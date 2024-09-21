@@ -1556,7 +1556,6 @@ dependencies = [
  "oxc_tasks_common",
  "phf 0.11.2",
  "pico-args",
- "project-root",
  "rayon",
  "regex",
  "saphyr",
@@ -1627,6 +1626,7 @@ dependencies = [
 name = "oxc_linter"
 version = "0.9.6"
 dependencies = [
+ "aho-corasick",
  "bitflags 2.6.0",
  "convert_case",
  "cow-utils",

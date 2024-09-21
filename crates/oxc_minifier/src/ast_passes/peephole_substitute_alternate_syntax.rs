@@ -11,14 +11,14 @@ use crate::{node_util::NodeUtil, CompressOptions, CompressorPass};
 /// A peephole optimization that minimizes code by simplifying conditional
 /// expressions, replacing IFs with HOOKs, replacing object constructors
 /// with literals, and simplifying returns.
-pub struct SubstituteAlternateSyntax {
+pub struct PeepholeSubstituteAlternateSyntax {
     options: CompressOptions,
     in_define_export: bool,
 }
 
-impl<'a> CompressorPass<'a> for SubstituteAlternateSyntax {}
+impl<'a> CompressorPass<'a> for PeepholeSubstituteAlternateSyntax {}
 
-impl<'a> Traverse<'a> for SubstituteAlternateSyntax {
+impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, _ctx: &mut TraverseCtx<'a>) {
         self.compress_block(stmt);
         // self.compress_while(stmt);
@@ -81,7 +81,7 @@ impl<'a> Traverse<'a> for SubstituteAlternateSyntax {
     }
 }
 
-impl<'a> SubstituteAlternateSyntax {
+impl<'a> PeepholeSubstituteAlternateSyntax {
     pub fn new(options: CompressOptions) -> Self {
         Self { options, in_define_export: false }
     }
@@ -243,5 +243,47 @@ impl<'a> SubstituteAlternateSyntax {
         if decl.init.as_ref().is_some_and(|init| init.is_undefined() || init.is_void_0()) {
             decl.init = None;
         }
+    }
+}
+
+/// <https://github.com/google/closure-compiler/blob/master/test/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntax.java>
+#[cfg(test)]
+mod test {
+    use oxc_allocator::Allocator;
+
+    use crate::{tester, CompressOptions};
+
+    fn test(source_text: &str, expected: &str) {
+        let allocator = Allocator::default();
+        let mut pass = super::PeepholeSubstituteAlternateSyntax::new(CompressOptions::default());
+        tester::test(&allocator, source_text, expected, &mut pass);
+    }
+
+    fn test_same(source_text: &str) {
+        test(source_text, source_text);
+    }
+
+    #[test]
+    fn fold_return_result() {
+        test("function f(){return !1;}", "function f(){return !1}");
+        test("function f(){return null;}", "function f(){return null}");
+        test("function f(){return void 0;}", "function f(){return}");
+        test("function f(){return void foo();}", "function f(){return void foo()}");
+        test("function f(){return undefined;}", "function f(){return}");
+        test("function f(){if(a()){return undefined;}}", "function f(){if(a())return}");
+    }
+
+    #[test]
+    fn undefined() {
+        test("var x = undefined", "var x");
+        test_same("var undefined = 1;function f() {var undefined=2;var x;}");
+        test("function f(undefined) {}", "function f(undefined){}");
+        test("try {} catch(undefined) {}", "try{}catch(undefined){}");
+        test("for (undefined in {}) {}", "for(undefined in {}){}");
+        test("undefined++", "undefined++");
+        test("undefined += undefined", "undefined+=void 0");
+
+        // shadowd
+        test_same("(function(undefined) { let x = typeof undefined; })()");
     }
 }

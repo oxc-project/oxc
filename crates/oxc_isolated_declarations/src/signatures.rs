@@ -30,12 +30,12 @@ impl<'a> IsolatedDeclarations<'a> {
                         };
 
                         let entry = method_annotations.entry(name).or_default();
-                        entry.0 |= first_param.pattern.type_annotation.is_some();
+                        entry.0 |= first_param.pattern.type_annotation.is_none();
                         entry.1 = Some(&mut first_param.pattern.type_annotation);
                     }
                     TSMethodSignatureKind::Get => {
                         let entry = method_annotations.entry(name).or_default();
-                        entry.0 |= method.return_type.is_some();
+                        entry.0 |= method.return_type.is_none();
                         entry.2 = Some(&mut method.return_type);
                     }
                 };

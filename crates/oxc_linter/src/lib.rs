@@ -4,6 +4,7 @@
 mod tester;
 
 mod ast_util;
+mod builder;
 mod config;
 mod context;
 mod disable_directives;
@@ -29,11 +30,12 @@ use oxc_diagnostics::Error;
 use oxc_semantic::{AstNode, Semantic};
 
 pub use crate::{
+    builder::LinterBuilder,
     config::Oxlintrc,
     context::LintContext,
     fixer::FixKind,
     frameworks::FrameworkFlags,
-    options::{AllowWarnDeny, InvalidFilterKind, LintFilter, OxlintOptions},
+    options::{AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind, OxlintOptions},
     rule::{RuleCategory, RuleFixMeta, RuleMeta, RuleWithSeverity},
     service::{LintService, LintServiceOptions},
 };
@@ -67,6 +69,14 @@ impl Default for Linter {
 }
 
 impl Linter {
+    pub(crate) fn new(
+        rules: Vec<RuleWithSeverity>,
+        options: LintOptions,
+        config: LintConfig,
+    ) -> Self {
+        Self { rules, options, config: Arc::new(config) }
+    }
+
     /// # Errors
     ///
     /// Returns `Err` if there are any errors parsing the configuration file.
@@ -79,14 +89,6 @@ impl Linter {
     #[must_use]
     pub fn with_rules(mut self, rules: Vec<RuleWithSeverity>) -> Self {
         self.rules = rules;
-        self
-    }
-
-    /// Used for testing
-    #[cfg(test)]
-    #[must_use]
-    pub(crate) fn with_eslint_config(mut self, config: LintConfig) -> Self {
-        self.config = Arc::new(config);
         self
     }
 

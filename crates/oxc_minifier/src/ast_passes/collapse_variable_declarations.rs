@@ -4,17 +4,16 @@ use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::{CompressOptions, CompressorPass};
 
-/// Collapse variable declarations (TODO: and assignments).
+/// Collapse variable declarations.
 ///
 /// `var a; var b = 1; var c = 2` => `var a, b = 1; c = 2`
-/// TODO: `a = null; b = null;` => `a = b = null`
-pub struct Collapse {
+pub struct CollapseVariableDeclarations {
     options: CompressOptions,
 }
 
-impl<'a> CompressorPass<'a> for Collapse {}
+impl<'a> CompressorPass<'a> for CollapseVariableDeclarations {}
 
-impl<'a> Traverse<'a> for Collapse {
+impl<'a> Traverse<'a> for CollapseVariableDeclarations {
     fn enter_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         if self.options.join_vars {
             self.join_vars(stmts, ctx);
@@ -22,7 +21,7 @@ impl<'a> Traverse<'a> for Collapse {
     }
 }
 
-impl<'a> Collapse {
+impl<'a> CollapseVariableDeclarations {
     pub fn new(options: CompressOptions) -> Self {
         Self { options }
     }
@@ -84,5 +83,36 @@ impl<'a> Collapse {
             }
         }
         *stmts = new_stmts;
+    }
+}
+
+/// <https://github.com/google/closure-compiler/blob/master/test/com/google/javascript/jscomp/CollapseVariableDeclarations.java>
+#[cfg(test)]
+mod test {
+    use oxc_allocator::Allocator;
+
+    use crate::{tester, CompressOptions};
+
+    fn test(source_text: &str, expected: &str) {
+        let allocator = Allocator::default();
+        let mut pass = super::CollapseVariableDeclarations::new(CompressOptions::default());
+        tester::test(&allocator, source_text, expected, &mut pass);
+    }
+
+    fn test_same(source_text: &str) {
+        test(source_text, source_text);
+    }
+
+    #[test]
+    fn cjs() {
+        // Do not join `require` calls for cjs-module-lexer.
+        test_same(
+            "
+    Object.defineProperty(exports, '__esModule', { value: true });
+    var compilerDom = require('@vue/compiler-dom');
+    var runtimeDom = require('@vue/runtime-dom');
+    var shared = require('@vue/shared');
+    ",
+        );
     }
 }

@@ -66,9 +66,10 @@ fn print_semicolon_after_export_declaration<'a>(
             };
 
             match declaration {
-                Declaration::TSInterfaceDeclaration(_) | Declaration::VariableDeclaration(_) => {
-                    None
-                }
+                Declaration::TSInterfaceDeclaration(_)
+                | Declaration::VariableDeclaration(_)
+                | Declaration::ClassDeclaration(_)
+                | Declaration::TSModuleDeclaration(_) => None,
                 _ => Some(ss!(";")),
             }
         }

@@ -10,8 +10,8 @@ use serde::Deserialize;
 use serde_json::Value;
 
 use crate::{
-    fixer::FixKind, options::LintPluginOptions, rules::RULES, AllowWarnDeny, Fixer, LintService,
-    LintServiceOptions, Linter, OxlintOptions, Oxlintrc, RuleEnum, RuleWithSeverity,
+    fixer::FixKind, options::LintPlugins, rules::RULES, AllowWarnDeny, Fixer, LintService,
+    LintServiceOptions, LinterBuilder, Oxlintrc, RuleEnum, RuleWithSeverity,
 };
 
 #[derive(Eq, PartialEq)]
@@ -171,13 +171,7 @@ pub struct Tester {
     /// See: [insta::Settings::set_snapshot_suffix]
     snapshot_suffix: Option<&'static str>,
     current_working_directory: Box<Path>,
-    // import_plugin: bool,
-    // jest_plugin: bool,
-    // vitest_plugin: bool,
-    // jsx_a11y_plugin: bool,
-    // nextjs_plugin: bool,
-    // react_perf_plugin: bool,
-    plugins: LintPluginOptions,
+    plugins: LintPlugins,
 }
 
 impl Tester {
@@ -201,7 +195,7 @@ impl Tester {
             snapshot: String::new(),
             snapshot_suffix: None,
             current_working_directory,
-            plugins: LintPluginOptions::none(),
+            plugins: LintPlugins::default(),
         }
     }
 
@@ -223,37 +217,37 @@ impl Tester {
     }
 
     pub fn with_import_plugin(mut self, yes: bool) -> Self {
-        self.plugins.import = yes;
+        self.plugins.set(LintPlugins::IMPORT, yes);
         self
     }
 
     pub fn with_jest_plugin(mut self, yes: bool) -> Self {
-        self.plugins.jest = yes;
+        self.plugins.set(LintPlugins::JEST, yes);
         self
     }
 
     pub fn with_vitest_plugin(mut self, yes: bool) -> Self {
-        self.plugins.vitest = yes;
+        self.plugins.set(LintPlugins::VITEST, yes);
         self
     }
 
     pub fn with_jsx_a11y_plugin(mut self, yes: bool) -> Self {
-        self.plugins.jsx_a11y = yes;
+        self.plugins.set(LintPlugins::JSX_A11Y, yes);
         self
     }
 
     pub fn with_nextjs_plugin(mut self, yes: bool) -> Self {
-        self.plugins.nextjs = yes;
+        self.plugins.set(LintPlugins::NEXTJS, yes);
         self
     }
 
     pub fn with_react_perf_plugin(mut self, yes: bool) -> Self {
-        self.plugins.react_perf = yes;
+        self.plugins.set(LintPlugins::REACT_PERF, yes);
         self
     }
 
     pub fn with_node_plugin(mut self, yes: bool) -> Self {
-        self.plugins.node = yes;
+        self.plugins.set(LintPlugins::NODE, yes);
         self
     }
 
@@ -351,28 +345,22 @@ impl Tester {
     ) -> TestResult {
         let allocator = Allocator::default();
         let rule = self.find_rule().read_json(rule_config.unwrap_or_default());
-        let options = OxlintOptions::default()
-            .with_fix(fix.into())
-            .with_import_plugin(self.plugins.import)
-            .with_jest_plugin(self.plugins.jest)
-            .with_vitest_plugin(self.plugins.vitest)
-            .with_jsx_a11y_plugin(self.plugins.jsx_a11y)
-            .with_nextjs_plugin(self.plugins.nextjs)
-            .with_react_perf_plugin(self.plugins.react_perf)
-            .with_node_plugin(self.plugins.node);
-        let eslint_config = eslint_config
+        let linter = eslint_config
             .as_ref()
-            .map_or_else(Oxlintrc::default, |v| Oxlintrc::deserialize(v).unwrap());
-        let linter = Linter::from_options(options)
-            .unwrap()
-            .with_rules(vec![RuleWithSeverity::new(rule, AllowWarnDeny::Warn)])
-            .with_eslint_config(eslint_config.into());
-        let path_to_lint = if self.plugins.import {
+            .map_or_else(LinterBuilder::empty, |v| {
+                LinterBuilder::from_oxlintrc(true, Oxlintrc::deserialize(v).unwrap())
+            })
+            .with_fix(fix.into())
+            .with_plugins(self.plugins)
+            .with_rule(RuleWithSeverity::new(rule, AllowWarnDeny::Warn))
+            .build();
+
+        let path_to_lint = if self.plugins.has_import() {
             assert!(path.is_none(), "import plugin does not support path");
             self.current_working_directory.join(&self.rule_path)
         } else if let Some(path) = path {
             self.current_working_directory.join(path)
-        } else if self.plugins.jest {
+        } else if self.plugins.has_jest() {
             self.rule_path.with_extension("test.tsx")
         } else {
             self.rule_path.clone()
@@ -380,7 +368,8 @@ impl Tester {
 
         let cwd = self.current_working_directory.clone();
         let paths = vec![path_to_lint.into_boxed_path()];
-        let options = LintServiceOptions::new(cwd, paths).with_cross_module(self.plugins.import);
+        let options =
+            LintServiceOptions::new(cwd, paths).with_cross_module(self.plugins.has_import());
         let lint_service = LintService::from_linter(linter, options);
         let diagnostic_service = DiagnosticService::default();
         let tx_error = diagnostic_service.sender();
@@ -395,7 +384,7 @@ impl Tester {
             return TestResult::Fixed(fix_result.fixed_code.to_string());
         }
 
-        let diagnostic_path = if self.plugins.import {
+        let diagnostic_path = if self.plugins.has_import() {
             self.rule_path.strip_prefix(&self.current_working_directory).unwrap()
         } else {
             &self.rule_path

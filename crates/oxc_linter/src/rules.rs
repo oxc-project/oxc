@@ -108,6 +108,7 @@ mod eslint {
     pub mod no_this_before_super;
     pub mod no_undef;
     pub mod no_undefined;
+    pub mod no_unexpected_multiline;
     pub mod no_unreachable;
     pub mod no_unsafe_finally;
     pub mod no_unsafe_negation;
@@ -569,6 +570,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_this_before_super,
     eslint::no_undef,
     eslint::no_undefined,
+    eslint::no_unexpected_multiline,
     eslint::no_unreachable,
     eslint::no_unsafe_finally,
     eslint::no_unsafe_negation,

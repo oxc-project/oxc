@@ -142,7 +142,6 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         self.x0_typescript.enter_arrow_function_expression(arrow, ctx);
-        self.x3_es2015.enter_arrow_function_expression(arrow, ctx);
     }
 
     fn enter_binding_pattern(&mut self, pat: &mut BindingPattern<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -156,11 +155,6 @@ impl<'a> Traverse<'a> for Transformer<'a> {
 
     fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.enter_class(class, ctx);
-        self.x3_es2015.enter_class(class, ctx);
-    }
-
-    fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.x3_es2015.exit_class(class, ctx);
     }
 
     fn enter_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -311,8 +305,6 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         arrow: &mut ArrowFunctionExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        self.x3_es2015.exit_arrow_function_expression(arrow, ctx);
-
         // Some plugins may add new statements to the ArrowFunctionExpression's body,
         // which can cause issues with the `() => x;` case, as it only allows a single statement.
         // To address this, we wrap the last statement in a return statement and set the expression to false.

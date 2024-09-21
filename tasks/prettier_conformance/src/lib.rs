@@ -56,11 +56,15 @@ pub struct TestRunner {
 }
 
 fn root() -> PathBuf {
-    project_root().join("tasks/prettier_conformance")
+    project_root().join("tasks").join("prettier_conformance")
 }
 
 fn fixtures_root() -> PathBuf {
-    project_root().join(root()).join("prettier/tests/format")
+    root().join("prettier").join("tests").join("format")
+}
+
+fn snap_root() -> PathBuf {
+    root().join("snapshots")
 }
 
 const SNAP_NAME: &str = "format.test.js";
@@ -172,7 +176,7 @@ impl TestRunner {
             let failed = failed.join("\n");
             let snapshot = format!("{heading}\n\n# Failed\n{failed}");
             let filename = format!("prettier.{language}.snap.md");
-            fs::write(root().join(filename), snapshot).unwrap();
+            fs::write(snap_root().join(filename), snapshot).unwrap();
         }
     }
 

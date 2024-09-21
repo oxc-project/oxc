@@ -12,10 +12,7 @@ pub(crate) fn test(source_text: &str, expected: &str, options: CompressOptions) 
     let source_type = SourceType::default();
     let result = run(source_text, source_type, Some(options));
     let expected = run(expected, source_type, None);
-    assert_eq!(
-        result, expected,
-        "\nfor source {source_text:?}\nexpect {expected:?}\ngot    {result:?}"
-    );
+    assert_eq!(result, expected, "\nfor source\n{source_text}\nexpect\n{expected}\ngot\n{result}");
 }
 
 fn run(source_text: &str, source_type: SourceType, options: Option<CompressOptions>) -> String {

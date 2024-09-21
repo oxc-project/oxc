@@ -2,6 +2,7 @@
 source: crates/oxc_isolated_declarations/tests/mod.rs
 input_file: crates/oxc_isolated_declarations/tests/fixtures/signatures.ts
 ---
+```
 ==================== .D.TS ====================
 
 export interface X {
@@ -22,4 +23,11 @@ export type A = {
 export interface I {
 	set value(_: string);
 	get value(): string;
+}
+export interface Ref<
+	T = any,
+	S = T
+> {
+	get value(): T;
+	set value(_: S);
 }

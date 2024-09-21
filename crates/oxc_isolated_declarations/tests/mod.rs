@@ -29,7 +29,8 @@ fn transform(path: &Path, source_text: &str) -> String {
         .build(&id_ret.program)
         .source_text;
 
-    let mut snapshot = format!("==================== .D.TS ====================\n\n{code}\n\n");
+    let mut snapshot =
+        format!("```\n==================== .D.TS ====================\n\n{code}\n\n");
     if !id_ret.errors.is_empty() {
         let source = Arc::new(source_text.to_string());
         let error_messages = id_ret
@@ -41,7 +42,7 @@ fn transform(path: &Path, source_text: &str) -> String {
             .join("\n");
 
         snapshot.push_str(&format!(
-            "==================== Errors ====================\n\n{error_messages}\n\n"
+            "==================== Errors ====================\n\n{error_messages}\n\n```"
         ));
     }
 

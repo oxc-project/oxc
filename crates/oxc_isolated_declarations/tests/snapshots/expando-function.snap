@@ -2,34 +2,25 @@
 source: crates/oxc_isolated_declarations/tests/mod.rs
 input_file: crates/oxc_isolated_declarations/tests/fixtures/expando-function.ts
 ---
+```
 ==================== .D.TS ====================
 
 export declare function foo(): void;
 export declare const bar: () => void;
 export declare namespace NS {
-	export const goo: () => void;
+	const goo: () => void;
 }
 export declare namespace foo {
-	export let baz: number;
+	let baz: number;
 }
 declare function qux(): void;
 declare namespace qux {
-	export let woo: number;
+	let woo: number;
 }
 export default qux;
 
 
 ==================== Errors ====================
-
-  x TS9023: Assigning properties to functions without declaring them is not
-  | supported with --isolatedDeclarations. Add an explicit declaration for the
-  | properties assigned to this function.
-    ,-[10:3]
-  9 |   export const goo = (): void => {}
- 10 |   goo.length = 10
-    :   ^^^^^^^^^^
- 11 | }
-    `----
 
   x TS9023: Assigning properties to functions without declaring them is not
   | supported with --isolatedDeclarations. Add an explicit declaration for the
@@ -60,3 +51,16 @@ export default qux;
     : ^^^^^^^
  20 | foo.baz = 100;
     `----
+
+  x TS9023: Assigning properties to functions without declaring them is not
+  | supported with --isolatedDeclarations. Add an explicit declaration for the
+  | properties assigned to this function.
+    ,-[10:3]
+  9 |   export const goo = (): void => {}
+ 10 |   goo.length = 10
+    :   ^^^^^^^^^^
+ 11 | }
+    `----
+
+
+```

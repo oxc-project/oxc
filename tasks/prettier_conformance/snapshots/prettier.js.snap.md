@@ -1,13 +1,16 @@
-js compatibility: 268/593 (45.19%)
+js compatibility: 235/593 (39.63%)
 
 # Failed
 
 ### arrays
 * arrays/numbers-negative-comment-after-minus.js
 * arrays/numbers-negative.js
+* arrays/numbers-trailing-comma.js
+* arrays/numbers-with-holes.js
 * arrays/numbers-with-trailing-comments.js
 * arrays/numbers-with-tricky-comments.js
 * arrays/numbers2.js
+* arrays/numbers3.js
 * arrays/preserve_empty_lines.js
 
 ### arrow-call
@@ -40,8 +43,10 @@ js compatibility: 268/593 (45.19%)
 * assignment/issue-10218.js
 * assignment/issue-2184.js
 * assignment/issue-2540.js
+* assignment/issue-5610.js
 * assignment/issue-6922.js
 * assignment/issue-7572.js
+* assignment/issue-7961.js
 * assignment/lone-arg.js
 
 ### assignment-comments
@@ -61,6 +66,7 @@ js compatibility: 268/593 (45.19%)
 * binary-expressions/call.js
 * binary-expressions/comment.js
 * binary-expressions/if.js
+* binary-expressions/in_instanceof.js
 * binary-expressions/inline-jsx.js
 * binary-expressions/inline-object-array.js
 * binary-expressions/jsx_parent.js
@@ -82,12 +88,16 @@ js compatibility: 268/593 (45.19%)
 * call/first-argument-expansion/jsx.js
 * call/first-argument-expansion/test.js
 
+### call/no-argument
+* call/no-argument/special-cases.js
+
 ### chain-expression
 * chain-expression/issue-15785-1.js
 * chain-expression/issue-15785-2.js
 * chain-expression/issue-15785-3.js
 * chain-expression/issue-15916.js
 * chain-expression/test-3.js
+* chain-expression/test-4.js
 * chain-expression/test.js
 
 ### class-comment
@@ -99,20 +109,24 @@ js compatibility: 268/593 (45.19%)
 * class-extends/extends.js
 
 ### classes
+* classes/asi.js
 * classes/assignment.js
 * classes/empty.js
 * classes/method.js
 * classes/property.js
 
 ### classes-private-fields
+* classes-private-fields/optional-chaining.js
 * classes-private-fields/with_comments.js
 
 ### comments
 * comments/arrow.js
+* comments/assignment-pattern.js
 * comments/before-comma.js
 * comments/binary-expressions-block-comments.js
 * comments/binary-expressions-parens.js
 * comments/binary-expressions-single-comments.js
+* comments/binary-expressions.js
 * comments/blank.js
 * comments/break-continue-statements.js
 * comments/call_comment.js
@@ -125,6 +139,7 @@ js compatibility: 268/593 (45.19%)
 * comments/empty-statements.js
 * comments/export-and-import.js
 * comments/export.js
+* comments/first-line.js
 * comments/function-declaration.js
 * comments/if.js
 * comments/issue-3532.js
@@ -134,6 +149,7 @@ js compatibility: 268/593 (45.19%)
 * comments/jsdoc.js
 * comments/jsx.js
 * comments/last-arg.js
+* comments/multi-comments-2.js
 * comments/multi-comments-on-same-line-2.js
 * comments/multi-comments-on-same-line.js
 * comments/multi-comments.js
@@ -164,12 +180,14 @@ js compatibility: 268/593 (45.19%)
 * comments-closure-typecast/comment-in-the-middle.js
 * comments-closure-typecast/comment-placement.js
 * comments-closure-typecast/extra-spaces-and-asterisks.js
+* comments-closure-typecast/iife-issue-5850-isolated.js
 * comments-closure-typecast/iife.js
 * comments-closure-typecast/issue-4124.js
 * comments-closure-typecast/issue-8045.js
 * comments-closure-typecast/issue-9358.js
 * comments-closure-typecast/member.js
 * comments-closure-typecast/nested.js
+* comments-closure-typecast/non-casts.js
 * comments-closure-typecast/object-with-comment.js
 * comments-closure-typecast/satisfies.js
 * comments-closure-typecast/styled-components.js
@@ -227,12 +245,16 @@ js compatibility: 268/593 (45.19%)
 * for/continue-and-break-comment-2.js
 * for/continue-and-break-comment-without-blocks.js
 * for/for-in-with-initializer.js
+* for/parentheses.js
 
 ### function
 * function/issue-10277.js
 
 ### function-comments
 * function-comments/params-trail-comments.js
+
+### function-first-param
+* function-first-param/function_expression.js
 
 ### function-single-destructuring
 * function-single-destructuring/array.js
@@ -245,15 +267,21 @@ js compatibility: 268/593 (45.19%)
 * functional-composition/pipe-function-calls-with-comments.js
 * functional-composition/pipe-function-calls.js
 * functional-composition/ramda_compose.js
+* functional-composition/ramda_pipe.js
 * functional-composition/redux_connect.js
 * functional-composition/reselect_createselector.js
 * functional-composition/rxjs_pipe.js
+
+### generator
+* generator/async.js
+* generator/function-name-starts-with-get.js
 
 ### identifier/parentheses
 * identifier/parentheses/let.js
 
 ### if
 * if/comment_before_else.js
+* if/else.js
 * if/expr_and_same_line_comments.js
 * if/if_comments.js
 * if/issue-15168.js
@@ -262,6 +290,8 @@ js compatibility: 268/593 (45.19%)
 
 ### import
 * import/comments.js
+* import/empty-import.js
+* import/same-local-and-imported.js
 
 ### import-assertions
 * import-assertions/empty.js
@@ -297,8 +327,12 @@ js compatibility: 268/593 (45.19%)
 ### line-suffix-boundary
 * line-suffix-boundary/boundary.js
 
+### literal
+* literal/number.js
+
 ### logical_expressions
 * logical_expressions/issue-7024.js
+* logical_expressions/logical_expression_operators.js
 
 ### member
 * member/conditional.js
@@ -345,11 +379,21 @@ js compatibility: 268/593 (45.19%)
 ### no-semi-babylon-extensions
 * no-semi-babylon-extensions/no-semi.js
 
+### non-strict
+* non-strict/keywords.js
+
 ### nullish-coalescing
 * nullish-coalescing/nullish_coalesing_operator.js
 
+### numeric-separators
+* numeric-separators/number.js
+
 ### object-prop-break-in
+* object-prop-break-in/comment.js
 * object-prop-break-in/short-keys.js
+
+### object-property-comment
+* object-property-comment/after-key.js
 
 ### object-property-ignore
 * object-property-ignore/ignore.js
@@ -364,6 +408,7 @@ js compatibility: 268/593 (45.19%)
 ### optional-chaining
 * optional-chaining/chaining.js
 * optional-chaining/comments.js
+* optional-chaining/eval.js
 
 ### optional-chaining-assignment
 * optional-chaining-assignment/valid-complex-case.js
@@ -420,6 +465,7 @@ js compatibility: 268/593 (45.19%)
 * template/graphql.js
 * template/indent.js
 * template/inline.js
+* template/parenthesis.js
 
 ### template-align
 * template-align/indent.js
@@ -471,6 +517,9 @@ js compatibility: 268/593 (45.19%)
 ### try
 * try/catch.js
 * try/try.js
+
+### unary
+* unary/object.js
 
 ### unary-expression
 * unary-expression/comments.js

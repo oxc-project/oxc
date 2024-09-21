@@ -10,11 +10,11 @@ use crate::{keep_var::KeepVar, node_util::NodeUtil, tri::Tri, CompressorPass};
 /// Terser option: `dead_code: true`.
 ///
 /// See `KeepVar` at the end of this file for `var` hoisting logic.
-pub struct RemoveDeadCode;
+pub struct PeepholeRemoveDeadCode;
 
-impl<'a> CompressorPass<'a> for RemoveDeadCode {}
+impl<'a> CompressorPass<'a> for PeepholeRemoveDeadCode {}
 
-impl<'a> Traverse<'a> for RemoveDeadCode {
+impl<'a> Traverse<'a> for PeepholeRemoveDeadCode {
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         Self::fold_if_statement(stmt, ctx);
     }
@@ -25,7 +25,7 @@ impl<'a> Traverse<'a> for RemoveDeadCode {
     }
 }
 
-impl<'a> RemoveDeadCode {
+impl<'a> PeepholeRemoveDeadCode {
     pub fn new() -> Self {
         Self {}
     }
@@ -115,3 +115,21 @@ impl<'a> RemoveDeadCode {
         }
     }
 }
+
+// /// <https://github.com/google/closure-compiler/blob/master/test/com/google/javascript/jscomp/PeepholeRemoveDeadCode.java>
+// #[cfg(test)]
+// mod test {
+// use oxc_allocator::Allocator;
+
+// use crate::{tester, CompressOptions};
+
+// fn test(source_text: &str, expected: &str) {
+// let allocator = Allocator::default();
+// let mut pass = super::PeepholeRemoveDeadCode::new();
+// tester::test(&allocator, source_text, expected, &mut pass);
+// }
+
+// fn test_same(source_text: &str) {
+// test(source_text, source_text);
+// }
+// }

@@ -88,3 +88,32 @@ impl<'a> RemoveSyntax {
         ident.name == "console"
     }
 }
+
+#[cfg(test)]
+mod test {
+    use oxc_allocator::Allocator;
+
+    use crate::{tester, CompressOptions};
+
+    fn test(source_text: &str, expected: &str) {
+        let allocator = Allocator::default();
+        let mut pass = super::RemoveSyntax::new(CompressOptions::all_true());
+        tester::test(&allocator, source_text, expected, &mut pass);
+    }
+
+    #[test]
+    fn parens() {
+        test("(((x)))", "x");
+        test("(((a + b))) * c", "(a + b) * c");
+    }
+
+    #[test]
+    fn drop_console() {
+        test("console.log()", "");
+    }
+
+    #[test]
+    fn drop_debugger() {
+        test("debugger", "");
+    }
+}

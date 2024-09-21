@@ -2003,20 +2003,21 @@ impl<'a> SemanticBuilder<'a> {
                 }
                 self.current_reference_flags -= ReferenceFlags::Write;
             }
-            AstKind::AssignmentExpression(expr) => {
-                if expr.operator != AssignmentOperator::Assign
-                    || self.is_not_expression_statement_parent()
-                {
-                    self.current_reference_flags -= ReferenceFlags::Read;
-                }
-            }
-            AstKind::ExportNamedDeclaration(_)
+            AstKind::AssignmentExpression(_) | AstKind::ExportNamedDeclaration(_)
             | AstKind::TSTypeQuery(_)
             // Clear the reference flags that are set in AstKind::PropertySignature
             | AstKind::PropertyKey(_) => {
                 self.current_reference_flags = ReferenceFlags::empty();
             }
-            AstKind::AssignmentTarget(_) => self.current_reference_flags -= ReferenceFlags::Write,
+            AstKind::AssignmentTarget(_) =>{
+                // Handle nested assignment targets like `({a: b} = obj)`
+                if !matches!(
+                    self.nodes.parent_kind(self.current_node_id),
+                    Some(AstKind::ObjectAssignmentTarget(_) | AstKind::ArrayAssignmentTarget(_))
+                ) {
+                    self.current_reference_flags -= ReferenceFlags::Write;
+                }
+            },
             AstKind::LabeledStatement(_) => self.unused_labels.mark_unused(self.current_node_id),
             _ => {}
         }

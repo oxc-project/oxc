@@ -4,12 +4,11 @@ mod plugins;
 
 use std::{convert::From, path::PathBuf};
 
-use filter::LintFilterKind;
 use oxc_diagnostics::Error;
 use rustc_hash::FxHashSet;
 
 pub use allow_warn_deny::AllowWarnDeny;
-pub use filter::{InvalidFilterKind, LintFilter};
+pub use filter::{InvalidFilterKind, LintFilter, LintFilterKind};
 pub use plugins::{LintPluginOptions, LintPlugins};
 
 use crate::{

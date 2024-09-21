@@ -2,9 +2,8 @@ commit: a709f989
 
 transpile Summary:
 AST Parsed     : 20/20 (100.00%)
-Positive Passed: 17/20 (85.00%)
+Positive Passed: 18/20 (90.00%)
 Mismatch: tasks/coverage/typescript/tests/cases/transpile/declarationBasicSyntax.ts
-Mismatch: tasks/coverage/typescript/tests/cases/transpile/declarationEmitPartialNodeReuse.ts
 Mismatch: tasks/coverage/typescript/tests/cases/transpile/declarationRestParameters.ts
 
 #### "typescript/tests/cases/transpile/declarationComputedPropertyNames.ts" ####
@@ -68,7 +67,7 @@ export const D = {
 
 //// [declarationComputedPropertyNames.d.ts] ////
 export declare namespace presentNs {
-	export const a: unknown;
+	const a: unknown;
 }
 declare const aliasing: unknown;
 export type A = {

@@ -95,7 +95,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         if matches!(ts_type, TSType::TSTypeReference(_)) {
                             self.error(implicitly_adding_undefined_to_type(param.span));
                         } else if !ts_type.is_maybe_undefined() {
-                            // union with undefined
+                            // union with `undefined`
                             return self.ast.ts_type_annotation(
                                 SPAN,
                                 self.ast.ts_type_union_type(
