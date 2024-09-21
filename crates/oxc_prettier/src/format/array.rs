@@ -127,7 +127,7 @@ pub fn print_array<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
 
 fn print_empty_array_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
     let dangling_options = DanglingCommentsPrintOptions::default().with_ident(true);
-    p.print_dangling_comments(array.span(), Some(dangling_options)).map_or_else(
+    p.print_dangling_comments(array.span(), Some(&dangling_options)).map_or_else(
         || ss!("[]"),
         |dangling_comments| group![p, ss!("["), dangling_comments, softline!(), ss!("]")],
     )
