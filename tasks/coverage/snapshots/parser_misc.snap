@@ -250,6 +250,7 @@ Negative Passed: 20/20 (100.00%)
    ·        ▲
  2 │ 
    ╰────
+  help: If you want an optional type, use `number | undefined` instead.
 
   × Unexpected token
    ╭─[misc/fail/oxc-5955-2.ts:3:8]
