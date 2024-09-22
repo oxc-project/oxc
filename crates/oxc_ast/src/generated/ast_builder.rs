@@ -832,15 +832,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// - r#type
     /// - span: The [`Span`] covering this node
-    /// - id
-    /// - generator
+    /// - id: The function identifier. [`None`] for anonymous function expressions.
+    /// - generator: Is this a generator function?
     /// - r#async
     /// - declare
     /// - type_parameters
     /// - this_param: Declaring `this` in a Function <https://www.typescriptlang.org/docs/handbook/2/functions.html#declaring-this-in-a-function>
-    /// - params
-    /// - return_type
-    /// - body
+    /// - params: Function parameters.
+    /// - return_type: The TypeScript return type annotation.
+    /// - body: The function body.
     #[inline]
     pub fn expression_function<T1, T2, T3, T4, T5>(
         self,
@@ -4179,15 +4179,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// - r#type
     /// - span: The [`Span`] covering this node
-    /// - id
-    /// - generator
+    /// - id: The function identifier. [`None`] for anonymous function expressions.
+    /// - generator: Is this a generator function?
     /// - r#async
     /// - declare
     /// - type_parameters
     /// - this_param: Declaring `this` in a Function <https://www.typescriptlang.org/docs/handbook/2/functions.html#declaring-this-in-a-function>
-    /// - params
-    /// - return_type
-    /// - body
+    /// - params: Function parameters.
+    /// - return_type: The TypeScript return type annotation.
+    /// - body: The function body.
     #[inline]
     pub fn declaration_function<T1, T2, T3, T4, T5>(
         self,
@@ -5719,15 +5719,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// - r#type
     /// - span: The [`Span`] covering this node
-    /// - id
-    /// - generator
+    /// - id: The function identifier. [`None`] for anonymous function expressions.
+    /// - generator: Is this a generator function?
     /// - r#async
     /// - declare
     /// - type_parameters
     /// - this_param: Declaring `this` in a Function <https://www.typescriptlang.org/docs/handbook/2/functions.html#declaring-this-in-a-function>
-    /// - params
-    /// - return_type
-    /// - body
+    /// - params: Function parameters.
+    /// - return_type: The TypeScript return type annotation.
+    /// - body: The function body.
     #[inline]
     pub fn function<T1, T2, T3, T4, T5>(
         self,
@@ -5773,15 +5773,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// - r#type
     /// - span: The [`Span`] covering this node
-    /// - id
-    /// - generator
+    /// - id: The function identifier. [`None`] for anonymous function expressions.
+    /// - generator: Is this a generator function?
     /// - r#async
     /// - declare
     /// - type_parameters
     /// - this_param: Declaring `this` in a Function <https://www.typescriptlang.org/docs/handbook/2/functions.html#declaring-this-in-a-function>
-    /// - params
-    /// - return_type
-    /// - body
+    /// - params: Function parameters.
+    /// - return_type: The TypeScript return type annotation.
+    /// - body: The function body.
     #[inline]
     pub fn alloc_function<T1, T2, T3, T4, T5>(
         self,
@@ -7677,15 +7677,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// - r#type
     /// - span: The [`Span`] covering this node
-    /// - id
-    /// - generator
+    /// - id: The function identifier. [`None`] for anonymous function expressions.
+    /// - generator: Is this a generator function?
     /// - r#async
     /// - declare
     /// - type_parameters
     /// - this_param: Declaring `this` in a Function <https://www.typescriptlang.org/docs/handbook/2/functions.html#declaring-this-in-a-function>
-    /// - params
-    /// - return_type
-    /// - body
+    /// - params: Function parameters.
+    /// - return_type: The TypeScript return type annotation.
+    /// - body: The function body.
     #[inline]
     pub fn export_default_declaration_kind_function<T1, T2, T3, T4, T5>(
         self,
