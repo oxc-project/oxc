@@ -7,7 +7,7 @@ _default:
   @just --list -u
 
 alias r := ready
-alias c := coverage
+alias c := conformance
 alias f := fix
 alias new-typescript-rule := new-ts-rule
 
@@ -91,7 +91,7 @@ coverage:
   cargo coverage
   cargo run -p oxc_transform_conformance -- --exec
   cargo run -p oxc_prettier_conformance
-  # cargo minsize
+  cargo minsize
 
 conformance *args='':
   cargo coverage -- {{args}}
