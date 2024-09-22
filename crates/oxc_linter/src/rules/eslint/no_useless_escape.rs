@@ -572,6 +572,7 @@ fn test() {
         r"/[\&&&\&]/v",  // { "ecmaVersion": 2024 },
         r"/[[\-]\-]/v",  // { "ecmaVersion": 2024 },
         r"/[\^]/v",      // { "ecmaVersion": 2024 }
+        r"/[\s\-(]/",    // https://github.com/oxc-project/oxc/issues/5227
     ];
 
     let fail = vec![
@@ -729,6 +730,12 @@ fn test() {
         (r"/[\.&&\.&&\.]/v", r"/[.&&.&&.]/v", None), // { "ecmaVersion": 2024 },
         (r"/[[\.&]--[\.&]]/v", r"/[[.&]--[.&]]/v", None), // { "ecmaVersion": 2024 },
         (r"/[[\.&]&&[\.&]]/v", r"/[[.&]&&[.&]]/v", None), // { "ecmaVersion": 2024 }
+        (
+            // https://github.com/oxc-project/oxc/issues/5227
+            r"const regex = /(https?:\/\/github\.com\/(([^\s]+)\/([^\s]+))\/([^\s]+\/)?(issues|pull)\/([0-9]+))|(([^\s]+)\/([^\s]+))?#([1-9][0-9]*)($|[\s\:\;\-\(\=])/;",
+            r"const regex = /(https?:\/\/github\.com\/(([^\s]+)\/([^\s]+))\/([^\s]+\/)?(issues|pull)\/([0-9]+))|(([^\s]+)\/([^\s]+))?#([1-9][0-9]*)($|[\s:;\-(=])/;",
+            None,
+        ),
     ];
 
     Tester::new(NoUselessEscape::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
