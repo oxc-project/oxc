@@ -364,7 +364,6 @@ impl<'a> IsolatedDeclarations<'a> {
                     if self.has_internal_annotation(method.span) {
                         continue;
                     }
-
                     if !(method.r#type.is_abstract() || method.optional)
                         && method.value.body.is_none()
                     {
@@ -384,36 +383,42 @@ impl<'a> IsolatedDeclarations<'a> {
 
                     let inferred_accessor_types = self.collect_inferred_accessor_types(decl);
                     let function = &method.value;
-                    let params = if method.kind.is_set() {
-                        method.key.static_name().map_or_else(
+                    let params = match method.kind {
+                        MethodDefinitionKind::Set => method.key.static_name().map_or_else(
                             || self.transform_formal_parameters(&function.params),
                             |n| {
                                 self.transform_set_accessor_params(
                                     &function.params,
-                                    inferred_accessor_types.get(&self.ast.atom(&n)).map(|t| {
+                                    inferred_accessor_types.get(&self.ast.atom(&n)).map(|t|
                                         // SAFETY: `ast.copy` is unsound! We need to fix.
-                                        unsafe { self.ast.copy(t) }
-                                    }),
+                                        unsafe { self.ast.copy(t) }),
                                 )
                             },
-                        )
-                    } else {
-                        self.transform_formal_parameters(&function.params)
+                        ),
+                        MethodDefinitionKind::Constructor => {
+                            let params = self.transform_formal_parameters(&function.params);
+                            elements.splice(
+                                0..0,
+                                self.transform_constructor_params_to_class_properties(
+                                    function, &params,
+                                ),
+                            );
+
+                            if method.accessibility.is_some_and(TSAccessibility::is_private) {
+                                elements.push(self.transform_private_modifier_method(method));
+                                continue;
+                            }
+
+                            params
+                        }
+                        _ => {
+                            if method.accessibility.is_some_and(TSAccessibility::is_private) {
+                                elements.push(self.transform_private_modifier_method(method));
+                                continue;
+                            }
+                            self.transform_formal_parameters(&function.params)
+                        }
                     };
-
-                    if let MethodDefinitionKind::Constructor = method.kind {
-                        elements.splice(
-                            0..0,
-                            self.transform_constructor_params_to_class_properties(
-                                function, &params,
-                            ),
-                        );
-                    }
-
-                    if method.accessibility.is_some_and(TSAccessibility::is_private) {
-                        elements.push(self.transform_private_modifier_method(method));
-                        continue;
-                    }
 
                     let return_type = match method.kind {
                         MethodDefinitionKind::Method => {

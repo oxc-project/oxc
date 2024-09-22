@@ -54,3 +54,12 @@ export class PrivateFieldsWithConstructorAssignments {
   private second = 0;
   constructor(public first: number) {}
 }
+
+
+export class PrivateMethodClass {
+  private good(a): void {}
+}
+
+export class PublicMethodClass {
+  public bad(a): void {}
+}
