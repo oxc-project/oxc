@@ -15,13 +15,14 @@ mod markers;
 mod passes;
 mod rust_ast;
 mod schema;
+mod to_code;
 mod util;
 
 use derives::{DeriveCloneIn, DeriveContentEq, DeriveContentHash, DeriveGetSpan, DeriveGetSpanMut};
 use fmt::cargo_fmt;
 use generators::{
-    AssertLayouts, AstBuilderGenerator, AstKindGenerator, Generator, GeneratorOutput,
-    VisitGenerator, VisitMutGenerator,
+    AssertLayouts, AstBuilderGenerator, AstKindGenerator, AstMacroGenerator, Generator,
+    GeneratorOutput, VisitGenerator, VisitMutGenerator,
 };
 use passes::{CalcLayout, Linker};
 use util::{write_all_to, NormalizeError};
@@ -39,6 +40,7 @@ static SOURCE_PATHS: &[&str] = &[
 ];
 
 const AST_CRATE: &str = "crates/oxc_ast";
+const AST_MACROS_CRATE: &str = "crates/oxc_ast_macros";
 
 type Result<R> = std::result::Result<R, String>;
 type TypeId = usize;
@@ -79,6 +81,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         .generate(AstBuilderGenerator)
         .generate(VisitGenerator)
         .generate(VisitMutGenerator)
+        .generate(AstMacroGenerator)
         .run()?;
 
     if !cli_options.dry_run {

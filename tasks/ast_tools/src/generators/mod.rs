@@ -7,11 +7,13 @@ use crate::codegen::LateCtx;
 mod assert_layouts;
 mod ast_builder;
 mod ast_kind;
+mod ast_macro;
 mod visit;
 
 pub use assert_layouts::AssertLayouts;
 pub use ast_builder::AstBuilderGenerator;
 pub use ast_kind::AstKindGenerator;
+pub use ast_macro::AstMacroGenerator;
 pub use visit::{VisitGenerator, VisitMutGenerator};
 
 /// Inserts a newline in the `TokenStream`.

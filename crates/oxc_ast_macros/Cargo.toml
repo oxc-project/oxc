@@ -19,8 +19,3 @@ workspace = true
 [lib]
 proc-macro = true
 doctest = false
-
-[dependencies]
-proc-macro2 = { workspace = true }
-quote = { workspace = true }
-syn = { workspace = true, features = ["full", "parsing", "printing", "proc-macro"] }
