@@ -52,7 +52,7 @@ fn unexpected_optional(span: Span) -> OxcDiagnostic {
 #[allow(clippy::cast_possible_truncation)]
 pub fn check_variable_declarator(decl: &VariableDeclarator, ctx: &SemanticBuilder<'_>) {
     if decl.id.optional {
-        let start = decl.id.span().end;
+        let start = decl.id.span().start;
         let Some(offset) = ctx.source_text[start as usize..].find('?') else { return };
         let offset = start + offset as u32;
         ctx.error(unexpected_optional(Span::new(offset, offset)));

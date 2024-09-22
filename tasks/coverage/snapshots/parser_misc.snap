@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 29/29 (100.00%)
-Positive Passed: 29/29 (100.00%)
-Negative Passed: 17/17 (100.00%)
+AST Parsed     : 30/30 (100.00%)
+Positive Passed: 30/30 (100.00%)
+Negative Passed: 20/20 (100.00%)
 
   × Unexpected token
    ╭─[misc/fail/oxc-169.js:2:1]
@@ -242,6 +242,29 @@ Negative Passed: 17/17 (100.00%)
    ╭─[misc/fail/oxc-5355.jsx:1:6]
  1 │ <Foo.bar-baz />
    ·      ───────
+   ╰────
+
+  × Unexpected `?` operator
+   ╭─[misc/fail/oxc-5955-1.ts:1:8]
+ 1 │ const x?: number = 1;
+   ·        ▲
+ 2 │ 
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/oxc-5955-2.ts:3:8]
+ 2 │ interface B {
+ 3 │     e()?: number;
+   ·        ─
+ 4 │ }
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/oxc-5955-3.ts:2:18]
+ 1 │ class A {
+ 2 │     [key: string]?: number;
+   ·                  ─
+ 3 │ }
    ╰────
 
   × The keyword 'let' is reserved
