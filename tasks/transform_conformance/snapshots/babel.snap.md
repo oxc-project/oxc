@@ -1,15 +1,16 @@
 commit: 3bcfee23
 
-Passed: 312/1038
+Passed: 330/1024
 
 # All Passed:
 * babel-plugin-transform-optional-catch-binding
+* babel-preset-react
 * babel-plugin-transform-react-display-name
 * babel-plugin-transform-react-jsx-self
 * babel-plugin-transform-react-jsx-source
 
 
-# babel-preset-env (104/585)
+# babel-preset-env (106/585)
 * .plugins-overlapping/chrome-49/input.js
 x Output mismatch
 
@@ -255,12 +256,6 @@ x Output mismatch
 
 * corejs2-babel-7/usage-typed-array/input.mjs
 x Output mismatch
-
-* corejs2-babel-7/usage-typed-array-edge-13/input.mjs
-Missing ReferenceId: Int8Array
-Unresolved reference IDs mismatch for "Int8Array":
-after transform: [ReferenceId(0)]
-rebuilt        : [ReferenceId(0)]
 
 * corejs2-babel-7/usage-typed-array-static/input.mjs
 x Output mismatch
@@ -1321,16 +1316,6 @@ x Output mismatch
 * preset-options/include-scoped/input.mjs
 x Output mismatch
 
-* preset-options/ios-10/input.mjs
-Missing SymbolId: a
-Missing ScopeId
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
-
 * preset-options/ios-6/input.mjs
 x Output mismatch
 
@@ -1464,35 +1449,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-logical-assignment-operators (0/6)
-* logical-assignment/anonymous-functions-transform/input.js
-Symbol reference IDs mismatch:
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8)]
-rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5)]
-Reference flags mismatch:
-after transform: ReferenceId(4): ReferenceFlags(Write)
-rebuilt        : ReferenceId(1): ReferenceFlags(Read | Write)
-Reference flags mismatch:
-after transform: ReferenceId(6): ReferenceFlags(Write)
-rebuilt        : ReferenceId(3): ReferenceFlags(Read | Write)
-Reference flags mismatch:
-after transform: ReferenceId(8): ReferenceFlags(Write)
-rebuilt        : ReferenceId(5): ReferenceFlags(Read | Write)
-
-* logical-assignment/arrow-functions-transform/input.js
-Symbol reference IDs mismatch:
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8)]
-rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5)]
-Reference flags mismatch:
-after transform: ReferenceId(4): ReferenceFlags(Write)
-rebuilt        : ReferenceId(1): ReferenceFlags(Read | Write)
-Reference flags mismatch:
-after transform: ReferenceId(6): ReferenceFlags(Write)
-rebuilt        : ReferenceId(3): ReferenceFlags(Read | Write)
-Reference flags mismatch:
-after transform: ReferenceId(8): ReferenceFlags(Write)
-rebuilt        : ReferenceId(5): ReferenceFlags(Read | Write)
-
+# babel-plugin-transform-logical-assignment-operators (3/6)
 * logical-assignment/general-semantics/input.js
 Symbol reference IDs mismatch:
 after transform: SymbolId(15): [ReferenceId(117), ReferenceId(118), ReferenceId(121)]
@@ -1506,104 +1463,6 @@ rebuilt        : SymbolId(12): [ReferenceId(111), ReferenceId(115)]
 Symbol reference IDs mismatch:
 after transform: SymbolId(21): [ReferenceId(132), ReferenceId(133), ReferenceId(136)]
 rebuilt        : SymbolId(14): [ReferenceId(123), ReferenceId(127)]
-Reference flags mismatch:
-after transform: ReferenceId(98): ReferenceFlags(Write)
-rebuilt        : ReferenceId(27): ReferenceFlags(Read | Write)
-Reference flags mismatch:
-after transform: ReferenceId(97): ReferenceFlags(Write)
-rebuilt        : ReferenceId(29): ReferenceFlags(Read)
-Reference flags mismatch:
-after transform: ReferenceId(100): ReferenceFlags(Write)
-rebuilt        : ReferenceId(33): ReferenceFlags(Read | Write)
-Reference flags mismatch:
-after transform: ReferenceId(99): ReferenceFlags(Write)
-rebuilt        : ReferenceId(35): ReferenceFlags(Read)
-Reference flags mismatch:
-after transform: ReferenceId(102): ReferenceFlags(Write)
-rebuilt        : ReferenceId(39): ReferenceFlags(Read | Write)
-Reference flags mismatch:
-after transform: ReferenceId(101): ReferenceFlags(Write)
-rebuilt        : ReferenceId(41): ReferenceFlags(Read)
-Reference flags mismatch:
-after transform: ReferenceId(104): ReferenceFlags(Write)
-rebuilt        : ReferenceId(45): ReferenceFlags(Read | Write)
-Reference flags mismatch:
-after transform: ReferenceId(103): ReferenceFlags(Write)
-rebuilt        : ReferenceId(47): ReferenceFlags(Read)
-Reference flags mismatch:
-after transform: ReferenceId(107): ReferenceFlags(Write)
-rebuilt        : ReferenceId(52): ReferenceFlags(Read | Write)
-Reference flags mismatch:
-after transform: ReferenceId(105): ReferenceFlags(Write)
-rebuilt        : ReferenceId(55): ReferenceFlags(Read)
-Reference flags mismatch:
-after transform: ReferenceId(110): ReferenceFlags(Write)
-rebuilt        : ReferenceId(61): ReferenceFlags(Read | Write)
-Reference flags mismatch:
-after transform: ReferenceId(108): ReferenceFlags(Write)
-rebuilt        : ReferenceId(64): ReferenceFlags(Read)
-Reference flags mismatch:
-after transform: ReferenceId(113): ReferenceFlags(Write)
-rebuilt        : ReferenceId(70): ReferenceFlags(Read | Write)
-Reference flags mismatch:
-after transform: ReferenceId(111): ReferenceFlags(Write)
-rebuilt        : ReferenceId(73): ReferenceFlags(Read)
-Reference flags mismatch:
-after transform: ReferenceId(116): ReferenceFlags(Write)
-rebuilt        : ReferenceId(79): ReferenceFlags(Read | Write)
-Reference flags mismatch:
-after transform: ReferenceId(114): ReferenceFlags(Write)
-rebuilt        : ReferenceId(82): ReferenceFlags(Read)
-Reference flags mismatch:
-after transform: ReferenceId(118): ReferenceFlags(Write)
-rebuilt        : ReferenceId(87): ReferenceFlags(Read | Write)
-Reference flags mismatch:
-after transform: ReferenceId(120): ReferenceFlags(Write)
-rebuilt        : ReferenceId(89): ReferenceFlags(Read | Write)
-Reference flags mismatch:
-after transform: ReferenceId(119): ReferenceFlags(Write)
-rebuilt        : ReferenceId(92): ReferenceFlags(Read)
-Reference flags mismatch:
-after transform: ReferenceId(123): ReferenceFlags(Write)
-rebuilt        : ReferenceId(99): ReferenceFlags(Read | Write)
-Reference flags mismatch:
-after transform: ReferenceId(125): ReferenceFlags(Write)
-rebuilt        : ReferenceId(101): ReferenceFlags(Read | Write)
-Reference flags mismatch:
-after transform: ReferenceId(124): ReferenceFlags(Write)
-rebuilt        : ReferenceId(104): ReferenceFlags(Read)
-Reference flags mismatch:
-after transform: ReferenceId(128): ReferenceFlags(Write)
-rebuilt        : ReferenceId(111): ReferenceFlags(Read | Write)
-Reference flags mismatch:
-after transform: ReferenceId(130): ReferenceFlags(Write)
-rebuilt        : ReferenceId(113): ReferenceFlags(Read | Write)
-Reference flags mismatch:
-after transform: ReferenceId(129): ReferenceFlags(Write)
-rebuilt        : ReferenceId(116): ReferenceFlags(Read)
-Reference flags mismatch:
-after transform: ReferenceId(133): ReferenceFlags(Write)
-rebuilt        : ReferenceId(123): ReferenceFlags(Read | Write)
-Reference flags mismatch:
-after transform: ReferenceId(135): ReferenceFlags(Write)
-rebuilt        : ReferenceId(125): ReferenceFlags(Read | Write)
-Reference flags mismatch:
-after transform: ReferenceId(134): ReferenceFlags(Write)
-rebuilt        : ReferenceId(128): ReferenceFlags(Read)
-
-* logical-assignment/named-functions-transform/input.js
-Symbol reference IDs mismatch:
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8)]
-rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5)]
-Reference flags mismatch:
-after transform: ReferenceId(4): ReferenceFlags(Write)
-rebuilt        : ReferenceId(1): ReferenceFlags(Read | Write)
-Reference flags mismatch:
-after transform: ReferenceId(6): ReferenceFlags(Write)
-rebuilt        : ReferenceId(3): ReferenceFlags(Read | Write)
-Reference flags mismatch:
-after transform: ReferenceId(8): ReferenceFlags(Write)
-rebuilt        : ReferenceId(5): ReferenceFlags(Read | Write)
 
 * logical-assignment/null-coalescing/input.js
 Symbol reference IDs mismatch:
@@ -1615,29 +1474,8 @@ rebuilt        : SymbolId(13): [ReferenceId(88), ReferenceId(94)]
 
 * logical-assignment/null-coalescing-without-other/input.js
 Symbol reference IDs mismatch:
-after transform: SymbolId(2): [ReferenceId(7), ReferenceId(8), ReferenceId(11)]
+after transform: SymbolId(2): [ReferenceId(6), ReferenceId(7), ReferenceId(10)]
 rebuilt        : SymbolId(1): [ReferenceId(5), ReferenceId(8)]
-Symbol reference IDs mismatch:
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4)]
-rebuilt        : SymbolId(3): [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(6)]
-Reference flags mismatch:
-after transform: ReferenceId(4): ReferenceFlags(Write)
-rebuilt        : ReferenceId(1): ReferenceFlags(Read | Write)
-Reference flags mismatch:
-after transform: ReferenceId(6): ReferenceFlags(Write)
-rebuilt        : ReferenceId(2): ReferenceFlags(Read | Write)
-Reference flags mismatch:
-after transform: ReferenceId(5): ReferenceFlags(Write)
-rebuilt        : ReferenceId(4): ReferenceFlags(Read)
-Reference flags mismatch:
-after transform: ReferenceId(8): ReferenceFlags(Write)
-rebuilt        : ReferenceId(5): ReferenceFlags(Read | Write)
-Reference flags mismatch:
-after transform: ReferenceId(10): ReferenceFlags(Write)
-rebuilt        : ReferenceId(7): ReferenceFlags(Read | Write)
-Reference flags mismatch:
-after transform: ReferenceId(9): ReferenceFlags(Write)
-rebuilt        : ReferenceId(9): ReferenceFlags(Read)
 
 
 # babel-plugin-transform-nullish-coalescing-operator (5/12)
@@ -1827,53 +1665,11 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-async-to-generator (1/17)
+# babel-plugin-transform-async-to-generator (0/2)
 * assumption-ignoreFunctionLength-true/basic/input.mjs
 x Output mismatch
 
 * assumption-ignoreFunctionLength-true/export-default-function/input.mjs
-x Output mismatch
-
-* assumption-noNewArrows-false/basic/input.js
-x Output mismatch
-
-* bluebird-coroutines/arrow-function/input.js
-x Output mismatch
-
-* bluebird-coroutines/class/input.js
-x Output mismatch
-
-* bluebird-coroutines/expression/input.js
-x Output mismatch
-
-* bluebird-coroutines/named-expression/input.js
-x Output mismatch
-
-* bluebird-coroutines/statement/input.js
-x Output mismatch
-
-* regression/15978/input.js
-x Output mismatch
-
-* regression/4599/input.js
-x Output mismatch
-
-* regression/8783/input.js
-x Output mismatch
-
-* regression/T7108/input.js
-x Output mismatch
-
-* regression/T7194/input.js
-x Output mismatch
-
-* regression/gh-6923/input.js
-x Output mismatch
-
-* regression/in-uncompiled-class-fields/input.js
-x Output mismatch
-
-* regression/regression-2765/input.js
 x Output mismatch
 
 
@@ -2032,16 +1828,16 @@ Bindings mismatch:
 after transform: ScopeId(1): ["A", "E"]
 rebuilt        : ScopeId(1): ["E"]
 Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 * enum/const/input.ts
 Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(ConstEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -2051,8 +1847,8 @@ Bindings mismatch:
 after transform: ScopeId(1): ["E", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r"]
 rebuilt        : ScopeId(1): ["E"]
 Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -2062,14 +1858,14 @@ Bindings mismatch:
 after transform: ScopeId(1): ["Animals", "Cat", "Dog"]
 rebuilt        : ScopeId(1): ["Animals"]
 Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["Animals", "CatDog"]
 rebuilt        : ScopeId(2): ["Animals"]
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -2085,20 +1881,20 @@ Bindings mismatch:
 after transform: ScopeId(1): ["Animals", "Cat"]
 rebuilt        : ScopeId(1): ["Animals"]
 Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["Animals", "Dog"]
 rebuilt        : ScopeId(2): ["Animals"]
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(3): ["Animals", "CatDog"]
 rebuilt        : ScopeId(3): ["Animals"]
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(3): ScopeFlags(0x0)
+rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol reference IDs mismatch:
 after transform: SymbolId(0): [ReferenceId(0)]
 rebuilt        : SymbolId(0): []
@@ -2137,8 +1933,8 @@ Bindings mismatch:
 after transform: ScopeId(1): ["E", "x", "y"]
 rebuilt        : ScopeId(1): ["E"]
 Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -2148,8 +1944,8 @@ Bindings mismatch:
 after transform: ScopeId(1): ["E", "a", "b"]
 rebuilt        : ScopeId(1): ["E"]
 Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -2162,8 +1958,8 @@ Bindings mismatch:
 after transform: ScopeId(1): ["E", "a", "b"]
 rebuilt        : ScopeId(1): ["E"]
 Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -2173,14 +1969,14 @@ Bindings mismatch:
 after transform: ScopeId(1): ["E", "x", "y"]
 rebuilt        : ScopeId(1): ["E"]
 Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["E", "z"]
 rebuilt        : ScopeId(2): ["E"]
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -2193,14 +1989,14 @@ Bindings mismatch:
 after transform: ScopeId(1): ["IPC", "SERVER", "SOCKET", "socketType"]
 rebuilt        : ScopeId(1): ["socketType"]
 Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["IPC", "SERVER", "SOCKET", "UV_READABLE", "UV_WRITABLE", "constants"]
 rebuilt        : ScopeId(2): ["constants"]
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -2216,8 +2012,8 @@ x Output mismatch
 
 * enum/scoped/input.ts
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -2227,8 +2023,8 @@ Bindings mismatch:
 after transform: ScopeId(1): ["A", "A2", "B", "B2", "E"]
 rebuilt        : ScopeId(1): ["E"]
 Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -2238,8 +2034,8 @@ Bindings mismatch:
 after transform: ScopeId(1): ["A", "E"]
 rebuilt        : ScopeId(1): ["E"]
 Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -2249,8 +2045,8 @@ Bindings mismatch:
 after transform: ScopeId(1): ["A", "E"]
 rebuilt        : ScopeId(1): ["E"]
 Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -3545,38 +3341,18 @@ after transform: ["T", "f"]
 rebuilt        : ["f"]
 
 
-# babel-preset-react (6/9)
-* preset-options/development-runtime-automatic/input.js
-x Output mismatch
-
-* preset-options/empty-options/input.js
-x Output mismatch
-
-* preset-options/runtime-automatic/input.js
-x Output mismatch
-
-
-# babel-plugin-transform-react-jsx (119/144)
-* pure/false-default-pragma-automatic-runtime/input.js
-x Output mismatch
-
+# babel-plugin-transform-react-jsx (124/144)
 * pure/false-pragma-comment-automatic-runtime/input.js
 pragma and pragmaFrag cannot be set when runtime is automatic.
 
 * pure/false-pragma-option-automatic-runtime/input.js
 pragma and pragmaFrag cannot be set when runtime is automatic.
 
-* pure/true-default-pragma-automatic-runtime/input.js
-x Output mismatch
-
 * pure/true-pragma-comment-automatic-runtime/input.js
 pragma and pragmaFrag cannot be set when runtime is automatic.
 
 * pure/true-pragma-option-automatic-runtime/input.js
 pragma and pragmaFrag cannot be set when runtime is automatic.
-
-* pure/unset-default-pragma-automatic-runtime/input.js
-x Output mismatch
 
 * pure/unset-pragma-comment-automatic-runtime/input.js
 pragma and pragmaFrag cannot be set when runtime is automatic.
@@ -3662,12 +3438,6 @@ Spread children are not supported in React.
 * react-automatic/should-warn-when-pragma-or-pragmaFrag-is-set/input.js
 pragma and pragmaFrag cannot be set when runtime is automatic.
 
-* runtime/defaults-to-automatic/input.js
-x Output mismatch
-
-* runtime/runtime-automatic/input.js
-x Output mismatch
-
 * spread-transform/transform-to-babel-extend/input.js
 x Output mismatch
 
@@ -3675,7 +3445,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-react-jsx-development (2/10)
+# babel-plugin-transform-react-jsx-development (8/11)
 * cross-platform/disallow-__self-as-jsx-attribute/input.js
   ! Duplicate __self prop found.
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-react-jsx-development/test/fixtures/cross-platform/disallow-__self-as-jsx-attribute/input.js:1:14]
@@ -3691,21 +3461,6 @@ x Output mismatch
    :              ^^^^^^^^
    `----
 
-
-* cross-platform/fragments/input.js
-x Output mismatch
-
-* cross-platform/handle-fragments-with-key/input.js
-x Output mismatch
-
-* cross-platform/handle-nonstatic-children/input.js
-x Output mismatch
-
-* cross-platform/handle-static-children/input.js
-x Output mismatch
-
-* cross-platform/within-derived-classes-constructor/input.js
-x Output mismatch
 
 * cross-platform/within-ts-module-block/input.tsx
 x Output mismatch
