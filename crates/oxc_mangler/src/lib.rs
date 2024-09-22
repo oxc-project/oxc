@@ -1,7 +1,7 @@
 use itertools::Itertools;
 use oxc_ast::ast::Program;
 use oxc_index::{index_vec, Idx, IndexVec};
-use oxc_semantic::{ReferenceId, SemanticBuilder, SymbolId, SymbolTable};
+use oxc_semantic::{ReferenceId, ScopeTree, SemanticBuilder, SymbolId, SymbolTable};
 use oxc_span::CompactStr;
 
 type Slot = usize;
@@ -124,9 +124,12 @@ impl Mangler {
         }
 
         let frequencies =
-            Self::tally_slot_frequencies(&symbol_table, total_number_of_slots, &slots);
+            Self::tally_slot_frequencies(&symbol_table, &scope_tree, total_number_of_slots, &slots);
 
-        let mut names = Vec::with_capacity(total_number_of_slots);
+        let root_unresolved_references = scope_tree.root_unresolved_references();
+        let root_bindings = scope_tree.get_bindings(scope_tree.root_scope_id());
+
+        let mut reserved_names = Vec::with_capacity(total_number_of_slots);
 
         let generate_name = if self.options.debug { debug_name } else { base54 };
         let mut count = 0;
@@ -135,13 +138,16 @@ impl Mangler {
                 let name = generate_name(count);
                 count += 1;
                 // Do not mangle keywords and unresolved references
-                if !is_keyword(&name)
-                    && !scope_tree.root_unresolved_references().contains_key(name.as_str())
+                let n = name.as_str();
+                if !is_keyword(n)
+                    && !is_special_name(n)
+                    && !root_unresolved_references.contains_key(n)
+                    && !root_bindings.contains_key(n)
                 {
                     break name;
                 }
             };
-            names.push(name);
+            reserved_names.push(name);
         }
 
         // Group similar symbols for smaller gzipped file
@@ -160,7 +166,9 @@ impl Mangler {
 
         let mut freq_iter = frequencies.iter();
         // 2. "N number of vars are going to be assigned names of the same length"
-        for (_, slice_of_same_len_strings_group) in &names.into_iter().chunk_by(CompactStr::len) {
+        for (_, slice_of_same_len_strings_group) in
+            &reserved_names.into_iter().chunk_by(CompactStr::len)
+        {
             // 1. "The most frequent vars get the shorter names"
             // (freq_iter is sorted by frequency from highest to lowest,
             //  so taking means take the N most frequent symbols remaining)
@@ -194,14 +202,17 @@ impl Mangler {
 
     fn tally_slot_frequencies(
         symbol_table: &SymbolTable,
+        scope_tree: &ScopeTree,
         total_number_of_slots: usize,
         slots: &IndexVec<SymbolId, Slot>,
     ) -> Vec<SlotFrequency> {
+        let root_scope_id = scope_tree.root_scope_id();
         let mut frequencies = vec![SlotFrequency::default(); total_number_of_slots];
         for (symbol_id, slot) in slots.iter_enumerated() {
-            let symbol_flags = symbol_table.get_flags(symbol_id);
-            // omit renaming `export { x }`
-            if !symbol_flags.is_variable() || symbol_flags.is_export() {
+            if symbol_table.get_scope_id(symbol_id) == root_scope_id {
+                continue;
+            }
+            if is_special_name(symbol_table.get_name(symbol_id)) {
                 continue;
             }
             let index = *slot;
@@ -213,6 +224,10 @@ impl Mangler {
         frequencies.sort_unstable_by_key(|x| std::cmp::Reverse(x.frequency));
         frequencies
     }
+}
+
+fn is_special_name(name: &str) -> bool {
+    matches!(name, "exports" | "arguments")
 }
 
 #[derive(Debug, Default, Clone)]

@@ -762,24 +762,10 @@ impl<'a> Gen for ImportDeclaration<'a> {
                             p.print_str("type ");
                         }
 
-                        let imported_name = match &spec.imported {
-                            ModuleExportName::IdentifierName(identifier) => {
-                                identifier.print(p, ctx);
-                                identifier.name.as_str()
-                            }
-                            ModuleExportName::IdentifierReference(identifier) => {
-                                identifier.print(p, ctx);
-                                identifier.name.as_str()
-                            }
-                            ModuleExportName::StringLiteral(literal) => {
-                                literal.print(p, ctx);
-                                literal.value.as_str()
-                            }
-                        };
-
-                        let local_name = spec.local.name.as_str();
-
-                        if imported_name != local_name {
+                        spec.imported.print(p, ctx);
+                        let local_name = p.get_binding_identifier_name(&spec.local);
+                        let imported_name = get_module_export_name(&spec.imported, p);
+                        if imported_name.is_none() || imported_name != Some(local_name) {
                             p.print_str(" as ");
                             spec.local.print(p, ctx);
                         }
@@ -919,13 +905,28 @@ impl<'a> Gen for TSNamespaceExportDeclaration<'a> {
     }
 }
 
+fn get_module_export_name<'a>(
+    module_export_name: &ModuleExportName<'a>,
+    p: &Codegen<'a>,
+) -> Option<&'a str> {
+    match module_export_name {
+        ModuleExportName::IdentifierName(ident) => Some(ident.name.as_str()),
+        ModuleExportName::IdentifierReference(ident) => {
+            Some(p.get_identifier_reference_name(ident))
+        }
+        ModuleExportName::StringLiteral(_) => None,
+    }
+}
+
 impl<'a> Gen for ExportSpecifier<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         if self.export_kind.is_type() {
             p.print_str("type ");
         }
         self.local.print(p, ctx);
-        if self.local.name() != self.exported.name() {
+        let local_name = get_module_export_name(&self.local, p);
+        let exported_name = get_module_export_name(&self.exported, p);
+        if exported_name.is_none() || local_name != exported_name {
             p.print_str(" as ");
             self.exported.print(p, ctx);
         }
@@ -935,8 +936,8 @@ impl<'a> Gen for ExportSpecifier<'a> {
 impl<'a> Gen for ModuleExportName<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
-            Self::IdentifierName(identifier) => p.print_str(identifier.name.as_str()),
-            Self::IdentifierReference(identifier) => identifier.print(p, ctx),
+            Self::IdentifierName(ident) => ident.print(p, ctx),
+            Self::IdentifierReference(ident) => ident.print(p, ctx),
             Self::StringLiteral(literal) => literal.print(p, ctx),
         };
     }
