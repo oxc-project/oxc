@@ -44,6 +44,7 @@ impl<'a> Template<'a> {
             RuleKind::TreeShaking => Path::new("crates/oxc_linter/src/rules/tree_shaking"),
             RuleKind::Promise => Path::new("crates/oxc_linter/src/rules/promise"),
             RuleKind::Vitest => Path::new("crates/oxc_linter/src/rules/vitest"),
+            RuleKind::Security => Path::new("crates/oxc_linter/src/rules/security"),
         };
 
         std::fs::create_dir_all(path)?;
@@ -52,7 +53,7 @@ impl<'a> Template<'a> {
         File::create(out_path.clone())?.write_all(rendered.as_bytes())?;
         format_rule_output(&out_path)?;
 
-        println!("Saved testd file to {out_path:?}");
+        println!("Saved test file to {out_path:?}");
 
         Ok(())
     }

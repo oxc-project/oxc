@@ -411,6 +411,10 @@ mod oxc {
     pub mod uninvoked_array_callback;
 }
 
+mod security {
+    pub mod api_keys;
+}
+
 mod nextjs {
     pub mod google_font_display;
     pub mod google_font_preconnect;
@@ -789,6 +793,7 @@ oxc_macros::declare_all_lint_rules! {
     react_perf::jsx_no_new_array_as_prop,
     react_perf::jsx_no_new_function_as_prop,
     react_perf::jsx_no_new_object_as_prop,
+    security::api_keys,
     tree_shaking::no_side_effects_in_initialization,
     typescript::adjacent_overload_signatures,
     typescript::array_type,
