@@ -104,8 +104,13 @@ impl<'a> FunctionReturnType<'a> {
             }
         }
 
-        //
+        // If there are multiple return statements, which means there must be a union with `undefined`
         if visitor.return_statement_count > 1 {
+            // Here is a union type, if the return type is a function type, we need to wrap it in parentheses
+            if matches!(expr_type, TSType::TSFunctionType(_)) {
+                expr_type = transformer.ast.ts_type_parenthesized_type(SPAN, expr_type);
+            }
+
             let types = transformer
                 .ast
                 .vec_from_iter([expr_type, transformer.ast.ts_type_undefined_keyword(SPAN)]);
