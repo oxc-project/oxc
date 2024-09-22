@@ -2,6 +2,13 @@
 source: crates/oxc_linter/src/tester.rs
 ---
   ⚠ eslint(no-regex-spaces): Spaces are hard to count.
+   ╭─[no_regex_spaces.tsx:1:12]
+ 1 │ var foo = /  /;
+   ·            ──
+   ╰────
+  help: Use a quantifier, e.g. {2}
+
+  ⚠ eslint(no-regex-spaces): Spaces are hard to count.
    ╭─[no_regex_spaces.tsx:1:15]
  1 │ var foo = /bar  baz/;
    ·               ──
@@ -46,28 +53,28 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint(no-regex-spaces): Spaces are hard to count.
    ╭─[no_regex_spaces.tsx:1:15]
  1 │ var foo = /bar   {3}baz/;
-   ·               ───
+   ·               ──
    ╰────
   help: Use a quantifier, e.g. {2}
 
   ⚠ eslint(no-regex-spaces): Spaces are hard to count.
    ╭─[no_regex_spaces.tsx:1:15]
  1 │ var foo = /bar    ?baz/;
-   ·               ────
+   ·               ───
    ╰────
   help: Use a quantifier, e.g. {2}
 
   ⚠ eslint(no-regex-spaces): Spaces are hard to count.
    ╭─[no_regex_spaces.tsx:1:26]
  1 │ var foo = new RegExp('bar   *baz')
-   ·                          ───
+   ·                          ──
    ╰────
   help: Use a quantifier, e.g. {2}
 
   ⚠ eslint(no-regex-spaces): Spaces are hard to count.
    ╭─[no_regex_spaces.tsx:1:22]
  1 │ var foo = RegExp('bar   +baz')
-   ·                      ───
+   ·                      ──
    ╰────
   help: Use a quantifier, e.g. {2}
 
@@ -170,8 +177,8 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a quantifier, e.g. {2}
 
   ⚠ eslint(no-regex-spaces): Spaces are hard to count.
-   ╭─[no_regex_spaces.tsx:1:35]
+   ╭─[no_regex_spaces.tsx:1:30]
  1 │ var foo = new RegExp('[[    ]    ]    ', 'v');
-   ·                                   ────
+   ·                              ────
    ╰────
   help: Use a quantifier, e.g. {2}

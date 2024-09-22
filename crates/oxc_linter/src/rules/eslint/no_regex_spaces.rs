@@ -1,10 +1,16 @@
-use oxc_allocator::Vec;
+use aho_corasick::AhoCorasick;
+use lazy_static::lazy_static;
+use oxc_allocator::{Allocator, Vec};
 use oxc_ast::{
     ast::{Argument, CallExpression, NewExpression, RegExpLiteral},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_regular_expression::{
+    ast::{Alternative, Disjunction, Pattern, Term},
+    Parser, ParserOptions,
+};
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -38,7 +44,13 @@ declare_oxc_lint!(
     /// ```
     NoRegexSpaces,
     restriction,
+    pending // TODO: This is somewhat autofixable, but the fixer does not exist yet.
 );
+
+lazy_static! {
+    static ref DOUBLE_SPACE: AhoCorasick =
+        AhoCorasick::new(["  "]).expect("no-regex-spaces: Unable to build AhoCorasick");
+}
 
 impl Rule for NoRegexSpaces {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -70,18 +82,12 @@ impl NoRegexSpaces {
     fn find_literal_to_report(literal: &RegExpLiteral, ctx: &LintContext) -> Option<Span> {
         let pattern_text = literal.regex.pattern.source_text(ctx.source_text());
         let pattern_text = pattern_text.as_ref();
-        if Self::has_exempted_char_class(pattern_text) {
+        if !Self::has_double_space(pattern_text) {
             return None;
         }
 
-        if let Some((idx_start, idx_end)) = Self::find_consecutive_spaces_indices(pattern_text) {
-            let start = literal.span.start + u32::try_from(idx_start).unwrap() + 1;
-            let end = literal.span.start + u32::try_from(idx_end).unwrap() + 2;
-
-            return Some(Span::new(start, end));
-        }
-
-        None
+        let pattern = literal.regex.pattern.as_pattern()?;
+        Self::find_consecutive_spaces(pattern)
     }
 
     fn find_expr_to_report(args: &Vec<'_, Argument<'_>>) -> Option<Span> {
@@ -91,72 +97,60 @@ impl NoRegexSpaces {
             }
         }
 
-        if let Some(Argument::StringLiteral(pattern)) = args.first() {
-            if Self::has_exempted_char_class(&pattern.value) {
-                return None; // skip spaces inside char class, e.g. RegExp('[  ]')
-            }
-
-            if let Some((idx_start, idx_end)) =
-                Self::find_consecutive_spaces_indices(&pattern.value)
-            {
-                let start = pattern.span.start + u32::try_from(idx_start).unwrap() + 1;
-                let end = pattern.span.start + u32::try_from(idx_end).unwrap() + 2;
-
-                return Some(Span::new(start, end));
-            }
+        let Some(Argument::StringLiteral(pattern)) = args.first() else {
+            return None;
+        };
+        if !Self::has_double_space(&pattern.value) {
+            return None;
         }
 
-        None
+        let alloc = Allocator::default();
+        let pattern_with_slashes = format!("/{}/", &pattern.value);
+        let parser = Parser::new(&alloc, pattern_with_slashes.as_str(), ParserOptions::default());
+        let regex = parser.parse().ok()?;
+
+        Self::find_consecutive_spaces(&regex.pattern)
+            .map(|span| Span::new(span.start + pattern.span.start, span.end + pattern.span.start))
     }
 
-    fn find_consecutive_spaces_indices(input: &str) -> Option<(usize, usize)> {
-        let mut consecutive_spaces = 0;
-        let mut start: Option<usize> = None;
-        let mut inside_square_brackets: usize = 0;
-
-        for (cur_idx, char) in input.char_indices() {
-            if char == '[' {
-                inside_square_brackets += 1;
-            } else if char == ']' {
-                inside_square_brackets = inside_square_brackets.saturating_sub(1);
+    fn find_consecutive_spaces(pattern: &Pattern) -> Option<Span> {
+        let mut last_space_span: Option<Span> = None;
+        let mut in_quantifier = false;
+        visit_terms(pattern, &mut |term| {
+            if let Term::Quantifier(_) = term {
+                in_quantifier = true;
+                return;
             }
-
-            if char != ' ' || inside_square_brackets > 0 {
-                // ignore spaces inside char class, including nested ones
-                consecutive_spaces = 0;
-                start = None;
-                continue;
+            let Term::Character(ch) = term else {
+                return;
+            };
+            if in_quantifier {
+                in_quantifier = false;
+                return;
             }
-
-            if start.is_none() {
-                start = Some(cur_idx);
+            if ch.value != u32::from(b' ') {
+                return;
             }
-
-            consecutive_spaces += 1;
-
-            if consecutive_spaces < 2 {
-                continue;
-            }
-
-            // 2 or more consecutive spaces
-
-            if let Some(next_char) = input.chars().nth(cur_idx + 1) {
-                if next_char == ' ' {
-                    continue; // keep collecting spaces
+            if let Some(ref mut space_span) = last_space_span {
+                // If this is consecutive with the last space, extend it
+                if space_span.end == ch.span.start {
+                    space_span.end = ch.span.end;
                 }
-
-                if "+*{?".contains(next_char) && consecutive_spaces == 2 {
-                    continue; // ignore 2 consecutive spaces before quantifier
+                // If it is not consecutive, and the last space is only one space, move it up
+                else if space_span.size() == 1 {
+                    last_space_span.replace(ch.span);
                 }
-
-                return Some((start.unwrap(), cur_idx));
+            } else {
+                last_space_span = Some(ch.span);
             }
+        });
 
-            // end of string
-            return Some((start.unwrap(), cur_idx));
+        // return None if last_space_span length is only 1
+        if last_space_span.is_some_and(|span| span.size() > 1) {
+            last_space_span
+        } else {
+            None
         }
-
-        None
     }
 
     fn is_regexp_new_expression(expr: &NewExpression<'_>) -> bool {
@@ -167,23 +161,47 @@ impl NoRegexSpaces {
         expr.callee.is_specific_id("RegExp") && expr.arguments.len() > 0
     }
 
-    /// Whether the input has a character class but no consecutive spaces
-    /// outside the character class.
-    fn has_exempted_char_class(input: &str) -> bool {
-        let mut inside_class = false;
+    // For skipping if there aren't any consecutive spaces in the source, to avoid reporting cases
+    // where the space is explicitly escaped, like: `RegExp(' \ ')``.
+    fn has_double_space(input: &str) -> bool {
+        DOUBLE_SPACE.is_match(input)
+    }
+}
 
-        for (i, c) in input.chars().enumerate() {
-            match c {
-                '[' => inside_class = true,
-                ']' => inside_class = false,
-                ' ' if input.chars().nth(i + 1) == Some(' ') && !inside_class => {
-                    return false;
-                }
-                _ => {}
+/// Calls the given closure on every [`Term`] in the [`Pattern`].
+fn visit_terms<'a, F: FnMut(&'a Term<'a>)>(pattern: &'a Pattern, f: &mut F) {
+    visit_terms_disjunction(&pattern.body, f);
+}
+
+/// Calls the given closure on every [`Term`] in the [`Disjunction`].
+fn visit_terms_disjunction<'a, F: FnMut(&'a Term<'a>)>(disjunction: &'a Disjunction, f: &mut F) {
+    for alternative in &disjunction.body {
+        visit_terms_alternative(alternative, f);
+    }
+}
+
+/// Calls the given closure on every [`Term`] in the [`Alternative`].
+fn visit_terms_alternative<'a, F: FnMut(&'a Term<'a>)>(alternative: &'a Alternative, f: &mut F) {
+    for term in &alternative.body {
+        match term {
+            Term::LookAroundAssertion(lookaround) => {
+                f(term);
+                visit_terms_disjunction(&lookaround.body, f);
             }
+            Term::Quantifier(quant) => {
+                f(term);
+                f(&quant.body);
+            }
+            Term::CapturingGroup(group) => {
+                f(term);
+                visit_terms_disjunction(&group.body, f);
+            }
+            Term::IgnoreGroup(group) => {
+                f(term);
+                visit_terms_disjunction(&group.body, f);
+            }
+            _ => f(term),
         }
-
-        true
     }
 }
 
@@ -208,6 +226,7 @@ fn test() {
         "var foo = /  */;",
         "var foo = /  {2}/;",
         "var foo = /  {2}/v;",
+        "var foo = / /;",
         r"var foo = /bar \\ baz/;",
         r"var foo = /bar\\ \\ baz/;",
         r"var foo = /bar \\u0020 baz/;",
@@ -234,6 +253,7 @@ fn test() {
     ];
 
     let fail = vec![
+        "var foo = /  /;",
         "var foo = /bar  baz/;",
         "var foo = /bar    baz/;",
         "var foo = / a b  c d /;",
