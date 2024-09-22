@@ -1,308 +1,151 @@
+//! ES2017: Async / Await
+//!
+//! This plugin transforms async functions to generator functions.
+//!
+//! ## Example
+//!
+//! Input:
+//! ```js
+//! async function foo() {
+//!   await bar();
+//! }
+//! const foo2 = async () => {
+//!   await bar();
+//! };
+//! ```
+//!
+//! Output:
+//! ```js
+//! function foo() {
+//!   return _asyncToGenerator(this, null, function* () {
+//!     yield bar();
+//!   })
+//! }
+//! const foo2 = () => _asyncToGenerator(this, null, function* () {
+//!   yield bar();
+//! }
+//! ```
+//!
+//! ## Implementation
+//!
+//! Implementation based on [@babel/plugin-transform-async-to-generator](https://babel.dev/docs/babel-plugin-transform-async-to-generator) and [esbuild](https://github.com/evanw/esbuild/blob/main/internal/js_parser/js_parser_lower.go#L392).
+//!
+//!
+//! Reference:
+//! * Babel docs: <https://babeljs.io/docs/en/babel-plugin-transform-async-to-generator>
+//! * Esbuild implementation: <https://github.com/evanw/esbuild/blob/main/internal/js_parser/js_parser_lower.go#L392>
+//! * Babel implementation: <https://github.com/babel/babel/blob/main/packages/babel-plugin-transform-async-to-generator>
+//! * Babel helper implementation: <https://github.com/babel/babel/blob/main/packages/babel-helper-remap-async-to-generator>
+//! * Async / Await TC39 proposal: <https://github.com/tc39/proposal-async-await>
+//!
+
 use crate::context::Ctx;
-use crate::es2017::utils::{
-    async_generator_step, async_to_generator, function_apply, generate_caller_from_arrow,
-    generate_caller_from_function,
-};
-use oxc_allocator::{Box, CloneIn};
+use oxc_allocator::CloneIn;
 use oxc_ast::ast::{
-    ArrowFunctionExpression, AwaitExpression, BindingRestElement, Expression, FormalParameterKind,
-    Function, FunctionType, Program, TSThisParameter, TSTypeAnnotation, TSTypeParameterDeclaration,
-    TSTypeParameterInstantiation, VariableDeclarationKind,
+    ArrowFunctionExpression, Expression, FormalParameterKind, Function, Statement, YieldExpression,
 };
-use oxc_span::SPAN;
-use oxc_syntax::operator::AssignmentOperator;
+use oxc_ast::NONE;
+use oxc_span::{Atom, SPAN};
+use oxc_syntax::reference::ReferenceFlags;
+use oxc_syntax::symbol::SymbolId;
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
-/// ES2017: Async / Await
-///
-/// This plugin transforms async functions to generator functions.
-///
-/// Reference:
-/// * <https://babeljs.io/docs/en/babel-plugin-transform-async-to-generator>
-/// * <https://github.com/babel/babel/blob/main/packages/babel-plugin-transform-async-to-generator>
-/// * <https://github.com/babel/babel/blob/main/packages/babel-helper-remap-async-to-generator>
 pub struct AsyncToGenerator<'a> {
-    ctx: Ctx<'a>,
-
-    inject_helpers: bool,
+    _ctx: Ctx<'a>,
 }
 
 impl<'a> AsyncToGenerator<'a> {
     pub fn new(ctx: Ctx<'a>) -> Self {
-        Self { ctx, inject_helpers: false }
+        Self { _ctx: ctx }
     }
-}
 
-impl<'a> AsyncToGenerator<'a> {
-    pub fn transform_await_to_yield(&mut self, decl: &Box<AwaitExpression>) -> Expression<'a> {
-        self.ctx.ast.expression_yield(
+    fn get_helper_callee(symbol_id: Option<SymbolId>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+        let ident = ctx.create_reference_id(
             SPAN,
-            false,
-            Some(decl.argument.clone_in(self.ctx.ast.allocator)),
-        )
+            Atom::from("babelHelpers"),
+            symbol_id,
+            ReferenceFlags::Read,
+        );
+        let object = ctx.ast.expression_from_identifier_reference(ident);
+        let property = ctx.ast.identifier_name(SPAN, Atom::from("asyncToGenerator"));
+        Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false))
     }
 }
 
 impl<'a> Traverse<'a> for AsyncToGenerator<'a> {
-    fn exit_program(&mut self, program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
-        let mut stmts = self.ctx.ast.vec();
-
-        if self.inject_helpers {
-            stmts.push(async_generator_step(&self.ctx.ast).clone_in(self.ctx.ast.allocator));
-            stmts.push(async_to_generator(&self.ctx.ast).clone_in(self.ctx.ast.allocator));
-        }
-        stmts.extend(program.body.clone_in(self.ctx.ast.allocator));
-        program.body = stmts;
-    }
-
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        match expr {
-            Expression::AwaitExpression(decl) => {
-                // Do not transform await in top-level
-                let in_function = ctx.ancestry.ancestors().any(|ancestor| {
-                    matches!(
-                        ancestor,
-                        Ancestor::FunctionBody(_) | Ancestor::ArrowFunctionExpressionBody(_)
-                    )
-                });
-                if in_function {
-                    *expr = self.transform_await_to_yield(decl).clone_in(self.ctx.ast.allocator);
-                }
+        if let Expression::AwaitExpression(await_expr) = expr {
+            // Do not transform top-level await
+            if ctx.ancestry.ancestors().any(|ancestor| {
+                matches!(
+                    ancestor,
+                    Ancestor::FunctionBody(_) | Ancestor::ArrowFunctionExpressionBody(_)
+                )
+            }) {
+                let yield_expression = YieldExpression {
+                    span: SPAN,
+                    delegate: false,
+                    argument: Some(await_expr.argument.clone_in(ctx.ast.allocator)),
+                };
+                let expression = ctx.ast.alloc(yield_expression);
+                *expr = Expression::YieldExpression(expression);
             }
-            Expression::ArrowFunctionExpression(func) if func.r#async => {
-                let func = func.clone_in(self.ctx.ast.allocator);
-                if func.params.items.is_empty() {
-                    *expr = generate_caller_from_arrow(&func, &self.ctx.ast)
-                        .clone_in(self.ctx.ast.allocator);
-                } else {
-                    let mut statements = self.ctx.ast.vec();
-                    statements.push(
-                        self.ctx.ast.statement_declaration(
-                            self.ctx.ast.declaration_variable(
-                                SPAN,
-                                VariableDeclarationKind::Var,
-                                self.ctx.ast.vec1(
-                                    self.ctx.ast.variable_declarator(
-                                        SPAN,
-                                        VariableDeclarationKind::Var,
-                                        self.ctx.ast.binding_pattern(
-                                            self.ctx.ast.binding_pattern_kind_binding_identifier(
-                                                SPAN, "_ref",
-                                            ),
-                                            None::<TSTypeAnnotation>,
-                                            false,
-                                        ),
-                                        Some(
-                                            generate_caller_from_arrow(&func, &self.ctx.ast)
-                                                .clone_in(self.ctx.ast.allocator),
-                                        ),
-                                        false,
-                                    ),
-                                ),
-                                false,
-                            ),
-                        ),
-                    );
-                    statements.push(
-                        function_apply("_ref", &self.ctx.ast).clone_in(self.ctx.ast.allocator),
-                    );
-                    *expr = self.ctx.ast.expression_parenthesized(
-                        SPAN,
-                        self.ctx.ast.expression_function(
-                            FunctionType::FunctionExpression,
-                            SPAN,
-                            None,
-                            false,
-                            false,
-                            false,
-                            None::<TSTypeParameterDeclaration>,
-                            None::<TSThisParameter>,
-                            self.ctx.ast.formal_parameters(
-                                SPAN,
-                                FormalParameterKind::FormalParameter,
-                                self.ctx.ast.vec(),
-                                None::<BindingRestElement>,
-                            ),
-                            None::<TSTypeAnnotation>,
-                            Some(self.ctx.ast.function_body(SPAN, self.ctx.ast.vec(), statements)),
-                        ),
-                    );
-                }
-            }
-            Expression::FunctionExpression(func) if func.r#async => {
-                let func = func.clone_in(self.ctx.ast.allocator);
-                if func.params.items.is_empty() {
-                    *expr = generate_caller_from_function(&func, &self.ctx.ast)
-                        .clone_in(self.ctx.ast.allocator);
-                } else {
-                    let mut statements = self.ctx.ast.vec();
-                    statements.push(
-                        self.ctx.ast.statement_declaration(
-                            self.ctx.ast.declaration_variable(
-                                SPAN,
-                                VariableDeclarationKind::Var,
-                                self.ctx.ast.vec1(
-                                    self.ctx.ast.variable_declarator(
-                                        SPAN,
-                                        VariableDeclarationKind::Var,
-                                        self.ctx.ast.binding_pattern(
-                                            self.ctx.ast.binding_pattern_kind_binding_identifier(
-                                                SPAN, "_ref",
-                                            ),
-                                            None::<TSTypeAnnotation>,
-                                            false,
-                                        ),
-                                        Some(
-                                            generate_caller_from_function(&func, &self.ctx.ast)
-                                                .clone_in(self.ctx.ast.allocator),
-                                        ),
-                                        false,
-                                    ),
-                                ),
-                                false,
-                            ),
-                        ),
-                    );
-                    statements.push(
-                        function_apply("_ref", &self.ctx.ast).clone_in(self.ctx.ast.allocator),
-                    );
-                    *expr = self.ctx.ast.expression_parenthesized(
-                        SPAN,
-                        self.ctx.ast.expression_function(
-                            FunctionType::FunctionExpression,
-                            SPAN,
-                            None,
-                            false,
-                            false,
-                            false,
-                            None::<TSTypeParameterDeclaration>,
-                            None::<TSThisParameter>,
-                            self.ctx.ast.formal_parameters(
-                                SPAN,
-                                FormalParameterKind::FormalParameter,
-                                self.ctx.ast.vec(),
-                                None::<BindingRestElement>,
-                            ),
-                            None::<TSTypeAnnotation>,
-                            Some(self.ctx.ast.function_body(SPAN, self.ctx.ast.vec(), statements)),
-                        ),
-                    );
-                }
-            }
-            _ => {}
         }
     }
 
-    fn enter_function(&mut self, function: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
-        if function.r#async && !function.generator {
-            self.inject_helpers = true;
-        }
+    fn exit_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
+        let babel_helpers_id = ctx.scopes().find_binding(ctx.current_scope_id(), "babelHelpers");
+        let callee = Self::get_helper_callee(babel_helpers_id, ctx);
+        let mut target = func.clone_in(ctx.ast.allocator);
+        target.r#async = false;
+        target.generator = true;
+        target.params = ctx.ast.alloc(ctx.ast.formal_parameters(
+            SPAN,
+            FormalParameterKind::FormalParameter,
+            ctx.ast.vec(),
+            NONE,
+        ));
+        let parameters = {
+            let mut items = ctx.ast.vec();
+            items.push(ctx.ast.argument_expression(ctx.ast.expression_this(SPAN)));
+            items.push(ctx.ast.argument_expression(ctx.ast.expression_null_literal(SPAN)));
+            items.push(ctx.ast.argument_expression(ctx.ast.expression_from_function(target)));
+            items
+        };
+        let call = ctx.ast.expression_call(SPAN, callee, NONE, parameters, false);
+        let returns = ctx.ast.return_statement(SPAN, Some(call));
+        let body = Statement::ReturnStatement(ctx.ast.alloc(returns));
+        let body = ctx.ast.function_body(SPAN, ctx.ast.vec(), ctx.ast.vec1(body));
+        let body = ctx.ast.alloc(body);
+        func.body = Some(body);
     }
 
-    fn exit_function(&mut self, decl: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
-        let fn_name = decl
-            .id
-            .clone_in(self.ctx.ast.allocator)
-            .map_or("ref".to_owned(), |id| id.name.to_string());
-        let alias_name = "_".to_owned() + fn_name.as_str();
-        let inner_function = self.ctx.ast.function(
-            decl.r#type.clone_in(self.ctx.ast.allocator),
-            SPAN,
-            Some(self.ctx.ast.binding_identifier(SPAN, alias_name.as_str())),
-            false,
-            false,
-            false,
-            decl.type_parameters.clone_in(self.ctx.ast.allocator),
-            decl.this_param.clone_in(self.ctx.ast.allocator),
-            decl.params.clone_in(self.ctx.ast.allocator),
-            decl.return_type.clone_in(self.ctx.ast.allocator),
-            Some(self.ctx.ast.function_body(SPAN, self.ctx.ast.vec(), {
-                let mut result = self.ctx.ast.vec();
-                result.push(self.ctx.ast.statement_expression(
-                    SPAN,
-                    self.ctx.ast.expression_assignment(
-                        SPAN,
-                        AssignmentOperator::Assign,
-                        self.ctx.ast.assignment_target_simple(
-                            self.ctx.ast.simple_assignment_target_identifier_reference(
-                                SPAN,
-                                alias_name.as_str(),
-                            ),
-                        ),
-                        self.ctx.ast.expression_call(
-                            SPAN,
-                            self.ctx.ast.expression_identifier_reference(SPAN, "_asyncToGenerator"),
-                            None::<TSTypeParameterInstantiation>,
-                            self.ctx.ast.vec1(self.ctx.ast.argument_expression(
-                                self.ctx.ast.expression_from_function(
-                                    decl.clone_in(self.ctx.ast.allocator),
-                                ),
-                            )),
-                            false,
-                        ),
-                    ),
-                ));
-                result.push(
-                    function_apply(fn_name.as_str(), &self.ctx.ast)
-                        .clone_in(self.ctx.ast.allocator),
-                );
-                result
-            })),
-        );
-        *decl = self.ctx.ast.function(
-            decl.r#type.clone_in(self.ctx.ast.allocator),
-            SPAN,
-            Some(self.ctx.ast.binding_identifier(SPAN, "b")),
-            false,
-            false,
-            false,
-            decl.type_parameters.clone_in(self.ctx.ast.allocator),
-            decl.this_param.clone_in(self.ctx.ast.allocator),
-            decl.params.clone_in(self.ctx.ast.allocator),
-            decl.return_type.clone_in(self.ctx.ast.allocator),
-            Some(self.ctx.ast.function_body(
-                SPAN,
-                self.ctx.ast.vec(),
-                self.ctx.ast.vec1(self.ctx.ast.statement_return(
-                    SPAN,
-                    Some(self.ctx.ast.expression_call(
-                        SPAN,
-                        self.ctx.ast.expression_member(self.ctx.ast.member_expression_static(
-                            SPAN,
-                            self.ctx.ast.expression_parenthesized(
-                                SPAN,
-                                self.ctx.ast.expression_from_function(inner_function),
-                            ),
-                            self.ctx.ast.identifier_name(SPAN, "apply"),
-                            false,
-                        )),
-                        None::<TSTypeParameterInstantiation>,
-                        {
-                            let mut items = self.ctx.ast.vec();
-                            items.push(
-                                self.ctx
-                                    .ast
-                                    .argument_expression(self.ctx.ast.expression_this(SPAN)),
-                            );
-                            items.push(self.ctx.ast.argument_expression(
-                                self.ctx.ast.expression_identifier_reference(SPAN, "arguments"),
-                            ));
-                            items
-                        },
-                        false,
-                    )),
-                )),
-            )),
-        );
-    }
-
-    fn enter_arrow_function_expression(
+    fn exit_arrow_function_expression(
         &mut self,
-        function: &mut ArrowFunctionExpression<'a>,
-        _ctx: &mut TraverseCtx<'a>,
+        arrow: &mut ArrowFunctionExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
-        if function.r#async {
-            self.inject_helpers = true;
-        }
+        let babel_helpers_id = ctx.scopes().find_binding(ctx.current_scope_id(), "babelHelpers");
+        let callee = Self::get_helper_callee(babel_helpers_id, ctx);
+        let mut target = arrow.clone_in(ctx.ast.allocator);
+        target.r#async = false;
+        target.params = ctx.ast.alloc(ctx.ast.formal_parameters(
+            SPAN,
+            FormalParameterKind::FormalParameter,
+            ctx.ast.vec(),
+            NONE,
+        ));
+        let parameters = {
+            let mut items = ctx.ast.vec();
+            items.push(ctx.ast.argument_expression(ctx.ast.expression_this(SPAN)));
+            items.push(ctx.ast.argument_expression(ctx.ast.expression_null_literal(SPAN)));
+            items.push(ctx.ast.argument_expression(ctx.ast.expression_from_arrow_function(target)));
+            items
+        };
+        let call = ctx.ast.expression_call(SPAN, callee, NONE, parameters, false);
+        let returns = ctx.ast.return_statement(SPAN, Some(call));
+        let body = Statement::ReturnStatement(ctx.ast.alloc(returns));
+        let body = ctx.ast.function_body(SPAN, ctx.ast.vec(), ctx.ast.vec1(body));
+        arrow.body = ctx.ast.alloc(body);
     }
 }
