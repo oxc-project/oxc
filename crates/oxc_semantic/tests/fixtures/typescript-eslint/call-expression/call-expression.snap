@@ -2,6 +2,10 @@
 source: crates/oxc_semantic/tests/main.rs
 input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/call-expression/call-expression.ts
 ---
+================================================================================
+SCOPES
+================================================================================
+
 [
   {
     "children": [
@@ -60,3 +64,9 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/call-expression
     ]
   }
 ]
+
+================================================================================
+CONFORMANCE
+================================================================================
+
+All tests passed.

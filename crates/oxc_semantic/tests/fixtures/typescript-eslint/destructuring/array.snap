@@ -2,6 +2,10 @@
 source: crates/oxc_semantic/tests/main.rs
 input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/destructuring/array.ts
 ---
+================================================================================
+SCOPES
+================================================================================
+
 [
   {
     "children": [],
@@ -61,3 +65,9 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/destructuring/a
     ]
   }
 ]
+
+================================================================================
+CONFORMANCE
+================================================================================
+
+All tests passed.

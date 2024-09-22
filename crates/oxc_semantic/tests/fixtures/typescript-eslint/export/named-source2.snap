@@ -2,6 +2,10 @@
 source: crates/oxc_semantic/tests/main.rs
 input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/export/named-source2.ts
 ---
+================================================================================
+SCOPES
+================================================================================
+
 [
   {
     "children": [],
@@ -11,3 +15,9 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/export/named-so
     "symbols": []
   }
 ]
+
+================================================================================
+CONFORMANCE
+================================================================================
+
+All tests passed.

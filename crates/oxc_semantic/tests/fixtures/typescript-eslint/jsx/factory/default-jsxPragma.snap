@@ -2,6 +2,10 @@
 source: crates/oxc_semantic/tests/main.rs
 input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/jsx/factory/default-jsxPragma.tsx
 ---
+================================================================================
+SCOPES
+================================================================================
+
 [
   {
     "children": [],
@@ -19,3 +23,9 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/jsx/factory/def
     ]
   }
 ]
+
+================================================================================
+CONFORMANCE
+================================================================================
+
+All tests passed.
