@@ -3925,7 +3925,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - argument
+    /// - argument: The expression being thrown, e.g. `err` in `throw err;`
     #[inline]
     pub fn statement_throw(self, span: Span, argument: Expression<'a>) -> Statement<'a> {
         Statement::ThrowStatement(self.alloc(self.throw_statement(span, argument)))
@@ -3946,9 +3946,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - block
-    /// - handler
-    /// - finalizer
+    /// - block: Statements in the `try` block
+    /// - handler: The `catch` clause, including the parameter and the block statement
+    /// - finalizer: The `finally` clause
     #[inline]
     pub fn statement_try<T1, T2, T3>(
         self,
@@ -5183,7 +5183,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - argument
+    /// - argument: The expression being thrown, e.g. `err` in `throw err;`
     #[inline]
     pub fn throw_statement(self, span: Span, argument: Expression<'a>) -> ThrowStatement<'a> {
         ThrowStatement { span, argument }
@@ -5195,7 +5195,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - argument
+    /// - argument: The expression being thrown, e.g. `err` in `throw err;`
     #[inline]
     pub fn alloc_throw_statement(
         self,
@@ -5211,9 +5211,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - block
-    /// - handler
-    /// - finalizer
+    /// - block: Statements in the `try` block
+    /// - handler: The `catch` clause, including the parameter and the block statement
+    /// - finalizer: The `finally` clause
     #[inline]
     pub fn try_statement<T1, T2, T3>(
         self,
@@ -5241,9 +5241,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - block
-    /// - handler
-    /// - finalizer
+    /// - block: Statements in the `try` block
+    /// - handler: The `catch` clause, including the parameter and the block statement
+    /// - finalizer: The `finally` clause
     #[inline]
     pub fn alloc_try_statement<T1, T2, T3>(
         self,
@@ -5266,8 +5266,8 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - param
-    /// - body
+    /// - param: The caught error parameter, e.g. `e` in `catch (e) {}`
+    /// - body: The statements run when an error is caught
     #[inline]
     pub fn catch_clause<T1>(
         self,
@@ -5292,8 +5292,8 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - param
-    /// - body
+    /// - param: The caught error parameter, e.g. `e` in `catch (e) {}`
+    /// - body: The statements run when an error is caught
     #[inline]
     pub fn alloc_catch_clause<T1>(
         self,
@@ -5313,7 +5313,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - pattern
+    /// - pattern: The bound error
     #[inline]
     pub fn catch_parameter(self, span: Span, pattern: BindingPattern<'a>) -> CatchParameter<'a> {
         CatchParameter { span, pattern }
@@ -5325,7 +5325,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - pattern
+    /// - pattern: The bound error
     #[inline]
     pub fn alloc_catch_parameter(
         self,
