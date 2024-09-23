@@ -77,11 +77,10 @@ macro_rules! define_derive {
             }
 
             fn run(&mut self, ctx: &$crate::codegen::LateCtx) -> $crate::Result<Self::Output> {
-                use std::collections::{HashSet};
                 use std::vec::Vec;
                 use convert_case::{Case, Casing};
                 use itertools::Itertools;
-                use rustc_hash::FxHashMap;
+                use rustc_hash::{FxHashMap, FxHashSet};
 
                 use $crate::derives::DeriveTemplate;
 
@@ -91,7 +90,7 @@ macro_rules! define_derive {
                     .into_iter()
                     .filter(|def| def.generates_derive(trait_name))
                     .map(|def| (def, self.derive(def, ctx)))
-                    .fold(FxHashMap::<&str, (HashSet<&str>, Vec<TokenStream>)>::default(), |mut acc, (def, stream)| {
+                    .fold(FxHashMap::<&str, (FxHashSet<&str>, Vec<TokenStream>)>::default(), |mut acc, (def, stream)| {
                         let module_path = def.module_path();
                         let krate = module_path.split("::").next().unwrap();
                         if !acc.contains_key(krate) {

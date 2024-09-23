@@ -3,7 +3,6 @@ mod ignore_list;
 mod spec;
 
 use std::{
-    collections::HashSet,
     fs,
     path::{Path, PathBuf},
 };
@@ -13,6 +12,7 @@ use oxc_parser::{ParseOptions, Parser};
 use oxc_prettier::{Prettier, PrettierOptions};
 use oxc_span::SourceType;
 use oxc_tasks_common::project_root;
+use rustc_hash::FxHashSet;
 use walkdir::WalkDir;
 
 use crate::{
@@ -113,7 +113,7 @@ impl TestRunner {
             .filter(|path| path.join("__snapshots__").exists())
             .collect::<Vec<_>>();
 
-        let dir_set: HashSet<_> = dirs.iter().cloned().collect();
+        let dir_set: FxHashSet<_> = dirs.iter().cloned().collect();
         dirs = dir_set.into_iter().collect();
 
         dirs.sort_unstable();
