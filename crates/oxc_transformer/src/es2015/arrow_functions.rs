@@ -8,6 +8,7 @@
 //!
 //! Implementation is incomplete at present. Still TODO:
 //!
+//! * `spec` option.
 //! * Handle `arguments` in arrow functions.
 //! * Handle `new.target` in arrow functions.
 //! * Handle arrow function in function params (`function f(g = () => this) {}`).
@@ -28,10 +29,10 @@
 //! console.log(double); // [2,4,6]
 //!
 //! var bob = {
-//!   _name: "Bob",
-//!   _friends: ["Sally", "Tom"],
+//!   name: "Bob",
+//!   friends: ["Sally", "Tom"],
 //!   printFriends() {
-//!     this._friends.forEach(f => console.log(this._name + " knows " + f));
+//!     this.friends.forEach(f => console.log(this.name + " knows " + f));
 //!   },
 //! };
 //! console.log(bob.printFriends());
@@ -40,9 +41,7 @@
 //! Output:
 //! ```js
 //! var a = function() {};
-//! var a = function(b) {
-//!   return b;
-//! };
+//! var a = function(b) { return b; };
 //!
 //! const double = [1, 2, 3].map(function(num) {
 //!   return num * 2;
@@ -50,14 +49,64 @@
 //! console.log(double); // [2,4,6]
 //!
 //! var bob = {
-//!   _name: "Bob",
-//!   _friends: ["Sally", "Tom"],
+//!   name: "Bob",
+//!   friends: ["Sally", "Tom"],
 //!   printFriends() {
 //!     var _this = this;
-//!
-//!     this._friends.forEach(function(f) {
-//!       return console.log(_this._name + " knows " + f);
+//!     this.friends.forEach(function(f) {
+//!       return console.log(_this.name + " knows " + f);
 //!     });
+//!   },
+//! };
+//! console.log(bob.printFriends());
+//! ```
+//!
+//! ## Options
+//!
+//! ### `spec`
+//!
+//! `boolean`, defaults to `false`.
+//!
+//! This option enables the following:
+//! * Wrap the generated function in .bind(this) and keeps uses of this inside the function as-is,
+//!   instead of using a renamed this.
+//! * Add a runtime check to ensure the functions are not instantiated.
+//! * Add names to arrow functions.
+//!
+//! #### Example
+//!
+//! Using spec mode with the above example produces:
+//!
+//! ```js
+//! var _this = this;
+//!
+//! var a = function a() {
+//!   babelHelpers.newArrowCheck(this, _this);
+//! }.bind(this);
+//! var a = function a(b) {
+//!   babelHelpers.newArrowCheck(this, _this);
+//!   return b;
+//! }.bind(this);
+//!
+//! const double = [1, 2, 3].map(
+//!   function(num) {
+//!     babelHelpers.newArrowCheck(this, _this);
+//!     return num * 2;
+//!   }.bind(this)
+//! );
+//! console.log(double); // [2,4,6]
+//!
+//! var bob = {
+//!   name: "Bob",
+//!   friends: ["Sally", "Tom"],
+//!   printFriends() {
+//!     var _this2 = this;
+//!     this.friends.forEach(
+//!       function(f) {
+//!         babelHelpers.newArrowCheck(this, _this2);
+//!         return console.log(this.name + " knows " + f);
+//!       }.bind(this)
+//!     );
 //!   },
 //! };
 //! console.log(bob.printFriends());
