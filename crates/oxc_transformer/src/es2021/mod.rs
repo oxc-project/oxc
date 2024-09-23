@@ -31,6 +31,13 @@ impl<'a> ES2021<'a> {
 }
 
 impl<'a> Traverse<'a> for ES2021<'a> {
+    #[inline] // Inline because it's no-op in release mode
+    fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.options.logical_assignment_operators {
+            self.logical_assignment_operators.exit_program(program, ctx);
+        }
+    }
+
     fn enter_statements(
         &mut self,
         statements: &mut Vec<'a, Statement<'a>>,

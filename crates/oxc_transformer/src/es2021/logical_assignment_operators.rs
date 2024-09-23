@@ -60,22 +60,31 @@ use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, LogicalOperator};
 use oxc_traverse::{Traverse, TraverseCtx};
 
-use crate::context::Ctx;
+use crate::{context::Ctx, helpers::stack::SparseStack};
 
 pub struct LogicalAssignmentOperators<'a> {
     _ctx: Ctx<'a>,
-    var_declarations: std::vec::Vec<Vec<'a, VariableDeclarator<'a>>>,
+    var_declarations: SparseStack<Vec<'a, VariableDeclarator<'a>>>,
 }
 
 impl<'a> LogicalAssignmentOperators<'a> {
     pub fn new(ctx: Ctx<'a>) -> Self {
-        Self { _ctx: ctx, var_declarations: vec![] }
+        Self { _ctx: ctx, var_declarations: SparseStack::new() }
     }
 }
 
 impl<'a> Traverse<'a> for LogicalAssignmentOperators<'a> {
-    fn enter_statements(&mut self, _stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
-        self.var_declarations.push(ctx.ast.vec());
+    #[inline] // Inline because it's no-op in release mode
+    fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
+        debug_assert!(self.var_declarations.is_empty());
+    }
+
+    fn enter_statements(
+        &mut self,
+        _stmts: &mut Vec<'a, Statement<'a>>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.var_declarations.push(None);
     }
 
     fn exit_statements(
@@ -84,9 +93,7 @@ impl<'a> Traverse<'a> for LogicalAssignmentOperators<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         if let Some(declarations) = self.var_declarations.pop() {
-            if declarations.is_empty() {
-                return;
-            }
+            debug_assert!(!declarations.is_empty());
             let variable = ctx.ast.alloc_variable_declaration(
                 SPAN,
                 VariableDeclarationKind::Var,
@@ -390,8 +397,7 @@ impl<'a> LogicalAssignmentOperators<'a> {
         let id = ctx.ast.binding_pattern_kind_from_binding_identifier(binding_identifier);
         let id = ctx.ast.binding_pattern(id, NONE, false);
         self.var_declarations
-            .last_mut()
-            .unwrap()
+            .get_mut_or_init(|| ctx.ast.vec())
             .push(ctx.ast.variable_declarator(SPAN, kind, id, None, false));
 
         // _name = name
