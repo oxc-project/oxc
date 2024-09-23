@@ -4,6 +4,41 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.30.0] - 2024-09-23
+
+- 033b907 ast: [**BREAKING**] Apply `#[non_exhaustive]`, must use `AstBuilder` (#5787) (Boshen)
+
+### Features
+
+- ae89145 ast: Revert `#[non_exhaustive]` change (#5885) (Boshen)
+- e8bf30a ast: Add `Comment::real_span` (#5764) (Boshen)
+- bcdbba3 codegen: Print jsdoc comments that are attached to statements and class elements (#5845) (Boshen)
+- 4a62703 isolated-declarations: Handle `export` in the `namespace` correctly (#5950) (Dunqing)
+- 3bf7b24 linter: Make `typescript/no-duplicate-enum-values` a `correctness` rule (#5810) (DonIsaac)
+- 8e7556f parser: Calculate leading and trailing position for comments (#5785) (Boshen)
+- 65c337a prettier: Improve ts compatibility (#5900) (Alexander S.)
+- 6d9ccdd prettier: Support TSMappedType (#5834) (Alexander S.)
+- b5ac5a6 prettier: Support TSModuleDeclaration (#5813) (Alexander S.)
+
+### Bug Fixes
+
+- 66e919e ast: Correct TS types for JSX (#5884) (overlookmotel)
+- 0d10521 ast: Serialize `JSXMemberExpressionObject` to estree (#5883) (overlookmotel)
+- a822c9d ast: Serialize `JSXElementName` to estree (#5882) (Boshen)
+- 8780c54 isolated-declarations: Do not union a undefined when the param type is any or unknown (#5930) (Dunqing)
+
+### Documentation
+
+- acc2d16 ast: Document most TypeScript AST nodes (#5983) (DonIsaac)
+- 47c2faa ast: Document TryStatement and related nodes (#5970) (DonIsaac)
+
+### Refactor
+
+- f4fac0f ast: Remove `.iter()` where not needed (#5904) (camchenry)
+- 6dd6f7c ast: Change `Comment` struct (#5783) (Boshen)
+- 7caae5b codegen: Add `GetSpan` requirement to `Gen` trait (#5772) (Boshen)
+- 1c1353b transformer: Use AstBuilder instead of using struct constructor (#5778) (Boshen)
+
 ## [0.29.0] - 2024-09-13
 
 - c3dd2a0 ast: [**BREAKING**] Revert: reduce byte size of `TaggedTemplateExpression::quasi` by `Boxing` it (#5679) (#5715) (overlookmotel)

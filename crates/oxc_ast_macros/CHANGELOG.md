@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.30.0] - 2024-09-23
+
+### Refactor
+
+- 17cd903 ast: Move functions to top level in `ast` macro (#5793) (overlookmotel)
+- cf97f6d ast: Import `syn` types in `ast` macro (#5792) (overlookmotel)
+- dc10eaf ast: Split `ast` macro into multiple files (#5791) (overlookmotel)
+
 ## [0.27.0] - 2024-09-06
 
 ### Features

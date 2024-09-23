@@ -4,6 +4,40 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.30.0] - 2024-09-23
+
+- c96b712 syntax: [**BREAKING**] Remove `SymbolFlags::ArrowFunction` (#5857) (overlookmotel)
+
+### Features
+
+- a111bb6 oxc_wasm: Add `verbse` option to `debug_dot`  (#5879) (IWANABETHATGUY)
+- 74d8714 semantic: Add help message for invalid `let x?: number` (#5969) (DonIsaac)
+- 3230ae5 semantic: Add `SemanticBuilder::with_excess_capacity` (#5762) (overlookmotel)
+- a07f03a transformer: Sync `Program::source_type` after transform (#5887) (Boshen)
+
+### Bug Fixes
+
+- f1551d6 semantic: `?` on variable declaration type annotations is a syntax error (#5956) (DonIsaac)
+- a23879c semantic: Analyze `ReferenceFlags` incorrectly when there are nested `AssignmentTarget` (#5847) (Dunqing)
+
+### Performance
+
+- c3e0fb6 semantic: Simplify resetting ReferenceFlags in `AssignmentExpression` (#5846) (Dunqing)
+
+### Documentation
+
+- 1ccf290 semantic: Document `AstNode` and `AstNodes` (#5872) (DonIsaac)
+
+### Refactor
+
+- 6dd6f7c ast: Change `Comment` struct (#5783) (Boshen)
+- d910304 semantic: Rename lifetime on `impl IntoIterator for &AstNodes` (#5881) (overlookmotel)
+- f360e2c semantic: Remove redundunt is_leading check for JSDoc (#5877) (leaysgur)
+- 9115dd9 semantic: Use `Comment::attached_to` for jsdoc attachment (#5876) (Boshen)
+- db4f16a semantic: Call `with_trivias` before `build_with_jsdoc` (#5875) (Boshen)
+- 3d13c6d semantic: Impl `IntoIterator` for `&AstNodes` (#5873) (DonIsaac)
+- 47d9ad8 semantic: Remove unused vars warning in release mode (#5803) (overlookmotel)
+
 ## [0.29.0] - 2024-09-13
 
 ### Features

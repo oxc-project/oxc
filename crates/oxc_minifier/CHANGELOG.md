@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.30.0] - 2024-09-23
+
+### Features
+
+- 9076dee minifier: Implement part of `StatementFusion` (#5936) (Boshen)
+
+### Bug Fixes
+
+- 362c427 mangler,codegen: Do not mangle top level symbols (#5965) (Boshen)
+
+### Refactor
+
+- 943bd76 minifier: Move tests to their src files (#5912) (Boshen)
+- cbaeea6 minifier: Clean up some tests (#5910) (Boshen)
+- 144611e minifier: Align ast pass names with closure compiler (#5908) (Boshen)
+
 ## [0.29.0] - 2024-09-13
 
 ### Features
