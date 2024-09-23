@@ -1,7 +1,6 @@
 #![allow(clippy::print_stdout, clippy::print_stderr, clippy::disallowed_methods)]
 use std::{
     borrow::Cow,
-    collections::HashMap,
     fmt::{self, Display, Formatter},
 };
 
@@ -18,6 +17,7 @@ use oxc_ast::{
 };
 use oxc_parser::Parser;
 use oxc_span::{GetSpan, SourceType, Span};
+use rustc_hash::FxHashMap;
 use serde::Serialize;
 use ureq::Response;
 
@@ -381,7 +381,7 @@ struct State<'a> {
     source_text: &'a str,
     valid_tests: Vec<&'a Expression<'a>>,
     invalid_tests: Vec<&'a Expression<'a>>,
-    expression_to_group_comment_map: HashMap<Span, String>,
+    expression_to_group_comment_map: FxHashMap<Span, String>,
     group_comment_stack: Vec<String>,
 }
 
@@ -391,7 +391,7 @@ impl<'a> State<'a> {
             source_text,
             valid_tests: vec![],
             invalid_tests: vec![],
-            expression_to_group_comment_map: HashMap::new(),
+            expression_to_group_comment_map: FxHashMap::default(),
             group_comment_stack: vec![],
         }
     }

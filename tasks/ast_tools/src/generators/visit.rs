@@ -1,9 +1,10 @@
-use std::{borrow::Cow, collections::HashMap};
+use std::borrow::Cow;
 
 use convert_case::{Case, Casing};
 use itertools::Itertools;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens};
+use rustc_hash::FxHashMap;
 use syn::{parse_quote, Ident};
 
 use super::define_generator;
@@ -135,12 +136,12 @@ struct VisitBuilder<'a> {
 
     visits: Vec<TokenStream>,
     walks: Vec<TokenStream>,
-    cache: HashMap<Ident, [Option<Cow<'a, Ident>>; 2]>,
+    cache: FxHashMap<Ident, [Option<Cow<'a, Ident>>; 2]>,
 }
 
 impl<'a> VisitBuilder<'a> {
     fn new(ctx: &'a LateCtx, is_mut: bool) -> Self {
-        Self { ctx, is_mut, visits: Vec::new(), walks: Vec::new(), cache: HashMap::new() }
+        Self { ctx, is_mut, visits: Vec::new(), walks: Vec::new(), cache: FxHashMap::default() }
     }
 
     fn build(mut self) -> (/* visits */ Vec<TokenStream>, /* walks */ Vec<TokenStream>) {

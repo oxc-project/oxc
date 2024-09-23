@@ -28,3 +28,4 @@ flate2 = { workspace = true }
 oxc_tasks_common = { workspace = true }
 
 humansize = { workspace = true }
+rustc-hash = { workspace = true }

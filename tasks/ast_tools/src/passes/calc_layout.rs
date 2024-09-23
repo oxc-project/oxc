@@ -1,8 +1,7 @@
-use std::collections::HashMap;
-
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use quote::ToTokens;
+use rustc_hash::FxHashMap;
 use syn::Type;
 
 use super::{define_pass, Pass};
@@ -18,7 +17,7 @@ use crate::{
 #[cfg(not(target_pointer_width = "64"))]
 compile_error!("This module only supports 64bit architectures.");
 
-type WellKnown = HashMap<&'static str, PlatformLayout>;
+type WellKnown = FxHashMap<&'static str, PlatformLayout>;
 
 define_pass! {
     pub struct CalcLayout;
@@ -279,7 +278,7 @@ fn calc_type_layout(ty: &TypeAnalysis, ctx: &EarlyCtx) -> Result<PlatformLayout>
 
 macro_rules! well_known {
     ($($typ:ty: { $($platform:tt => $layout:expr,)*},)*) => {
-        WellKnown::from([
+        FxHashMap::from_iter([
             $((
                 stringify!($typ),
                 well_known!(@ $( $platform => $layout,)*)

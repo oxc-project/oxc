@@ -18,4 +18,5 @@ handlebars = { workspace = true }
 oxc_tasks_common = { workspace = true }
 
 lazy_static = { workspace = true }
+rustc-hash = { workspace = true }
 serde = { workspace = true, features = ["derive"] }

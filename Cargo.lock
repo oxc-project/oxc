@@ -976,6 +976,7 @@ dependencies = [
  "handlebars",
  "lazy_static",
  "oxc_tasks_common",
+ "rustc-hash",
  "serde",
 ]
 
@@ -1482,6 +1483,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "regex",
+ "rustc-hash",
  "serde",
  "serde_json",
  "syn",
@@ -1558,6 +1560,7 @@ dependencies = [
  "pico-args",
  "rayon",
  "regex",
+ "rustc-hash",
  "saphyr",
  "serde",
  "serde_json",
@@ -1724,6 +1727,7 @@ dependencies = [
  "oxc_parser",
  "oxc_span",
  "oxc_tasks_common",
+ "rustc-hash",
 ]
 
 [[package]]
@@ -2429,6 +2433,7 @@ dependencies = [
  "oxc_span",
  "oxc_tasks_common",
  "regex",
+ "rustc-hash",
  "serde",
  "ureq",
 ]

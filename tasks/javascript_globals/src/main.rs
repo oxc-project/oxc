@@ -1,8 +1,7 @@
 #![allow(clippy::print_stdout, clippy::print_stderr)]
-use std::collections::HashMap;
-
 use lazy_static::lazy_static;
 use oxc_tasks_common::agent;
+use rustc_hash::FxHashMap;
 use serde::Serialize;
 mod template;
 
@@ -30,10 +29,10 @@ impl<'a> Context<'a> {
 }
 
 fn get_diff(
-    current: &HashMap<String, bool>,
-    prev: &HashMap<String, bool>,
-) -> HashMap<String, bool> {
-    let mut retv: HashMap<String, bool> = HashMap::new();
+    current: &FxHashMap<String, bool>,
+    prev: &FxHashMap<String, bool>,
+) -> FxHashMap<String, bool> {
+    let mut retv: FxHashMap<String, bool> = FxHashMap::default();
 
     for (key, value) in current {
         if !prev.contains_key(key) {
@@ -45,22 +44,22 @@ fn get_diff(
 }
 
 lazy_static! {
-    static ref NEW_GLOBALS_2017: HashMap<String, bool> = {
-        return HashMap::from([
+    static ref NEW_GLOBALS_2017: FxHashMap<String, bool> = {
+        return FxHashMap::from_iter([
             (String::from("Atomics"), false),
             (String::from("SharedArrayBuffer"), false),
         ]);
     };
-    static ref NEW_GLOBALS_2020: HashMap<String, bool> = {
-        return HashMap::from([
+    static ref NEW_GLOBALS_2020: FxHashMap<String, bool> = {
+        return FxHashMap::from_iter([
             (String::from("BigInt"), false),
             (String::from("BigInt64Array"), false),
             (String::from("BigUint64Array"), false),
             (String::from("globalThis"), false),
         ]);
     };
-    static ref NEW_GLOBALS_2021: HashMap<String, bool> = {
-        return HashMap::from([
+    static ref NEW_GLOBALS_2021: FxHashMap<String, bool> = {
+        return FxHashMap::from_iter([
             (String::from("AggregateError"), false),
             (String::from("FinalizationRegistry"), false),
             (String::from("WeakRef"), false),
@@ -73,8 +72,8 @@ fn main() {
     // A value of true indicates that the variable may be overwritten.
     // A value of false indicates that the variable should be considered read-only.
     // open globals.json file relative to current file
-    // let globals: HashMap<String, HashMap<String, bool>>;
-    let globals: HashMap<String, HashMap<String, bool>> = match agent()
+    // let globals: FxHashMap<String, FxHashMap<String, bool>>;
+    let globals: FxHashMap<String, FxHashMap<String, bool>> = match agent()
         .get("https://raw.githubusercontent.com/sindresorhus/globals/main/globals.json")
         .call()
     {
@@ -88,7 +87,7 @@ fn main() {
     let new_globals_2015 = get_diff(&globals["es2015"], &globals["es5"]);
 
     let new_globals_2015_2017 = {
-        let mut map = HashMap::new();
+        let mut map = FxHashMap::default();
         map.extend(new_globals_2015.clone());
         map.extend(NEW_GLOBALS_2017.clone());
         map
@@ -158,7 +157,7 @@ fn main() {
     }
 }
 
-fn to_env_vars(env_var_map: &HashMap<String, bool>) -> Vec<EnvVar> {
+fn to_env_vars(env_var_map: &FxHashMap<String, bool>) -> Vec<EnvVar> {
     let mut result: Vec<EnvVar> = vec![];
     for (key, value) in env_var_map {
         result.push(EnvVar { name: key, writeable: *value });

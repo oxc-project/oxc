@@ -1,10 +1,11 @@
-use std::{borrow::Cow, collections::HashMap, stringify};
+use std::{borrow::Cow, stringify};
 
 use convert_case::{Case, Casing};
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens};
+use rustc_hash::FxHashMap;
 use syn::{parse_quote, Ident, Type};
 
 use super::define_generator;
@@ -226,7 +227,7 @@ fn default_init_field(field: &FieldDef) -> bool {
         };
     }
     lazy_static! {
-        static ref DEFAULT_FIELDS: HashMap<&'static str, &'static str> = HashMap::from([
+        static ref DEFAULT_FIELDS: FxHashMap<&'static str, &'static str> = FxHashMap::from_iter([
             field!(scope_id: Cell<Option<ScopeId>>),
             field!(symbol_id: Cell<Option<SymbolId>>),
             field!(reference_id: Cell<Option<ReferenceId>>),

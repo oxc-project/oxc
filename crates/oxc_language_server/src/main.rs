@@ -1,3 +1,4 @@
+#[allow(clippy::disallowed_types)]
 mod linter;
 
 use std::{collections::HashMap, fmt::Debug, path::PathBuf, str::FromStr};
