@@ -277,7 +277,6 @@ impl<'a> ParserImpl<'a> {
     fn parse_postfix_type_or_higher(&mut self) -> Result<TSType<'a>> {
         let span = self.start_span();
         let mut ty = self.parse_non_array_type()?;
-        // dbg!(&ty);
 
         while !self.cur_token().is_on_new_line {
             match self.cur_kind() {
@@ -925,7 +924,6 @@ impl<'a> ParserImpl<'a> {
         }
 
         let ty = self.context(extra_context, Context::empty(), Self::parse_ts_type)?;
-        // let ty = self.parse_ts_type()?;
         if let TSType::JSDocNullableType(ty) = ty {
             if ty.span.start == ty.type_annotation.span().start {
                 Ok(self.ast.ts_tuple_element_optional_type(ty.span, ty.unbox().type_annotation))

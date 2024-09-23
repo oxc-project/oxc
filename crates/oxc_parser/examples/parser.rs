@@ -14,7 +14,7 @@ use pico_args::Arguments;
 fn main() -> Result<(), String> {
     let mut args = Arguments::from_env();
 
-    let name = args.subcommand().ok().flatten().unwrap_or_else(|| String::from("test.ts"));
+    let name = args.subcommand().ok().flatten().unwrap_or_else(|| String::from("test.js"));
     let show_ast = args.contains("--ast");
     let show_comments = args.contains("--comments");
 
