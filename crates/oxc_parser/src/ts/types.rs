@@ -1,4 +1,3 @@
-use bitflags::Flags;
 use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, NONE};
 use oxc_diagnostics::Result;
