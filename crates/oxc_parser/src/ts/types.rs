@@ -290,7 +290,7 @@ impl<'a> ParserImpl<'a> {
                         /* postfix */ true,
                     );
                 }
-                Kind::Question if self.ctx.contains(Context::AllowQuestionAfterType) => {
+                Kind::Question if self.ctx.contains(Context::AllowQuestionMarkAfterType) => {
                     // If next token is start of a type we have a conditional type
                     if self.lookahead(Self::next_token_is_start_of_type) {
                         return Ok(ty);
@@ -355,7 +355,7 @@ impl<'a> ParserImpl<'a> {
             // // falls through
             // case SyntaxKind.FunctionKeyword:
             // return parseJSDocFunctionType();
-            Kind::Question if self.ctx.contains(Context::AllowQuestionAfterType) => {
+            Kind::Question if self.ctx.contains(Context::AllowQuestionMarkAfterType) => {
                 self.parse_js_doc_unknown_or_nullable_type()
             }
             Kind::Bang => self.parse_js_doc_non_nullable_type(),
@@ -899,7 +899,7 @@ impl<'a> ParserImpl<'a> {
                 ))
             });
         }
-        self.parse_tuple_element_type(Context::AllowQuestionAfterType)
+        self.parse_tuple_element_type(Context::AllowQuestionMarkAfterType)
     }
 
     fn is_tuple_element_name(&mut self) -> bool {
