@@ -1249,6 +1249,14 @@ pub enum VariableDeclarationKind {
     AwaitUsing = 4,
 }
 
+/// A single variable declaration in a list of [variable declarations](VariableDeclaration).
+///
+/// ## Examples
+/// ```ts
+/// // declarators may or may not have initializers
+/// let foo, b = 1;
+/// //  ^^^ id   ^ init
+/// ```
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]

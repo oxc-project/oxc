@@ -1247,6 +1247,26 @@ pub struct TSInterfaceHeritage<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
+/// TypeScript Type Predicate
+///
+/// ## Examples
+/// ```ts
+/// function isString(x: unknown): x is string {
+/// //              parameter_name ^    ^^^^^^ type_annotation
+///     return typeof x === 'string';
+/// }
+/// ```
+///
+/// ```ts
+/// function assertString(x: unknown): asserts x is string {
+/// //                                 ^^^^^^^ asserts: true
+///     if (typeof x !== 'string') throw new TypeError('x is not a string');
+/// }
+/// ```
+///
+/// ## References
+/// * [TypeScript Handbook - Type Predicates](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates)
+/// * [TypeScript Handbook - Assertion Functions](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#assertion-functions)
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
@@ -1255,7 +1275,14 @@ pub struct TSInterfaceHeritage<'a> {
 pub struct TSTypePredicate<'a> {
     #[serde(flatten)]
     pub span: Span,
+    /// The identifier the predicate operates on
     pub parameter_name: TSTypePredicateName<'a>,
+    /// Does this predicate include an `asserts` modifier?
+    ///
+    /// ## Example
+    /// ```ts
+    /// declare function isString(x: any): asserts x is string; // true
+    /// ```
     pub asserts: bool,
     pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
 }
@@ -1270,6 +1297,32 @@ pub enum TSTypePredicateName<'a> {
     This(TSThisType) = 1,
 }
 
+/// TypeScript Module and Namespace Declarations
+///
+/// ## Examples
+/// ```ts
+/// declare module 'foo' {
+/// // kind ^^^^^^ ^^^^^ id
+/// }
+/// ```
+///
+/// ```ts
+/// namespace Foo { }
+/// declare namespace Bar { }
+/// ```
+///
+/// ```ts
+/// declare global {
+///     interface Window {
+///        customProp: string;
+///     }
+/// }
+/// ```
+///
+/// ## References
+/// * [TypeScript Handbook - Namespaces](https://www.typescriptlang.org/docs/handbook/2/modules.html#namespaces)
+/// * [TypeScript Handbook - Module Augmentation](https://www.typescriptlang.org/docs/handbook/declaration-merging.html#module-augmentation)
+/// * [TypeScript Handbook - Global Augmentation](https://www.typescriptlang.org/docs/handbook/declaration-merging.html#global-augmentation)
 #[ast(visit)]
 #[scope(
     flags(ScopeFlags::TsModuleBlock),
@@ -1285,8 +1338,12 @@ pub struct TSModuleDeclaration<'a> {
     pub id: TSModuleDeclarationName<'a>,
     #[scope(enter_before)]
     pub body: Option<TSModuleDeclarationBody<'a>>,
-    /// The keyword used to define this module declaration
-    /// ```text
+    /// The keyword used to define this module declaration.
+    ///
+    /// Helps discriminate between global overrides vs module declarations vs namespace
+    /// declarations.
+    ///
+    /// ```ts
     /// namespace Foo {}
     /// ^^^^^^^^^
     /// module 'foo' {}
@@ -1307,8 +1364,11 @@ pub struct TSModuleDeclaration<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(rename_all = "camelCase")]
 pub enum TSModuleDeclarationKind {
+    /// `declare global {}`
     Global = 0,
+    /// `declare module 'foo' {}`
     Module = 1,
+    /// `namespace Foo {}`
     Namespace = 2,
 }
 
@@ -1326,6 +1386,26 @@ impl TSModuleDeclarationKind {
     }
 }
 
+/// The name of a TypeScript [namespace or module declaration](TSModuleDeclaration).
+///
+/// Note that it is a syntax error for namespace declarations to have a string literal name.
+/// Modules may have either kind.
+///
+/// ## Examples
+/// ```ts
+/// // TSModuleDeclarationName::StringLiteral
+/// declare module "*.css" {
+///     const styles: { [key: string]: string };
+///     export default styles;
+/// }
+/// ```
+///
+/// ```ts
+/// // TSModuleDeclarationName::Identifier
+/// namespace Foo {
+///    export const bar = 42;
+/// }
+/// ```
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
@@ -1461,7 +1541,8 @@ pub enum TSTypeQueryExprName<'a> {
 pub struct TSImportType<'a> {
     #[serde(flatten)]
     pub span: Span,
-    pub is_type_of: bool, // `typeof import("foo")`
+    /// `true` for `typeof import("foo")`
+    pub is_type_of: bool,
     pub parameter: TSType<'a>,
     pub qualifier: Option<TSTypeName<'a>>,
     pub attributes: Option<Box<'a, TSImportAttributes<'a>>>,
@@ -1556,6 +1637,27 @@ pub struct TSConstructorType<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
 }
 
+/// TypeScript Mapped Type
+///
+/// ## Examples
+/// ```ts
+/// type Maybe<T> = {
+/// //        _____ constraint
+///     [P in keyof T]?: T[P]
+/// //   ^ type_parameter
+/// }
+/// ```
+///
+/// ```ts
+/// type ReadonlyDefinite<T> = {
+/// //           _ type parameter
+///    readonly [P in keyof T]-?: T[P]
+/// //                        ^^ `optional` modifier
+/// };
+/// ```
+///
+/// ## References
+/// * [TypeScript Handbook - Mapped Types](https://www.typescriptlang.org/docs/handbook/2/mapped-types.html)
 #[ast(visit)]
 #[scope]
 #[derive(Debug)]
@@ -1565,10 +1667,33 @@ pub struct TSConstructorType<'a> {
 pub struct TSMappedType<'a> {
     #[serde(flatten)]
     pub span: Span,
+    /// Key type parameter, e.g. `P` in `[P in keyof T]`.
     pub type_parameter: Box<'a, TSTypeParameter<'a>>,
     pub name_type: Option<TSType<'a>>,
     pub type_annotation: Option<TSType<'a>>,
+    /// Optional modifier on type annotation
+    ///
+    /// ## Examples
+    /// ```ts
+    /// type Foo = { [P in keyof T]?: T[P] }
+    /// //                         ^^ True
+    /// type Bar = { [P in keyof T]+?: T[P] }
+    /// //                         ^^ Plus
+    /// type Baz = { [P in keyof T]-?: T[P] }
+    /// //                         ^^ Minus
+    /// type Qux = { [P in keyof T]: T[P] }
+    /// //                         ^ None
+    /// ```
     pub optional: TSMappedTypeModifierOperator,
+    /// Readonly modifier before keyed index signature
+    ///
+    /// ## Examples
+    /// ```ts
+    /// type Foo = { readonly [P in keyof T]: T[P] }  // True
+    /// type Bar = { +readonly [P in keyof T]: T[P] } // Plus
+    /// type Baz = { -readonly [P in keyof T]: T[P] } // Minus
+    /// type Qux = { [P in keyof T]: T[P] }           // None
+    /// ```
     pub readonly: TSMappedTypeModifierOperator,
     #[serde(skip)]
     #[clone_in(default)]
@@ -1581,14 +1706,29 @@ pub struct TSMappedType<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(rename_all = "camelCase")]
 pub enum TSMappedTypeModifierOperator {
+    /// e.g. `?` in `{ [P in K]?: T }`
     True = 0,
+    /// e.g. `+?` in `{ [P in K]+?: T }`
     #[serde(rename = "+")]
     Plus = 1,
+    /// e.g. `-?` in `{ [P in K]-?: T }`
     #[serde(rename = "-")]
     Minus = 2,
+    /// No modifier present
     None = 3,
 }
 
+/// TypeScript Template Literal Type
+///
+/// ## Example
+/// ```ts
+/// // Each string part is an element in `quasis`, including empty strings at the beginning/end.
+/// // In this example, `quasis` has 3 elements: ["", ".", ""]
+/// type Dot<T, U> = `${T}.${U}`;
+/// ```
+///
+/// ## Reference
+/// * [TypeScript Handbook - Template Literal Types](https://www.typescriptlang.org/docs/handbook/2/template-literal-types.html#handbook-content)
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
@@ -1597,7 +1737,9 @@ pub enum TSMappedTypeModifierOperator {
 pub struct TSTemplateLiteralType<'a> {
     #[serde(flatten)]
     pub span: Span,
+    /// The string parts of the template literal.
     pub quasis: Vec<'a, TemplateElement<'a>>,
+    /// The interpolated expressions in the template literal.
     pub types: Vec<'a, TSType<'a>>,
 }
 
@@ -1613,6 +1755,18 @@ pub struct TSAsExpression<'a> {
     pub type_annotation: TSType<'a>,
 }
 
+/// TypeScript `satisfies` Expression
+///
+/// ## Example
+/// ```ts
+/// const user = {
+///     id: 0,
+///     name: 'Alice',
+/// } satisfies User;
+/// ```
+///
+/// ## Reference
+/// * [TypeScript Handbook - The `satisfies` Operator](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-4-9.html#the-satisfies-operator)
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
@@ -1621,7 +1775,9 @@ pub struct TSAsExpression<'a> {
 pub struct TSSatisfiesExpression<'a> {
     #[serde(flatten)]
     pub span: Span,
+    /// The value expression being constrained.
     pub expression: Expression<'a>,
+    /// The type `expression` must satisfy.
     pub type_annotation: TSType<'a>,
 }
 

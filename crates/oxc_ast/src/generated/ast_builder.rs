@@ -1347,8 +1347,8 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - expression
-    /// - type_annotation
+    /// - expression: The value expression being constrained.
+    /// - type_annotation: The type `expression` must satisfy.
     #[inline]
     pub fn expression_ts_satisfies(
         self,
@@ -2853,8 +2853,8 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - expression
-    /// - type_annotation
+    /// - expression: The value expression being constrained.
+    /// - type_annotation: The type `expression` must satisfy.
     #[inline]
     pub fn simple_assignment_target_ts_satisfies_expression(
         self,
@@ -4419,7 +4419,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     /// - id
     /// - body
-    /// - kind: The keyword used to define this module declaration
+    /// - kind: The keyword used to define this module declaration.
     /// - declare
     #[inline]
     pub fn declaration_ts_module(
@@ -8839,7 +8839,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - is_type_of
+    /// - is_type_of: `true` for `typeof import("foo")`
     /// - parameter
     /// - qualifier
     /// - attributes
@@ -8980,11 +8980,11 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - type_parameter
+    /// - type_parameter: Key type parameter, e.g. `P` in `[P in keyof T]`.
     /// - name_type
     /// - type_annotation
-    /// - optional
-    /// - readonly
+    /// - optional: Optional modifier on type annotation
+    /// - readonly: Readonly modifier before keyed index signature
     #[inline]
     pub fn ts_type_mapped_type<T1>(
         self,
@@ -9084,8 +9084,8 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - quasis
-    /// - types
+    /// - quasis: The string parts of the template literal.
+    /// - types: The interpolated expressions in the template literal.
     #[inline]
     pub fn ts_type_template_literal_type(
         self,
@@ -9210,8 +9210,8 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - parameter_name
-    /// - asserts
+    /// - parameter_name: The identifier the predicate operates on
+    /// - asserts: Does this predicate include an `asserts` modifier?
     /// - type_annotation
     #[inline]
     pub fn ts_type_type_predicate<T1>(
@@ -11281,8 +11281,8 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - parameter_name
-    /// - asserts
+    /// - parameter_name: The identifier the predicate operates on
+    /// - asserts: Does this predicate include an `asserts` modifier?
     /// - type_annotation
     #[inline]
     pub fn ts_type_predicate<T1>(
@@ -11309,8 +11309,8 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - parameter_name
-    /// - asserts
+    /// - parameter_name: The identifier the predicate operates on
+    /// - asserts: Does this predicate include an `asserts` modifier?
     /// - type_annotation
     #[inline]
     pub fn alloc_ts_type_predicate<T1>(
@@ -11383,7 +11383,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     /// - id
     /// - body
-    /// - kind: The keyword used to define this module declaration
+    /// - kind: The keyword used to define this module declaration.
     /// - declare
     #[inline]
     pub fn ts_module_declaration(
@@ -11405,7 +11405,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     /// - id
     /// - body
-    /// - kind: The keyword used to define this module declaration
+    /// - kind: The keyword used to define this module declaration.
     /// - declare
     #[inline]
     pub fn alloc_ts_module_declaration(
@@ -11485,7 +11485,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     /// - id
     /// - body
-    /// - kind: The keyword used to define this module declaration
+    /// - kind: The keyword used to define this module declaration.
     /// - declare
     #[inline]
     pub fn ts_module_declaration_body_module_declaration(
@@ -11691,7 +11691,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - is_type_of
+    /// - is_type_of: `true` for `typeof import("foo")`
     /// - parameter
     /// - qualifier
     /// - attributes
@@ -11743,7 +11743,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - is_type_of
+    /// - is_type_of: `true` for `typeof import("foo")`
     /// - parameter
     /// - qualifier
     /// - attributes
@@ -11778,7 +11778,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - is_type_of
+    /// - is_type_of: `true` for `typeof import("foo")`
     /// - parameter
     /// - qualifier
     /// - attributes
@@ -12074,11 +12074,11 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - type_parameter
+    /// - type_parameter: Key type parameter, e.g. `P` in `[P in keyof T]`.
     /// - name_type
     /// - type_annotation
-    /// - optional
-    /// - readonly
+    /// - optional: Optional modifier on type annotation
+    /// - readonly: Readonly modifier before keyed index signature
     #[inline]
     pub fn ts_mapped_type<T1>(
         self,
@@ -12109,11 +12109,11 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - type_parameter
+    /// - type_parameter: Key type parameter, e.g. `P` in `[P in keyof T]`.
     /// - name_type
     /// - type_annotation
-    /// - optional
-    /// - readonly
+    /// - optional: Optional modifier on type annotation
+    /// - readonly: Readonly modifier before keyed index signature
     #[inline]
     pub fn alloc_ts_mapped_type<T1>(
         self,
@@ -12146,8 +12146,8 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - quasis
-    /// - types
+    /// - quasis: The string parts of the template literal.
+    /// - types: The interpolated expressions in the template literal.
     #[inline]
     pub fn ts_template_literal_type(
         self,
@@ -12164,8 +12164,8 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - quasis
-    /// - types
+    /// - quasis: The string parts of the template literal.
+    /// - types: The interpolated expressions in the template literal.
     #[inline]
     pub fn alloc_ts_template_literal_type(
         self,
@@ -12218,8 +12218,8 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - expression
-    /// - type_annotation
+    /// - expression: The value expression being constrained.
+    /// - type_annotation: The type `expression` must satisfy.
     #[inline]
     pub fn ts_satisfies_expression(
         self,
@@ -12236,8 +12236,8 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - expression
-    /// - type_annotation
+    /// - expression: The value expression being constrained.
+    /// - type_annotation: The type `expression` must satisfy.
     #[inline]
     pub fn alloc_ts_satisfies_expression(
         self,
