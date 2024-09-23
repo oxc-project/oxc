@@ -1388,7 +1388,7 @@ pub enum TSModuleDeclarationKind {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum TSModuleDeclarationName<'a> {
-    Identifier(IdentifierName<'a>) = 0,
+    Identifier(BindingIdentifier<'a>) = 0,
     StringLiteral(StringLiteral<'a>) = 1,
 }
 

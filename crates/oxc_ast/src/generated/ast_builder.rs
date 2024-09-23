@@ -11423,9 +11423,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - name
+    /// - name: The identifier name being bound.
     #[inline]
-    pub fn ts_module_declaration_name_identifier_name<A>(
+    pub fn ts_module_declaration_name_binding_identifier<A>(
         self,
         span: Span,
         name: A,
@@ -11433,17 +11433,17 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
-        TSModuleDeclarationName::Identifier(self.identifier_name(span, name))
+        TSModuleDeclarationName::Identifier(self.binding_identifier(span, name))
     }
 
-    /// Convert a [`IdentifierName`] into a [`TSModuleDeclarationName::Identifier`]
+    /// Convert a [`BindingIdentifier`] into a [`TSModuleDeclarationName::Identifier`]
     #[inline]
-    pub fn ts_module_declaration_name_from_identifier_name<T>(
+    pub fn ts_module_declaration_name_from_binding_identifier<T>(
         self,
         inner: T,
     ) -> TSModuleDeclarationName<'a>
     where
-        T: IntoIn<'a, IdentifierName<'a>>,
+        T: IntoIn<'a, BindingIdentifier<'a>>,
     {
         TSModuleDeclarationName::Identifier(inner.into_in(self.allocator))
     }

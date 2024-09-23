@@ -300,7 +300,7 @@ impl<'a> ParserImpl<'a> {
         );
         let id = match self.cur_kind() {
             Kind::Str => self.parse_literal_string().map(TSModuleDeclarationName::StringLiteral),
-            _ => self.parse_identifier_name().map(TSModuleDeclarationName::Identifier),
+            _ => self.parse_binding_identifier().map(TSModuleDeclarationName::Identifier),
         }?;
 
         let body = if self.eat(Kind::Dot) {

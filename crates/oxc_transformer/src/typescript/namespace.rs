@@ -151,7 +151,8 @@ impl<'a> TypeScriptNamespace<'a> {
 
         let mut names: FxHashSet<Atom<'a>> = FxHashSet::default();
 
-        let TSModuleDeclarationName::Identifier(IdentifierName { name: real_name, .. }) = decl.id
+        let TSModuleDeclarationName::Identifier(BindingIdentifier { name: real_name, .. }) =
+            decl.id
         else {
             return None;
         };
