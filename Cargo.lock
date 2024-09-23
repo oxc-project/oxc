@@ -1625,7 +1625,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_linter"
-version = "0.9.6"
+version = "0.9.7"
 dependencies = [
  "aho-corasick",
  "bitflags 2.6.0",
@@ -2018,7 +2018,7 @@ dependencies = [
 
 [[package]]
 name = "oxlint"
-version = "0.9.6"
+version = "0.9.7"
 dependencies = [
  "bpaf",
  "glob",

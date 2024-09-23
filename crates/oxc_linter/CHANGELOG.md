@@ -4,6 +4,41 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.9.7] - 2024-09-23
+
+### Features
+
+- d24985e linter: Add `oxc-security/api-keys` (#5906) (DonIsaac)
+- f9b44c5 linter: Add unicode sets support to `no-useless-escape` rule (#5974) (camchenry)
+- 0f19848 linter: Implement `no-unexpected-multiline` rule (#5911) (camchenry)
+- 16fe383 linter: Implement `no-extend-native` rule (#5867) (Cam McHenry)
+
+### Bug Fixes
+
+- eed9ac7 linter: Include actual span size in `no-regex-spaces` diagnostic (#5957) (camchenry)
+- 40c89c2 linter: Move `promise/avoid-new` to style category (#5961) (DonIsaac)
+
+### Performance
+
+- 608d637 linter: Use `aho-corasick` instead of `regex` for string matching in `jsx-a11y/img-redundant-alt` (#5892) (camchenry)
+- 3148d4b linter: Check file path after checking node kind for `nextjs/no-head-element` (#5868) (Cam McHenry)
+
+### Refactor
+
+- 0a5a4a9 linter: Use parsed patterns for `unicorn/no-hex-escape` (#5985) (camchenry)
+- 2cf2edd linter: Use parsed patterns in `no-empty-character-class` rule (#5980) (camchenry)
+- a9a8e2a linter: Use regex parser in `eslint/no-regex-spaces` (#5952) (camchenry)
+- 05f592b linter: Use parsed patterns in `unicorn/prefer-string-starts-ends-with` (#5949) (camchenry)
+- 3273b64 linter: Use parsed patterns for `unicorn/prefer-string-replace-all` rule (#5943) (camchenry)
+- ba7b01f linter: Add `LinterBuilder` (#5714) (DonIsaac)
+- db4f16a semantic: Call `with_trivias` before `build_with_jsdoc` (#5875) (Boshen)
+- 3d13c6d semantic: Impl `IntoIterator` for `&AstNodes` (#5873) (DonIsaac)
+
+### Testing
+
+- b681c9a linter: Import test cases for `no-empty-character-class` (#5981) (camchenry)
+- 767602b linter: Add regression test for #5227 (#5975) (camchenry)
+
 ## [0.9.6] - 2024-09-18
 
 ### Features
