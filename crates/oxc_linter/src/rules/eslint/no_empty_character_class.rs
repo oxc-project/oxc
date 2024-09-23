@@ -130,6 +130,15 @@ fn test() {
         ("var foo = /[\\]]/s;", None),
         ("var foo = /[\\]]/d;", None),
         ("var foo = /\\[]/", None),
+        // ES2024
+        ("var foo = /[[^]]/v;", None),    // { "ecmaVersion": 2024 }
+        ("var foo = /[[\\]]]/v;", None),  // { "ecmaVersion": 2024 }
+        ("var foo = /[[\\[]]/v;", None),  // { "ecmaVersion": 2024 }
+        ("var foo = /[a--b]/v;", None),   // { "ecmaVersion": 2024 }
+        ("var foo = /[a&&b]/v;", None),   // { "ecmaVersion": 2024 }
+        ("var foo = /[[a][b]]/v;", None), // { "ecmaVersion": 2024 }
+        ("var foo = /[\\q{}]/v;", None),  // { "ecmaVersion": 2024 }
+        ("var foo = /[[^]--\\p{ASCII}]/v;", None), // { "ecmaVersion": 2024 }
     ];
 
     let fail = vec![
@@ -143,6 +152,16 @@ fn test() {
         ("var foo = /[]]/d;", None),
         ("var foo = /[[][]]/v;", None),
         ("var foo = /[[]]|[]/v;", None),
+        ("var foo = /[(]\\u{0}*[]/u;", None), // { "ecmaVersion": 2015 }
+        // ES2024
+        ("var foo = /[]/v;", None),           // { "ecmaVersion": 2024 }
+        ("var foo = /[[]]/v;", None),         // { "ecmaVersion": 2024 }
+        ("var foo = /[[a][]]/v;", None),      // { "ecmaVersion": 2024 }
+        ("var foo = /[a[[b[]c]]d]/v;", None), // { "ecmaVersion": 2024 }
+        ("var foo = /[a--[]]/v;", None),      // { "ecmaVersion": 2024 }
+        ("var foo = /[[]--b]/v;", None),      // { "ecmaVersion": 2024 }
+        ("var foo = /[a&&[]]/v;", None),      // { "ecmaVersion": 2024 }
+        ("var foo = /[[]&&b]/v;", None),      // { "ecmaVersion": 2024 }
     ];
 
     Tester::new(NoEmptyCharacterClass::NAME, pass, fail).test_and_snapshot();
