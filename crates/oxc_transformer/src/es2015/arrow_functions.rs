@@ -82,7 +82,10 @@ use oxc_syntax::{
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 use serde::Deserialize;
 
-use crate::{context::Ctx, helpers::bindings::BoundIdentifier};
+use crate::{
+    context::Ctx,
+    helpers::{bindings::BoundIdentifier, stack::SparseStack},
+};
 
 #[derive(Debug, Default, Clone, Deserialize)]
 pub struct ArrowFunctionsOptions {
@@ -97,17 +100,16 @@ pub struct ArrowFunctionsOptions {
 pub struct ArrowFunctions<'a> {
     ctx: Ctx<'a>,
     _options: ArrowFunctionsOptions,
-    this_var_stack: std::vec::Vec<Option<BoundIdentifier<'a>>>,
+    this_var_stack: SparseStack<BoundIdentifier<'a>>,
 }
 
 impl<'a> ArrowFunctions<'a> {
     pub fn new(options: ArrowFunctionsOptions, ctx: Ctx<'a>) -> Self {
-        Self {
-            ctx,
-            _options: options,
-            // Initial entry for `Program` scope
-            this_var_stack: vec![None],
-        }
+        // Init stack with empty entry for `Program` (instead of pushing entry in `enter_program`)
+        let mut this_var_stack = SparseStack::new();
+        this_var_stack.push(None);
+
+        Self { ctx, _options: options, this_var_stack }
     }
 }
 
@@ -118,10 +120,10 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
     /// Insert `var _this = this;` for the global scope.
     fn exit_program(&mut self, program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
         assert!(self.this_var_stack.len() == 1);
-        let this_var = self.this_var_stack.pop().unwrap();
-        if let Some(this_var) = this_var {
+        if let Some(this_var) = self.this_var_stack.take() {
             self.insert_this_var_statement_at_the_top_of_statements(&mut program.body, &this_var);
         }
+        debug_assert!(self.this_var_stack.len() == 1);
     }
 
     fn enter_function(&mut self, _func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
@@ -140,8 +142,7 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
     /// ```
     /// Insert the var _this = this; statement outside the arrow function
     fn exit_function(&mut self, func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
-        let this_var = self.this_var_stack.pop().unwrap();
-        if let Some(this_var) = this_var {
+        if let Some(this_var) = self.this_var_stack.pop() {
             let Some(body) = &mut func.body else { unreachable!() };
 
             self.insert_this_var_statement_at_the_top_of_statements(
@@ -156,8 +157,7 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
     }
 
     fn exit_static_block(&mut self, block: &mut StaticBlock<'a>, _ctx: &mut TraverseCtx<'a>) {
-        let this_var = self.this_var_stack.pop().unwrap();
-        if let Some(this_var) = this_var {
+        if let Some(this_var) = self.this_var_stack.pop() {
             self.insert_this_var_statement_at_the_top_of_statements(&mut block.body, &this_var);
         }
     }
@@ -221,8 +221,7 @@ impl<'a> ArrowFunctions<'a> {
         // `this` can be in scope at a time. We could create a single `_this` UID and reuse it in each
         // scope. But this does not match output for some of Babel's test cases.
         // <https://github.com/oxc-project/oxc/pull/5840>
-        let this_var = self.this_var_stack.last_mut().unwrap();
-        if this_var.is_none() {
+        let this_var = self.this_var_stack.get_or_init(|| {
             let target_scope_id = ctx
                 .scopes()
                 .ancestors(arrow_scope_id)
@@ -236,14 +235,13 @@ impl<'a> ArrowFunctions<'a> {
                 })
                 .unwrap();
 
-            this_var.replace(BoundIdentifier::new_uid(
+            BoundIdentifier::new_uid(
                 "this",
                 target_scope_id,
                 SymbolFlags::FunctionScopedVariable,
                 ctx,
-            ));
-        }
-        let this_var = this_var.as_ref().unwrap();
+            )
+        });
         Some(this_var.create_spanned_read_reference(span, ctx))
     }
 

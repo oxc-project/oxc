@@ -27,6 +27,7 @@ mod typescript;
 mod helpers {
     pub mod bindings;
     pub mod module_imports;
+    pub mod stack;
 }
 
 use std::{path::Path, rc::Rc};
