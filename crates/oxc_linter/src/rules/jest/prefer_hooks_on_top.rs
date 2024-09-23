@@ -1,10 +1,9 @@
-use std::collections::HashMap;
-
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeId;
 use oxc_span::Span;
+use rustc_hash::FxHashMap;
 
 use crate::{
     context::LintContext,
@@ -141,7 +140,7 @@ declare_oxc_lint!(
 
 impl Rule for PreferHooksOnTop {
     fn run_once(&self, ctx: &LintContext) {
-        let mut hooks_contexts: HashMap<ScopeId, bool> = HashMap::default();
+        let mut hooks_contexts: FxHashMap<ScopeId, bool> = FxHashMap::default();
         let mut possibles_jest_nodes = collect_possible_jest_call_node(ctx);
         possibles_jest_nodes.sort_by_key(|n| n.node.id());
 
@@ -154,7 +153,7 @@ impl Rule for PreferHooksOnTop {
 impl PreferHooksOnTop {
     fn run<'a>(
         possible_jest_node: &PossibleJestNode<'a, '_>,
-        hooks_context: &mut HashMap<ScopeId, bool>,
+        hooks_context: &mut FxHashMap<ScopeId, bool>,
         ctx: &LintContext<'a>,
     ) {
         let node = possible_jest_node.node;

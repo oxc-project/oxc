@@ -5,9 +5,10 @@
 
 mod command;
 
-use std::collections::{HashMap, VecDeque};
+use std::collections::VecDeque;
 
 use oxc_allocator::Allocator;
+use rustc_hash::FxHashMap;
 
 use self::command::{Command, Indent, Mode};
 use crate::{
@@ -27,7 +28,7 @@ pub struct Printer<'a> {
     cmds: Vec<Command<'a>>,
 
     line_suffix: Vec<Command<'a>>,
-    group_mode_map: HashMap<GroupId, Mode>,
+    group_mode_map: FxHashMap<GroupId, Mode>,
 
     // states
     new_line: &'static str,
@@ -59,7 +60,7 @@ impl<'a> Printer<'a> {
             pos: 0,
             cmds,
             line_suffix: vec![],
-            group_mode_map: HashMap::new(),
+            group_mode_map: FxHashMap::default(),
             new_line: options.end_of_line.as_str(),
             allocator,
         }

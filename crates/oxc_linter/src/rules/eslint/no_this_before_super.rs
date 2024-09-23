@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 use oxc_ast::{
     ast::{Argument, Expression, MethodDefinitionKind},
@@ -12,6 +12,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
+use rustc_hash::FxHashMap;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -62,7 +63,8 @@ impl Rule for NoThisBeforeSuper {
         // first pass -> find super calls and local violations
         let mut wanted_nodes = Vec::new();
         let mut basic_blocks_with_super_called = HashSet::<BasicBlockId>::new();
-        let mut basic_blocks_with_local_violations = HashMap::<BasicBlockId, Vec<NodeId>>::new();
+        let mut basic_blocks_with_local_violations =
+            FxHashMap::<BasicBlockId, Vec<NodeId>>::default();
         for node in semantic.nodes() {
             match node.kind() {
                 AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
@@ -153,7 +155,7 @@ impl NoThisBeforeSuper {
         cfg: &ControlFlowGraph,
         id: BasicBlockId,
         basic_blocks_with_super_called: &HashSet<BasicBlockId>,
-        basic_blocks_with_local_violations: &HashMap<BasicBlockId, Vec<NodeId>>,
+        basic_blocks_with_local_violations: &FxHashMap<BasicBlockId, Vec<NodeId>>,
         follow_join: bool,
     ) -> Vec<DefinitelyCallsThisBeforeSuper> {
         neighbors_filtered_by_edge_weight(
@@ -212,7 +214,7 @@ impl NoThisBeforeSuper {
         cfg: &ControlFlowGraph,
         output: Vec<DefinitelyCallsThisBeforeSuper>,
         basic_blocks_with_super_called: &HashSet<BasicBlockId>,
-        basic_blocks_with_local_violations: &HashMap<BasicBlockId, Vec<NodeId>>,
+        basic_blocks_with_local_violations: &FxHashMap<BasicBlockId, Vec<NodeId>>,
     ) -> bool {
         // Deciding whether we definitely call this before super in all
         // codepaths is as simple as seeing if any individual codepath

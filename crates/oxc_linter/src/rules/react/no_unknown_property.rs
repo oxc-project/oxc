@@ -1,4 +1,4 @@
-use std::{borrow::Cow, collections::hash_map::HashMap};
+use std::borrow::Cow;
 
 use cow_utils::CowUtils;
 use itertools::Itertools;
@@ -12,7 +12,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use phf::{phf_map, phf_set, Map, Set};
 use regex::Regex;
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 use serde::Deserialize;
 
 use crate::{
@@ -426,11 +426,11 @@ const DOM_PROPERTIES_IGNORE_CASE: [&str; 5] = [
     "webkitDirectory",
 ];
 
-static DOM_PROPERTIES_LOWER_MAP: Lazy<HashMap<String, &'static str>> = Lazy::new(|| {
+static DOM_PROPERTIES_LOWER_MAP: Lazy<FxHashMap<String, &'static str>> = Lazy::new(|| {
     DOM_PROPERTIES_NAMES
         .iter()
         .map(|it| (it.cow_to_lowercase().into_owned(), *it))
-        .collect::<HashMap<_, _>>()
+        .collect::<FxHashMap<_, _>>()
 });
 
 ///

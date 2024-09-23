@@ -1572,6 +1572,7 @@ version = "0.30.0"
 dependencies = [
  "miette",
  "owo-colors",
+ "rustc-hash",
  "textwrap",
  "unicode-width",
 ]
@@ -1796,6 +1797,7 @@ dependencies = [
  "oxc_span",
  "oxc_syntax",
  "pico-args",
+ "rustc-hash",
 ]
 
 [[package]]
