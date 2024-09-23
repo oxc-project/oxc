@@ -197,6 +197,13 @@ impl<'a> TSModuleDeclarationName<'a> {
             Self::StringLiteral(lit) => lit.value.clone(),
         }
     }
+
+    pub fn binding_identifier(&self) -> Option<&BindingIdentifier<'a>> {
+        match self {
+            Self::Identifier(ident) => Some(ident),
+            Self::StringLiteral(_) => None,
+        }
+    }
 }
 
 impl<'a> fmt::Display for TSModuleDeclarationName<'a> {
