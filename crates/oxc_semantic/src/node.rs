@@ -110,6 +110,7 @@ pub struct AstNodes<'a> {
 }
 
 impl<'a> AstNodes<'a> {
+    /// Iterate over all [`AstNode`]s in this AST.
     pub fn iter(&self) -> impl Iterator<Item = &AstNode<'a>> + '_ {
         self.nodes.iter()
     }

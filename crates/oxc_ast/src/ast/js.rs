@@ -1725,6 +1725,15 @@ pub struct ArrayPattern<'a> {
     pub rest: Option<Box<'a, BindingRestElement<'a>>>,
 }
 
+/// A `...rest` binding in an [array](ArrayPattern) or [object](ObjectPattern) destructure.
+///
+/// ## Examples
+/// ```ts
+/// const [a, ...rest] = [1, 2, 3];
+/// //           ^^^^  argument
+/// const { x, y, ...others} = foo.bar();
+/// //               ^^^^^^  argument
+/// ```
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
@@ -1736,7 +1745,41 @@ pub struct BindingRestElement<'a> {
     pub argument: BindingPattern<'a>,
 }
 
-/// Function Definitions
+/// Function Statement or Expression
+///
+/// Includes generator functions and function-valued class properties.
+/// Arrow functions are represented by [`ArrowFunctionExpression`].
+///
+/// # Examples
+/// ```ts
+/// //    id ___             ____ return_type
+/// function foo(a: number): void {
+/// //           ^^^^^^^^^ params
+///     console.log(a);
+/// }
+/// ```
+///
+/// ```ts
+/// // `async` and `generator` are true
+/// async function* foo() {
+///     yield 1;
+/// }
+/// ```
+///
+/// ```js
+/// // function.id is None
+/// // use function.r#type to check if a node is a function expression.
+/// const foo = function() { }
+/// ```
+///
+/// ```ts
+/// // Function overloads will not have a body
+/// function add(a: number, b: number): number; // <-- No body
+/// function add(a: string, b: string): string; // <-- No body
+/// function add(a: any, b: any): any {         // <-- Body is between `{}`, inclusive.
+///    return a + b;
+/// }
+/// ```
 #[ast(visit)]
 #[scope(
     // `flags` passed in to visitor via parameter defined by `#[visit(args(flags = ...))]` on parents
@@ -1751,7 +1794,14 @@ pub struct Function<'a> {
     pub r#type: FunctionType,
     #[serde(flatten)]
     pub span: Span,
+    /// The function identifier. [`None`] for anonymous function expressions.
     pub id: Option<BindingIdentifier<'a>>,
+    /// Is this a generator function?
+    ///
+    /// ```ts
+    /// function* foo() { } // <- generator: true
+    /// function bar() { }  // <- generator: false
+    /// ```
     pub generator: bool,
     pub r#async: bool,
     pub declare: bool,
@@ -1761,19 +1811,36 @@ pub struct Function<'a> {
     /// The JavaScript specification states that you cannot have a parameter called `this`,
     /// and so TypeScript uses that syntax space to let you declare the type for `this` in the function body.
     ///
-    /// ```TypeScript
+    /// ```ts
     /// interface DB {
-    ///   filterUsers(filter: (this: User) => boolean): User[];
+    ///     filterUsers(filter: (this: User) => boolean): User[];
+    ///     //                   ^^^^
     /// }
     ///
     /// const db = getDB();
     /// const admins = db.filterUsers(function (this: User) {
-    ///   return this.admin;
+    ///     return this.admin;
     /// });
     /// ```
     pub this_param: Option<Box<'a, TSThisParameter<'a>>>,
+    /// Function parameters.
+    ///
+    /// Does not include `this` parameters used by some TypeScript functions.
     pub params: Box<'a, FormalParameters<'a>>,
+    /// The TypeScript return type annotation.
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
+    /// The function body.
+    ///
+    /// [`None`] for function declarations, e.g.
+    /// ```ts
+    /// // TypeScript function declarations have no body
+    /// declare function foo(a: number): number;
+    ///
+    /// function bar(a: number): number; // <- overloads have no body
+    /// function bar(a: number): number {
+    ///     return a;
+    /// }
+    /// ```
     pub body: Option<Box<'a, FunctionBody<'a>>>,
     #[serde(skip)]
     #[clone_in(default)]
