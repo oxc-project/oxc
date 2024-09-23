@@ -4,23 +4,23 @@ Original   | Minified   | esbuild    | Gzip       | esbuild
 
 173.90 kB  | 61.79 kB   | 59.82 kB   | 19.57 kB   | 19.33 kB   | moment.js 
 
-287.63 kB  | 92.91 kB   | 90.07 kB   | 32.33 kB   | 31.95 kB   | jquery.js 
+287.63 kB  | 92.89 kB   | 90.07 kB   | 32.32 kB   | 31.95 kB   | jquery.js 
 
-342.15 kB  | 122.95 kB  | 118.14 kB  | 45.03 kB   | 44.37 kB   | vue.js    
+342.15 kB  | 122.41 kB  | 118.14 kB  | 44.77 kB   | 44.37 kB   | vue.js    
 
-544.10 kB  | 73.57 kB   | 72.48 kB   | 26.15 kB   | 26.20 kB   | lodash.js 
+544.10 kB  | 73.54 kB   | 72.48 kB   | 26.13 kB   | 26.20 kB   | lodash.js 
 
-555.77 kB  | 274.81 kB  | 270.13 kB  | 91.40 kB   | 90.80 kB   | d3.js     
+555.77 kB  | 277.01 kB  | 270.13 kB  | 91.22 kB   | 90.80 kB   | d3.js     
 
-1.01 MB    | 471.67 kB  | 458.89 kB  | 127.55 kB  | 126.71 kB  | bundle.min.js
+1.01 MB    | 468.10 kB  | 458.89 kB  | 126.67 kB  | 126.71 kB  | bundle.min.js
 
-1.25 MB    | 673.75 kB  | 646.76 kB  | 166.76 kB  | 163.73 kB  | three.js  
+1.25 MB    | 663.51 kB  | 646.76 kB  | 163.76 kB  | 163.73 kB  | three.js  
 
-2.14 MB    | 743.40 kB  | 724.14 kB  | 181.95 kB  | 181.07 kB  | victory.js
+2.14 MB    | 742.01 kB  | 724.14 kB  | 181.59 kB  | 181.07 kB  | victory.js
 
 3.20 MB    | 1.03 MB    | 1.01 MB    | 332.45 kB  | 331.56 kB  | echarts.js
 
-6.69 MB    | 2.42 MB    | 2.31 MB    | 503.16 kB  | 488.28 kB  | antd.js   
+6.69 MB    | 2.39 MB    | 2.31 MB    | 496.45 kB  | 488.28 kB  | antd.js   
 
-10.95 MB   | 3.57 MB    | 3.49 MB    | 912.34 kB  | 915.50 kB  | typescript.js
+10.95 MB   | 3.56 MB    | 3.49 MB    | 911.22 kB  | 915.50 kB  | typescript.js
 

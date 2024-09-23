@@ -51,3 +51,24 @@ export declare class PrivateFieldsWithConstructorAssignments {
 	private second;
 	constructor(first: number);
 }
+export declare class PrivateMethodClass {
+	private good;
+}
+export declare class PublicMethodClass {
+	bad(a): void;
+}
+
+
+==================== Errors ====================
+
+  x TS9011: Parameter must have an explicit type annotation with
+  | --isolatedDeclarations.
+    ,-[64:14]
+ 63 | export class PublicMethodClass {
+ 64 |   public bad(a): void {}
+    :              ^
+ 65 | }
+    `----
+
+
+```

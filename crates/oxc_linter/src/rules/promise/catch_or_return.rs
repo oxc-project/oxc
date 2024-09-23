@@ -49,13 +49,16 @@ impl std::ops::Deref for CatchOrReturn {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Ensure that each time a then() is applied to a promise, a catch() is applied as well.
-    /// Exceptions are made if you are returning that promise.
+    /// Ensure that each time a `then()` is applied to a promise, a `catch()`
+    /// must be applied as well. Exceptions are made for promises returned from
+    /// a function.
     ///
     /// ### Why is this bad?
     ///
-    /// Not catching errors in a promise can cause hard to debug problems or missing handling of
-    /// error conditions.
+    /// Not catching errors in a promise can cause hard to debug problems or
+    /// missing handling of error conditions. In the worst case, unhandled
+    /// promise rejections can cause your application to crash.
+    ///
     ///
     /// ### Example
     ///

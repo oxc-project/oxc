@@ -34,6 +34,7 @@ trivia = "trivia"
 xdescribe = "xdescribe"
 seeked = "seeked"
 labeledby = "labeledby"
+hashi = "hashi"
 
 [default.extend-identifiers]
 IIFEs = "IIFEs"

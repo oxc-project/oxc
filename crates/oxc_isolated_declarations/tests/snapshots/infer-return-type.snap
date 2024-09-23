@@ -10,6 +10,7 @@ declare function bar(): number | undefined;
 declare function baz();
 declare function qux(): string;
 declare function quux(): string;
+declare function returnFunctionOrNothing(): (() => number) | undefined;
 
 
 ==================== Errors ====================

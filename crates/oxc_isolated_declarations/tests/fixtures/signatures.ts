@@ -18,3 +18,10 @@ export interface Ref<T = any, S = T> {
   get value(): T
   set value(_: S)
 }
+
+export interface MultipleSetterAndGetter {
+  get ok(): string
+  set ok(_: string)
+  get bad() // infer return type
+  set bad(_: string)
+}

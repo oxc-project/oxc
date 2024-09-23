@@ -31,3 +31,9 @@ export interface Ref<
 	get value(): T;
 	set value(_: S);
 }
+export interface MultipleSetterAndGetter {
+	get ok(): string;
+	set ok(_: string);
+	get bad(): string;
+	set bad(_: string);
+}

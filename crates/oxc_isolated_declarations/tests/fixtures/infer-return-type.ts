@@ -30,3 +30,11 @@ function quux() {
   return `${''}`
 }
 // Inferred type is string
+
+function returnFunctionOrNothing() {
+  if (process.env.NODE_ENV === 'development') {
+    return
+  }
+
+  return () => 0;
+}

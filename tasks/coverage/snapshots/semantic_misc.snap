@@ -1,6 +1,6 @@
 semantic_misc Summary:
-AST Parsed     : 29/29 (100.00%)
-Positive Passed: 17/29 (58.62%)
+AST Parsed     : 30/30 (100.00%)
+Positive Passed: 17/30 (56.67%)
 tasks/coverage/misc/pass/babel-16776-m.js
 semantic error: Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | Export)
@@ -175,6 +175,14 @@ rebuilt        : ScopeId(0): ["Bang"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+
+tasks/coverage/misc/pass/oxc-5955.ts
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["B", "C", "a"]
+rebuilt        : ScopeId(0): ["B", "a"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 
 tasks/coverage/misc/pass/swc-7187.ts
 semantic error: Bindings mismatch:

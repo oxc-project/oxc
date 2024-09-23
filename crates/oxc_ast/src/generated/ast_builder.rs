@@ -3925,7 +3925,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - argument
+    /// - argument: The expression being thrown, e.g. `err` in `throw err;`
     #[inline]
     pub fn statement_throw(self, span: Span, argument: Expression<'a>) -> Statement<'a> {
         Statement::ThrowStatement(self.alloc(self.throw_statement(span, argument)))
@@ -3946,9 +3946,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - block
-    /// - handler
-    /// - finalizer
+    /// - block: Statements in the `try` block
+    /// - handler: The `catch` clause, including the parameter and the block statement
+    /// - finalizer: The `finally` clause
     #[inline]
     pub fn statement_try<T1, T2, T3>(
         self,
@@ -4300,7 +4300,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - id
+    /// - id: Type alias's identifier, e.g. `Foo` in `type Foo = number`.
     /// - type_parameters
     /// - type_annotation
     /// - declare
@@ -4341,10 +4341,10 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     /// - id: The identifier (name) of the interface.
-    /// - extends
-    /// - type_parameters
+    /// - extends: Other interfaces/types this interface extends.
+    /// - type_parameters: Type parameters that get bound to the interface.
     /// - body
-    /// - declare
+    /// - declare: `true` for `declare interface Foo {}`
     #[inline]
     pub fn declaration_ts_interface<T1, T2>(
         self,
@@ -4386,7 +4386,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     /// - id
     /// - members
-    /// - r#const
+    /// - r#const: `true` for const enums
     /// - declare
     #[inline]
     pub fn declaration_ts_enum(
@@ -5183,7 +5183,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - argument
+    /// - argument: The expression being thrown, e.g. `err` in `throw err;`
     #[inline]
     pub fn throw_statement(self, span: Span, argument: Expression<'a>) -> ThrowStatement<'a> {
         ThrowStatement { span, argument }
@@ -5195,7 +5195,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - argument
+    /// - argument: The expression being thrown, e.g. `err` in `throw err;`
     #[inline]
     pub fn alloc_throw_statement(
         self,
@@ -5211,9 +5211,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - block
-    /// - handler
-    /// - finalizer
+    /// - block: Statements in the `try` block
+    /// - handler: The `catch` clause, including the parameter and the block statement
+    /// - finalizer: The `finally` clause
     #[inline]
     pub fn try_statement<T1, T2, T3>(
         self,
@@ -5241,9 +5241,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - block
-    /// - handler
-    /// - finalizer
+    /// - block: Statements in the `try` block
+    /// - handler: The `catch` clause, including the parameter and the block statement
+    /// - finalizer: The `finally` clause
     #[inline]
     pub fn alloc_try_statement<T1, T2, T3>(
         self,
@@ -5266,8 +5266,8 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - param
-    /// - body
+    /// - param: The caught error parameter, e.g. `e` in `catch (e) {}`
+    /// - body: The statements run when an error is caught
     #[inline]
     pub fn catch_clause<T1>(
         self,
@@ -5292,8 +5292,8 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - param
-    /// - body
+    /// - param: The caught error parameter, e.g. `e` in `catch (e) {}`
+    /// - body: The statements run when an error is caught
     #[inline]
     pub fn alloc_catch_clause<T1>(
         self,
@@ -5313,7 +5313,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - pattern
+    /// - pattern: The bound error
     #[inline]
     pub fn catch_parameter(self, span: Span, pattern: BindingPattern<'a>) -> CatchParameter<'a> {
         CatchParameter { span, pattern }
@@ -5325,7 +5325,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - pattern
+    /// - pattern: The bound error
     #[inline]
     pub fn alloc_catch_parameter(
         self,
@@ -7805,10 +7805,10 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     /// - id: The identifier (name) of the interface.
-    /// - extends
-    /// - type_parameters
+    /// - extends: Other interfaces/types this interface extends.
+    /// - type_parameters: Type parameters that get bound to the interface.
     /// - body
-    /// - declare
+    /// - declare: `true` for `declare interface Foo {}`
     #[inline]
     pub fn export_default_declaration_kind_ts_interface_declaration<T1, T2>(
         self,
@@ -7925,7 +7925,7 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     /// - this_span
-    /// - type_annotation
+    /// - type_annotation: Type type the `this` keyword will have in the function
     #[inline]
     pub fn ts_this_parameter<T1>(
         self,
@@ -7950,7 +7950,7 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     /// - this_span
-    /// - type_annotation
+    /// - type_annotation: Type type the `this` keyword will have in the function
     #[inline]
     pub fn alloc_ts_this_parameter<T1>(
         self,
@@ -7972,7 +7972,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     /// - id
     /// - members
-    /// - r#const
+    /// - r#const: `true` for const enums
     /// - declare
     #[inline]
     pub fn ts_enum_declaration(
@@ -7994,7 +7994,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     /// - id
     /// - members
-    /// - r#const
+    /// - r#const: `true` for const enums
     /// - declare
     #[inline]
     pub fn alloc_ts_enum_declaration(
@@ -8168,7 +8168,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: starts at the `:` token and ends at the end of the type annotation
-    /// - type_annotation
+    /// - type_annotation: The actual type in the annotation
     #[inline]
     pub fn ts_type_annotation(
         self,
@@ -8184,7 +8184,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: starts at the `:` token and ends at the end of the type annotation
-    /// - type_annotation
+    /// - type_annotation: The actual type in the annotation
     #[inline]
     pub fn alloc_ts_type_annotation(
         self,
@@ -8717,10 +8717,10 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - check_type
-    /// - extends_type
-    /// - true_type
-    /// - false_type
+    /// - check_type: The type before `extends` in the test expression.
+    /// - extends_type: The type `check_type` is being tested against.
+    /// - true_type: The type evaluated to if the test is true.
+    /// - false_type: The type evaluated to if the test is false.
     #[inline]
     pub fn ts_type_conditional_type(
         self,
@@ -8796,10 +8796,10 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - this_param
-    /// - params
-    /// - return_type
-    /// - type_parameters
+    /// - this_param: `this` parameter
+    /// - params: Function parameters. Akin to [`Function::params`].
+    /// - return_type: Return type of the function.
+    /// - type_parameters: Generic type parameters
     #[inline]
     pub fn ts_type_function_type<T1, T2, T3, T4>(
         self,
@@ -8914,7 +8914,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - type_parameter
+    /// - type_parameter: The type bound when the
     #[inline]
     pub fn ts_type_infer_type<T1>(self, span: Span, type_parameter: T1) -> TSType<'a>
     where
@@ -9180,7 +9180,7 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     /// - operator
-    /// - type_annotation
+    /// - type_annotation: The type being operated on
     #[inline]
     pub fn ts_type_type_operator(
         self,
@@ -9311,7 +9311,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - types
+    /// - types: The types in the union.
     #[inline]
     pub fn ts_type_union_type(self, span: Span, types: Vec<'a, TSType<'a>>) -> TSType<'a> {
         TSType::TSUnionType(self.alloc(self.ts_union_type(span, types)))
@@ -9435,10 +9435,10 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - check_type
-    /// - extends_type
-    /// - true_type
-    /// - false_type
+    /// - check_type: The type before `extends` in the test expression.
+    /// - extends_type: The type `check_type` is being tested against.
+    /// - true_type: The type evaluated to if the test is true.
+    /// - false_type: The type evaluated to if the test is false.
     #[inline]
     pub fn ts_conditional_type(
         self,
@@ -9464,10 +9464,10 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - check_type
-    /// - extends_type
-    /// - true_type
-    /// - false_type
+    /// - check_type: The type before `extends` in the test expression.
+    /// - extends_type: The type `check_type` is being tested against.
+    /// - true_type: The type evaluated to if the test is true.
+    /// - false_type: The type evaluated to if the test is false.
     #[inline]
     pub fn alloc_ts_conditional_type(
         self,
@@ -9489,7 +9489,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - types
+    /// - types: The types in the union.
     #[inline]
     pub fn ts_union_type(self, span: Span, types: Vec<'a, TSType<'a>>) -> TSUnionType<'a> {
         TSUnionType { span, types }
@@ -9501,7 +9501,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - types
+    /// - types: The types in the union.
     #[inline]
     pub fn alloc_ts_union_type(
         self,
@@ -9582,7 +9582,7 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     /// - operator
-    /// - type_annotation
+    /// - type_annotation: The type being operated on
     #[inline]
     pub fn ts_type_operator(
         self,
@@ -9600,7 +9600,7 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     /// - operator
-    /// - type_annotation
+    /// - type_annotation: The type being operated on
     #[inline]
     pub fn alloc_ts_type_operator(
         self,
@@ -10337,12 +10337,12 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - name
-    /// - constraint
-    /// - default
-    /// - r#in
-    /// - out
-    /// - r#const
+    /// - name: The name of the parameter, e.g. `T` in `type Foo<T> = ...`.
+    /// - constraint: Constrains what types can be passed to the type parameter.
+    /// - default: Default value of the type parameter if no type is provided when using the type.
+    /// - r#in: Was an `in` modifier keyword present?
+    /// - out: Was an `out` modifier keyword present?
+    /// - r#const: Was a `const` modifier keyword present?
     #[inline]
     pub fn ts_type_parameter(
         self,
@@ -10363,12 +10363,12 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - name
-    /// - constraint
-    /// - default
-    /// - r#in
-    /// - out
-    /// - r#const
+    /// - name: The name of the parameter, e.g. `T` in `type Foo<T> = ...`.
+    /// - constraint: Constrains what types can be passed to the type parameter.
+    /// - default: Default value of the type parameter if no type is provided when using the type.
+    /// - r#in: Was an `in` modifier keyword present?
+    /// - out: Was an `out` modifier keyword present?
+    /// - r#const: Was a `const` modifier keyword present?
     #[inline]
     pub fn alloc_ts_type_parameter(
         self,
@@ -10424,7 +10424,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - id
+    /// - id: Type alias's identifier, e.g. `Foo` in `type Foo = number`.
     /// - type_parameters
     /// - type_annotation
     /// - declare
@@ -10456,7 +10456,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - id
+    /// - id: Type alias's identifier, e.g. `Foo` in `type Foo = number`.
     /// - type_parameters
     /// - type_annotation
     /// - declare
@@ -10531,10 +10531,10 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     /// - id: The identifier (name) of the interface.
-    /// - extends
-    /// - type_parameters
+    /// - extends: Other interfaces/types this interface extends.
+    /// - type_parameters: Type parameters that get bound to the interface.
     /// - body
-    /// - declare
+    /// - declare: `true` for `declare interface Foo {}`
     #[inline]
     pub fn ts_interface_declaration<T1, T2>(
         self,
@@ -10567,10 +10567,10 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     /// - id: The identifier (name) of the interface.
-    /// - extends
-    /// - type_parameters
+    /// - extends: Other interfaces/types this interface extends.
+    /// - type_parameters: Type parameters that get bound to the interface.
     /// - body
-    /// - declare
+    /// - declare: `true` for `declare interface Foo {}`
     #[inline]
     pub fn alloc_ts_interface_declaration<T1, T2>(
         self,
@@ -11619,7 +11619,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - type_parameter
+    /// - type_parameter: The type bound when the
     #[inline]
     pub fn ts_infer_type<T1>(self, span: Span, type_parameter: T1) -> TSInferType<'a>
     where
@@ -11634,7 +11634,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - type_parameter
+    /// - type_parameter: The type bound when the
     #[inline]
     pub fn alloc_ts_infer_type<T1>(self, span: Span, type_parameter: T1) -> Box<'a, TSInferType<'a>>
     where
@@ -11946,10 +11946,10 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - this_param
-    /// - params
-    /// - return_type
-    /// - type_parameters
+    /// - this_param: `this` parameter
+    /// - params: Function parameters. Akin to [`Function::params`].
+    /// - return_type: Return type of the function.
+    /// - type_parameters: Generic type parameters
     #[inline]
     pub fn ts_function_type<T1, T2, T3, T4>(
         self,
@@ -11980,10 +11980,10 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - this_param
-    /// - params
-    /// - return_type
-    /// - type_parameters
+    /// - this_param: `this` parameter
+    /// - params: Function parameters. Akin to [`Function::params`].
+    /// - return_type: Return type of the function.
+    /// - type_parameters: Generic type parameters
     #[inline]
     pub fn alloc_ts_function_type<T1, T2, T3, T4>(
         self,

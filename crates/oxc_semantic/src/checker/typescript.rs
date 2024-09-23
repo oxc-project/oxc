@@ -45,17 +45,35 @@ pub fn check_variable_declaration(decl: &VariableDeclaration, ctx: &SemanticBuil
     }
 }
 
-fn unexpected_optional(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Unexpected `?` operator").with_label(span)
+fn unexpected_optional(span: Span, type_annotation: Option<&str>) -> OxcDiagnostic {
+    let d = OxcDiagnostic::error("Unexpected `?` operator").with_label(span);
+    if let Some(ty) = type_annotation {
+        d.with_help(format!("If you want an optional type, use `{ty} | undefined` instead."))
+    } else {
+        d
+    }
 }
 
 #[allow(clippy::cast_possible_truncation)]
 pub fn check_variable_declarator(decl: &VariableDeclarator, ctx: &SemanticBuilder<'_>) {
+    // Check for `let x?: number;`
     if decl.id.optional {
-        let start = decl.id.span().end;
-        let Some(offset) = ctx.source_text[start as usize..].find('?') else { return };
+        // NOTE: BindingPattern spans cover the identifier _and_ the type annotation.
+        let start = decl.id.span().start;
+        let Some(offset) = ctx.source_text[start as usize..].find('?') else {
+            debug_assert!(false, "Optional flag not found in source text. This is likely indicates a bug in the parser.");
+            return;
+        };
         let offset = start + offset as u32;
-        ctx.error(unexpected_optional(Span::new(offset, offset)));
+        let span = Span::new(offset, offset);
+        let ty = decl
+            .id
+            .type_annotation
+            .as_ref()
+            .map(|ty| ty.type_annotation.span())
+            .map(|span| &ctx.source_text[span]);
+
+        ctx.error(unexpected_optional(span, ty));
     }
 }
 
