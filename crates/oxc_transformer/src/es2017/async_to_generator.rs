@@ -41,9 +41,7 @@
 
 use crate::context::Ctx;
 use oxc_allocator::CloneIn;
-use oxc_ast::ast::{
-    ArrowFunctionExpression, Expression, FormalParameterKind, Function, Statement, YieldExpression,
-};
+use oxc_ast::ast::{ArrowFunctionExpression, Expression, FormalParameterKind, Function, FunctionType, Statement, YieldExpression};
 use oxc_ast::NONE;
 use oxc_span::{Atom, SPAN};
 use oxc_syntax::reference::ReferenceFlags;
@@ -96,15 +94,24 @@ impl<'a> Traverse<'a> for AsyncToGenerator<'a> {
     fn exit_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
         let babel_helpers_id = ctx.scopes().find_binding(ctx.current_scope_id(), "babelHelpers");
         let callee = Self::get_helper_callee(babel_helpers_id, ctx);
-        let mut target = func.clone_in(ctx.ast.allocator);
-        target.r#async = false;
-        target.generator = true;
-        target.params = ctx.ast.alloc(ctx.ast.formal_parameters(
+        let target = ctx.ast.function(
+            func.r#type.clone(),
             SPAN,
-            FormalParameterKind::FormalParameter,
-            ctx.ast.vec(),
-            NONE,
-        ));
+            func.id.clone(),
+            true,
+            false,
+            false,
+            func.type_parameters.take(),
+            func.this_param.take(),
+            ctx.ast.alloc(ctx.ast.formal_parameters(
+                SPAN,
+                FormalParameterKind::FormalParameter,
+                ctx.ast.vec(),
+                NONE,
+            )),
+            func.return_type.take(),
+            func.body.take()
+        );
         let parameters = {
             let mut items = ctx.ast.vec();
             items.push(ctx.ast.argument_expression(ctx.ast.expression_this(SPAN)));
@@ -117,6 +124,7 @@ impl<'a> Traverse<'a> for AsyncToGenerator<'a> {
         let body = Statement::ReturnStatement(ctx.ast.alloc(returns));
         let body = ctx.ast.function_body(SPAN, ctx.ast.vec(), ctx.ast.vec1(body));
         let body = ctx.ast.alloc(body);
+        func.r#async = false;
         func.body = Some(body);
     }
 
@@ -127,19 +135,30 @@ impl<'a> Traverse<'a> for AsyncToGenerator<'a> {
     ) {
         let babel_helpers_id = ctx.scopes().find_binding(ctx.current_scope_id(), "babelHelpers");
         let callee = Self::get_helper_callee(babel_helpers_id, ctx);
-        let mut target = arrow.clone_in(ctx.ast.allocator);
-        target.r#async = false;
-        target.params = ctx.ast.alloc(ctx.ast.formal_parameters(
+        let body = ctx.ast.function_body(SPAN, ctx.ast.move_vec(&mut arrow.body.directives), ctx.ast.move_vec(&mut arrow.body.statements));
+        let target = ctx.ast.function(
+            FunctionType::FunctionExpression,
             SPAN,
-            FormalParameterKind::FormalParameter,
-            ctx.ast.vec(),
+            None,
+            true,
+            false,
+            false,
+            arrow.type_parameters.take(),
             NONE,
-        ));
+            ctx.ast.alloc(ctx.ast.formal_parameters(
+                SPAN,
+                FormalParameterKind::FormalParameter,
+                ctx.ast.vec(),
+                NONE,
+            )),
+            arrow.return_type.take(),
+            Some(body)
+        );
         let parameters = {
             let mut items = ctx.ast.vec();
             items.push(ctx.ast.argument_expression(ctx.ast.expression_this(SPAN)));
             items.push(ctx.ast.argument_expression(ctx.ast.expression_null_literal(SPAN)));
-            items.push(ctx.ast.argument_expression(ctx.ast.expression_from_arrow_function(target)));
+            items.push(ctx.ast.argument_expression(ctx.ast.expression_from_function(target)));
             items
         };
         let call = ctx.ast.expression_call(SPAN, callee, NONE, parameters, false);
@@ -147,5 +166,6 @@ impl<'a> Traverse<'a> for AsyncToGenerator<'a> {
         let body = Statement::ReturnStatement(ctx.ast.alloc(returns));
         let body = ctx.ast.function_body(SPAN, ctx.ast.vec(), ctx.ast.vec1(body));
         arrow.body = ctx.ast.alloc(body);
+        arrow.r#async = false;
     }
 }

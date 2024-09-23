@@ -330,6 +330,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
                 .push(ctx.ast.statement_return(SPAN, Some(statement.unbox().expression)));
             arrow.expression = false;
         }
+        self.x2_es2017.exit_arrow_function_expression(arrow, ctx);
     }
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
