@@ -50,6 +50,7 @@ jobs:
       - uses: Boshen/setup-rust@main
         with:
           cache-key: "wasm"
+          tools: wasm-pack
 
       - name: Build
         working-directory: wasm/parser
@@ -63,4 +64,4 @@ jobs:
         working-directory: npm/parser-wasm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: pnpm publish --provenance --access public # --tag alpha
+        run: pnpm publish --provenance --access public
