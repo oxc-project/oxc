@@ -133,6 +133,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x1_react.exit_program(program, ctx);
         self.x0_typescript.exit_program(program, ctx);
         self.x2_es2020.exit_program(program, ctx);
+        self.x2_es2016.exit_program(program, ctx);
         self.x3_es2015.exit_program(program, ctx);
     }
 

@@ -27,6 +27,13 @@ impl<'a> ES2016<'a> {
 }
 
 impl<'a> Traverse<'a> for ES2016<'a> {
+    #[inline] // Inline because it's no-op in release mode
+    fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.options.exponentiation_operator {
+            self.exponentiation_operator.exit_program(program, ctx);
+        }
+    }
+
     fn enter_statements(
         &mut self,
         statements: &mut Vec<'a, Statement<'a>>,
