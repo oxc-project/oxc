@@ -1,7 +1,7 @@
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, Visit};
 use oxc_span::SPAN;
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
 use crate::{keep_var::KeepVar, node_util::NodeUtil, tri::Tri, CompressorPass};
 
@@ -22,6 +22,15 @@ impl<'a> Traverse<'a> for PeepholeRemoveDeadCode {
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
         self.dead_code_elimination(stmts, ctx);
+    }
+
+    fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Some(folded_expr) = match expr {
+            Expression::ConditionalExpression(e) => self.try_fold_conditional_expression(e, ctx),
+            _ => None,
+        } {
+            *expr = folded_expr;
+        }
     }
 }
 
@@ -114,22 +123,26 @@ impl<'a> PeepholeRemoveDeadCode {
             Tri::Unknown => {}
         }
     }
+
+    /// Try folding conditional expression (?:) if the condition results of the condition is known.
+    fn try_fold_conditional_expression(
+        &self,
+        expr: &mut ConditionalExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        match ctx.get_boolean_value(&expr.test) {
+            Tri::True => {
+                // Bail `let o = { f() { assert.ok(this !== o); } }; (true ? o.f : false)(); (true ? o.f : false)``;`
+                let parent = ctx.ancestry.parent();
+                if parent.is_tagged_template_expression()
+                    || matches!(parent, Ancestor::CallExpressionCallee(_))
+                {
+                    return None;
+                }
+                Some(ctx.ast.move_expression(&mut expr.consequent))
+            }
+            Tri::False => Some(ctx.ast.move_expression(&mut expr.alternate)),
+            Tri::Unknown => None,
+        }
+    }
 }
-
-// /// <https://github.com/google/closure-compiler/blob/master/test/com/google/javascript/jscomp/PeepholeRemoveDeadCode.java>
-// #[cfg(test)]
-// mod test {
-// use oxc_allocator::Allocator;
-
-// use crate::{tester, CompressOptions};
-
-// fn test(source_text: &str, expected: &str) {
-// let allocator = Allocator::default();
-// let mut pass = super::PeepholeRemoveDeadCode::new();
-// tester::test(&allocator, source_text, expected, &mut pass);
-// }
-
-// fn test_same(source_text: &str) {
-// test(source_text, source_text);
-// }
-// }

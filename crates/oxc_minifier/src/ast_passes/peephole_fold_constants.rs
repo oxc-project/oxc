@@ -113,7 +113,13 @@ impl<'a> PeepholeFoldConstants {
         match expr.operator {
             UnaryOperator::Void => Self::try_reduce_void(expr, ctx),
             UnaryOperator::Typeof => self.try_fold_type_of(expr, ctx),
+            #[allow(clippy::float_cmp)]
             UnaryOperator::LogicalNot => {
+                if let Expression::NumericLiteral(n) = &expr.argument {
+                    if n.value == 0.0 || n.value == 1.0 {
+                        return None;
+                    }
+                }
                 expr.argument.to_boolean().map(|b| ctx.ast.expression_boolean_literal(SPAN, !b))
             }
             // `-NaN` -> `NaN`

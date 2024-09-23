@@ -42,13 +42,24 @@ impl<'a> Compressor<'a> {
             return;
         }
 
-        self.fold_constants(program, &mut ctx);
+        // earlyPeepholeOptimizations
+        // TODO: MinimizeExitPoints
         self.minimize_conditions(program, &mut ctx);
-        self.remove_dead_code(program, &mut ctx);
-        // self.statement_fusion(program, &mut ctx);
         self.substitute_alternate_syntax(program, &mut ctx);
-        self.collapse_variable_declarations(program, &mut ctx);
+        // TODO: PeepholeReplaceKnownMethods
+        self.remove_dead_code(program, &mut ctx);
+        self.fold_constants(program, &mut ctx);
+
+        // latePeepholeOptimizations
+        // TODO: StatementFusion
+        self.remove_dead_code(program, &mut ctx);
+        self.minimize_conditions(program, &mut ctx);
+        self.substitute_alternate_syntax(program, &mut ctx);
+        // TODO: PeepholeReplaceKnownMethods
+        self.fold_constants(program, &mut ctx);
+
         self.exploit_assigns(program, &mut ctx);
+        self.collapse_variable_declarations(program, &mut ctx);
     }
 
     fn dead_code_elimination(self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
