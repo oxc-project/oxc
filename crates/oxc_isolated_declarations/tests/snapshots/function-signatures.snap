@@ -1,0 +1,11 @@
+---
+source: crates/oxc_isolated_declarations/tests/mod.rs
+input_file: crates/oxc_isolated_declarations/tests/fixtures/function-signatures.ts
+---
+```
+==================== .D.TS ====================
+
+export declare function A(): void;
+export declare function B(): (() => void) | undefined;
+export declare function C(x: string): void;
+export declare function C(x: number): void;
