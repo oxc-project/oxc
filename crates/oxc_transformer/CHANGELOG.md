@@ -4,6 +4,62 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.30.0] - 2024-09-23
+
+- c96b712 syntax: [**BREAKING**] Remove `SymbolFlags::ArrowFunction` (#5857) (overlookmotel)
+
+### Features
+
+- 3230ae5 semantic: Add `SemanticBuilder::with_excess_capacity` (#5762) (overlookmotel)
+- a07f03a transformer: Sync `Program::source_type` after transform (#5887) (Boshen)
+
+### Bug Fixes
+
+- 87323c6 transformer: Arrow function transform: prevent stack getting out of sync (#5941) (overlookmotel)
+- 4e9e838 transformer: Fix arrow function transform (#5933) (overlookmotel)
+- 4d5c4f6 transformer: Fix reference flags in logical assignment operator transform (#5903) (overlookmotel)
+- d335a67 transformer: Fix references in logical assignment operator transform (#5896) (overlookmotel)
+- 9758c1a transformer: JSX source: add `var _jsxFileName` statement (#5894) (overlookmotel)
+- 49ee1dc transformer: Arrow function transform handle `this` in arrow function in class static block (#5848) (overlookmotel)
+- 172fa03 transformer: Fix stacks in arrow function transform (#5828) (overlookmotel)
+- d74c7fa transformer: Remove `AstBuilder::copy` from arrow functions transform (#5825) (overlookmotel)
+- 3cc38df transformer/react: React refresh panics when encounter `use` hook (#5768) (Dunqing)
+
+### Performance
+
+- ff7d9c1 transformer: Arrow function transform: calculate whether `this` is in arrow function lazily (#5850) (Dunqing)
+- fd70c4b transformer: Arrow function transform more efficient scope search (#5842) (overlookmotel)
+- 56703a3 transformer: Make branch more predictable in arrow function transform (#5833) (overlookmotel)
+- 36e698b transformer: Call `transform_jsx` in `exit_expression` rather than `enter_expression` (#5751) (Dunqing)
+- aac8316 transformer/react: Improve `is_componentish_name`'s implementation (#5769) (Dunqing)
+
+### Documentation
+
+- 7085829 transformer: Arrow function transform: comment about incomplete implementation (#5945) (overlookmotel)
+- 66b4688 transformer: React: convert docs to standard format (#5891) (overlookmotel)
+- 7f05eed transformer: Add comment about missing features in arrow function transform (#5855) (overlookmotel)
+- 8770647 transformer: Correct docs for arrow function transform (#5854) (overlookmotel)
+
+### Refactor
+
+- 155d7fc transformer: Arrow function transform: ignore type fields when finding enclosing arrow function (#5944) (overlookmotel)
+- 2cf5607 transformer: Split up logical assignment operator transform into functions (#5902) (overlookmotel)
+- 41fbe15 transformer: Internal functions not `pub` in logical assignment operator transform (#5898) (overlookmotel)
+- b11d91c transformer: Remove nested match in logical assignment operator transform (#5897) (overlookmotel)
+- 52c9903 transformer: JSX: use `AstBuilder::vec_from_iter` (#5862) (overlookmotel)
+- 74364ad transformer: JSX: merge `transform_jsx_attribute_item` into `transform_jsx` (#5861) (overlookmotel)
+- d2eaa7d transformer: Reorder match arms in JSX transform (#5860) (overlookmotel)
+- 58a8327 transformer: Simplify match in JSX transform (#5859) (overlookmotel)
+- b9c4564 transformer: Transformer example output semantic + transformer errors (#5852) (overlookmotel)
+- 03e02a0 transformer: Comment about potential improvement to arrow function transform (#5841) (overlookmotel)
+- 40cdad5 transformer: Remove repeat code in arrow function transform (#5837) (overlookmotel)
+- 3dd188c transformer: Deref `SymbolId` immediately (#5836) (overlookmotel)
+- 03a9e1a transformer: Reorder methods in arrow function transform (#5830) (overlookmotel)
+- 4d97184 transformer: Rename vars in arrow function transform (#5827) (overlookmotel)
+- 01c5b7c transformer: Shorten code in arrow functions transform (#5826) (overlookmotel)
+- 85ac3f7 transformer: Arrow functions transform do not wrap function expressions in parentheses (#5824) (overlookmotel)
+- 1c1353b transformer: Use AstBuilder instead of using struct constructor (#5778) (Boshen)
+
 ## [0.29.0] - 2024-09-13
 
 ### Features

@@ -4,6 +4,30 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.30.0] - 2024-09-23
+
+### Features
+
+- e8bf30a ast: Add `Comment::real_span` (#5764) (Boshen)
+- bcdbba3 codegen: Print jsdoc comments that are attached to statements and class elements (#5845) (Boshen)
+- 8e7556f parser: Calculate leading and trailing position for comments (#5785) (Boshen)
+
+### Bug Fixes
+
+- 42dcadf parser: Hashbang comment should not keep the end newline char (#5844) (Boshen)
+
+### Documentation
+
+- 3120c6c parser: Add module and struct level documentation (#5831) (DonIsaac)
+
+### Refactor
+
+- 6dd6f7c ast: Change `Comment` struct (#5783) (Boshen)
+- 31e9db4 parser: Shorten `UniquePromise` code (#5805) (overlookmotel)
+- 2322b8b parser: Remove dead code warning when running tests (#5804) (overlookmotel)
+- 4abfa76 parser: Add `--ast` and `--comments` to example (Boshen)
+- a4b55bf parser: Use AstBuilder (#5743) (Boshen)
+
 ## [0.29.0] - 2024-09-13
 
 ### Features

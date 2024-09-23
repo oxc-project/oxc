@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.30.0] - 2024-09-23
+
+### Testing
+
+- 84b7d1a index: Add unit tests to `oxc_index` (#5979) (DonIsaac)
+
 ## [0.29.0] - 2024-09-13
 
 - 71116a1 index: [**BREAKING**] Remove ability to index `IndexVec` with `usize` (#5733) (overlookmotel)

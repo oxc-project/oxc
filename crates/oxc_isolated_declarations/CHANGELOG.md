@@ -4,6 +4,45 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.30.0] - 2024-09-23
+
+### Features
+
+- 4a62703 isolated-declarations: Handle `export` in the `namespace` correctly (#5950) (Dunqing)
+- 84a5816 isolated_declarations: Add `stripInternal` (#5878) (Boshen)
+- dfbde2c isolated_declarations: Print jsdoc comments (#5858) (Boshen)
+
+### Bug Fixes
+
+- 5901d2a codegen: Various spacing issues (#5820) (Boshen)
+- fd1c46c isolated-declarations: Infer failed if there are two setter/getter methods that need to be inferred (#5967) (Dunqing)
+- 6df82ee isolated-declarations: False positive for class private method that has arguments without type annotations (#5964) (Dunqing)
+- 6a9e71d isolated-declarations: Wrap TSFunctionType in parentheses if it is inside the `TSUnionType` (#5963) (Dunqing)
+- ea32d5b isolated-declarations: Should print constructor assignments first (#5934) (Dunqing)
+- 0f96b59 isolated-declarations: Missing print comments in class's private method (#5931) (Dunqing)
+- 8780c54 isolated-declarations: Do not union a undefined when the param type is any or unknown (#5930) (Dunqing)
+- f07ff14 isolated-declarations: Should not transform signature that has type annotation (#5927) (Dunqing)
+- b6a9178 isolated-declarations: Don't collect references when `ExportNamedDeclaration` has source (#5926) (Dunqing)
+- 756a571 isolated-declarations: Missing empty export when has an export declare (#5925) (Dunqing)
+- e148c80 isolated_declarations: Try fix fixtures (Boshen)
+- 9b3f763 isolated_declarations: Try fix new line issue (Boshen)
+- ee748b0 isolated_declarations: Fix fixture spacing (Boshen)
+
+### Performance
+
+- cd34f07 isolated-declarations: Combine type/value bindings and type/value references into one (#5968) (Dunqing)
+
+### Refactor
+
+- c84bd28 isolated-declarations: Simplify to infer the getter and setter methods (#5966) (Dunqing)
+- 67b4220 isolated-declarations: Simplify handling VariableDeclaration transform (#5916) (Dunqing)
+- 2fd5c2a isolated-declarations: Pre-filter statements that do not need to be transformed (#5909) (Dunqing)
+- 1c1353b transformer: Use AstBuilder instead of using struct constructor (#5778) (Boshen)
+
+### Testing
+
+- d6cbbe7 isolated-declarations: Arrow function unions in return signature (#5973) (DonIsaac)
+
 ## [0.29.0] - 2024-09-13
 
 ### Features

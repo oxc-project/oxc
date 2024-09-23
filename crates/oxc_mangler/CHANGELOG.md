@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.30.0] - 2024-09-23
+
+### Bug Fixes
+
+- 362c427 mangler,codegen: Do not mangle top level symbols (#5965) (Boshen)
+
+### Performance
+
+- c477424 mangler: Use `sort_unstable_by_key` instead of `sort_by` (#5948) (Boshen)
+
 ## [0.28.0] - 2024-09-11
 
 - b060525 semantic: [**BREAKING**] Remove `source_type` argument from `SemanticBuilder::new` (#5553) (Boshen)
