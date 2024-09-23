@@ -310,6 +310,10 @@ impl<'a> IsolatedDeclarations<'a> {
                         entry.1 = Some(&mut first_param.pattern.type_annotation);
                     }
                     MethodDefinitionKind::Get => {
+                        if method.accessibility.is_some_and(TSAccessibility::is_private) {
+                            continue;
+                        }
+
                         let function = &mut method.value;
                         if function.return_type.is_none() {
                             function.return_type = self.infer_function_return_type(function);
