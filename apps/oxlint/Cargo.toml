@@ -1,6 +1,6 @@
 [package]
 name = "oxlint"
-version = "0.9.6"
+version = "0.9.7"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
