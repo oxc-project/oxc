@@ -76,7 +76,7 @@ impl<'a> LogicalAssignmentOperators<'a> {
 impl<'a> Traverse<'a> for LogicalAssignmentOperators<'a> {
     #[inline] // Inline because it's no-op in release mode
     fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
-        debug_assert!(self.var_declarations.is_empty());
+        debug_assert!(self.var_declarations.len() == 1);
     }
 
     fn enter_statements(

@@ -105,11 +105,8 @@ pub struct ArrowFunctions<'a> {
 
 impl<'a> ArrowFunctions<'a> {
     pub fn new(options: ArrowFunctionsOptions, ctx: Ctx<'a>) -> Self {
-        // Init stack with empty entry for `Program` (instead of pushing entry in `enter_program`)
-        let mut this_var_stack = SparseStack::new();
-        this_var_stack.push(None);
-
-        Self { ctx, _options: options, this_var_stack }
+        // `SparseStack` is created with 1 empty entry, for `Program`
+        Self { ctx, _options: options, this_var_stack: SparseStack::new() }
     }
 }
 

@@ -3,6 +3,10 @@
 /// Functionally equivalent to a stack implemented as `Vec<Option<T>>`, but more memory-efficient
 /// in cases where majority of entries in the stack will be empty (`None`).
 ///
+/// Stack is initialized with a single entry which can never be popped off.
+/// If `Program` has a entry on the stack, can use this initial entry for it. Get value for `Program`
+/// in `exit_program` visitor with `SparseStack::take` instead of `SparseStack::pop`.
+///
 /// The stack is stored as 2 arrays:
 /// 1. `has_values` - Records whether an entry on the stack has a value or not (`Some` or `None`).
 /// 2. `values` - Where the stack entry *does* have a value, it's stored in this array.
@@ -25,7 +29,10 @@ pub struct SparseStack<T> {
 impl<T> SparseStack<T> {
     /// Create new `SparseStack`.
     pub fn new() -> Self {
-        Self { has_values: vec![], values: vec![] }
+        // `has_values` starts with a single empty entry, which will never be popped off.
+        // This means `take`, `get_or_init`, and `get_mut_or_init` can all be infallible,
+        // as there's always an entry on the stack to read.
+        Self { has_values: vec![false], values: vec![] }
     }
 
     /// Push an entry to the stack.
@@ -43,9 +50,28 @@ impl<T> SparseStack<T> {
     /// Pop last entry from the stack.
     ///
     /// # Panics
-    /// Panics if the stack is empty.
+    /// Panics if the stack has only 1 entry on it.
+    #[inline]
     pub fn pop(&mut self) -> Option<T> {
-        let has_value = self.has_values.pop().unwrap();
+        // SAFETY: `self.has_values` starts with 1 entry. Only `pop` removes entries from it.
+        // We check that popping an entry does not leave the stack empty before performing the pop.
+        // So `self.has_values` can never be left in an empty state.
+        //
+        // This would be equivalent:
+        // ```
+        // assert!(self.has_values.len() > 1);
+        // self.has_values.pop().unwrap()
+        // ```
+        // But checking `original_len > 1` is 1 more CPU op than decrementing length first,
+        // and then checking for `new_len > 0`. https://godbolt.org/z/eqx385E5K
+        let has_value = unsafe {
+            let new_len = self.has_values.len() - 1;
+            assert!(new_len > 0);
+            let has_value = *self.has_values.get_unchecked(new_len);
+            self.has_values.set_len(new_len);
+            has_value
+        };
+
         if has_value {
             debug_assert!(!self.values.is_empty());
             // SAFETY: Last `self.has_values` is only `true` if there's a corresponding value in `self.values`.
@@ -60,11 +86,12 @@ impl<T> SparseStack<T> {
     }
 
     /// Take value from last entry on the stack.
-    ///
-    /// # Panics
-    /// Panics if the stack is empty.
+    #[inline]
     pub fn take(&mut self) -> Option<T> {
-        let has_value = self.has_values.last_mut().unwrap();
+        debug_assert!(!self.has_values.is_empty());
+        // SAFETY: `self.has_values` starts with 1 entry. Only `pop` removes entries from it,
+        // and it ensures `self.has_values` always has at least one entry.
+        let has_value = unsafe { self.has_values.last_mut().unwrap_unchecked() };
         if *has_value {
             *has_value = false;
 
@@ -82,11 +109,12 @@ impl<T> SparseStack<T> {
 
     /// Initialize the value for top entry on the stack, if it has no value already.
     /// Return reference to value.
-    ///
-    /// # Panics
-    /// Panics if the stack is empty.
+    #[inline]
     pub fn get_or_init<I: FnOnce() -> T>(&mut self, init: I) -> &T {
-        let has_value = self.has_values.last_mut().unwrap();
+        debug_assert!(!self.has_values.is_empty());
+        // SAFETY: `self.has_values` starts with 1 entry. Only `pop` removes entries from it,
+        // and it ensures `self.has_values` always has at least one entry.
+        let has_value = unsafe { self.has_values.last_mut().unwrap_unchecked() };
         if !*has_value {
             *has_value = true;
             self.values.push(init());
@@ -102,11 +130,12 @@ impl<T> SparseStack<T> {
 
     /// Initialize the value for top entry on the stack, if it has no value already.
     /// Return mutable reference to value.
-    ///
-    /// # Panics
-    /// Panics if the stack is empty.
+    #[inline]
     pub fn get_mut_or_init<I: FnOnce() -> T>(&mut self, init: I) -> &mut T {
-        let has_value = self.has_values.last_mut().unwrap();
+        debug_assert!(!self.has_values.is_empty());
+        // SAFETY: `self.has_values` starts with 1 entry. Only `pop` removes entries from it,
+        // and it ensures `self.has_values` always has at least one entry.
+        let has_value = unsafe { self.has_values.last_mut().unwrap_unchecked() };
         if !*has_value {
             *has_value = true;
             self.values.push(init());
@@ -120,14 +149,10 @@ impl<T> SparseStack<T> {
     }
 
     /// Get number of entries on the stack.
+    ///
+    /// Number of entries is always at least 1. Stack is never empty.
     #[inline]
     pub fn len(&self) -> usize {
         self.has_values.len()
-    }
-
-    /// Returns `true` if stack is empty.
-    #[inline]
-    pub fn is_empty(&self) -> bool {
-        self.has_values.is_empty()
     }
 }
