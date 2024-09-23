@@ -16,14 +16,6 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-module/globa
     "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
-    "symbols": [
-      {
-        "flags": "SymbolFlags(NameSpaceModule | Ambient)",
-        "id": 0,
-        "name": "global",
-        "node": "TSModuleDeclaration(global)",
-        "references": []
-      }
-    ]
+    "symbols": []
   }
 ]

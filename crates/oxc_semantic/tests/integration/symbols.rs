@@ -449,3 +449,19 @@ fn test_tagged_templates() {
     .has_number_of_writes(0)
     .test();
 }
+
+#[test]
+fn test_module_like_declarations() {
+    SemanticTester::ts("namespace A { export const x = 1; }")
+        .has_root_symbol("A")
+        .contains_flags(SymbolFlags::NameSpaceModule)
+        .test();
+
+    let test = SemanticTester::ts("declare global { interface Window { x: number; } }");
+    let semantic = test.build();
+    let global = semantic.symbols().names.iter().find(|name| *name == "global");
+    assert!(
+        global.is_none(),
+        "A symbol should not be created for global augmentation declarations."
+    );
+}

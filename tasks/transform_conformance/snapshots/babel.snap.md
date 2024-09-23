@@ -2701,14 +2701,14 @@ Missing SymbolId: X
 Missing SymbolId: _X
 Missing ReferenceId: X
 Missing ReferenceId: X
-Bindings mismatch:
-after transform: ScopeId(0): ["X", "global", "i18n"]
-rebuilt        : ScopeId(0): ["X", "i18n"]
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(2), SymbolId(4)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(3)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Binding symbols mismatch:
-after transform: ScopeId(3): [SymbolId(4), SymbolId(6)]
+after transform: ScopeId(3): [SymbolId(3), SymbolId(5)]
 rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2)]
 
 * namespace/empty-removed/input.ts
