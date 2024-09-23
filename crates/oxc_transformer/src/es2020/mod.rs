@@ -31,6 +31,13 @@ impl<'a> ES2020<'a> {
 }
 
 impl<'a> Traverse<'a> for ES2020<'a> {
+    #[inline] // Inline because it's no-op in release mode
+    fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.options.nullish_coalescing_operator {
+            self.nullish_coalescing_operator.exit_program(program, ctx);
+        }
+    }
+
     fn enter_statements(
         &mut self,
         statements: &mut Vec<'a, Statement<'a>>,
