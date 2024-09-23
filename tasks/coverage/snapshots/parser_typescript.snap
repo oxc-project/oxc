@@ -3,7 +3,7 @@ commit: a709f989
 parser_typescript Summary:
 AST Parsed     : 6469/6479 (99.85%)
 Positive Passed: 6456/6479 (99.65%)
-Negative Passed: 1225/5715 (21.43%)
+Negative Passed: 1228/5715 (21.49%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration10.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration11.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration13.ts
@@ -1664,7 +1664,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parseCommaSe
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parseCommaSeparatedNewlineString.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parseImportAttributesError.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parseInvalidNonNullableTypes.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parseInvalidNullableTypes.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parseJsxExtends2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parseTypes.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/partialDiscriminatedUnionMemberHasGoodError.ts
@@ -4310,10 +4309,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tup
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/emptyTuples/emptyTuplesTypeAssertion01.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/emptyTuples/emptyTuplesTypeAssertion02.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/indexerWithTuple.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/named/namedTupleMembersErrors.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/optionalTupleElements1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/readonlyArraysAndTuples.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/restTupleElements1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/strictTupleLength.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/tupleLengthCheck.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/unionsOfTupleTypes1.ts
@@ -10205,6 +10202,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
   help: Try insert a semicolon here
 
   × Unexpected token
+   ╭─[typescript/tests/cases/compiler/parseInvalidNullableTypes.ts:1:30]
+ 1 │ function f1(a: string): a is ?string {
+   ·                              ─
+ 2 │     return true;
+   ╰────
+
+  × Unexpected token
    ╭─[typescript/tests/cases/compiler/parseJsxElementInUnaryExpressionNoCrash1.ts:1:4]
  1 │ ~< <
    ·    ─
@@ -14997,13 +15001,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: Try insert a semicolon here
 
-  × Unexpected token
-    ╭─[typescript/tests/cases/conformance/decorators/decoratorMetadata-jsdoc.ts:9:9]
-  8 │     @decorator()
-  9 │     c?: *;
-    ·         ─
- 10 │ }
-    ╰────
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tests/cases/conformance/decorators/decoratorMetadata-jsdoc.ts:5:15]
+ 4 │     @decorator()
+ 5 │     a?: string?;
+   ·               ▲
+ 6 │     @decorator()
+   ╰────
+  help: Try insert a semicolon here
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/decorators/invalid/decoratorOnArrowFunction.ts:3:17]
@@ -24253,6 +24258,24 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
      ·                              ────
  166 │ 
      ╰────
+
+  × Expected `,` but found `?`
+    ╭─[typescript/tests/cases/conformance/types/tuple/named/namedTupleMembersErrors.ts:10:35]
+  9 │ 
+ 10 │ export type Opt = [element: string?]; // question mark on element disallowed
+    ·                                   ┬
+    ·                                   ╰── `,` expected
+ 11 │ 
+    ╰────
+
+  × Expected `,` but found `?`
+    ╭─[typescript/tests/cases/conformance/types/tuple/restTupleElements1.ts:10:22]
+  9 │ type T08 = [...string];  // Error
+ 10 │ type T09 = [...string?];  // Error
+    ·                      ┬
+    ·                      ╰── `,` expected
+ 11 │ type T10 = [string, ...[...string[]]];
+    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/conformance/types/typeAliases/reservedNamesInAliases.ts:6:5]

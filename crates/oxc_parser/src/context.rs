@@ -47,6 +47,8 @@ bitflags! {
         ///   * ambient variable declaration => `declare var $: any`
         ///   * ambient class declaration => `declare class C { foo(); } , etc..`
         const Ambient = 1 << 6;
+
+       const QuestionAfterType = 1 << 7;
     }
 }
 

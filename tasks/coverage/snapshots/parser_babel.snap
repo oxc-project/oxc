@@ -3,7 +3,7 @@ commit: 3bcfee23
 parser_babel Summary:
 AST Parsed     : 2093/2101 (99.62%)
 Positive Passed: 2083/2101 (99.14%)
-Negative Passed: 1382/1493 (92.57%)
+Negative Passed: 1383/1493 (92.63%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.1-sloppy-labeled-functions-if-body/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-if/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-loop/input.js
@@ -112,7 +112,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/read-only-2/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/read-only-3/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/read-only-4/input.ts
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/tuple-labeled-invalid-optional/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/tuple-optional-invalid/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/tuple-required-after-labeled-optional/input.ts
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/opts/allowNewTargetOutsideFunction-true/input.js
@@ -10908,6 +10907,13 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Expected `,` but found `:`
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/tuple-invalid-label-2/input.ts:1:15]
  1 │ type T = [x<y>: A];
+   ·               ┬
+   ·               ╰── `,` expected
+   ╰────
+
+  × Expected `,` but found `?`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/tuple-labeled-invalid-optional/input.ts:1:15]
+ 1 │ type T = [x: A?];
    ·               ┬
    ·               ╰── `,` expected
    ╰────

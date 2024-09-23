@@ -1,3 +1,4 @@
+use bitflags::Flags;
 use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, NONE};
 use oxc_diagnostics::Result;
@@ -277,6 +278,7 @@ impl<'a> ParserImpl<'a> {
     fn parse_postfix_type_or_higher(&mut self) -> Result<TSType<'a>> {
         let span = self.start_span();
         let mut ty = self.parse_non_array_type()?;
+        // dbg!(&ty);
 
         while !self.cur_token().is_on_new_line {
             match self.cur_kind() {
@@ -288,7 +290,7 @@ impl<'a> ParserImpl<'a> {
                         /* postfix */ true,
                     );
                 }
-                Kind::Question => {
+                Kind::Question if self.ctx.contains(Context::QuestionAfterType) => {
                     // If next token is start of a type we have a conditional type
                     if self.lookahead(Self::next_token_is_start_of_type) {
                         return Ok(ty);
@@ -353,7 +355,9 @@ impl<'a> ParserImpl<'a> {
             // // falls through
             // case SyntaxKind.FunctionKeyword:
             // return parseJSDocFunctionType();
-            Kind::Question => self.parse_js_doc_unknown_or_nullable_type(),
+            Kind::Question if self.ctx.contains(Context::QuestionAfterType) => {
+                self.parse_js_doc_unknown_or_nullable_type()
+            }
             Kind::Bang => self.parse_js_doc_non_nullable_type(),
             Kind::NoSubstitutionTemplate | Kind::Str | Kind::False | Kind::Null => {
                 self.parse_literal_type_node(/* negative */ false)
@@ -874,7 +878,7 @@ impl<'a> ParserImpl<'a> {
             let label = self.parse_identifier_name()?;
             let optional = self.eat(Kind::Question);
             self.expect(Kind::Colon)?;
-            let element_type = self.parse_tuple_element_type()?;
+            let element_type = self.parse_tuple_element_type(Context::empty())?;
             let span = self.end_span(span);
             return Ok(if dotdotdot {
                 let type_annotation = self.ast.ts_type_named_tuple_member(
@@ -895,7 +899,7 @@ impl<'a> ParserImpl<'a> {
                 ))
             });
         }
-        self.parse_tuple_element_type()
+        self.parse_tuple_element_type(Context::QuestionAfterType)
     }
 
     fn is_tuple_element_name(&mut self) -> bool {
@@ -914,13 +918,15 @@ impl<'a> ParserImpl<'a> {
         self.at(Kind::Question) && self.peek_at(Kind::Colon)
     }
 
-    fn parse_tuple_element_type(&mut self) -> Result<TSTupleElement<'a>> {
+    fn parse_tuple_element_type(&mut self, extra_context: Context) -> Result<TSTupleElement<'a>> {
         let span = self.start_span();
         if self.eat(Kind::Dot3) {
             let ty = self.parse_ts_type()?;
             return Ok(self.ast.ts_tuple_element_rest_type(self.end_span(span), ty));
         }
-        let ty = self.parse_ts_type()?;
+
+        let ty = self.context(extra_context, Context::empty(), Self::parse_ts_type)?;
+        // let ty = self.parse_ts_type()?;
         if let TSType::JSDocNullableType(ty) = ty {
             if ty.span.start == ty.type_annotation.span().start {
                 Ok(self.ast.ts_tuple_element_optional_type(ty.span, ty.unbox().type_annotation))
