@@ -48,7 +48,7 @@ bitflags! {
         ///   * ambient class declaration => `declare class C { foo(); } , etc..`
         const Ambient = 1 << 6;
 
-       const QuestionAfterType = 1 << 7;
+       const AllowQuestionAfterType = 1 << 7;
     }
 }
 
