@@ -58,8 +58,14 @@ export class PrivateFieldsWithConstructorAssignments {
 
 export class PrivateMethodClass {
   private good(a): void {}
+  private get goodGetter() {
+    return {[('x')]: 1};
+  }
 }
 
 export class PublicMethodClass {
   public bad(a): void {}
+  public get badGetter() {
+    return {[('x')]: 1};
+  }
 }

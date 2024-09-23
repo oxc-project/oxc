@@ -53,21 +53,32 @@ export declare class PrivateFieldsWithConstructorAssignments {
 }
 export declare class PrivateMethodClass {
 	private good;
+	private get goodGetter();
 }
 export declare class PublicMethodClass {
 	bad(a): void;
+	get badGetter(): {};
 }
 
 
 ==================== Errors ====================
 
+  x TS9038: Computed property names on class or object literals cannot be
+  | inferred with --isolatedDeclarations.
+    ,-[69:14]
+ 68 |   public get badGetter() {
+ 69 |     return {[('x')]: 1};
+    :              ^^^^^
+ 70 |   }
+    `----
+
   x TS9011: Parameter must have an explicit type annotation with
   | --isolatedDeclarations.
-    ,-[64:14]
- 63 | export class PublicMethodClass {
- 64 |   public bad(a): void {}
+    ,-[67:14]
+ 66 | export class PublicMethodClass {
+ 67 |   public bad(a): void {}
     :              ^
- 65 | }
+ 68 |   public get badGetter() {
     `----
 
 
