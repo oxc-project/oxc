@@ -165,7 +165,6 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
 
     /// Insert `var _this = this;` for the global scope.
     fn exit_program(&mut self, program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
-        assert!(self.this_var_stack.len() == 1);
         if let Some(this_var) = self.this_var_stack.take() {
             self.insert_this_var_statement_at_the_top_of_statements(&mut program.body, &this_var);
         }
