@@ -266,9 +266,11 @@ impl<'a> Traverse<'a> for AsyncToGenerator<'a> {
             },
             false,
         );
-        let returns = ctx.ast.return_statement(SPAN, Some(call));
-        let body = Statement::ReturnStatement(ctx.ast.alloc(returns));
-        let body = ctx.ast.function_body(SPAN, ctx.ast.vec(), ctx.ast.vec1(body));
+        let body = ctx.ast.function_body(
+            SPAN,
+            ctx.ast.vec(),
+            ctx.ast.vec1(ctx.ast.statement_expression(SPAN, call)),
+        );
         arrow.body = ctx.ast.alloc(body);
         arrow.r#async = false;
     }
