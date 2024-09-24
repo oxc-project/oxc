@@ -3,9 +3,19 @@ source: crates/oxc_codegen/tests/integration/main.rs
 ---
 ########## 0
 
+/**
+ * Top level
+ *
+ * @module
+ */
+
 /** This is a description of the foo function. */
 function foo() {
 }
+
+/**
+ * Preserve newline
+ */
 
 /**
  * Represents a book.
@@ -18,6 +28,10 @@ function Book(title, author) {
 
 /** Class representing a point. */
 class Point {
+    /**
+     * Preserve newline
+     */
+
     /**
      * Create a point.
      * @param {number} x - The x value.
@@ -93,8 +107,16 @@ export enum DefinitionKind {
 }
 
 ----------
+/**
+* Top level
+*
+* @module
+*/
 /** This is a description of the foo function. */
 function foo() {}
+/**
+* Preserve newline
+*/
 /**
 * Represents a book.
 * @constructor
@@ -104,6 +126,9 @@ function foo() {}
 function Book(title, author) {}
 /** Class representing a point. */
 class Point {
+	/**
+	* Preserve newline
+	*/
 	/**
 	* Create a point.
 	* @param {number} x - The x value.
@@ -132,7 +157,8 @@ const Point = class {};
 /**
 * Shirt module.
 * @module my/shirt
-*//** Button the shirt. */
+*/
+/** Button the shirt. */
 exports.button = function() {};
 /** Unbutton the shirt. */
 exports.unbutton = function() {};

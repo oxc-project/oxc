@@ -1,7 +1,7 @@
-use oxc_syntax::identifier::is_line_terminator;
 use rustc_hash::FxHashMap;
 
 use oxc_ast::{Comment, CommentKind, Trivias};
+use oxc_syntax::identifier::is_line_terminator;
 
 use crate::Codegen;
 
@@ -34,24 +34,28 @@ impl<'a> Codegen<'a> {
         let Some(source_text) = self.source_text else { return };
         let Some(comments) = self.leading_comments.remove(&start) else { return };
 
-        let first = comments.first().unwrap();
-        if first.preceded_by_newline {
+        if comments.first().is_some_and(|c| c.preceded_by_newline) {
             // Skip printing newline if this comment is already on a newline.
             if self.peek_nth(0).is_some_and(|c| c != '\n' && c != '\t') {
-                self.print_char(b'\n');
+                self.print_hard_newline();
                 self.print_indent();
             }
         }
 
-        for comment in &comments {
-            let s = comment.real_span().source_text(source_text);
+        for (i, comment) in comments.iter().enumerate() {
+            if i >= 1 && comment.preceded_by_newline {
+                self.print_hard_newline();
+                self.print_indent();
+            }
+
+            let comment_source = comment.real_span().source_text(source_text);
             match comment.kind {
                 CommentKind::Line => {
-                    self.print_str(s);
+                    self.print_str(comment_source);
                 }
                 CommentKind::Block => {
                     // Print block comments with our own indentation.
-                    let lines = s.split(is_line_terminator);
+                    let lines = comment_source.split(is_line_terminator);
                     for line in lines {
                         if !line.starts_with("/*") {
                             self.print_indent();
@@ -65,8 +69,7 @@ impl<'a> Codegen<'a> {
             }
         }
 
-        let last = comments.last().unwrap();
-        if last.is_line() || last.followed_by_newline {
+        if comments.last().is_some_and(|c| c.is_line() || c.followed_by_newline) {
             self.print_hard_newline();
             self.print_indent();
         }

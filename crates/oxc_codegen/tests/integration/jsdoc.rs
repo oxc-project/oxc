@@ -4,9 +4,19 @@ use crate::snapshot;
 fn comment() {
     let cases = vec![
         r"
+/**
+ * Top level
+ *
+ * @module
+ */
+
 /** This is a description of the foo function. */
 function foo() {
 }
+
+/**
+ * Preserve newline
+ */
 
 /**
  * Represents a book.
@@ -19,6 +29,10 @@ function Book(title, author) {
 
 /** Class representing a point. */
 class Point {
+    /**
+     * Preserve newline
+     */
+
     /**
      * Create a point.
      * @param {number} x - The x value.

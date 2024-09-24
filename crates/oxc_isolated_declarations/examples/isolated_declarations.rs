@@ -10,7 +10,7 @@ use oxc_span::SourceType;
 // Instruction:
 // create a `test.js`,
 // run `cargo run -p oxc_isolated_declarations --example isolated_declarations`
-// or `just watch "run -p oxc_isolated_declarations --example isolated_declarations"`
+// or `just example isolated_declarations`
 
 fn main() {
     let name = env::args().nth(1).unwrap_or_else(|| "test.tsx".to_string());
