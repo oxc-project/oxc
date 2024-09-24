@@ -45,7 +45,16 @@ oxc_syntax = { workspace = true }
 oxc_transformer = { workspace = true, optional = true }
 
 [features]
-full = ["codegen", "mangler", "minifier", "semantic", "transformer", "isolated_declarations", "sourcemap", "cfg"]
+full = [
+  "codegen",
+  "mangler",
+  "minifier",
+  "semantic",
+  "transformer",
+  "isolated_declarations",
+  "sourcemap",
+  "cfg",
+]
 
 semantic = ["oxc_semantic"]
 transformer = ["oxc_transformer"]
@@ -54,7 +63,12 @@ codegen = ["oxc_codegen"]
 mangler = ["oxc_mangler"]
 cfg = ["oxc_cfg"]
 
-serialize = ["oxc_ast/serialize", "oxc_semantic?/serialize", "oxc_span/serialize", "oxc_syntax/serialize"]
+serialize = [
+  "oxc_ast/serialize",
+  "oxc_semantic?/serialize",
+  "oxc_span/serialize",
+  "oxc_syntax/serialize",
+]
 
 sourcemap = ["oxc_sourcemap"]
 sourcemap_concurrent = ["oxc_sourcemap/concurrent", "sourcemap"]
@@ -62,3 +76,6 @@ sourcemap_concurrent = ["oxc_sourcemap/concurrent", "sourcemap"]
 isolated_declarations = ["oxc_isolated_declarations"]
 
 wasm = ["oxc_transformer/wasm"]
+
+[package.metadata.docs.rs]
+all-features = true
