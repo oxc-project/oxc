@@ -45,7 +45,7 @@ oxc_syntax = { workspace = true }
 oxc_transformer = { workspace = true, optional = true }
 
 [features]
-full = ["codegen", "mangler", "minifier", "semantic", "transformer"]
+full = ["codegen", "mangler", "minifier", "semantic", "transformer", "isolated_declarations", "sourcemap", "cfg"]
 
 semantic = ["oxc_semantic"]
 transformer = ["oxc_transformer"]
