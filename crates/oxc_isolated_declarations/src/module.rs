@@ -67,7 +67,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
                     let id = self.ast.binding_pattern(id, type_annotation, false);
                     let declarations =
-                        self.ast.vec1(self.ast.variable_declarator(SPAN, kind, id, None, true));
+                        self.ast.vec1(self.ast.variable_declarator(SPAN, kind, id, None, false));
 
                     Some((
                         Some(self.ast.variable_declaration(

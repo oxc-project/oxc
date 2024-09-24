@@ -148,6 +148,14 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x0_typescript.enter_arrow_function_expression(arrow, ctx);
     }
 
+    fn enter_variable_declarator(
+        &mut self,
+        decl: &mut VariableDeclarator<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.x0_typescript.enter_variable_declarator(decl, ctx);
+    }
+
     fn enter_binding_pattern(&mut self, pat: &mut BindingPattern<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.enter_binding_pattern(pat, ctx);
     }

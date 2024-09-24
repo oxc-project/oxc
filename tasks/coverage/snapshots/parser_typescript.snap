@@ -3,7 +3,7 @@ commit: a709f989
 parser_typescript Summary:
 AST Parsed     : 6469/6479 (99.85%)
 Positive Passed: 6456/6479 (99.65%)
-Negative Passed: 1225/5715 (21.43%)
+Negative Passed: 1226/5715 (21.45%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration10.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration11.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration13.ts
@@ -2542,7 +2542,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/controlFl
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/controlFlow/controlFlowOptionalChain3.tsx
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/controlFlow/controlFlowTypeofObject.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/controlFlow/controlFlowWhileStatement.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/controlFlow/dependentDestructuredVariables.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/controlFlow/exhaustiveSwitchStatements1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/controlFlow/neverReturningFunctions1.ts
@@ -14916,6 +14915,30 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
      ·                     ╰── `,` expected
  164 │     get p2(): asserts this is string;
      ╰────
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+    ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:69:10]
+ 68 │ function f4() {
+ 69 │     let a!;
+    ·          ▲
+ 70 │     let b! = 1;
+    ╰────
+
+  × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
+    ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:70:10]
+ 69 │     let a!;
+ 70 │     let b! = 1;
+    ·          ▲
+ 71 │     let c!: number = 1;
+    ╰────
+
+  × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
+    ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:71:10]
+ 70 │     let b! = 1;
+ 71 │     let c!: number = 1;
+    ·          ▲
+ 72 │ }
+    ╰────
 
   × Expected `,` but found `!`
    ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertionsWithObjectShortHand.ts:2:16]

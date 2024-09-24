@@ -54,26 +54,52 @@ fn unexpected_optional(span: Span, type_annotation: Option<&str>) -> OxcDiagnost
     }
 }
 
-#[allow(clippy::cast_possible_truncation)]
+#[expect(clippy::cast_possible_truncation)]
+fn find_char(span: Span, source_text: &str, c: char) -> Option<Span> {
+    let Some(offset) = span.source_text(source_text).find(c) else {
+        debug_assert!(
+            false,
+            "Flag {c} not found in source text. This is likely indicates a bug in the parser.",
+        );
+        return None;
+    };
+    let offset = span.start + offset as u32;
+    Some(Span::new(offset, offset))
+}
+
 pub fn check_variable_declarator(decl: &VariableDeclarator, ctx: &SemanticBuilder<'_>) {
     // Check for `let x?: number;`
     if decl.id.optional {
         // NOTE: BindingPattern spans cover the identifier _and_ the type annotation.
-        let start = decl.id.span().start;
-        let Some(offset) = ctx.source_text[start as usize..].find('?') else {
-            debug_assert!(false, "Optional flag not found in source text. This is likely indicates a bug in the parser.");
-            return;
-        };
-        let offset = start + offset as u32;
-        let span = Span::new(offset, offset);
         let ty = decl
             .id
             .type_annotation
             .as_ref()
             .map(|ty| ty.type_annotation.span())
             .map(|span| &ctx.source_text[span]);
-
-        ctx.error(unexpected_optional(span, ty));
+        if let Some(span) = find_char(decl.span, ctx.source_text, '?') {
+            ctx.error(unexpected_optional(span, ty));
+        }
+    }
+    if decl.definite {
+        // Check for `let x!: number = 1;`
+        //                 ^
+        let Some(span) = find_char(decl.span, ctx.source_text, '!') else { return };
+        if decl.init.is_some() {
+            let error = ts_error(
+                "1263",
+                "Declarations with initializers cannot also have definite assignment assertions.",
+            )
+            .with_label(span);
+            ctx.error(error);
+        } else if decl.id.type_annotation.is_none() {
+            let error = ts_error(
+                "1264",
+                "Declarations with definite assignment assertions must also have type annotations.",
+            )
+            .with_label(span);
+            ctx.error(error);
+        }
     }
 }
 

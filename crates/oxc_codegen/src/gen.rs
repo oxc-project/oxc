@@ -588,7 +588,18 @@ impl<'a> Gen for VariableDeclaration<'a> {
 
 impl<'a> Gen for VariableDeclarator<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        self.id.print(p, ctx);
+        self.id.kind.print(p, ctx);
+        if self.definite {
+            p.print_char(b'!');
+        }
+        if self.id.optional {
+            p.print_str("?");
+        }
+        if let Some(type_annotation) = &self.id.type_annotation {
+            p.print_colon();
+            p.print_soft_space();
+            type_annotation.print(p, ctx);
+        }
         if let Some(init) = &self.init {
             p.print_soft_space();
             p.print_equal();
@@ -2585,12 +2596,7 @@ impl<'a> Gen for PrivateIdentifier<'a> {
 
 impl<'a> Gen for BindingPattern<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        match &self.kind {
-            BindingPatternKind::BindingIdentifier(ident) => ident.print(p, ctx),
-            BindingPatternKind::ObjectPattern(pattern) => pattern.print(p, ctx),
-            BindingPatternKind::ArrayPattern(pattern) => pattern.print(p, ctx),
-            BindingPatternKind::AssignmentPattern(pattern) => pattern.print(p, ctx),
-        }
+        self.kind.print(p, ctx);
         if self.optional {
             p.print_str("?");
         }
@@ -2598,6 +2604,17 @@ impl<'a> Gen for BindingPattern<'a> {
             p.print_colon();
             p.print_soft_space();
             type_annotation.print(p, ctx);
+        }
+    }
+}
+
+impl<'a> Gen for BindingPatternKind<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
+        match self {
+            BindingPatternKind::BindingIdentifier(ident) => ident.print(p, ctx),
+            BindingPatternKind::ObjectPattern(pattern) => pattern.print(p, ctx),
+            BindingPatternKind::ArrayPattern(pattern) => pattern.print(p, ctx),
+            BindingPatternKind::AssignmentPattern(pattern) => pattern.print(p, ctx),
         }
     }
 }
