@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.9.8] - 2024-09-24
+
+### Bug Fixes
+
+- e3c8a12 linter: Fix panic in sort-keys (#6017) (Boshen)
+- 4771492 linter: Fix `import/no_cycle` with `ignoreTypes` (#5995) (Boshen)
+
+### Performance
+
+- 5ae3f36 linter: `no-fallthrough`: Use string matching instead of Regex for default comment pattern (#6008) (camchenry)
+- 2b17003 linter, prettier, diagnostics: Use `FxHashMap` instead of `std::collections::HashMap` (#5993) (camchenry)
+
 ## [0.9.7] - 2024-09-23
 
 ### Features
