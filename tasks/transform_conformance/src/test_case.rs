@@ -306,7 +306,7 @@ impl TestCase for ConformanceTestCase {
                             ..Default::default()
                         })
                         .parse();
-                    
+
                     CodeGenerator::new()
                         // .enable_comment(
                         // &output,
