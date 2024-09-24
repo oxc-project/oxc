@@ -39,7 +39,6 @@
 //! * Async / Await TC39 proposal: <https://github.com/tc39/proposal-async-await>
 //!
 
-use crate::context::Ctx;
 use oxc_ast::ast::{
     ArrowFunctionExpression, Expression, FormalParameterKind, Function, FunctionType, Statement,
     VariableDeclarationKind, YieldExpression,
@@ -50,16 +49,13 @@ use oxc_syntax::reference::ReferenceFlags;
 use oxc_syntax::symbol::SymbolId;
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
-pub struct AsyncToGenerator<'a> {
-    _ctx: Ctx<'a>,
-}
+pub struct AsyncToGenerator;
 
-impl<'a> AsyncToGenerator<'a> {
-    pub fn new(ctx: Ctx<'a>) -> Self {
-        Self { _ctx: ctx }
-    }
-
-    fn get_helper_callee(symbol_id: Option<SymbolId>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+impl AsyncToGenerator {
+    fn get_helper_callee<'a>(
+        symbol_id: Option<SymbolId>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
         let ident = ctx.create_reference_id(
             SPAN,
             Atom::from("babelHelpers"),
@@ -71,7 +67,7 @@ impl<'a> AsyncToGenerator<'a> {
         Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false))
     }
 
-    fn transform_function(func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) -> Function<'a> {
+    fn transform_function<'a>(func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) -> Function<'a> {
         let babel_helpers_id = ctx.scopes().find_binding(ctx.current_scope_id(), "babelHelpers");
         let callee = Self::get_helper_callee(babel_helpers_id, ctx);
         let target = ctx.ast.function(
@@ -141,7 +137,7 @@ impl<'a> AsyncToGenerator<'a> {
     }
 }
 
-impl<'a> Traverse<'a> for AsyncToGenerator<'a> {
+impl<'a> Traverse<'a> for AsyncToGenerator {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Expression::AwaitExpression(await_expr) = expr {
             // Do not transform top-level await, or in async generator functions.
