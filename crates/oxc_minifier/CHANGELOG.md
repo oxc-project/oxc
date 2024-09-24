@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.30.1] - 2024-09-24
+
+### Features
+
+- 5c323a2 minifier: Loop compressor passes (#6013) (Boshen)
+
+### Refactor
+
+- 0a2f687 minifier: Move dce conditional expression to `RemoveDeadCode` (#5971) (Boshen)
+
 ## [0.30.0] - 2024-09-23
 
 ### Features

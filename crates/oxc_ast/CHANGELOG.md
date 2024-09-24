@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.30.1] - 2024-09-24
+
+### Documentation
+
+- 5a0d17c ast: Document more AST nodes (#6000) (DonIsaac)
+- 1abfe8f semantic: Document `SymbolTable` (#5998) (DonIsaac)
+
 ## [0.30.0] - 2024-09-23
 
 - 033b907 ast: [**BREAKING**] Apply `#[non_exhaustive]`, must use `AstBuilder` (#5787) (Boshen)
