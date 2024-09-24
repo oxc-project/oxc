@@ -10,17 +10,30 @@ use crate::{keep_var::KeepVar, node_util::NodeUtil, tri::Tri, CompressorPass};
 /// Terser option: `dead_code: true`.
 ///
 /// See `KeepVar` at the end of this file for `var` hoisting logic.
-pub struct PeepholeRemoveDeadCode;
+pub struct PeepholeRemoveDeadCode {
+    changed: bool,
+}
 
-impl<'a> CompressorPass<'a> for PeepholeRemoveDeadCode {}
+impl<'a> CompressorPass<'a> for PeepholeRemoveDeadCode {
+    fn changed(&self) -> bool {
+        self.changed
+    }
+
+    fn build(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.changed = false;
+        oxc_traverse::walk_program(self, program, ctx);
+    }
+}
 
 impl<'a> Traverse<'a> for PeepholeRemoveDeadCode {
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        Self::fold_if_statement(stmt, ctx);
+        self.fold_if_statement(stmt, ctx);
     }
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
-        stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
+        if stmts.iter().any(|stmt| matches!(stmt, Statement::EmptyStatement(_))) {
+            stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
+        }
         self.dead_code_elimination(stmts, ctx);
     }
 
@@ -30,13 +43,14 @@ impl<'a> Traverse<'a> for PeepholeRemoveDeadCode {
             _ => None,
         } {
             *expr = folded_expr;
+            self.changed = true;
         }
     }
 }
 
 impl<'a> PeepholeRemoveDeadCode {
     pub fn new() -> Self {
-        Self {}
+        Self { changed: false }
     }
 
     /// Removes dead code thats comes after `return` statements after inlining `if` statements
@@ -76,6 +90,7 @@ impl<'a> PeepholeRemoveDeadCode {
         }
 
         let mut i = 0;
+        let len = stmts.len();
         stmts.retain(|s| {
             i += 1;
             if i - 1 <= index {
@@ -88,25 +103,35 @@ impl<'a> PeepholeRemoveDeadCode {
             false
         });
 
+        let all_hoisted = keep_var.all_hoisted();
         if let Some(stmt) = keep_var.get_variable_declaration_statement() {
             stmts.push(stmt);
+            if !all_hoisted {
+                self.changed = true;
+            }
+        }
+
+        if stmts.len() != len {
+            self.changed = true;
         }
     }
 
-    fn fold_if_statement(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn fold_if_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::IfStatement(if_stmt) = stmt else { return };
 
         // Descend and remove `else` blocks first.
         if let Some(alternate) = &mut if_stmt.alternate {
-            Self::fold_if_statement(alternate, ctx);
+            self.fold_if_statement(alternate, ctx);
             if matches!(alternate, Statement::EmptyStatement(_)) {
                 if_stmt.alternate = None;
+                self.changed = true;
             }
         }
 
         match ctx.get_boolean_value(&if_stmt.test) {
             Tri::True => {
                 *stmt = ctx.ast.move_statement(&mut if_stmt.consequent);
+                self.changed = true;
             }
             Tri::False => {
                 *stmt = if let Some(alternate) = &mut if_stmt.alternate {
@@ -119,6 +144,7 @@ impl<'a> PeepholeRemoveDeadCode {
                         .get_variable_declaration_statement()
                         .unwrap_or_else(|| ctx.ast.statement_empty(SPAN))
                 };
+                self.changed = true;
             }
             Tri::Unknown => {}
         }

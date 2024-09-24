@@ -35,69 +35,50 @@ impl<'a> Compressor<'a> {
         program: &mut Program<'a>,
     ) {
         let mut ctx = TraverseCtx::new(scopes, symbols, self.allocator);
-        self.remove_syntax(program, &mut ctx);
+        RemoveSyntax::new(self.options).build(program, &mut ctx);
 
         if self.options.dead_code_elimination {
             self.dead_code_elimination(program, &mut ctx);
             return;
         }
 
-        // earlyPeepholeOptimizations
-        // TODO: MinimizeExitPoints
-        self.minimize_conditions(program, &mut ctx);
-        self.substitute_alternate_syntax(program, &mut ctx);
-        // TODO: PeepholeReplaceKnownMethods
-        self.remove_dead_code(program, &mut ctx);
-        self.fold_constants(program, &mut ctx);
+        ExploitAssigns::new().build(program, &mut ctx);
+        CollapseVariableDeclarations::new(self.options).build(program, &mut ctx);
 
-        // latePeepholeOptimizations
-        // TODO: StatementFusion
-        self.remove_dead_code(program, &mut ctx);
-        self.minimize_conditions(program, &mut ctx);
-        self.substitute_alternate_syntax(program, &mut ctx);
-        // TODO: PeepholeReplaceKnownMethods
-        self.fold_constants(program, &mut ctx);
+        // See `latePeepholeOptimizations`
+        let mut passes: [&mut dyn CompressorPass; 5] = [
+            &mut StatementFusion::new(),
+            &mut PeepholeRemoveDeadCode::new(),
+            // TODO: MinimizeExitPoints
+            &mut PeepholeMinimizeConditions::new(),
+            &mut PeepholeSubstituteAlternateSyntax::new(self.options),
+            // TODO: PeepholeReplaceKnownMethods
+            &mut PeepholeFoldConstants::new(),
+        ];
 
-        self.exploit_assigns(program, &mut ctx);
-        self.collapse_variable_declarations(program, &mut ctx);
+        let mut i = 0;
+        loop {
+            let mut changed = false;
+            for pass in &mut passes {
+                pass.build(program, &mut ctx);
+                if pass.changed() {
+                    changed = true;
+                }
+            }
+            if !changed {
+                break;
+            }
+            if i > 50 {
+                debug_assert!(false, "Ran in a infinite loop.");
+                break;
+            }
+            i += 1;
+        }
     }
 
     fn dead_code_elimination(self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.fold_constants(program, ctx);
-        self.minimize_conditions(program, ctx);
-        self.remove_dead_code(program, ctx);
-    }
-
-    fn remove_syntax(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        RemoveSyntax::new(self.options).build(program, ctx);
-    }
-
-    fn minimize_conditions(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        PeepholeFoldConstants::new().build(program, ctx);
         PeepholeMinimizeConditions::new().build(program, ctx);
-    }
-
-    fn fold_constants(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        PeepholeFoldConstants::new().with_evaluate(self.options.evaluate).build(program, ctx);
-    }
-
-    fn substitute_alternate_syntax(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        PeepholeSubstituteAlternateSyntax::new(self.options).build(program, ctx);
-    }
-
-    fn remove_dead_code(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         PeepholeRemoveDeadCode::new().build(program, ctx);
-    }
-
-    #[allow(unused)]
-    fn statement_fusion(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        StatementFusion::new().build(program, ctx);
-    }
-
-    fn collapse_variable_declarations(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        CollapseVariableDeclarations::new(self.options).build(program, ctx);
-    }
-
-    fn exploit_assigns(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        ExploitAssigns::new().build(program, ctx);
     }
 }

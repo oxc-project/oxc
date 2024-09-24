@@ -10,32 +10,43 @@ use crate::CompressorPass;
 /// Tries to fuse all the statements in a block into a one statement by using COMMAs or statements.
 ///
 /// <https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/StatementFusion.java>
-pub struct StatementFusion;
+pub struct StatementFusion {
+    changed: bool,
+}
 
-impl<'a> CompressorPass<'a> for StatementFusion {}
+impl<'a> CompressorPass<'a> for StatementFusion {
+    fn changed(&self) -> bool {
+        self.changed
+    }
+
+    fn build(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.changed = false;
+        oxc_traverse::walk_program(self, program, ctx);
+    }
+}
 
 impl<'a> Traverse<'a> for StatementFusion {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        Self::fuse_statements(&mut program.body, ctx);
+        self.fuse_statements(&mut program.body, ctx);
     }
 
     fn exit_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
-        Self::fuse_statements(&mut body.statements, ctx);
+        self.fuse_statements(&mut body.statements, ctx);
     }
 
     fn exit_block_statement(&mut self, block: &mut BlockStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-        Self::fuse_statements(&mut block.body, ctx);
+        self.fuse_statements(&mut block.body, ctx);
     }
 }
 
 impl<'a> StatementFusion {
     pub fn new() -> Self {
-        Self {}
+        Self { changed: false }
     }
 
-    fn fuse_statements(stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+    fn fuse_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         if Self::can_fuse_into_one_statement(stmts) {
-            Self::fuse_into_one_statement(stmts, ctx);
+            self.fuse_into_one_statement(stmts, ctx);
         }
     }
 
@@ -75,7 +86,11 @@ impl<'a> StatementFusion {
         }
     }
 
-    fn fuse_into_one_statement(stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+    fn fuse_into_one_statement(
+        &mut self,
+        stmts: &mut Vec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         let len = stmts.len();
         let mut expressions = ctx.ast.vec();
 
@@ -103,6 +118,7 @@ impl<'a> StatementFusion {
         Self::fuse_expression_into_control_flow_statement(last, expressions, ctx);
 
         *stmts = ctx.ast.vec1(ctx.ast.move_statement(last));
+        self.changed = true;
     }
 
     fn fuse_expression_into_control_flow_statement(

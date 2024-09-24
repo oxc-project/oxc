@@ -18,7 +18,7 @@ pub use statement_fusion::StatementFusion;
 
 use oxc_ast::ast::Program;
 use oxc_semantic::{ScopeTree, SymbolTable};
-use oxc_traverse::{walk_program, Traverse, TraverseCtx};
+use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::node_util::NodeUtil;
 
@@ -33,11 +33,7 @@ impl<'a> NodeUtil for TraverseCtx<'a> {
 }
 
 pub trait CompressorPass<'a>: Traverse<'a> {
-    fn build(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>)
-    where
-        Self: Traverse<'a>,
-        Self: Sized,
-    {
-        walk_program(self, program, ctx);
-    }
+    fn changed(&self) -> bool;
+
+    fn build(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>);
 }

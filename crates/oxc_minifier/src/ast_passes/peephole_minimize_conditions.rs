@@ -10,9 +10,20 @@ use crate::CompressorPass;
 /// with `? :` and short-circuit binary operators.
 ///
 /// <https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeMinimizeConditions.java>
-pub struct PeepholeMinimizeConditions;
+pub struct PeepholeMinimizeConditions {
+    changed: bool,
+}
 
-impl<'a> CompressorPass<'a> for PeepholeMinimizeConditions {}
+impl<'a> CompressorPass<'a> for PeepholeMinimizeConditions {
+    fn changed(&self) -> bool {
+        self.changed
+    }
+
+    fn build(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.changed = false;
+        oxc_traverse::walk_program(self, program, ctx);
+    }
+}
 
 impl<'a> Traverse<'a> for PeepholeMinimizeConditions {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -21,13 +32,14 @@ impl<'a> Traverse<'a> for PeepholeMinimizeConditions {
             _ => None,
         } {
             *expr = folded_expr;
+            self.changed = true;
         };
     }
 }
 
 impl<'a> PeepholeMinimizeConditions {
     pub fn new() -> Self {
-        Self
+        Self { changed: false }
     }
 
     /// Try to minimize NOT nodes such as `!(x==y)`.

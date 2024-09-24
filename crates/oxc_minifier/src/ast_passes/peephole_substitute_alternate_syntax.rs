@@ -14,9 +14,19 @@ use crate::{node_util::NodeUtil, CompressOptions, CompressorPass};
 pub struct PeepholeSubstituteAlternateSyntax {
     options: CompressOptions,
     in_define_export: bool,
+    changed: bool,
 }
 
-impl<'a> CompressorPass<'a> for PeepholeSubstituteAlternateSyntax {}
+impl<'a> CompressorPass<'a> for PeepholeSubstituteAlternateSyntax {
+    fn changed(&self) -> bool {
+        self.changed
+    }
+
+    fn build(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.changed = false;
+        oxc_traverse::walk_program(self, program, ctx);
+    }
+}
 
 impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, _ctx: &mut TraverseCtx<'a>) {
@@ -30,7 +40,7 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
         _ctx: &mut TraverseCtx<'a>,
     ) {
         // We may fold `void 1` to `void 0`, so compress it after visiting
-        Self::compress_return_statement(stmt);
+        self.compress_return_statement(stmt);
     }
 
     fn enter_variable_declaration(
@@ -39,7 +49,7 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
         _ctx: &mut TraverseCtx<'a>,
     ) {
         for declarator in decl.declarations.iter_mut() {
-            Self::compress_variable_declarator(declarator);
+            self.compress_variable_declarator(declarator);
         }
     }
 
@@ -83,7 +93,7 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
 
 impl<'a> PeepholeSubstituteAlternateSyntax {
     pub fn new(options: CompressOptions) -> Self {
-        Self { options, in_define_export: false }
+        Self { options, in_define_export: false, changed: false }
     }
 
     /* Utilities */
@@ -120,14 +130,14 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
 
     /// Remove block from single line blocks
     /// `{ block } -> block`
-    #[allow(clippy::only_used_in_recursion)] // `&self` is only used in recursion
-    fn compress_block(&self, stmt: &mut Statement<'a>) {
+    fn compress_block(&mut self, stmt: &mut Statement<'a>) {
         if let Statement::BlockStatement(block) = stmt {
             // Avoid compressing `if (x) { var x = 1 }` to `if (x) var x = 1` due to different
             // semantics according to AnnexB, which lead to different semantics.
             if block.body.len() == 1 && !block.body[0].is_declaration() {
                 *stmt = block.body.remove(0);
                 self.compress_block(stmt);
+                self.changed = true;
             }
         }
     }
@@ -230,18 +240,20 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
     ///
     /// `return undefined` -> `return`
     /// `return void 0` -> `return`
-    fn compress_return_statement(stmt: &mut ReturnStatement<'a>) {
+    fn compress_return_statement(&mut self, stmt: &mut ReturnStatement<'a>) {
         if stmt.argument.as_ref().is_some_and(|expr| expr.is_undefined() || expr.is_void_0()) {
             stmt.argument = None;
+            self.changed = true;
         }
     }
 
-    fn compress_variable_declarator(decl: &mut VariableDeclarator<'a>) {
+    fn compress_variable_declarator(&mut self, decl: &mut VariableDeclarator<'a>) {
         if decl.kind.is_const() {
             return;
         }
         if decl.init.as_ref().is_some_and(|init| init.is_undefined() || init.is_void_0()) {
             decl.init = None;
+            self.changed = true;
         }
     }
 }

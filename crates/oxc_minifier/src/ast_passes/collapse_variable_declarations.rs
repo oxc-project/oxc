@@ -9,25 +9,37 @@ use crate::{CompressOptions, CompressorPass};
 /// `var a; var b = 1; var c = 2` => `var a, b = 1; c = 2`
 pub struct CollapseVariableDeclarations {
     options: CompressOptions,
+
+    changed: bool,
 }
 
-impl<'a> CompressorPass<'a> for CollapseVariableDeclarations {}
+impl<'a> CompressorPass<'a> for CollapseVariableDeclarations {
+    fn changed(&self) -> bool {
+        self.changed
+    }
+
+    fn build(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.changed = false;
+        oxc_traverse::walk_program(self, program, ctx);
+    }
+}
 
 impl<'a> Traverse<'a> for CollapseVariableDeclarations {
     fn enter_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
-        if self.options.join_vars {
-            self.join_vars(stmts, ctx);
-        }
+        self.join_vars(stmts, ctx);
     }
 }
 
 impl<'a> CollapseVariableDeclarations {
     pub fn new(options: CompressOptions) -> Self {
-        Self { options }
+        Self { options, changed: false }
     }
 
     /// Join consecutive var statements
-    fn join_vars(&self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+    fn join_vars(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+        if self.options.join_vars {
+            return;
+        }
         // Collect all the consecutive ranges that contain joinable vars.
         // This is required because Rust prevents in-place vec mutation.
         let mut ranges = vec![];
@@ -83,6 +95,7 @@ impl<'a> CollapseVariableDeclarations {
             }
         }
         *stmts = new_stmts;
+        self.changed = true;
     }
 }
 

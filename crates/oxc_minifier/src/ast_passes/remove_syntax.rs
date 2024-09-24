@@ -13,7 +13,15 @@ pub struct RemoveSyntax {
     options: CompressOptions,
 }
 
-impl<'a> CompressorPass<'a> for RemoveSyntax {}
+impl<'a> CompressorPass<'a> for RemoveSyntax {
+    fn changed(&self) -> bool {
+        false
+    }
+
+    fn build(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        oxc_traverse::walk_program(self, program, ctx);
+    }
+}
 
 impl<'a> Traverse<'a> for RemoveSyntax {
     fn enter_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, _ctx: &mut TraverseCtx<'a>) {

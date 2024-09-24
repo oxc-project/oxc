@@ -27,8 +27,9 @@ fn main() -> std::io::Result<()> {
     println!("{printed}");
 
     if twice {
-        let printed = minify(&printed, source_type, mangle);
-        println!("{printed}");
+        let printed2 = minify(&printed, source_type, mangle);
+        println!("{printed2}");
+        println!("same = {}", printed == printed2);
     }
 
     Ok(())
