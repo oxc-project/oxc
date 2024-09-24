@@ -25,15 +25,13 @@
 //! * Object rest/spread TC39 proposal: <https://github.com/tc39/proposal-object-rest-spread>
 
 use super::ObjectRestSpreadOptions;
-use crate::context::Ctx;
 
-pub struct ObjectRest<'a> {
-    _ctx: Ctx<'a>,
+pub struct ObjectRest {
     _options: ObjectRestSpreadOptions,
 }
 
-impl<'a> ObjectRest<'a> {
-    pub fn new(options: ObjectRestSpreadOptions, ctx: Ctx<'a>) -> Self {
-        Self { _ctx: ctx, _options: options }
+impl ObjectRest {
+    pub fn new(options: ObjectRestSpreadOptions) -> Self {
+        Self { _options: options }
     }
 }

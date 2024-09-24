@@ -32,19 +32,17 @@ use oxc_span::SPAN;
 use oxc_traverse::{Traverse, TraverseCtx};
 
 use super::ObjectRestSpreadOptions;
-use crate::context::Ctx;
 
-pub struct ObjectSpread<'a> {
-    _ctx: Ctx<'a>,
+pub struct ObjectSpread {
     options: ObjectRestSpreadOptions,
 }
 
-impl<'a> ObjectSpread<'a> {
-    pub fn new(options: ObjectRestSpreadOptions, ctx: Ctx<'a>) -> Self {
-        Self { _ctx: ctx, options }
+impl ObjectSpread {
+    pub fn new(options: ObjectRestSpreadOptions) -> Self {
+        Self { options }
     }
 }
-impl<'a> Traverse<'a> for ObjectSpread<'a> {
+impl<'a> Traverse<'a> for ObjectSpread {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::ObjectExpression(obj_expr) = expr else {
             return;
@@ -100,7 +98,7 @@ impl<'a> Traverse<'a> for ObjectSpread<'a> {
     }
 }
 
-impl<'a> ObjectSpread<'a> {
+impl<'a> ObjectSpread {
     fn object_assign(symbol_id: Option<SymbolId>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         let ident =
             ctx.create_reference_id(SPAN, Atom::from("Object"), symbol_id, ReferenceFlags::Read);

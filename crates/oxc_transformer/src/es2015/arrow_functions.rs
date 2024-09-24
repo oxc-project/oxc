@@ -131,10 +131,7 @@ use oxc_syntax::{
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 use serde::Deserialize;
 
-use crate::{
-    context::Ctx,
-    helpers::{bindings::BoundIdentifier, stack::SparseStack},
-};
+use crate::helpers::{bindings::BoundIdentifier, stack::SparseStack};
 
 #[derive(Debug, Default, Clone, Deserialize)]
 pub struct ArrowFunctionsOptions {
@@ -147,15 +144,14 @@ pub struct ArrowFunctionsOptions {
 }
 
 pub struct ArrowFunctions<'a> {
-    ctx: Ctx<'a>,
     _options: ArrowFunctionsOptions,
     this_var_stack: SparseStack<BoundIdentifier<'a>>,
 }
 
 impl<'a> ArrowFunctions<'a> {
-    pub fn new(options: ArrowFunctionsOptions, ctx: Ctx<'a>) -> Self {
+    pub fn new(options: ArrowFunctionsOptions) -> Self {
         // `SparseStack` is created with 1 empty entry, for `Program`
-        Self { ctx, _options: options, this_var_stack: SparseStack::new() }
+        Self { _options: options, this_var_stack: SparseStack::new() }
     }
 }
 
@@ -164,9 +160,13 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
     // <https://www.typescriptlang.org/play/?#code/HYQwtgpgzgDiDGEAEAxA9mpBvAsAKCSXjWCgBckANJAXiQAoBKWgPiTIAsBLKAbnwC++fGDQATAK4AbZACEQAJ2z5CxUhWp0mrdtz6D8QA>
 
     /// Insert `var _this = this;` for the global scope.
-    fn exit_program(&mut self, program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
+    fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(this_var) = self.this_var_stack.take() {
-            self.insert_this_var_statement_at_the_top_of_statements(&mut program.body, &this_var);
+            self.insert_this_var_statement_at_the_top_of_statements(
+                &mut program.body,
+                &this_var,
+                ctx,
+            );
         }
         debug_assert!(self.this_var_stack.len() == 1);
     }
@@ -186,13 +186,14 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
     /// }
     /// ```
     /// Insert the var _this = this; statement outside the arrow function
-    fn exit_function(&mut self, func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
+    fn exit_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(this_var) = self.this_var_stack.pop() {
             let Some(body) = &mut func.body else { unreachable!() };
 
             self.insert_this_var_statement_at_the_top_of_statements(
                 &mut body.statements,
                 &this_var,
+                ctx,
             );
         }
     }
@@ -201,9 +202,13 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
         self.this_var_stack.push(None);
     }
 
-    fn exit_static_block(&mut self, block: &mut StaticBlock<'a>, _ctx: &mut TraverseCtx<'a>) {
+    fn exit_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(this_var) = self.this_var_stack.pop() {
-            self.insert_this_var_statement_at_the_top_of_statements(&mut block.body, &this_var);
+            self.insert_this_var_statement_at_the_top_of_statements(
+                &mut block.body,
+                &this_var,
+                ctx,
+            );
         }
     }
 
@@ -214,7 +219,7 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
     ) {
         if let JSXElementName::ThisExpression(this) = element_name {
             if let Some(ident) = self.get_this_identifier(this.span, ctx) {
-                *element_name = self.ctx.ast.jsx_element_name_from_identifier_reference(ident);
+                *element_name = ctx.ast.jsx_element_name_from_identifier_reference(ident);
             }
         };
     }
@@ -226,8 +231,7 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
     ) {
         if let JSXMemberExpressionObject::ThisExpression(this) = object {
             if let Some(ident) = self.get_this_identifier(this.span, ctx) {
-                *object =
-                    self.ctx.ast.jsx_member_expression_object_from_identifier_reference(ident);
+                *object = ctx.ast.jsx_member_expression_object_from_identifier_reference(ident);
             }
         }
     }
@@ -235,7 +239,7 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Expression::ThisExpression(this) = expr {
             if let Some(ident) = self.get_this_identifier(this.span, ctx) {
-                *expr = self.ctx.ast.expression_from_identifier_reference(ident);
+                *expr = ctx.ast.expression_from_identifier_reference(ident);
             }
         }
     }
@@ -336,7 +340,7 @@ impl<'a> ArrowFunctions<'a> {
                 // Function (includes class method body)
                 | Ancestor::FunctionParams(_)
                 | Ancestor::FunctionBody(_)
-                // Class property body 
+                // Class property body
                 | Ancestor::PropertyDefinitionValue(_)
                 // Class static block
                 | Ancestor::StaticBlockBody(_) => return None,
@@ -352,6 +356,7 @@ impl<'a> ArrowFunctions<'a> {
         unreachable!();
     }
 
+    #[expect(clippy::unused_self)]
     fn transform_arrow_function_expression(
         &mut self,
         arrow_function_expr: ArrowFunctionExpression<'a>,
@@ -364,7 +369,7 @@ impl<'a> ArrowFunctions<'a> {
             let stmt = body.statements.pop().unwrap();
             let Statement::ExpressionStatement(stmt) = stmt else { unreachable!() };
             let stmt = stmt.unbox();
-            let return_statement = self.ctx.ast.statement_return(stmt.span, Some(stmt.expression));
+            let return_statement = ctx.ast.statement_return(stmt.span, Some(stmt.expression));
             body.statements.push(return_statement);
         }
 
@@ -387,35 +392,36 @@ impl<'a> ArrowFunctions<'a> {
         );
         new_function.scope_id.set(Some(scope_id));
 
-        Expression::FunctionExpression(self.ctx.ast.alloc(new_function))
+        Expression::FunctionExpression(ctx.ast.alloc(new_function))
     }
 
     /// Insert `var _this = this;` at the top of the statements.
+    #[expect(clippy::unused_self)]
     fn insert_this_var_statement_at_the_top_of_statements(
         &mut self,
         statements: &mut Vec<'a, Statement<'a>>,
         this_var: &BoundIdentifier<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
-        let binding_pattern = self.ctx.ast.binding_pattern(
-            self.ctx
-                .ast
+        let binding_pattern = ctx.ast.binding_pattern(
+            ctx.ast
                 .binding_pattern_kind_from_binding_identifier(this_var.create_binding_identifier()),
             NONE,
             false,
         );
 
-        let variable_declarator = self.ctx.ast.variable_declarator(
+        let variable_declarator = ctx.ast.variable_declarator(
             SPAN,
             VariableDeclarationKind::Var,
             binding_pattern,
-            Some(self.ctx.ast.expression_this(SPAN)),
+            Some(ctx.ast.expression_this(SPAN)),
             false,
         );
 
-        let stmt = self.ctx.ast.alloc_variable_declaration(
+        let stmt = ctx.ast.alloc_variable_declaration(
             SPAN,
             VariableDeclarationKind::Var,
-            self.ctx.ast.vec1(variable_declarator),
+            ctx.ast.vec1(variable_declarator),
             false,
         );
 

@@ -1,18 +1,12 @@
 mod arrow_functions;
 mod options;
 
-use std::rc::Rc;
-
 pub use arrow_functions::{ArrowFunctions, ArrowFunctionsOptions};
 pub use options::ES2015Options;
 use oxc_ast::ast::*;
 use oxc_traverse::{Traverse, TraverseCtx};
 
-use crate::context::Ctx;
-
-#[allow(dead_code)]
 pub struct ES2015<'a> {
-    ctx: Ctx<'a>,
     options: ES2015Options,
 
     // Plugins
@@ -20,13 +14,11 @@ pub struct ES2015<'a> {
 }
 
 impl<'a> ES2015<'a> {
-    pub fn new(options: ES2015Options, ctx: Ctx<'a>) -> Self {
+    pub fn new(options: ES2015Options) -> Self {
         Self {
             arrow_functions: ArrowFunctions::new(
                 options.arrow_function.clone().unwrap_or_default(),
-                Rc::clone(&ctx),
             ),
-            ctx,
             options,
         }
     }

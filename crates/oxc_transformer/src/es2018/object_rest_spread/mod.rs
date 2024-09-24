@@ -26,15 +26,12 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/main/packages/babel-plugin-transform-object-rest-spread>
 //! * Object rest/spread TC39 proposal: <https://github.com/tc39/proposal-object-rest-spread>
 
-use std::rc::Rc;
-
 use object_rest::ObjectRest;
 use object_spread::ObjectSpread;
 use oxc_ast::ast::*;
 use oxc_traverse::{Traverse, TraverseCtx};
 use serde::Deserialize;
 
-use crate::context::Ctx;
 mod object_rest;
 mod object_spread;
 
@@ -46,28 +43,27 @@ pub struct ObjectRestSpreadOptions {
     pub(crate) use_built_ins: bool,
 }
 
-#[allow(dead_code)]
-pub struct ObjectRestSpread<'a> {
-    ctx: Ctx<'a>,
+pub struct ObjectRestSpread {
+    #[allow(dead_code)]
     options: ObjectRestSpreadOptions,
 
     // Plugins
-    object_spread: ObjectSpread<'a>,
-    object_rest: ObjectRest<'a>,
+    object_spread: ObjectSpread,
+    #[allow(dead_code)]
+    object_rest: ObjectRest,
 }
 
-impl<'a> ObjectRestSpread<'a> {
-    pub fn new(options: ObjectRestSpreadOptions, ctx: Ctx<'a>) -> Self {
+impl ObjectRestSpread {
+    pub fn new(options: ObjectRestSpreadOptions) -> Self {
         Self {
-            object_spread: ObjectSpread::new(options, Rc::clone(&ctx)),
-            object_rest: ObjectRest::new(options, Rc::clone(&ctx)),
-            ctx,
+            object_spread: ObjectSpread::new(options),
+            object_rest: ObjectRest::new(options),
             options,
         }
     }
 }
 
-impl<'a> Traverse<'a> for ObjectRestSpread<'a> {
+impl<'a> Traverse<'a> for ObjectRestSpread {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         self.object_spread.enter_expression(expr, ctx);
     }

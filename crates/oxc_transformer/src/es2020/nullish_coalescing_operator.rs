@@ -35,16 +35,15 @@ use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
-use crate::{context::Ctx, helpers::stack::SparseStack};
+use crate::helpers::stack::SparseStack;
 
 pub struct NullishCoalescingOperator<'a> {
-    _ctx: Ctx<'a>,
     var_declarations: SparseStack<Vec<'a, VariableDeclarator<'a>>>,
 }
 
 impl<'a> NullishCoalescingOperator<'a> {
-    pub fn new(ctx: Ctx<'a>) -> Self {
-        Self { _ctx: ctx, var_declarations: SparseStack::new() }
+    pub fn new() -> Self {
+        Self { var_declarations: SparseStack::new() }
     }
 }
 

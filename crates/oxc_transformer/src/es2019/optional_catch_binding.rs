@@ -37,19 +37,15 @@ use oxc_semantic::SymbolFlags;
 use oxc_span::SPAN;
 use oxc_traverse::{Traverse, TraverseCtx};
 
-use crate::context::Ctx;
+pub struct OptionalCatchBinding;
 
-pub struct OptionalCatchBinding<'a> {
-    _ctx: Ctx<'a>,
-}
-
-impl<'a> OptionalCatchBinding<'a> {
-    pub fn new(ctx: Ctx<'a>) -> Self {
-        Self { _ctx: ctx }
+impl OptionalCatchBinding {
+    pub fn new() -> Self {
+        Self
     }
 }
 
-impl<'a> Traverse<'a> for OptionalCatchBinding<'a> {
+impl<'a> Traverse<'a> for OptionalCatchBinding {
     /// If CatchClause has no param, add a parameter called `unused`.
     #[allow(clippy::unused_self)]
     fn enter_catch_clause(&mut self, clause: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {

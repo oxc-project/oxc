@@ -37,7 +37,7 @@ use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator};
 use oxc_traverse::{Traverse, TraverseCtx};
 
-use crate::{context::Ctx, helpers::stack::SparseStack};
+use crate::helpers::stack::SparseStack;
 
 /// ES2016: Exponentiation Operator
 ///
@@ -46,7 +46,6 @@ use crate::{context::Ctx, helpers::stack::SparseStack};
 /// * <https://github.com/babel/babel/blob/main/packages/babel-plugin-transform-exponentiation-operator>
 /// * <https://github.com/babel/babel/blob/main/packages/babel-helper-builder-binary-assignment-operator-visitor>
 pub struct ExponentiationOperator<'a> {
-    _ctx: Ctx<'a>,
     var_declarations: SparseStack<Vec<'a, VariableDeclarator<'a>>>,
 }
 
@@ -57,8 +56,8 @@ struct Exploded<'a> {
 }
 
 impl<'a> ExponentiationOperator<'a> {
-    pub fn new(ctx: Ctx<'a>) -> Self {
-        Self { _ctx: ctx, var_declarations: SparseStack::new() }
+    pub fn new() -> Self {
+        Self { var_declarations: SparseStack::new() }
     }
 }
 
