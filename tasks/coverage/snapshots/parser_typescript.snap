@@ -2,7 +2,7 @@ commit: a709f989
 
 parser_typescript Summary:
 AST Parsed     : 6469/6479 (99.85%)
-Positive Passed: 6456/6479 (99.65%)
+Positive Passed: 6458/6479 (99.68%)
 Negative Passed: 1226/5715 (21.45%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration10.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration11.ts
@@ -4519,15 +4519,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/elidedEmbeddedSt
     · ────
  24 │     const enum H {}
     ╰────
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationNoNewNames.ts
-
-  × Missing initializer in destructuring declaration
-    ╭─[typescript/tests/cases/compiler/moduleAugmentationNoNewNames.ts:11:9]
- 10 │     let y: number, z: string;
- 11 │     let {a: x, b: x1}: {a: number, b: number};
-    ·         ─────────────────────────────────────
- 12 │     module Z {}
-    ╰────
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionWithExtensions_unexpected2.ts
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -4554,15 +4545,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/moduleResolution
    ·    ▲
    ╰────
   help: Try insert a semicolon here
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/newNamesInGlobalAugmentations1.ts
-
-  × Missing initializer in destructuring declaration
-    ╭─[typescript/tests/cases/compiler/newNamesInGlobalAugmentations1.ts:11:9]
- 10 │     class Cls {x}
- 11 │     let [a, b]: number[];
-    ·         ────────────────
- 12 │     export import X = M.M1.x;
-    ╰────
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationDecorators.ts
 
   × Unexpected token

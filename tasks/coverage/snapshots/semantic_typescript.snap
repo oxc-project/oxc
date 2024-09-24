@@ -2,7 +2,7 @@ commit: a709f989
 
 semantic_typescript Summary:
 AST Parsed     : 6479/6479 (100.00%)
-Positive Passed: 2671/6479 (41.23%)
+Positive Passed: 2672/6479 (41.24%)
 tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 semantic error: Symbol reference IDs mismatch:
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -23132,8 +23132,7 @@ after transform: ScopeId(0): ["Observable", "x"]
 rebuilt        : ScopeId(0): ["x"]
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationNoNewNames.ts
-semantic error: Missing initializer in destructuring declaration
-Bindings mismatch:
+semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["./observable", "Observable"]
 rebuilt        : ScopeId(0): ["Observable"]
 Scope children mismatch:
@@ -24950,9 +24949,6 @@ rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
 after transform: ["a"]
 rebuilt        : []
-
-tasks/coverage/typescript/tests/cases/compiler/newNamesInGlobalAugmentations1.ts
-semantic error: Missing initializer in destructuring declaration
 
 tasks/coverage/typescript/tests/cases/compiler/noAsConstNameLookup.ts
 semantic error: Bindings mismatch:
