@@ -73,17 +73,21 @@ impl<'a> AsyncToGenerator<'a> {
 impl<'a> Traverse<'a> for AsyncToGenerator<'a> {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Expression::AwaitExpression(await_expr) = expr {
-            // Do not transform top-level await
-            if ctx.ancestry.ancestors().any(|ancestor| {
-                matches!(
-                    ancestor,
-                    Ancestor::FunctionBody(_) | Ancestor::ArrowFunctionExpressionBody(_)
-                )
-            }) {
+            // Do not transform top-level await, or in async generator functions.
+            let in_async_function = ctx.ancestry.ancestors().find_map(|ance| {
+                if let Ancestor::FunctionBody(body) = ance {
+                    if *body.r#async() {
+                        Some(!body.generator())
+                    } else { None }
+                } else if let Ancestor::ArrowFunctionExpressionBody(body) = ance {
+                    Some(true)
+                } else { None }
+            }).unwrap_or(false);
+            if in_async_function {
                 let yield_expression = YieldExpression {
                     span: SPAN,
                     delegate: false,
-                    argument: Some(await_expr.argument.clone_in(ctx.ast.allocator)),
+                    argument: Some(ctx.ast.move_expression(&mut await_expr.argument)),
                 };
                 let expression = ctx.ast.alloc(yield_expression);
                 *expr = Expression::YieldExpression(expression);
