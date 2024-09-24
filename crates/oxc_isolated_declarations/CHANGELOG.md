@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.30.1] - 2024-09-24
+
+### Bug Fixes
+
+- 9ca202a codegen: Preserve newlines between comments (#6014) (Boshen)
+- 97a2c41 isolated-declarations: False positive for class private getter with non-inferrable return type (#5987) (michaelm)
+
 ## [0.30.0] - 2024-09-23
 
 ### Features

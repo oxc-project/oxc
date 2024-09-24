@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.30.1] - 2024-09-24
+
+### Performance
+
+- 7b90d79 transformer: `SparseStack` always keep minimum 1 entry (#5962) (overlookmotel)
+- 28fe80a transformer: Logical assignment operator transform use `SparseStack` (#5960) (overlookmotel)
+- 9f7d4b7 transformer: Exponentiation operator transform use `SparseStack` (#5959) (overlookmotel)
+- 5dc0154 transformer: Nullish coalescing operator transform use `SparseStack` (#5942) (overlookmotel)
+- 618e89e transformer: Arrow function transform: reduce stack memory usage (#5940) (overlookmotel)
+
+### Documentation
+
+- 860f108 transformer: Add to arrow functions transform docs (#5989) (overlookmotel)
+
+### Refactor
+
+- f02bf51 transformer: Arrow function transform: remove unnecessary assertion (#6002) (overlookmotel)
+
 ## [0.30.0] - 2024-09-23
 
 - c96b712 syntax: [**BREAKING**] Remove `SymbolFlags::ArrowFunction` (#5857) (overlookmotel)
