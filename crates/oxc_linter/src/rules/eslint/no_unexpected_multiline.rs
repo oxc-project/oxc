@@ -115,17 +115,11 @@ impl Rule for NoUnexpectedMultiline {
                 if let Some(AstKind::ChainExpression(_)) = ctx.nodes().parent_kind(node.id()) {
                     return;
                 }
+
                 let span = Span::new(call_expr.callee.span().end, call_expr.span.end);
-                let src = ctx.source_range(span).as_bytes();
-                let Some(open_paren) = memchr(b'(', src) else {
-                    return;
-                };
-                let Some(newline) = memchr(b'\n', src) else {
-                    return;
-                };
-                if newline < open_paren {
-                    let paren_span =
-                        Span::sized(span.start + u32::try_from(open_paren).unwrap(), 1);
+                if let Some(open_paren_pos) = has_newline_before(ctx, span, b'(') {
+                    let paren_span = Span::sized(span.start + open_paren_pos, 1);
+
                     ctx.diagnostic_with_dangerous_fix(
                         no_unexpected_multiline_diagnostic(&DiagnosticKind::FunctionCall {
                             open_paren_span: paren_span,
@@ -138,17 +132,11 @@ impl Rule for NoUnexpectedMultiline {
                 if !member_expr.is_computed() || member_expr.optional() {
                     return;
                 }
+
                 let span = Span::new(member_expr.object().span().end, member_expr.span().end);
-                let src = ctx.source_range(span).as_bytes();
-                let Some(open_bracket) = memchr(b'[', src) else {
-                    return;
-                };
-                let Some(newline) = memchr(b'\n', src) else {
-                    return;
-                };
-                if newline < open_bracket {
-                    let bracket_span =
-                        Span::sized(span.start + u32::try_from(open_bracket).unwrap(), 1);
+                if let Some(open_bracket_pos) = has_newline_before(ctx, span, b'[') {
+                    let bracket_span = Span::sized(span.start + open_bracket_pos, 1);
+
                     ctx.diagnostic_with_dangerous_fix(
                         no_unexpected_multiline_diagnostic(&DiagnosticKind::PropertyAccess {
                             open_bracket_span: bracket_span,
@@ -163,17 +151,11 @@ impl Rule for NoUnexpectedMultiline {
                 } else {
                     tagged_template_expr.tag.span().end
                 };
+
                 let span = Span::new(start, tagged_template_expr.span.end);
-                let src = ctx.source_range(span).as_bytes();
-                let Some(backtick) = memchr(b'`', src) else {
-                    return;
-                };
-                let Some(newline) = memchr(b'\n', src) else {
-                    return;
-                };
-                if newline < backtick {
-                    let backtick_span =
-                        Span::sized(span.start + u32::try_from(backtick).unwrap(), 1);
+                if let Some(backtick_pos) = has_newline_before(ctx, span, b'`') {
+                    let backtick_span = Span::sized(span.start + backtick_pos, 1);
+
                     ctx.diagnostic_with_dangerous_fix(
                         no_unexpected_multiline_diagnostic(&DiagnosticKind::TaggedTemplate {
                             backtick_span,
@@ -252,6 +234,19 @@ fn is_regex_flag(str: &str) -> bool {
         }
     }
     true
+}
+
+/// Check if there is a newline proceeding a target character within a snippet of source text.
+/// Returns `None` if the character is not found at all or has no proceeding newline. Otherwise,
+/// returns the byte offset of the target character with respect to the start of the span.
+///
+/// Newlines do not have to be directly before the target character, but can be anywhere before it.
+fn has_newline_before(ctx: &LintContext, span: Span, c: u8) -> Option<u32> {
+    let src = ctx.source_range(span).as_bytes();
+    let target = memchr(c, src)?;
+    let newline = memchr(b'\n', src)?;
+
+    (newline < target).then(|| u32::try_from(target).unwrap())
 }
 
 #[test]
