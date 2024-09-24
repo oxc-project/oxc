@@ -190,7 +190,8 @@ fn check_character(
     unicode_sets: bool,
 ) -> Option<Span> {
     let char_text = character.span.source_text(ctx.source_text());
-    let is_escaped = char_text.starts_with('\\');
+    // The character is escaped if it has at least two characters and the first character is a backslash
+    let is_escaped = char_text.starts_with('\\') && char_text.len() >= 2;
     if !is_escaped {
         return None;
     }
@@ -573,6 +574,8 @@ fn test() {
         r"/[[\-]\-]/v",  // { "ecmaVersion": 2024 },
         r"/[\^]/v",      // { "ecmaVersion": 2024 }
         r"/[\s\-(]/",    // https://github.com/oxc-project/oxc/issues/5227
+        r"/\c/",         // https://github.com/oxc-project/oxc/issues/6046
+        r"/\\c/",        // https://github.com/oxc-project/oxc/issues/6046
     ];
 
     let fail = vec![
