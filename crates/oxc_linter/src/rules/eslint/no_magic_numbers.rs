@@ -1,7 +1,5 @@
 use oxc_ast::{
-    ast::{
-        AssignmentTarget, Expression, MemberExpression, UnaryExpression, VariableDeclarationKind,
-    },
+    ast::{AssignmentTarget, Expression, MemberExpression, VariableDeclarationKind},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -369,8 +367,9 @@ fn is_parse_int_radix(parent_parent_node: &AstNode<'_>) -> bool {
 /// a[1e310] // (same as a["Infinity"])
 /// ```
 fn is_array_index<'a>(ast_kind: &AstKind<'a>, parent_kind: &AstKind<'a>) -> bool {
-    fn is_unanary_index(unary: &UnaryExpression) -> bool {
-        match &unary.argument {
+    match ast_kind {
+        AstKind::BigIntLiteral(_) => true,
+        AstKind::UnaryExpression(unary) => match &unary.argument {
             Expression::BigIntLiteral(_) => true,
             Expression::NumericLiteral(numeric)
                 if unary.operator == UnaryOperator::UnaryNegation =>
@@ -378,25 +377,18 @@ fn is_array_index<'a>(ast_kind: &AstKind<'a>, parent_kind: &AstKind<'a>) -> bool
                 numeric.value == 0.0
             }
             _ => false,
-        }
-    }
-
-    match ast_kind {
-        AstKind::UnaryExpression(unary) => is_unanary_index(unary),
-        AstKind::BigIntLiteral(_) => true,
+        },
         AstKind::NumericLiteral(numeric) => match parent_kind {
             AstKind::MemberExpression(expression) => {
                 if let MemberExpression::ComputedMemberExpression(computed_expression) = expression
                 {
                     return computed_expression.expression.is_number_value(numeric.value)
-                        && numeric.value >= 0.0
                         && numeric.value.fract() == 0.0
                         && numeric.value < f64::from(u32::MAX);
                 }
 
                 false
             }
-            AstKind::UnaryExpression(unary) => is_unanary_index(unary),
             _ => false,
         },
         _ => false,
