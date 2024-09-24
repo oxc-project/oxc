@@ -4,6 +4,7 @@ use std::{
 };
 
 use cow_utils::CowUtils;
+use oxc::parser::ParseOptions;
 use oxc::{
     allocator::Allocator,
     codegen::CodeGenerator,
@@ -298,7 +299,14 @@ impl TestCase for ConformanceTestCase {
                 String::default,
                 |output| {
                     // Get expected code by parsing the source text, so we can get the same code generated result.
-                    let ret = Parser::new(&allocator, &output, source_type).parse();
+                    let ret = Parser::new(&allocator, &output, source_type)
+                        .with_options(ParseOptions {
+                            // Related: async to generator, regression
+                            allow_return_outside_function: true,
+                            ..Default::default()
+                        })
+                        .parse();
+                    
                     CodeGenerator::new()
                         // .enable_comment(
                         // &output,

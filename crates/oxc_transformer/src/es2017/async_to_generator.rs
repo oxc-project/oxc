@@ -273,5 +273,6 @@ impl<'a> Traverse<'a> for AsyncToGenerator<'a> {
         );
         arrow.body = ctx.ast.alloc(body);
         arrow.r#async = false;
+        arrow.expression = true;
     }
 }
