@@ -1272,7 +1272,7 @@ impl<'a> Format<'a> for TSModuleDeclaration<'a> {
             parts.push(ss!("declare "));
         }
 
-        parts.push(ss!(self.kind.to_str()));
+        parts.push(ss!(self.kind.as_str()));
         parts.push(space!());
         parts.push(self.id.format(p));
         parts.push(ss!(" {"));

@@ -456,16 +456,6 @@ pub enum TSTypeOperatorOperator {
     Readonly = 2,
 }
 
-impl TSTypeOperatorOperator {
-    pub fn to_str(self) -> &'static str {
-        match self {
-            TSTypeOperatorOperator::Keyof => "keyof",
-            TSTypeOperatorOperator::Readonly => "readonly",
-            TSTypeOperatorOperator::Unique => "unique",
-        }
-    }
-}
-
 /// TypeScript Array Type
 ///
 /// Does not include tuple types, which are stored as [`TSTupleType`].
@@ -1372,20 +1362,6 @@ pub enum TSModuleDeclarationKind {
     Namespace = 2,
 }
 
-impl TSModuleDeclarationKind {
-    pub fn is_global(self) -> bool {
-        matches!(self, TSModuleDeclarationKind::Global)
-    }
-
-    pub fn to_str(self) -> &'static str {
-        match self {
-            TSModuleDeclarationKind::Global => "global",
-            TSModuleDeclarationKind::Namespace => "namespace",
-            TSModuleDeclarationKind::Module => "module",
-        }
-    }
-}
-
 /// The name of a TypeScript [namespace or module declaration](TSModuleDeclaration).
 ///
 /// Note that it is a syntax error for namespace declarations to have a string literal name.
@@ -1424,24 +1400,6 @@ pub enum TSModuleDeclarationName<'a> {
 pub enum TSModuleDeclarationBody<'a> {
     TSModuleDeclaration(Box<'a, TSModuleDeclaration<'a>>) = 0,
     TSModuleBlock(Box<'a, TSModuleBlock<'a>>) = 1,
-}
-
-impl<'a> TSModuleDeclarationBody<'a> {
-    pub fn is_empty(&self) -> bool {
-        match self {
-            TSModuleDeclarationBody::TSModuleDeclaration(declaration) => declaration.body.is_none(),
-            TSModuleDeclarationBody::TSModuleBlock(block) => block.body.len() == 0,
-        }
-    }
-
-    pub fn as_module_block_mut(&mut self) -> Option<&mut TSModuleBlock<'a>> {
-        match self {
-            TSModuleDeclarationBody::TSModuleBlock(block) => Some(block.as_mut()),
-            TSModuleDeclarationBody::TSModuleDeclaration(decl) => {
-                decl.body.as_mut().and_then(|body| body.as_module_block_mut())
-            }
-        }
-    }
 }
 
 // See serializer in serialize.rs

@@ -173,7 +173,11 @@ impl<'a> TSModuleDeclaration<'a> {
 }
 
 impl TSModuleDeclarationKind {
-    pub fn as_str(&self) -> &str {
+    pub fn is_global(self) -> bool {
+        matches!(self, TSModuleDeclarationKind::Global)
+    }
+
+    pub fn as_str(&self) -> &'static str {
         match self {
             Self::Global => "global",
             Self::Module => "module",
@@ -207,6 +211,22 @@ impl<'a> fmt::Display for TSModuleDeclarationName<'a> {
 impl<'a> TSModuleDeclarationBody<'a> {
     pub fn is_strict(&self) -> bool {
         matches!(self, Self::TSModuleBlock(block) if block.is_strict())
+    }
+
+    pub fn is_empty(&self) -> bool {
+        match self {
+            TSModuleDeclarationBody::TSModuleDeclaration(declaration) => declaration.body.is_none(),
+            TSModuleDeclarationBody::TSModuleBlock(block) => block.body.len() == 0,
+        }
+    }
+
+    pub fn as_module_block_mut(&mut self) -> Option<&mut TSModuleBlock<'a>> {
+        match self {
+            TSModuleDeclarationBody::TSModuleBlock(block) => Some(block.as_mut()),
+            TSModuleDeclarationBody::TSModuleDeclaration(decl) => {
+                decl.body.as_mut().and_then(|body| body.as_module_block_mut())
+            }
+        }
     }
 }
 
@@ -253,5 +273,15 @@ impl ImportOrExportKind {
 
     pub fn is_type(&self) -> bool {
         matches!(self, Self::Type)
+    }
+}
+
+impl TSTypeOperatorOperator {
+    pub fn to_str(self) -> &'static str {
+        match self {
+            TSTypeOperatorOperator::Keyof => "keyof",
+            TSTypeOperatorOperator::Readonly => "readonly",
+            TSTypeOperatorOperator::Unique => "unique",
+        }
     }
 }
