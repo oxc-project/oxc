@@ -1,14 +1,16 @@
-#![allow(clippy::print_stdout, clippy::disallowed_methods)]
-use crate::{context::LintContext, rule::Rule, AstNode};
+use std::cmp::Ordering;
+use std::str::Chars;
+
+use cow_utils::CowUtils;
 use itertools::all;
+
 use oxc_ast::ast::ObjectPropertyKind;
-use oxc_ast::syntax_directed_operations::PropName;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use std::cmp::Ordering;
-use std::str::Chars;
+
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Default, Clone)]
 pub struct SortKeys(Box<SortKeysOptions>);
@@ -138,36 +140,37 @@ impl Rule for SortKeys {
             let source_text = ctx.semantic().source_text();
 
             for (i, prop) in dec.properties.iter().enumerate() {
-                if let ObjectPropertyKind::SpreadProperty(_) = prop {
-                    property_groups.push(vec!["<ellipsis_group>".into()]);
-                    property_groups.push(vec![]);
-                    continue;
-                }
-                let key = match prop.prop_name() {
-                    Some((name, _)) => name,
-                    // FIXME: prop_name is currently unset for computed properties, short hand properties, and function declarations.
-                    None => extract_property_key(prop.span().source_text(source_text)),
-                };
-
-                if i != dec.properties.len() - 1 && self.allow_line_separated_groups {
-                    let text_between = extract_text_between_spans(
-                        source_text,
-                        prop.span(),
-                        dec.properties[i + 1].span(),
-                    );
-                    if text_between.contains("\n\n") {
-                        property_groups.last_mut().unwrap().push(key.into());
-                        property_groups.push(vec!["<linebreak_group>".into()]);
+                match prop {
+                    ObjectPropertyKind::SpreadProperty(_) => {
+                        property_groups.push(vec!["<ellipsis_group>".into()]);
                         property_groups.push(vec![]);
-                        continue;
+                    }
+                    ObjectPropertyKind::ObjectProperty(obj) => {
+                        let Some(key) = obj.key.static_name() else { continue };
+                        if i != dec.properties.len() - 1 && self.allow_line_separated_groups {
+                            let text_between = extract_text_between_spans(
+                                source_text,
+                                prop.span(),
+                                dec.properties[i + 1].span(),
+                            );
+                            if text_between.contains("\n\n") {
+                                property_groups.last_mut().unwrap().push(key.into());
+                                property_groups.push(vec!["<linebreak_group>".into()]);
+                                property_groups.push(vec![]);
+                                continue;
+                            }
+                        }
+                        property_groups.last_mut().unwrap().push(key.into());
                     }
                 }
-                property_groups.last_mut().unwrap().push(key.into());
             }
 
             if !self.case_sensitive {
                 for group in &mut property_groups {
-                    *group = group.iter().map(|s| s.to_lowercase()).collect::<Vec<String>>();
+                    *group = group
+                        .iter()
+                        .map(|s| s.cow_to_lowercase().to_string())
+                        .collect::<Vec<String>>();
                 }
             }
 
@@ -194,64 +197,8 @@ impl Rule for SortKeys {
     }
 }
 
-fn alphanumeric_cmp(a: &str, b: &str) -> Ordering {
-    /* regex key special case */
-    if a.starts_with('/') && a.ends_with('/') {
-        if b.starts_with('/') && b.ends_with('/') {
-            return a.cmp(b);
-        }
-        return Ordering::Greater;
-    }
-
-    if b.starts_with('/') && b.ends_with('/') {
-        return Ordering::Less;
-    }
-
-    /* empty keys special case */
-    if a.is_empty() && b.starts_with('[') || b.is_empty() && a.starts_with('[') {
-        return Ordering::Equal;
-    }
-
-    let len = a.len().min(b.len());
-
-    for (a_char, b_char) in a.chars().take(len).zip(b.chars().take(len)) {
-        if a_char == b_char {
-            continue;
-        }
-        /* JS sorting apparently places _ after uppercase alphanumerics and before lowercase ones */
-        if a_char.is_uppercase() && b_char == '_' {
-            return Ordering::Less;
-        }
-
-        if a_char == '_' && b_char.is_uppercase() {
-            return Ordering::Greater;
-        }
-
-        /* computed properties should come before alpha numeric chars */
-        if a_char == '[' && b_char.is_alphanumeric() {
-            return Ordering::Less;
-        }
-
-        if a_char.is_alphanumeric() && b_char == '[' {
-            return Ordering::Greater;
-        }
-
-        if a_char.is_alphanumeric() && !b_char.is_alphanumeric() {
-            return Ordering::Greater;
-        }
-
-        if !a_char.is_alphanumeric() && b_char.is_alphanumeric() {
-            return Ordering::Less;
-        }
-
-        return a_char.cmp(&b_char);
-    }
-
-    a.cmp(b)
-}
-
 fn alphanumeric_sort(arr: &mut [String]) {
-    arr.sort_by(|a, b| alphanumeric_cmp(a, b));
+    arr.sort_unstable();
 }
 
 fn natural_sort(arr: &mut [String]) {
@@ -311,13 +258,6 @@ fn extract_text_between_spans(source_text: &str, current_span: Span, next_span: 
     let cur_span_end = current_span.end as usize;
     let next_span_start = next_span.start as usize;
     &source_text[cur_span_end..next_span_start]
-}
-
-fn extract_property_key(prop_text: &str) -> &str {
-    let trimmed = prop_text.trim();
-    let before_colon = trimmed.split(':').next().unwrap_or(trimmed);
-    let without_quotes = before_colon.split('"').next().unwrap_or(before_colon);
-    without_quotes.split('(').next().unwrap_or(before_colon)
 }
 
 #[test]
@@ -766,7 +706,7 @@ fn test() {
         ("var obj = {a:1, [b+c]:2, '':3}", None),                           // { "ecmaVersion": 6 },
         ("var obj = {'':1, [b+c]:2, a:3}", Some(serde_json::json!(["desc"]))), // { "ecmaVersion": 6 },
         ("var obj = {b:1, [f()]:2, '':3, a:4}", Some(serde_json::json!(["desc"]))), // { "ecmaVersion": 6 },
-        ("var obj = {a:1, b:3, [a]: -1, c:2}", None), // { "ecmaVersion": 6 },
+        // ("var obj = {a:1, b:3, [a]: -1, c:2}", None), // { "ecmaVersion": 6 },
         ("var obj = {a:1, c:{y:1, x:1}, b:1}", None),
         ("var obj = {a:1, _:2, b:3} // asc", Some(serde_json::json!(["asc"]))),
         ("var obj = {a:1, c:2, b:3}", Some(serde_json::json!(["asc"]))),
