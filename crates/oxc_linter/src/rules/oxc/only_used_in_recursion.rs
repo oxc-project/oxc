@@ -40,12 +40,8 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```ts
-    /// function f(a: number, b: number): number {
-    ///     if (a == 0) {
-    ///         return 1
-    ///     } else {
-    ///         return f(a - 1, b + 1)
-    ///     }
+    /// function test(only_used_in_recursion) {
+    ///     return test(only_used_in_recursion);
     /// }
     /// ```
     ///
