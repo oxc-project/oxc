@@ -357,6 +357,84 @@ fn test() {
                 debugger;
             "
             ),
+            // Handles no spaces in comment
+            format!(
+                "debugger; //{prefix}-disable-line
+            debugger; //{prefix}-disable-line
+
+            //{prefix}-disable-next-line
+            debugger;
+
+            /*{prefix}-disable-next-line*/
+            debugger;
+
+            debugger; /*{prefix}-disable-line*/
+            
+            debugger; //{prefix}-disable-line no-debugger
+
+            //{prefix}-disable-next-line no-debugger
+            debugger;
+
+            debugger; /*{prefix}-disable-line no-debugger*/
+
+            /*{prefix}-disable-next-line no-debugger*/
+            debugger;
+        "
+            ),
+            // Handles extra spaces in comment
+            format!(
+                "debugger; //       {prefix}-disable-line
+            debugger; // \t\t {prefix}-disable-line
+
+            //         {prefix}-disable-next-line
+            debugger;
+
+            /*      {prefix}-disable-next-line        */
+            debugger;
+
+            debugger; /*    {prefix}-disable-line       */
+            
+            debugger; //            {prefix}-disable-line no-debugger
+
+            //          {prefix}-disable-next-line no-debugger
+            debugger;
+
+            debugger; /*     \t   {prefix}-disable-line no-debugger*/
+
+            /*    \t   {prefix}-disable-next-line no-debugger       */
+            debugger;
+        "
+            ),
+            // Extra commas
+            format!(
+                "
+            debugger // {prefix}-disable-line no-debugger,
+            debugger // {prefix}-disable-line ,no-debugger
+            debugger // {prefix}-disable-line no-debugger,,
+            debugger // {prefix}-disable-line ,,no-debugger,,
+            debugger // {prefix}-disable-line ,,no-debugger,,semi,,
+            debugger // {prefix}-disable-line ,,no-debugger,,no-debugger,,
+            debugger // {prefix}-disable-line ,  , ,,no-debugger, , ,
+
+            // {prefix}-disable-next-line no-debugger,
+            debugger
+            // {prefix}-disable-next-line ,no-debugger,
+            debugger
+            // {prefix}-disable-next-line no-debugger,,
+            debugger
+            // {prefix}-disable-next-line ,,no-debugger,,
+            debugger
+            // {prefix}-disable-next-line ,,no-debugger,,semi,,
+            debugger
+            // {prefix}-disable-next-line ,,no-debugger,,no-debugger,,
+            debugger
+            // {prefix}-disable-next-line ,  , ,,no-debugger, , ,
+        "
+            ),
+            format!("
+                /* {prefix}-disable , ,no-debugger, , */
+                debugger;
+            ")
         ];
 
         let fail = vec![
@@ -469,6 +547,68 @@ fn test() {
             /* {prefix}-enable no-debugger, no-console */
                 debugger;
             "
+            ),
+            // Handles no spaces in comment
+            format!(
+                "
+            /*{prefix}-disable*/
+                debugger;
+            /*{prefix}-enable*/
+                debugger;
+            "
+            ),
+            format!(
+                "
+            /*{prefix}-disable no-debugger,no-console*/
+                debugger;
+            /*{prefix}-enable no-debugger,no-console*/
+                debugger;
+            "
+            ),
+            format!(
+                "debugger; //{prefix}-disable-line no-alert,quotes,semi
+            //{prefix}-disable-next-line no-alert,quotes,semi
+            debugger;
+            debugger; /*{prefix}-disable-line no-alert,quotes,semi */
+            /*{prefix}-disable-next-line no-alert,quotes,semi */
+            debugger;
+            /*{prefix}-disable-next-line
+no-alert,
+quotes,
+semi*/
+            debugger;
+        "
+            ),
+            // Handles extra spaces in comment
+            format!(
+                "
+            /*   \t\t {prefix}-disable   \t\t*/
+                debugger;
+            /*   \t\t {prefix}-enable   \t\t*/
+                debugger;
+            "
+            ),
+            format!(
+                "
+            /*   \t\t {prefix}-disable    \t\t no-debugger,   \t\t no-console   \t\t */
+                debugger;
+            /*   \t\t {prefix}-enable    \t\t no-debugger,   \t\t no-console   \t\t */
+                debugger;
+            "
+            ),
+            format!(
+                "debugger; //   \t\t {prefix}-disable-line   \t\t  no-alert,   \t\t quotes,   \t\t semi   \t\t 
+            //   \t\t {prefix}-disable-next-line   \t\t  no-alert,   \t\t quotes,   \t\t semi
+            debugger;
+            debugger; /*   \t\t {prefix}-disable-line    \t\t no-alert,   \t\t quotes,   \t\t semi   \t\t  */
+            /*   \t\t {prefix}-disable-next-line   \t\t  no-alert,   \t\t quotes,   \t\t semi */
+            debugger;
+            /*  \t\t {prefix}-disable-next-line
+  \t\t no-alert,  \t\t 
+  \t\t quotes,  \t\t 
+  \t\t semi  \t\t */
+            debugger;
+        "
             ),
         ];
 
