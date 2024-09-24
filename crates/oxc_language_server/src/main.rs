@@ -1,7 +1,6 @@
-#[allow(clippy::disallowed_types)]
 mod linter;
 
-use std::{collections::HashMap, fmt::Debug, path::PathBuf, str::FromStr};
+use std::{fmt::Debug, path::PathBuf, str::FromStr};
 
 use dashmap::DashMap;
 use futures::future::join_all;
@@ -254,7 +253,8 @@ impl LanguageServer for Backend {
                     kind: Some(CodeActionKind::QUICKFIX),
                     is_preferred: Some(true),
                     edit: Some(WorkspaceEdit {
-                        changes: Some(HashMap::from([(
+                        #[expect(clippy::disallowed_types)]
+                        changes: Some(std::collections::HashMap::from([(
                             uri,
                             vec![TextEdit {
                                 range: fixed_content.range,
