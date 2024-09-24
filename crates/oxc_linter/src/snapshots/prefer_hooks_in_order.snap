@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 216
 ---
   ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
    ╭─[prefer_hooks_in_order.tsx:6:21]
@@ -186,16 +185,6 @@ assertion_line: 216
   help: "afterEach" hooks should be before any "afterAll" hooks
 
   ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-    ╭─[prefer_hooks_in_order.tsx:38:25]
- 37 │     
- 38 │ ╭─▶                         beforeEach(() => {
- 39 │ │                               mockLogger();
- 40 │ ╰─▶                         });
- 41 │     
-    ╰────
-  help: "beforeEach" hooks should be before any "afterEach" hooks
-
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
     ╭─[prefer_hooks_in_order.tsx:7:21]
   6 │     
   7 │ ╭─▶                     beforeAll(() => {
@@ -204,6 +193,16 @@ assertion_line: 216
  10 │     
     ╰────
   help: "beforeAll" hooks should be before any "beforeEach" hooks
+
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
+    ╭─[prefer_hooks_in_order.tsx:38:25]
+ 37 │     
+ 38 │ ╭─▶                         beforeEach(() => {
+ 39 │ │                               mockLogger();
+ 40 │ ╰─▶                         });
+ 41 │     
+    ╰────
+  help: "beforeEach" hooks should be before any "afterEach" hooks
 
   ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
    ╭─[prefer_hooks_in_order.tsx:6:17]
@@ -389,16 +388,6 @@ assertion_line: 216
   help: "afterEach" hooks should be before any "afterAll" hooks
 
   ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-    ╭─[prefer_hooks_in_order.tsx:38:21]
- 37 │     
- 38 │ ╭─▶                     beforeEach(() => {
- 39 │ │                           mockLogger();
- 40 │ ╰─▶                     });
- 41 │                     
-    ╰────
-  help: "beforeEach" hooks should be before any "afterEach" hooks
-
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
     ╭─[prefer_hooks_in_order.tsx:7:17]
   6 │     
   7 │ ╭─▶                 beforeAll(() => {
@@ -407,3 +396,13 @@ assertion_line: 216
  10 │     
     ╰────
   help: "beforeAll" hooks should be before any "beforeEach" hooks
+
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
+    ╭─[prefer_hooks_in_order.tsx:38:21]
+ 37 │     
+ 38 │ ╭─▶                     beforeEach(() => {
+ 39 │ │                           mockLogger();
+ 40 │ ╰─▶                     });
+ 41 │                     
+    ╰────
+  help: "beforeEach" hooks should be before any "afterEach" hooks
