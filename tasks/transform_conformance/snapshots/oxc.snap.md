@@ -1,10 +1,11 @@
 commit: 3bcfee23
 
-Passed: 55/64
+Passed: 56/65
 
 # All Passed:
 * babel-plugin-transform-nullish-coalescing-operator
 * babel-plugin-transform-optional-catch-binding
+* babel-plugin-transform-exponentiation-operator
 * babel-plugin-transform-arrow-functions
 * babel-preset-typescript
 * babel-plugin-transform-react-jsx-source

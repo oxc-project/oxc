@@ -92,10 +92,14 @@ impl<'a> Traverse<'a> for ExponentiationOperator<'a> {
         }
     }
 
+    // NOTE: Bail bigint arguments to `Math.pow`, which are runtime errors.
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         // left ** right
         if let Expression::BinaryExpression(binary_expr) = expr {
             if binary_expr.operator == BinaryOperator::Exponential {
+                if binary_expr.left.is_big_int_literal() || binary_expr.right.is_big_int_literal() {
+                    return;
+                }
                 let left = ctx.ast.move_expression(&mut binary_expr.left);
                 let right = ctx.ast.move_expression(&mut binary_expr.right);
                 *expr = Self::math_pow(left, right, ctx);
@@ -105,6 +109,9 @@ impl<'a> Traverse<'a> for ExponentiationOperator<'a> {
         // left **= right
         if let Expression::AssignmentExpression(assign_expr) = expr {
             if assign_expr.operator == AssignmentOperator::Exponential {
+                if assign_expr.right.is_big_int_literal() {
+                    return;
+                }
                 let mut nodes = ctx.ast.vec();
                 let Some(Exploded { reference, uid }) =
                     self.explode(&mut assign_expr.left, &mut nodes, ctx)
