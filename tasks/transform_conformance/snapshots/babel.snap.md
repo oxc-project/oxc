@@ -1,6 +1,6 @@
 commit: 3bcfee23
 
-Passed: 330/1024
+Passed: 333/1022
 
 # All Passed:
 * babel-plugin-transform-optional-catch-binding
@@ -10,7 +10,7 @@ Passed: 330/1024
 * babel-plugin-transform-react-jsx-source
 
 
-# babel-preset-env (106/585)
+# babel-preset-env (109/585)
 * .plugins-overlapping/chrome-49/input.js
 x Output mismatch
 
@@ -230,9 +230,6 @@ x Output mismatch
 * corejs2-babel-7/usage-regenerator-used-generator/input.mjs
 x Output mismatch
 
-* corejs2-babel-7/usage-regenerator-used-generator-native-support/input.mjs
-x Output mismatch
-
 * corejs2-babel-7/usage-remove-babel-polyfill-import/input.mjs
 x Output mismatch
 
@@ -438,9 +435,6 @@ x Output mismatch
 x Output mismatch
 
 * corejs3/usage-regenerator-used-async-native-support/input.mjs
-x Output mismatch
-
-* corejs3/usage-regenerator-used-generator-native-support/input.mjs
 x Output mismatch
 
 * corejs3/usage-shippedProposals/input.mjs
@@ -699,9 +693,6 @@ x Output mismatch
 x Output mismatch
 
 * corejs3-babel-7/usage-regenerator-used-generator/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-regenerator-used-generator-native-support/input.mjs
 x Output mismatch
 
 * corejs3-babel-7/usage-shippedProposals/input.mjs
@@ -1662,14 +1653,6 @@ x Output mismatch
 x Output mismatch
 
 * regression/gh-8323/input.js
-x Output mismatch
-
-
-# babel-plugin-transform-async-to-generator (0/2)
-* assumption-ignoreFunctionLength-true/basic/input.mjs
-x Output mismatch
-
-* assumption-ignoreFunctionLength-true/export-default-function/input.mjs
 x Output mismatch
 
 
@@ -3462,7 +3445,7 @@ x Output mismatch
    `----
 
 
-* cross-platform/within-ts-module-block/input.tsx
+* cross-platform/within-ts-module-block/input.ts
 x Output mismatch
 
 

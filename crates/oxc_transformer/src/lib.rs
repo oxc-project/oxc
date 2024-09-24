@@ -339,6 +339,10 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         self.common.exit_statements(stmts, ctx);
     }
 
+    fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x2_es2017.exit_statement(stmt, ctx);
+    }
+
     fn enter_tagged_template_expression(
         &mut self,
         expr: &mut TaggedTemplateExpression<'a>,

@@ -40,8 +40,10 @@
 //!
 
 use crate::context::Ctx;
-use oxc_allocator::CloneIn;
-use oxc_ast::ast::{ArrowFunctionExpression, Expression, FormalParameterKind, Function, FunctionType, Statement, YieldExpression};
+use oxc_ast::ast::{
+    ArrowFunctionExpression, Expression, FormalParameterKind, Function, FunctionType, Statement,
+    VariableDeclarationKind, YieldExpression,
+};
 use oxc_ast::NONE;
 use oxc_span::{Atom, SPAN};
 use oxc_syntax::reference::ReferenceFlags;
@@ -68,6 +70,65 @@ impl<'a> AsyncToGenerator<'a> {
         let property = ctx.ast.identifier_name(SPAN, Atom::from("asyncToGenerator"));
         Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false))
     }
+
+    fn transform_function(func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) -> Function<'a> {
+        let babel_helpers_id =
+            ctx.scopes().find_binding(ctx.current_scope_id(), "babelHelpers");
+        let callee = Self::get_helper_callee(babel_helpers_id, ctx);
+        let target = ctx.ast.function(
+            func.r#type,
+            SPAN,
+            None,
+            true,
+            false,
+            false,
+            func.type_parameters.take(),
+            func.this_param.take(),
+            ctx.ast.alloc(ctx.ast.formal_parameters(
+                SPAN,
+                FormalParameterKind::FormalParameter,
+                ctx.ast.vec(),
+                NONE,
+            )),
+            func.return_type.take(),
+            func.body.take(),
+        );
+        let parameters =
+            ctx.ast.vec1(ctx.ast.argument_expression(ctx.ast.expression_from_function(target)));
+        let call = ctx.ast.expression_call(SPAN, callee, NONE, parameters, false);
+        let call = ctx.ast.expression_member(ctx.ast.member_expression_static(
+            SPAN,
+            call,
+            ctx.ast.identifier_name(SPAN, "apply"),
+            false
+        ));
+        let call = ctx.ast.expression_call(SPAN, call, NONE, {
+            let mut items = ctx.ast.vec();
+            items.push(ctx.ast.argument_expression(ctx.ast.expression_this(SPAN)));
+            items.push(ctx.ast.argument_expression(
+                ctx.ast.expression_identifier_reference(SPAN, "arguments"),
+            ));
+            items
+        }, false);
+        let returns = ctx.ast.return_statement(SPAN, Some(call));
+        let body = Statement::ReturnStatement(ctx.ast.alloc(returns));
+        let body = ctx.ast.function_body(SPAN, ctx.ast.vec(), ctx.ast.vec1(body));
+        let body = ctx.ast.alloc(body);
+        let params = ctx.ast.formal_parameters(SPAN, func.params.kind, ctx.ast.move_vec(&mut func.params.items), func.params.rest.take());
+        ctx.ast.function(
+            FunctionType::FunctionExpression,
+            SPAN,
+            None,
+            false,
+            false,
+            false,
+            func.type_parameters.take(),
+            func.this_param.take(),
+            params,
+            func.return_type.take(),
+            Some(body)
+        )
+    }
 }
 
 impl<'a> Traverse<'a> for AsyncToGenerator<'a> {
@@ -84,7 +145,7 @@ impl<'a> Traverse<'a> for AsyncToGenerator<'a> {
                         } else {
                             None
                         }
-                    } else if let Ancestor::ArrowFunctionExpressionBody(body) = ance {
+                    } else if let Ancestor::ArrowFunctionExpressionBody(_) = ance {
                         Some(true)
                     } else {
                         None
@@ -100,44 +161,38 @@ impl<'a> Traverse<'a> for AsyncToGenerator<'a> {
                 let expression = ctx.ast.alloc(yield_expression);
                 *expr = Expression::YieldExpression(expression);
             }
+        } else if let Expression::FunctionExpression(func) = expr {
+            if !func.r#async || func.generator { return }
+            let new_function = Self::transform_function(func, ctx);
+            *expr = ctx.ast.expression_from_function(new_function);
         }
     }
 
-    fn exit_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
-        let babel_helpers_id = ctx.scopes().find_binding(ctx.current_scope_id(), "babelHelpers");
-        let callee = Self::get_helper_callee(babel_helpers_id, ctx);
-        let target = ctx.ast.function(
-            func.r#type.clone(),
-            SPAN,
-            func.id.clone(),
-            true,
-            false,
-            false,
-            func.type_parameters.take(),
-            func.this_param.take(),
-            ctx.ast.alloc(ctx.ast.formal_parameters(
-                SPAN,
-                FormalParameterKind::FormalParameter,
-                ctx.ast.vec(),
-                NONE,
-            )),
-            func.return_type.take(),
-            func.body.take()
-        );
-        let parameters = {
-            let mut items = ctx.ast.vec();
-            items.push(ctx.ast.argument_expression(ctx.ast.expression_this(SPAN)));
-            items.push(ctx.ast.argument_expression(ctx.ast.expression_null_literal(SPAN)));
-            items.push(ctx.ast.argument_expression(ctx.ast.expression_from_function(target)));
-            items
-        };
-        let call = ctx.ast.expression_call(SPAN, callee, NONE, parameters, false);
-        let returns = ctx.ast.return_statement(SPAN, Some(call));
-        let body = Statement::ReturnStatement(ctx.ast.alloc(returns));
-        let body = ctx.ast.function_body(SPAN, ctx.ast.vec(), ctx.ast.vec1(body));
-        let body = ctx.ast.alloc(body);
-        func.r#async = false;
-        func.body = Some(body);
+    fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Statement::FunctionDeclaration(func) = stmt {
+            if !func.r#async || func.generator { return }
+            let new_function = Self::transform_function(func, ctx);
+            if let Some(id) = func.id.take() {
+                *stmt = ctx.ast.statement_declaration(ctx.ast.declaration_variable(
+                    SPAN,
+                    VariableDeclarationKind::Const,
+                    ctx.ast.vec1(ctx.ast.variable_declarator(
+                        SPAN,
+                        VariableDeclarationKind::Const,
+                        ctx.ast.binding_pattern(
+                            ctx.ast.binding_pattern_kind_from_binding_identifier(id),
+                            NONE,
+                            false,
+                        ),
+                        Some(ctx.ast.expression_from_function(new_function)),
+                        false,
+                    )),
+                    false,
+                ));
+            } else {
+                *stmt = ctx.ast.statement_declaration(ctx.ast.declaration_from_function(new_function));
+            }
+        }
     }
 
     fn exit_arrow_function_expression(
@@ -145,9 +200,16 @@ impl<'a> Traverse<'a> for AsyncToGenerator<'a> {
         arrow: &mut ArrowFunctionExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        if !arrow.r#async {
+            return;
+        }
         let babel_helpers_id = ctx.scopes().find_binding(ctx.current_scope_id(), "babelHelpers");
         let callee = Self::get_helper_callee(babel_helpers_id, ctx);
-        let body = ctx.ast.function_body(SPAN, ctx.ast.move_vec(&mut arrow.body.directives), ctx.ast.move_vec(&mut arrow.body.statements));
+        let body = ctx.ast.function_body(
+            SPAN,
+            ctx.ast.move_vec(&mut arrow.body.directives),
+            ctx.ast.move_vec(&mut arrow.body.statements),
+        );
         let target = ctx.ast.function(
             FunctionType::FunctionExpression,
             SPAN,
@@ -164,16 +226,25 @@ impl<'a> Traverse<'a> for AsyncToGenerator<'a> {
                 NONE,
             )),
             arrow.return_type.take(),
-            Some(body)
+            Some(body),
         );
-        let parameters = {
+        let parameters =
+            ctx.ast.vec1(ctx.ast.argument_expression(ctx.ast.expression_from_function(target)));
+        let call = ctx.ast.expression_call(SPAN, callee, NONE, parameters, false);
+        let call = ctx.ast.expression_member(ctx.ast.member_expression_static(
+            SPAN,
+            call,
+            ctx.ast.identifier_name(SPAN, "apply"),
+            false
+        ));
+        let call = ctx.ast.expression_call(SPAN, call, NONE, {
             let mut items = ctx.ast.vec();
             items.push(ctx.ast.argument_expression(ctx.ast.expression_this(SPAN)));
-            items.push(ctx.ast.argument_expression(ctx.ast.expression_null_literal(SPAN)));
-            items.push(ctx.ast.argument_expression(ctx.ast.expression_from_function(target)));
+            items.push(ctx.ast.argument_expression(
+                ctx.ast.expression_identifier_reference(SPAN, "arguments"),
+            ));
             items
-        };
-        let call = ctx.ast.expression_call(SPAN, callee, NONE, parameters, false);
+        }, false);
         let returns = ctx.ast.return_statement(SPAN, Some(call));
         let body = Statement::ReturnStatement(ctx.ast.alloc(returns));
         let body = ctx.ast.function_body(SPAN, ctx.ast.vec(), ctx.ast.vec1(body));

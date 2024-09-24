@@ -4,7 +4,7 @@ pub mod options;
 use crate::context::Ctx;
 use crate::es2017::async_to_generator::AsyncToGenerator;
 use crate::es2017::options::ES2017Options;
-use oxc_ast::ast::{ArrowFunctionExpression, Expression, Function};
+use oxc_ast::ast::{ArrowFunctionExpression, Expression, Statement};
 use oxc_traverse::{Traverse, TraverseCtx};
 use std::rc::Rc;
 
@@ -30,9 +30,9 @@ impl<'a> Traverse<'a> for ES2017<'a> {
         }
     }
 
-    fn exit_function(&mut self, node: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.async_to_generator {
-            self.async_to_generator.exit_function(node, ctx);
+            self.async_to_generator.exit_statement(stmt, ctx);
         }
     }
 
