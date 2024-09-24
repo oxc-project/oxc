@@ -14,9 +14,12 @@ use crate::{
 };
 
 fn reorder_hooks(hook: (&str, Span), previous_hook: (&str, Span)) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer having hooks in a consistent order.")
+    OxcDiagnostic::warn("Test hooks are not in a consistent order.")
         .with_help(format!("{:?} hooks should be before any {:?} hooks", hook.0, previous_hook.0))
-        .with_label(hook.1)
+        .with_label(
+            hook.1.label(format!("this should be moved to before the {:?} hook", previous_hook.0)),
+        )
+        .and_label(previous_hook.1.label(format!("{:?} hook should be called before this", hook.0)))
 }
 
 #[derive(Debug, Default, Clone)]
