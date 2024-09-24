@@ -1815,6 +1815,7 @@ dependencies = [
  "oxc_span",
  "oxc_tasks_common",
  "pico-args",
+ "rustc-hash",
  "walkdir",
 ]
 

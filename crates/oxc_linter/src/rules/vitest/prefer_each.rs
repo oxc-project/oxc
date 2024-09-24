@@ -1,10 +1,9 @@
-use std::collections::HashSet;
-
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, NodeId};
 use oxc_span::{GetSpan, Span};
+use rustc_hash::FxHashSet;
 
 use crate::{
     context::LintContext,
@@ -70,7 +69,7 @@ declare_oxc_lint!(
 
 impl Rule for PreferEach {
     fn run_once(&self, ctx: &LintContext<'_>) {
-        let mut skip = HashSet::<NodeId>::new();
+        let mut skip = FxHashSet::<NodeId>::default();
         ctx.nodes().iter().for_each(|node| {
             Self::run(node, ctx, &mut skip);
         });
@@ -78,7 +77,7 @@ impl Rule for PreferEach {
 }
 
 impl PreferEach {
-    fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>, skip: &mut HashSet<NodeId>) {
+    fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>, skip: &mut FxHashSet<NodeId>) {
         let kind = node.kind();
 
         let AstKind::CallExpression(call_expr) = kind else { return };
@@ -164,7 +163,7 @@ fn test() {
 			      });"#,
         r#"it("only returns numbers that are greater than seven", function () {
 			     const numbers = getNumbers();
-			   
+
 			     for (let i = 0; i < numbers.length; i++) {
 			       expect(numbers[i]).toBeGreaterThan(7);
 			     }
@@ -191,7 +190,7 @@ fn test() {
 			        });
 			      });
 			       }
-			     
+
 			       for (const [input, expected] of data) {
 			      it.skip(`results in ${expected}`, () => {
 			        expect(fn(input)).toBe(expected)
@@ -205,7 +204,7 @@ fn test() {
         "it('is true', () => {
 			      expect(true).toBe(false);
 			       });
-			     
+
 			       for (const [input, expected] of data) {
 			      it.skip(`results in ${expected}`, () => {
 			        expect(fn(input)).toBe(expected)
@@ -216,20 +215,20 @@ fn test() {
 			        expect(fn(input)).toBe(expected)
 			      });
 			       }
-			     
+
 			       it('is true', () => {
 			      expect(true).toBe(false);
 			       });",
         " it('is true', () => {
 			      expect(true).toBe(false);
 			       });
-			     
+
 			       for (const [input, expected] of data) {
 			      it.skip(`results in ${expected}`, () => {
 			        expect(fn(input)).toBe(expected)
 			      });
 			       }
-			     
+
 			       it('is true', () => {
 			      expect(true).toBe(false);
 			       });",
@@ -237,7 +236,7 @@ fn test() {
 			      it(`results in ${expected}`, () => {
 			        expect(fn(input)).toBe(expected)
 			      });
-			     
+
 			      it(`results in ${expected}`, () => {
 			        expect(fn(input)).toBe(expected)
 			      });
@@ -247,7 +246,7 @@ fn test() {
 			        expect(fn(input)).toBe(expected)
 			      });
 			       }
-			     
+
 			       for (const [input, expected] of data) {
 			      it(`results in ${expected}`, () => {
 			        expect(fn(input)).toBe(expected)
@@ -255,7 +254,7 @@ fn test() {
 			       }",
         "for (const [input, expected] of data) {
 			      beforeEach(() => setupSomething(input));
-			     
+
 			      test(`results in ${expected}`, () => {
 			        expect(doSomething()).toBe(expected)
 			      });
@@ -264,7 +263,7 @@ fn test() {
 			       for (const [input, expected] of data) {
 			      it("only returns numbers that are greater than seven", function () {
 			        const numbers = getNumbers(input);
-			    
+
 			        for (let i = 0; i < numbers.length; i++) {
 			       expect(numbers[i]).toBeGreaterThan(7);
 			        }
@@ -274,10 +273,10 @@ fn test() {
         r#"
 			       for (const [input, expected] of data) {
 			      beforeEach(() => setupSomething(input));
-			     
+
 			      it("only returns numbers that are greater than seven", function () {
 			        const numbers = getNumbers();
-			    
+
 			        for (let i = 0; i < numbers.length; i++) {
 			       expect(numbers[i]).toBeGreaterThan(7);
 			        }

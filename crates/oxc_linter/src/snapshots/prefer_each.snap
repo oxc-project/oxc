@@ -27,7 +27,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-vitest(prefer-each): Enforce using `each` rather than manual loops
     ╭─[prefer_each.tsx:9:11]
-  8 │                  
+  8 │ 
   9 │                    for (const [input, expected] of data) {
     ·                    ──────────────────────────────────────
  10 │                   it.skip(`results in ${expected}`, () => {
@@ -44,7 +44,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-vitest(prefer-each): Enforce using `each` rather than manual loops
    ╭─[prefer_each.tsx:5:11]
- 4 │                  
+ 4 │ 
  5 │                    for (const [input, expected] of data) {
    ·                    ──────────────────────────────────────
  6 │                   it.skip(`results in ${expected}`, () => {
@@ -61,7 +61,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-vitest(prefer-each): Enforce using `each` rather than manual loops
    ╭─[prefer_each.tsx:5:11]
- 4 │                  
+ 4 │ 
  5 │                    for (const [input, expected] of data) {
    ·                    ──────────────────────────────────────
  6 │                   it.skip(`results in ${expected}`, () => {
@@ -86,7 +86,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-vitest(prefer-each): Enforce using `each` rather than manual loops
    ╭─[prefer_each.tsx:7:11]
- 6 │                  
+ 6 │ 
  7 │                    for (const [input, expected] of data) {
    ·                    ──────────────────────────────────────
  8 │                   it(`results in ${expected}`, () => {
