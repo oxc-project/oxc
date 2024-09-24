@@ -116,7 +116,13 @@ impl Rule for NoUnexpectedMultiline {
                     return;
                 }
 
-                let span = Span::new(call_expr.callee.span().end, call_expr.span.end);
+                let start = if let Some(generics) = &call_expr.type_parameters {
+                    generics.span.end
+                } else {
+                    call_expr.callee.span().end
+                };
+
+                let span = Span::new(start, call_expr.span.end);
                 if let Some(open_paren_pos) = has_newline_before(ctx, span, b'(') {
                     let paren_span = Span::sized(span.start + open_paren_pos, 1);
 
@@ -337,6 +343,13 @@ fn test() {
         "class C { field1\n*gen() {} }",         // { "ecmaVersion": 2022 },
         "class C { field1 = () => {}\n[field2]; }", // { "ecmaVersion": 2022 },
         "class C { field1 = () => {}\n*gen() {} }", // { "ecmaVersion": 2022 }
+        "const foo = bar<{
+            a: string
+            b: number
+        }>();",
+        "const foo = bar<{
+            [key: string | number]: string
+        }>();",
     ];
 
     let fail = vec![
