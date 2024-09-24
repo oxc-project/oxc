@@ -3551,6 +3551,7 @@ impl<'a> Gen for TSEnumDeclaration<'a> {
 
 impl<'a> Gen for TSEnumMember<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
+        p.print_leading_comments(self.span.start);
         match &self.id {
             TSEnumMemberName::StaticIdentifier(decl) => decl.print(p, ctx),
             TSEnumMemberName::StaticStringLiteral(decl) => decl.print(p, ctx),

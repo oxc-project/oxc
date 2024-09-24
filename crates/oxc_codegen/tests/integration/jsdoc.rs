@@ -71,7 +71,28 @@ this.Book = function(title) {
     /** The title of the book. */
     this.title = title;
 }
-        ",
+// https://github.com/oxc-project/oxc/issues/6006
+export enum DefinitionKind {
+  /**
+   * Definition is a referenced variable.
+   *
+   * @example defineSomething(foo)
+   */
+  Reference = 'Reference',
+  /**
+   * Definition is a `ObjectExpression`.
+   *
+   * @example defineSomething({ ... })
+   */
+  Object = 'Object',
+  /**
+   * Definition is TypeScript interface.
+   *
+   * @example defineSomething<{ ... }>()
+   */
+  TS = 'TS',
+}
+",
     ];
 
     snapshot("jsodc", &cases);
