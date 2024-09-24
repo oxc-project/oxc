@@ -1,4 +1,5 @@
 use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -52,26 +53,33 @@ declare_oxc_lint!(
     suspicious
 );
 
+lazy_static! {
+    //  /^\s*[xf]?(test|it|describe)(\.\w+|\[['"]\w+['"]\])?\s*\(/mu
+    static ref RE: Lazy<Regex> =
+      Lazy::new(|| Regex::new(r#"(?mu)^\s*[xf]?(test|it|describe)(\.\w+|\[['"]\w+['"]\])?\s*\("#).unwrap());
+    static ref TEST_FUNCTIONS: [&'static str; 8] = ["test", "it", "describe", "xtest", "xit", "xdescribe", "fit", "fdescribe"];
+}
+
 impl Rule for NoCommentedOutTests {
     fn run_once(&self, ctx: &LintContext) {
-        lazy_static! {
-        //  /^\s*[xf]?(test|it|describe)(\.\w+|\[['"]\w+['"]\])?\s*\(/mu
-            static ref RE: Regex =
-            Regex::new(r#"(?mu)^\s*[xf]?(test|it|describe)(\.\w+|\[['"]\w+['"]\])?\s*\("#).unwrap();
-        }
         let comments = ctx.semantic().trivias().comments();
         let source_text = ctx.semantic().source_text();
-        let commented_tests = comments.filter_map(|comment| {
-            let text = comment.span.source_text(source_text);
-            if RE.is_match(text) {
-                Some(comment.span)
-            } else {
-                None
+        for comment in comments {
+            let text = comment.span.source_text(source_text).trim();
+            // The shortest case is: `// it()`, so any shorter comment can be ignored
+            if text.len() < 4 {
+                continue;
             }
-        });
 
-        for span in commented_tests {
-            ctx.diagnostic(no_commented_out_tests_diagnostic(span));
+            // To avoid unnecessarily initializing the regex, we check if the comment starts with
+            // one of the test function keywords first
+            if !TEST_FUNCTIONS.iter().any(|f| text.starts_with(f)) {
+                continue;
+            }
+
+            if RE.is_match(text) {
+                ctx.diagnostic(no_commented_out_tests_diagnostic(comment.span));
+            }
         }
     }
 }
