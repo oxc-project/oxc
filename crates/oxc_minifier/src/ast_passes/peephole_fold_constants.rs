@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, mem};
+use std::cmp::Ordering;
 
 use num_bigint::BigInt;
 use oxc_ast::ast::*;
@@ -105,12 +105,12 @@ impl<'a> PeepholeFoldConstants {
     }
 
     fn try_fold_unary_expression(
-        &self,
+        &mut self,
         expr: &mut UnaryExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         match expr.operator {
-            UnaryOperator::Void => Self::try_reduce_void(expr, ctx),
+            UnaryOperator::Void => self.try_reduce_void(expr, ctx),
             UnaryOperator::Typeof => self.try_fold_type_of(expr, ctx),
             #[allow(clippy::float_cmp)]
             UnaryOperator::LogicalNot => {
@@ -135,13 +135,15 @@ impl<'a> PeepholeFoldConstants {
 
     /// `void 1` -> `void 0`
     fn try_reduce_void(
+        &mut self,
         expr: &mut UnaryExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         if (!expr.argument.is_number() || !expr.argument.is_number_0())
             && !expr.may_have_side_effects()
         {
-            let _ = mem::replace(&mut expr.argument, ctx.ast.number_0());
+            expr.argument = ctx.ast.number_0();
+            self.changed = true;
         }
         None
     }

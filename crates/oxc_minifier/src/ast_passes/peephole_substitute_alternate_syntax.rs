@@ -46,10 +46,10 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
     fn enter_variable_declaration(
         &mut self,
         decl: &mut VariableDeclaration<'a>,
-        _ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         for declarator in decl.declarations.iter_mut() {
-            self.compress_variable_declarator(declarator);
+            self.compress_variable_declarator(declarator, ctx);
         }
     }
 
@@ -247,11 +247,15 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
         }
     }
 
-    fn compress_variable_declarator(&mut self, decl: &mut VariableDeclarator<'a>) {
+    fn compress_variable_declarator(
+        &mut self,
+        decl: &mut VariableDeclarator<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         if decl.kind.is_const() {
             return;
         }
-        if decl.init.as_ref().is_some_and(|init| init.is_undefined() || init.is_void_0()) {
+        if decl.init.as_ref().is_some_and(|init| ctx.is_expression_undefined(init)) {
             decl.init = None;
             self.changed = true;
         }

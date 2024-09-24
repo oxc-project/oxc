@@ -41,10 +41,13 @@ pub trait NodeUtil {
     fn scopes(&self) -> &ScopeTree;
 
     fn is_expression_undefined(&self, expr: &Expression) -> bool {
-        if let Expression::Identifier(ident) = expr {
-            return self.is_identifier_undefined(ident);
-        };
-        false
+        match expr {
+            Expression::Identifier(ident) if self.is_identifier_undefined(ident) => true,
+            Expression::UnaryExpression(e) if e.operator.is_void() && e.argument.is_number() => {
+                true
+            }
+            _ => false,
+        }
     }
 
     fn is_identifier_undefined(&self, ident: &IdentifierReference) -> bool {
