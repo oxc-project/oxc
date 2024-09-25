@@ -11,7 +11,6 @@ use oxc_syntax::{
 };
 
 use crate::{
-    annotation_comment::AnnotationKind,
     binary_expr_visitor::{BinaryExpressionVisitor, Binaryish, BinaryishOperator},
     Codegen, Context, Operator,
 };
@@ -559,19 +558,15 @@ impl<'a> Gen for VariableDeclaration<'a> {
             p.print_str("declare ");
         }
 
-        if p.comment_options.preserve_annotate_comments
+        if p.preserve_annotate_comments()
+            && p.start_of_annotation_comment.is_none()
             && matches!(self.kind, VariableDeclarationKind::Const)
+            && matches!(self.declarations.first(), Some(VariableDeclarator { init: Some(init), .. }) if init.is_function())
+            && p.has_annotation_comments(self.span.start)
         {
-            if let Some(declarator) = self.declarations.first() {
-                if let Some(ref init) = declarator.init {
-                    let leading_annotate_comments =
-                        p.get_leading_annotate_comments(self.span.start);
-                    if !leading_annotate_comments.is_empty() {
-                        p.move_comments(init.span().start, leading_annotate_comments);
-                    }
-                }
-            }
+            p.start_of_annotation_comment = Some(self.span.start);
         }
+
         p.print_str(match self.kind {
             VariableDeclarationKind::Const => "const",
             VariableDeclarationKind::Let => "let",
@@ -604,6 +599,7 @@ impl<'a> Gen for VariableDeclarator<'a> {
             p.print_soft_space();
             p.print_equal();
             p.print_soft_space();
+            p.print_annotation_comments(self.span.start);
             init.print_expr(p, Precedence::Comma, ctx);
         }
     }
@@ -613,7 +609,7 @@ impl<'a> Gen for Function<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         let n = p.code_len();
         let wrap = self.is_expression() && (p.start_of_stmt == n || p.start_of_default_export == n);
-        p.gen_comments(self.span.start);
+        p.print_annotation_comments(self.span.start);
         p.wrap(wrap, |p| {
             p.print_space_before_identifier();
             p.add_source_mapping(self.span.start);
@@ -829,22 +825,18 @@ impl<'a> Gen for ExportNamedDeclaration<'a> {
         p.add_source_mapping(self.span.start);
         p.print_indent();
 
-        if p.comment_options.preserve_annotate_comments {
+        if p.preserve_annotate_comments() {
             match &self.declaration {
                 Some(Declaration::FunctionDeclaration(_)) => {
-                    p.gen_comments(self.span.start);
+                    p.print_annotation_comments(self.span.start);
                 }
                 Some(Declaration::VariableDeclaration(var_decl))
                     if matches!(var_decl.kind, VariableDeclarationKind::Const) =>
                 {
-                    if let Some(declarator) = var_decl.declarations.first() {
-                        if let Some(ref init) = declarator.init {
-                            let leading_annotate_comments =
-                                p.get_leading_annotate_comments(self.span.start);
-                            if !leading_annotate_comments.is_empty() {
-                                p.move_comments(init.span().start, leading_annotate_comments);
-                            }
-                        }
+                    if matches!(var_decl.declarations.first(), Some(VariableDeclarator { init: Some(init), .. }) if init.is_function())
+                        && p.has_annotation_comments(self.span.start)
+                    {
+                        p.start_of_annotation_comment = Some(self.span.start);
                     }
                 }
                 _ => {}
@@ -1374,13 +1366,17 @@ impl<'a> GenExpr for PrivateFieldExpression<'a> {
 
 impl<'a> GenExpr for CallExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
+        let is_export_default = p.start_of_default_export == p.code_len();
         let mut wrap = precedence >= Precedence::New || ctx.intersects(Context::FORBID_CALL);
-        let annotate_comments = p.get_leading_annotate_comments(self.span.start);
-        if !annotate_comments.is_empty() && precedence >= Precedence::Postfix {
+        if p.has_annotation_comments(self.span.start) && precedence >= Precedence::Postfix {
             wrap = true;
         }
+
         p.wrap(wrap, |p| {
-            p.print_comments(&annotate_comments, &mut AnnotationKind::empty());
+            p.print_annotation_comments(self.span.start);
+            if is_export_default {
+                p.start_of_default_export = p.code_len();
+            }
             p.add_source_mapping(self.span.start);
             self.callee.print_expr(p, Precedence::Postfix, Context::empty());
             if self.optional {
@@ -1593,7 +1589,7 @@ impl<'a> Gen for PropertyKey<'a> {
 impl<'a> GenExpr for ArrowFunctionExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         p.wrap(precedence >= Precedence::Assign, |p| {
-            p.gen_comments(self.span.start);
+            p.print_annotation_comments(self.span.start);
             if self.r#async {
                 p.add_source_mapping(self.span.start);
                 p.print_str("async");
@@ -2028,12 +2024,11 @@ impl<'a> GenExpr for ChainExpression<'a> {
 impl<'a> GenExpr for NewExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         let mut wrap = precedence >= self.precedence();
-        let annotate_comment = p.get_leading_annotate_comments(self.span.start);
-        if !annotate_comment.is_empty() && precedence >= Precedence::Postfix {
+        if p.has_annotation_comments(self.span.start) && precedence >= Precedence::Postfix {
             wrap = true;
         }
         p.wrap(wrap, |p| {
-            p.print_comments(&annotate_comment, &mut AnnotationKind::empty());
+            p.print_annotation_comments(self.span.start);
             p.print_space_before_identifier();
             p.add_source_mapping(self.span.start);
             p.print_str("new ");
