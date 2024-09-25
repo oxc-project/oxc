@@ -22,7 +22,7 @@ declare_oxc_lint!(
     /// Many cases that use `new Promise()` could be refactored to use an
     /// `async` function. `async` is considered more idiomatic in modern JavaScript.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
