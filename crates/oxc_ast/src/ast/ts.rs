@@ -1325,6 +1325,9 @@ pub enum TSTypePredicateName<'a> {
 pub struct TSModuleDeclaration<'a> {
     #[serde(flatten)]
     pub span: Span,
+    /// The name of the module/namespace being declared.
+    ///
+    /// Note that for `declare global {}`, no symbol will be created for the module name.
     pub id: TSModuleDeclarationName<'a>,
     #[scope(enter_before)]
     pub body: Option<TSModuleDeclarationBody<'a>>,

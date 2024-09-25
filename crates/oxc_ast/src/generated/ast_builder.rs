@@ -4417,7 +4417,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - id
+    /// - id: The name of the module/namespace being declared.
     /// - body
     /// - kind: The keyword used to define this module declaration.
     /// - declare
@@ -11381,7 +11381,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - id
+    /// - id: The name of the module/namespace being declared.
     /// - body
     /// - kind: The keyword used to define this module declaration.
     /// - declare
@@ -11403,7 +11403,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - id
+    /// - id: The name of the module/namespace being declared.
     /// - body
     /// - kind: The keyword used to define this module declaration.
     /// - declare
@@ -11483,7 +11483,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - id
+    /// - id: The name of the module/namespace being declared.
     /// - body
     /// - kind: The keyword used to define this module declaration.
     /// - declare
