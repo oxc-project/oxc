@@ -1,4 +1,4 @@
-ts compatibility: 184/526 (34.98%)
+ts compatibility: 185/526 (35.17%)
 
 # Failed
 
@@ -443,7 +443,6 @@ ts compatibility: 184/526 (34.98%)
 * non-null/parens.ts
 
 ### nosemi
-* nosemi/index-signature.ts
 * nosemi/type.ts
 
 ### optional-method

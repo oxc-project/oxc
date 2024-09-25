@@ -1,4 +1,4 @@
-js compatibility: 234/593 (39.46%)
+js compatibility: 235/593 (39.63%)
 
 # Failed
 
@@ -111,7 +111,6 @@ js compatibility: 234/593 (39.46%)
 ### classes
 * classes/asi.js
 * classes/assignment.js
-* classes/binary.js
 * classes/empty.js
 * classes/method.js
 * classes/property.js
