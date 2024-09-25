@@ -29,6 +29,47 @@ pub fn check_ts_type_parameter_declaration(
         ctx.error(empty_type_parameter_list(declaration.span));
     }
 }
+/// '?' at the end of a type is not valid TypeScript syntax. Did you mean to write 'number | null | undefined'?(17019)
+#[allow(clippy::needless_pass_by_value)]
+fn jsdoc_type_in_annotation(
+    modifier: char,
+    is_start: bool,
+    span: Span,
+    suggested_type: Cow<str>,
+) -> OxcDiagnostic {
+    let (code, start_or_end) = if is_start { ("17020", "start") } else { ("17019", "end") };
+
+    ts_error(
+        code,
+        format!("'{modifier}' at the {start_or_end} of a type is not valid TypeScript syntax.",),
+    )
+    .with_label(span)
+    .with_help(format!("Did you mean to write '{suggested_type}'?"))
+}
+
+pub fn check_ts_type_annotation(annotation: &TSTypeAnnotation<'_>, ctx: &SemanticBuilder<'_>) {
+    let (modifier, is_start, span_with_illegal_modifier) = match &annotation.type_annotation {
+        TSType::JSDocNonNullableType(ty) => ('!', !ty.postfix, ty.span()),
+        TSType::JSDocNullableType(ty) => ('?', !ty.postfix, ty.span()),
+        _ => {
+            return;
+        }
+    };
+
+    let valid_type_span = if is_start {
+        span_with_illegal_modifier.shrink_left(1)
+    } else {
+        span_with_illegal_modifier.shrink_right(1)
+    };
+
+    let suggestion = if modifier == '?' {
+        Cow::Owned(format!("{} | null | undefined", &ctx.source_text[valid_type_span]))
+    } else {
+        Cow::Borrowed(&ctx.source_text[valid_type_span])
+    };
+
+    ctx.error(jsdoc_type_in_annotation(modifier, is_start, span_with_illegal_modifier, suggestion));
+}
 
 /// Initializers are not allowed in ambient contexts. ts(1039)
 fn initializer_in_ambient_context(init_span: Span) -> OxcDiagnostic {

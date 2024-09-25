@@ -3,7 +3,7 @@ commit: a709f989
 parser_typescript Summary:
 AST Parsed     : 6469/6479 (99.85%)
 Positive Passed: 6458/6479 (99.68%)
-Negative Passed: 1226/5715 (21.45%)
+Negative Passed: 1228/5715 (21.49%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration10.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration11.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration13.ts
@@ -1663,8 +1663,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parseAssertE
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parseCommaSeparatedNewlineNumber.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parseCommaSeparatedNewlineString.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parseImportAttributesError.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parseInvalidNonNullableTypes.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parseInvalidNullableTypes.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parseJsxExtends2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parseTypes.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/partialDiscriminatedUnionMemberHasGoodError.ts
@@ -10184,6 +10182,173 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ interface 100 {}
    ╰────
   help: Try insert a semicolon here
+
+  × TS(17019): '!' at the end of a type is not valid TypeScript syntax.
+   ╭─[typescript/tests/cases/compiler/parseInvalidNonNullableTypes.ts:1:30]
+ 1 │ function f1(a: string): a is string! {
+   ·                              ───────
+ 2 │     return true;
+   ╰────
+  help: Did you mean to write 'string'?
+
+  × TS(17020): '!' at the start of a type is not valid TypeScript syntax.
+   ╭─[typescript/tests/cases/compiler/parseInvalidNonNullableTypes.ts:5:30]
+ 4 │ 
+ 5 │ function f2(a: string): a is !string {
+   ·                              ───────
+ 6 │     return true;
+   ╰────
+  help: Did you mean to write 'string'?
+
+  × TS(17019): '!' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tests/cases/compiler/parseInvalidNonNullableTypes.ts:9:16]
+  8 │ 
+  9 │ function f3(a: string!) {}
+    ·                ───────
+ 10 │ function f4(a: number!) {}
+    ╰────
+  help: Did you mean to write 'string'?
+
+  × TS(17019): '!' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tests/cases/compiler/parseInvalidNonNullableTypes.ts:10:16]
+  9 │ function f3(a: string!) {}
+ 10 │ function f4(a: number!) {}
+    ·                ───────
+ 11 │ 
+    ╰────
+  help: Did you mean to write 'number'?
+
+  × TS(17020): '!' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tests/cases/compiler/parseInvalidNonNullableTypes.ts:12:16]
+ 11 │ 
+ 12 │ function f5(a: !string) {}
+    ·                ───────
+ 13 │ function f6(a: !number) {}
+    ╰────
+  help: Did you mean to write 'string'?
+
+  × TS(17020): '!' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tests/cases/compiler/parseInvalidNonNullableTypes.ts:13:16]
+ 12 │ function f5(a: !string) {}
+ 13 │ function f6(a: !number) {}
+    ·                ───────
+ 14 │ 
+    ╰────
+  help: Did you mean to write 'number'?
+
+  × TS(17019): '!' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tests/cases/compiler/parseInvalidNonNullableTypes.ts:15:16]
+ 14 │ 
+ 15 │ function f7(): string! {}
+    ·                ───────
+ 16 │ function f8(): !string {}
+    ╰────
+  help: Did you mean to write 'string'?
+
+  × TS(17020): '!' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tests/cases/compiler/parseInvalidNonNullableTypes.ts:16:16]
+ 15 │ function f7(): string! {}
+ 16 │ function f8(): !string {}
+    ·                ───────
+ 17 │ 
+    ╰────
+  help: Did you mean to write 'string'?
+
+  × TS(17019): '!' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tests/cases/compiler/parseInvalidNonNullableTypes.ts:19:10]
+ 18 │ const a = 1 as any!;
+ 19 │ const b: number! = 1;
+    ·          ───────
+ 20 │ 
+    ╰────
+  help: Did you mean to write 'number'?
+
+  × TS(17020): '!' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tests/cases/compiler/parseInvalidNonNullableTypes.ts:22:10]
+ 21 │ const c = 1 as !any;
+ 22 │ const d: !number = 1;
+    ·          ───────
+    ╰────
+  help: Did you mean to write 'number'?
+
+  × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
+   ╭─[typescript/tests/cases/compiler/parseInvalidNullableTypes.ts:1:30]
+ 1 │ function f1(a: string): a is ?string {
+   ·                              ───────
+ 2 │     return true;
+   ╰────
+  help: Did you mean to write 'string | null | undefined'?
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+   ╭─[typescript/tests/cases/compiler/parseInvalidNullableTypes.ts:5:16]
+ 4 │ 
+ 5 │ function f2(a: string?) {}
+   ·                ───────
+ 6 │ function f3(a: number?) {}
+   ╰────
+  help: Did you mean to write 'string | null | undefined'?
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+   ╭─[typescript/tests/cases/compiler/parseInvalidNullableTypes.ts:6:16]
+ 5 │ function f2(a: string?) {}
+ 6 │ function f3(a: number?) {}
+   ·                ───────
+ 7 │ 
+   ╰────
+  help: Did you mean to write 'number | null | undefined'?
+
+  × TS(17020): '?' at the start of a type is not valid TypeScript syntax.
+    ╭─[typescript/tests/cases/compiler/parseInvalidNullableTypes.ts:11:25]
+ 10 │ 
+ 11 │ function f6(a: string): ?string {
+    ·                         ───────
+ 12 │     return true;
+    ╰────
+  help: Did you mean to write 'string | null | undefined'?
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tests/cases/compiler/parseInvalidNullableTypes.ts:16:10]
+ 15 │ const a = 1 as any?;
+ 16 │ const b: number? = 1;
+    ·          ───────
+ 17 │ 
+    ╰────
+  help: Did you mean to write 'number | null | undefined'?
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tests/cases/compiler/parseInvalidNullableTypes.ts:21:8]
+ 20 │ 
+ 21 │ let e: unknown?;
+    ·        ────────
+ 22 │ let f: never?;
+    ╰────
+  help: Did you mean to write 'unknown | null | undefined'?
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tests/cases/compiler/parseInvalidNullableTypes.ts:22:8]
+ 21 │ let e: unknown?;
+ 22 │ let f: never?;
+    ·        ──────
+ 23 │ let g: void?;
+    ╰────
+  help: Did you mean to write 'never | null | undefined'?
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tests/cases/compiler/parseInvalidNullableTypes.ts:23:8]
+ 22 │ let f: never?;
+ 23 │ let g: void?;
+    ·        ─────
+ 24 │ let h: undefined?;
+    ╰────
+  help: Did you mean to write 'void | null | undefined'?
+
+  × TS(17019): '?' at the end of a type is not valid TypeScript syntax.
+    ╭─[typescript/tests/cases/compiler/parseInvalidNullableTypes.ts:24:8]
+ 23 │ let g: void?;
+ 24 │ let h: undefined?;
+    ·        ──────────
+    ╰────
+  help: Did you mean to write 'undefined | null | undefined'?
 
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/parseJsxElementInUnaryExpressionNoCrash1.ts:1:4]
