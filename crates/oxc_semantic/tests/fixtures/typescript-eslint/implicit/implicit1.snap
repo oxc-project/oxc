@@ -2,6 +2,10 @@
 source: crates/oxc_semantic/tests/main.rs
 input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/implicit/implicit1.ts
 ---
+================================================================================
+SCOPES
+================================================================================
+
 [
   {
     "children": [],
@@ -19,3 +23,9 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/implicit/implic
     ]
   }
 ]
+
+================================================================================
+CONFORMANCE
+================================================================================
+
+All tests passed.
