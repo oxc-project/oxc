@@ -1716,6 +1716,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_minify_napi"
+version = "0.30.3"
+dependencies = [
+ "napi",
+ "napi-build",
+ "napi-derive",
+ "oxc_allocator",
+ "oxc_codegen",
+ "oxc_minifier",
+ "oxc_parser",
+ "oxc_span",
+]
+
+[[package]]
 name = "oxc_minsize"
 version = "0.0.0"
 dependencies = [
