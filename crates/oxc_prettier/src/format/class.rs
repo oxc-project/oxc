@@ -17,7 +17,7 @@ pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a
     // If there is only on extends and there are not comments
     // ToDo: implement comment checks 
     // @link https://github.com/prettier/prettier/blob/aa3853b7765645b3f3d8a76e41cf6d70b93c01fd/src/language-js/print/class.js#L62
-    let group_mode = class.super_class.is_some() || class.implements.as_ref().map(|v| !v.is_empty()).unwrap_or(false);
+    let group_mode = class.implements.as_ref().map(|v| !v.is_empty()).unwrap_or(false);
 
     if let Some(params) = &class.type_parameters {
         group_parts.push(params.format(p));
@@ -35,11 +35,10 @@ pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a
         }
         
         if group_mode {
-            heritage_clauses_parts.push(group!(p, softline!(), Doc::Array(extend_parts)))
-        } else {
-            heritage_clauses_parts.push(space!());
-            heritage_clauses_parts.push(Doc::Array(extend_parts))
+            heritage_clauses_parts.push(softline!());
         }
+
+        heritage_clauses_parts.push(Doc::Array(extend_parts));
     }
 
     heritage_clauses_parts.push(print_heritage_clauses_implements(p, class));
@@ -74,7 +73,7 @@ pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a
             indent!(p, Doc::Array(group_parts), Doc::Array(heritage_clauses_parts))
         };
 
-        parts.push(group!(p, printend_parts_group));
+        parts.push(printend_parts_group);
     } else {
         parts.push(array!(p, Doc::Array(heritage_clauses_parts), Doc::Array(group_parts)))
     }
@@ -383,8 +382,8 @@ fn print_heritage_clauses_implements<'a>(p: &mut Prettier<'a>, class: &Class<'a>
 
     if should_indent_only_heritage_clauses(class) {
         parts.push(Doc::IfBreak(IfBreak{
-            break_contents: p.boxed(ss!("")),
-            flat_content: p.boxed(softline!()),
+            break_contents: p.boxed(line!()),
+            flat_content: p.boxed(ss!("")),
             group_id: None  // ToDo - how to attach group id
         }));
     } else {
