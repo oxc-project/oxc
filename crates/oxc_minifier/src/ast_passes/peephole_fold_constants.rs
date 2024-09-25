@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, mem};
+use std::cmp::Ordering;
 
 use num_bigint::BigInt;
 use oxc_ast::ast::*;
@@ -22,10 +22,19 @@ use crate::{
 ///
 /// <https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
 pub struct PeepholeFoldConstants {
-    evaluate: bool,
+    changed: bool,
 }
 
-impl<'a> CompressorPass<'a> for PeepholeFoldConstants {}
+impl<'a> CompressorPass<'a> for PeepholeFoldConstants {
+    fn changed(&self) -> bool {
+        self.changed
+    }
+
+    fn build(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.changed = false;
+        oxc_traverse::walk_program(self, program, ctx);
+    }
+}
 
 impl<'a> Traverse<'a> for PeepholeFoldConstants {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -35,17 +44,12 @@ impl<'a> Traverse<'a> for PeepholeFoldConstants {
 
 impl<'a> PeepholeFoldConstants {
     pub fn new() -> Self {
-        Self { evaluate: false }
-    }
-
-    pub fn with_evaluate(mut self, yes: bool) -> Self {
-        self.evaluate = yes;
-        self
+        Self { changed: false }
     }
 
     // [optimizeSubtree](https://github.com/google/closure-compiler/blob/75335a5138dde05030747abfd3c852cd34ea7429/src/com/google/javascript/jscomp/PeepholeFoldConstants.java#L72)
     // TODO: tryReduceOperandsForOp
-    pub fn fold_expression(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+    pub fn fold_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(folded_expr) = match expr {
             Expression::BinaryExpression(e) => self.try_fold_binary_operator(e, ctx),
             Expression::LogicalExpression(e)
@@ -60,6 +64,7 @@ impl<'a> PeepholeFoldConstants {
             _ => None,
         } {
             *expr = folded_expr;
+            self.changed = true;
         };
     }
 
@@ -92,13 +97,7 @@ impl<'a> PeepholeFoldConstants {
                 &binary_expr.right,
                 ctx,
             ),
-            // NOTE: string concat folding breaks our current evaluation of Test262 tests. The
-            // minifier is tested by comparing output of running the minifier once and twice,
-            // respectively. Since Test262Error messages include string concats, the outputs
-            // don't match (even though the produced code is valid). Additionally, We'll likely
-            // want to add `evaluate` checks for all constant folding, not just additions, but
-            // we're adding this here until a decision is made.
-            BinaryOperator::Addition if self.evaluate => {
+            BinaryOperator::Addition => {
                 self.try_fold_addition(binary_expr.span, &binary_expr.left, &binary_expr.right, ctx)
             }
             _ => None,
@@ -106,14 +105,20 @@ impl<'a> PeepholeFoldConstants {
     }
 
     fn try_fold_unary_expression(
-        &self,
+        &mut self,
         expr: &mut UnaryExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         match expr.operator {
-            UnaryOperator::Void => Self::try_reduce_void(expr, ctx),
+            UnaryOperator::Void => self.try_reduce_void(expr, ctx),
             UnaryOperator::Typeof => self.try_fold_type_of(expr, ctx),
+            #[allow(clippy::float_cmp)]
             UnaryOperator::LogicalNot => {
+                if let Expression::NumericLiteral(n) = &expr.argument {
+                    if n.value == 0.0 || n.value == 1.0 {
+                        return None;
+                    }
+                }
                 expr.argument.to_boolean().map(|b| ctx.ast.expression_boolean_literal(SPAN, !b))
             }
             // `-NaN` -> `NaN`
@@ -130,13 +135,15 @@ impl<'a> PeepholeFoldConstants {
 
     /// `void 1` -> `void 0`
     fn try_reduce_void(
+        &mut self,
         expr: &mut UnaryExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         if (!expr.argument.is_number() || !expr.argument.is_number_0())
             && !expr.may_have_side_effects()
         {
-            let _ = mem::replace(&mut expr.argument, ctx.ast.number_0());
+            expr.argument = ctx.ast.number_0();
+            self.changed = true;
         }
         None
     }

@@ -29,6 +29,47 @@ pub fn check_ts_type_parameter_declaration(
         ctx.error(empty_type_parameter_list(declaration.span));
     }
 }
+/// '?' at the end of a type is not valid TypeScript syntax. Did you mean to write 'number | null | undefined'?(17019)
+#[allow(clippy::needless_pass_by_value)]
+fn jsdoc_type_in_annotation(
+    modifier: char,
+    is_start: bool,
+    span: Span,
+    suggested_type: Cow<str>,
+) -> OxcDiagnostic {
+    let (code, start_or_end) = if is_start { ("17020", "start") } else { ("17019", "end") };
+
+    ts_error(
+        code,
+        format!("'{modifier}' at the {start_or_end} of a type is not valid TypeScript syntax.",),
+    )
+    .with_label(span)
+    .with_help(format!("Did you mean to write '{suggested_type}'?"))
+}
+
+pub fn check_ts_type_annotation(annotation: &TSTypeAnnotation<'_>, ctx: &SemanticBuilder<'_>) {
+    let (modifier, is_start, span_with_illegal_modifier) = match &annotation.type_annotation {
+        TSType::JSDocNonNullableType(ty) => ('!', !ty.postfix, ty.span()),
+        TSType::JSDocNullableType(ty) => ('?', !ty.postfix, ty.span()),
+        _ => {
+            return;
+        }
+    };
+
+    let valid_type_span = if is_start {
+        span_with_illegal_modifier.shrink_left(1)
+    } else {
+        span_with_illegal_modifier.shrink_right(1)
+    };
+
+    let suggestion = if modifier == '?' {
+        Cow::Owned(format!("{} | null | undefined", &ctx.source_text[valid_type_span]))
+    } else {
+        Cow::Borrowed(&ctx.source_text[valid_type_span])
+    };
+
+    ctx.error(jsdoc_type_in_annotation(modifier, is_start, span_with_illegal_modifier, suggestion));
+}
 
 /// Initializers are not allowed in ambient contexts. ts(1039)
 fn initializer_in_ambient_context(init_span: Span) -> OxcDiagnostic {
@@ -45,17 +86,61 @@ pub fn check_variable_declaration(decl: &VariableDeclaration, ctx: &SemanticBuil
     }
 }
 
-fn unexpected_optional(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Unexpected `?` operator").with_label(span)
+fn unexpected_optional(span: Span, type_annotation: Option<&str>) -> OxcDiagnostic {
+    let d = OxcDiagnostic::error("Unexpected `?` operator").with_label(span);
+    if let Some(ty) = type_annotation {
+        d.with_help(format!("If you want an optional type, use `{ty} | undefined` instead."))
+    } else {
+        d
+    }
 }
 
-#[allow(clippy::cast_possible_truncation)]
+#[expect(clippy::cast_possible_truncation)]
+fn find_char(span: Span, source_text: &str, c: char) -> Option<Span> {
+    let Some(offset) = span.source_text(source_text).find(c) else {
+        debug_assert!(
+            false,
+            "Flag {c} not found in source text. This is likely indicates a bug in the parser.",
+        );
+        return None;
+    };
+    let offset = span.start + offset as u32;
+    Some(Span::new(offset, offset))
+}
+
 pub fn check_variable_declarator(decl: &VariableDeclarator, ctx: &SemanticBuilder<'_>) {
+    // Check for `let x?: number;`
     if decl.id.optional {
-        let start = decl.id.span().end;
-        let Some(offset) = ctx.source_text[start as usize..].find('?') else { return };
-        let offset = start + offset as u32;
-        ctx.error(unexpected_optional(Span::new(offset, offset)));
+        // NOTE: BindingPattern spans cover the identifier _and_ the type annotation.
+        let ty = decl
+            .id
+            .type_annotation
+            .as_ref()
+            .map(|ty| ty.type_annotation.span())
+            .map(|span| &ctx.source_text[span]);
+        if let Some(span) = find_char(decl.span, ctx.source_text, '?') {
+            ctx.error(unexpected_optional(span, ty));
+        }
+    }
+    if decl.definite {
+        // Check for `let x!: number = 1;`
+        //                 ^
+        let Some(span) = find_char(decl.span, ctx.source_text, '!') else { return };
+        if decl.init.is_some() {
+            let error = ts_error(
+                "1263",
+                "Declarations with initializers cannot also have definite assignment assertions.",
+            )
+            .with_label(span);
+            ctx.error(error);
+        } else if decl.id.type_annotation.is_none() {
+            let error = ts_error(
+                "1264",
+                "Declarations with definite assignment assertions must also have type annotations.",
+            )
+            .with_label(span);
+            ctx.error(error);
+        }
     }
 }
 
@@ -391,6 +476,30 @@ pub fn check_object_property(prop: &ObjectProperty, ctx: &SemanticBuilder<'_>) {
             && matches!(func.r#type, FunctionType::TSEmptyBodyFunctionExpression)
         {
             ctx.error(accessor_without_body(prop.key.span()));
+        }
+    }
+}
+
+/// The left-hand side of a 'for...of' statement cannot use a type annotation. (2483)
+fn type_annotation_in_for_left(span: Span, is_for_in: bool) -> OxcDiagnostic {
+    let for_of_or_in = if is_for_in { "for...in" } else { "for...of" };
+    ts_error(
+        "2483",
+        format!(
+            "The left-hand side of a '{for_of_or_in}' statement cannot use a type annotation.",
+        ),
+    ).with_label(span).with_help("This iterator's type will be inferred from the iterable. You can safely remove the type annotation.")
+}
+
+pub fn check_for_statement_left(left: &ForStatementLeft, is_for_in: bool, ctx: &SemanticBuilder) {
+    let ForStatementLeft::VariableDeclaration(decls) = left else {
+        return;
+    };
+
+    for decl in &decls.declarations {
+        if decl.id.type_annotation.is_some() {
+            let span = decl.id.span();
+            ctx.error(type_annotation_in_for_left(span, is_for_in));
         }
     }
 }

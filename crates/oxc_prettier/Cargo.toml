@@ -27,6 +27,7 @@ oxc_syntax = { workspace = true }
 
 bitflags = { workspace = true }
 cow-utils = { workspace = true }
+rustc-hash = { workspace = true }
 
 [dev-dependencies]
 oxc_parser = { workspace = true }

@@ -1,7 +1,6 @@
 #![allow(clippy::print_stdout, clippy::print_stderr, clippy::disallowed_methods)]
 use std::{
     borrow::Cow,
-    collections::HashMap,
     fmt::{self, Display, Formatter},
 };
 
@@ -18,6 +17,7 @@ use oxc_ast::{
 };
 use oxc_parser::Parser;
 use oxc_span::{GetSpan, SourceType, Span};
+use rustc_hash::FxHashMap;
 use serde::Serialize;
 use ureq::Response;
 
@@ -153,6 +153,11 @@ fn format_code_snippet(code: &str) -> String {
         code.to_string()
     };
 
+    // Do not quote strings that are already raw strings
+    if code.starts_with("r\"") || code.starts_with("r#\"") {
+        return code;
+    }
+
     // "debugger" => "debugger"
     if !code.contains('"') {
         return format!("\"{code}\"");
@@ -207,10 +212,19 @@ impl<'a> Visit<'a> for TestCase {
                         self.code = match &prop.value {
                             Expression::StringLiteral(s) => Some(s.value.to_string()),
                             Expression::TaggedTemplateExpression(tag_expr) => {
-                                // There are `dedent`(in eslint-plugin-jest), `outdent`(in eslint-plugin-unicorn) and `noFormat`(in typescript-eslint)
-                                // are known to be used to format test cases for their own purposes.
-                                // We read the quasi of tagged template directly also for the future usage.
-                                tag_expr.quasi.quasi().map(|quasi| quasi.to_string())
+                                // If it is a raw string like String.raw`something`, then we import that as a Rust raw string literal
+                                if tag_expr.tag.is_specific_member_access("String", "raw") {
+                                    tag_expr
+                                        .quasi
+                                        .quasis
+                                        .first()
+                                        .map(|quasi| format!("r#\"{}\"#", quasi.value.raw))
+                                } else {
+                                    // There are `dedent`(in eslint-plugin-jest), `outdent`(in eslint-plugin-unicorn) and `noFormat`(in typescript-eslint)
+                                    // are known to be used to format test cases for their own purposes.
+                                    // We read the quasi of tagged template directly also for the future usage.
+                                    tag_expr.quasi.quasi().map(|quasi| quasi.to_string())
+                                }
                             }
                             Expression::TemplateLiteral(tag_expr) => {
                                 tag_expr.quasi().map(|quasi| quasi.to_string())
@@ -299,13 +313,16 @@ impl<'a> Visit<'a> for TestCase {
     }
 
     fn visit_tagged_template_expression(&mut self, expr: &TaggedTemplateExpression<'a>) {
-        let Expression::Identifier(ident) = &expr.tag else {
-            return;
-        };
-        if ident.name != "dedent" && ident.name != "outdent" {
+        if expr.tag.is_specific_id("dedent") || expr.tag.is_specific_id("outdent") {
             return;
         }
-        self.code = expr.quasi.quasi().map(|quasi| quasi.to_string());
+
+        // If it is a raw string like String.raw`something`, then we import that as a Rust raw string literal
+        self.code = if expr.tag.is_specific_member_access("String", "raw") {
+            expr.quasi.quasis.first().map(|quasi| format!("r#\"{}\"#", quasi.value.raw))
+        } else {
+            expr.quasi.quasi().map(|quasi| quasi.to_string())
+        };
         self.config = None;
     }
 }
@@ -364,7 +381,7 @@ struct State<'a> {
     source_text: &'a str,
     valid_tests: Vec<&'a Expression<'a>>,
     invalid_tests: Vec<&'a Expression<'a>>,
-    expression_to_group_comment_map: HashMap<Span, String>,
+    expression_to_group_comment_map: FxHashMap<Span, String>,
     group_comment_stack: Vec<String>,
 }
 
@@ -374,7 +391,7 @@ impl<'a> State<'a> {
             source_text,
             valid_tests: vec![],
             invalid_tests: vec![],
-            expression_to_group_comment_map: HashMap::new(),
+            expression_to_group_comment_map: FxHashMap::default(),
             group_comment_stack: vec![],
         }
     }
@@ -589,6 +606,7 @@ pub enum RuleKind {
     TreeShaking,
     Promise,
     Vitest,
+    Security,
 }
 
 impl RuleKind {
@@ -607,6 +625,7 @@ impl RuleKind {
             "tree-shaking" => Self::TreeShaking,
             "promise" => Self::Promise,
             "vitest" => Self::Vitest,
+            "security" => Self::Security,
             _ => Self::ESLint,
         }
     }
@@ -629,6 +648,7 @@ impl Display for RuleKind {
             Self::TreeShaking => write!(f, "eslint-plugin-tree-shaking"),
             Self::Promise => write!(f, "eslint-plugin-promise"),
             Self::Vitest => write!(f, "eslint-plugin-vitest"),
+            Self::Security => write!(f, "security"),
         }
     }
 }
@@ -657,7 +677,7 @@ fn main() {
         RuleKind::TreeShaking => format!("{TREE_SHAKING_PATH}/{kebab_rule_name}.test.ts"),
         RuleKind::Promise => format!("{PROMISE_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::Vitest => format!("{VITEST_TEST_PATH}/{kebab_rule_name}.test.ts"),
-        RuleKind::Oxc => String::new(),
+        RuleKind::Oxc | RuleKind::Security => String::new(),
     };
     let language = match rule_kind {
         RuleKind::Typescript | RuleKind::Oxc => "ts",

@@ -119,14 +119,17 @@ impl<'a> ParserImpl<'a> {
         let init =
             self.eat(Kind::Eq).then(|| self.parse_assignment_expression_or_higher()).transpose()?;
 
-        if init.is_none() && decl_ctx.parent == VariableDeclarationParent::Statement {
+        if init.is_none()
+            && !self.ctx.has_ambient()
+            && decl_ctx.parent == VariableDeclarationParent::Statement
+        {
             // LexicalBinding[In, Yield, Await] :
             //   BindingIdentifier[?Yield, ?Await] Initializer[?In, ?Yield, ?Await] opt
             //   BindingPattern[?Yield, ?Await] Initializer[?In, ?Yield, ?Await]
             // the grammar forbids `let []`, `let {}`
             if !matches!(id.kind, BindingPatternKind::BindingIdentifier(_)) {
                 self.error(diagnostics::invalid_destrucuring_declaration(id.span()));
-            } else if kind == VariableDeclarationKind::Const && !self.ctx.has_ambient() {
+            } else if kind == VariableDeclarationKind::Const {
                 // It is a Syntax Error if Initializer is not present and IsConstantDeclaration of the LexicalDeclaration containing this LexicalBinding is true.
                 self.error(diagnostics::missinginitializer_in_const(id.span()));
             }

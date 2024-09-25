@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use oxc_ast::{
     ast::{Expression, JSXAttributeItem, JSXAttributeName, JSXAttributeValue},
     AstKind,
@@ -7,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use rustc_hash::FxHashSet;
 
 use crate::{
     context::{ContextHost, LintContext},
@@ -43,7 +42,7 @@ pub enum EnforceBooleanAttribute {
 #[derive(Debug, Default, Clone)]
 pub struct JsxBooleanValueConfig {
     pub enforce_boolean_attribute: EnforceBooleanAttribute,
-    pub exceptions: HashSet<String>,
+    pub exceptions: FxHashSet<String>,
     pub assume_undefined_is_false: bool,
 }
 

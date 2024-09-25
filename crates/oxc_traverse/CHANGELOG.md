@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.30.0] - 2024-09-23
+
+### Features
+
+- 635e918 traverse: `generate_uid_name` method (#5839) (overlookmotel)
+
+### Refactor
+
+- 1c1353b transformer: Use AstBuilder instead of using struct constructor (#5778) (Boshen)
+
 ## [0.29.0] - 2024-09-13
 
 - c3dd2a0 ast: [**BREAKING**] Revert: reduce byte size of `TaggedTemplateExpression::quasi` by `Boxing` it (#5679) (#5715) (overlookmotel)

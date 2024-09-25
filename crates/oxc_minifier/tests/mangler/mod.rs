@@ -22,6 +22,8 @@ fn mangler() {
         "function foo(a) { let _ = { x } }",
         "function foo(a) { let { x } = y }",
         "var x; function foo(a) { ({ x } = y) }",
+        "import { x } from 's'; export { x }",
+        "function _ (exports) { Object.defineProperty(exports, '__esModule', { value: true }) }",
     ];
 
     let snapshot = cases.into_iter().fold(String::new(), |mut w, case| {

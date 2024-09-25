@@ -94,6 +94,14 @@ impl<'a> Traverse<'a> for TypeScript<'a> {
         self.annotations.enter_arrow_function_expression(expr, ctx);
     }
 
+    fn enter_variable_declarator(
+        &mut self,
+        decl: &mut VariableDeclarator<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.enter_variable_declarator(decl, ctx);
+    }
+
     fn enter_binding_pattern(&mut self, pat: &mut BindingPattern<'a>, ctx: &mut TraverseCtx<'a>) {
         self.annotations.enter_binding_pattern(pat, ctx);
     }

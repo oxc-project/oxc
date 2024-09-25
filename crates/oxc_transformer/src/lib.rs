@@ -27,6 +27,7 @@ mod typescript;
 mod helpers {
     pub mod bindings;
     pub mod module_imports;
+    pub mod stack;
 }
 
 use std::{path::Path, rc::Rc};
@@ -72,8 +73,8 @@ pub struct Transformer<'a> {
     x1_react: React<'a>,
     x2_es2021: ES2021<'a>,
     x2_es2020: ES2020<'a>,
-    x2_es2019: ES2019<'a>,
-    x2_es2018: ES2018<'a>,
+    x2_es2019: ES2019,
+    x2_es2018: ES2018,
     x2_es2016: ES2016<'a>,
     x3_es2015: ES2015<'a>,
     x4_regexp: RegExp<'a>,
@@ -100,12 +101,12 @@ impl<'a> Transformer<'a> {
             ctx: Rc::clone(&ctx),
             x0_typescript: TypeScript::new(options.typescript, Rc::clone(&ctx)),
             x1_react: React::new(options.react, Rc::clone(&ctx)),
-            x2_es2021: ES2021::new(options.es2021, Rc::clone(&ctx)),
-            x2_es2020: ES2020::new(options.es2020, Rc::clone(&ctx)),
-            x2_es2019: ES2019::new(options.es2019, Rc::clone(&ctx)),
-            x2_es2018: ES2018::new(options.es2018, Rc::clone(&ctx)),
-            x2_es2016: ES2016::new(options.es2016, Rc::clone(&ctx)),
-            x3_es2015: ES2015::new(options.es2015, Rc::clone(&ctx)),
+            x2_es2021: ES2021::new(options.es2021),
+            x2_es2020: ES2020::new(options.es2020),
+            x2_es2019: ES2019::new(options.es2019),
+            x2_es2018: ES2018::new(options.es2018),
+            x2_es2016: ES2016::new(options.es2016),
+            x3_es2015: ES2015::new(options.es2015),
             x4_regexp: RegExp::new(options.regexp, ctx),
         }
     }
@@ -131,6 +132,9 @@ impl<'a> Traverse<'a> for Transformer<'a> {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x1_react.exit_program(program, ctx);
         self.x0_typescript.exit_program(program, ctx);
+        self.x2_es2021.exit_program(program, ctx);
+        self.x2_es2020.exit_program(program, ctx);
+        self.x2_es2016.exit_program(program, ctx);
         self.x3_es2015.exit_program(program, ctx);
     }
 
@@ -142,7 +146,14 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         self.x0_typescript.enter_arrow_function_expression(arrow, ctx);
-        self.x3_es2015.enter_arrow_function_expression(arrow, ctx);
+    }
+
+    fn enter_variable_declarator(
+        &mut self,
+        decl: &mut VariableDeclarator<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.x0_typescript.enter_variable_declarator(decl, ctx);
     }
 
     fn enter_binding_pattern(&mut self, pat: &mut BindingPattern<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -156,11 +167,6 @@ impl<'a> Traverse<'a> for Transformer<'a> {
 
     fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.enter_class(class, ctx);
-        self.x3_es2015.enter_class(class, ctx);
-    }
-
-    fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.x3_es2015.exit_class(class, ctx);
     }
 
     fn enter_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -311,8 +317,6 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         arrow: &mut ArrowFunctionExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        self.x3_es2015.exit_arrow_function_expression(arrow, ctx);
-
         // Some plugins may add new statements to the ArrowFunctionExpression's body,
         // which can cause issues with the `() => x;` case, as it only allows a single statement.
         // To address this, we wrap the last statement in a return statement and set the expression to false.

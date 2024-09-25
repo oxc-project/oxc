@@ -241,7 +241,7 @@ const defineSSRCustomElement = /* @__NO_SIDE_EFFECTS__ */ (
 };
         
 ----------
-const defineSSRCustomElement = /* #__NO_SIDE_EFFECTS__ */ (options, extraOptions) => {
+const defineSSRCustomElement = /* #__NO_SIDE_EFFECTS__ */ /* @__NO_SIDE_EFFECTS__ */ (options, extraOptions) => {
 	return /* @__PURE__ */ defineCustomElement(options, extraOptions, hydrate);
 };
 
@@ -253,5 +253,5 @@ const defineSSRCustomElement = () => {
         
 ----------
 const defineSSRCustomElement = () => {
-	return /* @__PURE__ */ /* @__NO_SIDE_EFFECTS__ */ defineCustomElement(options, extraOptions, hydrate);
+	return /* @__PURE__ */ /* @__NO_SIDE_EFFECTS__ */ /* #__NO_SIDE_EFFECTS__ */ defineCustomElement(options, extraOptions, hydrate);
 };

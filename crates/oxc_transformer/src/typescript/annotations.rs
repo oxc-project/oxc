@@ -165,6 +165,14 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a> {
         expr.return_type = None;
     }
 
+    fn enter_variable_declarator(
+        &mut self,
+        decl: &mut VariableDeclarator<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
+        decl.definite = false;
+    }
+
     fn enter_binding_pattern(&mut self, pat: &mut BindingPattern<'a>, _ctx: &mut TraverseCtx<'a>) {
         pat.type_annotation = None;
 

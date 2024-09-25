@@ -20,10 +20,9 @@ use crate::{symbol::SymbolId, NodeId};
 /// populated. [`None`] indicates that either a global variable or a
 /// non-existent symbol is being referenced.
 ///
-/// In most cases, the node identified by `node_id` will be an
-/// [`IdentifierReference`], but it could be some special reference type like a
-/// [`JSXIdentifier`]. Note that declarations do not count as references, even
-/// if the declaration is being used in an expression.
+/// The node identified by `node_id` will be an [`IdentifierReference`].
+/// Note that declarations do not count as references, even if the declaration
+/// is being used in an expression.
 ///
 /// ```ts
 /// const arr = [1, 2, 3].map(function mapper(x) { return x + 1; });
@@ -31,7 +30,6 @@ use crate::{symbol::SymbolId, NodeId};
 /// ```
 ///
 /// [`IdentifierReference`]: oxc_ast::ast::IdentifierReference
-/// [`JSXIdentifier`]: oxc_ast::ast::JSXIdentifier
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]

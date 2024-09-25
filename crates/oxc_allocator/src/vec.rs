@@ -21,11 +21,72 @@ use crate::Allocator;
 pub struct Vec<'alloc, T>(vec::Vec<T, &'alloc Bump>);
 
 impl<'alloc, T> Vec<'alloc, T> {
+    /// Constructs a new, empty `Vec<T>`.
+    ///
+    /// The vector will not allocate until elements are pushed onto it.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use oxc_allocator::{Allocator, Vec};
+    ///
+    /// let arena = Allocator::default();
+    ///
+    /// let mut vec: Vec<i32> = Vec::new_in(&arena);
+    /// assert!(vec.is_empty());
+    /// ```
     #[inline]
     pub fn new_in(allocator: &'alloc Allocator) -> Self {
         Self(vec::Vec::new_in(allocator))
     }
 
+    /// Constructs a new, empty `Vec<T>` with at least the specified capacity
+    /// with the provided allocator.
+    ///
+    /// The vector will be able to hold at least `capacity` elements without
+    /// reallocating. This method is allowed to allocate for more elements than
+    /// `capacity`. If `capacity` is 0, the vector will not allocate.
+    ///
+    /// It is important to note that although the returned vector has the
+    /// minimum *capacity* specified, the vector will have a zero *length*.
+    ///
+    /// For `Vec<T>` where `T` is a zero-sized type, there will be no allocation
+    /// and the capacity will always be `usize::MAX`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the new capacity exceeds `isize::MAX` bytes.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use oxc_allocator::{Allocator, Vec};
+    ///
+    /// let arena = Allocator::default();
+    ///
+    /// let mut vec = Vec::with_capacity_in(10, &arena);
+    ///
+    /// // The vector contains no items, even though it has capacity for more
+    /// assert_eq!(vec.len(), 0);
+    /// assert_eq!(vec.capacity(), 10);
+    ///
+    /// // These are all done without reallocating...
+    /// for i in 0..10 {
+    ///     vec.push(i);
+    /// }
+    /// assert_eq!(vec.len(), 10);
+    /// assert_eq!(vec.capacity(), 10);
+    ///
+    /// // ...but this may make the vector reallocate
+    /// vec.push(11);
+    /// assert_eq!(vec.len(), 11);
+    /// assert!(vec.capacity() >= 11);
+    ///
+    /// // A vector of a zero-sized type will always over-allocate, since no
+    /// // allocation is necessary
+    /// let vec_units = Vec::<()>::with_capacity_in(10, &arena);
+    /// assert_eq!(vec_units.capacity(), usize::MAX);
+    /// ```
     #[inline]
     pub fn with_capacity_in(capacity: usize, allocator: &'alloc Allocator) -> Self {
         Self(vec::Vec::with_capacity_in(capacity, allocator))
@@ -125,6 +186,13 @@ impl<'alloc, T: Hash> Hash for Vec<'alloc, T> {
 mod test {
     use super::Vec;
     use crate::Allocator;
+
+    #[test]
+    fn vec_with_capacity() {
+        let allocator = Allocator::default();
+        let v: Vec<i32> = Vec::with_capacity_in(10, &allocator);
+        assert!(v.is_empty());
+    }
 
     #[test]
     fn vec_debug() {

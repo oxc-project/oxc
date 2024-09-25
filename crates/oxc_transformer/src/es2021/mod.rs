@@ -1,19 +1,13 @@
 mod logical_assignment_operators;
 mod options;
 
-use std::rc::Rc;
-
 pub use logical_assignment_operators::LogicalAssignmentOperators;
 pub use options::ES2021Options;
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_traverse::{Traverse, TraverseCtx};
 
-use crate::context::Ctx;
-
-#[allow(dead_code)]
 pub struct ES2021<'a> {
-    ctx: Ctx<'a>,
     options: ES2021Options,
 
     // Plugins
@@ -21,16 +15,19 @@ pub struct ES2021<'a> {
 }
 
 impl<'a> ES2021<'a> {
-    pub fn new(options: ES2021Options, ctx: Ctx<'a>) -> Self {
-        Self {
-            logical_assignment_operators: LogicalAssignmentOperators::new(Rc::clone(&ctx)),
-            ctx,
-            options,
-        }
+    pub fn new(options: ES2021Options) -> Self {
+        Self { logical_assignment_operators: LogicalAssignmentOperators::new(), options }
     }
 }
 
 impl<'a> Traverse<'a> for ES2021<'a> {
+    #[inline] // Inline because it's no-op in release mode
+    fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.options.logical_assignment_operators {
+            self.logical_assignment_operators.exit_program(program, ctx);
+        }
+    }
+
     fn enter_statements(
         &mut self,
         statements: &mut Vec<'a, Statement<'a>>,

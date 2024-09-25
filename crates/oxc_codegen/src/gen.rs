@@ -6,13 +6,11 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 use oxc_syntax::{
     identifier::{LS, PS},
-    keyword::is_reserved_keyword_or_global_object,
     operator::UnaryOperator,
     precedence::{GetPrecedence, Precedence},
 };
 
 use crate::{
-    annotation_comment::AnnotationKind,
     binary_expr_visitor::{BinaryExpressionVisitor, Binaryish, BinaryishOperator},
     Codegen, Context, Operator,
 };
@@ -560,19 +558,15 @@ impl<'a> Gen for VariableDeclaration<'a> {
             p.print_str("declare ");
         }
 
-        if p.comment_options.preserve_annotate_comments
+        if p.preserve_annotate_comments()
+            && p.start_of_annotation_comment.is_none()
             && matches!(self.kind, VariableDeclarationKind::Const)
+            && matches!(self.declarations.first(), Some(VariableDeclarator { init: Some(init), .. }) if init.is_function())
+            && p.has_annotation_comments(self.span.start)
         {
-            if let Some(declarator) = self.declarations.first() {
-                if let Some(ref init) = declarator.init {
-                    let leading_annotate_comments =
-                        p.get_leading_annotate_comments(self.span.start);
-                    if !leading_annotate_comments.is_empty() {
-                        p.move_comments(init.span().start, leading_annotate_comments);
-                    }
-                }
-            }
+            p.start_of_annotation_comment = Some(self.span.start);
         }
+
         p.print_str(match self.kind {
             VariableDeclarationKind::Const => "const",
             VariableDeclarationKind::Let => "let",
@@ -589,11 +583,23 @@ impl<'a> Gen for VariableDeclaration<'a> {
 
 impl<'a> Gen for VariableDeclarator<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        self.id.print(p, ctx);
+        self.id.kind.print(p, ctx);
+        if self.definite {
+            p.print_char(b'!');
+        }
+        if self.id.optional {
+            p.print_str("?");
+        }
+        if let Some(type_annotation) = &self.id.type_annotation {
+            p.print_colon();
+            p.print_soft_space();
+            type_annotation.print(p, ctx);
+        }
         if let Some(init) = &self.init {
             p.print_soft_space();
             p.print_equal();
             p.print_soft_space();
+            p.print_annotation_comments(self.span.start);
             init.print_expr(p, Precedence::Comma, ctx);
         }
     }
@@ -603,7 +609,7 @@ impl<'a> Gen for Function<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         let n = p.code_len();
         let wrap = self.is_expression() && (p.start_of_stmt == n || p.start_of_default_export == n);
-        p.gen_comments(self.span.start);
+        p.print_annotation_comments(self.span.start);
         p.wrap(wrap, |p| {
             p.print_space_before_identifier();
             p.add_source_mapping(self.span.start);
@@ -763,24 +769,10 @@ impl<'a> Gen for ImportDeclaration<'a> {
                             p.print_str("type ");
                         }
 
-                        let imported_name = match &spec.imported {
-                            ModuleExportName::IdentifierName(identifier) => {
-                                identifier.print(p, ctx);
-                                identifier.name.as_str()
-                            }
-                            ModuleExportName::IdentifierReference(identifier) => {
-                                identifier.print(p, ctx);
-                                identifier.name.as_str()
-                            }
-                            ModuleExportName::StringLiteral(literal) => {
-                                literal.print(p, ctx);
-                                literal.value.as_str()
-                            }
-                        };
-
-                        let local_name = spec.local.name.as_str();
-
-                        if imported_name != local_name {
+                        spec.imported.print(p, ctx);
+                        let local_name = p.get_binding_identifier_name(&spec.local);
+                        let imported_name = get_module_export_name(&spec.imported, p);
+                        if imported_name.is_none() || imported_name != Some(local_name) {
                             p.print_str(" as ");
                             spec.local.print(p, ctx);
                         }
@@ -833,22 +825,18 @@ impl<'a> Gen for ExportNamedDeclaration<'a> {
         p.add_source_mapping(self.span.start);
         p.print_indent();
 
-        if p.comment_options.preserve_annotate_comments {
+        if p.preserve_annotate_comments() {
             match &self.declaration {
                 Some(Declaration::FunctionDeclaration(_)) => {
-                    p.gen_comments(self.span.start);
+                    p.print_annotation_comments(self.span.start);
                 }
                 Some(Declaration::VariableDeclaration(var_decl))
                     if matches!(var_decl.kind, VariableDeclarationKind::Const) =>
                 {
-                    if let Some(declarator) = var_decl.declarations.first() {
-                        if let Some(ref init) = declarator.init {
-                            let leading_annotate_comments =
-                                p.get_leading_annotate_comments(self.span.start);
-                            if !leading_annotate_comments.is_empty() {
-                                p.move_comments(init.span().start, leading_annotate_comments);
-                            }
-                        }
+                    if matches!(var_decl.declarations.first(), Some(VariableDeclarator { init: Some(init), .. }) if init.is_function())
+                        && p.has_annotation_comments(self.span.start)
+                    {
+                        p.start_of_annotation_comment = Some(self.span.start);
                     }
                 }
                 _ => {}
@@ -920,13 +908,28 @@ impl<'a> Gen for TSNamespaceExportDeclaration<'a> {
     }
 }
 
+fn get_module_export_name<'a>(
+    module_export_name: &ModuleExportName<'a>,
+    p: &Codegen<'a>,
+) -> Option<&'a str> {
+    match module_export_name {
+        ModuleExportName::IdentifierName(ident) => Some(ident.name.as_str()),
+        ModuleExportName::IdentifierReference(ident) => {
+            Some(p.get_identifier_reference_name(ident))
+        }
+        ModuleExportName::StringLiteral(_) => None,
+    }
+}
+
 impl<'a> Gen for ExportSpecifier<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         if self.export_kind.is_type() {
             p.print_str("type ");
         }
         self.local.print(p, ctx);
-        if self.local.name() != self.exported.name() {
+        let local_name = get_module_export_name(&self.local, p);
+        let exported_name = get_module_export_name(&self.exported, p);
+        if exported_name.is_none() || local_name != exported_name {
             p.print_str(" as ");
             self.exported.print(p, ctx);
         }
@@ -936,8 +939,8 @@ impl<'a> Gen for ExportSpecifier<'a> {
 impl<'a> Gen for ModuleExportName<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
-            Self::IdentifierName(identifier) => p.print_str(identifier.name.as_str()),
-            Self::IdentifierReference(identifier) => identifier.print(p, ctx),
+            Self::IdentifierName(ident) => ident.print(p, ctx),
+            Self::IdentifierReference(ident) => ident.print(p, ctx),
             Self::StringLiteral(literal) => literal.print(p, ctx),
         };
     }
@@ -1110,16 +1113,17 @@ impl<'a> Gen for NumericLiteral<'a> {
     #[allow(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span.start);
-        if self.value != f64::INFINITY && (p.options.minify || self.raw.is_empty()) {
+        if !p.options.minify && !self.raw.is_empty() {
+            p.print_str(self.raw);
+            need_space_before_dot(self.raw, p);
+        } else if self.value != f64::INFINITY {
             p.print_space_before_identifier();
             let abs_value = self.value.abs();
-
             if self.value.is_sign_negative() {
                 p.print_space_before_operator(Operator::Unary(UnaryOperator::UnaryNegation));
                 p.print_str("-");
             }
-
-            let result = print_non_negative_float(abs_value, p);
+            let result = get_minified_number(abs_value);
             let bytes = result.as_str();
             p.print_str(bytes);
             need_space_before_dot(bytes, p);
@@ -1133,78 +1137,51 @@ impl<'a> Gen for NumericLiteral<'a> {
     }
 }
 
-// TODO: refactor this with less allocations
-// <https://github.com/evanw/esbuild/blob/360d47230813e67d0312ad754cad2b6ee09b151b/internal/js_printer/js_printer.go#L3472>
-#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-fn print_non_negative_float(value: f64, p: &Codegen) -> String {
+// https://github.com/terser/terser/blob/c5315c3fd6321d6b2e076af35a70ef532f498505/lib/output.js#L2418
+#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_possible_wrap)]
+fn get_minified_number(num: f64) -> String {
     use oxc_syntax::number::ToJsString;
-    if value < 1000.0 && value.fract() == 0.0 {
-        return value.to_js_string();
-    }
-    let mut result = format!("{value:e}");
-    let chars = result.as_bytes();
-    let len = chars.len();
-    let dot = chars.iter().position(|&c| c == b'.');
-    let u8_to_string = |num: &[u8]| {
-        // SAFETY: criteria of `from_utf8_unchecked`.are met.
-        unsafe { String::from_utf8_unchecked(num.to_vec()) }
-    };
-
-    if dot == Some(1) && chars[0] == b'0' {
-        // Strip off the leading zero when minifying
-        // "0.5" => ".5"
-        let stripped_result = &chars[1..];
-        // after stripping the leading zero, the after dot position will be start from 1
-        let after_dot = 1;
-
-        // Try using an exponent
-        // "0.001" => "1e-3"
-        if stripped_result[after_dot] == b'0' {
-            let mut i = after_dot + 1;
-            while stripped_result[i] == b'0' {
-                i += 1;
-            }
-            let remaining = &stripped_result[i..];
-            let exponent = format!("-{}", remaining.len() - after_dot + i);
-
-            // Only switch if it's actually shorter
-            if stripped_result.len() > remaining.len() + 1 + exponent.len() {
-                result = format!("{}e{}", u8_to_string(remaining), exponent);
-            } else {
-                result = u8_to_string(stripped_result);
-            }
-        } else {
-            result = u8_to_string(stripped_result);
-        }
-    } else if chars[len - 1] == b'0' {
-        // Simplify numbers ending with "0" by trying to use an exponent
-        // "1000" => "1e3"
-        let mut i = len - 1;
-        while i > 0 && chars[i - 1] == b'0' {
-            i -= 1;
-        }
-        let remaining = &chars[0..i];
-        let exponent = format!("{}", chars.len() - i);
-
-        // Only switch if it's actually shorter
-        if chars.len() > remaining.len() + 1 + exponent.len() {
-            result = format!("{}e{}", u8_to_string(remaining), exponent);
-        } else {
-            result = u8_to_string(chars);
-        }
+    if num < 1000.0 && num.fract() == 0.0 {
+        return num.to_js_string();
     }
 
-    if p.options.minify && value.fract() == 0.0 {
-        let value = value as u64;
-        if (1_000_000_000_000..=0xFFFF_FFFF_FFFF_F800).contains(&value) {
-            let hex = format!("{value:#x}");
-            if hex.len() < result.len() {
-                result = hex;
-            }
-        }
+    let mut s = num.to_js_string();
+
+    if s.starts_with("0.") {
+        s = s[1..].to_string();
     }
 
-    result
+    s = s.cow_replacen("e+", "e", 1).to_string();
+
+    let mut candidates = vec![s.clone()];
+
+    if num.fract() == 0.0 {
+        candidates.push(format!("0x{:x}", num as u128));
+    }
+
+    if s.starts_with(".0") {
+        // create `1e-2`
+        if let Some((i, _)) = s[1..].bytes().enumerate().find(|(_, c)| *c != b'0') {
+            let len = i + 1; // `+1` to include the dot.
+            let digits = &s[len..];
+            candidates.push(format!("{digits}e-{}", digits.len() + len - 1));
+        }
+    } else if s.ends_with('0') {
+        // create 1e2
+        if let Some((len, _)) = s.bytes().rev().enumerate().find(|(_, c)| *c != b'0') {
+            candidates.push(format!("{}e{len}", &s[0..s.len() - len]));
+        }
+    } else if let Some((integer, point, exponent)) =
+        s.split_once('.').and_then(|(a, b)| b.split_once('e').map(|e| (a, e.0, e.1)))
+    {
+        // `1.2e101` -> ("1", "2", "101")
+        candidates.push(format!(
+            "{integer}{point}e{}",
+            exponent.parse::<isize>().unwrap() - point.len() as isize
+        ));
+    }
+
+    candidates.into_iter().min_by_key(String::len).unwrap()
 }
 
 impl<'a> Gen for BigIntLiteral<'a> {
@@ -1348,7 +1325,11 @@ impl<'a> GenExpr for MemberExpression<'a> {
 
 impl<'a> GenExpr for ComputedMemberExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen, _precedence: Precedence, ctx: Context) {
-        self.object.print_expr(p, Precedence::Prefix, ctx.intersection(Context::FORBID_CALL));
+        // `(let[0] = 100);` -> `(let)[0] = 100`;
+        let wrap = self.object.get_identifier_reference().is_some_and(|r| r.name == "let");
+        p.wrap(wrap, |p| {
+            self.object.print_expr(p, Precedence::Prefix, ctx.intersection(Context::FORBID_CALL));
+        });
         if self.optional {
             p.print_str("?.");
         }
@@ -1385,13 +1366,17 @@ impl<'a> GenExpr for PrivateFieldExpression<'a> {
 
 impl<'a> GenExpr for CallExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
+        let is_export_default = p.start_of_default_export == p.code_len();
         let mut wrap = precedence >= Precedence::New || ctx.intersects(Context::FORBID_CALL);
-        let annotate_comments = p.get_leading_annotate_comments(self.span.start);
-        if !annotate_comments.is_empty() && precedence >= Precedence::Postfix {
+        if p.has_annotation_comments(self.span.start) && precedence >= Precedence::Postfix {
             wrap = true;
         }
+
         p.wrap(wrap, |p| {
-            p.print_comments(&annotate_comments, &mut AnnotationKind::empty());
+            p.print_annotation_comments(self.span.start);
+            if is_export_default {
+                p.start_of_default_export = p.code_len();
+            }
             p.add_source_mapping(self.span.start);
             self.callee.print_expr(p, Precedence::Postfix, Context::empty());
             if self.optional {
@@ -1604,7 +1589,7 @@ impl<'a> Gen for PropertyKey<'a> {
 impl<'a> GenExpr for ArrowFunctionExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         p.wrap(precedence >= Precedence::Assign, |p| {
-            p.gen_comments(self.span.start);
+            p.print_annotation_comments(self.span.start);
             if self.r#async {
                 p.add_source_mapping(self.span.start);
                 p.print_str("async");
@@ -1775,31 +1760,10 @@ impl<'a> GenExpr for ConditionalExpression<'a> {
 
 impl<'a> GenExpr for AssignmentExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
-        // Destructuring assignment
         let n = p.code_len();
-
-        let identifier_is_keyword = match &self.left {
-            AssignmentTarget::AssignmentTargetIdentifier(target) => {
-                is_reserved_keyword_or_global_object(target.name.as_str())
-            }
-            AssignmentTarget::ComputedMemberExpression(expression) => match &expression.object {
-                Expression::Identifier(ident) => {
-                    is_reserved_keyword_or_global_object(ident.name.as_str())
-                }
-                _ => false,
-            },
-            AssignmentTarget::StaticMemberExpression(expression) => {
-                is_reserved_keyword_or_global_object(expression.property.name.as_str())
-            }
-            AssignmentTarget::PrivateFieldExpression(expression) => {
-                is_reserved_keyword_or_global_object(expression.field.name.as_str())
-            }
-            _ => false,
-        };
-
-        let wrap = ((p.start_of_stmt == n || p.start_of_arrow_expr == n)
-            && matches!(self.left, AssignmentTarget::ObjectAssignmentTarget(_)))
-            || identifier_is_keyword;
+        // Destructuring assignments must be parenthesized
+        let wrap = (p.start_of_stmt == n || p.start_of_arrow_expr == n)
+            && matches!(self.left, AssignmentTarget::ObjectAssignmentTarget(_));
         p.wrap(wrap || precedence >= self.precedence(), |p| {
             self.left.print(p, ctx);
             p.print_soft_space();
@@ -2060,12 +2024,11 @@ impl<'a> GenExpr for ChainExpression<'a> {
 impl<'a> GenExpr for NewExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         let mut wrap = precedence >= self.precedence();
-        let annotate_comment = p.get_leading_annotate_comments(self.span.start);
-        if !annotate_comment.is_empty() && precedence >= Precedence::Postfix {
+        if p.has_annotation_comments(self.span.start) && precedence >= Precedence::Postfix {
             wrap = true;
         }
         p.wrap(wrap, |p| {
-            p.print_comments(&annotate_comment, &mut AnnotationKind::empty());
+            p.print_annotation_comments(self.span.start);
             p.print_space_before_identifier();
             p.add_source_mapping(self.span.start);
             p.print_str("new ");
@@ -2628,12 +2591,7 @@ impl<'a> Gen for PrivateIdentifier<'a> {
 
 impl<'a> Gen for BindingPattern<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        match &self.kind {
-            BindingPatternKind::BindingIdentifier(ident) => ident.print(p, ctx),
-            BindingPatternKind::ObjectPattern(pattern) => pattern.print(p, ctx),
-            BindingPatternKind::ArrayPattern(pattern) => pattern.print(p, ctx),
-            BindingPatternKind::AssignmentPattern(pattern) => pattern.print(p, ctx),
-        }
+        self.kind.print(p, ctx);
         if self.optional {
             p.print_str("?");
         }
@@ -2641,6 +2599,17 @@ impl<'a> Gen for BindingPattern<'a> {
             p.print_colon();
             p.print_soft_space();
             type_annotation.print(p, ctx);
+        }
+    }
+}
+
+impl<'a> Gen for BindingPatternKind<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
+        match self {
+            BindingPatternKind::BindingIdentifier(ident) => ident.print(p, ctx),
+            BindingPatternKind::ObjectPattern(pattern) => pattern.print(p, ctx),
+            BindingPatternKind::ArrayPattern(pattern) => pattern.print(p, ctx),
+            BindingPatternKind::AssignmentPattern(pattern) => pattern.print(p, ctx),
         }
     }
 }
@@ -3594,6 +3563,7 @@ impl<'a> Gen for TSEnumDeclaration<'a> {
 
 impl<'a> Gen for TSEnumMember<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
+        p.print_leading_comments(self.span.start);
         match &self.id {
             TSEnumMemberName::StaticIdentifier(decl) => decl.print(p, ctx),
             TSEnumMemberName::StaticStringLiteral(decl) => decl.print(p, ctx),

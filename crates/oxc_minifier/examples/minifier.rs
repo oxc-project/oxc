@@ -23,22 +23,29 @@ fn main() -> std::io::Result<()> {
     let source_text = std::fs::read_to_string(path)?;
     let source_type = SourceType::from_path(path).unwrap();
 
-    let printed = minify(&source_text, source_type, mangle);
+    let mut allocator = Allocator::default();
+    let printed = minify(&allocator, &source_text, source_type, mangle);
     println!("{printed}");
 
     if twice {
-        let printed = minify(&printed, source_type, mangle);
-        println!("{printed}");
+        allocator.reset();
+        let printed2 = minify(&allocator, &printed, source_type, mangle);
+        println!("{printed2}");
+        println!("same = {}", printed == printed2);
     }
 
     Ok(())
 }
 
-fn minify(source_text: &str, source_type: SourceType, mangle: bool) -> String {
-    let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
-    let program = allocator.alloc(ret.program);
-    let options = MinifierOptions { mangle, compress: CompressOptions::all_true() };
-    let ret = Minifier::new(options).build(&allocator, program);
-    CodeGenerator::new().with_mangler(ret.mangler).build(program).source_text
+fn minify(
+    allocator: &Allocator,
+    source_text: &str,
+    source_type: SourceType,
+    mangle: bool,
+) -> String {
+    let ret = Parser::new(allocator, source_text, source_type).parse();
+    let mut program = ret.program;
+    let options = MinifierOptions { mangle, compress: CompressOptions::default() };
+    let ret = Minifier::new(options).build(allocator, &mut program);
+    CodeGenerator::new().with_mangler(ret.mangler).build(&program).source_text
 }

@@ -1,7 +1,7 @@
 use oxc_ast::ast::*;
-use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
+use oxc_traverse::{Traverse, TraverseCtx};
 
-use crate::{node_util::NodeUtil, tri::Tri, CompressorPass};
+use crate::CompressorPass;
 
 /// Minimize Conditions
 ///
@@ -10,50 +10,36 @@ use crate::{node_util::NodeUtil, tri::Tri, CompressorPass};
 /// with `? :` and short-circuit binary operators.
 ///
 /// <https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeMinimizeConditions.java>
-pub struct PeepholeMinimizeConditions;
+pub struct PeepholeMinimizeConditions {
+    changed: bool,
+}
 
-impl<'a> CompressorPass<'a> for PeepholeMinimizeConditions {}
+impl<'a> CompressorPass<'a> for PeepholeMinimizeConditions {
+    fn changed(&self) -> bool {
+        self.changed
+    }
+
+    fn build(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.changed = false;
+        oxc_traverse::walk_program(self, program, ctx);
+    }
+}
 
 impl<'a> Traverse<'a> for PeepholeMinimizeConditions {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.fold_expression(expr, ctx);
+        if let Some(folded_expr) = match expr {
+            Expression::UnaryExpression(e) if e.operator.is_not() => self.try_minimize_not(e, ctx),
+            _ => None,
+        } {
+            *expr = folded_expr;
+            self.changed = true;
+        };
     }
 }
 
 impl<'a> PeepholeMinimizeConditions {
     pub fn new() -> Self {
-        Self
-    }
-
-    fn fold_expression(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Some(folded_expr) = match expr {
-            Expression::ConditionalExpression(e) => self.try_fold_conditional_expression(e, ctx),
-            Expression::UnaryExpression(e) if e.operator.is_not() => self.try_minimize_not(e, ctx),
-            _ => None,
-        } {
-            *expr = folded_expr;
-        };
-    }
-
-    fn try_fold_conditional_expression(
-        &self,
-        expr: &mut ConditionalExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Option<Expression<'a>> {
-        match ctx.get_boolean_value(&expr.test) {
-            Tri::True => {
-                // Bail `let o = { f() { assert.ok(this !== o); } }; (true ? o.f : false)(); (true ? o.f : false)``;`
-                let parent = ctx.ancestry.parent();
-                if parent.is_tagged_template_expression()
-                    || matches!(parent, Ancestor::CallExpressionCallee(_))
-                {
-                    return None;
-                }
-                Some(ctx.ast.move_expression(&mut expr.consequent))
-            }
-            Tri::False => Some(ctx.ast.move_expression(&mut expr.alternate)),
-            Tri::Unknown => None,
-        }
+        Self { changed: false }
     }
 
     /// Try to minimize NOT nodes such as `!(x==y)`.

@@ -1,5 +1,4 @@
 use std::{
-    collections::HashSet,
     fs,
     path::{Path, PathBuf},
     time::Duration,
@@ -8,6 +7,7 @@ use std::{
 use oxc::{allocator::Allocator, codegen::CodeGenerator, parser::Parser, span::SourceType};
 use oxc_tasks_common::agent;
 use phf::{phf_set, Set};
+use rustc_hash::FxHashSet;
 use serde_json::json;
 
 use crate::{
@@ -19,8 +19,8 @@ use crate::{
 pub const V8_TEST_262_FAILED_TESTS_PATH: &str = "src/runtime/v8_test262.status";
 
 lazy_static::lazy_static! {
-    static ref V8_TEST_262_FAILED_TESTS: HashSet<String> = {
-        let mut set = HashSet::default();
+    static ref V8_TEST_262_FAILED_TESTS: FxHashSet<String> = {
+        let mut set = FxHashSet::default();
         fs::read_to_string(workspace_root().join(V8_TEST_262_FAILED_TESTS_PATH))
             .expect("Failed to read v8_test262.status")
             .lines()

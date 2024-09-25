@@ -1,4 +1,5 @@
 use oxc_allocator::Box;
+use oxc_allocator::Vec;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 use oxc_span::{Atom, GetSpan, SPAN};
@@ -8,9 +9,9 @@ use crate::{diagnostics::default_export_inferred, IsolatedDeclarations};
 impl<'a> IsolatedDeclarations<'a> {
     pub fn transform_export_named_declaration(
         &mut self,
-        prev_decl: &ExportNamedDeclaration<'a>,
+        prev_decl: &mut ExportNamedDeclaration<'a>,
     ) -> Option<ExportNamedDeclaration<'a>> {
-        let decl = self.transform_declaration(prev_decl.declaration.as_ref()?, false)?;
+        let decl = self.transform_declaration(prev_decl.declaration.as_mut()?, false)?;
 
         Some(self.ast.export_named_declaration(
             prev_decl.span,
@@ -34,9 +35,9 @@ impl<'a> IsolatedDeclarations<'a> {
 
     pub fn transform_export_default_declaration(
         &mut self,
-        decl: &ExportDefaultDeclaration<'a>,
+        decl: &mut ExportDefaultDeclaration<'a>,
     ) -> Option<(Option<VariableDeclaration<'a>>, ExportDefaultDeclaration<'a>)> {
-        let declaration = match &decl.declaration {
+        let declaration = match &mut decl.declaration {
             ExportDefaultDeclarationKind::FunctionDeclaration(decl) => self
                 .transform_function(decl, Some(false))
                 .map(|d| (None, ExportDefaultDeclarationKind::FunctionDeclaration(d))),
@@ -66,7 +67,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
                     let id = self.ast.binding_pattern(id, type_annotation, false);
                     let declarations =
-                        self.ast.vec1(self.ast.variable_declarator(SPAN, kind, id, None, true));
+                        self.ast.vec1(self.ast.variable_declarator(SPAN, kind, id, None, false));
 
                     Some((
                         Some(self.ast.variable_declaration(
@@ -123,5 +124,26 @@ impl<'a> IsolatedDeclarations<'a> {
                 decl.import_kind,
             ))
         }
+    }
+
+    /// Strip export keyword from ExportNamedDeclaration
+    ///
+    /// ```ts
+    /// export const a = 1;
+    /// export function b() {}
+    /// ```
+    /// to
+    /// ```ts
+    /// const a = 1;
+    /// function b() {}
+    /// ```
+    pub fn strip_export_keyword(&self, stmts: &mut Vec<'a, Statement<'a>>) {
+        stmts.iter_mut().for_each(|stmt| {
+            if let Statement::ExportNamedDeclaration(decl) = stmt {
+                if let Some(declaration) = &mut decl.declaration {
+                    *stmt = Statement::from(self.ast.move_declaration(declaration));
+                }
+            }
+        });
     }
 }
