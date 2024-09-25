@@ -5,16 +5,21 @@ mod secrets;
 
 use std::{num::NonZeroU32, ops::Deref};
 
+use regex::Regex;
+use serde::Deserialize;
+use serde_json::Value;
+
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::GetSpan;
-
-use entropy::Entropy;
-use secret::{Secret, SecretScanner, SecretScannerMeta, SecretViolation};
-use secrets::{SecretsEnum, ALL_RULES};
+use oxc_span::{CompactStr, GetSpan};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
+use entropy::Entropy;
+use secret::{
+    Secret, SecretScanner, SecretScannerMeta, SecretViolation, DEFAULT_MIN_ENTROPY, DEFAULT_MIN_LEN,
+};
+use secrets::{CustomSecret, SecretsEnum, ALL_RULES};
 
 fn api_keys(violation: &SecretViolation) -> OxcDiagnostic {
     OxcDiagnostic::warn(violation.message().to_owned())
@@ -104,6 +109,31 @@ pub struct ApiKeysInner {
     rules: Vec<SecretsEnum>,
 }
 
+#[derive(Debug, Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ApiKeysConfig {
+    #[serde(default)]
+    custom_patterns: Vec<CustomPattern>,
+}
+
+#[derive(Debug, Deserialize)]
+struct CustomPattern {
+    // required fields
+    #[serde(rename = "ruleName")]
+    rule_name: CompactStr,
+    pattern: String,
+
+    // optional fields
+    #[serde(default)]
+    message: Option<CompactStr>,
+    #[serde(default)]
+    entropy: Option<f32>,
+    #[serde(default, rename = "minLength")]
+    min_len: Option<NonZeroU32>,
+    #[serde(default, rename = "maxLength")]
+    max_len: Option<NonZeroU32>,
+}
+
 impl Default for ApiKeysInner {
     fn default() -> Self {
         Self::new(ALL_RULES.clone())
@@ -172,5 +202,28 @@ impl Rule for ApiKeys {
                 return;
             }
         }
+    }
+
+    fn from_configuration(value: Value) -> Self {
+        let Some(obj) = value.get(0) else {
+            return Self::default();
+        };
+        let config = serde_json::from_value::<ApiKeysConfig>(obj.clone()).unwrap();
+
+        // TODO: Check if this is worth optimizing, then do so if needed.
+        let mut rules = ALL_RULES.clone();
+        rules.extend(config.custom_patterns.into_iter().map(|pattern| {
+            let regex = Regex::new(&pattern.pattern).unwrap();
+            SecretsEnum::Custom(CustomSecret {
+                rule_name: pattern.rule_name,
+                message: pattern.message.unwrap_or("Detected a hard-coded secret.".into()),
+                entropy: pattern.entropy.unwrap_or(DEFAULT_MIN_ENTROPY),
+                min_len: pattern.min_len.unwrap_or(DEFAULT_MIN_LEN),
+                max_len: pattern.max_len,
+                pattern: regex,
+            })
+        }));
+
+        Self(Box::new(ApiKeysInner::new(rules)))
     }
 }
