@@ -19,11 +19,6 @@ pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a
     // @link https://github.com/prettier/prettier/blob/aa3853b7765645b3f3d8a76e41cf6d70b93c01fd/src/language-js/print/class.js#L62
     let group_mode = class.implements.as_ref().map(|v| !v.is_empty()).unwrap_or(false);
 
-    if let Some(params) = &class.type_parameters {
-        group_parts.push(params.format(p));
-        group_parts.push(space!());
-    }
-
     if let Some(super_class) = &class.super_class {
         let mut extend_parts = p.vec();
 
@@ -63,6 +58,13 @@ pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a
     
     if let Some(id) = &class.id {
         parts.push(id.format(p));
+    }
+
+    if let Some(params) = &class.type_parameters {
+        parts.push(params.format(p));
+    }
+
+    if class.id.is_some() || class.type_parameters.is_some() {
         parts.push(space!());
     }
     

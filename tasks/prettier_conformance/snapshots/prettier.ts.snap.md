@@ -1,4 +1,4 @@
-ts compatibility: 171/526 (32.51%)
+ts compatibility: 184/526 (34.98%)
 
 # Failed
 
@@ -63,7 +63,6 @@ ts compatibility: 171/526 (32.51%)
 
 ### class
 * class/constructor.ts
-* class/dunder.ts
 * class/empty-method-body.ts
 * class/extends_implements.ts
 * class/generics.ts
@@ -135,20 +134,13 @@ ts compatibility: 171/526 (32.51%)
 * conformance/classes/nestedClassDeclaration.ts
 
 ### conformance/classes/classDeclarations/classAbstractKeyword
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractGeneric.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractWithInterface.ts
 
 ### conformance/classes/classDeclarations/classHeritageSpecification
-* conformance/classes/classDeclarations/classHeritageSpecification/classExtendingClass.ts
 * conformance/classes/classDeclarations/classHeritageSpecification/classExtendsItselfIndirectly.ts
-* conformance/classes/classDeclarations/classHeritageSpecification/classIsSubtypeOfBaseType.ts
 
 ### conformance/classes/constructorDeclarations/constructorParameters
-* conformance/classes/constructorDeclarations/constructorParameters/constructorDefaultValuesReferencingThis.ts
-* conformance/classes/constructorDeclarations/constructorParameters/constructorImplementationWithDefaultValues.ts
 * conformance/classes/constructorDeclarations/constructorParameters/constructorImplementationWithDefaultValues2.ts
-* conformance/classes/constructorDeclarations/constructorParameters/constructorOverloadsWithDefaultValues.ts
-* conformance/classes/constructorDeclarations/constructorParameters/constructorOverloadsWithOptionalParameters.ts
 * conformance/classes/constructorDeclarations/constructorParameters/constructorParameterProperties.ts
 * conformance/classes/constructorDeclarations/constructorParameters/constructorParameterProperties2.ts
 * conformance/classes/constructorDeclarations/constructorParameters/declarationEmitReadonly.ts
@@ -209,9 +201,6 @@ ts compatibility: 171/526 (32.51%)
 
 ### conformance/types/parameterProperty
 * conformance/types/parameterProperty/parameterProperty.ts
-
-### conformance/types/thisType
-* conformance/types/thisType/thisType.ts
 
 ### conformance/types/tuple
 * conformance/types/tuple/contextualTypeWithTuple.ts
@@ -326,7 +315,6 @@ ts compatibility: 171/526 (32.51%)
 * enum/enum.ts
 
 ### error-recovery
-* error-recovery/generic.ts
 * error-recovery/index-signature.ts
 * error-recovery/jsdoc_only_types.ts
 
@@ -371,7 +359,6 @@ ts compatibility: 171/526 (32.51%)
 ### instantiation-expression
 * instantiation-expression/basic.ts
 * instantiation-expression/inferface-asi.ts
-* instantiation-expression/logical-expr.ts
 * instantiation-expression/new.ts
 * instantiation-expression/property-access.ts
 
@@ -464,10 +451,6 @@ ts compatibility: 171/526 (32.51%)
 
 ### optional-type
 * optional-type/complex.ts
-
-### optional-variance
-* optional-variance/basic.ts
-* optional-variance/with-jsx.tsx
 
 ### prettier-ignore
 * prettier-ignore/issue-14238.ts
