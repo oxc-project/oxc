@@ -3,7 +3,7 @@ commit: a709f989
 parser_typescript Summary:
 AST Parsed     : 6469/6479 (99.85%)
 Positive Passed: 6458/6479 (99.68%)
-Negative Passed: 1228/5715 (21.49%)
+Negative Passed: 1234/5715 (21.59%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration10.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration11.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration13.ts
@@ -854,10 +854,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/firstMatchRe
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/fixTypeParameterInSignatureWithRestParameters.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/fixingTypeParametersRepeatedly2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/flatArrayNoExcessiveStackDepth.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/forIn.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/forIn2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/forInStatement2.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/forInStatement4.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/forInStatement7.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/forInStrictNullChecksNoError.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/forwardDeclaredCommonTypes01.ts
@@ -3850,14 +3848,12 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserES5ForOfStatement15.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserES5ForOfStatement16.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserES5ForOfStatement20.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserES5ForOfStatement5.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserES5ForOfStatement8.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserES5ForOfStatement9.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserEmptyStatement1.d.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserExpressionStatement1.d.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForInStatement1.d.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForInStatement4.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForInStatement5.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForInStatement8.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForStatement1.d.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForStatement2.ts
@@ -3962,7 +3958,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/Iterators/parserForOfStatement15.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/Iterators/parserForOfStatement16.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/Iterators/parserForOfStatement20.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/Iterators/parserForOfStatement5.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/Iterators/parserForOfStatement8.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/Iterators/parserForOfStatement9.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/pedantic/noUncheckedIndexedAccess.ts
@@ -4071,7 +4066,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statement
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/for-inStatements/for-inStatementsDestructuring2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/for-inStatements/for-inStatementsDestructuring3.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/for-inStatements/for-inStatementsDestructuring4.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/for-inStatements/for-inStatementsInvalid.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/for-ofStatements/ES5For-of17.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/for-ofStatements/ES5For-of26.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/for-ofStatements/ES5For-of27.ts
@@ -7900,6 +7894,24 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ·      ╰── `;` expected
  30 │ }
     ╰────
+
+  × TS(2483): The left-hand side of a 'for...in' statement cannot use a type annotation.
+   ╭─[typescript/tests/cases/compiler/forIn.ts:2:10]
+ 1 │ var arr = null;
+ 2 │ for (var i:number in arr) { // error
+   ·          ────────
+ 3 │     var x1 = arr[i];
+   ╰────
+  help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
+
+  × TS(2483): The left-hand side of a 'for...in' statement cannot use a type annotation.
+   ╭─[typescript/tests/cases/compiler/forInStatement4.ts:2:10]
+ 1 │ var expr: any;
+ 2 │ for (var a: number in expr) {
+   ·          ─────────
+ 3 │ }
+   ╰────
+  help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
 
   × Identifier `foo3` has already been declared
     ╭─[typescript/tests/cases/compiler/funClodule.ts:15:10]
@@ -21644,6 +21656,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ }
    ╰────
 
+  × TS(2483): The left-hand side of a 'for...of' statement cannot use a type annotation.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserES5ForOfStatement5.ts:1:10]
+ 1 │ for (var a: number of X) {
+   ·          ─────────
+ 2 │ }
+   ╰────
+  help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
+
   × Only a single declaration is allowed in a `for...of` statement
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserES5ForOfStatement6.ts:1:6]
  1 │ for (var a = 1, b = 2 of X) {
@@ -21657,6 +21677,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·      ─────────────────────────────────
  2 │ }
    ╰────
+
+  × TS(2483): The left-hand side of a 'for...of' statement cannot use a type annotation.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserES5ForOfStatement7.ts:1:10]
+ 1 │ for (var a: number = 1, b: string = "" of X) {
+   ·          ─────────
+ 2 │ }
+   ╰────
+  help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
+
+  × TS(2483): The left-hand side of a 'for...of' statement cannot use a type annotation.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserES5ForOfStatement7.ts:1:25]
+ 1 │ for (var a: number = 1, b: string = "" of X) {
+   ·                         ─────────
+ 2 │ }
+   ╰────
+  help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForInStatement2.ts:1:10]
@@ -21672,6 +21708,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ }
    ╰────
 
+  × TS(2483): The left-hand side of a 'for...in' statement cannot use a type annotation.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForInStatement5.ts:1:10]
+ 1 │ for (var a: number in X) {
+   ·          ─────────
+ 2 │ }
+   ╰────
+  help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
+
   × Only a single declaration is allowed in a `for...in` statement
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForInStatement6.ts:1:6]
  1 │ for (var a = 1, b = 2 in X) {
@@ -21685,6 +21729,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·      ─────────────────────────────────
  2 │ }
    ╰────
+
+  × TS(2483): The left-hand side of a 'for...in' statement cannot use a type annotation.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForInStatement7.ts:1:10]
+ 1 │ for (var a: number = 1, b: string = "" in X) {
+   ·          ─────────
+ 2 │ }
+   ╰────
+  help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
+
+  × TS(2483): The left-hand side of a 'for...in' statement cannot use a type annotation.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForInStatement7.ts:1:25]
+ 1 │ for (var a: number = 1, b: string = "" in X) {
+   ·                         ─────────
+ 2 │ }
+   ╰────
+  help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForStatement4.ts:1:6]
@@ -22151,6 +22211,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ }
    ╰────
 
+  × TS(2483): The left-hand side of a 'for...of' statement cannot use a type annotation.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript6/Iterators/parserForOfStatement5.ts:1:10]
+ 1 │ for (var a: number of X) {
+   ·          ─────────
+ 2 │ }
+   ╰────
+  help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
+
   × Only a single declaration is allowed in a `for...of` statement
    ╭─[typescript/tests/cases/conformance/parser/ecmascript6/Iterators/parserForOfStatement6.ts:1:6]
  1 │ for (var a = 1, b = 2 of X) {
@@ -22164,6 +22232,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·      ─────────────────────────────────
  2 │ }
    ╰────
+
+  × TS(2483): The left-hand side of a 'for...of' statement cannot use a type annotation.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript6/Iterators/parserForOfStatement7.ts:1:10]
+ 1 │ for (var a: number = 1, b: string = "" of X) {
+   ·          ─────────
+ 2 │ }
+   ╰────
+  help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
+
+  × TS(2483): The left-hand side of a 'for...of' statement cannot use a type annotation.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript6/Iterators/parserForOfStatement7.ts:1:25]
+ 1 │ for (var a: number = 1, b: string = "" of X) {
+   ·                         ─────────
+ 2 │ }
+   ╰────
+  help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
 
   × Expected `,` but found `?`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript6/ShorthandPropertyAssignment/parserShorthandPropertyAssignment1.ts:3:11]
@@ -23100,6 +23184,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ·              ────
  38 │ }
     ╰────
+
+  × TS(2483): The left-hand side of a 'for...in' statement cannot use a type annotation.
+    ╭─[typescript/tests/cases/conformance/statements/for-inStatements/for-inStatementsInvalid.ts:10:10]
+  9 │ 
+ 10 │ for (var idx : number in {}) { }
+    ·          ────────────
+ 11 │ 
+    ╰────
+  help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/statements/for-ofStatements/ES5For-of12.ts:1:6]

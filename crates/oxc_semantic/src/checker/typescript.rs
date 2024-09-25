@@ -479,3 +479,27 @@ pub fn check_object_property(prop: &ObjectProperty, ctx: &SemanticBuilder<'_>) {
         }
     }
 }
+
+/// The left-hand side of a 'for...of' statement cannot use a type annotation. (2483)
+fn type_annotation_in_for_left(span: Span, is_for_in: bool) -> OxcDiagnostic {
+    let for_of_or_in = if is_for_in { "for...in" } else { "for...of" };
+    ts_error(
+        "2483",
+        format!(
+            "The left-hand side of a '{for_of_or_in}' statement cannot use a type annotation.",
+        ),
+    ).with_label(span).with_help("This iterator's type will be inferred from the iterable. You can safely remove the type annotation.")
+}
+
+pub fn check_for_statement_left(left: &ForStatementLeft, is_for_in: bool, ctx: &SemanticBuilder) {
+    let ForStatementLeft::VariableDeclaration(decls) = left else {
+        return;
+    };
+
+    for decl in &decls.declarations {
+        if decl.id.type_annotation.is_some() {
+            let span = decl.id.span();
+            ctx.error(type_annotation_in_for_left(span, is_for_in));
+        }
+    }
+}

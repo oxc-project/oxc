@@ -53,10 +53,12 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::ForInStatement(stmt) => {
             js::check_function_declaration(&stmt.body, false, ctx);
             js::check_for_statement_left(&stmt.left, true, node, ctx);
+            ts::check_for_statement_left(&stmt.left, true, ctx);
         }
         AstKind::ForOfStatement(stmt) => {
             js::check_function_declaration(&stmt.body, false, ctx);
             js::check_for_statement_left(&stmt.left, false, node, ctx);
+            ts::check_for_statement_left(&stmt.left, false, ctx);
         }
         AstKind::WhileStatement(WhileStatement { body, .. })
         | AstKind::DoWhileStatement(DoWhileStatement { body, .. })
