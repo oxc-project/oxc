@@ -1,6 +1,4 @@
-//! # The JavaScript Oxidation Compiler
-//!
-//! <https://github.com/oxc-project/oxc>
+#![doc = include_str!("../README.md")]
 
 #[cfg(feature = "full")]
 mod compiler;
