@@ -1,16 +1,50 @@
+use std::ops::Add;
+
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use super::assignment::AssignmentLikeNode;
 use crate::{
-    array,
-    doc::{Doc, DocBuilder},
-    format::assignment,
-    hardline, space, ss, Format, Prettier,
+    array, doc::{Doc, DocBuilder, Group, IfBreak, Line}, format::{assignment, Separator}, group, hardline, if_break, indent, indent_if_break, line, softline, space, ss, Format, Prettier, 
 };
 
 pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a> {
     let mut parts = p.vec();
+    let mut heritage_clauses_parts = p.vec();
+    let mut group_parts = p.vec();
+
+    // Keep old behaviour of extends in same line
+    // If there is only on extends and there are not comments
+    // ToDo: implement comment checks 
+    // @link https://github.com/prettier/prettier/blob/aa3853b7765645b3f3d8a76e41cf6d70b93c01fd/src/language-js/print/class.js#L62
+    let group_mode = class.super_class.is_some() || class.implements.as_ref().map(|v| !v.is_empty()).unwrap_or(false);
+
+    if let Some(params) = &class.type_parameters {
+        group_parts.push(params.format(p));
+        group_parts.push(space!());
+    }
+
+    if let Some(super_class) = &class.super_class {
+        let mut extend_parts = p.vec();
+
+        extend_parts.push(ss!("extends "));
+        extend_parts.push(super_class.format(p));
+
+        if let Some(super_type_parameters) = &class.super_type_parameters {
+            extend_parts.push(super_type_parameters.format(p));
+        }
+        
+        if group_mode {
+            heritage_clauses_parts.push(group!(p, softline!(), Doc::Array(extend_parts)))
+        } else {
+            heritage_clauses_parts.push(space!());
+            heritage_clauses_parts.push(Doc::Array(extend_parts))
+        }
+    }
+
+    heritage_clauses_parts.push(print_heritage_clauses_implements(p, class));
+
+    println!("{group_mode:?} {}", should_indent_only_heritage_clauses(class));
 
     for decorator in &class.decorators {
         parts.push(ss!("@"));
@@ -27,46 +61,22 @@ pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a
     }
 
     parts.push(ss!("class "));
+    
     if let Some(id) = &class.id {
         parts.push(id.format(p));
-    }
-
-    if let Some(params) = &class.type_parameters {
-        parts.push(params.format(p));
-    }
-
-    if class.id.is_some() || class.type_parameters.is_some() {
         parts.push(space!());
     }
+    
+    if group_mode {
+        let printend_parts_group = if should_indent_only_heritage_clauses(class) {
+            array!(p, Doc::Array(group_parts), indent!(p, Doc::Array(heritage_clauses_parts)))
+        } else {
+            indent!(p, Doc::Array(group_parts), Doc::Array(heritage_clauses_parts))
+        };
 
-    if let Some(super_class) = &class.super_class {
-        parts.push(ss!("extends "));
-        parts.push(super_class.format(p));
-
-        if let Some(super_type_parameters) = &class.super_type_parameters {
-            parts.push(super_type_parameters.format(p));
-        }
-
-        parts.push(space!());
-    }
-
-    if let Some(implements) = &class.implements {
-        if implements.len() > 0 {
-            parts.push(ss!("implements "));
-
-            let mut print_comma = false;
-            for implementation in implements {
-                if print_comma {
-                    parts.push(ss!(", "));
-                } else {
-                    print_comma = true;
-                }
-
-                parts.push(implementation.format(p));
-            }
-
-            parts.push(space!());
-        }
+        parts.push(group!(p, printend_parts_group));
+    } else {
+        parts.push(array!(p, Doc::Array(heritage_clauses_parts), Doc::Array(group_parts)))
     }
 
     parts.push(class.body.format(p));
@@ -353,4 +363,56 @@ fn should_print_semicolon_after_class_property<'a>(
             false
         }
     }
+}
+
+/**
+ * @link https://github.com/prettier/prettier/blob/aa3853b7765645b3f3d8a76e41cf6d70b93c01fd/src/language-js/print/class.js#L148
+ */
+fn print_heritage_clauses_implements<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a> {
+    let mut parts = p.vec();
+
+    if class.implements.is_none() {
+        return Doc::Array(parts);
+    }
+
+    let implements = class.implements.as_ref().unwrap();
+
+    if implements.len() == 0 {
+        return Doc::Array(parts);
+    }
+
+    if should_indent_only_heritage_clauses(class) {
+        parts.push(Doc::IfBreak(IfBreak{
+            break_contents: p.boxed(ss!("")),
+            flat_content: p.boxed(softline!()),
+            group_id: None  // ToDo - how to attach group id
+        }));
+    } else {
+        parts.extend(hardline!());
+    }
+
+    parts.push(ss!("implements "));
+    
+    let implements_docs = implements.iter().map(|v| v.format(p)).collect();
+
+    parts.push(indent!(p, group!(p, Doc::Array(p.join(Separator::CommaLine, implements_docs)))));
+    parts.push(space!());
+
+    Doc::Group(Group::new(parts))
+}
+
+fn should_indent_only_heritage_clauses(class: &Class) -> bool {
+    // Todo - Check for Comments
+    // @link https://github.com/prettier/prettier/blob/aa3853b7765645b3f3d8a76e41cf6d70b93c01fd/src/language-js/print/class.js#L137
+    class.type_parameters.is_some() && !has_multiple_heritage(class)
+}
+
+fn has_multiple_heritage(class: &Class) -> bool {
+    let mut len = if class.super_class.is_some() { 1 } else { 0 };
+
+    if let Some(implements) = &class.implements {
+        len.add(i32::try_from(implements.len()).unwrap());
+    }
+
+    len > 1
 }

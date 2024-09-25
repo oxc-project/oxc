@@ -1,4 +1,4 @@
-ts compatibility: 185/526 (35.17%)
+ts compatibility: 156/526 (29.66%)
 
 # Failed
 
@@ -63,6 +63,7 @@ ts compatibility: 185/526 (35.17%)
 
 ### class
 * class/constructor.ts
+* class/dunder.ts
 * class/empty-method-body.ts
 * class/extends_implements.ts
 * class/generics.ts
@@ -134,13 +135,32 @@ ts compatibility: 185/526 (35.17%)
 * conformance/classes/nestedClassDeclaration.ts
 
 ### conformance/classes/classDeclarations/classAbstractKeyword
+* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractConstructorAssignability.ts
+* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractCrashedOnce.ts
+* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractExtends.ts
+* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractFactoryFunction.ts
+* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractGeneric.ts
+* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInAModule.ts
+* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInheritance.ts
+* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInstantiations1.ts
+* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInstantiations2.ts
+* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractOverrideWithAbstract.ts
+* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractSuperCalls.ts
+* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractUsingAbstractMethod1.ts
+* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractUsingAbstractMethods2.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractWithInterface.ts
 
 ### conformance/classes/classDeclarations/classHeritageSpecification
+* conformance/classes/classDeclarations/classHeritageSpecification/classExtendingClass.ts
 * conformance/classes/classDeclarations/classHeritageSpecification/classExtendsItselfIndirectly.ts
+* conformance/classes/classDeclarations/classHeritageSpecification/classIsSubtypeOfBaseType.ts
 
 ### conformance/classes/constructorDeclarations/constructorParameters
+* conformance/classes/constructorDeclarations/constructorParameters/constructorDefaultValuesReferencingThis.ts
+* conformance/classes/constructorDeclarations/constructorParameters/constructorImplementationWithDefaultValues.ts
 * conformance/classes/constructorDeclarations/constructorParameters/constructorImplementationWithDefaultValues2.ts
+* conformance/classes/constructorDeclarations/constructorParameters/constructorOverloadsWithDefaultValues.ts
+* conformance/classes/constructorDeclarations/constructorParameters/constructorOverloadsWithOptionalParameters.ts
 * conformance/classes/constructorDeclarations/constructorParameters/constructorParameterProperties.ts
 * conformance/classes/constructorDeclarations/constructorParameters/constructorParameterProperties2.ts
 * conformance/classes/constructorDeclarations/constructorParameters/declarationEmitReadonly.ts
@@ -201,6 +221,9 @@ ts compatibility: 185/526 (35.17%)
 
 ### conformance/types/parameterProperty
 * conformance/types/parameterProperty/parameterProperty.ts
+
+### conformance/types/thisType
+* conformance/types/thisType/thisType.ts
 
 ### conformance/types/tuple
 * conformance/types/tuple/contextualTypeWithTuple.ts
@@ -276,6 +299,7 @@ ts compatibility: 185/526 (35.17%)
 * custom/typeParameters/variables.ts
 
 ### declare
+* declare/declare_class_fields.ts
 * declare/declare_var.ts
 * declare/object-type-in-declare-function.ts
 
@@ -315,6 +339,7 @@ ts compatibility: 185/526 (35.17%)
 * enum/enum.ts
 
 ### error-recovery
+* error-recovery/generic.ts
 * error-recovery/index-signature.ts
 * error-recovery/jsdoc_only_types.ts
 
@@ -359,6 +384,7 @@ ts compatibility: 185/526 (35.17%)
 ### instantiation-expression
 * instantiation-expression/basic.ts
 * instantiation-expression/inferface-asi.ts
+* instantiation-expression/logical-expr.ts
 * instantiation-expression/new.ts
 * instantiation-expression/property-access.ts
 
@@ -443,6 +469,7 @@ ts compatibility: 185/526 (35.17%)
 * non-null/parens.ts
 
 ### nosemi
+* nosemi/index-signature.ts
 * nosemi/type.ts
 
 ### optional-method
@@ -450,6 +477,14 @@ ts compatibility: 185/526 (35.17%)
 
 ### optional-type
 * optional-type/complex.ts
+
+### optional-variance
+* optional-variance/basic.ts
+* optional-variance/with-jsx.tsx
+
+### override-modifiers
+* override-modifiers/override-modifier.ts
+* override-modifiers/parameter-property.ts
 
 ### prettier-ignore
 * prettier-ignore/issue-14238.ts

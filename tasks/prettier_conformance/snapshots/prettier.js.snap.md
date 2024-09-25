@@ -1,4 +1,4 @@
-js compatibility: 235/593 (39.63%)
+js compatibility: 232/593 (39.12%)
 
 # Failed
 
@@ -106,14 +106,17 @@ js compatibility: 235/593 (39.63%)
 * class-comment/superclass.js
 
 ### class-extends
+* class-extends/complex.js
 * class-extends/extends.js
 
 ### classes
 * classes/asi.js
 * classes/assignment.js
+* classes/binary.js
 * classes/empty.js
 * classes/method.js
 * classes/property.js
+* classes/super.js
 
 ### classes-private-fields
 * classes-private-fields/optional-chaining.js
