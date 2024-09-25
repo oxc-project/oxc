@@ -34,6 +34,8 @@ pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a
             extend_parts.push(super_type_parameters.format(p));
         }
         
+        extend_parts.push(if_break!(p, " ", ""));
+
         if group_mode {
             heritage_clauses_parts.push(softline!());
         }
@@ -42,8 +44,6 @@ pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a
     }
 
     heritage_clauses_parts.push(print_heritage_clauses_implements(p, class));
-
-    println!("{group_mode:?} {}", should_indent_only_heritage_clauses(class));
 
     for decorator in &class.decorators {
         parts.push(ss!("@"));
@@ -74,6 +74,10 @@ pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a
         };
 
         parts.push(printend_parts_group);
+
+        if !class.body.body.is_empty() {
+            parts.extend(hardline!())
+        }
     } else {
         parts.push(array!(p, Doc::Array(heritage_clauses_parts), Doc::Array(group_parts)))
     }
@@ -382,19 +386,20 @@ fn print_heritage_clauses_implements<'a>(p: &mut Prettier<'a>, class: &Class<'a>
 
     if should_indent_only_heritage_clauses(class) {
         parts.push(Doc::IfBreak(IfBreak{
-            break_contents: p.boxed(line!()),
             flat_content: p.boxed(ss!("")),
+            break_contents: p.boxed(line!()),
             group_id: None  // ToDo - how to attach group id
         }));
     } else {
         parts.extend(hardline!());
     }
 
+    parts.push(if_break!(p, "", " "));
     parts.push(ss!("implements "));
     
     let implements_docs = implements.iter().map(|v| v.format(p)).collect();
 
-    parts.push(indent!(p, group!(p, Doc::Array(p.join(Separator::CommaLine, implements_docs)))));
+    parts.push(indent!(p, group!(p, softline!(), Doc::Array(p.join(Separator::CommaLine, implements_docs)))));
     parts.push(space!());
 
     Doc::Group(Group::new(parts))

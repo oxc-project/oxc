@@ -1,4 +1,4 @@
-ts compatibility: 156/526 (29.66%)
+ts compatibility: 171/526 (32.51%)
 
 # Failed
 
@@ -135,19 +135,7 @@ ts compatibility: 156/526 (29.66%)
 * conformance/classes/nestedClassDeclaration.ts
 
 ### conformance/classes/classDeclarations/classAbstractKeyword
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractConstructorAssignability.ts
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractCrashedOnce.ts
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractExtends.ts
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractFactoryFunction.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractGeneric.ts
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInAModule.ts
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInheritance.ts
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInstantiations1.ts
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInstantiations2.ts
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractOverrideWithAbstract.ts
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractSuperCalls.ts
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractUsingAbstractMethod1.ts
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractUsingAbstractMethods2.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractWithInterface.ts
 
 ### conformance/classes/classDeclarations/classHeritageSpecification
@@ -299,7 +287,6 @@ ts compatibility: 156/526 (29.66%)
 * custom/typeParameters/variables.ts
 
 ### declare
-* declare/declare_class_fields.ts
 * declare/declare_var.ts
 * declare/object-type-in-declare-function.ts
 
@@ -481,10 +468,6 @@ ts compatibility: 156/526 (29.66%)
 ### optional-variance
 * optional-variance/basic.ts
 * optional-variance/with-jsx.tsx
-
-### override-modifiers
-* override-modifiers/override-modifier.ts
-* override-modifiers/parameter-property.ts
 
 ### prettier-ignore
 * prettier-ignore/issue-14238.ts
