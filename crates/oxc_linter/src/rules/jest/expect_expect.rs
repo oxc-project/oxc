@@ -109,10 +109,8 @@ impl Rule for ExpectExpect {
         }))
     }
 
-    fn run_once(&self, ctx: &LintContext) {
-        for possible_jest_node in &collect_possible_jest_call_node(ctx) {
-            run(self, possible_jest_node, ctx);
-        }
+    fn run_on_jest_node<'a>(&self, jest_node: &'a PossibleJestNode<'a, 'a>, ctx: &LintContext<'a>) {
+        run(self, jest_node, ctx);
     }
 }
 

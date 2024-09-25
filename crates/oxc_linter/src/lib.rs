@@ -28,6 +28,7 @@ use context::ContextHost;
 use options::LintOptions;
 use oxc_diagnostics::Error;
 use oxc_semantic::{AstNode, Semantic};
+use utils::{collect_possible_jest_call_node, PossibleJestNode};
 
 pub use crate::{
     builder::LinterBuilder,
@@ -146,6 +147,15 @@ impl Linter {
         for node in semantic.nodes() {
             for (rule, ctx) in &rules {
                 rule.run(node, ctx);
+            }
+        }
+
+        if self.options.framework_hints.contains(FrameworkFlags::Jest) {
+            let jest_nodes = collect_possible_jest_call_node(semantic);
+            for node in &jest_nodes {
+                for (rule, ctx) in &rules {
+                    rule.run_on_jest_node(node, ctx);
+                }
             }
         }
 

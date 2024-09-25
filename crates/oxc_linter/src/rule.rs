@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     context::{ContextHost, LintContext},
+    utils::PossibleJestNode,
     AllowWarnDeny, AstNode, FixKind, RuleEnum,
 };
 
@@ -34,6 +35,11 @@ pub trait Rule: Sized + Default + fmt::Debug {
     #[expect(unused_variables)]
     #[inline]
     fn run_once(&self, ctx: &LintContext) {}
+
+    #[expect(unused_variables)]
+    #[inline]
+    fn run_on_jest_node<'a>(&self, jest_node: &'a PossibleJestNode<'a, 'a>, ctx: &LintContext<'a>) {
+    }
 
     /// Check if a rule should be run at all.
     ///
