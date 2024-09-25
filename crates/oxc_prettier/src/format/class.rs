@@ -394,9 +394,10 @@ fn print_heritage_clauses_implements<'a>(p: &mut Prettier<'a>, class: &Class<'a>
         }));
     } else if class.super_class.is_some() {
         parts.extend(hardline!());
+    } else {
+        parts.push(softline!());
     }
 
-    parts.push(if_break!(p, " ", ""));
     parts.push(ss!("implements "));
     
     let implements_docs = implements.iter().map(|v| v.format(p)).collect();
@@ -417,7 +418,7 @@ fn has_multiple_heritage(class: &Class) -> bool {
     let mut len = if class.super_class.is_some() { 1 } else { 0 };
 
     if let Some(implements) = &class.implements {
-        len.add(i32::try_from(implements.len()).unwrap());
+        len = len.add(i32::try_from(implements.len()).unwrap());
     }
 
     len > 1
