@@ -224,7 +224,7 @@ impl<'a> NullishCoalescingOperator<'a> {
             SPAN,
             Self::clone_expression(&reference, ctx),
             op,
-            ctx.ast.void_0(),
+            ctx.ast.void_0(SPAN),
         );
         let test = ctx.ast.expression_logical(SPAN, left, LogicalOperator::And, right);
 

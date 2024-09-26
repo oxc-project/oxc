@@ -676,7 +676,7 @@ impl<'a> ReactJsx<'a> {
             if key_prop.is_some() {
                 arguments.push(Argument::from(self.transform_jsx_attribute_value(key_prop, ctx)));
             } else if is_development {
-                arguments.push(Argument::from(self.ctx.ast.void_0()));
+                arguments.push(Argument::from(self.ctx.ast.void_0(SPAN)));
             }
 
             // isStaticChildren
