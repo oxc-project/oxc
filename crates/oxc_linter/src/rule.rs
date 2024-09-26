@@ -1,5 +1,5 @@
 use std::{
-    borrow::Cow,
+    borrow::{Borrow, Cow},
     fmt,
     hash::{Hash, Hasher},
     ops::Deref,
@@ -257,6 +257,12 @@ impl Deref for RuleWithSeverity {
     type Target = RuleEnum;
 
     fn deref(&self) -> &Self::Target {
+        &self.rule
+    }
+}
+
+impl Borrow<RuleEnum> for RuleWithSeverity {
+    fn borrow(&self) -> &RuleEnum {
         &self.rule
     }
 }
