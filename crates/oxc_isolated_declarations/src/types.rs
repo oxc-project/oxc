@@ -164,7 +164,11 @@ impl<'a> IsolatedDeclarations<'a> {
                 }
                 _ => self
                     .transform_expression_to_ts_type(element.to_expression())
-                    .map(TSTupleElement::from),
+                    .map(TSTupleElement::from)
+                    .or_else(|| {
+                        self.error(inferred_type_of_expression(element.span()));
+                        None
+                    }),
             }
         }));
 
