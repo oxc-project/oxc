@@ -17,7 +17,8 @@ fn main() -> std::io::Result<()> {
     let source_text = std::fs::read_to_string(path)?;
     let source_type = SourceType::from_path(path).unwrap();
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, &source_text, source_type).parse();
+    let stats = Default::default();
+    let ret = Parser::new(&allocator, &stats, &source_text, source_type).parse();
 
     if !ret.errors.is_empty() {
         for error in ret.errors {

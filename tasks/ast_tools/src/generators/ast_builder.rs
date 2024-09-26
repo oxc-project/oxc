@@ -50,13 +50,14 @@ impl Generator for AstBuilderGenerator {
 
                 ///@@line_break
                 #[allow(clippy::wildcard_imports)]
-                use crate::ast::*;
+                use crate::{ast::*, stats::Stats};
 
                 ///@@line_break
                 /// AST builder for creating AST nodes
                 #[derive(Clone, Copy)]
                 pub struct AstBuilder<'a> {
                     pub allocator: &'a Allocator,
+                    pub stats: &'a Stats,
                 }
 
                 ///@@line_break
@@ -125,6 +126,8 @@ fn generate_enum_inherit_builder_fn(
         ///@@line_break
         #[inline]
         pub fn #fn_name(self, inner: #super_type) -> #enum_as_type {
+            self.stats.nodes.set(self.stats.nodes.get() + 1);
+            println!("{}: nodes++", stringify!(#fn_name));
             #enum_ident::from(inner)
         }
     }
@@ -181,6 +184,8 @@ fn generate_enum_variant_builder_fn(
         #docs
         #[inline]
         pub fn #fn_name #generic_params (self, #(#params),*) -> #enum_type #where_clause {
+            self.stats.nodes.set(self.stats.nodes.get() + 1);
+            println!("{}: nodes++", stringify!(#fn_name));
             #enum_ident::#var_ident(#inner)
         }
 
@@ -215,6 +220,7 @@ fn generate_enum_from_variant_builder_fn(
         #docs
         #[inline]
         pub fn #fn_name<T>(self, inner: T) -> #enum_type where T: IntoIn<'a, #var_type> {
+            println!("{}: nodes~~", stringify!(#fn_name));
             #enum_ident::#var_ident(inner.into_in(self.allocator))
         }
     }
@@ -290,6 +296,8 @@ fn generate_struct_builder_fn(ty: &StructDef, ctx: &LateCtx) -> TokenStream {
         #fn_docs
         #[inline]
         pub fn #fn_name #generic_params (self, #(#params),*) -> #as_type  #where_clause {
+            self.stats.nodes.set(self.stats.nodes.get() + 1);
+            println!("{}: nodes++", stringify!(#fn_name));
             #ident { #(#fields),* }
         }
 

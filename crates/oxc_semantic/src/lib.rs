@@ -225,15 +225,28 @@ mod tests {
     /// Create a [`Semantic`] from source code, assuming there are no syntax/semantic errors.
     fn get_semantic<'s, 'a: 's>(
         allocator: &'a Allocator,
+        stats: &'a oxc_ast::Stats,
         source: &'s str,
         source_type: SourceType,
     ) -> Semantic<'s> {
-        let parse = oxc_parser::Parser::new(allocator, source, source_type).parse();
+        let parse = oxc_parser::Parser::new(allocator, stats, source, source_type).parse();
         assert!(parse.errors.is_empty());
         let program = allocator.alloc(parse.program);
         let semantic = SemanticBuilder::new(source).build(program);
         assert!(semantic.errors.is_empty(), "Parse error: {}", semantic.errors[0]);
         semantic.semantic
+    }
+
+    #[test]
+    fn test_node_stats() {
+        let source = "let a = 1; let b = 2; let c = 3;";
+        let allocator = Allocator::default();
+        let stats = Default::default();
+        let semantic = get_semantic(&allocator, &stats, source, SourceType::default());
+
+        let semantic_stats = semantic.stats();
+
+        assert_eq!(stats.nodes.get(), semantic_stats.nodes);
     }
 
     #[test]
@@ -245,7 +258,8 @@ mod tests {
             }
             let b = a + foo(1);";
         let allocator = Allocator::default();
-        let semantic = get_semantic(&allocator, source, SourceType::default());
+        let stats = Default::default();
+        let semantic = get_semantic(&allocator, &stats, source, SourceType::default());
 
         let top_level_a =
             semantic.scopes().get_binding(semantic.scopes().root_scope_id(), "a").unwrap();
@@ -266,7 +280,8 @@ mod tests {
     fn test_top_level_symbols() {
         let source = "function Fn() {}";
         let allocator = Allocator::default();
-        let semantic = get_semantic(&allocator, source, SourceType::default());
+        let stats = Default::default();
+        let semantic = get_semantic(&allocator, &stats, source, SourceType::default());
 
         let top_level_a = semantic
             .scopes()
@@ -287,7 +302,8 @@ mod tests {
             var b = a + 2;
         ";
         let allocator = Allocator::default();
-        let semantic = get_semantic(&allocator, source, SourceType::default());
+        let stats = Default::default();
+        let semantic = get_semantic(&allocator, &stats, source, SourceType::default());
         for node in semantic.nodes() {
             if let AstKind::IdentifierReference(id) = node.kind() {
                 assert!(!semantic.is_reference_to_global_variable(id));
@@ -299,14 +315,16 @@ mod tests {
     fn type_alias_gets_reference() {
         let source = "type A = 1; type B = A";
         let allocator = Allocator::default();
+        let stats = Default::default();
         let source_type: SourceType = SourceType::default().with_typescript(true);
-        let semantic = get_semantic(&allocator, source, source_type);
+        let semantic = get_semantic(&allocator, &stats, source, source_type);
         assert!(semantic.symbols().references.len() == 1);
     }
 
     #[test]
     fn test_reference_resolutions_simple_read_write() {
         let alloc = Allocator::default();
+        let stats = Default::default();
         let target_symbol_name = Atom::from("a");
         let typescript = SourceType::ts();
         let sources = [
@@ -413,7 +431,7 @@ mod tests {
         ];
 
         for (source_type, source, flags) in sources {
-            let semantic = get_semantic(&alloc, source, source_type);
+            let semantic = get_semantic(&alloc, &stats, source, source_type);
             let a_id =
                 semantic.scopes().get_root_binding(&target_symbol_name).unwrap_or_else(|| {
                     panic!("no references for '{target_symbol_name}' found");

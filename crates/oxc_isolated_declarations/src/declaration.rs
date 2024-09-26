@@ -195,7 +195,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
     pub fn transform_declaration(
         &mut self,
-        decl: &Declaration<'a>,
+        decl: &mut Declaration<'a>,
         check_binding: bool,
     ) -> Option<Declaration<'a>> {
         match decl {

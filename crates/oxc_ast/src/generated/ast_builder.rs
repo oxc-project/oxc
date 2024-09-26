@@ -10,12 +10,13 @@
 use oxc_allocator::{Allocator, Box, IntoIn, Vec};
 
 #[allow(clippy::wildcard_imports)]
-use crate::ast::*;
+use crate::{ast::*, stats::Stats};
 
 /// AST builder for creating AST nodes
 #[derive(Clone, Copy)]
 pub struct AstBuilder<'a> {
     pub allocator: &'a Allocator,
+    pub stats: &'a Stats,
 }
 
 impl<'a> AstBuilder<'a> {
@@ -28,6 +29,8 @@ impl<'a> AstBuilder<'a> {
     /// - value
     #[inline]
     pub fn boolean_literal(self, span: Span, value: bool) -> BooleanLiteral {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(boolean_literal));
         BooleanLiteral { span, value }
     }
 
@@ -51,6 +54,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn null_literal(self, span: Span) -> NullLiteral {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(null_literal));
         NullLiteral { span }
     }
 
@@ -85,6 +90,8 @@ impl<'a> AstBuilder<'a> {
     where
         S: IntoIn<'a, &'a str>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(numeric_literal));
         NumericLiteral { span, value, raw: raw.into_in(self.allocator), base }
     }
 
@@ -124,6 +131,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(big_int_literal));
         BigIntLiteral { span, raw: raw.into_in(self.allocator), base }
     }
 
@@ -163,6 +172,8 @@ impl<'a> AstBuilder<'a> {
         value: EmptyObject,
         regex: RegExp<'a>,
     ) -> RegExpLiteral<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(reg_exp_literal));
         RegExpLiteral { span, value, regex }
     }
 
@@ -196,6 +207,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(string_literal));
         StringLiteral { span, value: value.into_in(self.allocator) }
     }
 
@@ -233,6 +246,8 @@ impl<'a> AstBuilder<'a> {
         directives: Vec<'a, Directive<'a>>,
         body: Vec<'a, Statement<'a>>,
     ) -> Program<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(program));
         Program { span, source_type, hashbang, directives, body, scope_id: Default::default() }
     }
 
@@ -267,6 +282,8 @@ impl<'a> AstBuilder<'a> {
     /// - value
     #[inline]
     pub fn expression_boolean_literal(self, span: Span, value: bool) -> Expression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_boolean_literal));
         Expression::BooleanLiteral(self.alloc(self.boolean_literal(span, value)))
     }
 
@@ -276,6 +293,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, BooleanLiteral>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_boolean_literal));
         Expression::BooleanLiteral(inner.into_in(self.allocator))
     }
 
@@ -287,6 +305,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn expression_null_literal(self, span: Span) -> Expression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_null_literal));
         Expression::NullLiteral(self.alloc(self.null_literal(span)))
     }
 
@@ -296,6 +316,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, NullLiteral>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_null_literal));
         Expression::NullLiteral(inner.into_in(self.allocator))
     }
 
@@ -319,6 +340,8 @@ impl<'a> AstBuilder<'a> {
     where
         S: IntoIn<'a, &'a str>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_numeric_literal));
         Expression::NumericLiteral(self.alloc(self.numeric_literal(span, value, raw, base)))
     }
 
@@ -328,6 +351,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, NumericLiteral<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_numeric_literal));
         Expression::NumericLiteral(inner.into_in(self.allocator))
     }
 
@@ -349,6 +373,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_big_int_literal));
         Expression::BigIntLiteral(self.alloc(self.big_int_literal(span, raw, base)))
     }
 
@@ -358,6 +384,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, BigIntLiteral<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_big_int_literal));
         Expression::BigIntLiteral(inner.into_in(self.allocator))
     }
 
@@ -376,6 +403,8 @@ impl<'a> AstBuilder<'a> {
         value: EmptyObject,
         regex: RegExp<'a>,
     ) -> Expression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_reg_exp_literal));
         Expression::RegExpLiteral(self.alloc(self.reg_exp_literal(span, value, regex)))
     }
 
@@ -385,6 +414,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, RegExpLiteral<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_reg_exp_literal));
         Expression::RegExpLiteral(inner.into_in(self.allocator))
     }
 
@@ -400,6 +430,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_string_literal));
         Expression::StringLiteral(self.alloc(self.string_literal(span, value)))
     }
 
@@ -409,6 +441,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, StringLiteral<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_string_literal));
         Expression::StringLiteral(inner.into_in(self.allocator))
     }
 
@@ -427,6 +460,8 @@ impl<'a> AstBuilder<'a> {
         quasis: Vec<'a, TemplateElement<'a>>,
         expressions: Vec<'a, Expression<'a>>,
     ) -> Expression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_template_literal));
         Expression::TemplateLiteral(self.alloc(self.template_literal(span, quasis, expressions)))
     }
 
@@ -436,6 +471,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TemplateLiteral<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_template_literal));
         Expression::TemplateLiteral(inner.into_in(self.allocator))
     }
 
@@ -451,6 +487,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_identifier_reference));
         Expression::Identifier(self.alloc(self.identifier_reference(span, name)))
     }
 
@@ -460,6 +498,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, IdentifierReference<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_identifier_reference));
         Expression::Identifier(inner.into_in(self.allocator))
     }
 
@@ -478,6 +517,8 @@ impl<'a> AstBuilder<'a> {
         meta: IdentifierName<'a>,
         property: IdentifierName<'a>,
     ) -> Expression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_meta_property));
         Expression::MetaProperty(self.alloc(self.meta_property(span, meta, property)))
     }
 
@@ -487,6 +528,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, MetaProperty<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_meta_property));
         Expression::MetaProperty(inner.into_in(self.allocator))
     }
 
@@ -498,6 +540,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn expression_super(self, span: Span) -> Expression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_super));
         Expression::Super(self.alloc(self.super_(span)))
     }
 
@@ -507,6 +551,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, Super>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_super));
         Expression::Super(inner.into_in(self.allocator))
     }
 
@@ -525,6 +570,8 @@ impl<'a> AstBuilder<'a> {
         elements: Vec<'a, ArrayExpressionElement<'a>>,
         trailing_comma: Option<Span>,
     ) -> Expression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_array));
         Expression::ArrayExpression(self.alloc(self.array_expression(
             span,
             elements,
@@ -538,6 +585,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, ArrayExpression<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_array));
         Expression::ArrayExpression(inner.into_in(self.allocator))
     }
 
@@ -570,6 +618,8 @@ impl<'a> AstBuilder<'a> {
         T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
         T4: IntoIn<'a, Box<'a, FunctionBody<'a>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_arrow_function));
         Expression::ArrowFunctionExpression(self.alloc(self.arrow_function_expression(
             span,
             expression,
@@ -587,6 +637,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, ArrowFunctionExpression<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_arrow_function));
         Expression::ArrowFunctionExpression(inner.into_in(self.allocator))
     }
 
@@ -607,6 +658,8 @@ impl<'a> AstBuilder<'a> {
         left: AssignmentTarget<'a>,
         right: Expression<'a>,
     ) -> Expression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_assignment));
         Expression::AssignmentExpression(
             self.alloc(self.assignment_expression(span, operator, left, right)),
         )
@@ -618,6 +671,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, AssignmentExpression<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_assignment));
         Expression::AssignmentExpression(inner.into_in(self.allocator))
     }
 
@@ -630,6 +684,8 @@ impl<'a> AstBuilder<'a> {
     /// - argument
     #[inline]
     pub fn expression_await(self, span: Span, argument: Expression<'a>) -> Expression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_await));
         Expression::AwaitExpression(self.alloc(self.await_expression(span, argument)))
     }
 
@@ -639,6 +695,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, AwaitExpression<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_await));
         Expression::AwaitExpression(inner.into_in(self.allocator))
     }
 
@@ -659,6 +716,8 @@ impl<'a> AstBuilder<'a> {
         operator: BinaryOperator,
         right: Expression<'a>,
     ) -> Expression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_binary));
         Expression::BinaryExpression(
             self.alloc(self.binary_expression(span, left, operator, right)),
         )
@@ -670,6 +729,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, BinaryExpression<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_binary));
         Expression::BinaryExpression(inner.into_in(self.allocator))
     }
 
@@ -695,6 +755,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_call));
         Expression::CallExpression(self.alloc(self.call_expression(
             span,
             callee,
@@ -710,6 +772,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, CallExpression<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_call));
         Expression::CallExpression(inner.into_in(self.allocator))
     }
 
@@ -722,6 +785,8 @@ impl<'a> AstBuilder<'a> {
     /// - expression
     #[inline]
     pub fn expression_chain(self, span: Span, expression: ChainElement<'a>) -> Expression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_chain));
         Expression::ChainExpression(self.alloc(self.chain_expression(span, expression)))
     }
 
@@ -731,6 +796,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, ChainExpression<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_chain));
         Expression::ChainExpression(inner.into_in(self.allocator))
     }
 
@@ -770,6 +836,8 @@ impl<'a> AstBuilder<'a> {
         T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
         T3: IntoIn<'a, Box<'a, ClassBody<'a>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_class));
         Expression::ClassExpression(self.alloc(self.class(
             r#type,
             span,
@@ -791,6 +859,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, Class<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_class));
         Expression::ClassExpression(inner.into_in(self.allocator))
     }
 
@@ -811,6 +880,8 @@ impl<'a> AstBuilder<'a> {
         consequent: Expression<'a>,
         alternate: Expression<'a>,
     ) -> Expression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_conditional));
         Expression::ConditionalExpression(
             self.alloc(self.conditional_expression(span, test, consequent, alternate)),
         )
@@ -822,6 +893,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, ConditionalExpression<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_conditional));
         Expression::ConditionalExpression(inner.into_in(self.allocator))
     }
 
@@ -863,6 +935,8 @@ impl<'a> AstBuilder<'a> {
         T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
         T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_function));
         Expression::FunctionExpression(self.alloc(self.function(
             r#type,
             span,
@@ -884,6 +958,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, Function<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_function));
         Expression::FunctionExpression(inner.into_in(self.allocator))
     }
 
@@ -902,6 +977,8 @@ impl<'a> AstBuilder<'a> {
         source: Expression<'a>,
         arguments: Vec<'a, Expression<'a>>,
     ) -> Expression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_import));
         Expression::ImportExpression(self.alloc(self.import_expression(span, source, arguments)))
     }
 
@@ -911,6 +988,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, ImportExpression<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_import));
         Expression::ImportExpression(inner.into_in(self.allocator))
     }
 
@@ -931,6 +1009,8 @@ impl<'a> AstBuilder<'a> {
         operator: LogicalOperator,
         right: Expression<'a>,
     ) -> Expression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_logical));
         Expression::LogicalExpression(
             self.alloc(self.logical_expression(span, left, operator, right)),
         )
@@ -942,6 +1022,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, LogicalExpression<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_logical));
         Expression::LogicalExpression(inner.into_in(self.allocator))
     }
 
@@ -965,6 +1046,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_new));
         Expression::NewExpression(self.alloc(self.new_expression(
             span,
             callee,
@@ -979,6 +1062,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, NewExpression<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_new));
         Expression::NewExpression(inner.into_in(self.allocator))
     }
 
@@ -997,6 +1081,8 @@ impl<'a> AstBuilder<'a> {
         properties: Vec<'a, ObjectPropertyKind<'a>>,
         trailing_comma: Option<Span>,
     ) -> Expression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_object));
         Expression::ObjectExpression(self.alloc(self.object_expression(
             span,
             properties,
@@ -1010,6 +1096,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, ObjectExpression<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_object));
         Expression::ObjectExpression(inner.into_in(self.allocator))
     }
 
@@ -1026,6 +1113,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: Expression<'a>,
     ) -> Expression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_parenthesized));
         Expression::ParenthesizedExpression(
             self.alloc(self.parenthesized_expression(span, expression)),
         )
@@ -1037,6 +1126,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, ParenthesizedExpression<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_parenthesized));
         Expression::ParenthesizedExpression(inner.into_in(self.allocator))
     }
 
@@ -1053,6 +1143,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expressions: Vec<'a, Expression<'a>>,
     ) -> Expression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_sequence));
         Expression::SequenceExpression(self.alloc(self.sequence_expression(span, expressions)))
     }
 
@@ -1062,6 +1154,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, SequenceExpression<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_sequence));
         Expression::SequenceExpression(inner.into_in(self.allocator))
     }
 
@@ -1085,6 +1178,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_tagged_template));
         Expression::TaggedTemplateExpression(self.alloc(self.tagged_template_expression(
             span,
             tag,
@@ -1099,6 +1194,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TaggedTemplateExpression<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_tagged_template));
         Expression::TaggedTemplateExpression(inner.into_in(self.allocator))
     }
 
@@ -1110,6 +1206,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn expression_this(self, span: Span) -> Expression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_this));
         Expression::ThisExpression(self.alloc(self.this_expression(span)))
     }
 
@@ -1119,6 +1217,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, ThisExpression>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_this));
         Expression::ThisExpression(inner.into_in(self.allocator))
     }
 
@@ -1137,6 +1236,8 @@ impl<'a> AstBuilder<'a> {
         operator: UnaryOperator,
         argument: Expression<'a>,
     ) -> Expression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_unary));
         Expression::UnaryExpression(self.alloc(self.unary_expression(span, operator, argument)))
     }
 
@@ -1146,6 +1247,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, UnaryExpression<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_unary));
         Expression::UnaryExpression(inner.into_in(self.allocator))
     }
 
@@ -1166,6 +1268,8 @@ impl<'a> AstBuilder<'a> {
         prefix: bool,
         argument: SimpleAssignmentTarget<'a>,
     ) -> Expression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_update));
         Expression::UpdateExpression(
             self.alloc(self.update_expression(span, operator, prefix, argument)),
         )
@@ -1177,6 +1281,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, UpdateExpression<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_update));
         Expression::UpdateExpression(inner.into_in(self.allocator))
     }
 
@@ -1195,6 +1300,8 @@ impl<'a> AstBuilder<'a> {
         delegate: bool,
         argument: Option<Expression<'a>>,
     ) -> Expression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_yield));
         Expression::YieldExpression(self.alloc(self.yield_expression(span, delegate, argument)))
     }
 
@@ -1204,6 +1311,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, YieldExpression<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_yield));
         Expression::YieldExpression(inner.into_in(self.allocator))
     }
 
@@ -1224,6 +1332,8 @@ impl<'a> AstBuilder<'a> {
         operator: BinaryOperator,
         right: Expression<'a>,
     ) -> Expression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_private_in));
         Expression::PrivateInExpression(
             self.alloc(self.private_in_expression(span, left, operator, right)),
         )
@@ -1235,6 +1345,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, PrivateInExpression<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_private_in));
         Expression::PrivateInExpression(inner.into_in(self.allocator))
     }
 
@@ -1259,6 +1370,8 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a>>>,
         T2: IntoIn<'a, Option<Box<'a, JSXClosingElement<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_jsx_element));
         Expression::JSXElement(self.alloc(self.jsx_element(
             span,
             opening_element,
@@ -1273,6 +1386,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, JSXElement<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_jsx_element));
         Expression::JSXElement(inner.into_in(self.allocator))
     }
 
@@ -1293,6 +1407,8 @@ impl<'a> AstBuilder<'a> {
         closing_fragment: JSXClosingFragment,
         children: Vec<'a, JSXChild<'a>>,
     ) -> Expression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_jsx_fragment));
         Expression::JSXFragment(self.alloc(self.jsx_fragment(
             span,
             opening_fragment,
@@ -1307,6 +1423,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, JSXFragment<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_jsx_fragment));
         Expression::JSXFragment(inner.into_in(self.allocator))
     }
 
@@ -1325,6 +1442,8 @@ impl<'a> AstBuilder<'a> {
         expression: Expression<'a>,
         type_annotation: TSType<'a>,
     ) -> Expression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_ts_as));
         Expression::TSAsExpression(self.alloc(self.ts_as_expression(
             span,
             expression,
@@ -1338,6 +1457,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSAsExpression<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_ts_as));
         Expression::TSAsExpression(inner.into_in(self.allocator))
     }
 
@@ -1356,6 +1476,8 @@ impl<'a> AstBuilder<'a> {
         expression: Expression<'a>,
         type_annotation: TSType<'a>,
     ) -> Expression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_ts_satisfies));
         Expression::TSSatisfiesExpression(self.alloc(self.ts_satisfies_expression(
             span,
             expression,
@@ -1369,6 +1491,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSSatisfiesExpression<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_ts_satisfies));
         Expression::TSSatisfiesExpression(inner.into_in(self.allocator))
     }
 
@@ -1387,6 +1510,8 @@ impl<'a> AstBuilder<'a> {
         expression: Expression<'a>,
         type_annotation: TSType<'a>,
     ) -> Expression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_ts_type_assertion));
         Expression::TSTypeAssertion(self.alloc(self.ts_type_assertion(
             span,
             expression,
@@ -1400,6 +1525,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSTypeAssertion<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_ts_type_assertion));
         Expression::TSTypeAssertion(inner.into_in(self.allocator))
     }
 
@@ -1412,6 +1538,8 @@ impl<'a> AstBuilder<'a> {
     /// - expression
     #[inline]
     pub fn expression_ts_non_null(self, span: Span, expression: Expression<'a>) -> Expression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_ts_non_null));
         Expression::TSNonNullExpression(self.alloc(self.ts_non_null_expression(span, expression)))
     }
 
@@ -1421,6 +1549,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSNonNullExpression<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_ts_non_null));
         Expression::TSNonNullExpression(inner.into_in(self.allocator))
     }
 
@@ -1442,6 +1571,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Box<'a, TSTypeParameterInstantiation<'a>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_ts_instantiation));
         Expression::TSInstantiationExpression(self.alloc(self.ts_instantiation_expression(
             span,
             expression,
@@ -1455,11 +1586,14 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSInstantiationExpression<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(expression_from_ts_instantiation));
         Expression::TSInstantiationExpression(inner.into_in(self.allocator))
     }
 
     #[inline]
     pub fn expression_member(self, inner: MemberExpression<'a>) -> Expression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_member));
         Expression::from(inner)
     }
 
@@ -1475,6 +1609,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(identifier_name));
         IdentifierName { span, name: name.into_in(self.allocator) }
     }
 
@@ -1505,6 +1641,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(identifier_reference));
         IdentifierReference {
             span,
             name: name.into_in(self.allocator),
@@ -1543,6 +1681,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(binding_identifier));
         BindingIdentifier {
             span,
             name: name.into_in(self.allocator),
@@ -1577,6 +1717,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(label_identifier));
         LabelIdentifier { span, name: name.into_in(self.allocator) }
     }
 
@@ -1603,6 +1745,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn this_expression(self, span: Span) -> ThisExpression {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(this_expression));
         ThisExpression { span }
     }
 
@@ -1632,6 +1776,8 @@ impl<'a> AstBuilder<'a> {
         elements: Vec<'a, ArrayExpressionElement<'a>>,
         trailing_comma: Option<Span>,
     ) -> ArrayExpression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(array_expression));
         ArrayExpression { span, elements, trailing_comma }
     }
 
@@ -1666,6 +1812,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         argument: Expression<'a>,
     ) -> ArrayExpressionElement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(array_expression_element_spread_element));
         ArrayExpressionElement::SpreadElement(self.alloc(self.spread_element(span, argument)))
     }
 
@@ -1678,6 +1826,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, SpreadElement<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(array_expression_element_from_spread_element));
         ArrayExpressionElement::SpreadElement(inner.into_in(self.allocator))
     }
 
@@ -1687,6 +1836,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn array_expression_element_elision(self, span: Span) -> ArrayExpressionElement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(array_expression_element_elision));
         ArrayExpressionElement::Elision(self.elision(span))
     }
 
@@ -1696,6 +1847,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Elision>,
     {
+        println!("{}: nodes~~", stringify!(array_expression_element_from_elision));
         ArrayExpressionElement::Elision(inner.into_in(self.allocator))
     }
 
@@ -1704,6 +1856,8 @@ impl<'a> AstBuilder<'a> {
         self,
         inner: Expression<'a>,
     ) -> ArrayExpressionElement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(array_expression_element_expression));
         ArrayExpressionElement::from(inner)
     }
 
@@ -1715,6 +1869,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn elision(self, span: Span) -> Elision {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(elision));
         Elision { span }
     }
 
@@ -1744,6 +1900,8 @@ impl<'a> AstBuilder<'a> {
         properties: Vec<'a, ObjectPropertyKind<'a>>,
         trailing_comma: Option<Span>,
     ) -> ObjectExpression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(object_expression));
         ObjectExpression { span, properties, trailing_comma }
     }
 
@@ -1790,6 +1948,8 @@ impl<'a> AstBuilder<'a> {
         shorthand: bool,
         computed: bool,
     ) -> ObjectPropertyKind<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(object_property_kind_object_property));
         ObjectPropertyKind::ObjectProperty(
             self.alloc(
                 self.object_property(span, kind, key, value, init, method, shorthand, computed),
@@ -1803,6 +1963,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, ObjectProperty<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(object_property_kind_from_object_property));
         ObjectPropertyKind::ObjectProperty(inner.into_in(self.allocator))
     }
 
@@ -1819,6 +1980,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         argument: Expression<'a>,
     ) -> ObjectPropertyKind<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(object_property_kind_spread_element));
         ObjectPropertyKind::SpreadProperty(self.alloc(self.spread_element(span, argument)))
     }
 
@@ -1828,6 +1991,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, SpreadElement<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(object_property_kind_from_spread_element));
         ObjectPropertyKind::SpreadProperty(inner.into_in(self.allocator))
     }
 
@@ -1856,6 +2020,8 @@ impl<'a> AstBuilder<'a> {
         shorthand: bool,
         computed: bool,
     ) -> ObjectProperty<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(object_property));
         ObjectProperty { span, kind, key, value, init, method, shorthand, computed }
     }
 
@@ -1902,6 +2068,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(property_key_identifier_name));
         PropertyKey::StaticIdentifier(self.alloc(self.identifier_name(span, name)))
     }
 
@@ -1911,6 +2079,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, IdentifierName<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(property_key_from_identifier_name));
         PropertyKey::StaticIdentifier(inner.into_in(self.allocator))
     }
 
@@ -1926,6 +2095,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(property_key_private_identifier));
         PropertyKey::PrivateIdentifier(self.alloc(self.private_identifier(span, name)))
     }
 
@@ -1935,11 +2106,14 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, PrivateIdentifier<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(property_key_from_private_identifier));
         PropertyKey::PrivateIdentifier(inner.into_in(self.allocator))
     }
 
     #[inline]
     pub fn property_key_expression(self, inner: Expression<'a>) -> PropertyKey<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(property_key_expression));
         PropertyKey::from(inner)
     }
 
@@ -1958,6 +2132,8 @@ impl<'a> AstBuilder<'a> {
         quasis: Vec<'a, TemplateElement<'a>>,
         expressions: Vec<'a, Expression<'a>>,
     ) -> TemplateLiteral<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(template_literal));
         TemplateLiteral { span, quasis, expressions }
     }
 
@@ -1999,6 +2175,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(tagged_template_expression));
         TaggedTemplateExpression {
             span,
             tag,
@@ -2048,6 +2226,8 @@ impl<'a> AstBuilder<'a> {
         tail: bool,
         value: TemplateElementValue<'a>,
     ) -> TemplateElement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(template_element));
         TemplateElement { span, tail, value }
     }
 
@@ -2086,6 +2266,8 @@ impl<'a> AstBuilder<'a> {
         expression: Expression<'a>,
         optional: bool,
     ) -> MemberExpression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(member_expression_computed));
         MemberExpression::ComputedMemberExpression(
             self.alloc(self.computed_member_expression(span, object, expression, optional)),
         )
@@ -2097,6 +2279,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, ComputedMemberExpression<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(member_expression_from_computed));
         MemberExpression::ComputedMemberExpression(inner.into_in(self.allocator))
     }
 
@@ -2117,6 +2300,8 @@ impl<'a> AstBuilder<'a> {
         property: IdentifierName<'a>,
         optional: bool,
     ) -> MemberExpression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(member_expression_static));
         MemberExpression::StaticMemberExpression(
             self.alloc(self.static_member_expression(span, object, property, optional)),
         )
@@ -2128,6 +2313,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, StaticMemberExpression<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(member_expression_from_static));
         MemberExpression::StaticMemberExpression(inner.into_in(self.allocator))
     }
 
@@ -2148,6 +2334,8 @@ impl<'a> AstBuilder<'a> {
         field: PrivateIdentifier<'a>,
         optional: bool,
     ) -> MemberExpression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(member_expression_private_field_expression));
         MemberExpression::PrivateFieldExpression(
             self.alloc(self.private_field_expression(span, object, field, optional)),
         )
@@ -2162,6 +2350,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, PrivateFieldExpression<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(member_expression_from_private_field_expression));
         MemberExpression::PrivateFieldExpression(inner.into_in(self.allocator))
     }
 
@@ -2182,6 +2371,8 @@ impl<'a> AstBuilder<'a> {
         expression: Expression<'a>,
         optional: bool,
     ) -> ComputedMemberExpression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(computed_member_expression));
         ComputedMemberExpression { span, object, expression, optional }
     }
 
@@ -2225,6 +2416,8 @@ impl<'a> AstBuilder<'a> {
         property: IdentifierName<'a>,
         optional: bool,
     ) -> StaticMemberExpression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(static_member_expression));
         StaticMemberExpression { span, object, property, optional }
     }
 
@@ -2265,6 +2458,8 @@ impl<'a> AstBuilder<'a> {
         field: PrivateIdentifier<'a>,
         optional: bool,
     ) -> PrivateFieldExpression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(private_field_expression));
         PrivateFieldExpression { span, object, field, optional }
     }
 
@@ -2310,6 +2505,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(call_expression));
         CallExpression {
             span,
             callee,
@@ -2367,6 +2564,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(new_expression));
         NewExpression {
             span,
             callee,
@@ -2413,6 +2612,8 @@ impl<'a> AstBuilder<'a> {
         meta: IdentifierName<'a>,
         property: IdentifierName<'a>,
     ) -> MetaProperty<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(meta_property));
         MetaProperty { span, meta, property }
     }
 
@@ -2443,6 +2644,8 @@ impl<'a> AstBuilder<'a> {
     /// - argument: The expression being spread.
     #[inline]
     pub fn spread_element(self, span: Span, argument: Expression<'a>) -> SpreadElement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(spread_element));
         SpreadElement { span, argument }
     }
 
@@ -2471,6 +2674,8 @@ impl<'a> AstBuilder<'a> {
     /// - argument: The expression being spread.
     #[inline]
     pub fn argument_spread_element(self, span: Span, argument: Expression<'a>) -> Argument<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(argument_spread_element));
         Argument::SpreadElement(self.alloc(self.spread_element(span, argument)))
     }
 
@@ -2480,11 +2685,14 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, SpreadElement<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(argument_from_spread_element));
         Argument::SpreadElement(inner.into_in(self.allocator))
     }
 
     #[inline]
     pub fn argument_expression(self, inner: Expression<'a>) -> Argument<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(argument_expression));
         Argument::from(inner)
     }
 
@@ -2505,6 +2713,8 @@ impl<'a> AstBuilder<'a> {
         prefix: bool,
         argument: SimpleAssignmentTarget<'a>,
     ) -> UpdateExpression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(update_expression));
         UpdateExpression { span, operator, prefix, argument }
     }
 
@@ -2543,6 +2753,8 @@ impl<'a> AstBuilder<'a> {
         operator: UnaryOperator,
         argument: Expression<'a>,
     ) -> UnaryExpression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(unary_expression));
         UnaryExpression { span, operator, argument }
     }
 
@@ -2581,6 +2793,8 @@ impl<'a> AstBuilder<'a> {
         operator: BinaryOperator,
         right: Expression<'a>,
     ) -> BinaryExpression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(binary_expression));
         BinaryExpression { span, left, operator, right }
     }
 
@@ -2621,6 +2835,8 @@ impl<'a> AstBuilder<'a> {
         operator: BinaryOperator,
         right: Expression<'a>,
     ) -> PrivateInExpression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(private_in_expression));
         PrivateInExpression { span, left, operator, right }
     }
 
@@ -2661,6 +2877,8 @@ impl<'a> AstBuilder<'a> {
         operator: LogicalOperator,
         right: Expression<'a>,
     ) -> LogicalExpression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(logical_expression));
         LogicalExpression { span, left, operator, right }
     }
 
@@ -2701,6 +2919,8 @@ impl<'a> AstBuilder<'a> {
         consequent: Expression<'a>,
         alternate: Expression<'a>,
     ) -> ConditionalExpression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(conditional_expression));
         ConditionalExpression { span, test, consequent, alternate }
     }
 
@@ -2741,6 +2961,8 @@ impl<'a> AstBuilder<'a> {
         left: AssignmentTarget<'a>,
         right: Expression<'a>,
     ) -> AssignmentExpression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(assignment_expression));
         AssignmentExpression { span, operator, left, right }
     }
 
@@ -2769,6 +2991,8 @@ impl<'a> AstBuilder<'a> {
         self,
         inner: SimpleAssignmentTarget<'a>,
     ) -> AssignmentTarget<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(assignment_target_simple));
         AssignmentTarget::from(inner)
     }
 
@@ -2777,6 +3001,8 @@ impl<'a> AstBuilder<'a> {
         self,
         inner: AssignmentTargetPattern<'a>,
     ) -> AssignmentTarget<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(assignment_target_assignment_target_pattern));
         AssignmentTarget::from(inner)
     }
 
@@ -2796,6 +3022,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(simple_assignment_target_identifier_reference));
         SimpleAssignmentTarget::AssignmentTargetIdentifier(
             self.alloc(self.identifier_reference(span, name)),
         )
@@ -2810,6 +3038,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, IdentifierReference<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(simple_assignment_target_from_identifier_reference));
         SimpleAssignmentTarget::AssignmentTargetIdentifier(inner.into_in(self.allocator))
     }
 
@@ -2828,6 +3057,8 @@ impl<'a> AstBuilder<'a> {
         expression: Expression<'a>,
         type_annotation: TSType<'a>,
     ) -> SimpleAssignmentTarget<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(simple_assignment_target_ts_as_expression));
         SimpleAssignmentTarget::TSAsExpression(self.alloc(self.ts_as_expression(
             span,
             expression,
@@ -2844,6 +3075,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSAsExpression<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(simple_assignment_target_from_ts_as_expression));
         SimpleAssignmentTarget::TSAsExpression(inner.into_in(self.allocator))
     }
 
@@ -2862,6 +3094,8 @@ impl<'a> AstBuilder<'a> {
         expression: Expression<'a>,
         type_annotation: TSType<'a>,
     ) -> SimpleAssignmentTarget<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(simple_assignment_target_ts_satisfies_expression));
         SimpleAssignmentTarget::TSSatisfiesExpression(self.alloc(self.ts_satisfies_expression(
             span,
             expression,
@@ -2878,6 +3112,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSSatisfiesExpression<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(simple_assignment_target_from_ts_satisfies_expression));
         SimpleAssignmentTarget::TSSatisfiesExpression(inner.into_in(self.allocator))
     }
 
@@ -2894,6 +3129,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: Expression<'a>,
     ) -> SimpleAssignmentTarget<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(simple_assignment_target_ts_non_null_expression));
         SimpleAssignmentTarget::TSNonNullExpression(
             self.alloc(self.ts_non_null_expression(span, expression)),
         )
@@ -2908,6 +3145,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSNonNullExpression<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(simple_assignment_target_from_ts_non_null_expression));
         SimpleAssignmentTarget::TSNonNullExpression(inner.into_in(self.allocator))
     }
 
@@ -2926,6 +3164,8 @@ impl<'a> AstBuilder<'a> {
         expression: Expression<'a>,
         type_annotation: TSType<'a>,
     ) -> SimpleAssignmentTarget<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(simple_assignment_target_ts_type_assertion));
         SimpleAssignmentTarget::TSTypeAssertion(self.alloc(self.ts_type_assertion(
             span,
             expression,
@@ -2942,6 +3182,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSTypeAssertion<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(simple_assignment_target_from_ts_type_assertion));
         SimpleAssignmentTarget::TSTypeAssertion(inner.into_in(self.allocator))
     }
 
@@ -2963,6 +3204,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Box<'a, TSTypeParameterInstantiation<'a>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(simple_assignment_target_ts_instantiation_expression));
         SimpleAssignmentTarget::TSInstantiationExpression(
             self.alloc(self.ts_instantiation_expression(span, expression, type_parameters)),
         )
@@ -2977,6 +3220,10 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSInstantiationExpression<'a>>>,
     {
+        println!(
+            "{}: nodes~~",
+            stringify!(simple_assignment_target_from_ts_instantiation_expression)
+        );
         SimpleAssignmentTarget::TSInstantiationExpression(inner.into_in(self.allocator))
     }
 
@@ -2985,6 +3232,8 @@ impl<'a> AstBuilder<'a> {
         self,
         inner: MemberExpression<'a>,
     ) -> SimpleAssignmentTarget<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(simple_assignment_target_member_expression));
         SimpleAssignmentTarget::from(inner)
     }
 
@@ -3005,6 +3254,8 @@ impl<'a> AstBuilder<'a> {
         rest: Option<AssignmentTargetRest<'a>>,
         trailing_comma: Option<Span>,
     ) -> AssignmentTargetPattern<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(assignment_target_pattern_array_assignment_target));
         AssignmentTargetPattern::ArrayAssignmentTarget(self.alloc(self.array_assignment_target(
             span,
             elements,
@@ -3022,6 +3273,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, ArrayAssignmentTarget<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(assignment_target_pattern_from_array_assignment_target));
         AssignmentTargetPattern::ArrayAssignmentTarget(inner.into_in(self.allocator))
     }
 
@@ -3040,6 +3292,8 @@ impl<'a> AstBuilder<'a> {
         properties: Vec<'a, AssignmentTargetProperty<'a>>,
         rest: Option<AssignmentTargetRest<'a>>,
     ) -> AssignmentTargetPattern<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(assignment_target_pattern_object_assignment_target));
         AssignmentTargetPattern::ObjectAssignmentTarget(
             self.alloc(self.object_assignment_target(span, properties, rest)),
         )
@@ -3054,6 +3308,10 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, ObjectAssignmentTarget<'a>>>,
     {
+        println!(
+            "{}: nodes~~",
+            stringify!(assignment_target_pattern_from_object_assignment_target)
+        );
         AssignmentTargetPattern::ObjectAssignmentTarget(inner.into_in(self.allocator))
     }
 
@@ -3074,6 +3332,8 @@ impl<'a> AstBuilder<'a> {
         rest: Option<AssignmentTargetRest<'a>>,
         trailing_comma: Option<Span>,
     ) -> ArrayAssignmentTarget<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(array_assignment_target));
         ArrayAssignmentTarget { span, elements, rest, trailing_comma }
     }
 
@@ -3115,6 +3375,8 @@ impl<'a> AstBuilder<'a> {
         properties: Vec<'a, AssignmentTargetProperty<'a>>,
         rest: Option<AssignmentTargetRest<'a>>,
     ) -> ObjectAssignmentTarget<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(object_assignment_target));
         ObjectAssignmentTarget { span, properties, rest }
     }
 
@@ -3149,6 +3411,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         target: AssignmentTarget<'a>,
     ) -> AssignmentTargetRest<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(assignment_target_rest));
         AssignmentTargetRest { span, target }
     }
 
@@ -3183,6 +3447,11 @@ impl<'a> AstBuilder<'a> {
         binding: AssignmentTarget<'a>,
         init: Expression<'a>,
     ) -> AssignmentTargetMaybeDefault<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!(
+            "{}: nodes++",
+            stringify!(assignment_target_maybe_default_assignment_target_with_default)
+        );
         AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(
             self.alloc(self.assignment_target_with_default(span, binding, init)),
         )
@@ -3197,6 +3466,10 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, AssignmentTargetWithDefault<'a>>>,
     {
+        println!(
+            "{}: nodes~~",
+            stringify!(assignment_target_maybe_default_from_assignment_target_with_default)
+        );
         AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(inner.into_in(self.allocator))
     }
 
@@ -3205,6 +3478,8 @@ impl<'a> AstBuilder<'a> {
         self,
         inner: AssignmentTarget<'a>,
     ) -> AssignmentTargetMaybeDefault<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(assignment_target_maybe_default_assignment_target));
         AssignmentTargetMaybeDefault::from(inner)
     }
 
@@ -3223,6 +3498,8 @@ impl<'a> AstBuilder<'a> {
         binding: AssignmentTarget<'a>,
         init: Expression<'a>,
     ) -> AssignmentTargetWithDefault<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(assignment_target_with_default));
         AssignmentTargetWithDefault { span, binding, init }
     }
 
@@ -3259,6 +3536,11 @@ impl<'a> AstBuilder<'a> {
         binding: IdentifierReference<'a>,
         init: Option<Expression<'a>>,
     ) -> AssignmentTargetProperty<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!(
+            "{}: nodes++",
+            stringify!(assignment_target_property_assignment_target_property_identifier)
+        );
         AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(
             self.alloc(self.assignment_target_property_identifier(span, binding, init)),
         )
@@ -3273,6 +3555,10 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, AssignmentTargetPropertyIdentifier<'a>>>,
     {
+        println!(
+            "{}: nodes~~",
+            stringify!(assignment_target_property_from_assignment_target_property_identifier)
+        );
         AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(inner.into_in(self.allocator))
     }
 
@@ -3291,6 +3577,11 @@ impl<'a> AstBuilder<'a> {
         name: PropertyKey<'a>,
         binding: AssignmentTargetMaybeDefault<'a>,
     ) -> AssignmentTargetProperty<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!(
+            "{}: nodes++",
+            stringify!(assignment_target_property_assignment_target_property_property)
+        );
         AssignmentTargetProperty::AssignmentTargetPropertyProperty(
             self.alloc(self.assignment_target_property_property(span, name, binding)),
         )
@@ -3305,6 +3596,10 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, AssignmentTargetPropertyProperty<'a>>>,
     {
+        println!(
+            "{}: nodes~~",
+            stringify!(assignment_target_property_from_assignment_target_property_property)
+        );
         AssignmentTargetProperty::AssignmentTargetPropertyProperty(inner.into_in(self.allocator))
     }
 
@@ -3323,6 +3618,8 @@ impl<'a> AstBuilder<'a> {
         binding: IdentifierReference<'a>,
         init: Option<Expression<'a>>,
     ) -> AssignmentTargetPropertyIdentifier<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(assignment_target_property_identifier));
         AssignmentTargetPropertyIdentifier { span, binding, init }
     }
 
@@ -3359,6 +3656,8 @@ impl<'a> AstBuilder<'a> {
         name: PropertyKey<'a>,
         binding: AssignmentTargetMaybeDefault<'a>,
     ) -> AssignmentTargetPropertyProperty<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(assignment_target_property_property));
         AssignmentTargetPropertyProperty { span, name, binding }
     }
 
@@ -3393,6 +3692,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expressions: Vec<'a, Expression<'a>>,
     ) -> SequenceExpression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(sequence_expression));
         SequenceExpression { span, expressions }
     }
 
@@ -3420,6 +3721,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn super_(self, span: Span) -> Super {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(super_));
         Super { span }
     }
 
@@ -3443,6 +3746,8 @@ impl<'a> AstBuilder<'a> {
     /// - argument
     #[inline]
     pub fn await_expression(self, span: Span, argument: Expression<'a>) -> AwaitExpression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(await_expression));
         AwaitExpression { span, argument }
     }
 
@@ -3471,6 +3776,8 @@ impl<'a> AstBuilder<'a> {
     /// - expression
     #[inline]
     pub fn chain_expression(self, span: Span, expression: ChainElement<'a>) -> ChainExpression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(chain_expression));
         ChainExpression { span, expression }
     }
 
@@ -3512,6 +3819,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(chain_element_call_expression));
         ChainElement::CallExpression(self.alloc(self.call_expression(
             span,
             callee,
@@ -3527,11 +3836,14 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, CallExpression<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(chain_element_from_call_expression));
         ChainElement::CallExpression(inner.into_in(self.allocator))
     }
 
     #[inline]
     pub fn chain_element_member_expression(self, inner: MemberExpression<'a>) -> ChainElement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(chain_element_member_expression));
         ChainElement::from(inner)
     }
 
@@ -3548,6 +3860,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: Expression<'a>,
     ) -> ParenthesizedExpression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(parenthesized_expression));
         ParenthesizedExpression { span, expression }
     }
 
@@ -3576,6 +3890,8 @@ impl<'a> AstBuilder<'a> {
     /// - body
     #[inline]
     pub fn statement_block(self, span: Span, body: Vec<'a, Statement<'a>>) -> Statement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(statement_block));
         Statement::BlockStatement(self.alloc(self.block_statement(span, body)))
     }
 
@@ -3585,6 +3901,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, BlockStatement<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(statement_from_block));
         Statement::BlockStatement(inner.into_in(self.allocator))
     }
 
@@ -3597,6 +3914,8 @@ impl<'a> AstBuilder<'a> {
     /// - label
     #[inline]
     pub fn statement_break(self, span: Span, label: Option<LabelIdentifier<'a>>) -> Statement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(statement_break));
         Statement::BreakStatement(self.alloc(self.break_statement(span, label)))
     }
 
@@ -3606,6 +3925,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, BreakStatement<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(statement_from_break));
         Statement::BreakStatement(inner.into_in(self.allocator))
     }
 
@@ -3622,6 +3942,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         label: Option<LabelIdentifier<'a>>,
     ) -> Statement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(statement_continue));
         Statement::ContinueStatement(self.alloc(self.continue_statement(span, label)))
     }
 
@@ -3631,6 +3953,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, ContinueStatement<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(statement_from_continue));
         Statement::ContinueStatement(inner.into_in(self.allocator))
     }
 
@@ -3642,6 +3965,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn statement_debugger(self, span: Span) -> Statement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(statement_debugger));
         Statement::DebuggerStatement(self.alloc(self.debugger_statement(span)))
     }
 
@@ -3651,6 +3976,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, DebuggerStatement>>,
     {
+        println!("{}: nodes~~", stringify!(statement_from_debugger));
         Statement::DebuggerStatement(inner.into_in(self.allocator))
     }
 
@@ -3669,6 +3995,8 @@ impl<'a> AstBuilder<'a> {
         body: Statement<'a>,
         test: Expression<'a>,
     ) -> Statement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(statement_do_while));
         Statement::DoWhileStatement(self.alloc(self.do_while_statement(span, body, test)))
     }
 
@@ -3678,6 +4006,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, DoWhileStatement<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(statement_from_do_while));
         Statement::DoWhileStatement(inner.into_in(self.allocator))
     }
 
@@ -3689,6 +4018,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn statement_empty(self, span: Span) -> Statement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(statement_empty));
         Statement::EmptyStatement(self.alloc(self.empty_statement(span)))
     }
 
@@ -3698,6 +4029,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, EmptyStatement>>,
     {
+        println!("{}: nodes~~", stringify!(statement_from_empty));
         Statement::EmptyStatement(inner.into_in(self.allocator))
     }
 
@@ -3710,6 +4042,8 @@ impl<'a> AstBuilder<'a> {
     /// - expression
     #[inline]
     pub fn statement_expression(self, span: Span, expression: Expression<'a>) -> Statement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(statement_expression));
         Statement::ExpressionStatement(self.alloc(self.expression_statement(span, expression)))
     }
 
@@ -3719,6 +4053,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, ExpressionStatement<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(statement_from_expression));
         Statement::ExpressionStatement(inner.into_in(self.allocator))
     }
 
@@ -3739,6 +4074,8 @@ impl<'a> AstBuilder<'a> {
         right: Expression<'a>,
         body: Statement<'a>,
     ) -> Statement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(statement_for_in));
         Statement::ForInStatement(self.alloc(self.for_in_statement(span, left, right, body)))
     }
 
@@ -3748,6 +4085,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, ForInStatement<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(statement_from_for_in));
         Statement::ForInStatement(inner.into_in(self.allocator))
     }
 
@@ -3770,6 +4108,8 @@ impl<'a> AstBuilder<'a> {
         right: Expression<'a>,
         body: Statement<'a>,
     ) -> Statement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(statement_for_of));
         Statement::ForOfStatement(
             self.alloc(self.for_of_statement(span, r#await, left, right, body)),
         )
@@ -3781,6 +4121,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, ForOfStatement<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(statement_from_for_of));
         Statement::ForOfStatement(inner.into_in(self.allocator))
     }
 
@@ -3803,6 +4144,8 @@ impl<'a> AstBuilder<'a> {
         update: Option<Expression<'a>>,
         body: Statement<'a>,
     ) -> Statement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(statement_for));
         Statement::ForStatement(self.alloc(self.for_statement(span, init, test, update, body)))
     }
 
@@ -3812,6 +4155,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, ForStatement<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(statement_from_for));
         Statement::ForStatement(inner.into_in(self.allocator))
     }
 
@@ -3832,6 +4176,8 @@ impl<'a> AstBuilder<'a> {
         consequent: Statement<'a>,
         alternate: Option<Statement<'a>>,
     ) -> Statement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(statement_if));
         Statement::IfStatement(self.alloc(self.if_statement(span, test, consequent, alternate)))
     }
 
@@ -3841,6 +4187,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, IfStatement<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(statement_from_if));
         Statement::IfStatement(inner.into_in(self.allocator))
     }
 
@@ -3859,6 +4206,8 @@ impl<'a> AstBuilder<'a> {
         label: LabelIdentifier<'a>,
         body: Statement<'a>,
     ) -> Statement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(statement_labeled));
         Statement::LabeledStatement(self.alloc(self.labeled_statement(span, label, body)))
     }
 
@@ -3868,6 +4217,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, LabeledStatement<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(statement_from_labeled));
         Statement::LabeledStatement(inner.into_in(self.allocator))
     }
 
@@ -3880,6 +4230,8 @@ impl<'a> AstBuilder<'a> {
     /// - argument
     #[inline]
     pub fn statement_return(self, span: Span, argument: Option<Expression<'a>>) -> Statement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(statement_return));
         Statement::ReturnStatement(self.alloc(self.return_statement(span, argument)))
     }
 
@@ -3889,6 +4241,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, ReturnStatement<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(statement_from_return));
         Statement::ReturnStatement(inner.into_in(self.allocator))
     }
 
@@ -3907,6 +4260,8 @@ impl<'a> AstBuilder<'a> {
         discriminant: Expression<'a>,
         cases: Vec<'a, SwitchCase<'a>>,
     ) -> Statement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(statement_switch));
         Statement::SwitchStatement(self.alloc(self.switch_statement(span, discriminant, cases)))
     }
 
@@ -3916,6 +4271,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, SwitchStatement<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(statement_from_switch));
         Statement::SwitchStatement(inner.into_in(self.allocator))
     }
 
@@ -3928,6 +4284,8 @@ impl<'a> AstBuilder<'a> {
     /// - argument: The expression being thrown, e.g. `err` in `throw err;`
     #[inline]
     pub fn statement_throw(self, span: Span, argument: Expression<'a>) -> Statement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(statement_throw));
         Statement::ThrowStatement(self.alloc(self.throw_statement(span, argument)))
     }
 
@@ -3937,6 +4295,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, ThrowStatement<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(statement_from_throw));
         Statement::ThrowStatement(inner.into_in(self.allocator))
     }
 
@@ -3962,6 +4321,8 @@ impl<'a> AstBuilder<'a> {
         T2: IntoIn<'a, Option<Box<'a, CatchClause<'a>>>>,
         T3: IntoIn<'a, Option<Box<'a, BlockStatement<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(statement_try));
         Statement::TryStatement(self.alloc(self.try_statement(span, block, handler, finalizer)))
     }
 
@@ -3971,6 +4332,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TryStatement<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(statement_from_try));
         Statement::TryStatement(inner.into_in(self.allocator))
     }
 
@@ -3989,6 +4351,8 @@ impl<'a> AstBuilder<'a> {
         test: Expression<'a>,
         body: Statement<'a>,
     ) -> Statement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(statement_while));
         Statement::WhileStatement(self.alloc(self.while_statement(span, test, body)))
     }
 
@@ -3998,6 +4362,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, WhileStatement<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(statement_from_while));
         Statement::WhileStatement(inner.into_in(self.allocator))
     }
 
@@ -4016,6 +4381,8 @@ impl<'a> AstBuilder<'a> {
         object: Expression<'a>,
         body: Statement<'a>,
     ) -> Statement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(statement_with));
         Statement::WithStatement(self.alloc(self.with_statement(span, object, body)))
     }
 
@@ -4025,16 +4392,21 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, WithStatement<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(statement_from_with));
         Statement::WithStatement(inner.into_in(self.allocator))
     }
 
     #[inline]
     pub fn statement_declaration(self, inner: Declaration<'a>) -> Statement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(statement_declaration));
         Statement::from(inner)
     }
 
     #[inline]
     pub fn statement_module_declaration(self, inner: ModuleDeclaration<'a>) -> Statement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(statement_module_declaration));
         Statement::from(inner)
     }
 
@@ -4056,6 +4428,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(directive));
         Directive { span, expression, directive: directive.into_in(self.allocator) }
     }
 
@@ -4092,6 +4466,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(hashbang));
         Hashbang { span, value: value.into_in(self.allocator) }
     }
 
@@ -4119,6 +4495,8 @@ impl<'a> AstBuilder<'a> {
     /// - body
     #[inline]
     pub fn block_statement(self, span: Span, body: Vec<'a, Statement<'a>>) -> BlockStatement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(block_statement));
         BlockStatement { span, body, scope_id: Default::default() }
     }
 
@@ -4155,6 +4533,8 @@ impl<'a> AstBuilder<'a> {
         declarations: Vec<'a, VariableDeclarator<'a>>,
         declare: bool,
     ) -> Declaration<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(declaration_variable));
         Declaration::VariableDeclaration(self.alloc(self.variable_declaration(
             span,
             kind,
@@ -4169,6 +4549,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, VariableDeclaration<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(declaration_from_variable));
         Declaration::VariableDeclaration(inner.into_in(self.allocator))
     }
 
@@ -4210,6 +4591,8 @@ impl<'a> AstBuilder<'a> {
         T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
         T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(declaration_function));
         Declaration::FunctionDeclaration(self.alloc(self.function(
             r#type,
             span,
@@ -4231,6 +4614,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, Function<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(declaration_from_function));
         Declaration::FunctionDeclaration(inner.into_in(self.allocator))
     }
 
@@ -4270,6 +4654,8 @@ impl<'a> AstBuilder<'a> {
         T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
         T3: IntoIn<'a, Box<'a, ClassBody<'a>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(declaration_class));
         Declaration::ClassDeclaration(self.alloc(self.class(
             r#type,
             span,
@@ -4291,6 +4677,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, Class<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(declaration_from_class));
         Declaration::ClassDeclaration(inner.into_in(self.allocator))
     }
 
@@ -4316,6 +4703,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(declaration_ts_type_alias));
         Declaration::TSTypeAliasDeclaration(self.alloc(self.ts_type_alias_declaration(
             span,
             id,
@@ -4331,6 +4720,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSTypeAliasDeclaration<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(declaration_from_ts_type_alias));
         Declaration::TSTypeAliasDeclaration(inner.into_in(self.allocator))
     }
 
@@ -4359,6 +4749,8 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
         T2: IntoIn<'a, Box<'a, TSInterfaceBody<'a>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(declaration_ts_interface));
         Declaration::TSInterfaceDeclaration(self.alloc(self.ts_interface_declaration(
             span,
             id,
@@ -4375,6 +4767,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSInterfaceDeclaration<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(declaration_from_ts_interface));
         Declaration::TSInterfaceDeclaration(inner.into_in(self.allocator))
     }
 
@@ -4397,6 +4790,8 @@ impl<'a> AstBuilder<'a> {
         r#const: bool,
         declare: bool,
     ) -> Declaration<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(declaration_ts_enum));
         Declaration::TSEnumDeclaration(
             self.alloc(self.ts_enum_declaration(span, id, members, r#const, declare)),
         )
@@ -4408,6 +4803,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSEnumDeclaration<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(declaration_from_ts_enum));
         Declaration::TSEnumDeclaration(inner.into_in(self.allocator))
     }
 
@@ -4430,6 +4826,8 @@ impl<'a> AstBuilder<'a> {
         kind: TSModuleDeclarationKind,
         declare: bool,
     ) -> Declaration<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(declaration_ts_module));
         Declaration::TSModuleDeclaration(
             self.alloc(self.ts_module_declaration(span, id, body, kind, declare)),
         )
@@ -4441,6 +4839,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSModuleDeclaration<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(declaration_from_ts_module));
         Declaration::TSModuleDeclaration(inner.into_in(self.allocator))
     }
 
@@ -4461,6 +4860,8 @@ impl<'a> AstBuilder<'a> {
         module_reference: TSModuleReference<'a>,
         import_kind: ImportOrExportKind,
     ) -> Declaration<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(declaration_ts_import_equals));
         Declaration::TSImportEqualsDeclaration(self.alloc(self.ts_import_equals_declaration(
             span,
             id,
@@ -4475,6 +4876,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSImportEqualsDeclaration<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(declaration_from_ts_import_equals));
         Declaration::TSImportEqualsDeclaration(inner.into_in(self.allocator))
     }
 
@@ -4495,6 +4897,8 @@ impl<'a> AstBuilder<'a> {
         declarations: Vec<'a, VariableDeclarator<'a>>,
         declare: bool,
     ) -> VariableDeclaration<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(variable_declaration));
         VariableDeclaration { span, kind, declarations, declare }
     }
 
@@ -4537,6 +4941,8 @@ impl<'a> AstBuilder<'a> {
         init: Option<Expression<'a>>,
         definite: bool,
     ) -> VariableDeclarator<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(variable_declarator));
         VariableDeclarator { span, kind, id, init, definite }
     }
 
@@ -4570,6 +4976,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn empty_statement(self, span: Span) -> EmptyStatement {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(empty_statement));
         EmptyStatement { span }
     }
 
@@ -4597,6 +5005,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: Expression<'a>,
     ) -> ExpressionStatement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(expression_statement));
         ExpressionStatement { span, expression }
     }
 
@@ -4633,6 +5043,8 @@ impl<'a> AstBuilder<'a> {
         consequent: Statement<'a>,
         alternate: Option<Statement<'a>>,
     ) -> IfStatement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(if_statement));
         IfStatement { span, test, consequent, alternate }
     }
 
@@ -4671,6 +5083,8 @@ impl<'a> AstBuilder<'a> {
         body: Statement<'a>,
         test: Expression<'a>,
     ) -> DoWhileStatement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(do_while_statement));
         DoWhileStatement { span, body, test }
     }
 
@@ -4707,6 +5121,8 @@ impl<'a> AstBuilder<'a> {
         test: Expression<'a>,
         body: Statement<'a>,
     ) -> WhileStatement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(while_statement));
         WhileStatement { span, test, body }
     }
 
@@ -4747,6 +5163,8 @@ impl<'a> AstBuilder<'a> {
         update: Option<Expression<'a>>,
         body: Statement<'a>,
     ) -> ForStatement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(for_statement));
         ForStatement { span, init, test, update, body, scope_id: Default::default() }
     }
 
@@ -4789,6 +5207,8 @@ impl<'a> AstBuilder<'a> {
         declarations: Vec<'a, VariableDeclarator<'a>>,
         declare: bool,
     ) -> ForStatementInit<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(for_statement_init_variable_declaration));
         ForStatementInit::VariableDeclaration(self.alloc(self.variable_declaration(
             span,
             kind,
@@ -4803,11 +5223,14 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, VariableDeclaration<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(for_statement_init_from_variable_declaration));
         ForStatementInit::VariableDeclaration(inner.into_in(self.allocator))
     }
 
     #[inline]
     pub fn for_statement_init_expression(self, inner: Expression<'a>) -> ForStatementInit<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(for_statement_init_expression));
         ForStatementInit::from(inner)
     }
 
@@ -4828,6 +5251,8 @@ impl<'a> AstBuilder<'a> {
         right: Expression<'a>,
         body: Statement<'a>,
     ) -> ForInStatement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(for_in_statement));
         ForInStatement { span, left, right, body, scope_id: Default::default() }
     }
 
@@ -4868,6 +5293,8 @@ impl<'a> AstBuilder<'a> {
         declarations: Vec<'a, VariableDeclarator<'a>>,
         declare: bool,
     ) -> ForStatementLeft<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(for_statement_left_variable_declaration));
         ForStatementLeft::VariableDeclaration(self.alloc(self.variable_declaration(
             span,
             kind,
@@ -4882,6 +5309,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, VariableDeclaration<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(for_statement_left_from_variable_declaration));
         ForStatementLeft::VariableDeclaration(inner.into_in(self.allocator))
     }
 
@@ -4890,6 +5318,8 @@ impl<'a> AstBuilder<'a> {
         self,
         inner: AssignmentTarget<'a>,
     ) -> ForStatementLeft<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(for_statement_left_assignment_target));
         ForStatementLeft::from(inner)
     }
 
@@ -4912,6 +5342,8 @@ impl<'a> AstBuilder<'a> {
         right: Expression<'a>,
         body: Statement<'a>,
     ) -> ForOfStatement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(for_of_statement));
         ForOfStatement { span, r#await, left, right, body, scope_id: Default::default() }
     }
 
@@ -4950,6 +5382,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         label: Option<LabelIdentifier<'a>>,
     ) -> ContinueStatement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(continue_statement));
         ContinueStatement { span, label }
     }
 
@@ -4982,6 +5416,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         label: Option<LabelIdentifier<'a>>,
     ) -> BreakStatement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(break_statement));
         BreakStatement { span, label }
     }
 
@@ -5014,6 +5450,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         argument: Option<Expression<'a>>,
     ) -> ReturnStatement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(return_statement));
         ReturnStatement { span, argument }
     }
 
@@ -5048,6 +5486,8 @@ impl<'a> AstBuilder<'a> {
         object: Expression<'a>,
         body: Statement<'a>,
     ) -> WithStatement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(with_statement));
         WithStatement { span, object, body }
     }
 
@@ -5084,6 +5524,8 @@ impl<'a> AstBuilder<'a> {
         discriminant: Expression<'a>,
         cases: Vec<'a, SwitchCase<'a>>,
     ) -> SwitchStatement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(switch_statement));
         SwitchStatement { span, discriminant, cases, scope_id: Default::default() }
     }
 
@@ -5120,6 +5562,8 @@ impl<'a> AstBuilder<'a> {
         test: Option<Expression<'a>>,
         consequent: Vec<'a, Statement<'a>>,
     ) -> SwitchCase<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(switch_case));
         SwitchCase { span, test, consequent }
     }
 
@@ -5156,6 +5600,8 @@ impl<'a> AstBuilder<'a> {
         label: LabelIdentifier<'a>,
         body: Statement<'a>,
     ) -> LabeledStatement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(labeled_statement));
         LabeledStatement { span, label, body }
     }
 
@@ -5186,6 +5632,8 @@ impl<'a> AstBuilder<'a> {
     /// - argument: The expression being thrown, e.g. `err` in `throw err;`
     #[inline]
     pub fn throw_statement(self, span: Span, argument: Expression<'a>) -> ThrowStatement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(throw_statement));
         ThrowStatement { span, argument }
     }
 
@@ -5227,6 +5675,8 @@ impl<'a> AstBuilder<'a> {
         T2: IntoIn<'a, Option<Box<'a, CatchClause<'a>>>>,
         T3: IntoIn<'a, Option<Box<'a, BlockStatement<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(try_statement));
         TryStatement {
             span,
             block: block.into_in(self.allocator),
@@ -5278,6 +5728,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Box<'a, BlockStatement<'a>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(catch_clause));
         CatchClause {
             span,
             param,
@@ -5316,6 +5768,8 @@ impl<'a> AstBuilder<'a> {
     /// - pattern: The bound error
     #[inline]
     pub fn catch_parameter(self, span: Span, pattern: BindingPattern<'a>) -> CatchParameter<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(catch_parameter));
         CatchParameter { span, pattern }
     }
 
@@ -5343,6 +5797,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn debugger_statement(self, span: Span) -> DebuggerStatement {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(debugger_statement));
         DebuggerStatement { span }
     }
 
@@ -5375,6 +5831,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(binding_pattern));
         BindingPattern { kind, type_annotation: type_annotation.into_in(self.allocator), optional }
     }
 
@@ -5415,6 +5873,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(binding_pattern_kind_binding_identifier));
         BindingPatternKind::BindingIdentifier(self.alloc(self.binding_identifier(span, name)))
     }
 
@@ -5424,6 +5884,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, BindingIdentifier<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(binding_pattern_kind_from_binding_identifier));
         BindingPatternKind::BindingIdentifier(inner.into_in(self.allocator))
     }
 
@@ -5445,6 +5906,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(binding_pattern_kind_object_pattern));
         BindingPatternKind::ObjectPattern(self.alloc(self.object_pattern(span, properties, rest)))
     }
 
@@ -5454,6 +5917,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, ObjectPattern<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(binding_pattern_kind_from_object_pattern));
         BindingPatternKind::ObjectPattern(inner.into_in(self.allocator))
     }
 
@@ -5475,6 +5939,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(binding_pattern_kind_array_pattern));
         BindingPatternKind::ArrayPattern(self.alloc(self.array_pattern(span, elements, rest)))
     }
 
@@ -5484,6 +5950,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, ArrayPattern<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(binding_pattern_kind_from_array_pattern));
         BindingPatternKind::ArrayPattern(inner.into_in(self.allocator))
     }
 
@@ -5502,6 +5969,8 @@ impl<'a> AstBuilder<'a> {
         left: BindingPattern<'a>,
         right: Expression<'a>,
     ) -> BindingPatternKind<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(binding_pattern_kind_assignment_pattern));
         BindingPatternKind::AssignmentPattern(
             self.alloc(self.assignment_pattern(span, left, right)),
         )
@@ -5513,6 +5982,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, AssignmentPattern<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(binding_pattern_kind_from_assignment_pattern));
         BindingPatternKind::AssignmentPattern(inner.into_in(self.allocator))
     }
 
@@ -5531,6 +6001,8 @@ impl<'a> AstBuilder<'a> {
         left: BindingPattern<'a>,
         right: Expression<'a>,
     ) -> AssignmentPattern<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(assignment_pattern));
         AssignmentPattern { span, left, right }
     }
 
@@ -5570,6 +6042,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(object_pattern));
         ObjectPattern { span, properties, rest: rest.into_in(self.allocator) }
     }
 
@@ -5613,6 +6087,8 @@ impl<'a> AstBuilder<'a> {
         shorthand: bool,
         computed: bool,
     ) -> BindingProperty<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(binding_property));
         BindingProperty { span, key, value, shorthand, computed }
     }
 
@@ -5656,6 +6132,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(array_pattern));
         ArrayPattern { span, elements, rest: rest.into_in(self.allocator) }
     }
 
@@ -5693,6 +6171,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         argument: BindingPattern<'a>,
     ) -> BindingRestElement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(binding_rest_element));
         BindingRestElement { span, argument }
     }
 
@@ -5750,6 +6230,8 @@ impl<'a> AstBuilder<'a> {
         T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
         T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(function));
         Function {
             r#type,
             span,
@@ -5842,6 +6324,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(formal_parameters));
         FormalParameters { span, kind, items, rest: rest.into_in(self.allocator) }
     }
 
@@ -5889,6 +6373,8 @@ impl<'a> AstBuilder<'a> {
         readonly: bool,
         r#override: bool,
     ) -> FormalParameter<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(formal_parameter));
         FormalParameter { span, decorators, pattern, accessibility, readonly, r#override }
     }
 
@@ -5934,6 +6420,8 @@ impl<'a> AstBuilder<'a> {
         directives: Vec<'a, Directive<'a>>,
         statements: Vec<'a, Statement<'a>>,
     ) -> FunctionBody<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(function_body));
         FunctionBody { span, directives, statements }
     }
 
@@ -5984,6 +6472,8 @@ impl<'a> AstBuilder<'a> {
         T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
         T4: IntoIn<'a, Box<'a, FunctionBody<'a>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(arrow_function_expression));
         ArrowFunctionExpression {
             span,
             expression,
@@ -6054,6 +6544,8 @@ impl<'a> AstBuilder<'a> {
         delegate: bool,
         argument: Option<Expression<'a>>,
     ) -> YieldExpression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(yield_expression));
         YieldExpression { span, delegate, argument }
     }
 
@@ -6111,6 +6603,8 @@ impl<'a> AstBuilder<'a> {
         T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
         T3: IntoIn<'a, Box<'a, ClassBody<'a>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(class));
         Class {
             r#type,
             span,
@@ -6190,6 +6684,8 @@ impl<'a> AstBuilder<'a> {
     /// - body
     #[inline]
     pub fn class_body(self, span: Span, body: Vec<'a, ClassElement<'a>>) -> ClassBody<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(class_body));
         ClassBody { span, body }
     }
 
@@ -6222,6 +6718,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         body: Vec<'a, Statement<'a>>,
     ) -> ClassElement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(class_element_static_block));
         ClassElement::StaticBlock(self.alloc(self.static_block(span, body)))
     }
 
@@ -6231,6 +6729,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, StaticBlock<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(class_element_from_static_block));
         ClassElement::StaticBlock(inner.into_in(self.allocator))
     }
 
@@ -6268,6 +6767,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Box<'a, Function<'a>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(class_element_method_definition));
         ClassElement::MethodDefinition(self.alloc(self.method_definition(
             r#type,
             span,
@@ -6289,6 +6790,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, MethodDefinition<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(class_element_from_method_definition));
         ClassElement::MethodDefinition(inner.into_in(self.allocator))
     }
 
@@ -6332,6 +6834,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(class_element_property_definition));
         ClassElement::PropertyDefinition(self.alloc(self.property_definition(
             r#type,
             span,
@@ -6356,6 +6860,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, PropertyDefinition<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(class_element_from_property_definition));
         ClassElement::PropertyDefinition(inner.into_in(self.allocator))
     }
 
@@ -6391,6 +6896,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(class_element_accessor_property));
         ClassElement::AccessorProperty(self.alloc(self.accessor_property(
             r#type,
             span,
@@ -6411,6 +6918,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, AccessorProperty<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(class_element_from_accessor_property));
         ClassElement::AccessorProperty(inner.into_in(self.allocator))
     }
 
@@ -6434,6 +6942,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(class_element_ts_index_signature));
         ClassElement::TSIndexSignature(self.alloc(self.ts_index_signature(
             span,
             parameters,
@@ -6448,6 +6958,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSIndexSignature<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(class_element_from_ts_index_signature));
         ClassElement::TSIndexSignature(inner.into_in(self.allocator))
     }
 
@@ -6485,6 +6996,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Box<'a, Function<'a>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(method_definition));
         MethodDefinition {
             r#type,
             span,
@@ -6592,6 +7105,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(property_definition));
         PropertyDefinition {
             r#type,
             span,
@@ -6683,6 +7198,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(private_identifier));
         PrivateIdentifier { span, name: name.into_in(self.allocator) }
     }
 
@@ -6710,6 +7227,8 @@ impl<'a> AstBuilder<'a> {
     /// - body
     #[inline]
     pub fn static_block(self, span: Span, body: Vec<'a, Statement<'a>>) -> StaticBlock<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(static_block));
         StaticBlock { span, body, scope_id: Default::default() }
     }
 
@@ -6751,6 +7270,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(module_declaration_import_declaration));
         ModuleDeclaration::ImportDeclaration(self.alloc(self.import_declaration(
             span,
             specifiers,
@@ -6766,6 +7287,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, ImportDeclaration<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(module_declaration_from_import_declaration));
         ModuleDeclaration::ImportDeclaration(inner.into_in(self.allocator))
     }
 
@@ -6791,6 +7313,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(module_declaration_export_all_declaration));
         ModuleDeclaration::ExportAllDeclaration(self.alloc(self.export_all_declaration(
             span,
             exported,
@@ -6809,6 +7333,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, ExportAllDeclaration<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(module_declaration_from_export_all_declaration));
         ModuleDeclaration::ExportAllDeclaration(inner.into_in(self.allocator))
     }
 
@@ -6827,6 +7352,8 @@ impl<'a> AstBuilder<'a> {
         declaration: ExportDefaultDeclarationKind<'a>,
         exported: ModuleExportName<'a>,
     ) -> ModuleDeclaration<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(module_declaration_export_default_declaration));
         ModuleDeclaration::ExportDefaultDeclaration(self.alloc(self.export_default_declaration(
             span,
             declaration,
@@ -6843,6 +7370,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, ExportDefaultDeclaration<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(module_declaration_from_export_default_declaration));
         ModuleDeclaration::ExportDefaultDeclaration(inner.into_in(self.allocator))
     }
 
@@ -6870,6 +7398,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(module_declaration_export_named_declaration));
         ModuleDeclaration::ExportNamedDeclaration(self.alloc(self.export_named_declaration(
             span,
             declaration,
@@ -6889,6 +7419,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, ExportNamedDeclaration<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(module_declaration_from_export_named_declaration));
         ModuleDeclaration::ExportNamedDeclaration(inner.into_in(self.allocator))
     }
 
@@ -6905,6 +7436,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: Expression<'a>,
     ) -> ModuleDeclaration<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(module_declaration_ts_export_assignment));
         ModuleDeclaration::TSExportAssignment(
             self.alloc(self.ts_export_assignment(span, expression)),
         )
@@ -6916,6 +7449,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSExportAssignment<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(module_declaration_from_ts_export_assignment));
         ModuleDeclaration::TSExportAssignment(inner.into_in(self.allocator))
     }
 
@@ -6932,6 +7466,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         id: IdentifierName<'a>,
     ) -> ModuleDeclaration<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(module_declaration_ts_namespace_export_declaration));
         ModuleDeclaration::TSNamespaceExportDeclaration(
             self.alloc(self.ts_namespace_export_declaration(span, id)),
         )
@@ -6946,6 +7482,10 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSNamespaceExportDeclaration<'a>>>,
     {
+        println!(
+            "{}: nodes~~",
+            stringify!(module_declaration_from_ts_namespace_export_declaration)
+        );
         ModuleDeclaration::TSNamespaceExportDeclaration(inner.into_in(self.allocator))
     }
 
@@ -6981,6 +7521,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(accessor_property));
         AccessorProperty {
             r#type,
             span,
@@ -7059,6 +7601,8 @@ impl<'a> AstBuilder<'a> {
         source: Expression<'a>,
         arguments: Vec<'a, Expression<'a>>,
     ) -> ImportExpression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(import_expression));
         ImportExpression { span, source, arguments }
     }
 
@@ -7102,6 +7646,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(import_declaration));
         ImportDeclaration {
             span,
             specifiers,
@@ -7156,6 +7702,8 @@ impl<'a> AstBuilder<'a> {
         local: BindingIdentifier<'a>,
         import_kind: ImportOrExportKind,
     ) -> ImportDeclarationSpecifier<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(import_declaration_specifier_import_specifier));
         ImportDeclarationSpecifier::ImportSpecifier(self.alloc(self.import_specifier(
             span,
             imported,
@@ -7173,6 +7721,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, ImportSpecifier<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(import_declaration_specifier_from_import_specifier));
         ImportDeclarationSpecifier::ImportSpecifier(inner.into_in(self.allocator))
     }
 
@@ -7189,6 +7738,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         local: BindingIdentifier<'a>,
     ) -> ImportDeclarationSpecifier<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(import_declaration_specifier_import_default_specifier));
         ImportDeclarationSpecifier::ImportDefaultSpecifier(
             self.alloc(self.import_default_specifier(span, local)),
         )
@@ -7203,6 +7754,10 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, ImportDefaultSpecifier<'a>>>,
     {
+        println!(
+            "{}: nodes~~",
+            stringify!(import_declaration_specifier_from_import_default_specifier)
+        );
         ImportDeclarationSpecifier::ImportDefaultSpecifier(inner.into_in(self.allocator))
     }
 
@@ -7219,6 +7774,11 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         local: BindingIdentifier<'a>,
     ) -> ImportDeclarationSpecifier<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!(
+            "{}: nodes++",
+            stringify!(import_declaration_specifier_import_namespace_specifier)
+        );
         ImportDeclarationSpecifier::ImportNamespaceSpecifier(
             self.alloc(self.import_namespace_specifier(span, local)),
         )
@@ -7233,6 +7793,10 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, ImportNamespaceSpecifier<'a>>>,
     {
+        println!(
+            "{}: nodes~~",
+            stringify!(import_declaration_specifier_from_import_namespace_specifier)
+        );
         ImportDeclarationSpecifier::ImportNamespaceSpecifier(inner.into_in(self.allocator))
     }
 
@@ -7253,6 +7817,8 @@ impl<'a> AstBuilder<'a> {
         local: BindingIdentifier<'a>,
         import_kind: ImportOrExportKind,
     ) -> ImportSpecifier<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(import_specifier));
         ImportSpecifier { span, imported, local, import_kind }
     }
 
@@ -7289,6 +7855,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         local: BindingIdentifier<'a>,
     ) -> ImportDefaultSpecifier<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(import_default_specifier));
         ImportDefaultSpecifier { span, local }
     }
 
@@ -7321,6 +7889,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         local: BindingIdentifier<'a>,
     ) -> ImportNamespaceSpecifier<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(import_namespace_specifier));
         ImportNamespaceSpecifier { span, local }
     }
 
@@ -7355,6 +7925,8 @@ impl<'a> AstBuilder<'a> {
         attributes_keyword: IdentifierName<'a>,
         with_entries: Vec<'a, ImportAttribute<'a>>,
     ) -> WithClause<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(with_clause));
         WithClause { span, attributes_keyword, with_entries }
     }
 
@@ -7391,6 +7963,8 @@ impl<'a> AstBuilder<'a> {
         key: ImportAttributeKey<'a>,
         value: StringLiteral<'a>,
     ) -> ImportAttribute<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(import_attribute));
         ImportAttribute { span, key, value }
     }
 
@@ -7426,6 +8000,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(import_attribute_key_identifier_name));
         ImportAttributeKey::Identifier(self.identifier_name(span, name))
     }
 
@@ -7435,6 +8011,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, IdentifierName<'a>>,
     {
+        println!("{}: nodes~~", stringify!(import_attribute_key_from_identifier_name));
         ImportAttributeKey::Identifier(inner.into_in(self.allocator))
     }
 
@@ -7452,6 +8029,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(import_attribute_key_string_literal));
         ImportAttributeKey::StringLiteral(self.string_literal(span, value))
     }
 
@@ -7461,6 +8040,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, StringLiteral<'a>>,
     {
+        println!("{}: nodes~~", stringify!(import_attribute_key_from_string_literal));
         ImportAttributeKey::StringLiteral(inner.into_in(self.allocator))
     }
 
@@ -7488,6 +8068,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(export_named_declaration));
         ExportNamedDeclaration {
             span,
             declaration,
@@ -7550,6 +8132,8 @@ impl<'a> AstBuilder<'a> {
         declaration: ExportDefaultDeclarationKind<'a>,
         exported: ModuleExportName<'a>,
     ) -> ExportDefaultDeclaration<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(export_default_declaration));
         ExportDefaultDeclaration { span, declaration, exported }
     }
 
@@ -7593,6 +8177,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(export_all_declaration));
         ExportAllDeclaration {
             span,
             exported,
@@ -7647,6 +8233,8 @@ impl<'a> AstBuilder<'a> {
         exported: ModuleExportName<'a>,
         export_kind: ImportOrExportKind,
     ) -> ExportSpecifier<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(export_specifier));
         ExportSpecifier { span, local, exported, export_kind }
     }
 
@@ -7708,6 +8296,8 @@ impl<'a> AstBuilder<'a> {
         T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
         T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(export_default_declaration_kind_function));
         ExportDefaultDeclarationKind::FunctionDeclaration(self.alloc(self.function(
             r#type,
             span,
@@ -7732,6 +8322,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, Function<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(export_default_declaration_kind_from_function));
         ExportDefaultDeclarationKind::FunctionDeclaration(inner.into_in(self.allocator))
     }
 
@@ -7771,6 +8362,8 @@ impl<'a> AstBuilder<'a> {
         T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
         T3: IntoIn<'a, Box<'a, ClassBody<'a>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(export_default_declaration_kind_class));
         ExportDefaultDeclarationKind::ClassDeclaration(self.alloc(self.class(
             r#type,
             span,
@@ -7795,6 +8388,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, Class<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(export_default_declaration_kind_from_class));
         ExportDefaultDeclarationKind::ClassDeclaration(inner.into_in(self.allocator))
     }
 
@@ -7823,6 +8417,11 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
         T2: IntoIn<'a, Box<'a, TSInterfaceBody<'a>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!(
+            "{}: nodes++",
+            stringify!(export_default_declaration_kind_ts_interface_declaration)
+        );
         ExportDefaultDeclarationKind::TSInterfaceDeclaration(self.alloc(
             self.ts_interface_declaration(span, id, extends, type_parameters, body, declare),
         ))
@@ -7837,6 +8436,10 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSInterfaceDeclaration<'a>>>,
     {
+        println!(
+            "{}: nodes~~",
+            stringify!(export_default_declaration_kind_from_ts_interface_declaration)
+        );
         ExportDefaultDeclarationKind::TSInterfaceDeclaration(inner.into_in(self.allocator))
     }
 
@@ -7845,6 +8448,8 @@ impl<'a> AstBuilder<'a> {
         self,
         inner: Expression<'a>,
     ) -> ExportDefaultDeclarationKind<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(export_default_declaration_kind_expression));
         ExportDefaultDeclarationKind::from(inner)
     }
 
@@ -7858,6 +8463,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(module_export_name_identifier_name));
         ModuleExportName::IdentifierName(self.identifier_name(span, name))
     }
 
@@ -7867,6 +8474,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, IdentifierName<'a>>,
     {
+        println!("{}: nodes~~", stringify!(module_export_name_from_identifier_name));
         ModuleExportName::IdentifierName(inner.into_in(self.allocator))
     }
 
@@ -7884,6 +8492,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(module_export_name_identifier_reference));
         ModuleExportName::IdentifierReference(self.identifier_reference(span, name))
     }
 
@@ -7893,6 +8503,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, IdentifierReference<'a>>,
     {
+        println!("{}: nodes~~", stringify!(module_export_name_from_identifier_reference));
         ModuleExportName::IdentifierReference(inner.into_in(self.allocator))
     }
 
@@ -7906,6 +8517,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(module_export_name_string_literal));
         ModuleExportName::StringLiteral(self.string_literal(span, value))
     }
 
@@ -7915,6 +8528,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, StringLiteral<'a>>,
     {
+        println!("{}: nodes~~", stringify!(module_export_name_from_string_literal));
         ModuleExportName::StringLiteral(inner.into_in(self.allocator))
     }
 
@@ -7936,6 +8550,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_this_parameter));
         TSThisParameter {
             span,
             this_span,
@@ -7983,6 +8599,8 @@ impl<'a> AstBuilder<'a> {
         r#const: bool,
         declare: bool,
     ) -> TSEnumDeclaration<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_enum_declaration));
         TSEnumDeclaration { span, id, members, r#const, declare, scope_id: Default::default() }
     }
 
@@ -8023,6 +8641,8 @@ impl<'a> AstBuilder<'a> {
         id: TSEnumMemberName<'a>,
         initializer: Option<Expression<'a>>,
     ) -> TSEnumMember<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_enum_member));
         TSEnumMember { span, id, initializer }
     }
 
@@ -8056,6 +8676,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_enum_member_name_identifier_name));
         TSEnumMemberName::StaticIdentifier(self.alloc(self.identifier_name(span, name)))
     }
 
@@ -8065,6 +8687,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, IdentifierName<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_enum_member_name_from_identifier_name));
         TSEnumMemberName::StaticIdentifier(inner.into_in(self.allocator))
     }
 
@@ -8080,6 +8703,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_enum_member_name_string_literal));
         TSEnumMemberName::StaticStringLiteral(self.alloc(self.string_literal(span, value)))
     }
 
@@ -8089,6 +8714,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, StringLiteral<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_enum_member_name_from_string_literal));
         TSEnumMemberName::StaticStringLiteral(inner.into_in(self.allocator))
     }
 
@@ -8107,6 +8733,8 @@ impl<'a> AstBuilder<'a> {
         quasis: Vec<'a, TemplateElement<'a>>,
         expressions: Vec<'a, Expression<'a>>,
     ) -> TSEnumMemberName<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_enum_member_name_template_literal));
         TSEnumMemberName::StaticTemplateLiteral(self.alloc(self.template_literal(
             span,
             quasis,
@@ -8120,6 +8748,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TemplateLiteral<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_enum_member_name_from_template_literal));
         TSEnumMemberName::StaticTemplateLiteral(inner.into_in(self.allocator))
     }
 
@@ -8143,6 +8772,8 @@ impl<'a> AstBuilder<'a> {
     where
         S: IntoIn<'a, &'a str>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_enum_member_name_numeric_literal));
         TSEnumMemberName::StaticNumericLiteral(
             self.alloc(self.numeric_literal(span, value, raw, base)),
         )
@@ -8154,11 +8785,14 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, NumericLiteral<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_enum_member_name_from_numeric_literal));
         TSEnumMemberName::StaticNumericLiteral(inner.into_in(self.allocator))
     }
 
     #[inline]
     pub fn ts_enum_member_name_expression(self, inner: Expression<'a>) -> TSEnumMemberName<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_enum_member_name_expression));
         TSEnumMemberName::from(inner)
     }
 
@@ -8175,6 +8809,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         type_annotation: TSType<'a>,
     ) -> TSTypeAnnotation<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_annotation));
         TSTypeAnnotation { span, type_annotation }
     }
 
@@ -8203,6 +8839,8 @@ impl<'a> AstBuilder<'a> {
     /// - literal
     #[inline]
     pub fn ts_literal_type(self, span: Span, literal: TSLiteral<'a>) -> TSLiteralType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_literal_type));
         TSLiteralType { span, literal }
     }
 
@@ -8231,6 +8869,8 @@ impl<'a> AstBuilder<'a> {
     /// - value
     #[inline]
     pub fn ts_literal_boolean_literal(self, span: Span, value: bool) -> TSLiteral<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_literal_boolean_literal));
         TSLiteral::BooleanLiteral(self.alloc(self.boolean_literal(span, value)))
     }
 
@@ -8240,6 +8880,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, BooleanLiteral>>,
     {
+        println!("{}: nodes~~", stringify!(ts_literal_from_boolean_literal));
         TSLiteral::BooleanLiteral(inner.into_in(self.allocator))
     }
 
@@ -8251,6 +8892,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_literal_null_literal(self, span: Span) -> TSLiteral<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_literal_null_literal));
         TSLiteral::NullLiteral(self.alloc(self.null_literal(span)))
     }
 
@@ -8260,6 +8903,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, NullLiteral>>,
     {
+        println!("{}: nodes~~", stringify!(ts_literal_from_null_literal));
         TSLiteral::NullLiteral(inner.into_in(self.allocator))
     }
 
@@ -8283,6 +8927,8 @@ impl<'a> AstBuilder<'a> {
     where
         S: IntoIn<'a, &'a str>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_literal_numeric_literal));
         TSLiteral::NumericLiteral(self.alloc(self.numeric_literal(span, value, raw, base)))
     }
 
@@ -8292,6 +8938,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, NumericLiteral<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_literal_from_numeric_literal));
         TSLiteral::NumericLiteral(inner.into_in(self.allocator))
     }
 
@@ -8313,6 +8960,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_literal_big_int_literal));
         TSLiteral::BigIntLiteral(self.alloc(self.big_int_literal(span, raw, base)))
     }
 
@@ -8322,6 +8971,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, BigIntLiteral<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_literal_from_big_int_literal));
         TSLiteral::BigIntLiteral(inner.into_in(self.allocator))
     }
 
@@ -8340,6 +8990,8 @@ impl<'a> AstBuilder<'a> {
         value: EmptyObject,
         regex: RegExp<'a>,
     ) -> TSLiteral<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_literal_reg_exp_literal));
         TSLiteral::RegExpLiteral(self.alloc(self.reg_exp_literal(span, value, regex)))
     }
 
@@ -8349,6 +9001,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, RegExpLiteral<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_literal_from_reg_exp_literal));
         TSLiteral::RegExpLiteral(inner.into_in(self.allocator))
     }
 
@@ -8364,6 +9017,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_literal_string_literal));
         TSLiteral::StringLiteral(self.alloc(self.string_literal(span, value)))
     }
 
@@ -8373,6 +9028,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, StringLiteral<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_literal_from_string_literal));
         TSLiteral::StringLiteral(inner.into_in(self.allocator))
     }
 
@@ -8391,6 +9047,8 @@ impl<'a> AstBuilder<'a> {
         quasis: Vec<'a, TemplateElement<'a>>,
         expressions: Vec<'a, Expression<'a>>,
     ) -> TSLiteral<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_literal_template_literal));
         TSLiteral::TemplateLiteral(self.alloc(self.template_literal(span, quasis, expressions)))
     }
 
@@ -8400,6 +9058,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TemplateLiteral<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_literal_from_template_literal));
         TSLiteral::TemplateLiteral(inner.into_in(self.allocator))
     }
 
@@ -8418,6 +9077,8 @@ impl<'a> AstBuilder<'a> {
         operator: UnaryOperator,
         argument: Expression<'a>,
     ) -> TSLiteral<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_literal_unary_expression));
         TSLiteral::UnaryExpression(self.alloc(self.unary_expression(span, operator, argument)))
     }
 
@@ -8427,6 +9088,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, UnaryExpression<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_literal_from_unary_expression));
         TSLiteral::UnaryExpression(inner.into_in(self.allocator))
     }
 
@@ -8438,6 +9100,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_type_any_keyword(self, span: Span) -> TSType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_any_keyword));
         TSType::TSAnyKeyword(self.alloc(self.ts_any_keyword(span)))
     }
 
@@ -8447,6 +9111,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSAnyKeyword>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_from_ts_any_keyword));
         TSType::TSAnyKeyword(inner.into_in(self.allocator))
     }
 
@@ -8458,6 +9123,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_type_big_int_keyword(self, span: Span) -> TSType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_big_int_keyword));
         TSType::TSBigIntKeyword(self.alloc(self.ts_big_int_keyword(span)))
     }
 
@@ -8467,6 +9134,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSBigIntKeyword>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_from_ts_big_int_keyword));
         TSType::TSBigIntKeyword(inner.into_in(self.allocator))
     }
 
@@ -8478,6 +9146,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_type_boolean_keyword(self, span: Span) -> TSType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_boolean_keyword));
         TSType::TSBooleanKeyword(self.alloc(self.ts_boolean_keyword(span)))
     }
 
@@ -8487,6 +9157,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSBooleanKeyword>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_from_ts_boolean_keyword));
         TSType::TSBooleanKeyword(inner.into_in(self.allocator))
     }
 
@@ -8498,6 +9169,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_type_intrinsic_keyword(self, span: Span) -> TSType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_intrinsic_keyword));
         TSType::TSIntrinsicKeyword(self.alloc(self.ts_intrinsic_keyword(span)))
     }
 
@@ -8507,6 +9180,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSIntrinsicKeyword>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_from_ts_intrinsic_keyword));
         TSType::TSIntrinsicKeyword(inner.into_in(self.allocator))
     }
 
@@ -8518,6 +9192,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_type_never_keyword(self, span: Span) -> TSType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_never_keyword));
         TSType::TSNeverKeyword(self.alloc(self.ts_never_keyword(span)))
     }
 
@@ -8527,6 +9203,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSNeverKeyword>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_from_ts_never_keyword));
         TSType::TSNeverKeyword(inner.into_in(self.allocator))
     }
 
@@ -8538,6 +9215,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_type_null_keyword(self, span: Span) -> TSType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_null_keyword));
         TSType::TSNullKeyword(self.alloc(self.ts_null_keyword(span)))
     }
 
@@ -8547,6 +9226,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSNullKeyword>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_from_ts_null_keyword));
         TSType::TSNullKeyword(inner.into_in(self.allocator))
     }
 
@@ -8558,6 +9238,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_type_number_keyword(self, span: Span) -> TSType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_number_keyword));
         TSType::TSNumberKeyword(self.alloc(self.ts_number_keyword(span)))
     }
 
@@ -8567,6 +9249,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSNumberKeyword>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_from_ts_number_keyword));
         TSType::TSNumberKeyword(inner.into_in(self.allocator))
     }
 
@@ -8578,6 +9261,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_type_object_keyword(self, span: Span) -> TSType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_object_keyword));
         TSType::TSObjectKeyword(self.alloc(self.ts_object_keyword(span)))
     }
 
@@ -8587,6 +9272,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSObjectKeyword>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_from_ts_object_keyword));
         TSType::TSObjectKeyword(inner.into_in(self.allocator))
     }
 
@@ -8598,6 +9284,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_type_string_keyword(self, span: Span) -> TSType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_string_keyword));
         TSType::TSStringKeyword(self.alloc(self.ts_string_keyword(span)))
     }
 
@@ -8607,6 +9295,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSStringKeyword>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_from_ts_string_keyword));
         TSType::TSStringKeyword(inner.into_in(self.allocator))
     }
 
@@ -8618,6 +9307,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_type_symbol_keyword(self, span: Span) -> TSType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_symbol_keyword));
         TSType::TSSymbolKeyword(self.alloc(self.ts_symbol_keyword(span)))
     }
 
@@ -8627,6 +9318,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSSymbolKeyword>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_from_ts_symbol_keyword));
         TSType::TSSymbolKeyword(inner.into_in(self.allocator))
     }
 
@@ -8638,6 +9330,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_type_undefined_keyword(self, span: Span) -> TSType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_undefined_keyword));
         TSType::TSUndefinedKeyword(self.alloc(self.ts_undefined_keyword(span)))
     }
 
@@ -8647,6 +9341,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSUndefinedKeyword>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_from_ts_undefined_keyword));
         TSType::TSUndefinedKeyword(inner.into_in(self.allocator))
     }
 
@@ -8658,6 +9353,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_type_unknown_keyword(self, span: Span) -> TSType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_unknown_keyword));
         TSType::TSUnknownKeyword(self.alloc(self.ts_unknown_keyword(span)))
     }
 
@@ -8667,6 +9364,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSUnknownKeyword>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_from_ts_unknown_keyword));
         TSType::TSUnknownKeyword(inner.into_in(self.allocator))
     }
 
@@ -8678,6 +9376,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_type_void_keyword(self, span: Span) -> TSType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_void_keyword));
         TSType::TSVoidKeyword(self.alloc(self.ts_void_keyword(span)))
     }
 
@@ -8687,6 +9387,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSVoidKeyword>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_from_ts_void_keyword));
         TSType::TSVoidKeyword(inner.into_in(self.allocator))
     }
 
@@ -8699,6 +9400,8 @@ impl<'a> AstBuilder<'a> {
     /// - element_type
     #[inline]
     pub fn ts_type_array_type(self, span: Span, element_type: TSType<'a>) -> TSType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_array_type));
         TSType::TSArrayType(self.alloc(self.ts_array_type(span, element_type)))
     }
 
@@ -8708,6 +9411,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSArrayType<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_from_ts_array_type));
         TSType::TSArrayType(inner.into_in(self.allocator))
     }
 
@@ -8730,6 +9434,8 @@ impl<'a> AstBuilder<'a> {
         true_type: TSType<'a>,
         false_type: TSType<'a>,
     ) -> TSType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_conditional_type));
         TSType::TSConditionalType(self.alloc(self.ts_conditional_type(
             span,
             check_type,
@@ -8745,6 +9451,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSConditionalType<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_from_ts_conditional_type));
         TSType::TSConditionalType(inner.into_in(self.allocator))
     }
 
@@ -8772,6 +9479,8 @@ impl<'a> AstBuilder<'a> {
         T2: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
         T3: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_constructor_type));
         TSType::TSConstructorType(self.alloc(self.ts_constructor_type(
             span,
             r#abstract,
@@ -8787,6 +9496,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSConstructorType<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_from_ts_constructor_type));
         TSType::TSConstructorType(inner.into_in(self.allocator))
     }
 
@@ -8815,6 +9525,8 @@ impl<'a> AstBuilder<'a> {
         T3: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
         T4: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_function_type));
         TSType::TSFunctionType(self.alloc(self.ts_function_type(
             span,
             this_param,
@@ -8830,6 +9542,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSFunctionType<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_from_ts_function_type));
         TSType::TSFunctionType(inner.into_in(self.allocator))
     }
 
@@ -8858,6 +9571,8 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a>>>>,
         T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_import_type));
         TSType::TSImportType(self.alloc(self.ts_import_type(
             span,
             is_type_of,
@@ -8874,6 +9589,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSImportType<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_from_ts_import_type));
         TSType::TSImportType(inner.into_in(self.allocator))
     }
 
@@ -8892,6 +9608,8 @@ impl<'a> AstBuilder<'a> {
         object_type: TSType<'a>,
         index_type: TSType<'a>,
     ) -> TSType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_indexed_access_type));
         TSType::TSIndexedAccessType(self.alloc(self.ts_indexed_access_type(
             span,
             object_type,
@@ -8905,6 +9623,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSIndexedAccessType<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_from_ts_indexed_access_type));
         TSType::TSIndexedAccessType(inner.into_in(self.allocator))
     }
 
@@ -8920,6 +9639,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Box<'a, TSTypeParameter<'a>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_infer_type));
         TSType::TSInferType(self.alloc(self.ts_infer_type(span, type_parameter)))
     }
 
@@ -8929,6 +9650,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSInferType<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_from_ts_infer_type));
         TSType::TSInferType(inner.into_in(self.allocator))
     }
 
@@ -8941,6 +9663,8 @@ impl<'a> AstBuilder<'a> {
     /// - types
     #[inline]
     pub fn ts_type_intersection_type(self, span: Span, types: Vec<'a, TSType<'a>>) -> TSType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_intersection_type));
         TSType::TSIntersectionType(self.alloc(self.ts_intersection_type(span, types)))
     }
 
@@ -8950,6 +9674,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSIntersectionType<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_from_ts_intersection_type));
         TSType::TSIntersectionType(inner.into_in(self.allocator))
     }
 
@@ -8962,6 +9687,8 @@ impl<'a> AstBuilder<'a> {
     /// - literal
     #[inline]
     pub fn ts_type_literal_type(self, span: Span, literal: TSLiteral<'a>) -> TSType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_literal_type));
         TSType::TSLiteralType(self.alloc(self.ts_literal_type(span, literal)))
     }
 
@@ -8971,6 +9698,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSLiteralType<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_from_ts_literal_type));
         TSType::TSLiteralType(inner.into_in(self.allocator))
     }
 
@@ -8998,6 +9726,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Box<'a, TSTypeParameter<'a>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_mapped_type));
         TSType::TSMappedType(self.alloc(self.ts_mapped_type(
             span,
             type_parameter,
@@ -9014,6 +9744,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSMappedType<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_from_ts_mapped_type));
         TSType::TSMappedType(inner.into_in(self.allocator))
     }
 
@@ -9034,6 +9765,8 @@ impl<'a> AstBuilder<'a> {
         label: IdentifierName<'a>,
         optional: bool,
     ) -> TSType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_named_tuple_member));
         TSType::TSNamedTupleMember(self.alloc(self.ts_named_tuple_member(
             span,
             element_type,
@@ -9048,6 +9781,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSNamedTupleMember<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_from_ts_named_tuple_member));
         TSType::TSNamedTupleMember(inner.into_in(self.allocator))
     }
 
@@ -9066,6 +9800,8 @@ impl<'a> AstBuilder<'a> {
         left: TSTypeName<'a>,
         right: IdentifierName<'a>,
     ) -> TSType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_qualified_name));
         TSType::TSQualifiedName(self.alloc(self.ts_qualified_name(span, left, right)))
     }
 
@@ -9075,6 +9811,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSQualifiedName<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_from_ts_qualified_name));
         TSType::TSQualifiedName(inner.into_in(self.allocator))
     }
 
@@ -9093,6 +9830,8 @@ impl<'a> AstBuilder<'a> {
         quasis: Vec<'a, TemplateElement<'a>>,
         types: Vec<'a, TSType<'a>>,
     ) -> TSType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_template_literal_type));
         TSType::TSTemplateLiteralType(
             self.alloc(self.ts_template_literal_type(span, quasis, types)),
         )
@@ -9104,6 +9843,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSTemplateLiteralType<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_from_ts_template_literal_type));
         TSType::TSTemplateLiteralType(inner.into_in(self.allocator))
     }
 
@@ -9115,6 +9855,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_type_this_type(self, span: Span) -> TSType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_this_type));
         TSType::TSThisType(self.alloc(self.ts_this_type(span)))
     }
 
@@ -9124,6 +9866,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSThisType>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_from_ts_this_type));
         TSType::TSThisType(inner.into_in(self.allocator))
     }
 
@@ -9140,6 +9883,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         element_types: Vec<'a, TSTupleElement<'a>>,
     ) -> TSType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_tuple_type));
         TSType::TSTupleType(self.alloc(self.ts_tuple_type(span, element_types)))
     }
 
@@ -9149,6 +9894,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSTupleType<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_from_ts_tuple_type));
         TSType::TSTupleType(inner.into_in(self.allocator))
     }
 
@@ -9161,6 +9907,8 @@ impl<'a> AstBuilder<'a> {
     /// - members
     #[inline]
     pub fn ts_type_type_literal(self, span: Span, members: Vec<'a, TSSignature<'a>>) -> TSType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_type_literal));
         TSType::TSTypeLiteral(self.alloc(self.ts_type_literal(span, members)))
     }
 
@@ -9170,6 +9918,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSTypeLiteral<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_from_ts_type_literal));
         TSType::TSTypeLiteral(inner.into_in(self.allocator))
     }
 
@@ -9188,6 +9937,8 @@ impl<'a> AstBuilder<'a> {
         operator: TSTypeOperatorOperator,
         type_annotation: TSType<'a>,
     ) -> TSType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_type_operator));
         TSType::TSTypeOperatorType(self.alloc(self.ts_type_operator(
             span,
             operator,
@@ -9201,6 +9952,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSTypeOperator<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_from_ts_type_operator));
         TSType::TSTypeOperatorType(inner.into_in(self.allocator))
     }
 
@@ -9224,6 +9976,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_type_predicate));
         TSType::TSTypePredicate(self.alloc(self.ts_type_predicate(
             span,
             parameter_name,
@@ -9238,6 +9992,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSTypePredicate<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_from_ts_type_predicate));
         TSType::TSTypePredicate(inner.into_in(self.allocator))
     }
 
@@ -9259,6 +10014,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_type_query));
         TSType::TSTypeQuery(self.alloc(self.ts_type_query(span, expr_name, type_parameters)))
     }
 
@@ -9268,6 +10025,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSTypeQuery<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_from_ts_type_query));
         TSType::TSTypeQuery(inner.into_in(self.allocator))
     }
 
@@ -9289,6 +10047,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_type_reference));
         TSType::TSTypeReference(self.alloc(self.ts_type_reference(
             span,
             type_name,
@@ -9302,6 +10062,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSTypeReference<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_from_ts_type_reference));
         TSType::TSTypeReference(inner.into_in(self.allocator))
     }
 
@@ -9314,6 +10075,8 @@ impl<'a> AstBuilder<'a> {
     /// - types: The types in the union.
     #[inline]
     pub fn ts_type_union_type(self, span: Span, types: Vec<'a, TSType<'a>>) -> TSType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_union_type));
         TSType::TSUnionType(self.alloc(self.ts_union_type(span, types)))
     }
 
@@ -9323,6 +10086,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSUnionType<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_from_ts_union_type));
         TSType::TSUnionType(inner.into_in(self.allocator))
     }
 
@@ -9335,6 +10099,8 @@ impl<'a> AstBuilder<'a> {
     /// - type_annotation
     #[inline]
     pub fn ts_type_parenthesized_type(self, span: Span, type_annotation: TSType<'a>) -> TSType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_parenthesized_type));
         TSType::TSParenthesizedType(self.alloc(self.ts_parenthesized_type(span, type_annotation)))
     }
 
@@ -9344,6 +10110,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSParenthesizedType<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_from_ts_parenthesized_type));
         TSType::TSParenthesizedType(inner.into_in(self.allocator))
     }
 
@@ -9362,6 +10129,8 @@ impl<'a> AstBuilder<'a> {
         type_annotation: TSType<'a>,
         postfix: bool,
     ) -> TSType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_js_doc_nullable_type));
         TSType::JSDocNullableType(self.alloc(self.js_doc_nullable_type(
             span,
             type_annotation,
@@ -9375,6 +10144,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, JSDocNullableType<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_from_js_doc_nullable_type));
         TSType::JSDocNullableType(inner.into_in(self.allocator))
     }
 
@@ -9393,6 +10163,8 @@ impl<'a> AstBuilder<'a> {
         type_annotation: TSType<'a>,
         postfix: bool,
     ) -> TSType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_js_doc_non_nullable_type));
         TSType::JSDocNonNullableType(self.alloc(self.js_doc_non_nullable_type(
             span,
             type_annotation,
@@ -9406,6 +10178,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, JSDocNonNullableType<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_from_js_doc_non_nullable_type));
         TSType::JSDocNonNullableType(inner.into_in(self.allocator))
     }
 
@@ -9417,6 +10190,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_type_js_doc_unknown_type(self, span: Span) -> TSType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_js_doc_unknown_type));
         TSType::JSDocUnknownType(self.alloc(self.js_doc_unknown_type(span)))
     }
 
@@ -9426,6 +10201,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, JSDocUnknownType>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_from_js_doc_unknown_type));
         TSType::JSDocUnknownType(inner.into_in(self.allocator))
     }
 
@@ -9448,6 +10224,8 @@ impl<'a> AstBuilder<'a> {
         true_type: TSType<'a>,
         false_type: TSType<'a>,
     ) -> TSConditionalType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_conditional_type));
         TSConditionalType {
             span,
             check_type,
@@ -9492,6 +10270,8 @@ impl<'a> AstBuilder<'a> {
     /// - types: The types in the union.
     #[inline]
     pub fn ts_union_type(self, span: Span, types: Vec<'a, TSType<'a>>) -> TSUnionType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_union_type));
         TSUnionType { span, types }
     }
 
@@ -9524,6 +10304,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         types: Vec<'a, TSType<'a>>,
     ) -> TSIntersectionType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_intersection_type));
         TSIntersectionType { span, types }
     }
 
@@ -9556,6 +10338,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         type_annotation: TSType<'a>,
     ) -> TSParenthesizedType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_parenthesized_type));
         TSParenthesizedType { span, type_annotation }
     }
 
@@ -9590,6 +10374,8 @@ impl<'a> AstBuilder<'a> {
         operator: TSTypeOperatorOperator,
         type_annotation: TSType<'a>,
     ) -> TSTypeOperator<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_operator));
         TSTypeOperator { span, operator, type_annotation }
     }
 
@@ -9620,6 +10406,8 @@ impl<'a> AstBuilder<'a> {
     /// - element_type
     #[inline]
     pub fn ts_array_type(self, span: Span, element_type: TSType<'a>) -> TSArrayType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_array_type));
         TSArrayType { span, element_type }
     }
 
@@ -9654,6 +10442,8 @@ impl<'a> AstBuilder<'a> {
         object_type: TSType<'a>,
         index_type: TSType<'a>,
     ) -> TSIndexedAccessType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_indexed_access_type));
         TSIndexedAccessType { span, object_type, index_type }
     }
 
@@ -9688,6 +10478,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         element_types: Vec<'a, TSTupleElement<'a>>,
     ) -> TSTupleType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_tuple_type));
         TSTupleType { span, element_types }
     }
 
@@ -9724,6 +10516,8 @@ impl<'a> AstBuilder<'a> {
         label: IdentifierName<'a>,
         optional: bool,
     ) -> TSNamedTupleMember<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_named_tuple_member));
         TSNamedTupleMember { span, element_type, label, optional }
     }
 
@@ -9756,6 +10550,8 @@ impl<'a> AstBuilder<'a> {
     /// - type_annotation
     #[inline]
     pub fn ts_optional_type(self, span: Span, type_annotation: TSType<'a>) -> TSOptionalType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_optional_type));
         TSOptionalType { span, type_annotation }
     }
 
@@ -9784,6 +10580,8 @@ impl<'a> AstBuilder<'a> {
     /// - type_annotation
     #[inline]
     pub fn ts_rest_type(self, span: Span, type_annotation: TSType<'a>) -> TSRestType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_rest_type));
         TSRestType { span, type_annotation }
     }
 
@@ -9816,6 +10614,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         type_annotation: TSType<'a>,
     ) -> TSTupleElement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_tuple_element_optional_type));
         TSTupleElement::TSOptionalType(self.alloc(self.ts_optional_type(span, type_annotation)))
     }
 
@@ -9825,6 +10625,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSOptionalType<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_tuple_element_from_ts_optional_type));
         TSTupleElement::TSOptionalType(inner.into_in(self.allocator))
     }
 
@@ -9841,6 +10642,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         type_annotation: TSType<'a>,
     ) -> TSTupleElement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_tuple_element_rest_type));
         TSTupleElement::TSRestType(self.alloc(self.ts_rest_type(span, type_annotation)))
     }
 
@@ -9850,11 +10653,14 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSRestType<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_tuple_element_from_ts_rest_type));
         TSTupleElement::TSRestType(inner.into_in(self.allocator))
     }
 
     #[inline]
     pub fn ts_tuple_element_type(self, inner: TSType<'a>) -> TSTupleElement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_tuple_element_type));
         TSTupleElement::from(inner)
     }
 
@@ -9866,6 +10672,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_any_keyword(self, span: Span) -> TSAnyKeyword {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_any_keyword));
         TSAnyKeyword { span }
     }
 
@@ -9888,6 +10696,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_string_keyword(self, span: Span) -> TSStringKeyword {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_string_keyword));
         TSStringKeyword { span }
     }
 
@@ -9910,6 +10720,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_boolean_keyword(self, span: Span) -> TSBooleanKeyword {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_boolean_keyword));
         TSBooleanKeyword { span }
     }
 
@@ -9932,6 +10744,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_number_keyword(self, span: Span) -> TSNumberKeyword {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_number_keyword));
         TSNumberKeyword { span }
     }
 
@@ -9954,6 +10768,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_never_keyword(self, span: Span) -> TSNeverKeyword {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_never_keyword));
         TSNeverKeyword { span }
     }
 
@@ -9976,6 +10792,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_intrinsic_keyword(self, span: Span) -> TSIntrinsicKeyword {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_intrinsic_keyword));
         TSIntrinsicKeyword { span }
     }
 
@@ -9998,6 +10816,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_unknown_keyword(self, span: Span) -> TSUnknownKeyword {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_unknown_keyword));
         TSUnknownKeyword { span }
     }
 
@@ -10020,6 +10840,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_null_keyword(self, span: Span) -> TSNullKeyword {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_null_keyword));
         TSNullKeyword { span }
     }
 
@@ -10042,6 +10864,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_undefined_keyword(self, span: Span) -> TSUndefinedKeyword {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_undefined_keyword));
         TSUndefinedKeyword { span }
     }
 
@@ -10064,6 +10888,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_void_keyword(self, span: Span) -> TSVoidKeyword {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_void_keyword));
         TSVoidKeyword { span }
     }
 
@@ -10086,6 +10912,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_symbol_keyword(self, span: Span) -> TSSymbolKeyword {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_symbol_keyword));
         TSSymbolKeyword { span }
     }
 
@@ -10108,6 +10936,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_this_type(self, span: Span) -> TSThisType {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_this_type));
         TSThisType { span }
     }
 
@@ -10130,6 +10960,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_object_keyword(self, span: Span) -> TSObjectKeyword {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_object_keyword));
         TSObjectKeyword { span }
     }
 
@@ -10152,6 +10984,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_big_int_keyword(self, span: Span) -> TSBigIntKeyword {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_big_int_keyword));
         TSBigIntKeyword { span }
     }
 
@@ -10184,6 +11018,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_reference));
         TSTypeReference {
             span,
             type_name,
@@ -10224,6 +11060,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_name_identifier_reference));
         TSTypeName::IdentifierReference(self.alloc(self.identifier_reference(span, name)))
     }
 
@@ -10233,6 +11071,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, IdentifierReference<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_name_from_identifier_reference));
         TSTypeName::IdentifierReference(inner.into_in(self.allocator))
     }
 
@@ -10251,6 +11090,8 @@ impl<'a> AstBuilder<'a> {
         left: TSTypeName<'a>,
         right: IdentifierName<'a>,
     ) -> TSTypeName<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_name_qualified_name));
         TSTypeName::QualifiedName(self.alloc(self.ts_qualified_name(span, left, right)))
     }
 
@@ -10260,6 +11101,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSQualifiedName<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_name_from_ts_qualified_name));
         TSTypeName::QualifiedName(inner.into_in(self.allocator))
     }
 
@@ -10278,6 +11120,8 @@ impl<'a> AstBuilder<'a> {
         left: TSTypeName<'a>,
         right: IdentifierName<'a>,
     ) -> TSQualifiedName<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_qualified_name));
         TSQualifiedName { span, left, right }
     }
 
@@ -10312,6 +11156,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         params: Vec<'a, TSType<'a>>,
     ) -> TSTypeParameterInstantiation<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_parameter_instantiation));
         TSTypeParameterInstantiation { span, params }
     }
 
@@ -10354,6 +11200,8 @@ impl<'a> AstBuilder<'a> {
         out: bool,
         r#const: bool,
     ) -> TSTypeParameter<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_parameter));
         TSTypeParameter { span, name, constraint, default, r#in, out, r#const }
     }
 
@@ -10399,6 +11247,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         params: Vec<'a, TSTypeParameter<'a>>,
     ) -> TSTypeParameterDeclaration<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_parameter_declaration));
         TSTypeParameterDeclaration { span, params }
     }
 
@@ -10440,6 +11290,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_alias_declaration));
         TSTypeAliasDeclaration {
             span,
             id,
@@ -10496,6 +11348,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_class_implements));
         TSClassImplements {
             span,
             expression,
@@ -10549,6 +11403,8 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
         T2: IntoIn<'a, Box<'a, TSInterfaceBody<'a>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_interface_declaration));
         TSInterfaceDeclaration {
             span,
             id,
@@ -10604,6 +11460,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         body: Vec<'a, TSSignature<'a>>,
     ) -> TSInterfaceBody<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_interface_body));
         TSInterfaceBody { span, body }
     }
 
@@ -10647,6 +11505,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_property_signature));
         TSPropertySignature {
             span,
             computed,
@@ -10707,6 +11567,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_signature_index_signature));
         TSSignature::TSIndexSignature(self.alloc(self.ts_index_signature(
             span,
             parameters,
@@ -10721,6 +11583,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSIndexSignature<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_signature_from_ts_index_signature));
         TSSignature::TSIndexSignature(inner.into_in(self.allocator))
     }
 
@@ -10748,6 +11611,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_signature_property_signature));
         TSSignature::TSPropertySignature(self.alloc(self.ts_property_signature(
             span,
             computed,
@@ -10764,6 +11629,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSPropertySignature<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_signature_from_ts_property_signature));
         TSSignature::TSPropertySignature(inner.into_in(self.allocator))
     }
 
@@ -10791,6 +11657,8 @@ impl<'a> AstBuilder<'a> {
         T2: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
         T3: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_signature_call_signature_declaration));
         TSSignature::TSCallSignatureDeclaration(self.alloc(self.ts_call_signature_declaration(
             span,
             this_param,
@@ -10806,6 +11674,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSCallSignatureDeclaration<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_signature_from_ts_call_signature_declaration));
         TSSignature::TSCallSignatureDeclaration(inner.into_in(self.allocator))
     }
 
@@ -10831,6 +11700,8 @@ impl<'a> AstBuilder<'a> {
         T2: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
         T3: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_signature_construct_signature_declaration));
         TSSignature::TSConstructSignatureDeclaration(self.alloc(
             self.ts_construct_signature_declaration(span, params, return_type, type_parameters),
         ))
@@ -10845,6 +11716,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSConstructSignatureDeclaration<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_signature_from_ts_construct_signature_declaration));
         TSSignature::TSConstructSignatureDeclaration(inner.into_in(self.allocator))
     }
 
@@ -10881,6 +11753,8 @@ impl<'a> AstBuilder<'a> {
         T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
         T4: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_signature_method_signature));
         TSSignature::TSMethodSignature(self.alloc(self.ts_method_signature(
             span,
             key,
@@ -10900,6 +11774,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSMethodSignature<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_signature_from_ts_method_signature));
         TSSignature::TSMethodSignature(inner.into_in(self.allocator))
     }
 
@@ -10923,6 +11798,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_index_signature));
         TSIndexSignature {
             span,
             parameters,
@@ -10981,6 +11858,8 @@ impl<'a> AstBuilder<'a> {
         T2: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
         T3: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_call_signature_declaration));
         TSCallSignatureDeclaration {
             span,
             this_param,
@@ -11059,6 +11938,8 @@ impl<'a> AstBuilder<'a> {
         T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
         T4: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_method_signature));
         TSMethodSignature {
             span,
             key,
@@ -11144,6 +12025,8 @@ impl<'a> AstBuilder<'a> {
         T2: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
         T3: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_construct_signature_declaration));
         TSConstructSignatureDeclaration {
             span,
             params: params.into_in(self.allocator),
@@ -11200,6 +12083,8 @@ impl<'a> AstBuilder<'a> {
         A: IntoIn<'a, Atom<'a>>,
         T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_index_signature_name));
         TSIndexSignatureName {
             span,
             name: name.into_in(self.allocator),
@@ -11247,6 +12132,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_interface_heritage));
         TSInterfaceHeritage {
             span,
             expression,
@@ -11295,6 +12182,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_predicate));
         TSTypePredicate {
             span,
             parameter_name,
@@ -11345,6 +12234,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_predicate_name_identifier_name));
         TSTypePredicateName::Identifier(self.alloc(self.identifier_name(span, name)))
     }
 
@@ -11354,6 +12245,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, IdentifierName<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_predicate_name_from_identifier_name));
         TSTypePredicateName::Identifier(inner.into_in(self.allocator))
     }
 
@@ -11363,6 +12255,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_type_predicate_name_this_type(self, span: Span) -> TSTypePredicateName<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_predicate_name_this_type));
         TSTypePredicateName::This(self.ts_this_type(span))
     }
 
@@ -11372,6 +12266,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, TSThisType>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_predicate_name_from_ts_this_type));
         TSTypePredicateName::This(inner.into_in(self.allocator))
     }
 
@@ -11394,6 +12289,8 @@ impl<'a> AstBuilder<'a> {
         kind: TSModuleDeclarationKind,
         declare: bool,
     ) -> TSModuleDeclaration<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_module_declaration));
         TSModuleDeclaration { span, id, body, kind, declare, scope_id: Default::default() }
     }
 
@@ -11433,6 +12330,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_module_declaration_name_identifier_name));
         TSModuleDeclarationName::Identifier(self.identifier_name(span, name))
     }
 
@@ -11445,6 +12344,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, IdentifierName<'a>>,
     {
+        println!("{}: nodes~~", stringify!(ts_module_declaration_name_from_identifier_name));
         TSModuleDeclarationName::Identifier(inner.into_in(self.allocator))
     }
 
@@ -11462,6 +12362,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_module_declaration_name_string_literal));
         TSModuleDeclarationName::StringLiteral(self.string_literal(span, value))
     }
 
@@ -11474,6 +12376,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, StringLiteral<'a>>,
     {
+        println!("{}: nodes~~", stringify!(ts_module_declaration_name_from_string_literal));
         TSModuleDeclarationName::StringLiteral(inner.into_in(self.allocator))
     }
 
@@ -11496,6 +12399,8 @@ impl<'a> AstBuilder<'a> {
         kind: TSModuleDeclarationKind,
         declare: bool,
     ) -> TSModuleDeclarationBody<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_module_declaration_body_module_declaration));
         TSModuleDeclarationBody::TSModuleDeclaration(
             self.alloc(self.ts_module_declaration(span, id, body, kind, declare)),
         )
@@ -11510,6 +12415,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSModuleDeclaration<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_module_declaration_body_from_ts_module_declaration));
         TSModuleDeclarationBody::TSModuleDeclaration(inner.into_in(self.allocator))
     }
 
@@ -11528,6 +12434,8 @@ impl<'a> AstBuilder<'a> {
         directives: Vec<'a, Directive<'a>>,
         body: Vec<'a, Statement<'a>>,
     ) -> TSModuleDeclarationBody<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_module_declaration_body_module_block));
         TSModuleDeclarationBody::TSModuleBlock(
             self.alloc(self.ts_module_block(span, directives, body)),
         )
@@ -11542,6 +12450,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSModuleBlock<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_module_declaration_body_from_ts_module_block));
         TSModuleDeclarationBody::TSModuleBlock(inner.into_in(self.allocator))
     }
 
@@ -11560,6 +12469,8 @@ impl<'a> AstBuilder<'a> {
         directives: Vec<'a, Directive<'a>>,
         body: Vec<'a, Statement<'a>>,
     ) -> TSModuleBlock<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_module_block));
         TSModuleBlock { span, directives, body }
     }
 
@@ -11594,6 +12505,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         members: Vec<'a, TSSignature<'a>>,
     ) -> TSTypeLiteral<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_literal));
         TSTypeLiteral { span, members }
     }
 
@@ -11625,6 +12538,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Box<'a, TSTypeParameter<'a>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_infer_type));
         TSInferType { span, type_parameter: type_parameter.into_in(self.allocator) }
     }
 
@@ -11661,6 +12576,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_query));
         TSTypeQuery { span, expr_name, type_parameters: type_parameters.into_in(self.allocator) }
     }
 
@@ -11710,6 +12627,8 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a>>>>,
         T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_query_expr_name_import_type));
         TSTypeQueryExprName::TSImportType(self.alloc(self.ts_import_type(
             span,
             is_type_of,
@@ -11726,6 +12645,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSImportType<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_type_query_expr_name_from_ts_import_type));
         TSTypeQueryExprName::TSImportType(inner.into_in(self.allocator))
     }
 
@@ -11734,6 +12654,8 @@ impl<'a> AstBuilder<'a> {
         self,
         inner: TSTypeName<'a>,
     ) -> TSTypeQueryExprName<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_query_expr_name_type_name));
         TSTypeQueryExprName::from(inner)
     }
 
@@ -11762,6 +12684,8 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a>>>>,
         T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_import_type));
         TSImportType {
             span,
             is_type_of,
@@ -11825,6 +12749,8 @@ impl<'a> AstBuilder<'a> {
         attributes_keyword: IdentifierName<'a>,
         elements: Vec<'a, TSImportAttribute<'a>>,
     ) -> TSImportAttributes<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_import_attributes));
         TSImportAttributes { span, attributes_keyword, elements }
     }
 
@@ -11861,6 +12787,8 @@ impl<'a> AstBuilder<'a> {
         name: TSImportAttributeName<'a>,
         value: Expression<'a>,
     ) -> TSImportAttribute<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_import_attribute));
         TSImportAttribute { span, name, value }
     }
 
@@ -11896,6 +12824,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_import_attribute_name_identifier_name));
         TSImportAttributeName::Identifier(self.identifier_name(span, name))
     }
 
@@ -11908,6 +12838,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, IdentifierName<'a>>,
     {
+        println!("{}: nodes~~", stringify!(ts_import_attribute_name_from_identifier_name));
         TSImportAttributeName::Identifier(inner.into_in(self.allocator))
     }
 
@@ -11925,6 +12856,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_import_attribute_name_string_literal));
         TSImportAttributeName::StringLiteral(self.string_literal(span, value))
     }
 
@@ -11937,6 +12870,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, StringLiteral<'a>>,
     {
+        println!("{}: nodes~~", stringify!(ts_import_attribute_name_from_string_literal));
         TSImportAttributeName::StringLiteral(inner.into_in(self.allocator))
     }
 
@@ -11965,6 +12899,8 @@ impl<'a> AstBuilder<'a> {
         T3: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
         T4: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_function_type));
         TSFunctionType {
             span,
             this_param: this_param.into_in(self.allocator),
@@ -12029,6 +12965,8 @@ impl<'a> AstBuilder<'a> {
         T2: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
         T3: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_constructor_type));
         TSConstructorType {
             span,
             r#abstract,
@@ -12092,6 +13030,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Box<'a, TSTypeParameter<'a>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_mapped_type));
         TSMappedType {
             span,
             type_parameter: type_parameter.into_in(self.allocator),
@@ -12155,6 +13095,8 @@ impl<'a> AstBuilder<'a> {
         quasis: Vec<'a, TemplateElement<'a>>,
         types: Vec<'a, TSType<'a>>,
     ) -> TSTemplateLiteralType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_template_literal_type));
         TSTemplateLiteralType { span, quasis, types }
     }
 
@@ -12191,6 +13133,8 @@ impl<'a> AstBuilder<'a> {
         expression: Expression<'a>,
         type_annotation: TSType<'a>,
     ) -> TSAsExpression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_as_expression));
         TSAsExpression { span, expression, type_annotation }
     }
 
@@ -12227,6 +13171,8 @@ impl<'a> AstBuilder<'a> {
         expression: Expression<'a>,
         type_annotation: TSType<'a>,
     ) -> TSSatisfiesExpression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_satisfies_expression));
         TSSatisfiesExpression { span, expression, type_annotation }
     }
 
@@ -12263,6 +13209,8 @@ impl<'a> AstBuilder<'a> {
         expression: Expression<'a>,
         type_annotation: TSType<'a>,
     ) -> TSTypeAssertion<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_type_assertion));
         TSTypeAssertion { span, expression, type_annotation }
     }
 
@@ -12301,6 +13249,8 @@ impl<'a> AstBuilder<'a> {
         module_reference: TSModuleReference<'a>,
         import_kind: ImportOrExportKind,
     ) -> TSImportEqualsDeclaration<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_import_equals_declaration));
         TSImportEqualsDeclaration { span, id, module_reference, import_kind }
     }
 
@@ -12340,6 +13290,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: StringLiteral<'a>,
     ) -> TSModuleReference<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_module_reference_external_module_reference));
         TSModuleReference::ExternalModuleReference(
             self.alloc(self.ts_external_module_reference(span, expression)),
         )
@@ -12354,11 +13306,14 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, TSExternalModuleReference<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(ts_module_reference_from_ts_external_module_reference));
         TSModuleReference::ExternalModuleReference(inner.into_in(self.allocator))
     }
 
     #[inline]
     pub fn ts_module_reference_type_name(self, inner: TSTypeName<'a>) -> TSModuleReference<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_module_reference_type_name));
         TSModuleReference::from(inner)
     }
 
@@ -12375,6 +13330,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: StringLiteral<'a>,
     ) -> TSExternalModuleReference<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_external_module_reference));
         TSExternalModuleReference { span, expression }
     }
 
@@ -12407,6 +13364,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: Expression<'a>,
     ) -> TSNonNullExpression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_non_null_expression));
         TSNonNullExpression { span, expression }
     }
 
@@ -12435,6 +13394,8 @@ impl<'a> AstBuilder<'a> {
     /// - expression
     #[inline]
     pub fn decorator(self, span: Span, expression: Expression<'a>) -> Decorator<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(decorator));
         Decorator { span, expression }
     }
 
@@ -12463,6 +13424,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: Expression<'a>,
     ) -> TSExportAssignment<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_export_assignment));
         TSExportAssignment { span, expression }
     }
 
@@ -12495,6 +13458,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         id: IdentifierName<'a>,
     ) -> TSNamespaceExportDeclaration<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_namespace_export_declaration));
         TSNamespaceExportDeclaration { span, id }
     }
 
@@ -12532,6 +13497,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Box<'a, TSTypeParameterInstantiation<'a>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(ts_instantiation_expression));
         TSInstantiationExpression {
             span,
             expression,
@@ -12578,6 +13545,8 @@ impl<'a> AstBuilder<'a> {
         type_annotation: TSType<'a>,
         postfix: bool,
     ) -> JSDocNullableType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(js_doc_nullable_type));
         JSDocNullableType { span, type_annotation, postfix }
     }
 
@@ -12614,6 +13583,8 @@ impl<'a> AstBuilder<'a> {
         type_annotation: TSType<'a>,
         postfix: bool,
     ) -> JSDocNonNullableType<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(js_doc_non_nullable_type));
         JSDocNonNullableType { span, type_annotation, postfix }
     }
 
@@ -12643,6 +13614,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn js_doc_unknown_type(self, span: Span) -> JSDocUnknownType {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(js_doc_unknown_type));
         JSDocUnknownType { span }
     }
 
@@ -12678,6 +13651,8 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a>>>,
         T2: IntoIn<'a, Option<Box<'a, JSXClosingElement<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(jsx_element));
         JSXElement {
             span,
             opening_element: opening_element.into_in(self.allocator),
@@ -12735,6 +13710,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(jsx_opening_element));
         JSXOpeningElement {
             span,
             self_closing,
@@ -12785,6 +13762,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         name: JSXElementName<'a>,
     ) -> JSXClosingElement<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(jsx_closing_element));
         JSXClosingElement { span, name }
     }
 
@@ -12821,6 +13800,8 @@ impl<'a> AstBuilder<'a> {
         closing_fragment: JSXClosingFragment,
         children: Vec<'a, JSXChild<'a>>,
     ) -> JSXFragment<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(jsx_fragment));
         JSXFragment { span, opening_fragment, closing_fragment, children }
     }
 
@@ -12859,6 +13840,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(jsx_element_name_jsx_identifier));
         JSXElementName::Identifier(self.alloc(self.jsx_identifier(span, name)))
     }
 
@@ -12868,6 +13851,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, JSXIdentifier<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(jsx_element_name_from_jsx_identifier));
         JSXElementName::Identifier(inner.into_in(self.allocator))
     }
 
@@ -12883,6 +13867,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(jsx_element_name_identifier_reference));
         JSXElementName::IdentifierReference(self.alloc(self.identifier_reference(span, name)))
     }
 
@@ -12892,6 +13878,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, IdentifierReference<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(jsx_element_name_from_identifier_reference));
         JSXElementName::IdentifierReference(inner.into_in(self.allocator))
     }
 
@@ -12910,6 +13897,8 @@ impl<'a> AstBuilder<'a> {
         namespace: JSXIdentifier<'a>,
         property: JSXIdentifier<'a>,
     ) -> JSXElementName<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(jsx_element_name_jsx_namespaced_name));
         JSXElementName::NamespacedName(
             self.alloc(self.jsx_namespaced_name(span, namespace, property)),
         )
@@ -12921,6 +13910,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, JSXNamespacedName<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(jsx_element_name_from_jsx_namespaced_name));
         JSXElementName::NamespacedName(inner.into_in(self.allocator))
     }
 
@@ -12939,6 +13929,8 @@ impl<'a> AstBuilder<'a> {
         object: JSXMemberExpressionObject<'a>,
         property: JSXIdentifier<'a>,
     ) -> JSXElementName<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(jsx_element_name_jsx_member_expression));
         JSXElementName::MemberExpression(
             self.alloc(self.jsx_member_expression(span, object, property)),
         )
@@ -12950,6 +13942,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, JSXMemberExpression<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(jsx_element_name_from_jsx_member_expression));
         JSXElementName::MemberExpression(inner.into_in(self.allocator))
     }
 
@@ -12961,6 +13954,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn jsx_element_name_this_expression(self, span: Span) -> JSXElementName<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(jsx_element_name_this_expression));
         JSXElementName::ThisExpression(self.alloc(self.this_expression(span)))
     }
 
@@ -12970,6 +13965,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, ThisExpression>>,
     {
+        println!("{}: nodes~~", stringify!(jsx_element_name_from_this_expression));
         JSXElementName::ThisExpression(inner.into_in(self.allocator))
     }
 
@@ -12988,6 +13984,8 @@ impl<'a> AstBuilder<'a> {
         namespace: JSXIdentifier<'a>,
         property: JSXIdentifier<'a>,
     ) -> JSXNamespacedName<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(jsx_namespaced_name));
         JSXNamespacedName { span, namespace, property }
     }
 
@@ -13024,6 +14022,8 @@ impl<'a> AstBuilder<'a> {
         object: JSXMemberExpressionObject<'a>,
         property: JSXIdentifier<'a>,
     ) -> JSXMemberExpression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(jsx_member_expression));
         JSXMemberExpression { span, object, property }
     }
 
@@ -13061,6 +14061,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(jsx_member_expression_object_identifier_reference));
         JSXMemberExpressionObject::IdentifierReference(
             self.alloc(self.identifier_reference(span, name)),
         )
@@ -13075,6 +14077,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, IdentifierReference<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(jsx_member_expression_object_from_identifier_reference));
         JSXMemberExpressionObject::IdentifierReference(inner.into_in(self.allocator))
     }
 
@@ -13093,6 +14096,8 @@ impl<'a> AstBuilder<'a> {
         object: JSXMemberExpressionObject<'a>,
         property: JSXIdentifier<'a>,
     ) -> JSXMemberExpressionObject<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(jsx_member_expression_object_jsx_member_expression));
         JSXMemberExpressionObject::MemberExpression(
             self.alloc(self.jsx_member_expression(span, object, property)),
         )
@@ -13107,6 +14112,10 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, JSXMemberExpression<'a>>>,
     {
+        println!(
+            "{}: nodes~~",
+            stringify!(jsx_member_expression_object_from_jsx_member_expression)
+        );
         JSXMemberExpressionObject::MemberExpression(inner.into_in(self.allocator))
     }
 
@@ -13121,6 +14130,8 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
     ) -> JSXMemberExpressionObject<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(jsx_member_expression_object_this_expression));
         JSXMemberExpressionObject::ThisExpression(self.alloc(self.this_expression(span)))
     }
 
@@ -13133,6 +14144,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, ThisExpression>>,
     {
+        println!("{}: nodes~~", stringify!(jsx_member_expression_object_from_this_expression));
         JSXMemberExpressionObject::ThisExpression(inner.into_in(self.allocator))
     }
 
@@ -13149,6 +14161,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: JSXExpression<'a>,
     ) -> JSXExpressionContainer<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(jsx_expression_container));
         JSXExpressionContainer { span, expression }
     }
 
@@ -13174,6 +14188,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn jsx_expression_jsx_empty_expression(self, span: Span) -> JSXExpression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(jsx_expression_jsx_empty_expression));
         JSXExpression::EmptyExpression(self.jsx_empty_expression(span))
     }
 
@@ -13183,11 +14199,14 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, JSXEmptyExpression>,
     {
+        println!("{}: nodes~~", stringify!(jsx_expression_from_jsx_empty_expression));
         JSXExpression::EmptyExpression(inner.into_in(self.allocator))
     }
 
     #[inline]
     pub fn jsx_expression_expression(self, inner: Expression<'a>) -> JSXExpression<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(jsx_expression_expression));
         JSXExpression::from(inner)
     }
 
@@ -13199,6 +14218,8 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn jsx_empty_expression(self, span: Span) -> JSXEmptyExpression {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(jsx_empty_expression));
         JSXEmptyExpression { span }
     }
 
@@ -13228,6 +14249,8 @@ impl<'a> AstBuilder<'a> {
         name: JSXAttributeName<'a>,
         value: Option<JSXAttributeValue<'a>>,
     ) -> JSXAttributeItem<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(jsx_attribute_item_jsx_attribute));
         JSXAttributeItem::Attribute(self.alloc(self.jsx_attribute(span, name, value)))
     }
 
@@ -13237,6 +14260,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, JSXAttribute<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(jsx_attribute_item_from_jsx_attribute));
         JSXAttributeItem::Attribute(inner.into_in(self.allocator))
     }
 
@@ -13253,6 +14277,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         argument: Expression<'a>,
     ) -> JSXAttributeItem<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(jsx_attribute_item_jsx_spread_attribute));
         JSXAttributeItem::SpreadAttribute(self.alloc(self.jsx_spread_attribute(span, argument)))
     }
 
@@ -13262,6 +14288,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, JSXSpreadAttribute<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(jsx_attribute_item_from_jsx_spread_attribute));
         JSXAttributeItem::SpreadAttribute(inner.into_in(self.allocator))
     }
 
@@ -13280,6 +14307,8 @@ impl<'a> AstBuilder<'a> {
         name: JSXAttributeName<'a>,
         value: Option<JSXAttributeValue<'a>>,
     ) -> JSXAttribute<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(jsx_attribute));
         JSXAttribute { span, name, value }
     }
 
@@ -13314,6 +14343,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         argument: Expression<'a>,
     ) -> JSXSpreadAttribute<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(jsx_spread_attribute));
         JSXSpreadAttribute { span, argument }
     }
 
@@ -13345,6 +14376,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(jsx_attribute_name_jsx_identifier));
         JSXAttributeName::Identifier(self.alloc(self.jsx_identifier(span, name)))
     }
 
@@ -13354,6 +14387,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, JSXIdentifier<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(jsx_attribute_name_from_jsx_identifier));
         JSXAttributeName::Identifier(inner.into_in(self.allocator))
     }
 
@@ -13372,6 +14406,8 @@ impl<'a> AstBuilder<'a> {
         namespace: JSXIdentifier<'a>,
         property: JSXIdentifier<'a>,
     ) -> JSXAttributeName<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(jsx_attribute_name_jsx_namespaced_name));
         JSXAttributeName::NamespacedName(
             self.alloc(self.jsx_namespaced_name(span, namespace, property)),
         )
@@ -13383,6 +14419,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, JSXNamespacedName<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(jsx_attribute_name_from_jsx_namespaced_name));
         JSXAttributeName::NamespacedName(inner.into_in(self.allocator))
     }
 
@@ -13402,6 +14439,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(jsx_attribute_value_string_literal));
         JSXAttributeValue::StringLiteral(self.alloc(self.string_literal(span, value)))
     }
 
@@ -13411,6 +14450,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, StringLiteral<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(jsx_attribute_value_from_string_literal));
         JSXAttributeValue::StringLiteral(inner.into_in(self.allocator))
     }
 
@@ -13427,6 +14467,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: JSXExpression<'a>,
     ) -> JSXAttributeValue<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(jsx_attribute_value_jsx_expression_container));
         JSXAttributeValue::ExpressionContainer(
             self.alloc(self.jsx_expression_container(span, expression)),
         )
@@ -13441,6 +14483,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, JSXExpressionContainer<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(jsx_attribute_value_from_jsx_expression_container));
         JSXAttributeValue::ExpressionContainer(inner.into_in(self.allocator))
     }
 
@@ -13465,6 +14508,8 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a>>>,
         T2: IntoIn<'a, Option<Box<'a, JSXClosingElement<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(jsx_attribute_value_jsx_element));
         JSXAttributeValue::Element(self.alloc(self.jsx_element(
             span,
             opening_element,
@@ -13479,6 +14524,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, JSXElement<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(jsx_attribute_value_from_jsx_element));
         JSXAttributeValue::Element(inner.into_in(self.allocator))
     }
 
@@ -13499,6 +14545,8 @@ impl<'a> AstBuilder<'a> {
         closing_fragment: JSXClosingFragment,
         children: Vec<'a, JSXChild<'a>>,
     ) -> JSXAttributeValue<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(jsx_attribute_value_jsx_fragment));
         JSXAttributeValue::Fragment(self.alloc(self.jsx_fragment(
             span,
             opening_fragment,
@@ -13513,6 +14561,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, JSXFragment<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(jsx_attribute_value_from_jsx_fragment));
         JSXAttributeValue::Fragment(inner.into_in(self.allocator))
     }
 
@@ -13528,6 +14577,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(jsx_identifier));
         JSXIdentifier { span, name: name.into_in(self.allocator) }
     }
 
@@ -13558,6 +14609,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(jsx_child_jsx_text));
         JSXChild::Text(self.alloc(self.jsx_text(span, value)))
     }
 
@@ -13567,6 +14620,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, JSXText<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(jsx_child_from_jsx_text));
         JSXChild::Text(inner.into_in(self.allocator))
     }
 
@@ -13591,6 +14645,8 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a>>>,
         T2: IntoIn<'a, Option<Box<'a, JSXClosingElement<'a>>>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(jsx_child_jsx_element));
         JSXChild::Element(self.alloc(self.jsx_element(
             span,
             opening_element,
@@ -13605,6 +14661,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, JSXElement<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(jsx_child_from_jsx_element));
         JSXChild::Element(inner.into_in(self.allocator))
     }
 
@@ -13625,6 +14682,8 @@ impl<'a> AstBuilder<'a> {
         closing_fragment: JSXClosingFragment,
         children: Vec<'a, JSXChild<'a>>,
     ) -> JSXChild<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(jsx_child_jsx_fragment));
         JSXChild::Fragment(self.alloc(self.jsx_fragment(
             span,
             opening_fragment,
@@ -13639,6 +14698,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, JSXFragment<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(jsx_child_from_jsx_fragment));
         JSXChild::Fragment(inner.into_in(self.allocator))
     }
 
@@ -13655,6 +14715,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: JSXExpression<'a>,
     ) -> JSXChild<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(jsx_child_jsx_expression_container));
         JSXChild::ExpressionContainer(self.alloc(self.jsx_expression_container(span, expression)))
     }
 
@@ -13664,6 +14726,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, JSXExpressionContainer<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(jsx_child_from_jsx_expression_container));
         JSXChild::ExpressionContainer(inner.into_in(self.allocator))
     }
 
@@ -13680,6 +14743,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: Expression<'a>,
     ) -> JSXChild<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(jsx_child_jsx_spread_child));
         JSXChild::Spread(self.alloc(self.jsx_spread_child(span, expression)))
     }
 
@@ -13689,6 +14754,7 @@ impl<'a> AstBuilder<'a> {
     where
         T: IntoIn<'a, Box<'a, JSXSpreadChild<'a>>>,
     {
+        println!("{}: nodes~~", stringify!(jsx_child_from_jsx_spread_child));
         JSXChild::Spread(inner.into_in(self.allocator))
     }
 
@@ -13701,6 +14767,8 @@ impl<'a> AstBuilder<'a> {
     /// - expression: The expression being spread.
     #[inline]
     pub fn jsx_spread_child(self, span: Span, expression: Expression<'a>) -> JSXSpreadChild<'a> {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(jsx_spread_child));
         JSXSpreadChild { span, expression }
     }
 
@@ -13732,6 +14800,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.stats.nodes.set(self.stats.nodes.get() + 1);
+        println!("{}: nodes++", stringify!(jsx_text));
         JSXText { span, value: value.into_in(self.allocator) }
     }
 

@@ -37,8 +37,9 @@ fn main() -> std::io::Result<()> {
 
     let source_text = Arc::new(std::fs::read_to_string(test_file_path)?);
     let allocator = Allocator::default();
+    let stats = Stats::default();
     let source_type = SourceType::from_path(test_file_path).unwrap();
-    let parser_ret = Parser::new(&allocator, &source_text, source_type).parse();
+    let parser_ret = Parser::new(&allocator, &stats, &source_text, source_type).parse();
 
     if !parser_ret.errors.is_empty() {
         let error_message: String = parser_ret

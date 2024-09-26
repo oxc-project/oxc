@@ -2,6 +2,7 @@
 use std::{env, path::Path};
 
 use oxc_allocator::Allocator;
+use oxc_ast::stats::Stats;
 use oxc_codegen::{CodeGenerator, CodegenOptions, CommentOptions};
 use oxc_parser::{Parser, ParserReturn};
 use oxc_span::SourceType;
@@ -21,9 +22,10 @@ fn main() -> std::io::Result<()> {
     let source_text = std::fs::read_to_string(path)?;
     let source_type = SourceType::from_path(path).unwrap();
     let mut allocator = Allocator::default();
+    let stats = Stats::default();
 
     let printed = {
-        let Some(ret) = parse(&allocator, &source_text, source_type) else { return Ok(()) };
+        let Some(ret) = parse(&allocator, &stats, &source_text, source_type) else { return Ok(()) };
         codegen(&source_text, &ret, minify)
     };
     println!("First time:");
@@ -33,12 +35,12 @@ fn main() -> std::io::Result<()> {
         // Reset the allocator as we don't need the first AST any more
         allocator.reset();
 
-        let Some(ret) = parse(&allocator, &printed, source_type) else { return Ok(()) };
+        let Some(ret) = parse(&allocator, &stats, &printed, source_type) else { return Ok(()) };
         println!("Second time:");
         let printed = codegen(&printed, &ret, minify);
         println!("{printed}");
         // Check syntax error
-        parse(&allocator, &printed, source_type);
+        parse(&allocator, &stats, &printed, source_type);
     }
 
     Ok(())
@@ -46,10 +48,11 @@ fn main() -> std::io::Result<()> {
 
 fn parse<'a>(
     allocator: &'a Allocator,
+    stats: &'a Stats,
     source_text: &'a str,
     source_type: SourceType,
 ) -> Option<ParserReturn<'a>> {
-    let ret = Parser::new(allocator, source_text, source_type).parse();
+    let ret = Parser::new(allocator, stats, source_text, source_type).parse();
     if !ret.errors.is_empty() {
         for error in ret.errors {
             println!("{:?}", error.with_source_code(source_text.to_string()));

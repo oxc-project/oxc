@@ -193,6 +193,7 @@ fn should_attach_jsdoc(kind: &AstKind) -> bool {
 #[cfg(test)]
 mod test {
     use oxc_allocator::Allocator;
+    use oxc_ast::Stats;
     use oxc_parser::Parser;
     use oxc_span::{SourceType, Span};
 
@@ -201,11 +202,12 @@ mod test {
 
     fn build_semantic<'a>(
         allocator: &'a Allocator,
+        stats: &'a Stats,
         source_text: &'a str,
         source_type: Option<SourceType>,
     ) -> Semantic<'a> {
         let source_type = source_type.unwrap_or_default();
-        let ret = Parser::new(allocator, source_text, source_type).parse();
+        let ret = Parser::new(allocator, stats, source_text, source_type).parse();
         let program = allocator.alloc(ret.program);
         let semantic = SemanticBuilder::new(source_text)
             .with_trivias(ret.trivias)
@@ -217,11 +219,12 @@ mod test {
 
     fn get_jsdocs<'a>(
         allocator: &'a Allocator,
+        stats: &'a Stats,
         source_text: &'a str,
         symbol: &'a str,
         source_type: Option<SourceType>,
     ) -> Option<Vec<JSDoc<'a>>> {
-        let semantic = build_semantic(allocator, source_text, source_type);
+        let semantic = build_semantic(allocator, stats, source_text, source_type);
         let start = u32::try_from(source_text.find(symbol).unwrap_or(0)).unwrap();
         let span = Span::new(start, start + u32::try_from(symbol.len()).unwrap());
         semantic.jsdoc().get_all_by_span(span)
@@ -229,16 +232,18 @@ mod test {
 
     fn test_jsdoc_found(source_text: &str, symbol: &str, source_type: Option<SourceType>) {
         let allocator = Allocator::default();
+        let stats = Stats::default();
         assert!(
-            get_jsdocs(&allocator, source_text, symbol, source_type).is_some(),
+            get_jsdocs(&allocator, &stats, source_text, symbol, source_type).is_some(),
             "JSDoc should found for\n  {symbol} \nin\n  {source_text}"
         );
     }
 
     fn test_jsdoc_not_found(source_text: &str, symbol: &str) {
         let allocator = Allocator::default();
+        let stats = Stats::default();
         assert!(
-            get_jsdocs(&allocator, source_text, symbol, None).is_none(),
+            get_jsdocs(&allocator, &stats, source_text, symbol, None).is_none(),
             "JSDoc should NOT found for\n  {symbol} \nin\n  {source_text}"
         );
     }
@@ -370,6 +375,7 @@ mod test {
     #[test]
     fn get_all_by_span_order() {
         let allocator = Allocator::default();
+        let stats = Stats::default();
         let source_text = r"
             /**c0*/
             function foo() {}
@@ -382,7 +388,7 @@ mod test {
             const x = () => {};
         ";
         let symbol = "const x = () => {};";
-        let jsdocs = get_jsdocs(&allocator, source_text, symbol, None);
+        let jsdocs = get_jsdocs(&allocator, &stats, source_text, symbol, None);
 
         assert!(jsdocs.is_some());
         let jsdocs = jsdocs.unwrap();
@@ -401,8 +407,10 @@ mod test {
     #[test]
     fn get_all_jsdoc() {
         let allocator = Allocator::default();
+        let stats = Stats::default();
         let semantic = build_semantic(
             &allocator,
+            &stats,
             r"
             // noop
             /** 1. ; */

@@ -31,6 +31,7 @@ export const Counter: React.FC = () => {
         errors,   // Syntax errors
         panicked, // Parser encountered an error it couldn't recover from
         trivias,  // Comments, whitespace, etc.
+        stats,
     } = Parser::new(&allocator, source_text, source_type).parse();
 
     assert!(!panicked);

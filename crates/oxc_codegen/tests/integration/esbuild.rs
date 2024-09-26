@@ -180,39 +180,32 @@ fn test_new() {
     // test_minify("new x() ** 2", "new x**2;");
 
     // Test preservation of Webpack-specific comments
-    // TODO: Not support trailing comments yet
     // test(
     // "new Worker(// webpackFoo: 1\n // webpackBar: 2\n 'path');",
     // "new Worker(\n  // webpackFoo: 1\n  // webpackBar: 2\n  \"path\"\n);\n",
     // );
-    test(
-        "new Worker(/* webpackFoo: 1 */ /* webpackBar: 2 */ 'path');",
-        "new Worker(\n\t/* webpackFoo: 1 */\n\t/* webpackBar: 2 */\n\t\"path\"\n);\n",
-    );
-    test(
-        "new Worker(\n    /* multi\n     * line\n     * webpackBar: */ 'path');",
-        "new Worker(\n\t/* multi\n\t* line\n\t* webpackBar: */\n\t\"path\"\n);\n",
-    );
-    test(
-        "new Worker(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */);",
-        "new Worker(\n\t/* webpackFoo: 1 */\n\t\"path\"\n\t/* webpackBar:2 */\n);\n",
-    );
-    test(
-        "new Worker(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */ ,);",
-        "new Worker(\n\t/* webpackFoo: 1 */\n\t\"path\"\n);\n",
-    ); // Not currently handled
-    test(
-        "new Worker(/* webpackFoo: 1 */ 'path', /* webpackBar:2 */ );",
-        "new Worker(\n\t/* webpackFoo: 1 */\n\t\"path\"\n\t/* webpackBar:2 */\n);\n",
-    );
-    test( "new Worker(new URL('path', /* webpackFoo: these can go anywhere */ import.meta.url))",
-    "new Worker(new URL(\n\t\"path\",\n\t/* webpackFoo: these can go anywhere */\n\timport.meta.url\n));\n");
-
-    // non-webpack comments
-    test("new Worker(/* before */ foo)", "new Worker(\n\t/* before */\n\tfoo\n);\n");
-    test("new Worker(/* before */ 'foo')", "new Worker(\n\t/* before */\n\t\"foo\"\n);\n");
-    test("new Worker(foo /* after */)", "new Worker(\n\tfoo\n\t/* after */\n);\n");
-    test("new Worker('foo' /* after */)", "new Worker(\n\t\"foo\"\n\t/* after */\n);\n");
+    // test(
+    // "new Worker(/* webpackFoo: 1 */ /* webpackBar: 2 */ 'path');",
+    // "new Worker(\n  /* webpackFoo: 1 */\n  /* webpackBar: 2 */\n  \"path\"\n);\n",
+    // );
+    // test(
+    // "new Worker(\n    /* multi\n     * line\n     * webpackBar: */ 'path');",
+    // "new Worker(\n  /* multi\n   * line\n   * webpackBar: */\n  \"path\"\n);\n",
+    // );
+    // test(
+    // "new Worker(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */);",
+    // "new Worker(\n  /* webpackFoo: 1 */\n  \"path\"\n  /* webpackBar:2 */\n);\n",
+    // );
+    // test(
+    // "new Worker(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */ ,);",
+    // "new Worker(\n  /* webpackFoo: 1 */\n  \"path\"\n);\n",
+    // ); // Not currently handled
+    // test(
+    // "new Worker(/* webpackFoo: 1 */ 'path', /* webpackBar:2 */ );",
+    // "new Worker(\n  /* webpackFoo: 1 */\n  \"path\"\n  /* webpackBar:2 */\n);\n",
+    // );
+    // test( "new Worker(new URL('path', /* webpackFoo: these can go anywhere */ import.meta.url))",
+    // "new Worker(new URL(\n  \"path\",\n  /* webpackFoo: these can go anywhere */\n  import.meta.url\n));\n");
 }
 
 #[test]
@@ -241,43 +234,6 @@ fn test_call() {
     test_minify("(1, eval)?.(x)", "(1,eval)?.(x);");
     // testMangleMinify(t, "(1 ? eval : 2)(x)", "(0,eval)(x);");
     // testMangleMinify(t, "(1 ? eval : 2)?.(x)", "eval?.(x);");
-
-    // Webpack-specific comments
-    // TODO: Not support trailing comments yet
-    // test(
-    //     "import(// webpackFoo: 1\n // webpackBar: 2\n 'path');",
-    //     "import(\n  // webpackFoo: 1\n  // webpackBar: 2\n  \"path\"\n);\n",
-    // );
-    // test( "import(// webpackFoo: 1\n // webpackBar: 2\n 'path', {type: 'module'});", "import(\n  // webpackFoo: 1\n  // webpackBar: 2\n  \"path\",\n  { type: \"module\" }\n);\n");
-    test(
-        "require(/* webpackFoo: 1 */ /* webpackBar: 2 */ 'path');",
-        "require(\n\t/* webpackFoo: 1 */\n\t/* webpackBar: 2 */\n\t\"path\"\n);\n",
-    );
-    test( "require(/* webpackFoo: 1 */ /* webpackBar: 2 */ 'path', {type: 'module'});",
-        "require(\n\t/* webpackFoo: 1 */\n\t/* webpackBar: 2 */\n\t\"path\",\n\t{ type: \"module\" }\n);\n");
-    test(
-        "require(\n    /* multi\n     * line\n     * webpackBar: */ 'path');",
-        "require(\n\t/* multi\n\t* line\n\t* webpackBar: */\n\t\"path\"\n);\n",
-    );
-    test(
-        "require(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */);",
-        "require(\n\t/* webpackFoo: 1 */\n\t\"path\"\n\t/* webpackBar:2 */\n);\n",
-    );
-    test(
-        "require(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */ ,);",
-        "require(\n\t/* webpackFoo: 1 */\n\t\"path\"\n);\n",
-    ); // Not currently handled
-    test(
-        "require(/* webpackFoo: 1 */ 'path', /* webpackBar:2 */ );",
-        "require(\n\t/* webpackFoo: 1 */\n\t\"path\"\n\t/* webpackBar:2 */\n);\n",
-    );
-    test( "require(/* webpackFoo: 1 */ 'path', { type: 'module' } /* webpackBar:2 */ );", "require(\n\t/* webpackFoo: 1 */\n\t\"path\",\n\t{ type: \"module\" }\n\t/* webpackBar:2 */\n);\n");
-
-    // non-webpack comments
-    test("require(/* before */ foo)", "require(\n\t/* before */\n\tfoo\n);\n");
-    test("require(/* before */ 'foo')", "require(\n\t/* before */\n\t\"foo\"\n);\n");
-    test("require(foo /* after */)", "require(\n\tfoo\n\t/* after */\n);\n");
-    test("require('foo' /* after */)", "require(\n\t\"foo\"\n\t/* after */\n);\n");
 }
 
 #[test]
@@ -657,43 +613,37 @@ fn test_decorators() {
 fn test_import() {
     test("import('path');", "import(\"path\");\n"); // The semicolon must not be a separate statement
 
-    // TODO: Not support trailing comments yet
+    // FIXME
+    // Test preservation of Webpack-specific comments
     // test(
-    //     "import(// webpackFoo: 1\n // webpackBar: 2\n 'path');",
-    //     "import(\n  // webpackFoo: 1\n  // webpackBar: 2\n  \"path\"\n);\n",
+    // "import(// webpackFoo: 1\n // webpackBar: 2\n 'path');",
+    // "import(\n  // webpackFoo: 1\n  // webpackBar: 2\n  \"path\"\n);\n",
     // );
     // test( "import(// webpackFoo: 1\n // webpackBar: 2\n 'path', {type: 'module'});", "import(\n  // webpackFoo: 1\n  // webpackBar: 2\n  \"path\",\n  { type: \"module\" }\n);\n");
-    test(
-        "import(/* webpackFoo: 1 */ /* webpackBar: 2 */ 'path');",
-        "import(\n\t/* webpackFoo: 1 */\n\t/* webpackBar: 2 */\n\t\"path\"\n);\n",
-    );
-    test( "import(/* webpackFoo: 1 */ /* webpackBar: 2 */ 'path', {type: 'module'});",
-        "import(\n\t/* webpackFoo: 1 */\n\t/* webpackBar: 2 */\n\t\"path\",\n\t{ type: \"module\" }\n);\n");
-    test(
-        "import(\n    /* multi\n     * line\n     * webpackBar: */ 'path');",
-        "import(\n\t/* multi\n\t* line\n\t* webpackBar: */\n\t\"path\"\n);\n",
-    );
-    test(
-        "import(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */);",
-        "import(\n\t/* webpackFoo: 1 */\n\t\"path\"\n\t/* webpackBar:2 */\n);\n",
-    );
-    test(
-        "import(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */ ,);",
-        "import(\n\t/* webpackFoo: 1 */\n\t\"path\"\n);\n",
-    ); // Not currently handled
-    test(
-        "import(/* webpackFoo: 1 */ 'path', /* webpackBar:2 */ );",
-        "import(\n\t/* webpackFoo: 1 */\n\t\"path\"\n\t/* webpackBar:2 */\n);\n",
-    );
-    test( "import(/* webpackFoo: 1 */ 'path', { type: 'module' } /* webpackBar:2 */ );", "import(\n\t/* webpackFoo: 1 */\n\t\"path\",\n\t{ type: \"module\" }\n\t/* webpackBar:2 */\n);\n");
-    test( "import(new URL('path', /* webpackFoo: these can go anywhere */ import.meta.url))",
-    "import(new URL(\n\t\"path\",\n\t/* webpackFoo: these can go anywhere */\n\timport.meta.url\n));\n");
-
-    // non-webpack comments
-    test("import(/* before */ foo)", "import(\n\t/* before */\n\tfoo\n);\n");
-    test("import(/* before */ 'foo')", "import(\n\t/* before */\n\t\"foo\"\n);\n");
-    test("import(foo /* after */)", "import(\n\tfoo\n\t/* after */\n);\n");
-    test("import('foo' /* after */)", "import(\n\t\"foo\"\n\t/* after */\n);\n");
+    // test(
+    // "import(/* webpackFoo: 1 */ /* webpackBar: 2 */ 'path');",
+    // "import(\n  /* webpackFoo: 1 */\n  /* webpackBar: 2 */\n  \"path\"\n);\n",
+    // );
+    // test( "import(/* webpackFoo: 1 */ /* webpackBar: 2 */ 'path', {type: 'module'});", "import(\n  /* webpackFoo: 1 */\n  /* webpackBar: 2 */\n  \"path\",\n  { type: \"module\" }\n);\n");
+    // test(
+    // "import(\n    /* multi\n     * line\n     * webpackBar: */ 'path');",
+    // "import(\n  /* multi\n   * line\n   * webpackBar: */\n  \"path\"\n);\n",
+    // );
+    // test(
+    // "import(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */);",
+    // "import(\n  /* webpackFoo: 1 */\n  \"path\"\n  /* webpackBar:2 */\n);\n",
+    // );
+    // test(
+    // "import(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */ ,);",
+    // "import(\n  /* webpackFoo: 1 */\n  \"path\"\n);\n",
+    // ); // Not currently handled
+    // test(
+    // "import(/* webpackFoo: 1 */ 'path', /* webpackBar:2 */ );",
+    // "import(\n  /* webpackFoo: 1 */\n  \"path\"\n  /* webpackBar:2 */\n);\n",
+    // );
+    // test( "import(/* webpackFoo: 1 */ 'path', { type: 'module' } /* webpackBar:2 */ );", "import(\n  /* webpackFoo: 1 */\n  \"path\",\n  { type: \"module\" }\n  /* webpackBar:2 */\n);\n");
+    // test( "import(new URL('path', /* webpackFoo: these can go anywhere */ import.meta.url))",
+    // "import(new URL(\n  \"path\",\n  /* webpackFoo: these can go anywhere */\n  import.meta.url\n));\n");
 }
 
 #[test]

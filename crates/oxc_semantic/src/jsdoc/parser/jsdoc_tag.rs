@@ -186,14 +186,19 @@ impl<'a> JSDocTag<'a> {
 #[cfg(test)]
 mod test {
     use oxc_allocator::Allocator;
+    use oxc_ast::Stats;
     use oxc_parser::Parser;
     use oxc_span::SourceType;
 
     use crate::{Semantic, SemanticBuilder};
 
-    fn build_semantic<'a>(allocator: &'a Allocator, source_text: &'a str) -> Semantic<'a> {
+    fn build_semantic<'a>(
+        allocator: &'a Allocator,
+        stats: &'a Stats,
+        source_text: &'a str,
+    ) -> Semantic<'a> {
         let source_type = SourceType::default();
-        let ret = Parser::new(allocator, source_text, source_type).parse();
+        let ret = Parser::new(allocator, stats, source_text, source_type).parse();
         let program = allocator.alloc(ret.program);
         let semantic = SemanticBuilder::new(source_text)
             .with_trivias(ret.trivias)
@@ -237,7 +242,8 @@ mod test {
             ("/** single line @k4 c4 */", "@k4 c4 "),
         ] {
             let allocator = Allocator::default();
-            let semantic = build_semantic(&allocator, source_text);
+            let stats = Stats::default();
+            let semantic = build_semantic(&allocator, &stats, source_text);
             let mut jsdocs = semantic.jsdoc().iter_all();
 
             let tag = jsdocs.next().unwrap().tags().first().unwrap();
@@ -273,7 +279,8 @@ mod test {
             (" /** @あいう え */ ", "あいう", "@あいう"),
         ] {
             let allocator = Allocator::default();
-            let semantic = build_semantic(&allocator, source_text);
+            let stats = Stats::default();
+            let semantic = build_semantic(&allocator, &stats, source_text);
             let mut jsdocs = semantic.jsdoc().iter_all();
 
             let tag = jsdocs.next().unwrap().tags().first().unwrap();
@@ -310,7 +317,8 @@ mod test {
             (" /** @あいう え */ ", ("え", " え ")),
         ] {
             let allocator = Allocator::default();
-            let semantic = build_semantic(&allocator, source_text);
+            let stats = Stats::default();
+            let semantic = build_semantic(&allocator, &stats, source_text);
             let mut jsdocs = semantic.jsdoc().iter_all();
 
             let comment = jsdocs.next().unwrap().tags().first().unwrap().comment();
@@ -342,7 +350,8 @@ mod test {
             ("/** @k10 {{t10} */", None),
         ] {
             let allocator = Allocator::default();
-            let semantic = build_semantic(&allocator, source_text);
+            let stats = Stats::default();
+            let semantic = build_semantic(&allocator, &stats, source_text);
             let mut jsdocs = semantic.jsdoc().iter_all();
 
             let type_part = jsdocs.next().unwrap().tags().first().unwrap().r#type();
@@ -376,7 +385,8 @@ c5 */",
             ("/** @k6 {t6} - c6 */", Some(("t6", "{t6}")), ("- c6", " - c6 ")),
         ] {
             let allocator = Allocator::default();
-            let semantic = build_semantic(&allocator, source_text);
+            let stats = Stats::default();
+            let semantic = build_semantic(&allocator, &stats, source_text);
             let mut jsdocs = semantic.jsdoc().iter_all();
 
             let (type_part, comment_part) =
@@ -460,7 +470,8 @@ c7 */",
             ("/** @type{t16}n16*/", Some(("t16", "{t16}")), Some(("n16", "n16")), ("", "")),
         ] {
             let allocator = Allocator::default();
-            let semantic = build_semantic(&allocator, source_text);
+            let stats = Stats::default();
+            let semantic = build_semantic(&allocator, &stats, source_text);
             let mut jsdocs = semantic.jsdoc().iter_all();
 
             let (type_part, type_name_part, comment_part) =

@@ -9,9 +9,9 @@ use crate::{diagnostics::default_export_inferred, IsolatedDeclarations};
 impl<'a> IsolatedDeclarations<'a> {
     pub fn transform_export_named_declaration(
         &mut self,
-        prev_decl: &ExportNamedDeclaration<'a>,
+        prev_decl: &mut ExportNamedDeclaration<'a>,
     ) -> Option<ExportNamedDeclaration<'a>> {
-        let decl = self.transform_declaration(prev_decl.declaration.as_ref()?, false)?;
+        let decl = self.transform_declaration(prev_decl.declaration.as_mut()?, false)?;
 
         Some(self.ast.export_named_declaration(
             prev_decl.span,
@@ -35,9 +35,9 @@ impl<'a> IsolatedDeclarations<'a> {
 
     pub fn transform_export_default_declaration(
         &mut self,
-        decl: &ExportDefaultDeclaration<'a>,
+        decl: &mut ExportDefaultDeclaration<'a>,
     ) -> Option<(Option<VariableDeclaration<'a>>, ExportDefaultDeclaration<'a>)> {
-        let declaration = match &decl.declaration {
+        let declaration = match &mut decl.declaration {
             ExportDefaultDeclarationKind::FunctionDeclaration(decl) => self
                 .transform_function(decl, Some(false))
                 .map(|d| (None, ExportDefaultDeclarationKind::FunctionDeclaration(d))),

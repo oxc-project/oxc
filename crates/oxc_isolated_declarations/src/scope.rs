@@ -4,7 +4,7 @@ use bitflags::bitflags;
 use oxc_allocator::{Allocator, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
-use oxc_ast::AstBuilder;
+use oxc_ast::{stats::Stats, AstBuilder};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{visit::walk::*, Visit};
 use oxc_span::Atom;
@@ -41,8 +41,8 @@ pub struct ScopeTree<'a> {
 }
 
 impl<'a> ScopeTree<'a> {
-    pub fn new(allocator: &'a Allocator) -> Self {
-        let ast = AstBuilder::new(allocator);
+    pub fn new(allocator: &'a Allocator, stats: &'a Stats) -> Self {
+        let ast = AstBuilder::new(allocator, stats);
         let levels = ast.vec1(Scope::new(ScopeFlags::Top));
         Self { levels }
     }

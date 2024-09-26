@@ -26,52 +26,19 @@ impl<'a> Codegen<'a> {
         }
     }
 
-    pub fn has_comment(&self, start: u32) -> bool {
-        self.comments.contains_key(&start)
-    }
-
-    pub fn has_annotation_comment(&self, start: u32) -> bool {
+    pub fn has_annotation_comments(&self, start: u32) -> bool {
         let Some(source_text) = self.source_text else { return false };
         self.comments.get(&start).is_some_and(|comments| {
-            comments.iter().any(|comment| Self::is_annotation_comment(comment, source_text))
-        })
-    }
-
-    pub fn has_non_annotation_comment(&self, start: u32) -> bool {
-        let Some(source_text) = self.source_text else { return false };
-        self.comments.get(&start).is_some_and(|comments| {
-            comments.iter().any(|comment| !Self::is_annotation_comment(comment, source_text))
+            comments.iter().any(|comment| Self::is_annotation_comments(comment, source_text))
         })
     }
 
     /// Weather to keep leading comments.
     fn is_leading_comments(comment: &Comment, source_text: &str) -> bool {
-        (comment.is_jsdoc(source_text) || (comment.is_line() && Self::is_annotation_comment(comment, source_text)))
+        (comment.is_jsdoc(source_text) || (comment.is_line() && Self::is_annotation_comments(comment, source_text)))
             && comment.preceded_by_newline
             // webpack comment `/*****/`
             && !comment.span.source_text(source_text).chars().all(|c| c == '*')
-    }
-
-    fn print_comment(&mut self, comment: &Comment, source_text: &str) {
-        let comment_source = comment.real_span().source_text(source_text);
-        match comment.kind {
-            CommentKind::Line => {
-                self.print_str(comment_source);
-            }
-            CommentKind::Block => {
-                // Print block comments with our own indentation.
-                let lines = comment_source.split(is_line_terminator);
-                for line in lines {
-                    if !line.starts_with("/*") {
-                        self.print_indent();
-                    }
-                    self.print_str(line.trim_start());
-                    if !line.ends_with("*/") {
-                        self.print_hard_newline();
-                    }
-                }
-            }
-        }
     }
 
     pub(crate) fn print_leading_comments(&mut self, start: u32) {
@@ -101,7 +68,25 @@ impl<'a> Codegen<'a> {
                 self.print_indent();
             }
 
-            self.print_comment(comment, source_text);
+            let comment_source = comment.real_span().source_text(source_text);
+            match comment.kind {
+                CommentKind::Line => {
+                    self.print_str(comment_source);
+                }
+                CommentKind::Block => {
+                    // Print block comments with our own indentation.
+                    let lines = comment_source.split(is_line_terminator);
+                    for line in lines {
+                        if !line.starts_with("/*") {
+                            self.print_indent();
+                        }
+                        self.print_str(line.trim_start());
+                        if !line.ends_with("*/") {
+                            self.print_hard_newline();
+                        }
+                    }
+                }
+            }
         }
 
         if comments.last().is_some_and(|c| c.is_line() || c.followed_by_newline) {
@@ -114,7 +99,7 @@ impl<'a> Codegen<'a> {
         }
     }
 
-    fn is_annotation_comment(comment: &Comment, source_text: &str) -> bool {
+    fn is_annotation_comments(comment: &Comment, source_text: &str) -> bool {
         let comment_content = comment.span.source_text(source_text);
         ANNOTATION_MATCHER.find_iter(comment_content).count() != 0
     }
@@ -131,40 +116,11 @@ impl<'a> Codegen<'a> {
         let Some(comments) = self.comments.remove(&start) else { return };
 
         for comment in comments {
-            if !Self::is_annotation_comment(&comment, source_text) {
+            if !Self::is_annotation_comments(&comment, source_text) {
                 continue;
             }
             self.print_str(comment.real_span().source_text(source_text));
             self.print_hard_space();
-        }
-    }
-
-    pub(crate) fn print_expr_comments(&mut self, start: u32) -> bool {
-        if self.options.minify {
-            return false;
-        }
-        let Some(source_text) = self.source_text else { return false };
-        let Some(comments) = self.comments.remove(&start) else { return false };
-
-        let (annotation_comments, comments): (Vec<_>, Vec<_>) = comments
-            .into_iter()
-            .partition(|comment| Self::is_annotation_comment(comment, source_text));
-
-        if !annotation_comments.is_empty() {
-            self.comments.insert(start, annotation_comments);
-        }
-
-        for comment in &comments {
-            self.print_hard_newline();
-            self.print_indent();
-            self.print_comment(comment, source_text);
-        }
-
-        if comments.is_empty() {
-            false
-        } else {
-            self.print_hard_newline();
-            true
         }
     }
 }

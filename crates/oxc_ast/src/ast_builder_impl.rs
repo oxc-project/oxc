@@ -13,7 +13,7 @@ use oxc_syntax::{number::NumberBase, operator::UnaryOperator};
 
 #[allow(clippy::wildcard_imports)]
 use crate::ast::*;
-use crate::AstBuilder;
+use crate::{stats::Stats, AstBuilder};
 
 /// Type that can be used in any AST builder method call which requires an `IntoIn<'a, Anything<'a>>`.
 /// Pass `NONE` instead of `None::<Anything<'a>>`.
@@ -28,8 +28,8 @@ impl<'a, T> FromIn<'a, NONE> for Option<Box<'a, T>> {
 
 impl<'a> AstBuilder<'a> {
     #[inline]
-    pub fn new(allocator: &'a Allocator) -> Self {
-        Self { allocator }
+    pub fn new(allocator: &'a Allocator, stats: &'a Stats) -> Self {
+        Self { allocator, stats }
     }
 
     #[inline]

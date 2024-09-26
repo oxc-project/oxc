@@ -6,7 +6,8 @@ use oxc_span::SourceType;
 pub fn test(source_text: &str, expected: &str) {
     let source_type = SourceType::jsx();
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    let stats = Default::default();
+    let ret = Parser::new(&allocator, &stats, source_text, source_type).parse();
     let result = CodeGenerator::new()
         .enable_comment(
             source_text,
@@ -24,7 +25,8 @@ pub fn test(source_text: &str, expected: &str) {
 pub fn test_without_source(source_text: &str, expected: &str) {
     let source_type = SourceType::jsx();
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    let stats = Default::default();
+    let ret = Parser::new(&allocator, &stats, source_text, source_type).parse();
     let result = CodeGenerator::new().build(&ret.program).source_text;
     assert_eq!(
         result, expected,
@@ -35,7 +37,8 @@ pub fn test_without_source(source_text: &str, expected: &str) {
 pub fn test_minify(source_text: &str, expected: &str) {
     let source_type = SourceType::jsx();
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    let stats = Default::default();
+    let ret = Parser::new(&allocator, &stats, source_text, source_type).parse();
     let result = CodeGenerator::new()
         .with_options(CodegenOptions { minify: true, ..CodegenOptions::default() })
         .build(&ret.program)

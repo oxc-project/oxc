@@ -13,8 +13,9 @@ use oxc_span::SourceType;
 
 pub fn codegen(source_text: &str) -> String {
     let allocator = Allocator::default();
+    let stats = Default::default();
     let source_type = SourceType::ts();
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    let ret = Parser::new(&allocator, &stats, source_text, source_type).parse();
     CodeGenerator::new()
         .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
         .enable_comment(

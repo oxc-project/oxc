@@ -17,7 +17,8 @@ mod module_record_tests {
     fn build(source_text: &str) -> Arc<ModuleRecord> {
         let source_type = SourceType::mjs();
         let allocator = Allocator::default();
-        let ret = Parser::new(&allocator, source_text, source_type).parse();
+        let stats = Default::default();
+        let ret = Parser::new(&allocator, &stats, source_text, source_type).parse();
         let program = allocator.alloc(ret.program);
         let semantic_ret = SemanticBuilder::new(source_text)
             .build_module_record(Path::new(""), program)

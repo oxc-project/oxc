@@ -8,15 +8,16 @@ use oxc_span::{GetSpan, Span};
 use crate::{
     diagnostics,
     lexer::{Kind, LexerCheckpoint, LexerContext, Token},
-    Context, ParserImpl,
+    Context, ParserImpl, Stats,
 };
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct ParserCheckpoint<'a> {
     lexer: LexerCheckpoint<'a>,
     cur_token: Token,
     prev_span_end: u32,
     errors_pos: usize,
+    stats: Stats,
 }
 
 impl<'a> ParserImpl<'a> {
@@ -279,17 +280,20 @@ impl<'a> ParserImpl<'a> {
             cur_token: self.token,
             prev_span_end: self.prev_token_end,
             errors_pos: self.errors.len(),
+            // Cheap clone
+            stats: self.ast.stats.clone(),
         }
     }
 
     pub(crate) fn rewind(&mut self, checkpoint: ParserCheckpoint<'a>) {
-        let ParserCheckpoint { lexer, cur_token, prev_span_end, errors_pos: errors_lens } =
+        let ParserCheckpoint { lexer, cur_token, prev_span_end, errors_pos: errors_lens, stats } =
             checkpoint;
 
         self.lexer.rewind(lexer);
         self.token = cur_token;
         self.prev_token_end = prev_span_end;
         self.errors.truncate(errors_lens);
+        self.ast.stats.rewind(&stats);
     }
 
     /// # Errors

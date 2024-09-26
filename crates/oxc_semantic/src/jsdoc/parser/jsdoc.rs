@@ -37,14 +37,19 @@ impl<'a> JSDoc<'a> {
 #[cfg(test)]
 mod test {
     use oxc_allocator::Allocator;
+    use oxc_ast::Stats;
     use oxc_parser::Parser;
     use oxc_span::SourceType;
 
     use crate::{Semantic, SemanticBuilder};
 
-    fn build_semantic<'a>(allocator: &'a Allocator, source_text: &'a str) -> Semantic<'a> {
+    fn build_semantic<'a>(
+        allocator: &'a Allocator,
+        stats: &'a Stats,
+        source_text: &'a str,
+    ) -> Semantic<'a> {
         let source_type = SourceType::default();
-        let ret = Parser::new(allocator, source_text, source_type).parse();
+        let ret = Parser::new(allocator, stats, source_text, source_type).parse();
         let program = allocator.alloc(ret.program);
         let semantic = SemanticBuilder::new(source_text)
             .with_trivias(ret.trivias)
@@ -77,7 +82,8 @@ line2
             ),
         ] {
             let allocator = Allocator::default();
-            let semantic = build_semantic(&allocator, source_text);
+            let stats = Stats::default();
+            let semantic = build_semantic(&allocator, &stats, source_text);
             let mut jsdocs = semantic.jsdoc().iter_all();
 
             let jsdoc = jsdocs.next().unwrap();
@@ -177,7 +183,8 @@ line2
             ),
         ] {
             let allocator = Allocator::default();
-            let semantic = build_semantic(&allocator, source_text);
+            let stats = Stats::default();
+            let semantic = build_semantic(&allocator, &stats, source_text);
             let mut jsdocs = semantic.jsdoc().iter_all();
 
             let jsdoc = jsdocs.next().unwrap();
@@ -191,8 +198,10 @@ line2
     #[test]
     fn parses_practical() {
         let allocator = Allocator::default();
+        let stats = Stats::default();
         let semantic = build_semantic(
             &allocator,
+            &stats,
             "/**
               * @typedef {Object} User - a User account
               * @property {string} displayName - the name used to show the user
@@ -237,8 +246,10 @@ line2
     #[test]
     fn parses_practical_with_multibyte() {
         let allocator = Allocator::default();
+        let stats = Stats::default();
         let semantic = build_semantic(
             &allocator,
+            &stats,
             "/**
                   * flat tree data on expanded state
                   *
@@ -310,8 +321,10 @@ line2
     #[test]
     fn parses_with_backticks() {
         let allocator = Allocator::default();
+        let stats = Stats::default();
         let semantic = build_semantic(
             &allocator,
+            &stats,
             "
             /**
              * This is normal comment, `@xxx` should not parsed as tag.

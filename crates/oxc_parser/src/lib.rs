@@ -12,7 +12,7 @@
 //! source string, and a [`SourceType`]) and one return struct (a [ParserReturn]).
 //!
 //! ```rust
-//! let parser_return = Parser::new(&allocator, &source_text, source_type).parse();
+//! let parser_return = Parser::new(&allocator, &stats, &source_text, source_type).parse();
 //! ```
 //!
 //! # Abstract Syntax Tree (AST)
@@ -88,6 +88,7 @@ use context::{Context, StatementContext};
 use oxc_allocator::Allocator;
 use oxc_ast::{
     ast::{Expression, Program},
+    stats::Stats,
     AstBuilder, Trivias,
 };
 use oxc_diagnostics::{OxcDiagnostic, Result};
@@ -169,6 +170,11 @@ pub struct ParserReturn<'a> {
     /// [`program`]: ParserReturn::program
     /// [`errors`]: ParserReturn::errors
     pub panicked: bool,
+
+    /// Statistics about data held in the result.
+    ///
+    /// Comprises number of AST nodes, scopes, symbols, and references.
+    pub stats: Stats,
 }
 
 /// Parse options
@@ -216,6 +222,7 @@ impl Default for ParseOptions {
 /// See [`Parser::parse`] for entry function.
 pub struct Parser<'a> {
     allocator: &'a Allocator,
+    stats: &'a Stats,
     source_text: &'a str,
     source_type: SourceType,
     options: ParseOptions,
@@ -228,9 +235,14 @@ impl<'a> Parser<'a> {
     /// - `allocator`: [Memory arena](oxc_allocator::Allocator) for allocating AST nodes
     /// - `source_text`: Source code to parse
     /// - `source_type`: Source type (e.g. JavaScript, TypeScript, JSX, ESM Module, Script)
-    pub fn new(allocator: &'a Allocator, source_text: &'a str, source_type: SourceType) -> Self {
+    pub fn new(
+        allocator: &'a Allocator,
+        stats: &'a Stats,
+        source_text: &'a str,
+        source_type: SourceType,
+    ) -> Self {
         let options = ParseOptions::default();
-        Self { allocator, source_text, source_type, options }
+        Self { allocator, stats, source_text, source_type, options }
     }
 
     /// Set parse options
@@ -286,6 +298,7 @@ mod parser_parse {
             let unique = UniquePromise::new();
             let parser = ParserImpl::new(
                 self.allocator,
+                self.stats,
                 self.source_text,
                 self.source_type,
                 self.options,
@@ -308,7 +321,7 @@ mod parser_parse {
         /// let allocator = Allocator::new();
         /// let source_type = SourceType::default();
         ///
-        /// let expr: Expression<'_> = Parser::new(&allocator, src, source_type).parse_expression().unwrap();
+        /// let expr: Expression<'_> = Parser::new(&allocator, &stats, src, source_type).parse_expression().unwrap();
         /// ```
         ///
         /// # Errors
@@ -317,6 +330,7 @@ mod parser_parse {
             let unique = UniquePromise::new();
             let parser = ParserImpl::new(
                 self.allocator,
+                self.stats,
                 self.source_text,
                 self.source_type,
                 self.options,
@@ -369,6 +383,7 @@ impl<'a> ParserImpl<'a> {
     #[inline]
     pub fn new(
         allocator: &'a Allocator,
+        stats: &'a Stats,
         source_text: &'a str,
         source_type: SourceType,
         options: ParseOptions,
@@ -384,7 +399,7 @@ impl<'a> ParserImpl<'a> {
             prev_token_end: 0,
             state: ParserState::default(),
             ctx: Self::default_context(source_type, options),
-            ast: AstBuilder::new(allocator),
+            ast: AstBuilder::new(allocator, &stats),
         }
     }
 
@@ -421,7 +436,7 @@ impl<'a> ParserImpl<'a> {
             errors.extend(self.errors);
         }
         let trivias = self.lexer.trivia_builder.build();
-        ParserReturn { program, errors, trivias, panicked }
+        ParserReturn { program, errors, trivias, panicked, stats: self.ast.stats.clone() }
     }
 
     pub fn parse_expression(mut self) -> std::result::Result<Expression<'a>, Vec<OxcDiagnostic>> {
@@ -447,6 +462,7 @@ impl<'a> ParserImpl<'a> {
         self.set_source_type_to_script_if_unambiguous();
 
         let span = Span::new(0, self.source_text.len() as u32);
+
         Ok(self.ast.program(span, self.source_type, hashbang, directives, statements))
     }
 
@@ -537,9 +553,10 @@ mod test {
     #[test]
     fn parse_program_smoke_test() {
         let allocator = Allocator::default();
+        let stats = Stats::default();
         let source_type = SourceType::default();
         let source = "";
-        let ret = Parser::new(&allocator, source, source_type).parse();
+        let ret = Parser::new(&allocator, &stats, source, source_type).parse();
         assert!(ret.program.is_empty());
         assert!(ret.errors.is_empty());
     }
@@ -547,15 +564,17 @@ mod test {
     #[test]
     fn parse_expression_smoke_test() {
         let allocator = Allocator::default();
+        let stats = Stats::default();
         let source_type = SourceType::default();
         let source = "a";
-        let expr = Parser::new(&allocator, source, source_type).parse_expression().unwrap();
+        let expr = Parser::new(&allocator, &stats, source, source_type).parse_expression().unwrap();
         assert!(matches!(expr, Expression::Identifier(_)));
     }
 
     #[test]
     fn flow_error() {
         let allocator = Allocator::default();
+        let stats = Stats::default();
         let source_type = SourceType::default();
         let sources = [
             "// @flow\nasdf adsf",
@@ -568,7 +587,7 @@ mod test {
             "/* @flow */ super;",
         ];
         for source in sources {
-            let ret = Parser::new(&allocator, source, source_type).parse();
+            let ret = Parser::new(&allocator, &stats, source, source_type).parse();
             assert_eq!(ret.errors.len(), 1);
             assert_eq!(ret.errors.first().unwrap().to_string(), "Flow is not supported");
         }
@@ -577,15 +596,17 @@ mod test {
     #[test]
     fn ts_module_declaration() {
         let allocator = Allocator::default();
+        let stats = Stats::default();
         let source_type = SourceType::from_path(Path::new("module.ts")).unwrap();
         let source = "declare module 'test'\n";
-        let ret = Parser::new(&allocator, source, source_type).parse();
+        let ret = Parser::new(&allocator, &stats, source, source_type).parse();
         assert_eq!(ret.errors.len(), 0);
     }
 
     #[test]
     fn directives() {
         let allocator = Allocator::default();
+        let stats = Stats::default();
         let source_type = SourceType::default();
         let sources = [
             ("import x from 'foo'; 'use strict';", 2),
@@ -593,7 +614,7 @@ mod test {
             (";'use strict';", 2),
         ];
         for (source, body_length) in sources {
-            let ret = Parser::new(&allocator, source, source_type).parse();
+            let ret = Parser::new(&allocator, &stats, source, source_type).parse();
             assert!(ret.program.directives.is_empty(), "{source}");
             assert_eq!(ret.program.body.len(), body_length, "{source}");
         }
@@ -602,6 +623,7 @@ mod test {
     #[test]
     fn comments() {
         let allocator = Allocator::default();
+        let stats = Stats::default();
         let source_type = SourceType::default().with_typescript(true);
         let sources = [
             ("// line comment", CommentKind::Line),
@@ -612,7 +634,7 @@ mod test {
             ),
         ];
         for (source, kind) in sources {
-            let ret = Parser::new(&allocator, source, source_type).parse();
+            let ret = Parser::new(&allocator, &stats, source, source_type).parse();
             let comments = ret.trivias.comments().collect::<Vec<_>>();
             assert_eq!(comments.len(), 1, "{source}");
             assert_eq!(comments.first().unwrap().kind, kind, "{source}");
@@ -622,26 +644,28 @@ mod test {
     #[test]
     fn hashbang() {
         let allocator = Allocator::default();
+        let stats = Stats::default();
         let source_type = SourceType::default();
         let source = "#!/usr/bin/node\n;";
-        let ret = Parser::new(&allocator, source, source_type).parse();
+        let ret = Parser::new(&allocator, &stats, source, source_type).parse();
         assert_eq!(ret.program.hashbang.unwrap().value.as_str(), "/usr/bin/node");
     }
 
     #[test]
     fn unambiguous() {
         let allocator = Allocator::default();
+        let stats = Stats::default();
         let source_type = SourceType::unambiguous();
         assert!(source_type.is_unambiguous());
         let sources = ["import x from 'foo';", "export {x} from 'foo';", "import.meta"];
         for source in sources {
-            let ret = Parser::new(&allocator, source, source_type).parse();
+            let ret = Parser::new(&allocator, &stats, source, source_type).parse();
             assert!(ret.program.source_type.is_module());
         }
 
         let sources = ["", "import('foo')"];
         for source in sources {
-            let ret = Parser::new(&allocator, source, source_type).parse();
+            let ret = Parser::new(&allocator, &stats, source, source_type).parse();
             assert!(ret.program.source_type.is_script());
         }
     }
@@ -649,10 +673,11 @@ mod test {
     #[test]
     fn memory_leak() {
         let allocator = Allocator::default();
+        let stats = Stats::default();
         let source_type = SourceType::default();
         let sources = ["2n", ";'1234567890123456789012345678901234567890'"];
         for source in sources {
-            let ret = Parser::new(&allocator, source, source_type).parse();
+            let ret = Parser::new(&allocator, &stats, source, source_type).parse();
             assert!(!ret.program.body.is_empty());
         }
     }
@@ -678,7 +703,8 @@ mod test {
         assert_eq!(source.len(), MAX_LEN + 1);
 
         let allocator = Allocator::default();
-        let ret = Parser::new(&allocator, &source, SourceType::default()).parse();
+        let stats = Stats::default();
+        let ret = Parser::new(&allocator, &stats, &source, SourceType::default()).parse();
         assert!(ret.program.is_empty());
         assert!(ret.panicked);
         assert_eq!(ret.errors.len(), 1);
@@ -700,7 +726,8 @@ mod test {
         assert_eq!(source.len(), MAX_LEN);
 
         let allocator = Allocator::default();
-        let ret = Parser::new(&allocator, &source, SourceType::default()).parse();
+        let stats = Stats::default();
+        let ret = Parser::new(&allocator, &stats, &source, SourceType::default()).parse();
         assert!(!ret.panicked);
         assert!(ret.errors.is_empty());
         assert_eq!(ret.program.body.len(), 2);

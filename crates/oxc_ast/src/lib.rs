@@ -33,6 +33,7 @@ mod ast_builder_impl;
 mod ast_impl;
 mod ast_kind_impl;
 pub mod precedence;
+pub mod stats;
 pub mod syntax_directed_operations;
 mod trivia;
 
@@ -61,6 +62,7 @@ pub use crate::{
     ast_builder::AstBuilder,
     ast_builder_impl::NONE,
     ast_kind::{AstKind, AstType},
+    stats::Stats,
     trivia::{Comment, CommentKind, CommentPosition, SortedComments, Trivias},
     visit::{Visit, VisitMut},
 };
