@@ -12,7 +12,10 @@
     "url": "https://github.com/oxc-project/oxc",
     "directory": "npm/oxlint"
   },
-  "bin": "bin/oxlint",
+  "bin": {
+    "oxlint": "bin/oxlint",
+    "oxc_language_server":"bin/oxc_language_server"
+  },
   "funding": {
     "url": "https://github.com/sponsors/Boshen"
   },
