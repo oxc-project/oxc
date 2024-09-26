@@ -1,4 +1,5 @@
 #![allow(unused_variables, clippy::wildcard_imports)]
+use oxc_span::{GetSpan, Span};
 use walk::walk_pattern;
 
 use crate::ast::{
@@ -31,6 +32,34 @@ pub enum RegExpAstKind<'a> {
     CharacterClassString(&'a ClassString<'a>),
     IndexedReference(&'a IndexedReference),
     NamedReference(&'a NamedReference<'a>),
+}
+
+impl<'a> GetSpan for RegExpAstKind<'a> {
+    #[inline]
+    fn span(&self) -> Span {
+        match self {
+            Self::Pattern(it) => it.span,
+            Self::Disjunction(it) => it.span,
+            Self::Alternative(it) => it.span,
+            Self::Term(it) => GetSpan::span(*it),
+            Self::LookAroundAssertion(it) => it.span,
+            Self::Quantifier(it) => it.span,
+            Self::CapturingGroup(it) => it.span,
+            Self::IgnoreGroup(it) => it.span,
+            Self::BoundaryAssertion(it) => it.span,
+            Self::Character(it) => it.span,
+            Self::Dot(it) => it.span,
+            Self::CharacterClassEscape(it) => it.span,
+            Self::UnicodePropertyEscape(it) => it.span,
+            Self::CharacterClass(it) => it.span,
+            Self::CharacterClassContents(it) => GetSpan::span(*it),
+            Self::CharacterClassRange(it) => it.span,
+            Self::CharacterClassStringDisjunction(it) => it.span,
+            Self::CharacterClassString(it) => it.span,
+            Self::IndexedReference(it) => it.span,
+            Self::NamedReference(it) => it.span,
+        }
+    }
 }
 
 /// RegEx syntax tree traversal
