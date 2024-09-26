@@ -1,0 +1,111 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-return-assign): Return statement should not contain assignment.
+   ╭─[no_return_assign.tsx:1:16]
+ 1 │ function x() { return result = a * b; };
+   ·                ──────────────────────
+   ╰────
+
+  ⚠ eslint(no-return-assign): Return statement should not contain assignment.
+   ╭─[no_return_assign.tsx:1:16]
+ 1 │ function x() { return (result) = (a * b); };
+   ·                ──────────────────────────
+   ╰────
+
+  ⚠ eslint(no-return-assign): Return statement should not contain assignment.
+   ╭─[no_return_assign.tsx:1:16]
+ 1 │ function x() { return result = a * b; };
+   ·                ──────────────────────
+   ╰────
+
+  ⚠ eslint(no-return-assign): Return statement should not contain assignment.
+   ╭─[no_return_assign.tsx:1:16]
+ 1 │ function x() { return (result) = (a * b); };
+   ·                ──────────────────────────
+   ╰────
+
+  ⚠ eslint(no-return-assign): Return statement should not contain assignment.
+   ╭─[no_return_assign.tsx:1:9]
+ 1 │ () => { return result = a * b; }
+   ·         ──────────────────────
+   ╰────
+
+  ⚠ eslint(no-return-assign): Arrow function should not return assignment.
+   ╭─[no_return_assign.tsx:1:1]
+ 1 │ () => result = a * b
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint(no-return-assign): Return statement should not contain assignment.
+   ╭─[no_return_assign.tsx:1:16]
+ 1 │ function x() { return result = a * b; };
+   ·                ──────────────────────
+   ╰────
+
+  ⚠ eslint(no-return-assign): Return statement should not contain assignment.
+   ╭─[no_return_assign.tsx:1:16]
+ 1 │ function x() { return (result = a * b); };
+   ·                ────────────────────────
+   ╰────
+
+  ⚠ eslint(no-return-assign): Return statement should not contain assignment.
+   ╭─[no_return_assign.tsx:1:16]
+ 1 │ function x() { return result || (result = a * b); };
+   ·                ──────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-return-assign): Return statement should not contain assignment.
+   ╭─[no_return_assign.tsx:2:20]
+ 1 │ function foo(){
+ 2 │                             return a = b
+   ·                             ────────────
+ 3 │                         }
+   ╰────
+
+  ⚠ eslint(no-return-assign): Return statement should not contain assignment.
+   ╭─[no_return_assign.tsx:2:20]
+ 1 │ function doSomething() {
+ 2 │                             return foo = bar && foo > 0;
+   ·                             ────────────────────────────
+ 3 │                         }
+   ╰────
+
+  ⚠ eslint(no-return-assign): Return statement should not contain assignment.
+   ╭─[no_return_assign.tsx:2:20]
+ 1 │     function doSomething() {
+ 2 │ ╭─▶                             return foo = function(){
+ 3 │ │                                   return (bar = bar1)
+ 4 │ ╰─▶                             }
+ 5 │                             }
+   ╰────
+
+  ⚠ eslint(no-return-assign): Return statement should not contain assignment.
+   ╭─[no_return_assign.tsx:2:20]
+ 1 │ function doSomething() {
+ 2 │                             return foo = () => a
+   ·                             ────────────────────
+ 3 │                         }
+   ╰────
+
+  ⚠ eslint(no-return-assign): Arrow function should not return assignment.
+   ╭─[no_return_assign.tsx:2:27]
+ 1 │ function doSomething() {
+ 2 │                             return () => a = () => b
+   ·                                    ─────────────────
+ 3 │                         }
+   ╰────
+
+  ⚠ eslint(no-return-assign): Return statement should not contain assignment.
+   ╭─[no_return_assign.tsx:3:24]
+ 2 │                             return function bar(b){
+ 3 │                                 return a = b
+   ·                                 ────────────
+ 4 │                             }
+   ╰────
+
+  ⚠ eslint(no-return-assign): Arrow function should not return assignment.
+   ╭─[no_return_assign.tsx:1:20]
+ 1 │ const foo = (a) => (b) => a = b
+   ·                    ────────────
+   ╰────
