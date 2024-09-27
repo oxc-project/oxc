@@ -3,8 +3,9 @@ use memchr::memchr2;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_regular_expression::ast::{
-    Alternative, CharacterClass, CharacterClassContents, Disjunction, Pattern, Term,
+use oxc_regular_expression::{
+    ast::CharacterClass,
+    visit::{walk::walk_character_class, Visit},
 };
 use oxc_span::Span;
 
@@ -48,65 +49,26 @@ impl Rule for NoEmptyCharacterClass {
                 return;
             }
 
-            visit_terms(pattern, &mut |term| {
-                if let Term::CharacterClass(class) = term {
-                    check_character_class(ctx, class);
-                }
-            });
+            let mut finder = EmptyClassFinder { empty_classes: vec![] };
+            finder.visit_pattern(pattern);
+
+            for span in finder.empty_classes {
+                ctx.diagnostic(no_empty_character_class_diagnostic(span));
+            }
         }
     }
 }
 
-fn check_character_class(ctx: &LintContext, class: &CharacterClass) {
-    // Class has nothing in it, example: `/[]/`
-    if !class.negative && class.body.is_empty() {
-        ctx.diagnostic(no_empty_character_class_diagnostic(class.span));
-        return;
-    }
-
-    // Class has something in it, but might contain empty nested character classes,
-    // example: `/[[]]/`
-    for term in &class.body {
-        if let CharacterClassContents::NestedCharacterClass(class) = term {
-            check_character_class(ctx, class);
-        }
-    }
+struct EmptyClassFinder {
+    empty_classes: Vec<Span>,
 }
 
-// TODO: Replace with proper regex AST visitor when available
-/// Calls the given closure on every [`Term`] in the [`Pattern`].
-fn visit_terms<'a, F: FnMut(&'a Term<'a>)>(pattern: &'a Pattern, f: &mut F) {
-    visit_terms_disjunction(&pattern.body, f);
-}
-
-/// Calls the given closure on every [`Term`] in the [`Disjunction`].
-fn visit_terms_disjunction<'a, F: FnMut(&'a Term<'a>)>(disjunction: &'a Disjunction, f: &mut F) {
-    for alternative in &disjunction.body {
-        visit_terms_alternative(alternative, f);
-    }
-}
-
-/// Calls the given closure on every [`Term`] in the [`Alternative`].
-fn visit_terms_alternative<'a, F: FnMut(&'a Term<'a>)>(alternative: &'a Alternative, f: &mut F) {
-    for term in &alternative.body {
-        match term {
-            Term::LookAroundAssertion(lookaround) => {
-                f(term);
-                visit_terms_disjunction(&lookaround.body, f);
-            }
-            Term::Quantifier(quant) => {
-                f(term);
-                f(&quant.body);
-            }
-            Term::CapturingGroup(group) => {
-                f(term);
-                visit_terms_disjunction(&group.body, f);
-            }
-            Term::IgnoreGroup(group) => {
-                f(term);
-                visit_terms_disjunction(&group.body, f);
-            }
-            _ => f(term),
+impl<'a> Visit<'a> for EmptyClassFinder {
+    fn visit_character_class(&mut self, class: &CharacterClass) {
+        if !class.negative && class.body.is_empty() {
+            self.empty_classes.push(class.span);
+        } else {
+            walk_character_class(self, class);
         }
     }
 }
