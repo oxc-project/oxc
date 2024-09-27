@@ -12,10 +12,10 @@ This is still in alpha and may yield incorrect results, feel free to [submit a b
 import assert from 'assert';
 import oxc from 'oxc-transform';
 
-const { sourceMap, sourceText, errors } = oxc.isolatedDeclaration('test.ts', 'class A {}', { sourcemap: true });
+const { map, code, errors } = oxc.isolatedDeclaration('test.ts', 'class A {}', { sourcemap: true });
 
-assert.equal(sourceText, 'declare class A {}\n');
-assert.deepEqual(ret.sourceMap, {
+assert.equal(code, 'declare class A {}\n');
+assert.deepEqual(map, {
   mappings: 'AAAA,cAAM,EAAE,CAAE',
   names: [],
   sources: ['test.ts'],
@@ -30,15 +30,17 @@ assert(errors.length == 0);
 export function isolatedDeclaration(
   filename: string,
   sourceText: string,
-  options: IsolatedDeclarationsOptions,
+  options?: IsolatedDeclarationsOptions,
 ): IsolatedDeclarationsResult;
 
 export interface IsolatedDeclarationsOptions {
-  sourcemap: boolean;
+  stripInternal?: boolean;
+  sourcemap?: boolean;
 }
 
 export interface IsolatedDeclarationsResult {
-  sourceText: string;
+ code: string;
+  map?: SourceMap;
   errors: Array<string>;
 }
 ```
