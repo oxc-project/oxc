@@ -9,8 +9,8 @@ import assert from 'assert';
 import oxc from 'oxc-transform';
 
 const { code, declaration, errors } = oxc.transform(
-  "test.ts",
-  "class A<T> {}",
+  'test.ts',
+  'class A<T> {}',
   {
     typescript: {
       declaration: true, // With isolated declarations in a single step.
@@ -18,8 +18,8 @@ const { code, declaration, errors } = oxc.transform(
   },
 );
 
-assert.equal(code, "class A {}\n");
-assert.equal(declaration, "declare class A<T> {}\n");
+assert.equal(code, 'class A {}\n');
+assert.equal(declaration, 'declare class A<T> {}\n');
 assert(errors.length == 0);
 ```
 
@@ -45,9 +45,9 @@ See `index.d.ts`.
 
 ```typescript
 export declare function transform(
-    filename: string,
-    sourceText: string,
-    options?: TransformOptions
+  filename: string,
+  sourceText: string,
+  options?: TransformOptions,
 ): TransformResult;
 
 export function isolatedDeclaration(
