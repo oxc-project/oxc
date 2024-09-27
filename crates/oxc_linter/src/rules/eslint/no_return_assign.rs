@@ -20,7 +20,7 @@ declare_oxc_lint!(
     /// Disallows assignment operators in return statements
     ///
     /// ### Why is this bad?
-    /// Assignment is allowed by js in return expression, but usually, an expression with only one equal sign is intended to be a comparison.
+    /// Assignment is allowed by js in return expressions, but usually, an expression with only one equal sign is intended to be a comparison.
     /// However, because of the missing equal sign, this turns to assignment, which is valid js code
     /// Because of this ambiguity, it’s considered a best practice to not use assignment in return statements.
     ///
@@ -73,24 +73,22 @@ impl Rule for NoReturnAssign {
             while parent_node.is_some_and(|parent| !is_sentinel_node(parent.kind())) {
                 parent_node = ctx.nodes().parent_node(parent_node.unwrap().id());
             }
-            if parent_node.is_none() {
-                return;
-            }
-            let parent = parent_node.unwrap();
-            match parent.kind() {
-                AstKind::ReturnStatement(_) => {
-                    ctx.diagnostic(no_return_assign_diagnostic(
-                        parent.span(),
-                        "Return statement should not contain assignment.",
-                    ));
+            if let Some(parent) = parent_node {
+                match parent.kind() {
+                    AstKind::ReturnStatement(_) => {
+                        ctx.diagnostic(no_return_assign_diagnostic(
+                            parent.span(),
+                            "Return statement should not contain an assignment.",
+                        ));
+                    }
+                    AstKind::ArrowFunctionExpression(_) => {
+                        ctx.diagnostic(no_return_assign_diagnostic(
+                            parent.span(),
+                            "Arrow function should not return an assignment.",
+                        ));
+                    }
+                    _ => (),
                 }
-                AstKind::ArrowFunctionExpression(_) => {
-                    ctx.diagnostic(no_return_assign_diagnostic(
-                        parent.span(),
-                        "Arrow function should not return assignment.",
-                    ));
-                }
-                _ => (),
             }
         }
     }
