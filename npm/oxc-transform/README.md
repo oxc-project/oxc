@@ -39,7 +39,7 @@ export interface IsolatedDeclarationsOptions {
 }
 
 export interface IsolatedDeclarationsResult {
- code: string;
+  code: string;
   map?: SourceMap;
   errors: Array<string>;
 }
