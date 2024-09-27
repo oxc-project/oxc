@@ -2,6 +2,10 @@
 source: crates/oxc_semantic/tests/main.rs
 input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-enum/self-ref.ts
 ---
+================================================================================
+SCOPES
+================================================================================
+
 [
   {
     "children": [
@@ -49,3 +53,9 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-enum/self-re
     ]
   }
 ]
+
+================================================================================
+CONFORMANCE
+================================================================================
+
+All tests passed.

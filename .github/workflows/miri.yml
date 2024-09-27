@@ -40,4 +40,6 @@ jobs:
           cargo miri setup
 
       - name: Test with Miri
-        run: cargo miri test -p oxc_parser
+        run: |
+          cargo miri test -p oxc_parser
+          cargo miri test -p oxc_transformer

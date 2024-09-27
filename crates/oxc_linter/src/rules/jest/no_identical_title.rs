@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use oxc_ast::{
     ast::{Argument, CallExpression},
     AstKind,
@@ -8,6 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::Span;
+use rustc_hash::FxHashMap;
 
 use crate::{
     context::LintContext,
@@ -74,8 +73,8 @@ declare_oxc_lint!(
 impl Rule for NoIdenticalTitle {
     fn run_once(&self, ctx: &LintContext) {
         let possible_jest_nodes = collect_possible_jest_call_node(ctx);
-        let mut title_to_span_mapping = HashMap::new();
-        let mut span_to_parent_mapping = HashMap::new();
+        let mut title_to_span_mapping = FxHashMap::default();
+        let mut span_to_parent_mapping = FxHashMap::default();
 
         possible_jest_nodes
             .iter()

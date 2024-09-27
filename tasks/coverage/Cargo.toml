@@ -33,9 +33,9 @@ futures = { workspace = true }
 lazy_static = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 pico-args = { workspace = true }
-project-root = { workspace = true }
 rayon = { workspace = true }
 regex = { workspace = true }
+rustc-hash = { workspace = true }
 saphyr = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }

@@ -38,6 +38,15 @@ impl<'a, 'b> CallExpressionLike<'a, 'b> {
             CallExpressionLike::NewExpression(new) => &new.arguments,
         }
     }
+
+    pub fn type_parameters(
+        &self,
+    ) -> &Option<oxc_allocator::Box<'a, TSTypeParameterInstantiation<'a>>> {
+        match self {
+            CallExpressionLike::CallExpression(call) => &call.type_parameters,
+            CallExpressionLike::NewExpression(new) => &new.type_parameters,
+        }
+    }
 }
 
 impl GetSpan for CallExpressionLike<'_, '_> {
@@ -60,6 +69,10 @@ pub(super) fn print_call_expression<'a>(
     };
 
     parts.push(expression.callee().format(p));
+
+    if let Some(type_parameters) = expression.type_parameters() {
+        parts.push(type_parameters.format(p));
+    }
 
     if expression.optional() {
         parts.push(ss!("?."));

@@ -16,12 +16,29 @@ use serde::{Serialize, Serializer};
 
 use crate::Allocator;
 
-/// A Box without Drop.
+/// A Box without [`Drop`].
+///
 /// This is used for over coming self-referential structs.
-/// It is a memory leak if the boxed value has a `Drop` implementation.
+/// It is a memory leak if the boxed value has a [`Drop`] implementation.
 pub struct Box<'alloc, T: ?Sized>(NonNull<T>, PhantomData<(&'alloc (), T)>);
 
 impl<'alloc, T> Box<'alloc, T> {
+    /// Take ownership of the value stored in this [`Box`], consuming the box in
+    /// the process.
+    ///
+    /// ## Example
+    /// ```
+    /// use oxc_allocator::{Allocator, Box};
+    ///
+    /// let arena = Allocator::default();
+    ///
+    /// // Put `5` into the arena and on the heap.
+    /// let boxed: Box<i32> = Box::new_in(5, &arena);
+    /// // Move it back to the stack. `boxed` has been consumed.
+    /// let i = boxed.unbox();
+    ///
+    /// assert_eq!(i, 5);
+    /// ```
     pub fn unbox(self) -> T {
         // SAFETY:
         // This pointer read is safe because the reference `self.0` is
@@ -34,11 +51,22 @@ impl<'alloc, T> Box<'alloc, T> {
 }
 
 impl<'alloc, T> Box<'alloc, T> {
+    /// Put a `value` into a memory arena and get back a [`Box`] with ownership
+    /// to the allocation.
+    ///
+    /// ## Example
+    /// ```
+    /// use oxc_allocator::{Allocator, Box};
+    ///
+    /// let arena = Allocator::default();
+    /// let in_arena: Box<i32> = Box::new_in(5, &arena);
+    /// ```
     pub fn new_in(value: T, allocator: &Allocator) -> Self {
         Self(NonNull::from(allocator.alloc(value)), PhantomData)
     }
 
-    /// Create a fake `Box` with a dangling pointer.
+    /// Create a fake [`Box`] with a dangling pointer.
+    ///
     /// # SAFETY
     /// Safe to create, but must never be dereferenced, as does not point to a valid `T`.
     /// Only purpose is for mocking types without allocating for const assertions.

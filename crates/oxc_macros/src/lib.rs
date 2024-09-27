@@ -3,6 +3,7 @@ use syn::parse_macro_input;
 
 mod declare_all_lint_rules;
 mod declare_oxc_lint;
+mod declare_oxc_secret;
 
 /// Macro used to declare an oxc lint rule
 ///
@@ -100,4 +101,66 @@ pub fn declare_oxc_lint_test(input: TokenStream) -> TokenStream {
 pub fn declare_all_lint_rules(input: TokenStream) -> TokenStream {
     let metadata = parse_macro_input!(input as declare_all_lint_rules::AllLintRulesMeta);
     declare_all_lint_rules::declare_all_lint_rules(metadata)
+}
+
+/// Declare a secret scanner for `oxc-security/api-keys`.
+///
+/// Scanner definitions are composed of:
+/// 1. The scanner struct name,
+/// 2. A message displayed in diagnostics,
+/// 3. A set of `key = value` config pairs.
+///
+/// # Pre-Verify Configuration
+///
+/// These configs filter secret candidates before `verify` is ever called. This
+/// is for performance reasons, as many `verify` implementations use expensive
+/// checks (such as regular expression matching). All configs are optional.
+///
+/// The following config key/value pairs are available:
+///
+/// ## `entropy` ([`f32`])
+/// Minimum [Shannon
+/// entropy](https://en.wikipedia.org/wiki/Entropy_(information_theory)) a
+/// candidate must have to be considered a violation. Must be a positive,
+/// non-zero `f32`. Defaults to `0.5`.
+///
+/// ## `min_len` ([`NonZeroU32`])
+/// Minimum length a key candidate must have to be considered a violation. This
+/// is a `u32` greater than 0. Defaults to `8`.
+///
+/// ## `max_len` ([`Option<NonZeroU32>`])
+/// Maximum length a key candidate must have to be considered a violation. This
+/// is a `u32` greater than 0. By default, no maximum is enforced ([`None`]).
+///
+/// # Example
+/// ```
+/// use oxc_macros::declare_oxc_secret;
+/// use super::SecretScanner;
+///
+/// #[derive(Debug, Default, Clone)]
+/// pub struct AwsAccessKeyId;
+///
+/// declare_oxc_secret! {
+///     AwsAccessKeyId,
+///     "Detected an AWS Access Key ID, which can be used to access AWS resources.",
+///     entropy = 4.0,
+///     min_len = 20,
+///     max_len = 20,
+/// }
+///
+/// impl SecretScanner for AwsAccessKeyId {
+///     fn detect(&self, candidate: &Secret<'_>) -> bool {
+///         // Look for AKIA, ASIA, or AIDA
+///         ["AKIA", "ASIA", "AIDA"].iter().any(|prefix| candidate.starts_with(prefix)) &&
+///         !candidate.cha
+///     }
+/// }
+///
+/// ```
+///
+/// [`NonZeroU32`]: std::num::NonZeroU32
+#[proc_macro]
+pub fn declare_oxc_secret(input: TokenStream) -> TokenStream {
+    let metadata = parse_macro_input!(input as declare_oxc_secret::SecretRuleMeta);
+    declare_oxc_secret::declare_oxc_secret(metadata)
 }

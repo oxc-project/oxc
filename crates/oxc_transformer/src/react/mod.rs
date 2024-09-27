@@ -70,6 +70,9 @@ impl<'a> React<'a> {
 
 impl<'a> Traverse<'a> for React<'a> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.jsx_plugin {
+            program.source_type = program.source_type.with_standard(true);
+        }
         if self.refresh_plugin {
             self.refresh.enter_program(program, ctx);
         }
@@ -81,6 +84,8 @@ impl<'a> Traverse<'a> for React<'a> {
         }
         if self.jsx_plugin {
             self.jsx.exit_program(program, ctx);
+        } else if self.jsx_source_plugin {
+            self.jsx.jsx_source.exit_program(program, ctx);
         }
     }
 

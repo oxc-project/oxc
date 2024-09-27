@@ -1,3 +1,5 @@
+#![allow(rustdoc::bare_urls)]
+
 use std::path::PathBuf;
 
 use napi::Either;
@@ -6,6 +8,8 @@ use oxc_transformer::{
     ArrowFunctionsOptions, ES2015Options, ReactJsxRuntime, ReactOptions, ReactRefreshOptions,
     RewriteExtensionsMode, TypeScriptOptions,
 };
+
+use crate::IsolatedDeclarationsOptions;
 
 #[napi(object)]
 #[derive(Default)]
@@ -22,7 +26,7 @@ pub struct TypeScriptBindingOptions {
     /// requirements.
     ///
     /// @default false
-    pub declaration: Option<bool>,
+    pub declaration: Option<IsolatedDeclarationsOptions>,
     /// Rewrite or remove TypeScript import/export declaration extensions.
     ///
     /// - When set to `rewrite`, it will change `.ts`, `.mts`, `.cts` extensions to `.js`, `.mjs`, `.cjs` respectively.
@@ -69,7 +73,7 @@ impl From<TypeScriptBindingOptions> for TypeScriptOptions {
 
 /// Configure how TSX and JSX are transformed.
 ///
-/// @see [@babel/plugin-transform-react-jsx](https://babeljs.io/docs/babel-plugin-transform-react-jsx#options)
+/// @see {@link https://babeljs.io/docs/babel-plugin-transform-react-jsx#options}
 #[napi(object)]
 pub struct ReactBindingOptions {
     /// Decides which runtime to use.
@@ -85,7 +89,7 @@ pub struct ReactBindingOptions {
     ///
     /// @default false
     ///
-    /// @see [@babel/plugin-transform-react-jsx-development](https://babeljs.io/docs/babel-plugin-transform-react-jsx-development)
+    /// @see {@link https://babeljs.io/docs/babel-plugin-transform-react-jsx-development}
     pub development: Option<bool>,
 
     /// Toggles whether or not to throw an error if an XML namespaced tag name
@@ -97,9 +101,11 @@ pub struct ReactBindingOptions {
     /// @default true
     pub throw_if_namespace: Option<bool>,
 
-    /// Enables [@babel/plugin-transform-react-pure-annotations](https://babeljs.io/docs/en/babel-plugin-transform-react-pure-annotations).
+    /// Enables `@babel/plugin-transform-react-pure-annotations`.
     ///
     /// It will mark top-level React method calls as pure for tree shaking.
+    ///
+    /// @see {@link https://babeljs.io/docs/en/babel-plugin-transform-react-pure-annotations}
     ///
     /// @default true
     pub pure: Option<bool>,

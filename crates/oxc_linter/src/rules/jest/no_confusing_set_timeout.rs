@@ -1,11 +1,10 @@
-use std::collections::HashMap;
-
 use cow_utils::CowUtils;
 use oxc_ast::{ast::MemberExpression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, NodeId, ReferenceId};
 use oxc_span::{GetSpan, Span};
+use rustc_hash::FxHashMap;
 
 use crate::{
     context::LintContext,
@@ -80,10 +79,11 @@ impl Rule for NoConfusingSetTimeout {
         let scopes = ctx.scopes();
         let symbol_table = ctx.symbols();
         let possible_nodes = collect_possible_jest_call_node(ctx);
-        let id_to_jest_node_map = possible_nodes.iter().fold(HashMap::new(), |mut acc, cur| {
-            acc.insert(cur.node.id(), cur);
-            acc
-        });
+        let id_to_jest_node_map =
+            possible_nodes.iter().fold(FxHashMap::default(), |mut acc, cur| {
+                acc.insert(cur.node.id(), cur);
+                acc
+            });
 
         let mut jest_reference_id_list: Vec<(ReferenceId, Span)> = vec![];
         let mut seen_jest_set_timeout = false;
@@ -151,7 +151,7 @@ fn handle_jest_set_time_out<'a>(
     reference_id_list: impl Iterator<Item = ReferenceId>,
     jest_reference_id_list: &Vec<(ReferenceId, Span)>,
     seen_jest_set_timeout: &mut bool,
-    id_to_jest_node_map: &HashMap<NodeId, &PossibleJestNode<'a, '_>>,
+    id_to_jest_node_map: &FxHashMap<NodeId, &PossibleJestNode<'a, '_>>,
 ) {
     let nodes = ctx.nodes();
     let scopes = ctx.scopes();
@@ -199,7 +199,7 @@ fn handle_jest_set_time_out<'a>(
 
 fn is_jest_fn_call<'a>(
     parent_node: &AstNode<'a>,
-    id_to_jest_node_map: &HashMap<NodeId, &PossibleJestNode<'a, '_>>,
+    id_to_jest_node_map: &FxHashMap<NodeId, &PossibleJestNode<'a, '_>>,
     ctx: &LintContext<'a>,
 ) -> bool {
     let mut id = parent_node.id();

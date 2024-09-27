@@ -1,11 +1,6 @@
 #[derive(Debug, Clone, Copy)]
 pub struct CompressOptions {
-    pub remove_syntax: bool,
-    pub minimize_conditions: bool,
-    pub substitute_alternate_syntax: bool,
-    pub fold_constants: bool,
-    pub remove_dead_code: bool,
-    pub collapse: bool,
+    pub dead_code_elimination: bool,
 
     /// Various optimizations for boolean context, for example `!!a ? b : c` → `a ? b : c`.
     ///
@@ -46,19 +41,14 @@ pub struct CompressOptions {
 #[allow(clippy::derivable_impls)]
 impl Default for CompressOptions {
     fn default() -> Self {
-        Self { drop_console: false, ..Self::all_true() }
+        Self { dead_code_elimination: false, drop_console: false, ..Self::all_true() }
     }
 }
 
 impl CompressOptions {
     pub fn all_true() -> Self {
         Self {
-            remove_syntax: true,
-            minimize_conditions: true,
-            substitute_alternate_syntax: true,
-            fold_constants: true,
-            remove_dead_code: true,
-            collapse: true,
+            dead_code_elimination: false,
             booleans: true,
             drop_debugger: true,
             drop_console: true,
@@ -71,12 +61,7 @@ impl CompressOptions {
 
     pub fn all_false() -> Self {
         Self {
-            remove_syntax: false,
-            minimize_conditions: false,
-            substitute_alternate_syntax: false,
-            fold_constants: false,
-            remove_dead_code: false,
-            collapse: false,
+            dead_code_elimination: false,
             booleans: false,
             drop_debugger: false,
             drop_console: false,
@@ -88,12 +73,6 @@ impl CompressOptions {
     }
 
     pub fn dead_code_elimination() -> Self {
-        Self {
-            remove_syntax: true,
-            minimize_conditions: true,
-            fold_constants: true,
-            remove_dead_code: true,
-            ..Self::all_false()
-        }
+        Self { dead_code_elimination: true, ..Self::all_false() }
     }
 }

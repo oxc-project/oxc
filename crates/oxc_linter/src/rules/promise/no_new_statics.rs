@@ -26,7 +26,7 @@ declare_oxc_lint!(
     /// Calling a static `Promise` method with `new` is invalid and will result
     /// in a `TypeError` at runtime.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript

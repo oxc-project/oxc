@@ -11,7 +11,7 @@ use oxc_diagnostics::{Error, NamedSource, OxcDiagnostic};
 use oxc_parser::{Parser, ParserReturn};
 use oxc_span::SourceType;
 
-use crate::TransformOptions;
+use crate::{IsolatedDeclarationsOptions, TransformOptions};
 
 #[must_use]
 pub(crate) struct TransformContext<'a> {
@@ -27,7 +27,7 @@ pub(crate) struct TransformContext<'a> {
     /// Generate `.d.ts` files?
     ///
     /// Used by [`crate::transform`].
-    declarations: bool,
+    declarations: Option<IsolatedDeclarationsOptions>,
 
     /// Path to the file being transformed.
     filename: &'a str,
@@ -53,11 +53,8 @@ impl<'a> TransformContext<'a> {
         // Options that are added by this napi crates and don't exist in
         // oxc_transformer.
         let source_map = options.as_ref().and_then(|o| o.sourcemap).unwrap_or_default();
-        let declarations = options
-            .as_ref()
-            .and_then(|o| o.typescript.as_ref())
-            .and_then(|t| t.declaration)
-            .unwrap_or_default();
+        let declarations =
+            options.as_ref().and_then(|o| o.typescript.as_ref()).and_then(|t| t.declaration);
 
         // Insert options into the cell if provided. Otherwise they will be
         // initialized to default when first accessed.
@@ -103,8 +100,8 @@ impl<'a> TransformContext<'a> {
     }
 
     #[inline]
-    pub(crate) fn declarations(&self) -> bool {
-        self.declarations
+    pub(crate) fn declarations(&self) -> Option<&IsolatedDeclarationsOptions> {
+        self.declarations.as_ref()
     }
 
     #[inline]

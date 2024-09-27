@@ -80,9 +80,11 @@ pub fn transform(
     let allocator = Allocator::default();
     let ctx = TransformContext::new(&allocator, &filename, &source_text, source_type, options);
 
-    let should_build_types = ctx.declarations() && source_type.is_typescript();
-    let declarations_result =
-        should_build_types.then(|| isolated_declaration::build_declarations(&ctx));
+    let declarations_result = source_type
+        .is_typescript()
+        .then(|| ctx.declarations())
+        .flatten()
+        .map(|options| isolated_declaration::build_declarations(&ctx, *options));
 
     let transpile_result = transpile(&ctx);
 

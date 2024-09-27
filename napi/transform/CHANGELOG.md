@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.30.0] - 2024-09-23
+
+### Features
+
+- 84a5816 isolated_declarations: Add `stripInternal` (#5878) (Boshen)
+- dfbde2c isolated_declarations: Print jsdoc comments (#5858) (Boshen)
+- 3230ae5 semantic: Add `SemanticBuilder::with_excess_capacity` (#5762) (overlookmotel)
+
+### Bug Fixes
+
+- 127c881 napi/transform: Fix jsdoc links (#5886) (Boshen)
+- 6c04fa1 napi/transform: Make isolated_declaration options optional (#5880) (Boshen)
+
 ## [0.29.0] - 2024-09-13
 
 ### Bug Fixes

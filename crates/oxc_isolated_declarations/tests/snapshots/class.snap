@@ -2,6 +2,7 @@
 source: crates/oxc_isolated_declarations/tests/mod.rs
 input_file: crates/oxc_isolated_declarations/tests/fixtures/class.ts
 ---
+```
 ==================== .D.TS ====================
 
 export declare class Foo {
@@ -20,11 +21,17 @@ export declare abstract class Qux {
 	baz(): void;
 }
 export declare class Baz {
+	/** Just a comment */
 	readonly prop1 = "some string";
+	/** Just a comment */
 	prop2: string;
+	/** Just a comment */
 	private prop3;
+	/** Just a comment */
 	private prop4;
+	/** Just a comment */
 	private static prop5;
+	/** Just a comment */
 	private static prop6;
 }
 export declare class Boo {
@@ -39,3 +46,40 @@ export declare class Bux {
 	readonly prop3: number;
 	private constructor();
 }
+export declare class PrivateFieldsWithConstructorAssignments {
+	first: number;
+	private second;
+	constructor(first: number);
+}
+export declare class PrivateMethodClass {
+	private good;
+	private get goodGetter();
+}
+export declare class PublicMethodClass {
+	bad(a): void;
+	get badGetter(): {};
+}
+
+
+==================== Errors ====================
+
+  x TS9038: Computed property names on class or object literals cannot be
+  | inferred with --isolatedDeclarations.
+    ,-[69:14]
+ 68 |   public get badGetter() {
+ 69 |     return {[('x')]: 1};
+    :              ^^^^^
+ 70 |   }
+    `----
+
+  x TS9011: Parameter must have an explicit type annotation with
+  | --isolatedDeclarations.
+    ,-[67:14]
+ 66 | export class PublicMethodClass {
+ 67 |   public bad(a): void {}
+    :              ^
+ 68 |   public get badGetter() {
+    `----
+
+
+```

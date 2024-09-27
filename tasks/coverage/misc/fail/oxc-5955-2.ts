@@ -1,0 +1,4 @@
+
+interface B {
+    e()?: number;
+}

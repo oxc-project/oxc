@@ -295,6 +295,14 @@ impl SourceType {
     }
 
     #[must_use]
+    pub const fn with_javascript(mut self, yes: bool) -> Self {
+        if yes {
+            self.language = Language::JavaScript;
+        }
+        self
+    }
+
+    #[must_use]
     pub const fn with_typescript(mut self, yes: bool) -> Self {
         if yes {
             self.language = Language::TypeScript;
@@ -314,6 +322,14 @@ impl SourceType {
     pub const fn with_jsx(mut self, yes: bool) -> Self {
         if yes {
             self.variant = LanguageVariant::Jsx;
+        }
+        self
+    }
+
+    #[must_use]
+    pub const fn with_standard(mut self, yes: bool) -> Self {
+        if yes {
+            self.variant = LanguageVariant::Standard;
         }
         self
     }

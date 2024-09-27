@@ -108,6 +108,7 @@ mod eslint {
     pub mod no_this_before_super;
     pub mod no_undef;
     pub mod no_undefined;
+    pub mod no_unexpected_multiline;
     pub mod no_unreachable;
     pub mod no_unsafe_finally;
     pub mod no_unsafe_negation;
@@ -410,6 +411,10 @@ mod oxc {
     pub mod uninvoked_array_callback;
 }
 
+mod security {
+    pub mod api_keys;
+}
+
 mod nextjs {
     pub mod google_font_display;
     pub mod google_font_preconnect;
@@ -570,6 +575,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_this_before_super,
     eslint::no_undef,
     eslint::no_undefined,
+    eslint::no_unexpected_multiline,
     eslint::no_unreachable,
     eslint::no_unsafe_finally,
     eslint::no_unsafe_negation,
@@ -789,6 +795,7 @@ oxc_macros::declare_all_lint_rules! {
     react_perf::jsx_no_new_array_as_prop,
     react_perf::jsx_no_new_function_as_prop,
     react_perf::jsx_no_new_object_as_prop,
+    security::api_keys,
     tree_shaking::no_side_effects_in_initialization,
     typescript::adjacent_overload_signatures,
     typescript::array_type,

@@ -2,18 +2,18 @@
 
 use crate::tester::{test, test_minify};
 
+// NOTE: These values are aligned with terser, not esbuild.
 #[test]
-#[ignore]
 fn test_number() {
     // Check "1eN"
     test("x = 1e-100", "x = 1e-100;\n");
     test("x = 1e-4", "x = 1e-4;\n");
     test("x = 1e-3", "x = 1e-3;\n");
-    // test("x = 1e-2", "x = 0.01;\n");
-    // test("x = 1e-1", "x = 0.1;\n");
-    // test("x = 1e0", "x = 1;\n");
-    // test("x = 1e1", "x = 10;\n");
-    // test("x = 1e2", "x = 100;\n");
+    test("x = 1e-2", "x = 1e-2;\n");
+    test("x = 1e-1", "x = 1e-1;\n");
+    test("x = 1e0", "x = 1e0;\n");
+    test("x = 1e1", "x = 1e1;\n");
+    test("x = 1e2", "x = 1e2;\n");
     test("x = 1e3", "x = 1e3;\n");
     test("x = 1e4", "x = 1e4;\n");
     test("x = 1e100", "x = 1e100;\n");
@@ -28,22 +28,22 @@ fn test_number() {
     test_minify("x = 1e2", "x=100;");
     test_minify("x = 1e3", "x=1e3;");
     test_minify("x = 1e4", "x=1e4;");
-    // test_minify("x = 1e100", "x=1e100;");
+    test_minify("x = 1e100", "x=1e100;");
 
     // Check "12eN"
     test("x = 12e-100", "x = 12e-100;\n");
     test("x = 12e-5", "x = 12e-5;\n");
     test("x = 12e-4", "x = 12e-4;\n");
-    // test("x = 12e-3", "x = 0.012;\n");
-    // test("x = 12e-2", "x = 0.12;\n");
-    // test("x = 12e-1", "x = 1.2;\n");
-    // test("x = 12e0", "x = 12;\n");
-    // test("x = 12e1", "x = 120;\n");
-    // test("x = 12e2", "x = 1200;\n");
+    test("x = 12e-3", "x = 12e-3;\n");
+    test("x = 12e-2", "x = 12e-2;\n");
+    test("x = 12e-1", "x = 12e-1;\n");
+    test("x = 12e0", "x = 12e0;\n");
+    test("x = 12e1", "x = 12e1;\n");
+    test("x = 12e2", "x = 12e2;\n");
     test("x = 12e3", "x = 12e3;\n");
     test("x = 12e4", "x = 12e4;\n");
     test("x = 12e100", "x = 12e100;\n");
-    // test_minify("x = 12e-100", "x=12e-100;");
+    test_minify("x = 12e-100", "x=1.2e-99;");
     test_minify("x = 12e-6", "x=12e-6;");
     test_minify("x = 12e-5", "x=12e-5;");
     test_minify("x = 12e-4", "x=.0012;");
@@ -55,7 +55,7 @@ fn test_number() {
     test_minify("x = 12e2", "x=1200;");
     test_minify("x = 12e3", "x=12e3;");
     test_minify("x = 12e4", "x=12e4;");
-    // test_minify("x = 12e100", "x=12e100;");
+    test_minify("x = 12e100", "x=12e100;");
 
     // Check cases for "A.BeX" => "ABeY" simplification
     test("x = 123456789", "x = 123456789;\n");
@@ -66,11 +66,11 @@ fn test_number() {
     test("x = 10000123456789", "x = 10000123456789;\n");
     test("x = 100000123456789", "x = 100000123456789;\n");
     test("x = 1000000123456789", "x = 1000000123456789;\n");
-    // test("x = 10000000123456789", "x = 10000000123456788;\n");
-    // test("x = 100000000123456789", "x = 100000000123456780;\n");
-    // test("x = 1000000000123456789", "x = 1000000000123456800;\n");
-    // test("x = 10000000000123456789", "x = 10000000000123458e3;\n");
-    // test("x = 100000000000123456789", "x = 10000000000012345e4;\n");
+    test("x = 10000000123456789", "x = 10000000123456789;\n");
+    test("x = 100000000123456789", "x = 100000000123456789;\n");
+    test("x = 1000000000123456789", "x = 1000000000123456789;\n");
+    test("x = 10000000000123456789", "x = 10000000000123456789;\n");
+    test("x = 100000000000123456789", "x = 100000000000123456789;\n");
 
     // Check numbers around the ends of various integer ranges. These were
     // crashing in the WebAssembly build due to a bug in the Go runtime.
@@ -92,36 +92,36 @@ fn test_number() {
     test_minify("x = -0x1_0000_0001", "x=-4294967297;");
 
     // int64
-    test_minify("x = 0x7fff_ffff_ffff_fdff", "x=9223372036854775e3;");
-    test_minify("x = 0x8000_0000_0000_0000", "x=9223372036854776e3;");
-    test_minify("x = 0x8000_0000_0000_3000", "x=9223372036854788e3;");
-    test_minify("x = -0x7fff_ffff_ffff_fdff", "x=-9223372036854775e3;");
-    test_minify("x = -0x8000_0000_0000_0000", "x=-9223372036854776e3;");
-    test_minify("x = -0x8000_0000_0000_3000", "x=-9223372036854788e3;");
+    test_minify("x = 0x7fff_ffff_ffff_fdff", "x=0x7ffffffffffffc00;");
+    test_minify("x = 0x8000_0000_0000_0000", "x=0x8000000000000000;");
+    test_minify("x = 0x8000_0000_0000_3000", "x=0x8000000000003000;");
+    test_minify("x = -0x7fff_ffff_ffff_fdff", "x=-0x7ffffffffffffc00;");
+    test_minify("x = -0x8000_0000_0000_0000", "x=-0x8000000000000000;");
+    test_minify("x = -0x8000_0000_0000_3000", "x=-0x8000000000003000;");
 
     // uint64
-    test_minify("x = 0xffff_ffff_ffff_fbff", "x=1844674407370955e4;");
-    test_minify("x = 0x1_0000_0000_0000_0000", "x=18446744073709552e3;");
-    test_minify("x = 0x1_0000_0000_0000_1000", "x=18446744073709556e3;");
-    test_minify("x = -0xffff_ffff_ffff_fbff", "x=-1844674407370955e4;");
-    test_minify("x = -0x1_0000_0000_0000_0000", "x=-18446744073709552e3;");
-    test_minify("x = -0x1_0000_0000_0000_1000", "x=-18446744073709556e3;");
+    test_minify("x = 0xffff_ffff_ffff_fbff", "x=0xfffffffffffff800;");
+    test_minify("x = 0x1_0000_0000_0000_0000", "x=0x10000000000000000;");
+    test_minify("x = 0x1_0000_0000_0000_1000", "x=0x10000000000001000;");
+    test_minify("x = -0xffff_ffff_ffff_fbff", "x=-0xfffffffffffff800;");
+    test_minify("x = -0x1_0000_0000_0000_0000", "x=-0x10000000000000000;");
+    test_minify("x = -0x1_0000_0000_0000_1000", "x=-0x10000000000001000;");
 
     // Check the hex vs. decimal decision boundary when minifying
-    // test("x = 999999999999", "x = 999999999999;\n");
-    // test("x = 1000000000001", "x = 1000000000001;\n");
-    // test("x = 0x0FFF_FFFF_FFFF_FF80", "x = 1152921504606846800;\n");
-    // test("x = 0x1000_0000_0000_0000", "x = 1152921504606847e3;\n");
-    // test("x = 0xFFFF_FFFF_FFFF_F000", "x = 18446744073709548e3;\n");
-    // test("x = 0xFFFF_FFFF_FFFF_F800", "x = 1844674407370955e4;\n");
-    // test("x = 0xFFFF_FFFF_FFFF_FFFF", "x = 18446744073709552e3;\n");
-    // test_minify("x = 999999999999", "x=999999999999;");
-    // test_minify("x = 1000000000001", "x=0xe8d4a51001;");
-    // test_minify("x = 0x0FFF_FFFF_FFFF_FF80", "x=0xfffffffffffff80;");
-    // test_minify("x = 0x1000_0000_0000_0000", "x=1152921504606847e3;");
-    // test_minify("x = 0xFFFF_FFFF_FFFF_F000", "x=0xfffffffffffff000;");
-    // test_minify("x = 0xFFFF_FFFF_FFFF_F800", "x=1844674407370955e4;");
-    // test_minify("x = 0xFFFF_FFFF_FFFF_FFFF", "x=18446744073709552e3;");
+    test("x = 999999999999", "x = 999999999999;\n");
+    test("x = 1000000000001", "x = 1000000000001;\n");
+    test("x = 0x0FFF_FFFF_FFFF_FF80", "x = 0x0FFF_FFFF_FFFF_FF80;\n");
+    test("x = 0x1000_0000_0000_0000", "x = 0x1000_0000_0000_0000;\n");
+    test("x = 0xFFFF_FFFF_FFFF_F000", "x = 0xFFFF_FFFF_FFFF_F000;\n");
+    test("x = 0xFFFF_FFFF_FFFF_F800", "x = 0xFFFF_FFFF_FFFF_F800;\n");
+    test("x = 0xFFFF_FFFF_FFFF_FFFF", "x = 0xFFFF_FFFF_FFFF_FFFF;\n");
+    test_minify("x = 999999999999", "x=999999999999;");
+    test_minify("x = 1000000000001", "x=0xe8d4a51001;");
+    test_minify("x = 0x0FFF_FFFF_FFFF_FF80", "x=0xfffffffffffff80;");
+    test_minify("x = 0x1000_0000_0000_0000", "x=0x1000000000000000;");
+    test_minify("x = 0xFFFF_FFFF_FFFF_F000", "x=0xfffffffffffff000;");
+    test_minify("x = 0xFFFF_FFFF_FFFF_F800", "x=0xfffffffffffff800;");
+    test_minify("x = 0xFFFF_FFFF_FFFF_FFFF", "x=0x10000000000000000;");
 
     // Check printing a space in between a number and a subsequent "."
     test_minify("x = 0.0001 .y", "x=1e-4.y;");
@@ -180,32 +180,39 @@ fn test_new() {
     // test_minify("new x() ** 2", "new x**2;");
 
     // Test preservation of Webpack-specific comments
+    // TODO: Not support trailing comments yet
     // test(
     // "new Worker(// webpackFoo: 1\n // webpackBar: 2\n 'path');",
     // "new Worker(\n  // webpackFoo: 1\n  // webpackBar: 2\n  \"path\"\n);\n",
     // );
-    // test(
-    // "new Worker(/* webpackFoo: 1 */ /* webpackBar: 2 */ 'path');",
-    // "new Worker(\n  /* webpackFoo: 1 */\n  /* webpackBar: 2 */\n  \"path\"\n);\n",
-    // );
-    // test(
-    // "new Worker(\n    /* multi\n     * line\n     * webpackBar: */ 'path');",
-    // "new Worker(\n  /* multi\n   * line\n   * webpackBar: */\n  \"path\"\n);\n",
-    // );
-    // test(
-    // "new Worker(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */);",
-    // "new Worker(\n  /* webpackFoo: 1 */\n  \"path\"\n  /* webpackBar:2 */\n);\n",
-    // );
-    // test(
-    // "new Worker(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */ ,);",
-    // "new Worker(\n  /* webpackFoo: 1 */\n  \"path\"\n);\n",
-    // ); // Not currently handled
-    // test(
-    // "new Worker(/* webpackFoo: 1 */ 'path', /* webpackBar:2 */ );",
-    // "new Worker(\n  /* webpackFoo: 1 */\n  \"path\"\n  /* webpackBar:2 */\n);\n",
-    // );
-    // test( "new Worker(new URL('path', /* webpackFoo: these can go anywhere */ import.meta.url))",
-    // "new Worker(new URL(\n  \"path\",\n  /* webpackFoo: these can go anywhere */\n  import.meta.url\n));\n");
+    test(
+        "new Worker(/* webpackFoo: 1 */ /* webpackBar: 2 */ 'path');",
+        "new Worker(\n\t/* webpackFoo: 1 */\n\t/* webpackBar: 2 */\n\t\"path\"\n);\n",
+    );
+    test(
+        "new Worker(\n    /* multi\n     * line\n     * webpackBar: */ 'path');",
+        "new Worker(\n\t/* multi\n\t* line\n\t* webpackBar: */\n\t\"path\"\n);\n",
+    );
+    test(
+        "new Worker(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */);",
+        "new Worker(\n\t/* webpackFoo: 1 */\n\t\"path\"\n\t/* webpackBar:2 */\n);\n",
+    );
+    test(
+        "new Worker(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */ ,);",
+        "new Worker(\n\t/* webpackFoo: 1 */\n\t\"path\"\n);\n",
+    ); // Not currently handled
+    test(
+        "new Worker(/* webpackFoo: 1 */ 'path', /* webpackBar:2 */ );",
+        "new Worker(\n\t/* webpackFoo: 1 */\n\t\"path\"\n\t/* webpackBar:2 */\n);\n",
+    );
+    test( "new Worker(new URL('path', /* webpackFoo: these can go anywhere */ import.meta.url))",
+    "new Worker(new URL(\n\t\"path\",\n\t/* webpackFoo: these can go anywhere */\n\timport.meta.url\n));\n");
+
+    // non-webpack comments
+    test("new Worker(/* before */ foo)", "new Worker(\n\t/* before */\n\tfoo\n);\n");
+    test("new Worker(/* before */ 'foo')", "new Worker(\n\t/* before */\n\t\"foo\"\n);\n");
+    test("new Worker(foo /* after */)", "new Worker(\n\tfoo\n\t/* after */\n);\n");
+    test("new Worker('foo' /* after */)", "new Worker(\n\t\"foo\"\n\t/* after */\n);\n");
 }
 
 #[test]
@@ -234,6 +241,43 @@ fn test_call() {
     test_minify("(1, eval)?.(x)", "(1,eval)?.(x);");
     // testMangleMinify(t, "(1 ? eval : 2)(x)", "(0,eval)(x);");
     // testMangleMinify(t, "(1 ? eval : 2)?.(x)", "eval?.(x);");
+
+    // Webpack-specific comments
+    // TODO: Not support trailing comments yet
+    // test(
+    //     "import(// webpackFoo: 1\n // webpackBar: 2\n 'path');",
+    //     "import(\n  // webpackFoo: 1\n  // webpackBar: 2\n  \"path\"\n);\n",
+    // );
+    // test( "import(// webpackFoo: 1\n // webpackBar: 2\n 'path', {type: 'module'});", "import(\n  // webpackFoo: 1\n  // webpackBar: 2\n  \"path\",\n  { type: \"module\" }\n);\n");
+    test(
+        "require(/* webpackFoo: 1 */ /* webpackBar: 2 */ 'path');",
+        "require(\n\t/* webpackFoo: 1 */\n\t/* webpackBar: 2 */\n\t\"path\"\n);\n",
+    );
+    test( "require(/* webpackFoo: 1 */ /* webpackBar: 2 */ 'path', {type: 'module'});",
+        "require(\n\t/* webpackFoo: 1 */\n\t/* webpackBar: 2 */\n\t\"path\",\n\t{ type: \"module\" }\n);\n");
+    test(
+        "require(\n    /* multi\n     * line\n     * webpackBar: */ 'path');",
+        "require(\n\t/* multi\n\t* line\n\t* webpackBar: */\n\t\"path\"\n);\n",
+    );
+    test(
+        "require(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */);",
+        "require(\n\t/* webpackFoo: 1 */\n\t\"path\"\n\t/* webpackBar:2 */\n);\n",
+    );
+    test(
+        "require(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */ ,);",
+        "require(\n\t/* webpackFoo: 1 */\n\t\"path\"\n);\n",
+    ); // Not currently handled
+    test(
+        "require(/* webpackFoo: 1 */ 'path', /* webpackBar:2 */ );",
+        "require(\n\t/* webpackFoo: 1 */\n\t\"path\"\n\t/* webpackBar:2 */\n);\n",
+    );
+    test( "require(/* webpackFoo: 1 */ 'path', { type: 'module' } /* webpackBar:2 */ );", "require(\n\t/* webpackFoo: 1 */\n\t\"path\",\n\t{ type: \"module\" }\n\t/* webpackBar:2 */\n);\n");
+
+    // non-webpack comments
+    test("require(/* before */ foo)", "require(\n\t/* before */\n\tfoo\n);\n");
+    test("require(/* before */ 'foo')", "require(\n\t/* before */\n\t\"foo\"\n);\n");
+    test("require(foo /* after */)", "require(\n\tfoo\n\t/* after */\n);\n");
+    test("require('foo' /* after */)", "require(\n\t\"foo\"\n\t/* after */\n);\n");
 }
 
 #[test]
@@ -613,37 +657,43 @@ fn test_decorators() {
 fn test_import() {
     test("import('path');", "import(\"path\");\n"); // The semicolon must not be a separate statement
 
-    // FIXME
-    // Test preservation of Webpack-specific comments
+    // TODO: Not support trailing comments yet
     // test(
-    // "import(// webpackFoo: 1\n // webpackBar: 2\n 'path');",
-    // "import(\n  // webpackFoo: 1\n  // webpackBar: 2\n  \"path\"\n);\n",
+    //     "import(// webpackFoo: 1\n // webpackBar: 2\n 'path');",
+    //     "import(\n  // webpackFoo: 1\n  // webpackBar: 2\n  \"path\"\n);\n",
     // );
     // test( "import(// webpackFoo: 1\n // webpackBar: 2\n 'path', {type: 'module'});", "import(\n  // webpackFoo: 1\n  // webpackBar: 2\n  \"path\",\n  { type: \"module\" }\n);\n");
-    // test(
-    // "import(/* webpackFoo: 1 */ /* webpackBar: 2 */ 'path');",
-    // "import(\n  /* webpackFoo: 1 */\n  /* webpackBar: 2 */\n  \"path\"\n);\n",
-    // );
-    // test( "import(/* webpackFoo: 1 */ /* webpackBar: 2 */ 'path', {type: 'module'});", "import(\n  /* webpackFoo: 1 */\n  /* webpackBar: 2 */\n  \"path\",\n  { type: \"module\" }\n);\n");
-    // test(
-    // "import(\n    /* multi\n     * line\n     * webpackBar: */ 'path');",
-    // "import(\n  /* multi\n   * line\n   * webpackBar: */\n  \"path\"\n);\n",
-    // );
-    // test(
-    // "import(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */);",
-    // "import(\n  /* webpackFoo: 1 */\n  \"path\"\n  /* webpackBar:2 */\n);\n",
-    // );
-    // test(
-    // "import(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */ ,);",
-    // "import(\n  /* webpackFoo: 1 */\n  \"path\"\n);\n",
-    // ); // Not currently handled
-    // test(
-    // "import(/* webpackFoo: 1 */ 'path', /* webpackBar:2 */ );",
-    // "import(\n  /* webpackFoo: 1 */\n  \"path\"\n  /* webpackBar:2 */\n);\n",
-    // );
-    // test( "import(/* webpackFoo: 1 */ 'path', { type: 'module' } /* webpackBar:2 */ );", "import(\n  /* webpackFoo: 1 */\n  \"path\",\n  { type: \"module\" }\n  /* webpackBar:2 */\n);\n");
-    // test( "import(new URL('path', /* webpackFoo: these can go anywhere */ import.meta.url))",
-    // "import(new URL(\n  \"path\",\n  /* webpackFoo: these can go anywhere */\n  import.meta.url\n));\n");
+    test(
+        "import(/* webpackFoo: 1 */ /* webpackBar: 2 */ 'path');",
+        "import(\n\t/* webpackFoo: 1 */\n\t/* webpackBar: 2 */\n\t\"path\"\n);\n",
+    );
+    test( "import(/* webpackFoo: 1 */ /* webpackBar: 2 */ 'path', {type: 'module'});",
+        "import(\n\t/* webpackFoo: 1 */\n\t/* webpackBar: 2 */\n\t\"path\",\n\t{ type: \"module\" }\n);\n");
+    test(
+        "import(\n    /* multi\n     * line\n     * webpackBar: */ 'path');",
+        "import(\n\t/* multi\n\t* line\n\t* webpackBar: */\n\t\"path\"\n);\n",
+    );
+    test(
+        "import(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */);",
+        "import(\n\t/* webpackFoo: 1 */\n\t\"path\"\n\t/* webpackBar:2 */\n);\n",
+    );
+    test(
+        "import(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */ ,);",
+        "import(\n\t/* webpackFoo: 1 */\n\t\"path\"\n);\n",
+    ); // Not currently handled
+    test(
+        "import(/* webpackFoo: 1 */ 'path', /* webpackBar:2 */ );",
+        "import(\n\t/* webpackFoo: 1 */\n\t\"path\"\n\t/* webpackBar:2 */\n);\n",
+    );
+    test( "import(/* webpackFoo: 1 */ 'path', { type: 'module' } /* webpackBar:2 */ );", "import(\n\t/* webpackFoo: 1 */\n\t\"path\",\n\t{ type: \"module\" }\n\t/* webpackBar:2 */\n);\n");
+    test( "import(new URL('path', /* webpackFoo: these can go anywhere */ import.meta.url))",
+    "import(new URL(\n\t\"path\",\n\t/* webpackFoo: these can go anywhere */\n\timport.meta.url\n));\n");
+
+    // non-webpack comments
+    test("import(/* before */ foo)", "import(\n\t/* before */\n\tfoo\n);\n");
+    test("import(/* before */ 'foo')", "import(\n\t/* before */\n\t\"foo\"\n);\n");
+    test("import(foo /* after */)", "import(\n\tfoo\n\t/* after */\n);\n");
+    test("import('foo' /* after */)", "import(\n\t\"foo\"\n\t/* after */\n);\n");
 }
 
 #[test]

@@ -1,5 +1,6 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
+use oxc_span::GetSpan;
 use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::{CompressOptions, CompressorPass};
@@ -13,7 +14,15 @@ pub struct RemoveSyntax {
     options: CompressOptions,
 }
 
-impl<'a> CompressorPass<'a> for RemoveSyntax {}
+impl<'a> CompressorPass<'a> for RemoveSyntax {
+    fn changed(&self) -> bool {
+        false
+    }
+
+    fn build(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        oxc_traverse::walk_program(self, program, ctx);
+    }
+}
 
 impl<'a> Traverse<'a> for RemoveSyntax {
     fn enter_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, _ctx: &mut TraverseCtx<'a>) {
@@ -69,7 +78,7 @@ impl<'a> RemoveSyntax {
 
     fn compress_console(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.drop_console && Self::is_console(expr) {
-            *expr = ctx.ast.void_0();
+            *expr = ctx.ast.void_0(expr.span());
         }
     }
 
@@ -86,5 +95,34 @@ impl<'a> RemoveSyntax {
         let obj = member_expr.object();
         let Some(ident) = obj.get_identifier_reference() else { return false };
         ident.name == "console"
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use oxc_allocator::Allocator;
+
+    use crate::{tester, CompressOptions};
+
+    fn test(source_text: &str, expected: &str) {
+        let allocator = Allocator::default();
+        let mut pass = super::RemoveSyntax::new(CompressOptions::all_true());
+        tester::test(&allocator, source_text, expected, &mut pass);
+    }
+
+    #[test]
+    fn parens() {
+        test("(((x)))", "x");
+        test("(((a + b))) * c", "(a + b) * c");
+    }
+
+    #[test]
+    fn drop_console() {
+        test("console.log()", "");
+    }
+
+    #[test]
+    fn drop_debugger() {
+        test("debugger", "");
     }
 }

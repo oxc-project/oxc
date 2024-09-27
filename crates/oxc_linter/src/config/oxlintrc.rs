@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use super::{env::OxlintEnv, globals::OxlintGlobals, rules::OxlintRules, settings::OxlintSettings};
 
-use crate::utils::read_to_string;
+use crate::{options::LintPlugins, utils::read_to_string};
 
 /// Oxlint Configuration File
 ///
@@ -42,7 +42,9 @@ use crate::utils::read_to_string;
 /// ```
 #[derive(Debug, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct Oxlintrc {
+    pub plugins: LintPlugins,
     /// See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html).
     pub rules: OxlintRules,
     pub settings: OxlintSettings,
@@ -87,78 +89,4 @@ impl Oxlintrc {
 
         Ok(config)
     }
-
-    // #[allow(clippy::option_if_let_else)]
-    // pub fn override_rules(
-    //     &self,
-    //     rules_for_override: &mut FxHashSet<RuleWithSeverity>,
-    //     all_rules: &[RuleEnum],
-    // ) {
-    //     use itertools::Itertools;
-    //     let mut rules_to_replace: Vec<RuleWithSeverity> = vec![];
-    //     let mut rules_to_remove: Vec<RuleWithSeverity> = vec![];
-
-    //     // Rules can have the same name but different plugin names
-    //     let lookup = self.rules.iter().into_group_map_by(|r| r.rule_name.as_str());
-
-    //     for (name, rule_configs) in &lookup {
-    //         match rule_configs.len() {
-    //             0 => unreachable!(),
-    //             1 => {
-    //                 let rule_config = &rule_configs[0];
-    //                 let (rule_name, plugin_name) = transform_rule_and_plugin_name(
-    //                     &rule_config.rule_name,
-    //                     &rule_config.plugin_name,
-    //                 );
-    //                 let severity = rule_config.severity;
-    //                 match severity {
-    //                     AllowWarnDeny::Warn | AllowWarnDeny::Deny => {
-    //                         if let Some(rule) = all_rules
-    //                             .iter()
-    //                             .find(|r| r.name() == rule_name && r.plugin_name() == plugin_name)
-    //                         {
-    //                             let config = rule_config.config.clone().unwrap_or_default();
-    //                             let rule = rule.read_json(config);
-    //                             rules_to_replace.push(RuleWithSeverity::new(rule, severity));
-    //                         }
-    //                     }
-    //                     AllowWarnDeny::Allow => {
-    //                         if let Some(rule) = rules_for_override
-    //                             .iter()
-    //                             .find(|r| r.name() == rule_name && r.plugin_name() == plugin_name)
-    //                         {
-    //                             let rule = rule.clone();
-    //                             rules_to_remove.push(rule);
-    //                         }
-    //                     }
-    //                 }
-    //             }
-    //             _ => {
-    //                 // For overlapping rule names, use the "error" one
-    //                 // "no-loss-of-precision": "off",
-    //                 // "@typescript-eslint/no-loss-of-precision": "error"
-    //                 if let Some(rule_config) =
-    //                     rule_configs.iter().find(|r| r.severity.is_warn_deny())
-    //                 {
-    //                     if let Some(rule) = rules_for_override.iter().find(|r| r.name() == *name) {
-    //                         let config = rule_config.config.clone().unwrap_or_default();
-    //                         rules_to_replace
-    //                             .push(RuleWithSeverity::new(rule.read_json(config), rule.severity));
-    //                     }
-    //                 } else if rule_configs.iter().all(|r| r.severity.is_allow()) {
-    //                     if let Some(rule) = rules_for_override.iter().find(|r| r.name() == *name) {
-    //                         rules_to_remove.push(rule.clone());
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     }
-
-    //     for rule in rules_to_remove {
-    //         rules_for_override.remove(&rule);
-    //     }
-    //     for rule in rules_to_replace {
-    //         rules_for_override.replace(rule);
-    //     }
-    // }
 }

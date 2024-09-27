@@ -4,6 +4,7 @@ use oxc_span::{Atom, Span, SPAN};
 pub struct KeepVar<'a> {
     ast: AstBuilder<'a>,
     vars: std::vec::Vec<(Atom<'a>, Span)>,
+    all_hoisted: bool,
 }
 
 impl<'a> Visit<'a> for KeepVar<'a> {
@@ -37,6 +38,9 @@ impl<'a> Visit<'a> for KeepVar<'a> {
                     decl.bound_names(&mut |ident| {
                         self.vars.push((ident.name.clone(), ident.span));
                     });
+                    if decl.has_init() {
+                        self.all_hoisted = false;
+                    }
                 }
             }
             _ => {}
@@ -46,7 +50,11 @@ impl<'a> Visit<'a> for KeepVar<'a> {
 
 impl<'a> KeepVar<'a> {
     pub fn new(ast: AstBuilder<'a>) -> Self {
-        Self { ast, vars: std::vec![] }
+        Self { ast, vars: std::vec![], all_hoisted: true }
+    }
+
+    pub fn all_hoisted(&self) -> bool {
+        self.all_hoisted
     }
 
     pub fn get_variable_declaration_statement(self) -> Option<Statement<'a>> {

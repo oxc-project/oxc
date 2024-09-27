@@ -6,6 +6,7 @@
 
 /// origin file: https://github.com/zkat/miette/blob/75fea0935e495d0215518c80d32dd820910982e3/src/handlers/graphical.rs#L1
 use std::fmt::{self, Write};
+use std::io::IsTerminal;
 
 use miette::{
     Diagnostic, LabeledSpan, ReportHandler, Severity, SourceCode, SourceSpan, SpanContents,
@@ -66,10 +67,11 @@ impl GraphicalReportHandler {
     /// Create a new `GraphicalReportHandler` with the default
     /// [`GraphicalTheme`]. This will use both unicode characters and colors.
     pub fn new() -> Self {
+        let is_terminal = std::io::stdout().is_terminal() && std::io::stderr().is_terminal();
         Self {
-            links: LinkStyle::Link,
+            links: if is_terminal { LinkStyle::Link } else { LinkStyle::Text },
             termwidth: 400,
-            theme: GraphicalTheme::default(),
+            theme: GraphicalTheme::new(is_terminal),
             footer: None,
             context_lines: 1,
             tab_width: 4,

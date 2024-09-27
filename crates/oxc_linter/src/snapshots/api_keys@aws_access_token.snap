@@ -1,0 +1,51 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ oxc-security(api-keys/aws-access-token): Detected an AWS Access Key ID, which may lead to unauthorized access to AWS resources.
+   ╭─[api_keys.tsx:1:11]
+ 1 │ let key = "AKIAAABCD1099FAM9KEY"
+   ·           ──────────────────────
+   ╰────
+  help: Use a secrets manager to store your API keys securely, then read them at runtime.
+
+  ⚠ oxc-security(api-keys/aws-access-token): Detected an AWS Access Key ID, which may lead to unauthorized access to AWS resources.
+   ╭─[api_keys.tsx:1:11]
+ 1 │ let key = `AKIAAABCD1099FAM9KEY`
+   ·           ──────────────────────
+   ╰────
+  help: Use a secrets manager to store your API keys securely, then read them at runtime.
+
+  ⚠ oxc-security(api-keys/aws-access-token): Detected an AWS STS service bearer token, which may lead to unauthorized access to AWS resources.
+   ╭─[api_keys.tsx:1:11]
+ 1 │ let key = 'ABIAAABCD1099FAM9KEY'
+   ·           ──────────────────────
+   ╰────
+  help: Use a secrets manager to store your API keys securely, then read them at runtime.
+
+  ⚠ oxc-security(api-keys/aws-access-token): Detected an AWS Context-specific credential, which may lead to unauthorized access to AWS resources.
+   ╭─[api_keys.tsx:1:11]
+ 1 │ let key = 'ACCAAABCD1099FAM9KEY'
+   ·           ──────────────────────
+   ╰────
+  help: Use a secrets manager to store your API keys securely, then read them at runtime.
+
+  ⚠ oxc-security(api-keys/aws-access-token): Detected an AWS Access Key ID, which may lead to unauthorized access to AWS resources.
+   ╭─[api_keys.tsx:1:11]
+ 1 │ let key = 'AKIAAABCD1099FAM9KEY'
+   ·           ──────────────────────
+   ╰────
+  help: Use a secrets manager to store your API keys securely, then read them at runtime.
+
+  ⚠ oxc-security(api-keys/aws-access-token): Detected an AWS Access Key ID, which may lead to unauthorized access to AWS resources.
+   ╭─[api_keys.tsx:1:11]
+ 1 │ let key = 'AKIAAABCD1099FAM9KEY'
+   ·           ──────────────────────
+   ╰────
+  help: Use a secrets manager to store your API keys securely, then read them at runtime.
+
+  ⚠ oxc-security(api-keys/aws-access-token): Detected an AWS Access Key ID, which may lead to unauthorized access to AWS resources.
+   ╭─[api_keys.tsx:1:11]
+ 1 │ let key = 'AKIAAABCD1099FAM9KEY'
+   ·           ──────────────────────
+   ╰────
+  help: Use a secrets manager to store your API keys securely, then read them at runtime.

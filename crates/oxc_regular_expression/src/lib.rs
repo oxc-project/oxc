@@ -9,6 +9,7 @@ mod literal_parser;
 mod options;
 mod span;
 mod surrogate_pair;
+pub mod visit;
 
 mod generated {
     mod derive_clone_in;

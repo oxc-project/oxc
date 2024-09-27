@@ -1,5 +1,4 @@
 use std::{
-    collections::HashMap,
     ffi::OsStr,
     fs,
     path::{Path, PathBuf},
@@ -15,7 +14,7 @@ use oxc_resolver::Resolver;
 use oxc_semantic::{ModuleRecord, SemanticBuilder};
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 use rayon::{iter::ParallelBridge, prelude::ParallelIterator};
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
     partial_loader::{JavaScriptSource, PartialLoader, LINT_PARTIAL_LOADER_EXT},
@@ -145,7 +144,7 @@ impl LintService {
 ///
 /// See the "problem section" in <https://medium.com/@polyglot_factotum/rust-concurrency-patterns-condvars-and-locks-e278f18db74f>
 /// and the solution is copied here to fix the issue.
-type CacheState = Mutex<HashMap<Box<Path>, Arc<(Mutex<CacheStateEntry>, Condvar)>>>;
+type CacheState = Mutex<FxHashMap<Box<Path>, Arc<(Mutex<CacheStateEntry>, Condvar)>>>;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum CacheStateEntry {
@@ -269,7 +268,9 @@ impl Runtime {
             // TODO: Span is wrong, ban this feature for file process by `PartialLoader`.
             if !is_processed_by_partial_loader && self.linter.options().fix.is_some() {
                 let fix_result = Fixer::new(source_text, messages).fix();
-                fs::write(path, fix_result.fixed_code.as_bytes()).unwrap();
+                if fix_result.fixed {
+                    fs::write(path, fix_result.fixed_code.as_bytes()).unwrap();
+                }
                 messages = fix_result.messages;
             }
 

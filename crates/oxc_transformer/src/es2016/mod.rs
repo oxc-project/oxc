@@ -1,19 +1,13 @@
 mod exponentiation_operator;
 mod options;
 
-use std::rc::Rc;
-
 pub use exponentiation_operator::ExponentiationOperator;
 pub use options::ES2016Options;
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_traverse::{Traverse, TraverseCtx};
 
-use crate::context::Ctx;
-
-#[allow(dead_code)]
 pub struct ES2016<'a> {
-    ctx: Ctx<'a>,
     options: ES2016Options,
 
     // Plugins
@@ -21,12 +15,19 @@ pub struct ES2016<'a> {
 }
 
 impl<'a> ES2016<'a> {
-    pub fn new(options: ES2016Options, ctx: Ctx<'a>) -> Self {
-        Self { exponentiation_operator: ExponentiationOperator::new(Rc::clone(&ctx)), ctx, options }
+    pub fn new(options: ES2016Options) -> Self {
+        Self { exponentiation_operator: ExponentiationOperator::new(), options }
     }
 }
 
 impl<'a> Traverse<'a> for ES2016<'a> {
+    #[inline] // Inline because it's no-op in release mode
+    fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.options.exponentiation_operator {
+            self.exponentiation_operator.exit_program(program, ctx);
+        }
+    }
+
     fn enter_statements(
         &mut self,
         statements: &mut Vec<'a, Statement<'a>>,

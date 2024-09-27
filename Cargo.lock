@@ -976,6 +976,7 @@ dependencies = [
  "handlebars",
  "lazy_static",
  "oxc_tasks_common",
+ "rustc-hash",
  "serde",
 ]
 
@@ -1397,7 +1398,7 @@ checksum = "caff54706df99d2a78a5a4e3455ff45448d81ef1bb63c22cd14052ca0e993a3f"
 
 [[package]]
 name = "oxc"
-version = "0.29.0"
+version = "0.30.3"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
@@ -1436,7 +1437,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_allocator"
-version = "0.29.0"
+version = "0.30.3"
 dependencies = [
  "allocator-api2",
  "bumpalo",
@@ -1446,7 +1447,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast"
-version = "0.29.0"
+version = "0.30.3"
 dependencies = [
  "bitflags 2.6.0",
  "num-bigint",
@@ -1463,7 +1464,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast_macros"
-version = "0.29.0"
+version = "0.30.3"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1482,6 +1483,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "regex",
+ "rustc-hash",
  "serde",
  "serde_json",
  "syn",
@@ -1510,7 +1512,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_cfg"
-version = "0.29.0"
+version = "0.30.3"
 dependencies = [
  "bitflags 2.6.0",
  "itertools",
@@ -1521,7 +1523,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_codegen"
-version = "0.29.0"
+version = "0.30.3"
 dependencies = [
  "base64",
  "bitflags 2.6.0",
@@ -1556,9 +1558,9 @@ dependencies = [
  "oxc_tasks_common",
  "phf 0.11.2",
  "pico-args",
- "project-root",
  "rayon",
  "regex",
+ "rustc-hash",
  "saphyr",
  "serde",
  "serde_json",
@@ -1569,17 +1571,18 @@ dependencies = [
 
 [[package]]
 name = "oxc_diagnostics"
-version = "0.29.0"
+version = "0.30.3"
 dependencies = [
  "miette",
  "owo-colors",
+ "rustc-hash",
  "textwrap",
  "unicode-width",
 ]
 
 [[package]]
 name = "oxc_index"
-version = "0.29.0"
+version = "0.30.3"
 dependencies = [
  "rayon",
  "serde",
@@ -1587,8 +1590,9 @@ dependencies = [
 
 [[package]]
 name = "oxc_isolated_declarations"
-version = "0.29.0"
+version = "0.30.3"
 dependencies = [
+ "bitflags 2.6.0",
  "insta",
  "oxc_allocator",
  "oxc_ast",
@@ -1625,8 +1629,9 @@ dependencies = [
 
 [[package]]
 name = "oxc_linter"
-version = "0.9.6"
+version = "0.9.9"
 dependencies = [
+ "aho-corasick",
  "bitflags 2.6.0",
  "convert_case",
  "cow-utils",
@@ -1680,7 +1685,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_mangler"
-version = "0.29.0"
+version = "0.30.3"
 dependencies = [
  "itertools",
  "oxc_ast",
@@ -1691,7 +1696,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_minifier"
-version = "0.29.0"
+version = "0.30.3"
 dependencies = [
  "cow-utils",
  "insta",
@@ -1711,6 +1716,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_minify_napi"
+version = "0.30.3"
+dependencies = [
+ "napi",
+ "napi-build",
+ "napi-derive",
+ "oxc_allocator",
+ "oxc_codegen",
+ "oxc_minifier",
+ "oxc_parser",
+ "oxc_span",
+]
+
+[[package]]
 name = "oxc_minsize"
 version = "0.0.0"
 dependencies = [
@@ -1722,11 +1741,12 @@ dependencies = [
  "oxc_parser",
  "oxc_span",
  "oxc_tasks_common",
+ "rustc-hash",
 ]
 
 [[package]]
 name = "oxc_module_lexer"
-version = "0.29.0"
+version = "0.30.3"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
@@ -1736,7 +1756,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_parser"
-version = "0.29.0"
+version = "0.30.3"
 dependencies = [
  "assert-unchecked",
  "bitflags 2.6.0",
@@ -1795,6 +1815,7 @@ dependencies = [
  "oxc_span",
  "oxc_syntax",
  "pico-args",
+ "rustc-hash",
 ]
 
 [[package]]
@@ -1808,12 +1829,13 @@ dependencies = [
  "oxc_span",
  "oxc_tasks_common",
  "pico-args",
+ "rustc-hash",
  "walkdir",
 ]
 
 [[package]]
 name = "oxc_regular_expression"
-version = "0.29.0"
+version = "0.30.3"
 dependencies = [
  "oxc_allocator",
  "oxc_ast_macros",
@@ -1847,7 +1869,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_semantic"
-version = "0.29.0"
+version = "0.30.3"
 dependencies = [
  "assert-unchecked",
  "indexmap",
@@ -1871,7 +1893,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_sourcemap"
-version = "0.29.0"
+version = "0.30.3"
 dependencies = [
  "base64-simd",
  "cfg-if",
@@ -1884,7 +1906,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_span"
-version = "0.29.0"
+version = "0.30.3"
 dependencies = [
  "compact_str",
  "miette",
@@ -1898,7 +1920,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_syntax"
-version = "0.29.0"
+version = "0.30.3"
 dependencies = [
  "assert-unchecked",
  "bitflags 2.6.0",
@@ -1942,7 +1964,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_transform_napi"
-version = "0.29.0"
+version = "0.30.3"
 dependencies = [
  "napi",
  "napi-build",
@@ -1961,8 +1983,9 @@ dependencies = [
 
 [[package]]
 name = "oxc_transformer"
-version = "0.29.0"
+version = "0.30.3"
 dependencies = [
+ "assert-unchecked",
  "base64",
  "dashmap 6.0.1",
  "indexmap",
@@ -1987,7 +2010,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_traverse"
-version = "0.29.0"
+version = "0.30.3"
 dependencies = [
  "compact_str",
  "itoa",
@@ -2017,7 +2040,7 @@ dependencies = [
 
 [[package]]
 name = "oxlint"
-version = "0.9.6"
+version = "0.9.9"
 dependencies = [
  "bpaf",
  "glob",
@@ -2426,6 +2449,7 @@ dependencies = [
  "oxc_span",
  "oxc_tasks_common",
  "regex",
+ "rustc-hash",
  "serde",
  "ureq",
 ]

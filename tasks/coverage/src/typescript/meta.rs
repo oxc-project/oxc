@@ -1,6 +1,7 @@
 //! <https://github.com/microsoft/TypeScript/blob/6f06eb1b27a6495b209e8be79036f3b2ea92cd0b/src/harness/harnessIO.ts#L1237>
 
-use std::{collections::HashMap, fs, path::Path, sync::Arc};
+use rustc_hash::FxHashMap;
+use std::{fs, path::Path, sync::Arc};
 
 use oxc::{
     allocator::Allocator,
@@ -35,7 +36,7 @@ pub struct CompilerSettings {
 }
 
 impl CompilerSettings {
-    pub fn new(options: &HashMap<String, String>) -> Self {
+    pub fn new(options: &FxHashMap<String, String>) -> Self {
         Self {
             modules: Self::split_value_options(options.get("module")),
             targets: Self::split_value_options(options.get("target")),
@@ -93,7 +94,7 @@ impl TestCaseContent {
     /// These files start with `// @<option-name>: <option-value>` and are followed by the file's content.
     /// This function extracts the individual files with their content and drops unsupported files.
     pub fn make_units_from_test(path: &Path, code: &str) -> Self {
-        let mut current_file_options: HashMap<String, String> = HashMap::default();
+        let mut current_file_options: FxHashMap<String, String> = FxHashMap::default();
         let mut current_file_name: Option<String> = None;
         let mut test_unit_data: Vec<TestUnitData> = vec![];
         let mut current_file_content = String::new();

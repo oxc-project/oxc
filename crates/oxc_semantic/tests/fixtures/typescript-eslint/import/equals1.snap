@@ -2,6 +2,10 @@
 source: crates/oxc_semantic/tests/main.rs
 input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/import/equals1.ts
 ---
+================================================================================
+SCOPES
+================================================================================
+
 [
   {
     "children": [],
@@ -26,3 +30,9 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/import/equals1.
     ]
   }
 ]
+
+================================================================================
+CONFORMANCE
+================================================================================
+
+All tests passed.

@@ -37,8 +37,8 @@ declare_oxc_lint!(
     ///
     /// This rule forbids `for` loops where the counter variable changes in such a
     /// way that the stop condition will never be met. For example, if the
-    /// counter variable is increasing (i.e. `i++``) and the stop condition tests
-    /// that the counter is greater than zero (`i >= 0``) then the loop will never
+    /// counter variable is increasing (i.e. `i++`) and the stop condition tests
+    /// that the counter is greater than zero (`i >= 0`) then the loop will never
     /// exit.
     ///
     /// ### Example

@@ -15,18 +15,31 @@ pub struct AvoidNew;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow creating new promises outside of utility libs.
+    /// Disallow creating promises with `new Promise()`.
     ///
     /// ### Why is this bad?
     ///
-    /// If you dislike the new promise style promises.
+    /// Many cases that use `new Promise()` could be refactored to use an
+    /// `async` function. `async` is considered more idiomatic in modern JavaScript.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// new Promise((resolve, reject) => { /* ... */ });
+    /// function foo() {
+    ///     return new Promise((resolve, reject) => { /* ... */ });
+    /// }
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// async function foo() {
+    ///     // ...
+    /// }
+    /// const bar = await Promise.all([baz(), bang()]);
     /// ```
     AvoidNew,
-    restriction,
+    style,
 );
 
 impl Rule for AvoidNew {

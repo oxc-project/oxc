@@ -1,4 +1,4 @@
-use std::{collections::HashSet, ops::ControlFlow, path::PathBuf};
+use std::{ops::ControlFlow, path::PathBuf};
 
 use oxc::{
     allocator::Allocator,
@@ -19,6 +19,7 @@ use oxc::{
     transformer::{TransformOptions, TransformerReturn},
     CompilerInterface,
 };
+use rustc_hash::FxHashSet;
 
 use crate::suite::TestResult;
 
@@ -146,7 +147,7 @@ impl Driver {
     }
 
     fn check_comments(&mut self, trivias: &Trivias) -> bool {
-        let mut uniq: HashSet<Span> = HashSet::new();
+        let mut uniq: FxHashSet<Span> = FxHashSet::default();
         for comment in trivias.comments() {
             if !uniq.insert(comment.span) {
                 self.errors
