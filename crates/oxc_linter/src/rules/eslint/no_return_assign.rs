@@ -38,8 +38,8 @@ declare_oxc_lint!(
     /// function x() { var result = a = b; return result; }
     /// ```
     NoReturnAssign,
-    style, // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
-    suggestion  // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
+    style,
+    suggestion
 );
 
 fn is_sentinel_node(ast_kind: AstKind) -> bool {
