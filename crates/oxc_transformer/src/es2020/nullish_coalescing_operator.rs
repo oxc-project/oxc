@@ -157,7 +157,7 @@ impl<'a> Traverse<'a> for NullishCoalescingOperator<'a> {
         } else {
             let kind = VariableDeclarationKind::Var;
             self.var_declarations
-                .get_mut_or_init(|| ctx.ast.vec())
+                .last_mut_or_init(|| ctx.ast.vec())
                 .push(ctx.ast.variable_declarator(SPAN, kind, id, None, false));
         }
 

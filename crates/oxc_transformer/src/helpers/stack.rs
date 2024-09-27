@@ -5,7 +5,7 @@
 ///
 /// Stack is initialized with a single entry which can never be popped off.
 /// If `Program` has a entry on the stack, can use this initial entry for it. Get value for `Program`
-/// in `exit_program` visitor with `SparseStack::take` instead of `SparseStack::pop`.
+/// in `exit_program` visitor with `SparseStack::take_last` instead of `SparseStack::pop`.
 ///
 /// The stack is stored as 2 arrays:
 /// 1. `has_values` - Records whether an entry on the stack has a value or not (`Some` or `None`).
@@ -30,7 +30,7 @@ impl<T> SparseStack<T> {
     /// Create new `SparseStack`.
     pub fn new() -> Self {
         // `has_values` starts with a single empty entry, which will never be popped off.
-        // This means `take`, `get_or_init`, and `get_mut_or_init` can all be infallible,
+        // This means `take_last`, `last_or_init`, and `last_mut_or_init` can all be infallible,
         // as there's always an entry on the stack to read.
         Self { has_values: vec![false], values: vec![] }
     }
@@ -75,7 +75,7 @@ impl<T> SparseStack<T> {
         if has_value {
             debug_assert!(!self.values.is_empty());
             // SAFETY: Last `self.has_values` is only `true` if there's a corresponding value in `self.values`.
-            // This invariant is maintained in `push`, `take`, `get_or_init`, and `get_mut_or_init`.
+            // This invariant is maintained in `push`, `take_last`, `last_or_init`, and `last_mut_or_init`.
             // We maintain it here too because we just popped from `self.has_values`, so that `true`
             // has been consumed at the same time we consume its corresponding value from `self.values`.
             let value = unsafe { self.values.pop().unwrap_unchecked() };
@@ -85,19 +85,19 @@ impl<T> SparseStack<T> {
         }
     }
 
-    /// Take value from last entry on the stack.
+    /// Take value from last entry on the stack, leaving last entry empty.
     #[inline]
-    pub fn take(&mut self) -> Option<T> {
+    pub fn take_last(&mut self) -> Option<T> {
         debug_assert!(!self.has_values.is_empty());
         // SAFETY: `self.has_values` starts with 1 entry. Only `pop` removes entries from it,
-        // and it ensures `self.has_values` always has at least one entry.
+        // and it ensures `self.has_values` always has at least 1 entry.
         let has_value = unsafe { self.has_values.last_mut().unwrap_unchecked() };
         if *has_value {
             *has_value = false;
 
             debug_assert!(!self.values.is_empty());
             // SAFETY: Last `self.has_values` is only `true` if there's a corresponding value in `self.values`.
-            // This invariant is maintained in `push`, `pop`, `get_or_init`, and `get_mut_or_init`.
+            // This invariant is maintained in `push`, `pop`, `last_or_init`, and `last_mut_or_init`.
             // We maintain it here too because we just set last `self.has_values` to `false`
             // at the same time as we consume the corresponding value from `self.values`.
             let value = unsafe { self.values.pop().unwrap_unchecked() };
@@ -107,13 +107,13 @@ impl<T> SparseStack<T> {
         }
     }
 
-    /// Initialize the value for top entry on the stack, if it has no value already.
+    /// Initialize the value for last entry on the stack, if it has no value already.
     /// Return reference to value.
     #[inline]
-    pub fn get_or_init<I: FnOnce() -> T>(&mut self, init: I) -> &T {
+    pub fn last_or_init<I: FnOnce() -> T>(&mut self, init: I) -> &T {
         debug_assert!(!self.has_values.is_empty());
         // SAFETY: `self.has_values` starts with 1 entry. Only `pop` removes entries from it,
-        // and it ensures `self.has_values` always has at least one entry.
+        // and it ensures `self.has_values` always has at least 1 entry.
         let has_value = unsafe { self.has_values.last_mut().unwrap_unchecked() };
         if !*has_value {
             *has_value = true;
@@ -122,19 +122,19 @@ impl<T> SparseStack<T> {
 
         debug_assert!(!self.values.is_empty());
         // SAFETY: Last `self.has_values` is only `true` if there's a corresponding value in `self.values`.
-        // This invariant is maintained in `push`, `pop`, `take`, and `get_mut_or_init`.
+        // This invariant is maintained in `push`, `pop`, `take_last`, and `last_mut_or_init`.
         // Here either last `self.has_values` was already `true`, or it's just been set to `true`
         // and a value pushed to `self.values` above.
         unsafe { self.values.last().unwrap_unchecked() }
     }
 
-    /// Initialize the value for top entry on the stack, if it has no value already.
+    /// Initialize the value for last entry on the stack, if it has no value already.
     /// Return mutable reference to value.
     #[inline]
-    pub fn get_mut_or_init<I: FnOnce() -> T>(&mut self, init: I) -> &mut T {
+    pub fn last_mut_or_init<I: FnOnce() -> T>(&mut self, init: I) -> &mut T {
         debug_assert!(!self.has_values.is_empty());
         // SAFETY: `self.has_values` starts with 1 entry. Only `pop` removes entries from it,
-        // and it ensures `self.has_values` always has at least one entry.
+        // and it ensures `self.has_values` always has at least 1 entry.
         let has_value = unsafe { self.has_values.last_mut().unwrap_unchecked() };
         if !*has_value {
             *has_value = true;
@@ -142,7 +142,7 @@ impl<T> SparseStack<T> {
         }
 
         // SAFETY: Last `self.has_values` is only `true` if there's a corresponding value in `self.values`.
-        // This invariant is maintained in `push`, `pop`, `take`, and `get_or_init`.
+        // This invariant is maintained in `push`, `pop`, `take_last`, and `last_or_init`.
         // Here either last `self.has_values` was already `true`, or it's just been set to `true`
         // and a value pushed to `self.values` above.
         unsafe { self.values.last_mut().unwrap_unchecked() }

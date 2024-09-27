@@ -327,7 +327,7 @@ impl<'a> ExponentiationOperator<'a> {
             let id = ctx.ast.binding_pattern_kind_from_binding_identifier(binding_identifier);
             let id = ctx.ast.binding_pattern(id, NONE, false);
             self.var_declarations
-                .get_mut_or_init(|| ctx.ast.vec())
+                .last_mut_or_init(|| ctx.ast.vec())
                 .push(ctx.ast.variable_declarator(SPAN, kind, id, None, false));
         }
 
