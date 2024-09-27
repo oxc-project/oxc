@@ -31,6 +31,9 @@ impl<'a> Codegen<'a> {
     }
 
     pub fn has_annotation_comment(&self, start: u32) -> bool {
+        if !self.preserve_annotate_comments() {
+            return false;
+        }
         let Some(source_text) = self.source_text else { return false };
         self.comments.get(&start).is_some_and(|comments| {
             comments.iter().any(|comment| Self::is_annotation_comment(comment, source_text))
@@ -38,6 +41,9 @@ impl<'a> Codegen<'a> {
     }
 
     pub fn has_non_annotation_comment(&self, start: u32) -> bool {
+        if !self.preserve_annotate_comments() {
+            return self.has_comment(start);
+        }
         let Some(source_text) = self.source_text else { return false };
         self.comments.get(&start).is_some_and(|comments| {
             comments.iter().any(|comment| !Self::is_annotation_comment(comment, source_text))
