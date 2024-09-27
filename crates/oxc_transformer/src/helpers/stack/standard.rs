@@ -1,14 +1,8 @@
 #![expect(clippy::unnecessary_safety_comment)]
 
-use std::{
-    alloc::{self, Layout},
-    mem::{align_of, size_of, ManuallyDrop},
-    ptr::{self, NonNull},
-};
+use std::{mem::size_of, ptr::NonNull};
 
-use assert_unchecked::assert_unchecked;
-
-use super::StackCapacity;
+use super::{StackCapacity, StackCommon};
 
 /// A simple stack.
 ///
@@ -43,6 +37,38 @@ pub struct Stack<T> {
 }
 
 impl<T> StackCapacity<T> for Stack<T> {}
+
+impl<T> StackCommon<T> for Stack<T> {
+    #[inline]
+    fn start(&self) -> NonNull<T> {
+        self.start
+    }
+
+    #[inline]
+    fn end(&self) -> NonNull<T> {
+        self.end
+    }
+
+    #[inline]
+    fn cursor(&self) -> NonNull<T> {
+        self.cursor
+    }
+
+    #[inline]
+    fn set_start(&mut self, start: NonNull<T>) {
+        self.start = start;
+    }
+
+    #[inline]
+    fn set_end(&mut self, end: NonNull<T>) {
+        self.end = end;
+    }
+
+    #[inline]
+    fn set_cursor(&mut self, cursor: NonNull<T>) {
+        self.cursor = cursor;
+    }
+}
 
 impl<T> Stack<T> {
     /// Maximum capacity.
@@ -120,44 +146,10 @@ impl<T> Stack<T> {
         assert!(size_of::<T>() > 0, "Zero sized types are not supported");
 
         // SAFETY: Caller guarantees `capacity_bytes` satisfies requirements
-        let layout = Self::layout_for(capacity_bytes);
-        let ptr = alloc::alloc(layout);
-        if ptr.is_null() {
-            alloc::handle_alloc_error(layout);
-        }
-        // `layout_for` produces a layout with `T`'s alignment, so `ptr` is aligned for `T`
-        let ptr = ptr.cast::<T>();
-
-        // SAFETY: We checked `ptr` is non-null
-        let start = NonNull::new_unchecked(ptr);
-        // SAFETY: We allocated `capacity_bytes` bytes, so `end` is end of allocation
-        let end = NonNull::new_unchecked(ptr.byte_add(capacity_bytes));
+        let (start, end) = Self::allocate(capacity_bytes);
 
         // `cursor` is positioned at start
         Self { cursor: start, start, end }
-    }
-
-    /// Get layout for allocation of `capacity_bytes` bytes.
-    ///
-    /// # SAFETY
-    /// * `capacity_bytes` must not be 0.
-    /// * `capacity_bytes` must be a multiple of `mem::size_of::<T>()`.
-    /// * `capacity_bytes` must not exceed [`Self::MAX_CAPACITY_BYTES`].
-    #[inline]
-    unsafe fn layout_for(capacity_bytes: usize) -> Layout {
-        // `capacity_bytes` must not be 0 because cannot make 0-size allocations.
-        debug_assert!(capacity_bytes > 0);
-        // `capacity_bytes` must be a multiple of `size_of::<T>()` so that `new_cursor == self.end`
-        // check in `push` accurately detects when full to capacity
-        debug_assert!(capacity_bytes % size_of::<T>() == 0);
-        // `capacity_bytes` must not exceed `Self::MAX_CAPACITY_BYTES` to prevent creating an allocation
-        // of illegal size
-        debug_assert!(capacity_bytes <= Self::MAX_CAPACITY_BYTES);
-
-        // SAFETY: `align_of::<T>()` trivially satisfies alignment requirements.
-        // Caller guarantees `capacity_bytes <= MAX_CAPACITY_BYTES`.
-        // `MAX_CAPACITY_BYTES` takes into account the rounding-up by alignment requirement.
-        Layout::from_size_align_unchecked(capacity_bytes, align_of::<T>())
     }
 
     /// Get reference to last value on stack.
@@ -249,69 +241,18 @@ impl<T> Stack<T> {
     #[cold]
     #[inline(never)]
     unsafe fn push_slow(&mut self, value: T) {
-        if self.end == self.start {
+        #[expect(clippy::if_not_else)]
+        if self.end != self.start {
+            // Stack was already allocated. Grow capacity.
+            // SAFETY: Checked above that is already allocated.
+            self.grow();
+        } else {
             // Stack was not allocated yet.
             // SAFETY: `DEFAULT_CAPACITY_BYTES` satisfies requirements.
-            let new = ManuallyDrop::new(Self::new_with_capacity_bytes_unchecked(
-                Self::DEFAULT_CAPACITY_BYTES,
-            ));
-            self.start = new.start;
-            self.cursor = new.start;
-            self.end = new.end;
-        } else {
-            // Stack was already allocated. Grow capacity.
-            // Get new capacity
-            let old_capacity_bytes = self.capacity_bytes();
-            // Capacity in bytes cannot be larger than `isize::MAX`, so `* 2` cannot overflow.
-            let mut new_capacity_bytes = old_capacity_bytes * 2;
-            if new_capacity_bytes > Self::MAX_CAPACITY_BYTES {
-                assert!(
-                    old_capacity_bytes < Self::MAX_CAPACITY_BYTES,
-                    "Cannot grow beyond `Self::MAX_CAPACITY`"
-                );
-                new_capacity_bytes = Self::MAX_CAPACITY_BYTES;
-            }
-            debug_assert!(new_capacity_bytes > old_capacity_bytes);
-
-            // Reallocate.
-            // SAFETY:
-            // Stack is allocated, and `self.start` and `self.end` are boundaries of that allocation.
-            // So `self.start` and `old_layout` accurately describe the current allocation.
-            // `old_capacity_bytes` was a multiple of `size_of::<T>()`, so double that must be too.
-            // `MAX_CAPACITY_BYTES` is also a multiple of `size_of::<T>()`.
-            // So `new_capacity_bytes` must be a multiple of `size_of::<T>()`.
-            // `new_capacity_bytes` is `<= MAX_CAPACITY_BYTES`, so is a legal allocation size.
-            // `layout_for` produces a layout with `T`'s alignment, so `new_ptr` is aligned for `T`.
-            let new_ptr = unsafe {
-                let old_ptr = self.start.as_ptr().cast::<u8>();
-                let old_layout = Self::layout_for(old_capacity_bytes);
-                let new_ptr = alloc::realloc(old_ptr, old_layout, new_capacity_bytes);
-                if new_ptr.is_null() {
-                    let new_layout = Self::layout_for(new_capacity_bytes);
-                    alloc::handle_alloc_error(new_layout);
-                }
-                new_ptr.cast::<T>()
-            };
-
-            // Update pointers.
-            // Stack was full to capacity, so new last index after push is the old capacity.
-            // i.e. `self.cursor - self.start == old_end - old_start`.
-            // Note: All pointers need to be updated even if allocation grew in place.
-            // From docs for `GlobalAlloc::realloc`:
-            // "Any access to the old `ptr` is Undefined Behavior, even if the allocation remained in-place."
-            // <https://doc.rust-lang.org/std/alloc/trait.GlobalAlloc.html#method.realloc>
-            // `end` changes whatever happens, so always need to be updated.
-            // `cursor` needs to be derived from `start` to make `offset_from` valid, so also needs updating.
-            // SAFETY: We checked that `new_ptr` is non-null.
-            // `old_capacity_bytes` and `new_capacity_bytes` are both multiples of `size_of::<T>()`.
-            // `size_of::<T>()` is always a multiple of `T`'s alignment, and `new_ptr` is aligned for `T`,
-            // so new `self.cursor` and `self.end` are aligned for `T`.
-            // `old_capacity_bytes` is always `< new_capacity_bytes`, so new `self.cursor` must be in bounds.
-            unsafe {
-                self.start = NonNull::new_unchecked(new_ptr);
-                self.end = NonNull::new_unchecked(new_ptr.byte_add(new_capacity_bytes));
-                self.cursor = NonNull::new_unchecked(new_ptr.byte_add(old_capacity_bytes));
-            }
+            let (start, end) = Self::allocate(Self::DEFAULT_CAPACITY_BYTES);
+            self.start = start;
+            self.cursor = start;
+            self.end = end;
         }
 
         // Write value + increment cursor.
@@ -355,19 +296,10 @@ impl<T> Stack<T> {
     /// Get number of entries on stack.
     #[inline]
     pub fn len(&self) -> usize {
-        // `offset_from` returns offset in units of `T`.
-        // SAFETY: `self.start` and `self.cursor` are both derived from same pointer
-        // (in `new`, `new_with_capacity_bytes_unchecked` and `push_slow`).
-        // Both pointers are always within bounds of a single allocation.
-        // Distance between pointers is always a multiple of `size_of::<T>()`.
+        // SAFETY: `self.start` and `self.cursor` are both derived from same pointer.
         // `self.cursor` is always >= `self.start`.
-        // `assert_unchecked!` is to help compiler to optimize.
-        // See: https://doc.rust-lang.org/std/primitive.pointer.html#method.sub_ptr
-        #[expect(clippy::cast_sign_loss)]
-        unsafe {
-            assert_unchecked!(self.cursor >= self.start);
-            self.cursor.as_ptr().offset_from(self.start.as_ptr()) as usize
-        }
+        // Distance between pointers is always a multiple of `size_of::<T>()`.
+        unsafe { self.cursor_offset() }
     }
 
     /// Get if stack is empty.
@@ -379,35 +311,7 @@ impl<T> Stack<T> {
     /// Get capacity.
     #[inline]
     pub fn capacity(&self) -> usize {
-        // SAFETY: `self.start` and `self.end` are both derived from same pointer
-        // (in `new`, `new_with_capacity_bytes_unchecked` and `push_slow`).
-        // Both pointers are always within bounds of single allocation.
-        // Distance between pointers is always a multiple of `size_of::<T>()`.
-        // `self.end` is always >= `self.start`.
-        // `assert_unchecked!` is to help compiler to optimize.
-        // See: https://doc.rust-lang.org/std/primitive.pointer.html#method.sub_ptr
-        #[expect(clippy::cast_sign_loss)]
-        unsafe {
-            assert_unchecked!(self.end >= self.start);
-            self.end.as_ptr().offset_from(self.start.as_ptr()) as usize
-        }
-    }
-
-    /// Get capacity in bytes.
-    #[inline]
-    fn capacity_bytes(&self) -> usize {
-        // SAFETY: `self.start` and `self.end` are both derived from same pointer
-        // (in `new`, `new_with_capacity_bytes_unchecked` and `push_slow`).
-        // Both pointers are always within bounds of single allocation.
-        // Distance between pointers is always a multiple of `size_of::<T>()`.
-        // `self.end` is always >= `self.start`.
-        // `assert_unchecked!` is to help compiler to optimize.
-        // See: https://doc.rust-lang.org/std/primitive.pointer.html#method.sub_ptr
-        #[expect(clippy::cast_sign_loss)]
-        unsafe {
-            assert_unchecked!(self.end >= self.start);
-            self.end.as_ptr().byte_offset_from(self.start.as_ptr()) as usize
-        }
+        <Self as StackCommon<T>>::capacity(self)
     }
 }
 
@@ -419,22 +323,14 @@ impl<T> Drop for Stack<T> {
         }
 
         if !self.is_empty() {
-            // Drop contents. This block copied from `std`'s `Vec`.
-            // Will be optimized out if `T` is non-drop, as `drop_in_place` calls `std::mem::needs_drop`.
-            // SAFETY: Stack contains `self.len()` initialized entries, starting at `self.start`.
-            unsafe {
-                ptr::drop_in_place(ptr::slice_from_raw_parts_mut(self.start.as_ptr(), self.len()));
-            }
+            // SAFETY: Checked above that stack is allocated.
+            // Stack contains `self.len()` initialized entries, starting at `self.start`
+            unsafe { self.drop_contents(self.len()) };
         }
 
         // Drop the memory
         // SAFETY: Checked above that stack is allocated.
-        // `self.start` and `self.end` are boundaries of that allocation.
-        // So `self.start` and `layout` accurately describe the current allocation.
-        unsafe {
-            let layout = Self::layout_for(self.capacity_bytes());
-            alloc::dealloc(self.start.as_ptr().cast::<u8>(), layout);
-        }
+        unsafe { self.deallocate() };
     }
 }
 
