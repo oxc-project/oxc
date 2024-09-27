@@ -105,6 +105,19 @@ impl LinterBuilder {
         self
     }
 
+    /// Configure what linter plugins are enabled.
+    ///
+    /// Turning on a plugin will not automatically enable any of its rules. You must do this
+    /// yourself (using [`with_filters`]) after turning the plugin on. Note that turning off a
+    /// plugin that was already on will cause all rules in that plugin to be turned off. Any
+    /// configuration you passed to those rules will be lost. You'll need to re-add it if/when you
+    /// turn that rule back on.
+    ///
+    /// This method sets what plugins are enabled and disabled, overwriting whatever existing
+    /// config is set. If you are looking to add/remove plugins, use [`and_plugins`]
+    ///
+    /// [`with_filters`]: LinterBuilder::with_filters
+    /// [`and_plugins`]: LinterBuilder::and_plugins
     #[inline]
     pub fn with_plugins(mut self, plugins: LintPlugins) -> Self {
         self.options.plugins = plugins;
@@ -112,6 +125,10 @@ impl LinterBuilder {
         self
     }
 
+    /// Enable or disable a set of plugins, leaving unrelated plugins alone.
+    ///
+    /// See [`LinterBuilder::with_plugins`] for details on how plugin configuration affects your
+    /// rules.
     #[inline]
     pub fn and_plugins(mut self, plugins: LintPlugins, enabled: bool) -> Self {
         self.options.plugins.set(plugins, enabled);
@@ -203,7 +220,15 @@ impl LinterBuilder {
 
     #[must_use]
     pub fn build(self) -> Linter {
-        let mut rules = self.rules.into_iter().collect::<Vec<_>>();
+        // When a plugin gets disabled before build(), rules for that plugin aren't removed until
+        // with_filters() gets called. If the user never calls it, those now-undesired rules need
+        // to be taken out.
+        let plugins = self.plugins();
+        let mut rules = if self.cache.is_stale() {
+            self.rules.into_iter().filter(|r| plugins.contains(r.plugin_name().into())).collect()
+        } else {
+            self.rules.into_iter().collect::<Vec<_>>()
+        };
         rules.sort_unstable_by_key(|r| r.id());
         Linter::new(rules, self.options, self.config)
     }
@@ -240,35 +265,56 @@ impl fmt::Debug for LinterBuilder {
     }
 }
 
-struct RulesCache(RefCell<Option<Vec<RuleEnum>>>, LintPlugins);
+struct RulesCache {
+    all_rules: RefCell<Option<Vec<RuleEnum>>>,
+    plugins: LintPlugins,
+    last_fresh_plugins: LintPlugins,
+}
+
 impl RulesCache {
     #[inline]
     #[must_use]
     pub fn new(plugins: LintPlugins) -> Self {
-        Self(RefCell::new(None), plugins)
+        Self { all_rules: RefCell::new(None), plugins, last_fresh_plugins: plugins }
     }
 
     pub fn set_plugins(&mut self, plugins: LintPlugins) {
-        self.1 = plugins;
+        if self.plugins == plugins {
+            return;
+        }
+        self.last_fresh_plugins = self.plugins;
+        self.plugins = plugins;
         self.clear();
+    }
+
+    pub fn is_stale(&self) -> bool {
+        // NOTE: After all_rules cache has been initialized _at least once_ (e.g. its borrowed, or
+        // initialize() is called), all_rules will be some if and only if last_fresh_plugins ==
+        // plugins. Right before creation, (::new()) and before initialize() is called, these two
+        // fields will be equal _but all_rules will be none_. This is OK for this function, but is
+        // a possible future foot-gun. LinterBuilder uses this to re-build its rules list in
+        // ::build(). If cache is created but never made stale (by changing plugins),
+        // LinterBuilder's rule list won't need updating anyways, meaning its sound for this to
+        // return `false`.
+        self.last_fresh_plugins != self.plugins
     }
 
     #[must_use]
     fn borrow(&self) -> Ref<'_, Vec<RuleEnum>> {
-        let cached = self.0.borrow();
+        let cached = self.all_rules.borrow();
         if cached.is_some() {
             Ref::map(cached, |cached| cached.as_ref().unwrap())
         } else {
             drop(cached);
             self.initialize();
-            Ref::map(self.0.borrow(), |cached| cached.as_ref().unwrap())
+            Ref::map(self.all_rules.borrow(), |cached| cached.as_ref().unwrap())
         }
     }
 
     /// # Panics
     /// If the cache cell is currently borrowed.
     fn clear(&self) {
-        *self.0.borrow_mut() = None;
+        *self.all_rules.borrow_mut() = None;
     }
 
     /// Forcefully initialize this cache with all rules in all plugins currently
@@ -282,22 +328,22 @@ impl RulesCache {
     /// If the cache cell is currently borrowed.
     fn initialize(&self) {
         debug_assert!(
-            self.0.borrow().is_none(),
+            self.all_rules.borrow().is_none(),
             "Cannot re-initialize a populated rules cache. It must be cleared first."
         );
 
-        let mut all_rules: Vec<_> = if self.1.is_all() {
+        let mut all_rules: Vec<_> = if self.plugins.is_all() {
             RULES.clone()
         } else {
             RULES
                 .iter()
-                .filter(|rule| self.1.contains(LintPlugins::from(rule.plugin_name())))
+                .filter(|rule| self.plugins.contains(LintPlugins::from(rule.plugin_name())))
                 .cloned()
                 .collect()
         };
         all_rules.sort_unstable(); // TODO: do we need to sort? is is already sorted?
 
-        *self.0.borrow_mut() = Some(all_rules);
+        *self.all_rules.borrow_mut() = Some(all_rules);
     }
 }
 
@@ -392,6 +438,26 @@ mod test {
 
         let builder = builder.and_plugins(LintPlugins::IMPORT, true);
         assert_eq!(initial_rule_count, builder.rules.len(), "Enabling a plugin should not add any rules, since we don't know which categories to turn on.");
+    }
+
+    #[test]
+    fn test_rules_after_plugin_removal() {
+        // sanity check: the plugin we're removing is, in fact, enabled by default.
+        assert!(LintPlugins::default().contains(LintPlugins::TYPESCRIPT));
+
+        let mut desired_plugins = LintPlugins::default();
+        desired_plugins.set(LintPlugins::TYPESCRIPT, false);
+
+        let linter = LinterBuilder::default().with_plugins(desired_plugins).build();
+        for rule in linter.rules() {
+            let name = rule.name();
+            let plugin = rule.plugin_name();
+            assert_ne!(
+                LintPlugins::from(plugin),
+                LintPlugins::TYPESCRIPT,
+                "{plugin}/{name} is in the rules list after typescript plugin has been disabled"
+            );
+        }
     }
 
     #[test]
