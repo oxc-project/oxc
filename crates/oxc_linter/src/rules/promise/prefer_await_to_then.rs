@@ -21,9 +21,16 @@ declare_oxc_lint!(
     ///
     /// Async/await syntax can be seen as more readable.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// myPromise.then(doSomething)
+    /// function foo() { hey.then(x => {}) }
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// async function hi() { await thing() }
     /// ```
     PreferAwaitToThen,
     style,

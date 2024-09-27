@@ -268,7 +268,9 @@ impl Runtime {
             // TODO: Span is wrong, ban this feature for file process by `PartialLoader`.
             if !is_processed_by_partial_loader && self.linter.options().fix.is_some() {
                 let fix_result = Fixer::new(source_text, messages).fix();
-                fs::write(path, fix_result.fixed_code.as_bytes()).unwrap();
+                if fix_result.fixed {
+                    fs::write(path, fix_result.fixed_code.as_bytes()).unwrap();
+                }
                 messages = fix_result.messages;
             }
 

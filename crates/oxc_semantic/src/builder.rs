@@ -82,7 +82,7 @@ pub struct SemanticBuilder<'a> {
     // we need the to know the modules we are inside
     // and when we reach a value declaration we set it
     // to value like
-    pub(crate) namespace_stack: Vec<SymbolId>,
+    pub(crate) namespace_stack: Vec<Option<SymbolId>>,
     current_reference_flags: ReferenceFlags,
     pub(crate) hoisting_variables: FxHashMap<ScopeId, FxHashMap<Atom<'a>, SymbolId>>,
 
@@ -1847,8 +1847,9 @@ impl<'a> SemanticBuilder<'a> {
                 let symbol_id = self
                     .scope
                     .get_bindings(self.current_scope_id)
-                    .get(module_declaration.id.name().as_str());
-                self.namespace_stack.push(*symbol_id.unwrap());
+                    .get(module_declaration.id.name().as_str())
+                    .copied();
+                self.namespace_stack.push(symbol_id);
                 self.current_symbol_flags -= SymbolFlags::Export;
             }
             AstKind::TSTypeAliasDeclaration(type_alias_declaration) => {
@@ -2025,11 +2026,15 @@ impl<'a> SemanticBuilder<'a> {
 
     fn make_all_namespaces_valuelike(&mut self) {
         for symbol_id in &self.namespace_stack {
+            let Some(symbol_id) = *symbol_id else {
+                continue;
+            };
+
             // Ambient modules cannot be value modules
-            if self.symbols.get_flags(*symbol_id).intersects(SymbolFlags::Ambient) {
+            if self.symbols.get_flags(symbol_id).intersects(SymbolFlags::Ambient) {
                 continue;
             }
-            self.symbols.union_flag(*symbol_id, SymbolFlags::ValueModule);
+            self.symbols.union_flag(symbol_id, SymbolFlags::ValueModule);
         }
     }
 

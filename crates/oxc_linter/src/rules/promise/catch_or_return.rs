@@ -60,7 +60,7 @@ declare_oxc_lint!(
     /// promise rejections can cause your application to crash.
     ///
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript

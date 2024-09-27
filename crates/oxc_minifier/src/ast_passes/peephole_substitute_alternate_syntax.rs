@@ -1,5 +1,5 @@
 use oxc_ast::ast::*;
-use oxc_span::SPAN;
+use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::{
     number::NumberBase,
     operator::{BinaryOperator, UnaryOperator},
@@ -101,7 +101,7 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
     /// Transforms `undefined` => `void 0`
     fn compress_undefined(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
         if ctx.is_expression_undefined(expr) {
-            *expr = ctx.ast.void_0();
+            *expr = ctx.ast.void_0(expr.span());
             return true;
         };
         false

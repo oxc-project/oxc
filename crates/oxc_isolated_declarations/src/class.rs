@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use oxc_allocator::{Box, CloneIn};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, NONE};
@@ -269,23 +271,26 @@ impl<'a> IsolatedDeclarations<'a> {
         elements
     }
 
-    /// Transform getter and setter methods
+    /// Collect return_type of getter and first parma type of setter
     ///
     /// ### Getter
     ///
-    /// 1. If it has no return type, infer it from the function body
-    /// 2. If it cannot be inferred from the function body, try to infer it from setter method's first parameter
+    /// 1. If it has return type, use it
+    /// 2. If it has no return type, infer it from the function body
     ///
     /// ### Setter
     ///
-    /// 1. If it has no parameter, create a parameter with the name `value`
-    /// 2. If it has no parameter type, infer it from the getter method's return type
-    fn transform_getter_or_setter_methods(&self, decl: &mut Class<'a>) {
-        let mut method_annotations: FxHashMap<_, (bool, _, _)> = FxHashMap::default();
-        for element in decl.body.body.iter_mut() {
+    /// 1. If it has no parameter type, infer it from the getter method's return type
+    fn collect_getter_or_setter_annotations(
+        &self,
+        decl: &Class<'a>,
+    ) -> FxHashMap<Cow<str>, Box<'a, TSTypeAnnotation<'a>>> {
+        let mut method_annotations = FxHashMap::default();
+        for element in &decl.body.body {
             if let ClassElement::MethodDefinition(method) = element {
-                if method.key.is_private_identifier()
-                    && (method.computed && !self.is_literal_key(&method.key))
+                if (method.key.is_private_identifier()
+                    || method.accessibility.is_some_and(TSAccessibility::is_private))
+                    || (method.computed && !self.is_literal_key(&method.key))
                 {
                     continue;
                 }
@@ -296,52 +301,36 @@ impl<'a> IsolatedDeclarations<'a> {
 
                 match method.kind {
                     MethodDefinitionKind::Set => {
-                        let params = &mut method.value.params;
-                        if params.items.is_empty() {
-                            *params = self.create_formal_parameters(
-                                self.ast.binding_pattern_kind_binding_identifier(SPAN, "value"),
-                            );
-                        }
-                        let Some(first_param) = method.value.params.items.first_mut() else {
+                        let Some(first_param) = method.value.params.items.first() else {
                             continue;
                         };
-                        let entry = method_annotations.entry(name).or_default();
-                        entry.0 |= first_param.pattern.type_annotation.is_none();
-                        entry.1 = Some(&mut first_param.pattern.type_annotation);
+                        if let Some(annotation) =
+                            first_param.pattern.type_annotation.clone_in(self.ast.allocator)
+                        {
+                            method_annotations.insert(name, annotation);
+                        }
                     }
                     MethodDefinitionKind::Get => {
-                        if method.accessibility.is_some_and(TSAccessibility::is_private) {
-                            continue;
+                        let function = &method.value;
+                        if let Some(annotation) = function
+                            .return_type
+                            .clone_in(self.ast.allocator)
+                            .or_else(|| self.infer_function_return_type(function))
+                        {
+                            method_annotations.insert(name, annotation);
                         }
-
-                        let function = &mut method.value;
-                        if function.return_type.is_none() {
-                            function.return_type = self.infer_function_return_type(function);
-                        };
-                        let return_type = &mut function.return_type;
-                        let entry = method_annotations.entry(name).or_default();
-                        entry.0 |= return_type.is_none();
-                        entry.2 = Some(&mut function.return_type);
                     }
                     _ => continue,
                 };
             }
         }
 
-        for (requires_inference, param, return_type) in method_annotations.into_values() {
-            if requires_inference {
-                if let (Some(Some(annotation)), Some(option))
-                | (Some(option), Some(Some(annotation))) = (param, return_type)
-                {
-                    option.replace(annotation.clone_in(self.ast.allocator));
-                }
-            }
-        }
+        method_annotations
     }
 
     pub fn transform_class(
         &self,
-        decl: &mut Class<'a>,
+        decl: &Class<'a>,
         declare: Option<bool>,
     ) -> Option<Box<'a, Class<'a>>> {
         if decl.declare {
@@ -361,7 +350,7 @@ impl<'a> IsolatedDeclarations<'a> {
             }
         }
 
-        self.transform_getter_or_setter_methods(decl);
+        let setter_getter_annotations = self.collect_getter_or_setter_annotations(decl);
         let mut has_private_key = false;
         let mut elements = self.ast.vec();
         let mut is_function_overloads = false;
@@ -391,7 +380,32 @@ impl<'a> IsolatedDeclarations<'a> {
 
                     let function = &method.value;
                     let params = match method.kind {
-                        MethodDefinitionKind::Set => function.params.clone_in(self.ast.allocator),
+                        MethodDefinitionKind::Set => {
+                            if method.accessibility.is_some_and(TSAccessibility::is_private) {
+                                elements.push(self.transform_private_modifier_method(method));
+                                continue;
+                            }
+                            let params = &method.value.params;
+                            if params.items.is_empty() {
+                                self.create_formal_parameters(
+                                    self.ast.binding_pattern_kind_binding_identifier(SPAN, "value"),
+                                )
+                            } else {
+                                let mut params = params.clone_in(self.ast.allocator);
+                                if let Some(param) = params.items.first_mut() {
+                                    if let Some(annotation) =
+                                        method.key.static_name().and_then(|name| {
+                                            setter_getter_annotations
+                                                .get(&name)
+                                                .map(|a| a.clone_in(self.ast.allocator))
+                                        })
+                                    {
+                                        param.pattern.type_annotation = Some(annotation);
+                                    }
+                                }
+                                params
+                            }
+                        }
                         MethodDefinitionKind::Constructor => {
                             let params = self.transform_formal_parameters(&function.params);
                             elements.splice(
@@ -428,8 +442,16 @@ impl<'a> IsolatedDeclarations<'a> {
                             rt
                         }
                         MethodDefinitionKind::Get => {
-                            let rt = method.value.return_type.clone_in(self.ast.allocator);
-                            if method.value.return_type.is_none() {
+                            let rt = method.value.return_type.clone_in(self.ast.allocator).or_else(
+                                || {
+                                    method
+                                        .key
+                                        .static_name()
+                                        .and_then(|name| setter_getter_annotations.get(&name))
+                                        .map(|a| a.clone_in(self.ast.allocator))
+                                },
+                            );
+                            if rt.is_none() {
                                 self.error(accessor_must_have_explicit_return_type(
                                     method.key.span(),
                                 ));

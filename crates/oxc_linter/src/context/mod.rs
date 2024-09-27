@@ -277,7 +277,7 @@ impl<'a> LintContext<'a> {
             (Some(message), None) => diagnostic.with_help(message.to_owned()),
             _ => diagnostic,
         };
-        if self.parent.fix.can_apply(rule_fix.kind()) {
+        if self.parent.fix.can_apply(rule_fix.kind()) && !rule_fix.is_empty() {
             let fix = rule_fix.into_fix(self.source_text());
             self.add_diagnostic(Message::new(diagnostic, Some(fix)));
         } else {

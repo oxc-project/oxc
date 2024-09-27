@@ -95,15 +95,17 @@ impl Reference {
         &mut self.flags
     }
 
-    /// Returns `true` if the identifier value was read. This is not mutually
-    /// exclusive with [`#is_write`]
+    /// Returns `true` if the identifier value was read.
+    ///
+    /// This is not mutually exclusive with [`Reference::is_write`].
     #[inline]
     pub fn is_read(&self) -> bool {
         self.flags.is_read()
     }
 
-    /// Returns `true` if the identifier was written to. This is not mutually
-    /// exclusive with [`#is_read`]
+    /// Returns `true` if the identifier was written to.
+    ///
+    /// This is not mutually exclusive with [`Reference::is_read`].
     #[inline]
     pub fn is_write(&self) -> bool {
         self.flags.is_write()

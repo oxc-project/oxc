@@ -116,6 +116,11 @@ impl Linter {
         self.rules.len()
     }
 
+    #[cfg(test)]
+    pub(crate) fn rules(&self) -> &Vec<RuleWithSeverity> {
+        &self.rules
+    }
+
     pub fn run<'a>(&self, path: &Path, semantic: Rc<Semantic<'a>>) -> Vec<Message<'a>> {
         let ctx_host =
             Rc::new(ContextHost::new(path, semantic, self.options).with_config(&self.config));

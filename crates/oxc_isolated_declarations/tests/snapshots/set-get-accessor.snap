@@ -7,7 +7,7 @@ input_file: crates/oxc_isolated_declarations/tests/fixtures/set-get-accessor.ts
 
 declare class Cls {
 	get a(): number;
-	set a(value: number);
+	set a(value);
 	get b(): string;
 	set b(v: string);
 	private get c();

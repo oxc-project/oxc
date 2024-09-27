@@ -255,3 +255,19 @@ fn equality() {
     test_minify("a, b == c , d", "a,b==c,d;");
     test_minify("(a, b) == (c , d)", "(a,b)==(c,d);");
 }
+
+#[test]
+fn vite_special_comments() {
+    test(
+        "new URL(/* @vite-ignore */ 'non-existent', import.meta.url)",
+        "new URL(\n\t/* @vite-ignore */\n\t\"non-existent\",\n\timport.meta.url\n);\n",
+    );
+    test(
+        "const importPromise = import(\n/* @vite-ignore */\nbase + '.js'\n);",
+        "const importPromise = import(\n\t/* @vite-ignore */\n\tbase + \".js\"\n);\n",
+    );
+    test(
+        "import(/* @vite-ignore */ module1Url).then((module1) => {\nself.postMessage(module.default + module1.msg1 + import.meta.env.BASE_URL)})",
+        "import(\n\t/* @vite-ignore */\n\tmodule1Url\n).then((module1) => {\n\tself.postMessage(module.default + module1.msg1 + import.meta.env.BASE_URL);\n});\n",
+    );
+}

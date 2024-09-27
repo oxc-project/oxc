@@ -1,5 +1,6 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
+use oxc_span::GetSpan;
 use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::{CompressOptions, CompressorPass};
@@ -77,7 +78,7 @@ impl<'a> RemoveSyntax {
 
     fn compress_console(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.drop_console && Self::is_console(expr) {
-            *expr = ctx.ast.void_0();
+            *expr = ctx.ast.void_0(expr.span());
         }
     }
 

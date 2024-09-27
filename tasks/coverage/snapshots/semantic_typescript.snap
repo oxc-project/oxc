@@ -9009,10 +9009,7 @@ after transform: ScopeId(1): ["E", "i"]
 rebuilt        : ScopeId(1): ["i"]
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitRetainsJsdocyComments.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Foo", "foo", "global", "someMethod"]
-rebuilt        : ScopeId(0): ["Foo", "foo", "someMethod"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(6)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(4)]
 
@@ -10734,7 +10731,7 @@ rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/doubleUnderscoreReactNamespace.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["__foot", "_jsxFileName", "global", "thing"]
+after transform: ScopeId(0): ["__foot", "_jsxFileName", "thing"]
 rebuilt        : ScopeId(0): ["_jsxFileName", "thing"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
@@ -17286,10 +17283,7 @@ after transform: ReferenceId(2): Some("M")
 rebuilt        : ReferenceId(6): Some("M")
 
 tasks/coverage/typescript/tests/cases/compiler/globalFunctionAugmentationOverload.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["global"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
@@ -21003,7 +20997,7 @@ rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/jsxCallbackWithDestructuring.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Component", "MyComponent", "RouteProps", "_jsx", "_jsxFileName", "global"]
+after transform: ScopeId(0): ["Component", "MyComponent", "RouteProps", "_jsx", "_jsxFileName"]
 rebuilt        : ScopeId(0): ["MyComponent", "_jsx", "_jsxFileName"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(5), ScopeId(14), ScopeId(15), ScopeId(16)]
@@ -23043,7 +23037,7 @@ rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationGlobal1.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A", "global", "x", "y"]
+after transform: ScopeId(0): ["A", "x", "y"]
 rebuilt        : ScopeId(0): ["x", "y"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
@@ -23051,7 +23045,7 @@ rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationGlobal2.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A", "global", "x", "y"]
+after transform: ScopeId(0): ["A", "x", "y"]
 rebuilt        : ScopeId(0): ["x", "y"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
@@ -23059,17 +23053,14 @@ rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationGlobal3.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A", "global"]
+after transform: ScopeId(0): ["A"]
 rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationGlobal4.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["global"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
@@ -37199,10 +37190,7 @@ after transform: [ReferenceId(7), ReferenceId(9), ReferenceId(13)]
 rebuilt        : [ReferenceId(4)]
 
 tasks/coverage/typescript/tests/cases/compiler/uniqueSymbolAssignmentOnGlobalAugmentationSuceeds.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["FOO_SYMBOL", "foo", "global"]
-rebuilt        : ScopeId(0): ["FOO_SYMBOL", "foo"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Bindings mismatch:
@@ -40502,14 +40490,11 @@ after transform: [ReferenceId(0), ReferenceId(11)]
 rebuilt        : [ReferenceId(10)]
 
 tasks/coverage/typescript/tests/cases/conformance/controlFlow/controlFlowInstanceofExtendsFunction.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["X", "Y", "global", "x"]
-rebuilt        : ScopeId(0): ["X", "Y", "x"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(5), ScopeId(8), ScopeId(9)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(5), ScopeId(6)]
 Symbol reference IDs mismatch:
-after transform: SymbolId(2): [ReferenceId(2), ReferenceId(5), ReferenceId(7), ReferenceId(9)]
+after transform: SymbolId(1): [ReferenceId(2), ReferenceId(5), ReferenceId(7), ReferenceId(9)]
 rebuilt        : SymbolId(0): [ReferenceId(2), ReferenceId(6), ReferenceId(8)]
 
 tasks/coverage/typescript/tests/cases/conformance/controlFlow/controlFlowOptionalChain2.ts
@@ -42020,10 +42005,7 @@ semantic error: The only valid meta property for import is import.meta
 The only valid meta property for import is import.meta
 
 tasks/coverage/typescript/tests/cases/conformance/es2019/importMeta/importMetaNarrowing.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["global"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
@@ -42503,7 +42485,7 @@ rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolProperty61.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["InteropObservable", "MyObservable", "from", "global", "observable"]
+after transform: ScopeId(0): ["InteropObservable", "MyObservable", "from", "observable"]
 rebuilt        : ScopeId(0): ["MyObservable", "from", "observable"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(7), ScopeId(9)]
@@ -47533,10 +47515,7 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 rebuilt        : SymbolId(0): [ReferenceId(0)]
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/globalAugmentationModuleResolution.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["global"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
