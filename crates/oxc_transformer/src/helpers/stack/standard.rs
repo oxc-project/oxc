@@ -1,8 +1,8 @@
 #![expect(clippy::unnecessary_safety_comment)]
 
-use std::{mem::size_of, ptr::NonNull};
+use std::mem::size_of;
 
-use super::{StackCapacity, StackCommon};
+use super::{NonNull, StackCapacity, StackCommon};
 
 /// A simple stack.
 ///
@@ -177,7 +177,7 @@ impl<T> Stack<T> {
         // SAFETY: All methods ensure `self.cursor` is always in bounds, is aligned for `T`,
         // and `self.current.sub(1)` points to a valid initialized `T`, if stack is not empty.
         // Caller guarantees stack is not empty.
-        NonNull::new_unchecked(self.cursor.as_ptr().sub(1)).as_ref()
+        self.cursor.sub(1).as_ref()
     }
 
     /// Get mutable reference to last value on stack.
@@ -205,7 +205,7 @@ impl<T> Stack<T> {
         // SAFETY: All methods ensure `self.cursor` is always in bounds, is aligned for `T`,
         // and `self.current.sub(1)` points to a valid initialized `T`, if stack is not empty.
         // Caller guarantees stack is not empty.
-        NonNull::new_unchecked(self.cursor.as_ptr().sub(1)).as_mut()
+        self.cursor.sub(1).as_mut()
     }
 
     /// Push value to stack.
@@ -224,7 +224,7 @@ impl<T> Stack<T> {
             // SAFETY: Cursor is not at end, so `self.cursor` is in bounds for writing
             unsafe { self.cursor.as_ptr().write(value) };
             // SAFETY: Cursor is not at end, so advancing by a `T` cannot be out of bounds
-            self.cursor = unsafe { NonNull::new_unchecked(self.cursor.as_ptr().add(1)) };
+            self.cursor = unsafe { self.cursor.add(1) };
         }
     }
 
@@ -260,7 +260,7 @@ impl<T> Stack<T> {
         // `self.cursor` is aligned for `T`.
         unsafe { self.cursor.as_ptr().write(value) }
         // SAFETY: Cursor is not at end, so advancing by a `T` cannot be out of bounds
-        self.cursor = unsafe { NonNull::new_unchecked(self.cursor.as_ptr().add(1)) };
+        self.cursor = unsafe { self.cursor.add(1) };
     }
 
     /// Pop value from stack.
@@ -286,7 +286,7 @@ impl<T> Stack<T> {
         debug_assert!(self.cursor > self.start);
         debug_assert!(self.cursor <= self.end);
         // SAFETY: Caller guarantees stack is not empty, so subtracting 1 cannot be out of bounds
-        self.cursor = NonNull::new_unchecked(self.cursor.as_ptr().sub(1));
+        self.cursor = self.cursor.sub(1);
         // SAFETY: All methods ensure `self.cursor` is always in bounds, is aligned for `T`,
         // and points to a valid initialized `T`, if stack is not empty.
         // Caller guarantees stack was not empty.

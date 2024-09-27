@@ -3,12 +3,12 @@
 use std::{
     alloc::{self, Layout},
     mem::{align_of, size_of},
-    ptr::{self, NonNull},
+    ptr,
 };
 
 use assert_unchecked::assert_unchecked;
 
-use super::StackCapacity;
+use super::{NonNull, StackCapacity};
 
 pub trait StackCommon<T>: StackCapacity<T> {
     // Getter setter methods defined by implementer
@@ -34,11 +34,8 @@ pub trait StackCommon<T>: StackCapacity<T> {
         let layout = Self::layout_for(capacity_bytes);
         let (start, end) = allocate(layout);
 
-        // SAFETY: `start` and `end` are `NonNull` - just casting them
-        let start = NonNull::new_unchecked(start.as_ptr().cast::<T>());
-        let end = NonNull::new_unchecked(end.as_ptr().cast::<T>());
-
-        (start, end)
+        // SAFETY: `layout_for` produces a layout with `T`'s alignment, so pointers are aligned for `T`
+        (start.cast::<T>(), end.cast::<T>())
     }
 
     /// Grow allocation.
@@ -64,7 +61,7 @@ pub trait StackCommon<T>: StackCapacity<T> {
         // `MAX_CAPACITY_BYTES` is also a multiple of `size_of::<T>()`.
         // So new capacity in bytes must be a multiple of `size_of::<T>()`.
         // `MAX_CAPACITY_BYTES <= isize::MAX`.
-        let old_start_ptr = NonNull::new_unchecked(self.start().as_ptr().cast::<u8>());
+        let old_start_ptr = self.start().cast::<u8>();
         let old_layout = Self::layout_for(self.capacity_bytes());
         let (start, end, current) = grow(old_start_ptr, old_layout, Self::MAX_CAPACITY_BYTES);
 
@@ -73,9 +70,9 @@ pub trait StackCommon<T>: StackCapacity<T> {
         // All pointers returned from `grow` are aligned for `T`.
         // Old capacity and new capacity in bytes are both multiples of `size_of::<T>()`,
         // so distances `end - start` and `current - start` are both multiples of `size_of::<T>()`.
-        self.set_start(NonNull::new_unchecked(start.as_ptr().cast::<T>()));
-        self.set_end(NonNull::new_unchecked(end.as_ptr().cast::<T>()));
-        self.set_cursor(NonNull::new_unchecked(current.as_ptr().cast::<T>()));
+        self.set_start(start.cast::<T>());
+        self.set_end(end.cast::<T>());
+        self.set_cursor(current.cast::<T>());
     }
 
     /// Deallocate stack memory.
@@ -149,7 +146,7 @@ pub trait StackCommon<T>: StackCapacity<T> {
         #[expect(clippy::cast_sign_loss)]
         unsafe {
             assert_unchecked!(self.cursor() >= self.start());
-            self.cursor().as_ptr().offset_from(self.start().as_ptr()) as usize
+            self.cursor().offset_from(self.start()) as usize
         }
     }
 
@@ -166,7 +163,7 @@ pub trait StackCommon<T>: StackCapacity<T> {
         #[expect(clippy::cast_sign_loss)]
         unsafe {
             assert_unchecked!(self.end() >= self.start());
-            self.end().as_ptr().offset_from(self.start().as_ptr()) as usize
+            self.end().offset_from(self.start()) as usize
         }
     }
 
@@ -183,7 +180,7 @@ pub trait StackCommon<T>: StackCapacity<T> {
         #[expect(clippy::cast_sign_loss)]
         unsafe {
             assert_unchecked!(self.end() >= self.start());
-            self.end().as_ptr().byte_offset_from(self.start().as_ptr()) as usize
+            self.end().byte_offset_from(self.start()) as usize
         }
     }
 }
@@ -209,7 +206,7 @@ unsafe fn allocate(layout: Layout) -> (/* start */ NonNull<u8>, /* end */ NonNul
     // SAFETY: We checked `ptr` is non-null
     let start = NonNull::new_unchecked(ptr);
     // SAFETY: We allocated `layout.size()` bytes, so `end` is end of allocation
-    let end = NonNull::new_unchecked(ptr.add(layout.size()));
+    let end = start.add(layout.size());
 
     (start, end)
 }
@@ -249,7 +246,7 @@ unsafe fn grow(
     // So `new_capacity_bytes` must be a multiple of `size_of::<T>()`.
     // `new_capacity_bytes` is `<= MAX_CAPACITY_BYTES`, so is a legal allocation size.
     // `layout_for` produces a layout with `T`'s alignment, so `new_ptr` is aligned for `T`.
-    let new_ptr = unsafe {
+    let new_start = unsafe {
         let old_ptr = old_start.as_ptr();
         let new_ptr = alloc::realloc(old_ptr, old_layout, new_capacity_bytes);
         if new_ptr.is_null() {
@@ -257,7 +254,7 @@ unsafe fn grow(
                 Layout::from_size_align_unchecked(old_capacity_bytes, old_layout.align());
             alloc::handle_alloc_error(new_layout);
         }
-        new_ptr
+        NonNull::new_unchecked(new_ptr)
     };
 
     // Update pointers.
@@ -273,9 +270,8 @@ unsafe fn grow(
     //
     // SAFETY: We checked that `new_ptr` is non-null.
     // `old_capacity_bytes < new_capacity_bytes` (ensured above), so `new_cursor` must be in bounds.
-    let new_start = NonNull::new_unchecked(new_ptr);
-    let new_end = NonNull::new_unchecked(new_ptr.add(new_capacity_bytes));
-    let new_cursor = NonNull::new_unchecked(new_ptr.add(old_capacity_bytes));
+    let new_end = new_start.add(new_capacity_bytes);
+    let new_cursor = new_start.add(old_capacity_bytes);
 
     (new_start, new_end, new_cursor)
 }

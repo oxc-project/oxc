@@ -1,8 +1,8 @@
 #![expect(clippy::unnecessary_safety_comment)]
 
-use std::{mem::size_of, ptr::NonNull};
+use std::mem::size_of;
 
-use super::{StackCapacity, StackCommon};
+use super::{NonNull, StackCapacity, StackCommon};
 
 /// A stack which can never be empty.
 ///
@@ -199,7 +199,7 @@ impl<T> NonEmptyStack<T> {
         // of allocation. So advancing by a `T` cannot be out of bounds.
         // The distance between `self.cursor` and `self.end` is always a multiple of `size_of::<T>()`,
         // so `==` check is sufficient to detect when full to capacity.
-        let new_cursor = unsafe { NonNull::new_unchecked(self.cursor.as_ptr().add(1)) };
+        let new_cursor = unsafe { self.cursor.add(1) };
         if new_cursor == self.end {
             // Needs to grow
             // SAFETY: Stack is full to capacity
@@ -264,7 +264,7 @@ impl<T> NonEmptyStack<T> {
         let value = self.cursor.as_ptr().read();
         // SAFETY: Caller guarantees there's at least 2 entries on stack, so subtracting 1
         // cannot be out of bounds
-        self.cursor = NonNull::new_unchecked(self.cursor.as_ptr().sub(1));
+        self.cursor = self.cursor.sub(1);
         value
     }
 
