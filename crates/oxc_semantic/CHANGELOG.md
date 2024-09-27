@@ -4,6 +4,26 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.30.2] - 2024-09-27
+
+### Features
+
+- f866781 semantic: Check for type annotations on left side of `for..in` and `for..of` iterators (#6043) (DonIsaac)
+- 8b2e9aa semantic: Check for JSDoc types in TS type annotations (#6042) (DonIsaac)
+
+### Bug Fixes
+
+- b1af73d semantic: Do not create a `global` symbol for `declare global {}` (#6040) (DonIsaac)
+- c8682e9 semantic,codegen,transformer: Handle definite `!` operator in variable declarator (#6019) (Boshen)
+
+### Documentation
+
+- efabfc8 semantic: Improve doc comments on `Reference` methods (#6076) (overlookmotel)
+
+### Testing
+
+- 93575cd semantic: Add comprehensive regression test suite (#5976) (DonIsaac)
+
 ## [0.30.1] - 2024-09-24
 
 ### Performance

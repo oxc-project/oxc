@@ -4,6 +4,34 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.30.2] - 2024-09-27
+
+### Features
+
+- 60c52ba ast: Allow passing span to `void_0` method (#6065) (Dunqing)
+- 28da771 transformer: Do not transform `**` with bigint literals (#6023) (Boshen)
+
+### Bug Fixes
+
+- c8682e9 semantic,codegen,transformer: Handle definite `!` operator in variable declarator (#6019) (Boshen)
+
+### Performance
+
+- 85aff19 transformer: Introduce `Stack` (#6093) (overlookmotel)
+- ad4ef31 transformer: Introduce `NonEmptyStack` (#6092) (overlookmotel)
+
+### Refactor
+
+- e60ce50 transformer: Add `SparseStack::with_capacity` method (#6094) (overlookmotel)
+- 1399d2c transformer: Move `SparseStack` definition into folder (#6091) (overlookmotel)
+- 6bd29dd transformer: Add more debug assertions (#6090) (overlookmotel)
+- c90b9bf transformer: Rename `SparseStack` methods (#6089) (overlookmotel)
+- 2b380c8 transformer: Remove unsued `self.ctx` (#6022) (Boshen)
+
+### Testing
+
+- a4cec75 transformer: Enable tests (#6032) (overlookmotel)
+
 ## [0.30.1] - 2024-09-24
 
 ### Performance
