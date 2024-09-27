@@ -30,6 +30,7 @@ oxc_span = { workspace = true }
 oxc_syntax = { workspace = true, features = ["to_js_string"] }
 oxc_traverse = { workspace = true }
 
+assert-unchecked = { workspace = true }
 base64 = { workspace = true }
 dashmap = { workspace = true }
 indexmap = { workspace = true }
