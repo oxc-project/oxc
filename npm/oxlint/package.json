@@ -1,6 +1,6 @@
 {
   "name": "oxlint",
-  "version": "0.9.8",
+  "version": "0.9.9",
   "description": "Linter for the JavaScript Oxidation Compiler",
   "keywords": [],
   "author": "Boshen and oxc contributors",
@@ -14,7 +14,7 @@
   },
   "bin": {
     "oxlint": "bin/oxlint",
-    "oxc_language_server":"bin/oxc_language_server"
+    "oxc_language_server": "bin/oxc_language_server"
   },
   "funding": {
     "url": "https://github.com/sponsors/Boshen"
