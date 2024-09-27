@@ -18,7 +18,8 @@ use super::StackCapacity;
 /// The fact that the stack is never empty makes all operations except `pop` infallible.
 /// `last` and `last_mut` are branchless.
 ///
-/// The trade-off is that you cannot create a `NonEmptyStack` without allocating (unlike `Vec`).
+/// The trade-off is that you cannot create a `NonEmptyStack` without allocating.
+/// If that is not a good trade-off for your use case, prefer [`Stack`], which can be empty.
 ///
 /// To simplify implementation, zero size types are not supported (e.g. `NonEmptyStack<()>`).
 ///
@@ -47,6 +48,8 @@ use super::StackCapacity;
 /// 2. Stack could grow downwards, like `bumpalo` allocator does. This would probably make `pop` use
 ///    1 less register, but at the cost that the stack can never grow in place, which would incur more
 ///    memory copies when the stack grows.
+///
+/// [`Stack`]: super::Stack
 pub struct NonEmptyStack<T> {
     /// Pointer to last entry on stack.
     /// Points *to* last entry, not *after* last entry.
