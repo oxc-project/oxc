@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, syntax_directed_operations::BoundNames, NONE};
 use oxc_span::{Atom, CompactStr, SPAN};
@@ -19,11 +17,11 @@ use crate::TransformCtx;
 
 pub struct TypeScriptNamespace<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,
-    options: Rc<TypeScriptOptions>,
+    options: &'ctx TypeScriptOptions,
 }
 
 impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
-    pub fn new(options: Rc<TypeScriptOptions>, ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(options: &'ctx TypeScriptOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
         Self { ctx, options }
     }
 }

@@ -6,8 +6,6 @@ mod namespace;
 mod options;
 mod rewrite_extensions;
 
-use std::rc::Rc;
-
 use module::TypeScriptModule;
 use namespace::TypeScriptNamespace;
 use oxc_allocator::Vec;
@@ -41,7 +39,7 @@ use crate::TransformCtx;
 /// In:  `const x: number = 0;`
 /// Out: `const x = 0;`
 pub struct TypeScript<'a, 'ctx> {
-    options: Rc<TypeScriptOptions>,
+    options: &'ctx TypeScriptOptions,
     ctx: &'ctx TransformCtx<'a>,
 
     annotations: TypeScriptAnnotations<'a, 'ctx>,
@@ -52,16 +50,14 @@ pub struct TypeScript<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> TypeScript<'a, 'ctx> {
-    pub fn new(options: TypeScriptOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
-        let options = Rc::new(options.update_with_comments(ctx));
-
+    pub fn new(options: &'ctx TypeScriptOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
         Self {
-            annotations: TypeScriptAnnotations::new(Rc::clone(&options), ctx),
+            annotations: TypeScriptAnnotations::new(options, ctx),
             r#enum: TypeScriptEnum::new(ctx),
             rewrite_extensions: TypeScriptRewriteExtensions::new(
                 options.rewrite_import_extensions.clone().unwrap_or_default(),
             ),
-            namespace: TypeScriptNamespace::new(Rc::clone(&options), ctx),
+            namespace: TypeScriptNamespace::new(options, ctx),
             module: TypeScriptModule::new(ctx),
             options,
             ctx,

@@ -1,6 +1,6 @@
 #![allow(clippy::unused_self)]
 
-use std::{cell::Cell, rc::Rc};
+use std::cell::Cell;
 
 use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast::*;
@@ -20,7 +20,7 @@ use crate::{TransformCtx, TypeScriptOptions};
 
 pub struct TypeScriptAnnotations<'a, 'ctx> {
     #[allow(dead_code)]
-    options: Rc<TypeScriptOptions>,
+    options: &'ctx TypeScriptOptions,
     ctx: &'ctx TransformCtx<'a>,
     /// Assignments to be added to the constructor body
     assignments: Vec<Assignment<'a>>,
@@ -34,7 +34,7 @@ pub struct TypeScriptAnnotations<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> TypeScriptAnnotations<'a, 'ctx> {
-    pub fn new(options: Rc<TypeScriptOptions>, ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(options: &'ctx TypeScriptOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
         let jsx_element_import_name = if options.jsx_pragma.contains('.') {
             options.jsx_pragma.split('.').next().map(String::from).unwrap()
         } else {
