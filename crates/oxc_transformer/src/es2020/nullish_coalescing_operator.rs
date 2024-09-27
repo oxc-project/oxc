@@ -79,6 +79,7 @@ impl<'a> Traverse<'a> for NullishCoalescingOperator<'a> {
         }
     }
 
+    #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         // left ?? right
         if !matches!(expr, Expression::LogicalExpression(logical_expr) if logical_expr.operator == LogicalOperator::Coalesce)

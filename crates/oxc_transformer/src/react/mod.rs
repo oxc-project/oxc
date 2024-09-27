@@ -128,6 +128,7 @@ impl<'a, 'ctx> Traverse<'a> for React<'a, 'ctx> {
         }
     }
 
+    #[inline]
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.jsx_plugin {
             self.jsx.exit_expression(expr, ctx);

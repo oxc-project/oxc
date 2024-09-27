@@ -94,6 +94,7 @@ impl<'a> Traverse<'a> for ExponentiationOperator<'a> {
     }
 
     // NOTE: Bail bigint arguments to `Math.pow`, which are runtime errors.
+    #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         match expr {
             // left ** right

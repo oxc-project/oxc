@@ -195,6 +195,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         self.x4_regexp.enter_expression(expr, ctx);
     }
 
+    #[inline]
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x1_react.exit_expression(expr, ctx);
         self.x3_es2015.exit_expression(expr, ctx);

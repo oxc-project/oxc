@@ -43,6 +43,7 @@ impl<'a> Traverse<'a> for ES2015<'a> {
         }
     }
 
+    #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.arrow_function.is_some() {
             self.arrow_functions.enter_expression(expr, ctx);

@@ -64,6 +64,7 @@ impl ObjectRestSpread {
 }
 
 impl<'a> Traverse<'a> for ObjectRestSpread {
+    #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         self.object_spread.enter_expression(expr, ctx);
     }

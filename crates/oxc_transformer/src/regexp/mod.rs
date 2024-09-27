@@ -112,6 +112,7 @@ impl<'a, 'ctx> RegExp<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> Traverse<'a> for RegExp<'a, 'ctx> {
+    #[inline]
     fn enter_expression(
         &mut self,
         expr: &mut Expression<'a>,

@@ -104,6 +104,7 @@ impl<'a> Traverse<'a> for LogicalAssignmentOperators<'a> {
         }
     }
 
+    #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::AssignmentExpression(assignment_expr) = expr else { return };
 

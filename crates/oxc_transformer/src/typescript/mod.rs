@@ -126,6 +126,7 @@ impl<'a, 'ctx> Traverse<'a> for TypeScript<'a, 'ctx> {
         self.annotations.enter_ts_module_declaration(decl, ctx);
     }
 
+    #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         self.annotations.enter_expression(expr, ctx);
     }

@@ -25,6 +25,7 @@ impl ES2018 {
 }
 
 impl<'a> Traverse<'a> for ES2018 {
+    #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.object_rest_spread.is_some() {
             self.object_rest_spread.enter_expression(expr, ctx);

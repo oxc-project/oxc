@@ -215,6 +215,7 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
         });
     }
 
+    #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, _ctx: &mut TraverseCtx<'a>) {
         if expr.is_typescript_syntax() {
             let inner_expr = expr.get_inner_expression_mut();

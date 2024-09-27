@@ -48,6 +48,7 @@ impl<'a> Traverse<'a> for ES2020<'a> {
         }
     }
 
+    #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.nullish_coalescing_operator {
             self.nullish_coalescing_operator.enter_expression(expr, ctx);

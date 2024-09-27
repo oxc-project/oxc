@@ -237,6 +237,7 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
         }
     }
 
+    #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Expression::ThisExpression(this) = expr {
             if let Some(ident) = self.get_this_identifier(this.span, ctx) {

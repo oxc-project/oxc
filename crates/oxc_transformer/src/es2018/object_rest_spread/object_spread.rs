@@ -43,6 +43,7 @@ impl ObjectSpread {
     }
 }
 impl<'a> Traverse<'a> for ObjectSpread {
+    #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::ObjectExpression(obj_expr) = expr else {
             return;
