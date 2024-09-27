@@ -225,9 +225,6 @@ impl<'a> IsolatedDeclarations<'a> {
                 match_module_declaration!(Statement) => {
                     match stmt.to_module_declaration() {
                         ModuleDeclaration::ExportDefaultDeclaration(decl) => {
-                            if self.has_internal_annotation(decl.span) {
-                                continue;
-                            }
                             transformed_spans.insert(decl.span);
                             if let Some((var_decl, new_decl)) =
                                 self.transform_export_default_declaration(decl)
@@ -246,10 +243,11 @@ impl<'a> IsolatedDeclarations<'a> {
                                         self.ast.alloc(new_decl),
                                     )),
                                 );
+                            } else {
+                                self.scope.visit_export_default_declaration(decl);
                             }
 
                             need_empty_export_marker = false;
-                            self.scope.visit_export_default_declaration(decl);
                         }
 
                         ModuleDeclaration::ExportNamedDeclaration(decl) => {
