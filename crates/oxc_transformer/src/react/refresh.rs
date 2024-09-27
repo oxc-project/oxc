@@ -11,7 +11,7 @@ use rustc_hash::FxHashMap;
 use sha1::{Digest, Sha1};
 
 use super::options::ReactRefreshOptions;
-use crate::context::Ctx;
+use crate::TransformCtx;
 
 /// Parse a string into a `RefreshIdentifierResolver` and convert it into an `Expression`
 #[derive(Debug)]
@@ -94,11 +94,11 @@ impl<'a> RefreshIdentifierResolver<'a> {
 ///
 /// * <https://github.com/facebook/react/issues/16604#issuecomment-528663101>
 /// * <https://github.com/facebook/react/blob/main/packages/react-refresh/src/ReactFreshBabelPlugin.js>
-pub struct ReactRefresh<'a> {
+pub struct ReactRefresh<'a, 'ctx> {
     refresh_reg: RefreshIdentifierResolver<'a>,
     refresh_sig: RefreshIdentifierResolver<'a>,
     emit_full_signatures: bool,
-    ctx: Ctx<'a>,
+    ctx: &'ctx TransformCtx<'a>,
     // States
     registrations: Vec<(SymbolId, Atom<'a>)>,
     signature_declarator_items: Vec<oxc_allocator::Vec<'a, VariableDeclarator<'a>>>,
@@ -111,8 +111,8 @@ pub struct ReactRefresh<'a> {
     non_builtin_hooks_callee: FxHashMap<ScopeId, Vec<Option<Expression<'a>>>>,
 }
 
-impl<'a> ReactRefresh<'a> {
-    pub fn new(options: &ReactRefreshOptions, ctx: Ctx<'a>) -> Self {
+impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
+    pub fn new(options: &ReactRefreshOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
         Self {
             refresh_reg: RefreshIdentifierResolver::parse(&options.refresh_reg, ctx.ast),
             refresh_sig: RefreshIdentifierResolver::parse(&options.refresh_sig, ctx.ast),
@@ -128,7 +128,7 @@ impl<'a> ReactRefresh<'a> {
     }
 }
 
-impl<'a> Traverse<'a> for ReactRefresh<'a> {
+impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         let mut new_statements = ctx.ast.vec_with_capacity(program.body.len());
         for mut statement in program.body.drain(..) {
@@ -455,7 +455,7 @@ impl<'a> Traverse<'a> for ReactRefresh<'a> {
 }
 
 // Internal Methods
-impl<'a> ReactRefresh<'a> {
+impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
     fn create_registration(
         &mut self,
         persistent_id: Atom<'a>,

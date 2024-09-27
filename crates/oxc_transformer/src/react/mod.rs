@@ -7,8 +7,6 @@ mod options;
 mod refresh;
 mod utils;
 
-use std::rc::Rc;
-
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_traverse::{Traverse, TraverseCtx};
@@ -19,7 +17,7 @@ pub use self::{
     jsx::ReactJsx,
     options::{ReactJsxRuntime, ReactOptions, ReactRefreshOptions},
 };
-use crate::context::Ctx;
+use crate::TransformCtx;
 
 /// [Preset React](https://babel.dev/docs/babel-preset-react)
 ///
@@ -29,10 +27,10 @@ use crate::context::Ctx;
 /// * [plugin-transform-react-jsx-self](https://babeljs.io/docs/babel-plugin-transform-react-jsx-self)
 /// * [plugin-transform-react-jsx-source](https://babel.dev/docs/babel-plugin-transform-react-jsx-source)
 /// * [plugin-transform-react-display-name](https://babeljs.io/docs/babel-plugin-transform-react-display-name)
-pub struct React<'a> {
-    jsx: ReactJsx<'a>,
-    display_name: ReactDisplayName<'a>,
-    refresh: ReactRefresh<'a>,
+pub struct React<'a, 'ctx> {
+    jsx: ReactJsx<'a, 'ctx>,
+    display_name: ReactDisplayName<'a, 'ctx>,
+    refresh: ReactRefresh<'a, 'ctx>,
     jsx_plugin: bool,
     display_name_plugin: bool,
     jsx_self_plugin: bool,
@@ -41,10 +39,10 @@ pub struct React<'a> {
 }
 
 // Constructors
-impl<'a> React<'a> {
-    pub fn new(mut options: ReactOptions, ctx: Ctx<'a>) -> Self {
+impl<'a, 'ctx> React<'a, 'ctx> {
+    pub fn new(mut options: ReactOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
         if options.jsx_plugin || options.development {
-            options.update_with_comments(&ctx);
+            options.update_with_comments(ctx);
             options.conform();
         }
         let ReactOptions {
@@ -56,8 +54,8 @@ impl<'a> React<'a> {
         } = options;
         let refresh = options.refresh.clone();
         Self {
-            jsx: ReactJsx::new(options, Rc::clone(&ctx)),
-            display_name: ReactDisplayName::new(Rc::clone(&ctx)),
+            jsx: ReactJsx::new(options, ctx),
+            display_name: ReactDisplayName::new(ctx),
             jsx_plugin,
             display_name_plugin,
             jsx_self_plugin,
@@ -68,7 +66,7 @@ impl<'a> React<'a> {
     }
 }
 
-impl<'a> Traverse<'a> for React<'a> {
+impl<'a, 'ctx> Traverse<'a> for React<'a, 'ctx> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.jsx_plugin {
             program.source_type = program.source_type.with_standard(true);

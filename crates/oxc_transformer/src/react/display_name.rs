@@ -50,19 +50,19 @@ use oxc_ast::ast::*;
 use oxc_span::{Atom, SPAN};
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
-use crate::context::Ctx;
+use crate::TransformCtx;
 
-pub struct ReactDisplayName<'a> {
-    ctx: Ctx<'a>,
+pub struct ReactDisplayName<'a, 'ctx> {
+    ctx: &'ctx TransformCtx<'a>,
 }
 
-impl<'a> ReactDisplayName<'a> {
-    pub fn new(ctx: Ctx<'a>) -> Self {
+impl<'a, 'ctx> ReactDisplayName<'a, 'ctx> {
+    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
         Self { ctx }
     }
 }
 
-impl<'a> Traverse<'a> for ReactDisplayName<'a> {
+impl<'a, 'ctx> Traverse<'a> for ReactDisplayName<'a, 'ctx> {
     fn enter_call_expression(
         &mut self,
         call_expr: &mut CallExpression<'a>,
@@ -129,7 +129,7 @@ impl<'a> Traverse<'a> for ReactDisplayName<'a> {
     }
 }
 
-impl<'a> ReactDisplayName<'a> {
+impl<'a, 'ctx> ReactDisplayName<'a, 'ctx> {
     /// Get the object from `React.createClass({})` or `createReactClass({})`
     fn get_object_from_create_class<'b>(
         call_expr: &'b mut CallExpression<'a>,

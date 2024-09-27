@@ -17,7 +17,7 @@ use rewrite_extensions::TypeScriptRewriteExtensions;
 
 pub use self::options::{RewriteExtensionsMode, TypeScriptOptions};
 use self::{annotations::TypeScriptAnnotations, r#enum::TypeScriptEnum};
-use crate::context::Ctx;
+use crate::TransformCtx;
 
 /// [Preset TypeScript](https://babeljs.io/docs/babel-preset-typescript)
 ///
@@ -40,36 +40,36 @@ use crate::context::Ctx;
 ///
 /// In:  `const x: number = 0;`
 /// Out: `const x = 0;`
-pub struct TypeScript<'a> {
+pub struct TypeScript<'a, 'ctx> {
     options: Rc<TypeScriptOptions>,
-    ctx: Ctx<'a>,
+    ctx: &'ctx TransformCtx<'a>,
 
-    annotations: TypeScriptAnnotations<'a>,
-    r#enum: TypeScriptEnum<'a>,
-    namespace: TypeScriptNamespace<'a>,
-    module: TypeScriptModule<'a>,
+    annotations: TypeScriptAnnotations<'a, 'ctx>,
+    r#enum: TypeScriptEnum<'a, 'ctx>,
+    namespace: TypeScriptNamespace<'a, 'ctx>,
+    module: TypeScriptModule<'a, 'ctx>,
     rewrite_extensions: TypeScriptRewriteExtensions,
 }
 
-impl<'a> TypeScript<'a> {
-    pub fn new(options: TypeScriptOptions, ctx: Ctx<'a>) -> Self {
-        let options = Rc::new(options.update_with_comments(&ctx));
+impl<'a, 'ctx> TypeScript<'a, 'ctx> {
+    pub fn new(options: TypeScriptOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
+        let options = Rc::new(options.update_with_comments(ctx));
 
         Self {
-            annotations: TypeScriptAnnotations::new(Rc::clone(&options), Rc::clone(&ctx)),
-            r#enum: TypeScriptEnum::new(Rc::clone(&ctx)),
+            annotations: TypeScriptAnnotations::new(Rc::clone(&options), ctx),
+            r#enum: TypeScriptEnum::new(ctx),
             rewrite_extensions: TypeScriptRewriteExtensions::new(
                 options.rewrite_import_extensions.clone().unwrap_or_default(),
             ),
-            namespace: TypeScriptNamespace::new(Rc::clone(&options), Rc::clone(&ctx)),
-            module: TypeScriptModule::new(Rc::clone(&ctx)),
+            namespace: TypeScriptNamespace::new(Rc::clone(&options), ctx),
+            module: TypeScriptModule::new(ctx),
             options,
             ctx,
         }
     }
 }
 
-impl<'a> Traverse<'a> for TypeScript<'a> {
+impl<'a, 'ctx> Traverse<'a> for TypeScript<'a, 'ctx> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.ctx.source_type.is_typescript_definition() {
             // Output empty file for TS definitions

@@ -15,20 +15,20 @@ use super::{
     diagnostics::{ambient_module_nested, namespace_exporting_non_const, namespace_not_supported},
     TypeScriptOptions,
 };
-use crate::context::Ctx;
+use crate::TransformCtx;
 
-pub struct TypeScriptNamespace<'a> {
-    ctx: Ctx<'a>,
+pub struct TypeScriptNamespace<'a, 'ctx> {
+    ctx: &'ctx TransformCtx<'a>,
     options: Rc<TypeScriptOptions>,
 }
 
-impl<'a> TypeScriptNamespace<'a> {
-    pub fn new(options: Rc<TypeScriptOptions>, ctx: Ctx<'a>) -> Self {
+impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
+    pub fn new(options: Rc<TypeScriptOptions>, ctx: &'ctx TransformCtx<'a>) -> Self {
         Self { ctx, options }
     }
 }
 
-impl<'a> Traverse<'a> for TypeScriptNamespace<'a> {
+impl<'a, 'ctx> Traverse<'a> for TypeScriptNamespace<'a, 'ctx> {
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         // namespace declaration is only allowed at the top level
@@ -139,7 +139,7 @@ impl<'a> Traverse<'a> for TypeScriptNamespace<'a> {
     }
 }
 
-impl<'a> TypeScriptNamespace<'a> {
+impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
     fn handle_nested(
         &self,
         decl: TSModuleDeclaration<'a>,

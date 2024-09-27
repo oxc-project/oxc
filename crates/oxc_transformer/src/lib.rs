@@ -30,7 +30,7 @@ mod helpers {
     pub mod stack;
 }
 
-use std::{path::Path, rc::Rc};
+use std::path::Path;
 
 use es2016::ES2016;
 use es2018::ES2018;
@@ -53,12 +53,7 @@ pub use crate::{
     react::{ReactJsxRuntime, ReactOptions, ReactRefreshOptions},
     typescript::{RewriteExtensionsMode, TypeScriptOptions},
 };
-use crate::{
-    context::{Ctx, TransformCtx},
-    es2015::ES2015,
-    react::React,
-    typescript::TypeScript,
-};
+use crate::{context::TransformCtx, es2015::ES2015, react::React, typescript::TypeScript};
 
 pub struct TransformerReturn {
     pub errors: std::vec::Vec<OxcDiagnostic>,
@@ -67,17 +62,8 @@ pub struct TransformerReturn {
 }
 
 pub struct Transformer<'a> {
-    ctx: Ctx<'a>,
-    // NOTE: all callbacks must run in order.
-    x0_typescript: TypeScript<'a>,
-    x1_react: React<'a>,
-    x2_es2021: ES2021<'a>,
-    x2_es2020: ES2020<'a>,
-    x2_es2019: ES2019,
-    x2_es2018: ES2018,
-    x2_es2016: ES2016<'a>,
-    x3_es2015: ES2015<'a>,
-    x4_regexp: RegExp<'a>,
+    ctx: TransformCtx<'a>,
+    options: TransformOptions,
 }
 
 impl<'a> Transformer<'a> {
@@ -89,41 +75,50 @@ impl<'a> Transformer<'a> {
         trivias: Trivias,
         options: TransformOptions,
     ) -> Self {
-        let ctx = Rc::new(TransformCtx::new(
-            allocator,
-            source_path,
-            source_type,
-            source_text,
-            trivias,
-            &options,
-        ));
-        Self {
-            ctx: Rc::clone(&ctx),
-            x0_typescript: TypeScript::new(options.typescript, Rc::clone(&ctx)),
-            x1_react: React::new(options.react, Rc::clone(&ctx)),
-            x2_es2021: ES2021::new(options.es2021),
-            x2_es2020: ES2020::new(options.es2020),
-            x2_es2019: ES2019::new(options.es2019),
-            x2_es2018: ES2018::new(options.es2018),
-            x2_es2016: ES2016::new(options.es2016),
-            x3_es2015: ES2015::new(options.es2015),
-            x4_regexp: RegExp::new(options.regexp, ctx),
-        }
+        let ctx =
+            TransformCtx::new(allocator, source_path, source_type, source_text, trivias, &options);
+        Self { ctx, options }
     }
 
     pub fn build_with_symbols_and_scopes(
-        mut self,
+        self,
         symbols: SymbolTable,
         scopes: ScopeTree,
         program: &mut Program<'a>,
     ) -> TransformerReturn {
         let allocator = self.ctx.ast.allocator;
-        let (symbols, scopes) = traverse_mut(&mut self, allocator, program, symbols, scopes);
+
+        let mut transformer = TransformerImpl {
+            x0_typescript: TypeScript::new(self.options.typescript, &self.ctx),
+            x1_react: React::new(self.options.react, &self.ctx),
+            x2_es2021: ES2021::new(self.options.es2021),
+            x2_es2020: ES2020::new(self.options.es2020),
+            x2_es2019: ES2019::new(self.options.es2019),
+            x2_es2018: ES2018::new(self.options.es2018),
+            x2_es2016: ES2016::new(self.options.es2016),
+            x3_es2015: ES2015::new(self.options.es2015),
+            x4_regexp: RegExp::new(self.options.regexp, &self.ctx),
+        };
+
+        let (symbols, scopes) = traverse_mut(&mut transformer, allocator, program, symbols, scopes);
         TransformerReturn { errors: self.ctx.take_errors(), symbols, scopes }
     }
 }
 
-impl<'a> Traverse<'a> for Transformer<'a> {
+struct TransformerImpl<'a, 'ctx> {
+    // NOTE: all callbacks must run in order.
+    x0_typescript: TypeScript<'a, 'ctx>,
+    x1_react: React<'a, 'ctx>,
+    x2_es2021: ES2021<'a>,
+    x2_es2020: ES2020<'a>,
+    x2_es2019: ES2019,
+    x2_es2018: ES2018,
+    x2_es2016: ES2016<'a>,
+    x3_es2015: ES2015<'a>,
+    x4_regexp: RegExp<'a, 'ctx>,
+}
+
+impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.enter_program(program, ctx);
         self.x1_react.enter_program(program, ctx);
@@ -189,6 +184,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x0_typescript.enter_ts_module_declaration(decl, ctx);
     }
 
+    #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.enter_expression(expr, ctx);
         self.x1_react.enter_expression(expr, ctx);

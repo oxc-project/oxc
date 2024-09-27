@@ -41,24 +41,24 @@ use oxc_traverse::{Traverse, TraverseCtx};
 use ropey::Rope;
 
 use super::utils::get_line_column;
-use crate::{context::Ctx, helpers::bindings::BoundIdentifier};
+use crate::{helpers::bindings::BoundIdentifier, TransformCtx};
 
 const SOURCE: &str = "__source";
 const FILE_NAME_VAR: &str = "jsxFileName";
 
-pub struct ReactJsxSource<'a> {
+pub struct ReactJsxSource<'a, 'ctx> {
     filename_var: Option<BoundIdentifier<'a>>,
     source_rope: Option<Rope>,
-    ctx: Ctx<'a>,
+    ctx: &'ctx TransformCtx<'a>,
 }
 
-impl<'a> ReactJsxSource<'a> {
-    pub fn new(ctx: Ctx<'a>) -> Self {
+impl<'a, 'ctx> ReactJsxSource<'a, 'ctx> {
+    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
         Self { filename_var: None, source_rope: None, ctx }
     }
 }
 
-impl<'a> Traverse<'a> for ReactJsxSource<'a> {
+impl<'a, 'ctx> Traverse<'a> for ReactJsxSource<'a, 'ctx> {
     fn exit_program(&mut self, program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
         if let Some(stmt) = self.get_var_file_name_statement() {
             program.body.insert(0, stmt);
@@ -74,7 +74,7 @@ impl<'a> Traverse<'a> for ReactJsxSource<'a> {
     }
 }
 
-impl<'a> ReactJsxSource<'a> {
+impl<'a, 'ctx> ReactJsxSource<'a, 'ctx> {
     pub fn get_line_column(&mut self, offset: u32) -> (usize, usize) {
         if self.source_rope.is_none() {
             self.source_rope = Some(Rope::from_str(self.ctx.source_text));

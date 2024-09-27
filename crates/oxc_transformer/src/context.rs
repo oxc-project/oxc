@@ -2,7 +2,6 @@ use std::{
     cell::RefCell,
     mem,
     path::{Path, PathBuf},
-    rc::Rc,
 };
 
 use oxc_allocator::Allocator;
@@ -11,8 +10,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::SourceType;
 
 use crate::{helpers::module_imports::ModuleImports, TransformOptions};
-
-pub type Ctx<'a> = Rc<TransformCtx<'a>>;
 
 pub struct TransformCtx<'a> {
     errors: RefCell<Vec<OxcDiagnostic>>,
