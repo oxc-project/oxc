@@ -351,6 +351,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         self.x0_typescript.enter_tagged_template_expression(expr, ctx);
     }
 
+    #[inline]
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.enter_statement(stmt, ctx);
     }
