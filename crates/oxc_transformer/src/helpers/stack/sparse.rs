@@ -31,6 +31,22 @@ pub struct SparseStack<T> {
 }
 
 impl<T> SparseStack<T> {
+    /// Maximum capacity for entries (either `Some` or `None`).
+    ///
+    /// Effectively unlimited on 64-bit systems.
+    #[expect(dead_code)]
+    pub const MAX_TOTAL_CAPACITY: usize = NonEmptyStack::<bool>::MAX_CAPACITY;
+
+    /// Maximum capacity for filled entries (`Some`).
+    ///
+    /// Unless `size_of::<T>() == 1`, `MAX_FILLED_CAPACITY` is lower than [`MAX_TOTAL_CAPACITY`].
+    ///
+    /// Both are effectively unlimited on 64-bit systems.
+    ///
+    /// [`MAX_TOTAL_CAPACITY`]: Self::MAX_TOTAL_CAPACITY
+    #[expect(dead_code)]
+    pub const MAX_FILLED_CAPACITY: usize = Stack::<T>::MAX_CAPACITY;
+
     /// Create new `SparseStack`.
     ///
     /// # Panics
@@ -40,6 +56,26 @@ impl<T> SparseStack<T> {
         // This means `take_last`, `last_or_init`, and `last_mut_or_init` can all be infallible,
         // as there's always an entry on the stack to read.
         Self { has_values: NonEmptyStack::new(false), values: Stack::new() }
+    }
+
+    /// Create new `SparseStack` with pre-allocated capacity.
+    ///
+    /// * `total_capacity` is capacity for any entries (either `Some` or `None`). Cannot be 0.
+    /// * `filled_capacity` is capacity for full entries (`Some`).
+    ///
+    /// # Panics
+    /// Panics if any of these requirements are not satisfied:
+    /// * `T` must not be a zero-sized type.
+    /// * `total_capacity` must not be 0.
+    /// * `total_capacity` must not exceed `Self::MAX_TOTAL_CAPACITY`.
+    /// * `filled_capacity` must not exceed `Self::MAX_FILLED_CAPACITY`.
+    #[inline]
+    #[expect(dead_code)]
+    pub fn with_capacity(total_capacity: usize, filled_capacity: usize) -> Self {
+        Self {
+            has_values: NonEmptyStack::with_capacity(total_capacity, false),
+            values: Stack::with_capacity(filled_capacity),
+        }
     }
 
     /// Push an entry to the stack.
@@ -149,5 +185,25 @@ impl<T> SparseStack<T> {
     #[inline]
     pub fn len(&self) -> usize {
         self.has_values.len()
+    }
+
+    /// Get capacity of stack for any entries (either `Some` or `None`).
+    ///
+    /// Capacity is always at least 1. Stack is never empty.
+    #[inline]
+    #[expect(dead_code)]
+    pub fn total_capacity(&self) -> usize {
+        self.has_values.capacity()
+    }
+
+    /// Get capacity of stack for filled entries (`Some`).
+    ///
+    /// The capacity can be zero (unlike [`total_capacity`]).
+    ///
+    /// [`total_capacity`]: Self::total_capacity
+    #[inline]
+    #[expect(dead_code)]
+    pub fn filled_capacity(&self) -> usize {
+        self.values.capacity()
     }
 }

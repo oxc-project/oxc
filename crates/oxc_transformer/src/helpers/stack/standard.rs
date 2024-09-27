@@ -73,7 +73,6 @@ impl<T> Stack<T> {
     /// * `T` must not be a zero-sized type.
     /// * `capacity` must not exceed [`Self::MAX_CAPACITY`].
     #[inline]
-    #[cfg_attr(not(test), expect(dead_code))]
     pub fn with_capacity(capacity: usize) -> Self {
         if capacity == 0 {
             Self::new()
@@ -374,7 +373,6 @@ impl<T> Stack<T> {
 
     /// Get capacity.
     #[inline]
-    #[cfg_attr(not(test), expect(dead_code))]
     pub fn capacity(&self) -> usize {
         // SAFETY: `self.start` and `self.end` are both derived from same pointer
         // (in `new`, `new_with_capacity_bytes_unchecked` and `push_slow`).

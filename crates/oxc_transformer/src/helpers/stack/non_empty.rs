@@ -93,7 +93,6 @@ impl<T> NonEmptyStack<T> {
     /// * `capacity` must not be 0.
     /// * `capacity` must not exceed [`Self::MAX_CAPACITY`].
     #[inline]
-    #[cfg_attr(not(test), expect(dead_code))]
     pub fn with_capacity(capacity: usize, initial_value: T) -> Self {
         assert!(capacity > 0, "`capacity` cannot be zero");
         assert!(capacity <= Self::MAX_CAPACITY, "`capacity` must not exceed `Self::MAX_CAPACITY`");
@@ -352,7 +351,6 @@ impl<T> NonEmptyStack<T> {
 
     /// Get capacity.
     #[inline]
-    #[cfg_attr(not(test), expect(dead_code))]
     pub fn capacity(&self) -> usize {
         // SAFETY: `self.start` and `self.end` are both derived from same pointer
         // (in `new_with_capacity_bytes_unchecked` and `push_slow`).
