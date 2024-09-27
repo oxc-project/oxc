@@ -169,6 +169,7 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
             );
         }
         debug_assert!(self.this_var_stack.len() == 1);
+        debug_assert!(self.this_var_stack.last().is_none());
     }
 
     fn enter_function(&mut self, _func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
