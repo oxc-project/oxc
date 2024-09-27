@@ -156,44 +156,18 @@ impl LinterBuilder {
 
     pub fn with_filter(mut self, filter: LintFilter) -> Self {
         let (severity, filter) = filter.into();
-        let all_rules = self.cache.borrow();
 
         match severity {
             AllowWarnDeny::Deny | AllowWarnDeny::Warn => match filter {
                 LintFilterKind::Category(category) => {
-                    let rules_to_configure = all_rules.iter().filter(|r| r.category() == category);
-                    for rule in rules_to_configure {
-                        if let Some(mut existing_rule) = self.rules.take(rule) {
-                            existing_rule.severity = severity;
-                            self.rules.insert(existing_rule);
-                        } else {
-                            self.rules.insert(RuleWithSeverity::new(rule.clone(), severity));
-                        }
-                    }
+                    self.upsert_where(severity, |r| r.category() == category);
                 }
-                LintFilterKind::Rule(_, name) => {
-                    self.rules.extend(
-                        all_rules
-                            .iter()
-                            .filter(|rule| rule.name() == name)
-                            .map(|rule| RuleWithSeverity::new(rule.clone(), severity)),
-                    );
-                }
+                LintFilterKind::Rule(_, name) => self.upsert_where(severity, |r| r.name() == name),
                 LintFilterKind::Generic(name_or_category) => {
                     if name_or_category == "all" {
-                        self.rules.extend(
-                            all_rules
-                                .iter()
-                                .filter(|rule| rule.category() != RuleCategory::Nursery)
-                                .map(|rule| RuleWithSeverity::new(rule.clone(), severity)),
-                        );
+                        self.upsert_where(severity, |r| r.category() != RuleCategory::Nursery);
                     } else {
-                        self.rules.extend(
-                            all_rules
-                                .iter()
-                                .filter(|rule| rule.name() == name_or_category)
-                                .map(|rule| RuleWithSeverity::new(rule.clone(), severity)),
-                        );
+                        self.upsert_where(severity, |r| r.name() == name_or_category);
                     }
                 }
             },
@@ -213,9 +187,28 @@ impl LinterBuilder {
                 }
             },
         }
-        drop(all_rules);
 
         self
+    }
+
+    /// Warn/Deny a let of rules based on some predicate. Rules already in `self.rules` get
+    /// re-configured, while those that are not are added. Affects rules where `query` returns
+    /// `true`.
+    fn upsert_where<F>(&mut self, severity: AllowWarnDeny, query: F)
+    where
+        F: Fn(&&RuleEnum) -> bool,
+    {
+        let all_rules = self.cache.borrow();
+        // NOTE: we may want to warn users if they're configuring a rule that does not exist.
+        let rules_to_configure = all_rules.iter().filter(query);
+        for rule in rules_to_configure {
+            if let Some(mut existing_rule) = self.rules.take(rule) {
+                existing_rule.severity = severity;
+                self.rules.insert(existing_rule);
+            } else {
+                self.rules.insert(RuleWithSeverity::new(rule.clone(), severity));
+            }
+        }
     }
 
     #[must_use]
@@ -400,6 +393,47 @@ mod test {
                 builder.plugins().contains(plugin.into()),
                 "{plugin}/{name} is in the default rule set but its plugin is not enabled"
             );
+        }
+    }
+
+    // change a rule already set to "warn" to "deny"
+    #[test]
+    fn test_filter_deny_single_enabled_rule_on_default() {
+        for filter_string in ["no-const-assign", "eslint/no-const-assign"] {
+            let builder = LinterBuilder::default();
+            let initial_rule_count = builder.rules.len();
+
+            let builder =
+                builder
+                    .with_filters([LintFilter::new(AllowWarnDeny::Deny, filter_string).unwrap()]);
+            let rule_count_after_deny = builder.rules.len();
+            assert_eq!(initial_rule_count, rule_count_after_deny, "Changing a single rule from warn to deny should not add a new one, just modify what's already there.");
+
+            let no_const_assign = builder
+                .rules
+                .iter()
+                .find(|r| r.plugin_name() == "eslint" && r.name() == "no-const-assign")
+                .expect("Could not find eslint/no-const-assign after configuring it to 'deny'");
+            assert_eq!(no_const_assign.severity, AllowWarnDeny::Deny);
+        }
+    }
+    // turn on a rule that isn't configured yet and set it to "warn"
+    // note that this is an eslint rule, a plugin that's already turned on.
+    #[test]
+    fn test_filter_warn_single_disabled_rule_on_default() {
+        for filter_string in ["no-console", "eslint/no-console"] {
+            let filter = LintFilter::new(AllowWarnDeny::Warn, filter_string).unwrap();
+            let builder = LinterBuilder::default();
+            // sanity check: not already turned on
+            assert!(!builder.rules.iter().any(|r| r.name() == "no-console"));
+            let builder = builder.with_filter(filter);
+            let no_console = builder
+                .rules
+                .iter()
+                .find(|r| r.plugin_name() == "eslint" && r.name() == "no-console")
+                .expect("Could not find eslint/no-console after configuring it to 'warn'");
+
+            assert_eq!(no_console.severity, AllowWarnDeny::Warn);
         }
     }
 
