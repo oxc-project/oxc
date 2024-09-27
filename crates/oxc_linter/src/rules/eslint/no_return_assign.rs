@@ -6,8 +6,10 @@ use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_return_assign_diagnostic(span: Span, message: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(message.to_string()).with_label(span)
+fn no_return_assign_diagnostic(span: Span, message: &'static str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(message)
+        .with_label(span)
+        .with_help("Did you mean to use `==` instead of `=`?")
 }
 
 #[derive(Debug, Default, Clone)]
@@ -39,7 +41,7 @@ declare_oxc_lint!(
     /// ```
     NoReturnAssign,
     style,
-    suggestion
+    pending // TODO: add a suggestion
 );
 
 fn is_sentinel_node(ast_kind: AstKind) -> bool {
@@ -60,35 +62,39 @@ impl Rule for NoReturnAssign {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::AssignmentExpression(_) = node.kind() {
-            if !self.always_disallow_assignment_in_return
-                && ctx
-                    .nodes()
-                    .parent_node(node.id())
-                    .is_some_and(|node| node.kind().as_parenthesized_expression().is_some())
-            {
-                return;
-            }
-            let mut parent_node = ctx.nodes().parent_node(node.id());
-            while parent_node.is_some_and(|parent| !is_sentinel_node(parent.kind())) {
-                parent_node = ctx.nodes().parent_node(parent_node.unwrap().id());
-            }
-            if let Some(parent) = parent_node {
-                match parent.kind() {
-                    AstKind::ReturnStatement(_) => {
-                        ctx.diagnostic(no_return_assign_diagnostic(
-                            parent.span(),
-                            "Return statement should not contain an assignment.",
-                        ));
-                    }
-                    AstKind::ArrowFunctionExpression(_) => {
-                        ctx.diagnostic(no_return_assign_diagnostic(
-                            parent.span(),
-                            "Arrow function should not return an assignment.",
-                        ));
-                    }
-                    _ => (),
+        let AstKind::AssignmentExpression(assign) = node.kind() else {
+            return;
+        };
+        if !self.always_disallow_assignment_in_return
+            && ctx
+                .nodes()
+                .parent_node(node.id())
+                .is_some_and(|node| node.kind().as_parenthesized_expression().is_some())
+        {
+            return;
+        }
+
+        let mut parent_node = ctx.nodes().parent_node(node.id());
+        while parent_node.is_some_and(|parent| !is_sentinel_node(parent.kind())) {
+            parent_node = ctx.nodes().parent_node(parent_node.unwrap().id());
+        }
+        if let Some(parent) = parent_node {
+            match parent.kind() {
+                AstKind::ReturnStatement(_) => {
+                    ctx.diagnostic(no_return_assign_diagnostic(
+                        assign.span(),
+                        "Return statements should not contain an assignment.",
+                    ));
                 }
+                AstKind::ArrowFunctionExpression(arrow) => {
+                    if arrow.expression {
+                        ctx.diagnostic(no_return_assign_diagnostic(
+                            assign.span(),
+                            "Arrow functions should not return an assignment.",
+                        ));
+                    }
+                }
+                _ => (),
             }
         }
     }
@@ -116,6 +122,7 @@ fn test() {
             "function x() { return function y() { result = a * b }; }",
             Some(serde_json::json!(["always"])),
         ),
+        ("() => { a = b; }", None),
         ("() => { return (result = a * b); }", Some(serde_json::json!(["except-parens"]))),
         ("() => (result = a * b)", Some(serde_json::json!(["except-parens"]))),
         ("const foo = (a,b,c) => ((a = b), c)", None),
