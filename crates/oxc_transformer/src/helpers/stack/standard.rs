@@ -181,6 +181,9 @@ impl<T> Stack<T> {
     /// Stack must not be empty.
     #[inline]
     pub unsafe fn last_unchecked(&self) -> &T {
+        debug_assert!(self.end > self.start);
+        debug_assert!(self.cursor > self.start);
+        debug_assert!(self.cursor <= self.end);
         // SAFETY: All methods ensure `self.cursor` is always in bounds, is aligned for `T`,
         // and `self.current.sub(1)` points to a valid initialized `T`, if stack is not empty.
         // Caller guarantees stack is not empty.
@@ -206,6 +209,9 @@ impl<T> Stack<T> {
     /// Stack must not be empty.
     #[inline]
     pub unsafe fn last_mut_unchecked(&mut self) -> &mut T {
+        debug_assert!(self.end > self.start);
+        debug_assert!(self.cursor > self.start);
+        debug_assert!(self.cursor <= self.end);
         // SAFETY: All methods ensure `self.cursor` is always in bounds, is aligned for `T`,
         // and `self.current.sub(1)` points to a valid initialized `T`, if stack is not empty.
         // Caller guarantees stack is not empty.
@@ -337,8 +343,9 @@ impl<T> Stack<T> {
     /// Stack must not be empty.
     #[inline]
     pub unsafe fn pop_unchecked(&mut self) -> T {
+        debug_assert!(self.end > self.start);
         debug_assert!(self.cursor > self.start);
-        debug_assert!(self.cursor < self.end);
+        debug_assert!(self.cursor <= self.end);
         // SAFETY: Caller guarantees stack is not empty, so subtracting 1 cannot be out of bounds
         self.cursor = NonNull::new_unchecked(self.cursor.as_ptr().sub(1));
         // SAFETY: All methods ensure `self.cursor` is always in bounds, is aligned for `T`,
@@ -557,13 +564,22 @@ mod tests {
         stack.push(40);
         assert_len_cap_last!(stack, 4, 4, Some(&40));
         assert_eq!(stack.capacity_bytes(), 32);
+
+        assert_eq!(stack.pop(), Some(40));
+        assert_len_cap_last!(stack, 3, 4, Some(&31));
+        assert_eq!(stack.capacity_bytes(), 32);
+
+        stack.push(41);
+        assert_len_cap_last!(stack, 4, 4, Some(&41));
+        assert_eq!(stack.capacity_bytes(), 32);
+
         stack.push(50);
         assert_len_cap_last!(stack, 5, 8, Some(&50));
         assert_eq!(stack.capacity_bytes(), 64);
 
         assert_eq!(stack.pop(), Some(50));
-        assert_len_cap_last!(stack, 4, 8, Some(&40));
-        assert_eq!(stack.pop(), Some(40));
+        assert_len_cap_last!(stack, 4, 8, Some(&41));
+        assert_eq!(stack.pop(), Some(41));
         assert_len_cap_last!(stack, 3, 8, Some(&31));
         assert_eq!(stack.pop(), Some(31));
         assert_len_cap_last!(stack, 2, 8, Some(&20));
