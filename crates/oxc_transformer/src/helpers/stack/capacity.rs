@@ -2,15 +2,14 @@ use std::mem::{align_of, size_of};
 
 /// Trait for defining maximum and default capacity of stacks.
 ///
+/// `T` is the type that the stack contains.
+///
 /// `MAX_CAPACITY` and `MAX_CAPACITY_BYTES` being calculated correctly is required for soundness
 /// of stack types.
-pub trait StackCapacity {
-    /// Type that the stack contains
-    type Item: Sized;
-
+pub trait StackCapacity<T> {
     /// Maximum capacity of stack.
     ///
-    /// This is guaranteed to be a legal size for a stack of `Item`s, without exceeding Rust's
+    /// This is guaranteed to be a legal size for a stack of `T`s, without exceeding Rust's
     /// allocation size limits.
     ///
     /// From [`std::alloc::Layout`]'s docs:
@@ -18,21 +17,21 @@ pub trait StackCapacity {
     /// > (i.e., the rounded value must be less than or equal to `isize::MAX`).
     const MAX_CAPACITY: usize = {
         // This assertion is not needed as next line will cause a compile failure anyway
-        // if `size_of::<Self::Item>() == 0`, due to division by zero.
+        // if `size_of::<T>() == 0`, due to division by zero.
         // But keep it anyway as soundness depends on it.
-        assert!(size_of::<Self::Item>() > 0, "Zero sized types are not supported");
+        assert!(size_of::<T>() > 0, "Zero sized types are not supported");
         // As it's always true that `size_of::<T>() >= align_of::<T>()` and `/` rounds down,
         // this fulfills `Layout`'s alignment requirement
-        let max_capacity = isize::MAX as usize / size_of::<Self::Item>();
+        let max_capacity = isize::MAX as usize / size_of::<T>();
         assert!(max_capacity > 0);
         max_capacity
     };
 
     /// Maximum capacity of stack in bytes
     const MAX_CAPACITY_BYTES: usize = {
-        let capacity_bytes = Self::MAX_CAPACITY * size_of::<Self::Item>();
+        let capacity_bytes = Self::MAX_CAPACITY * size_of::<T>();
         // Just double-checking `Layout`'s alignment requirement is fulfilled
-        assert!(capacity_bytes <= isize::MAX as usize + 1 - align_of::<Self::Item>());
+        assert!(capacity_bytes <= isize::MAX as usize + 1 - align_of::<T>());
         capacity_bytes
     };
 
@@ -41,7 +40,7 @@ pub trait StackCapacity {
     /// Same defaults as [`std::vec::Vec`] uses.
     const DEFAULT_CAPACITY: usize = {
         // It's impossible for this to exceed `MAX_CAPACITY` because `size_of::<T>() >= align_of::<T>()`
-        match size_of::<Self::Item>() {
+        match size_of::<T>() {
             1 => 8,
             size if size <= 1024 => 4,
             _ => 1,
@@ -49,7 +48,7 @@ pub trait StackCapacity {
     };
 
     /// Default capacity of stack in bytes
-    const DEFAULT_CAPACITY_BYTES: usize = Self::DEFAULT_CAPACITY * size_of::<Self::Item>();
+    const DEFAULT_CAPACITY_BYTES: usize = Self::DEFAULT_CAPACITY * size_of::<T>();
 }
 
 #[cfg(test)]
@@ -63,9 +62,7 @@ mod tests {
     #[test]
     fn bool() {
         struct TestStack;
-        impl StackCapacity for TestStack {
-            type Item = bool;
-        }
+        impl StackCapacity<bool> for TestStack {}
         assert_eq!(TestStack::MAX_CAPACITY, ISIZE_MAX);
         assert_eq!(TestStack::MAX_CAPACITY_BYTES, ISIZE_MAX);
         assert_eq!(TestStack::DEFAULT_CAPACITY, 8);
@@ -75,9 +72,7 @@ mod tests {
     #[test]
     fn u64() {
         struct TestStack;
-        impl StackCapacity for TestStack {
-            type Item = u64;
-        }
+        impl StackCapacity<u64> for TestStack {}
         assert_eq!(TestStack::MAX_CAPACITY, ISIZE_MAX / 8);
         assert_eq!(TestStack::MAX_CAPACITY_BYTES, TestStack::MAX_CAPACITY * 8);
         assert!(TestStack::MAX_CAPACITY_BYTES <= ISIZE_MAX_PLUS_ONE - 8);
@@ -88,9 +83,7 @@ mod tests {
     #[test]
     fn u32_pair() {
         struct TestStack;
-        impl StackCapacity for TestStack {
-            type Item = [u32; 2];
-        }
+        impl StackCapacity<[u32; 2]> for TestStack {}
         assert_eq!(TestStack::MAX_CAPACITY, ISIZE_MAX / 8);
         assert_eq!(TestStack::MAX_CAPACITY_BYTES, TestStack::MAX_CAPACITY * 8);
         assert!(TestStack::MAX_CAPACITY_BYTES <= ISIZE_MAX_PLUS_ONE - 4);
@@ -101,9 +94,7 @@ mod tests {
     #[test]
     fn u32_triple() {
         struct TestStack;
-        impl StackCapacity for TestStack {
-            type Item = [u32; 3];
-        }
+        impl StackCapacity<[u32; 3]> for TestStack {}
         assert_eq!(TestStack::MAX_CAPACITY, ISIZE_MAX / 12);
         assert_eq!(TestStack::MAX_CAPACITY_BYTES, TestStack::MAX_CAPACITY * 12);
         assert!(TestStack::MAX_CAPACITY_BYTES <= ISIZE_MAX_PLUS_ONE - 4);
@@ -114,9 +105,7 @@ mod tests {
     #[test]
     fn large_low_alignment() {
         struct TestStack;
-        impl StackCapacity for TestStack {
-            type Item = [u16; 1000];
-        }
+        impl StackCapacity<[u16; 1000]> for TestStack {}
         assert_eq!(TestStack::MAX_CAPACITY, ISIZE_MAX / 2000);
         assert_eq!(TestStack::MAX_CAPACITY_BYTES, TestStack::MAX_CAPACITY * 2000);
         assert!(TestStack::MAX_CAPACITY_BYTES <= ISIZE_MAX_PLUS_ONE - 2);
@@ -131,9 +120,7 @@ mod tests {
         struct TestItem(u8);
 
         struct TestStack;
-        impl StackCapacity for TestStack {
-            type Item = TestItem;
-        }
+        impl StackCapacity<TestItem> for TestStack {}
         assert_eq!(TestStack::MAX_CAPACITY, ISIZE_MAX / 4096);
         assert_eq!(TestStack::MAX_CAPACITY_BYTES, TestStack::MAX_CAPACITY * 4096);
         assert!(TestStack::MAX_CAPACITY_BYTES <= ISIZE_MAX_PLUS_ONE - 4096);

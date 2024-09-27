@@ -42,15 +42,13 @@ pub struct Stack<T> {
     end: NonNull<T>,
 }
 
-impl<T> StackCapacity for Stack<T> {
-    type Item = T;
-}
+impl<T> StackCapacity<T> for Stack<T> {}
 
 impl<T> Stack<T> {
     /// Maximum capacity.
     ///
     /// Effectively unlimited on 64-bit systems.
-    pub const MAX_CAPACITY: usize = <Self as StackCapacity>::MAX_CAPACITY;
+    pub const MAX_CAPACITY: usize = <Self as StackCapacity<T>>::MAX_CAPACITY;
 
     /// Create new empty `Stack`.
     ///

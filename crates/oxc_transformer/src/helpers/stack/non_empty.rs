@@ -60,15 +60,13 @@ pub struct NonEmptyStack<T> {
     end: NonNull<T>,
 }
 
-impl<T> StackCapacity for NonEmptyStack<T> {
-    type Item = T;
-}
+impl<T> StackCapacity<T> for NonEmptyStack<T> {}
 
 impl<T> NonEmptyStack<T> {
     /// Maximum capacity.
     ///
     /// Effectively unlimited on 64-bit systems.
-    pub const MAX_CAPACITY: usize = <Self as StackCapacity>::MAX_CAPACITY;
+    pub const MAX_CAPACITY: usize = <Self as StackCapacity<T>>::MAX_CAPACITY;
 
     /// Create new [`NonEmptyStack`] with default pre-allocated capacity, and initial value `initial_value`.
     ///
