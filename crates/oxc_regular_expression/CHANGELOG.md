@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.30.2] - 2024-09-27
+
+### Features
+
+- 8d026e1 regular_expression: Implement `GetSpan` for RegExp AST nodes (#6056) (camchenry)
+- 7764793 regular_expression: Implement visitor pattern trait for regex AST (#6055) (camchenry)
+
 ## [0.28.0] - 2024-09-11
 
 ### Bug Fixes
