@@ -37,11 +37,12 @@ pub trait StackCapacity<T> {
 
     /// Default capacity of stack.
     ///
-    /// Same defaults as [`std::vec::Vec`] uses.
+    /// Same defaults as [`std::vec::Vec`] uses, except 16 bytes for types with size 1 (instead of 8).
+    /// Allocators will usually allocate minimum 16 bytes anyway.
     const DEFAULT_CAPACITY: usize = {
         // It's impossible for this to exceed `MAX_CAPACITY` because `size_of::<T>() >= align_of::<T>()`
         match size_of::<T>() {
-            1 => 8,
+            1 => 16,
             size if size <= 1024 => 4,
             _ => 1,
         }
@@ -65,8 +66,8 @@ mod tests {
         impl StackCapacity<bool> for TestStack {}
         assert_eq!(TestStack::MAX_CAPACITY, ISIZE_MAX);
         assert_eq!(TestStack::MAX_CAPACITY_BYTES, ISIZE_MAX);
-        assert_eq!(TestStack::DEFAULT_CAPACITY, 8);
-        assert_eq!(TestStack::DEFAULT_CAPACITY_BYTES, 8);
+        assert_eq!(TestStack::DEFAULT_CAPACITY, 16);
+        assert_eq!(TestStack::DEFAULT_CAPACITY_BYTES, 16);
     }
 
     #[test]

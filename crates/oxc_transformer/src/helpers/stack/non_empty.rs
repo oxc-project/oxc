@@ -319,8 +319,8 @@ mod tests {
     #[test]
     fn new() {
         let stack = NonEmptyStack::new(true);
-        assert_len_cap_last!(stack, 1, 8, &true);
-        assert_eq!(stack.capacity_bytes(), 8);
+        assert_len_cap_last!(stack, 1, 16, &true);
+        assert_eq!(stack.capacity_bytes(), 16);
 
         let stack = NonEmptyStack::new(10u64);
         assert_len_cap_last!(stack, 1, 4, &10);
