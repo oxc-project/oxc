@@ -40,7 +40,7 @@
 //!
 
 use oxc_ast::ast::{
-    ArrowFunctionExpression, Expression, FormalParameterKind, Function, FunctionType, Statement,
+    ArrowFunctionExpression, Expression, Function, FunctionType, Statement,
     VariableDeclarationKind, YieldExpression,
 };
 use oxc_ast::NONE;
@@ -81,9 +81,9 @@ impl AsyncToGenerator {
             func.this_param.take(),
             ctx.ast.alloc(ctx.ast.formal_parameters(
                 SPAN,
-                FormalParameterKind::FormalParameter,
-                ctx.ast.vec(),
-                NONE,
+                func.params.kind,
+                ctx.ast.move_vec(&mut func.params.items),
+                func.params.rest.take(),
             )),
             func.return_type.take(),
             func.body.take(),
@@ -232,9 +232,9 @@ impl<'a> Traverse<'a> for AsyncToGenerator {
             NONE,
             ctx.ast.alloc(ctx.ast.formal_parameters(
                 SPAN,
-                FormalParameterKind::FormalParameter,
-                ctx.ast.vec(),
-                NONE,
+                arrow.params.kind,
+                ctx.ast.move_vec(&mut arrow.params.items),
+                arrow.params.rest.take(),
             )),
             arrow.return_type.take(),
             Some(body),
