@@ -475,3 +475,18 @@ fn test_module_like_declarations() {
         "A symbol should not be created for global augmentation declarations."
     );
 }
+
+#[test]
+fn test_class_merging() {
+    // classes can be merged with interfaces, resulting in a single symbol
+    SemanticTester::ts(
+        "
+        class Foo {}
+        interface Foo {}
+    ",
+    )
+    .has_root_symbol("Foo")
+    .contains_flags(SymbolFlags::Class)
+    .contains_flags(SymbolFlags::Interface)
+    .test();
+}

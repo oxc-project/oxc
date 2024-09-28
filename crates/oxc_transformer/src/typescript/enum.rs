@@ -11,20 +11,20 @@ use oxc_syntax::{
 use oxc_traverse::{Traverse, TraverseCtx};
 use rustc_hash::FxHashMap;
 
-use crate::context::Ctx;
+use crate::TransformCtx;
 
-pub struct TypeScriptEnum<'a> {
-    ctx: Ctx<'a>,
+pub struct TypeScriptEnum<'a, 'ctx> {
+    ctx: &'ctx TransformCtx<'a>,
     enums: FxHashMap<Atom<'a>, FxHashMap<Atom<'a>, ConstantValue>>,
 }
 
-impl<'a> TypeScriptEnum<'a> {
-    pub fn new(ctx: Ctx<'a>) -> Self {
+impl<'a, 'ctx> TypeScriptEnum<'a, 'ctx> {
+    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
         Self { ctx, enums: FxHashMap::default() }
     }
 }
 
-impl<'a> Traverse<'a> for TypeScriptEnum<'a> {
+impl<'a, 'ctx> Traverse<'a> for TypeScriptEnum<'a, 'ctx> {
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let new_stmt = match stmt {
             Statement::TSEnumDeclaration(ts_enum_decl) => {
@@ -47,7 +47,7 @@ impl<'a> Traverse<'a> for TypeScriptEnum<'a> {
     }
 }
 
-impl<'a> TypeScriptEnum<'a> {
+impl<'a, 'ctx> TypeScriptEnum<'a, 'ctx> {
     /// ```TypeScript
     /// enum Foo {
     ///   X = 1,
@@ -366,7 +366,7 @@ enum ConstantValue {
     String(String),
 }
 
-impl<'a> TypeScriptEnum<'a> {
+impl<'a, 'ctx> TypeScriptEnum<'a, 'ctx> {
     /// Evaluate the expression to a constant value.
     /// Refer to [babel](https://github.com/babel/babel/blob/610897a9a96c5e344e77ca9665df7613d2f88358/packages/babel-plugin-transform-typescript/src/enum.ts#L241C1-L394C2)
     fn computed_constant_value(

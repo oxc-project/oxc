@@ -124,8 +124,14 @@ export interface ReactBindingOptions {
    * @default false
    */
   useSpread?: boolean
-  /** Enable react fast refresh transform */
-  refresh?: ReactRefreshBindingOptions
+  /**
+   * Enable React Fast Refresh .
+   *
+   * Conforms to the implementation in {@link https://github.com/facebook/react/tree/main/packages/react-refresh}
+   *
+   * @default false
+   */
+  refresh?: boolean | ReactRefreshBindingOptions
 }
 
 export interface ReactRefreshBindingOptions {
@@ -146,11 +152,11 @@ export interface ReactRefreshBindingOptions {
 
 export interface SourceMap {
   file?: string
-  mappings?: string
-  names?: Array<string>
+  mappings: string
+  names: Array<string>
   sourceRoot?: string
-  sources?: Array<string | undefined | null>
-  sourcesContent?: Array<string | undefined | null>
+  sources: Array<string>
+  sourcesContent?: Array<string>
   version: number
   x_google_ignoreList?: Array<number>
 }

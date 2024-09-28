@@ -1328,7 +1328,7 @@ impl<'a> GenExpr for ComputedMemberExpression<'a> {
         // `(let[0] = 100);` -> `(let)[0] = 100`;
         let wrap = self.object.get_identifier_reference().is_some_and(|r| r.name == "let");
         p.wrap(wrap, |p| {
-            self.object.print_expr(p, Precedence::Prefix, ctx.intersection(Context::FORBID_CALL));
+            self.object.print_expr(p, Precedence::Postfix, ctx.intersection(Context::FORBID_CALL));
         });
         if self.optional {
             p.print_str("?.");

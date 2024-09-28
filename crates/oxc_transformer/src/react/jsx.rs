@@ -88,8 +88,6 @@
 //!
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/main/packages/babel-helper-builder-react-jsx>
 
-use std::rc::Rc;
-
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, AstBuilder, NONE};
 use oxc_span::{Atom, GetSpan, Span, SPAN};
@@ -108,29 +106,29 @@ pub use super::{
     options::{ReactJsxRuntime, ReactOptions},
 };
 use crate::{
-    context::{Ctx, TransformCtx},
     helpers::{bindings::BoundIdentifier, module_imports::NamedImport},
+    TransformCtx,
 };
 
-pub struct ReactJsx<'a> {
+pub struct ReactJsx<'a, 'ctx> {
     options: ReactOptions,
 
-    ctx: Ctx<'a>,
+    ctx: &'ctx TransformCtx<'a>,
 
-    pub(super) jsx_self: ReactJsxSelf<'a>,
-    pub(super) jsx_source: ReactJsxSource<'a>,
+    pub(super) jsx_self: ReactJsxSelf<'a, 'ctx>,
+    pub(super) jsx_source: ReactJsxSource<'a, 'ctx>,
 
     // States
-    bindings: Bindings<'a>,
+    bindings: Bindings<'a, 'ctx>,
 }
 
 /// Bindings for different import options
-enum Bindings<'a> {
+enum Bindings<'a, 'ctx> {
     Classic(ClassicBindings<'a>),
-    AutomaticScript(AutomaticScriptBindings<'a>),
-    AutomaticModule(AutomaticModuleBindings<'a>),
+    AutomaticScript(AutomaticScriptBindings<'a, 'ctx>),
+    AutomaticModule(AutomaticModuleBindings<'a, 'ctx>),
 }
-impl<'a> Bindings<'a> {
+impl<'a, 'ctx> Bindings<'a, 'ctx> {
     #[inline]
     fn is_classic(&self) -> bool {
         matches!(self, Self::Classic(_))
@@ -142,8 +140,8 @@ struct ClassicBindings<'a> {
     pragma_frag: Pragma<'a>,
 }
 
-struct AutomaticScriptBindings<'a> {
-    ctx: Ctx<'a>,
+struct AutomaticScriptBindings<'a, 'ctx> {
+    ctx: &'ctx TransformCtx<'a>,
     jsx_runtime_importer: Atom<'a>,
     react_importer_len: u32,
     require_create_element: Option<BoundIdentifier<'a>>,
@@ -151,9 +149,9 @@ struct AutomaticScriptBindings<'a> {
     is_development: bool,
 }
 
-impl<'a> AutomaticScriptBindings<'a> {
+impl<'a, 'ctx> AutomaticScriptBindings<'a, 'ctx> {
     fn new(
-        ctx: Ctx<'a>,
+        ctx: &'ctx TransformCtx<'a>,
         jsx_runtime_importer: Atom<'a>,
         react_importer_len: u32,
         is_development: bool,
@@ -206,8 +204,8 @@ impl<'a> AutomaticScriptBindings<'a> {
     }
 }
 
-struct AutomaticModuleBindings<'a> {
-    ctx: Ctx<'a>,
+struct AutomaticModuleBindings<'a, 'ctx> {
+    ctx: &'ctx TransformCtx<'a>,
     jsx_runtime_importer: Atom<'a>,
     react_importer_len: u32,
     import_create_element: Option<BoundIdentifier<'a>>,
@@ -217,9 +215,9 @@ struct AutomaticModuleBindings<'a> {
     is_development: bool,
 }
 
-impl<'a> AutomaticModuleBindings<'a> {
+impl<'a, 'ctx> AutomaticModuleBindings<'a, 'ctx> {
     fn new(
-        ctx: Ctx<'a>,
+        ctx: &'ctx TransformCtx<'a>,
         jsx_runtime_importer: Atom<'a>,
         react_importer_len: u32,
         is_development: bool,
@@ -371,15 +369,15 @@ impl<'a> Pragma<'a> {
     }
 }
 
-impl<'a> ReactJsx<'a> {
-    pub fn new(options: ReactOptions, ctx: Ctx<'a>) -> Self {
+impl<'a, 'ctx> ReactJsx<'a, 'ctx> {
+    pub fn new(options: ReactOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
         let bindings = match options.runtime {
             ReactJsxRuntime::Classic => {
                 if options.import_source.is_some() {
                     ctx.error(diagnostics::import_source_cannot_be_set());
                 }
-                let pragma = Pragma::parse(options.pragma.as_ref(), "createElement", &ctx);
-                let pragma_frag = Pragma::parse(options.pragma_frag.as_ref(), "Fragment", &ctx);
+                let pragma = Pragma::parse(options.pragma.as_ref(), "createElement", ctx);
+                let pragma_frag = Pragma::parse(options.pragma_frag.as_ref(), "Fragment", ctx);
                 Bindings::Classic(ClassicBindings { pragma, pragma_frag })
             }
             ReactJsxRuntime::Automatic => {
@@ -419,14 +417,14 @@ impl<'a> ReactJsx<'a> {
 
                 if ctx.source_type.is_script() {
                     Bindings::AutomaticScript(AutomaticScriptBindings::new(
-                        Rc::clone(&ctx),
+                        ctx,
                         jsx_runtime_importer,
                         source_len,
                         is_development,
                     ))
                 } else {
                     Bindings::AutomaticModule(AutomaticModuleBindings::new(
-                        Rc::clone(&ctx),
+                        ctx,
                         jsx_runtime_importer,
                         source_len,
                         is_development,
@@ -437,15 +435,15 @@ impl<'a> ReactJsx<'a> {
 
         Self {
             options,
-            ctx: Rc::clone(&ctx),
-            jsx_self: ReactJsxSelf::new(Rc::clone(&ctx)),
+            ctx,
+            jsx_self: ReactJsxSelf::new(ctx),
             jsx_source: ReactJsxSource::new(ctx),
             bindings,
         }
     }
 }
 
-impl<'a> Traverse<'a> for ReactJsx<'a> {
+impl<'a, 'ctx> Traverse<'a> for ReactJsx<'a, 'ctx> {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.add_runtime_imports(program, ctx);
     }
@@ -461,7 +459,7 @@ impl<'a> Traverse<'a> for ReactJsx<'a> {
     }
 }
 
-impl<'a> ReactJsx<'a> {
+impl<'a, 'ctx> ReactJsx<'a, 'ctx> {
     fn is_script(&self) -> bool {
         self.ctx.source_type.is_script()
     }

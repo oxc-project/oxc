@@ -111,6 +111,8 @@ const builtInSymbols = new Set(
         "#,
         "(/* @__PURE__ */ new Foo()).bar();\n",
         "(/* @__PURE__ */ Foo()).bar();\n",
+        "(/* @__PURE__ */ new Foo())['bar']();\n",
+        "(/* @__PURE__ */ Foo())['bar']();\n",
         // https://github.com/oxc-project/oxc/issues/4843
         r"
 /* #__NO_SIDE_EFFECTS__ */

@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, syntax_directed_operations::BoundNames, NONE};
 use oxc_span::{Atom, CompactStr, SPAN};
@@ -15,20 +13,22 @@ use super::{
     diagnostics::{ambient_module_nested, namespace_exporting_non_const, namespace_not_supported},
     TypeScriptOptions,
 };
-use crate::context::Ctx;
+use crate::TransformCtx;
 
-pub struct TypeScriptNamespace<'a> {
-    ctx: Ctx<'a>,
-    options: Rc<TypeScriptOptions>,
+pub struct TypeScriptNamespace<'a, 'ctx> {
+    ctx: &'ctx TransformCtx<'a>,
+
+    // Options
+    allow_namespaces: bool,
 }
 
-impl<'a> TypeScriptNamespace<'a> {
-    pub fn new(options: Rc<TypeScriptOptions>, ctx: Ctx<'a>) -> Self {
-        Self { ctx, options }
+impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
+    pub fn new(options: &TypeScriptOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
+        Self { ctx, allow_namespaces: options.allow_namespaces }
     }
 }
 
-impl<'a> Traverse<'a> for TypeScriptNamespace<'a> {
+impl<'a, 'ctx> Traverse<'a> for TypeScriptNamespace<'a, 'ctx> {
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         // namespace declaration is only allowed at the top level
@@ -49,7 +49,7 @@ impl<'a> Traverse<'a> for TypeScriptNamespace<'a> {
             match stmt {
                 Statement::TSModuleDeclaration(decl) => {
                     if !decl.declare {
-                        if !self.options.allow_namespaces {
+                        if !self.allow_namespaces {
                             self.ctx.error(namespace_not_supported(decl.span));
                         }
 
@@ -77,7 +77,7 @@ impl<'a> Traverse<'a> for TypeScriptNamespace<'a> {
                     match &export_decl.declaration {
                         Some(Declaration::TSModuleDeclaration(decl)) => {
                             if !decl.declare {
-                                if !self.options.allow_namespaces {
+                                if !self.allow_namespaces {
                                     self.ctx.error(namespace_not_supported(decl.span));
                                 }
 
@@ -139,7 +139,7 @@ impl<'a> Traverse<'a> for TypeScriptNamespace<'a> {
     }
 }
 
-impl<'a> TypeScriptNamespace<'a> {
+impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
     fn handle_nested(
         &self,
         decl: TSModuleDeclaration<'a>,

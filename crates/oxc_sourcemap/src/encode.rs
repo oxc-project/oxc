@@ -13,14 +13,14 @@ use crate::{token::TokenChunk, SourceMap, Token};
 pub fn encode(sourcemap: &SourceMap) -> JSONSourceMap {
     JSONSourceMap {
         file: sourcemap.get_file().map(ToString::to_string),
-        mappings: Some(serialize_sourcemap_mappings(sourcemap)),
+        mappings: serialize_sourcemap_mappings(sourcemap),
         source_root: sourcemap.get_source_root().map(ToString::to_string),
-        sources: Some(sourcemap.sources.iter().map(ToString::to_string).map(Some).collect()),
+        sources: sourcemap.sources.iter().map(ToString::to_string).collect(),
         sources_content: sourcemap
             .source_contents
             .as_ref()
             .map(|x| x.iter().map(ToString::to_string).map(Some).collect()),
-        names: Some(sourcemap.names.iter().map(ToString::to_string).collect()),
+        names: sourcemap.names.iter().map(ToString::to_string).collect(),
     }
 }
 

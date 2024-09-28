@@ -1,6 +1,6 @@
 #![allow(clippy::unused_self)]
 
-use std::{cell::Cell, rc::Rc};
+use std::cell::Cell;
 
 use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast::*;
@@ -16,12 +16,14 @@ use oxc_syntax::{
 use oxc_traverse::{Traverse, TraverseCtx};
 use rustc_hash::FxHashSet;
 
-use crate::{context::Ctx, TypeScriptOptions};
+use crate::{TransformCtx, TypeScriptOptions};
 
-pub struct TypeScriptAnnotations<'a> {
-    #[allow(dead_code)]
-    options: Rc<TypeScriptOptions>,
-    ctx: Ctx<'a>,
+pub struct TypeScriptAnnotations<'a, 'ctx> {
+    ctx: &'ctx TransformCtx<'a>,
+
+    // Options
+    only_remove_type_imports: bool,
+
     /// Assignments to be added to the constructor body
     assignments: Vec<Assignment<'a>>,
     has_super_call: bool,
@@ -33,8 +35,8 @@ pub struct TypeScriptAnnotations<'a> {
     type_identifier_names: FxHashSet<Atom<'a>>,
 }
 
-impl<'a> TypeScriptAnnotations<'a> {
-    pub fn new(options: Rc<TypeScriptOptions>, ctx: Ctx<'a>) -> Self {
+impl<'a, 'ctx> TypeScriptAnnotations<'a, 'ctx> {
+    pub fn new(options: &TypeScriptOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
         let jsx_element_import_name = if options.jsx_pragma.contains('.') {
             options.jsx_pragma.split('.').next().map(String::from).unwrap()
         } else {
@@ -48,10 +50,10 @@ impl<'a> TypeScriptAnnotations<'a> {
         };
 
         Self {
+            ctx,
+            only_remove_type_imports: options.only_remove_type_imports,
             has_super_call: false,
             assignments: vec![],
-            options,
-            ctx,
             has_jsx_element: false,
             has_jsx_fragment: false,
             jsx_element_import_name,
@@ -60,7 +62,8 @@ impl<'a> TypeScriptAnnotations<'a> {
         }
     }
 }
-impl<'a> Traverse<'a> for TypeScriptAnnotations<'a> {
+
+impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         let mut no_modules_remaining = true;
         let mut some_modules_deleted = false;
@@ -99,7 +102,7 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a> {
                 Statement::ImportDeclaration(decl) => {
                     if decl.import_kind.is_type() {
                         false
-                    } else if self.options.only_remove_type_imports {
+                    } else if self.only_remove_type_imports {
                         true
                     } else if let Some(specifiers) = &mut decl.specifiers {
                         if specifiers.is_empty() {
@@ -548,7 +551,7 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a> {
     }
 }
 
-impl<'a> TypeScriptAnnotations<'a> {
+impl<'a, 'ctx> TypeScriptAnnotations<'a, 'ctx> {
     /// Check if the given name is a JSX pragma or fragment pragma import
     /// and if the file contains JSX elements or fragments
     fn is_jsx_imports(&self, name: &str) -> bool {

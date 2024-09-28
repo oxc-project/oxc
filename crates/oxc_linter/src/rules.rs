@@ -97,6 +97,7 @@ mod eslint {
     pub mod no_redeclare;
     pub mod no_regex_spaces;
     pub mod no_restricted_globals;
+    pub mod no_return_assign;
     pub mod no_script_url;
     pub mod no_self_assign;
     pub mod no_self_compare;
@@ -563,6 +564,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_redeclare,
     eslint::no_regex_spaces,
     eslint::no_restricted_globals,
+    eslint::no_return_assign,
     eslint::no_script_url,
     eslint::no_self_assign,
     eslint::no_self_compare,

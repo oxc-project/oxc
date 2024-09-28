@@ -1,0 +1,127 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-return-assign): Return statements should not contain an assignment.
+   ╭─[no_return_assign.tsx:1:23]
+ 1 │ function x() { return result = a * b; };
+   ·                       ──────────────
+   ╰────
+  help: Did you mean to use `==` instead of `=`?
+
+  ⚠ eslint(no-return-assign): Return statements should not contain an assignment.
+   ╭─[no_return_assign.tsx:1:23]
+ 1 │ function x() { return (result) = (a * b); };
+   ·                       ──────────────────
+   ╰────
+  help: Did you mean to use `==` instead of `=`?
+
+  ⚠ eslint(no-return-assign): Return statements should not contain an assignment.
+   ╭─[no_return_assign.tsx:1:23]
+ 1 │ function x() { return result = a * b; };
+   ·                       ──────────────
+   ╰────
+  help: Did you mean to use `==` instead of `=`?
+
+  ⚠ eslint(no-return-assign): Return statements should not contain an assignment.
+   ╭─[no_return_assign.tsx:1:23]
+ 1 │ function x() { return (result) = (a * b); };
+   ·                       ──────────────────
+   ╰────
+  help: Did you mean to use `==` instead of `=`?
+
+  ⚠ eslint(no-return-assign): Return statements should not contain an assignment.
+   ╭─[no_return_assign.tsx:1:16]
+ 1 │ () => { return result = a * b; }
+   ·                ──────────────
+   ╰────
+  help: Did you mean to use `==` instead of `=`?
+
+  ⚠ eslint(no-return-assign): Arrow functions should not return an assignment.
+   ╭─[no_return_assign.tsx:1:7]
+ 1 │ () => result = a * b
+   ·       ──────────────
+   ╰────
+  help: Did you mean to use `==` instead of `=`?
+
+  ⚠ eslint(no-return-assign): Return statements should not contain an assignment.
+   ╭─[no_return_assign.tsx:1:23]
+ 1 │ function x() { return result = a * b; };
+   ·                       ──────────────
+   ╰────
+  help: Did you mean to use `==` instead of `=`?
+
+  ⚠ eslint(no-return-assign): Return statements should not contain an assignment.
+   ╭─[no_return_assign.tsx:1:24]
+ 1 │ function x() { return (result = a * b); };
+   ·                        ──────────────
+   ╰────
+  help: Did you mean to use `==` instead of `=`?
+
+  ⚠ eslint(no-return-assign): Return statements should not contain an assignment.
+   ╭─[no_return_assign.tsx:1:34]
+ 1 │ function x() { return result || (result = a * b); };
+   ·                                  ──────────────
+   ╰────
+  help: Did you mean to use `==` instead of `=`?
+
+  ⚠ eslint(no-return-assign): Return statements should not contain an assignment.
+   ╭─[no_return_assign.tsx:2:27]
+ 1 │ function foo(){
+ 2 │                             return a = b
+   ·                                    ─────
+ 3 │                         }
+   ╰────
+  help: Did you mean to use `==` instead of `=`?
+
+  ⚠ eslint(no-return-assign): Return statements should not contain an assignment.
+   ╭─[no_return_assign.tsx:2:27]
+ 1 │ function doSomething() {
+ 2 │                             return foo = bar && foo > 0;
+   ·                                    ────────────────────
+ 3 │                         }
+   ╰────
+  help: Did you mean to use `==` instead of `=`?
+
+  ⚠ eslint(no-return-assign): Return statements should not contain an assignment.
+   ╭─[no_return_assign.tsx:2:27]
+ 1 │     function doSomething() {
+ 2 │ ╭─▶                             return foo = function(){
+ 3 │ │                                   return (bar = bar1)
+ 4 │ ╰─▶                             }
+ 5 │                             }
+   ╰────
+  help: Did you mean to use `==` instead of `=`?
+
+  ⚠ eslint(no-return-assign): Return statements should not contain an assignment.
+   ╭─[no_return_assign.tsx:2:27]
+ 1 │ function doSomething() {
+ 2 │                             return foo = () => a
+   ·                                    ─────────────
+ 3 │                         }
+   ╰────
+  help: Did you mean to use `==` instead of `=`?
+
+  ⚠ eslint(no-return-assign): Arrow functions should not return an assignment.
+   ╭─[no_return_assign.tsx:2:33]
+ 1 │ function doSomething() {
+ 2 │                             return () => a = () => b
+   ·                                          ───────────
+ 3 │                         }
+   ╰────
+  help: Did you mean to use `==` instead of `=`?
+
+  ⚠ eslint(no-return-assign): Return statements should not contain an assignment.
+   ╭─[no_return_assign.tsx:3:31]
+ 2 │                             return function bar(b){
+ 3 │                                 return a = b
+   ·                                        ─────
+ 4 │                             }
+   ╰────
+  help: Did you mean to use `==` instead of `=`?
+
+  ⚠ eslint(no-return-assign): Arrow functions should not return an assignment.
+   ╭─[no_return_assign.tsx:1:27]
+ 1 │ const foo = (a) => (b) => a = b
+   ·                           ─────
+   ╰────
+  help: Did you mean to use `==` instead of `=`?

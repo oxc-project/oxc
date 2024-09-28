@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.30.2] - 2024-09-27
+
+### Features
+
+- 60c52ba ast: Allow passing span to `void_0` method (#6065) (Dunqing)
+- 28da771 transformer: Do not transform `**` with bigint literals (#6023) (Boshen)
+
+### Bug Fixes
+
+- b1af73d semantic: Do not create a `global` symbol for `declare global {}` (#6040) (DonIsaac)
+
+### Refactor
+
+- 1fc80d1 ast: Move all ts ast related impl methods to `ast_impl` (#6015) (Dunqing)
+
 ## [0.30.1] - 2024-09-24
 
 ### Documentation

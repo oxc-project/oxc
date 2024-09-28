@@ -8,7 +8,8 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_regular_expression::{
-    ast::{Alternative, Disjunction, Pattern, Term},
+    ast::{Character, Pattern},
+    visit::{RegExpAstKind, Visit},
     Parser, ParserOptions,
 };
 use oxc_span::Span;
@@ -72,7 +73,6 @@ impl Rule for NoRegexSpaces {
                     ctx.diagnostic(no_regex_spaces_diagnostic(span)); // new RegExp('a  b')
                 }
             }
-
             _ => {}
         }
     }
@@ -87,7 +87,7 @@ impl NoRegexSpaces {
         }
 
         let pattern = literal.regex.pattern.as_pattern()?;
-        Self::find_consecutive_spaces(pattern)
+        find_consecutive_spaces(pattern)
     }
 
     fn find_expr_to_report(args: &Vec<'_, Argument<'_>>) -> Option<Span> {
@@ -109,48 +109,8 @@ impl NoRegexSpaces {
         let parser = Parser::new(&alloc, pattern_with_slashes.as_str(), ParserOptions::default());
         let regex = parser.parse().ok()?;
 
-        Self::find_consecutive_spaces(&regex.pattern)
+        find_consecutive_spaces(&regex.pattern)
             .map(|span| Span::new(span.start + pattern.span.start, span.end + pattern.span.start))
-    }
-
-    fn find_consecutive_spaces(pattern: &Pattern) -> Option<Span> {
-        let mut last_space_span: Option<Span> = None;
-        let mut in_quantifier = false;
-        visit_terms(pattern, &mut |term| {
-            if let Term::Quantifier(_) = term {
-                in_quantifier = true;
-                return;
-            }
-            let Term::Character(ch) = term else {
-                return;
-            };
-            if in_quantifier {
-                in_quantifier = false;
-                return;
-            }
-            if ch.value != u32::from(b' ') {
-                return;
-            }
-            if let Some(ref mut space_span) = last_space_span {
-                // If this is consecutive with the last space, extend it
-                if space_span.end == ch.span.start {
-                    space_span.end = ch.span.end;
-                }
-                // If it is not consecutive, and the last space is only one space, move it up
-                else if space_span.size() == 1 {
-                    last_space_span.replace(ch.span);
-                }
-            } else {
-                last_space_span = Some(ch.span);
-            }
-        });
-
-        // return None if last_space_span length is only 1
-        if last_space_span.is_some_and(|span| span.size() > 1) {
-            last_space_span
-        } else {
-            None
-        }
     }
 
     fn is_regexp_new_expression(expr: &NewExpression<'_>) -> bool {
@@ -168,39 +128,49 @@ impl NoRegexSpaces {
     }
 }
 
-/// Calls the given closure on every [`Term`] in the [`Pattern`].
-fn visit_terms<'a, F: FnMut(&'a Term<'a>)>(pattern: &'a Pattern, f: &mut F) {
-    visit_terms_disjunction(&pattern.body, f);
+fn find_consecutive_spaces(pattern: &Pattern) -> Option<Span> {
+    let mut finder = ConsecutiveSpaceFinder { last_space_span: None, depth: 0 };
+    finder.visit_pattern(pattern);
+
+    // return none if span is only one space
+    finder.last_space_span.filter(|span| span.size() > 1)
 }
 
-/// Calls the given closure on every [`Term`] in the [`Disjunction`].
-fn visit_terms_disjunction<'a, F: FnMut(&'a Term<'a>)>(disjunction: &'a Disjunction, f: &mut F) {
-    for alternative in &disjunction.body {
-        visit_terms_alternative(alternative, f);
+struct ConsecutiveSpaceFinder {
+    last_space_span: Option<Span>,
+    depth: u32,
+}
+
+impl<'a> Visit<'a> for ConsecutiveSpaceFinder {
+    fn enter_node(&mut self, kind: RegExpAstKind<'a>) {
+        if let RegExpAstKind::Quantifier(_) | RegExpAstKind::CharacterClass(_) = kind {
+            self.depth += 1;
+        }
     }
-}
+    fn leave_node(&mut self, kind: RegExpAstKind<'a>) {
+        if let RegExpAstKind::Quantifier(_) | RegExpAstKind::CharacterClass(_) = kind {
+            self.depth -= 1;
+        }
+    }
 
-/// Calls the given closure on every [`Term`] in the [`Alternative`].
-fn visit_terms_alternative<'a, F: FnMut(&'a Term<'a>)>(alternative: &'a Alternative, f: &mut F) {
-    for term in &alternative.body {
-        match term {
-            Term::LookAroundAssertion(lookaround) => {
-                f(term);
-                visit_terms_disjunction(&lookaround.body, f);
+    fn visit_character(&mut self, ch: &Character) {
+        if self.depth > 0 {
+            return;
+        }
+        if ch.value != u32::from(b' ') {
+            return;
+        }
+        if let Some(ref mut space_span) = self.last_space_span {
+            // If this is consecutive with the last space, extend it
+            if space_span.end == ch.span.start {
+                space_span.end = ch.span.end;
             }
-            Term::Quantifier(quant) => {
-                f(term);
-                f(&quant.body);
+            // If it is not consecutive, and the last space is only one space, move it up
+            else if space_span.size() == 1 {
+                self.last_space_span.replace(ch.span);
             }
-            Term::CapturingGroup(group) => {
-                f(term);
-                visit_terms_disjunction(&group.body, f);
-            }
-            Term::IgnoreGroup(group) => {
-                f(term);
-                visit_terms_disjunction(&group.body, f);
-            }
-            _ => f(term),
+        } else {
+            self.last_space_span = Some(ch.span);
         }
     }
 }

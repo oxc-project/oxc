@@ -76,6 +76,7 @@ impl<'a> Traverse<'a> for LogicalAssignmentOperators<'a> {
     #[inline] // Inline because it's no-op in release mode
     fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
         debug_assert!(self.var_declarations.len() == 1);
+        debug_assert!(self.var_declarations.last().is_none());
     }
 
     fn enter_statements(
@@ -396,7 +397,7 @@ impl<'a> LogicalAssignmentOperators<'a> {
         let id = ctx.ast.binding_pattern_kind_from_binding_identifier(binding_identifier);
         let id = ctx.ast.binding_pattern(id, NONE, false);
         self.var_declarations
-            .get_mut_or_init(|| ctx.ast.vec())
+            .last_mut_or_init(|| ctx.ast.vec())
             .push(ctx.ast.variable_declarator(SPAN, kind, id, None, false));
 
         // _name = name

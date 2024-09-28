@@ -4,8 +4,9 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_regular_expression::ast::{
-    Alternative, Character, CharacterClassContents, CharacterKind, Disjunction, Pattern, Term,
+use oxc_regular_expression::{
+    ast::{Character, CharacterKind},
+    visit::Visit,
 };
 use oxc_span::Span;
 
@@ -97,80 +98,32 @@ impl Rule for NoHexEscape {
                     return;
                 };
 
-                visit_terms(pattern, &mut |term| match term {
-                    Term::Character(ch) => {
-                        check_character(ch, ctx);
-                    }
-                    Term::CharacterClass(class) => {
-                        for term in &class.body {
-                            match term {
-                                CharacterClassContents::Character(ch) => {
-                                    check_character(ch, ctx);
-                                }
-                                CharacterClassContents::CharacterClassRange(range) => {
-                                    check_character(&range.min, ctx);
-                                    check_character(&range.max, ctx);
-                                }
-                                _ => (),
-                            }
-                        }
-                    }
-                    _ => (),
-                });
+                let mut finder = HexEscapeFinder { hex_escapes: vec![] };
+                finder.visit_pattern(pattern);
+
+                for span in finder.hex_escapes {
+                    let unicode_escape =
+                        format!(r"\u00{}", &span.source_text(ctx.source_text())[2..]);
+
+                    ctx.diagnostic_with_fix(no_hex_escape_diagnostic(span), |fixer| {
+                        fixer.replace(span, unicode_escape)
+                    });
+                }
             }
             _ => {}
         }
     }
 }
 
-fn check_character(ch: &Character, ctx: &LintContext) {
-    if ch.kind == CharacterKind::HexadecimalEscape {
-        let unicode_escape = format!(r"\u00{}", &ch.span.source_text(ctx.source_text())[2..]);
-        ctx.diagnostic_with_fix(no_hex_escape_diagnostic(ch.span), |fixer| {
-            fixer.replace(ch.span, unicode_escape)
-        });
-    }
+struct HexEscapeFinder {
+    hex_escapes: Vec<Span>,
 }
 
-// TODO: Replace with proper regex AST visitor when available
-/// Calls the given closure on every [`Term`] in the [`Pattern`].
-fn visit_terms<'a, F: FnMut(&'a Term<'a>)>(pattern: &'a Pattern, f: &mut F) {
-    visit_terms_disjunction(&pattern.body, f);
-}
-
-/// Calls the given closure on every [`Term`] in the [`Disjunction`].
-fn visit_terms_disjunction<'a, F: FnMut(&'a Term<'a>)>(disjunction: &'a Disjunction, f: &mut F) {
-    for alternative in &disjunction.body {
-        visit_terms_alternative(alternative, f);
-    }
-}
-
-/// Calls the given closure on every [`Term`] in the [`Alternative`].
-fn visit_terms_alternative<'a, F: FnMut(&'a Term<'a>)>(alternative: &'a Alternative, f: &mut F) {
-    for term in &alternative.body {
-        visit_term(term, f);
-    }
-}
-
-fn visit_term<'a, F: FnMut(&'a Term<'a>)>(term: &'a Term<'a>, f: &mut F) {
-    match term {
-        Term::LookAroundAssertion(lookaround) => {
-            f(term);
-            visit_terms_disjunction(&lookaround.body, f);
+impl<'a> Visit<'a> for HexEscapeFinder {
+    fn visit_character(&mut self, ch: &Character) {
+        if ch.kind == CharacterKind::HexadecimalEscape {
+            self.hex_escapes.push(ch.span);
         }
-        Term::Quantifier(quant) => {
-            f(term);
-            visit_term(&quant.body, f);
-        }
-        Term::CapturingGroup(group) => {
-            f(term);
-            visit_terms_disjunction(&group.body, f);
-        }
-        Term::IgnoreGroup(group) => {
-            f(term);
-            visit_terms_disjunction(&group.body, f);
-        }
-        _ => f(term),
     }
 }
 

@@ -19,12 +19,15 @@ pub struct NoDynamicRequire {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Forbid imports which use an expression for the module argument.
+    /// Forbids imports that use an expression for the module argument. This includes
+    /// dynamically resolved paths in `require` or `import` statements.
     ///
     /// ### Why is this bad?
     ///
-    /// Import statements which use an expression resolved at runtime makes it to find where the
-    /// import comes from and some static code analysis tools might not be able to resolve them.
+    /// Using expressions that are resolved at runtime in import statements makes it
+    /// difficult to determine where the module is being imported from. This can complicate
+    /// code navigation and hinder static analysis tools, which rely on predictable module paths
+    /// for linting, bundling, and other optimizations.
     ///
     /// ### Examples
     ///

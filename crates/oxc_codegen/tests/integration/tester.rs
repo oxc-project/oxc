@@ -15,10 +15,7 @@ pub fn test(source_text: &str, expected: &str) {
         )
         .build(&ret.program)
         .source_text;
-    assert_eq!(
-        result, expected,
-        "\nfor source {source_text:?}\nexpect {expected:?}\ngot    {result:?}"
-    );
+    assert_eq!(result, expected, "\nfor source: {source_text:?}");
 }
 
 pub fn test_without_source(source_text: &str, expected: &str) {
@@ -26,10 +23,7 @@ pub fn test_without_source(source_text: &str, expected: &str) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let result = CodeGenerator::new().build(&ret.program).source_text;
-    assert_eq!(
-        result, expected,
-        "\nfor source {source_text:?}\nexpect {expected:?}\ngot    {result:?}\nwithout providing the original code."
-    );
+    assert_eq!(result, expected, "\nfor source: {source_text:?}");
 }
 
 pub fn test_minify(source_text: &str, expected: &str) {
@@ -40,8 +34,5 @@ pub fn test_minify(source_text: &str, expected: &str) {
         .with_options(CodegenOptions { minify: true, ..CodegenOptions::default() })
         .build(&ret.program)
         .source_text;
-    assert_eq!(
-        result, expected,
-        "\nfor minify source {source_text}\nexpect {expected}\ngot    {result:?}"
-    );
+    assert_eq!(result, expected, "\nfor minify source: {source_text}");
 }
