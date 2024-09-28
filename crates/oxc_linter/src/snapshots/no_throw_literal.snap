@@ -1,0 +1,121 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-throw-literal): Disallow throwing literals as exceptions
+   ╭─[no_throw_literal.tsx:1:1]
+ 1 │ throw 'error';
+   · ──────────────
+   ╰────
+  help: Expected an error object to be thrown.
+
+  ⚠ eslint(no-throw-literal): Disallow throwing literals as exceptions
+   ╭─[no_throw_literal.tsx:1:1]
+ 1 │ throw 0;
+   · ────────
+   ╰────
+  help: Expected an error object to be thrown.
+
+  ⚠ eslint(no-throw-literal): Disallow throwing literals as exceptions
+   ╭─[no_throw_literal.tsx:1:1]
+ 1 │ throw false;
+   · ────────────
+   ╰────
+  help: Expected an error object to be thrown.
+
+  ⚠ eslint(no-throw-literal): Disallow throwing literals as exceptions
+   ╭─[no_throw_literal.tsx:1:1]
+ 1 │ throw null;
+   · ───────────
+   ╰────
+  help: Expected an error object to be thrown.
+
+  ⚠ eslint(no-throw-literal): Disallow throwing literals as exceptions
+   ╭─[no_throw_literal.tsx:1:1]
+ 1 │ throw {};
+   · ─────────
+   ╰────
+  help: Expected an error object to be thrown.
+
+  ⚠ eslint(no-throw-literal): Disallow throwing literals as exceptions
+   ╭─[no_throw_literal.tsx:1:1]
+ 1 │ throw undefined;
+   · ────────────────
+   ╰────
+  help: Do not throw undefined.
+
+  ⚠ eslint(no-throw-literal): Disallow throwing literals as exceptions
+   ╭─[no_throw_literal.tsx:1:1]
+ 1 │ throw 'a' + 'b';
+   · ────────────────
+   ╰────
+  help: Expected an error object to be thrown.
+
+  ⚠ eslint(no-throw-literal): Disallow throwing literals as exceptions
+   ╭─[no_throw_literal.tsx:1:22]
+ 1 │ var b = new Error(); throw 'a' + b;
+   ·                      ──────────────
+   ╰────
+  help: Expected an error object to be thrown.
+
+  ⚠ eslint(no-throw-literal): Disallow throwing literals as exceptions
+   ╭─[no_throw_literal.tsx:1:1]
+ 1 │ throw foo = 'error';
+   · ────────────────────
+   ╰────
+  help: Expected an error object to be thrown.
+
+  ⚠ eslint(no-throw-literal): Disallow throwing literals as exceptions
+   ╭─[no_throw_literal.tsx:1:1]
+ 1 │ throw foo += new Error();
+   · ─────────────────────────
+   ╰────
+  help: Expected an error object to be thrown.
+
+  ⚠ eslint(no-throw-literal): Disallow throwing literals as exceptions
+   ╭─[no_throw_literal.tsx:1:1]
+ 1 │ throw foo &= new Error();
+   · ─────────────────────────
+   ╰────
+  help: Expected an error object to be thrown.
+
+  ⚠ eslint(no-throw-literal): Disallow throwing literals as exceptions
+   ╭─[no_throw_literal.tsx:1:1]
+ 1 │ throw foo &&= 'literal'
+   · ───────────────────────
+   ╰────
+  help: Expected an error object to be thrown.
+
+  ⚠ eslint(no-throw-literal): Disallow throwing literals as exceptions
+   ╭─[no_throw_literal.tsx:1:1]
+ 1 │ throw new Error(), 1, 2, 3;
+   · ───────────────────────────
+   ╰────
+  help: Expected an error object to be thrown.
+
+  ⚠ eslint(no-throw-literal): Disallow throwing literals as exceptions
+   ╭─[no_throw_literal.tsx:1:1]
+ 1 │ throw 'literal' && 'not an Error';
+   · ──────────────────────────────────
+   ╰────
+  help: Expected an error object to be thrown.
+
+  ⚠ eslint(no-throw-literal): Disallow throwing literals as exceptions
+   ╭─[no_throw_literal.tsx:1:1]
+ 1 │ throw foo && 'literal'
+   · ──────────────────────
+   ╰────
+  help: Expected an error object to be thrown.
+
+  ⚠ eslint(no-throw-literal): Disallow throwing literals as exceptions
+   ╭─[no_throw_literal.tsx:1:1]
+ 1 │ throw foo ? 'not an Error' : 'literal';
+   · ───────────────────────────────────────
+   ╰────
+  help: Expected an error object to be thrown.
+
+  ⚠ eslint(no-throw-literal): Disallow throwing literals as exceptions
+   ╭─[no_throw_literal.tsx:1:1]
+ 1 │ throw `${err}`;
+   · ───────────────
+   ╰────
+  help: Expected an error object to be thrown.
