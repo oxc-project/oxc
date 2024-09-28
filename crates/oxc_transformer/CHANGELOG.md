@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.30.4] - 2024-09-28
+
+### Bug Fixes
+
+- 64d4756 transformer: Fix debug assertion in `Stack` (#6106) (overlookmotel)
+
+### Refactor
+
+- 7bc3988 transformer: Remove dead code (#6124) (overlookmotel)
+- 07fe45b transformer: Exponentiation operator: convert to match (#6123) (overlookmotel)
+- 4387845 transformer: Share `TypeScriptOptions` with ref not `Rc` (#6121) (overlookmotel)
+- 09e41c2 transformer: Share `TransformCtx` with ref not `Rc` (#6118) (overlookmotel)
+- 58fd6eb transformer: Pre-allocate more stack space (#6095) (overlookmotel)
+- 9ac80bd transformer: Add wrapper around `NonNull` (#6115) (overlookmotel)
+- c50500e transformer: Move common stack functionality into `StackCommon` trait (#6114) (overlookmotel)
+- 9839059 transformer: Simplify `StackCapacity` trait (#6113) (overlookmotel)
+
 ## [0.30.2] - 2024-09-27
 
 ### Features
