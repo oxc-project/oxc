@@ -91,36 +91,11 @@ impl AsyncToGenerator {
         let parameters =
             ctx.ast.vec1(ctx.ast.argument_expression(ctx.ast.expression_from_function(target)));
         let call = ctx.ast.expression_call(SPAN, callee, NONE, parameters, false);
-        let call = ctx.ast.expression_member(ctx.ast.member_expression_static(
-            SPAN,
-            call,
-            ctx.ast.identifier_name(SPAN, "apply"),
-            false,
-        ));
-        let call = ctx.ast.expression_call(
-            SPAN,
-            call,
-            NONE,
-            {
-                let mut items = ctx.ast.vec();
-                items.push(ctx.ast.argument_expression(ctx.ast.expression_this(SPAN)));
-                items.push(ctx.ast.argument_expression(
-                    ctx.ast.expression_identifier_reference(SPAN, "arguments"),
-                ));
-                items
-            },
-            false,
-        );
         let returns = ctx.ast.return_statement(SPAN, Some(call));
         let body = Statement::ReturnStatement(ctx.ast.alloc(returns));
         let body = ctx.ast.function_body(SPAN, ctx.ast.vec(), ctx.ast.vec1(body));
         let body = ctx.ast.alloc(body);
-        let params = ctx.ast.formal_parameters(
-            SPAN,
-            func.params.kind,
-            ctx.ast.move_vec(&mut func.params.items),
-            func.params.rest.take(),
-        );
+        let params = ctx.ast.formal_parameters(SPAN, func.params.kind, ctx.ast.vec(), NONE);
         ctx.ast.function(
             FunctionType::FunctionExpression,
             SPAN,
@@ -242,26 +217,6 @@ impl<'a> Traverse<'a> for AsyncToGenerator {
         let parameters =
             ctx.ast.vec1(ctx.ast.argument_expression(ctx.ast.expression_from_function(target)));
         let call = ctx.ast.expression_call(SPAN, callee, NONE, parameters, false);
-        let call = ctx.ast.expression_member(ctx.ast.member_expression_static(
-            SPAN,
-            call,
-            ctx.ast.identifier_name(SPAN, "apply"),
-            false,
-        ));
-        let call = ctx.ast.expression_call(
-            SPAN,
-            call,
-            NONE,
-            {
-                let mut items = ctx.ast.vec();
-                items.push(ctx.ast.argument_expression(ctx.ast.expression_this(SPAN)));
-                items.push(ctx.ast.argument_expression(
-                    ctx.ast.expression_identifier_reference(SPAN, "arguments"),
-                ));
-                items
-            },
-            false,
-        );
         let body = ctx.ast.function_body(
             SPAN,
             ctx.ast.vec(),
