@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs';
+import { promises as fsPromises } from 'node:fs';
 
 import {
   commands,
@@ -92,27 +92,41 @@ export async function activate(context: ExtensionContext) {
   const outputChannel = window.createOutputChannel(outputChannelName);
   const traceOutputChannel = window.createOutputChannel(traceOutputChannelName);
 
-  function findBinary(): string {
+  async function findBinary(): Promise<string> {
     const cfg = workspace.getConfiguration('oxc');
 
     let bin = cfg.get<string>('binPath', '');
-    if (bin && existsSync(bin)) {
-      return bin;
+    if (bin) {
+      try {
+        await fsPromises.access(bin);
+        return bin;
+      } catch {}
     }
 
     const workspaceFolders = workspace.workspaceFolders;
     if (workspaceFolders) {
-      for (const folder of workspaceFolders) {
+      const checks = workspaceFolders.map(async (folder) => {
         const binPath = join(
           folder.uri.fsPath,
           'node_modules',
           '.bin',
           'oxc_language_server',
         );
-        if (existsSync(binPath)) {
+
+        try {
+          await fsPromises.access(binPath);
           return binPath;
+        } catch {
+          return undefined;
         }
-      }
+      });
+
+      // Wait for all checks and return the first valid path
+      const result = (await Promise.all(checks)).find(
+        (path) => path !== undefined,
+      );
+
+      if (result) return result;
     }
 
     const ext = process.platform === 'win32' ? '.exe' : '';
@@ -123,7 +137,7 @@ export async function activate(context: ExtensionContext) {
     );
   }
 
-  const command = findBinary();
+  const command = await findBinary();
   const run: Executable = {
     command: command!,
     options: {
