@@ -17,12 +17,14 @@ use crate::TransformCtx;
 
 pub struct TypeScriptNamespace<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,
-    options: &'ctx TypeScriptOptions,
+
+    // Options
+    allow_namespaces: bool,
 }
 
 impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
-    pub fn new(options: &'ctx TypeScriptOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self { ctx, options }
+    pub fn new(options: &TypeScriptOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
+        Self { ctx, allow_namespaces: options.allow_namespaces }
     }
 }
 
@@ -47,7 +49,7 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptNamespace<'a, 'ctx> {
             match stmt {
                 Statement::TSModuleDeclaration(decl) => {
                     if !decl.declare {
-                        if !self.options.allow_namespaces {
+                        if !self.allow_namespaces {
                             self.ctx.error(namespace_not_supported(decl.span));
                         }
 
@@ -75,7 +77,7 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptNamespace<'a, 'ctx> {
                     match &export_decl.declaration {
                         Some(Declaration::TSModuleDeclaration(decl)) => {
                             if !decl.declare {
-                                if !self.options.allow_namespaces {
+                                if !self.allow_namespaces {
                                     self.ctx.error(namespace_not_supported(decl.span));
                                 }
 

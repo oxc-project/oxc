@@ -39,28 +39,24 @@ use crate::TransformCtx;
 /// In:  `const x: number = 0;`
 /// Out: `const x = 0;`
 pub struct TypeScript<'a, 'ctx> {
-    options: &'ctx TypeScriptOptions,
     ctx: &'ctx TransformCtx<'a>,
 
     annotations: TypeScriptAnnotations<'a, 'ctx>,
     r#enum: TypeScriptEnum<'a, 'ctx>,
     namespace: TypeScriptNamespace<'a, 'ctx>,
     module: TypeScriptModule<'a, 'ctx>,
-    rewrite_extensions: TypeScriptRewriteExtensions,
+    rewrite_extensions: Option<TypeScriptRewriteExtensions>,
 }
 
 impl<'a, 'ctx> TypeScript<'a, 'ctx> {
-    pub fn new(options: &'ctx TypeScriptOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(options: &TypeScriptOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
         Self {
+            ctx,
             annotations: TypeScriptAnnotations::new(options, ctx),
             r#enum: TypeScriptEnum::new(ctx),
-            rewrite_extensions: TypeScriptRewriteExtensions::new(
-                options.rewrite_import_extensions.clone().unwrap_or_default(),
-            ),
             namespace: TypeScriptNamespace::new(options, ctx),
             module: TypeScriptModule::new(ctx),
-            options,
-            ctx,
+            rewrite_extensions: TypeScriptRewriteExtensions::new(options),
         }
     }
 }
@@ -263,8 +259,8 @@ impl<'a, 'ctx> Traverse<'a> for TypeScript<'a, 'ctx> {
         node: &mut ImportDeclaration<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if self.options.rewrite_import_extensions.is_some() {
-            self.rewrite_extensions.enter_import_declaration(node, ctx);
+        if let Some(rewrite_extensions) = &mut self.rewrite_extensions {
+            rewrite_extensions.enter_import_declaration(node, ctx);
         }
     }
 
@@ -273,8 +269,8 @@ impl<'a, 'ctx> Traverse<'a> for TypeScript<'a, 'ctx> {
         node: &mut ExportAllDeclaration<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if self.options.rewrite_import_extensions.is_some() {
-            self.rewrite_extensions.enter_export_all_declaration(node, ctx);
+        if let Some(rewrite_extensions) = &mut self.rewrite_extensions {
+            rewrite_extensions.enter_export_all_declaration(node, ctx);
         }
     }
 
@@ -283,8 +279,8 @@ impl<'a, 'ctx> Traverse<'a> for TypeScript<'a, 'ctx> {
         node: &mut ExportNamedDeclaration<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if self.options.rewrite_import_extensions.is_some() {
-            self.rewrite_extensions.enter_export_named_declaration(node, ctx);
+        if let Some(rewrite_extensions) = &mut self.rewrite_extensions {
+            rewrite_extensions.enter_export_named_declaration(node, ctx);
         }
     }
 

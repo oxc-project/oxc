@@ -19,9 +19,11 @@ use rustc_hash::FxHashSet;
 use crate::{TransformCtx, TypeScriptOptions};
 
 pub struct TypeScriptAnnotations<'a, 'ctx> {
-    #[allow(dead_code)]
-    options: &'ctx TypeScriptOptions,
     ctx: &'ctx TransformCtx<'a>,
+
+    // Options
+    only_remove_type_imports: bool,
+
     /// Assignments to be added to the constructor body
     assignments: Vec<Assignment<'a>>,
     has_super_call: bool,
@@ -34,7 +36,7 @@ pub struct TypeScriptAnnotations<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> TypeScriptAnnotations<'a, 'ctx> {
-    pub fn new(options: &'ctx TypeScriptOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(options: &TypeScriptOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
         let jsx_element_import_name = if options.jsx_pragma.contains('.') {
             options.jsx_pragma.split('.').next().map(String::from).unwrap()
         } else {
@@ -48,10 +50,10 @@ impl<'a, 'ctx> TypeScriptAnnotations<'a, 'ctx> {
         };
 
         Self {
+            ctx,
+            only_remove_type_imports: options.only_remove_type_imports,
             has_super_call: false,
             assignments: vec![],
-            options,
-            ctx,
             has_jsx_element: false,
             has_jsx_fragment: false,
             jsx_element_import_name,
@@ -100,7 +102,7 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
                 Statement::ImportDeclaration(decl) => {
                     if decl.import_kind.is_type() {
                         false
-                    } else if self.options.only_remove_type_imports {
+                    } else if self.only_remove_type_imports {
                         true
                     } else if let Some(specifiers) = &mut decl.specifiers {
                         if specifiers.is_empty() {

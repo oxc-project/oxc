@@ -109,7 +109,7 @@ impl Default for TypeScriptOptions {
     }
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Copy, Default)]
 pub enum RewriteExtensionsMode {
     /// Rewrite `.ts`/`.mts`/`.cts` extensions in import/export declarations to `.js`/`.mjs`/`.cjs`.
     #[default]
