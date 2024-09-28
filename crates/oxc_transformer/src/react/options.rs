@@ -139,11 +139,14 @@ impl ReactOptions {
         }
     }
 
-    /// Scan through all comments and find the following pragmas
+    /// Scan through all comments and find the following pragmas:
     ///
     /// * @jsxRuntime classic / automatic
+    /// * @jsxImportSource custom-jsx-library
+    /// * @jsxFrag Preact.Fragment
+    /// * @jsx Preact.h
     ///
-    /// The comment does not need to be a jsdoc,
+    /// The comment does not need to be a jsdoc comment,
     /// otherwise `JSDoc` could be used instead.
     ///
     /// This behavior is aligned with babel.
@@ -158,16 +161,13 @@ impl ReactOptions {
             let Some(comment) = comment.strip_prefix('@') else { continue };
 
             // read jsxRuntime
-            match comment.strip_prefix("jsxRuntime").map(str::trim) {
-                Some("classic") => {
-                    self.runtime = ReactJsxRuntime::Classic;
-                    continue;
-                }
-                Some("automatic") => {
-                    self.runtime = ReactJsxRuntime::Automatic;
-                    continue;
-                }
-                _ => {}
+            if let Some(runtime) = comment.strip_prefix("jsxRuntime") {
+                self.runtime = match runtime.trim() {
+                    "classic" => ReactJsxRuntime::Classic,
+                    "automatic" => ReactJsxRuntime::Automatic,
+                    _ => continue,
+                };
+                continue;
             }
 
             // read jsxImportSource
