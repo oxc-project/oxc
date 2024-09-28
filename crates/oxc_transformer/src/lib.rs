@@ -36,8 +36,8 @@ use std::path::Path;
 
 use common::Common;
 use es2016::ES2016;
-use es2018::ES2018;
 use es2017::ES2017;
+use es2018::ES2018;
 use es2019::ES2019;
 use es2020::ES2020;
 use es2021::ES2021;
