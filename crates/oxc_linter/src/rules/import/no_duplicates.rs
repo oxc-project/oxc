@@ -14,7 +14,27 @@ pub struct NoDuplicates {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Reports if a resolved path is imported more than once.
+    /// Reports if a resolved path is imported more than once in the same module.
+    /// This helps avoid unnecessary duplicate imports and keeps the code clean.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// Importing the same module multiple times can lead to redundancy and
+    /// unnecessary complexity. It also affects maintainability, as it might
+    /// confuse developers and result in inconsistent usage of imports across the code.
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// import { foo } from './module';
+    /// import { bar } from './module';
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// import { foo, bar } from './module';
+    /// ```
     NoDuplicates,
     suspicious
 );

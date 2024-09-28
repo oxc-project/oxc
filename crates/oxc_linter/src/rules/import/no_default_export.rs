@@ -14,7 +14,15 @@ pub struct NoDefaultExport;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Forbid a module to have a default exports. This help your editor to provide better auto imports.
+    /// Forbids a module from having default exports. This helps your editor
+    /// provide better auto-import functionality, as named exports offer more
+    /// explicit and predictable imports compared to default exports.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// Default exports can lead to confusion, as the name of the imported value
+    /// can vary based on how it's imported. This can make refactoring and
+    /// auto-imports less reliable.
     ///
     /// ### Examples
     ///
@@ -31,7 +39,6 @@ declare_oxc_lint!(
     /// export const foo = 'foo';
     /// export const bar = 'bar';
     /// ```
-    ///
     NoDefaultExport,
     restriction
 );
@@ -48,6 +55,7 @@ impl Rule for NoDefaultExport {
 fn write_diagnostic(ctx: &LintContext<'_>, span: Span) {
     ctx.diagnostic(no_default_export_diagnostic(span));
 }
+
 fn write_diagnostic_optional(ctx: &LintContext<'_>, span_option: Option<Span>) {
     if let Some(span) = span_option {
         write_diagnostic(ctx, span);
@@ -77,6 +85,7 @@ fn test() {
         "import {default as foo} from './foo';",
         "export type UserId = number;",
     ];
+    
     let fail = vec![
         "export default function bar() {};",
         "export const foo = 'foo';\nexport default bar;",

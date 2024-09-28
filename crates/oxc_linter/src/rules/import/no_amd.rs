@@ -20,14 +20,20 @@ pub struct NoAmd;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Forbid AMD `require` and `define` calls.
+    /// Forbids the use of AMD `require` and `define` calls.
     ///
     /// ### Why is this bad?
+    ///
+    /// AMD (Asynchronous Module Definition) is an older module format
+    /// that is less common in modern JavaScript development, especially
+    /// with the widespread use of ES6 modules and CommonJS in Node.js.
+    /// AMD introduces unnecessary complexity and is often considered outdated.
+    /// This rule enforces the use of more modern module systems to improve
+    /// maintainability and consistency across the codebase.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
-    ///
     /// ```javascript
     /// require([a, b], function() {} );
     /// ```
