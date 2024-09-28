@@ -6,6 +6,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ throw 'error';
    ·       ───────
    ╰────
+  help: Replace `'error'` with `new Error('error')`.
 
   ⚠ eslint(no-throw-literal): Expected an error object to be thrown
    ╭─[no_throw_literal.tsx:1:7]
@@ -102,6 +103,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ throw `${err}`;
    ·       ────────
    ╰────
+  help: Replace ``${err}`` with `new Error(`${err}`)`.
 
   ⚠ eslint(no-throw-literal): Expected an error object to be thrown
    ╭─[no_throw_literal.tsx:1:7]
@@ -114,3 +116,4 @@ source: crates/oxc_linter/src/tester.rs
  1 │ throw 'error' satisfies Error
    ·       ───────────────────────
    ╰────
+  help: Replace `'error' satisfies Error` with `new Error('error' satisfies Error)`.

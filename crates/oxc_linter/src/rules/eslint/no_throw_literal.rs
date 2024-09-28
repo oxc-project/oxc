@@ -66,6 +66,7 @@ declare_oxc_lint!(
     /// ```
     NoThrowLiteral,
     correctness,
+    conditional_suggestion,
 );
 
 impl Rule for NoThrowLiteral {
@@ -76,11 +77,24 @@ impl Rule for NoThrowLiteral {
 
         let expr = &stmt.argument;
 
-        if !Self::could_be_error(expr) {
-            ctx.diagnostic(no_throw_literal_diagnostic(expr.span(), false));
-        } else if matches!(expr, Expression::Identifier(id) if id.name == "undefined") {
-            ctx.diagnostic(no_throw_literal_diagnostic(expr.span(), true));
-        };
+        match expr.get_inner_expression() {
+            Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => {
+                let span = expr.span();
+                ctx.diagnostic_with_suggestion(no_throw_literal_diagnostic(span, false), |fixer| {
+                    fixer.replace(
+                        span,
+                        format!("new Error({})", span.source_text(ctx.source_text())),
+                    )
+                });
+            }
+            _ => {
+                if !Self::could_be_error(expr) {
+                    ctx.diagnostic(no_throw_literal_diagnostic(expr.span(), false));
+                } else if matches!(expr, Expression::Identifier(id) if id.name == "undefined") {
+                    ctx.diagnostic(no_throw_literal_diagnostic(expr.span(), true));
+                };
+            }
+        }
     }
 }
 
@@ -195,5 +209,11 @@ fn test() {
         "throw 'error' satisfies Error",
     ];
 
-    Tester::new(NoThrowLiteral::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("throw 'error';", "throw new Error('error');"),
+        ("throw `${err}`;", "throw new Error(`${err}`);"),
+        ("throw 'error' satisfies Error", "throw new Error('error' satisfies Error)"),
+    ];
+
+    Tester::new(NoThrowLiteral::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }
