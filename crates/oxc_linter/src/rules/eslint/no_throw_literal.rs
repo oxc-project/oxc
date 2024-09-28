@@ -1,20 +1,18 @@
 use oxc_ast::{
-    ast::{AssignmentOperator, AssignmentTarget, Expression, LogicalOperator},
+    ast::{AssignmentOperator, Expression, LogicalOperator},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_throw_literal_diagnostic(span: Span, is_undef: bool) -> OxcDiagnostic {
     let message =
-        if is_undef { "Do not throw undefined." } else { "Expected an error object to be thrown." };
+        if is_undef { "Do not throw undefined" } else { "Expected an error object to be thrown" };
 
-    OxcDiagnostic::warn("Disallow throwing literals as exceptions")
-        .with_help(message)
-        .with_label(span)
+    OxcDiagnostic::warn(message).with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -76,17 +74,19 @@ impl Rule for NoThrowLiteral {
             return;
         };
 
-        if !Self::could_be_error(&stmt.argument) {
-            ctx.diagnostic(no_throw_literal_diagnostic(stmt.span, false));
-        } else if matches!(&stmt.argument, Expression::Identifier(id) if id.name == "undefined") {
-            ctx.diagnostic(no_throw_literal_diagnostic(stmt.span, true));
+        let expr = &stmt.argument;
+
+        if !Self::could_be_error(expr) {
+            ctx.diagnostic(no_throw_literal_diagnostic(expr.span(), false));
+        } else if matches!(expr, Expression::Identifier(id) if id.name == "undefined") {
+            ctx.diagnostic(no_throw_literal_diagnostic(expr.span(), true));
         };
     }
 }
 
 impl NoThrowLiteral {
     fn could_be_error(expr: &Expression) -> bool {
-        match expr {
+        match expr.get_inner_expression() {
             Expression::Identifier(_)
             | Expression::NewExpression(_)
             | Expression::AwaitExpression(_)
@@ -109,13 +109,11 @@ impl NoThrowLiteral {
                     expr.operator,
                     AssignmentOperator::LogicalOr | AssignmentOperator::LogicalNullish
                 ) {
-                    return matches!(
-                        expr.left,
-                        AssignmentTarget::AssignmentTargetIdentifier(_)
-                            | AssignmentTarget::PrivateFieldExpression(_)
-                            | AssignmentTarget::StaticMemberExpression(_)
-                            | AssignmentTarget::ComputedMemberExpression(_)
-                    ) || Self::could_be_error(&expr.right);
+                    return expr
+                        .left
+                        .get_expression()
+                        .map_or(true, |expr| Self::could_be_error(expr))
+                        || Self::could_be_error(&expr.right);
                 }
 
                 false
@@ -171,6 +169,8 @@ fn test() {
         "async function foo() { throw await bar; }", // { "ecmaVersion": 8 },
         "throw obj?.foo",      // { "ecmaVersion": 2020 },
         "throw obj?.foo()",    // { "ecmaVersion": 2020 }
+        "throw obj?.foo() as string",
+        "throw obj?.foo() satisfies Direction",
     ];
 
     let fail = vec![
@@ -191,6 +191,8 @@ fn test() {
         "throw foo && 'literal'",
         "throw foo ? 'not an Error' : 'literal';",
         "throw `${err}`;", // { "ecmaVersion": 6 }
+        "throw 0 as number",
+        "throw 'error' satisfies Error",
     ];
 
     Tester::new(NoThrowLiteral::NAME, pass, fail).test_and_snapshot();
