@@ -181,7 +181,15 @@ struct ControlCharacterFinder {
 impl<'a> Visit<'a> for ControlCharacterFinder {
     fn visit_character(&mut self, ch: &Character) {
         // Control characters are in the range 0x00 to 0x1F
-        if ch.value <= 0x1F {
+        if ch.value <= 0x1F &&
+            // tab
+            ch.value != 0x09 &&
+            // line feed
+            ch.value != 0x0A &&
+            // carriage return
+            ch.value != 0x0D
+        {
+            // TODO: check if starts with \x or \u when char spans work correctly
             self.control_chars.push(ch.to_string());
         }
     }
@@ -279,6 +287,15 @@ mod tests {
                 r"new RegExp('\\u{1F}')",
                 r"new RegExp('\\u{1F}', 'g')",
                 r"new RegExp('\\u{1F}', flags)", // unknown flags, we assume no 'u'
+                // https://github.com/oxc-project/oxc/issues/6136
+                r"/---\n([\s\S]+?)\n---/",
+                r"/import \{((?:.|\n)*)\} from '@romejs\/js-ast';/",
+                r"/^\t+/",
+                r"/\n/g",
+                r"/\r\n|\r|\n/",
+                r"/[\n\r\p{Z}\p{P}]/u",
+                r"/[\n\t]+/g",
+                r"/^expected `string`\.\n {2}in Foo \(at (.*)[/\\]debug[/\\]test[/\\]browser[/\\]debug\.test\.js:[0-9]+\)$/",
             ],
             vec![
                 r"var regex = /\x1f/",
@@ -296,6 +313,14 @@ mod tests {
                 r"/\u{1F}/ugi",
                 r"new RegExp('\\u{1F}', 'u')",
                 r"new RegExp('\\u{1F}', 'ugi')",
+                // https://github.com/oxc-project/oxc/issues/6136
+                // TODO: uncomment when char spans work correctly
+                // r"/\u{0a}/u",
+                // r"/\x0a/u",
+                // r"/\u{0d}/u",
+                // r"/\x0d/u",
+                // r"/\u{09}/u",
+                // r"/\x09/u",
             ],
         )
         .test_and_snapshot();
