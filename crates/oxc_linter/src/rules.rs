@@ -398,6 +398,7 @@ mod oxc {
     pub mod const_comparisons;
     pub mod double_comparisons;
     pub mod erasing_op;
+    pub mod ifs_same_conditions;
     pub mod misrefactored_assign_op;
     pub mod missing_throw;
     pub mod no_accumulating_spread;
@@ -743,6 +744,7 @@ oxc_macros::declare_all_lint_rules! {
     oxc::const_comparisons,
     oxc::double_comparisons,
     oxc::erasing_op,
+    oxc::ifs_same_conditions,
     oxc::misrefactored_assign_op,
     oxc::missing_throw,
     oxc::no_accumulating_spread,
