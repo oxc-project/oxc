@@ -29,18 +29,37 @@ pub struct NoNamedAsDefaultMember;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Reports use of an exported name as a property on the default export.
+    /// Reports the use of an exported name (named export) as a property on the
+    /// default export. This occurs when trying to access a named export through
+    /// the default export, which is incorrect.
     ///
-    /// ### Example
+    /// ### Why is this bad?
     ///
+    /// Accessing a named export via the default export is incorrect and will not
+    /// work as expected. Named exports should be imported directly, while default
+    /// exports are accessed without properties. This mistake can lead to runtime
+    /// errors or undefined behavior.
+    ///
+    /// ### Examples
+    ///
+    /// Given
     /// ```javascript
     /// // ./bar.js
     /// export function bar() { return null }
     /// export default () => { return 1 }
+    /// ```
     ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
     /// // ./foo.js
-    /// import bar from './bar'
-    /// const bar = foo.bar // trying to access named export via default
+    /// import foo from './bar'
+    /// const bar = foo.bar; // Incorrect: trying to access named export via default
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// // ./foo.js
+    /// import { bar } from './bar'; // Correct: accessing named export directly
     /// ```
     NoNamedAsDefaultMember,
     suspicious
