@@ -1,12 +1,16 @@
-use lazy_static::lazy_static;
+use oxc_allocator::Allocator;
 use oxc_ast::{
-    ast::{Argument, RegExpFlags, RegExpPattern},
+    ast::{Argument, RegExpFlags},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_regular_expression::{
+    ast::{Character, Pattern},
+    visit::Visit,
+    Parser, ParserOptions,
+};
 use oxc_span::{GetSpan, Span};
-use regex::{Matches, Regex};
 
 use crate::{ast_util::extract_regex_flags, context::LintContext, rule::Rule, AstNode};
 
@@ -64,196 +68,123 @@ declare_oxc_lint!(
 
 impl Rule for NoControlRegex {
     fn run<'a>(&self, node: &AstNode<'a>, context: &LintContext<'a>) {
-        if let Some(RegexPatternData { pattern, flags, span }) = regex_pattern(node) {
-            let mut violations: Vec<&str> = Vec::new();
-            let pattern = pattern.as_ref();
-            let pattern_text = pattern.source_text(context.source_text());
-            for matched_ctl_pattern in control_patterns(pattern_text.as_ref()) {
-                let ctl = matched_ctl_pattern.as_str();
+        match node.kind() {
+            // regex literal
+            AstKind::RegExpLiteral(reg) => {
+                let Some(pattern) = reg.regex.pattern.as_pattern() else {
+                    return;
+                };
 
-                // check for an even number of backslashes, since these will
-                // prevent the pattern from being a control sequence
-                if ctl.starts_with('\\') && matched_ctl_pattern.start() > 0 {
-                    let pattern_chars: Vec<char> = pattern_text.chars().collect(); // ew
+                check_pattern(context, pattern, reg.span);
+            }
 
-                    // Convert byte index to char index
-                    let byte_start = matched_ctl_pattern.start();
-                    let char_start = pattern_text[..byte_start].chars().count();
+            // new RegExp()
+            AstKind::NewExpression(expr) => {
+                // constructor is RegExp,
+                if expr.callee.is_specific_id("RegExp")
+                // which is provided at least 1 parameter,
+                    && expr.arguments.len() > 0
+                {
+                    // where the first one is a string literal
+                    // note: improvements required for strings used via identifier
+                    // references
+                    if let Argument::StringLiteral(pattern) = &expr.arguments[0] {
+                        // get pattern from arguments. Missing or non-string arguments
+                        // will be runtime errors, but are not covered by this rule.
+                        let alloc = Allocator::default();
+                        let pattern_with_slashes = format!("/{}/", &pattern.value);
+                        let flags = extract_regex_flags(&expr.arguments);
+                        let parser = Parser::new(
+                            &alloc,
+                            pattern_with_slashes.as_str(),
+                            ParserOptions {
+                                span_offset: expr
+                                    .arguments
+                                    .first()
+                                    .map_or(0, |arg| arg.span().start),
+                                unicode_mode: flags
+                                    .is_some_and(|flags| flags.contains(RegExpFlags::U)),
+                                unicode_sets_mode: flags
+                                    .is_some_and(|flags| flags.contains(RegExpFlags::V)),
+                            },
+                        );
 
-                    let mut first_backslash = char_start;
-                    while first_backslash > 0 && pattern_chars[first_backslash] == '\\' {
-                        first_backslash -= 1;
-                    }
-
-                    let mut num_slashes = char_start - first_backslash;
-                    if first_backslash == 0 && pattern_chars[first_backslash] == '\\' {
-                        num_slashes += 1;
-                    }
-                    // even # of slashes
-                    if num_slashes % 2 == 0 {
-                        continue;
-                    }
-                }
-
-                if ctl.starts_with(r"\x") || ctl.starts_with(r"\u") {
-                    let mut numeric_part = &ctl[2..];
-
-                    // extract numeric part from \u{00}
-                    if numeric_part.starts_with('{') {
-                        let has_unicode_flag = match flags {
-                            Some(flags) if flags.contains(RegExpFlags::U) => true,
-                            _ => {
-                                continue;
-                            }
+                        let Some(pattern) = parser.parse().ok().map(|pattern| pattern.pattern)
+                        else {
+                            return;
                         };
 
-                        // 1. Unicode control pattern is missing a curly brace
-                        //    and is therefore invalid. (note: we may want to
-                        //    report this?)
-                        // 2. Unicode flag is missing, which is needed for
-                        //    interpreting \u{`nn`} as a unicode character
-                        if !has_unicode_flag || !numeric_part.ends_with('}') {
-                            continue;
-                        }
-
-                        numeric_part = &numeric_part[1..numeric_part.len() - 1];
-                    }
-
-                    match u32::from_str_radix(numeric_part, 16) {
-                        Err(_) => continue,
-                        Ok(as_num) if as_num > 0x1f => continue,
-                        Ok(_) => { /* noop */ }
+                        check_pattern(context, &pattern, expr.span);
                     }
                 }
-
-                violations.push(ctl);
             }
 
-            if !violations.is_empty() {
-                let violations = violations.join(", ");
-                context.diagnostic(no_control_regex_diagnostic(&violations, span));
-            }
-        }
-    }
-}
+            // RegExp()
+            AstKind::CallExpression(expr) => {
+                // constructor is RegExp,
+                if expr.callee.is_specific_id("RegExp")
+                    // which is provided at least 1 parameter,
+                    && expr.arguments.len() > 0
+                {
+                    // where the first one is a string literal
+                    // note: improvements required for strings used via identifier
+                    // references
+                    if let Argument::StringLiteral(pattern) = &expr.arguments[0] {
+                        // get pattern from arguments. Missing or non-string arguments
+                        // will be runtime errors, but are not covered by this rule.
+                        let alloc = Allocator::default();
+                        let pattern_with_slashes = format!("/{}/", &pattern.value);
+                        let flags = extract_regex_flags(&expr.arguments);
+                        let parser = Parser::new(
+                            &alloc,
+                            pattern_with_slashes.as_str(),
+                            ParserOptions {
+                                span_offset: expr
+                                    .arguments
+                                    .first()
+                                    .map_or(0, |arg| arg.span().start),
+                                unicode_mode: flags
+                                    .is_some_and(|flags| flags.contains(RegExpFlags::U)),
+                                unicode_sets_mode: flags
+                                    .is_some_and(|flags| flags.contains(RegExpFlags::V)),
+                            },
+                        );
 
-/// Since we don't implement `ToOwned` trait.
-enum PatRef<'a> {
-    Owned(RegExpPattern<'a>),
-    Borrowed(&'a RegExpPattern<'a>),
-}
+                        let Some(pattern) = parser.parse().ok().map(|pattern| pattern.pattern)
+                        else {
+                            return;
+                        };
 
-impl<'a> AsRef<RegExpPattern<'a>> for PatRef<'a> {
-    fn as_ref(&self) -> &RegExpPattern<'a> {
-        match self {
-            Self::Owned(pat) => pat,
-            Self::Borrowed(pat) => pat,
-        }
-    }
-}
-
-struct RegexPatternData<'a> {
-    /// A regex pattern, either from a literal (`/foo/`) a RegExp constructor
-    /// (`new RegExp("foo")`), or a RegExp function call (`RegExp("foo"))
-    pattern: PatRef<'a>,
-    /// Regex flags, if found. It's possible for this to be `Some` but have
-    /// no flags.
-    ///
-    /// Note that flags are represented by a `u8` and therefore safely clonable
-    /// with low performance overhead.
-    flags: Option<RegExpFlags>,
-    /// The pattern's span. For [`oxc_ast::ast::Expression::NewExpression`]s
-    /// and [`oxc_ast::ast::Expression::CallExpression`]s,
-    /// this will match the entire new/call expression.
-    ///
-    /// Note that spans are 8 bytes and safely clonable with low performance overhead
-    span: Span,
-}
-
-/// Returns the regex pattern inside a node, if it's applicable.
-///
-/// e.g.:
-/// * /foo/ -> "foo"
-/// * new RegExp("foo") -> foo
-///
-/// note: [`RegExpFlags`] and [`Span`]s are both tiny and cloneable.
-fn regex_pattern<'a>(node: &AstNode<'a>) -> Option<RegexPatternData<'a>> {
-    let kind = node.kind();
-    match kind {
-        // regex literal
-        AstKind::RegExpLiteral(reg) => Some(RegexPatternData {
-            pattern: PatRef::Borrowed(&reg.regex.pattern),
-            flags: Some(reg.regex.flags),
-            span: reg.span,
-        }),
-
-        // new RegExp()
-        AstKind::NewExpression(expr) => {
-            // constructor is RegExp,
-            if expr.callee.is_specific_id("RegExp")
-            // which is provided at least 1 parameter,
-                && expr.arguments.len() > 0
-            {
-                // where the first one is a string literal
-                // note: improvements required for strings used via identifier
-                // references
-                if let Argument::StringLiteral(pattern) = &expr.arguments[0] {
-                    // get pattern from arguments. Missing or non-string arguments
-                    // will be runtime errors, but are not covered by this rule.
-                    // Note that we're intentionally reporting the entire "new
-                    // RegExp("pat") expression, not just "pat".
-                    Some(RegexPatternData {
-                        pattern: PatRef::Owned(RegExpPattern::Raw(pattern.value.as_ref())),
-                        flags: extract_regex_flags(&expr.arguments),
-                        span: kind.span(),
-                    })
-                } else {
-                    None
+                        check_pattern(context, &pattern, expr.span);
+                    }
                 }
-            } else {
-                None
             }
-        }
-
-        // RegExp()
-        AstKind::CallExpression(expr) => {
-            // constructor is RegExp,
-            if expr.callee.is_specific_id("RegExp")
-                // which is provided at least 1 parameter,
-                && expr.arguments.len() > 0
-            {
-                // where the first one is a string literal
-                // note: improvements required for strings used via identifier
-                // references
-                if let Argument::StringLiteral(pattern) = &expr.arguments[0] {
-                    // get pattern from arguments. Missing or non-string arguments
-                    // will be runtime errors, but are not covered by this rule.
-                    // Note that we're intentionally reporting the entire "new
-                    // RegExp("pat") expression, not just "pat".
-                    Some(RegexPatternData {
-                        pattern: PatRef::Owned(RegExpPattern::Raw(pattern.value.as_ref())),
-                        flags: extract_regex_flags(&expr.arguments),
-                        span: kind.span(),
-                    })
-                } else {
-                    None
-                }
-            } else {
-                None
-            }
-        }
-        _ => None,
+            _ => {}
+        };
     }
 }
 
-fn control_patterns(pattern: &str) -> Matches<'static, '_> {
-    lazy_static! {
-        static ref CTL_PAT: Regex = Regex::new(
-            r"([\x00-\x1f]|(?:\\x\w{2})|(?:\\u\w{4})|(?:\\u\{\w{1,4}\}))"
-            // r"((?:\\x\w{2}))"
-        ).unwrap();
+fn check_pattern(context: &LintContext, pattern: &Pattern, span: Span) {
+    let mut finder = ControlCharacterFinder { control_chars: Vec::new() };
+    finder.visit_pattern(pattern);
+
+    if !finder.control_chars.is_empty() {
+        let violations = finder.control_chars.join(", ");
+        context.diagnostic(no_control_regex_diagnostic(&violations, span));
     }
-    CTL_PAT.find_iter(pattern)
+}
+
+struct ControlCharacterFinder {
+    control_chars: Vec<String>,
+}
+
+impl<'a> Visit<'a> for ControlCharacterFinder {
+    fn visit_character(&mut self, ch: &Character) {
+        // Control characters are in the range 0x00 to 0x1F
+        if ch.value <= 0x1F {
+            self.control_chars.push(ch.to_string());
+        }
+    }
 }
 
 #[cfg(test)]
