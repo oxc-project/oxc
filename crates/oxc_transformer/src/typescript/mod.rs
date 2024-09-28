@@ -49,14 +49,15 @@ pub struct TypeScript<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> TypeScript<'a, 'ctx> {
-    pub fn new(options: &TypeScriptOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(mut options: TypeScriptOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
+        options.update_with_comments(ctx);
         Self {
             ctx,
-            annotations: TypeScriptAnnotations::new(options, ctx),
+            annotations: TypeScriptAnnotations::new(&options, ctx),
             r#enum: TypeScriptEnum::new(ctx),
-            namespace: TypeScriptNamespace::new(options, ctx),
+            namespace: TypeScriptNamespace::new(&options, ctx),
             module: TypeScriptModule::new(ctx),
-            rewrite_extensions: TypeScriptRewriteExtensions::new(options),
+            rewrite_extensions: TypeScriptRewriteExtensions::new(&options),
         }
     }
 }

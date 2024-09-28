@@ -73,13 +73,10 @@ impl<'a> Transformer<'a> {
         source_type: SourceType,
         source_text: &'a str,
         trivias: Trivias,
-        mut options: TransformOptions,
+        options: TransformOptions,
     ) -> Self {
         let ctx =
             TransformCtx::new(allocator, source_path, source_type, source_text, trivias, &options);
-
-        options.typescript.update_with_comments(&ctx);
-
         Self { ctx, options }
     }
 
@@ -92,7 +89,7 @@ impl<'a> Transformer<'a> {
         let allocator = self.ctx.ast.allocator;
 
         let mut transformer = TransformerImpl {
-            x0_typescript: TypeScript::new(&self.options.typescript, &self.ctx),
+            x0_typescript: TypeScript::new(self.options.typescript, &self.ctx),
             x1_react: React::new(self.options.react, &self.ctx),
             x2_es2021: ES2021::new(self.options.es2021),
             x2_es2020: ES2020::new(self.options.es2020),
