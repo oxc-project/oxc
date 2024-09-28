@@ -124,8 +124,14 @@ export interface ReactBindingOptions {
    * @default false
    */
   useSpread?: boolean
-  /** Enable react fast refresh transform */
-  refresh?: ReactRefreshBindingOptions
+  /**
+   * Enable React Fast Refresh .
+   *
+   * Conforms to the implementation in {@link https://github.com/facebook/react/tree/main/packages/react-refresh}
+   *
+   * @default false
+   */
+  refresh?: boolean | ReactRefreshBindingOptions
 }
 
 export interface ReactRefreshBindingOptions {

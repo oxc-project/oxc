@@ -147,8 +147,12 @@ pub struct ReactBindingOptions {
     /// @default false
     pub use_spread: Option<bool>,
 
-    /// Enable react fast refresh transform
-    pub refresh: Option<ReactRefreshBindingOptions>,
+    /// Enable React Fast Refresh .
+    ///
+    /// Conforms to the implementation in {@link https://github.com/facebook/react/tree/main/packages/react-refresh}
+    ///
+    /// @default false
+    pub refresh: Option<Either<bool, ReactRefreshBindingOptions>>,
 }
 
 impl From<ReactBindingOptions> for ReactOptions {
@@ -167,7 +171,10 @@ impl From<ReactBindingOptions> for ReactOptions {
             pragma_frag: options.pragma_frag,
             use_built_ins: options.use_built_ins,
             use_spread: options.use_spread,
-            refresh: options.refresh.map(Into::into),
+            refresh: options.refresh.and_then(|value| match value {
+                Either::A(b) => b.then(ReactRefreshOptions::default),
+                Either::B(options) => Some(ReactRefreshOptions::from(options)),
+            }),
             ..Default::default()
         }
     }
