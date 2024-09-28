@@ -384,10 +384,11 @@ impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
         }
 
         if !is_builtin_hook(&hook_name) {
+            // Check if a corresponding binding exists where we emit the signature.
             let (binding_name, is_member_expression) = match &call_expr.callee {
                 Expression::Identifier(ident) => (Some(ident.name.clone()), false),
                 Expression::StaticMemberExpression(member) => {
-                    if let Expression::Identifier(object) = member.get_first_object() {
+                    if let Expression::Identifier(object) = &member.object {
                         (Some(object.name.clone()), true)
                     } else {
                         (None, false)
