@@ -85,7 +85,7 @@ fn test() {
         "import {default as foo} from './foo';",
         "export type UserId = number;",
     ];
-    
+
     let fail = vec![
         "export default function bar() {};",
         "export const foo = 'foo';\nexport default bar;",
