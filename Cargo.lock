@@ -1621,6 +1621,7 @@ dependencies = [
  "oxc_semantic",
  "oxc_span",
  "ropey",
+ "rustc-hash",
  "serde",
  "serde_json",
  "tokio",

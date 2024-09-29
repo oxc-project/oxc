@@ -2,35 +2,19 @@ mod astro;
 mod svelte;
 mod vue;
 
-use oxc_span::SourceType;
-
 pub use self::{astro::AstroPartialLoader, svelte::SveltePartialLoader, vue::VuePartialLoader};
+use crate::loader::JavaScriptSource;
 
 const SCRIPT_START: &str = "<script";
 const SCRIPT_END: &str = "</script>";
 
 pub const LINT_PARTIAL_LOADER_EXT: &[&str] = &["vue", "astro", "svelte"];
 
-#[derive(Debug, Clone, Copy)]
-pub struct JavaScriptSource<'a> {
-    pub source_text: &'a str,
-    pub source_type: SourceType,
-    /// The javascript source could be embedded in some file,
-    /// use `start` to record start offset of js block in the original file.
-    pub start: usize,
-}
-
-impl<'a> JavaScriptSource<'a> {
-    pub fn new(source_text: &'a str, source_type: SourceType, start: usize) -> Self {
-        Self { source_text, source_type, start }
-    }
-}
-
 pub struct PartialLoader;
 
 impl PartialLoader {
-    /// Extract js section of specifial files.
-    /// Returns `None` if the specifial file does not have a js section.
+    /// Extract js section of special files.
+    /// Returns `None` if the special file does not have a js section.
     pub fn parse<'a>(ext: &str, source_text: &'a str) -> Option<Vec<JavaScriptSource<'a>>> {
         match ext {
             "vue" => Some(VuePartialLoader::new(source_text).parse()),

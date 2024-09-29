@@ -17,7 +17,7 @@ use rayon::{iter::ParallelBridge, prelude::ParallelIterator};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
-    partial_loader::{JavaScriptSource, PartialLoader, LINT_PARTIAL_LOADER_EXT},
+    loader::{JavaScriptSource, PartialLoader, LINT_PARTIAL_LOADER_EXT},
     utils::read_to_string,
     Fixer, Linter, Message,
 };
@@ -252,8 +252,8 @@ impl Runtime {
 
         let sources = PartialLoader::parse(ext, &source_text);
         let is_processed_by_partial_loader = sources.is_some();
-        let sources =
-            sources.unwrap_or_else(|| vec![JavaScriptSource::new(&source_text, source_type, 0)]);
+        let sources = sources
+            .unwrap_or_else(|| vec![JavaScriptSource::partial(&source_text, source_type, 0)]);
 
         if sources.is_empty() {
             self.ignore_path(path);
