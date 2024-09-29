@@ -1,0 +1,86 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
+   ╭─[prefer_await_to_callbacks.tsx:1:7]
+ 1 │ heart(function(err) {})
+   ·       ────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
+   ╭─[prefer_await_to_callbacks.tsx:1:7]
+ 1 │ heart(err => {})
+   ·       ─────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
+   ╭─[prefer_await_to_callbacks.tsx:1:15]
+ 1 │ heart("ball", function(err) {})
+   ·               ────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
+   ╭─[prefer_await_to_callbacks.tsx:1:22]
+ 1 │ function getData(id, callback) {}
+   ·                      ────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
+   ╭─[prefer_await_to_callbacks.tsx:1:18]
+ 1 │ const getData = (cb) => {}
+   ·                  ──
+   ╰────
+
+  ⚠ eslint-plugin-promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
+   ╭─[prefer_await_to_callbacks.tsx:1:22]
+ 1 │ var x = function (x, cb) {}
+   ·                      ──
+   ╰────
+
+  ⚠ eslint-plugin-promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
+   ╭─[prefer_await_to_callbacks.tsx:1:1]
+ 1 │ cb()
+   · ────
+   ╰────
+
+  ⚠ eslint-plugin-promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
+   ╭─[prefer_await_to_callbacks.tsx:1:1]
+ 1 │ callback()
+   · ──────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
+   ╭─[prefer_await_to_callbacks.tsx:1:7]
+ 1 │ heart(error => {})
+   ·       ───────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
+   ╭─[prefer_await_to_callbacks.tsx:1:27]
+ 1 │ async.map(files, fs.stat, function(err, results) { if (err) throw err; });
+   ·                           ──────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
+   ╭─[prefer_await_to_callbacks.tsx:1:23]
+ 1 │ _.map(files, fs.stat, function(err, results) { if (err) throw err; });
+   ·                       ──────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
+   ╭─[prefer_await_to_callbacks.tsx:1:21]
+ 1 │ map(files, fs.stat, function(err, results) { if (err) throw err; });
+   ·                     ──────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
+   ╭─[prefer_await_to_callbacks.tsx:1:5]
+ 1 │ map(function(err, results) { if (err) throw err; });
+   ·     ──────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
+   ╭─[prefer_await_to_callbacks.tsx:1:19]
+ 1 │ customMap(errors, (err) => err.message)
+   ·                   ────────────────────
+   ╰────
