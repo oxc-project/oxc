@@ -1,7 +1,5 @@
 use serde::Deserialize;
 
-use crate::TransformCtx;
-
 #[inline]
 fn default_as_true() -> bool {
     true
@@ -136,57 +134,6 @@ impl ReactOptions {
             self.jsx_plugin = true;
             self.jsx_self_plugin = true;
             self.jsx_source_plugin = true;
-        }
-    }
-
-    /// Scan through all comments and find the following pragmas:
-    ///
-    /// * @jsxRuntime classic / automatic
-    /// * @jsxImportSource custom-jsx-library
-    /// * @jsxFrag Preact.Fragment
-    /// * @jsx Preact.h
-    ///
-    /// The comment does not need to be a jsdoc comment,
-    /// otherwise `JSDoc` could be used instead.
-    ///
-    /// This behavior is aligned with babel.
-    pub(crate) fn update_with_comments(&mut self, ctx: &TransformCtx) {
-        for comment in ctx.trivias.comments() {
-            let mut comment = comment.span.source_text(ctx.source_text).trim_start();
-            // strip leading jsdoc comment `*` and then whitespaces
-            while let Some(cur_comment) = comment.strip_prefix('*') {
-                comment = cur_comment.trim_start();
-            }
-            // strip leading `@`
-            let Some(comment) = comment.strip_prefix('@') else { continue };
-
-            // read jsxRuntime
-            if let Some(runtime) = comment.strip_prefix("jsxRuntime") {
-                self.runtime = match runtime.trim() {
-                    "classic" => ReactJsxRuntime::Classic,
-                    "automatic" => ReactJsxRuntime::Automatic,
-                    _ => continue,
-                };
-                continue;
-            }
-
-            // read jsxImportSource
-            if let Some(import_source) = comment.strip_prefix("jsxImportSource").map(str::trim) {
-                self.import_source = Some(import_source.to_string());
-                continue;
-            }
-
-            // read jsxFrag
-            if let Some(pragma_frag) = comment.strip_prefix("jsxFrag").map(str::trim) {
-                self.pragma_frag = Some(pragma_frag.to_string());
-                continue;
-            }
-
-            // Put this condition at the end to avoid breaking @jsxXX
-            // read jsx
-            if let Some(pragma) = comment.strip_prefix("jsx").map(str::trim) {
-                self.pragma = Some(pragma.to_string());
-            }
         }
     }
 }

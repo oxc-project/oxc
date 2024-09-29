@@ -1,3 +1,4 @@
+mod comments;
 mod diagnostics;
 mod display_name;
 mod jsx;
@@ -18,6 +19,8 @@ pub use self::{
     options::{ReactJsxRuntime, ReactOptions, ReactRefreshOptions},
 };
 use crate::TransformCtx;
+
+use comments::update_options_with_comments;
 
 /// [Preset React](https://babel.dev/docs/babel-preset-react)
 ///
@@ -42,7 +45,7 @@ pub struct React<'a, 'ctx> {
 impl<'a, 'ctx> React<'a, 'ctx> {
     pub fn new(mut options: ReactOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
         if options.jsx_plugin || options.development {
-            options.update_with_comments(ctx);
+            update_options_with_comments(&mut options, ctx);
             options.conform();
         }
         let ReactOptions {
