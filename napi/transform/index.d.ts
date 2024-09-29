@@ -187,18 +187,12 @@ export interface TransformOptions {
    * options.
    */
   cwd?: string
-  /**
-   * Force jsx parsing,
-   *
-   * @default false
-   */
-  jsx?: boolean
   /** Configure how TypeScript is transformed. */
   typescript?: TypeScriptBindingOptions
   /** Configure how TSX and JSX are transformed. */
   react?: ReactBindingOptions
   /** Enable ES2015 transformations. */
-  es2015?: Es2015BindingOptions
+  es2015?: ES2015BindingOptions
   /**
    * Enable source map generation.
    *

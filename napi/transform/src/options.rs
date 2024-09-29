@@ -11,6 +11,50 @@ use oxc_transformer::{
 
 use crate::IsolatedDeclarationsOptions;
 
+/// Options for transforming a JavaScript or TypeScript file.
+///
+/// @see {@link transform}
+#[napi(object)]
+#[derive(Default)]
+pub struct TransformOptions {
+    #[napi(ts_type = "'script' | 'module' | 'unambiguous' | undefined")]
+    pub source_type: Option<String>,
+
+    /// The current working directory. Used to resolve relative paths in other
+    /// options.
+    pub cwd: Option<String>,
+
+    /// Configure how TypeScript is transformed.
+    pub typescript: Option<TypeScriptBindingOptions>,
+
+    /// Configure how TSX and JSX are transformed.
+    pub react: Option<ReactBindingOptions>,
+
+    /// Enable ES2015 transformations.
+    pub es2015: Option<ES2015BindingOptions>,
+
+    /// Enable source map generation.
+    ///
+    /// When `true`, the `sourceMap` field of transform result objects will be populated.
+    ///
+    /// @default false
+    ///
+    /// @see {@link SourceMap}
+    pub sourcemap: Option<bool>,
+}
+
+impl From<TransformOptions> for oxc_transformer::TransformOptions {
+    fn from(options: TransformOptions) -> Self {
+        Self {
+            cwd: options.cwd.map(PathBuf::from).unwrap_or_default(),
+            typescript: options.typescript.map(Into::into).unwrap_or_default(),
+            react: options.react.map(Into::into).unwrap_or_default(),
+            es2015: options.es2015.map(Into::into).unwrap_or_default(),
+            ..Self::default()
+        }
+    }
+}
+
 #[napi(object)]
 #[derive(Default)]
 pub struct TypeScriptBindingOptions {
@@ -232,54 +276,5 @@ pub struct ES2015BindingOptions {
 impl From<ES2015BindingOptions> for ES2015Options {
     fn from(options: ES2015BindingOptions) -> Self {
         ES2015Options { arrow_function: options.arrow_function.map(Into::into) }
-    }
-}
-
-/// Options for transforming a JavaScript or TypeScript file.
-///
-/// @see {@link transform}
-#[napi(object)]
-#[derive(Default)]
-pub struct TransformOptions {
-    #[napi(ts_type = "'script' | 'module' | 'unambiguous' | undefined")]
-    pub source_type: Option<String>,
-
-    /// The current working directory. Used to resolve relative paths in other
-    /// options.
-    pub cwd: Option<String>,
-
-    /// Force jsx parsing,
-    ///
-    /// @default false
-    pub jsx: Option<bool>,
-
-    /// Configure how TypeScript is transformed.
-    pub typescript: Option<TypeScriptBindingOptions>,
-
-    /// Configure how TSX and JSX are transformed.
-    pub react: Option<ReactBindingOptions>,
-
-    /// Enable ES2015 transformations.
-    pub es2015: Option<ES2015BindingOptions>,
-
-    /// Enable source map generation.
-    ///
-    /// When `true`, the `sourceMap` field of transform result objects will be populated.
-    ///
-    /// @default false
-    ///
-    /// @see {@link SourceMap}
-    pub sourcemap: Option<bool>,
-}
-
-impl From<TransformOptions> for oxc_transformer::TransformOptions {
-    fn from(options: TransformOptions) -> Self {
-        Self {
-            cwd: options.cwd.map(PathBuf::from).unwrap_or_default(),
-            typescript: options.typescript.map(Into::into).unwrap_or_default(),
-            react: options.react.map(Into::into).unwrap_or_default(),
-            es2015: options.es2015.map(Into::into).unwrap_or_default(),
-            ..Self::default()
-        }
     }
 }

@@ -70,10 +70,6 @@ pub fn transform(
             Some("module") => source_type = source_type.with_module(true),
             _ => {}
         }
-        // Force `jsx`
-        if let Some(jsx) = options.as_ref().and_then(|options| options.jsx.as_ref()) {
-            source_type = source_type.with_jsx(*jsx);
-        }
         source_type
     };
 
