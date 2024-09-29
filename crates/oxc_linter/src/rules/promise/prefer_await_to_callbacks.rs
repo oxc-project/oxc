@@ -45,7 +45,9 @@ declare_oxc_lint!(
     /// ```js
     /// await doSomething(arg)
     /// async function doSomethingElse() {}
-    /// yield yieldValue(err => {})
+    /// function* generator() {
+    ///     yield yieldValue(err => {})
+    /// }
     /// eventEmitter.on('error', err => {})
     /// ```
     PreferAwaitToCallbacks,
