@@ -133,11 +133,7 @@ impl NoThrowLiteral {
                 false
             }
             Expression::SequenceExpression(expr) => {
-                if expr.expressions.len() > 0 {
-                    return Self::could_be_error(expr.expressions.last().unwrap());
-                }
-
-                false
+                expr.expressions.last().is_some_and(Self::could_be_error)
             }
             Expression::LogicalExpression(expr) => {
                 if matches!(expr.operator, LogicalOperator::And) {
