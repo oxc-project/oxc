@@ -76,8 +76,13 @@ test:
 lint:
   cargo lint -- --deny warnings
 
+[unix]
 doc:
   RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items
+
+[windows]
+doc:
+  $Env:RUSTDOCFLAGS='-D warnings'; cargo doc --no-deps --document-private-items
 
 # Fix all auto-fixable format and lint issues. Make sure your working tree is clean first.
 fix:
