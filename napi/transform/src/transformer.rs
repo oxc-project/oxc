@@ -97,12 +97,14 @@ pub fn transform(
 }
 
 fn transpile(ctx: &TransformContext<'_>) -> CodegenReturn {
-    let (symbols, scopes) = SemanticBuilder::new(ctx.source_text())
+    let semantic_ret = SemanticBuilder::new(ctx.source_text())
         // Estimate transformer will triple scopes, symbols, references
         .with_excess_capacity(2.0)
-        .build(&ctx.program())
-        .semantic
-        .into_symbol_table_and_scope_tree();
+        .with_check_syntax_error(true)
+        .build(&ctx.program());
+    ctx.add_diagnostics(semantic_ret.errors);
+
+    let (symbols, scopes) = semantic_ret.semantic.into_symbol_table_and_scope_tree();
     let ret = Transformer::new(
         ctx.allocator,
         ctx.file_path(),
