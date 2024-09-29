@@ -38,7 +38,26 @@ impl<'a> CompressorPass<'a> for PeepholeFoldConstants {
 
 impl<'a> Traverse<'a> for PeepholeFoldConstants {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.fold_expression(expr, ctx);
+        if let Some(folded_expr) = match expr {
+            Expression::CallExpression(e) => {
+                self.try_fold_useless_object_dot_define_properties_call(e, ctx)
+            }
+            Expression::NewExpression(e) => self.try_fold_ctor_cal(e, ctx),
+            // TODO
+            // return tryFoldSpread(subtree);
+            Expression::ArrayExpression(e) => self.try_flatten_array_expression(e, ctx),
+            Expression::ObjectExpression(e) => self.try_flatten_object_expression(e, ctx),
+            Expression::BinaryExpression(e) => self.try_fold_binary_expression(e, ctx),
+            Expression::UnaryExpression(e) => self.try_fold_unary_expression(e, ctx),
+            // TODO: return tryFoldGetProp(subtree);
+            Expression::LogicalExpression(e) => self.try_fold_logical_expression(e, ctx),
+            // TODO: tryFoldGetElem
+            // TODO: tryFoldAssign
+            _ => None,
+        } {
+            *expr = folded_expr;
+            self.changed = true;
+        };
     }
 }
 
@@ -47,61 +66,72 @@ impl<'a> PeepholeFoldConstants {
         Self { changed: false }
     }
 
-    // [optimizeSubtree](https://github.com/google/closure-compiler/blob/75335a5138dde05030747abfd3c852cd34ea7429/src/com/google/javascript/jscomp/PeepholeFoldConstants.java#L72)
-    // TODO: tryReduceOperandsForOp
-    pub fn fold_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Some(folded_expr) = match expr {
-            Expression::BinaryExpression(e) => self.try_fold_binary_operator(e, ctx),
-            Expression::LogicalExpression(e)
-                if matches!(e.operator, LogicalOperator::And | LogicalOperator::Or) =>
-            {
-                self.try_fold_and_or(e, ctx)
-            }
-            Expression::LogicalExpression(e) if e.operator == LogicalOperator::Coalesce => {
-                self.try_fold_coalesce(e, ctx)
-            }
-            Expression::UnaryExpression(e) => self.try_fold_unary_expression(e, ctx),
-            _ => None,
-        } {
-            *expr = folded_expr;
-            self.changed = true;
-        };
+    fn try_fold_useless_object_dot_define_properties_call(
+        &mut self,
+        _call_expr: &mut CallExpression<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        None
     }
 
-    fn try_fold_binary_operator(
+    fn try_fold_ctor_cal(
+        &mut self,
+        _new_expr: &mut NewExpression<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        None
+    }
+
+    /// Folds 'typeof(foo)' if foo is a literal, e.g.
+    /// `typeof("bar") --> "string"`
+    /// `typeof(6) --> "number"`
+    fn try_fold_type_of(
         &self,
-        binary_expr: &mut BinaryExpression<'a>,
+        expr: &mut UnaryExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        match binary_expr.operator {
-            BinaryOperator::Equality
-            | BinaryOperator::Inequality
-            | BinaryOperator::StrictEquality
-            | BinaryOperator::StrictInequality
-            | BinaryOperator::LessThan
-            | BinaryOperator::LessEqualThan
-            | BinaryOperator::GreaterThan
-            | BinaryOperator::GreaterEqualThan => self.try_fold_comparison(
-                binary_expr.span,
-                binary_expr.operator,
-                &binary_expr.left,
-                &binary_expr.right,
-                ctx,
-            ),
-            BinaryOperator::ShiftLeft
-            | BinaryOperator::ShiftRight
-            | BinaryOperator::ShiftRightZeroFill => self.try_fold_shift(
-                binary_expr.span,
-                binary_expr.operator,
-                &binary_expr.left,
-                &binary_expr.right,
-                ctx,
-            ),
-            BinaryOperator::Addition => {
-                self.try_fold_addition(binary_expr.span, &binary_expr.left, &binary_expr.right, ctx)
-            }
-            _ => None,
+        if !expr.argument.is_literal_value(/* include_function */ true) {
+            return None;
         }
+        let s = match &mut expr.argument {
+            Expression::FunctionExpression(_) => "function",
+            Expression::StringLiteral(_) => "string",
+            Expression::NumericLiteral(_) => "number",
+            Expression::BooleanLiteral(_) => "boolean",
+            Expression::NullLiteral(_)
+            | Expression::ObjectExpression(_)
+            | Expression::ArrayExpression(_) => "object",
+            Expression::UnaryExpression(e) if e.operator == UnaryOperator::Void => "undefined",
+            Expression::BigIntLiteral(_) => "bigint",
+            Expression::Identifier(ident) if ctx.is_identifier_undefined(ident) => "undefined",
+            _ => return None,
+        };
+        Some(ctx.ast.expression_string_literal(SPAN, s))
+    }
+
+    // TODO
+    // fn try_fold_spread(
+    // &mut self,
+    // _new_expr: &mut NewExpression<'a>,
+    // _ctx: &mut TraverseCtx<'a>,
+    // ) -> Option<Expression<'a>> {
+    // None
+    // }
+
+    fn try_flatten_array_expression(
+        &mut self,
+        _new_expr: &mut ArrayExpression<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        None
+    }
+
+    fn try_flatten_object_expression(
+        &mut self,
+        _new_expr: &mut ObjectExpression<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        None
     }
 
     fn try_fold_unary_expression(
@@ -112,6 +142,7 @@ impl<'a> PeepholeFoldConstants {
         match expr.operator {
             UnaryOperator::Void => self.try_reduce_void(expr, ctx),
             UnaryOperator::Typeof => self.try_fold_type_of(expr, ctx),
+            // TODO: tryReduceOperandsForOp
             #[allow(clippy::float_cmp)]
             UnaryOperator::LogicalNot => {
                 if let Expression::NumericLiteral(n) = &expr.argument {
@@ -148,31 +179,167 @@ impl<'a> PeepholeFoldConstants {
         None
     }
 
-    /// Folds 'typeof(foo)' if foo is a literal, e.g.
-    /// `typeof("bar") --> "string"`
-    /// `typeof(6) --> "number"`
-    fn try_fold_type_of(
+    fn try_fold_logical_expression(
         &self,
-        expr: &mut UnaryExpression<'a>,
+        logical_expr: &mut LogicalExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        if !expr.argument.is_literal_value(/* include_function */ true) {
-            return None;
+        match logical_expr.operator {
+            LogicalOperator::And | LogicalOperator::Or => self.try_fold_and_or(logical_expr, ctx),
+            LogicalOperator::Coalesce => self.try_fold_coalesce(logical_expr, ctx),
         }
-        let s = match &mut expr.argument {
-            Expression::FunctionExpression(_) => "function",
-            Expression::StringLiteral(_) => "string",
-            Expression::NumericLiteral(_) => "number",
-            Expression::BooleanLiteral(_) => "boolean",
-            Expression::NullLiteral(_)
-            | Expression::ObjectExpression(_)
-            | Expression::ArrayExpression(_) => "object",
-            Expression::UnaryExpression(e) if e.operator == UnaryOperator::Void => "undefined",
-            Expression::BigIntLiteral(_) => "bigint",
-            Expression::Identifier(ident) if ctx.is_identifier_undefined(ident) => "undefined",
-            _ => return None,
-        };
-        Some(ctx.ast.expression_string_literal(SPAN, s))
+    }
+
+    /// Try to fold a AND / OR node.
+    ///
+    /// port from [closure-compiler](https://github.com/google/closure-compiler/blob/09094b551915a6487a980a783831cba58b5739d1/src/com/google/javascript/jscomp/PeepholeFoldConstants.java#L587)
+    pub fn try_fold_and_or(
+        &self,
+        logical_expr: &mut LogicalExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        let op = logical_expr.operator;
+        debug_assert!(matches!(op, LogicalOperator::And | LogicalOperator::Or));
+
+        let left = &logical_expr.left;
+        let left_val = ctx.get_boolean_value(left).to_option();
+
+        if let Some(lval) = left_val {
+            // Bail `0 && (module.exports = {})` for `cjs-module-lexer`.
+            if !lval {
+                if let Expression::AssignmentExpression(assign_expr) = &logical_expr.right {
+                    if let Some(member_expr) = assign_expr.left.as_member_expression() {
+                        if member_expr.is_specific_member_access("module", "exports") {
+                            return None;
+                        }
+                    }
+                }
+            }
+
+            // (TRUE || x) => TRUE (also, (3 || x) => 3)
+            // (FALSE && x) => FALSE
+            if if lval { op == LogicalOperator::Or } else { op == LogicalOperator::And } {
+                return Some(ctx.ast.move_expression(&mut logical_expr.left));
+            } else if !left.may_have_side_effects() {
+                let parent = ctx.ancestry.parent();
+                // Bail `let o = { f() { assert.ok(this !== o); } }; (true && o.f)(); (true && o.f)``;`
+                if parent.is_tagged_template_expression()
+                    || matches!(parent, Ancestor::CallExpressionCallee(_))
+                {
+                    return None;
+                }
+                // (FALSE || x) => x
+                // (TRUE && x) => x
+                return Some(ctx.ast.move_expression(&mut logical_expr.right));
+            }
+            // Left side may have side effects, but we know its boolean value.
+            // e.g. true_with_sideeffects || foo() => true_with_sideeffects, foo()
+            // or: false_with_sideeffects && foo() => false_with_sideeffects, foo()
+            let left = ctx.ast.move_expression(&mut logical_expr.left);
+            let right = ctx.ast.move_expression(&mut logical_expr.right);
+            let mut vec = ctx.ast.vec_with_capacity(2);
+            vec.push(left);
+            vec.push(right);
+            let sequence_expr = ctx.ast.expression_sequence(logical_expr.span, vec);
+            return Some(sequence_expr);
+        } else if let Expression::LogicalExpression(left_child) = &mut logical_expr.left {
+            if left_child.operator == logical_expr.operator {
+                let left_child_right_boolean = ctx.get_boolean_value(&left_child.right).to_option();
+                let left_child_op = left_child.operator;
+                if let Some(right_boolean) = left_child_right_boolean {
+                    if !left_child.right.may_have_side_effects() {
+                        // a || false || b => a || b
+                        // a && true && b => a && b
+                        if !right_boolean && left_child_op == LogicalOperator::Or
+                            || right_boolean && left_child_op == LogicalOperator::And
+                        {
+                            let left = ctx.ast.move_expression(&mut left_child.left);
+                            let right = ctx.ast.move_expression(&mut logical_expr.right);
+                            let logic_expr = ctx.ast.expression_logical(
+                                logical_expr.span,
+                                left,
+                                left_child_op,
+                                right,
+                            );
+                            return Some(logic_expr);
+                        }
+                    }
+                }
+            }
+        }
+        None
+    }
+
+    /// Try to fold a nullish coalesce `foo ?? bar`.
+    pub fn try_fold_coalesce(
+        &self,
+        logical_expr: &mut LogicalExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        debug_assert_eq!(logical_expr.operator, LogicalOperator::Coalesce);
+        let left = &logical_expr.left;
+        let left_val = ctx.get_known_value_type(left);
+        match left_val {
+            ValueType::Null | ValueType::Void => {
+                Some(if left.may_have_side_effects() {
+                    // e.g. `(a(), null) ?? 1` => `(a(), null, 1)`
+                    let expressions = ctx.ast.vec_from_iter([
+                        ctx.ast.move_expression(&mut logical_expr.left),
+                        ctx.ast.move_expression(&mut logical_expr.right),
+                    ]);
+                    ctx.ast.expression_sequence(SPAN, expressions)
+                } else {
+                    // nullish condition => this expression evaluates to the right side.
+                    ctx.ast.move_expression(&mut logical_expr.right)
+                })
+            }
+            ValueType::Number
+            | ValueType::Bigint
+            | ValueType::String
+            | ValueType::Boolean
+            | ValueType::Object => {
+                // non-nullish condition => this expression evaluates to the left side.
+                Some(ctx.ast.move_expression(&mut logical_expr.left))
+            }
+            ValueType::Undetermined => None,
+        }
+    }
+
+    fn try_fold_binary_expression(
+        &self,
+        e: &mut BinaryExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        // TODO: tryReduceOperandsForOp
+        match e.operator {
+            op if op.is_bitshift() => {
+                self.try_fold_shift(e.span, e.operator, &e.left, &e.right, ctx)
+            }
+            BinaryOperator::Instanceof => self.try_fold_instanceof(e.span, &e.left, &e.right, ctx),
+            BinaryOperator::Addition => self.try_fold_addition(e.span, &e.left, &e.right, ctx),
+            BinaryOperator::Subtraction
+            | BinaryOperator::Division
+            | BinaryOperator::Remainder
+            | BinaryOperator::Exponential => {
+                self.try_fold_arithmetic_op(e.span, &e.left, &e.right, ctx)
+            }
+            BinaryOperator::Multiplication
+            | BinaryOperator::BitwiseAnd
+            | BinaryOperator::BitwiseOR
+            | BinaryOperator::BitwiseXOR => {
+                // TODO:
+                // self.try_fold_arithmetic_op(e.span, &e.left, &e.right, ctx)
+                // if (result != subtree) {
+                // return result;
+                // }
+                // return tryFoldLeftChildOp(subtree, left, right);
+                None
+            }
+            op if op.is_equality() || op.is_compare() => {
+                self.try_fold_comparison(e.span, e.operator, &e.left, &e.right, ctx)
+            }
+            _ => None,
+        }
     }
 
     fn try_fold_addition<'b>(
@@ -217,6 +384,26 @@ impl<'a> PeepholeFoldConstants {
             },
             _ => None
         }
+    }
+
+    fn try_fold_arithmetic_op<'b>(
+        &self,
+        _span: Span,
+        _left: &'b Expression<'a>,
+        _right: &'b Expression<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        None
+    }
+
+    fn try_fold_instanceof<'b>(
+        &self,
+        _span: Span,
+        _left: &'b Expression<'a>,
+        _right: &'b Expression<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        None
     }
 
     fn try_fold_comparison<'b>(
@@ -586,121 +773,6 @@ impl<'a> PeepholeFoldConstants {
         }
 
         None
-    }
-
-    /// Try to fold a AND / OR node.
-    ///
-    /// port from [closure-compiler](https://github.com/google/closure-compiler/blob/09094b551915a6487a980a783831cba58b5739d1/src/com/google/javascript/jscomp/PeepholeFoldConstants.java#L587)
-    pub fn try_fold_and_or(
-        &self,
-        logical_expr: &mut LogicalExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Option<Expression<'a>> {
-        let op = logical_expr.operator;
-        debug_assert!(matches!(op, LogicalOperator::And | LogicalOperator::Or));
-
-        let left = &logical_expr.left;
-        let left_val = ctx.get_boolean_value(left).to_option();
-
-        if let Some(lval) = left_val {
-            // Bail `0 && (module.exports = {})` for `cjs-module-lexer`.
-            if !lval {
-                if let Expression::AssignmentExpression(assign_expr) = &logical_expr.right {
-                    if let Some(member_expr) = assign_expr.left.as_member_expression() {
-                        if member_expr.is_specific_member_access("module", "exports") {
-                            return None;
-                        }
-                    }
-                }
-            }
-
-            // (TRUE || x) => TRUE (also, (3 || x) => 3)
-            // (FALSE && x) => FALSE
-            if if lval { op == LogicalOperator::Or } else { op == LogicalOperator::And } {
-                return Some(ctx.ast.move_expression(&mut logical_expr.left));
-            } else if !left.may_have_side_effects() {
-                let parent = ctx.ancestry.parent();
-                // Bail `let o = { f() { assert.ok(this !== o); } }; (true && o.f)(); (true && o.f)``;`
-                if parent.is_tagged_template_expression()
-                    || matches!(parent, Ancestor::CallExpressionCallee(_))
-                {
-                    return None;
-                }
-                // (FALSE || x) => x
-                // (TRUE && x) => x
-                return Some(ctx.ast.move_expression(&mut logical_expr.right));
-            }
-            // Left side may have side effects, but we know its boolean value.
-            // e.g. true_with_sideeffects || foo() => true_with_sideeffects, foo()
-            // or: false_with_sideeffects && foo() => false_with_sideeffects, foo()
-            let left = ctx.ast.move_expression(&mut logical_expr.left);
-            let right = ctx.ast.move_expression(&mut logical_expr.right);
-            let mut vec = ctx.ast.vec_with_capacity(2);
-            vec.push(left);
-            vec.push(right);
-            let sequence_expr = ctx.ast.expression_sequence(logical_expr.span, vec);
-            return Some(sequence_expr);
-        } else if let Expression::LogicalExpression(left_child) = &mut logical_expr.left {
-            if left_child.operator == logical_expr.operator {
-                let left_child_right_boolean = ctx.get_boolean_value(&left_child.right).to_option();
-                let left_child_op = left_child.operator;
-                if let Some(right_boolean) = left_child_right_boolean {
-                    if !left_child.right.may_have_side_effects() {
-                        // a || false || b => a || b
-                        // a && true && b => a && b
-                        if !right_boolean && left_child_op == LogicalOperator::Or
-                            || right_boolean && left_child_op == LogicalOperator::And
-                        {
-                            let left = ctx.ast.move_expression(&mut left_child.left);
-                            let right = ctx.ast.move_expression(&mut logical_expr.right);
-                            let logic_expr = ctx.ast.expression_logical(
-                                logical_expr.span,
-                                left,
-                                left_child_op,
-                                right,
-                            );
-                            return Some(logic_expr);
-                        }
-                    }
-                }
-            }
-        }
-        None
-    }
-
-    /// Try to fold a nullish coalesce `foo ?? bar`.
-    pub fn try_fold_coalesce(
-        &self,
-        logical_expr: &mut LogicalExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Option<Expression<'a>> {
-        debug_assert_eq!(logical_expr.operator, LogicalOperator::Coalesce);
-        let left = &logical_expr.left;
-        let left_val = ctx.get_known_value_type(left);
-        match left_val {
-            ValueType::Null | ValueType::Void => {
-                Some(if left.may_have_side_effects() {
-                    // e.g. `(a(), null) ?? 1` => `(a(), null, 1)`
-                    let expressions = ctx.ast.vec_from_iter([
-                        ctx.ast.move_expression(&mut logical_expr.left),
-                        ctx.ast.move_expression(&mut logical_expr.right),
-                    ]);
-                    ctx.ast.expression_sequence(SPAN, expressions)
-                } else {
-                    // nullish condition => this expression evaluates to the right side.
-                    ctx.ast.move_expression(&mut logical_expr.right)
-                })
-            }
-            ValueType::Number
-            | ValueType::Bigint
-            | ValueType::String
-            | ValueType::Boolean
-            | ValueType::Object => {
-                // non-nullish condition => this expression evaluates to the left side.
-                Some(ctx.ast.move_expression(&mut logical_expr.left))
-            }
-            ValueType::Undetermined => None,
-        }
     }
 }
 
