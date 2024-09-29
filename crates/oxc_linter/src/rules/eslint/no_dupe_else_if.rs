@@ -114,6 +114,10 @@ impl Rule for NoDupeElseIf {
             }
         }
     }
+
+    fn should_run_on_node_kind(&self, kind: &AstKind) -> bool {
+        matches!(kind, AstKind::IfStatement(_))
+    }
 }
 
 fn split_by_or<'a, 'b>(expr: &'a Expression<'b>) -> Vec<&'a Expression<'b>> {

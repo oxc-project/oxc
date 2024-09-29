@@ -5,6 +5,7 @@ use std::{
     ops::Deref,
 };
 
+use oxc_ast::AstKind;
 use oxc_semantic::SymbolId;
 
 use crate::{
@@ -43,6 +44,13 @@ pub trait Rule: Sized + Default + fmt::Debug {
     #[expect(unused_variables)]
     #[inline]
     fn should_run(&self, ctx: &ContextHost) -> bool {
+        true
+    }
+
+    // TODO: document this
+    #[expect(unused_variables)]
+    #[inline]
+    fn should_run_on_node_kind(&self, kind: &AstKind) -> bool {
         true
     }
 }

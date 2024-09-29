@@ -91,6 +91,10 @@ impl Rule for BadCharAtComparison {
             }
         }
     }
+
+    fn should_run_on_node_kind(&self, kind: &AstKind) -> bool {
+        matches!(kind, AstKind::CallExpression(_))
+    }
 }
 
 fn is_string_valid(str: &str) -> bool {

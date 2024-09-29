@@ -98,6 +98,10 @@ impl Rule for BadArrayMethodOnArguments {
             MemberExpression::PrivateFieldExpression(_) => {}
         }
     }
+
+    fn should_run_on_node_kind(&self, kind: &AstKind) -> bool {
+        matches!(kind, AstKind::IdentifierReference(_))
+    }
 }
 
 /// `https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array#instance_methods`

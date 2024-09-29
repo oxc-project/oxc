@@ -43,6 +43,10 @@ impl Rule for RequireYield {
             }
         }
     }
+
+    fn should_run_on_node_kind(&self, kind: &AstKind) -> bool {
+        matches!(kind, AstKind::Function(_))
+    }
 }
 
 #[test]

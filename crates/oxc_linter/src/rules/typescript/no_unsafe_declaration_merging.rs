@@ -68,6 +68,10 @@ impl Rule for NoUnsafeDeclarationMerging {
     fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
     }
+
+    fn should_run_on_node_kind(&self, kind: &AstKind) -> bool {
+        matches!(kind, AstKind::Class(_) | AstKind::TSInterfaceDeclaration(_))
+    }
 }
 
 fn check_and_diagnostic(

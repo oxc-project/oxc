@@ -114,6 +114,13 @@ impl Rule for NoUselessEscape {
             _ => {}
         }
     }
+
+    fn should_run_on_node_kind(&self, kind: &AstKind) -> bool {
+        matches!(
+            kind,
+            AstKind::RegExpLiteral(_) | AstKind::StringLiteral(_) | AstKind::TemplateLiteral(_)
+        )
+    }
 }
 
 fn is_within_jsx_attribute_item(id: NodeId, ctx: &LintContext) -> bool {

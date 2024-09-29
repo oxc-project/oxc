@@ -98,6 +98,10 @@ impl Rule for NoNonNullAssertedOptionalChain {
     fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
     }
+
+    fn should_run_on_node_kind(&self, kind: &AstKind) -> bool {
+        matches!(kind, AstKind::TSNonNullExpression(_))
+    }
 }
 
 fn is_parent_member_or_call(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {

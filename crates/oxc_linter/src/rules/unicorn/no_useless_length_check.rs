@@ -168,6 +168,10 @@ impl Rule for NoUselessLengthCheck {
             }
         };
     }
+
+    fn should_run_on_node_kind(&self, kind: &AstKind) -> bool {
+        matches!(kind, AstKind::LogicalExpression(_))
+    }
 }
 
 fn flat_logical_expression<'a>(node: &'a LogicalExpression<'a>) -> Vec<&'a Expression<'a>> {

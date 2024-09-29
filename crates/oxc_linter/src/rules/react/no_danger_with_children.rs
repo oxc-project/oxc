@@ -122,6 +122,10 @@ impl Rule for NoDangerWithChildren {
             _ => (),
         }
     }
+
+    fn should_run_on_node_kind(&self, kind: &AstKind) -> bool {
+        matches!(kind, AstKind::JSXElement(_) | AstKind::CallExpression(_))
+    }
 }
 
 #[test]

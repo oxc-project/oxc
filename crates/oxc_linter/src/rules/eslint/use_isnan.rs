@@ -147,6 +147,16 @@ impl Rule for UseIsnan {
 
         Self { enforce_for_switch_case, enforce_for_index_of }
     }
+
+    fn should_run_on_node_kind(&self, kind: &AstKind) -> bool {
+        matches!(
+            kind,
+            AstKind::BinaryExpression(_)
+                | AstKind::SwitchCase(_)
+                | AstKind::SwitchStatement(_)
+                | AstKind::CallExpression(_)
+        )
+    }
 }
 
 fn is_nan_identifier<'a>(expr: &'a Expression<'a>) -> bool {

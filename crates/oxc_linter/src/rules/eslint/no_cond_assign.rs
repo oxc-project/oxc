@@ -98,6 +98,18 @@ impl Rule for NoCondAssign {
             _ => {}
         }
     }
+
+    fn should_run_on_node_kind(&self, kind: &AstKind) -> bool {
+        matches!(
+            kind,
+            AstKind::IfStatement(_)
+                | AstKind::WhileStatement(_)
+                | AstKind::DoWhileStatement(_)
+                | AstKind::ForStatement(_)
+                | AstKind::ConditionalExpression(_)
+                | AstKind::AssignmentExpression(_)
+        )
+    }
 }
 
 impl NoCondAssign {

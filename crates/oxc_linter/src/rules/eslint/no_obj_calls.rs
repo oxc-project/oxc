@@ -159,6 +159,10 @@ impl Rule for NoObjCalls {
             }
         };
     }
+
+    fn should_run_on_node_kind(&self, kind: &AstKind) -> bool {
+        matches!(kind, AstKind::NewExpression(_) | AstKind::CallExpression(_))
+    }
 }
 
 #[test]

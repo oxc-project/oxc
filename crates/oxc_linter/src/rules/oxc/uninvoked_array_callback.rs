@@ -80,6 +80,10 @@ impl Rule for UninvokedArrayCallback {
         };
         ctx.diagnostic(uninvoked_array_callback_diagnostic(property_span, new_expr.span));
     }
+
+    fn should_run_on_node_kind(&self, kind: &AstKind) -> bool {
+        matches!(kind, AstKind::NewExpression(_))
+    }
 }
 
 #[test]

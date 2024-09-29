@@ -88,6 +88,10 @@ impl Rule for NoUselessFallbackInSpread {
             ctx.diagnostic(diagnostic);
         }
     }
+
+    fn should_run_on_node_kind(&self, kind: &AstKind) -> bool {
+        matches!(kind, AstKind::LogicalExpression(_))
+    }
 }
 
 fn can_fix(left: &Expression<'_>) -> bool {

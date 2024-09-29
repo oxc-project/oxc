@@ -92,6 +92,16 @@ impl Rule for NoUnsafeFinally {
             }
         }
     }
+
+    fn should_run_on_node_kind(&self, kind: &AstKind) -> bool {
+        matches!(
+            kind,
+            AstKind::BreakStatement(_)
+                | AstKind::ContinueStatement(_)
+                | AstKind::ReturnStatement(_)
+                | AstKind::ThrowStatement(_)
+        )
+    }
 }
 
 #[derive(Debug, Clone, Copy)]

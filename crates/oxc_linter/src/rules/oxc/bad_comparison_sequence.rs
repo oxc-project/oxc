@@ -42,6 +42,10 @@ impl Rule for BadComparisonSequence {
             ctx.diagnostic(bad_comparison_sequence_diagnostic(expr.span));
         }
     }
+
+    fn should_run_on_node_kind(&self, kind: &AstKind) -> bool {
+        matches!(kind, AstKind::BinaryExpression(_))
+    }
 }
 
 fn has_no_bad_comparison_in_parents<'a, 'b>(

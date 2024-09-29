@@ -45,6 +45,10 @@ impl Rule for NoSetterReturn {
             ctx.diagnostic(no_setter_return_diagnostic(stmt.span));
         }
     }
+
+    fn should_run_on_node_kind(&self, kind: &AstKind) -> bool {
+        matches!(kind, AstKind::ReturnStatement(_))
+    }
 }
 
 #[test]

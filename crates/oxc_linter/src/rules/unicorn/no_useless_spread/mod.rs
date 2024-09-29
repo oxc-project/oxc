@@ -177,6 +177,10 @@ impl Rule for NoUselessSpread {
             _ => unreachable!(),
         }
     }
+
+    fn should_run_on_node_kind(&self, kind: &AstKind) -> bool {
+        matches!(kind, AstKind::ArrayExpression(_) | AstKind::ObjectExpression(_))
+    }
 }
 
 fn check_useless_spread_in_list<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {

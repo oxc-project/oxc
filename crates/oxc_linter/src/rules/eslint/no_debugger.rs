@@ -63,6 +63,10 @@ impl Rule for NoDebugger {
             });
         }
     }
+
+    fn should_run_on_node_kind(&self, kind: &AstKind) -> bool {
+        matches!(kind, AstKind::DebuggerStatement(_))
+    }
 }
 
 #[test]

@@ -144,8 +144,11 @@ impl Linter {
         }
 
         for node in semantic.nodes() {
+            let kind = node.kind();
             for (rule, ctx) in &rules {
-                rule.run(node, ctx);
+                if rule.should_run_on_node_kind(&kind) {
+                    rule.run(node, ctx);
+                }
             }
         }
 

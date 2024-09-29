@@ -50,6 +50,10 @@ impl Rule for NoVoid {
         Self { allow_as_statement }
     }
 
+    fn should_run_on_node_kind(&self, kind: &AstKind) -> bool {
+        matches!(kind, AstKind::UnaryExpression(_))
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::UnaryExpression(unary_expr) = node.kind() else {
             return;

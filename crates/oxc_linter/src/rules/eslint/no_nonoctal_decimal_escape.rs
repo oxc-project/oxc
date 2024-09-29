@@ -49,6 +49,10 @@ impl Rule for NoNonoctalDecimalEscape {
             check_string(ctx, literal.span.source_text(ctx.source_text()));
         }
     }
+
+    fn should_run_on_node_kind(&self, kind: &AstKind) -> bool {
+        matches!(kind, AstKind::StringLiteral(_))
+    }
 }
 trait StickyRegex {
     fn sticky_captures<'h>(&self, haystack: &'h str, start: usize)

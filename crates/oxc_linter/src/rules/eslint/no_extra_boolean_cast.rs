@@ -81,6 +81,10 @@ impl Rule for NoExtraBooleanCast {
             _ => {}
         }
     }
+
+    fn should_run_on_node_kind(&self, kind: &AstKind) -> bool {
+        matches!(kind, AstKind::CallExpression(_) | AstKind::UnaryExpression(_))
+    }
 }
 
 // Checks whether the node is a context that should report an error

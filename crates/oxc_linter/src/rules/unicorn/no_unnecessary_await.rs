@@ -72,6 +72,10 @@ impl Rule for NoUnnecessaryAwait {
             };
         }
     }
+
+    fn should_run_on_node_kind(&self, kind: &AstKind) -> bool {
+        matches!(kind, AstKind::AwaitExpression(_))
+    }
 }
 
 fn not_promise(expr: &Expression) -> bool {

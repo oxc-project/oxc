@@ -40,6 +40,10 @@ impl Rule for MissingThrow {
             });
         }
     }
+
+    fn should_run_on_node_kind(&self, kind: &AstKind) -> bool {
+        matches!(kind, AstKind::NewExpression(_))
+    }
 }
 
 impl MissingThrow {

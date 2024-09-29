@@ -119,6 +119,10 @@ impl Rule for NoSinglePromiseInPromiseMethods {
             ctx.diagnostic(diagnostic);
         }
     }
+
+    fn should_run_on_node_kind(&self, kind: &AstKind) -> bool {
+        matches!(kind, AstKind::CallExpression(_))
+    }
 }
 
 fn is_promise_method_with_single_argument(call_expr: &CallExpression) -> bool {

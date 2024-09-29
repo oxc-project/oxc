@@ -133,6 +133,10 @@ impl Rule for ValidTypeof {
 
         Self { require_string_literals }
     }
+
+    fn should_run_on_node_kind(&self, kind: &AstKind) -> bool {
+        matches!(kind, AstKind::UnaryExpression(_) | AstKind::BinaryExpression(_))
+    }
 }
 
 const VALID_TYPES: Set<&'static str> = phf_set! {

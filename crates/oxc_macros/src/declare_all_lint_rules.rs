@@ -63,6 +63,7 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
 
         use crate::{context::{ContextHost, LintContext}, rule::{Rule, RuleCategory, RuleFixMeta, RuleMeta}, AstNode};
         use oxc_semantic::SymbolId;
+        use oxc_ast::AstKind;
 
         #[derive(Debug, Clone)]
         #[allow(clippy::enum_variant_names)]
@@ -137,6 +138,12 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
             pub(super) fn should_run(&self, ctx: &ContextHost) -> bool {
                 match self {
                     #(Self::#struct_names(rule) => rule.should_run(ctx)),*
+                }
+            }
+
+            pub(super) fn should_run_on_node_kind(&self, kind: &AstKind) -> bool {
+                match self {
+                    #(Self::#struct_names(rule) => rule.should_run_on_node_kind(kind)),*
                 }
             }
         }
