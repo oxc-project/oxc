@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.30.5] - 2024-09-29
+
+### Bug Fixes
+
+- bfd1988 transformer/react: Should not collect use-hooks if it's a nested member expression (#6143) (Dunqing)
+
+### Refactor
+
+- 375bebe transformer: Improve parsing React pragmas (#6138) (overlookmotel)
+- 0836f6b transformer: Move parsing pragmas into TS transform (#6137) (overlookmotel)
+- 30424fa transformer: TS transforms only store options they need (#6135) (overlookmotel)
+
 ## [0.30.4] - 2024-09-28
 
 ### Bug Fixes
