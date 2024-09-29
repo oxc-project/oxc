@@ -6,6 +6,8 @@ use std::{
 };
 
 use oxc_semantic::SymbolId;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     context::{ContextHost, LintContext},
@@ -61,7 +63,8 @@ pub trait RuleMeta {
 }
 
 /// Rule categories defined by rust-clippy
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
 pub enum RuleCategory {
     /// Code that is outright wrong or useless
     Correctness,
@@ -277,6 +280,7 @@ impl RuleWithSeverity {
 mod test {
     use markdown::{to_html_with_options, Options};
 
+    use super::RuleCategory;
     use crate::rules::RULES;
 
     #[test]
@@ -293,6 +297,27 @@ mod test {
             // will panic if provided invalid markdown
             let html = to_html_with_options(rule.documentation().unwrap(), &options).unwrap();
             assert!(!html.is_empty());
+        }
+    }
+
+    #[test]
+    fn test_deserialize_rule_category() {
+        let tests = [
+            ("correctness", RuleCategory::Correctness),
+            ("suspicious", RuleCategory::Suspicious),
+            ("restriction", RuleCategory::Restriction),
+            ("perf", RuleCategory::Perf),
+            ("pedantic", RuleCategory::Pedantic),
+            ("style", RuleCategory::Style),
+            ("nursery", RuleCategory::Nursery),
+        ];
+
+        for (input, expected) in tests {
+            let de: RuleCategory = serde_json::from_str(&format!("{input:?}")).unwrap();
+            // deserializes to expected value
+            assert_eq!(de, expected, "{input}");
+            // try_from on a str produces the same value as deserializing
+            assert_eq!(de, RuleCategory::try_from(input).unwrap(), "{input}");
         }
     }
 }
