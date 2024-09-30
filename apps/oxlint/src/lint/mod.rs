@@ -524,7 +524,7 @@ mod test {
 
     #[test]
     fn lint_svelte_file() {
-        let args = &["fixtures/svelte/debugger.svelte"];
+        let args = &["-c", "fixtures/svelte/eslintrc.json", "fixtures/svelte/debugger.svelte"];
         let result = test(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 2);
