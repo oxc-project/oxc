@@ -1057,7 +1057,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_string_string_comparison() {
         test("'a' < 'b'", "true");
         test("'a' <= 'b'", "true");
@@ -1123,7 +1122,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_bigint_number_comparison() {
         test("1n < 2", "true");
         test("1n > 2", "false");
@@ -1168,7 +1166,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_bigint_string_comparison() {
         test("1n < '2'", "true");
         test("2n > '1'", "true");
@@ -1181,7 +1178,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_string_bigint_comparison() {
         test("'1' < 2n", "true");
         test("'2' > 1n", "true");
@@ -1199,10 +1195,10 @@ mod test {
         test("NaN <= 1", "false");
         test("NaN > 1", "false");
         test("NaN >= 1", "false");
-        // test("NaN < 1n", "false");
-        // test("NaN <= 1n", "false");
-        // test("NaN > 1n", "false");
-        // test("NaN >= 1n", "false");
+        test("NaN < 1n", "false");
+        test("NaN <= 1n", "false");
+        test("NaN > 1n", "false");
+        test("NaN >= 1n", "false");
 
         test("NaN < NaN", "false");
         test("NaN >= NaN", "false");
