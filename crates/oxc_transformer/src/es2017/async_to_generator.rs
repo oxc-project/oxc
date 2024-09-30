@@ -1,4 +1,4 @@
-//! ES2017: Async / Await
+//! ES2017: Async / Await [WIP]
 //!
 //! This plugin transforms async functions to generator functions.
 //!
@@ -12,23 +12,26 @@
 //! const foo2 = async () => {
 //!   await bar();
 //! };
+//! async () => {
+//!   await bar();
+//! }
 //! ```
 //!
-//! Output:
+//! Output (Currently):
 //! ```js
 //! function foo() {
-//!   return _asyncToGenerator(this, null, function* () {
+//!   return _asyncToGenerator(function* () {
 //!     yield bar();
 //!   })
 //! }
-//! const foo2 = () => _asyncToGenerator(this, null, function* () {
+//! const foo2 = () => _asyncToGenerator(function* () {
 //!   yield bar();
 //! }
 //! ```
 //!
 //! ## Implementation
 //!
-//! Implementation based on [@babel/plugin-transform-async-to-generator](https://babel.dev/docs/babel-plugin-transform-async-to-generator) and [esbuild](https://github.com/evanw/esbuild/blob/main/internal/js_parser/js_parser_lower.go#L392).
+//! Implementation based on [@babel/plugin-transform-async-to-generator](https://babel.dev/docs/babel-plugin-transform-async-to-generator).
 //!
 //!
 //! Reference:
@@ -40,8 +43,7 @@
 //!
 
 use oxc_ast::ast::{
-    ArrowFunctionExpression, Expression, Function, FunctionType, Statement,
-    VariableDeclarationKind, YieldExpression,
+    ArrowFunctionExpression, Expression, Function, FunctionType, Statement, VariableDeclarationKind,
 };
 use oxc_ast::NONE;
 use oxc_span::{Atom, SPAN};
@@ -120,6 +122,8 @@ impl<'a> Traverse<'a> for AsyncToGenerator {
                 .ancestry
                 .ancestors()
                 .find_map(|ance| {
+                    // We need to check if there's async generator or async function.
+                    // If it is async generator, we should not transform the await expression here.
                     if let Ancestor::FunctionBody(body) = ance {
                         if *body.r#async() {
                             Some(!body.generator())
@@ -127,6 +131,7 @@ impl<'a> Traverse<'a> for AsyncToGenerator {
                             None
                         }
                     } else if let Ancestor::ArrowFunctionExpressionBody(_) = ance {
+                        // Arrow function is never generator.
                         Some(true)
                     } else {
                         None
@@ -134,13 +139,12 @@ impl<'a> Traverse<'a> for AsyncToGenerator {
                 })
                 .unwrap_or(false);
             if in_async_function {
-                let yield_expression = YieldExpression {
-                    span: SPAN,
-                    delegate: false,
-                    argument: Some(ctx.ast.move_expression(&mut await_expr.argument)),
-                };
-                let expression = ctx.ast.alloc(yield_expression);
-                *expr = Expression::YieldExpression(expression);
+                // Move the expression to yield.
+                *expr = ctx.ast.expression_yield(
+                    SPAN,
+                    false,
+                    Some(ctx.ast.move_expression(&mut await_expr.argument)),
+                );
             }
         } else if let Expression::FunctionExpression(func) = expr {
             if !func.r#async || func.generator {
