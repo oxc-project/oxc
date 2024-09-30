@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{AssignmentOperator, Expression, LogicalOperator},
+    ast::{AssignmentOperator, Expression, LogicalOperator, TSType},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -69,6 +69,7 @@ declare_oxc_lint!(
     conditional_suggestion,
 );
 
+const SPECIAL_IDENTIFIERS: [&str; 3] = ["undefined", "Infinity", "NaN"];
 impl Rule for NoThrowLiteral {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::ThrowStatement(stmt) = node.kind() else {
@@ -87,22 +88,21 @@ impl Rule for NoThrowLiteral {
                     )
                 });
             }
-            _ => {
-                if !Self::could_be_error(expr) {
-                    ctx.diagnostic(no_throw_literal_diagnostic(expr.span(), false));
-                } else if matches!(expr, Expression::Identifier(id) if id.name == "undefined") {
-                    ctx.diagnostic(no_throw_literal_diagnostic(expr.span(), true));
-                };
+            Expression::Identifier(id) if SPECIAL_IDENTIFIERS.contains(&id.name.as_str()) => {
+                ctx.diagnostic(no_throw_literal_diagnostic(expr.span(), true));
             }
+            expr if !Self::could_be_error(ctx, expr) => {
+                ctx.diagnostic(no_throw_literal_diagnostic(expr.span(), false));
+            }
+            _ => {}
         }
     }
 }
 
 impl NoThrowLiteral {
-    fn could_be_error(expr: &Expression) -> bool {
+    fn could_be_error(ctx: &LintContext, expr: &Expression) -> bool {
         match expr.get_inner_expression() {
-            Expression::Identifier(_)
-            | Expression::NewExpression(_)
+            Expression::NewExpression(_)
             | Expression::AwaitExpression(_)
             | Expression::CallExpression(_)
             | Expression::ChainExpression(_)
@@ -116,7 +116,7 @@ impl NoThrowLiteral {
                     expr.operator,
                     AssignmentOperator::Assign | AssignmentOperator::LogicalAnd
                 ) {
-                    return Self::could_be_error(&expr.right);
+                    return Self::could_be_error(ctx, &expr.right);
                 }
 
                 if matches!(
@@ -126,27 +126,73 @@ impl NoThrowLiteral {
                     return expr
                         .left
                         .get_expression()
-                        .map_or(true, |expr| Self::could_be_error(expr))
-                        || Self::could_be_error(&expr.right);
+                        .map_or(true, |expr| Self::could_be_error(ctx, expr))
+                        || Self::could_be_error(ctx, &expr.right);
                 }
 
                 false
             }
             Expression::SequenceExpression(expr) => {
-                expr.expressions.last().is_some_and(Self::could_be_error)
+                expr.expressions.last().is_some_and(|expr| Self::could_be_error(ctx, expr))
             }
             Expression::LogicalExpression(expr) => {
                 if matches!(expr.operator, LogicalOperator::And) {
-                    return Self::could_be_error(&expr.right);
+                    return Self::could_be_error(ctx, &expr.right);
                 }
 
-                Self::could_be_error(&expr.left) || Self::could_be_error(&expr.right)
+                Self::could_be_error(ctx, &expr.left) || Self::could_be_error(ctx, &expr.right)
             }
             Expression::ConditionalExpression(expr) => {
-                Self::could_be_error(&expr.consequent) || Self::could_be_error(&expr.alternate)
+                Self::could_be_error(ctx, &expr.consequent)
+                    || Self::could_be_error(ctx, &expr.alternate)
+            }
+            Expression::Identifier(ident) => {
+                let Some(ref_id) = ident.reference_id() else {
+                    return true;
+                };
+                let reference = ctx.symbols().get_reference(ref_id);
+                let Some(symbol_id) = reference.symbol_id() else {
+                    return true;
+                };
+                let decl = ctx.nodes().get_node(ctx.symbols().get_declaration(symbol_id));
+                match decl.kind() {
+                    AstKind::VariableDeclarator(decl) => {
+                        if let Some(init) = &decl.init {
+                            Self::could_be_error(ctx, init)
+                        } else {
+                            // TODO: warn about throwing undefined
+                            false
+                        }
+                    }
+                    AstKind::Function(_)
+                    | AstKind::Class(_)
+                    | AstKind::TSModuleDeclaration(_)
+                    | AstKind::TSEnumDeclaration(_) => false,
+                    AstKind::FormalParameter(param) => {
+                        !param.pattern.type_annotation.as_ref().is_some_and(|annot| {
+                            is_definitely_non_error_type(&annot.type_annotation)
+                        })
+                    }
+                    _ => true,
+                }
             }
             _ => false,
         }
+    }
+}
+
+fn is_definitely_non_error_type(ty: &TSType) -> bool {
+    match ty {
+        TSType::TSNumberKeyword(_)
+        | TSType::TSStringKeyword(_)
+        | TSType::TSBooleanKeyword(_)
+        | TSType::TSNullKeyword(_)
+        | TSType::TSUndefinedKeyword(_) => true,
+        TSType::TSUnionType(union) => union.types.iter().all(is_definitely_non_error_type),
+        TSType::TSIntersectionType(intersect) => {
+            intersect.types.iter().all(is_definitely_non_error_type)
+        }
+        _ => false,
     }
 }
 
@@ -181,6 +227,11 @@ fn test() {
         "throw obj?.foo()",    // { "ecmaVersion": 2020 }
         "throw obj?.foo() as string",
         "throw obj?.foo() satisfies Direction",
+        // local reference resolution
+        "const err = new Error(); throw err;",
+        "function main(x) { throw x; }", // cannot determine type of x
+        "function main(x: any) { throw x; }",
+        "function main(x: TypeError) { throw x; }",
     ];
 
     let fail = vec![
@@ -190,6 +241,8 @@ fn test() {
         "throw null;",
         "throw {};",
         "throw undefined;",
+        "throw Infinity;",
+        "throw NaN;",
         "throw 'a' + 'b';",
         "var b = new Error(); throw 'a' + b;",
         "throw foo = 'error';",
@@ -203,6 +256,15 @@ fn test() {
         "throw `${err}`;", // { "ecmaVersion": 6 }
         "throw 0 as number",
         "throw 'error' satisfies Error",
+        // local reference resolution
+        "let foo = 'foo'; throw foo;",
+        "let foo = 'foo' as unknown as Error; throw foo;",
+        "function foo() {}; throw foo;",
+        "const foo = () => {}; throw foo;",
+        "class Foo {}\nthrow Foo;",
+        "function main(x: number) { throw x; }",
+        "function main(x: string) { throw x; }",
+        "function main(x: string | number) { throw x; }",
     ];
 
     let fix = vec![
