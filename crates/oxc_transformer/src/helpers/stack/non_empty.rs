@@ -206,12 +206,12 @@ impl<T> NonEmptyStack<T> {
             unsafe { self.push_slow(value) };
         } else {
             // Capacity for at least 1 more entry
-            self.cursor = new_cursor;
             // SAFETY: We checked there is capacity for 1 more entry, so `self.cursor` is in bounds.
             // `self.cursor` was aligned for `T`, and we added `size_of::<T>()` to pointer.
             // `size_of::<T>()` is always a multiple of `T`'s alignment, so `self.cursor` must still be
             // aligned for `T`.
-            unsafe { self.cursor.as_ptr().write(value) };
+            unsafe { new_cursor.as_ptr().write(value) };
+            self.cursor = new_cursor;
         }
     }
 
