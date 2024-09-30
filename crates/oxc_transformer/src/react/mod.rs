@@ -43,9 +43,13 @@ pub struct React<'a, 'ctx> {
 
 // Constructors
 impl<'a, 'ctx> React<'a, 'ctx> {
-    pub fn new(mut options: ReactOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(
+        mut options: ReactOptions,
+        transform_ctx: &'ctx TransformCtx<'a>,
+        traverse_ctx: &TraverseCtx<'a>,
+    ) -> Self {
         if options.jsx_plugin || options.development {
-            update_options_with_comments(&mut options, ctx);
+            update_options_with_comments(&mut options, transform_ctx);
             options.conform();
         }
         let ReactOptions {
@@ -57,14 +61,14 @@ impl<'a, 'ctx> React<'a, 'ctx> {
         } = options;
         let refresh = options.refresh.clone();
         Self {
-            jsx: ReactJsx::new(options, ctx),
-            display_name: ReactDisplayName::new(ctx),
+            jsx: ReactJsx::new(options, transform_ctx, traverse_ctx),
+            display_name: ReactDisplayName::new(transform_ctx),
             jsx_plugin,
             display_name_plugin,
             jsx_self_plugin,
             jsx_source_plugin,
             refresh_plugin: refresh.is_some(),
-            refresh: ReactRefresh::new(&refresh.unwrap_or_default(), ctx),
+            refresh: ReactRefresh::new(&refresh.unwrap_or_default(), transform_ctx, traverse_ctx),
         }
     }
 }

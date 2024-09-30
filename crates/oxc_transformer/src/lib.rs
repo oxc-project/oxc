@@ -87,12 +87,12 @@ impl<'a> Transformer<'a> {
         symbols: SymbolTable,
         scopes: ScopeTree,
         program: &mut Program<'a>,
+        allocator: &'a Allocator,
     ) -> TransformerReturn {
-        let allocator = self.ctx.ast.allocator;
-
+        let traverse_ctx = TraverseCtx::new(scopes, symbols, allocator);
         let mut transformer = TransformerImpl {
             x0_typescript: TypeScript::new(self.options.typescript, &self.ctx),
-            x1_react: React::new(self.options.react, &self.ctx),
+            x1_react: React::new(self.options.react, &self.ctx, &traverse_ctx),
             x2_es2021: ES2021::new(self.options.es2021, &self.ctx),
             x2_es2020: ES2020::new(self.options.es2020, &self.ctx),
             x2_es2019: ES2019::new(self.options.es2019),
@@ -103,7 +103,7 @@ impl<'a> Transformer<'a> {
             common: Common::new(&self.ctx),
         };
 
-        let (symbols, scopes) = traverse_mut(&mut transformer, allocator, program, symbols, scopes);
+        let (symbols, scopes) = traverse_mut(&mut transformer, program, traverse_ctx);
         TransformerReturn { errors: self.ctx.take_errors(), symbols, scopes }
     }
 }

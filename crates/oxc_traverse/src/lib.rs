@@ -60,7 +60,6 @@
 //! scheme could very easily be derailed entirely by a single mistake, so in my opinion, it's unwise
 //! to edit by hand.
 
-use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 use oxc_semantic::{ScopeTree, SymbolTable};
 
@@ -144,12 +143,9 @@ mod compile_fail_tests;
 
 pub fn traverse_mut<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
-    allocator: &'a Allocator,
     program: &mut Program<'a>,
-    symbols: SymbolTable,
-    scopes: ScopeTree,
+    mut ctx: TraverseCtx<'a>,
 ) -> (SymbolTable, ScopeTree) {
-    let mut ctx = TraverseCtx::new(scopes, symbols, allocator);
     walk_program(traverser, program, &mut ctx);
     debug_assert!(ctx.ancestors_depth() == 1);
     ctx.scoping.into_symbol_table_and_scope_tree()

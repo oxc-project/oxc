@@ -199,7 +199,8 @@ impl<'a> ReplaceGlobalDefines<'a> {
         scopes: ScopeTree,
         program: &mut Program<'a>,
     ) -> ReplaceGlobalDefinesReturn {
-        let (symbols, scopes) = traverse_mut(self, self.allocator, program, symbols, scopes);
+        let ctx = TraverseCtx::new(scopes, symbols, self.allocator);
+        let (symbols, scopes) = traverse_mut(self, program, ctx);
         ReplaceGlobalDefinesReturn { symbols, scopes }
     }
 

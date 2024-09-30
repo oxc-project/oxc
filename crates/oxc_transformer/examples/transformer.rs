@@ -73,7 +73,7 @@ fn main() {
         trivias.clone(),
         transform_options,
     )
-    .build_with_symbols_and_scopes(symbols, scopes, &mut program);
+    .build_with_symbols_and_scopes(symbols, scopes, &mut program, &allocator);
 
     if !ret.errors.is_empty() {
         println!("Transformer Errors:");
