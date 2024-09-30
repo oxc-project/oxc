@@ -20,7 +20,7 @@ use oxc_span::SPAN;
 use oxc_syntax::symbol::SymbolId;
 use oxc_traverse::{Traverse, TraverseCtx};
 
-use crate::{context::TransformCtx, helpers::stack::SparseStack};
+use crate::{helpers::stack::SparseStack, TransformCtx};
 
 /// Transform that maintains the stack of `Vec<VariableDeclarator>`s, and adds a `var` statement
 /// to top of a statement block if another transform has requested that.
