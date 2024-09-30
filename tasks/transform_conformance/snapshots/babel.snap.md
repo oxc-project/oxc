@@ -1,6 +1,6 @@
 commit: 3bcfee23
 
-Passed: 333/1022
+Passed: 327/1022
 
 # All Passed:
 * babel-plugin-transform-optional-catch-binding
@@ -3324,7 +3324,19 @@ after transform: ["T", "f"]
 rebuilt        : ["f"]
 
 
-# babel-plugin-transform-react-jsx (124/144)
+# babel-plugin-transform-react-jsx (119/144)
+* autoImport/after-polyfills/input.mjs
+x Output mismatch
+
+* autoImport/after-polyfills-2/input.mjs
+x Output mismatch
+
+* autoImport/auto-import-react-source-type-script/input.js
+x Output mismatch
+
+* autoImport/react-defined/input.js
+x Output mismatch
+
 * pure/false-pragma-comment-automatic-runtime/input.js
 pragma and pragmaFrag cannot be set when runtime is automatic.
 
@@ -3385,6 +3397,9 @@ importSource cannot be set when runtime is classic.
 * react-automatic/does-not-add-source-self-automatic/input.mjs
 transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
 
+* react-automatic/handle-fragments-with-key/input.js
+x Output mismatch
+
 * react-automatic/should-disallow-spread-children/input.js
 Spread children are not supported in React.
 
@@ -3428,7 +3443,10 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-react-jsx-development (8/11)
+# babel-plugin-transform-react-jsx-development (7/11)
+* cross-platform/auto-import-dev/input.js
+x Output mismatch
+
 * cross-platform/disallow-__self-as-jsx-attribute/input.js
   ! Duplicate __self prop found.
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-react-jsx-development/test/fixtures/cross-platform/disallow-__self-as-jsx-attribute/input.js:1:14]

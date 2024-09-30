@@ -59,16 +59,12 @@ impl<'a> ModuleImports<'a> {
     }
 
     /// Add `var named_import from 'source'`
-    pub fn add_require(&self, source: Atom<'a>, import: NamedImport<'a>, front: bool) {
-        let len = self.imports.borrow().len();
+    pub fn add_require(&self, source: Atom<'a>, import: NamedImport<'a>) {
         self.imports
             .borrow_mut()
             .entry(ImportType::new(ImportKind::Require, source))
             .or_default()
             .push(import);
-        if front {
-            self.imports.borrow_mut().move_index(len, 0);
-        }
     }
 
     pub fn get_import_statements(&self, ctx: &mut TraverseCtx<'a>) -> Vec<'a, Statement<'a>> {

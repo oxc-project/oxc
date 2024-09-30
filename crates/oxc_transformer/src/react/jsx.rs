@@ -170,7 +170,7 @@ impl<'a, 'ctx> AutomaticScriptBindings<'a, 'ctx> {
         if self.require_create_element.is_none() {
             let source =
                 get_import_source(self.jsx_runtime_importer.as_str(), self.react_importer_len);
-            let id = self.add_require_statement("react", source, true, ctx);
+            let id = self.add_require_statement("react", source, ctx);
             self.require_create_element = Some(id);
         }
         self.require_create_element.as_ref().unwrap().create_read_reference(ctx)
@@ -180,8 +180,7 @@ impl<'a, 'ctx> AutomaticScriptBindings<'a, 'ctx> {
         if self.require_jsx.is_none() {
             let var_name =
                 if self.is_development { "reactJsxDevRuntime" } else { "reactJsxRuntime" };
-            let id =
-                self.add_require_statement(var_name, self.jsx_runtime_importer.clone(), false, ctx);
+            let id = self.add_require_statement(var_name, self.jsx_runtime_importer.clone(), ctx);
             self.require_jsx = Some(id);
         };
         self.require_jsx.as_ref().unwrap().create_read_reference(ctx)
@@ -191,7 +190,6 @@ impl<'a, 'ctx> AutomaticScriptBindings<'a, 'ctx> {
         &mut self,
         variable_name: &str,
         source: Atom<'a>,
-        front: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> BoundIdentifier<'a> {
         let symbol_id =
@@ -199,7 +197,7 @@ impl<'a, 'ctx> AutomaticScriptBindings<'a, 'ctx> {
         let variable_name = ctx.ast.atom(&ctx.symbols().names[symbol_id]);
 
         let import = NamedImport::new(variable_name.clone(), None, symbol_id);
-        self.ctx.module_imports.add_require(source, import, front);
+        self.ctx.module_imports.add_require(source, import);
         BoundIdentifier { name: variable_name, symbol_id }
     }
 }
@@ -460,39 +458,16 @@ impl<'a, 'ctx> Traverse<'a> for ReactJsx<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> ReactJsx<'a, 'ctx> {
-    fn is_script(&self) -> bool {
-        self.ctx.source_type.is_script()
-    }
-
     fn ast(&self) -> AstBuilder<'a> {
         self.ctx.ast
     }
 
     fn add_runtime_imports(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.bindings.is_classic() {
-            if let Some(stmt) = self.jsx_source.get_var_file_name_statement() {
-                program.body.insert(0, stmt);
-            }
-            return;
-        }
-
-        let imports = self.ctx.module_imports.get_import_statements(ctx);
-        let mut index = program
-            .body
-            .iter()
-            .rposition(|stmt| matches!(stmt, Statement::ImportDeclaration(_)))
-            .map_or(0, |i| i + 1);
-
         if let Some(stmt) = self.jsx_source.get_var_file_name_statement() {
-            program.body.insert(index, stmt);
-            // If source type is module then we need to add the import statement after the var file name statement
-            // Follow the same behavior as babel
-            if !self.is_script() {
-                index += 1;
-            }
+            program.body.insert(0, stmt);
         }
-
-        program.body.splice(index..index, imports);
+        let imports = self.ctx.module_imports.get_import_statements(ctx);
+        program.body.splice(0..0, imports);
     }
 
     fn transform_jsx<'b>(
