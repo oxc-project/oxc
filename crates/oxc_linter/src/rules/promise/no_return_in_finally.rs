@@ -42,7 +42,7 @@ declare_oxc_lint!(
     /// Promise.resolve(1).finally(() => { console.log(2) })
     /// ```
     NoReturnInFinally,
-    nursery,
+    correctness,
 );
 
 impl Rule for NoReturnInFinally {

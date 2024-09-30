@@ -188,7 +188,7 @@ declare_oxc_lint!(
     /// /*@__PURE__*/ x();
     /// ```
     NoSideEffectsInInitialization,
-    nursery
+    perf
 );
 
 impl Rule for NoSideEffectsInInitialization {

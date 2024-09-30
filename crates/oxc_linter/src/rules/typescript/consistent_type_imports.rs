@@ -102,7 +102,7 @@ declare_oxc_lint!(
     /// type S = import("Foo");
     /// ```
     ConsistentTypeImports,
-    nursery,
+    style,
     conditional_fix
 );
 

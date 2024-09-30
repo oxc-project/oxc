@@ -104,7 +104,7 @@ declare_oxc_lint!(
     /// <https://reactjs.org/docs/hooks-rules.html>
     ///
     RulesOfHooks,
-    nursery
+    correctness
 );
 
 impl Rule for RulesOfHooks {

@@ -31,7 +31,7 @@ declare_oxc_lint!(
     /// var bar = a + 1;
     /// ```
     NoUndef,
-    nursery
+    correctness
 );
 
 impl Rule for NoUndef {
