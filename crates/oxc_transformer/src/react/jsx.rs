@@ -105,10 +105,7 @@ pub use super::{
     jsx_source::ReactJsxSource,
     options::{ReactJsxRuntime, ReactOptions},
 };
-use crate::{
-    helpers::{bindings::BoundIdentifier, module_imports::NamedImport},
-    TransformCtx,
-};
+use crate::{common::NamedImport, helpers::bindings::BoundIdentifier, TransformCtx};
 
 pub struct ReactJsx<'a, 'ctx> {
     options: ReactOptions,
@@ -442,8 +439,8 @@ impl<'a, 'ctx> ReactJsx<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> Traverse<'a> for ReactJsx<'a, 'ctx> {
-    fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.add_runtime_imports(program, ctx);
+    fn exit_program(&mut self, program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
+        self.add_runtime_imports(program);
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -462,12 +459,10 @@ impl<'a, 'ctx> ReactJsx<'a, 'ctx> {
         self.ctx.ast
     }
 
-    fn add_runtime_imports(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn add_runtime_imports(&mut self, program: &mut Program<'a>) {
         if let Some(stmt) = self.jsx_source.get_var_file_name_statement() {
             program.body.insert(0, stmt);
         }
-        let imports = self.ctx.module_imports.get_import_statements(ctx);
-        program.body.splice(0..0, imports);
     }
 
     fn transform_jsx<'b>(

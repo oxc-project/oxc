@@ -1,18 +1,13 @@
 use std::cell::RefCell;
 
 use indexmap::IndexMap;
-use oxc_allocator::Vec;
 use oxc_ast::{ast::*, NONE};
 use oxc_semantic::ReferenceFlags;
 use oxc_span::{Atom, SPAN};
 use oxc_syntax::symbol::SymbolId;
-use oxc_traverse::TraverseCtx;
+use oxc_traverse::{Traverse, TraverseCtx};
 
-pub struct NamedImport<'a> {
-    imported: Atom<'a>,
-    local: Option<Atom<'a>>, // Not used in `require`
-    symbol_id: SymbolId,
-}
+use crate::context::TransformCtx;
 
 impl<'a> NamedImport<'a> {
     pub fn new(imported: Atom<'a>, local: Option<Atom<'a>>, symbol_id: SymbolId) -> Self {
@@ -40,40 +35,26 @@ impl<'a> ImportType<'a> {
 
 /// Manage import statement globally
 /// <https://github.com/nicolo-ribaudo/babel/tree/main/packages/babel-helper-module-imports>
-pub struct ModuleImports<'a> {
-    imports: RefCell<IndexMap<ImportType<'a>, std::vec::Vec<NamedImport<'a>>>>,
+pub struct ModuleImports<'a, 'ctx> {
+    ctx: &'ctx TransformCtx<'a>,
 }
 
-impl<'a> ModuleImports<'a> {
-    pub fn new() -> ModuleImports<'a> {
-        Self { imports: RefCell::new(IndexMap::default()) }
+impl<'a, 'ctx> Traverse<'a> for ModuleImports<'a, 'ctx> {
+    fn exit_program(&mut self, node: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        let statements =
+            ctx.ast.vec_from_iter(self.ctx.module_imports.imports.borrow_mut().drain(..).map(
+                |(import_type, names)| match import_type.kind {
+                    ImportKind::Import => Self::get_named_import(import_type.source, names, ctx),
+                    ImportKind::Require => Self::get_require(import_type.source, names, ctx),
+                },
+            ));
+        node.body.splice(0..0, statements);
     }
+}
 
-    /// Add `import { named_import } from 'source'`
-    pub fn add_import(&self, source: Atom<'a>, import: NamedImport<'a>) {
-        self.imports
-            .borrow_mut()
-            .entry(ImportType::new(ImportKind::Import, source))
-            .or_default()
-            .push(import);
-    }
-
-    /// Add `var named_import from 'source'`
-    pub fn add_require(&self, source: Atom<'a>, import: NamedImport<'a>) {
-        self.imports
-            .borrow_mut()
-            .entry(ImportType::new(ImportKind::Require, source))
-            .or_default()
-            .push(import);
-    }
-
-    pub fn get_import_statements(&self, ctx: &mut TraverseCtx<'a>) -> Vec<'a, Statement<'a>> {
-        ctx.ast.vec_from_iter(self.imports.borrow_mut().drain(..).map(|(import_type, names)| {
-            match import_type.kind {
-                ImportKind::Import => Self::get_named_import(import_type.source, names, ctx),
-                ImportKind::Require => Self::get_require(import_type.source, names, ctx),
-            }
-        }))
+impl<'a, 'ctx> ModuleImports<'a, 'ctx> {
+    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
+        Self { ctx }
     }
 
     fn get_named_import(
@@ -131,5 +112,42 @@ impl<'a> ModuleImports<'a> {
         };
         let var_decl = ctx.ast.declaration_variable(SPAN, var_kind, decl, false);
         ctx.ast.statement_declaration(var_decl)
+    }
+}
+
+pub struct NamedImport<'a> {
+    imported: Atom<'a>,
+    local: Option<Atom<'a>>, // Not used in `require`
+    symbol_id: SymbolId,
+}
+
+/// Store for `ModuleImports`s to be added to enclosing statement block.
+pub struct ModuleImportsStore<'a> {
+    imports: RefCell<IndexMap<ImportType<'a>, std::vec::Vec<NamedImport<'a>>>>,
+}
+
+impl<'a> ModuleImportsStore<'a> {
+    pub fn new() -> Self {
+        Self { imports: RefCell::new(IndexMap::new()) }
+    }
+}
+
+impl<'a> ModuleImportsStore<'a> {
+    /// Add `import { named_import } from 'source'`
+    pub fn add_import(&self, source: Atom<'a>, import: NamedImport<'a>) {
+        self.imports
+            .borrow_mut()
+            .entry(ImportType::new(ImportKind::Import, source))
+            .or_default()
+            .push(import);
+    }
+
+    /// Add `var named_import from 'source'`
+    pub fn add_require(&self, source: Atom<'a>, import: NamedImport<'a>) {
+        self.imports
+            .borrow_mut()
+            .entry(ImportType::new(ImportKind::Require, source))
+            .or_default()
+            .push(import);
     }
 }
