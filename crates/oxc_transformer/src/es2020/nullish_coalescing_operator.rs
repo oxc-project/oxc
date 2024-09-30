@@ -125,7 +125,7 @@ impl<'a, 'ctx> Traverse<'a> for NullishCoalescingOperator<'a, 'ctx> {
             // `(x) => x;` -> `((x) => x)();`
             new_expr = ctx.ast.expression_call(SPAN, arrow_function, NONE, ctx.ast.vec(), false);
         } else {
-            self.ctx.var_declarations.insert_declarator_binding_pattern(id, None, ctx);
+            self.ctx.var_declarations.insert_binding_pattern(id, None, ctx);
         }
 
         *expr = new_expr;

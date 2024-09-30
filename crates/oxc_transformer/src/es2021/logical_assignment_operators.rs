@@ -359,7 +359,7 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
         let symbol_name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
 
         // var _name;
-        self.ctx.var_declarations.insert_declarator(symbol_name.clone(), symbol_id, None, ctx);
+        self.ctx.var_declarations.insert(symbol_name.clone(), symbol_id, None, ctx);
 
         // _name = name
         Some(ctx.create_reference_id(SPAN, symbol_name, Some(symbol_id), ReferenceFlags::Write))

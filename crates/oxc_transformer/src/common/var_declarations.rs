@@ -82,7 +82,7 @@ impl<'a> VarDeclarationsStore<'a> {
 impl<'a> VarDeclarationsStore<'a> {
     /// Add a `VariableDeclarator` to be inserted at top of current enclosing statement block,
     /// given `name` and `symbol_id`.
-    pub fn insert_declarator(
+    pub fn insert(
         &self,
         name: Atom<'a>,
         symbol_id: SymbolId,
@@ -92,12 +92,12 @@ impl<'a> VarDeclarationsStore<'a> {
         let ident = BindingIdentifier::new_with_symbol_id(SPAN, name, symbol_id);
         let ident = ctx.ast.binding_pattern_kind_from_binding_identifier(ident);
         let ident = ctx.ast.binding_pattern(ident, NONE, false);
-        self.insert_declarator_binding_pattern(ident, init, ctx);
+        self.insert_binding_pattern(ident, init, ctx);
     }
 
     /// Add a `VariableDeclarator` to be inserted at top of current enclosing statement block,
     /// given a `BindingPattern`.
-    pub fn insert_declarator_binding_pattern(
+    pub fn insert_binding_pattern(
         &self,
         ident: BindingPattern<'a>,
         init: Option<Expression<'a>>,
@@ -105,6 +105,11 @@ impl<'a> VarDeclarationsStore<'a> {
     ) {
         let declarator =
             ctx.ast.variable_declarator(SPAN, VariableDeclarationKind::Var, ident, init, false);
+        self.insert_declarator(declarator, ctx);
+    }
+
+    /// Add a `VariableDeclarator` to be inserted at top of current enclosing statement block.
+    pub fn insert_declarator(&self, declarator: VariableDeclarator<'a>, ctx: &mut TraverseCtx<'a>) {
         let mut declarators = self.declarators.borrow_mut();
         declarators.last_mut_or_init(|| ctx.ast.vec()).push(declarator);
     }
