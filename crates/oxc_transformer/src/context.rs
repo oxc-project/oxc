@@ -62,7 +62,7 @@ impl<'a> TransformCtx<'a> {
             source_type,
             source_text,
             trivias,
-            module_imports: ModuleImports::new(allocator),
+            module_imports: ModuleImports::new(),
             var_declarations: VarDeclarationsStore::new(),
         }
     }
