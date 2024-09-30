@@ -6,10 +6,9 @@ use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::TransformCtx;
 
-mod var_declarations;
+pub mod var_declarations;
 
 use var_declarations::VarDeclarations;
-pub use var_declarations::VarDeclarationsStore;
 
 pub struct Common<'a, 'ctx> {
     var_declarations: VarDeclarations<'a, 'ctx>,

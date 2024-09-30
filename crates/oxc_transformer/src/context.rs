@@ -10,7 +10,8 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::SourceType;
 
 use crate::{
-    common::VarDeclarationsStore, helpers::module_imports::ModuleImports, TransformOptions,
+    common::var_declarations::VarDeclarationsStore, helpers::module_imports::ModuleImports,
+    TransformOptions,
 };
 
 pub struct TransformCtx<'a> {
