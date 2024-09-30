@@ -105,28 +105,21 @@ export async function activate(context: ExtensionContext) {
 
     const workspaceFolders = workspace.workspaceFolders;
     if (workspaceFolders) {
-      const checks = workspaceFolders.map(async (folder) => {
-        const binPath = join(
-          folder.uri.fsPath,
-          'node_modules',
-          '.bin',
-          'oxc_language_server',
+      try {
+        return await Promise.any(
+          workspaceFolders.map(async (folder) => {
+            const binPath = join(
+              folder.uri.fsPath,
+              'node_modules',
+              '.bin',
+              'oxc_language_server',
+            );
+
+            await fsPromises.access(binPath);
+            return binPath;
+          }),
         );
-
-        try {
-          await fsPromises.access(binPath);
-          return binPath;
-        } catch {
-          return undefined;
-        }
-      });
-
-      // Wait for all checks and return the first valid path
-      const result = (await Promise.all(checks)).find(
-        (path) => path !== undefined,
-      );
-
-      if (result) return result;
+      } catch {}
     }
 
     const ext = process.platform === 'win32' ? '.exe' : '';
