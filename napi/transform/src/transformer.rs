@@ -113,7 +113,7 @@ fn transpile(ctx: &TransformContext<'_>) -> CodegenReturn {
         ctx.trivias.clone(),
         ctx.oxc_options(),
     )
-    .build_with_symbols_and_scopes(symbols, scopes, &mut ctx.program_mut(), ctx.allocator);
+    .build_with_symbols_and_scopes(symbols, scopes, &mut ctx.program_mut());
 
     ctx.add_diagnostics(ret.errors);
     ctx.codegen().build(&ctx.program())

@@ -55,7 +55,7 @@ fn bench_transformer(criterion: &mut Criterion) {
                         trivias,
                         options,
                     )
-                    .build_with_symbols_and_scopes(symbols, scopes, program, &allocator);
+                    .build_with_symbols_and_scopes(symbols, scopes, program);
 
                     // Return the `TransformerReturn`, so it's dropped outside of the measured section.
                     // `TransformerReturn` contains `ScopeTree` and `SymbolTable` which are costly to drop.

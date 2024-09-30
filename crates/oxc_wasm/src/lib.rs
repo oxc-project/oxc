@@ -249,12 +249,7 @@ impl Oxc {
                     trivias.clone(),
                     options,
                 )
-                .build_with_symbols_and_scopes(
-                    symbols,
-                    scopes,
-                    &mut program,
-                    &allocator,
-                );
+                .build_with_symbols_and_scopes(symbols, scopes, &mut program);
                 if !result.errors.is_empty() {
                     self.save_diagnostics(
                         result.errors.into_iter().map(Error::from).collect::<Vec<_>>(),

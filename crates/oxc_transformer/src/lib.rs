@@ -66,6 +66,7 @@ pub struct TransformerReturn {
 pub struct Transformer<'a> {
     ctx: TransformCtx<'a>,
     options: TransformOptions,
+    allocator: &'a Allocator,
 }
 
 impl<'a> Transformer<'a> {
@@ -79,7 +80,7 @@ impl<'a> Transformer<'a> {
     ) -> Self {
         let ctx =
             TransformCtx::new(allocator, source_path, source_type, source_text, trivias, &options);
-        Self { ctx, options }
+        Self { ctx, options, allocator }
     }
 
     pub fn build_with_symbols_and_scopes(
@@ -87,9 +88,8 @@ impl<'a> Transformer<'a> {
         symbols: SymbolTable,
         scopes: ScopeTree,
         program: &mut Program<'a>,
-        allocator: &'a Allocator,
     ) -> TransformerReturn {
-        let traverse_ctx = TraverseCtx::new(scopes, symbols, allocator);
+        let traverse_ctx = TraverseCtx::new(scopes, symbols, self.allocator);
         let mut transformer = TransformerImpl {
             x0_typescript: TypeScript::new(self.options.typescript, &self.ctx),
             x1_react: React::new(self.options.react, &self.ctx, &traverse_ctx),

@@ -214,7 +214,7 @@ pub trait CompilerInterface {
         scopes: ScopeTree,
     ) -> TransformerReturn {
         Transformer::new(allocator, source_path, source_type, source_text, trivias.clone(), options)
-            .build_with_symbols_and_scopes(symbols, scopes, program, allocator)
+            .build_with_symbols_and_scopes(symbols, scopes, program)
     }
 
     fn compress<'a>(
