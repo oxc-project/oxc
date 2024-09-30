@@ -1,4 +1,4 @@
-//! ES2017: Async / Await [WIP]
+//! ES2017: Async / Await \[WIP\]
 //!
 //! This plugin transforms async functions to generator functions.
 //!
