@@ -42,7 +42,7 @@ pub struct TypeScript<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,
 
     annotations: TypeScriptAnnotations<'a, 'ctx>,
-    r#enum: TypeScriptEnum<'a, 'ctx>,
+    r#enum: TypeScriptEnum<'a>,
     namespace: TypeScriptNamespace<'a, 'ctx>,
     module: TypeScriptModule<'a, 'ctx>,
     rewrite_extensions: Option<TypeScriptRewriteExtensions>,
@@ -54,7 +54,7 @@ impl<'a, 'ctx> TypeScript<'a, 'ctx> {
         Self {
             ctx,
             annotations: TypeScriptAnnotations::new(&options, ctx),
-            r#enum: TypeScriptEnum::new(ctx),
+            r#enum: TypeScriptEnum::new(),
             namespace: TypeScriptNamespace::new(&options, ctx),
             module: TypeScriptModule::new(ctx),
             rewrite_extensions: TypeScriptRewriteExtensions::new(&options),

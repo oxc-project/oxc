@@ -4,8 +4,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use oxc_allocator::Allocator;
-use oxc_ast::{AstBuilder, Trivias};
+use oxc_ast::Trivias;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::SourceType;
 
@@ -21,8 +20,6 @@ pub struct TransformCtx<'a> {
     errors: RefCell<Vec<OxcDiagnostic>>,
 
     pub trivias: Trivias,
-
-    pub ast: AstBuilder<'a>,
 
     /// <https://babeljs.io/docs/options#filename>
     pub filename: String,
@@ -45,7 +42,6 @@ pub struct TransformCtx<'a> {
 
 impl<'a> TransformCtx<'a> {
     pub fn new(
-        allocator: &'a Allocator,
         source_path: &Path,
         source_type: SourceType,
         source_text: &'a str,
@@ -62,7 +58,6 @@ impl<'a> TransformCtx<'a> {
 
         Self {
             errors: RefCell::new(vec![]),
-            ast: AstBuilder::new(allocator),
             filename,
             source_path,
             source_type,

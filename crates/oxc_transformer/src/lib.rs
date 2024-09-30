@@ -8,6 +8,8 @@
 //! * <https://babel.dev/docs/presets>
 //! * <https://github.com/microsoft/TypeScript/blob/main/src/compiler/transformer.ts>
 
+use oxc_ast::AstBuilder;
+
 // Core
 mod common;
 mod compiler_assumptions;
@@ -68,6 +70,7 @@ pub struct TransformerReturn {
 pub struct Transformer<'a> {
     ctx: TransformCtx<'a>,
     options: TransformOptions,
+    allocator: &'a Allocator,
 }
 
 impl<'a> Transformer<'a> {
@@ -79,9 +82,8 @@ impl<'a> Transformer<'a> {
         trivias: Trivias,
         options: TransformOptions,
     ) -> Self {
-        let ctx =
-            TransformCtx::new(allocator, source_path, source_type, source_text, trivias, &options);
-        Self { ctx, options }
+        let ctx = TransformCtx::new(source_path, source_type, source_text, trivias, &options);
+        Self { ctx, options, allocator }
     }
 
     pub fn build_with_symbols_and_scopes(
@@ -90,11 +92,12 @@ impl<'a> Transformer<'a> {
         scopes: ScopeTree,
         program: &mut Program<'a>,
     ) -> TransformerReturn {
-        let allocator = self.ctx.ast.allocator;
+        let allocator = self.allocator;
+        let ast_builder = AstBuilder::new(allocator);
 
         let mut transformer = TransformerImpl {
             x0_typescript: TypeScript::new(self.options.typescript, &self.ctx),
-            x1_react: React::new(self.options.react, &self.ctx),
+            x1_react: React::new(self.options.react, ast_builder, &self.ctx),
             x2_es2021: ES2021::new(self.options.es2021, &self.ctx),
             x2_es2020: ES2020::new(self.options.es2020, &self.ctx),
             x2_es2019: ES2019::new(self.options.es2019),
