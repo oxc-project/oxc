@@ -78,8 +78,7 @@ impl<'a> Transformer<'a> {
         trivias: Trivias,
         options: TransformOptions,
     ) -> Self {
-        let ctx =
-            TransformCtx::new(allocator, source_path, source_type, source_text, trivias, &options);
+        let ctx = TransformCtx::new(source_path, source_type, source_text, trivias, &options);
         Self { ctx, options, allocator }
     }
 

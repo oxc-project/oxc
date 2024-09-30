@@ -4,7 +4,6 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use oxc_allocator::Allocator;
 use oxc_ast::Trivias;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::SourceType;
@@ -37,7 +36,6 @@ pub struct TransformCtx<'a> {
 
 impl<'a> TransformCtx<'a> {
     pub fn new(
-        allocator: &'a Allocator,
         source_path: &Path,
         source_type: SourceType,
         source_text: &'a str,
