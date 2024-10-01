@@ -3,7 +3,7 @@
 use std::{
     alloc::{self, Layout},
     mem::{align_of, size_of},
-    ptr,
+    ptr, slice,
 };
 
 use assert_unchecked::assert_unchecked;
@@ -185,6 +185,20 @@ pub trait StackCommon<T>: StackCapacity<T> {
             assert_unchecked!(self.end() >= self.start());
             self.end().byte_offset_from(self.start()) as usize
         }
+    }
+
+    /// Get contents of stack as a slice `&[T]`.
+    #[inline]
+    fn as_slice(&self) -> &[T] {
+        // SAFETY: Stack always contains `self.len()` entries, starting at `self.start()`
+        unsafe { slice::from_raw_parts(self.start().as_ptr(), self.len()) }
+    }
+
+    /// Get contents of stack as a mutable slice `&mut [T]`.
+    #[inline]
+    fn as_mut_slice(&mut self) -> &mut [T] {
+        // SAFETY: Stack always contains `self.len()` entries, starting at `self.start()`
+        unsafe { slice::from_raw_parts_mut(self.start().as_ptr(), self.len()) }
     }
 }
 

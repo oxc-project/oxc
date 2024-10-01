@@ -1,6 +1,9 @@
 #![expect(clippy::unnecessary_safety_comment)]
 
-use std::mem::size_of;
+use std::{
+    mem::size_of,
+    ops::{Deref, DerefMut},
+};
 
 use super::{NonNull, StackCapacity, StackCommon};
 
@@ -324,6 +327,18 @@ impl<T> Stack<T> {
     pub fn capacity(&self) -> usize {
         <Self as StackCommon<T>>::capacity(self)
     }
+
+    /// Get contents of stack as a slice `&[T]`.
+    #[inline]
+    pub fn as_slice(&self) -> &[T] {
+        <Self as StackCommon<T>>::as_slice(self)
+    }
+
+    /// Get contents of stack as a mutable slice `&mut [T]`.
+    #[inline]
+    pub fn as_mut_slice(&mut self) -> &mut [T] {
+        <Self as StackCommon<T>>::as_mut_slice(self)
+    }
 }
 
 impl<T> Drop for Stack<T> {
@@ -342,6 +357,22 @@ impl<T> Drop for Stack<T> {
         // Drop the memory
         // SAFETY: Checked above that stack is allocated.
         unsafe { self.deallocate() };
+    }
+}
+
+impl<T> Deref for Stack<T> {
+    type Target = [T];
+
+    #[inline]
+    fn deref(&self) -> &[T] {
+        self.as_slice()
+    }
+}
+
+impl<T> DerefMut for Stack<T> {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut [T] {
+        self.as_mut_slice()
     }
 }
 
