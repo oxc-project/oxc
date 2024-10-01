@@ -157,17 +157,14 @@ impl<'a> PeepholeFoldConstants {
                 Some(ctx.ast.move_expression(&mut expr.argument))
             }
             // `+1` -> `1`
-            UnaryOperator::UnaryPlus => {
-                if expr.argument.is_number() {
-                    Some(ctx.ast.move_expression(&mut expr.argument))
-                } else if let Expression::UnaryExpression(un_expr) = &mut expr.argument {
-                    // handle +-
-                    matches!(un_expr.operator, UnaryOperator::UnaryNegation)
+            UnaryOperator::UnaryPlus => match &expr.argument {
+                Expression::UnaryExpression(unary) => {
+                    matches!(unary.operator, UnaryOperator::UnaryNegation)
                         .then(|| ctx.ast.move_expression(&mut expr.argument))
-                } else {
-                    None
                 }
-            }
+                _ if expr.argument.is_number() => Some(ctx.ast.move_expression(&mut expr.argument)),
+                _ => None,
+            },
             _ => None,
         }
     }
