@@ -220,6 +220,13 @@ strip = "symbols" # Set to `false` for debug information
 debug = false # Set to `true` for debug information
 panic = "abort" # Let it crash and force ourselves to write safe Rust
 
+# Profile used for release mode, but with debugging information for profiling
+# and debugging. Use `cargo build --profile=release-with-debug` to build with this profile.
+[profile.release-with-debug]
+inherits = "release"
+strip = false # Keep debug information in binary
+debug = true # Include maxiumum amount of debug information
+
 # Profile for `cargo coverage`
 [profile.coverage]
 inherits = "release"
