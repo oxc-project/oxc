@@ -162,8 +162,7 @@ impl<'a> InjectGlobalVariables<'a> {
 
         if !dot_defines.is_empty() {
             self.dot_defines = dot_defines;
-            let ctx = TraverseCtx::new(scopes, symbols, self.ast.allocator);
-            (symbols, scopes) = traverse_mut(self, program, ctx);
+            (symbols, scopes) = traverse_mut(self, self.ast.allocator, program, symbols, scopes);
         }
 
         // Step 2: find all the injects that are referenced.

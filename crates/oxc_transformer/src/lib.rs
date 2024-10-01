@@ -88,7 +88,6 @@ impl<'a> Transformer<'a> {
         scopes: ScopeTree,
         program: &mut Program<'a>,
     ) -> TransformerReturn {
-        let traverse_ctx = TraverseCtx::new(scopes, symbols, self.allocator);
         let mut transformer = TransformerImpl {
             x0_typescript: TypeScript::new(self.options.typescript, &self.ctx),
             x1_react: React::new(self.options.react, &self.ctx, &traverse_ctx),
@@ -102,7 +101,8 @@ impl<'a> Transformer<'a> {
             common: Common::new(&self.ctx),
         };
 
-        let (symbols, scopes) = traverse_mut(&mut transformer, program, traverse_ctx);
+        let (symbols, scopes) =
+            traverse_mut(&mut transformer, self.allocator, program, symbols, scopes);
         TransformerReturn { errors: self.ctx.take_errors(), symbols, scopes }
     }
 }
