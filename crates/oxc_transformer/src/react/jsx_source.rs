@@ -59,9 +59,9 @@ impl<'a, 'ctx> ReactJsxSource<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> Traverse<'a> for ReactJsxSource<'a, 'ctx> {
-    fn exit_program(&mut self, program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
+    fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
         if let Some(stmt) = self.get_var_file_name_statement() {
-            program.body.insert(0, stmt);
+            self.ctx.top_level_statements.insert_statement(stmt);
         }
     }
 
@@ -190,7 +190,19 @@ impl<'a, 'ctx> ReactJsxSource<'a, 'ctx> {
         self.ctx.ast.expression_object(SPAN, properties, None)
     }
 
-    pub fn get_var_file_name_statement(&mut self) -> Option<Statement<'a>> {
+    pub fn get_var_file_name_statement(&self) -> Option<Statement<'a>> {
+        let decl = self.get_var_file_name_declarator()?;
+
+        let var_decl = Statement::VariableDeclaration(self.ctx.ast.alloc_variable_declaration(
+            SPAN,
+            VariableDeclarationKind::Var,
+            self.ctx.ast.vec1(decl),
+            false,
+        ));
+        Some(var_decl)
+    }
+
+    pub fn get_var_file_name_declarator(&self) -> Option<VariableDeclarator<'a>> {
         let filename_var = self.filename_var.as_ref()?;
 
         let var_kind = VariableDeclarationKind::Var;
@@ -204,11 +216,9 @@ impl<'a, 'ctx> ReactJsxSource<'a, 'ctx> {
                 .ctx
                 .ast
                 .expression_string_literal(SPAN, self.ctx.source_path.to_string_lossy());
-            let decl = self.ctx.ast.variable_declarator(SPAN, var_kind, id, Some(init), false);
-            self.ctx.ast.vec1(decl)
+            self.ctx.ast.variable_declarator(SPAN, var_kind, id, Some(init), false)
         };
-        let var_decl = self.ctx.ast.alloc_variable_declaration(SPAN, var_kind, decl, false);
-        Some(Statement::VariableDeclaration(var_decl))
+        Some(decl)
     }
 
     fn get_filename_var(&mut self, ctx: &mut TraverseCtx<'a>) -> BoundIdentifier<'a> {

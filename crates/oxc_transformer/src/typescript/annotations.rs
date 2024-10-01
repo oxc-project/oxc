@@ -151,7 +151,7 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
         // Determine if we still have import/export statements, otherwise we
         // need to inject an empty statement (`export {}`) so that the file is
         // still considered a module
-        if no_modules_remaining && some_modules_deleted {
+        if no_modules_remaining && some_modules_deleted && self.ctx.module_imports.is_empty() {
             let export_decl = ModuleDeclaration::ExportNamedDeclaration(
                 self.ctx.ast.plain_export_named_declaration(SPAN, self.ctx.ast.vec(), None),
             );

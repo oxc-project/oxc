@@ -1530,7 +1530,7 @@ after transform: ScopeId(20): [ScopeId(21), ScopeId(22)]
 rebuilt        : ScopeId(13): []
 Symbol reference IDs mismatch:
 after transform: SymbolId(0): [ReferenceId(28), ReferenceId(32), ReferenceId(33), ReferenceId(36), ReferenceId(38), ReferenceId(42), ReferenceId(44), ReferenceId(46)]
-rebuilt        : SymbolId(1): [ReferenceId(24), ReferenceId(28), ReferenceId(31)]
+rebuilt        : SymbolId(0): [ReferenceId(24), ReferenceId(28), ReferenceId(31)]
 
 tasks/coverage/typescript/tests/cases/compiler/capturedLetConstInLoop1.ts
 semantic error: Bindings mismatch:
@@ -5488,7 +5488,7 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(8), ScopeId(9)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Symbol reference IDs mismatch:
 after transform: SymbolId(0): [ReferenceId(6), ReferenceId(15), ReferenceId(16), ReferenceId(18), ReferenceId(21), ReferenceId(22), ReferenceId(24)]
-rebuilt        : SymbolId(1): [ReferenceId(0), ReferenceId(3), ReferenceId(5), ReferenceId(8), ReferenceId(10), ReferenceId(12)]
+rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(3), ReferenceId(5), ReferenceId(8), ReferenceId(10), ReferenceId(12)]
 Reference symbol mismatch:
 after transform: ReferenceId(8): Some("DropdownMenu")
 rebuilt        : ReferenceId(1): None
@@ -21018,7 +21018,7 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Symbol reference IDs mismatch:
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(3), ReferenceId(7), ReferenceId(9), ReferenceId(11), ReferenceId(13)]
-rebuilt        : SymbolId(1): [ReferenceId(0), ReferenceId(2), ReferenceId(3), ReferenceId(6), ReferenceId(8)]
+rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(3), ReferenceId(6), ReferenceId(8)]
 
 tasks/coverage/typescript/tests/cases/compiler/jsxComplexSignatureHasApplicabilityError.tsx
 semantic error: Bindings mismatch:
@@ -21032,7 +21032,7 @@ after transform: ScopeId(6): ["WrappedComponent", "WrappedProps"]
 rebuilt        : ScopeId(1): ["WrappedComponent"]
 Symbol reference IDs mismatch:
 after transform: SymbolId(0): [ReferenceId(17), ReferenceId(19), ReferenceId(44), ReferenceId(50), ReferenceId(54), ReferenceId(82), ReferenceId(85), ReferenceId(88), ReferenceId(102), ReferenceId(180), ReferenceId(195), ReferenceId(206), ReferenceId(209), ReferenceId(233), ReferenceId(236), ReferenceId(240)]
-rebuilt        : SymbolId(1): [ReferenceId(0)]
+rebuilt        : SymbolId(0): [ReferenceId(0)]
 Unresolved references mismatch:
 after transform: ["Array", "Exclude", "HTMLAnchorElement", "HTMLDivElement", "HTMLInputElement", "JSX", "Pick", "Promise", "ReactSelectClass", "undefined"]
 rebuilt        : ["ReactSelectClass", "undefined"]
@@ -21306,7 +21306,7 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 Symbol reference IDs mismatch:
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(6)]
-rebuilt        : SymbolId(1): [ReferenceId(0)]
+rebuilt        : SymbolId(0): [ReferenceId(0)]
 Reference symbol mismatch:
 after transform: ReferenceId(4): Some("Comp")
 rebuilt        : ReferenceId(1): None
@@ -30410,7 +30410,7 @@ after transform: ScopeId(1): ["Inner", "P"]
 rebuilt        : ScopeId(1): ["Inner"]
 Symbol reference IDs mismatch:
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(4), ReferenceId(8)]
-rebuilt        : SymbolId(1): [ReferenceId(0), ReferenceId(1)]
+rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/reactSFCAndFunctionResolvable.tsx
 semantic error: Bindings mismatch:
@@ -30418,7 +30418,7 @@ after transform: ScopeId(0): ["Checkbox", "OtherRadio", "Radio", "RandomComponen
 rebuilt        : ScopeId(0): ["RandomComponent", "React", "_jsxFileName"]
 Symbol reference IDs mismatch:
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(14), ReferenceId(16)]
-rebuilt        : SymbolId(1): [ReferenceId(7), ReferenceId(10)]
+rebuilt        : SymbolId(0): [ReferenceId(7), ReferenceId(10)]
 Reference symbol mismatch:
 after transform: ReferenceId(4): Some("condition1")
 rebuilt        : ReferenceId(0): None
@@ -30450,7 +30450,7 @@ after transform: ScopeId(0): ["React", "Tag", "_jsxFileName", "children", "class
 rebuilt        : ScopeId(0): ["React", "_jsxFileName", "children", "classes", "rest"]
 Symbol reference IDs mismatch:
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(7)]
-rebuilt        : SymbolId(1): [ReferenceId(0)]
+rebuilt        : SymbolId(0): [ReferenceId(0)]
 Reference symbol mismatch:
 after transform: ReferenceId(1): Some("Tag")
 rebuilt        : ReferenceId(1): None
@@ -30464,7 +30464,7 @@ after transform: ScopeId(0): ["React", "Tag", "_jsxFileName", "children", "class
 rebuilt        : ScopeId(0): ["React", "_jsxFileName", "children", "classes", "rest"]
 Symbol reference IDs mismatch:
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(9)]
-rebuilt        : SymbolId(1): [ReferenceId(0)]
+rebuilt        : SymbolId(0): [ReferenceId(0)]
 Reference symbol mismatch:
 after transform: ReferenceId(3): Some("Tag")
 rebuilt        : ReferenceId(1): None
@@ -35341,7 +35341,7 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol reference IDs mismatch:
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(3), ReferenceId(7), ReferenceId(12)]
-rebuilt        : SymbolId(1): [ReferenceId(0)]
+rebuilt        : SymbolId(0): [ReferenceId(0)]
 Unresolved references mismatch:
 after transform: ["Button", "HTMLButtonElement"]
 rebuilt        : ["Button"]

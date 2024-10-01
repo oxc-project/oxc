@@ -106,8 +106,7 @@ pub use super::{
     options::{JsxOptions, JsxRuntime},
 };
 use crate::{
-    helpers::{bindings::BoundIdentifier, module_imports::NamedImport},
-    TransformCtx,
+    common::module_imports::NamedImport, helpers::bindings::BoundIdentifier, TransformCtx,
 };
 
 pub struct ReactJsx<'a, 'ctx> {
@@ -170,6 +169,9 @@ impl<'a, 'ctx> AutomaticScriptBindings<'a, 'ctx> {
         if self.require_create_element.is_none() {
             let source =
                 get_import_source(self.jsx_runtime_importer.as_str(), self.react_importer_len);
+            // We have to insert this `require` above `require("react/jsx-runtime")`
+            // just to pass one of Babel's tests, but the order doesn't actually matter.
+            // TODO(improve-on-babel): Remove this once we don't need our output to match Babel exactly.
             let id = self.add_require_statement("react", source, true, ctx);
             self.require_create_element = Some(id);
         }
@@ -444,8 +446,8 @@ impl<'a, 'ctx> ReactJsx<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> Traverse<'a> for ReactJsx<'a, 'ctx> {
-    fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.add_runtime_imports(program, ctx);
+    fn exit_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.insert_var_file_name_statement(ctx);
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -468,31 +470,26 @@ impl<'a, 'ctx> ReactJsx<'a, 'ctx> {
         self.ctx.ast
     }
 
-    fn add_runtime_imports(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.bindings.is_classic() {
-            if let Some(stmt) = self.jsx_source.get_var_file_name_statement() {
-                program.body.insert(0, stmt);
-            }
-            return;
+    fn insert_var_file_name_statement(&mut self, ctx: &mut TraverseCtx<'a>) {
+        let Some(declarator) = self.jsx_source.get_var_file_name_declarator() else { return };
+
+        // If is a module, add filename statements before `import`s. If script, then after `require`s.
+        // This is the same behavior as Babel.
+        // If in classic mode, then there are no import statements, so it doesn't matter either way.
+        // TODO(improve-on-babel): Simplify this once we don't need to follow Babel exactly.
+        if self.bindings.is_classic() || !self.is_script() {
+            // Insert before imports - add to `top_level_statements` immediately
+            let stmt = Statement::VariableDeclaration(ctx.ast.alloc_variable_declaration(
+                SPAN,
+                VariableDeclarationKind::Var,
+                self.ctx.ast.vec1(declarator),
+                false,
+            ));
+            self.ctx.top_level_statements.insert_statement(stmt);
+        } else {
+            // Insert after imports - add to `var_declarations`, which are inserted after `require` statements
+            self.ctx.var_declarations.insert_declarator(declarator, ctx);
         }
-
-        let imports = self.ctx.module_imports.get_import_statements(ctx);
-        let mut index = program
-            .body
-            .iter()
-            .rposition(|stmt| matches!(stmt, Statement::ImportDeclaration(_)))
-            .map_or(0, |i| i + 1);
-
-        if let Some(stmt) = self.jsx_source.get_var_file_name_statement() {
-            program.body.insert(index, stmt);
-            // If source type is module then we need to add the import statement after the var file name statement
-            // Follow the same behavior as babel
-            if !self.is_script() {
-                index += 1;
-            }
-        }
-
-        program.body.splice(index..index, imports);
     }
 
     fn transform_jsx<'b>(

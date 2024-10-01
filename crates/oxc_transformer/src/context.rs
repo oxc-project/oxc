@@ -11,9 +11,9 @@ use oxc_span::SourceType;
 
 use crate::{
     common::{
-        top_level_statements::TopLevelStatementsStore, var_declarations::VarDeclarationsStore,
+        module_imports::ModuleImportsStore, top_level_statements::TopLevelStatementsStore,
+        var_declarations::VarDeclarationsStore,
     },
-    helpers::module_imports::ModuleImports,
     TransformOptions,
 };
 
@@ -36,7 +36,7 @@ pub struct TransformCtx<'a> {
 
     // Helpers
     /// Manage import statement globally
-    pub module_imports: ModuleImports<'a>,
+    pub module_imports: ModuleImportsStore<'a>,
     /// Manage inserting `var` statements globally
     pub var_declarations: VarDeclarationsStore<'a>,
     /// Manage inserting statements at top of program globally
@@ -68,7 +68,7 @@ impl<'a> TransformCtx<'a> {
             source_type,
             source_text,
             trivias,
-            module_imports: ModuleImports::new(),
+            module_imports: ModuleImportsStore::new(),
             var_declarations: VarDeclarationsStore::new(),
             top_level_statements: TopLevelStatementsStore::new(),
         }

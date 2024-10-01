@@ -67,4 +67,9 @@ impl<'a> TopLevelStatementsStore<'a> {
     pub fn insert_statement(&self, stmt: Statement<'a>) {
         self.stmts.borrow_mut().push(stmt);
     }
+
+    /// Add statements to be inserted at top of program.
+    pub fn insert_statements<I: IntoIterator<Item = Statement<'a>>>(&self, stmts: I) {
+        self.stmts.borrow_mut().extend(stmts);
+    }
 }
