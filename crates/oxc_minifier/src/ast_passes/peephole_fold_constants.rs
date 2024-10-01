@@ -139,7 +139,10 @@ impl<'a> PeepholeFoldConstants {
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         fn is_within_i32_range(x: f64) -> bool {
-            x.is_finite() && x.fract() == 0.0 && x >= f64::from(i32::MIN) && x <= f64::from(i32::MAX)
+            x.is_finite()
+                && x.fract() == 0.0
+                && x >= f64::from(i32::MIN)
+                && x <= f64::from(i32::MAX)
         }
         match expr.operator {
             UnaryOperator::Void => self.try_reduce_void(expr, ctx),
