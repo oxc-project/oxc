@@ -18,10 +18,19 @@ export interface Es2015BindingOptions {
 }
 
 /** TypeScript Isolated Declarations for Standalone DTS Emit */
-export declare function isolatedDeclaration(filename: string, sourceText: string, options: IsolatedDeclarationsOptions): IsolatedDeclarationsResult
+export declare function isolatedDeclaration(filename: string, sourceText: string, options?: IsolatedDeclarationsOptions | undefined | null): IsolatedDeclarationsResult
 
 export interface IsolatedDeclarationsOptions {
-  sourcemap: boolean
+  /**
+   * Do not emit declarations for code that has an @internal annotation in its JSDoc comment.
+   * This is an internal compiler option; use at your own risk, because the compiler does not check that the result is valid.
+   *
+   * Default: `false`
+   *
+   * See <https://www.typescriptlang.org/tsconfig/#stripInternal>
+   */
+  stripInternal?: boolean
+  sourcemap?: boolean
 }
 
 export interface IsolatedDeclarationsResult {
@@ -33,9 +42,9 @@ export interface IsolatedDeclarationsResult {
 /**
  * Configure how TSX and JSX are transformed.
  *
- * @see [@babel/plugin-transform-react-jsx](https://babeljs.io/docs/babel-plugin-transform-react-jsx#options)
+ * @see {@link https://babeljs.io/docs/babel-plugin-transform-react-jsx#options}
  */
-export interface ReactBindingOptions {
+export interface JsxOptions {
   /**
    * Decides which runtime to use.
    *
@@ -50,7 +59,7 @@ export interface ReactBindingOptions {
    *
    * @default false
    *
-   * @see [@babel/plugin-transform-react-jsx-development](https://babeljs.io/docs/babel-plugin-transform-react-jsx-development)
+   * @see {@link https://babeljs.io/docs/babel-plugin-transform-react-jsx-development}
    */
   development?: boolean
   /**
@@ -64,9 +73,11 @@ export interface ReactBindingOptions {
    */
   throwIfNamespace?: boolean
   /**
-   * Enables [@babel/plugin-transform-react-pure-annotations](https://babeljs.io/docs/en/babel-plugin-transform-react-pure-annotations).
+   * Enables `@babel/plugin-transform-react-pure-annotations`.
    *
    * It will mark top-level React method calls as pure for tree shaking.
+   *
+   * @see {@link https://babeljs.io/docs/en/babel-plugin-transform-react-pure-annotations}
    *
    * @default true
    */
@@ -113,11 +124,17 @@ export interface ReactBindingOptions {
    * @default false
    */
   useSpread?: boolean
-  /** Enable react fast refresh transform */
-  refresh?: ReactRefreshBindingOptions
+  /**
+   * Enable React Fast Refresh .
+   *
+   * Conforms to the implementation in {@link https://github.com/facebook/react/tree/main/packages/react-refresh}
+   *
+   * @default false
+   */
+  refresh?: boolean | ReactRefreshOptions
 }
 
-export interface ReactRefreshBindingOptions {
+export interface ReactRefreshOptions {
   /**
    * Specify the identifier of the refresh registration variable.
    *
@@ -135,11 +152,11 @@ export interface ReactRefreshBindingOptions {
 
 export interface SourceMap {
   file?: string
-  mappings?: string
-  names?: Array<string>
+  mappings: string
+  names: Array<string>
   sourceRoot?: string
-  sources?: Array<string | undefined | null>
-  sourcesContent?: Array<string | undefined | null>
+  sources: Array<string>
+  sourcesContent?: Array<string>
   version: number
   x_google_ignoreList?: Array<number>
 }
@@ -171,18 +188,6 @@ export interface TransformOptions {
    */
   cwd?: string
   /**
-   * Force jsx parsing,
-   *
-   * @default false
-   */
-  jsx?: boolean
-  /** Configure how TypeScript is transformed. */
-  typescript?: TypeScriptBindingOptions
-  /** Configure how TSX and JSX are transformed. */
-  react?: ReactBindingOptions
-  /** Enable ES2015 transformations. */
-  es2015?: Es2015BindingOptions
-  /**
    * Enable source map generation.
    *
    * When `true`, the `sourceMap` field of transform result objects will be populated.
@@ -192,6 +197,14 @@ export interface TransformOptions {
    * @see {@link SourceMap}
    */
   sourcemap?: boolean
+  /** Configure how TypeScript is transformed. */
+  typescript?: TypeScriptOptions
+  /** Configure how TSX and JSX are transformed. */
+  jsx?: JsxOptions
+  /** Enable ES2015 transformations. */
+  es2015?: ES2015BindingOptions
+  /** Define Plugin */
+  define?: Record<string, string>
 }
 
 export interface TransformResult {
@@ -234,7 +247,7 @@ export interface TransformResult {
   errors: Array<string>
 }
 
-export interface TypeScriptBindingOptions {
+export interface TypeScriptOptions {
   jsxPragma?: string
   jsxPragmaFrag?: string
   onlyRemoveTypeImports?: boolean
@@ -249,7 +262,7 @@ export interface TypeScriptBindingOptions {
    *
    * @default false
    */
-  declaration?: boolean
+  declaration?: IsolatedDeclarationsOptions
   /**
    * Rewrite or remove TypeScript import/export declaration extensions.
    *

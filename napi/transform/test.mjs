@@ -62,7 +62,7 @@ test(
     return <button onClick={() => setCount(count + 1)}>count is {count}</button>;
   };
 `,
-    { react: { refresh: {} } },
+    { jsx: { refresh: {} } },
   ),
   {
     code: 'var _s = $RefreshSig$();\n' +

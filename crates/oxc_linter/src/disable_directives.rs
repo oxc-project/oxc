@@ -109,9 +109,8 @@ impl<'a> DisableDirectivesBuilder<'a> {
                     self.disable_all_comments.push(comment.span);
                     continue;
                 }
-
                 // `eslint-disable-next-line`
-                if let Some(text) = text.strip_prefix("-next-line") {
+                else if let Some(text) = text.strip_prefix("-next-line") {
                     // Get the span up to the next new line
                     let stop = self.source_text[comment.span.end as usize..]
                         .lines()
@@ -136,9 +135,8 @@ impl<'a> DisableDirectivesBuilder<'a> {
                     }
                     continue;
                 }
-
                 // `eslint-disable-line`
-                if let Some(text) = text.strip_prefix("-line") {
+                else if let Some(text) = text.strip_prefix("-line") {
                     // Get the span between the preceding newline to this comment
                     let start = self.source_text[..=comment.span.start as usize]
                         .lines()
@@ -162,16 +160,19 @@ impl<'a> DisableDirectivesBuilder<'a> {
                     }
                     continue;
                 }
-
-                // `eslint-disable rule-name1, rule-name2`
-                let mut rules = vec![];
-                Self::get_rule_names(text, |rule_name| {
-                    self.disable_start_map.entry(rule_name).or_insert(comment.span.end);
-                    rules.push(rule_name);
-                });
-                self.disable_rule_comments.push(DisableRuleComment { span: comment.span, rules });
-
-                continue;
+                // Remaining text should start with a space, else it's probably a typo of the correct syntax.
+                // Like `eslint-disable-lext-nine` where `text` is `-lext-nine`, or directive is `eslint-disablefoo`
+                else if text.starts_with(' ') {
+                    // `eslint-disable rule-name1, rule-name2`
+                    let mut rules = vec![];
+                    Self::get_rule_names(text, |rule_name| {
+                        self.disable_start_map.entry(rule_name).or_insert(comment.span.end);
+                        rules.push(rule_name);
+                    });
+                    self.disable_rule_comments
+                        .push(DisableRuleComment { span: comment.span, rules });
+                    continue;
+                }
             }
 
             if let Some(text) =
@@ -341,6 +342,99 @@ fn test() {
             debugger;
         "
             ),
+            // Should only match `eslint-enable` comments, not `eslint-enablefoo`
+            format!("
+            /* {prefix}-disable */
+                debugger;
+            /* {prefix}-enablefoo */
+                debugger;
+            "
+            ),
+            format!("
+            /* {prefix}-disable no-debugger, no-console */
+                debugger;
+            /* {prefix}-enablefoo no-debugger, no-console */
+                debugger;
+            "
+            ),
+            // Handles no spaces in comment
+            format!(
+                "debugger; //{prefix}-disable-line
+            debugger; //{prefix}-disable-line
+
+            //{prefix}-disable-next-line
+            debugger;
+
+            /*{prefix}-disable-next-line*/
+            debugger;
+
+            debugger; /*{prefix}-disable-line*/
+            
+            debugger; //{prefix}-disable-line no-debugger
+
+            //{prefix}-disable-next-line no-debugger
+            debugger;
+
+            debugger; /*{prefix}-disable-line no-debugger*/
+
+            /*{prefix}-disable-next-line no-debugger*/
+            debugger;
+        "
+            ),
+            // Handles extra spaces in comment
+            format!(
+                "debugger; //       {prefix}-disable-line
+            debugger; // \t\t {prefix}-disable-line
+
+            //         {prefix}-disable-next-line
+            debugger;
+
+            /*      {prefix}-disable-next-line        */
+            debugger;
+
+            debugger; /*    {prefix}-disable-line       */
+            
+            debugger; //            {prefix}-disable-line no-debugger
+
+            //          {prefix}-disable-next-line no-debugger
+            debugger;
+
+            debugger; /*     \t   {prefix}-disable-line no-debugger*/
+
+            /*    \t   {prefix}-disable-next-line no-debugger       */
+            debugger;
+        "
+            ),
+            // Extra commas
+            format!(
+                "
+            debugger // {prefix}-disable-line no-debugger,
+            debugger // {prefix}-disable-line ,no-debugger
+            debugger // {prefix}-disable-line no-debugger,,
+            debugger // {prefix}-disable-line ,,no-debugger,,
+            debugger // {prefix}-disable-line ,,no-debugger,,semi,,
+            debugger // {prefix}-disable-line ,,no-debugger,,no-debugger,,
+            debugger // {prefix}-disable-line ,  , ,,no-debugger, , ,
+
+            // {prefix}-disable-next-line no-debugger,
+            debugger
+            // {prefix}-disable-next-line ,no-debugger,
+            debugger
+            // {prefix}-disable-next-line no-debugger,,
+            debugger
+            // {prefix}-disable-next-line ,,no-debugger,,
+            debugger
+            // {prefix}-disable-next-line ,,no-debugger,,semi,,
+            debugger
+            // {prefix}-disable-next-line ,,no-debugger,,no-debugger,,
+            debugger
+            // {prefix}-disable-next-line ,  , ,,no-debugger, , ,
+        "
+            ),
+            format!("
+                /* {prefix}-disable , ,no-debugger, , */
+                debugger;
+            ")
         ];
 
         let fail = vec![
@@ -392,6 +486,127 @@ fn test() {
                 "
             // {prefix}-disable-next-line no-debugger
             debugger;
+            debugger;
+        "
+            ),
+            // Should not match invalid directives
+            // https://github.com/oxc-project/oxc/issues/6041
+            format!(
+                "// {prefix}-disable-lext-nine no-debugger
+                debugger;
+                "
+            ),
+            format!(
+                "// {prefix}-disabled no-debugger
+                debugger;
+                "
+            ),
+            format!(
+                "// {prefix}-disabled
+                debugger;
+                "
+            ),
+            format!(
+                "
+            debugger; // {prefix}-disable-lext-nine no-debugger
+
+            // {prefix}-disable-lext-nine no-debugger
+            debugger;
+
+            debugger; /* {prefix}-disable-lin no-debugger */
+
+            /* {prefix}-disable-next-lin no-debugger */
+            debugger;
+        "
+            ),
+            format!(
+                "debugger; // {prefix}-disable-linefoo
+            debugger; // {prefix}-disable-linefoo
+
+            // {prefix}-disable-next-linefoo
+            debugger;
+
+            /* {prefix}-disable-next-linefoo */
+            debugger;
+
+            debugger; /* {prefix}-disable-linefoo */
+        "
+            ),
+            format!(
+                "
+            /* {prefix}-disable */
+                debugger;
+            /* {prefix}-enable */
+                debugger;
+            "
+            ),
+            format!(
+                "
+            /* {prefix}-disable no-debugger, no-console */
+                debugger;
+            /* {prefix}-enable no-debugger, no-console */
+                debugger;
+            "
+            ),
+            // Handles no spaces in comment
+            format!(
+                "
+            /*{prefix}-disable*/
+                debugger;
+            /*{prefix}-enable*/
+                debugger;
+            "
+            ),
+            format!(
+                "
+            /*{prefix}-disable no-debugger,no-console*/
+                debugger;
+            /*{prefix}-enable no-debugger,no-console*/
+                debugger;
+            "
+            ),
+            format!(
+                "debugger; //{prefix}-disable-line no-alert,quotes,semi
+            //{prefix}-disable-next-line no-alert,quotes,semi
+            debugger;
+            debugger; /*{prefix}-disable-line no-alert,quotes,semi */
+            /*{prefix}-disable-next-line no-alert,quotes,semi */
+            debugger;
+            /*{prefix}-disable-next-line
+no-alert,
+quotes,
+semi*/
+            debugger;
+        "
+            ),
+            // Handles extra spaces in comment
+            format!(
+                "
+            /*   \t\t {prefix}-disable   \t\t*/
+                debugger;
+            /*   \t\t {prefix}-enable   \t\t*/
+                debugger;
+            "
+            ),
+            format!(
+                "
+            /*   \t\t {prefix}-disable    \t\t no-debugger,   \t\t no-console   \t\t */
+                debugger;
+            /*   \t\t {prefix}-enable    \t\t no-debugger,   \t\t no-console   \t\t */
+                debugger;
+            "
+            ),
+            format!(
+                "debugger; //   \t\t {prefix}-disable-line   \t\t  no-alert,   \t\t quotes,   \t\t semi   \t\t 
+            //   \t\t {prefix}-disable-next-line   \t\t  no-alert,   \t\t quotes,   \t\t semi
+            debugger;
+            debugger; /*   \t\t {prefix}-disable-line    \t\t no-alert,   \t\t quotes,   \t\t semi   \t\t  */
+            /*   \t\t {prefix}-disable-next-line   \t\t  no-alert,   \t\t quotes,   \t\t semi */
+            debugger;
+            /*  \t\t {prefix}-disable-next-line
+  \t\t no-alert,  \t\t 
+  \t\t quotes,  \t\t 
+  \t\t semi  \t\t */
             debugger;
         "
             ),

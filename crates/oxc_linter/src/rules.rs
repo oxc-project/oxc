@@ -98,6 +98,7 @@ mod eslint {
     pub mod no_redeclare;
     pub mod no_regex_spaces;
     pub mod no_restricted_globals;
+    pub mod no_return_assign;
     pub mod no_script_url;
     pub mod no_self_assign;
     pub mod no_self_compare;
@@ -109,6 +110,7 @@ mod eslint {
     pub mod no_this_before_super;
     pub mod no_undef;
     pub mod no_undefined;
+    pub mod no_unexpected_multiline;
     pub mod no_unreachable;
     pub mod no_unsafe_finally;
     pub mod no_unsafe_negation;
@@ -411,6 +413,10 @@ mod oxc {
     pub mod uninvoked_array_callback;
 }
 
+mod security {
+    pub mod api_keys;
+}
+
 mod nextjs {
     pub mod google_font_display;
     pub mod google_font_preconnect;
@@ -466,6 +472,7 @@ mod promise {
     pub mod no_new_statics;
     pub mod no_return_in_finally;
     pub mod param_names;
+    pub mod prefer_await_to_callbacks;
     pub mod prefer_await_to_then;
     pub mod spec_only;
     pub mod valid_params;
@@ -560,6 +567,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_redeclare,
     eslint::no_regex_spaces,
     eslint::no_restricted_globals,
+    eslint::no_return_assign,
     eslint::no_script_url,
     eslint::no_self_assign,
     eslint::no_self_compare,
@@ -571,6 +579,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_this_before_super,
     eslint::no_undef,
     eslint::no_undefined,
+    eslint::no_unexpected_multiline,
     eslint::no_unreachable,
     eslint::no_unsafe_finally,
     eslint::no_unsafe_negation,
@@ -754,6 +763,7 @@ oxc_macros::declare_all_lint_rules! {
     promise::no_new_statics,
     promise::no_return_in_finally,
     promise::param_names,
+    promise::prefer_await_to_callbacks,
     promise::prefer_await_to_then,
     promise::spec_only,
     promise::valid_params,
@@ -789,6 +799,7 @@ oxc_macros::declare_all_lint_rules! {
     react_perf::jsx_no_new_array_as_prop,
     react_perf::jsx_no_new_function_as_prop,
     react_perf::jsx_no_new_object_as_prop,
+    security::api_keys,
     tree_shaking::no_side_effects_in_initialization,
     typescript::adjacent_overload_signatures,
     typescript::array_type,

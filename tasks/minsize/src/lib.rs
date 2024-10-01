@@ -1,6 +1,5 @@
 #![allow(clippy::print_stdout, clippy::print_stderr)]
 use std::{
-    collections::HashMap,
     fs::File,
     io::{self, Write},
 };
@@ -13,6 +12,7 @@ use oxc_minifier::{CompressOptions, Minifier, MinifierOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 use oxc_tasks_common::{project_root, TestFile, TestFiles};
+use rustc_hash::FxHashMap;
 
 // #[test]
 // #[cfg(any(coverage, coverage_nightly))]
@@ -28,7 +28,7 @@ pub fn run() -> Result<(), io::Error> {
     let path = project_root().join("tasks/minsize/minsize.snap");
 
     // Data copied from https://github.com/privatenumber/minification-benchmarks
-    let targets = HashMap::<&str, &str>::from_iter([
+    let targets = FxHashMap::<&str, &str>::from_iter([
         ("react.development.js", "23.70 kB"),
         ("moment.js", "59.82 kB"),
         ("jquery.js", "90.07 kB"),
@@ -43,7 +43,7 @@ pub fn run() -> Result<(), io::Error> {
         ("typescript.js", "3.49 MB"),
     ]);
 
-    let gzip_targets = HashMap::<&str, &str>::from_iter([
+    let gzip_targets = FxHashMap::<&str, &str>::from_iter([
         ("react.development.js", "8.54 kB"),
         ("moment.js", "19.33 kB"),
         ("jquery.js", "31.95 kB"),

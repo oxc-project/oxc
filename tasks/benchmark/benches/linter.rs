@@ -30,6 +30,7 @@ fn bench_linter(criterion: &mut Criterion) {
                 let program = allocator.alloc(ret.program);
                 let semantic_ret = SemanticBuilder::new(source_text)
                     .with_trivias(ret.trivias)
+                    .with_build_jsdoc(true)
                     .with_cfg(true)
                     .build_module_record(Path::new(""), program)
                     .build(program);

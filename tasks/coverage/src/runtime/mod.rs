@@ -1,13 +1,13 @@
 use std::{
-    collections::HashSet,
     fs,
     path::{Path, PathBuf},
     time::Duration,
 };
 
 use oxc::{allocator::Allocator, codegen::CodeGenerator, parser::Parser, span::SourceType};
-use oxc_tasks_common::{agent, project_root};
+use oxc_tasks_common::agent;
 use phf::{phf_set, Set};
+use rustc_hash::FxHashSet;
 use serde_json::json;
 
 use crate::{
@@ -19,8 +19,8 @@ use crate::{
 pub const V8_TEST_262_FAILED_TESTS_PATH: &str = "src/runtime/v8_test262.status";
 
 lazy_static::lazy_static! {
-    static ref V8_TEST_262_FAILED_TESTS: HashSet<String> = {
-        let mut set = HashSet::default();
+    static ref V8_TEST_262_FAILED_TESTS: FxHashSet<String> = {
+        let mut set = FxHashSet::default();
         fs::read_to_string(workspace_root().join(V8_TEST_262_FAILED_TESTS_PATH))
             .expect("Failed to read v8_test262.status")
             .lines()
@@ -78,7 +78,7 @@ static SKIP_TEST_CASES: Set<&'static str> = phf_set! {
     "language/eval-code"
 };
 
-const FIXTURES_PATH: &str = "tasks/coverage/test262/test";
+const FIXTURES_PATH: &str = "test262/test";
 
 pub struct CodegenRuntimeTest262Case {
     base: Test262Case,
@@ -87,7 +87,7 @@ pub struct CodegenRuntimeTest262Case {
 
 impl Case for CodegenRuntimeTest262Case {
     fn new(path: PathBuf, code: String) -> Self {
-        Self { base: Test262Case::new(path, code), test_root: project_root().join(FIXTURES_PATH) }
+        Self { base: Test262Case::new(path, code), test_root: workspace_root().join(FIXTURES_PATH) }
     }
 
     fn code(&self) -> &str {

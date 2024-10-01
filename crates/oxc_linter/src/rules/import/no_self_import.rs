@@ -14,14 +14,27 @@ pub struct NoSelfImport;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Forbid a module from importing itself. This can sometimes happen during refactoring.
+    /// Forbids a module from importing itself. This can sometimes happen accidentally,
+    /// especially during refactoring.
     ///
-    /// ### Example
+    /// ### Why is this bad?
     ///
+    /// Importing a module into itself creates a circular dependency, which can cause
+    /// runtime issues, including infinite loops, unresolved imports, or `undefined` values.
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// // foo.js
-    /// import foo from './foo.js'
-    /// const foo = require('./foo')
+    /// import foo from './foo.js';  // Incorrect: module imports itself
+    /// const foo = require('./foo'); // Incorrect: module imports itself
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// // foo.js
+    /// import bar from './bar.js';  // Correct: module imports another module
     /// ```
     NoSelfImport,
     suspicious

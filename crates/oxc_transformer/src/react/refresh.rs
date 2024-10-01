@@ -11,7 +11,7 @@ use rustc_hash::FxHashMap;
 use sha1::{Digest, Sha1};
 
 use super::options::ReactRefreshOptions;
-use crate::context::Ctx;
+use crate::TransformCtx;
 
 /// Parse a string into a `RefreshIdentifierResolver` and convert it into an `Expression`
 #[derive(Debug)]
@@ -94,11 +94,11 @@ impl<'a> RefreshIdentifierResolver<'a> {
 ///
 /// * <https://github.com/facebook/react/issues/16604#issuecomment-528663101>
 /// * <https://github.com/facebook/react/blob/main/packages/react-refresh/src/ReactFreshBabelPlugin.js>
-pub struct ReactRefresh<'a> {
+pub struct ReactRefresh<'a, 'ctx> {
     refresh_reg: RefreshIdentifierResolver<'a>,
     refresh_sig: RefreshIdentifierResolver<'a>,
     emit_full_signatures: bool,
-    ctx: Ctx<'a>,
+    ctx: &'ctx TransformCtx<'a>,
     // States
     registrations: Vec<(SymbolId, Atom<'a>)>,
     signature_declarator_items: Vec<oxc_allocator::Vec<'a, VariableDeclarator<'a>>>,
@@ -111,11 +111,15 @@ pub struct ReactRefresh<'a> {
     non_builtin_hooks_callee: FxHashMap<ScopeId, Vec<Option<Expression<'a>>>>,
 }
 
-impl<'a> ReactRefresh<'a> {
-    pub fn new(options: &ReactRefreshOptions, ctx: Ctx<'a>) -> Self {
+impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
+    pub fn new(
+        options: &ReactRefreshOptions,
+        ast: AstBuilder<'a>,
+        ctx: &'ctx TransformCtx<'a>,
+    ) -> Self {
         Self {
-            refresh_reg: RefreshIdentifierResolver::parse(&options.refresh_reg, ctx.ast),
-            refresh_sig: RefreshIdentifierResolver::parse(&options.refresh_sig, ctx.ast),
+            refresh_reg: RefreshIdentifierResolver::parse(&options.refresh_reg, ast),
+            refresh_sig: RefreshIdentifierResolver::parse(&options.refresh_sig, ast),
             emit_full_signatures: options.emit_full_signatures,
             signature_declarator_items: Vec::new(),
             registrations: Vec::default(),
@@ -128,7 +132,7 @@ impl<'a> ReactRefresh<'a> {
     }
 }
 
-impl<'a> Traverse<'a> for ReactRefresh<'a> {
+impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         let mut new_statements = ctx.ast.vec_with_capacity(program.body.len());
         for mut statement in program.body.drain(..) {
@@ -173,7 +177,7 @@ impl<'a> Traverse<'a> for ReactRefresh<'a> {
                 Self::create_identifier_reference_from_binding_identifier(&binding_identifier, ctx),
             ));
             arguments.push(ctx.ast.argument_expression(
-                ctx.ast.expression_string_literal(SPAN, self.ctx.ast.atom(&persistent_id)),
+                ctx.ast.expression_string_literal(SPAN, ctx.ast.atom(&persistent_id)),
             ));
             new_statements.push(ctx.ast.statement_expression(
                 SPAN,
@@ -192,9 +196,9 @@ impl<'a> Traverse<'a> for ReactRefresh<'a> {
     fn enter_statements(
         &mut self,
         _stmts: &mut oxc_allocator::Vec<'a, Statement<'a>>,
-        _ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
-        self.signature_declarator_items.push(self.ctx.ast.vec());
+        self.signature_declarator_items.push(ctx.ast.vec());
     }
 
     fn exit_statements(
@@ -315,7 +319,7 @@ impl<'a> Traverse<'a> for ReactRefresh<'a> {
         }
 
         arguments.insert(0, Argument::from(ctx.ast.move_expression(expr)));
-        *expr = self.ctx.ast.expression_call(
+        *expr = ctx.ast.expression_call(
             SPAN,
             Self::create_identifier_reference_from_binding_identifier(&binding_identifier, ctx),
             NONE,
@@ -384,10 +388,11 @@ impl<'a> Traverse<'a> for ReactRefresh<'a> {
         }
 
         if !is_builtin_hook(&hook_name) {
+            // Check if a corresponding binding exists where we emit the signature.
             let (binding_name, is_member_expression) = match &call_expr.callee {
                 Expression::Identifier(ident) => (Some(ident.name.clone()), false),
                 Expression::StaticMemberExpression(member) => {
-                    if let Expression::Identifier(object) = member.get_first_object() {
+                    if let Expression::Identifier(object) = &member.object {
                         (Some(object.name.clone()), true)
                     } else {
                         (None, false)
@@ -410,14 +415,14 @@ impl<'a> Traverse<'a> for ReactRefresh<'a> {
                                 Some(symbol_id),
                                 ReferenceFlags::Read,
                             );
-                            let mut expr = self.ctx.ast.expression_from_identifier_reference(ident);
+                            let mut expr = ctx.ast.expression_from_identifier_reference(ident);
 
                             if is_member_expression {
                                 // binding_name.hook_name
-                                expr = Expression::from(self.ctx.ast.member_expression_static(
+                                expr = Expression::from(ctx.ast.member_expression_static(
                                     SPAN,
                                     expr,
-                                    self.ctx.ast.identifier_name(SPAN, hook_name.clone()),
+                                    ctx.ast.identifier_name(SPAN, hook_name.clone()),
                                     false,
                                 ));
                             }
@@ -455,7 +460,7 @@ impl<'a> Traverse<'a> for ReactRefresh<'a> {
 }
 
 // Internal Methods
-impl<'a> ReactRefresh<'a> {
+impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
     fn create_registration(
         &mut self,
         persistent_id: Atom<'a>,
@@ -633,29 +638,27 @@ impl<'a> ReactRefresh<'a> {
 
         if force_reset || !custom_hooks_in_scope.is_empty() {
             arguments.push(
-                self.ctx.ast.argument_expression(
-                    self.ctx.ast.expression_boolean_literal(SPAN, force_reset),
-                ),
+                ctx.ast.argument_expression(ctx.ast.expression_boolean_literal(SPAN, force_reset)),
             );
         }
 
         if !custom_hooks_in_scope.is_empty() {
             // function () { return custom_hooks_in_scope }
-            let formal_parameters = self.ctx.ast.formal_parameters(
+            let formal_parameters = ctx.ast.formal_parameters(
                 SPAN,
                 FormalParameterKind::FormalParameter,
-                self.ctx.ast.vec(),
+                ctx.ast.vec(),
                 NONE,
             );
-            let function_body = self.ctx.ast.function_body(
+            let function_body = ctx.ast.function_body(
                 SPAN,
-                self.ctx.ast.vec(),
-                self.ctx.ast.vec1(self.ctx.ast.statement_return(
+                ctx.ast.vec(),
+                ctx.ast.vec1(ctx.ast.statement_return(
                     SPAN,
-                    Some(self.ctx.ast.expression_array(SPAN, custom_hooks_in_scope, None)),
+                    Some(ctx.ast.expression_array(SPAN, custom_hooks_in_scope, None)),
                 )),
             );
-            let function = self.ctx.ast.function(
+            let function = ctx.ast.function(
                 FunctionType::FunctionExpression,
                 SPAN,
                 None,
@@ -670,8 +673,7 @@ impl<'a> ReactRefresh<'a> {
             );
             let scope_id = ctx.create_child_scope_of_current(ScopeFlags::Function);
             function.scope_id.set(Some(scope_id));
-            arguments
-                .push(self.ctx.ast.argument_expression(ctx.ast.expression_from_function(function)));
+            arguments.push(ctx.ast.argument_expression(ctx.ast.expression_from_function(function)));
         }
 
         // TODO: Handle var hoisted in ctx API

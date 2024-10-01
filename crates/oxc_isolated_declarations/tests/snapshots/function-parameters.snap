@@ -2,6 +2,7 @@
 source: crates/oxc_isolated_declarations/tests/mod.rs
 input_file: crates/oxc_isolated_declarations/tests/fixtures/function-parameters.ts
 ---
+```
 ==================== .D.TS ====================
 
 export declare function fnDeclGood(p?: T, rParam?: string): void;
@@ -14,6 +15,9 @@ export declare function fnDeclBad2<T>(p: T, r2: T): void;
 export declare function fnDeclBad3<T>(p: T, rParam?: T, r2: T): void;
 export declare function fooBad(): number;
 export declare const fooBad2: () => number;
+export declare function withAny(a: any, b: string): void;
+export declare function withUnknown(a: unknown, b: string): void;
+export declare function withTypeAssertion(a?: any): void;
 
 
 ==================== Errors ====================
@@ -71,3 +75,6 @@ export declare const fooBad2: () => number;
     :                         ^^^^^^^^^^^^^^^^^^^^^^^
  27 |   return 2;
     `----
+
+
+```

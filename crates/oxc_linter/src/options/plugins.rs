@@ -6,6 +6,8 @@ bitflags! {
     // NOTE: may be increased to a u32 if needed
     #[derive(Debug, Clone, Copy, PartialEq, Hash)]
     pub struct LintPlugins: u16 {
+        /// Not really a plugin. Included for completeness.
+        const ESLINT = 0;
         /// `eslint-plugin-react`, plus `eslint-plugin-react-hooks`
         const REACT = 1 << 0;
         /// `eslint-plugin-unicorn`
@@ -32,6 +34,8 @@ bitflags! {
         const PROMISE = 1 << 11;
         /// `eslint-plugin-node`
         const NODE = 1 << 12;
+        /// Custom security rules made by the Oxc team
+        const SECURITY = 1 << 13;
     }
 }
 impl Default for LintPlugins {
@@ -57,6 +61,7 @@ impl From<LintPluginOptions> for LintPlugins {
         plugins.set(LintPlugins::REACT_PERF, options.react_perf);
         plugins.set(LintPlugins::PROMISE, options.promise);
         plugins.set(LintPlugins::NODE, options.node);
+        plugins.set(LintPlugins::SECURITY, options.security);
         plugins
     }
 }
@@ -66,6 +71,12 @@ impl LintPlugins {
     #[inline]
     pub fn has_vitest(self) -> bool {
         self.contains(LintPlugins::VITEST)
+    }
+
+    /// Returns `true` if the Jest plugin is enabled.
+    #[inline]
+    pub fn has_jest(self) -> bool {
+        self.contains(LintPlugins::JEST)
     }
 
     /// Returns `true` if Jest or Vitest plugins are enabled.
@@ -100,6 +111,7 @@ impl From<&str> for LintPlugins {
             "react-perf" | "react_perf" => LintPlugins::REACT_PERF,
             "promise" => LintPlugins::PROMISE,
             "node" => LintPlugins::NODE,
+            "security" | "oxc-security" => LintPlugins::SECURITY,
             // "eslint" is not really a plugin, so it's 'empty'. This has the added benefit of
             // making it the default value.
             _ => LintPlugins::empty(),
@@ -123,6 +135,7 @@ impl From<LintPlugins> for &'static str {
             LintPlugins::REACT_PERF => "react-perf",
             LintPlugins::PROMISE => "promise",
             LintPlugins::NODE => "node",
+            LintPlugins::SECURITY => "security",
             _ => "",
         }
     }
@@ -181,6 +194,7 @@ pub struct LintPluginOptions {
     pub react_perf: bool,
     pub promise: bool,
     pub node: bool,
+    pub security: bool,
 }
 
 impl Default for LintPluginOptions {
@@ -199,6 +213,7 @@ impl Default for LintPluginOptions {
             react_perf: false,
             promise: false,
             node: false,
+            security: false,
         }
     }
 }
@@ -221,6 +236,7 @@ impl LintPluginOptions {
             react_perf: false,
             promise: false,
             node: false,
+            security: false,
         }
     }
 
@@ -241,6 +257,7 @@ impl LintPluginOptions {
             react_perf: true,
             promise: true,
             node: true,
+            security: true,
         }
     }
 }
@@ -264,6 +281,7 @@ impl<S: AsRef<str>> FromIterator<(S, bool)> for LintPluginOptions {
                 LintPlugins::REACT_PERF => options.react_perf = enabled,
                 LintPlugins::PROMISE => options.promise = enabled,
                 LintPlugins::NODE => options.node = enabled,
+                LintPlugins::SECURITY => options.security = enabled,
                 _ => {} // ignored
             }
         }
@@ -296,6 +314,7 @@ mod test {
                 && self.react_perf == other.react_perf
                 && self.promise == other.promise
                 && self.node == other.node
+                && self.security == other.security
         }
     }
 
@@ -335,6 +354,7 @@ mod test {
             react_perf: false,
             promise: false,
             node: false,
+            security: false,
         };
         assert_eq!(plugins, expected);
     }

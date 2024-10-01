@@ -411,10 +411,16 @@ impl<'a> Binder<'a> for TSEnumMember<'a> {
 
 impl<'a> Binder<'a> for TSModuleDeclaration<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
+        // do not bind `global` for `declare global { ... }`
+        if matches!(self.kind, TSModuleDeclarationKind::Global) {
+            return;
+        }
+
         // At declaration time a module has no value declaration it is only when a value declaration
         // is made inside a the scope of a module that the symbol is modified
         let ambient = if self.declare { SymbolFlags::Ambient } else { SymbolFlags::None };
-        builder.declare_symbol(
+        // FIXME: insert symbol_id into TSModuleDeclarationName AST node
+        let _symbol_id = builder.declare_symbol(
             self.id.span(),
             self.id.name().as_str(),
             SymbolFlags::NameSpaceModule | ambient,

@@ -40,12 +40,8 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```ts
-    /// function f(a: number, b: number): number {
-    ///     if (a == 0) {
-    ///         return 1
-    ///     } else {
-    ///         return f(a - 1, b + 1)
-    ///     }
+    /// function test(only_used_in_recursion) {
+    ///     return test(only_used_in_recursion);
     /// }
     /// ```
     ///
@@ -238,15 +234,13 @@ fn is_function_maybe_reassigned<'a>(
 // skipping whitespace, commas, finds the next character (exclusive)
 #[allow(clippy::cast_possible_truncation)]
 fn skip_to_next_char(s: &str, start: u32) -> u32 {
-    let mut i = start as usize;
-    while i < s.len() {
-        let c = s.chars().nth(i).unwrap();
+    for (i, c) in s.char_indices().skip(start as usize) {
         if !c.is_whitespace() && c != ',' {
-            break;
+            return i as u32;
         }
-        i += 1;
     }
-    i as u32
+
+    s.len() as u32
 }
 
 #[test]
@@ -405,6 +399,8 @@ fn test() {
                 return a(arg0);
             }
         ",
+        "//¿
+function writeChunks(a,callac){writeChunks(m,callac)}writeChunks(i,{})",
     ];
 
     let fix = vec![

@@ -216,7 +216,9 @@ const builtInSymbols = new Set(
 )
         
 ----------
-const builtInSymbols = new Set(/*#__PURE__*/ Object.getOwnPropertyNames(Symbol).filter((key) => key !== 'arguments' && key !== 'caller'));
+const builtInSymbols = new Set(
+	/*#__PURE__*/ Object.getOwnPropertyNames(Symbol).filter((key) => key !== 'arguments' && key !== 'caller')
+);
 
 ########## 14
 (/* @__PURE__ */ new Foo()).bar();
@@ -231,6 +233,18 @@ const builtInSymbols = new Set(/*#__PURE__*/ Object.getOwnPropertyNames(Symbol).
 (/* @__PURE__ */ Foo()).bar();
 
 ########## 16
+(/* @__PURE__ */ new Foo())['bar']();
+
+----------
+(/* @__PURE__ */ new Foo())['bar']();
+
+########## 17
+(/* @__PURE__ */ Foo())['bar']();
+
+----------
+(/* @__PURE__ */ Foo())['bar']();
+
+########## 18
 
 /* #__NO_SIDE_EFFECTS__ */
 const defineSSRCustomElement = /* @__NO_SIDE_EFFECTS__ */ (
@@ -241,11 +255,11 @@ const defineSSRCustomElement = /* @__NO_SIDE_EFFECTS__ */ (
 };
         
 ----------
-const defineSSRCustomElement = /* #__NO_SIDE_EFFECTS__ */ (options, extraOptions) => {
+const defineSSRCustomElement = /* #__NO_SIDE_EFFECTS__ */ /* @__NO_SIDE_EFFECTS__ */ (options, extraOptions) => {
 	return /* @__PURE__ */ defineCustomElement(options, extraOptions, hydrate);
 };
 
-########## 17
+########## 19
 
 const defineSSRCustomElement = () => {
   return /* @__PURE__ */ /* @__NO_SIDE_EFFECTS__ */ /* #__NO_SIDE_EFFECTS__ */ defineCustomElement(options, extraOptions, hydrate);
@@ -253,5 +267,5 @@ const defineSSRCustomElement = () => {
         
 ----------
 const defineSSRCustomElement = () => {
-	return /* @__PURE__ */ /* @__NO_SIDE_EFFECTS__ */ defineCustomElement(options, extraOptions, hydrate);
+	return /* @__PURE__ */ /* @__NO_SIDE_EFFECTS__ */ /* #__NO_SIDE_EFFECTS__ */ defineCustomElement(options, extraOptions, hydrate);
 };

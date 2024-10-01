@@ -4,12 +4,11 @@ mod plugins;
 
 use std::{convert::From, path::PathBuf};
 
-use filter::LintFilterKind;
 use oxc_diagnostics::Error;
 use rustc_hash::FxHashSet;
 
 pub use allow_warn_deny::AllowWarnDeny;
-pub use filter::{InvalidFilterKind, LintFilter};
+pub use filter::{InvalidFilterKind, LintFilter, LintFilterKind};
 pub use plugins::{LintPluginOptions, LintPlugins};
 
 use crate::{
@@ -179,6 +178,12 @@ impl OxlintOptions {
         self.plugins.node = yes;
         self
     }
+
+    #[must_use]
+    pub fn with_security_plugin(mut self, yes: bool) -> Self {
+        self.plugins.security = yes;
+        self
+    }
 }
 
 impl OxlintOptions {
@@ -287,6 +292,7 @@ impl OxlintOptions {
                 "eslint" | "tree_shaking" => true,
                 "promise" => self.plugins.promise,
                 "node" => self.plugins.node,
+                "security" => self.plugins.security,
                 name => panic!("Unhandled plugin: {name}"),
             })
             .cloned()

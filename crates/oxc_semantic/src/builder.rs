@@ -82,7 +82,7 @@ pub struct SemanticBuilder<'a> {
     // we need the to know the modules we are inside
     // and when we reach a value declaration we set it
     // to value like
-    pub(crate) namespace_stack: Vec<SymbolId>,
+    pub(crate) namespace_stack: Vec<Option<SymbolId>>,
     current_reference_flags: ReferenceFlags,
     pub(crate) hoisting_variables: FxHashMap<ScopeId, FxHashMap<Atom<'a>, SymbolId>>,
 
@@ -145,7 +145,7 @@ impl<'a> SemanticBuilder<'a> {
             module_record: Arc::new(ModuleRecord::default()),
             unused_labels: UnusedLabels::default(),
             build_jsdoc: false,
-            jsdoc: JSDocBuilder::new(source_text, trivias),
+            jsdoc: JSDocBuilder::new(source_text, &trivias),
             stats: None,
             excess_capacity: 0.0,
             check_syntax_error: false,
@@ -157,8 +157,7 @@ impl<'a> SemanticBuilder<'a> {
 
     #[must_use]
     pub fn with_trivias(mut self, trivias: Trivias) -> Self {
-        self.trivias = trivias.clone();
-        self.jsdoc = JSDocBuilder::new(self.source_text, trivias);
+        self.trivias = trivias;
         self
     }
 
@@ -176,8 +175,10 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     /// Enable/disable JSDoc parsing.
+    /// `with_trivias` must be called prior to this call.
     #[must_use]
     pub fn with_build_jsdoc(mut self, yes: bool) -> Self {
+        self.jsdoc = JSDocBuilder::new(self.source_text, &self.trivias);
         self.build_jsdoc = yes;
         self
     }
@@ -1846,8 +1847,9 @@ impl<'a> SemanticBuilder<'a> {
                 let symbol_id = self
                     .scope
                     .get_bindings(self.current_scope_id)
-                    .get(module_declaration.id.name().as_str());
-                self.namespace_stack.push(*symbol_id.unwrap());
+                    .get(module_declaration.id.name().as_str())
+                    .copied();
+                self.namespace_stack.push(symbol_id);
                 self.current_symbol_flags -= SymbolFlags::Export;
             }
             AstKind::TSTypeAliasDeclaration(type_alias_declaration) => {
@@ -2002,20 +2004,21 @@ impl<'a> SemanticBuilder<'a> {
                 }
                 self.current_reference_flags -= ReferenceFlags::Write;
             }
-            AstKind::AssignmentExpression(expr) => {
-                if expr.operator != AssignmentOperator::Assign
-                    || self.is_not_expression_statement_parent()
-                {
-                    self.current_reference_flags -= ReferenceFlags::Read;
-                }
-            }
-            AstKind::ExportNamedDeclaration(_)
+            AstKind::AssignmentExpression(_) | AstKind::ExportNamedDeclaration(_)
             | AstKind::TSTypeQuery(_)
             // Clear the reference flags that are set in AstKind::PropertySignature
             | AstKind::PropertyKey(_) => {
                 self.current_reference_flags = ReferenceFlags::empty();
             }
-            AstKind::AssignmentTarget(_) => self.current_reference_flags -= ReferenceFlags::Write,
+            AstKind::AssignmentTarget(_) =>{
+                // Handle nested assignment targets like `({a: b} = obj)`
+                if !matches!(
+                    self.nodes.parent_kind(self.current_node_id),
+                    Some(AstKind::ObjectAssignmentTarget(_) | AstKind::ArrayAssignmentTarget(_))
+                ) {
+                    self.current_reference_flags -= ReferenceFlags::Write;
+                }
+            },
             AstKind::LabeledStatement(_) => self.unused_labels.mark_unused(self.current_node_id),
             _ => {}
         }
@@ -2023,11 +2026,15 @@ impl<'a> SemanticBuilder<'a> {
 
     fn make_all_namespaces_valuelike(&mut self) {
         for symbol_id in &self.namespace_stack {
+            let Some(symbol_id) = *symbol_id else {
+                continue;
+            };
+
             // Ambient modules cannot be value modules
-            if self.symbols.get_flags(*symbol_id).intersects(SymbolFlags::Ambient) {
+            if self.symbols.get_flags(symbol_id).intersects(SymbolFlags::Ambient) {
                 continue;
             }
-            self.symbols.union_flag(*symbol_id, SymbolFlags::ValueModule);
+            self.symbols.union_flag(symbol_id, SymbolFlags::ValueModule);
         }
     }
 

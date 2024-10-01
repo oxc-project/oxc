@@ -2,12 +2,14 @@
 source: crates/oxc_isolated_declarations/tests/mod.rs
 input_file: crates/oxc_isolated_declarations/tests/fixtures/arrow-function-return-type.ts
 ---
+```
 ==================== .D.TS ====================
 
 declare function A(): unknown;
 declare const B: unknown;
 declare const C: unknown;
 declare const D: () => string;
+declare const E: () => (() => void) | undefined;
 
 
 ==================== Errors ====================
@@ -38,3 +40,6 @@ declare const D: () => string;
     :                    ^
  10 | 
     `----
+
+
+```

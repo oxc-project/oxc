@@ -13,7 +13,7 @@ mod tools;
 
 use std::{fs, path::PathBuf, process::Command, time::Duration};
 
-use oxc_tasks_common::agent;
+use oxc_tasks_common::{agent, project_root};
 use runtime::{CodegenRuntimeTest262Case, V8_TEST_262_FAILED_TESTS_PATH};
 use similar::DiffableStr;
 
@@ -40,10 +40,12 @@ use crate::{
     typescript::{TranspileRunner, TypeScriptCase, TypeScriptSuite, TypeScriptTranspileCase},
 };
 
-/// # Panics
-/// Invalid Project Root
 pub fn workspace_root() -> PathBuf {
-    project_root::get_project_root().unwrap().join("tasks").join("coverage")
+    project_root().join("tasks").join("coverage")
+}
+
+fn snap_root() -> PathBuf {
+    workspace_root().join("snapshots")
 }
 
 #[derive(Debug, Default)]

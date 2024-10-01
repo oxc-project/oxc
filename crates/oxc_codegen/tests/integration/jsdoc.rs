@@ -4,9 +4,19 @@ use crate::snapshot;
 fn comment() {
     let cases = vec![
         r"
+/**
+ * Top level
+ *
+ * @module
+ */
+
 /** This is a description of the foo function. */
 function foo() {
 }
+
+/**
+ * Preserve newline
+ */
 
 /**
  * Represents a book.
@@ -19,6 +29,10 @@ function Book(title, author) {
 
 /** Class representing a point. */
 class Point {
+    /**
+     * Preserve newline
+     */
+
     /**
      * Create a point.
      * @param {number} x - The x value.
@@ -71,7 +85,28 @@ this.Book = function(title) {
     /** The title of the book. */
     this.title = title;
 }
-        ",
+// https://github.com/oxc-project/oxc/issues/6006
+export enum DefinitionKind {
+  /**
+   * Definition is a referenced variable.
+   *
+   * @example defineSomething(foo)
+   */
+  Reference = 'Reference',
+  /**
+   * Definition is a `ObjectExpression`.
+   *
+   * @example defineSomething({ ... })
+   */
+  Object = 'Object',
+  /**
+   * Definition is TypeScript interface.
+   *
+   * @example defineSomething<{ ... }>()
+   */
+  TS = 'TS',
+}
+",
     ];
 
     snapshot("jsodc", &cases);

@@ -35,15 +35,33 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// ### Example
+    /// Importing or exporting names that do not exist in the referenced module
+    /// can lead to runtime errors and confusion. It may suggest that certain
+    /// functionality is available when it is not, making the code harder to
+    /// maintain and understand. This rule helps ensure that your code
+    /// accurately reflects the available exports, improving reliability.
+    ///
+    /// ### Examples
+    ///
     /// Given
     /// ```js
     /// // ./foo.js
-    /// export const foo = "I'm so foo"
+    /// export const foo = "I'm so foo";
     /// ```
     ///
-    /// The following is considered valid:
+    /// Examples of **incorrect** code for this rule:
+    /// ```js
+    /// // ./baz.js
+    /// import { notFoo } from './foo'
     ///
+    /// // ES7 proposal
+    /// export { notFoo as defNotBar } from './foo'
+    ///
+    /// // will follow 'jsnext:main', if available
+    /// import { dontCreateStore } from 'redux'
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
     /// ```js
     /// // ./bar.js
     /// import { foo } from './foo'
@@ -54,19 +72,6 @@ declare_oxc_lint!(
     /// // node_modules without jsnext:main are not analyzed by default
     /// // (import/ignore setting)
     /// import { SomeNonsenseThatDoesntExist } from 'react'
-    /// ```
-    ///
-    /// ...and the following are reported:
-    ///
-    /// ```js
-    /// // ./baz.js
-    /// import { notFoo } from './foo'
-    ///
-    /// // ES7 proposal
-    /// export { notFoo as defNotBar } from './foo'
-    ///
-    /// // will follow 'jsnext:main', if available
-    /// import { dontCreateStore } from 'redux'
     /// ```
     Named,
     correctness

@@ -4,6 +4,88 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.9.9] - 2024-09-27
+
+### Bug Fixes
+
+- bd8f786 linter: Rule and generic filters do not re-configure existing rules (#6087) (DonIsaac)
+- c5cdb4c linter: Disable all rules in a plugin when that plugin gets turned off (#6086) (DonIsaac)
+- 6c855af linter: Only write fix results if source code has changed (#6096) (DonIsaac)
+- 8759528 linter: Category filters not re-configuring already-enabled rules (#6085) (DonIsaac)
+- c2616f7 linter: Fix panic in fixer for `oxc/only-used-in-recursion` (#6070) (camc314)
+- 3da3845 linter: Malformed snippets in `eslint/for-direction` docs (#6060) (DonIsaac)
+- c047d42 linter: `no-useless-escape`: do not crash on backslash character (#6048) (camchenry)
+- 6f76ebe linter: Ignore invalid or partial disable directives (#6045) (camchenry)
+- 09a24cd linter: Fix false positives for generics in `no-unexpected-multiline` (#6039) (camchenry)
+- d05fd20 linter: Newline in type parameters causing false positive in `no-unexpected-multiline` (#6031) (DonIsaac)
+
+### Performance
+
+- f8464a3 linter: `no-magic-numbers` remove redudant checks in `is_array_index` (#6033) (Alexander S.)
+- c16ae60 linter: `jest/prefer-hooks-in-order`: rewrite rule to allocate less and iterate fewer times (#6030) (camchenry)
+
+### Documentation
+
+- a4fdf1b linter: Improve docs for promise rules (#6051) (dalaoshu)
+- 21cdb78 linter: Fix incorrect "bad" example in `only-used-in-recursion` (#6029) (Boshen)
+
+### Refactor
+
+- 1f92d61 linter: `jest/prefer-hooks-in-order`: improve diagnostic messages (#6036) (camchenry)
+
+### Testing
+
+- 55949eb linter: Add `OxlintRules::override_rules` tests (#6081) (DonIsaac)
+- 1a6923a linter: Add filter parsing test cases (#6080) (DonIsaac)
+- 58d333a linter: Add more test cases for disable directives (#6047) (camchenry)
+
+## [0.9.8] - 2024-09-24
+
+### Bug Fixes
+
+- e3c8a12 linter: Fix panic in sort-keys (#6017) (Boshen)
+- 4771492 linter: Fix `import/no_cycle` with `ignoreTypes` (#5995) (Boshen)
+
+### Performance
+
+- 5ae3f36 linter: `no-fallthrough`: Use string matching instead of Regex for default comment pattern (#6008) (camchenry)
+- 2b17003 linter, prettier, diagnostics: Use `FxHashMap` instead of `std::collections::HashMap` (#5993) (camchenry)
+
+## [0.9.7] - 2024-09-23
+
+### Features
+
+- d24985e linter: Add `oxc-security/api-keys` (#5906) (DonIsaac)
+- f9b44c5 linter: Add unicode sets support to `no-useless-escape` rule (#5974) (camchenry)
+- 0f19848 linter: Implement `no-unexpected-multiline` rule (#5911) (camchenry)
+- 16fe383 linter: Implement `no-extend-native` rule (#5867) (Cam McHenry)
+
+### Bug Fixes
+
+- eed9ac7 linter: Include actual span size in `no-regex-spaces` diagnostic (#5957) (camchenry)
+- 40c89c2 linter: Move `promise/avoid-new` to style category (#5961) (DonIsaac)
+
+### Performance
+
+- 608d637 linter: Use `aho-corasick` instead of `regex` for string matching in `jsx-a11y/img-redundant-alt` (#5892) (camchenry)
+- 3148d4b linter: Check file path after checking node kind for `nextjs/no-head-element` (#5868) (Cam McHenry)
+
+### Refactor
+
+- 0a5a4a9 linter: Use parsed patterns for `unicorn/no-hex-escape` (#5985) (camchenry)
+- 2cf2edd linter: Use parsed patterns in `no-empty-character-class` rule (#5980) (camchenry)
+- a9a8e2a linter: Use regex parser in `eslint/no-regex-spaces` (#5952) (camchenry)
+- 05f592b linter: Use parsed patterns in `unicorn/prefer-string-starts-ends-with` (#5949) (camchenry)
+- 3273b64 linter: Use parsed patterns for `unicorn/prefer-string-replace-all` rule (#5943) (camchenry)
+- ba7b01f linter: Add `LinterBuilder` (#5714) (DonIsaac)
+- db4f16a semantic: Call `with_trivias` before `build_with_jsdoc` (#5875) (Boshen)
+- 3d13c6d semantic: Impl `IntoIterator` for `&AstNodes` (#5873) (DonIsaac)
+
+### Testing
+
+- b681c9a linter: Import test cases for `no-empty-character-class` (#5981) (camchenry)
+- 767602b linter: Add regression test for #5227 (#5975) (camchenry)
+
 ## [0.9.6] - 2024-09-18
 
 ### Features

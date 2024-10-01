@@ -14,8 +14,17 @@ pub struct IsolatedDeclarationsResult {
 }
 
 #[napi(object)]
+#[derive(Debug, Default, Clone, Copy)]
 pub struct IsolatedDeclarationsOptions {
-    pub sourcemap: bool,
+    /// Do not emit declarations for code that has an @internal annotation in its JSDoc comment.
+    /// This is an internal compiler option; use at your own risk, because the compiler does not check that the result is valid.
+    ///
+    /// Default: `false`
+    ///
+    /// See <https://www.typescriptlang.org/tsconfig/#stripInternal>
+    pub strip_internal: Option<bool>,
+
+    pub sourcemap: Option<bool>,
 }
 
 /// TypeScript Isolated Declarations for Standalone DTS Emit
@@ -24,28 +33,40 @@ pub struct IsolatedDeclarationsOptions {
 pub fn isolated_declaration(
     filename: String,
     source_text: String,
-    options: IsolatedDeclarationsOptions,
+    options: Option<IsolatedDeclarationsOptions>,
 ) -> IsolatedDeclarationsResult {
     let source_type = SourceType::from_path(&filename).unwrap_or_default().with_typescript(true);
     let allocator = Allocator::default();
+    let options = options.unwrap_or_default();
     let ctx = TransformContext::new(
         &allocator,
         &filename,
         &source_text,
         source_type,
-        Some(TransformOptions { sourcemap: Some(options.sourcemap), ..Default::default() }),
+        Some(&TransformOptions { sourcemap: options.sourcemap, ..Default::default() }),
     );
-    let transformed_ret = build_declarations(&ctx);
+    let transformed_ret = build_declarations(&ctx, options);
 
     IsolatedDeclarationsResult {
         code: transformed_ret.source_text,
-        map: options.sourcemap.then(|| transformed_ret.source_map.map(Into::into)).flatten(),
+        map: options.sourcemap.and_then(|_| transformed_ret.source_map.map(Into::into)),
         errors: ctx.take_and_render_reports(),
     }
 }
 
-pub(crate) fn build_declarations(ctx: &TransformContext<'_>) -> CodegenReturn {
-    let transformed_ret = IsolatedDeclarations::new(ctx.allocator).build(&ctx.program());
+pub(crate) fn build_declarations(
+    ctx: &TransformContext<'_>,
+    options: IsolatedDeclarationsOptions,
+) -> CodegenReturn {
+    let transformed_ret = IsolatedDeclarations::new(
+        ctx.allocator,
+        ctx.source_text(),
+        &ctx.trivias,
+        oxc_isolated_declarations::IsolatedDeclarationsOptions {
+            strip_internal: options.strip_internal.unwrap_or(false),
+        },
+    )
+    .build(&ctx.program());
     ctx.add_diagnostics(transformed_ret.errors);
     ctx.codegen()
         .enable_comment(

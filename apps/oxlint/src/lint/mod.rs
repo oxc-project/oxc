@@ -3,8 +3,8 @@ use std::{env, io::BufWriter, time::Instant};
 use ignore::gitignore::Gitignore;
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
 use oxc_linter::{
-    partial_loader::LINT_PARTIAL_LOADER_EXT, AllowWarnDeny, InvalidFilterKind, LintFilter,
-    LintService, LintServiceOptions, Linter, OxlintOptions,
+    loader::LINT_PARTIAL_LOADER_EXT, AllowWarnDeny, InvalidFilterKind, LintFilter, LintService,
+    LintServiceOptions, Linter, OxlintOptions,
 };
 use oxc_span::VALID_EXTENSIONS;
 
@@ -116,7 +116,8 @@ impl Runner for LintRunner {
             .with_nextjs_plugin(enable_plugins.nextjs_plugin)
             .with_react_perf_plugin(enable_plugins.react_perf_plugin)
             .with_promise_plugin(enable_plugins.promise_plugin)
-            .with_node_plugin(enable_plugins.node_plugin);
+            .with_node_plugin(enable_plugins.node_plugin)
+            .with_security_plugin(enable_plugins.security_plugin);
 
         let linter = match Linter::from_options(lint_options) {
             Ok(lint_service) => lint_service,

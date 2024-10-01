@@ -440,3 +440,276 @@ source: crates/oxc_linter/src/tester.rs
    ·                                        ─
    ╰────
   help: Replace `\` with ``.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character ' '
+   ╭─[no_useless_escape.tsx:1:5]
+ 1 │ "use\ strict";
+   ·     ──
+   ╰────
+  help: Replace `\ ` with ` `.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character 'z'
+   ╭─[no_useless_escape.tsx:1:29]
+ 1 │ ({ foo() { "foo"; "bar"; "ba\z" } })
+   ·                             ──
+   ╰────
+  help: Replace `\z` with `z`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '^'
+   ╭─[no_useless_escape.tsx:1:4]
+ 1 │ /[^\^]/
+   ·    ──
+   ╰────
+  help: Replace `\^` with `^`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '^'
+   ╭─[no_useless_escape.tsx:1:4]
+ 1 │ /[^\^]/u
+   ·    ──
+   ╰────
+  help: Replace `\^` with `^`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '$'
+   ╭─[no_useless_escape.tsx:1:3]
+ 1 │ /[\$]/v
+   ·   ──
+   ╰────
+  help: Replace `\$` with `$`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '&'
+   ╭─[no_useless_escape.tsx:1:3]
+ 1 │ /[\&\&]/v
+   ·   ──
+   ╰────
+  help: Replace `\&` with `&`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '!'
+   ╭─[no_useless_escape.tsx:1:3]
+ 1 │ /[\!\!]/v
+   ·   ──
+   ╰────
+  help: Replace `\!` with `!`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '#'
+   ╭─[no_useless_escape.tsx:1:3]
+ 1 │ /[\#\#]/v
+   ·   ──
+   ╰────
+  help: Replace `\#` with `#`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '%'
+   ╭─[no_useless_escape.tsx:1:3]
+ 1 │ /[\%\%]/v
+   ·   ──
+   ╰────
+  help: Replace `\%` with `%`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '*'
+   ╭─[no_useless_escape.tsx:1:3]
+ 1 │ /[\*\*]/v
+   ·   ──
+   ╰────
+  help: Replace `\*` with `*`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '+'
+   ╭─[no_useless_escape.tsx:1:3]
+ 1 │ /[\+\+]/v
+   ·   ──
+   ╰────
+  help: Replace `\+` with `+`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character ','
+   ╭─[no_useless_escape.tsx:1:3]
+ 1 │ /[\,\,]/v
+   ·   ──
+   ╰────
+  help: Replace `\,` with `,`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '.'
+   ╭─[no_useless_escape.tsx:1:3]
+ 1 │ /[\.\.]/v
+   ·   ──
+   ╰────
+  help: Replace `\.` with `.`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character ':'
+   ╭─[no_useless_escape.tsx:1:3]
+ 1 │ /[\:\:]/v
+   ·   ──
+   ╰────
+  help: Replace `\:` with `:`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character ';'
+   ╭─[no_useless_escape.tsx:1:3]
+ 1 │ /[\;\;]/v
+   ·   ──
+   ╰────
+  help: Replace `\;` with `;`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '<'
+   ╭─[no_useless_escape.tsx:1:3]
+ 1 │ /[\<\<]/v
+   ·   ──
+   ╰────
+  help: Replace `\<` with `<`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '='
+   ╭─[no_useless_escape.tsx:1:3]
+ 1 │ /[\=\=]/v
+   ·   ──
+   ╰────
+  help: Replace `\=` with `=`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '>'
+   ╭─[no_useless_escape.tsx:1:3]
+ 1 │ /[\>\>]/v
+   ·   ──
+   ╰────
+  help: Replace `\>` with `>`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '?'
+   ╭─[no_useless_escape.tsx:1:3]
+ 1 │ /[\?\?]/v
+   ·   ──
+   ╰────
+  help: Replace `\?` with `?`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '@'
+   ╭─[no_useless_escape.tsx:1:3]
+ 1 │ /[\@\@]/v
+   ·   ──
+   ╰────
+  help: Replace `\@` with `@`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '`'
+   ╭─[no_useless_escape.tsx:1:3]
+ 1 │ /[\`\`]/v
+   ·   ──
+   ╰────
+  help: Replace `\`` with ```.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '~'
+   ╭─[no_useless_escape.tsx:1:3]
+ 1 │ /[\~\~]/v
+   ·   ──
+   ╰────
+  help: Replace `\~` with `~`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '^'
+   ╭─[no_useless_escape.tsx:1:4]
+ 1 │ /[^\^\^]/v
+   ·    ──
+   ╰────
+  help: Replace `\^` with `^`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '^'
+   ╭─[no_useless_escape.tsx:1:4]
+ 1 │ /[_\^\^]/v
+   ·    ──
+   ╰────
+  help: Replace `\^` with `^`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '&'
+   ╭─[no_useless_escape.tsx:1:3]
+ 1 │ /[\&\&&\&]/v
+   ·   ──
+   ╰────
+  help: Replace `\&` with `&`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '.'
+   ╭─[no_useless_escape.tsx:1:14]
+ 1 │ /[\p{ASCII}--\.]/v
+   ·              ──
+   ╰────
+  help: Replace `\.` with `.`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '.'
+   ╭─[no_useless_escape.tsx:1:14]
+ 1 │ /[\p{ASCII}&&\.]/v
+   ·              ──
+   ╰────
+  help: Replace `\.` with `.`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '.'
+   ╭─[no_useless_escape.tsx:1:3]
+ 1 │ /[\.--[.&]]/v
+   ·   ──
+   ╰────
+  help: Replace `\.` with `.`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '.'
+   ╭─[no_useless_escape.tsx:1:3]
+ 1 │ /[\.&&[.&]]/v
+   ·   ──
+   ╰────
+  help: Replace `\.` with `.`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '.'
+   ╭─[no_useless_escape.tsx:1:3]
+ 1 │ /[\.--\.--\.]/v
+   ·   ──
+   ╰────
+  help: Replace `\.` with `.`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '.'
+   ╭─[no_useless_escape.tsx:1:7]
+ 1 │ /[\.--\.--\.]/v
+   ·       ──
+   ╰────
+  help: Replace `\.` with `.`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '.'
+   ╭─[no_useless_escape.tsx:1:11]
+ 1 │ /[\.--\.--\.]/v
+   ·           ──
+   ╰────
+  help: Replace `\.` with `.`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '.'
+   ╭─[no_useless_escape.tsx:1:3]
+ 1 │ /[\.&&\.&&\.]/v
+   ·   ──
+   ╰────
+  help: Replace `\.` with `.`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '.'
+   ╭─[no_useless_escape.tsx:1:7]
+ 1 │ /[\.&&\.&&\.]/v
+   ·       ──
+   ╰────
+  help: Replace `\.` with `.`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '.'
+   ╭─[no_useless_escape.tsx:1:11]
+ 1 │ /[\.&&\.&&\.]/v
+   ·           ──
+   ╰────
+  help: Replace `\.` with `.`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '.'
+   ╭─[no_useless_escape.tsx:1:4]
+ 1 │ /[[\.&]--[\.&]]/v
+   ·    ──
+   ╰────
+  help: Replace `\.` with `.`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '.'
+   ╭─[no_useless_escape.tsx:1:11]
+ 1 │ /[[\.&]--[\.&]]/v
+   ·           ──
+   ╰────
+  help: Replace `\.` with `.`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '.'
+   ╭─[no_useless_escape.tsx:1:4]
+ 1 │ /[[\.&]&&[\.&]]/v
+   ·    ──
+   ╰────
+  help: Replace `\.` with `.`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '.'
+   ╭─[no_useless_escape.tsx:1:11]
+ 1 │ /[[\.&]&&[\.&]]/v
+   ·           ──
+   ╰────
+  help: Replace `\.` with `.`.

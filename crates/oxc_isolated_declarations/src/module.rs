@@ -1,4 +1,5 @@
 use oxc_allocator::Box;
+use oxc_allocator::Vec;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 use oxc_span::{Atom, GetSpan, SPAN};
@@ -66,7 +67,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
                     let id = self.ast.binding_pattern(id, type_annotation, false);
                     let declarations =
-                        self.ast.vec1(self.ast.variable_declarator(SPAN, kind, id, None, true));
+                        self.ast.vec1(self.ast.variable_declarator(SPAN, kind, id, None, false));
 
                     Some((
                         Some(self.ast.variable_declaration(
@@ -123,5 +124,26 @@ impl<'a> IsolatedDeclarations<'a> {
                 decl.import_kind,
             ))
         }
+    }
+
+    /// Strip export keyword from ExportNamedDeclaration
+    ///
+    /// ```ts
+    /// export const a = 1;
+    /// export function b() {}
+    /// ```
+    /// to
+    /// ```ts
+    /// const a = 1;
+    /// function b() {}
+    /// ```
+    pub fn strip_export_keyword(&self, stmts: &mut Vec<'a, Statement<'a>>) {
+        stmts.iter_mut().for_each(|stmt| {
+            if let Statement::ExportNamedDeclaration(decl) = stmt {
+                if let Some(declaration) = &mut decl.declaration {
+                    *stmt = Statement::from(self.ast.move_declaration(declaration));
+                }
+            }
+        });
     }
 }

@@ -7,7 +7,7 @@ _default:
   @just --list -u
 
 alias r := ready
-alias c := coverage
+alias c := conformance
 alias f := fix
 alias new-typescript-rule := new-ts-rule
 
@@ -76,8 +76,13 @@ test:
 lint:
   cargo lint -- --deny warnings
 
+[unix]
 doc:
   RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items
+
+[windows]
+doc:
+  $Env:RUSTDOCFLAGS='-D warnings'; cargo doc --no-deps --document-private-items
 
 # Fix all auto-fixable format and lint issues. Make sure your working tree is clean first.
 fix:
@@ -91,7 +96,7 @@ coverage:
   cargo coverage
   cargo run -p oxc_transform_conformance -- --exec
   cargo run -p oxc_prettier_conformance
-  # cargo minsize
+  cargo minsize
 
 conformance *args='':
   cargo coverage -- {{args}}
@@ -175,6 +180,9 @@ new-promise-rule name:
 
 new-vitest-rule name:
     cargo run -p rulegen {{name}} vitest
+
+new-security-rule name:
+    cargo run -p rulegen {{name}} security
 
 clone-submodule dir url sha:
   git clone --depth=1 {{url}} {{dir}} || true

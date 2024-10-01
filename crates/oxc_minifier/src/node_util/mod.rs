@@ -41,10 +41,13 @@ pub trait NodeUtil {
     fn scopes(&self) -> &ScopeTree;
 
     fn is_expression_undefined(&self, expr: &Expression) -> bool {
-        if let Expression::Identifier(ident) = expr {
-            return self.is_identifier_undefined(ident);
-        };
-        false
+        match expr {
+            Expression::Identifier(ident) if self.is_identifier_undefined(ident) => true,
+            Expression::UnaryExpression(e) if e.operator.is_void() && e.argument.is_number() => {
+                true
+            }
+            _ => false,
+        }
     }
 
     fn is_identifier_undefined(&self, ident: &IdentifierReference) -> bool {
@@ -269,9 +272,11 @@ pub trait NodeUtil {
                     None
                 }
             }
-            Expression::BigIntLiteral(_bigint_literal) => {
-                // TODO: evaluate the bigint value
-                None
+            Expression::BigIntLiteral(bigint_literal) => {
+                let value =
+                    self.get_string_bigint_value(bigint_literal.raw.as_str().trim_end_matches('n'));
+                debug_assert!(value.is_some(), "Failed to parse {}", bigint_literal.raw);
+                value
             }
             Expression::BooleanLiteral(bool_literal) => {
                 if bool_literal.value {

@@ -5,7 +5,7 @@ use oxc_allocator::CloneIn;
 use oxc_ast_macros::ast;
 use oxc_span::{cmp::ContentEq, hash::ContentHash};
 #[cfg(feature = "serialize")]
-use ::{serde::Serialize, tsify::Tsify};
+use {serde::Serialize, tsify::Tsify};
 
 use crate::precedence::{GetPrecedence, Precedence};
 
@@ -354,6 +354,10 @@ impl UnaryOperator {
 
     pub fn is_bitwise(self) -> bool {
         matches!(self, Self::BitwiseNot)
+    }
+
+    pub fn is_void(self) -> bool {
+        matches!(self, Self::Void)
     }
 
     pub fn is_keyword(self) -> bool {

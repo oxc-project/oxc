@@ -49,16 +49,40 @@ pub struct SymbolTable {
 }
 
 impl SymbolTable {
+    /// Returns the number of symbols in this table.
     #[inline]
     pub fn len(&self) -> usize {
         self.spans.len()
     }
 
+    /// Returns `true` if this table contains no symbols.
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.spans.is_empty()
     }
 
+    /// Iterate over all symbol IDs in this table.
+    ///
+    /// Use [`ScopeTree::iter_bindings_in`] to only iterate over symbols declared in a specific
+    /// scope.
+    ///
+    /// [`ScopeTree::iter_bindings_in`]: crate::scope::ScopeTree::iter_bindings_in
+    ///
+    /// ## Example
+    ///
+    /// ```
+    /// use oxc_semantic::Semantic;
+    /// let semantic: Semantic<'_> = parse_and_analyze("./foo.js");
+    ///
+    /// let classes = semantic
+    ///     .scopes()
+    ///     .symbol_ids()
+    ///     .filter(|symbol_id| {
+    ///         let flags = semantic.symbols().get_flags(*symbol_id);
+    ///         flags.is_class()
+    ///      })
+    ///      .collect::<Vec<_>>();
+    /// ```
     pub fn symbol_ids(&self) -> impl Iterator<Item = SymbolId> + '_ {
         self.spans.iter_enumerated().map(|(symbol_id, _)| symbol_id)
     }
@@ -69,11 +93,15 @@ impl SymbolTable {
             .find_map(|(symbol, &inner_span)| if inner_span == span { Some(symbol) } else { None })
     }
 
+    /// Get the [`Span`] of the [`AstNode`] declaring a symbol.
+    ///
+    /// [`AstNode`]: crate::node::AstNode
     #[inline]
     pub fn get_span(&self, symbol_id: SymbolId) -> Span {
         self.spans[symbol_id]
     }
 
+    /// Get the identifier name a symbol is bound to.
     #[inline]
     pub fn get_name(&self, symbol_id: SymbolId) -> &str {
         &self.names[symbol_id]
@@ -84,11 +112,15 @@ impl SymbolTable {
         self.names[symbol_id] = name;
     }
 
+    /// Get the [`SymbolFlags`] for a symbol, which describe how the symbol is declared.
+    ///
+    /// To find how a symbol is used, use [`SymbolTable::get_resolved_references`].
     #[inline]
     pub fn get_flags(&self, symbol_id: SymbolId) -> SymbolFlags {
         self.flags[symbol_id]
     }
 
+    /// Get a mutable reference to a symbol's [flags](SymbolFlags).
     #[inline]
     pub fn get_flags_mut(&mut self, symbol_id: SymbolId) -> &mut SymbolFlags {
         &mut self.flags[symbol_id]
@@ -123,6 +155,16 @@ impl SymbolTable {
         self.get_symbol_id_from_span(span).map(|symbol_id| self.get_scope_id(symbol_id))
     }
 
+    /// Get the ID of the AST node declaring a symbol.
+    ///
+    /// This node will be a [`VariableDeclaration`], [`Function`], or some other AST node
+    /// that _has_ a [`BindingIdentifier`] or a [`BindingPattern`]. It will not point to the
+    /// binding pattern or identifier node itself.
+    ///
+    /// [`VariableDeclaration`]: oxc_ast::ast::VariableDeclaration
+    /// [`Function`]: oxc_ast::ast::Function
+    /// [`BindingIdentifier`]: oxc_ast::ast::BindingIdentifier
+    /// [`BindingPattern`]: oxc_ast::ast::BindingPattern
     #[inline]
     pub fn get_declaration(&self, symbol_id: SymbolId) -> NodeId {
         self.declarations[symbol_id]
@@ -158,6 +200,9 @@ impl SymbolTable {
         self.references.push(reference)
     }
 
+    /// Get a resolved or unresolved reference.
+    ///
+    /// [`ReferenceId`]s can be found in [`IdentifierReference`] and similar nodes.
     #[inline]
     pub fn get_reference(&self, reference_id: ReferenceId) -> &Reference {
         &self.references[reference_id]
@@ -168,16 +213,25 @@ impl SymbolTable {
         &mut self.references[reference_id]
     }
 
+    /// Returns `true` if the corresponding [`Reference`] is resolved to a symbol.
+    ///
+    /// When `false`, this could either be a reference to a global value or an identifier that does
+    /// not exist.
     #[inline]
     pub fn has_binding(&self, reference_id: ReferenceId) -> bool {
         self.references[reference_id].symbol_id().is_some()
     }
 
+    /// Find [`Reference`] ids resolved to a symbol.
+    ///
+    /// If you want direct access to a symbol's [`Reference`]s, use
+    /// [`SymbolTable::get_resolved_references`].
     #[inline]
     pub fn get_resolved_reference_ids(&self, symbol_id: SymbolId) -> &Vec<ReferenceId> {
         &self.resolved_references[symbol_id]
     }
 
+    /// Find [`Reference`]s resolved to a symbol.
     pub fn get_resolved_references(
         &self,
         symbol_id: SymbolId,

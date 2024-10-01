@@ -1,9 +1,10 @@
-use std::{borrow::Cow, collections::HashMap};
+use std::borrow::Cow;
 
 use convert_case::{Case, Casing};
 use itertools::Itertools;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens};
+use rustc_hash::FxHashMap;
 use syn::{parse_quote, Ident};
 
 use super::define_generator;
@@ -135,12 +136,12 @@ struct VisitBuilder<'a> {
 
     visits: Vec<TokenStream>,
     walks: Vec<TokenStream>,
-    cache: HashMap<Ident, [Option<Cow<'a, Ident>>; 2]>,
+    cache: FxHashMap<Ident, [Option<Cow<'a, Ident>>; 2]>,
 }
 
 impl<'a> VisitBuilder<'a> {
     fn new(ctx: &'a LateCtx, is_mut: bool) -> Self {
-        Self { ctx, is_mut, visits: Vec::new(), walks: Vec::new(), cache: HashMap::new() }
+        Self { ctx, is_mut, visits: Vec::new(), walks: Vec::new(), cache: FxHashMap::default() }
     }
 
     fn build(mut self) -> (/* visits */ Vec<TokenStream>, /* walks */ Vec<TokenStream>) {
@@ -172,14 +173,6 @@ impl<'a> VisitBuilder<'a> {
             quote!(AstType::#ident)
         } else {
             quote!(AstKind::#ident(visitor.alloc(it)))
-        }
-    }
-
-    fn get_iter(&self) -> TokenStream {
-        if self.is_mut {
-            quote!(iter_mut)
-        } else {
-            quote!(iter)
         }
     }
 
@@ -262,10 +255,10 @@ impl<'a> VisitBuilder<'a> {
 
         let (walk_body, may_inline) = if collection {
             let singular_visit = self.get_visitor(def, false, None);
-            let iter = self.get_iter();
+            let iter = if self.is_mut { quote!(it.iter_mut()) } else { quote!(it) };
             (
                 quote! {
-                    for el in it.#iter() {
+                    for el in #iter {
                         visitor.#singular_visit(el);
                     }
                 },
@@ -510,7 +503,7 @@ impl<'a> VisitBuilder<'a> {
                         }
                     },
                     TypeWrapper::VecOpt => {
-                        let iter = self.get_iter();
+                        let iter = if self.is_mut { quote!(iter_mut) } else { quote!(iter) };
                         quote! {
                             for #name in it.#name.#iter().flatten() {
                                 visitor.#visit(#name #(#args)*);

@@ -40,6 +40,7 @@ pub struct NoExportsAssign;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Disallows assignment to `exports`.
     ///
     /// ### Why is this bad?

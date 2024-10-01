@@ -247,7 +247,7 @@ This project was incubated with the assistance of these exceptional mentors and 
 
 - [Biome][biome] - [@ematipico](https://github.com/ematipico)
 - [Ruff][ruff] - [@charliermarsh](https://github.com/charliermarsh), [@MichaReiser](https://github.com/MichaReiser)
-- [quick-lint-js](https://quick-lint-js.com) - [@strager](https://github.com/strager)
+- [quick-lint-js](https://github.com/quick-lint/quick-lint-js) - [@strager](https://github.com/strager)
 - [elm-review](https://package.elm-lang.org/packages/jfmengels/elm-review/latest) - [@jfmengels](https://github.com/jfmengels)
 
 Special thanks go to

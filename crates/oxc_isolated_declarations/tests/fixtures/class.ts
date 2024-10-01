@@ -20,11 +20,17 @@ export abstract class Qux {
 }
 
 export class Baz {
-  readonly prop1 = 'some string';
-  prop2 = 'another string';
-  private prop3 = 'yet another string';
+  /** Just a comment */
+  readonly prop1 = "some string";
+  /** Just a comment */
+  prop2 = "another string";
+  /** Just a comment */
+  private prop3 = "yet another string";
+  /** Just a comment */
   private prop4(): void {}
-  private static prop5 = 'yet another string';
+  /** Just a comment */
+  private static prop5 = "yet another string";
+  /** Just a comment */
   private static prop6(): void {}
 }
 
@@ -42,4 +48,24 @@ export class Bux {
     private readonly prop2: number = 1,
     readonly prop3: number = 1,
   ) {}
+}
+
+export class PrivateFieldsWithConstructorAssignments {
+  private second = 0;
+  constructor(public first: number) {}
+}
+
+
+export class PrivateMethodClass {
+  private good(a): void {}
+  private get goodGetter() {
+    return {[('x')]: 1};
+  }
+}
+
+export class PublicMethodClass {
+  public bad(a): void {}
+  public get badGetter() {
+    return {[('x')]: 1};
+  }
 }

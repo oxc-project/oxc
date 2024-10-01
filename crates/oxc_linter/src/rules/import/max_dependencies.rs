@@ -9,11 +9,11 @@ use crate::{context::LintContext, rule::Rule};
 
 fn max_dependencies_diagnostic<S: Into<Cow<'static, str>>>(
     message: S,
-    span1: Span,
+    span: Span,
 ) -> OxcDiagnostic {
     OxcDiagnostic::warn(message)
         .with_help("Reduce the number of dependencies in this file")
-        .with_label(span1)
+        .with_label(span)
 }
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/max-dependencies.md>
@@ -47,19 +47,26 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// This is a useful rule because a module with too many dependencies is a code smell, and
-    /// usually indicates the module is doing too much and/or should be broken up into smaller
-    /// modules.
+    /// This is a useful rule because a module with too many dependencies is a code smell,
+    /// and usually indicates the module is doing too much and/or should be broken up into
+    /// smaller modules.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Given `{"max": 2}`
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// import a from './a';
     /// import b from './b';
-    /// import c from './c';
+    /// import c from './c'; // Too many dependencies: 3 (max: 2)
     /// ```
-
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// import a from './a';
+    /// import b from './b'; // Allowed: 2 dependencies (max: 2)
+    /// ```
     MaxDependencies,
     pedantic,
 );

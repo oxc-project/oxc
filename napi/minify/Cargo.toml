@@ -1,0 +1,37 @@
+[package]
+name = "oxc_minify_napi"
+version = "0.30.3"
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+license.workspace = true
+publish = false
+repository.workspace = true
+rust-version.workspace = true
+description.workspace = true
+
+[lints]
+workspace = true
+
+[lib]
+crate-type = ["cdylib", "lib"]
+test = false
+doctest = false
+
+[dependencies]
+oxc_allocator = { workspace = true }
+oxc_codegen = { workspace = true }
+oxc_minifier = { workspace = true }
+oxc_parser = { workspace = true }
+oxc_span = { workspace = true }
+
+napi = { workspace = true }
+napi-derive = { workspace = true }
+
+[package.metadata.cargo-shear]
+ignored = ["napi"]
+
+[build-dependencies]
+napi-build = { workspace = true }

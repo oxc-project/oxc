@@ -1,3 +1,4 @@
+use aho_corasick::AhoCorasick;
 use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXExpression},
     AstKind,
@@ -5,7 +6,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
-use regex::{Regex, RegexBuilder};
 use serde_json::Value;
 
 use crate::{
@@ -28,7 +28,7 @@ pub struct ImgRedundantAlt(Box<ImgRedundantAltConfig>);
 #[derive(Debug, Clone)]
 pub struct ImgRedundantAltConfig {
     types_to_validate: Vec<CompactStr>,
-    redundant_words: Regex,
+    redundant_words: AhoCorasick,
 }
 
 impl std::ops::Deref for ImgRedundantAlt {
@@ -45,20 +45,24 @@ impl Default for ImgRedundantAltConfig {
     fn default() -> Self {
         Self {
             types_to_validate: vec![CompactStr::new("img")],
-            redundant_words: Self::union(&REDUNDANT_WORDS).unwrap(),
+            redundant_words: AhoCorasick::builder()
+                .ascii_case_insensitive(true)
+                .build(REDUNDANT_WORDS)
+                .expect("Could not build AhoCorasick"),
         }
     }
 }
 impl ImgRedundantAltConfig {
-    fn new(types_to_validate: Vec<&str>, redundant_words: &[&str]) -> Result<Self, regex::Error> {
+    fn new(
+        types_to_validate: Vec<&str>,
+        redundant_words: &[&str],
+    ) -> Result<Self, aho_corasick::BuildError> {
         Ok(Self {
             types_to_validate: types_to_validate.into_iter().map(Into::into).collect(),
-            redundant_words: Self::union(redundant_words)?,
+            redundant_words: AhoCorasick::builder()
+                .ascii_case_insensitive(true)
+                .build(redundant_words)?,
         })
-    }
-
-    fn union(strs: &[&str]) -> Result<Regex, regex::Error> {
-        RegexBuilder::new(&format!(r"(?i)\b({})\b", strs.join("|"))).case_insensitive(true).build()
     }
 }
 
@@ -191,7 +195,13 @@ impl Rule for ImgRedundantAlt {
 impl ImgRedundantAlt {
     #[inline]
     fn is_redundant_alt_text(&self, alt_text: &str) -> bool {
-        self.redundant_words.is_match(alt_text)
+        for mat in self.redundant_words.find_iter(alt_text) {
+            // check if followed by space or is whole text
+            if mat.end() == alt_text.len() || alt_text.as_bytes()[mat.end()] == b' ' {
+                return true;
+            }
+        }
+        false
     }
 }
 

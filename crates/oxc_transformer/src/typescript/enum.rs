@@ -11,16 +11,13 @@ use oxc_syntax::{
 use oxc_traverse::{Traverse, TraverseCtx};
 use rustc_hash::FxHashMap;
 
-use crate::context::Ctx;
-
 pub struct TypeScriptEnum<'a> {
-    ctx: Ctx<'a>,
     enums: FxHashMap<Atom<'a>, FxHashMap<Atom<'a>, ConstantValue>>,
 }
 
 impl<'a> TypeScriptEnum<'a> {
-    pub fn new(ctx: Ctx<'a>) -> Self {
-        Self { ctx, enums: FxHashMap::default() }
+    pub fn new() -> Self {
+        Self { enums: FxHashMap::default() }
     }
 }
 
@@ -262,7 +259,7 @@ impl<'a> TypeScriptEnum<'a> {
                         match constant_value {
                             ConstantValue::Number(v) => {
                                 prev_constant_value = Some(ConstantValue::Number(v));
-                                self.get_initializer_expr(v)
+                                Self::get_initializer_expr(v, ctx)
                             }
                             ConstantValue::String(str) => {
                                 prev_constant_value = None;
@@ -280,7 +277,7 @@ impl<'a> TypeScriptEnum<'a> {
                         let constant_value = ConstantValue::Number(value);
                         prev_constant_value = Some(constant_value.clone());
                         previous_enum_members.insert(member_name.clone(), constant_value);
-                        self.get_initializer_expr(value)
+                        Self::get_initializer_expr(value, ctx)
                     }
                     ConstantValue::String(_) => unreachable!(),
                 }
@@ -292,10 +289,10 @@ impl<'a> TypeScriptEnum<'a> {
                 };
 
                 // 1 + Foo["x"]
-                let one = self.get_number_literal_expression(1.0);
+                let one = Self::get_number_literal_expression(1.0, ctx);
                 ast.expression_binary(SPAN, one, BinaryOperator::Addition, self_ref)
             } else {
-                self.get_number_literal_expression(0.0)
+                Self::get_number_literal_expression(0.0, ctx)
             };
 
             let is_str = init.is_string_literal();
@@ -337,23 +334,23 @@ impl<'a> TypeScriptEnum<'a> {
         statements
     }
 
-    fn get_number_literal_expression(&self, value: f64) -> Expression<'a> {
-        self.ctx.ast.expression_numeric_literal(SPAN, value, value.to_string(), NumberBase::Decimal)
+    fn get_number_literal_expression(value: f64, ctx: &TraverseCtx<'a>) -> Expression<'a> {
+        ctx.ast.expression_numeric_literal(SPAN, value, value.to_string(), NumberBase::Decimal)
     }
 
-    fn get_initializer_expr(&self, value: f64) -> Expression<'a> {
+    fn get_initializer_expr(value: f64, ctx: &TraverseCtx<'a>) -> Expression<'a> {
         let is_negative = value < 0.0;
 
         // Infinity
         let expr = if value.is_infinite() {
-            self.ctx.ast.expression_identifier_reference(SPAN, "Infinity")
+            ctx.ast.expression_identifier_reference(SPAN, "Infinity")
         } else {
             let value = if is_negative { -value } else { value };
-            self.get_number_literal_expression(value)
+            Self::get_number_literal_expression(value, ctx)
         };
 
         if is_negative {
-            self.ctx.ast.expression_unary(SPAN, UnaryOperator::UnaryNegation, expr)
+            ctx.ast.expression_unary(SPAN, UnaryOperator::UnaryNegation, expr)
         } else {
             expr
         }

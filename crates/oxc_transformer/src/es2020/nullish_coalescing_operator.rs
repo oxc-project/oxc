@@ -28,50 +28,26 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/main/packages/babel-plugin-transform-nullish-coalescing-operator>
 //! * Nullish coalescing TC39 proposal: <https://github.com/tc39-transfer/proposal-nullish-coalescing>
 
-use oxc_allocator::{CloneIn, Vec};
+use oxc_allocator::CloneIn;
 use oxc_ast::{ast::*, NONE};
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
-use crate::context::Ctx;
+use crate::TransformCtx;
 
-pub struct NullishCoalescingOperator<'a> {
-    _ctx: Ctx<'a>,
-    var_declarations: std::vec::Vec<Vec<'a, VariableDeclarator<'a>>>,
+pub struct NullishCoalescingOperator<'a, 'ctx> {
+    ctx: &'ctx TransformCtx<'a>,
 }
 
-impl<'a> NullishCoalescingOperator<'a> {
-    pub fn new(ctx: Ctx<'a>) -> Self {
-        Self { _ctx: ctx, var_declarations: vec![] }
+impl<'a, 'ctx> NullishCoalescingOperator<'a, 'ctx> {
+    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
+        Self { ctx }
     }
 }
 
-impl<'a> Traverse<'a> for NullishCoalescingOperator<'a> {
-    fn enter_statements(&mut self, _stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
-        self.var_declarations.push(ctx.ast.vec());
-    }
-
-    fn exit_statements(
-        &mut self,
-        statements: &mut Vec<'a, Statement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if let Some(declarations) = self.var_declarations.pop() {
-            if declarations.is_empty() {
-                return;
-            }
-            let variable = ctx.ast.alloc_variable_declaration(
-                SPAN,
-                VariableDeclarationKind::Var,
-                declarations,
-                false,
-            );
-            statements.insert(0, Statement::VariableDeclaration(variable));
-        }
-    }
-
+impl<'a, 'ctx> Traverse<'a> for NullishCoalescingOperator<'a, 'ctx> {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         // left ?? right
         if !matches!(expr, Expression::LogicalExpression(logical_expr) if logical_expr.operator == LogicalOperator::Coalesce)
@@ -149,18 +125,14 @@ impl<'a> Traverse<'a> for NullishCoalescingOperator<'a> {
             // `(x) => x;` -> `((x) => x)();`
             new_expr = ctx.ast.expression_call(SPAN, arrow_function, NONE, ctx.ast.vec(), false);
         } else {
-            let kind = VariableDeclarationKind::Var;
-            self.var_declarations
-                .last_mut()
-                .unwrap()
-                .push(ctx.ast.variable_declarator(SPAN, kind, id, None, false));
+            self.ctx.var_declarations.insert_binding_pattern(id, None, ctx);
         }
 
         *expr = new_expr;
     }
 }
 
-impl<'a> NullishCoalescingOperator<'a> {
+impl<'a, 'ctx> NullishCoalescingOperator<'a, 'ctx> {
     fn clone_expression(expr: &Expression<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         match expr {
             Expression::Identifier(ident) => ctx.ast.expression_from_identifier_reference(
@@ -219,7 +191,7 @@ impl<'a> NullishCoalescingOperator<'a> {
             SPAN,
             Self::clone_expression(&reference, ctx),
             op,
-            ctx.ast.void_0(),
+            ctx.ast.void_0(SPAN),
         );
         let test = ctx.ast.expression_logical(SPAN, left, LogicalOperator::And, right);
 

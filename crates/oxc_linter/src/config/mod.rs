@@ -76,7 +76,7 @@ mod test {
         }));
         assert!(config.is_ok());
 
-        let Oxlintrc { rules, settings, env, globals } = config.unwrap();
+        let Oxlintrc { rules, settings, env, globals, .. } = config.unwrap();
         assert!(!rules.is_empty());
         assert_eq!(
             settings.jsx_a11y.polymorphic_prop_name.as_ref().map(CompactStr::as_str),

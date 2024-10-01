@@ -100,8 +100,10 @@ bitflags! {
         const Ambient                 = 1 << 19;
 
         const Enum = Self::ConstEnum.bits() | Self::RegularEnum.bits();
-
         const Variable = Self::FunctionScopedVariable.bits() | Self::BlockScopedVariable.bits();
+
+        const BlockScoped = Self::BlockScopedVariable.bits() | Self::Enum.bits() | Self::Class.bits();
+
         const Value = Self::Variable.bits() | Self::Class.bits() | Self::Enum.bits() | Self::EnumMember.bits() | Self::ValueModule.bits();
         const Type =  Self::Class.bits() | Self::Interface.bits() | Self::Enum.bits() | Self::EnumMember.bits() | Self::TypeLiteral.bits() | Self::TypeParameter.bits()  |  Self::TypeAlias.bits();
 
@@ -113,7 +115,7 @@ bitflags! {
         /// they can not merge with anything in the value space
         const BlockScopedVariableExcludes = Self::Value.bits();
 
-        const ClassExcludes = (Self::Value.bits() | Self::TypeAlias.bits()) & !Self::ValueModule.bits() ;
+        const ClassExcludes = (Self::Value.bits() | Self::TypeAlias.bits()) & !(Self::ValueModule.bits() | Self::Interface.bits() | Self::Function.bits());
         const ImportBindingExcludes = Self::Import.bits() | Self::TypeImport.bits();
         // Type specific excludes
         const TypeAliasExcludes = Self::Type.bits();

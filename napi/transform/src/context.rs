@@ -1,5 +1,5 @@
 use std::{
-    cell::{OnceCell, Ref, RefCell, RefMut},
+    cell::{Ref, RefCell, RefMut},
     path::Path,
     sync::Arc,
 };
@@ -11,7 +11,7 @@ use oxc_diagnostics::{Error, NamedSource, OxcDiagnostic};
 use oxc_parser::{Parser, ParserReturn};
 use oxc_span::SourceType;
 
-use crate::TransformOptions;
+use crate::{IsolatedDeclarationsOptions, TransformOptions};
 
 #[must_use]
 pub(crate) struct TransformContext<'a> {
@@ -19,15 +19,12 @@ pub(crate) struct TransformContext<'a> {
     program: RefCell<Program<'a>>,
     pub trivias: Trivias,
 
-    /// Will be initialized if provided to constructor or first accessed.
-    /// Prevents allocations for codegen tasks that don't require options.
-    options: OnceCell<oxc_transformer::TransformOptions>,
     /// Generate source maps?
     source_map: bool,
     /// Generate `.d.ts` files?
     ///
     /// Used by [`crate::transform`].
-    declarations: bool,
+    declarations: Option<IsolatedDeclarationsOptions>,
 
     /// Path to the file being transformed.
     filename: &'a str,
@@ -45,7 +42,7 @@ impl<'a> TransformContext<'a> {
         filename: &'a str,
         source_text: &'a str,
         source_type: SourceType,
-        options: Option<TransformOptions>,
+        options: Option<&TransformOptions>,
     ) -> Self {
         let ParserReturn { errors, program, trivias, .. } =
             Parser::new(allocator, source_text, source_type).parse();
@@ -53,25 +50,14 @@ impl<'a> TransformContext<'a> {
         // Options that are added by this napi crates and don't exist in
         // oxc_transformer.
         let source_map = options.as_ref().and_then(|o| o.sourcemap).unwrap_or_default();
-        let declarations = options
-            .as_ref()
-            .and_then(|o| o.typescript.as_ref())
-            .and_then(|t| t.declaration)
-            .unwrap_or_default();
-
-        // Insert options into the cell if provided. Otherwise they will be
-        // initialized to default when first accessed.
-        let options_cell = OnceCell::new();
-        if let Some(options) = options {
-            options_cell.set(options.into()).unwrap();
-        }
+        let declarations =
+            options.as_ref().and_then(|o| o.typescript.as_ref()).and_then(|t| t.declaration);
 
         Self {
             allocator,
             program: RefCell::new(program),
             trivias,
 
-            options: options_cell,
             source_map,
             declarations,
 
@@ -98,13 +84,8 @@ impl<'a> TransformContext<'a> {
     }
 
     #[inline]
-    pub fn oxc_options(&self) -> oxc_transformer::TransformOptions {
-        self.options.get_or_init(Default::default).clone()
-    }
-
-    #[inline]
-    pub(crate) fn declarations(&self) -> bool {
-        self.declarations
+    pub(crate) fn declarations(&self) -> Option<&IsolatedDeclarationsOptions> {
+        self.declarations.as_ref()
     }
 
     #[inline]

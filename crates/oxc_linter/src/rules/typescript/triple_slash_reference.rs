@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use oxc_ast::{
     ast::{Statement, TSModuleReference},
     AstKind,
@@ -7,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use rustc_hash::FxHashMap;
 
 use crate::{
     context::{ContextHost, LintContext},
@@ -113,7 +112,7 @@ impl Rule for TripleSlashReference {
         // We don't need to iterate over all comments since Triple-slash directives are only valid at the top of their containing file.
         // We are trying to get the first statement start potioin, falling back to the program end if statement does not exist
         let comments_range_end = program.body.first().map_or(program.span.end, |v| v.span().start);
-        let mut refs_for_import = HashMap::new();
+        let mut refs_for_import = FxHashMap::default();
 
         for comment in ctx.semantic().trivias().comments_range(0..comments_range_end) {
             let raw = &ctx.semantic().source_text()

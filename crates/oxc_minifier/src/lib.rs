@@ -7,20 +7,17 @@ mod compressor;
 mod keep_var;
 mod node_util;
 mod options;
-mod plugins;
 mod tri;
 mod ty;
+
+#[cfg(test)]
+mod tester;
 
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 use oxc_mangler::Mangler;
 
-pub use crate::{
-    ast_passes::{CompressorPass, RemoveDeadCode, RemoveSyntax},
-    compressor::Compressor,
-    options::CompressOptions,
-    plugins::*,
-};
+pub use crate::{ast_passes::CompressorPass, compressor::Compressor, options::CompressOptions};
 
 #[derive(Debug, Clone, Copy)]
 pub struct MinifierOptions {

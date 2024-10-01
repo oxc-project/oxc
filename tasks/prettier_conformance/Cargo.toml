@@ -31,4 +31,5 @@ oxc_span = { workspace = true }
 oxc_tasks_common = { workspace = true }
 
 pico-args = { workspace = true }
+rustc-hash = { workspace = true }
 walkdir = { workspace = true }

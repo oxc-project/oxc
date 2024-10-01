@@ -2,6 +2,7 @@
 source: crates/oxc_isolated_declarations/tests/mod.rs
 input_file: crates/oxc_isolated_declarations/tests/fixtures/infer-expression.ts
 ---
+```
 ==================== .D.TS ====================
 
 declare const n: number;
@@ -13,6 +14,7 @@ declare const unaryB = -1_2n;
 declare const unaryC: unknown;
 declare const unaryD: unknown;
 declare const unaryE: {};
+declare const unaryF: readonly [];
 
 
 ==================== Errors ====================
@@ -40,4 +42,15 @@ declare const unaryE: {};
  17 | const unaryD = typeof "str"
  18 | const unaryE = {E: -"str"} as const
     :                    ^^^^^^
+ 19 | const unaryF = [+"str"] as const
     `----
+
+  x TS9013: Expression type can't be inferred with --isolatedDeclarations.
+    ,-[19:17]
+ 18 | const unaryE = {E: -"str"} as const
+ 19 | const unaryF = [+"str"] as const
+    :                 ^^^^^^
+    `----
+
+
+```

@@ -21,7 +21,7 @@ use similar::{ChangeTag, TextDiff};
 use tokio::runtime::Runtime;
 use walkdir::WalkDir;
 
-use crate::{workspace_root, AppArgs, Driver};
+use crate::{snap_root, workspace_root, AppArgs, Driver};
 
 #[derive(Debug, PartialEq)]
 pub enum TestResult {
@@ -265,7 +265,7 @@ pub trait Suite<T: Case> {
             }
         }
 
-        let path = workspace_root().join(format!("{}.snap", name.to_lowercase()));
+        let path = snap_root().join(format!("{}.snap", name.to_lowercase()));
         let out = String::from_utf8(out).unwrap();
         snapshot.save(&path, &out);
         Ok(())

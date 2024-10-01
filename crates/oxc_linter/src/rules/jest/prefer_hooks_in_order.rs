@@ -1,7 +1,7 @@
-use oxc_ast::{ast::CallExpression, AstKind};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNode, ScopeId};
+use oxc_semantic::ScopeId;
 use oxc_span::Span;
 use rustc_hash::FxHashMap;
 
@@ -13,10 +13,13 @@ use crate::{
     },
 };
 
-fn reorder_hooks(x1: &str, x2: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer having hooks in a consistent order.")
-        .with_help(format!("{x1:?} hooks should be before any {x2:?} hooks"))
-        .with_label(span)
+fn reorder_hooks(hook: (&str, Span), previous_hook: (&str, Span)) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Test hooks are not in a consistent order.")
+        .with_help(format!("{:?} hooks should be before any {:?} hooks", hook.0, previous_hook.0))
+        .with_label(
+            hook.1.label(format!("this should be moved to before the {:?} hook", previous_hook.0)),
+        )
+        .and_label(previous_hook.1.label(format!("{:?} hook should be called before this", hook.0)))
 }
 
 #[derive(Debug, Default, Clone)]
@@ -140,60 +143,66 @@ declare_oxc_lint!(
 
 impl Rule for PreferHooksInOrder {
     fn run_once(&self, ctx: &LintContext) {
-        let mut hook_groups: FxHashMap<ScopeId, Vec<AstNode>> = FxHashMap::default();
+        let mut previous_hook_orders: FxHashMap<ScopeId, (u8, Span)> = FxHashMap::default();
 
-        for node in ctx.nodes().iter() {
-            hook_groups.entry(node.scope_id()).or_default().push(*node);
-        }
-
-        for (_, nodes) in hook_groups {
-            let mut previous_hook_index = -1;
-
-            for node in nodes {
-                if let AstKind::CallExpression(call_expr) = node.kind() {
-                    let possible_jest_node = &PossibleJestNode { node: &node, original: None };
-                    Self::check(&mut previous_hook_index, possible_jest_node, call_expr, ctx);
+        for node in ctx.nodes() {
+            if let AstKind::CallExpression(call_expr) = node.kind() {
+                let possible_jest_node = &PossibleJestNode { node, original: None };
+                let Some(ParsedJestFnCallNew::GeneralJest(jest_fn_call)) =
+                    parse_jest_fn_call(call_expr, possible_jest_node, ctx)
+                else {
+                    previous_hook_orders.remove(&node.scope_id());
+                    continue;
                 };
-            }
+
+                if !matches!(jest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Hook)) {
+                    previous_hook_orders.remove(&node.scope_id());
+                    continue;
+                }
+
+                let previous_hook_order = previous_hook_orders.get(&node.scope_id());
+
+                let hook_name = jest_fn_call.name.as_ref();
+                let Some(hook_order) = get_hook_order(hook_name) else {
+                    continue;
+                };
+
+                if let Some((previous_hook_order, previous_hook_span)) = previous_hook_order {
+                    if hook_order < *previous_hook_order {
+                        let Some(previous_hook_name) = get_hook_name(*previous_hook_order) else {
+                            continue;
+                        };
+
+                        ctx.diagnostic(reorder_hooks(
+                            (hook_name, call_expr.span),
+                            (previous_hook_name, *previous_hook_span),
+                        ));
+                        continue;
+                    }
+                }
+                previous_hook_orders.insert(node.scope_id(), (hook_order, call_expr.span));
+            };
         }
     }
 }
 
-impl PreferHooksInOrder {
-    fn check<'a>(
-        previous_hook_index: &mut i32,
-        possible_jest_node: &PossibleJestNode<'a, '_>,
-        call_expr: &'a CallExpression<'_>,
-        ctx: &LintContext<'a>,
-    ) {
-        let Some(ParsedJestFnCallNew::GeneralJest(jest_fn_call)) =
-            parse_jest_fn_call(call_expr, possible_jest_node, ctx)
-        else {
-            *previous_hook_index = -1;
-            return;
-        };
+fn get_hook_order(hook_name: &str) -> Option<u8> {
+    match hook_name {
+        "beforeAll" => Some(0),
+        "beforeEach" => Some(1),
+        "afterEach" => Some(2),
+        "afterAll" => Some(3),
+        _ => None,
+    }
+}
 
-        if !matches!(jest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Hook)) {
-            *previous_hook_index = -1;
-            return;
-        }
-
-        let hook_orders = ["beforeAll", "beforeEach", "afterEach", "afterAll"];
-        let hook_name = jest_fn_call.name;
-        let hook_pos =
-            hook_orders.iter().position(|h| h.eq_ignore_ascii_case(&hook_name)).unwrap_or_default();
-        let previous_hook_pos = usize::try_from(*previous_hook_index).unwrap_or(0);
-
-        if hook_pos < previous_hook_pos {
-            let Some(previous_hook_name) = hook_orders.get(previous_hook_pos) else {
-                return;
-            };
-
-            ctx.diagnostic(reorder_hooks(&hook_name, previous_hook_name, call_expr.span));
-            return;
-        }
-
-        *previous_hook_index = i32::try_from(hook_pos).unwrap_or(-1);
+fn get_hook_name(hook_order: u8) -> Option<&'static str> {
+    match hook_order {
+        0 => Some("beforeAll"),
+        1 => Some("beforeEach"),
+        2 => Some("afterEach"),
+        3 => Some("afterAll"),
+        _ => None,
     }
 }
 

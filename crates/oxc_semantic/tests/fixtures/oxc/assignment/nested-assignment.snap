@@ -1,0 +1,50 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/assignment/nested-assignment.ts
+---
+================================================================================
+SCOPES
+================================================================================
+
+[
+  {
+    "children": [],
+    "flags": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(BlockScopedVariable)",
+        "id": 0,
+        "name": "y",
+        "node": "VariableDeclarator(y)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Write)",
+            "id": 0,
+            "name": "y",
+            "node_id": 10
+          },
+          {
+            "flags": "ReferenceFlags(Write)",
+            "id": 1,
+            "name": "y",
+            "node_id": 23
+          },
+          {
+            "flags": "ReferenceFlags(Write)",
+            "id": 2,
+            "name": "y",
+            "node_id": 40
+          }
+        ]
+      }
+    ]
+  }
+]
+
+================================================================================
+CONFORMANCE
+================================================================================
+
+All tests passed.

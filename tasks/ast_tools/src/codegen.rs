@@ -1,7 +1,8 @@
-use std::{cell::RefCell, collections::HashMap, path::PathBuf};
+use std::{cell::RefCell, path::PathBuf};
 
 use itertools::Itertools;
 use proc_macro2::TokenStream;
+use rustc_hash::{FxBuildHasher, FxHashMap};
 
 use crate::{
     derives::{Derive, DeriveOutput},
@@ -69,7 +70,7 @@ pub trait Runner {
 
 pub struct EarlyCtx {
     ty_table: Vec<AstRef>,
-    ident_table: HashMap<String, TypeId>,
+    ident_table: FxHashMap<String, TypeId>,
     mods: RefCell<Vec<rust_ast::Module>>,
 }
 
@@ -80,7 +81,7 @@ impl EarlyCtx {
         let adts = mods.iter().flat_map(|it| it.items.iter());
 
         let mut ty_table = Vec::with_capacity(len);
-        let mut ident_table = HashMap::with_capacity(len);
+        let mut ident_table = FxHashMap::with_capacity_and_hasher(len, FxBuildHasher);
         for adt in adts {
             if let Some(ident) = adt.borrow().ident() {
                 let ident = ident.to_string();

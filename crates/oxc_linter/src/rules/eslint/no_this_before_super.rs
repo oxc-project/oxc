@@ -1,5 +1,3 @@
-use std::collections::{HashMap, HashSet};
-
 use oxc_ast::{
     ast::{Argument, Expression, MethodDefinitionKind},
     AstKind,
@@ -12,6 +10,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -61,9 +60,10 @@ impl Rule for NoThisBeforeSuper {
 
         // first pass -> find super calls and local violations
         let mut wanted_nodes = Vec::new();
-        let mut basic_blocks_with_super_called = HashSet::<BasicBlockId>::new();
-        let mut basic_blocks_with_local_violations = HashMap::<BasicBlockId, Vec<NodeId>>::new();
-        for node in semantic.nodes().iter() {
+        let mut basic_blocks_with_super_called = FxHashSet::<BasicBlockId>::default();
+        let mut basic_blocks_with_local_violations =
+            FxHashMap::<BasicBlockId, Vec<NodeId>>::default();
+        for node in semantic.nodes() {
             match node.kind() {
                 AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
                     if Self::is_wanted_node(node, ctx).unwrap_or_default() {
@@ -152,8 +152,8 @@ impl NoThisBeforeSuper {
     fn analyze(
         cfg: &ControlFlowGraph,
         id: BasicBlockId,
-        basic_blocks_with_super_called: &HashSet<BasicBlockId>,
-        basic_blocks_with_local_violations: &HashMap<BasicBlockId, Vec<NodeId>>,
+        basic_blocks_with_super_called: &FxHashSet<BasicBlockId>,
+        basic_blocks_with_local_violations: &FxHashMap<BasicBlockId, Vec<NodeId>>,
         follow_join: bool,
     ) -> Vec<DefinitelyCallsThisBeforeSuper> {
         neighbors_filtered_by_edge_weight(
@@ -211,8 +211,8 @@ impl NoThisBeforeSuper {
     fn check_for_violation(
         cfg: &ControlFlowGraph,
         output: Vec<DefinitelyCallsThisBeforeSuper>,
-        basic_blocks_with_super_called: &HashSet<BasicBlockId>,
-        basic_blocks_with_local_violations: &HashMap<BasicBlockId, Vec<NodeId>>,
+        basic_blocks_with_super_called: &FxHashSet<BasicBlockId>,
+        basic_blocks_with_local_violations: &FxHashMap<BasicBlockId, Vec<NodeId>>,
     ) -> bool {
         // Deciding whether we definitely call this before super in all
         // codepaths is as simple as seeing if any individual codepath

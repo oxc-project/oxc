@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use oxc::{
     span::SourceType,
     transformer::{
-        ArrowFunctionsOptions, ES2015Options, ReactJsxRuntime, ReactOptions, TransformOptions,
+        ArrowFunctionsOptions, ES2015Options, JsxOptions, JsxRuntime, TransformOptions,
         TypeScriptOptions,
     },
 };
@@ -50,7 +50,7 @@ fn get_default_transformer_options() -> TransformOptions {
     TransformOptions {
         typescript: TypeScriptOptions::default(),
         es2015: ES2015Options { arrow_function: Some(ArrowFunctionsOptions::default()) },
-        react: ReactOptions {
+        react: JsxOptions {
             jsx_plugin: true,
             jsx_self_plugin: true,
             jsx_source_plugin: true,
@@ -158,7 +158,7 @@ impl Case for TransformerTypeScriptCase {
         // handle @jsx: react, `react` of behavior is match babel following options
         if self.base.settings.jsx.last().is_some_and(|jsx| jsx == "react") {
             source_type = source_type.with_module(true);
-            options.react.runtime = ReactJsxRuntime::Classic;
+            options.react.runtime = JsxRuntime::Classic;
         }
         get_result(self.base.code(), source_type, self.path(), Some(options))
     }

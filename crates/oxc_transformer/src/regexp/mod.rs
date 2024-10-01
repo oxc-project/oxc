@@ -55,13 +55,13 @@ use oxc_semantic::ReferenceFlags;
 use oxc_span::{Atom, SPAN};
 use oxc_traverse::{Traverse, TraverseCtx};
 
-use crate::context::Ctx;
+use crate::TransformCtx;
 
 mod options;
 pub use options::RegExpOptions;
 
-pub struct RegExp<'a> {
-    ctx: Ctx<'a>,
+pub struct RegExp<'a, 'ctx> {
+    ctx: &'ctx TransformCtx<'a>,
     unsupported_flags: RegExpFlags,
     some_unsupported_patterns: bool,
     look_behind_assertions: bool,
@@ -69,8 +69,8 @@ pub struct RegExp<'a> {
     unicode_property_escapes: bool,
 }
 
-impl<'a> RegExp<'a> {
-    pub fn new(options: RegExpOptions, ctx: Ctx<'a>) -> Self {
+impl<'a, 'ctx> RegExp<'a, 'ctx> {
+    pub fn new(options: RegExpOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
         // Get unsupported flags
         let mut unsupported_flags = RegExpFlags::empty();
         if options.dot_all_flag {
@@ -111,7 +111,7 @@ impl<'a> RegExp<'a> {
     }
 }
 
-impl<'a> Traverse<'a> for RegExp<'a> {
+impl<'a, 'ctx> Traverse<'a> for RegExp<'a, 'ctx> {
     fn enter_expression(
         &mut self,
         expr: &mut Expression<'a>,
@@ -190,7 +190,7 @@ impl<'a> Traverse<'a> for RegExp<'a> {
     }
 }
 
-impl<'a> RegExp<'a> {
+impl<'a, 'ctx> RegExp<'a, 'ctx> {
     /// Check if the regular expression contains any unsupported syntax.
     ///
     /// Based on parsed regular expression pattern.

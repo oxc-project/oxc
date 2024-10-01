@@ -15,6 +15,8 @@ use crate::{
     AllowWarnDeny, RuleWithSeverity,
 };
 
+type RuleSet = FxHashSet<RuleWithSeverity>;
+
 // TS type is `Record<string, RuleConf>`
 //   - type SeverityConf = 0 | 1 | 2 | "off" | "warn" | "error";
 //   - type RuleConf = SeverityConf | [SeverityConf, ...any[]];
@@ -50,11 +52,7 @@ impl IntoIterator for OxlintRules {
 
 impl OxlintRules {
     #[allow(clippy::option_if_let_else)]
-    pub(crate) fn override_rules(
-        &self,
-        rules_for_override: &mut FxHashSet<RuleWithSeverity>,
-        all_rules: &[RuleEnum],
-    ) {
+    pub(crate) fn override_rules(&self, rules_for_override: &mut RuleSet, all_rules: &[RuleEnum]) {
         use itertools::Itertools;
         let mut rules_to_replace: Vec<RuleWithSeverity> = vec![];
         let mut rules_to_remove: Vec<RuleWithSeverity> = vec![];
@@ -311,14 +309,20 @@ impl ESLintRule {
 }
 
 #[cfg(test)]
+#[allow(clippy::default_trait_access)]
 mod test {
+    use crate::{
+        rules::{RuleEnum, RULES},
+        AllowWarnDeny, RuleWithSeverity,
+    };
     use serde::Deserialize;
+    use serde_json::{json, Value};
 
-    use super::OxlintRules;
+    use super::{OxlintRules, RuleSet};
 
     #[test]
     fn test_parse_rules() {
-        let rules = OxlintRules::deserialize(&serde_json::json!({
+        let rules = OxlintRules::deserialize(&json!({
             "no-console": "off",
             "foo/no-unused-vars": [1],
             "dummy": ["error", "arg1", "args2"],
@@ -356,5 +360,89 @@ mod test {
     fn test_parse_rules_default() {
         let rules = OxlintRules::default();
         assert!(rules.is_empty());
+    }
+
+    fn r#override(rules: &mut RuleSet, rules_rc: &Value) {
+        let rules_config = OxlintRules::deserialize(rules_rc).unwrap();
+        rules_config.override_rules(rules, &RULES);
+    }
+
+    #[test]
+    fn test_override_empty() {
+        let mut rules = RuleSet::default();
+        let configs = [json!({ "no-console": "error" }), json!({ "eslint/no-console": "error" })];
+
+        for config in configs {
+            rules.clear();
+            r#override(&mut rules, &config);
+
+            assert_eq!(rules.len(), 1, "{config:?}");
+            let rule = rules.iter().next().unwrap();
+            assert_eq!(rule.name(), "no-console", "{config:?}");
+            assert_eq!(rule.severity, AllowWarnDeny::Deny, "{config:?}");
+        }
+    }
+
+    // FIXME
+    #[test]
+    #[should_panic(
+        expected = "eslint rules should be configurable by their typescript-eslint reimplementations:"
+    )]
+    fn test_override_empty_fixme() {
+        let config = json!({ "@typescript-eslint/no-console": "error" });
+        let mut rules = RuleSet::default();
+
+        rules.clear();
+        r#override(&mut rules, &config);
+
+        assert_eq!(rules.len(), 1, "eslint rules should be configurable by their typescript-eslint reimplementations: {config:?}");
+        let rule = rules.iter().next().unwrap();
+        assert_eq!(rule.name(), "no-console", "eslint rules should be configurable by their typescript-eslint reimplementations: {config:?}");
+        assert_eq!(rule.severity, AllowWarnDeny::Deny, "eslint rules should be configurable by their typescript-eslint reimplementations: {config:?}");
+    }
+
+    #[test]
+    fn test_override_allow() {
+        let mut rules = RuleSet::default();
+        rules.insert(RuleWithSeverity {
+            rule: RuleEnum::NoConsole(Default::default()),
+            severity: AllowWarnDeny::Deny,
+        });
+        r#override(&mut rules, &json!({ "eslint/no-console": "off" }));
+
+        assert!(rules.is_empty());
+    }
+
+    #[test]
+    fn test_override_plugin_prefix_duplicates() {
+        let configs = [
+            // json!({ "@typescript-eslint/no-unused-vars": "error" }),
+            json!({ "no-unused-vars": "off", "typescript/no-unused-vars": "error" }),
+            json!({ "no-unused-vars": "off", "@typescript-eslint/no-unused-vars": "error" }),
+        ];
+
+        for config in configs {
+            let mut rules = RuleSet::default();
+            r#override(&mut rules, &config);
+
+            // FIXME: this fails, meaning the behavior with two rules (in different plugins) does
+            // not match the behavior of a single rule in a oxlintrc.
+            // assert_eq!(rules.len(), 1, "{config:?}");
+            // let rule = rules.iter().next().unwrap();
+            // assert_eq!(rule.name(), "no-unused-vars", "{config:?}");
+            // assert_eq!(rule.severity, AllowWarnDeny::Deny, "{config:?}");
+
+            // rules = RuleSet::default();
+            rules.insert(RuleWithSeverity {
+                rule: RuleEnum::NoUnusedVars(Default::default()),
+                severity: AllowWarnDeny::Warn,
+            });
+            r#override(&mut rules, &config);
+
+            assert_eq!(rules.len(), 1, "{config:?}");
+            let rule = rules.iter().next().unwrap();
+            assert_eq!(rule.name(), "no-unused-vars", "{config:?}");
+            assert_eq!(rule.severity, AllowWarnDeny::Warn, "{config:?}");
+        }
     }
 }

@@ -1,3 +1,4 @@
+mod comments;
 mod diagnostics;
 mod display_name;
 mod jsx;
@@ -7,19 +8,19 @@ mod options;
 mod refresh;
 mod utils;
 
-use std::rc::Rc;
-
 use oxc_allocator::Vec;
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, AstBuilder};
 use oxc_traverse::{Traverse, TraverseCtx};
 use refresh::ReactRefresh;
 
 pub use self::{
     display_name::ReactDisplayName,
     jsx::ReactJsx,
-    options::{ReactJsxRuntime, ReactOptions, ReactRefreshOptions},
+    options::{JsxOptions, JsxRuntime, ReactRefreshOptions},
 };
-use crate::context::Ctx;
+use crate::TransformCtx;
+
+pub(crate) use comments::update_options_with_comments;
 
 /// [Preset React](https://babel.dev/docs/babel-preset-react)
 ///
@@ -29,10 +30,10 @@ use crate::context::Ctx;
 /// * [plugin-transform-react-jsx-self](https://babeljs.io/docs/babel-plugin-transform-react-jsx-self)
 /// * [plugin-transform-react-jsx-source](https://babel.dev/docs/babel-plugin-transform-react-jsx-source)
 /// * [plugin-transform-react-display-name](https://babeljs.io/docs/babel-plugin-transform-react-display-name)
-pub struct React<'a> {
-    jsx: ReactJsx<'a>,
-    display_name: ReactDisplayName<'a>,
-    refresh: ReactRefresh<'a>,
+pub struct React<'a, 'ctx> {
+    jsx: ReactJsx<'a, 'ctx>,
+    display_name: ReactDisplayName<'a, 'ctx>,
+    refresh: ReactRefresh<'a, 'ctx>,
     jsx_plugin: bool,
     display_name_plugin: bool,
     jsx_self_plugin: bool,
@@ -41,35 +42,33 @@ pub struct React<'a> {
 }
 
 // Constructors
-impl<'a> React<'a> {
-    pub fn new(mut options: ReactOptions, ctx: Ctx<'a>) -> Self {
+impl<'a, 'ctx> React<'a, 'ctx> {
+    pub fn new(mut options: JsxOptions, ast: AstBuilder<'a>, ctx: &'ctx TransformCtx<'a>) -> Self {
         if options.jsx_plugin || options.development {
-            options.update_with_comments(&ctx);
             options.conform();
         }
-        let ReactOptions {
-            jsx_plugin,
-            display_name_plugin,
-            jsx_self_plugin,
-            jsx_source_plugin,
-            ..
+        let JsxOptions {
+            jsx_plugin, display_name_plugin, jsx_self_plugin, jsx_source_plugin, ..
         } = options;
         let refresh = options.refresh.clone();
         Self {
-            jsx: ReactJsx::new(options, Rc::clone(&ctx)),
-            display_name: ReactDisplayName::new(Rc::clone(&ctx)),
+            jsx: ReactJsx::new(options, ast, ctx),
+            display_name: ReactDisplayName::new(ctx),
             jsx_plugin,
             display_name_plugin,
             jsx_self_plugin,
             jsx_source_plugin,
             refresh_plugin: refresh.is_some(),
-            refresh: ReactRefresh::new(&refresh.unwrap_or_default(), ctx),
+            refresh: ReactRefresh::new(&refresh.unwrap_or_default(), ast, ctx),
         }
     }
 }
 
-impl<'a> Traverse<'a> for React<'a> {
+impl<'a, 'ctx> Traverse<'a> for React<'a, 'ctx> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.jsx_plugin {
+            program.source_type = program.source_type.with_standard(true);
+        }
         if self.refresh_plugin {
             self.refresh.enter_program(program, ctx);
         }
@@ -81,6 +80,8 @@ impl<'a> Traverse<'a> for React<'a> {
         }
         if self.jsx_plugin {
             self.jsx.exit_program(program, ctx);
+        } else if self.jsx_source_plugin {
+            self.jsx.jsx_source.exit_program(program, ctx);
         }
     }
 

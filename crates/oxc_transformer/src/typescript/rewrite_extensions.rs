@@ -10,6 +10,8 @@ use oxc_ast::ast::{
 };
 use oxc_traverse::{Traverse, TraverseCtx};
 
+use crate::TypeScriptOptions;
+
 use super::options::RewriteExtensionsMode;
 
 pub struct TypeScriptRewriteExtensions {
@@ -17,8 +19,8 @@ pub struct TypeScriptRewriteExtensions {
 }
 
 impl TypeScriptRewriteExtensions {
-    pub fn new(mode: RewriteExtensionsMode) -> Self {
-        Self { mode }
+    pub fn new(options: &TypeScriptOptions) -> Option<Self> {
+        options.rewrite_import_extensions.map(|mode| Self { mode })
     }
 
     pub fn rewrite_extensions<'a>(

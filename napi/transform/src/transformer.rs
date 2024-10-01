@@ -3,7 +3,7 @@ use oxc_allocator::Allocator;
 use oxc_codegen::CodegenReturn;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
-use oxc_transformer::Transformer;
+use oxc_transformer::{ReplaceGlobalDefines, ReplaceGlobalDefinesConfig, Transformer};
 
 use crate::{context::TransformContext, isolated_declaration, SourceMap, TransformOptions};
 
@@ -70,21 +70,20 @@ pub fn transform(
             Some("module") => source_type = source_type.with_module(true),
             _ => {}
         }
-        // Force `jsx`
-        if let Some(jsx) = options.as_ref().and_then(|options| options.jsx.as_ref()) {
-            source_type = source_type.with_jsx(*jsx);
-        }
         source_type
     };
 
     let allocator = Allocator::default();
-    let ctx = TransformContext::new(&allocator, &filename, &source_text, source_type, options);
+    let ctx =
+        TransformContext::new(&allocator, &filename, &source_text, source_type, options.as_ref());
 
-    let should_build_types = ctx.declarations() && source_type.is_typescript();
-    let declarations_result =
-        should_build_types.then(|| isolated_declaration::build_declarations(&ctx));
+    let declarations_result = source_type
+        .is_typescript()
+        .then(|| ctx.declarations())
+        .flatten()
+        .map(|options| isolated_declaration::build_declarations(&ctx, *options));
 
-    let transpile_result = transpile(&ctx);
+    let transpile_result = transpile(&ctx, options);
 
     let (declaration, declaration_map) = declarations_result
         .map_or((None, None), |d| (Some(d.source_text), d.source_map.map(Into::into)));
@@ -98,23 +97,51 @@ pub fn transform(
     }
 }
 
-fn transpile(ctx: &TransformContext<'_>) -> CodegenReturn {
-    let (symbols, scopes) = SemanticBuilder::new(ctx.source_text())
+fn transpile(ctx: &TransformContext<'_>, options: Option<TransformOptions>) -> CodegenReturn {
+    let semantic_ret = SemanticBuilder::new(ctx.source_text())
         // Estimate transformer will triple scopes, symbols, references
         .with_excess_capacity(2.0)
-        .build(&ctx.program())
-        .semantic
-        .into_symbol_table_and_scope_tree();
+        .with_check_syntax_error(true)
+        .build(&ctx.program());
+    ctx.add_diagnostics(semantic_ret.errors);
+
+    let mut options = options;
+    let define = options.as_mut().and_then(|options| options.define.take());
+
+    let options = options.map(oxc_transformer::TransformOptions::from).unwrap_or_default();
+
+    let (mut symbols, mut scopes) = semantic_ret.semantic.into_symbol_table_and_scope_tree();
+
     let ret = Transformer::new(
         ctx.allocator,
         ctx.file_path(),
         ctx.source_type(),
         ctx.source_text(),
         ctx.trivias.clone(),
-        ctx.oxc_options(),
+        options,
     )
     .build_with_symbols_and_scopes(symbols, scopes, &mut ctx.program_mut());
-
     ctx.add_diagnostics(ret.errors);
+    symbols = ret.symbols;
+    scopes = ret.scopes;
+
+    if let Some(define) = define {
+        let define = define.into_iter().collect::<Vec<_>>();
+        match ReplaceGlobalDefinesConfig::new(&define) {
+            Ok(config) => {
+                let _ret = ReplaceGlobalDefines::new(ctx.allocator, config).build(
+                    symbols,
+                    scopes,
+                    &mut ctx.program_mut(),
+                );
+                // symbols = ret.symbols;
+                // scopes = ret.scopes;
+            }
+            Err(errors) => {
+                ctx.add_diagnostics(errors);
+            }
+        }
+    }
+
     ctx.codegen().build(&ctx.program())
 }

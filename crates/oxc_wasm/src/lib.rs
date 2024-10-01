@@ -16,7 +16,10 @@ use oxc::{
     diagnostics::Error,
     minifier::{CompressOptions, Minifier, MinifierOptions},
     parser::{ParseOptions, Parser, ParserReturn},
-    semantic::{dot::DebugDot, ScopeFlags, ScopeId, ScopeTree, SemanticBuilder, SymbolTable},
+    semantic::{
+        dot::{DebugDot, DebugDotContext},
+        ScopeFlags, ScopeId, ScopeTree, SemanticBuilder, SymbolTable,
+    },
     span::SourceType,
     transformer::{EnvOptions, Targets, TransformOptions, Transformer},
 };
@@ -153,6 +156,7 @@ impl Oxc {
             transformer: transform_options,
             codegen: codegen_options,
             minifier: minifier_options,
+            control_flow: control_flow_options,
         } = options;
         let run_options = run_options.unwrap_or_default();
         let parser_options = parser_options.unwrap_or_default();
@@ -160,6 +164,7 @@ impl Oxc {
         let minifier_options = minifier_options.unwrap_or_default();
         let _codegen_options = codegen_options.unwrap_or_default();
         let _transform_options = transform_options.unwrap_or_default();
+        let control_flow_options = control_flow_options.unwrap_or_default();
 
         let allocator = Allocator::default();
 
@@ -205,7 +210,10 @@ impl Oxc {
             .build(&program);
 
         self.control_flow_graph = semantic_ret.semantic.cfg().map_or_else(String::default, |cfg| {
-            cfg.debug_dot(semantic_ret.semantic.nodes().into())
+            cfg.debug_dot(DebugDotContext::new(
+                semantic_ret.semantic.nodes(),
+                control_flow_options.verbose.unwrap_or_default(),
+            ))
         });
         if run_options.syntax.unwrap_or_default() {
             self.save_diagnostics(

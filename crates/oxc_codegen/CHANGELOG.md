@@ -4,6 +4,68 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.30.5] - 2024-09-29
+
+### Refactor
+
+- ab187d1 codegen: Restrict visibility of internal methods (#6145) (DonIsaac)
+
+## [0.30.4] - 2024-09-28
+
+### Bug Fixes
+
+- 8582ae3 codegen: Missing parentheses if there is a pure comment before a NewExpression as a ComputedMemberExpression's callee (#6105) (Dunqing)
+
+### Performance
+
+- 05852a0 codegen: Do not check whether there are annotation comments or not if we don't preserve annotation comments (#6107) (Dunqing)
+
+## [0.30.2] - 2024-09-27
+
+### Features
+
+- cca433f codegen: Print `vite` / `webpack` special comments (#6021) (Dunqing)
+
+### Bug Fixes
+
+- c8682e9 semantic,codegen,transformer: Handle definite `!` operator in variable declarator (#6019) (Boshen)
+
+### Refactor
+
+- fe696f0 codegen: Simplify printing annotation comments (#6027) (Dunqing)
+
+## [0.30.1] - 2024-09-24
+
+### Bug Fixes
+
+- 9ca202a codegen: Preserve newlines between comments (#6014) (Boshen)
+- 4a99372 codegen: Print jsdoc comments for `TSEnumMember`s (#6007) (camc314)
+
+## [0.30.0] - 2024-09-23
+
+### Features
+
+- d901772 codegen: Implement minify number from terser (#5929) (Boshen)
+- 9f6696a codegen: Add new lines to `TSTypeParameterDeclaration` (#5853) (Boshen)
+- bcdbba3 codegen: Print jsdoc comments that are attached to statements and class elements (#5845) (Boshen)
+- 26386da codegen: Have `with_source_text` reserve memory for code buffer (#5823) (DonIsaac)
+- dfbde2c isolated_declarations: Print jsdoc comments (#5858) (Boshen)
+
+### Bug Fixes
+
+- f4aefb5 codegen: Print `let[0]` as `(let)[0]` (#5947) (Boshen)
+- cee9d0b codegen: Fix spacing of `for await (x of y)` (#5890) (Boshen)
+- 5901d2a codegen: Various spacing issues (#5820) (Boshen)
+- 362c427 mangler,codegen: Do not mangle top level symbols (#5965) (Boshen)
+- 42dcadf parser: Hashbang comment should not keep the end newline char (#5844) (Boshen)
+
+### Refactor
+
+- 6dd6f7c ast: Change `Comment` struct (#5783) (Boshen)
+- bb95306 codegen: Change annotation comment tests to snapshot (#5800) (Boshen)
+- e613a3d codegen: Prepare to add leading comments by adding a template method pattern (#5784) (Boshen)
+- 7caae5b codegen: Add `GetSpan` requirement to `Gen` trait (#5772) (Boshen)
+
 ## [0.29.0] - 2024-09-13
 
 ### Performance

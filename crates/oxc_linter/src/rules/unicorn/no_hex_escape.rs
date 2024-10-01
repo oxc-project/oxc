@@ -4,6 +4,10 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_regular_expression::{
+    ast::{Character, CharacterKind},
+    visit::Visit,
+};
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -57,7 +61,7 @@ fn check_escape(value: &str) -> Option<String> {
     if matched.is_empty() {
         None
     } else {
-        let mut fixed = String::with_capacity(value.len() + matched.len() * 2);
+        let mut fixed: String = String::with_capacity(value.len() + matched.len() * 2);
         let mut last = 0;
         for index in matched {
             fixed.push_str(&value[last..index - 1]);
@@ -90,22 +94,35 @@ impl Rule for NoHexEscape {
                 });
             }
             AstKind::RegExpLiteral(regex) => {
-                if let Some(fixed) =
-                    check_escape(regex.regex.pattern.source_text(ctx.source_text()).as_ref())
-                {
-                    #[allow(clippy::cast_possible_truncation)]
-                    ctx.diagnostic_with_fix(no_hex_escape_diagnostic(regex.span), |fixer| {
-                        fixer.replace(
-                            Span::new(
-                                regex.span.start,
-                                regex.span.end - regex.regex.flags.iter().count() as u32,
-                            ),
-                            format!("/{fixed}/"),
-                        )
+                let Some(pattern) = regex.regex.pattern.as_pattern() else {
+                    return;
+                };
+
+                let mut finder = HexEscapeFinder { hex_escapes: vec![] };
+                finder.visit_pattern(pattern);
+
+                for span in finder.hex_escapes {
+                    let unicode_escape =
+                        format!(r"\u00{}", &span.source_text(ctx.source_text())[2..]);
+
+                    ctx.diagnostic_with_fix(no_hex_escape_diagnostic(span), |fixer| {
+                        fixer.replace(span, unicode_escape)
                     });
                 }
             }
             _ => {}
+        }
+    }
+}
+
+struct HexEscapeFinder {
+    hex_escapes: Vec<Span>,
+}
+
+impl<'a> Visit<'a> for HexEscapeFinder {
+    fn visit_character(&mut self, ch: &Character) {
+        if ch.kind == CharacterKind::HexadecimalEscape {
+            self.hex_escapes.push(ch.span);
         }
     }
 }

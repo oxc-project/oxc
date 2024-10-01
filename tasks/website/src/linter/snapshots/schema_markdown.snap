@@ -70,6 +70,22 @@ You may also use `"readable"` or `false` to represent `"readonly"`, and `"writea
 
 
 
+## plugins
+
+type: `array`
+
+
+
+
+### plugins[n]
+
+type: `string`
+
+
+
+
+
+
 ## rules
 
 type: `object`
