@@ -4,10 +4,17 @@ use oxc_span::Span;
 
 use crate::{
     context::LintContext,
-    fixer::{RuleFixer, RuleFix},
+    fixer::{RuleFix, RuleFixer},
     rule::Rule,
-    AstNode
+    AstNode,
 };
+
+fn {{snake_rule_name}}_diagnostic(span: Span) -> OxcDiagnostic {
+    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
+    OxcDiagnostic::warn("Should be an imperative statement about what is wrong")
+        .with_help("Should be a command-like statement that tells the user how to fix the issue")
+        .with_label(span)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct {{pascal_rule_name}};
