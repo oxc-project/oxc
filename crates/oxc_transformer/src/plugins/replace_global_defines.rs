@@ -206,7 +206,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
     // Construct a new expression because we don't have ast clone right now.
     fn parse_value(&self, source_text: &str) -> Expression<'a> {
         // Allocate the string lazily because replacement happens rarely.
-        let source_text = self.allocator.alloc(source_text.to_string());
+        let source_text = self.allocator.alloc_str(source_text);
         // Unwrapping here, it should already be checked by [ReplaceGlobalDefinesConfig::new].
         Parser::new(self.allocator, source_text, SourceType::default()).parse_expression().unwrap()
     }
