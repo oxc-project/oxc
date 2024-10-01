@@ -143,14 +143,6 @@ impl<'alloc, T> ops::Index<usize> for Vec<'alloc, T> {
     }
 }
 
-impl<'alloc, T> ops::Index<usize> for &'alloc Vec<'alloc, T> {
-    type Output = T;
-
-    fn index(&self, index: usize) -> &Self::Output {
-        self.0.index(index)
-    }
-}
-
 // Unused right now.
 // impl<'alloc, T> ops::IndexMut<usize> for Vec<'alloc, T> {
 // fn index_mut(&mut self, index: usize) -> &mut Self::Output {
