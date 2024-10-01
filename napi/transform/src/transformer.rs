@@ -74,7 +74,8 @@ pub fn transform(
     };
 
     let allocator = Allocator::default();
-    let ctx = TransformContext::new(&allocator, &filename, &source_text, source_type, options);
+    let ctx =
+        TransformContext::new(&allocator, &filename, &source_text, source_type, options.as_ref());
 
     let declarations_result = source_type
         .is_typescript()
@@ -82,7 +83,7 @@ pub fn transform(
         .flatten()
         .map(|options| isolated_declaration::build_declarations(&ctx, *options));
 
-    let transpile_result = transpile(&ctx);
+    let transpile_result = transpile(&ctx, options);
 
     let (declaration, declaration_map) = declarations_result
         .map_or((None, None), |d| (Some(d.source_text), d.source_map.map(Into::into)));
@@ -96,13 +97,15 @@ pub fn transform(
     }
 }
 
-fn transpile(ctx: &TransformContext<'_>) -> CodegenReturn {
+fn transpile(ctx: &TransformContext<'_>, options: Option<TransformOptions>) -> CodegenReturn {
     let semantic_ret = SemanticBuilder::new(ctx.source_text())
         // Estimate transformer will triple scopes, symbols, references
         .with_excess_capacity(2.0)
         .with_check_syntax_error(true)
         .build(&ctx.program());
     ctx.add_diagnostics(semantic_ret.errors);
+
+    let options = options.map(oxc_transformer::TransformOptions::from).unwrap_or_default();
 
     let (symbols, scopes) = semantic_ret.semantic.into_symbol_table_and_scope_tree();
     let ret = Transformer::new(
@@ -111,10 +114,11 @@ fn transpile(ctx: &TransformContext<'_>) -> CodegenReturn {
         ctx.source_type(),
         ctx.source_text(),
         ctx.trivias.clone(),
-        ctx.oxc_options(),
+        options,
     )
     .build_with_symbols_and_scopes(symbols, scopes, &mut ctx.program_mut());
 
     ctx.add_diagnostics(ret.errors);
+
     ctx.codegen().build(&ctx.program())
 }
