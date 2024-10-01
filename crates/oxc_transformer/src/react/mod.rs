@@ -20,7 +20,7 @@ pub use self::{
 };
 use crate::TransformCtx;
 
-use comments::update_options_with_comments;
+pub(crate) use comments::update_options_with_comments;
 
 /// [Preset React](https://babel.dev/docs/babel-preset-react)
 ///
@@ -45,7 +45,6 @@ pub struct React<'a, 'ctx> {
 impl<'a, 'ctx> React<'a, 'ctx> {
     pub fn new(mut options: JsxOptions, ast: AstBuilder<'a>, ctx: &'ctx TransformCtx<'a>) -> Self {
         if options.jsx_plugin || options.development {
-            update_options_with_comments(&mut options, ctx);
             options.conform();
         }
         let JsxOptions {
