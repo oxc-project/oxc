@@ -1352,6 +1352,8 @@ mod test {
         test("a = ~0x3", "a = -4"); // Hexadecimal number
         test("a = ~9", "a = -10"); // Despite `-10` is longer than `~9`, the compiler still folds it.
         test_same("a = ~b");
+        test_same("a = ~NaN");
+        test_same("a = ~-Infinity");
         // TODO(7086cmd) We preserve it right now, since exceeded data's ~ calculation
         // is hard to implement within one PR.
         // test("x = ~2147483658.0", "x = 2147483647");
