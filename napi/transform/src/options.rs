@@ -1,5 +1,7 @@
 #![allow(rustdoc::bare_urls)]
+#![allow(clippy::disallowed_types)] // allow HashMap
 
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 use napi::Either;
@@ -21,6 +23,15 @@ pub struct TransformOptions {
     /// options.
     pub cwd: Option<String>,
 
+    /// Enable source map generation.
+    ///
+    /// When `true`, the `sourceMap` field of transform result objects will be populated.
+    ///
+    /// @default false
+    ///
+    /// @see {@link SourceMap}
+    pub sourcemap: Option<bool>,
+
     /// Configure how TypeScript is transformed.
     pub typescript: Option<TypeScriptOptions>,
 
@@ -30,14 +41,8 @@ pub struct TransformOptions {
     /// Enable ES2015 transformations.
     pub es2015: Option<ES2015BindingOptions>,
 
-    /// Enable source map generation.
-    ///
-    /// When `true`, the `sourceMap` field of transform result objects will be populated.
-    ///
-    /// @default false
-    ///
-    /// @see {@link SourceMap}
-    pub sourcemap: Option<bool>,
+    /// Define Plugin
+    pub define: Option<HashMap<String, String>>,
 }
 
 impl From<TransformOptions> for oxc_transformer::TransformOptions {

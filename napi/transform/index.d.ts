@@ -187,12 +187,6 @@ export interface TransformOptions {
    * options.
    */
   cwd?: string
-  /** Configure how TypeScript is transformed. */
-  typescript?: TypeScriptOptions
-  /** Configure how TSX and JSX are transformed. */
-  jsx?: JsxOptions
-  /** Enable ES2015 transformations. */
-  es2015?: ES2015BindingOptions
   /**
    * Enable source map generation.
    *
@@ -203,6 +197,14 @@ export interface TransformOptions {
    * @see {@link SourceMap}
    */
   sourcemap?: boolean
+  /** Configure how TypeScript is transformed. */
+  typescript?: TypeScriptOptions
+  /** Configure how TSX and JSX are transformed. */
+  jsx?: JsxOptions
+  /** Enable ES2015 transformations. */
+  es2015?: ES2015BindingOptions
+  /** Define Plugin */
+  define?: Record<string, string>
 }
 
 export interface TransformResult {
