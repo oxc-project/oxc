@@ -190,7 +190,7 @@ export interface TransformOptions {
   /** Configure how TypeScript is transformed. */
   typescript?: TypeScriptOptions
   /** Configure how TSX and JSX are transformed. */
-  react?: JsxOptions
+  jsx?: JsxOptions
   /** Enable ES2015 transformations. */
   es2015?: ES2015BindingOptions
   /**
