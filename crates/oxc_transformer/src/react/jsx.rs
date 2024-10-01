@@ -447,7 +447,7 @@ impl<'a, 'ctx> ReactJsx<'a, 'ctx> {
 
 impl<'a, 'ctx> Traverse<'a> for ReactJsx<'a, 'ctx> {
     fn exit_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.insert_var_file_name_statement(ctx);
+        self.insert_filename_var_statement(ctx);
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -470,8 +470,8 @@ impl<'a, 'ctx> ReactJsx<'a, 'ctx> {
         self.ctx.ast
     }
 
-    fn insert_var_file_name_statement(&mut self, ctx: &mut TraverseCtx<'a>) {
-        let Some(declarator) = self.jsx_source.get_var_file_name_declarator() else { return };
+    fn insert_filename_var_statement(&mut self, ctx: &mut TraverseCtx<'a>) {
+        let Some(declarator) = self.jsx_source.get_filename_var_declarator() else { return };
 
         // If is a module, add filename statements before `import`s. If script, then after `require`s.
         // This is the same behavior as Babel.

@@ -60,7 +60,7 @@ impl<'a, 'ctx> ReactJsxSource<'a, 'ctx> {
 
 impl<'a, 'ctx> Traverse<'a> for ReactJsxSource<'a, 'ctx> {
     fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
-        if let Some(stmt) = self.get_var_file_name_statement() {
+        if let Some(stmt) = self.get_filename_var_statement() {
             self.ctx.top_level_statements.insert_statement(stmt);
         }
     }
@@ -190,8 +190,8 @@ impl<'a, 'ctx> ReactJsxSource<'a, 'ctx> {
         self.ctx.ast.expression_object(SPAN, properties, None)
     }
 
-    pub fn get_var_file_name_statement(&self) -> Option<Statement<'a>> {
-        let decl = self.get_var_file_name_declarator()?;
+    pub fn get_filename_var_statement(&self) -> Option<Statement<'a>> {
+        let decl = self.get_filename_var_declarator()?;
 
         let var_decl = Statement::VariableDeclaration(self.ctx.ast.alloc_variable_declaration(
             SPAN,
@@ -202,7 +202,7 @@ impl<'a, 'ctx> ReactJsxSource<'a, 'ctx> {
         Some(var_decl)
     }
 
-    pub fn get_var_file_name_declarator(&self) -> Option<VariableDeclarator<'a>> {
+    pub fn get_filename_var_declarator(&self) -> Option<VariableDeclarator<'a>> {
         let filename_var = self.filename_var.as_ref()?;
 
         let var_kind = VariableDeclarationKind::Var;
