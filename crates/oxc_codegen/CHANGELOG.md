@@ -4,6 +4,223 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.30.5] - 2024-09-29
+
+### Refactor
+
+- ab187d1 codegen: Restrict visibility of internal methods (#6145) (DonIsaac)
+
+## [0.30.4] - 2024-09-28
+
+### Bug Fixes
+
+- 8582ae3 codegen: Missing parentheses if there is a pure comment before a NewExpression as a ComputedMemberExpression's callee (#6105) (Dunqing)
+
+### Performance
+
+- 05852a0 codegen: Do not check whether there are annotation comments or not if we don't preserve annotation comments (#6107) (Dunqing)
+
+## [0.30.2] - 2024-09-27
+
+### Features
+
+- cca433f codegen: Print `vite` / `webpack` special comments (#6021) (Dunqing)
+
+### Bug Fixes
+
+- c8682e9 semantic,codegen,transformer: Handle definite `!` operator in variable declarator (#6019) (Boshen)
+
+### Refactor
+
+- fe696f0 codegen: Simplify printing annotation comments (#6027) (Dunqing)
+
+## [0.30.1] - 2024-09-24
+
+### Bug Fixes
+
+- 9ca202a codegen: Preserve newlines between comments (#6014) (Boshen)
+- 4a99372 codegen: Print jsdoc comments for `TSEnumMember`s (#6007) (camc314)
+
+## [0.30.0] - 2024-09-23
+
+### Features
+
+- d901772 codegen: Implement minify number from terser (#5929) (Boshen)
+- 9f6696a codegen: Add new lines to `TSTypeParameterDeclaration` (#5853) (Boshen)
+- bcdbba3 codegen: Print jsdoc comments that are attached to statements and class elements (#5845) (Boshen)
+- 26386da codegen: Have `with_source_text` reserve memory for code buffer (#5823) (DonIsaac)
+- dfbde2c isolated_declarations: Print jsdoc comments (#5858) (Boshen)
+
+### Bug Fixes
+
+- f4aefb5 codegen: Print `let[0]` as `(let)[0]` (#5947) (Boshen)
+- cee9d0b codegen: Fix spacing of `for await (x of y)` (#5890) (Boshen)
+- 5901d2a codegen: Various spacing issues (#5820) (Boshen)
+- 362c427 mangler,codegen: Do not mangle top level symbols (#5965) (Boshen)
+- 42dcadf parser: Hashbang comment should not keep the end newline char (#5844) (Boshen)
+
+### Refactor
+
+- 6dd6f7c ast: Change `Comment` struct (#5783) (Boshen)
+- bb95306 codegen: Change annotation comment tests to snapshot (#5800) (Boshen)
+- e613a3d codegen: Prepare to add leading comments by adding a template method pattern (#5784) (Boshen)
+- 7caae5b codegen: Add `GetSpan` requirement to `Gen` trait (#5772) (Boshen)
+
+## [0.29.0] - 2024-09-13
+
+### Performance
+
+- d18c896 rust: Use `cow_utils` instead (#5664) (dalaoshu)
+
+## [0.28.0] - 2024-09-11
+
+- ee4fb42 ast: [**BREAKING**] Reduce size of `WithClause` by `Box`ing it (#5677) (Boshen)
+
+- 4a8aec1 span: [**BREAKING**] Change `SourceType::js` to `SourceType::cjs` and `SourceType::mjs` (#5606) (Boshen)
+
+### Features
+
+
+### Bug Fixes
+
+- d62defb codegen: Do not print trailing commas for `ArrayExpression` (#5551) (Boshen)
+
+### Performance
+
+
+## [0.27.0] - 2024-09-06
+
+- cba93f5 ast: [**BREAKING**] Add `ThisExpression` variants to `JSXElementName` and `JSXMemberExpressionObject` (#5466) (overlookmotel)
+
+- 87c5df2 ast: [**BREAKING**] Rename `Expression::without_parentheses` (#5448) (overlookmotel)
+
+### Features
+
+- 59abf27 ast, parser: Add `oxc_regular_expression` types to the parser and AST. (#5256) (rzvxa)
+- c782916 codegen: Print `type_parameters` in `TaggedTemplateExpression` (#5438) (Dunqing)
+
+### Bug Fixes
+
+- 0df1d9d ast, codegen, linter: Panics in fixers. (#5431) (rzvxa)
+
+### Refactor
+
+- d9d7e7c ast: Remove `IdentifierName` from `TSThisParameter` (#5327) (overlookmotel)
+
+## [0.26.0] - 2024-09-03
+
+- 1aa49af ast: [**BREAKING**] Remove `JSXMemberExpressionObject::Identifier` variant (#5358) (Dunqing)
+
+- 32f7300 ast: [**BREAKING**] Add `JSXElementName::IdentifierReference` and `JSXMemberExpressionObject::IdentifierReference` (#5223) (Dunqing)
+
+- 234a24c ast: [**BREAKING**] Merge `UsingDeclaration` into `VariableDeclaration` (#5270) (Kevin Deng 三咲智子)
+
+### Features
+
+- 5505749 ast: Add `accessibility` field to `AccessorProperty` (#5290) (Dunqing)
+- 292d162 codegen: Print missing fields for `AccessorProperty` (#5291) (Dunqing)
+
+### Bug Fixes
+
+- 5c4c001 codegen: Print `export @decorator declare abstract class Foo` correctly (#5303) (Boshen)
+- 7b1546b codegen: Do not print comments when `--minify` (Boshen)
+
+### Performance
+
+- 12a7607 codegen: Inline `Codegen::print_list` (#5221) (overlookmotel)
+- fb847bd codegen: Slightly faster `print_list` (#5192) (Boshen)
+
+### Refactor
+
+- d4c3778 codegen: Rename vars (#5222) (overlookmotel)
+- 543cad6 codegen: Remove some pub APIs (Boshen)
+
+## [0.25.0] - 2024-08-23
+
+- ce4d469 codegen: [**BREAKING**] Remove const generic `MINIFY` (#5001) (Boshen)
+
+### Features
+
+
+### Bug Fixes
+- b7db235 Comments gen regression (#5003) (IWANABETHATGUY)
+
+### Refactor
+
+- cd9cf5e oxc: Remove `remove_whitespace` (Boshen)
+
+## [0.24.3] - 2024-08-18
+
+### Features
+
+- d49fb16 oxc_codegen: Support generate range leading comments (#4898) (IWANABETHATGUY)
+
+### Bug Fixes
+
+- bbf9ec0 codegen: Add missing `declare` to `PropertyDefinition` (#4937) (Boshen)
+- f210cf7 codegen: Print `TSSatisfiesExpression` and `TSInstantiationExpression` (#4936) (Boshen)
+- 21f5762 codegen: Minify large numbers (#4889) (Boshen)
+- e8de4bd codegen: Fix whitespace issue when minifying `x in new Error()` (#4886) (Boshen)
+- a226962 codegen: Print `TSNonNullExpression` (#4869) (Boshen)
+- 3da33d3 codegen: Missing parenthesis for `PrivateInExpression` (#4865) (Boshen)
+- 1808529 codegen: Dedupe pure annotation comments (#4862) (IWANABETHATGUY)
+- 508644a linter/tree-shaking: Correct the calculation of `>>`, `<<` and `>>>` (#4932) (mysteryven)
+
+## [0.24.0] - 2024-08-08
+
+### Bug Fixes
+
+- 4a56954 codegen: Print raw if value is number is Infinity (#4676) (Boshen)
+- a40a217 parser: Parse `assert` keyword in `TSImportAttributes` (#4610) (Boshen)
+
+### Performance
+
+- 8dd76e4 codegen: Reduce size of `LineOffsetTable` (#4643) (overlookmotel)
+- b8e6753 codegen: `u32` indexes in `LineOffsetTable` for source maps (#4641) (overlookmotel)
+
+### Refactor
+
+- e78cba6 minifier: Ast passes infrastructure (#4625) (Boshen)
+
+## [0.23.1] - 2024-08-06
+
+### Bug Fixes
+
+- 4a56954 codegen: Print raw if value is number is Infinity (#4676) (Boshen)
+- a40a217 parser: Parse `assert` keyword in `TSImportAttributes` (#4610) (Boshen)
+
+### Performance
+
+- 8dd76e4 codegen: Reduce size of `LineOffsetTable` (#4643) (overlookmotel)
+- b8e6753 codegen: `u32` indexes in `LineOffsetTable` for source maps (#4641) (overlookmotel)
+
+### Refactor
+
+- e78cba6 minifier: Ast passes infrastructure (#4625) (Boshen)
+
+## [0.23.0] - 2024-08-01
+
+- 27fd062 sourcemap: [**BREAKING**] Avoid passing `Result`s (#4541) (overlookmotel)
+
+### Features
+
+- a558492 codegen: Implement `BinaryExpressionVisitor` (#4548) (Boshen)
+- 7446e98 codegen: Align more esbuild implementations (#4510) (Boshen)
+- 35654e6 codegen: Align operator precedence with esbuild (#4509) (Boshen)
+
+### Bug Fixes
+
+- b58ed80 codegen: Enable more test cases (#4585) (Boshen)
+- 6a94e3f codegen: Fixes for esbuild test cases (#4503) (Boshen)
+- d5c4b19 parser: Fix enum member parsing (#4543) (DonIsaac)
+
+### Performance
+
+- 7585e16 linter: Remove allocations for string comparisons (#4570) (DonIsaac)
+
+### Refactor
+
+
 ## [0.22.0] - 2024-07-23
 
 ### Bug Fixes

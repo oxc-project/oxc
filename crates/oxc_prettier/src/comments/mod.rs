@@ -1,24 +1,26 @@
 mod print;
 
 use bitflags::bitflags;
-use oxc_ast::CommentKind;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Comment {
+    /// Span start including `//` and `/*`
     pub start: u32,
+    /// Span end including `*?`
     pub end: u32,
     pub is_block: bool,
     pub has_line_suffix: bool,
 }
 
 impl Comment {
-    pub fn new(start: u32, end: u32, kind: CommentKind) -> Self {
-        // The comment span is for the comment value
-        // -2 for `//` and `/*`
-        let start = start - 2;
-        // +2 for `/*`
-        let end = if kind.is_multi_line() { end + 2 } else { end };
-        Self { start, end, is_block: kind.is_multi_line(), has_line_suffix: false }
+    pub fn new(comment: oxc_ast::Comment) -> Self {
+        let span = comment.real_span();
+        Self {
+            start: span.start,
+            end: span.end,
+            is_block: comment.is_block(),
+            has_line_suffix: false,
+        }
     }
 
     pub fn with_line_suffix(mut self, yes: bool) -> Self {

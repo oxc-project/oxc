@@ -37,3 +37,30 @@ source: crates/oxc_linter/src/tester.rs
  4 │             };
    ╰────
   help: Async/await is not allowed
+
+  ⚠ oxc(no-async-await): Unexpected async/await
+   ╭─[no_async_await.tsx:3:22]
+ 2 │         class Foo {
+ 3 │             async foo() {}
+   ·                      ─────
+ 4 │         }
+   ╰────
+  help: Async/await is not allowed
+
+  ⚠ oxc(no-async-await): Unexpected async/await
+   ╭─[no_async_await.tsx:3:29]
+ 2 │         class Foo {
+ 3 │             public async foo() {}
+   ·                             ─────
+ 4 │         }
+   ╰────
+  help: Async/await is not allowed
+
+  ⚠ oxc(no-async-await): Unexpected async/await
+   ╭─[no_async_await.tsx:3:13]
+ 2 │         const obj = {
+ 3 │             async foo() {}
+   ·             ─────
+ 4 │         }
+   ╰────
+  help: Async/await is not allowed

@@ -1,14 +1,14 @@
 [package]
-name                  = "oxc_prettier_conformance"
-version               = "0.0.0"
-publish               = false
-authors.workspace     = true
+name = "oxc_prettier_conformance"
+version = "0.0.0"
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+license.workspace = true
+publish = false
+repository.workspace = true
 description.workspace = true
-edition.workspace     = true
-homepage.workspace    = true
-keywords.workspace    = true
-license.workspace     = true
-repository.workspace  = true
 
 [lints]
 workspace = true
@@ -17,18 +17,19 @@ workspace = true
 doctest = false
 
 [[bin]]
-name    = "oxc_prettier_conformance"
-path    = "src/main.rs"
-test    = false
+name = "oxc_prettier_conformance"
+path = "src/main.rs"
+test = false
 doctest = false
 
 [dependencies]
-oxc_allocator    = { workspace = true }
-oxc_parser       = { workspace = true }
-oxc_prettier     = { workspace = true }
-oxc_span         = { workspace = true }
+oxc_allocator = { workspace = true }
+oxc_ast = { workspace = true }
+oxc_parser = { workspace = true }
+oxc_prettier = { workspace = true }
+oxc_span = { workspace = true }
 oxc_tasks_common = { workspace = true }
-oxc_ast          = { workspace = true }
 
-walkdir   = { workspace = true }
 pico-args = { workspace = true }
+rustc-hash = { workspace = true }
+walkdir = { workspace = true }

@@ -1,6 +1,7 @@
 #![allow(clippy::cast_possible_truncation)]
 use std::{ffi::OsStr, path::Component, sync::Arc};
 
+use cow_utils::CowUtils;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
@@ -11,10 +12,10 @@ use oxc_syntax::{
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_cycle_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
+fn no_cycle_diagnostic(span: Span, paths: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Dependency cycle detected")
-        .with_help(format!("These paths form a cycle: \n{x1}"))
-        .with_label(span0)
+        .with_help(format!("These paths form a cycle: \n{paths}"))
+        .with_label(span)
 }
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/no-cycle.md>
@@ -54,20 +55,37 @@ declare_oxc_lint!(
     /// ### Why is this bad?
     ///
     /// Dependency cycles lead to confusing architectures where bugs become hard to find.
-    ///
     /// It is common to import an `undefined` value that is caused by a cyclic dependency.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// // dep-b.js
     /// import './dep-a.js'
     /// export function b() { /* ... */ }
     /// ```
-    ///
     /// ```javascript
     /// // dep-a.js
     /// import { b } from './dep-b.js' // reported: Dependency cycle detected.
+    /// export function a() { /* ... */ }
     /// ```
+    ///
+    /// In this example, `dep-a.js` and `dep-b.js` import each other, creating a circular
+    /// dependency, which is problematic.
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// // dep-b.js
+    /// export function b() { /* ... */ }
+    /// ```
+    /// ```javascript
+    /// // dep-a.js
+    /// import { b } from './dep-b.js' // no circular dependency
+    /// export function a() { /* ... */ }
+    /// ```
+    ///
+    /// In this corrected version, `dep-b.js` no longer imports `dep-a.js`, breaking the cycle.
     NoCycle,
     restriction
 );
@@ -108,17 +126,29 @@ impl Rule for NoCycle {
             .max_depth(self.max_depth)
             .filter(move |(key, val): (&CompactStr, &Arc<ModuleRecord>), parent: &ModuleRecord| {
                 let path = &val.resolved_absolute_path;
+
                 let is_node_module = path
                     .components()
                     .any(|c| matches!(c, Component::Normal(p) if p == OsStr::new("node_modules")));
-                let is_type_import = !ignore_types
-                    || !parent
+
+                if is_node_module {
+                    return false;
+                }
+
+                if ignore_types {
+                    let import_entries = parent
                         .import_entries
                         .iter()
                         .filter(|entry| entry.module_request.name() == key)
-                        .all(|entry| entry.is_type);
+                        .collect::<Vec<_>>();
+                    if !import_entries.is_empty()
+                        && import_entries.iter().all(|entry| entry.is_type)
+                    {
+                        return false;
+                    }
+                }
 
-                is_node_module || is_type_import
+                true
             })
             .event(|event, (key, val), _| match event {
                 ModuleGraphVisitorEvent::Enter => {
@@ -142,12 +172,13 @@ impl Rule for NoCycle {
             let help = stack
                 .iter()
                 .map(|(specifier, path)| {
-                    let path = path
-                        .strip_prefix(&cwd)
-                        .unwrap_or(path)
-                        .to_string_lossy()
-                        .replace('\\', "/");
-                    format!("-> {specifier} - {path}")
+                    format!(
+                        "-> {specifier} - {}",
+                        path.strip_prefix(&cwd)
+                            .unwrap_or(path)
+                            .to_string_lossy()
+                            .cow_replace('\\', "/")
+                    )
                 })
                 .collect::<Vec<_>>()
                 .join("\n");
@@ -240,6 +271,7 @@ fn test() {
         // (r#"require(["./es6/depth-one"], d1 => {})"#, Some(json!([{"amd":true}]))),
         // (r#"define(["./es6/depth-one"], d1 => {})"#, Some(json!([{"amd":true}]))),
         (r#"import { foo } from "./es6/depth-one-reexport""#, None),
+        (r#"import { foo } from "./es6/depth-one-reexport""#, Some(json!([{"ignoreTypes":true}]))),
         (r#"import { foo } from "./es6/depth-two""#, None),
         (r#"import { foo } from "./es6/depth-two""#, Some(json!([{"maxDepth":2}]))),
         // (r#"const { foo } = require("./es6/depth-two")"#, Some(json!([{"commonjs":true}]))),

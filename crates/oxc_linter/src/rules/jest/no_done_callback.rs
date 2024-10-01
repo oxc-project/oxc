@@ -15,16 +15,16 @@ use crate::{
     },
 };
 
-fn no_done_callback(span0: Span) -> OxcDiagnostic {
+fn no_done_callback(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Function parameter(s) use the `done` argument")
         .with_help("Return a Promise instead of relying on callback parameter")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn use_await_instead_of_callback(span0: Span) -> OxcDiagnostic {
+fn use_await_instead_of_callback(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Function parameter(s) use the `done` argument")
         .with_help("Use await instead of callback in async functions")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

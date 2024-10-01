@@ -1,53 +1,53 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-promise(no-new-statics): Disallow calling `new` on a `Promise.resolve`
+  ⚠ eslint-plugin-promise(no-new-statics): Do not use `new` on `Promise.resolve`
    ╭─[no_new_statics.tsx:1:1]
  1 │ new Promise.resolve()
    · ───
    ╰────
-  help: Delete this code.
+  help: `Promise.resolve` is not a constructor. Call it as a function instead.
 
-  ⚠ eslint-plugin-promise(no-new-statics): Disallow calling `new` on a `Promise.reject`
+  ⚠ eslint-plugin-promise(no-new-statics): Do not use `new` on `Promise.reject`
    ╭─[no_new_statics.tsx:1:1]
  1 │ new Promise.reject()
    · ───
    ╰────
-  help: Delete this code.
+  help: `Promise.reject` is not a constructor. Call it as a function instead.
 
-  ⚠ eslint-plugin-promise(no-new-statics): Disallow calling `new` on a `Promise.all`
+  ⚠ eslint-plugin-promise(no-new-statics): Do not use `new` on `Promise.all`
    ╭─[no_new_statics.tsx:1:1]
  1 │ new Promise.all()
    · ───
    ╰────
-  help: Delete this code.
+  help: `Promise.all` is not a constructor. Call it as a function instead.
 
-  ⚠ eslint-plugin-promise(no-new-statics): Disallow calling `new` on a `Promise.allSettled`
+  ⚠ eslint-plugin-promise(no-new-statics): Do not use `new` on `Promise.allSettled`
    ╭─[no_new_statics.tsx:1:1]
  1 │ new Promise.allSettled()
    · ───
    ╰────
-  help: Delete this code.
+  help: `Promise.allSettled` is not a constructor. Call it as a function instead.
 
-  ⚠ eslint-plugin-promise(no-new-statics): Disallow calling `new` on a `Promise.any`
+  ⚠ eslint-plugin-promise(no-new-statics): Do not use `new` on `Promise.any`
    ╭─[no_new_statics.tsx:1:1]
  1 │ new Promise.any()
    · ───
    ╰────
-  help: Delete this code.
+  help: `Promise.any` is not a constructor. Call it as a function instead.
 
-  ⚠ eslint-plugin-promise(no-new-statics): Disallow calling `new` on a `Promise.race`
+  ⚠ eslint-plugin-promise(no-new-statics): Do not use `new` on `Promise.race`
    ╭─[no_new_statics.tsx:1:1]
  1 │ new Promise.race()
    · ───
    ╰────
-  help: Delete this code.
+  help: `Promise.race` is not a constructor. Call it as a function instead.
 
-  ⚠ eslint-plugin-promise(no-new-statics): Disallow calling `new` on a `Promise.resolve`
+  ⚠ eslint-plugin-promise(no-new-statics): Do not use `new` on `Promise.resolve`
    ╭─[no_new_statics.tsx:3:13]
  2 │               var a = getA()
  3 │               return new Promise.resolve(a)
    ·                      ───
  4 │             }
    ╰────
-  help: Delete this code.
+  help: `Promise.resolve` is not a constructor. Call it as a function instead.

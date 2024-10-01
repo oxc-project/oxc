@@ -9,9 +9,9 @@ exports.updateGitHubIssue = async ({ issueNo }, markdown) => {
     const res = await fetch(
       `https://api.github.com/repos/oxc-project/oxc/issues/${issueNo}`,
       {
-        method: "PATCH",
+        method: 'PATCH',
         headers: {
-          Accept: "application/vnd.github+json",
+          Accept: 'application/vnd.github+json',
           Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
         },
         body: JSON.stringify({ body: markdown }),

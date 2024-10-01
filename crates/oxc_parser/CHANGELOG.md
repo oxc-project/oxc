@@ -4,6 +4,210 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.30.4] - 2024-09-28
+
+### Bug Fixes
+
+- fd6798f parser: Remove unintended `pub Kind` (#6109) (Boshen)
+
+## [0.30.2] - 2024-09-27
+
+### Bug Fixes
+
+- 0658576 paresr: Do not report missing initializer error in ambient context (#6020) (Boshen)
+
+## [0.30.0] - 2024-09-23
+
+### Features
+
+- e8bf30a ast: Add `Comment::real_span` (#5764) (Boshen)
+- bcdbba3 codegen: Print jsdoc comments that are attached to statements and class elements (#5845) (Boshen)
+- 8e7556f parser: Calculate leading and trailing position for comments (#5785) (Boshen)
+
+### Bug Fixes
+
+- 42dcadf parser: Hashbang comment should not keep the end newline char (#5844) (Boshen)
+
+### Documentation
+
+- 3120c6c parser: Add module and struct level documentation (#5831) (DonIsaac)
+
+### Refactor
+
+- 6dd6f7c ast: Change `Comment` struct (#5783) (Boshen)
+- 31e9db4 parser: Shorten `UniquePromise` code (#5805) (overlookmotel)
+- 2322b8b parser: Remove dead code warning when running tests (#5804) (overlookmotel)
+- 4abfa76 parser: Add `--ast` and `--comments` to example (Boshen)
+- a4b55bf parser: Use AstBuilder (#5743) (Boshen)
+
+## [0.29.0] - 2024-09-13
+
+### Features
+
+- 953fe17 ast: Provide `NONE` type for AST builder calls (#5737) (overlookmotel)
+
+### Performance
+
+- d18c896 rust: Use `cow_utils` instead (#5664) (dalaoshu)
+
+## [0.28.0] - 2024-09-11
+
+- ee4fb42 ast: [**BREAKING**] Reduce size of `WithClause` by `Box`ing it (#5677) (Boshen)
+
+- 4a8aec1 span: [**BREAKING**] Change `SourceType::js` to `SourceType::cjs` and `SourceType::mjs` (#5606) (Boshen)
+
+- 603817b oxc: [**BREAKING**] Add `SourceType::Unambiguous`; parse `.js` as unambiguous (#5557) (Boshen)
+
+### Features
+
+
+### Performance
+
+
+### Refactor
+
+- 0ac420d linter: Use meaningful names for diagnostic parameters (#5564) (Don Isaac)
+
+## [0.27.0] - 2024-09-06
+
+- cba93f5 ast: [**BREAKING**] Add `ThisExpression` variants to `JSXElementName` and `JSXMemberExpressionObject` (#5466) (overlookmotel)
+
+### Features
+
+- 59abf27 ast, parser: Add `oxc_regular_expression` types to the parser and AST. (#5256) (rzvxa)
+- 10279f5 parser: Add syntax error for hyphen in `JSXMemberExpression` `<Foo.bar-baz />` (#5440) (Boshen)
+
+### Refactor
+
+- d9d7e7c ast: Remove `IdentifierName` from `TSThisParameter` (#5327) (overlookmotel)
+
+## [0.26.0] - 2024-09-03
+
+- 1aa49af ast: [**BREAKING**] Remove `JSXMemberExpressionObject::Identifier` variant (#5358) (Dunqing)
+
+- 32f7300 ast: [**BREAKING**] Add `JSXElementName::IdentifierReference` and `JSXMemberExpressionObject::IdentifierReference` (#5223) (Dunqing)
+
+- 234a24c ast: [**BREAKING**] Merge `UsingDeclaration` into `VariableDeclaration` (#5270) (Kevin Deng 三咲智子)
+
+### Features
+
+- 5505749 ast: Add `accessibility` field to `AccessorProperty` (#5290) (Dunqing)
+- 49cd5db ast,parser: Add `definite` flag to `AccessorProperty` node (#5182) (DonIsaac)
+- c2fa725 ast,parser: Parse `TSTypeAnnotations` on `AccessorProperty` (#5179) (DonIsaac)
+- 7dfd51a parser: Report class properties that are both definite and optional (#5181) (DonIsaac)
+- a563968 parser: Report errors on optional accessor properties (#5180) (DonIsaac)
+
+### Bug Fixes
+
+- d4c06ef parser: Revert "check for `@flow` with recoverable errors as well" (#5297) (overlookmotel)
+- e1d8b92 parser: Check for `@flow` with recoverable errors as well (Boshen)
+- e6fd52e parser: Change unterminated regex error to be non-recoverable (#5285) (Boshen)
+- 1686920 parser: Span for invalid regex flags (#5225) (leaysgur)
+
+### Refactor
+
+- d236554 parser: Move `JSXIdentifier` conversion code into parser (#5345) (overlookmotel)
+- bc59dd2 parser: Improve example for `byte_search!` macro usage (#5234) (overlookmotel)
+- a3ddfdd parser: Improve lexer pointer maths (#5233) (overlookmotel)
+
+### Testing
+
+- 7009177 parser: Fix incorrect flow error test (Boshen)
+
+## [0.25.0] - 2024-08-23
+
+- b2ff2df parser: [**BREAKING**] Remove builder pattern from `Parser` struct (#5000) (Boshen)
+
+- f88970b ast: [**BREAKING**] Change order of fields in CallExpression (#4859) (Burlin)
+
+### Features
+
+- 6800e69 oxc: Add `Compiler` and `CompilerInterface` (#4954) (Boshen)
+- afe728a parser: Parse regular expression with regex parser (#4998) (Boshen)
+
+### Bug Fixes
+
+- efbdced parser: Only show flow error if it's a flow file (#5069) (Boshen)
+
+### Refactor
+
+- ca70cc7 linter, mangler, parser, semantic, transformer, traverse, wasm: Rename various `flag` vars to `flags` (#5028) (overlookmotel)
+
+## [0.24.3] - 2024-08-18
+
+### Bug Fixes
+
+- 21f5762 codegen: Minify large numbers (#4889) (Boshen)
+- 1bdde2c parser: Detect @flow in `/** @flow */ comment (#4861) (Boshen)
+
+## [0.24.2] - 2024-08-12
+
+### Documentation
+
+- 559baa5 parser: Clean up doc regarding performance; remove conformance (Boshen)
+
+## [0.24.0] - 2024-08-08
+
+### Bug Fixes
+
+- a40a217 parser: Parse `assert` keyword in `TSImportAttributes` (#4610) (Boshen)
+
+### Refactor
+
+- d25dea7 parser: Use `ast_builder` in more places. (#4612) (rzvxa)
+
+## [0.23.1] - 2024-08-06
+
+### Bug Fixes
+
+- a40a217 parser: Parse `assert` keyword in `TSImportAttributes` (#4610) (Boshen)
+
+### Refactor
+
+- d25dea7 parser: Use `ast_builder` in more places. (#4612) (rzvxa)
+
+## [0.23.0] - 2024-08-01
+
+### Features
+
+- 7446e98 codegen: Align more esbuild implementations (#4510) (Boshen)
+- 35654e6 codegen: Align operator precedence with esbuild (#4509) (Boshen)
+
+### Bug Fixes
+
+- d5c4b19 parser: Fix enum member parsing (#4543) (DonIsaac)
+
+### Performance
+
+- 55a8763 parser: Faster decoding unicode escapes in identifiers (#4579) (overlookmotel)
+- ae1d38f parser: Fast path for ASCII when checking char after numeric literal (#4577) (overlookmotel)
+- 56ae615 parser: Make not at EOF the hot path in `Source` methods (#4576) (overlookmotel)
+- 25679e6 parser: Optimize `Lexer::hex_digit` (#4572) (overlookmotel)
+- bb33bcc parser: Speed up lexing non-decimal numbers (#4571) (overlookmotel)
+- ab8509e parser: Use `-` not `saturating_sub` (#4561) (overlookmotel)
+- c9c38a1 parser: Support peeking over bytes (#4304) (lucab)
+- 0870ee1 parser: Get and check lookahead token (#4534) (lucab)
+
+### Refactor
+
+- e68ed62 parser: Convert lexer byte handler for `|` to a single match (#4575) (overlookmotel)
+- bba824b parser: Convert `Lexer::read_minus` to a single match (#4574) (overlookmotel)
+- ef5418a parser: Convert `Lexer::read_left_angle` to a single match (#4573) (overlookmotel)
+- 9e5be78 parser: Add `Lexer::consume_2_chars` (#4569) (overlookmotel)
+- 649913e parser: Extract `u8` not `&u8` when iterating over bytes (#4568) (overlookmotel)
+- 59f00c0 parser: Rename function (#4566) (overlookmotel)
+- 8e3e910 parser: Rename vars (#4565) (overlookmotel)
+- 0c0601f parser: Rename function (#4564) (overlookmotel)
+- 0acc4a7 parser: Fetch 2 bytes in `?` byte handler (#4563) (overlookmotel)
+- 565eccf parser: Shorten lexer code (#4562) (overlookmotel)
+- 148bdb5 parser: Adjust function inlining (#4530) (overlookmotel)
+
+## [0.22.1] - 2024-07-27
+
+### Performance
+
+- 868fc87 parser: Optimize conditional advance on ASCII values (#4298) (lucab)
+
 ## [0.22.0] - 2024-07-23
 
 - f68b659 ast: [**BREAKING**] Reorder fields of `ArrowFunctionExpression` (#4364) (Dunqing)

@@ -5,12 +5,14 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_prototype_builtins_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("do not access Object.prototype method {x0:?} from target object"))
-        .with_help(format!(
-            "to avoid prototype pollution, use `Object.prototype.{x0}.call` instead"
-        ))
-        .with_label(span1)
+fn no_prototype_builtins_diagnostic(method_name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "do not access Object.prototype method {method_name:?} from target object"
+    ))
+    .with_help(format!(
+        "to avoid prototype pollution, use `Object.prototype.{method_name}.call` instead"
+    ))
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

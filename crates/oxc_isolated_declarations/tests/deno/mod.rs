@@ -5,20 +5,24 @@
 mod tests {
     use oxc_allocator::Allocator;
     use oxc_codegen::CodeGenerator;
-    use oxc_isolated_declarations::IsolatedDeclarations;
+    use oxc_isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions};
     use oxc_parser::Parser;
     use oxc_span::SourceType;
 
     fn transform_dts_test(source: &str, expected: &str) {
         let allocator = Allocator::default();
         let source_type = SourceType::from_path("test.ts").unwrap();
-        let program = Parser::new(&allocator, source, source_type).parse().program;
-
-        let ret = IsolatedDeclarations::new(&allocator).build(&program);
+        let ret = Parser::new(&allocator, source, source_type).parse();
+        let ret = IsolatedDeclarations::new(
+            &allocator,
+            source,
+            &ret.trivias,
+            IsolatedDeclarationsOptions { strip_internal: true },
+        )
+        .build(&ret.program);
         let actual = CodeGenerator::new().build(&ret.program).source_text;
         let expected_program = Parser::new(&allocator, expected, source_type).parse().program;
         let expected = CodeGenerator::new().build(&expected_program).source_text;
-
         assert_eq!(actual.trim(), expected.trim());
     }
 
@@ -223,15 +227,15 @@ export function foo(a: any): number {
         );
 
         transform_dts_test(
-      "export const foo = { str: \"bar\", bool: true, bool2: false, num: 42,   nullish: null } as const;",
-      "export declare const foo: {
+            "export const foo = { str: \"bar\", bool: true, bool2: false, num: 42,   nullish: null } as const;",
+            "export declare const foo: {
   readonly str: \"bar\";
   readonly bool: true;
   readonly bool2: false;
   readonly num: 42;
   readonly nullish: null;
 };",
-    );
+        );
 
         transform_dts_test(
             "export const foo = { str: [1, 2] as const } as const;",

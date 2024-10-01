@@ -5,8 +5,8 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_setter_return_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Setter cannot return a value").with_label(span0)
+fn no_setter_return_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Setter cannot return a value").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

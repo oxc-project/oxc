@@ -2,36 +2,40 @@
 source: crates/oxc_semantic/tests/main.rs
 input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaration/interface-heritage1.ts
 ---
+================================================================================
+SCOPES
+================================================================================
+
 [
   {
     "children": [
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 1,
         "node": "TSInterfaceDeclaration",
         "symbols": []
       },
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 2,
         "node": "TSInterfaceDeclaration",
         "symbols": []
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(Interface)",
+        "flags": "SymbolFlags(Interface)",
         "id": 0,
         "name": "Parent",
         "node": "TSInterfaceDeclaration",
         "references": [
           {
-            "flag": "ReferenceFlag(Type)",
+            "flags": "ReferenceFlags(Type)",
             "id": 0,
             "name": "Parent",
             "node_id": 6
@@ -39,7 +43,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         ]
       },
       {
-        "flag": "SymbolFlags(Interface)",
+        "flags": "SymbolFlags(Interface)",
         "id": 1,
         "name": "Foo",
         "node": "TSInterfaceDeclaration",
@@ -48,3 +52,9 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
     ]
   }
 ]
+
+================================================================================
+CONFORMANCE
+================================================================================
+
+All tests passed.

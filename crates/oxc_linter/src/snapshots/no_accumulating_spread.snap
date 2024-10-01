@@ -313,3 +313,157 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: It looks like you're spreading an `Object`. Consider using the `Object.assign` or assignment operators to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
+
+  ⚠ oxc(no-accumulating-spread): Do not spread accumulators in loops
+   ╭─[no_accumulating_spread.tsx:1:5]
+ 1 │ let foo = []; for (let i = 0; i < 10; i++) { foo = [...foo, i]; }
+   ·     ─┬─       ─┬─                                   ───┬──
+   ·      │         │                                       ╰── From this spread
+   ·      │         ╰── For this loop
+   ·      ╰── From this accumulator
+   ╰────
+  help: Consider using `Array.prototype.push()` to mutate the accumulator instead.
+        Using spreads within accumulators leads to `O(n^2)` time complexity.
+
+  ⚠ oxc(no-accumulating-spread): Do not spread accumulators in loops
+   ╭─[no_accumulating_spread.tsx:1:5]
+ 1 │ let foo = []; for (const i = 0; i < 10; i++) { foo = [...foo, i]; }
+   ·     ─┬─       ─┬─                                     ───┬──
+   ·      │         │                                         ╰── From this spread
+   ·      │         ╰── For this loop
+   ·      ╰── From this accumulator
+   ╰────
+  help: Consider using `Array.prototype.push()` to mutate the accumulator instead.
+        Using spreads within accumulators leads to `O(n^2)` time complexity.
+
+  ⚠ oxc(no-accumulating-spread): Do not spread accumulators in loops
+   ╭─[no_accumulating_spread.tsx:1:5]
+ 1 │ let foo = []; for (let i in [1,2,3]) { foo = [...foo, i]; }
+   ·     ─┬─       ─┬─                             ───┬──
+   ·      │         │                                 ╰── From this spread
+   ·      │         ╰── For this loop
+   ·      ╰── From this accumulator
+   ╰────
+  help: Consider using `Array.prototype.push()` to mutate the accumulator instead.
+        Using spreads within accumulators leads to `O(n^2)` time complexity.
+
+  ⚠ oxc(no-accumulating-spread): Do not spread accumulators in loops
+   ╭─[no_accumulating_spread.tsx:1:5]
+ 1 │ let foo = []; for (const i in [1,2,3]) { foo = [...foo, i]; }
+   ·     ─┬─       ─┬─                               ───┬──
+   ·      │         │                                   ╰── From this spread
+   ·      │         ╰── For this loop
+   ·      ╰── From this accumulator
+   ╰────
+  help: Consider using `Array.prototype.push()` to mutate the accumulator instead.
+        Using spreads within accumulators leads to `O(n^2)` time complexity.
+
+  ⚠ oxc(no-accumulating-spread): Do not spread accumulators in loops
+   ╭─[no_accumulating_spread.tsx:1:5]
+ 1 │ let foo = []; for (let i of [1,2,3]) { foo = [...foo, i]; }
+   ·     ─┬─       ─┬─                             ───┬──
+   ·      │         │                                 ╰── From this spread
+   ·      │         ╰── For this loop
+   ·      ╰── From this accumulator
+   ╰────
+  help: Consider using `Array.prototype.push()` to mutate the accumulator instead.
+        Using spreads within accumulators leads to `O(n^2)` time complexity.
+
+  ⚠ oxc(no-accumulating-spread): Do not spread accumulators in loops
+   ╭─[no_accumulating_spread.tsx:1:5]
+ 1 │ let foo = []; for (const i of [1,2,3]) { foo = [...foo, i]; }
+   ·     ─┬─       ─┬─                               ───┬──
+   ·      │         │                                   ╰── From this spread
+   ·      │         ╰── For this loop
+   ·      ╰── From this accumulator
+   ╰────
+  help: Consider using `Array.prototype.push()` to mutate the accumulator instead.
+        Using spreads within accumulators leads to `O(n^2)` time complexity.
+
+  ⚠ oxc(no-accumulating-spread): Do not spread accumulators in loops
+   ╭─[no_accumulating_spread.tsx:1:5]
+ 1 │ let foo = []; while (foo.length < 10) { foo = [...foo, foo.length]; }
+   ·     ─┬─       ──┬──                            ───┬──
+   ·      │          │                                 ╰── From this spread
+   ·      │          ╰── For this loop
+   ·      ╰── From this accumulator
+   ╰────
+  help: Consider using `Array.prototype.push()` to mutate the accumulator instead.
+        Using spreads within accumulators leads to `O(n^2)` time complexity.
+
+  ⚠ oxc(no-accumulating-spread): Do not spread accumulators in loops
+   ╭─[no_accumulating_spread.tsx:1:5]
+ 1 │ let foo = {}; for (let i = 0; i < 10; i++) { foo = { ...foo, [i]: i }; }
+   ·     ─┬─       ─┬─                                    ───┬──
+   ·      │         │                                        ╰── From this spread
+   ·      │         ╰── For this loop
+   ·      ╰── From this accumulator
+   ╰────
+  help: Consider using `Object.assign()` to mutate the accumulator instead.
+        Using spreads within accumulators leads to `O(n^2)` time complexity.
+
+  ⚠ oxc(no-accumulating-spread): Do not spread accumulators in loops
+   ╭─[no_accumulating_spread.tsx:1:5]
+ 1 │ let foo = {}; for (const i = 0; i < 10; i++) { foo = { ...foo, [i]: i }; }
+   ·     ─┬─       ─┬─                                      ───┬──
+   ·      │         │                                          ╰── From this spread
+   ·      │         ╰── For this loop
+   ·      ╰── From this accumulator
+   ╰────
+  help: Consider using `Object.assign()` to mutate the accumulator instead.
+        Using spreads within accumulators leads to `O(n^2)` time complexity.
+
+  ⚠ oxc(no-accumulating-spread): Do not spread accumulators in loops
+   ╭─[no_accumulating_spread.tsx:1:5]
+ 1 │ let foo = {}; for (let i in [1,2,3]) { foo = { ...foo, [i]: i }; }
+   ·     ─┬─       ─┬─                              ───┬──
+   ·      │         │                                  ╰── From this spread
+   ·      │         ╰── For this loop
+   ·      ╰── From this accumulator
+   ╰────
+  help: Consider using `Object.assign()` to mutate the accumulator instead.
+        Using spreads within accumulators leads to `O(n^2)` time complexity.
+
+  ⚠ oxc(no-accumulating-spread): Do not spread accumulators in loops
+   ╭─[no_accumulating_spread.tsx:1:5]
+ 1 │ let foo = {}; for (const i in [1,2,3]) { foo = { ...foo, [i]: i }; }
+   ·     ─┬─       ─┬─                                ───┬──
+   ·      │         │                                    ╰── From this spread
+   ·      │         ╰── For this loop
+   ·      ╰── From this accumulator
+   ╰────
+  help: Consider using `Object.assign()` to mutate the accumulator instead.
+        Using spreads within accumulators leads to `O(n^2)` time complexity.
+
+  ⚠ oxc(no-accumulating-spread): Do not spread accumulators in loops
+   ╭─[no_accumulating_spread.tsx:1:5]
+ 1 │ let foo = {}; for (let i of [1,2,3]) { foo = { ...foo, [i]: i }; }
+   ·     ─┬─       ─┬─                              ───┬──
+   ·      │         │                                  ╰── From this spread
+   ·      │         ╰── For this loop
+   ·      ╰── From this accumulator
+   ╰────
+  help: Consider using `Object.assign()` to mutate the accumulator instead.
+        Using spreads within accumulators leads to `O(n^2)` time complexity.
+
+  ⚠ oxc(no-accumulating-spread): Do not spread accumulators in loops
+   ╭─[no_accumulating_spread.tsx:1:5]
+ 1 │ let foo = {}; for (const i of [1,2,3]) { foo = { ...foo, [i]: i }; }
+   ·     ─┬─       ─┬─                                ───┬──
+   ·      │         │                                    ╰── From this spread
+   ·      │         ╰── For this loop
+   ·      ╰── From this accumulator
+   ╰────
+  help: Consider using `Object.assign()` to mutate the accumulator instead.
+        Using spreads within accumulators leads to `O(n^2)` time complexity.
+
+  ⚠ oxc(no-accumulating-spread): Do not spread accumulators in loops
+   ╭─[no_accumulating_spread.tsx:1:5]
+ 1 │ let foo = {}; while (Object.keys(foo).length < 10) { foo = { ...foo, [Object.keys(foo).length]: Object.keys(foo).length }; }
+   ·     ─┬─       ──┬──                                          ───┬──
+   ·      │          │                                               ╰── From this spread
+   ·      │          ╰── For this loop
+   ·      ╰── From this accumulator
+   ╰────
+  help: Consider using `Object.assign()` to mutate the accumulator instead.
+        Using spreads within accumulators leads to `O(n^2)` time complexity.

@@ -1,7 +1,5 @@
 use serde::Deserialize;
 
-use crate::TransformCtx;
-
 #[inline]
 fn default_as_true() -> bool {
     true
@@ -13,14 +11,14 @@ fn default_as_true() -> bool {
 /// classic does not automatic import anything.
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub enum ReactJsxRuntime {
+pub enum JsxRuntime {
     Classic,
     /// The default runtime is switched to automatic in Babel 8.
     #[default]
     Automatic,
 }
 
-impl ReactJsxRuntime {
+impl JsxRuntime {
     pub fn is_classic(self) -> bool {
         self == Self::Classic
     }
@@ -32,7 +30,7 @@ impl ReactJsxRuntime {
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(default, rename_all = "camelCase", deny_unknown_fields)]
-pub struct ReactOptions {
+pub struct JsxOptions {
     #[serde(skip)]
     pub jsx_plugin: bool,
 
@@ -48,7 +46,7 @@ pub struct ReactOptions {
     // Both Runtimes
     //
     /// Decides which runtime to use.
-    pub runtime: ReactJsxRuntime,
+    pub runtime: JsxRuntime,
 
     /// This toggles behavior specific to development, such as adding __source and __self.
     ///
@@ -104,16 +102,19 @@ pub struct ReactOptions {
     ///
     /// This value is used to skip Babel tests, and is not used in oxc.
     pub use_spread: Option<bool>,
+
+    /// Fast Refresh
+    pub refresh: Option<ReactRefreshOptions>,
 }
 
-impl Default for ReactOptions {
+impl Default for JsxOptions {
     fn default() -> Self {
         Self {
             jsx_plugin: true,
             display_name_plugin: true,
             jsx_self_plugin: false,
             jsx_source_plugin: false,
-            runtime: ReactJsxRuntime::default(),
+            runtime: JsxRuntime::default(),
             development: false,
             throw_if_namespace: default_as_true(),
             pure: default_as_true(),
@@ -122,11 +123,12 @@ impl Default for ReactOptions {
             pragma_frag: None,
             use_built_ins: None,
             use_spread: None,
+            refresh: None,
         }
     }
 }
 
-impl ReactOptions {
+impl JsxOptions {
     pub fn conform(&mut self) {
         if self.development {
             self.jsx_plugin = true;
@@ -134,55 +136,52 @@ impl ReactOptions {
             self.jsx_source_plugin = true;
         }
     }
+}
 
-    /// Scan through all comments and find the following pragmas
+#[derive(Debug, Clone, Deserialize)]
+#[serde(default, rename_all = "camelCase", deny_unknown_fields)]
+pub struct ReactRefreshOptions {
+    /// Specify the identifier of the refresh registration variable.
     ///
-    /// * @jsxRuntime classic / automatic
+    /// Defaults to `$RefreshReg$`.
+    #[serde(default = "default_refresh_reg")]
+    pub refresh_reg: String,
+
+    /// Specify the identifier of the refresh signature variable.
     ///
-    /// The comment does not need to be a jsdoc,
-    /// otherwise `JSDoc` could be used instead.
+    /// Defaults to `$RefreshSig$`.
+    #[serde(default = "default_refresh_sig")]
+    pub refresh_sig: String,
+
+    /// Controls whether to emit full signatures or use a more compact representation.
     ///
-    /// This behavior is aligned with babel.
-    pub(crate) fn update_with_comments(&mut self, ctx: &TransformCtx) {
-        for comment in ctx.trivias.comments() {
-            let mut comment = comment.span.source_text(ctx.source_text).trim_start();
-            // strip leading jsdoc comment `*` and then whitespaces
-            while let Some(cur_comment) = comment.strip_prefix('*') {
-                comment = cur_comment.trim_start();
-            }
-            // strip leading `@`
-            let Some(comment) = comment.strip_prefix('@') else { continue };
+    /// When set to `true`, this option causes this plugin to emit full, readable signatures
+    /// for React components and hooks. This can be useful for debugging and development purposes.
+    ///
+    /// When set to `false` (default), the transformer will use a more compact representation.
+    /// Specifically, it generates a SHA-1 hash of the signature and then encodes it using Base64.
+    /// This process produces a deterministic, compact representation that's suitable for
+    /// production builds while still uniquely identifying components.
+    ///
+    /// Defaults to `false`.
+    #[serde(default)]
+    pub emit_full_signatures: bool,
+}
 
-            // read jsxRuntime
-            match comment.strip_prefix("jsxRuntime").map(str::trim) {
-                Some("classic") => {
-                    self.runtime = ReactJsxRuntime::Classic;
-                    continue;
-                }
-                Some("automatic") => {
-                    self.runtime = ReactJsxRuntime::Automatic;
-                    continue;
-                }
-                _ => {}
-            }
-
-            // read jsxImportSource
-            if let Some(import_source) = comment.strip_prefix("jsxImportSource").map(str::trim) {
-                self.import_source = Some(import_source.to_string());
-                continue;
-            }
-
-            // read jsxFrag
-            if let Some(pragma_frag) = comment.strip_prefix("jsxFrag").map(str::trim) {
-                self.pragma_frag = Some(pragma_frag.to_string());
-                continue;
-            }
-
-            // Put this condition at the end to avoid breaking @jsxXX
-            // read jsx
-            if let Some(pragma) = comment.strip_prefix("jsx").map(str::trim) {
-                self.pragma = Some(pragma.to_string());
-            }
+impl Default for ReactRefreshOptions {
+    fn default() -> Self {
+        Self {
+            refresh_reg: default_refresh_reg(),
+            refresh_sig: default_refresh_sig(),
+            emit_full_signatures: false,
         }
     }
+}
+
+fn default_refresh_reg() -> String {
+    String::from("$RefreshReg$")
+}
+
+fn default_refresh_sig() -> String {
+    String::from("$RefreshSig$")
 }

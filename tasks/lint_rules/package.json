@@ -12,9 +12,11 @@
     "eslint-plugin-jsdoc": "latest",
     "eslint-plugin-jsx-a11y": "latest",
     "eslint-plugin-n": "latest",
+    "eslint-plugin-promise": "latest",
     "eslint-plugin-react": "latest",
     "eslint-plugin-react-hooks": "latest",
     "eslint-plugin-react-perf": "latest",
-    "eslint-plugin-unicorn": "latest"
+    "eslint-plugin-unicorn": "latest",
+    "eslint-plugin-vitest": "latest"
   }
 }

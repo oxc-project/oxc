@@ -1,0 +1,112 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
+   ╭─[no_wrapper_object_types.tsx:1:12]
+ 1 │ let value: BigInt;
+   ·            ──────
+   ╰────
+  help: Replace `BigInt` with `bigint`.
+
+  ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
+   ╭─[no_wrapper_object_types.tsx:1:12]
+ 1 │ let value: Boolean;
+   ·            ───────
+   ╰────
+  help: Replace `Boolean` with `boolean`.
+
+  ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
+   ╭─[no_wrapper_object_types.tsx:1:12]
+ 1 │ let value: Number;
+   ·            ──────
+   ╰────
+  help: Replace `Number` with `number`.
+
+  ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
+   ╭─[no_wrapper_object_types.tsx:1:12]
+ 1 │ let value: Object;
+   ·            ──────
+   ╰────
+  help: Replace `Object` with `object`.
+
+  ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
+   ╭─[no_wrapper_object_types.tsx:1:12]
+ 1 │ let value: String;
+   ·            ──────
+   ╰────
+  help: Replace `String` with `string`.
+
+  ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
+   ╭─[no_wrapper_object_types.tsx:1:12]
+ 1 │ let value: Symbol;
+   ·            ──────
+   ╰────
+  help: Replace `Symbol` with `symbol`.
+
+  ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
+   ╭─[no_wrapper_object_types.tsx:1:12]
+ 1 │ let value: Number | Symbol;
+   ·            ──────
+   ╰────
+  help: Replace `Number` with `number`.
+
+  ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
+   ╭─[no_wrapper_object_types.tsx:1:21]
+ 1 │ let value: Number | Symbol;
+   ·                     ──────
+   ╰────
+  help: Replace `Symbol` with `symbol`.
+
+  ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
+   ╭─[no_wrapper_object_types.tsx:1:24]
+ 1 │ let value: { property: Number };
+   ·                        ──────
+   ╰────
+  help: Replace `Number` with `number`.
+
+  ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
+   ╭─[no_wrapper_object_types.tsx:1:6]
+ 1 │ 0 as Number;
+   ·      ──────
+   ╰────
+  help: Replace `Number` with `number`.
+
+  ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
+   ╭─[no_wrapper_object_types.tsx:1:15]
+ 1 │ type MyType = Number;
+   ·               ──────
+   ╰────
+  help: Replace `Number` with `number`.
+
+  ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
+   ╭─[no_wrapper_object_types.tsx:1:16]
+ 1 │ type MyType = [Number];
+   ·                ──────
+   ╰────
+  help: Replace `Number` with `number`.
+
+  ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
+   ╭─[no_wrapper_object_types.tsx:1:26]
+ 1 │ class MyClass implements Number {}
+   ·                          ──────
+   ╰────
+
+  ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
+   ╭─[no_wrapper_object_types.tsx:1:31]
+ 1 │ interface MyInterface extends Number {}
+   ·                               ──────
+   ╰────
+
+  ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
+   ╭─[no_wrapper_object_types.tsx:1:15]
+ 1 │ type MyType = Number & String;
+   ·               ──────
+   ╰────
+  help: Replace `Number` with `number`.
+
+  ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
+   ╭─[no_wrapper_object_types.tsx:1:24]
+ 1 │ type MyType = Number & String;
+   ·                        ──────
+   ╰────
+  help: Replace `String` with `string`.

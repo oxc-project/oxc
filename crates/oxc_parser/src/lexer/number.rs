@@ -5,6 +5,7 @@
 
 use std::borrow::Cow;
 
+use cow_utils::CowUtils;
 use num_bigint::BigInt;
 use num_traits::Num;
 
@@ -40,7 +41,7 @@ pub fn parse_int(s: &str, kind: Kind, has_sep: bool) -> Result<f64, &'static str
 }
 
 pub fn parse_float(s: &str, has_sep: bool) -> Result<f64, &'static str> {
-    let s = if has_sep { Cow::Owned(s.replace('_', "")) } else { Cow::Borrowed(s) };
+    let s = if has_sep { s.cow_replace('_', "") } else { Cow::Borrowed(s) };
     debug_assert!(!s.contains('_'));
     s.parse::<f64>().map_err(|_| "invalid float")
 }
@@ -49,14 +50,14 @@ pub fn parse_float(s: &str, has_sep: bool) -> Result<f64, &'static str> {
 
 /// b'0' is 0x30 and b'9' is 0x39.
 ///
-/// So we can convert from any decimal digit to its value with `c & 15`.
-/// This is produces more compact assembly than `c - b'0'`.
+/// So we can convert from any decimal digit to its value with `b & 15`.
+/// This is produces more compact assembly than `b - b'0'`.
 ///
 /// <https://godbolt.org/z/WMarz15sq>
 #[inline]
-const fn decimal_byte_to_value(c: u8) -> u8 {
-    debug_assert!(c >= b'0' && c <= b'9');
-    c & 15
+const fn decimal_byte_to_value(b: u8) -> u8 {
+    debug_assert!(b >= b'0' && b <= b'9');
+    b & 15
 }
 
 #[allow(clippy::cast_precision_loss, clippy::cast_lossless)]
@@ -71,7 +72,7 @@ fn parse_decimal(s: &str) -> f64 {
     }
 
     let mut result = 0_u64;
-    for c in s.as_bytes() {
+    for &b in s.as_bytes() {
         // The latency of the multiplication can be hidden by issuing it
         // before the result is needed to improve performance on
         // modern out-of-order CPU as multiplication here is slower
@@ -79,7 +80,7 @@ fn parse_decimal(s: &str) -> f64 {
         // doing multiplication first and let the CPU spends other cycles
         // doing other computation and get multiplication result later.
         result *= 10;
-        let n = decimal_byte_to_value(*c);
+        let n = decimal_byte_to_value(b);
         result += n as u64;
     }
     result as f64
@@ -93,14 +94,14 @@ fn parse_decimal_with_underscores(s: &str) -> f64 {
 
     debug_assert!(!s.is_empty());
     if s.len() > MAX_FAST_DECIMAL_LEN {
-        return parse_decimal_slow(&s.replace('_', ""));
+        return parse_decimal_slow(&s.cow_replace('_', ""));
     }
 
     let mut result = 0_u64;
-    for c in s.as_bytes() {
-        if *c != b'_' {
+    for &b in s.as_bytes() {
+        if b != b'_' {
             result *= 10;
-            let n = decimal_byte_to_value(*c);
+            let n = decimal_byte_to_value(b);
             result += n as u64;
         }
     }
@@ -121,23 +122,23 @@ fn parse_decimal_slow(s: &str) -> f64 {
 
 /// b'0' is 0x30 and b'1' is 0x31.
 ///
-/// So we can convert from binary digit to its value with `c & 1`.
-/// This is produces more compact assembly than `c - b'0'`.
+/// So we can convert from binary digit to its value with `b & 1`.
+/// This is produces more compact assembly than `b - b'0'`.
 ///
 /// <https://godbolt.org/z/1vvrK78jf>
 #[inline]
-const fn binary_byte_to_value(c: u8) -> u8 {
-    debug_assert!(c == b'0' || c == b'1');
-    c & 1
+const fn binary_byte_to_value(b: u8) -> u8 {
+    debug_assert!(b == b'0' || b == b'1');
+    b & 1
 }
 
 /// NOTE: bit shifting here is is safe and much faster than f64::mul_add.
 /// It's safe because we're sure this number is an integer - if it wasn't, it
 /// would be a [`Kind::Float`] instead. It's fast because shifting usually takes
 /// 1 clock cycle on the ALU, while multiplication+addition uses the FPU and is
-/// much slower. Addtiionally, this loop often gets unrolled by rustc since
+/// much slower. Additionally, this loop often gets unrolled by rustc since
 /// these numbers are usually not long. On x84_64, FMUL has a latency of 4 clock
-/// cycles, which doesn't include addition. Some platorms support mul + add in a
+/// cycles, which doesn't include addition. Some platforms support mul + add in a
 /// single instruction, but many others do not.
 ///
 /// Unfortunately, this approach has the chance to overflow for excessively
@@ -159,9 +160,9 @@ fn parse_binary(s: &str) -> f64 {
     }
 
     let mut result = 0_u64;
-    for c in s.as_bytes() {
+    for &b in s.as_bytes() {
         result <<= 1;
-        result |= binary_byte_to_value(*c) as u64;
+        result |= binary_byte_to_value(b) as u64;
     }
     result as f64
 }
@@ -170,8 +171,8 @@ fn parse_binary(s: &str) -> f64 {
 #[inline(never)]
 fn parse_binary_slow(s: &str) -> f64 {
     let mut result = 0_f64;
-    for c in s.as_bytes() {
-        let value = f64::from(binary_byte_to_value(*c));
+    for &b in s.as_bytes() {
+        let value = f64::from(binary_byte_to_value(b));
         result = result.mul_add(2.0, value);
     }
     result
@@ -191,10 +192,10 @@ fn parse_binary_with_underscores(s: &str) -> f64 {
     }
 
     let mut result = 0_u64;
-    for c in s.as_bytes() {
-        if *c != b'_' {
+    for &b in s.as_bytes() {
+        if b != b'_' {
             result <<= 1;
-            result |= binary_byte_to_value(*c) as u64;
+            result |= binary_byte_to_value(b) as u64;
         }
     }
     result as f64
@@ -204,9 +205,9 @@ fn parse_binary_with_underscores(s: &str) -> f64 {
 #[inline(never)]
 fn parse_binary_with_underscores_slow(s: &str) -> f64 {
     let mut result = 0_f64;
-    for c in s.as_bytes() {
-        if *c != b'_' {
-            let value = f64::from(binary_byte_to_value(*c));
+    for &b in s.as_bytes() {
+        if b != b'_' {
+            let value = f64::from(binary_byte_to_value(b));
             result = result.mul_add(2.0, value);
         }
     }
@@ -217,14 +218,14 @@ fn parse_binary_with_underscores_slow(s: &str) -> f64 {
 
 /// b'0' is 0x30 and b'7' is 0x37.
 ///
-/// So we can convert from any octal digit to its value with `c & 7`.
-/// This is produces more compact assembly than `c - b'0'`.
+/// So we can convert from any octal digit to its value with `b & 7`.
+/// This is produces more compact assembly than `b - b'0'`.
 ///
 /// <https://godbolt.org/z/9rYTsMoMM>
 #[inline]
-const fn octal_byte_to_value(c: u8) -> u8 {
-    debug_assert!(c >= b'0' && c <= b'7');
-    c & 7
+const fn octal_byte_to_value(b: u8) -> u8 {
+    debug_assert!(b >= b'0' && b <= b'7');
+    b & 7
 }
 
 #[allow(clippy::cast_precision_loss, clippy::cast_lossless)]
@@ -239,8 +240,8 @@ fn parse_octal(s: &str) -> f64 {
     }
 
     let mut result = 0_u64;
-    for c in s.as_bytes() {
-        let n = octal_byte_to_value(*c);
+    for &b in s.as_bytes() {
+        let n = octal_byte_to_value(b);
         result <<= 3;
         result |= n as u64;
     }
@@ -252,8 +253,8 @@ fn parse_octal(s: &str) -> f64 {
 #[allow(clippy::cast_precision_loss, clippy::cast_lossless)]
 fn parse_octal_slow(s: &str) -> f64 {
     let mut result = 0_f64;
-    for c in s.as_bytes() {
-        let value = f64::from(octal_byte_to_value(*c));
+    for &b in s.as_bytes() {
+        let value = f64::from(octal_byte_to_value(b));
         result = result.mul_add(8.0, value);
     }
     result
@@ -271,9 +272,9 @@ fn parse_octal_with_underscores(s: &str) -> f64 {
     }
 
     let mut result = 0_u64;
-    for c in s.as_bytes() {
-        if *c != b'_' {
-            let n = octal_byte_to_value(*c);
+    for &b in s.as_bytes() {
+        if b != b'_' {
+            let n = octal_byte_to_value(b);
             result <<= 3;
             result |= n as u64;
         }
@@ -286,9 +287,9 @@ fn parse_octal_with_underscores(s: &str) -> f64 {
 #[allow(clippy::cast_precision_loss, clippy::cast_lossless)]
 fn parse_octal_with_underscores_slow(s: &str) -> f64 {
     let mut result = 0_f64;
-    for c in s.as_bytes() {
-        if *c != b'_' {
-            let value = f64::from(octal_byte_to_value(*c));
+    for &b in s.as_bytes() {
+        if b != b'_' {
+            let value = f64::from(octal_byte_to_value(b));
             result = result.mul_add(8.0, value);
         }
     }
@@ -301,22 +302,22 @@ fn parse_octal_with_underscores_slow(s: &str) -> f64 {
 /// - b'A' is 0x41 and b'F' is 0x46.
 /// - b'a' is 0x61 and b'f' is 0x66.
 ///
-/// So we can convert from a digit to its value with `c & 15`,
-/// and from `A-F` or `a-f` to its value with `(c & 15) + 9`.
-/// We could use `(c & 7) + 9` for `A-F`, but we use `(c & 15) + 9`
-/// so that both branches share the same `c & 15` operation.
+/// So we can convert from a digit to its value with `b & 15`,
+/// and from `A-F` or `a-f` to its value with `(b & 15) + 9`.
+/// We could use `(b & 7) + 9` for `A-F`, but we use `(b & 15) + 9`
+/// so that both branches share the same `b & 15` operation.
 ///
 /// This is produces more slightly more assembly than explicitly matching all possibilities,
 /// but only because compiler unrolls the loop.
 ///
 /// <https://godbolt.org/z/5fsdv8rGo>
 #[inline]
-const fn hex_byte_to_value(c: u8) -> u8 {
-    debug_assert!((c >= b'0' && c <= b'9') || (c >= b'A' && c <= b'F') || (c >= b'a' && c <= b'f'));
-    if c < b'A' {
-        c & 15 // 0-9
+const fn hex_byte_to_value(b: u8) -> u8 {
+    debug_assert!((b >= b'0' && b <= b'9') || (b >= b'A' && b <= b'F') || (b >= b'a' && b <= b'f'));
+    if b < b'A' {
+        b & 15 // 0-9
     } else {
-        (c & 15) + 9 // A-F or a-f
+        (b & 15) + 9 // A-F or a-f
     }
 }
 
@@ -333,8 +334,8 @@ fn parse_hex(s: &str) -> f64 {
     }
 
     let mut result = 0_u64;
-    for c in s.as_bytes() {
-        let n = hex_byte_to_value(*c);
+    for &b in s.as_bytes() {
+        let n = hex_byte_to_value(b);
         result <<= 4;
         result |= n as u64;
     }
@@ -345,8 +346,8 @@ fn parse_hex(s: &str) -> f64 {
 #[inline(never)]
 fn parse_hex_slow(s: &str) -> f64 {
     let mut result = 0_f64;
-    for c in s.as_bytes() {
-        let value = f64::from(hex_byte_to_value(*c));
+    for &b in s.as_bytes() {
+        let value = f64::from(hex_byte_to_value(b));
         result = result.mul_add(16.0, value);
     }
     result
@@ -365,9 +366,9 @@ fn parse_hex_with_underscores(s: &str) -> f64 {
     }
 
     let mut result = 0_u64;
-    for c in s.as_bytes() {
-        if *c != b'_' {
-            let n = hex_byte_to_value(*c);
+    for &b in s.as_bytes() {
+        if b != b'_' {
+            let n = hex_byte_to_value(b);
             result <<= 4;
             result |= n as u64;
         }
@@ -379,9 +380,9 @@ fn parse_hex_with_underscores(s: &str) -> f64 {
 #[inline(never)]
 fn parse_hex_with_underscores_slow(s: &str) -> f64 {
     let mut result = 0_f64;
-    for c in s.as_bytes() {
-        if *c != b'_' {
-            let value = f64::from(hex_byte_to_value(*c));
+    for &b in s.as_bytes() {
+        if b != b'_' {
+            let value = f64::from(hex_byte_to_value(b));
             result = result.mul_add(16.0, value);
         }
     }
@@ -391,7 +392,7 @@ fn parse_hex_with_underscores_slow(s: &str) -> f64 {
 // ==================================== BIGINT ====================================
 
 pub fn parse_big_int(s: &str, kind: Kind, has_sep: bool) -> Result<BigInt, &'static str> {
-    let s = if has_sep { Cow::Owned(s.replace('_', "")) } else { Cow::Borrowed(s) };
+    let s = if has_sep { s.cow_replace('_', "") } else { Cow::Borrowed(s) };
     debug_assert!(!s.contains('_'));
     parse_big_int_without_underscores(&s, kind)
 }
@@ -450,25 +451,27 @@ mod test {
         }
     }
 
-    // decimal
-    static_assertions::const_assert_eq!(decimal_byte_to_value(b'0'), 0);
-    static_assertions::const_assert_eq!(decimal_byte_to_value(b'9'), 9);
+    const _: () = {
+        // decimal
+        assert!(decimal_byte_to_value(b'0') == 0);
+        assert!(decimal_byte_to_value(b'9') == 9);
 
-    // binary
-    static_assertions::const_assert_eq!(binary_byte_to_value(b'0'), 0);
-    static_assertions::const_assert_eq!(binary_byte_to_value(b'1'), 1);
+        // binary
+        assert!(binary_byte_to_value(b'0') == 0);
+        assert!(binary_byte_to_value(b'1') == 1);
 
-    // octal
-    static_assertions::const_assert_eq!(octal_byte_to_value(b'0'), 0);
-    static_assertions::const_assert_eq!(octal_byte_to_value(b'7'), 7);
+        // octal
+        assert!(octal_byte_to_value(b'0') == 0);
+        assert!(octal_byte_to_value(b'7') == 7);
 
-    // hex
-    static_assertions::const_assert_eq!(hex_byte_to_value(b'0'), 0);
-    static_assertions::const_assert_eq!(hex_byte_to_value(b'9'), 9);
-    static_assertions::const_assert_eq!(hex_byte_to_value(b'A'), 10);
-    static_assertions::const_assert_eq!(hex_byte_to_value(b'F'), 15);
-    static_assertions::const_assert_eq!(hex_byte_to_value(b'a'), 10);
-    static_assertions::const_assert_eq!(hex_byte_to_value(b'f'), 15);
+        // hex
+        assert!(hex_byte_to_value(b'0') == 0);
+        assert!(hex_byte_to_value(b'9') == 9);
+        assert!(hex_byte_to_value(b'A') == 10);
+        assert!(hex_byte_to_value(b'F') == 15);
+        assert!(hex_byte_to_value(b'a') == 10);
+        assert!(hex_byte_to_value(b'f') == 15);
+    };
 
     #[test]
     #[allow(clippy::excessive_precision, clippy::cast_precision_loss)]

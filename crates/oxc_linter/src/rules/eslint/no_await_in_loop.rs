@@ -8,8 +8,8 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_await_in_loop_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected `await` inside a loop.").with_label(span0)
+fn no_await_in_loop_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected `await` inside a loop.").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -18,7 +18,7 @@ pub struct NoAwaitInLoop;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule disallows the use of await within loop bodies. (for, for-in, for-of, while, do-while).
+    /// This rule disallows the use of `await` within loop bodies. (for, for-in, for-of, while, do-while).
     ///
     /// ### Why is this bad?
     ///
@@ -26,16 +26,21 @@ declare_oxc_lint!(
     /// Instead, they are being run in series, which can lead to poorer performance.
     ///
     /// ### Example
-    /// Bad:
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// for (const user of users) {
-    ///   const userRecord = await getUserRecord(user);
+    /// async function bad() {
+    ///     for (const user of users) {
+    ///       const userRecord = await getUserRecord(user);
+    ///     }
     /// }
     /// ```
     ///
-    /// Good:
+    /// Examples of **correct** code for this rule:
     /// ```javascript
-    /// await Promise.all(users.map(user => getUserRecord(user)));
+    /// async function good() {
+    ///     await Promise.all(users.map(user => getUserRecord(user)));
+    /// }
     /// ```
     NoAwaitInLoop,
     perf

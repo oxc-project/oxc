@@ -5,10 +5,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_img_element_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_img_element_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prevent usage of `<img>` element due to slower LCP and higher bandwidth.")
         .with_help("See https://nextjs.org/docs/messages/no-img-element")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

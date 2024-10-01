@@ -6,25 +6,25 @@ source: crates/oxc_linter/src/tester.rs
  1 │ var a = test.__proto__;
    ·         ──────────────
    ╰────
-  help: Disallow the use of the `__proto__` property.
+  help: use `Object.getPrototypeOf` and `Object.setPrototypeOf` instead.
 
   ⚠ eslint(no-proto): The '__proto__' property is deprecated
    ╭─[no_proto.tsx:1:9]
  1 │ var a = test['__proto__'];
    ·         ─────────────────
    ╰────
-  help: Disallow the use of the `__proto__` property.
+  help: use `Object.getPrototypeOf` and `Object.setPrototypeOf` instead.
 
   ⚠ eslint(no-proto): The '__proto__' property is deprecated
    ╭─[no_proto.tsx:1:9]
  1 │ var a = test[`__proto__`];
    ·         ─────────────────
    ╰────
-  help: Disallow the use of the `__proto__` property.
+  help: use `Object.getPrototypeOf` and `Object.setPrototypeOf` instead.
 
   ⚠ eslint(no-proto): The '__proto__' property is deprecated
    ╭─[no_proto.tsx:1:1]
  1 │ test[`__proto__`] = function () {};
    · ─────────────────
    ╰────
-  help: Disallow the use of the `__proto__` property.
+  help: use `Object.getPrototypeOf` and `Object.setPrototypeOf` instead.

@@ -74,7 +74,40 @@ pub(super) fn print_function_parameters<'a>(
     let mut printed = p.vec();
     let len = params.items.len();
     let has_rest = params.rest.is_some();
+
+    if let AstKind::Function(function) = p.parent_kind() {
+        if let Some(this_param) = &function.this_param {
+            parts.push(this_param.format(p));
+
+            if params.items.len() > 0 {
+                printed.push(ss!(","));
+
+                if should_hug_the_only_function_parameter {
+                    printed.push(space!());
+                } else if p.is_next_line_empty(this_param.span) {
+                    printed.extend(hardline!());
+                    printed.extend(hardline!());
+                } else {
+                    printed.push(line!());
+                }
+            }
+        }
+    }
+
     for (i, param) in params.items.iter().enumerate() {
+        if let Some(accessibility) = &param.accessibility {
+            printed.push(ss!(accessibility.as_str()));
+            printed.push(space!());
+        }
+
+        if param.r#override {
+            printed.push(ss!("override "));
+        }
+
+        if param.readonly {
+            printed.push(ss!("readonly "));
+        }
+
         printed.push(param.format(p));
         if i == len - 1 && !has_rest {
             break;
@@ -106,8 +139,9 @@ pub(super) fn print_function_parameters<'a>(
     indented.extend(printed);
     let indented = indent!(p, Doc::Array(indented));
     parts.push(indented);
-    let has_rest_parameter = params.rest.is_some();
-    parts.push(if_break!(p, if has_rest_parameter { "" } else { "," }));
+    let skip_dangling_comma = params.rest.is_some()
+        || matches!(p.parent_kind(), AstKind::Function(func) if func.this_param.is_some());
+    parts.push(if_break!(p, if skip_dangling_comma { "" } else { "," }));
     parts.push(softline!());
     if need_parens {
         parts.push(ss!(")"));

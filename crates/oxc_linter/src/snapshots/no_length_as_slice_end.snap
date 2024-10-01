@@ -1,0 +1,56 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-unicorn(no-length-as-slice-end): Passing `length` as the end argument of a `slice` call is unnecessary.
+   ╭─[no_length_as_slice_end.tsx:1:5]
+ 1 │ foo.slice(1, foo.length)
+   ·     ──┬──    ─────┬────
+   ·       │           ╰── Invalid argument here
+   ·       ╰── `.slice` called here.
+   ╰────
+  help: Remove the second argument.
+
+  ⚠ eslint-plugin-unicorn(no-length-as-slice-end): Passing `length` as the end argument of a `slice` call is unnecessary.
+   ╭─[no_length_as_slice_end.tsx:1:6]
+ 1 │ foo?.slice(1, foo.length)
+   ·      ──┬──    ─────┬────
+   ·        │           ╰── Invalid argument here
+   ·        ╰── `.slice` called here.
+   ╰────
+  help: Remove the second argument.
+
+  ⚠ eslint-plugin-unicorn(no-length-as-slice-end): Passing `length` as the end argument of a `slice` call is unnecessary.
+   ╭─[no_length_as_slice_end.tsx:1:5]
+ 1 │ foo.slice(1, foo.length,)
+   ·     ──┬──    ─────┬────
+   ·       │           ╰── Invalid argument here
+   ·       ╰── `.slice` called here.
+   ╰────
+  help: Remove the second argument.
+
+  ⚠ eslint-plugin-unicorn(no-length-as-slice-end): Passing `length` as the end argument of a `slice` call is unnecessary.
+   ╭─[no_length_as_slice_end.tsx:1:5]
+ 1 │ foo.slice(1, (( foo.length )))
+   ·     ──┬──       ─────┬────
+   ·       │              ╰── Invalid argument here
+   ·       ╰── `.slice` called here.
+   ╰────
+  help: Remove the second argument.
+
+  ⚠ eslint-plugin-unicorn(no-length-as-slice-end): Passing `length` as the end argument of a `slice` call is unnecessary.
+   ╭─[no_length_as_slice_end.tsx:1:5]
+ 1 │ foo.slice(1, foo?.length)
+   ·     ──┬──    ─────┬─────
+   ·       │           ╰── Invalid argument here
+   ·       ╰── `.slice` called here.
+   ╰────
+  help: Remove the second argument.
+
+  ⚠ eslint-plugin-unicorn(no-length-as-slice-end): Passing `length` as the end argument of a `slice` call is unnecessary.
+   ╭─[no_length_as_slice_end.tsx:1:6]
+ 1 │ foo?.slice(1, foo?.length)
+   ·      ──┬──    ─────┬─────
+   ·        │           ╰── Invalid argument here
+   ·        ╰── `.slice` called here.
+   ╰────
+  help: Remove the second argument.

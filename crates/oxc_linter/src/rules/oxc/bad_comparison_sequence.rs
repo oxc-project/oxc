@@ -8,8 +8,8 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn bad_comparison_sequence_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Bad comparison sequence").with_help("Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)").with_label(span0)
+fn bad_comparison_sequence_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Bad comparison sequence").with_help("Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

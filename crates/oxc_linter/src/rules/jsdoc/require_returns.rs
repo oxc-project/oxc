@@ -14,20 +14,20 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        get_function_nearest_jsdoc_node, should_ignore_as_avoid, should_ignore_as_internal,
-        should_ignore_as_private,
+        default_true, get_function_nearest_jsdoc_node, should_ignore_as_avoid,
+        should_ignore_as_internal, should_ignore_as_private,
     },
 };
 
-fn missing_returns_diagnostic(span0: Span) -> OxcDiagnostic {
+fn missing_returns_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing JSDoc `@returns` declaration for function.")
         .with_help("Add `@returns` tag to the JSDoc comment.")
-        .with_label(span0)
+        .with_label(span)
 }
-fn duplicate_returns_diagnostic(span0: Span) -> OxcDiagnostic {
+fn duplicate_returns_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Duplicate `@returns` tags.")
         .with_help("Remove redundunt `@returns` tag.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -35,25 +35,31 @@ pub struct RequireReturns(Box<RequireReturnsConfig>);
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Requires that return statements are documented.
     /// Will also report if multiple `@returns` tags are present.
     ///
     /// ### Why is this bad?
+    ///
     /// The rule is intended to prevent the omission of `@returns` tag when necessary.
     ///
-    /// ### Example
-    /// ```javascript
-    /// // Passing
-    /// /** @returns Foo. */
-    /// function quux () { return foo; }
+    /// ### Examples
     ///
-    /// // Failing
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
     /// /** Foo. */
     /// function quux () { return foo; }
+    ///
     /// /**
     ///  * @returns Foo!
     ///  * @returns Foo?
     ///  */
+    /// function quux () { return foo; }
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// /** @returns Foo. */
     /// function quux () { return foo; }
     /// ```
     RequireReturns,
@@ -84,9 +90,6 @@ impl Default for RequireReturnsConfig {
         }
     }
 }
-fn default_true() -> bool {
-    true
-}
 fn default_exempted_by() -> Vec<String> {
     vec!["inheritdoc".to_string()]
 }
@@ -108,7 +111,7 @@ impl Rule for RequireReturns {
 
         // Value of map: (AstNode, Span, Attrs: (isAsync, hasReturnValue))
         let mut functions_to_check = FxHashMap::default();
-        'visit_node: for node in ctx.nodes().iter() {
+        'visit_node: for node in ctx.nodes() {
             match node.kind() {
                 AstKind::Function(func) => {
                     functions_to_check.insert(node.id(), (node, func.span, (func.r#async, false)));
@@ -226,12 +229,12 @@ impl Rule for RequireReturns {
             let jsdoc_tags = jsdocs.iter().flat_map(JSDoc::tags).collect::<Vec<_>>();
             let resolved_returns_tag_name = settings.resolve_tag_name("returns");
 
-            if is_missing_returns_tag(&jsdoc_tags, &resolved_returns_tag_name) {
+            if is_missing_returns_tag(&jsdoc_tags, resolved_returns_tag_name) {
                 ctx.diagnostic(missing_returns_diagnostic(*func_span));
                 continue;
             }
 
-            if let Some(span) = is_duplicated_returns_tag(&jsdoc_tags, &resolved_returns_tag_name) {
+            if let Some(span) = is_duplicated_returns_tag(&jsdoc_tags, resolved_returns_tag_name) {
                 ctx.diagnostic(duplicate_returns_diagnostic(span));
             }
         }

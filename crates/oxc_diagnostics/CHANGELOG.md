@@ -4,6 +4,52 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.30.2] - 2024-09-27
+
+### Bug Fixes
+
+- a88504c diagnostics: Check for terminal when displaying links (#6018) (Boshen)
+
+## [0.30.1] - 2024-09-24
+
+### Performance
+
+- 2b17003 linter, prettier, diagnostics: Use `FxHashMap` instead of `std::collections::HashMap` (#5993) (camchenry)
+
+## [0.30.0] - 2024-09-23
+
+### Documentation
+
+- 83ca7f5 diagnostics: Fully document `oxc_diagnostics` (#5865) (DonIsaac)
+
+### Refactor
+
+- 6dd6f7c ast: Change `Comment` struct (#5783) (Boshen)
+
+## [0.27.0] - 2024-09-06
+
+### Features
+
+- 91b39c4 oxc_diagnostic: Impl DerefMut for OxcDiagnostic (#5474) (IWANABETHATGUY)
+
+### Bug Fixes
+
+- fce549e diagnostics: Ignore `Interrupted` and `BrokenPipe` errors while printing (#5526) (Boshen)
+
+## [0.26.0] - 2024-09-03
+
+### Features
+
+- 9c22ce9 linter: Add hyperlinks to diagnostic messages (#5318) (DonIsaac)
+
+### Bug Fixes
+
+- ff7fa98 diagnostics: Improve "file is too long to fit on the screen" (#5120) (Boshen)
+
+### Refactor
+
+- cd63336 diagnostic: Change how diagnostic codes are rendered (#5317) (DonIsaac)
+
 ## [0.22.0] - 2024-07-23
 
 ### Features

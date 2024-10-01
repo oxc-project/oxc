@@ -1,0 +1,18 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-unused-vars): Type alias 'T' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:6]
+ 1 │ type T = number; function foo<T>(a: T): T { return a as T }; foo(1)
+   ·      ┬
+   ·      ╰── 'T' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Type alias 'A' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:6]
+ 1 │ type A = number; type B<A> = A; console.log(3 as B<3>)
+   ·      ┬
+   ·      ╰── 'A' is declared here
+   ╰────
+  help: Consider removing this declaration.

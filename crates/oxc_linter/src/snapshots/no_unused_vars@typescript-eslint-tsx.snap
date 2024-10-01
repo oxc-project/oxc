@@ -1,0 +1,12 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-unused-vars): Identifier 'Fragment' is imported but never used.
+   ╭─[no_unused_vars.tsx:3:18]
+ 2 │         import React from 'react';
+ 3 │         import { Fragment } from 'react';
+   ·                  ────┬───
+   ·                      ╰── 'Fragment' is imported here
+ 4 │ 
+   ╰────
+  help: Consider removing this import.

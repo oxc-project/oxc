@@ -1,0 +1,11 @@
+{
+  "name": "oxc",
+  "private": true,
+  "packageManager": "pnpm@9.11.0",
+  "volta": {
+    "node": "22.7.0"
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "catalog:"
+  }
+}

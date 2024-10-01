@@ -1,135 +1,135 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint(no-obj-calls): Disallow calling some global objects as functions
+  ⚠ eslint(no-obj-calls): `JSON` is not a function and cannot be called
    ╭─[no_obj_calls.tsx:1:14]
  1 │ let newObj = new JSON();
    ·              ──────────
    ╰────
-  help: JSON is not a function.
+  help: This call will throw a TypeError at runtime.
 
-  ⚠ eslint(no-obj-calls): Disallow calling some global objects as functions
+  ⚠ eslint(no-obj-calls): `JSON` is not a function and cannot be called
    ╭─[no_obj_calls.tsx:1:11]
  1 │ let obj = JSON();
    ·           ──────
    ╰────
-  help: JSON is not a function.
+  help: This call will throw a TypeError at runtime.
 
-  ⚠ eslint(no-obj-calls): Disallow calling some global objects as functions
+  ⚠ eslint(no-obj-calls): `JSON` is not a function and cannot be called
    ╭─[no_obj_calls.tsx:1:11]
  1 │ let obj = globalThis.JSON()
    ·           ─────────────────
    ╰────
-  help: JSON is not a function.
+  help: This call will throw a TypeError at runtime.
 
-  ⚠ eslint(no-obj-calls): Disallow calling some global objects as functions
+  ⚠ eslint(no-obj-calls): `JSON` is not a function and cannot be called
    ╭─[no_obj_calls.tsx:1:1]
  1 │ new JSON
    · ────────
    ╰────
-  help: JSON is not a function.
+  help: This call will throw a TypeError at runtime.
 
-  ⚠ eslint(no-obj-calls): Disallow calling some global objects as functions
+  ⚠ eslint(no-obj-calls): `JSON` is not a function and cannot be called
    ╭─[no_obj_calls.tsx:1:18]
  1 │ const foo = x => new JSON()
    ·                  ──────────
    ╰────
-  help: JSON is not a function.
+  help: This call will throw a TypeError at runtime.
 
-  ⚠ eslint(no-obj-calls): Disallow calling some global objects as functions
+  ⚠ eslint(no-obj-calls): `Math` is not a function and cannot be called
    ╭─[no_obj_calls.tsx:1:14]
  1 │ let newObj = new Math();
    ·              ──────────
    ╰────
-  help: Math is not a function.
+  help: This call will throw a TypeError at runtime.
 
-  ⚠ eslint(no-obj-calls): Disallow calling some global objects as functions
+  ⚠ eslint(no-obj-calls): `Math` is not a function and cannot be called
    ╭─[no_obj_calls.tsx:1:11]
  1 │ let obj = Math();
    ·           ──────
    ╰────
-  help: Math is not a function.
+  help: This call will throw a TypeError at runtime.
 
-  ⚠ eslint(no-obj-calls): Disallow calling some global objects as functions
+  ⚠ eslint(no-obj-calls): `Math` is not a function and cannot be called
    ╭─[no_obj_calls.tsx:1:11]
  1 │ let obj = new Math().foo;
    ·           ──────────
    ╰────
-  help: Math is not a function.
+  help: This call will throw a TypeError at runtime.
 
-  ⚠ eslint(no-obj-calls): Disallow calling some global objects as functions
+  ⚠ eslint(no-obj-calls): `Math` is not a function and cannot be called
    ╭─[no_obj_calls.tsx:1:11]
  1 │ let obj = new globalThis.Math()
    ·           ─────────────────────
    ╰────
-  help: Math is not a function.
+  help: This call will throw a TypeError at runtime.
 
-  ⚠ eslint(no-obj-calls): Disallow calling some global objects as functions
+  ⚠ eslint(no-obj-calls): `Atomics` is not a function and cannot be called
    ╭─[no_obj_calls.tsx:1:14]
  1 │ let newObj = new Atomics();
    ·              ─────────────
    ╰────
-  help: Atomics is not a function.
+  help: This call will throw a TypeError at runtime.
 
-  ⚠ eslint(no-obj-calls): Disallow calling some global objects as functions
+  ⚠ eslint(no-obj-calls): `Atomics` is not a function and cannot be called
    ╭─[no_obj_calls.tsx:1:11]
  1 │ let obj = Atomics();
    ·           ─────────
    ╰────
-  help: Atomics is not a function.
+  help: This call will throw a TypeError at runtime.
 
-  ⚠ eslint(no-obj-calls): Disallow calling some global objects as functions
+  ⚠ eslint(no-obj-calls): `Intl` is not a function and cannot be called
    ╭─[no_obj_calls.tsx:1:14]
  1 │ let newObj = new Intl();
    ·              ──────────
    ╰────
-  help: Intl is not a function.
+  help: This call will throw a TypeError at runtime.
 
-  ⚠ eslint(no-obj-calls): Disallow calling some global objects as functions
+  ⚠ eslint(no-obj-calls): `Intl` is not a function and cannot be called
    ╭─[no_obj_calls.tsx:1:11]
  1 │ let obj = Intl();
    ·           ──────
    ╰────
-  help: Intl is not a function.
+  help: This call will throw a TypeError at runtime.
 
-  ⚠ eslint(no-obj-calls): Disallow calling some global objects as functions
+  ⚠ eslint(no-obj-calls): `Reflect` is not a function and cannot be called
    ╭─[no_obj_calls.tsx:1:14]
  1 │ let newObj = new Reflect();
    ·              ─────────────
    ╰────
-  help: Reflect is not a function.
+  help: This call will throw a TypeError at runtime.
 
-  ⚠ eslint(no-obj-calls): Disallow calling some global objects as functions
+  ⚠ eslint(no-obj-calls): `Reflect` is not a function and cannot be called
    ╭─[no_obj_calls.tsx:1:11]
  1 │ let obj = Reflect();
    ·           ─────────
    ╰────
-  help: Reflect is not a function.
+  help: This call will throw a TypeError at runtime.
 
-  ⚠ eslint(no-obj-calls): Disallow calling some global objects as functions
+  ⚠ eslint(no-obj-calls): `Atomics` is not a function and cannot be called
    ╭─[no_obj_calls.tsx:1:27]
  1 │ function d() { JSON.parse(Atomics()) }
    ·                           ─────────
    ╰────
-  help: Atomics is not a function.
+  help: This call will throw a TypeError at runtime.
 
-  ⚠ eslint(no-obj-calls): Disallow calling some global objects as functions
+  ⚠ eslint(no-obj-calls): `j` is not a function and cannot be called
    ╭─[no_obj_calls.tsx:1:15]
  1 │ let j = JSON; j();
    ·               ───
    ╰────
-  help: j is not a function.
+  help: This call will throw a TypeError at runtime.
 
-  ⚠ eslint(no-obj-calls): Disallow calling some global objects as functions
+  ⚠ eslint(no-obj-calls): `b` is not a function and cannot be called
    ╭─[no_obj_calls.tsx:1:37]
  1 │ let a = JSON; let b = a; let c = b; b();
    ·                                     ───
    ╰────
-  help: b is not a function.
+  help: This call will throw a TypeError at runtime.
 
-  ⚠ eslint(no-obj-calls): Disallow calling some global objects as functions
+  ⚠ eslint(no-obj-calls): `m` is not a function and cannot be called
    ╭─[no_obj_calls.tsx:1:26]
  1 │ let m = globalThis.Math; new m();
    ·                          ───────
    ╰────
-  help: m is not a function.
+  help: This call will throw a TypeError at runtime.

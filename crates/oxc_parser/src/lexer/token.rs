@@ -41,7 +41,7 @@ pub struct Token {
 
 #[cfg(all(test, target_pointer_width = "64"))]
 mod size_asserts {
-    static_assertions::assert_eq_size!(super::Token, [u8; 16]);
+    const _: () = assert!(std::mem::size_of::<super::Token>() == 16);
 }
 
 impl Token {

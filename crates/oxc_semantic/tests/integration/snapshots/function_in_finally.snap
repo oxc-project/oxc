@@ -41,15 +41,19 @@ bb8: {
 }
 
 digraph {
-    0 [ label = "" ]
-    1 [ label = "TryStatement" ]
-    2 [ label = "" ]
-    3 [ label = "BlockStatement\nExpressionStatement" ]
-    4 [ label = "" ]
-    5 [ label = "" ]
-    6 [ label = "" ]
-    7 [ label = "ExpressionStatement" ]
-    8 [ label = "" ]
+    0 [ label = "bb0" shape = box]
+    1 [ label = "bb1
+TryStatement" shape = box]
+    2 [ label = "bb2" shape = box]
+    3 [ label = "bb3
+BlockStatement
+ExpressionStatement" shape = box]
+    4 [ label = "bb4" shape = box]
+    5 [ label = "bb5" shape = box]
+    6 [ label = "bb6" shape = box]
+    7 [ label = "bb7
+ExpressionStatement" shape = box]
+    8 [ label = "bb8" shape = box]
     1 -> 0 [ label = "Error(Implicit)" ]
     3 -> 0 [ label = "Error(Implicit)" ]
     3 -> 2 [ label = "Finalize" ]

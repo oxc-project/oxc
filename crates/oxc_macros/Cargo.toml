@@ -1,29 +1,29 @@
 [package]
-name                   = "oxc_macros"
-version                = "0.0.0"
-publish                = false
-authors.workspace      = true
-description.workspace  = true
-edition.workspace      = true
-homepage.workspace     = true
-keywords.workspace     = true
-license.workspace      = true
-repository.workspace   = true
+name = "oxc_macros"
+version = "0.0.0"
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+homepage.workspace = true
+include = ["/src"]
+keywords.workspace = true
+license.workspace = true
+publish = false
+repository.workspace = true
 rust-version.workspace = true
-categories.workspace   = true
-include                = ["/src"]
+description.workspace = true
 
 [lints]
 workspace = true
 
 [lib]
 proc-macro = true
-test       = false
-doctest    = false
+test = false
+doctest = false
 
 [dependencies]
-syn          = { workspace = true, features = ["derive", "parsing", "printing", "proc-macro"] }
-quote        = { workspace = true }
-proc-macro2  = { workspace = true }
-itertools    = { workspace = true }
 convert_case = { workspace = true }
+itertools = { workspace = true }
+proc-macro2 = { workspace = true }
+quote = { workspace = true }
+syn = { workspace = true, features = ["derive", "parsing", "printing", "proc-macro"] }

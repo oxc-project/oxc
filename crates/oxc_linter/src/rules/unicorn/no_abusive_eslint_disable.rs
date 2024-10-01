@@ -4,12 +4,12 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, disable_directives::DisableRuleComment, rule::Rule};
 
-fn no_abusive_eslint_disable_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_abusive_eslint_disable_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "Unexpected `eslint-disable` comment that does not specify any rules to disable.",
     )
     .with_help("Specify the rules you want to disable.")
-    .with_label(span0)
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -17,14 +17,17 @@ pub struct NoAbusiveEslintDisable;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// This rule disallows `eslint-disable` comments that do not specify any rules to disable.
     ///
     /// ### Why is this bad?
+    ///
     /// When only one rule should be disabled but the `eslint-disable` comment does not specify any rules, other useful errors will also be silently ignored.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Fail
     /// /* eslint-disable */
     /// console.log(message);
     ///
@@ -32,8 +35,10 @@ declare_oxc_lint!(
     ///
     /// // eslint-disable-next-line
     /// console.log(message);
+    /// ```
     ///
-    /// // Pass
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// /* eslint-disable no-console */
     /// console.log(message);
     ///

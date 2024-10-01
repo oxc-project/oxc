@@ -1,0 +1,93 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/type-declarations/signatures/property-with-type-import.ts
+---
+================================================================================
+SCOPES
+================================================================================
+
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flags": "ScopeFlags(StrictMode)",
+        "id": 1,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": []
+      },
+      {
+        "children": [],
+        "flags": "ScopeFlags(StrictMode)",
+        "id": 2,
+        "node": "TSInterfaceDeclaration",
+        "symbols": []
+      },
+      {
+        "children": [],
+        "flags": "ScopeFlags(StrictMode)",
+        "id": 3,
+        "node": "TSInterfaceDeclaration",
+        "symbols": []
+      }
+    ],
+    "flags": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(TypeImport)",
+        "id": 0,
+        "name": "X",
+        "node": "ImportDefaultSpecifier",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 0,
+            "name": "X",
+            "node_id": 15
+          },
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 2,
+            "name": "X",
+            "node_id": 27
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(TypeAlias)",
+        "id": 1,
+        "name": "B",
+        "node": "TSTypeAliasDeclaration",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 1,
+            "name": "B",
+            "node_id": 19
+          },
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 3,
+            "name": "B",
+            "node_id": 32
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(Export | Interface)",
+        "id": 2,
+        "name": "A",
+        "node": "TSInterfaceDeclaration",
+        "references": []
+      }
+    ]
+  }
+]
+
+================================================================================
+CONFORMANCE
+================================================================================
+
+All tests passed.

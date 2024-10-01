@@ -3,14 +3,15 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use cow_utils::CowUtils;
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler, GraphicalTheme, NamedSource};
 use serde::Deserialize;
 use serde_json::Value;
 
 use crate::{
-    fixer::FixKind, rules::RULES, AllowWarnDeny, Fixer, LintOptions, LintService,
-    LintServiceOptions, Linter, OxlintConfig, RuleEnum, RuleWithSeverity,
+    fixer::FixKind, options::LintPlugins, rules::RULES, AllowWarnDeny, Fixer, LintService,
+    LintServiceOptions, LinterBuilder, Oxlintrc, RuleEnum, RuleWithSeverity,
 };
 
 #[derive(Eq, PartialEq)]
@@ -65,24 +66,96 @@ impl From<(&str, Option<Value>, Option<Value>, Option<PathBuf>)> for TestCase {
     }
 }
 
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub enum ExpectFixKind {
+    /// We expect no fix to be applied
+    #[default]
+    None,
+    /// We expect some fix to be applied, but don't care what kind it is
+    Any,
+    /// We expect a fix of a certain [`FixKind`] to be applied
+    Specific(FixKind),
+}
+
+impl ExpectFixKind {
+    #[inline]
+    pub fn is_none(self) -> bool {
+        matches!(self, Self::None)
+    }
+
+    #[inline]
+    pub fn is_some(self) -> bool {
+        !self.is_none()
+    }
+}
+
+impl From<FixKind> for ExpectFixKind {
+    fn from(kind: FixKind) -> Self {
+        Self::Specific(kind)
+    }
+}
+impl From<ExpectFixKind> for FixKind {
+    fn from(expected_kind: ExpectFixKind) -> Self {
+        match expected_kind {
+            ExpectFixKind::None => FixKind::None,
+            ExpectFixKind::Any => FixKind::All,
+            ExpectFixKind::Specific(kind) => kind,
+        }
+    }
+}
+
+impl From<Option<FixKind>> for ExpectFixKind {
+    fn from(maybe_kind: Option<FixKind>) -> Self {
+        match maybe_kind {
+            Some(kind) => Self::Specific(kind),
+            None => Self::Any, // intentionally not None
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct ExpectFix {
     /// Source code being tested
     source: String,
     /// Expected source code after fix has been applied
     expected: String,
+    kind: ExpectFixKind,
     rule_config: Option<Value>,
 }
 
 impl<S: Into<String>> From<(S, S, Option<Value>)> for ExpectFix {
     fn from(value: (S, S, Option<Value>)) -> Self {
-        Self { source: value.0.into(), expected: value.1.into(), rule_config: value.2 }
+        Self {
+            source: value.0.into(),
+            expected: value.1.into(),
+            kind: ExpectFixKind::Any,
+            rule_config: value.2,
+        }
     }
 }
 
 impl<S: Into<String>> From<(S, S)> for ExpectFix {
     fn from(value: (S, S)) -> Self {
-        Self { source: value.0.into(), expected: value.1.into(), rule_config: None }
+        Self {
+            source: value.0.into(),
+            expected: value.1.into(),
+            kind: ExpectFixKind::Any,
+            rule_config: None,
+        }
+    }
+}
+impl<S, F> From<(S, S, Option<Value>, F)> for ExpectFix
+where
+    S: Into<String>,
+    F: Into<ExpectFixKind>,
+{
+    fn from((source, expected, config, kind): (S, S, Option<Value>, F)) -> Self {
+        Self {
+            source: source.into(),
+            expected: expected.into(),
+            kind: kind.into(),
+            rule_config: config,
+        }
     }
 }
 
@@ -93,13 +166,12 @@ pub struct Tester {
     expect_fail: Vec<TestCase>,
     expect_fix: Vec<ExpectFix>,
     snapshot: String,
+    /// Suffix added to end of snapshot name.
+    ///
+    /// See: [insta::Settings::set_snapshot_suffix]
+    snapshot_suffix: Option<&'static str>,
     current_working_directory: Box<Path>,
-    import_plugin: bool,
-    jest_plugin: bool,
-    vitest_plugin: bool,
-    jsx_a11y_plugin: bool,
-    nextjs_plugin: bool,
-    react_perf_plugin: bool,
+    plugins: LintPlugins,
 }
 
 impl Tester {
@@ -108,7 +180,8 @@ impl Tester {
         expect_pass: Vec<T>,
         expect_fail: Vec<T>,
     ) -> Self {
-        let rule_path = PathBuf::from(rule_name.replace('-', "_")).with_extension("tsx");
+        let rule_path =
+            PathBuf::from(rule_name.cow_replace('-', "_").into_owned()).with_extension("tsx");
         let expect_pass = expect_pass.into_iter().map(Into::into).collect::<Vec<_>>();
         let expect_fail = expect_fail.into_iter().map(Into::into).collect::<Vec<_>>();
         let current_working_directory =
@@ -120,13 +193,9 @@ impl Tester {
             expect_fail,
             expect_fix: vec![],
             snapshot: String::new(),
+            snapshot_suffix: None,
             current_working_directory,
-            import_plugin: false,
-            jest_plugin: false,
-            jsx_a11y_plugin: false,
-            nextjs_plugin: false,
-            react_perf_plugin: false,
-            vitest_plugin: false,
+            plugins: LintPlugins::default(),
         }
     }
 
@@ -142,33 +211,43 @@ impl Tester {
         self
     }
 
+    pub fn with_snapshot_suffix(mut self, suffix: &'static str) -> Self {
+        self.snapshot_suffix = Some(suffix);
+        self
+    }
+
     pub fn with_import_plugin(mut self, yes: bool) -> Self {
-        self.import_plugin = yes;
+        self.plugins.set(LintPlugins::IMPORT, yes);
         self
     }
 
     pub fn with_jest_plugin(mut self, yes: bool) -> Self {
-        self.jest_plugin = yes;
+        self.plugins.set(LintPlugins::JEST, yes);
         self
     }
 
     pub fn with_vitest_plugin(mut self, yes: bool) -> Self {
-        self.vitest_plugin = yes;
+        self.plugins.set(LintPlugins::VITEST, yes);
         self
     }
 
     pub fn with_jsx_a11y_plugin(mut self, yes: bool) -> Self {
-        self.jsx_a11y_plugin = yes;
+        self.plugins.set(LintPlugins::JSX_A11Y, yes);
         self
     }
 
     pub fn with_nextjs_plugin(mut self, yes: bool) -> Self {
-        self.nextjs_plugin = yes;
+        self.plugins.set(LintPlugins::NEXTJS, yes);
         self
     }
 
     pub fn with_react_perf_plugin(mut self, yes: bool) -> Self {
-        self.react_perf_plugin = yes;
+        self.plugins.set(LintPlugins::REACT_PERF, yes);
+        self
+    }
+
+    pub fn with_node_plugin(mut self, yes: bool) -> Self {
+        self.plugins.set(LintPlugins::NODE, yes);
         self
     }
 
@@ -210,16 +289,24 @@ impl Tester {
         self.snapshot();
     }
 
-    pub fn snapshot(&self) {
-        let name = self.rule_name.replace('-', "_");
-        insta::with_settings!({ prepend_module_to_snapshot => false, omit_expression => true }, {
-            insta::assert_snapshot!(name, self.snapshot);
+    fn snapshot(&self) {
+        let name = self.rule_name.cow_replace('-', "_");
+        let mut settings = insta::Settings::clone_current();
+
+        settings.set_prepend_module_to_snapshot(false);
+        settings.set_omit_expression(true);
+        if let Some(suffix) = self.snapshot_suffix {
+            settings.set_snapshot_suffix(suffix);
+        }
+
+        settings.bind(|| {
+            insta::assert_snapshot!(name.as_ref(), self.snapshot);
         });
     }
 
     fn test_pass(&mut self) {
         for TestCase { source, rule_config, eslint_config, path } in self.expect_pass.clone() {
-            let result = self.run(&source, rule_config, &eslint_config, path, false);
+            let result = self.run(&source, rule_config, &eslint_config, path, ExpectFixKind::None);
             let passed = result == TestResult::Passed;
             assert!(passed, "expect test to pass: {source} {}", self.snapshot);
         }
@@ -227,7 +314,7 @@ impl Tester {
 
     fn test_fail(&mut self) {
         for TestCase { source, rule_config, eslint_config, path } in self.expect_fail.clone() {
-            let result = self.run(&source, rule_config, &eslint_config, path, false);
+            let result = self.run(&source, rule_config, &eslint_config, path, ExpectFixKind::None);
             let failed = result == TestResult::Failed;
             assert!(failed, "expect test to fail: {source}");
         }
@@ -235,8 +322,8 @@ impl Tester {
 
     fn test_fix(&mut self) {
         for fix in self.expect_fix.clone() {
-            let ExpectFix { source, expected, rule_config: config } = fix;
-            let result = self.run(&source, config, &None, None, true);
+            let ExpectFix { source, expected, kind, rule_config: config } = fix;
+            let result = self.run(&source, config, &None, None, kind);
             match result {
                 TestResult::Fixed(fixed_str) => assert_eq!(
                     expected, fixed_str,
@@ -254,37 +341,35 @@ impl Tester {
         rule_config: Option<Value>,
         eslint_config: &Option<Value>,
         path: Option<PathBuf>,
-        is_fix: bool,
+        fix: ExpectFixKind,
     ) -> TestResult {
         let allocator = Allocator::default();
         let rule = self.find_rule().read_json(rule_config.unwrap_or_default());
-        let options = LintOptions::default()
-            .with_fix(is_fix.then_some(FixKind::DangerousFix).unwrap_or_default())
-            .with_import_plugin(self.import_plugin)
-            .with_jest_plugin(self.jest_plugin)
-            .with_vitest_plugin(self.vitest_plugin)
-            .with_jsx_a11y_plugin(self.jsx_a11y_plugin)
-            .with_nextjs_plugin(self.nextjs_plugin)
-            .with_react_perf_plugin(self.react_perf_plugin);
-        let eslint_config = eslint_config
+        let linter = eslint_config
             .as_ref()
-            .map_or_else(OxlintConfig::default, |v| OxlintConfig::deserialize(v).unwrap());
-        let linter = Linter::from_options(options)
-            .unwrap()
-            .with_rules(vec![RuleWithSeverity::new(rule, AllowWarnDeny::Warn)])
-            .with_eslint_config(eslint_config);
-        let path_to_lint = if self.import_plugin {
+            .map_or_else(LinterBuilder::empty, |v| {
+                LinterBuilder::from_oxlintrc(true, Oxlintrc::deserialize(v).unwrap())
+            })
+            .with_fix(fix.into())
+            .with_plugins(self.plugins)
+            .with_rule(RuleWithSeverity::new(rule, AllowWarnDeny::Warn))
+            .build();
+
+        let path_to_lint = if self.plugins.has_import() {
             assert!(path.is_none(), "import plugin does not support path");
             self.current_working_directory.join(&self.rule_path)
         } else if let Some(path) = path {
             self.current_working_directory.join(path)
+        } else if self.plugins.has_jest() {
+            self.rule_path.with_extension("test.tsx")
         } else {
             self.rule_path.clone()
         };
 
         let cwd = self.current_working_directory.clone();
         let paths = vec![path_to_lint.into_boxed_path()];
-        let options = LintServiceOptions { cwd, paths, tsconfig: None };
+        let options =
+            LintServiceOptions::new(cwd, paths).with_cross_module(self.plugins.has_import());
         let lint_service = LintService::from_linter(linter, options);
         let diagnostic_service = DiagnosticService::default();
         let tx_error = diagnostic_service.sender();
@@ -294,19 +379,21 @@ impl Tester {
             return TestResult::Passed;
         }
 
-        if is_fix {
+        if fix.is_some() {
             let fix_result = Fixer::new(source_text, result).fix();
             return TestResult::Fixed(fix_result.fixed_code.to_string());
         }
 
-        let diagnostic_path = if self.import_plugin {
+        let diagnostic_path = if self.plugins.has_import() {
             self.rule_path.strip_prefix(&self.current_working_directory).unwrap()
         } else {
             &self.rule_path
         }
         .to_string_lossy();
 
-        let handler = GraphicalReportHandler::new().with_theme(GraphicalTheme::unicode_nocolor());
+        let handler = GraphicalReportHandler::new()
+            .with_links(false)
+            .with_theme(GraphicalTheme::unicode_nocolor());
         for diagnostic in result {
             let diagnostic = diagnostic.error.with_source_code(NamedSource::new(
                 diagnostic_path.clone(),

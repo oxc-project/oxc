@@ -9,16 +9,16 @@ use crate::{
     utils::{collect_possible_jest_call_node, parse_expect_jest_fn_call, PossibleJestNode},
 };
 
-fn use_to_be_called_with(span0: Span) -> OxcDiagnostic {
+fn use_to_be_called_with(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Suggest using `toBeCalledWith()` or `toHaveBeenCalledWith()`.")
         .with_help("Prefer toBeCalledWith(/* expected args */)")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn use_have_been_called_with(span0: Span) -> OxcDiagnostic {
+fn use_have_been_called_with(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Suggest using `toBeCalledWith()` or `toHaveBeenCalledWith()`.")
         .with_help("Prefer toHaveBeenCalledWith(/* expected args */)")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

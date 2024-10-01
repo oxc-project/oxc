@@ -1,7 +1,5 @@
-use std::collections::{HashMap, HashSet};
-
 use oxc_ast::{
-    ast::{Expression, MethodDefinitionKind},
+    ast::{Argument, Expression, MethodDefinitionKind},
     AstKind,
 };
 use oxc_cfg::{
@@ -10,15 +8,16 @@ use oxc_cfg::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNodeId;
+use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_this_before_super_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_this_before_super_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Expected to always call super() before this/super property access.")
         .with_help("Call super() before this/super property access.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -61,23 +60,26 @@ impl Rule for NoThisBeforeSuper {
 
         // first pass -> find super calls and local violations
         let mut wanted_nodes = Vec::new();
-        let mut basic_blocks_with_super_called = HashSet::<BasicBlockId>::new();
-        let mut basic_blocks_with_local_violations = HashMap::<BasicBlockId, Vec<AstNodeId>>::new();
-        for node in semantic.nodes().iter() {
+        let mut basic_blocks_with_super_called = FxHashSet::<BasicBlockId>::default();
+        let mut basic_blocks_with_local_violations =
+            FxHashMap::<BasicBlockId, Vec<NodeId>>::default();
+        for node in semantic.nodes() {
             match node.kind() {
                 AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
-                    if Self::is_wanted_node(node, ctx) {
+                    if Self::is_wanted_node(node, ctx).unwrap_or_default() {
                         wanted_nodes.push(node);
                     }
                 }
                 AstKind::Super(_) => {
                     let basic_block_id = node.cfg_id();
                     if let Some(parent) = semantic.nodes().parent_node(node.id()) {
-                        if let AstKind::CallExpression(_) = parent.kind() {
-                            // Note: we don't need to worry about also having invalid
-                            // usage in the same callexpression, because arguments are visited
-                            // before the callee in generating the semantic nodes.
-                            basic_blocks_with_super_called.insert(basic_block_id);
+                        if let AstKind::CallExpression(call_expr) = parent.kind() {
+                            let has_this_or_super_in_args =
+                                Self::contains_this_or_super_in_args(&call_expr.arguments);
+
+                            if !has_this_or_super_in_args {
+                                basic_blocks_with_super_called.insert(basic_block_id);
+                            }
                         }
                     }
                     if !basic_blocks_with_super_called.contains(&basic_block_id) {
@@ -131,33 +133,27 @@ impl Rule for NoThisBeforeSuper {
 }
 
 impl NoThisBeforeSuper {
-    fn is_wanted_node(node: &AstNode, ctx: &LintContext<'_>) -> bool {
-        if let Some(parent) = ctx.nodes().parent_node(node.id()) {
-            if let AstKind::MethodDefinition(mdef) = parent.kind() {
-                if matches!(mdef.kind, MethodDefinitionKind::Constructor) {
-                    let parent_2 = ctx.nodes().parent_node(parent.id());
-                    if let Some(parent_2) = parent_2 {
-                        let parent_3 = ctx.nodes().parent_node(parent_2.id());
-                        if let Some(parent_3) = parent_3 {
-                            if let AstKind::Class(c) = parent_3.kind() {
-                                if let Some(super_class) = &c.super_class {
-                                    return !matches!(super_class, Expression::NullLiteral(_));
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+    fn is_wanted_node(node: &AstNode, ctx: &LintContext<'_>) -> Option<bool> {
+        let parent = ctx.nodes().parent_node(node.id())?;
+        let method_def = parent.kind().as_method_definition()?;
+
+        if matches!(method_def.kind, MethodDefinitionKind::Constructor) {
+            let parent_2 = ctx.nodes().parent_node(parent.id())?;
+            let parent_3 = ctx.nodes().parent_node(parent_2.id())?;
+
+            let class = parent_3.kind().as_class()?;
+            let super_class = class.super_class.as_ref()?;
+            return Some(!matches!(super_class, Expression::NullLiteral(_)));
         }
 
-        false
+        Some(false)
     }
 
     fn analyze(
         cfg: &ControlFlowGraph,
         id: BasicBlockId,
-        basic_blocks_with_super_called: &HashSet<BasicBlockId>,
-        basic_blocks_with_local_violations: &HashMap<BasicBlockId, Vec<AstNodeId>>,
+        basic_blocks_with_super_called: &FxHashSet<BasicBlockId>,
+        basic_blocks_with_local_violations: &FxHashMap<BasicBlockId, Vec<NodeId>>,
         follow_join: bool,
     ) -> Vec<DefinitelyCallsThisBeforeSuper> {
         neighbors_filtered_by_edge_weight(
@@ -215,8 +211,8 @@ impl NoThisBeforeSuper {
     fn check_for_violation(
         cfg: &ControlFlowGraph,
         output: Vec<DefinitelyCallsThisBeforeSuper>,
-        basic_blocks_with_super_called: &HashSet<BasicBlockId>,
-        basic_blocks_with_local_violations: &HashMap<BasicBlockId, Vec<AstNodeId>>,
+        basic_blocks_with_super_called: &FxHashSet<BasicBlockId>,
+        basic_blocks_with_local_violations: &FxHashMap<BasicBlockId, Vec<NodeId>>,
     ) -> bool {
         // Deciding whether we definitely call this before super in all
         // codepaths is as simple as seeing if any individual codepath
@@ -245,6 +241,27 @@ impl NoThisBeforeSuper {
                 }
             }),
         })
+    }
+
+    fn contains_this_or_super(arg: &Argument) -> bool {
+        match arg {
+            Argument::Super(_) | Argument::ThisExpression(_) => true,
+            Argument::CallExpression(call_expr) => {
+                matches!(&call_expr.callee, Expression::Super(_) | Expression::ThisExpression(_))
+                    || matches!(&call_expr.callee,
+                    Expression::StaticMemberExpression(static_member) if
+                    matches!(static_member.object, Expression::Super(_) | Expression::ThisExpression(_)))
+                    || Self::contains_this_or_super_in_args(&call_expr.arguments)
+            }
+            Argument::StaticMemberExpression(call_expr) => {
+                matches!(&call_expr.object, Expression::Super(_) | Expression::ThisExpression(_))
+            }
+            _ => false,
+        }
+    }
+
+    fn contains_this_or_super_in_args(args: &[Argument]) -> bool {
+        args.iter().any(|arg| Self::contains_this_or_super(arg))
     }
 }
 
@@ -382,8 +399,11 @@ fn test() {
         ("class A extends B { constructor() { this.c(); super(); } }", None),
         ("class A extends B { constructor() { super.c(); super(); } }", None),
         // disallows `this`/`super` in arguments of `super()`.
+        ("class A extends B { constructor() { super(this); } }", None),
         ("class A extends B { constructor() { super(this.c); } }", None),
+        ("class A extends B { constructor() { super(a(b(this.c))); } }", None),
         ("class A extends B { constructor() { super(this.c()); } }", None),
+        ("class A extends B { constructor() { super(super.c); } }", None),
         ("class A extends B { constructor() { super(super.c()); } }", None),
         // // even if is nested, reports correctly.
         (

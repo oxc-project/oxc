@@ -11,10 +11,10 @@ use crate::{
     rule::Rule, AstNode,
 };
 
-fn no_document_cookie_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_document_cookie_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use `document.cookie` directly")
         .with_help("Use the Cookie Store API or a cookie library instead")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -23,29 +23,40 @@ pub struct NoDocumentCookie;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow direct use of [`document.cookie`](https://developer.mozilla.org/en-US/docs/Web/API/Document/cookie).
+    /// Disallow direct use of
+    /// [`document.cookie`](https://developer.mozilla.org/en-US/docs/Web/API/Document/cookie).
     ///
     /// ### Why is this bad?
     ///
-    /// It's not recommended to use [`document.cookie`](https://developer.mozilla.org/en-US/docs/Web/API/Document/cookie) directly as it's easy to get the string wrong. Instead, you should use the [Cookie Store API](https://developer.mozilla.org/en-US/docs/Web/API/Cookie_Store_API) or a [cookie library](https://www.npmjs.com/search?q=cookie).
+    /// It's not recommended to use
+    /// [`document.cookie`](https://developer.mozilla.org/en-US/docs/Web/API/Document/cookie)
+    /// directly as it's easy to get the string wrong. Instead, you should use
+    /// the [Cookie Store
+    /// API](https://developer.mozilla.org/en-US/docs/Web/API/Cookie_Store_API)
+    /// or a [cookie library](https://www.npmjs.com/search?q=cookie).
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // bad
     /// document.cookie =
     ///     'foo=bar' +
     ///     '; Path=/' +
     ///     '; Domain=example.com' +
     ///     '; expires=Fri, 31 Dec 9999 23:59:59 GMT' +
     ///     '; Secure';
+    /// ```
     ///
-    /// // good
-    /// await cookieStore.set({
-    /// 	name: 'foo',
-    /// 	value: 'bar',
-    /// 	expires: Date.now() + 24 * 60 * 60 * 1000,
-    /// 	domain: 'example.com'
-    /// });
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// async function storeCookies() {
+    ///     await cookieStore.set({
+    ///         name: 'foo',
+    ///         value: 'bar',
+    ///         expires: Date.now() + 24 * 60 * 60 * 1000,
+    ///         domain: 'example.com'
+    ///     });
+    /// }
     /// ```
     NoDocumentCookie,
     correctness
@@ -109,7 +120,7 @@ fn is_document_cookie_reference<'a, 'b>(
                 return false;
             }
 
-            if let Expression::Identifier(ident) = member_expr.object().without_parenthesized() {
+            if let Expression::Identifier(ident) = member_expr.object().without_parentheses() {
                 if !GLOBAL_OBJECT_NAMES.contains(ident.name.as_str()) {
                     return false;
                 }

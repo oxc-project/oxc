@@ -6,6 +6,8 @@ use std::{
 use super::{writer, DiagnosticReporter, Info};
 use crate::{Error, Severity};
 
+/// Formats reports using [GitHub Actions
+/// annotations](https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-error-message). Useful for reporting in CI.
 pub struct GithubReporter {
     writer: BufWriter<Stdout>,
 }

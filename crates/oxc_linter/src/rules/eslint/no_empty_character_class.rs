@@ -1,17 +1,20 @@
+use memchr::memchr2;
 // Ported from https://github.com/eslint/eslint/blob/main/lib/rules/no-empty-character-class.js
-use lazy_static::lazy_static;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_regular_expression::{
+    ast::CharacterClass,
+    visit::{walk::walk_character_class, Visit},
+};
 use oxc_span::Span;
-use regex::Regex;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_empty_character_class_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Empty character class")
-        .with_help("Try to remove empty character class `[]` in regexp literal")
-        .with_label(span0)
+fn no_empty_character_class_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Empty character class will not match anything")
+        .with_help("Remove the empty character class: `[]`")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -34,24 +37,38 @@ declare_oxc_lint!(
 
 impl Rule for NoEmptyCharacterClass {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        lazy_static! {
-            /*
-            * plain-English description of the following regexp:
-            * 0. `^` fix the match at the beginning of the string
-            * 1. `([^\\[]|\\.|\[([^\\\]]|\\.)+\])*`: regexp contents; 0 or more of the following
-            * 1.0. `[^\\[]`: any character that's not a `\` or a `[` (anything but escape sequences and character classes)
-            * 1.1. `\\.`: an escape sequence
-            * 1.2. `\[([^\\\]]|\\.)+\]`: a character class that isn't empty
-            * 2. `$`: fix the match at the end of the string
-            */
-            static ref NO_EMPTY_CLASS_REGEX_PATTERN: Regex =
-                Regex::new(r"^([^\\\[]|\\.|\[([^\\\]]|\\.)+\])*$").unwrap();
-        }
-
         if let AstKind::RegExpLiteral(lit) = node.kind() {
-            if !NO_EMPTY_CLASS_REGEX_PATTERN.is_match(&lit.regex.pattern) {
-                ctx.diagnostic(no_empty_character_class_diagnostic(lit.span));
+            let Some(pattern) = lit.regex.pattern.as_pattern() else {
+                return;
+            };
+
+            // Skip if the pattern doesn't contain a `[` or `]` character
+            if memchr2(b'[', b']', lit.regex.pattern.source_text(ctx.source_text()).as_bytes())
+                .is_none()
+            {
+                return;
             }
+
+            let mut finder = EmptyClassFinder { empty_classes: vec![] };
+            finder.visit_pattern(pattern);
+
+            for span in finder.empty_classes {
+                ctx.diagnostic(no_empty_character_class_diagnostic(span));
+            }
+        }
+    }
+}
+
+struct EmptyClassFinder {
+    empty_classes: Vec<Span>,
+}
+
+impl<'a> Visit<'a> for EmptyClassFinder {
+    fn visit_character_class(&mut self, class: &CharacterClass) {
+        if !class.negative && class.body.is_empty() {
+            self.empty_classes.push(class.span);
+        } else {
+            walk_character_class(self, class);
         }
     }
 }
@@ -75,6 +92,15 @@ fn test() {
         ("var foo = /[\\]]/s;", None),
         ("var foo = /[\\]]/d;", None),
         ("var foo = /\\[]/", None),
+        // ES2024
+        ("var foo = /[[^]]/v;", None),    // { "ecmaVersion": 2024 }
+        ("var foo = /[[\\]]]/v;", None),  // { "ecmaVersion": 2024 }
+        ("var foo = /[[\\[]]/v;", None),  // { "ecmaVersion": 2024 }
+        ("var foo = /[a--b]/v;", None),   // { "ecmaVersion": 2024 }
+        ("var foo = /[a&&b]/v;", None),   // { "ecmaVersion": 2024 }
+        ("var foo = /[[a][b]]/v;", None), // { "ecmaVersion": 2024 }
+        ("var foo = /[\\q{}]/v;", None),  // { "ecmaVersion": 2024 }
+        ("var foo = /[[^]--\\p{ASCII}]/v;", None), // { "ecmaVersion": 2024 }
     ];
 
     let fail = vec![
@@ -86,6 +112,18 @@ fn test() {
         ("var foo = /\\[[]/;", None),
         ("var foo = /\\[\\[\\]a-z[]/;", None),
         ("var foo = /[]]/d;", None),
+        ("var foo = /[[][]]/v;", None),
+        ("var foo = /[[]]|[]/v;", None),
+        ("var foo = /[(]\\u{0}*[]/u;", None), // { "ecmaVersion": 2015 }
+        // ES2024
+        ("var foo = /[]/v;", None),           // { "ecmaVersion": 2024 }
+        ("var foo = /[[]]/v;", None),         // { "ecmaVersion": 2024 }
+        ("var foo = /[[a][]]/v;", None),      // { "ecmaVersion": 2024 }
+        ("var foo = /[a[[b[]c]]d]/v;", None), // { "ecmaVersion": 2024 }
+        ("var foo = /[a--[]]/v;", None),      // { "ecmaVersion": 2024 }
+        ("var foo = /[[]--b]/v;", None),      // { "ecmaVersion": 2024 }
+        ("var foo = /[a&&[]]/v;", None),      // { "ecmaVersion": 2024 }
+        ("var foo = /[[]&&b]/v;", None),      // { "ecmaVersion": 2024 }
     ];
 
     Tester::new(NoEmptyCharacterClass::NAME, pass, fail).test_and_snapshot();

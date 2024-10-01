@@ -1,5 +1,6 @@
 use std::ops::Range;
 
+use cow_utils::CowUtils;
 use itertools::Itertools;
 use oxc_ast::{
     ast::{Statement, SwitchCase, SwitchStatement},
@@ -21,25 +22,26 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_fallthrough_case_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Expected a 'break' statement before 'case'.").with_label(span)
+    OxcDiagnostic::warn("Expected a 'break' statement before 'case'.").with_label(span)
 }
 
 fn no_fallthrough_default_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Expected a 'break' statement before 'default'.").with_label(span)
+    OxcDiagnostic::warn("Expected a 'break' statement before 'default'.").with_label(span)
 }
 
 fn no_unused_fallthrough_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(
+    OxcDiagnostic::warn(
         "Found a comment that would permit fallthrough, but case cannot fall through.",
     )
     .with_label(span)
 }
 
-const DEFAULT_FALLTHROUGH_COMMENT_PATTERN: &str = r"falls?\s?through";
-
 #[derive(Debug, Clone)]
 struct Config {
-    comment_pattern: Regex,
+    /// The custom comment pattern to match against. If set to None, the rule
+    /// will use the default pattern. Otherwise, if this is Some, the rule will
+    /// use the provided pattern.
+    comment_pattern: Option<Regex>,
     allow_empty_case: bool,
     report_unused_fallthrough_comment: bool,
 }
@@ -53,9 +55,9 @@ impl NoFallthrough {
         allow_empty_case: Option<bool>,
         report_unused_fallthrough_comment: Option<bool>,
     ) -> Self {
-        let comment_pattern = comment_pattern.unwrap_or(DEFAULT_FALLTHROUGH_COMMENT_PATTERN);
         Self(Box::new(Config {
-            comment_pattern: Regex::new(format!("(?iu){comment_pattern}").as_str()).unwrap(),
+            comment_pattern: comment_pattern
+                .map(|pattern| Regex::new(format!("(?iu){pattern}").as_str()).unwrap()),
             allow_empty_case: allow_empty_case.unwrap_or(false),
             report_unused_fallthrough_comment: report_unused_fallthrough_comment.unwrap_or(false),
         }))
@@ -73,8 +75,177 @@ declare_oxc_lint!(
     ///
     /// Disallow fallthrough of `case` statements
     ///
+    /// This rule is aimed at eliminating unintentional fallthrough of one case
+    /// to the other. As such, it flags any fallthrough scenarios that are not
+    /// marked by a comment.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// The switch statement in JavaScript is one of the more error-prone
+    /// constructs of the language thanks in part to the ability to “fall
+    /// through” from one case to the next. For example:
+    ///
+    /// ```js
+    /// switch(foo) {
+    ///     case 1:
+    ///     doSomething();
+    ///
+    /// case 2:
+    ///     doSomethingElse();
+    /// }
+    /// ```
+    ///
+    /// In this example, if `foo` is `1`, then execution will flow through both
+    /// cases, as the first falls through to the second. You can prevent this by
+    /// using `break`, as in this example:
+    ///
+    /// ```js
+    /// switch(foo) {
+    ///     case 1:
+    ///         doSomething();
+    ///         break;
+    ///
+    ///     case 2:
+    ///         doSomethingElse();
+    /// }
+    /// ```
+    ///
+    /// That works fine when you don’t want a fallthrough, but what if the
+    /// fallthrough is intentional, there is no way to indicate that in the
+    /// language. It’s considered a best practice to always indicate when a
+    /// fallthrough is intentional using a comment which matches the
+    /// `/falls?\s?through/i`` regular expression but isn’t a directive:
+    ///
+    /// ```js
+    /// switch(foo) {
+    ///     case 1:
+    ///         doSomething();
+    ///         // falls through
+    ///
+    ///     case 2:
+    ///         doSomethingElse();
+    /// }
+    ///
+    /// switch(foo) {
+    ///     case 1:
+    ///         doSomething();
+    ///         // fall through
+    ///
+    ///     case 2:
+    ///         doSomethingElse();
+    /// }
+    ///
+    /// switch(foo) {
+    ///     case 1:
+    ///         doSomething();
+    ///         // fallsthrough
+    ///
+    ///     case 2:
+    ///         doSomethingElse();
+    /// }
+    ///
+    /// switch(foo) {
+    ///     case 1: {
+    ///         doSomething();
+    ///         // falls through
+    ///     }
+    ///
+    ///     case 2: {
+    ///         doSomethingElse();
+    ///     }
+    /// }
+    /// ```
+    ///
+    /// In this example, there is no confusion as to the expected behavior. It
+    /// is clear that the first case is meant to fall through to the second
+    /// case.
+    ///
+    /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```js
+    /// /*oxlint no-fallthrough: "error"*/
+    ///
+    /// switch(foo) {
+    ///     case 1:
+    ///         doSomething();
+    ///
+    ///     case 2:
+    ///         doSomething();
+    /// }
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```js
+    /// /*oxlint no-fallthrough: "error"*/
+    ///
+    /// switch(foo) {
+    ///     case 1:
+    ///         doSomething();
+    ///         break;
+    ///
+    ///     case 2:
+    ///         doSomething();
+    /// }
+    ///
+    /// function bar(foo) {
+    ///     switch(foo) {
+    ///         case 1:
+    ///             doSomething();
+    ///             return;
+    ///
+    ///         case 2:
+    ///             doSomething();
+    ///     }
+    /// }
+    ///
+    /// switch(foo) {
+    ///     case 1:
+    ///         doSomething();
+    ///         throw new Error("Boo!");
+    ///
+    ///     case 2:
+    ///         doSomething();
+    /// }
+    ///
+    /// switch(foo) {
+    ///     case 1:
+    ///     case 2:
+    ///         doSomething();
+    /// }
+    ///
+    /// switch(foo) {
+    ///     case 1: case 2:
+    ///         doSomething();
+    /// }
+    ///
+    /// switch(foo) {
+    ///     case 1:
+    ///         doSomething();
+    ///         // falls through
+    ///
+    ///     case 2:
+    ///         doSomething();
+    /// }
+    ///
+    /// switch(foo) {
+    ///     case 1: {
+    ///         doSomething();
+    ///         // falls through
+    ///     }
+    ///
+    ///     case 2: {
+    ///         doSomethingElse();
+    ///     }
+    /// }
+    /// ```
+    ///
+    /// Note that the last case statement in these examples does not cause a
+    /// warning because there is nothing to fall through into.
     NoFallthrough,
-    pedantic // Fall through code are still incorrect.
+    // TODO: add options section to docs
+    pedantic, // Fall through code are still incorrect.
+    pending // TODO: add a dangerous suggestion for this rule.
 );
 
 impl Rule for NoFallthrough {
@@ -218,10 +389,7 @@ impl NoFallthrough {
                 .last()
                 .map(str::trim);
 
-            comment.is_some_and(|comment| {
-                (!comment.starts_with("oxlint-") && !comment.starts_with("eslint-"))
-                    && self.0.comment_pattern.is_match(comment)
-            })
+            comment.is_some_and(|comment| self.is_comment_fall_through(comment))
         };
 
         let (start, end) = possible_fallthrough_comment_span(case);
@@ -238,6 +406,23 @@ impl NoFallthrough {
             Some(Span::new(start, fall.span.start))
         } else {
             None
+        }
+    }
+
+    fn is_comment_fall_through(&self, comment: &str) -> bool {
+        if comment.starts_with("oxlint-") || comment.starts_with("eslint-") {
+            return false;
+        }
+        if let Some(custom_pattern) = &self.0.comment_pattern {
+            custom_pattern.is_match(comment)
+        } else {
+            // We are doing a quick check here to see if it starts with the expected "falls" comment,
+            // so that we don't need to initialize the pattern matcher if we don't need it.
+            let comment = comment.trim().cow_to_ascii_lowercase();
+            comment == "falls through"
+                || comment == "fall through"
+                || comment == "fallsthrough"
+                || comment == "fallthrough"
         }
     }
 }

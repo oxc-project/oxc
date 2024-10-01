@@ -1,16 +1,18 @@
 //! <https://github.com/microsoft/TypeScript/blob/6f06eb1b27a6495b209e8be79036f3b2ea92cd0b/src/harness/harnessIO.ts#L1237>
 
-use std::{collections::HashMap, fs, path::Path, sync::Arc};
+use rustc_hash::FxHashMap;
+use std::{fs, path::Path, sync::Arc};
 
-use oxc_allocator::Allocator;
-use oxc_codegen::CodeGenerator;
-use oxc_diagnostics::{NamedSource, OxcDiagnostic};
-use oxc_parser::Parser;
-use oxc_span::SourceType;
+use oxc::{
+    allocator::Allocator,
+    codegen::CodeGenerator,
+    diagnostics::{NamedSource, OxcDiagnostic},
+    parser::Parser,
+    span::SourceType,
+};
 use regex::Regex;
 
-use super::TESTS_ROOT;
-use crate::project_root;
+use crate::workspace_root;
 
 lazy_static::lazy_static! {
     // Returns a match for a test option. Test options have the form `// @name: value`
@@ -18,7 +20,7 @@ lazy_static::lazy_static! {
     static ref TEST_BRACES: Regex = Regex::new(r"^[[:space:]]*[{|}][[:space:]]*$").unwrap();
 }
 
-#[allow(unused)]
+#[expect(unused)]
 #[derive(Debug)]
 pub struct CompilerSettings {
     pub modules: Vec<String>,
@@ -34,7 +36,7 @@ pub struct CompilerSettings {
 }
 
 impl CompilerSettings {
-    pub fn new(options: &HashMap<String, String>) -> Self {
+    pub fn new(options: &FxHashMap<String, String>) -> Self {
         Self {
             modules: Self::split_value_options(options.get("module")),
             targets: Self::split_value_options(options.get("target")),
@@ -92,7 +94,7 @@ impl TestCaseContent {
     /// These files start with `// @<option-name>: <option-value>` and are followed by the file's content.
     /// This function extracts the individual files with their content and drops unsupported files.
     pub fn make_units_from_test(path: &Path, code: &str) -> Self {
-        let mut current_file_options: HashMap<String, String> = HashMap::default();
+        let mut current_file_options: FxHashMap<String, String> = FxHashMap::default();
         let mut current_file_name: Option<String> = None;
         let mut test_unit_data: Vec<TestUnitData> = vec![];
         let mut current_file_content = String::new();
@@ -142,8 +144,11 @@ impl TestCaseContent {
         let test_unit_data = test_unit_data
             .into_iter()
             .filter_map(|mut unit| {
-                let source_type = Self::get_source_type(Path::new(&unit.name), &settings)?;
-                unit.source_type = source_type.with_module(is_module);
+                let mut source_type = Self::get_source_type(Path::new(&unit.name), &settings)?;
+                if is_module {
+                    source_type = source_type.with_module(true);
+                }
+                unit.source_type = source_type;
                 Some(unit)
             })
             .collect::<Vec<_>>();
@@ -153,17 +158,11 @@ impl TestCaseContent {
     }
 
     fn get_source_type(path: &Path, options: &CompilerSettings) -> Option<SourceType> {
-        let is_module = ["esnext", "es2022", "es2020", "es2015"]
-            .into_iter()
-            .any(|module| options.modules.contains(&module.to_string()));
-        Some(
-            SourceType::from_path(path)
-                .ok()?
-                .with_script(true)
-                .with_module(is_module)
-                .with_jsx(!options.jsx.is_empty())
-                .with_typescript_definition(options.declaration),
-        )
+        let source_type = SourceType::from_path(path)
+            .ok()?
+            .with_jsx(!options.jsx.is_empty())
+            .with_unambiguous(true);
+        Some(source_type)
     }
 
     // TypeScript error files can be:
@@ -172,7 +171,7 @@ impl TestCaseContent {
     //   * `filename.errors.txt`
     fn get_error_files(path: &Path, options: &CompilerSettings) -> Vec<String> {
         let file_name = path.file_stem().unwrap().to_string_lossy();
-        let root = project_root().join(TESTS_ROOT).join("baselines/reference");
+        let root = workspace_root().join("typescript/tests/baselines/reference");
         let mut suffixes = vec![String::new()];
         suffixes.extend(options.modules.iter().map(|module| format!("(module={module})")));
         suffixes.extend(options.targets.iter().map(|target| format!("(target={target})")));
@@ -218,7 +217,7 @@ impl Baseline {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct BaselineFile {
     pub files: Vec<Baseline>,
 }
@@ -241,7 +240,7 @@ impl BaselineFile {
     }
 
     pub fn parse(path: &Path) -> Self {
-        let s = fs::read_to_string(path).unwrap();
+        let Ok(s) = fs::read_to_string(path) else { return Self::default() };
 
         let mut files: Vec<Baseline> = vec![];
         let mut is_diagnostic = false;

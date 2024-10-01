@@ -8,10 +8,10 @@ use crate::{
     utils::{should_ignore_as_internal, should_ignore_as_private},
 };
 
-fn require_property_type_diagnostic(span0: Span) -> OxcDiagnostic {
+fn require_property_type_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing type in @property tag.")
         .with_help("Add a {type} to this @property tag.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -19,23 +19,28 @@ pub struct RequirePropertyType;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Requires that each `@property` tag has a type value (within curly brackets).
     ///
     /// ### Why is this bad?
+    ///
     /// The type of a property should be documented.
     ///
-    /// ### Example
-    /// ```javascript
-    /// // Passing
-    /// /**
-    ///  * @typedef {SomeType} SomeTypedef
-    ///  * @property {number} foo
-    ///  */
+    /// ### Examples
     ///
-    /// // Failing
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
     /// /**
     ///  * @typedef {SomeType} SomeTypedef
     ///  * @property foo
+    ///  */
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// /**
+    ///  * @typedef {SomeType} SomeTypedef
+    ///  * @property {number} foo
     ///  */
     /// ```
     RequirePropertyType,

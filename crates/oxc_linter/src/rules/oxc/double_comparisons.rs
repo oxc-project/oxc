@@ -6,12 +6,12 @@ use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
 use crate::{context::LintContext, rule::Rule, utils::is_same_reference, AstNode};
 
-fn double_comparisons_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
+fn double_comparisons_diagnostic(span: Span, operator: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected double comparisons.")
         .with_help(format!(
-            "This logical expression can be simplified. Try using the `{x1}` operator instead."
+            "This logical expression can be simplified. Try using the `{operator}` operator instead."
         ))
-        .with_label(span0)
+        .with_label(span)
 }
 
 /// <https://rust-lang.github.io/rust-clippy/master/index.html#/double_comparisons>
@@ -28,17 +28,21 @@ declare_oxc_lint!(
     /// Redundant comparisons can be confusing and make code harder to understand.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Bad
     /// x === y || x < y;
     /// x < y || x === y;
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// x <= y;
     /// x >= y;
     /// ```
     DoubleComparisons,
     correctness,
+    fix
 );
 
 #[allow(clippy::similar_names)]
@@ -84,7 +88,22 @@ impl Rule for DoubleComparisons {
             _ => return,
         };
 
-        ctx.diagnostic(double_comparisons_diagnostic(logical_expr.span, new_op));
+        ctx.diagnostic_with_fix(
+            double_comparisons_diagnostic(logical_expr.span, new_op),
+            |fixer| {
+                let modified_code = {
+                    let mut codegen = fixer.codegen();
+                    codegen.print_expression(llhs);
+                    codegen.print_char(b' ');
+                    codegen.print_str(new_op);
+                    codegen.print_char(b' ');
+                    codegen.print_expression(lrhs);
+                    codegen.into_source_text()
+                };
+
+                fixer.replace(logical_expr.span, modified_code)
+            },
+        );
     }
 }
 
@@ -127,5 +146,20 @@ fn test() {
         "x > y || x === y",
     ];
 
-    Tester::new(DoubleComparisons::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("x == y || x < y", "x <= y"),
+        ("x < y || x == y", "x <= y"),
+        ("x == y || x > y", "x >= y"),
+        ("x > y || x == y", "x >= y"),
+        ("x < y || x > y", "x != y"),
+        ("x > y || x < y", "x != y"),
+        ("x <= y && x >= y", "x == y"),
+        ("x >= y && x <= y", "x == y"),
+        ("x === y || x < y", "x <= y"),
+        ("x < y || x === y", "x <= y"),
+        ("x === y || x > y", "x >= y"),
+        ("x > y || x === y", "x >= y"),
+    ];
+
+    Tester::new(DoubleComparisons::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

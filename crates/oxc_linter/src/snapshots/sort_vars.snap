@@ -1,0 +1,153 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(sort-vars): Variable declarations should be sorted
+   ╭─[sort_vars.tsx:1:8]
+ 1 │ var b, a
+   ·        ─
+   ╰────
+
+  ⚠ eslint(sort-vars): Variable declarations should be sorted
+   ╭─[sort_vars.tsx:1:9]
+ 1 │ var b , a
+   ·         ─
+   ╰────
+
+  ⚠ eslint(sort-vars): Variable declarations should be sorted
+   ╭─[sort_vars.tsx:2:8]
+ 1 │ var b,
+ 2 │                 a;
+   ·                 ─
+   ╰────
+
+  ⚠ eslint(sort-vars): Variable declarations should be sorted
+   ╭─[sort_vars.tsx:1:11]
+ 1 │ var b=10, a=20;
+   ·           ────
+   ╰────
+
+  ⚠ eslint(sort-vars): Variable declarations should be sorted
+   ╭─[sort_vars.tsx:1:11]
+ 1 │ var b=10, a=20, c=30;
+   ·           ────
+   ╰────
+
+  ⚠ eslint(sort-vars): Variable declarations should be sorted
+   ╭─[sort_vars.tsx:1:13]
+ 1 │ var all=10, a = 1
+   ·             ─────
+   ╰────
+
+  ⚠ eslint(sort-vars): Variable declarations should be sorted
+   ╭─[sort_vars.tsx:1:11]
+ 1 │ var b, c, a, d
+   ·           ─
+   ╰────
+
+  ⚠ eslint(sort-vars): Variable declarations should be sorted
+   ╭─[sort_vars.tsx:1:11]
+ 1 │ var c, d, a, b
+   ·           ─
+   ╰────
+
+  ⚠ eslint(sort-vars): Variable declarations should be sorted
+   ╭─[sort_vars.tsx:1:8]
+ 1 │ var a, A;
+   ·        ─
+   ╰────
+
+  ⚠ eslint(sort-vars): Variable declarations should be sorted
+   ╭─[sort_vars.tsx:1:8]
+ 1 │ var a, B;
+   ·        ─
+   ╰────
+
+  ⚠ eslint(sort-vars): Variable declarations should be sorted
+   ╭─[sort_vars.tsx:1:8]
+ 1 │ var a, B, c;
+   ·        ─
+   ╰────
+
+  ⚠ eslint(sort-vars): Variable declarations should be sorted
+   ╭─[sort_vars.tsx:1:8]
+ 1 │ var B, a;
+   ·        ─
+   ╰────
+
+  ⚠ eslint(sort-vars): Variable declarations should be sorted
+   ╭─[sort_vars.tsx:1:8]
+ 1 │ var B, A, c;
+   ·        ─
+   ╰────
+
+  ⚠ eslint(sort-vars): Variable declarations should be sorted
+   ╭─[sort_vars.tsx:1:8]
+ 1 │ var d, a, [b, c] = {};
+   ·        ─
+   ╰────
+
+  ⚠ eslint(sort-vars): Variable declarations should be sorted
+   ╭─[sort_vars.tsx:1:8]
+ 1 │ var d, a, [b, {x: {c, e}}] = {};
+   ·        ─
+   ╰────
+
+  ⚠ eslint(sort-vars): Variable declarations should be sorted
+   ╭─[sort_vars.tsx:1:16]
+ 1 │ var {} = 1, b, a
+   ·                ─
+   ╰────
+
+  ⚠ eslint(sort-vars): Variable declarations should be sorted
+   ╭─[sort_vars.tsx:1:11]
+ 1 │ var b=10, a=f();
+   ·           ─────
+   ╰────
+
+  ⚠ eslint(sort-vars): Variable declarations should be sorted
+   ╭─[sort_vars.tsx:1:11]
+ 1 │ var b=10, a=b;
+   ·           ───
+   ╰────
+
+  ⚠ eslint(sort-vars): Variable declarations should be sorted
+   ╭─[sort_vars.tsx:1:12]
+ 1 │ var b = 0, a = `${b}`;
+   ·            ──────────
+   ╰────
+
+  ⚠ eslint(sort-vars): Variable declarations should be sorted
+   ╭─[sort_vars.tsx:1:12]
+ 1 │ var b = 0, a = `${f()}`
+   ·            ────────────
+   ╰────
+
+  ⚠ eslint(sort-vars): Variable declarations should be sorted
+   ╭─[sort_vars.tsx:1:19]
+ 1 │ var b = 0, c = b, a;
+   ·                   ─
+   ╰────
+
+  ⚠ eslint(sort-vars): Variable declarations should be sorted
+   ╭─[sort_vars.tsx:1:19]
+ 1 │ var b = 0, c = 0, a = b + c;
+   ·                   ─────────
+   ╰────
+
+  ⚠ eslint(sort-vars): Variable declarations should be sorted
+   ╭─[sort_vars.tsx:1:20]
+ 1 │ var b = f(), c, d, a;
+   ·                    ─
+   ╰────
+
+  ⚠ eslint(sort-vars): Variable declarations should be sorted
+   ╭─[sort_vars.tsx:1:25]
+ 1 │ var b = `${f()}`, c, d, a;
+   ·                         ─
+   ╰────
+
+  ⚠ eslint(sort-vars): Variable declarations should be sorted
+   ╭─[sort_vars.tsx:1:8]
+ 1 │ var c, a = b = 0
+   ·        ─────────
+   ╰────

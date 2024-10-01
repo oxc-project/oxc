@@ -5,8 +5,12 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_rest_spread_properties_diagnostic(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("{x1} are not allowed. {x2}")).with_label(span0)
+fn no_rest_spread_properties_diagnostic(
+    span: Span,
+    spread_kind: &str,
+    message_suffix: &str,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("{spread_kind} are not allowed. {message_suffix}")).with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

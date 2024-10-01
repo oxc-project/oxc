@@ -3,23 +3,37 @@ mod deno;
 use std::{fs, path::Path, sync::Arc};
 
 use oxc_allocator::Allocator;
-use oxc_codegen::CodeGenerator;
-use oxc_isolated_declarations::IsolatedDeclarations;
+use oxc_codegen::{CodeGenerator, CommentOptions};
+use oxc_isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
 fn transform(path: &Path, source_text: &str) -> String {
     let allocator = Allocator::default();
     let source_type = SourceType::from_path(path).unwrap();
-    let program = Parser::new(&allocator, source_text, source_type).parse().program;
+    let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
 
-    let ret = IsolatedDeclarations::new(&allocator).build(&program);
-    let code = CodeGenerator::new().build(&ret.program).source_text;
+    let id_ret = IsolatedDeclarations::new(
+        &allocator,
+        source_text,
+        &parser_ret.trivias,
+        IsolatedDeclarationsOptions { strip_internal: true },
+    )
+    .build(&parser_ret.program);
+    let code = CodeGenerator::new()
+        .enable_comment(
+            source_text,
+            parser_ret.trivias,
+            CommentOptions { preserve_annotate_comments: false },
+        )
+        .build(&id_ret.program)
+        .source_text;
 
-    let mut snapshot = format!("==================== .D.TS ====================\n\n{code}\n\n");
-    if !ret.errors.is_empty() {
+    let mut snapshot =
+        format!("```\n==================== .D.TS ====================\n\n{code}\n\n");
+    if !id_ret.errors.is_empty() {
         let source = Arc::new(source_text.to_string());
-        let error_messages = ret
+        let error_messages = id_ret
             .errors
             .iter()
             .map(|d| d.clone().with_source_code(Arc::clone(&source)))
@@ -28,7 +42,7 @@ fn transform(path: &Path, source_text: &str) -> String {
             .join("\n");
 
         snapshot.push_str(&format!(
-            "==================== Errors ====================\n\n{error_messages}\n\n"
+            "==================== Errors ====================\n\n{error_messages}\n\n```"
         ));
     }
 

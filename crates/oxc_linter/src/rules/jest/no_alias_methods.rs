@@ -54,7 +54,8 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoAliasMethods,
-    style
+    style,
+    fix
 );
 
 impl Rule for NoAliasMethods {

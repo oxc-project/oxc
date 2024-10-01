@@ -10,60 +10,60 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        get_element_type, get_prop_value, get_string_literal_prop_value, has_jsx_prop_lowercase,
+        get_element_type, get_prop_value, get_string_literal_prop_value, has_jsx_prop_ignore_case,
         object_has_accessible_child,
     },
     AstNode,
 };
 
-fn missing_alt_prop(span0: Span) -> OxcDiagnostic {
+fn missing_alt_prop(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing `alt` attribute.")
         .with_help("Must have `alt` prop, either with meaningful text, or an empty string for decorative images.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn missing_alt_value(span0: Span) -> OxcDiagnostic {
+fn missing_alt_value(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Invalid `alt` value.")
         .with_help(
             "Must have meaningful value for `alt` prop. Use alt=\"\" for presentational images.",
         )
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn aria_label_value(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Missing value for aria-label attribute.")
-        .with_help("The aria-label attribute must have a value. The alt attribute is preferred over aria-label for images.")
-        .with_label(span0)
+fn aria_label_value(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Missing value for `aria-label` attribute.")
+        .with_help("Give `aria-label` a meaningful value. Prever the `alt` attribute over `aria-label` for images.")
+        .with_label(span)
 }
 
-fn aria_labelled_by_value(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Missing value for aria-labelledby attribute.")
-        .with_help("The alt attribute is preferred over aria-labelledby for images.")
-        .with_label(span0)
+fn aria_labelled_by_value(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Missing value for `aria-labelledby` attribute.")
+        .with_help("Give `aria-labelledby` an ID to a label element. Prefer the `alt` attribute over `aria-labelledby` for images.")
+        .with_label(span)
 }
 
-fn prefer_alt(span0: Span) -> OxcDiagnostic {
+fn prefer_alt(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("ARIA used where native HTML could suffice.")
         .with_help("Prefer alt=\"\" over presentational role. Native HTML attributes should be preferred for accessibility before resorting to ARIA attributes.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn object(span0: Span) -> OxcDiagnostic {
+fn object(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing alternative text.")
         .with_help("Embedded <object> elements must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn area(span0: Span) -> OxcDiagnostic {
+fn area(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing alternative text.")
         .with_help("Each area of an image map must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn input_type_image(span0: Span) -> OxcDiagnostic {
+fn input_type_image(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing alternative text.")
         .with_help("<input> elements with type=\"image\" must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -119,12 +119,15 @@ declare_oxc_lint!(
     /// text that describes the element's content or purpose.
     ///
     /// ### Example
-    /// ```javascript
-    /// // Bad
-    /// <img src="flower.jpg">
     ///
-    /// // Good
-    /// <img src="flower.jpg" alt="A close-up of a white daisy">
+    /// Examples of **incorrect** code for this rule:
+    /// ```jsx
+    /// <img src="flower.jpg" alt="A close-up of a white daisy" />
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
+    /// <img src="flower.jpg" />
     /// ```
     AltText,
     correctness
@@ -205,8 +208,8 @@ impl Rule for AltText {
 
         // <input type="image">
         if let Some(custom_tags) = &self.input_type_image {
-            let has_input_with_type_image = name.to_lowercase() == "input"
-                && has_jsx_prop_lowercase(jsx_el, "type").map_or(false, |v| {
+            let has_input_with_type_image = name.eq_ignore_ascii_case("input")
+                && has_jsx_prop_ignore_case(jsx_el, "type").map_or(false, |v| {
                     get_string_literal_prop_value(v).map_or(false, |v| v == "image")
                 });
             if has_input_with_type_image || custom_tags.iter().any(|i| i == name) {
@@ -247,26 +250,26 @@ fn aria_label_has_value<'a>(item: &'a JSXAttributeItem<'a>) -> bool {
 }
 
 fn img_rule<'a>(node: &'a JSXOpeningElement<'a>, ctx: &LintContext<'a>) {
-    if let Some(alt_prop) = has_jsx_prop_lowercase(node, "alt") {
+    if let Some(alt_prop) = has_jsx_prop_ignore_case(node, "alt") {
         if !is_valid_alt_prop(alt_prop) {
             ctx.diagnostic(missing_alt_value(node.span));
         }
         return;
     }
 
-    if has_jsx_prop_lowercase(node, "role").map_or(false, is_presentation_role) {
+    if has_jsx_prop_ignore_case(node, "role").map_or(false, is_presentation_role) {
         ctx.diagnostic(prefer_alt(node.span));
         return;
     }
 
-    if let Some(aria_label_prop) = has_jsx_prop_lowercase(node, "aria-label") {
+    if let Some(aria_label_prop) = has_jsx_prop_ignore_case(node, "aria-label") {
         if !aria_label_has_value(aria_label_prop) {
             ctx.diagnostic(aria_label_value(node.span));
         }
         return;
     }
 
-    if let Some(aria_labelledby_prop) = has_jsx_prop_lowercase(node, "aria-labelledby") {
+    if let Some(aria_labelledby_prop) = has_jsx_prop_ignore_case(node, "aria-labelledby") {
         if !aria_label_has_value(aria_labelledby_prop) {
             ctx.diagnostic(aria_labelled_by_value(node.span));
         }
@@ -282,11 +285,11 @@ fn object_rule<'a>(
     ctx: &LintContext<'a>,
 ) {
     let has_aria_label =
-        has_jsx_prop_lowercase(node, "aria-label").map_or(false, aria_label_has_value);
+        has_jsx_prop_ignore_case(node, "aria-label").map_or(false, aria_label_has_value);
     let has_aria_labelledby =
-        has_jsx_prop_lowercase(node, "aria-labelledby").map_or(false, aria_label_has_value);
+        has_jsx_prop_ignore_case(node, "aria-labelledby").map_or(false, aria_label_has_value);
     let has_label = has_aria_label || has_aria_labelledby;
-    let has_title_attr = has_jsx_prop_lowercase(node, "title")
+    let has_title_attr = has_jsx_prop_ignore_case(node, "title")
         .and_then(get_string_literal_prop_value)
         .map_or(false, |v| !v.is_empty());
 
@@ -298,14 +301,14 @@ fn object_rule<'a>(
 
 fn area_rule<'a>(node: &'a JSXOpeningElement<'a>, ctx: &LintContext<'a>) {
     let has_aria_label =
-        has_jsx_prop_lowercase(node, "aria-label").map_or(false, aria_label_has_value);
+        has_jsx_prop_ignore_case(node, "aria-label").map_or(false, aria_label_has_value);
     let has_aria_labelledby =
-        has_jsx_prop_lowercase(node, "aria-labelledby").map_or(false, aria_label_has_value);
+        has_jsx_prop_ignore_case(node, "aria-labelledby").map_or(false, aria_label_has_value);
     let has_label = has_aria_label || has_aria_labelledby;
     if has_label {
         return;
     }
-    has_jsx_prop_lowercase(node, "alt").map_or_else(
+    has_jsx_prop_ignore_case(node, "alt").map_or_else(
         || {
             ctx.diagnostic(area(node.span));
         },
@@ -319,14 +322,14 @@ fn area_rule<'a>(node: &'a JSXOpeningElement<'a>, ctx: &LintContext<'a>) {
 
 fn input_type_image_rule<'a>(node: &'a JSXOpeningElement<'a>, ctx: &LintContext<'a>) {
     let has_aria_label =
-        has_jsx_prop_lowercase(node, "aria-label").map_or(false, aria_label_has_value);
+        has_jsx_prop_ignore_case(node, "aria-label").map_or(false, aria_label_has_value);
     let has_aria_labelledby =
-        has_jsx_prop_lowercase(node, "aria-labelledby").map_or(false, aria_label_has_value);
+        has_jsx_prop_ignore_case(node, "aria-labelledby").map_or(false, aria_label_has_value);
     let has_label = has_aria_label || has_aria_labelledby;
     if has_label {
         return;
     }
-    has_jsx_prop_lowercase(node, "alt").map_or_else(
+    has_jsx_prop_ignore_case(node, "alt").map_or_else(
         || {
             ctx.diagnostic(input_type_image(node.span));
         },

@@ -16,7 +16,6 @@ use super::{version::Version, Versions};
 #[allow(clippy::large_enum_variant)]
 pub enum Targets {
     Query(Query),
-    #[allow(unused)]
     EsModules(EsModules),
     Versions(Versions),
     HashMap(FxHashMap<String, QueryOrVersion>),
@@ -29,6 +28,20 @@ impl Default for Targets {
 }
 
 impl Targets {
+    /// Create a `Targets` from a browserslist query.
+    ///
+    /// The usage refer to the [browserslist](https://github.com/browserslist/browserslist?tab=readme-ov-file#queries) documentation.
+    pub fn from_query(query: &str) -> Self {
+        Targets::Query(Query::Single(query.into()))
+    }
+
+    /// Parse the query and return the parsed Versions.
+    ///
+    /// # Errors
+    ///
+    /// This function returns an error if:
+    /// * The query is not supported.
+    /// * The query is invalid.
     pub fn get_targets(self) -> Result<Versions, Error> {
         match self {
             Targets::Versions(v) => Ok(v),

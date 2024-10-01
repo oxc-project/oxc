@@ -5,16 +5,20 @@ on:
   pull_request:
     types: [opened, synchronize]
     paths:
-      - 'crates/oxc_parser/**'
-      - 'crates/oxc_allocator/**'
-      - '.github/workflows/miri.yml'
+      - "crates/oxc_allocator/**"
+      - "crates/oxc_data_structures/**"
+      - "crates/oxc_parser/**"
+      - "crates/oxc_traverse/**"
+      - ".github/workflows/miri.yml"
   push:
     branches:
       - main
     paths:
-      - 'crates/oxc_parser/**'
-      - 'crates/oxc_allocator/**'
-      - '.github/workflows/miri.yml'
+      - "crates/oxc_allocator/**"
+      - "crates/oxc_data_structures/**"
+      - "crates/oxc_parser/**"
+      - "crates/oxc_traverse/**"
+      - ".github/workflows/miri.yml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
@@ -40,4 +44,6 @@ jobs:
           cargo miri setup
 
       - name: Test with Miri
-        run: cargo miri test -p oxc_parser
+        run: |
+          cargo miri test -p oxc_parser
+          cargo miri test -p oxc_transformer

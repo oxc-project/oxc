@@ -37,14 +37,19 @@ bb7: {
 }
 
 digraph {
-    0 [ label = "" ]
-    1 [ label = "ExpressionStatement" ]
-    2 [ label = "" ]
-    3 [ label = "ExpressionStatement" ]
-    4 [ label = "" ]
-    5 [ label = "ExpressionStatement" ]
-    6 [ label = "" ]
-    7 [ label = "ExpressionStatement\nExpressionStatement" ]
+    0 [ label = "bb0" shape = box]
+    1 [ label = "bb1
+ExpressionStatement" shape = box]
+    2 [ label = "bb2" shape = box]
+    3 [ label = "bb3
+ExpressionStatement" shape = box]
+    4 [ label = "bb4" shape = box]
+    5 [ label = "bb5
+ExpressionStatement" shape = box]
+    6 [ label = "bb6" shape = box]
+    7 [ label = "bb7
+ExpressionStatement
+ExpressionStatement" shape = box]
     1 -> 0 [ label = "Error(Implicit)" ]
     2 -> 0 [ label = "Error(Implicit)" ]
     3 -> 0 [ label = "Error(Implicit)" ]

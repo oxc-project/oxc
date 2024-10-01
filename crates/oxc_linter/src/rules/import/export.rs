@@ -8,8 +8,9 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_named_export(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("No named exports found in module '{x1}'")).with_label(span0)
+fn no_named_export(module_name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("No named exports found in module '{module_name}'"))
+        .with_label(span)
 }
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/export.md>
@@ -18,13 +19,29 @@ pub struct Export;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Reports funny business with exports, like repeated exports of names or defaults.
     ///
-    /// ### Example
+    /// ### Why is this bad?
+    ///
+    /// Having multiple exports of the same name can lead to ambiguity and confusion
+    /// in the codebase. It makes it difficult to track which export is being used
+    /// and can result in runtime errors if the wrong export is referenced.
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// let foo;
     /// export { foo }; // Multiple exports of name 'foo'.
-    /// export * from "./export-all" // export-all.js also export foo
+    /// export * from "./export-all"; // Conflicts if export-all.js also exports foo
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// let foo;
+    /// export { foo as foo1 }; // Renamed export to avoid conflict
+    /// export * from "./export-all"; // No conflict if export-all.js also exports foo
     /// ```
     Export,
     nursery
@@ -57,7 +74,7 @@ impl Rule for Export {
             );
 
             if export_names.is_empty() {
-                ctx.diagnostic(no_named_export(module_request.span(), module_request.name()));
+                ctx.diagnostic(no_named_export(module_request.name(), module_request.span()));
             } else {
                 all_export_names.insert(star_export_entry.span, export_names);
             }

@@ -4,9 +4,12 @@ mod result;
 mod runner;
 mod walk;
 
-pub use crate::{
-    command::*,
-    lint::LintRunner,
-    result::{CliRunResult, LintResult},
-    runner::Runner,
-};
+pub mod cli {
+
+    pub use crate::{
+        command::*,
+        lint::LintRunner,
+        result::{CliRunResult, LintResult},
+        runner::Runner,
+    };
+}

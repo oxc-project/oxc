@@ -4,6 +4,69 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.30.2] - 2024-09-27
+
+### Documentation
+
+- d60ceb4 oxc: Add README.md and crate-level docs (#6035) (DonIsaac)
+
+## [0.30.1] - 2024-09-24
+
+### Documentation
+
+- 18371dd oxc: Include feature-guarded modules in docs.rs (#6012) (DonIsaac)
+
+## [0.30.0] - 2024-09-23
+
+### Features
+
+- 3230ae5 semantic: Add `SemanticBuilder::with_excess_capacity` (#5762) (overlookmotel)
+
+### Documentation
+
+- bacfbb8 oxc: Add submodule documentation (#5984) (DonIsaac)
+
+## [0.28.0] - 2024-09-11
+
+- b060525 semantic: [**BREAKING**] Remove `source_type` argument from `SemanticBuilder::new` (#5553) (Boshen)
+
+### Features
+
+- 2016bae coverage: Add regular expression idempotency test (#5676) (Boshen)
+
+### Refactor
+
+
+## [0.27.0] - 2024-09-06
+
+### Features
+
+- ed8ab6d oxc: Conditional expose `oxc_cfg` in `oxc` crate (#5524) (IWANABETHATGUY)
+
+## [0.26.0] - 2024-09-03
+
+### Features
+
+- be4642f semantic: Transform checker check child scope IDs (#5410) (overlookmotel)
+
+### Refactor
+
+- 3ae94b8 semantic: Change `build_module_record` to accept &Path instead of PathBuf (Boshen)
+
+## [0.25.0] - 2024-08-23
+
+- ce4d469 codegen: [**BREAKING**] Remove const generic `MINIFY` (#5001) (Boshen)
+
+### Features
+
+- 6800e69 oxc: Add `Compiler` and `CompilerInterface` (#4954) (Boshen)
+
+### Refactor
+
+- cd9cf5e oxc: Remove `remove_whitespace` (Boshen)
+- b4407c4 oxc,mangler: `oxc` crate add mangler; mangler use options API (Boshen)
+- 4fdf26d transform_conformance: Add driver (#4969) (Boshen)
+
 ## [0.21.0] - 2024-07-18
 
 ### Features

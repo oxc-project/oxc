@@ -2,29 +2,33 @@
 source: crates/oxc_semantic/tests/main.rs
 input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/function-declaration/inherited-scope.ts
 ---
+================================================================================
+SCOPES
+================================================================================
+
 [
   {
     "children": [
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode | Function)",
+        "flags": "ScopeFlags(StrictMode | Function)",
         "id": 1,
         "node": "Function(foo)",
         "symbols": []
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 0,
         "name": "parentScoped",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(parentScoped)",
         "references": [
           {
-            "flag": "ReferenceFlag(Read)",
+            "flags": "ReferenceFlags(Read)",
             "id": 0,
             "name": "parentScoped",
             "node_id": 11
@@ -32,7 +36,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
         ]
       },
       {
-        "flag": "SymbolFlags(BlockScopedVariable | Function)",
+        "flags": "SymbolFlags(BlockScopedVariable | Function)",
         "id": 1,
         "name": "foo",
         "node": "Function(foo)",
@@ -41,3 +45,9 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
     ]
   }
 ]
+
+================================================================================
+CONFORMANCE
+================================================================================
+
+All tests passed.

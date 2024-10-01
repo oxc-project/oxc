@@ -1,0 +1,44 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-vitest(prefer-to-be-falsy): Use `toBeFalsy` instead.
+   ╭─[prefer_to_be_falsy.tsx:1:14]
+ 1 │ expect(true).toBe(false);
+   ·              ───────────
+   ╰────
+  help: Replace `toBe(false)` with `toBeFalsy()`.
+
+  ⚠ eslint-plugin-vitest(prefer-to-be-falsy): Use `toBeFalsy` instead.
+   ╭─[prefer_to_be_falsy.tsx:1:23]
+ 1 │ expect(wasSuccessful).toEqual(false);
+   ·                       ──────────────
+   ╰────
+  help: Replace `toEqual(false)` with `toBeFalsy()`.
+
+  ⚠ eslint-plugin-vitest(prefer-to-be-falsy): Use `toBeFalsy` instead.
+   ╭─[prefer_to_be_falsy.tsx:1:40]
+ 1 │ expect(fs.existsSync('/path/to/file')).toStrictEqual(false);
+   ·                                        ────────────────────
+   ╰────
+  help: Replace `toStrictEqual(false)` with `toBeFalsy()`.
+
+  ⚠ eslint-plugin-vitest(prefer-to-be-falsy): Use `toBeFalsy` instead.
+   ╭─[prefer_to_be_falsy.tsx:1:24]
+ 1 │ expect("a string").not.toBe(false);
+   ·                        ───────────
+   ╰────
+  help: Replace `toBe(false)` with `toBeFalsy()`.
+
+  ⚠ eslint-plugin-vitest(prefer-to-be-falsy): Use `toBeFalsy` instead.
+   ╭─[prefer_to_be_falsy.tsx:1:24]
+ 1 │ expect("a string").not.toEqual(false);
+   ·                        ──────────────
+   ╰────
+  help: Replace `toEqual(false)` with `toBeFalsy()`.
+
+  ⚠ eslint-plugin-vitest(prefer-to-be-falsy): Use `toBeFalsy` instead.
+   ╭─[prefer_to_be_falsy.tsx:1:30]
+ 1 │ expectTypeOf("a string").not.toEqual(false);
+   ·                              ──────────────
+   ╰────
+  help: Replace `toEqual(false)` with `toBeFalsy()`.

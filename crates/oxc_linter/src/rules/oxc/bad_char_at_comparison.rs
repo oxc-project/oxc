@@ -9,13 +9,13 @@ use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode}
 fn bad_char_at_comparison_diagnostic(
     char_at: Span,
     compared_string: Span,
-    x2: usize,
+    len: usize,
 ) -> OxcDiagnostic {
     OxcDiagnostic::warn("Invalid comparison with `charAt` method")
         .with_help("`String.prototype.charAt` returns a string of length 1. If the return value is compared with a string of length greater than 1, the comparison will always be false.")
         .with_labels([
             char_at.label("`charAt` called here"),
-            compared_string.label(format!("And compared with a string of length {x2} here")),
+            compared_string.label(format!("And compared with a string of length {len} here")),
         ])
 }
 
@@ -31,13 +31,16 @@ declare_oxc_lint!(
     ///
     /// The `charAt` method returns a string of length 1. If the return value is compared with a string of length greater than 1, the comparison will always be false.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Bad: The return value of the `charAt` method is compared with a string of length greater than 1.
     /// a.charAt(4) === 'a2';
     /// a.charAt(4) === '/n';
+    /// ```
     ///
-    /// // Good: The return value of the `charAt` method is compared with a string of length 1.
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// a.charAt(4) === 'a'
     /// a.charAt(4) === '\n';
     /// ```

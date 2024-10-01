@@ -1,0 +1,14 @@
+---
+source: crates/oxc_isolated_declarations/tests/mod.rs
+input_file: crates/oxc_isolated_declarations/tests/fixtures/strip-internal.ts
+---
+```
+==================== .D.TS ====================
+
+declare class StripInternalClassFields {}
+export { stripInternalFunction, StripInternalClass, StripInternalClassFields };
+export interface StripInternalInterfaceSignatures {}
+export type StripInternalTypeSignatures = {};
+export declare namespace StripInternalNamespaceInner {
+	export {};
+}

@@ -8,10 +8,9 @@ use phf::{phf_map, Map};
 
 use crate::{context::LintContext, rule::Rule};
 
-fn deprecated_function(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow use of deprecated functions")
-        .with_help(format!("{x0:?} has been deprecated in favor of {x1:?}"))
-        .with_label(span2)
+fn deprecated_function(deprecated: &str, new: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("{deprecated:?} has been deprecated in favor of {new:?}"))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -75,6 +74,7 @@ declare_oxc_lint!(
     /// ```
     NoDeprecatedFunctions,
     style,
+    fix
 );
 
 const DEPRECATED_FUNCTIONS_MAP: Map<&'static str, (usize, &'static str)> = phf_map! {

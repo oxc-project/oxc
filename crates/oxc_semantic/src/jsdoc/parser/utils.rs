@@ -71,7 +71,9 @@ pub fn find_type_name_range(s: &str) -> Option<(usize, usize)> {
 pub fn find_token_range(s: &str) -> Option<(usize, usize)> {
     let mut start = None;
     for (idx, ch) in s.char_indices() {
-        if ch.is_whitespace() {
+        // `{` may appear just after `@kind{type}`
+        // Other syntax characters also can be splitter...?
+        if ch.is_whitespace() || ch == '{' {
             if let Some(start) = start {
                 return Some((start, idx));
             }
@@ -150,6 +152,7 @@ t9b: number;
             ("", None),
             (" トークン5\n", Some("トークン5")),
             ("\nk6\nx", Some("k6")),
+            ("k7{", Some("k7")),
         ] {
             assert_eq!(find_token_range(actual).map(|(s, e)| &actual[s..e]), expect);
         }

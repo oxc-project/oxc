@@ -21,30 +21,37 @@ pub struct RequireProperty;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Requires that all `@typedef` and `@namespace` tags have `@property` tags
     /// when their type is a plain `object`, `Object`, or `PlainObject`.
     ///
     /// ### Why is this bad?
+    ///
     /// Object type should have properties defined.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Passing
+    /// /**
+    ///  * @typedef {Object} SomeTypedef
+    ///  */
+    ///
+    /// /**
+    ///  * @namespace {Object} SomeNamesoace
+    ///  */
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// /**
     ///  * @typedef {Object} SomeTypedef
     ///  * @property {SomeType} propName Prop description
     ///  */
+    ///
     /// /**
     ///  * @typedef {object} Foo
     ///  * @property someProp
-    ///  */
-    ///
-    /// // Failing
-    /// /**
-    ///  * @typedef {Object} SomeTypedef
-    ///  */
-    /// /**
-    ///  * @namespace {Object} SomeNamesoace
     ///  */
     /// ```
     RequireProperty,

@@ -1,0 +1,36 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-promise(spec-only): Avoid using non-standard `Promise.done`
+   ╭─[spec_only.tsx:1:1]
+ 1 │ Promise.done()
+   · ────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(spec-only): Avoid using non-standard `Promise.something`
+   ╭─[spec_only.tsx:1:1]
+ 1 │ Promise.something()
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(spec-only): Avoid using non-standard `Promise.done`
+   ╭─[spec_only.tsx:1:5]
+ 1 │ new Promise.done()
+   ·     ────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(spec-only): Avoid using non-standard `Promise.done`
+   ╭─[spec_only.tsx:4:22]
+ 3 │               var a = getA()
+ 4 │               return Promise.done(a)
+   ·                      ────────────
+ 5 │             }
+   ╰────
+
+  ⚠ eslint-plugin-promise(spec-only): Avoid using non-standard `Promise.done`
+   ╭─[spec_only.tsx:3:20]
+ 2 │             function foo() {
+ 3 │               getA(Promise.done)
+   ·                    ────────────
+ 4 │             }
+   ╰────

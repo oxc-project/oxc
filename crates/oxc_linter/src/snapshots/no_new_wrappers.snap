@@ -1,41 +1,41 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint(no-new-wrappers): Disallow new operators with the String, Number, and Boolean objects
+  ⚠ eslint(no-new-wrappers): Do not use `String` as a constructor
    ╭─[no_new_wrappers.tsx:1:9]
  1 │ var a = new String('hello');
    ·         ───────────────────
    ╰────
-  help: do not use String as a constructor, consider removing the new operator.
+  help: Remove the `new` operator.
 
-  ⚠ eslint(no-new-wrappers): Disallow new operators with the String, Number, and Boolean objects
+  ⚠ eslint(no-new-wrappers): Do not use `Number` as a constructor
    ╭─[no_new_wrappers.tsx:1:9]
  1 │ var a = new Number(10);
    ·         ──────────────
    ╰────
-  help: do not use Number as a constructor, consider removing the new operator.
+  help: Remove the `new` operator.
 
-  ⚠ eslint(no-new-wrappers): Disallow new operators with the String, Number, and Boolean objects
+  ⚠ eslint(no-new-wrappers): Do not use `Boolean` as a constructor
    ╭─[no_new_wrappers.tsx:1:9]
  1 │ var a = new Boolean(false);
    ·         ──────────────────
    ╰────
-  help: do not use Boolean as a constructor, consider removing the new operator.
+  help: Remove the `new` operator.
 
-  ⚠ eslint(no-new-wrappers): Disallow new operators with the String, Number, and Boolean objects
+  ⚠ eslint(no-new-wrappers): Do not use `String` as a constructor
    ╭─[no_new_wrappers.tsx:2:23]
  1 │ 
  2 │             const a = new String('bar');
    ·                       ─────────────────
  3 │             {
    ╰────
-  help: do not use String as a constructor, consider removing the new operator.
+  help: Remove the `new` operator.
 
-  ⚠ eslint(no-new-wrappers): Disallow new operators with the String, Number, and Boolean objects
+  ⚠ eslint(no-new-wrappers): Do not use `String` as a constructor
    ╭─[no_new_wrappers.tsx:5:27]
  4 │                 const String = CustomString;
  5 │                 const b = new String('foo');
    ·                           ─────────────────
  6 │             }
    ╰────
-  help: do not use String as a constructor, consider removing the new operator.
+  help: Remove the `new` operator.

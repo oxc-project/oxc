@@ -1,28 +1,29 @@
 [package]
-name              = "rulegen"
-version           = "0.0.0"
-publish           = false
+name = "rulegen"
+version = "0.0.0"
 edition.workspace = true
 license.workspace = true
+publish = false
 
 [lints]
 workspace = true
 
 [[bin]]
-name    = "rulegen"
-test    = false
+name = "rulegen"
+test = false
 doctest = false
 
 [dependencies]
-oxc_allocator    = { workspace = true }
-oxc_span         = { workspace = true }
-oxc_ast          = { workspace = true }
-oxc_parser       = { workspace = true }
+oxc_allocator = { workspace = true }
+oxc_ast = { workspace = true }
+oxc_parser = { workspace = true }
+oxc_span = { workspace = true }
 oxc_tasks_common = { workspace = true }
 
 convert_case = { workspace = true }
-serde        = { workspace = true, features = ["derive"] }
-regex        = { workspace = true }
-lazy_static  = { workspace = true }
-ureq         = { workspace = true }
-handlebars   = { workspace = true }
+handlebars = { workspace = true }
+lazy_static = { workspace = true }
+regex = { workspace = true }
+rustc-hash = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+ureq = { workspace = true }

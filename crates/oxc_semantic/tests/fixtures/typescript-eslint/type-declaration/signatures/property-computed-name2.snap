@@ -2,17 +2,21 @@
 source: crates/oxc_semantic/tests/main.rs
 input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaration/signatures/property-computed-name2.ts
 ---
+================================================================================
+SCOPES
+================================================================================
+
 [
   {
     "children": [
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 1,
         "node": "TSEnumDeclaration(Foo)",
         "symbols": [
           {
-            "flag": "SymbolFlags(EnumMember)",
+            "flags": "SymbolFlags(EnumMember)",
             "id": 1,
             "name": "a",
             "node": "TSEnumMember",
@@ -22,24 +26,24 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
       },
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 2,
         "node": "TSTypeAliasDeclaration",
         "symbols": []
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(RegularEnum)",
+        "flags": "SymbolFlags(RegularEnum)",
         "id": 0,
         "name": "Foo",
         "node": "TSEnumDeclaration(Foo)",
         "references": [
           {
-            "flag": "ReferenceFlag(Read)",
+            "flags": "ReferenceFlags(Type)",
             "id": 0,
             "name": "Foo",
             "node_id": 11
@@ -47,7 +51,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         ]
       },
       {
-        "flag": "SymbolFlags(TypeAlias)",
+        "flags": "SymbolFlags(TypeAlias)",
         "id": 2,
         "name": "A",
         "node": "TSTypeAliasDeclaration",
@@ -56,3 +60,9 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
     ]
   }
 ]
+
+================================================================================
+CONFORMANCE
+================================================================================
+
+All tests passed.

@@ -8,10 +8,10 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, globals::GLOBAL_OBJECT_NAMES, rule::Rule, AstNode};
 
-fn prefer_number_properties_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Use `Number.{x1}` instead of the global `{x1}`"))
-        .with_help(format!("Replace it with `Number.{x1}`"))
-        .with_label(span0)
+fn prefer_number_properties_diagnostic(span: Span, method_name: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Use `Number.{method_name}` instead of the global `{method_name}`"))
+        .with_help(format!("Replace it with `Number.{method_name}`"))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -34,18 +34,22 @@ declare_oxc_lint!(
     /// - [`Number.POSITIVE_INFINITY`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/POSITIVE_INFINITY) over [`Infinity`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Infinity)
     /// - [`Number.NEGATIVE_INFINITY`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/NEGATIVE_INFINITY) over [`-Infinity`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Infinity)
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // bad
     /// const foo = parseInt('10', 2);
     /// const bar = parseFloat('10.5');
+    /// ```
     ///
-    /// // good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// const foo = Number.parseInt('10', 2);
     /// const bar = Number.parseFloat('10.5');
     /// ```
     PreferNumberProperties,
     restriction,
+    pending
 );
 
 impl Rule for PreferNumberProperties {

@@ -1,23 +1,23 @@
 use language_tags::LanguageTag;
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeValue, JSXElementName},
+    ast::{JSXAttributeItem, JSXAttributeValue},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{get_element_type, get_prop_value, has_jsx_prop_lowercase},
+    utils::{get_element_type, get_prop_value, has_jsx_prop_ignore_case},
     AstNode,
 };
 
-fn lang_diagnostic(span0: Span) -> OxcDiagnostic {
+fn lang_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Lang attribute must have a valid value.")
         .with_help("Set a valid value for lang attribute.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -26,7 +26,7 @@ pub struct Lang;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// The lang prop on the <html> element must be a valid IETF's BCP 47 language tag.
+    /// The lang prop on the `<html>` element must be a valid IETF's BCP 47 language tag.
     ///
     /// ### Why is this bad?
     ///
@@ -36,19 +36,19 @@ declare_oxc_lint!(
     /// and access website in more than one language.
     ///
     ///
-    /// ### Example
+    /// ### Examples
     ///
-    /// // good
-    /// ```javascript
-    /// <html lang="en">
-    /// <html lang="en-US">
-    /// ```
-    ///
-    /// // bad
-    /// ```javascript
+    /// Examples of **incorrect** code for this rule:
+    /// ```jsx
     /// <html>
     /// <html lang="foo">
     /// ````
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
+    /// <html lang="en">
+    /// <html lang="en-US">
+    /// ```
     ///
     /// ### Resources
     /// - [eslint-plugin-jsx-a11y/lang](https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/docs/rules/lang.md)
@@ -71,12 +71,8 @@ impl Rule for Lang {
             return;
         }
 
-        let JSXElementName::Identifier(identifier) = &jsx_el.name else {
-            return;
-        };
-
-        has_jsx_prop_lowercase(jsx_el, "lang").map_or_else(
-            || ctx.diagnostic(lang_diagnostic(identifier.span)),
+        has_jsx_prop_ignore_case(jsx_el, "lang").map_or_else(
+            || ctx.diagnostic(lang_diagnostic(jsx_el.name.span())),
             |lang_prop| {
                 if !is_valid_lang_prop(lang_prop) {
                     if let JSXAttributeItem::Attribute(attr) = lang_prop {
@@ -94,8 +90,7 @@ fn is_valid_lang_prop(item: &JSXAttributeItem) -> bool {
             !container.expression.is_expression() || !container.expression.is_undefined()
         }
         Some(JSXAttributeValue::StringLiteral(str)) => {
-            let language_tag = LanguageTag::parse(str.value.as_str()).unwrap();
-            language_tag.is_valid()
+            LanguageTag::parse(str.value.as_str()).as_ref().is_ok_and(LanguageTag::is_valid)
         }
         _ => true,
     }
@@ -135,6 +130,7 @@ fn test() {
 
     let fail = vec![
         ("<html lang='foo' />", None, None, None),
+        ("<html lang='n'></html>", None, None, None),
         ("<html lang='zz-LL' />", None, None, None),
         ("<html lang={undefined} />", None, None, None),
         ("<Foo lang={undefined} />", None, Some(settings()), None),

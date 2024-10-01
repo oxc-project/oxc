@@ -1,32 +1,34 @@
+use aho_corasick::AhoCorasick;
 use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXExpression},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
-use regex::Regex;
+use oxc_span::{CompactStr, Span};
+use serde_json::Value;
 
 use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        get_element_type, get_prop_value, has_jsx_prop_lowercase, is_hidden_from_screen_reader,
+        get_element_type, get_prop_value, has_jsx_prop_ignore_case, is_hidden_from_screen_reader,
     },
     AstNode,
 };
 
-fn img_redundant_alt_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Redundant alt attribute.").with_help("Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don’t need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the alt prop.").with_label(span0)
+fn img_redundant_alt_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Redundant alt attribute.")
+        .with_help("Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don’t need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the alt prop.").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
 pub struct ImgRedundantAlt(Box<ImgRedundantAltConfig>);
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct ImgRedundantAltConfig {
-    types_to_validate: Vec<String>,
-    redundant_words: Vec<String>,
+    types_to_validate: Vec<CompactStr>,
+    redundant_words: AhoCorasick,
 }
 
 impl std::ops::Deref for ImgRedundantAlt {
@@ -37,15 +39,30 @@ impl std::ops::Deref for ImgRedundantAlt {
     }
 }
 
+const COMPONENTS_FIXED_TO_VALIDATE: [&str; 1] = ["img"];
+const REDUNDANT_WORDS: [&str; 3] = ["image", "photo", "picture"];
 impl Default for ImgRedundantAltConfig {
     fn default() -> Self {
         Self {
-            types_to_validate: COMPONENTS_FIXED_TO_VALIDATE
-                .iter()
-                .map(|&s| s.to_string())
-                .collect(),
-            redundant_words: REDUNDANT_WORDS.iter().map(|&s| s.to_string()).collect(),
+            types_to_validate: vec![CompactStr::new("img")],
+            redundant_words: AhoCorasick::builder()
+                .ascii_case_insensitive(true)
+                .build(REDUNDANT_WORDS)
+                .expect("Could not build AhoCorasick"),
         }
+    }
+}
+impl ImgRedundantAltConfig {
+    fn new(
+        types_to_validate: Vec<&str>,
+        redundant_words: &[&str],
+    ) -> Result<Self, aho_corasick::BuildError> {
+        Ok(Self {
+            types_to_validate: types_to_validate.into_iter().map(Into::into).collect(),
+            redundant_words: AhoCorasick::builder()
+                .ascii_case_insensitive(true)
+                .build(redundant_words)?,
+        })
     }
 }
 
@@ -67,13 +84,16 @@ declare_oxc_lint!(
     /// `<img>` and the components which you define in options.components with the exception of components which is hidden from screen reader.
     ///
     /// ### Example
-    /// ```javascript
-    /// // Bad
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```jsx
     /// <img src="foo" alt="Photo of foo being weird." />
     /// <img src="bar" alt="Image of me at a bar!" />
     /// <img src="baz" alt="Picture of baz fixing a bug." />
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
     /// <img src="foo" alt="Foo eating a sandwich." />
     /// <img src="bar" aria-hidden alt="Picture of me taking a photo of an image" /> // Will pass because it is hidden.
     /// <img src="baz" alt={`Baz taking a ${photo}`} /> // This is valid since photo is a variable name.
@@ -81,27 +101,27 @@ declare_oxc_lint!(
     ImgRedundantAlt,
     correctness
 );
-const COMPONENTS_FIXED_TO_VALIDATE: [&str; 1] = ["img"];
-const REDUNDANT_WORDS: [&str; 3] = ["image", "photo", "picture"];
 
 impl Rule for ImgRedundantAlt {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let mut img_redundant_alt = ImgRedundantAltConfig::default();
-        if let Some(config) = value.get(0) {
-            if let Some(components) = config.get("components").and_then(|v| v.as_array()) {
-                img_redundant_alt
-                    .types_to_validate
-                    .extend(components.iter().filter_map(|v| v.as_str().map(ToString::to_string)));
-            }
+    fn from_configuration(value: Value) -> Self {
+        let Some(config) = value.get(0) else {
+            return Self::default();
+        };
+        let components = config.get("components").and_then(Value::as_array).map_or(
+            Vec::from(COMPONENTS_FIXED_TO_VALIDATE),
+            |v| {
+                v.iter()
+                    .filter_map(Value::as_str)
+                    .chain(COMPONENTS_FIXED_TO_VALIDATE)
+                    .collect::<Vec<_>>()
+            },
+        );
+        let words =
+            config.get("words").and_then(Value::as_array).map_or(Vec::from(REDUNDANT_WORDS), |v| {
+                v.iter().filter_map(Value::as_str).chain(REDUNDANT_WORDS).collect::<Vec<_>>()
+            });
 
-            if let Some(words) = config.get("words").and_then(|v| v.as_array()) {
-                img_redundant_alt
-                    .redundant_words
-                    .extend(words.iter().filter_map(|v| v.as_str().map(ToString::to_string)));
-            }
-        }
-
-        Self(Box::new(img_redundant_alt))
+        Self(Box::new(ImgRedundantAltConfig::new(components, words.as_slice()).unwrap()))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -120,7 +140,7 @@ impl Rule for ImgRedundantAlt {
             return;
         }
 
-        let Some(alt_prop) = has_jsx_prop_lowercase(jsx_el, "alt") else {
+        let Some(alt_prop) = has_jsx_prop_ignore_case(jsx_el, "alt") else {
             return;
         };
 
@@ -144,7 +164,7 @@ impl Rule for ImgRedundantAlt {
             JSXAttributeValue::StringLiteral(lit) => {
                 let alt_text = lit.value.as_str();
 
-                if is_redundant_alt_text(alt_text, &self.redundant_words) {
+                if self.is_redundant_alt_text(alt_text) {
                     ctx.diagnostic(img_redundant_alt_diagnostic(alt_attribute_name_span));
                 }
             }
@@ -152,7 +172,7 @@ impl Rule for ImgRedundantAlt {
                 JSXExpression::StringLiteral(lit) => {
                     let alt_text = lit.value.as_str();
 
-                    if is_redundant_alt_text(alt_text, &self.redundant_words) {
+                    if self.is_redundant_alt_text(alt_text) {
                         ctx.diagnostic(img_redundant_alt_diagnostic(alt_attribute_name_span));
                     }
                 }
@@ -160,7 +180,7 @@ impl Rule for ImgRedundantAlt {
                     for quasi in &lit.quasis {
                         let alt_text = quasi.value.raw.as_str();
 
-                        if is_redundant_alt_text(alt_text, &self.redundant_words) {
+                        if self.is_redundant_alt_text(alt_text) {
                             ctx.diagnostic(img_redundant_alt_diagnostic(alt_attribute_name_span));
                         }
                     }
@@ -172,10 +192,17 @@ impl Rule for ImgRedundantAlt {
     }
 }
 
-fn is_redundant_alt_text(alt_text: &str, redundant_words: &[String]) -> bool {
-    let regexp = Regex::new(&format!(r"(?i)\b({})\b", redundant_words.join("|"),)).unwrap();
-
-    regexp.is_match(alt_text)
+impl ImgRedundantAlt {
+    #[inline]
+    fn is_redundant_alt_text(&self, alt_text: &str) -> bool {
+        for mat in self.redundant_words.find_iter(alt_text) {
+            // check if followed by space or is whole text
+            if mat.end() == alt_text.len() || alt_text.as_bytes()[mat.end()] == b' ' {
+                return true;
+            }
+        }
+        false
+    }
 }
 
 #[test]

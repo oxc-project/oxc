@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXElementName},
+    ast::{JSXAttributeItem, JSXAttributeName, JSXAttributeValue},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -13,10 +13,10 @@ use crate::{
     AstNode,
 };
 
-fn no_before_interactive_script_outside_document_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_before_interactive_script_outside_document_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("next/script's `beforeInteractive` strategy should not be used outside of `pages/_document.js`")
         .with_help("See https://nextjs.org/docs/messages/no-before-interactive-script-outside-document")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -45,9 +45,7 @@ impl Rule for NoBeforeInteractiveScriptOutsideDocument {
             if is_in_app_dir(file_path) {
                 return;
             }
-            let tag_name = if let JSXElementName::Identifier(ident) = &jsx_el.name {
-                &ident.name
-            } else {
+            let Some(tag_name) = jsx_el.name.get_identifier_name() else {
                 return;
             };
             if jsx_el.attributes.len() == 0 {

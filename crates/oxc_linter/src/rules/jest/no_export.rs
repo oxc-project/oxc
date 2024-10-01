@@ -4,10 +4,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, utils::is_jest_file};
 
-fn no_export_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_export_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not export from a test file.")
         .with_help("If you want to share code between tests, move it into a separate file and import it from there.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -67,8 +67,8 @@ fn test() {
         ),
         ("window.location = 'valid'", None, None, None),
         ("module.somethingElse = 'foo';", None, None, None),
-        ("export const myThing = 'valid'", None, None, None),
-        ("export default function () {}", None, None, None),
+        ("export const myThing = 'valid'", None, None, Some(PathBuf::from("foo.js"))),
+        ("export default function () {}", None, None, Some(PathBuf::from("foo.js"))),
         ("module.exports = function(){}", None, None, None),
         ("module.exports.myThing = 'valid';", None, None, None),
     ];

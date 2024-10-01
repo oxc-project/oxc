@@ -36,6 +36,9 @@ pub struct ImportSpecifier<'a> {
 
     /// If this import has an import assertion, this is the start value
     pub a: Option<u32>,
+
+    /// If this import is for types only
+    pub t: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -57,6 +60,9 @@ pub struct ExportSpecifier<'a> {
 
     /// End of local name
     pub le: Option<u32>,
+
+    /// If this export is for types only
+    pub t: bool,
 }
 
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
@@ -142,6 +148,7 @@ impl<'a> Visit<'a> for ModuleLexer<'a> {
                 se: prop.span.end,
                 d: ImportType::ImportMeta,
                 a: None,
+                t: false,
             });
         }
         walk_meta_property(self, prop);
@@ -164,8 +171,30 @@ impl<'a> Visit<'a> for ModuleLexer<'a> {
             se: expr.span.end,
             d: ImportType::DynamicImport(expr.span.start + 6),
             a: expr.arguments.first().map(|e| e.span().start),
+            t: false,
         });
         walk_import_expression(self, expr);
+    }
+
+    fn visit_ts_import_type(&mut self, impt: &TSImportType<'a>) {
+        let (source, source_span) = match &impt.parameter {
+            TSType::TSLiteralType(literal_type) => match &literal_type.literal {
+                TSLiteral::StringLiteral(s) => (Some(s.value.clone()), s.span()),
+                _ => (None, literal_type.span()),
+            },
+            _ => (None, impt.parameter.span()),
+        };
+
+        self.imports.push(ImportSpecifier {
+            n: source,
+            s: source_span.start,
+            e: source_span.end,
+            ss: impt.span.start,
+            se: impt.span.end,
+            d: ImportType::DynamicImport(impt.span.start + 6),
+            a: None,
+            t: true,
+        });
     }
 
     fn visit_import_declaration(&mut self, decl: &ImportDeclaration<'a>) {
@@ -182,6 +211,7 @@ impl<'a> Visit<'a> for ModuleLexer<'a> {
             se: decl.span.end,
             d: ImportType::StaticImport,
             a: assertions,
+            t: decl.import_kind.is_type(),
         });
         walk_import_declaration(self, decl);
     }
@@ -197,6 +227,7 @@ impl<'a> Visit<'a> for ModuleLexer<'a> {
                 se: decl.span.end,
                 d: ImportType::StaticImport,
                 a: None,
+                t: decl.export_kind.is_type(),
             });
         }
 
@@ -213,6 +244,7 @@ impl<'a> Visit<'a> for ModuleLexer<'a> {
                     e: ident.span.end,
                     ls: None,
                     le: None,
+                    t: false,
                 });
             });
         }
@@ -232,6 +264,7 @@ impl<'a> Visit<'a> for ModuleLexer<'a> {
                 e: exported_end,
                 ls: Some(s.local.span().start),
                 le: Some(s.local.span().end),
+                t: decl.export_kind.is_type(),
             }
         }));
         walk_export_named_declaration(self, decl);
@@ -254,6 +287,7 @@ impl<'a> Visit<'a> for ModuleLexer<'a> {
             e: decl.exported.span().end,
             ls: None,
             le: None,
+            t: false,
         });
     }
 
@@ -263,7 +297,15 @@ impl<'a> Visit<'a> for ModuleLexer<'a> {
             let n = exported.name().clone();
             let s = exported.span().start;
             let e = exported.span().end;
-            self.exports.push(ExportSpecifier { n: n.clone(), ln: None, s, e, ls: None, le: None });
+            self.exports.push(ExportSpecifier {
+                n: n.clone(),
+                ln: None,
+                s,
+                e,
+                ls: None,
+                le: None,
+                t: decl.export_kind.is_type(),
+            });
             self.imports.push(ImportSpecifier {
                 n: Some(n),
                 s,
@@ -272,6 +314,7 @@ impl<'a> Visit<'a> for ModuleLexer<'a> {
                 se: decl.span.end,
                 d: ImportType::StaticImport,
                 a: None,
+                t: decl.export_kind.is_type(),
             });
         }
         walk_export_all_declaration(self, decl);

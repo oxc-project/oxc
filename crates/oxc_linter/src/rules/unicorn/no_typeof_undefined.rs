@@ -6,9 +6,9 @@ use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
 use crate::{ast_util::get_declaration_of_variable, context::LintContext, rule::Rule, AstNode};
 
-fn no_typeof_undefined_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_typeof_undefined_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Compare with `undefined` directly instead of using `typeof`.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -26,16 +26,20 @@ declare_oxc_lint!(
     /// Checking if a value is `undefined` by using `typeof value === 'undefined'` is needlessly verbose. It's generally better to compare against `undefined` directly. The only time `typeof` is needed is when a global variable potentially does not exists, in which case, using `globalThis.value === undefined` may be better.
     ///
     ///
-    /// ### Example
-    /// ```javascript
-    /// // bad
-    /// typeof foo === 'undefined';
+    /// ### Examples
     ///
-    /// // good
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// typeof foo === 'undefined';
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// foo === undefined;
     /// ```
     NoTypeofUndefined,
-    pedantic
+    pedantic,
+    pending
 );
 
 impl Rule for NoTypeofUndefined {

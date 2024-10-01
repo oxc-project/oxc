@@ -22,7 +22,7 @@ use oxc_syntax::{
     precedence::GetPrecedence,
 };
 
-use crate::{array, binaryish::BinaryishOperator, doc::Doc, ss, Prettier};
+use crate::{array, binaryish::BinaryishOperator, doc::Doc, ss, DocBuilder, Prettier};
 
 impl<'a> Prettier<'a> {
     pub(crate) fn wrap_parens(&mut self, doc: Doc<'a>, kind: AstKind<'a>) -> Doc<'a> {
@@ -53,6 +53,7 @@ impl<'a> Prettier<'a> {
 
     fn check_kind(&self, kind: AstKind<'a>) -> bool {
         let parent_kind = self.parent_kind();
+        let parent_parent_kind = self.parent_parent_kind();
         match kind {
             AstKind::NumericLiteral(literal) => {
                 matches!(parent_kind, AstKind::MemberExpression(e) if e.object().span() == literal.span)
@@ -97,6 +98,22 @@ impl<'a> Prettier<'a> {
                 AstKind::ExpressionStatement(_) => {
                     matches!(assign_expr.left, AssignmentTarget::ObjectAssignmentTarget(_))
                 }
+                AstKind::SequenceExpression(sequence_expr) => match parent_parent_kind {
+                    Some(AstKind::ForStatement(for_stat))
+                        if for_stat
+                            .init
+                            .as_ref()
+                            .is_some_and(|e| e.span() == sequence_expr.span)
+                            || for_stat
+                                .update
+                                .as_ref()
+                                .is_some_and(|e| e.span() == sequence_expr.span) =>
+                    {
+                        false
+                    }
+
+                    _ => true,
+                },
                 _ => true,
             },
             AstKind::UpdateExpression(update_expr) => match parent_kind {

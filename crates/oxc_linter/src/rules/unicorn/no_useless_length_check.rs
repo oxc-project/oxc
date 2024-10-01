@@ -12,20 +12,20 @@ use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn some(span0: Span) -> OxcDiagnostic {
+fn some(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Found a useless array length check")
         .with_help(
             "The non-empty check is useless as `Array#some()` returns `false` for an empty array.",
         )
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn every(span0: Span) -> OxcDiagnostic {
+fn every(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Found a useless array length check")
         .with_help(
             "The empty check is useless as `Array#every()` returns `true` for an empty array.",
         )
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -33,23 +33,27 @@ pub struct NoUselessLengthCheck;
 
 declare_oxc_lint!(
     /// ### What it does
-    /// It checks for an unnecessary array length check in a logical expression
+    ///
+    /// It checks for an unnecessary array length check in a logical expression.
+    ///
     /// The cases are:
-    ///  array.length === 0 || array.every(Boolean) (array.every returns true if array is has elements)
-    ///  array.length > 0 && array.some(Boolean) (array.some returns false if array is empty)
+    /// - `array.length === 0 || array.every(Boolean)` (`array.every` returns `true` if array is has elements)
+    /// - `array.length > 0 && array.some(Boolean)` (`array.some` returns `false` if array is empty)
     ///
     /// ### Why is this bad?
-    /// An extra unnecessary length check is done
+    ///
+    /// An extra unnecessary length check is done.
     ///
     /// ### Example
-    /// ```javascript
-    /// if(array.length === 0 || array.every(Boolean)){
-    ///    do something!
-    /// }
     ///
+    /// ```javascript
+    /// if (array.length === 0 || array.every(Boolean)) {
+    ///    // do something!
+    /// }
     /// ```
     NoUselessLengthCheck,
-    correctness
+    correctness,
+    pending
 );
 
 struct ConditionDTO<T: ToString> {
@@ -82,7 +86,7 @@ fn is_useless_check<'a>(
     let mut binary_expression_span: Option<Span> = None;
     let mut call_expression_span: Option<Span> = None;
 
-    let l = match left.without_parenthesized() {
+    let l = match left.without_parentheses() {
         Expression::BinaryExpression(expr) => {
             let left_expr = expr.left.get_inner_expression().as_member_expression()?;
             array_name = left_expr.object().get_identifier_reference()?.name.as_str();
@@ -106,7 +110,7 @@ fn is_useless_check<'a>(
         _ => false,
     };
 
-    let r = match right.without_parenthesized() {
+    let r = match right.without_parentheses() {
         Expression::BinaryExpression(expr) => {
             let left_expr = expr.left.get_inner_expression().as_member_expression()?;
             let ident_name = left_expr.object().get_identifier_reference()?.name.as_str();
@@ -167,7 +171,7 @@ impl Rule for NoUselessLengthCheck {
 }
 
 fn flat_logical_expression<'a>(node: &'a LogicalExpression<'a>) -> Vec<&'a Expression<'a>> {
-    let left = match &node.left.without_parenthesized() {
+    let left = match &node.left.without_parentheses() {
         Expression::LogicalExpression(le) => {
             if le.operator == node.operator {
                 flat_logical_expression(le)
@@ -178,7 +182,7 @@ fn flat_logical_expression<'a>(node: &'a LogicalExpression<'a>) -> Vec<&'a Expre
         _ => vec![&node.left],
     };
 
-    let right = match &node.right.without_parenthesized() {
+    let right = match &node.right.without_parentheses() {
         Expression::LogicalExpression(le) => {
             if le.operator == node.operator {
                 flat_logical_expression(le)

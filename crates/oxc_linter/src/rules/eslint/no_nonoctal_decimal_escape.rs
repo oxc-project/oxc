@@ -7,16 +7,16 @@ use regex::{Captures, Regex};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn replacement(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Don't use '{x0}' escape sequence."))
-        .with_help(format!("Replace '{x0}' with '{x1}'. This maintains the current functionality."))
-        .with_label(span2)
+fn replacement(escape_sequence: &str, replacement: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Don't use '{escape_sequence}' escape sequence."))
+        .with_help(format!("Replace '{escape_sequence}' with '{replacement}'. This maintains the current functionality."))
+        .with_label(span)
 }
 
-fn escape_backslash(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Don't use '{x0}' escape sequence."))
-        .with_help(format!("Replace '{x0}' with '{x1}' to include the actual backslash character."))
-        .with_label(span2)
+fn escape_backslash(escape_sequence: &str, replacement: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Don't use '{escape_sequence}' escape sequence."))
+        .with_help(format!("Replace '{escape_sequence}' with '{replacement}' to include the actual backslash character."))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -39,7 +39,8 @@ declare_oxc_lint!(
     /// "\\9"
     /// ```
     NoNonoctalDecimalEscape,
-    correctness
+    correctness,
+    pending
 );
 
 impl Rule for NoNonoctalDecimalEscape {

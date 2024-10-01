@@ -1,5 +1,6 @@
-use std::{collections::HashMap, hash::Hash};
+use std::hash::Hash;
 
+use cow_utils::CowUtils;
 use oxc_ast::{
     ast::{Argument, BinaryExpression, Expression},
     AstKind,
@@ -8,6 +9,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use regex::Regex;
+use rustc_hash::FxHashMap;
 
 use crate::{
     context::LintContext,
@@ -30,8 +32,8 @@ pub struct ValidTitleConfig {
     ignore_type_of_describe_name: bool,
     disallowed_words: Vec<String>,
     ignore_space: bool,
-    must_not_match_patterns: HashMap<MatchKind, CompiledMatcherAndMessage>,
-    must_match_patterns: HashMap<MatchKind, CompiledMatcherAndMessage>,
+    must_not_match_patterns: FxHashMap<MatchKind, CompiledMatcherAndMessage>,
+    must_match_patterns: FxHashMap<MatchKind, CompiledMatcherAndMessage>,
 }
 
 impl std::ops::Deref for ValidTitle {
@@ -205,14 +207,14 @@ impl MatchKind {
 
 fn compile_matcher_patterns(
     matcher_patterns: &serde_json::Value,
-) -> Option<HashMap<MatchKind, CompiledMatcherAndMessage>> {
+) -> Option<FxHashMap<MatchKind, CompiledMatcherAndMessage>> {
     matcher_patterns
         .as_array()
         .map_or_else(
             || {
                 // for `{ "describe": "/pattern/" }`
                 let obj = matcher_patterns.as_object()?;
-                let mut map: HashMap<MatchKind, CompiledMatcherAndMessage> = HashMap::new();
+                let mut map: FxHashMap<MatchKind, CompiledMatcherAndMessage> = FxHashMap::default();
                 for (key, value) in obj {
                     let Some(v) = compile_matcher_pattern(MatcherPattern::String(value)) else {
                         continue;
@@ -226,7 +228,7 @@ fn compile_matcher_patterns(
             },
             |value| {
                 // for `["/pattern/", "message"]`
-                let mut map: HashMap<MatchKind, CompiledMatcherAndMessage> = HashMap::new();
+                let mut map: FxHashMap<MatchKind, CompiledMatcherAndMessage> = FxHashMap::default();
                 let v = &compile_matcher_pattern(MatcherPattern::Vec(value))?;
                 map.insert(MatchKind::Describe, v.clone());
                 map.insert(MatchKind::Test, v.clone());
@@ -238,7 +240,7 @@ fn compile_matcher_patterns(
             || {
                 // for `"/pattern/"`
                 let string = matcher_patterns.as_str()?;
-                let mut map: HashMap<MatchKind, CompiledMatcherAndMessage> = HashMap::new();
+                let mut map: FxHashMap<MatchKind, CompiledMatcherAndMessage> = FxHashMap::default();
                 let v = &compile_matcher_pattern(MatcherPattern::String(
                     &serde_json::Value::String(string.to_string()),
                 ))?;
@@ -281,7 +283,7 @@ fn validate_title(
     if !valid_title.disallowed_words.is_empty() {
         let Ok(disallowed_words_reg) = regex::Regex::new(&format!(
             r#"(?iu)\b(?:{})\b"#,
-            valid_title.disallowed_words.join("|").replace('.', r"\.")
+            valid_title.disallowed_words.join("|").cow_replace('.', r"\.")
         )) else {
             return;
         };

@@ -8,8 +8,8 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 #[derive(Debug, Default, Clone)]
 pub struct SymbolDescription;
 
-fn symbol_description_diagnostic(span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Expected Symbol to have a description.").with_label(span1)
+fn symbol_description_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Expected Symbol to have a description.").with_label(span)
 }
 
 declare_oxc_lint!(
@@ -21,10 +21,27 @@ declare_oxc_lint!(
     ///
     /// The Symbol function may have an optional description.
     ///
+    /// ```js
+    /// var foo = Symbol("some description");
+    ///
+    /// var someString = "some description";
+    /// var bar = Symbol(someString);
+    /// ```
+    ///
+    /// Using `description` promotes easier debugging: when a symbol is logged the description is used:
+    /// ```js
+    /// var foo = Symbol("some description");
+    ///
+    /// console.log(foo);
+    /// // prints - Symbol(some description)
+    /// ```
+    ///
     /// ### Example
     /// ```javascript
     /// var foo = Symbol();
     /// ```
+    ///
+    ///
     SymbolDescription,
     pedantic,
 );

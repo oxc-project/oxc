@@ -4,9 +4,9 @@ use oxc_span::{CompactStr, Span};
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_global_assign_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Read-only global '{x0}' should not be modified."))
-        .with_label(span1.label(format!("Read-only global '{x0}' should not be modified.")))
+fn no_global_assign_diagnostic(global_name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Read-only global '{global_name}' should not be modified."))
+        .with_label(span.label(format!("Read-only global '{global_name}' should not be modified.")))
 }
 
 #[derive(Debug, Default, Clone)]

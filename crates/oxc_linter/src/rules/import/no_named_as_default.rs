@@ -5,10 +5,14 @@ use oxc_syntax::module_record::ImportImportName;
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_named_as_default_diagnostic(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Module {x2:?} has named export {x1:?}"))
-        .with_help(format!("Using default import as {x1:?} can be confusing. Use another name for default import to avoid confusion."))
-        .with_label(span0)
+fn no_named_as_default_diagnostic(
+    span: Span,
+    module_name: &str,
+    export_name: &str,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Module {export_name:?} has named export {module_name:?}"))
+        .with_help(format!("Using default import as {module_name:?} can be confusing. Use another name for default import to avoid confusion."))
+        .with_label(span)
 }
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/no-named-as-default-member.md>
@@ -19,22 +23,36 @@ declare_oxc_lint!(
     /// ### What it does
     ///
     /// Reports use of an exported name as the locally imported name of a default export.
+    /// This happens when an imported default export is assigned a name that conflicts
+    /// with a named export from the same module.
     ///
-    /// ### Example
+    /// ### Why is this bad?
     ///
+    /// Using a named export's identifier for a default export can cause confusion
+    /// and errors in understanding which value is being imported. It also reduces
+    /// code clarity, making it harder for other developers to understand the intended
+    /// imports.
+    ///
+    ///
+    /// ### Examples
+    ///
+    /// Given
     /// ```javascript
     /// // foo.js
     /// export default 'foo';
     /// export const bar = 'baz';
     /// ```
-    /// Valid:
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// import foo from './foo.js';
-    /// ```
-    /// Invalid:
-    /// ```javascript
-    /// // using exported name 'bar' as identifier for default export.
+    /// // Invalid: using exported name 'bar' as the identifier for default export.
     /// import bar from './foo.js';
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// // Valid: correctly importing default export with a non-conflicting name.
+    /// import foo from './foo.js';
     /// ```
     NoNamedAsDefault,
     suspicious

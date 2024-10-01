@@ -13,7 +13,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule};
 
 fn no_unreachable_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Unreachable code.").with_label(span)
+    OxcDiagnostic::warn("Unreachable code.").with_label(span)
 }
 
 /// <https://github.com/eslint/eslint/blob/069aa680c78b8516b9a1b568519f1d01e74fb2a2/lib/rules/no-unreachable.js#L196>
@@ -124,7 +124,7 @@ impl Rule for NoUnreachable {
                 _ => Control::Continue,
             });
         }
-        for node in ctx.nodes().iter() {
+        for node in ctx.nodes() {
             // exit early if we are not visiting a statement.
             if !node.kind().is_statement() {
                 continue;

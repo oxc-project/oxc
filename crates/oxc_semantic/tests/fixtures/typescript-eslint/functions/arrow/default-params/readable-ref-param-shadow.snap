@@ -2,30 +2,34 @@
 source: crates/oxc_semantic/tests/main.rs
 input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/arrow/default-params/readable-ref-param-shadow.ts
 ---
+================================================================================
+SCOPES
+================================================================================
+
 [
   {
     "children": [
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode | Function | Arrow)",
+        "flags": "ScopeFlags(StrictMode | Function | Arrow)",
         "id": 1,
         "node": "ArrowFunctionExpression",
         "symbols": [
           {
-            "flag": "SymbolFlags(FunctionScopedVariable)",
+            "flags": "SymbolFlags(FunctionScopedVariable)",
             "id": 2,
             "name": "b",
-            "node": "FormalParameter",
+            "node": "FormalParameter(b)",
             "references": []
           },
           {
-            "flag": "SymbolFlags(FunctionScopedVariable)",
+            "flags": "SymbolFlags(FunctionScopedVariable)",
             "id": 3,
             "name": "a",
-            "node": "FormalParameter",
+            "node": "FormalParameter(a)",
             "references": [
               {
-                "flag": "ReferenceFlag(Read)",
+                "flags": "ReferenceFlags(Read)",
                 "id": 0,
                 "name": "a",
                 "node_id": 12
@@ -35,24 +39,30 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/arrow
         ]
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(BlockScopedVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable)",
         "id": 0,
         "name": "a",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(a)",
         "references": []
       },
       {
-        "flag": "SymbolFlags(BlockScopedVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable)",
         "id": 1,
         "name": "foo",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(foo)",
         "references": []
       }
     ]
   }
 ]
+
+================================================================================
+CONFORMANCE
+================================================================================
+
+All tests passed.

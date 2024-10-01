@@ -1,0 +1,22 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-unused-vars): Function 'foo' is declared but never used.
+   ╭─[no_unused_vars.tsx:2:18]
+ 1 │ 
+ 2 │         function foo() {
+   ·                  ─┬─
+   ·                   ╰── 'foo' is declared here
+ 3 │             return foo
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'foo' is declared but never used.
+   ╭─[no_unused_vars.tsx:2:15]
+ 1 │ 
+ 2 │         const foo = () => {
+   ·               ─┬─
+   ·                ╰── 'foo' is declared here
+ 3 │             return foo
+   ╰────
+  help: Consider removing this declaration.

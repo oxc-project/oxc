@@ -5,10 +5,10 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_proto_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_proto_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("The '__proto__' property is deprecated")
-        .with_help("Disallow the use of the `__proto__` property.")
-        .with_label(span0)
+        .with_help("use `Object.getPrototypeOf` and `Object.setPrototypeOf` instead.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -16,10 +16,12 @@ pub struct NoProto;
 
 declare_oxc_lint!(
     /// ### What it does
-    /// Disallow the use of the __proto__ property
+    /// Disallow the use of the `__proto__` property
     ///
     /// ### Why is this bad?
-    /// __proto__ property has been deprecated as of ECMAScript 3.1 and shouldn’t be used in the code. Use Object.getPrototypeOf and Object.setPrototypeOf instead.
+    /// The `__proto__` property has been deprecated as of ECMAScript 3.1 and
+    /// shouldn’t be used in new code. Use `Object.getPrototypeOf` and
+    /// `Object.setPrototypeOf` instead.
     ///
     /// ### Example
     /// ```javascript
@@ -34,7 +36,8 @@ declare_oxc_lint!(
     /// obj["__proto__"] = b;
     /// ```
     NoProto,
-    restriction
+    restriction,
+    pending
 );
 
 impl Rule for NoProto {

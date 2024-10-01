@@ -1,39 +1,44 @@
 /// Port from https://github.com/getsentry/rust-sourcemap/blob/master/src/decoder.rs
 /// It is a helper for decode vlq soucemap string to `SourceMap`.
+use std::sync::Arc;
+
 use crate::error::{Error, Result};
 use crate::{SourceMap, Token};
 
+/// See <https://github.com/tc39/source-map/blob/main/source-map-rev3.md>.
 #[derive(serde::Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct JSONSourceMap {
-    // An optional name of the generated code that this source map is associated with.
+    /// An optional name of the generated code that this source map is associated with.
     pub file: Option<String>,
-    // A string with the encoded mapping data.
-    pub mappings: Option<String>,
-    // An optional source root, useful for relocating source files on a server or removing repeated values in the “sources” entry.  This value is prepended to the individual entries in the “source” field.
+    /// A string with the encoded mapping data.
+    pub mappings: String,
+    /// An optional source root, useful for relocating source files on a server or removing repeated values in the “sources” entry.
+    /// This value is prepended to the individual entries in the “source” field.
     pub source_root: Option<String>,
-    // A list of original sources used by the “mappings” entry.
-    pub sources: Option<Vec<Option<String>>>,
-    // An optional list of source content, useful when the “source” can’t be hosted. The contents are listed in the same order as the sources in line 5. “null” may be used if some original sources should be retrieved by name.
+    /// A list of original sources used by the “mappings” entry.
+    pub sources: Vec<String>,
+    /// An optional list of source content, useful when the “source” can’t be hosted.
+    /// The contents are listed in the same order as the sources in line 5. “null” may be used if some original sources should be retrieved by name.
     pub sources_content: Option<Vec<Option<String>>>,
-    // A list of symbol names used by the “mappings” entry.
-    pub names: Option<Vec<String>>,
+    /// A list of symbol names used by the “mappings” entry.
+    pub names: Vec<String>,
 }
 
 pub fn decode(json: JSONSourceMap) -> Result<SourceMap> {
-    let file = json.file.map(Into::into);
-    let names =
-        json.names.map(|v| v.into_iter().map(Into::into).collect::<Vec<_>>()).unwrap_or_default();
-    let source_root = json.source_root.map(Into::into);
-    let sources = json
-        .sources
-        .map(|v| v.into_iter().map(Option::unwrap_or_default).map(Into::into).collect::<Vec<_>>())
-        .unwrap_or_default();
-    let source_contents = json
-        .sources_content
-        .map(|v| v.into_iter().map(Option::unwrap_or_default).map(Into::into).collect::<Vec<_>>());
-    let tokens = decode_mapping(&json.mappings.unwrap_or_default(), names.len(), sources.len())?;
-    Ok(SourceMap::new(file, names, source_root, sources, source_contents, tokens, None))
+    let tokens = decode_mapping(&json.mappings, json.names.len(), json.sources.len())?;
+    Ok(SourceMap {
+        file: json.file.map(Arc::from),
+        names: json.names.into_iter().map(Arc::from).collect(),
+        source_root: json.source_root,
+        sources: json.sources.into_iter().map(Arc::from).collect(),
+        source_contents: json.sources_content.map(|content| {
+            content.into_iter().map(|c| c.map(Arc::from).unwrap_or_default()).collect()
+        }),
+        tokens,
+        token_chunks: None,
+        x_google_ignore_list: None,
+    })
 }
 
 pub fn decode_from_string(value: &str) -> Result<SourceMap> {
@@ -162,8 +167,10 @@ fn test_decode_sourcemap() {
 #[test]
 fn test_decode_sourcemap_optional_filed() {
     let input = r#"{
-        "sources": [null],
-        "sourcesContent": [null]
+        "names": [],
+        "sources": [],
+        "sourcesContent": [null],
+        "mappings": ""
     }"#;
     SourceMap::from_json_string(input).expect("should success");
 }

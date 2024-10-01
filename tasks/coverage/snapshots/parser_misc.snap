@@ -1,0 +1,284 @@
+parser_misc Summary:
+AST Parsed     : 30/30 (100.00%)
+Positive Passed: 30/30 (100.00%)
+Negative Passed: 20/20 (100.00%)
+
+  × Unexpected token
+   ╭─[misc/fail/oxc-169.js:2:1]
+ 1 │ 1<(V=82<<t-j0<(V=$<LBI<(V=ut<I<(V=$<LBI<(V=uIV=82<<t-j0<(V=$<LBI<(V=ut<I<(V=$<LBI<(V<II>
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/oxc-1942-1.ts:2:8]
+ 1 │ class Foo {
+ 2 │   get x: () => {
+   ·        ─
+ 3 │       return 5;
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/oxc-1942-2.ts:2:8]
+ 1 │ class Foo {
+ 2 │   set x: (v: number) => {}
+   ·        ─
+ 3 │ }
+   ╰────
+
+  × A class name is required.
+   ╭─[misc/fail/oxc-2144.js:1:1]
+ 1 │ class {}
+   · ─────
+ 2 │ export class {}
+   ╰────
+
+  × A class name is required.
+   ╭─[misc/fail/oxc-2144.js:2:8]
+ 1 │ class {}
+ 2 │ export class {}
+   ·        ─────
+   ╰────
+
+  × Unexpected `?` operator
+   ╭─[misc/fail/oxc-2253.ts:1:8]
+ 1 │ const a? = "A"
+   ·        ▲
+ 2 │ const [b]? = ["B"]
+   ╰────
+
+  × Unexpected `?` operator
+   ╭─[misc/fail/oxc-2253.ts:2:10]
+ 1 │ const a? = "A"
+ 2 │ const [b]? = ["B"]
+   ·          ▲
+ 3 │ const { c }? = { c: "C" }
+   ╰────
+
+  × Unexpected `?` operator
+   ╭─[misc/fail/oxc-2253.ts:3:12]
+ 2 │ const [b]? = ["B"]
+ 3 │ const { c }? = { c: "C" }
+   ·            ▲
+ 4 │ 
+   ╰────
+
+  × Unexpected `?` operator
+   ╭─[misc/fail/oxc-2253.ts:5:13]
+ 4 │ 
+ 5 │ const d     ? = "A"
+   ·             ▲
+ 6 │ const [e, f]      ? = ["B"]
+   ╰────
+
+  × Unexpected `?` operator
+   ╭─[misc/fail/oxc-2253.ts:6:19]
+ 5 │ const d     ? = "A"
+ 6 │ const [e, f]      ? = ["B"]
+   ·                   ▲
+ 7 │ const { g, h }       ? = { c: "C" }
+   ╰────
+
+  × Unexpected `?` operator
+   ╭─[misc/fail/oxc-2253.ts:7:22]
+ 6 │ const [e, f]      ? = ["B"]
+ 7 │ const { g, h }       ? = { c: "C" }
+   ·                      ▲
+   ╰────
+
+  × Empty parenthesized expression
+   ╭─[misc/fail/oxc-232.js:1:5]
+ 1 │ x = (/* a */)
+   ·     ─────────
+   ╰────
+
+  × Unexpected token
+    ╭─[misc/fail/oxc-2394.ts:20:22]
+ 19 │ export type LocalInterface =
+ 20 │     & import("pkg", {"resolution-mode": "require"}).RequireInterface
+    ·                      ─────────────────
+ 21 │     & import("pkg", {"resolution-mode": "import"}).ImportInterface;
+    ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/oxc-3320.tsx:1:8]
+ 1 │ m< $<{3[   $<{3[  $<{3[ m< m$<{3[ m< mm< $<{3[   $<{3[  $<{3[ m< m$<{3[ m< m$<{3[  $<{3[ m< m$<{3[
+   ·        ─
+   ╰────
+
+  × Expected corresponding JSX closing tag for 'Apple'.
+   ╭─[misc/fail/oxc-3528.jsx:1:10]
+ 1 │ let a = <Apple></Banana>;
+   ·          ─────   ──────
+ 2 │ 
+   ╰────
+
+  × Expected corresponding JSX closing tag for 'Apple:Orange'.
+   ╭─[misc/fail/oxc-3528.jsx:3:10]
+ 2 │ 
+ 3 │ let b = <Apple:Orange></Banana>;
+   ·          ────────────   ──────
+ 4 │ 
+   ╰────
+
+  × Expected corresponding JSX closing tag for 'Apple.Orange'.
+   ╭─[misc/fail/oxc-3528.jsx:5:10]
+ 4 │ 
+ 5 │ let c = <Apple.Orange></Banana>;
+   ·          ────────────   ──────
+   ╰────
+
+  × 'readonly' modifier cannot be used here.
+   ╭─[misc/fail/oxc-3948.ts:2:5]
+ 1 │ const x = {
+ 2 │     readonly foo() {
+   ·     ────────
+ 3 │ 
+   ╰────
+
+  × 'public' modifier cannot be used here.
+   ╭─[misc/fail/oxc-3948.ts:5:5]
+ 4 │     },
+ 5 │     public readonly async bar() {
+   ·     ──────
+ 6 │ 
+   ╰────
+
+  × 'readonly' modifier cannot be used here.
+   ╭─[misc/fail/oxc-3948.ts:5:12]
+ 4 │     },
+ 5 │     public readonly async bar() {
+   ·            ────────
+ 6 │ 
+   ╰────
+
+  × 'public' modifier cannot be used here.
+   ╭─[misc/fail/oxc-3948.ts:8:5]
+ 7 │     },
+ 8 │     public x: 1,
+   ·     ──────
+ 9 │ }
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/oxc-4111-1.js:1:35]
+ 1 │ funtransientction as longciiConÞr>ol(cde) {
+   ·                                  ▲
+   ╰────
+  help: Try insert a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/oxc-4212-1.ts:1:16]
+ 1 │ class a { const enum b(); }
+   ·                ▲
+   ╰────
+  help: Try insert a semicolon here
+
+  × TS(1164): Computed property names are not allowed in enums.
+   ╭─[misc/fail/oxc-4449.ts:2:11]
+ 1 │ // should fail
+ 2 │ enum A { [foo] }               // Computed property names are not allowed in enums
+   ·           ───
+ 3 │ enum B { [1] }                 // An enum member cannot have a numeric name.
+   ╰────
+
+  × TS(2452): An enum member cannot have a numeric name.
+   ╭─[misc/fail/oxc-4449.ts:3:11]
+ 2 │ enum A { [foo] }               // Computed property names are not allowed in enums
+ 3 │ enum B { [1] }                 // An enum member cannot have a numeric name.
+   ·           ─
+ 4 │ enum C { 1 }                   // An enum member cannot have a numeric name.
+   ╰────
+
+  × TS(2452): An enum member cannot have a numeric name.
+   ╭─[misc/fail/oxc-4449.ts:4:10]
+ 3 │ enum B { [1] }                 // An enum member cannot have a numeric name.
+ 4 │ enum C { 1 }                   // An enum member cannot have a numeric name.
+   ·          ─
+ 5 │ enum D { [`test${foo}`] }      // Computed property names are not allowed in enums.
+   ╰────
+
+  × TS(1164): Computed property names are not allowed in enums.
+   ╭─[misc/fail/oxc-4449.ts:5:11]
+ 4 │ enum C { 1 }                   // An enum member cannot have a numeric name.
+ 5 │ enum D { [`test${foo}`] }      // Computed property names are not allowed in enums.
+   ·           ────────────
+ 6 │ enum E { `baz` = 2 }           // Enum member expected.
+   ╰────
+
+  × Cannot assign to this expression
+   ╭─[misc/fail/oxc-4449.ts:6:10]
+ 5 │ enum D { [`test${foo}`] }      // Computed property names are not allowed in enums.
+ 6 │ enum E { `baz` = 2 }           // Enum member expected.
+   ·          ─────────
+ 7 │ enum F { ['baz' + 'baz'] }     // Computed property names are not allowed in enums.
+   ╰────
+
+  × TS(1164): Computed property names are not allowed in enums.
+   ╭─[misc/fail/oxc-4449.ts:7:11]
+ 6 │ enum E { `baz` = 2 }           // Enum member expected.
+ 7 │ enum F { ['baz' + 'baz'] }     // Computed property names are not allowed in enums.
+   ·           ─────────────
+   ╰────
+
+  × Label `Test` has already been declared
+   ╭─[misc/fail/oxc-5036.js:1:1]
+ 1 │ Test: {
+   · ──┬─
+   ·   ╰── `Test` has already been declared here
+ 2 │     Test: console.log('Test');
+   ·     ──┬─
+   ·       ╰── It can not be redeclared here
+ 3 │ }
+   ╰────
+
+  × TS(1276): An 'accessor' property cannot be declared optional.
+   ╭─[misc/fail/oxc-5177.ts:4:15]
+ 3 │ export class Bang {
+ 4 │     accessor x?: Foo
+   ·               ─
+ 5 │ }
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/oxc-5355.jsx:1:6]
+ 1 │ <Foo.bar-baz />
+   ·      ───────
+   ╰────
+
+  × Unexpected `?` operator
+   ╭─[misc/fail/oxc-5955-1.ts:1:8]
+ 1 │ const x?: number = 1;
+   ·        ▲
+ 2 │ 
+   ╰────
+  help: If you want an optional type, use `number | undefined` instead.
+
+  × Unexpected token
+   ╭─[misc/fail/oxc-5955-2.ts:3:8]
+ 2 │ interface B {
+ 3 │     e()?: number;
+   ·        ─
+ 4 │ }
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/oxc-5955-3.ts:2:18]
+ 1 │ class A {
+ 2 │     [key: string]?: number;
+   ·                  ─
+ 3 │ }
+   ╰────
+
+  × The keyword 'let' is reserved
+   ╭─[misc/fail/oxc.js:3:1]
+ 2 │ 
+ 3 │ let.a = 1;
+   · ───
+ 4 │ let()[a] = 1;
+   ╰────
+
+  × The keyword 'let' is reserved
+   ╭─[misc/fail/oxc.js:4:1]
+ 3 │ let.a = 1;
+ 4 │ let()[a] = 1;
+   · ───
+   ╰────

@@ -5,10 +5,10 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_await_expression_member_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow member access from await expression")
-        .with_help("When accessing a member from an await expression, the await expression has to be parenthesized, which is not readable.")
-        .with_label(span0)
+fn no_await_expression_member_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Do not access a member directly from an await expression.")
+        .with_help("Assign the result of the await expression to a variable, then access the member from that variable.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -17,23 +17,26 @@ pub struct NoAwaitExpressionMember;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule disallows member access from await expression
+    /// Disallows member access from `await` expressions.
     ///
     /// ### Why is this bad?
     ///
-    /// When accessing a member from an await expression,
-    /// the await expression has to be parenthesized, which is not readable.
+    /// When accessing a member from an `await` expression,
+    /// the `await` expression has to be parenthesized, which is not readable.
     ///
     /// ### Example
     /// ```javascript
-    /// // Bad
-    /// const secondElement = (await getArray())[1];
+    /// async function bad() {
+    ///     const secondElement = (await getArray())[1];
+    /// }
     ///
-    /// // Good
-    /// const [, secondElement] = await getArray();
+    /// async function good() {
+    ///     const [, secondElement] = await getArray();
+    /// }
     /// ```
     NoAwaitExpressionMember,
-    style
+    style,
+    pending
 );
 
 impl Rule for NoAwaitExpressionMember {

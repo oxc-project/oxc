@@ -1,24 +1,23 @@
+use oxc_linter::loader::LINT_PARTIAL_LOADER_EXT;
 use std::{
     fs,
     path::{Path, PathBuf},
     rc::Rc,
-    sync::Arc,
+    sync::{Arc, OnceLock},
 };
 
 use log::debug;
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{Error, NamedSource, Severity};
 use oxc_linter::{
-    partial_loader::{
-        AstroPartialLoader, JavaScriptSource, SveltePartialLoader, VuePartialLoader,
-        LINT_PARTIAL_LOADER_EXT,
-    },
+    loader::{JavaScriptSource, Loader},
     FixKind, Linter,
 };
-use oxc_parser::Parser;
+use oxc_parser::{ParseOptions, Parser};
 use oxc_semantic::SemanticBuilder;
-use oxc_span::{SourceType, VALID_EXTENSIONS};
+use oxc_span::VALID_EXTENSIONS;
 use ropey::Rope;
+use rustc_hash::FxHashSet;
 use tower_lsp::lsp_types::{
     self, DiagnosticRelatedInformation, DiagnosticSeverity, Position, Range, Url,
 };
@@ -154,11 +153,12 @@ pub struct FixedContent {
 
 pub struct IsolatedLintHandler {
     linter: Arc<Linter>,
+    loader: Loader,
 }
 
 impl IsolatedLintHandler {
     pub fn new(linter: Arc<Linter>) -> Self {
-        Self { linter }
+        Self { linter, loader: Loader }
     }
 
     pub fn run_single(
@@ -166,8 +166,8 @@ impl IsolatedLintHandler {
         path: &Path,
         content: Option<String>,
     ) -> Option<Vec<DiagnosticReport>> {
-        if Self::is_wanted_ext(path) {
-            Some(Self::lint_path(&self.linter, path, content).map_or(vec![], |(p, errors)| {
+        if Self::should_lint_path(path) {
+            Some(self.lint_path(path, content).map_or(vec![], |(p, errors)| {
                 let mut diagnostics: Vec<DiagnosticReport> =
                     errors.into_iter().map(|e| e.into_diagnostic_report(&p)).collect();
                 // a diagnostics connected from related_info to original diagnostic
@@ -212,65 +212,39 @@ impl IsolatedLintHandler {
         }
     }
 
-    fn is_wanted_ext(path: &Path) -> bool {
-        let extensions = get_valid_extensions();
-        path.extension().map_or(false, |ext| extensions.contains(&ext.to_string_lossy().as_ref()))
-    }
-
-    fn get_source_type_and_text(
+    fn lint_path(
+        &self,
         path: &Path,
         source_text: Option<String>,
-        ext: &str,
-    ) -> Option<(SourceType, String)> {
-        let source_type = SourceType::from_path(path);
-        let not_supported_yet =
-            source_type.as_ref().is_err_and(|_| !LINT_PARTIAL_LOADER_EXT.contains(&ext));
-        if not_supported_yet {
-            debug!("extension {ext} not supported yet.");
+    ) -> Option<(PathBuf, Vec<ErrorWithPosition>)> {
+        if !Loader::can_load(path) {
+            debug!("extension not supported yet.");
             return None;
         }
-        let source_type = source_type.unwrap_or_default();
         let source_text = source_text.map_or_else(
             || fs::read_to_string(path).unwrap_or_else(|_| panic!("Failed to read {path:?}")),
             |source_text| source_text,
         );
-
-        Some((source_type, source_text))
-    }
-
-    fn may_need_extract_js_content<'a>(
-        source_text: &'a str,
-        ext: &str,
-    ) -> Option<Vec<JavaScriptSource<'a>>> {
-        match ext {
-            "vue" => Some(VuePartialLoader::new(source_text).parse()),
-            "astro" => Some(AstroPartialLoader::new(source_text).parse()),
-            "svelte" => Some(SveltePartialLoader::new(source_text).parse()),
-            _ => None,
-        }
-    }
-
-    fn lint_path(
-        linter: &Linter,
-        path: &Path,
-        source_text: Option<String>,
-    ) -> Option<(PathBuf, Vec<ErrorWithPosition>)> {
-        let ext = path.extension().and_then(std::ffi::OsStr::to_str)?;
-        let (source_type, original_source_text) =
-            Self::get_source_type_and_text(path, source_text, ext)?;
-        let javascript_sources = Self::may_need_extract_js_content(&original_source_text, ext)
-            .unwrap_or_else(|| {
-                vec![JavaScriptSource { source_text: &original_source_text, source_type, start: 0 }]
-            });
+        let javascript_sources = match self.loader.load_str(path, &source_text) {
+            Ok(s) => s,
+            Err(e) => {
+                debug!("failed to load {path:?}: {e}");
+                return None;
+            }
+        };
 
         debug!("lint {path:?}");
         let mut diagnostics = vec![];
         for source in javascript_sources {
-            let JavaScriptSource { source_text: javascript_source_text, source_type, start } =
-                source;
+            let JavaScriptSource {
+                source_text: javascript_source_text, source_type, start, ..
+            } = source;
             let allocator = Allocator::default();
             let ret = Parser::new(&allocator, javascript_source_text, source_type)
-                .allow_return_outside_function(true)
+                .with_options(ParseOptions {
+                    allow_return_outside_function: true,
+                    ..ParseOptions::default()
+                })
                 .parse();
 
             if !ret.errors.is_empty() {
@@ -282,11 +256,11 @@ impl IsolatedLintHandler {
                         fixed_content: None,
                     })
                     .collect();
-                return Some(Self::wrap_diagnostics(path, &original_source_text, reports, start));
+                return Some(Self::wrap_diagnostics(path, &source_text, reports, start));
             };
 
             let program = allocator.alloc(ret.program);
-            let semantic_ret = SemanticBuilder::new(javascript_source_text, source_type)
+            let semantic_ret = SemanticBuilder::new(javascript_source_text)
                 .with_cfg(true)
                 .with_trivias(ret.trivias)
                 .with_check_syntax_error(true)
@@ -301,10 +275,10 @@ impl IsolatedLintHandler {
                         fixed_content: None,
                     })
                     .collect();
-                return Some(Self::wrap_diagnostics(path, &original_source_text, reports, start));
+                return Some(Self::wrap_diagnostics(path, &source_text, reports, start));
             };
 
-            let result = linter.run(path, Rc::new(semantic_ret.semantic));
+            let result = self.linter.run(path, Rc::new(semantic_ret.semantic));
 
             let reports = result
                 .into_iter()
@@ -313,12 +287,12 @@ impl IsolatedLintHandler {
                         code: f.content.to_string(),
                         range: Range {
                             start: offset_to_position(
-                                f.span.start as usize + start,
+                                (f.span.start + start) as usize,
                                 javascript_source_text,
                             )
                             .unwrap_or_default(),
                             end: offset_to_position(
-                                f.span.end as usize + start,
+                                (f.span.end + start) as usize,
                                 javascript_source_text,
                             )
                             .unwrap_or_default(),
@@ -329,18 +303,29 @@ impl IsolatedLintHandler {
                 })
                 .collect::<Vec<ErrorReport>>();
             let (_, errors_with_position) =
-                Self::wrap_diagnostics(path, &original_source_text, reports, start);
+                Self::wrap_diagnostics(path, &source_text, reports, start);
             diagnostics.extend(errors_with_position);
         }
 
         Some((path.to_path_buf(), diagnostics))
     }
 
+    fn should_lint_path(path: &Path) -> bool {
+        static WANTED_EXTENSIONS: OnceLock<FxHashSet<&'static str>> = OnceLock::new();
+        let wanted_exts = WANTED_EXTENSIONS.get_or_init(|| {
+            VALID_EXTENSIONS.iter().chain(LINT_PARTIAL_LOADER_EXT.iter()).copied().collect()
+        });
+
+        path.extension()
+            .and_then(std::ffi::OsStr::to_str)
+            .map_or(false, |ext| wanted_exts.contains(ext))
+    }
+
     fn wrap_diagnostics(
         path: &Path,
         source_text: &str,
         reports: Vec<ErrorReport>,
-        start: usize,
+        start: u32,
     ) -> (PathBuf, Vec<ErrorWithPosition>) {
         let source = Arc::new(NamedSource::new(path.to_string_lossy(), source_text.to_owned()));
         let diagnostics = reports
@@ -350,20 +335,12 @@ impl IsolatedLintHandler {
                     report.error.with_source_code(Arc::clone(&source)),
                     source_text,
                     report.fixed_content,
-                    start,
+                    start as usize,
                 )
             })
             .collect();
         (path.to_path_buf(), diagnostics)
     }
-}
-
-fn get_valid_extensions() -> Vec<&'static str> {
-    VALID_EXTENSIONS
-        .iter()
-        .chain(LINT_PARTIAL_LOADER_EXT.iter())
-        .copied()
-        .collect::<Vec<&'static str>>()
 }
 
 #[allow(clippy::cast_possible_truncation)]

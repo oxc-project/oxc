@@ -5,10 +5,10 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn require_number_to_fixed_digits_argument_diagnostic(span0: Span) -> OxcDiagnostic {
+fn require_number_to_fixed_digits_argument_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Number method .toFixed() should have an argument")
         .with_help("It's better to make it clear what the value of the digits argument is when calling Number#toFixed(), instead of relying on the default value of 0.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -16,23 +16,29 @@ pub struct RequireNumberToFixedDigitsArgument;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Enforce using the digits argument with Number.toFixed()
     ///
     /// ### Why is this bad?
+    ///
     /// It's better to make it clear what the value of the digits argument is when calling Number.toFixed(),
     /// instead of relying on the default value of 0.
     ///
-    /// ### Example
-    /// ```javascript
-    /// // Pass
-    /// number.toFixed(0);
-    /// number.toFixed(2);
+    /// ### Examples
     ///
-    /// // Fail:
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
     /// number.toFixed();
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// number.toFixed(0);
+    /// number.toFixed(2);
+    /// ```
     RequireNumberToFixedDigitsArgument,
-    pedantic
+    pedantic,
+    fix
 );
 
 impl Rule for RequireNumberToFixedDigitsArgument {

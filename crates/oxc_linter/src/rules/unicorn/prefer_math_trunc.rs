@@ -6,9 +6,9 @@ use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn prefer_math_trunc_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Prefer `Math.trunc()` over instead of `{x1} 0`."))
-        .with_label(span0)
+fn prefer_math_trunc_diagnostic(span: Span, bad_op: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Prefer `Math.trunc()` over instead of `{bad_op} 0`."))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -31,15 +31,19 @@ declare_oxc_lint!(
     /// Using bitwise operations to truncate numbers is not clear and do not work in [some cases](https://stackoverflow.com/a/34706108/11687747).
     ///
     /// ### Example
-    /// ```javascript
-    /// // Bad
-    /// const foo = 1.1 | 0;
     ///
-    /// // Good
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// const foo = 1.1 | 0;
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// const foo = Math.trunc(1.1);
     /// ```
     PreferMathTrunc,
-    pedantic
+    pedantic,
+    pending
 );
 
 impl Rule for PreferMathTrunc {

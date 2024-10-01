@@ -1,5 +1,5 @@
 use oxc_allocator::{Box, Vec};
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, NONE};
 use oxc_diagnostics::Result;
 use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashMap;
@@ -107,9 +107,8 @@ impl<'a> ParserImpl<'a> {
     fn parse_import_default_specifier(&mut self) -> Result<ImportDeclarationSpecifier<'a>> {
         let span = self.start_span();
         let local = self.parse_binding_identifier()?;
-        Ok(ImportDeclarationSpecifier::ImportDefaultSpecifier(
-            self.ast.alloc(ImportDefaultSpecifier { span: self.end_span(span), local }),
-        ))
+        let span = self.end_span(span);
+        Ok(self.ast.import_declaration_specifier_import_default_specifier(span, local))
     }
 
     // import * as name from "module-name"
@@ -118,9 +117,8 @@ impl<'a> ParserImpl<'a> {
         self.bump_any(); // advance `*`
         self.expect(Kind::As)?;
         let local = self.parse_binding_identifier()?;
-        Ok(ImportDeclarationSpecifier::ImportNamespaceSpecifier(
-            self.ast.alloc(ImportNamespaceSpecifier { span: self.end_span(span), local }),
-        ))
+        let span = self.end_span(span);
+        Ok(self.ast.import_declaration_specifier_import_namespace_specifier(span, local))
     }
 
     // import { export1 , export2 as alias2 , [...] } from "module-name";
@@ -168,7 +166,7 @@ impl<'a> ParserImpl<'a> {
             }
         }
 
-        Ok(Some(WithClause { span: self.end_span(span), attributes_keyword, with_entries }))
+        Ok(Some(self.ast.with_clause(self.end_span(span), attributes_keyword, with_entries)))
     }
 
     fn parse_import_attribute(&mut self) -> Result<ImportAttribute<'a>> {
@@ -179,7 +177,7 @@ impl<'a> ParserImpl<'a> {
         };
         self.expect(Kind::Colon)?;
         let value = self.parse_literal_string()?;
-        Ok(ImportAttribute { span: self.end_span(span), key, value })
+        Ok(self.ast.import_attribute(self.end_span(span), key, value))
     }
 
     pub(crate) fn parse_ts_export_assignment_declaration(
@@ -187,11 +185,9 @@ impl<'a> ParserImpl<'a> {
         start_span: Span,
     ) -> Result<Box<'a, TSExportAssignment<'a>>> {
         self.expect(Kind::Eq)?;
-
         let expression = self.parse_assignment_expression_or_higher()?;
         self.asi()?;
-
-        Ok(self.ast.alloc(TSExportAssignment { span: self.end_span(start_span), expression }))
+        Ok(self.ast.alloc_ts_export_assignment(self.end_span(start_span), expression))
     }
 
     pub(crate) fn parse_ts_export_namespace(
@@ -200,11 +196,9 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         self.expect(Kind::As)?;
         self.expect(Kind::Namespace)?;
-
         let id = self.parse_identifier_name()?;
         self.asi()?;
-
-        Ok(self.ast.alloc(TSNamespaceExportDeclaration { span: self.end_span(span), id }))
+        Ok(self.ast.alloc_ts_namespace_export_declaration(self.end_span(span), id))
     }
 
     /// [Exports](https://tc39.es/ecma262/#sec-exports)
@@ -347,7 +341,7 @@ impl<'a> ParserImpl<'a> {
             self.ast.vec(),
             None,
             ImportOrExportKind::Value,
-            None,
+            NONE,
         ))
     }
 
@@ -453,15 +447,14 @@ impl<'a> ParserImpl<'a> {
             (imported, local)
         } else {
             let local = self.parse_binding_identifier()?;
-            let imported = IdentifierName { span: local.span, name: local.name.clone() };
-            (ModuleExportName::IdentifierName(imported), local)
+            (self.ast.module_export_name_identifier_name(local.span, local.name.clone()), local)
         };
-        Ok(ImportDeclarationSpecifier::ImportSpecifier(self.ast.alloc(ImportSpecifier {
-            span: self.end_span(specifier_span),
+        Ok(self.ast.import_declaration_specifier_import_specifier(
+            self.end_span(specifier_span),
             imported,
             local,
             import_kind,
-        })))
+        ))
     }
 
     // ModuleExportName :
@@ -548,6 +541,6 @@ impl<'a> ParserImpl<'a> {
         let local = self.parse_module_export_name()?;
         let exported =
             if self.eat(Kind::As) { self.parse_module_export_name()? } else { local.clone() };
-        Ok(ExportSpecifier { span: self.end_span(specifier_span), local, exported, export_kind })
+        Ok(self.ast.export_specifier(self.end_span(specifier_span), local, exported, export_kind))
     }
 }

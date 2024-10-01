@@ -13,10 +13,10 @@ use crate::{
     utils::{collect_possible_jest_call_node, parse_expect_jest_fn_call, PossibleJestNode},
 };
 
-fn use_equality_matcher_diagnostic(span0: Span) -> OxcDiagnostic {
+fn use_equality_matcher_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Suggest using the built-in equality matchers.")
         .with_help("Prefer using one of the equality matchers instead")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

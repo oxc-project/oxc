@@ -2,7 +2,10 @@ use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 // use oxc_span::{CompactStr, Span};
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+};
 
 // #[derive(Debug, Error, Diagnostic)]
 // #[error("")]
@@ -16,7 +19,20 @@ pub struct NoDeprecated;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Reports use of a deprecated name, as indicated by a JSDoc block with a @deprecated tag or TomDoc Deprecated: comment.
+    /// Reports use of a deprecated name, as indicated by a JSDoc block with
+    /// a @deprecated tag or TomDoc Deprecated: comment.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// ```
     NoDeprecated,
     nursery
 );

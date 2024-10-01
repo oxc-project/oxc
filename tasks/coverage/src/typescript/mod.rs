@@ -5,12 +5,9 @@ use std::path::{Path, PathBuf};
 
 use self::meta::{CompilerSettings, TestCaseContent, TestUnitData};
 pub use self::transpile_runner::{TranspileRunner, TypeScriptTranspileCase};
-use crate::{
-    project_root,
-    suite::{Case, Suite, TestResult},
-};
+use crate::suite::{Case, Suite, TestResult};
 
-const TESTS_ROOT: &str = "tasks/coverage/typescript/tests/";
+const TESTS_ROOT: &str = "typescript/tests";
 
 pub struct TypeScriptSuite<T: Case> {
     test_root: PathBuf,
@@ -19,7 +16,7 @@ pub struct TypeScriptSuite<T: Case> {
 
 impl<T: Case> TypeScriptSuite<T> {
     pub fn new() -> Self {
-        Self { test_root: project_root().join(TESTS_ROOT).join("cases"), test_cases: vec![] }
+        Self { test_root: PathBuf::from(TESTS_ROOT).join("cases"), test_cases: vec![] }
     }
 }
 
@@ -39,6 +36,21 @@ impl<T: Case> Suite<T> for TypeScriptSuite<T> {
             // these 2 relies on the ts "target" option
             "functionWithUseStrictAndSimpleParameterList.ts",
             "parameterInitializerBeforeDestructuringEmit.ts",
+            // these also relies on "target: es5" option w/ RegExp `u` flag
+            "unicodeExtendedEscapesInRegularExpressions01.ts",
+            "unicodeExtendedEscapesInRegularExpressions02.ts",
+            "unicodeExtendedEscapesInRegularExpressions03.ts",
+            "unicodeExtendedEscapesInRegularExpressions04.ts",
+            "unicodeExtendedEscapesInRegularExpressions05.ts",
+            "unicodeExtendedEscapesInRegularExpressions06.ts",
+            "unicodeExtendedEscapesInRegularExpressions08.ts",
+            "unicodeExtendedEscapesInRegularExpressions09.ts",
+            "unicodeExtendedEscapesInRegularExpressions10.ts",
+            "unicodeExtendedEscapesInRegularExpressions11.ts",
+            "unicodeExtendedEscapesInRegularExpressions13.ts",
+            "unicodeExtendedEscapesInRegularExpressions15.ts",
+            "unicodeExtendedEscapesInRegularExpressions16.ts",
+            "unicodeExtendedEscapesInRegularExpressions18.ts",
         ]
         .iter()
         .any(|p| path.to_string_lossy().contains(p));
@@ -88,6 +100,10 @@ impl Case for TypeScriptCase {
 
     fn should_fail(&self) -> bool {
         !self.error_files.is_empty()
+    }
+
+    fn always_strict(&self) -> bool {
+        self.settings.always_strict
     }
 
     fn run(&mut self) {

@@ -2,20 +2,30 @@
 source: crates/oxc_semantic/tests/main.rs
 input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/new-expression/type-parameters2.ts
 ---
+================================================================================
+SCOPES
+================================================================================
+
 [
   {
     "children": [],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 0,
         "name": "T",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(T)",
         "references": []
       }
     ]
   }
 ]
+
+================================================================================
+CONFORMANCE
+================================================================================
+
+All tests passed.

@@ -1,37 +1,37 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-jest(no-hooks): Disallow setup and teardown hooks.
+  ⚠ eslint-plugin-jest(no-hooks): Do not use setup or teardown hooks
    ╭─[no_hooks.tsx:1:1]
  1 │ beforeAll(() => {})
    · ─────────
    ╰────
 
-  ⚠ eslint-plugin-jest(no-hooks): Disallow setup and teardown hooks.
+  ⚠ eslint-plugin-jest(no-hooks): Do not use setup or teardown hooks
    ╭─[no_hooks.tsx:1:1]
  1 │ beforeEach(() => {})
    · ──────────
    ╰────
 
-  ⚠ eslint-plugin-jest(no-hooks): Disallow setup and teardown hooks.
+  ⚠ eslint-plugin-jest(no-hooks): Do not use setup or teardown hooks
    ╭─[no_hooks.tsx:1:1]
  1 │ afterAll(() => {})
    · ────────
    ╰────
 
-  ⚠ eslint-plugin-jest(no-hooks): Disallow setup and teardown hooks.
+  ⚠ eslint-plugin-jest(no-hooks): Do not use setup or teardown hooks
    ╭─[no_hooks.tsx:1:1]
  1 │ afterEach(() => {})
    · ─────────
    ╰────
 
-  ⚠ eslint-plugin-jest(no-hooks): Disallow setup and teardown hooks.
+  ⚠ eslint-plugin-jest(no-hooks): Do not use setup or teardown hooks
    ╭─[no_hooks.tsx:1:1]
  1 │ beforeEach(() => {}); afterEach(() => { jest.resetModules() });
    · ──────────
    ╰────
 
-  ⚠ eslint-plugin-jest(no-hooks): Disallow setup and teardown hooks.
+  ⚠ eslint-plugin-jest(no-hooks): Do not use setup or teardown hooks
    ╭─[no_hooks.tsx:5:17]
  4 │                 afterEach(() => {});
  5 │                 beforeEach(() => { jest.resetModules() });

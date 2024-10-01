@@ -1,13 +1,13 @@
 mod linter;
 
-use std::{collections::HashMap, fmt::Debug, path::PathBuf, str::FromStr};
+use std::{fmt::Debug, path::PathBuf, str::FromStr};
 
 use dashmap::DashMap;
 use futures::future::join_all;
 use globset::Glob;
 use ignore::gitignore::Gitignore;
 use log::{debug, error, info};
-use oxc_linter::{FixKind, LintOptions, Linter};
+use oxc_linter::{FixKind, Linter, OxlintOptions};
 use serde::{Deserialize, Serialize};
 use tokio::sync::{Mutex, OnceCell, RwLock, SetError};
 use tower_lsp::{
@@ -253,7 +253,8 @@ impl LanguageServer for Backend {
                     kind: Some(CodeActionKind::QUICKFIX),
                     is_preferred: Some(true),
                     edit: Some(WorkspaceEdit {
-                        changes: Some(HashMap::from([(
+                        #[expect(clippy::disallowed_types)]
+                        changes: Some(std::collections::HashMap::from([(
                             uri,
                             vec![TextEdit {
                                 range: fixed_content.range,
@@ -345,7 +346,7 @@ impl Backend {
             let mut linter = self.server_linter.write().await;
             *linter = ServerLinter::new_with_linter(
                 Linter::from_options(
-                    LintOptions::default()
+                    OxlintOptions::default()
                         .with_fix(FixKind::SafeFix)
                         .with_config_path(Some(config_path)),
                 )

@@ -7,8 +7,8 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_eval_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eval can be harmful.").with_label(span0)
+fn no_eval_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eval can be harmful.").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

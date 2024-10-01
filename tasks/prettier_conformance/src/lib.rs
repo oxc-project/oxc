@@ -1,18 +1,18 @@
-#![allow(clippy::print_stdout, clippy::print_stderr)]
+#![allow(clippy::print_stdout, clippy::print_stderr, clippy::disallowed_methods)]
 mod ignore_list;
 mod spec;
 
 use std::{
-    collections::HashSet,
     fs,
     path::{Path, PathBuf},
 };
 
 use oxc_allocator::Allocator;
-use oxc_parser::Parser;
+use oxc_parser::{ParseOptions, Parser};
 use oxc_prettier::{Prettier, PrettierOptions};
 use oxc_span::SourceType;
 use oxc_tasks_common::project_root;
+use rustc_hash::FxHashSet;
 use walkdir::WalkDir;
 
 use crate::{
@@ -56,15 +56,19 @@ pub struct TestRunner {
 }
 
 fn root() -> PathBuf {
-    project_root().join("tasks/prettier_conformance")
+    project_root().join("tasks").join("prettier_conformance")
 }
 
 fn fixtures_root() -> PathBuf {
-    project_root().join(root()).join("prettier/tests/format")
+    root().join("prettier").join("tests").join("format")
 }
 
-const SNAP_NAME: &str = "jsfmt.spec.js";
-const SNAP_RELATIVE_PATH: &str = "__snapshots__/jsfmt.spec.js.snap";
+fn snap_root() -> PathBuf {
+    root().join("snapshots")
+}
+
+const SNAP_NAME: &str = "format.test.js";
+const SNAP_RELATIVE_PATH: &str = "__snapshots__/format.test.js.snap";
 const LF: char = '\u{a}';
 const CR: char = '\u{d}';
 
@@ -82,7 +86,7 @@ impl TestRunner {
     }
 
     /// # Panics
-    #[allow(clippy::cast_precision_loss)]
+    #[expect(clippy::cast_precision_loss)]
     pub fn run(mut self) {
         let fixture_root = &self.fixtures_root;
         // Read the first level of directories that contain `__snapshots__`
@@ -109,7 +113,7 @@ impl TestRunner {
             .filter(|path| path.join("__snapshots__").exists())
             .collect::<Vec<_>>();
 
-        let dir_set: HashSet<_> = dirs.iter().cloned().collect();
+        let dir_set: FxHashSet<_> = dirs.iter().cloned().collect();
         dirs = dir_set.into_iter().collect();
 
         dirs.sort_unstable();
@@ -172,7 +176,7 @@ impl TestRunner {
             let failed = failed.join("\n");
             let snapshot = format!("{heading}\n\n# Failed\n{failed}");
             let filename = format!("prettier.{language}.snap.md");
-            fs::write(root().join(filename), snapshot).unwrap();
+            fs::write(snap_root().join(filename), snapshot).unwrap();
         }
     }
 
@@ -382,7 +386,9 @@ impl TestRunner {
     fn prettier(path: &Path, source_text: &str, prettier_options: PrettierOptions) -> String {
         let allocator = Allocator::default();
         let source_type = SourceType::from_path(path).unwrap();
-        let ret = Parser::new(&allocator, source_text, source_type).preserve_parens(false).parse();
+        let ret = Parser::new(&allocator, source_text, source_type)
+            .with_options(ParseOptions { preserve_parens: false, ..ParseOptions::default() })
+            .parse();
         Prettier::new(&allocator, source_text, ret.trivias, prettier_options).build(&ret.program)
     }
 }

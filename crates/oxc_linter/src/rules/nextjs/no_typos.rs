@@ -7,12 +7,16 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use phf::phf_set;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    AstNode,
+};
 
-fn no_typos_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("{x0} may be a typo. Did you mean {x1}?"))
+fn no_typos_diagnostic(typo: &str, suggestion: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("{typo} may be a typo. Did you mean {suggestion}?"))
         .with_help("Prevent common typos in Next.js's data fetching functions")
-        .with_label(span2)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -33,7 +37,8 @@ declare_oxc_lint!(
     /// export async function getServurSideProps(){};
     /// ```
     NoTypos,
-    correctness
+    correctness,
+    pending
 );
 
 const NEXTJS_DATA_FETCHING_FUNCTIONS: phf::Set<&'static str> = phf_set! {
@@ -46,16 +51,20 @@ const NEXTJS_DATA_FETCHING_FUNCTIONS: phf::Set<&'static str> = phf_set! {
 const THRESHOLD: i32 = 1;
 
 impl Rule for NoTypos {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         let Some(path) = ctx.file_path().to_str() else {
-            return;
+            return false;
         };
         let Some(path_after_pages) = path.split("pages").nth(1) else {
-            return;
+            return false;
         };
         if path_after_pages.starts_with("/api") {
-            return;
+            return false;
         }
+        true
+    }
+
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::ModuleDeclaration(ModuleDeclaration::ExportNamedDeclaration(en_decl)) =
             node.kind()
         {

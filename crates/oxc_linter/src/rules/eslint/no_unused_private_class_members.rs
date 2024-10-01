@@ -2,14 +2,14 @@ use itertools::Itertools;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNode, AstNodeId, AstNodes};
+use oxc_semantic::{AstNode, AstNodes, NodeId};
 use oxc_span::Span;
 use oxc_syntax::class::ElementKind;
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_unused_private_class_members_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("'{x0}' is defined but never used.")).with_label(span1)
+fn no_unused_private_class_members_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("'{name}' is defined but never used.")).with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -24,10 +24,10 @@ declare_oxc_lint!(
     ///
     /// Private class members that are declared and not used anywhere in the code are most likely an error due to incomplete refactoring. Such class members take up space in the code and can lead to confusion by readers.
     ///
-    /// ### Example
-    /// ```javascript
+    /// ### Examples
     ///
-    /// /// bad
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
     /// class A {
     ///		#unusedMember = 5;
     ///	}
@@ -54,15 +54,17 @@ declare_oxc_lint!(
     ///			get #unusedAccessor() {}
     ///			set #unusedAccessor(value) {}
     ///	}
+    /// ```
     ///
-    /// /// Good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// class A {
     ///		#usedMember = 42;
     ///		method() {
     ///				return this.#usedMember;
     ///		}
     ///	}
-
+    ///
     ///	class B {
     ///			#usedMethod() {
     ///					return 42;
@@ -71,7 +73,7 @@ declare_oxc_lint!(
     ///					return this.#usedMethod();
     ///			}
     ///	}
-
+    ///
     ///	class C {
     ///			get #usedAccessor() {}
     ///			set #usedAccessor(value) {}
@@ -112,7 +114,7 @@ impl Rule for NoUnusedPrivateClassMembers {
     }
 }
 
-fn is_read(current_node_id: AstNodeId, nodes: &AstNodes) -> bool {
+fn is_read(current_node_id: NodeId, nodes: &AstNodes) -> bool {
     for (curr, parent) in nodes
         .iter_parents(nodes.parent_id(current_node_id).unwrap_or(current_node_id))
         .tuple_windows::<(&AstNode<'_>, &AstNode<'_>)>()

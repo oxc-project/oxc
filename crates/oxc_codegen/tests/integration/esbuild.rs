@@ -2,18 +2,18 @@
 
 use crate::tester::{test, test_minify};
 
+// NOTE: These values are aligned with terser, not esbuild.
 #[test]
-#[ignore]
 fn test_number() {
     // Check "1eN"
     test("x = 1e-100", "x = 1e-100;\n");
     test("x = 1e-4", "x = 1e-4;\n");
     test("x = 1e-3", "x = 1e-3;\n");
-    test("x = 1e-2", "x = 0.01;\n");
-    test("x = 1e-1", "x = 0.1;\n");
-    test("x = 1e0", "x = 1;\n");
-    test("x = 1e1", "x = 10;\n");
-    test("x = 1e2", "x = 100;\n");
+    test("x = 1e-2", "x = 1e-2;\n");
+    test("x = 1e-1", "x = 1e-1;\n");
+    test("x = 1e0", "x = 1e0;\n");
+    test("x = 1e1", "x = 1e1;\n");
+    test("x = 1e2", "x = 1e2;\n");
     test("x = 1e3", "x = 1e3;\n");
     test("x = 1e4", "x = 1e4;\n");
     test("x = 1e100", "x = 1e100;\n");
@@ -34,16 +34,16 @@ fn test_number() {
     test("x = 12e-100", "x = 12e-100;\n");
     test("x = 12e-5", "x = 12e-5;\n");
     test("x = 12e-4", "x = 12e-4;\n");
-    test("x = 12e-3", "x = 0.012;\n");
-    test("x = 12e-2", "x = 0.12;\n");
-    test("x = 12e-1", "x = 1.2;\n");
-    test("x = 12e0", "x = 12;\n");
-    test("x = 12e1", "x = 120;\n");
-    test("x = 12e2", "x = 1200;\n");
+    test("x = 12e-3", "x = 12e-3;\n");
+    test("x = 12e-2", "x = 12e-2;\n");
+    test("x = 12e-1", "x = 12e-1;\n");
+    test("x = 12e0", "x = 12e0;\n");
+    test("x = 12e1", "x = 12e1;\n");
+    test("x = 12e2", "x = 12e2;\n");
     test("x = 12e3", "x = 12e3;\n");
     test("x = 12e4", "x = 12e4;\n");
     test("x = 12e100", "x = 12e100;\n");
-    test_minify("x = 12e-100", "x=12e-100;");
+    test_minify("x = 12e-100", "x=1.2e-99;");
     test_minify("x = 12e-6", "x=12e-6;");
     test_minify("x = 12e-5", "x=12e-5;");
     test_minify("x = 12e-4", "x=.0012;");
@@ -66,62 +66,62 @@ fn test_number() {
     test("x = 10000123456789", "x = 10000123456789;\n");
     test("x = 100000123456789", "x = 100000123456789;\n");
     test("x = 1000000123456789", "x = 1000000123456789;\n");
-    test("x = 10000000123456789", "x = 10000000123456788;\n");
-    test("x = 100000000123456789", "x = 100000000123456780;\n");
-    test("x = 1000000000123456789", "x = 1000000000123456800;\n");
-    test("x = 10000000000123456789", "x = 10000000000123458e3;\n");
-    test("x = 100000000000123456789", "x = 10000000000012345e4;\n");
+    test("x = 10000000123456789", "x = 10000000123456789;\n");
+    test("x = 100000000123456789", "x = 100000000123456789;\n");
+    test("x = 1000000000123456789", "x = 1000000000123456789;\n");
+    test("x = 10000000000123456789", "x = 10000000000123456789;\n");
+    test("x = 100000000000123456789", "x = 100000000000123456789;\n");
 
     // Check numbers around the ends of various integer ranges. These were
     // crashing in the WebAssembly build due to a bug in the Go runtime.
 
     // int32
-    test("x = 0x7fff_ffff", "x = 2147483647;\n");
-    test("x = 0x8000_0000", "x = 2147483648;\n");
-    test("x = 0x8000_0001", "x = 2147483649;\n");
-    test("x = -0x7fff_ffff", "x = -2147483647;\n");
-    test("x = -0x8000_0000", "x = -2147483648;\n");
-    test("x = -0x8000_0001", "x = -2147483649;\n");
+    test_minify("x = 0x7fff_ffff", "x=2147483647;");
+    test_minify("x = 0x8000_0000", "x=2147483648;");
+    test_minify("x = 0x8000_0001", "x=2147483649;");
+    test_minify("x = -0x7fff_ffff", "x=-2147483647;");
+    test_minify("x = -0x8000_0000", "x=-2147483648;");
+    test_minify("x = -0x8000_0001", "x=-2147483649;");
 
     // uint32
-    test("x = 0xffff_ffff", "x = 4294967295;\n");
-    test("x = 0x1_0000_0000", "x = 4294967296;\n");
-    test("x = 0x1_0000_0001", "x = 4294967297;\n");
-    test("x = -0xffff_ffff", "x = -4294967295;\n");
-    test("x = -0x1_0000_0000", "x = -4294967296;\n");
-    test("x = -0x1_0000_0001", "x = -4294967297;\n");
+    test_minify("x = 0xffff_ffff", "x=4294967295;");
+    test_minify("x = 0x1_0000_0000", "x=4294967296;");
+    test_minify("x = 0x1_0000_0001", "x=4294967297;");
+    test_minify("x = -0xffff_ffff", "x=-4294967295;");
+    test_minify("x = -0x1_0000_0000", "x=-4294967296;");
+    test_minify("x = -0x1_0000_0001", "x=-4294967297;");
 
     // int64
-    test("x = 0x7fff_ffff_ffff_fdff", "x = 9223372036854775e3;\n");
-    test("x = 0x8000_0000_0000_0000", "x = 9223372036854776e3;\n");
-    test("x = 0x8000_0000_0000_3000", "x = 9223372036854788e3;\n");
-    test("x = -0x7fff_ffff_ffff_fdff", "x = -9223372036854775e3;\n");
-    test("x = -0x8000_0000_0000_0000", "x = -9223372036854776e3;\n");
-    test("x = -0x8000_0000_0000_3000", "x = -9223372036854788e3;\n");
+    test_minify("x = 0x7fff_ffff_ffff_fdff", "x=0x7ffffffffffffc00;");
+    test_minify("x = 0x8000_0000_0000_0000", "x=0x8000000000000000;");
+    test_minify("x = 0x8000_0000_0000_3000", "x=0x8000000000003000;");
+    test_minify("x = -0x7fff_ffff_ffff_fdff", "x=-0x7ffffffffffffc00;");
+    test_minify("x = -0x8000_0000_0000_0000", "x=-0x8000000000000000;");
+    test_minify("x = -0x8000_0000_0000_3000", "x=-0x8000000000003000;");
 
     // uint64
-    test("x = 0xffff_ffff_ffff_fbff", "x = 1844674407370955e4;\n");
-    test("x = 0x1_0000_0000_0000_0000", "x = 18446744073709552e3;\n");
-    test("x = 0x1_0000_0000_0000_1000", "x = 18446744073709556e3;\n");
-    test("x = -0xffff_ffff_ffff_fbff", "x = -1844674407370955e4;\n");
-    test("x = -0x1_0000_0000_0000_0000", "x = -18446744073709552e3;\n");
-    test("x = -0x1_0000_0000_0000_1000", "x = -18446744073709556e3;\n");
+    test_minify("x = 0xffff_ffff_ffff_fbff", "x=0xfffffffffffff800;");
+    test_minify("x = 0x1_0000_0000_0000_0000", "x=0x10000000000000000;");
+    test_minify("x = 0x1_0000_0000_0000_1000", "x=0x10000000000001000;");
+    test_minify("x = -0xffff_ffff_ffff_fbff", "x=-0xfffffffffffff800;");
+    test_minify("x = -0x1_0000_0000_0000_0000", "x=-0x10000000000000000;");
+    test_minify("x = -0x1_0000_0000_0000_1000", "x=-0x10000000000001000;");
 
     // Check the hex vs. decimal decision boundary when minifying
     test("x = 999999999999", "x = 999999999999;\n");
     test("x = 1000000000001", "x = 1000000000001;\n");
-    test("x = 0x0FFF_FFFF_FFFF_FF80", "x = 1152921504606846800;\n");
-    test("x = 0x1000_0000_0000_0000", "x = 1152921504606847e3;\n");
-    test("x = 0xFFFF_FFFF_FFFF_F000", "x = 18446744073709548e3;\n");
-    test("x = 0xFFFF_FFFF_FFFF_F800", "x = 1844674407370955e4;\n");
-    test("x = 0xFFFF_FFFF_FFFF_FFFF", "x = 18446744073709552e3;\n");
+    test("x = 0x0FFF_FFFF_FFFF_FF80", "x = 0x0FFF_FFFF_FFFF_FF80;\n");
+    test("x = 0x1000_0000_0000_0000", "x = 0x1000_0000_0000_0000;\n");
+    test("x = 0xFFFF_FFFF_FFFF_F000", "x = 0xFFFF_FFFF_FFFF_F000;\n");
+    test("x = 0xFFFF_FFFF_FFFF_F800", "x = 0xFFFF_FFFF_FFFF_F800;\n");
+    test("x = 0xFFFF_FFFF_FFFF_FFFF", "x = 0xFFFF_FFFF_FFFF_FFFF;\n");
     test_minify("x = 999999999999", "x=999999999999;");
     test_minify("x = 1000000000001", "x=0xe8d4a51001;");
     test_minify("x = 0x0FFF_FFFF_FFFF_FF80", "x=0xfffffffffffff80;");
-    test_minify("x = 0x1000_0000_0000_0000", "x=1152921504606847e3;");
+    test_minify("x = 0x1000_0000_0000_0000", "x=0x1000000000000000;");
     test_minify("x = 0xFFFF_FFFF_FFFF_F000", "x=0xfffffffffffff000;");
-    test_minify("x = 0xFFFF_FFFF_FFFF_F800", "x=1844674407370955e4;");
-    test_minify("x = 0xFFFF_FFFF_FFFF_FFFF", "x=18446744073709552e3;");
+    test_minify("x = 0xFFFF_FFFF_FFFF_F800", "x=0xfffffffffffff800;");
+    test_minify("x = 0xFFFF_FFFF_FFFF_FFFF", "x=0x10000000000000000;");
 
     // Check printing a space in between a number and a subsequent "."
     test_minify("x = 0.0001 .y", "x=1e-4.y;");
@@ -137,7 +137,6 @@ fn test_number() {
 }
 
 #[test]
-#[ignore]
 fn test_array() {
     test("[]", "[];\n");
     test("[,]", "[,];\n");
@@ -145,7 +144,6 @@ fn test_array() {
 }
 
 #[test]
-#[ignore]
 fn test_splat() {
     test("[...(a, b)]", "[...(a, b)];\n");
     test("x(...(a, b))", "x(...(a, b));\n");
@@ -153,7 +151,6 @@ fn test_splat() {
 }
 
 #[test]
-#[ignore]
 fn test_new() {
     test("new x", "new x();\n");
     test("new x()", "new x();\n");
@@ -170,49 +167,55 @@ fn test_new() {
     test("new (foo()[bar])", "new (foo())[bar]();\n");
     test("new (foo())[bar]", "new (foo())[bar]();\n");
 
-    test("new (import('foo').bar)", "new (import(\"foo\");).bar();\n");
-    test("new (import('foo')).bar", "new (import(\"foo\");).bar();\n");
-    test("new (import('foo')[bar])", "new (import(\"foo\");)[bar]();\n");
-    test("new (import('foo'))[bar]", "new (import(\"foo\");)[bar]();\n");
+    test("new (import('foo').bar)", "new (import(\"foo\")).bar();\n");
+    test("new (import('foo')).bar", "new (import(\"foo\")).bar();\n");
+    test("new (import('foo')[bar])", "new (import(\"foo\"))[bar]();\n");
+    test("new (import('foo'))[bar]", "new (import(\"foo\"))[bar]();\n");
 
-    test_minify("new x", "new x;");
-    test_minify("new x.y", "new x.y;");
-    test_minify("(new x).y", "new x().y;");
-    test_minify("new x().y", "new x().y;");
-    test_minify("new x() + y", "new x+y;");
-    test_minify("new x() ** 2", "new x**2;");
+    // test_minify("new x", "new x;");
+    // test_minify("new x.y", "new x.y;");
+    // test_minify("(new x).y", "new x().y;");
+    // test_minify("new x().y", "new x().y;");
+    // test_minify("new x() + y", "new x+y;");
+    // test_minify("new x() ** 2", "new x**2;");
 
     // Test preservation of Webpack-specific comments
-    test(
-        "new Worker(// webpackFoo: 1\n // webpackBar: 2\n 'path');",
-        "new Worker(\n  // webpackFoo: 1\n  // webpackBar: 2\n  \"path\"\n);\n",
-    );
+    // TODO: Not support trailing comments yet
+    // test(
+    // "new Worker(// webpackFoo: 1\n // webpackBar: 2\n 'path');",
+    // "new Worker(\n  // webpackFoo: 1\n  // webpackBar: 2\n  \"path\"\n);\n",
+    // );
     test(
         "new Worker(/* webpackFoo: 1 */ /* webpackBar: 2 */ 'path');",
-        "new Worker(\n  /* webpackFoo: 1 */\n  /* webpackBar: 2 */\n  \"path\"\n);\n",
+        "new Worker(\n\t/* webpackFoo: 1 */\n\t/* webpackBar: 2 */\n\t\"path\"\n);\n",
     );
     test(
         "new Worker(\n    /* multi\n     * line\n     * webpackBar: */ 'path');",
-        "new Worker(\n  /* multi\n   * line\n   * webpackBar: */\n  \"path\"\n);\n",
+        "new Worker(\n\t/* multi\n\t* line\n\t* webpackBar: */\n\t\"path\"\n);\n",
     );
     test(
         "new Worker(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */);",
-        "new Worker(\n  /* webpackFoo: 1 */\n  \"path\"\n  /* webpackBar:2 */\n);\n",
+        "new Worker(\n\t/* webpackFoo: 1 */\n\t\"path\"\n\t/* webpackBar:2 */\n);\n",
     );
     test(
         "new Worker(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */ ,);",
-        "new Worker(\n  /* webpackFoo: 1 */\n  \"path\"\n);\n",
+        "new Worker(\n\t/* webpackFoo: 1 */\n\t\"path\"\n);\n",
     ); // Not currently handled
     test(
         "new Worker(/* webpackFoo: 1 */ 'path', /* webpackBar:2 */ );",
-        "new Worker(\n  /* webpackFoo: 1 */\n  \"path\"\n  /* webpackBar:2 */\n);\n",
+        "new Worker(\n\t/* webpackFoo: 1 */\n\t\"path\"\n\t/* webpackBar:2 */\n);\n",
     );
     test( "new Worker(new URL('path', /* webpackFoo: these can go anywhere */ import.meta.url))",
-		"new Worker(new URL(\n  \"path\",\n  /* webpackFoo: these can go anywhere */\n  import.meta.url\n));\n");
+    "new Worker(new URL(\n\t\"path\",\n\t/* webpackFoo: these can go anywhere */\n\timport.meta.url\n));\n");
+
+    // non-webpack comments
+    test("new Worker(/* before */ foo)", "new Worker(\n\t/* before */\n\tfoo\n);\n");
+    test("new Worker(/* before */ 'foo')", "new Worker(\n\t/* before */\n\t\"foo\"\n);\n");
+    test("new Worker(foo /* after */)", "new Worker(\n\tfoo\n\t/* after */\n);\n");
+    test("new Worker('foo' /* after */)", "new Worker(\n\t\"foo\"\n\t/* after */\n);\n");
 }
 
 #[test]
-#[ignore]
 fn test_call() {
     test("x()()()", "x()()();\n");
     test("x().y()[z]()", "x().y()[z]();\n");
@@ -238,17 +241,52 @@ fn test_call() {
     test_minify("(1, eval)?.(x)", "(1,eval)?.(x);");
     // testMangleMinify(t, "(1 ? eval : 2)(x)", "(0,eval)(x);");
     // testMangleMinify(t, "(1 ? eval : 2)?.(x)", "eval?.(x);");
+
+    // Webpack-specific comments
+    // TODO: Not support trailing comments yet
+    // test(
+    //     "import(// webpackFoo: 1\n // webpackBar: 2\n 'path');",
+    //     "import(\n  // webpackFoo: 1\n  // webpackBar: 2\n  \"path\"\n);\n",
+    // );
+    // test( "import(// webpackFoo: 1\n // webpackBar: 2\n 'path', {type: 'module'});", "import(\n  // webpackFoo: 1\n  // webpackBar: 2\n  \"path\",\n  { type: \"module\" }\n);\n");
+    test(
+        "require(/* webpackFoo: 1 */ /* webpackBar: 2 */ 'path');",
+        "require(\n\t/* webpackFoo: 1 */\n\t/* webpackBar: 2 */\n\t\"path\"\n);\n",
+    );
+    test( "require(/* webpackFoo: 1 */ /* webpackBar: 2 */ 'path', {type: 'module'});",
+        "require(\n\t/* webpackFoo: 1 */\n\t/* webpackBar: 2 */\n\t\"path\",\n\t{ type: \"module\" }\n);\n");
+    test(
+        "require(\n    /* multi\n     * line\n     * webpackBar: */ 'path');",
+        "require(\n\t/* multi\n\t* line\n\t* webpackBar: */\n\t\"path\"\n);\n",
+    );
+    test(
+        "require(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */);",
+        "require(\n\t/* webpackFoo: 1 */\n\t\"path\"\n\t/* webpackBar:2 */\n);\n",
+    );
+    test(
+        "require(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */ ,);",
+        "require(\n\t/* webpackFoo: 1 */\n\t\"path\"\n);\n",
+    ); // Not currently handled
+    test(
+        "require(/* webpackFoo: 1 */ 'path', /* webpackBar:2 */ );",
+        "require(\n\t/* webpackFoo: 1 */\n\t\"path\"\n\t/* webpackBar:2 */\n);\n",
+    );
+    test( "require(/* webpackFoo: 1 */ 'path', { type: 'module' } /* webpackBar:2 */ );", "require(\n\t/* webpackFoo: 1 */\n\t\"path\",\n\t{ type: \"module\" }\n\t/* webpackBar:2 */\n);\n");
+
+    // non-webpack comments
+    test("require(/* before */ foo)", "require(\n\t/* before */\n\tfoo\n);\n");
+    test("require(/* before */ 'foo')", "require(\n\t/* before */\n\t\"foo\"\n);\n");
+    test("require(foo /* after */)", "require(\n\tfoo\n\t/* after */\n);\n");
+    test("require('foo' /* after */)", "require(\n\t\"foo\"\n\t/* after */\n);\n");
 }
 
 #[test]
-#[ignore]
 fn test_member() {
     test("x.y[z]", "x.y[z];\n");
     test("((x+1).y+1)[z]", "((x + 1).y + 1)[z];\n");
 }
 
 #[test]
-#[ignore]
 fn test_comma() {
     test("1, 2, 3", "1, 2, 3;\n");
     test("(1, 2), 3", "1, 2, 3;\n");
@@ -261,14 +299,12 @@ fn test_comma() {
 }
 
 #[test]
-#[ignore]
 fn test_unary() {
     test("+(x--)", "+x--;\n");
     test("-(x++)", "-x++;\n");
 }
 
 #[test]
-#[ignore]
 fn test_nullish() {
     // "??" can't directly contain "||" or "&&"
     test("(a && b) ?? c", "(a && b) ?? c;\n");
@@ -284,35 +320,34 @@ fn test_nullish() {
 }
 
 #[test]
-#[ignore]
 fn test_string() {
-    // test( "let x = ''", "let x = \"\";\n");
-    // test( "let x = '\b'", "let x = \"\\b\";\n");
-    // test( "let x = '\f'", "let x = \"\\f\";\n");
-    // test( "let x = '\t'", "let x = \"\t\";\n");
-    // test( "let x = '\v'", "let x = \"\\v\";\n");
-    // test( "let x = '\\n'", "let x = \"\\n\";\n");
-    // test( "let x = '\\''", "let x = \"'\";\n");
-    // test( "let x = '\\\"'", "let x = '\"';\n");
-    // test( "let x = '\\'\"'", "let x = `'\"`;\n");
-    // test( "let x = '\\\\'", "let x = \"\\\\\";\n");
-    // test( "let x = '\x00'", "let x = \"\\0\";\n");
-    // test( "let x = '\x00!'", "let x = \"\\0!\";\n");
-    // test( "let x = '\x001'", "let x = \"\\x001\";\n");
-    // test( "let x = '\\0'", "let x = \"\\0\";\n");
-    // test( "let x = '\\0!'", "let x = \"\\0!\";\n");
-    // test( "let x = '\x07'", "let x = \"\\x07\";\n");
-    // test( "let x = '\x07!'", "let x = \"\\x07!\";\n");
-    // test( "let x = '\x071'", "let x = \"\\x071\";\n");
-    // test( "let x = '\\7'", "let x = \"\\x07\";\n");
-    // test( "let x = '\\7!'", "let x = \"\\x07!\";\n");
-    // test( "let x = '\\01'", "let x = \"\x01\";\n");
-    // test( "let x = '\x10'", "let x = \"\x10\";\n");
-    // test( "let x = '\\x10'", "let x = \"\x10\";\n");
-    // test( "let x = '\x1B'", "let x = \"\\x1B\";\n");
-    // test( "let x = '\\x1B'", "let x = \"\\x1B\";\n");
-    // test( "let x = '\uABCD'", "let x = \"\uABCD\";\n");
-    // test( "let x = '\\uABCD'", "let x = \"\uABCD\";\n");
+    test("let x = ''", "let x = \"\";\n");
+    test("let x = '\\b'", "let x = \"\\b\";\n");
+    test("let x = '\\f'", "let x = \"\\f\";\n");
+    test("let x = '\t'", "let x = \"\t\";\n");
+    test("let x = '\\v'", "let x = \"\\v\";\n");
+    test("let x = '\\n'", "let x = \"\\n\";\n");
+    test("let x = '\\''", "let x = \"'\";\n");
+    test("let x = '\\\"'", "let x = \"\\\"\";\n");
+    test("let x = '\\'\"'", "let x = \"'\\\"\";\n");
+    test("let x = '\\\\'", "let x = \"\\\\\";\n");
+    test("let x = '\x00'", "let x = \"\\0\";\n");
+    test("let x = '\x00!'", "let x = \"\\0!\";\n");
+    test("let x = '\x001'", "let x = \"\\x001\";\n");
+    test("let x = '\\0'", "let x = \"\\0\";\n");
+    test("let x = '\\0!'", "let x = \"\\0!\";\n");
+    test("let x = '\x07'", "let x = \"\\x07\";\n");
+    test("let x = '\x07!'", "let x = \"\\x07!\";\n");
+    test("let x = '\x071'", "let x = \"\\x071\";\n");
+    test("let x = '\\7'", "let x = \"\\x07\";\n");
+    test("let x = '\\7!'", "let x = \"\\x07!\";\n");
+    test("let x = '\\01'", "let x = \"\x01\";\n");
+    test("let x = '\x10'", "let x = \"\x10\";\n");
+    test("let x = '\\x10'", "let x = \"\x10\";\n");
+    test("let x = '\x1B'", "let x = \"\\x1B\";\n");
+    test("let x = '\\x1B'", "let x = \"\\x1B\";\n");
+    test("let x = '\u{ABCD}'", "let x = \"\u{ABCD}\";\n");
+    test("let x = '\\uABCD'", "let x = \"\u{ABCD}\";\n");
     // test( "let x = '\U000123AB'", "let x = \"\U000123AB\";\n");
     // test( "let x = '\\u{123AB}'", "let x = \"\U000123AB\";\n");
     // test( "let x = '\\uD808\\uDFAB'", "let x = \"\U000123AB\";\n");
@@ -328,16 +363,15 @@ fn test_string() {
 }
 
 #[test]
-#[ignore]
 fn test_template() {
     test("let x = `\\0`", "let x = `\\0`;\n");
-    test("let x = `\\x01`", "let x = `\x01`;\n");
+    test("let x = `\\x01`", "let x = `\\x01`;\n");
     test("let x = `\\0${0}`", "let x = `\\0${0}`;\n");
-    test("let x = `\\x01${0}`", "let x = `\x01${0}`;\n");
+    test("let x = `\\x01${0}`", "let x = `\\x01${0}`;\n");
     test("let x = `${0}\\0`", "let x = `${0}\\0`;\n");
-    test("let x = `${0}\\x01`", "let x = `${0}\x01`;\n");
+    test("let x = `${0}\\x01`", "let x = `${0}\\x01`;\n");
     test("let x = `${0}\\0${1}`", "let x = `${0}\\0${1}`;\n");
-    test("let x = `${0}\\x01${1}`", "let x = `${0}\x01${1}`;\n");
+    test("let x = `${0}\\x01${1}`", "let x = `${0}\\x01${1}`;\n");
 
     test("let x = String.raw`\\1`", "let x = String.raw`\\1`;\n");
     test("let x = String.raw`\\x01`", "let x = String.raw`\\x01`;\n");
@@ -353,7 +387,7 @@ fn test_template() {
     test("let x = `{y}$`", "let x = `{y}$`;\n");
     test("let x = `$}y{`", "let x = `$}y{`;\n");
     test("let x = `\\${y}`", "let x = `\\${y}`;\n");
-    test("let x = `$\\{y}`", "let x = `\\${y}`;\n");
+    test("let x = `$\\{y}`", "let x = `$\\{y}`;\n");
 
     test("await tag`x`", "await tag`x`;\n");
     test("await (tag`x`)", "await tag`x`;\n");
@@ -367,25 +401,24 @@ fn test_template() {
     test("new (tag`x`)", "new tag`x`();\n");
     test("new tag()`x`", "new tag()`x`;\n");
     test("(new tag)`x`", "new tag()`x`;\n");
-    test_minify("new tag`x`", "new tag`x`;");
-    test_minify("new (tag`x`)", "new tag`x`;");
-    test_minify("new tag()`x`", "new tag()`x`;");
-    test_minify("(new tag)`x`", "new tag()`x`;");
+    // test_minify("new tag`x`", "new tag`x`;");
+    // test_minify("new (tag`x`)", "new tag`x`;");
+    // test_minify("new tag()`x`", "new tag()`x`;");
+    // test_minify("(new tag)`x`", "new tag()`x`;");
 
     test("new tag`${x}`", "new tag`${x}`();\n");
     test("new (tag`${x}`)", "new tag`${x}`();\n");
     test("new tag()`${x}`", "new tag()`${x}`;\n");
     test("(new tag)`${x}`", "new tag()`${x}`;\n");
-    test_minify("new tag`${x}`", "new tag`${x}`;");
-    test_minify("new (tag`${x}`)", "new tag`${x}`;");
-    test_minify("new tag()`${x}`", "new tag()`${x}`;");
-    test_minify("(new tag)`${x}`", "new tag()`${x}`;");
+    // test_minify("new tag`${x}`", "new tag`${x}`;");
+    // test_minify("new (tag`${x}`)", "new tag`${x}`;");
+    // test_minify("new tag()`${x}`", "new tag()`${x}`;");
+    // test_minify("(new tag)`${x}`", "new tag()`${x}`;");
 }
 
 #[test]
-#[ignore]
 fn test_object() {
-    test("let x = {'(':')'}", "let x = { \"(\": \");\" };\n");
+    test("let x = {'(':')'}", "let x = { \"(\": \")\" };\n");
     test("({})", "({});\n");
     test("({}.x)", "({}).x;\n");
     test("({} = {})", "({} = {});\n");
@@ -398,15 +431,15 @@ fn test_object() {
     // "{ __proto__: __proto__ }" must not become "{ __proto__ }"
     test(
         "function foo(__proto__) { return { __proto__: __proto__ } }",
-        "function foo(__proto__) {\n  return { __proto__: __proto__ };\n}\n",
+        "function foo(__proto__) {\n\treturn { __proto__: __proto__ };\n}\n",
     );
     test(
         "function foo(__proto__) { return { '__proto__': __proto__ } }",
-        "function foo(__proto__) {\n  return { \"__proto__\": __proto__ };\n}\n",
+        "function foo(__proto__) {\n\treturn { \"__proto__\": __proto__ };\n}\n",
     );
     test(
         "function foo(__proto__) { return { ['__proto__']: __proto__ } }",
-        "function foo(__proto__) {\n  return { [\"__proto__\"]: __proto__ };\n}\n",
+        "function foo(__proto__) {\n\treturn { [\"__proto__\"]: __proto__ };\n}\n",
     );
     test(
         "import { __proto__ } from 'foo'; let foo = () => ({ __proto__: __proto__ })",
@@ -431,44 +464,42 @@ fn test_object() {
 }
 
 #[test]
-#[ignore]
 fn test_for() {
     // Make sure "in" expressions are forbidden in the right places
-    test("for ((a in b);;);", "for ((a in b); ; ) ;\n");
-    test("for (a ? b : (c in d);;);", "for (a ? b : (c in d); ; ) ;\n");
-    test("for ((a ? b : c in d).foo;;);", "for ((a ? b : c in d).foo; ; ) ;\n");
-    test("for (var x = (a in b);;);", "for (var x = (a in b); ; ) ;\n");
-    test("for (x = (a in b);;);", "for (x = (a in b); ; ) ;\n");
-    test("for (x == (a in b);;);", "for (x == (a in b); ; ) ;\n");
-    test("for (1 * (x == a in b);;);", "for (1 * (x == a in b); ; ) ;\n");
-    test("for (a ? b : x = (c in d);;);", "for (a ? b : x = (c in d); ; ) ;\n");
-    test("for (var x = y = (a in b);;);", "for (var x = y = (a in b); ; ) ;\n");
-    test("for ([a in b];;);", "for ([a in b]; ; ) ;\n");
-    test("for (x(a in b);;);", "for (x(a in b); ; ) ;\n");
-    test("for (x[a in b];;);", "for (x[a in b]; ; ) ;\n");
-    test("for (x?.[a in b];;);", "for (x?.[a in b]; ; ) ;\n");
-    test("for ((x => a in b);;);", "for ((x) => (a in b); ; ) ;\n");
+    test("for ((a in b);;);", "for ((a in b);;);\n");
+    test("for (a ? b : (c in d);;);", "for (a ? b : (c in d);;);\n");
+    test("for ((a ? b : c in d).foo;;);", "for ((a ? b : c in d).foo;;);\n");
+    test("for (var x = (a in b);;);", "for (var x = (a in b);;);\n");
+    test("for (x = (a in b);;);", "for (x = (a in b);;);\n");
+    test("for (x == (a in b);;);", "for (x == (a in b);;);\n");
+    test("for (1 * (x == a in b);;);", "for (1 * (x == a in b);;);\n");
+    test("for (a ? b : x = (c in d);;);", "for (a ? b : x = (c in d);;);\n");
+    test("for (var x = y = (a in b);;);", "for (var x = y = (a in b);;);\n");
+    test("for ([a in b];;);", "for ([a in b];;);\n");
+    test("for (x(a in b);;);", "for (x(a in b);;);\n");
+    test("for (x[a in b];;);", "for (x[a in b];;);\n");
+    test("for (x?.[a in b];;);", "for (x?.[a in b];;);\n");
+    test("for ((x => a in b);;);", "for ((x) => (a in b);;);\n");
 
     // Make sure for-of loops with commas are wrapped in parentheses
-    test("for (let a in b, c);", "for (let a in b, c) ;\n");
-    test("for (let a of (b, c));", "for (let a of (b, c)) ;\n");
+    test("for (let a in b, c);", "for (let a in b, c);\n");
+    test("for (let a of (b, c));", "for (let a of (b, c));\n");
 }
 
 #[test]
-#[ignore]
 fn test_function() {
-    test("function foo(a = (b, c), ...d) {}", "function foo(a = (b, c), ...d) {\n}\n");
+    test("function foo(a = (b, c), ...d) {}", "function foo(a = (b, c), ...d) {}\n");
     test(
         "function foo({[1 + 2]: a = 3} = {[1 + 2]: 3}) {}",
-        "function foo({ [1 + 2]: a = 3 } = { [1 + 2]: 3 }) {\n}\n",
+        "function foo({ [1 + 2]: a = 3 } = { [1 + 2]: 3 }) {}\n",
     );
     test(
         "function foo([a = (1, 2), ...[b, ...c]] = [1, [2, 3]]) {}",
-        "function foo([a = (1, 2), ...[b, ...c]] = [1, [2, 3]]) {\n}\n",
+        "function foo([a = (1, 2), ...[b, ...c]] = [1, [2, 3]]) {}\n",
     );
-    test("function foo([] = []) {}", "function foo([] = []) {\n}\n");
-    test("function foo([,] = [,]) {}", "function foo([,] = [,]) {\n}\n");
-    test("function foo([,,] = [,,]) {}", "function foo([, ,] = [, ,]) {\n}\n");
+    test("function foo([] = []) {}", "function foo([] = []) {}\n");
+    test("function foo([,] = [,]) {}", "function foo([,] = [,]) {}\n");
+    test("function foo([,,] = [,,]) {}", "function foo([, ,] = [, ,]) {}\n");
 }
 
 #[test]
@@ -502,99 +533,94 @@ fn test_comments_and_parentheses() {
 }
 
 #[test]
-#[ignore]
 fn test_pure_comment() {
-    test("function* foo() {}", "function* foo() {\n}\n");
-    test("(function* () {})", "(function* () {\n});\n");
-    test("(function* foo() {})", "(function* foo() {\n});\n");
+    test("function* foo() {}", "function* foo() {}\n");
+    test("(function* () {})", "(function* () {});\n");
+    test("(function* foo() {})", "(function* foo() {});\n");
 
-    test("new (function() {})", "new function() {\n}();\n");
-    test("new (function() {})()", "new function() {\n}();\n");
-    test("/*@__PURE__*/new (function() {})()", "/* @__PURE__ */ new function() {\n}();\n");
+    test("new (function() {})", "new function() {}();\n");
+    test("new (function() {})()", "new function() {}();\n");
+    test("/*@__PURE__*/new (function() {})()", "/*@__PURE__*/ new function() {}();\n");
 
-    test("export default (function() { foo() })", "export default (function() {\n  foo();\n});\n");
+    test("export default (function() { foo() })", "export default (function() {\n\tfoo();\n});\n");
     test(
         "export default (function() { foo() })()",
-        "export default (function() {\n  foo();\n})();\n",
+        "export default (function() {\n\tfoo();\n})();\n",
     );
     test(
         "export default /*@__PURE__*/(function() { foo() })()",
-        "export default /* @__PURE__ */ (function() {\n  foo();\n})();\n",
+        "export default /*@__PURE__*/ (function() {\n\tfoo();\n})();\n",
     );
 }
 
 #[test]
-#[ignore]
 fn test_generator() {
-    test("function* foo() {}", "function* foo() {\n}\n");
-    test("(function* () {})", "(function* () {\n});\n");
-    test("(function* foo() {})", "(function* foo() {\n});\n");
+    test("function* foo() {}", "function* foo() {}\n");
+    test("(function* () {})", "(function* () {});\n");
+    test("(function* foo() {})", "(function* foo() {});\n");
 
-    test("class Foo { *foo() {} }", "class Foo {\n  *foo() {\n  }\n}\n");
-    test("class Foo { static *foo() {} }", "class Foo {\n  static *foo() {\n  }\n}\n");
-    test("class Foo { *[foo]() {} }", "class Foo {\n  *[foo]() {\n  }\n}\n");
-    test("class Foo { static *[foo]() {} }", "class Foo {\n  static *[foo]() {\n  }\n}\n");
+    test("class Foo { *foo() {} }", "class Foo {\n\t*foo() {}\n}\n");
+    test("class Foo { static *foo() {} }", "class Foo {\n\tstatic *foo() {}\n}\n");
+    test("class Foo { *[foo]() {} }", "class Foo {\n\t*[foo]() {}\n}\n");
+    test("class Foo { static *[foo]() {} }", "class Foo {\n\tstatic *[foo]() {}\n}\n");
 
-    test("(class { *foo() {} })", "(class {\n  *foo() {\n  }\n});\n");
-    test("(class { static *foo() {} })", "(class {\n  static *foo() {\n  }\n});\n");
-    test("(class { *[foo]() {} })", "(class {\n  *[foo]() {\n  }\n});\n");
-    test("(class { static *[foo]() {} })", "(class {\n  static *[foo]() {\n  }\n});\n");
+    test("(class { *foo() {} })", "(class {\n\t*foo() {}\n});\n");
+    test("(class { static *foo() {} })", "(class {\n\tstatic *foo() {}\n});\n");
+    test("(class { *[foo]() {} })", "(class {\n\t*[foo]() {}\n});\n");
+    test("(class { static *[foo]() {} })", "(class {\n\tstatic *[foo]() {}\n});\n");
 }
 
 #[test]
-#[ignore]
 fn test_arrow() {
-    test("() => {}", "() => {\n};\n");
+    test("() => {}", "() => {};\n");
     test("x => (x, 0)", "(x) => (x, 0);\n");
-    test("x => {y}", "(x) => {\n  y;\n};\n");
-    test("(a = (b, c), ...d) => {}", "(a = (b, c), ...d) => {\n};\n");
+    test("x => {y}", "(x) => {\n\ty;\n};\n");
+    test("(a = (b, c), ...d) => {}", "(a = (b, c), ...d) => {};\n");
     test(
         "({[1 + 2]: a = 3} = {[1 + 2]: 3}) => {}",
-        "({ [1 + 2]: a = 3 } = { [1 + 2]: 3 }) => {\n};\n",
+        "({ [1 + 2]: a = 3 } = { [1 + 2]: 3 }) => {};\n",
     );
     test(
         "([a = (1, 2), ...[b, ...c]] = [1, [2, 3]]) => {}",
-        "([a = (1, 2), ...[b, ...c]] = [1, [2, 3]]) => {\n};\n",
+        "([a = (1, 2), ...[b, ...c]] = [1, [2, 3]]) => {};\n",
     );
-    test("([] = []) => {}", "([] = []) => {\n};\n");
-    test("([,] = [,]) => {}", "([,] = [,]) => {\n};\n");
-    test("([,,] = [,,]) => {}", "([, ,] = [, ,]) => {\n};\n");
-    test("a = () => {}", "a = () => {\n};\n");
-    test("a || (() => {})", "a || (() => {\n});\n");
-    test("({a = b, c = d}) => {}", "({ a = b, c = d }) => {\n};\n");
-    test("([{a = b, c = d} = {}] = []) => {}", "([{ a = b, c = d } = {}] = []) => {\n};\n");
-    test("({a: [b = c] = []} = {}) => {}", "({ a: [b = c] = [] } = {}) => {\n};\n");
+    test("([] = []) => {}", "([] = []) => {};\n");
+    test("([,] = [,]) => {}", "([,] = [,]) => {};\n");
+    test("([,,] = [,,]) => {}", "([, ,] = [, ,]) => {};\n");
+    test("a = () => {}", "a = () => {};\n");
+    test("a || (() => {})", "a || (() => {});\n");
+    test("({a = b, c = d}) => {}", "({ a = b, c = d }) => {};\n");
+    test("([{a = b, c = d} = {}] = []) => {}", "([{ a = b, c = d } = {}] = []) => {};\n");
+    test("({a: [b = c] = []} = {}) => {}", "({ a: [b = c] = [] } = {}) => {};\n");
 
     // These are not arrow functions but initially look like one
     test("(a = b, c)", "a = b, c;\n");
     test("([...a = b])", "[...a = b];\n");
     test("([...a, ...b])", "[...a, ...b];\n");
-    test("({a: b, c() {}})", "({ a: b, c() {\n} });\n");
-    test("({a: b, get c() {}})", "({ a: b, get c() {\n} });\n");
-    test("({a: b, set c(x) {}})", "({ a: b, set c(x) {\n} });\n");
+    test("({a: b, c() {}})", "({\n\ta: b,\n\tc() {}\n});\n");
+    test("({a: b, get c() {}})", "({\n\ta: b,\n\tget c() {}\n});\n");
+    test("({a: b, set c(x) {}})", "({\n\ta: b,\n\tset c(x) {}\n});\n");
 }
 
 #[test]
-#[ignore]
 fn test_class() {
-    test("class Foo extends (a, b) {}", "class Foo extends (a, b) {\n}\n");
-    test("class Foo { get foo() {} }", "class Foo {\n  get foo() {\n  }\n}\n");
-    test("class Foo { set foo(x) {} }", "class Foo {\n  set foo(x) {\n  }\n}\n");
-    test("class Foo { static foo() {} }", "class Foo {\n  static foo() {\n  }\n}\n");
-    test("class Foo { static get foo() {} }", "class Foo {\n  static get foo() {\n  }\n}\n");
-    test("class Foo { static set foo(x) {} }", "class Foo {\n  static set foo(x) {\n  }\n}\n");
+    test("class Foo extends (a, b) {}", "class Foo extends (a, b) {}\n");
+    test("class Foo { get foo() {} }", "class Foo {\n\tget foo() {}\n}\n");
+    test("class Foo { set foo(x) {} }", "class Foo {\n\tset foo(x) {}\n}\n");
+    test("class Foo { static foo() {} }", "class Foo {\n\tstatic foo() {}\n}\n");
+    test("class Foo { static get foo() {} }", "class Foo {\n\tstatic get foo() {}\n}\n");
+    test("class Foo { static set foo(x) {} }", "class Foo {\n\tstatic set foo(x) {}\n}\n");
 }
 
 #[test]
-#[ignore]
 fn test_auto_accessors() {
     test(
         "class Foo { accessor x; static accessor y }",
-        "class Foo {\n  accessor x;\n  static accessor y;\n}\n",
+        "class Foo {\n\taccessor x;\n\tstatic accessor y;\n}\n",
     );
     test(
         "class Foo { accessor [x]; static accessor [y] }",
-        "class Foo {\n  accessor [x];\n  static accessor [y];\n}\n",
+        "class Foo {\n\taccessor [x];\n\tstatic accessor [y];\n}\n",
     );
     test_minify(
         "class Foo { accessor x; static accessor y }",
@@ -607,105 +633,103 @@ fn test_auto_accessors() {
 }
 
 #[test]
-#[ignore]
 fn test_private_identifiers() {
     test(
         "class Foo { #foo; foo() { return #foo in this } }",
-        "class Foo {\n  #foo;\n  foo() {\n    return #foo in this;\n  }\n}\n",
+        "class Foo {\n\t#foo;\n\tfoo() {\n\t\treturn #foo in this;\n\t}\n}\n",
     );
-    test_minify(
-        "class Foo { #foo; foo() { return #foo in this } }",
-        "class Foo{#foo;foo(){return#foo in this}}",
-    );
+    // FIXME
+    // test_minify(
+    // "class Foo { #foo; foo() { return #foo in this } }",
+    // "class Foo{#foo;foo(){return#foo in this}}",
+    // );
 }
 
 #[test]
-#[ignore]
 fn test_decorators() {
-    // example := "class Foo {\n@w\nw; @x x; @a1\n@b1@b2\n@c1@c2@c3\ny = @y1 @y2 class {}; @a1\n@b1@b2\n@c1@c2@c3 z =\n@z1\n@z2\nclass {}}"
-    // test( example, "class Foo {\n  @w\n  w;\n  @x x;\n  @a1\n  @b1 @b2\n  @c1 @c2 @c3\n  "+
-    // "y = @y1 @y2 class {\n  };\n  @a1\n  @b1 @b2\n  @c1 @c2 @c3 z = @z1 @z2 class {\n  };\n}\n");
+    let source = "class Foo {\n@w\nw; @x x; @a1\n@b1@b2\n@c1@c2@c3\ny = @y1 @y2 class {}; @a1\n@b1@b2\n@c1@c2@c3 z =\n@z1\n@z2\nclass {}}";
+    let expect = "class Foo {\n\t@w w;\n\t@x x;\n\t@a1 @b1 @b2 @c1 @c2 @c3 y = @y1 @y2 class {};\n\t@a1 @b1 @b2 @c1 @c2 @c3 z = @z1 @z2 class {};\n}\n";
+    test(source, expect);
     // test_minify( example, "class Foo{@w w;@x x;@a1@b1@b2@c1@c2@c3 y=@y1@y2 class{};@a1@b1@b2@c1@c2@c3 z=@z1@z2 class{}}");
 }
 
 #[test]
-#[ignore]
 fn test_import() {
-    test("import('path');", "import(\"path\");;\n"); // The semicolon must not be a separate statement
+    test("import('path');", "import(\"path\");\n"); // The semicolon must not be a separate statement
 
-    // Test preservation of Webpack-specific comments
-    test(
-        "import(// webpackFoo: 1\n // webpackBar: 2\n 'path');",
-        "import(\n  // webpackFoo: 1\n  // webpackBar: 2\n  \"path\"\n);\n",
-    );
-    test( "import(// webpackFoo: 1\n // webpackBar: 2\n 'path', {type: 'module'});", "import(\n  // webpackFoo: 1\n  // webpackBar: 2\n  \"path\",\n  { type: \"module\" }\n);\n");
+    // TODO: Not support trailing comments yet
+    // test(
+    //     "import(// webpackFoo: 1\n // webpackBar: 2\n 'path');",
+    //     "import(\n  // webpackFoo: 1\n  // webpackBar: 2\n  \"path\"\n);\n",
+    // );
+    // test( "import(// webpackFoo: 1\n // webpackBar: 2\n 'path', {type: 'module'});", "import(\n  // webpackFoo: 1\n  // webpackBar: 2\n  \"path\",\n  { type: \"module\" }\n);\n");
     test(
         "import(/* webpackFoo: 1 */ /* webpackBar: 2 */ 'path');",
-        "import(\n  /* webpackFoo: 1 */\n  /* webpackBar: 2 */\n  \"path\"\n);\n",
+        "import(\n\t/* webpackFoo: 1 */\n\t/* webpackBar: 2 */\n\t\"path\"\n);\n",
     );
-    test( "import(/* webpackFoo: 1 */ /* webpackBar: 2 */ 'path', {type: 'module'});", "import(\n  /* webpackFoo: 1 */\n  /* webpackBar: 2 */\n  \"path\",\n  { type: \"module\" }\n);\n");
+    test( "import(/* webpackFoo: 1 */ /* webpackBar: 2 */ 'path', {type: 'module'});",
+        "import(\n\t/* webpackFoo: 1 */\n\t/* webpackBar: 2 */\n\t\"path\",\n\t{ type: \"module\" }\n);\n");
     test(
         "import(\n    /* multi\n     * line\n     * webpackBar: */ 'path');",
-        "import(\n  /* multi\n   * line\n   * webpackBar: */\n  \"path\"\n);\n",
+        "import(\n\t/* multi\n\t* line\n\t* webpackBar: */\n\t\"path\"\n);\n",
     );
     test(
         "import(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */);",
-        "import(\n  /* webpackFoo: 1 */\n  \"path\"\n  /* webpackBar:2 */\n);\n",
+        "import(\n\t/* webpackFoo: 1 */\n\t\"path\"\n\t/* webpackBar:2 */\n);\n",
     );
     test(
         "import(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */ ,);",
-        "import(\n  /* webpackFoo: 1 */\n  \"path\"\n);\n",
+        "import(\n\t/* webpackFoo: 1 */\n\t\"path\"\n);\n",
     ); // Not currently handled
     test(
         "import(/* webpackFoo: 1 */ 'path', /* webpackBar:2 */ );",
-        "import(\n  /* webpackFoo: 1 */\n  \"path\"\n  /* webpackBar:2 */\n);\n",
+        "import(\n\t/* webpackFoo: 1 */\n\t\"path\"\n\t/* webpackBar:2 */\n);\n",
     );
-    test( "import(/* webpackFoo: 1 */ 'path', { type: 'module' } /* webpackBar:2 */ );", "import(\n  /* webpackFoo: 1 */\n  \"path\",\n  { type: \"module\" }\n  /* webpackBar:2 */\n);\n");
+    test( "import(/* webpackFoo: 1 */ 'path', { type: 'module' } /* webpackBar:2 */ );", "import(\n\t/* webpackFoo: 1 */\n\t\"path\",\n\t{ type: \"module\" }\n\t/* webpackBar:2 */\n);\n");
     test( "import(new URL('path', /* webpackFoo: these can go anywhere */ import.meta.url))",
-		"import(new URL(\n  \"path\",\n  /* webpackFoo: these can go anywhere */\n  import.meta.url\n));\n");
+    "import(new URL(\n\t\"path\",\n\t/* webpackFoo: these can go anywhere */\n\timport.meta.url\n));\n");
+
+    // non-webpack comments
+    test("import(/* before */ foo)", "import(\n\t/* before */\n\tfoo\n);\n");
+    test("import(/* before */ 'foo')", "import(\n\t/* before */\n\t\"foo\"\n);\n");
+    test("import(foo /* after */)", "import(\n\tfoo\n\t/* after */\n);\n");
+    test("import('foo' /* after */)", "import(\n\t\"foo\"\n\t/* after */\n);\n");
 }
 
 #[test]
-#[ignore]
 fn test_export_default() {
-    test("export default function() {}", "export default function() {\n}\n");
-    test("export default function foo() {}", "export default function foo() {\n}\n");
-    test("export default async function() {}", "export default async function() {\n}\n");
-    test("export default async function foo() {}", "export default async function foo() {\n}\n");
-    test("export default class {}", "export default class {\n}\n");
-    test("export default class foo {}", "export default class foo {\n}\n");
+    test("export default function() {}", "export default function() {}\n");
+    test("export default function foo() {}", "export default function foo() {}\n");
+    test("export default async function() {}", "export default async function() {}\n");
+    test("export default async function foo() {}", "export default async function foo() {}\n");
+    test("export default class {}", "export default class {}\n");
+    test("export default class foo {}", "export default class foo {}\n");
 
-    test("export default (function() {})", "export default (function() {\n});\n");
-    test("export default (function foo() {})", "export default (function foo() {\n});\n");
-    test("export default (async function() {})", "export default (async function() {\n});\n");
-    test(
-        "export default (async function foo() {})",
-        "export default (async function foo() {\n});\n",
-    );
-    test("export default (class {})", "export default (class {\n});\n");
-    test("export default (class foo {})", "export default (class foo {\n});\n");
+    test("export default (function() {})", "export default (function() {});\n");
+    test("export default (function foo() {})", "export default (function foo() {});\n");
+    test("export default (async function() {})", "export default (async function() {});\n");
+    test("export default (async function foo() {})", "export default (async function foo() {});\n");
+    test("export default (class {})", "export default (class {});\n");
+    test("export default (class foo {})", "export default (class foo {});\n");
 
     test(
         "export default (function() {}.toString())",
-        "export default (function() {\n}).toString();\n",
+        "export default (function() {}).toString();\n",
     );
     test(
         "export default (function foo() {}.toString())",
-        "export default (function foo() {\n}).toString();\n",
+        "export default (function foo() {}).toString();\n",
     );
     test(
         "export default (async function() {}.toString())",
-        "export default (async function() {\n}).toString();\n",
+        "export default (async function() {}).toString();\n",
     );
     test(
         "export default (async function foo() {}.toString())",
-        "export default (async function foo() {\n}).toString();\n",
+        "export default (async function foo() {}).toString();\n",
     );
-    test("export default (class {}.toString())", "export default (class {\n}).toString();\n");
-    test(
-        "export default (class foo {}.toString())",
-        "export default (class foo {\n}).toString();\n",
-    );
+    test("export default (class {}.toString())", "export default (class {}).toString();\n");
+    test("export default (class foo {}.toString())", "export default (class foo {}).toString();\n");
 
     test_minify("export default function() {}", "export default function(){}");
     test_minify("export default function foo() {}", "export default function foo(){}");
@@ -716,7 +740,6 @@ fn test_export_default() {
 }
 
 #[test]
-#[ignore]
 fn test_whitespace() {
     test("- -x", "- -x;\n");
     test("+ -x", "+-x;\n");
@@ -768,7 +791,7 @@ fn test_whitespace() {
 
     test_minify("()=>({})", "()=>({});");
     test_minify("()=>({}[1])", "()=>({})[1];");
-    test_minify("()=>({}+0)", "()=>\"[object Object]0\";");
+    // test_minify("()=>({}+0)", "()=>\"[object Object]0\";");
     test_minify("()=>function(){}", "()=>function(){};");
 
     test_minify("(function(){})", "(function(){});");
@@ -855,7 +878,6 @@ fn test_es5() {
 }
 
 #[test]
-#[ignore]
 fn test_ascii_only() {
     test("let π = 'π'", "let π = \"π\";\n");
     test("let π_ = 'π'", "let π_ = \"π\";\n");
@@ -905,96 +927,98 @@ fn test_ascii_only() {
     // test_minifyASCII(t, "(class 𐀀 extends π {})", "(class \\u{10000} extends \\u03C0{});");
 }
 
-// #[test]#[ignore] fn test_jsx() {
-// testJSX(t, "<a/>", "<a />;\n");
-// testJSX(t, "<A/>", "<A />;\n");
-// testJSX(t, "<a.b/>", "<a.b />;\n");
-// testJSX(t, "<A.B/>", "<A.B />;\n");
-// testJSX(t, "<a-b/>", "<a-b />;\n");
-// testJSX(t, "<a:b/>", "<a:b />;\n");
-// testJSX(t, "<a></a>", "<a />;\n");
-// testJSX(t, "<a b></a>", "<a b />;\n");
+#[test]
+fn test_jsx() {
+    test("<a/>", "<a />;\n");
+    test("<A/>", "<A />;\n");
+    test("<a.b/>", "<a.b />;\n");
+    test("<A.B/>", "<A.B />;\n");
+    test("<a-b/>", "<a-b />;\n");
+    test("<a:b/>", "<a:b />;\n");
+    test("<a></a>", "<a></a>;\n");
+    test("<a b></a>", "<a b></a>;\n");
 
-// testJSX(t, "<a b={true}></a>", "<a b={true} />;\n");
-// testJSX(t, "<a b='x'></a>", "<a b='x' />;\n");
-// testJSX(t, "<a b=\"x\"></a>", "<a b=\"x\" />;\n");
-// testJSX(t, "<a b={'x'}></a>", "<a b={\"x\"} />;\n");
-// testJSX(t, "<a b={`'`}></a>", "<a b={`'`} />;\n");
-// testJSX(t, "<a b={`\"`}></a>", "<a b={`\"`} />;\n");
-// testJSX(t, "<a b={`'\"`}></a>", "<a b={`'\"`} />;\n");
-// testJSX(t, "<a b=\"&quot;\"></a>", "<a b=\"&quot;\" />;\n");
-// testJSX(t, "<a b=\"&amp;\"></a>", "<a b=\"&amp;\" />;\n");
+    test("<a b={true}></a>", "<a b={true}></a>;\n");
+    test("<a b='x'></a>", "<a b=\"x\"></a>;\n");
+    test("<a b=\"x\"></a>", "<a b=\"x\"></a>;\n");
+    test("<a b={'x'}></a>", "<a b={\"x\"}></a>;\n");
+    test("<a b={`'`}></a>", "<a b={`'`}></a>;\n");
+    test("<a b={`\"`}></a>", "<a b={`\"`}></a>;\n");
+    test("<a b={`'\"`}></a>", "<a b={`'\"`}></a>;\n");
+    test("<a b=\"&quot;\"></a>", "<a b=\"&quot;\"></a>;\n");
+    test("<a b=\"&amp;\"></a>", "<a b=\"&amp;\"></a>;\n");
 
-// testJSX(t, "<a>x</a>", "<a>x</a>;\n");
-// testJSX(t, "<a>x\ny</a>", "<a>x\ny</a>;\n");
-// testJSX(t, "<a>{'x'}{'y'}</a>", "<a>{\"x\"}{\"y\"}</a>;\n");
-// testJSX(t, "<a> x</a>", "<a> x</a>;\n");
-// testJSX(t, "<a>x </a>", "<a>x </a>;\n");
-// testJSX(t, "<a>&#10;</a>", "<a>&#10;</a>;\n");
-// testJSX(t, "<a>&amp;</a>", "<a>&amp;</a>;\n");
-// testJSX(t, "<a>&lt;</a>", "<a>&lt;</a>;\n");
-// testJSX(t, "<a>&gt;</a>", "<a>&gt;</a>;\n");
-// testJSX(t, "<a>&#123;</a>", "<a>&#123;</a>;\n");
-// testJSX(t, "<a>&#125;</a>", "<a>&#125;</a>;\n");
+    test("<a>x</a>", "<a>x</a>;\n");
+    test("<a>x\ny</a>", "<a>x\ny</a>;\n");
+    test("<a>{'x'}{'y'}</a>", "<a>{\"x\"}{\"y\"}</a>;\n");
+    test("<a> x</a>", "<a> x</a>;\n");
+    test("<a>x </a>", "<a>x </a>;\n");
+    test("<a>&#10;</a>", "<a>&#10;</a>;\n");
+    test("<a>&amp;</a>", "<a>&amp;</a>;\n");
+    test("<a>&lt;</a>", "<a>&lt;</a>;\n");
+    test("<a>&gt;</a>", "<a>&gt;</a>;\n");
+    test("<a>&#123;</a>", "<a>&#123;</a>;\n");
+    test("<a>&#125;</a>", "<a>&#125;</a>;\n");
 
-// testJSX(t, "<a><x/></a>", "<a><x /></a>;\n");
-// testJSX(t, "<a><x/><y/></a>", "<a><x /><y /></a>;\n");
-// testJSX(t, "<a>b<c/>d</a>", "<a>b<c />d</a>;\n");
+    test("<a><x/></a>", "<a><x /></a>;\n");
+    test("<a><x/><y/></a>", "<a><x /><y /></a>;\n");
+    test("<a>b<c/>d</a>", "<a>b<c />d</a>;\n");
 
-// testJSX(t, "<></>", "<></>;\n");
-// testJSX(t, "<>x<y/>z</>", "<>x<y />z</>;\n");
+    test("<></>", "<></>;\n");
+    test("<>x<y/>z</>", "<>x<y />z</>;\n");
 
-// // JSX elements as JSX attribute values
-// testJSX(t, "<a b=<c/>/>", "<a b=<c /> />;\n");
-// testJSX(t, "<a b=<>c</>/>", "<a b=<>c</> />;\n");
-// testJSX(t, "<a b=<>{c}</>/>", "<a b=<>{c}</> />;\n");
-// testJSX(t, "<a b={<c/>}/>", "<a b={<c />} />;\n");
-// testJSX(t, "<a b={<>c</>}/>", "<a b={<>c</>} />;\n");
-// testJSX(t, "<a b={<>{c}</>}/>", "<a b={<>{c}</>} />;\n");
+    // JSX elements as JSX attribute values
+    test("<a b=<c/>/>", "<a b=<c /> />;\n");
+    test("<a b=<>c</>/>", "<a b=<>c</> />;\n");
+    test("<a b=<>{c}</>/>", "<a b=<>{c}</> />;\n");
+    test("<a b={<c/>}/>", "<a b={<c />} />;\n");
+    test("<a b={<>c</>}/>", "<a b={<>c</>} />;\n");
+    test("<a b={<>{c}</>}/>", "<a b={<>{c}</>} />;\n");
 
-// // These can't be escaped because JSX lacks a syntax for escapes
-// testJSXASCII(t, "<π/>", "<π />;\n");
-// testJSXASCII(t, "<π.𐀀/>", "<π.𐀀 />;\n");
-// testJSXASCII(t, "<𐀀.π/>", "<𐀀.π />;\n");
-// testJSXASCII(t, "<π>x</π>", "<π>x</π>;\n");
-// testJSXASCII(t, "<𐀀>x</𐀀>", "<𐀀>x</𐀀>;\n");
-// testJSXASCII(t, "<a π/>", "<a π />;\n");
-// testJSXASCII(t, "<a 𐀀/>", "<a 𐀀 />;\n");
+    // These can't be escaped because JSX lacks a syntax for escapes
+    // testJSXASCII(t, "<π/>", "<π />;\n");
+    // testJSXASCII(t, "<π.𐀀/>", "<π.𐀀 />;\n");
+    // testJSXASCII(t, "<𐀀.π/>", "<𐀀.π />;\n");
+    // testJSXASCII(t, "<π>x</π>", "<π>x</π>;\n");
+    // testJSXASCII(t, "<𐀀>x</𐀀>", "<𐀀>x</𐀀>;\n");
+    // testJSXASCII(t, "<a π/>", "<a π />;\n");
+    // testJSXASCII(t, "<a 𐀀/>", "<a 𐀀 />;\n");
 
-// // JSX text is deliberately not printed as ASCII when JSX preservation is
-// // enabled. This is because:
-// //
-// // a) The JSX specification doesn't say how JSX text is supposed to be interpreted
-// // b) Enabling JSX preservation means that JSX will be transformed again anyway
-// // c) People do very weird/custom things with JSX that "preserve" shouldn't break
-// //
-// // See also: https://github.com/evanw/esbuild/issues/3605
-// testJSXASCII(t, "<a b='π'/>", "<a b='π' />;\n");
-// testJSXASCII(t, "<a b='𐀀'/>", "<a b='𐀀' />;\n");
-// testJSXASCII(t, "<a>π</a>", "<a>π</a>;\n");
-// testJSXASCII(t, "<a>𐀀</a>", "<a>𐀀</a>;\n");
+    // JSX text is deliberately not printed as ASCII when JSX preservation is
+    // enabled. This is because:
+    //
+    // a) The JSX specification doesn't say how JSX text is supposed to be interpreted
+    // b) Enabling JSX preservation means that JSX will be transformed again anyway
+    // c) People do very weird/custom things with JSX that "preserve" shouldn't break
+    //
+    // See also: https://github.com/evanw/esbuild/issues/3605
+    // testJSXASCII(t, "<a b='π'/>", "<a b='π' />;\n");
+    // testJSXASCII(t, "<a b='𐀀'/>", "<a b='𐀀' />;\n");
+    // testJSXASCII(t, "<a>π</a>", "<a>π</a>;\n");
+    // testJSXASCII(t, "<a>𐀀</a>", "<a>𐀀</a>;\n");
 
-// testJSXMinify(t, "<a b c={x,y} d='true'/>", "<a b c={(x,y)}d='true'/>;");
-// testJSXMinify(t, "<a><b/><c/></a>", "<a><b/><c/></a>;");
-// testJSXMinify(t, "<a> x <b/> y </a>", "<a> x <b/> y </a>;");
-// testJSXMinify(t, "<a>{' x '}{'<b/>'}{' y '}</a>", "<a>{\" x \"}{\"<b/>\"}{\" y \"}</a>;");
-// }
+    // testJSXMinify(t, "<a b c={x,y} d='true'/>", "<a b c={(x,y)}d='true'/>;");
+    // testJSXMinify(t, "<a><b/><c/></a>", "<a><b/><c/></a>;");
+    // testJSXMinify(t, "<a> x <b/> y </a>", "<a> x <b/> y </a>;");
+    // testJSXMinify(t, "<a>{' x '}{'<b/>'}{' y '}</a>", "<a>{\" x \"}{\"<b/>\"}{\" y \"}</a>;");
+}
 
-// #[test]#[ignore] fn TestJSXSingleLine(t *testing.T) {
-// testJSX(t, "<x/>", "<x />;\n");
-// testJSX(t, "<x y/>", "<x y />;\n");
-// testJSX(t, "<x\n/>", "<x />;\n");
-// testJSX(t, "<x\ny/>", "<x\n  y\n/>;\n");
-// testJSX(t, "<x y\n/>", "<x\n  y\n/>;\n");
-// testJSX(t, "<x\n{...y}/>", "<x\n  {...y}\n/>;\n");
+#[test]
+fn test_jsx_single_line() {
+    test("<x/>", "<x />;\n");
+    test("<x y/>", "<x y />;\n");
+    test("<x\n/>", "<x />;\n");
+    // test("<x\ny/>", "<x\n\ty\n/>;\n");
+    // test("<x y\n/>", "<x\n\ty\n/>;\n");
+    // test("<x\n{...y}/>", "<x\n\t{...y}\n/>;\n");
 
-// testJSXMinify(t, "<x/>", "<x/>;");
-// testJSXMinify(t, "<x y/>", "<x y/>;");
-// testJSXMinify(t, "<x\n/>", "<x/>;");
-// testJSXMinify(t, "<x\ny/>", "<x y/>;");
-// testJSXMinify(t, "<x y\n/>", "<x y/>;");
-// testJSXMinify(t, "<x\n{...y}/>", "<x{...y}/>;");
-// }
+    test_minify("<x/>", "<x/>;");
+    test_minify("<x y/>", "<x y/>;");
+    test_minify("<x\n/>", "<x/>;");
+    test_minify("<x\ny/>", "<x y/>;");
+    test_minify("<x y\n/>", "<x y/>;");
+    test_minify("<x\n{...y}/>", "<x{...y}/>;");
+}
 
 #[test]
 #[ignore]
@@ -1016,16 +1040,26 @@ fn test_avoid_slash_script() {
     test("/*! </script \n </script */", "/*! <\\/script \n <\\/script */\n");
     test("/*! </SCRIPT \n </SCRIPT */", "/*! <\\/SCRIPT \n <\\/SCRIPT */\n");
     test("/*! </ScRiPt \n </ScRiPt */", "/*! <\\/ScRiPt \n <\\/ScRiPt */\n");
-    test( "String.raw`</script`",
-		"import { __template } from \"<runtime>\";\nvar _a;\nString.raw(_a || (_a = __template([\"<\\/script\"])));\n");
-    test( "String.raw`</script${a}`",
-		"import { __template } from \"<runtime>\";\nvar _a;\nString.raw(_a || (_a = __template([\"<\\/script\", \"\"])), a);\n");
-    test( "String.raw`${a}</script`",
-		"import { __template } from \"<runtime>\";\nvar _a;\nString.raw(_a || (_a = __template([\"\", \"<\\/script\"])), a);\n");
-    test( "String.raw`</SCRIPT`",
-		"import { __template } from \"<runtime>\";\nvar _a;\nString.raw(_a || (_a = __template([\"<\\/SCRIPT\"])));\n");
-    test( "String.raw`</ScRiPt`",
-		"import { __template } from \"<runtime>\";\nvar _a;\nString.raw(_a || (_a = __template([\"<\\/ScRiPt\"])));\n");
+    test(
+        "String.raw`</script`",
+        "import { __template } from \"<runtime>\";\nvar _a;\nString.raw(_a || (_a = __template([\"<\\/script\"])));\n",
+    );
+    test(
+        "String.raw`</script${a}`",
+        "import { __template } from \"<runtime>\";\nvar _a;\nString.raw(_a || (_a = __template([\"<\\/script\", \"\"])), a);\n",
+    );
+    test(
+        "String.raw`${a}</script`",
+        "import { __template } from \"<runtime>\";\nvar _a;\nString.raw(_a || (_a = __template([\"\", \"<\\/script\"])), a);\n",
+    );
+    test(
+        "String.raw`</SCRIPT`",
+        "import { __template } from \"<runtime>\";\nvar _a;\nString.raw(_a || (_a = __template([\"<\\/SCRIPT\"])));\n",
+    );
+    test(
+        "String.raw`</ScRiPt`",
+        "import { __template } from \"<runtime>\";\nvar _a;\nString.raw(_a || (_a = __template([\"<\\/ScRiPt\"])));\n",
+    );
 
     // Negative cases
     test("x = '</'", "x = \"</\";\n");
@@ -1038,7 +1072,6 @@ fn test_avoid_slash_script() {
 }
 
 #[test]
-#[ignore]
 fn test_infinity() {
     test("x = Infinity", "x = Infinity;\n");
     test("x = -Infinity", "x = -Infinity;\n");
@@ -1094,19 +1127,23 @@ fn test_infinity() {
 }
 
 #[test]
-#[ignore]
 fn test_binary_operator_visitor() {
     // Make sure the inner "/*b*/" comment doesn't disappear due to weird binary visitor stuff
     // testMangle(t, "x = (0, /*a*/ (0, /*b*/ (0, /*c*/ 1 == 2) + 3) * 4)", "x = /*a*/\n/*b*/\n(/*c*/\n!1 + 3) * 4;\n");
 
     // Make sure deeply-nested ASTs don't cause a stack overflow
-    // x := "x = f()" + strings.Repeat(" || f()", 10_000) + ";\n"
-    // test( x, x)
+    let x = format!("x = f(){};\n", " + f()".repeat(10_000));
+    test(&x, &x);
+
+    let x = format!("x = f(){};\n", " && f()".repeat(10_000));
+    test(&x, &x);
+
+    let x = format!("x = f(){};\n", " && f() + f()".repeat(10_000));
+    test(&x, &x);
 }
 
 // See: https://github.com/tc39/proposal-explicit-resource-management
 #[test]
-#[ignore]
 fn test_using() {
     test("using x = y", "using x = y;\n");
     test("using x = y, z = _", "using x = y, z = _;\n");

@@ -6,6 +6,7 @@
 
 /// origin file: https://github.com/zkat/miette/blob/75fea0935e495d0215518c80d32dd820910982e3/src/handlers/graphical.rs#L1
 use std::fmt::{self, Write};
+use std::io::IsTerminal;
 
 use miette::{
     Diagnostic, LabeledSpan, ReportHandler, Severity, SourceCode, SourceSpan, SpanContents,
@@ -18,14 +19,36 @@ use crate::graphical_theme::GraphicalTheme;
 
 #[derive(Debug, Clone)]
 pub struct GraphicalReportHandler {
+    /// How to render links.
+    ///
+    /// Default: [`LinkStyle::Link`]
     pub(crate) links: LinkStyle,
+    /// Terminal width to wrap at.
+    ///
+    /// Default: `400`
     pub(crate) termwidth: usize,
+    /// How to style reports
     pub(crate) theme: GraphicalTheme,
     pub(crate) footer: Option<String>,
+    /// Number of source lines to render before/after the line(s) covered by errors.
+    ///
+    /// Default: `1`
     pub(crate) context_lines: usize,
+    /// Tab print width
+    ///
+    /// Default: `4`
     pub(crate) tab_width: usize,
+    /// Unused.
     pub(crate) with_cause_chain: bool,
+    /// Whether to wrap lines to fit the width.
+    ///
+    /// Default: `true`
     pub(crate) wrap_lines: bool,
+    /// Whether to break words during wrapping.
+    ///
+    /// When `false`, line breaks will happen before the first word that would overflow `termwidth`.
+    ///
+    /// Default: `true`
     pub(crate) break_words: bool,
     pub(crate) word_separator: Option<textwrap::WordSeparator>,
     pub(crate) word_splitter: Option<textwrap::WordSplitter>,
@@ -44,10 +67,11 @@ impl GraphicalReportHandler {
     /// Create a new `GraphicalReportHandler` with the default
     /// [`GraphicalTheme`]. This will use both unicode characters and colors.
     pub fn new() -> Self {
+        let is_terminal = std::io::stdout().is_terminal() && std::io::stderr().is_terminal();
         Self {
-            links: LinkStyle::Link,
+            links: if is_terminal { LinkStyle::Link } else { LinkStyle::Text },
             termwidth: 400,
-            theme: GraphicalTheme::default(),
+            theme: GraphicalTheme::new(is_terminal),
             footer: None,
             context_lines: 1,
             tab_width: 4,
@@ -188,7 +212,7 @@ impl GraphicalReportHandler {
         f: &mut impl fmt::Write,
         diagnostic: &(dyn Diagnostic),
     ) -> fmt::Result {
-        self.render_header(f, diagnostic)?;
+        // self.render_header(f, diagnostic)?;
         writeln!(f)?;
         self.render_causes(f, diagnostic)?;
         let src = diagnostic.source_code();
@@ -271,7 +295,24 @@ impl GraphicalReportHandler {
             opts = opts.word_splitter(word_splitter);
         }
 
-        let title = format!("{}", diagnostic.to_string().style(severity_style));
+        let title = match (self.links, diagnostic.url(), diagnostic.code()) {
+            (LinkStyle::Link, Some(url), Some(code)) => {
+                // magic unicode escape sequences to make the terminal print a hyperlink
+                const CTL: &str = "\u{1b}]8;;";
+                const END: &str = "\u{1b}]8;;\u{1b}\\";
+                let code = code.style(severity_style);
+                let message = diagnostic.to_string();
+                let title = message.style(severity_style);
+                format!("{CTL}{url}\u{1b}\\{code}{END}: {title}",)
+            }
+            (_, _, Some(code)) => {
+                let title = format!("{code}: {}", diagnostic);
+                format!("{}", title.style(severity_style))
+            }
+            _ => {
+                format!("{}", diagnostic.to_string().style(severity_style))
+            }
+        };
         let title = textwrap::fill(&title, opts);
         writeln!(f, "{}", title)?;
 
@@ -625,14 +666,14 @@ impl GraphicalReportHandler {
                     max_gutter,
                     line,
                     labels,
-                    LabelRenderMode::MultiLineFirst,
+                    LabelRenderMode::BlockFirst,
                 )?;
 
                 self.render_multi_line_end_single(
                     f,
                     first,
                     label.style,
-                    LabelRenderMode::MultiLineFirst,
+                    LabelRenderMode::BlockFirst,
                 )?;
                 for label_line in rest {
                     // no line number!
@@ -643,13 +684,13 @@ impl GraphicalReportHandler {
                         max_gutter,
                         line,
                         labels,
-                        LabelRenderMode::MultiLineRest,
+                        LabelRenderMode::BlockRest,
                     )?;
                     self.render_multi_line_end_single(
                         f,
                         label_line,
                         label.style,
-                        LabelRenderMode::MultiLineRest,
+                        LabelRenderMode::BlockRest,
                     )?;
                 }
             }
@@ -747,7 +788,7 @@ impl GraphicalReportHandler {
         let applicable = highlights.iter().filter(|hl| line.span_applies_gutter(hl));
         for (i, hl) in applicable.enumerate() {
             if !line.span_line_only(hl) && line.span_ends(hl) {
-                if render_mode == LabelRenderMode::MultiLineRest {
+                if render_mode == LabelRenderMode::BlockRest {
                     // this is to make multiline labels work. We want to make the right amount
                     // of horizontal space for them, but not actually draw the lines
                     let horizontal_space = max_gutter.saturating_sub(i) + 2;
@@ -775,7 +816,7 @@ impl GraphicalReportHandler {
                                 num_repeat
                                     // if we are rendering a multiline label, then leave a bit of space for the
                                     // rcross character
-                                    - if render_mode == LabelRenderMode::MultiLineFirst {
+                                    - if render_mode == LabelRenderMode::BlockFirst {
                                         1
                                     } else {
                                         0
@@ -1022,9 +1063,9 @@ impl GraphicalReportHandler {
                             hl,
                             label_line,
                             if first {
-                                LabelRenderMode::MultiLineFirst
+                                LabelRenderMode::BlockFirst
                             } else {
-                                LabelRenderMode::MultiLineRest
+                                LabelRenderMode::BlockRest
                             },
                         )?;
                         first = false;
@@ -1073,10 +1114,10 @@ impl GraphicalReportHandler {
                     LabelRenderMode::SingleLine => {
                         format!("{}{} {}", chars.lbot, chars.hbar.to_string().repeat(2), label,)
                     }
-                    LabelRenderMode::MultiLineFirst => {
+                    LabelRenderMode::BlockFirst => {
                         format!("{}{}{} {}", chars.lbot, chars.hbar, chars.rcross, label,)
                     }
-                    LabelRenderMode::MultiLineRest => {
+                    LabelRenderMode::BlockRest => {
                         format!("  {} {}", chars.vbar, label,)
                     }
                 };
@@ -1098,10 +1139,10 @@ impl GraphicalReportHandler {
             LabelRenderMode::SingleLine => {
                 writeln!(f, "{} {}", self.theme.characters.hbar.style(style), label)?;
             }
-            LabelRenderMode::MultiLineFirst => {
+            LabelRenderMode::BlockFirst => {
                 writeln!(f, "{} {}", self.theme.characters.rcross.style(style), label)?;
             }
-            LabelRenderMode::MultiLineRest => {
+            LabelRenderMode::BlockRest => {
                 writeln!(f, "{} {}", self.theme.characters.vbar.style(style), label)?;
             }
         }
@@ -1189,9 +1230,9 @@ enum LabelRenderMode {
     /// we're rendering a single line label (or not rendering in any special way)
     SingleLine,
     /// we're rendering a multiline label
-    MultiLineFirst,
+    BlockFirst,
     /// we're rendering the rest of a multiline label
-    MultiLineRest,
+    BlockRest,
 }
 
 #[derive(Debug)]

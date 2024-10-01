@@ -1,0 +1,1412 @@
+commit: d62fa93c
+
+codegen_runtime_test262 Summary:
+AST Parsed     : 18456/18456 (100.00%)
+Positive Passed: 17987/18456 (97.46%)
+tasks/coverage/test262/test/language/expressions/assignment/fn-name-lhs-cover.js
+runtime error: Test262Error: descriptor value should be ; object value should be 
+
+tasks/coverage/test262/test/language/expressions/class/elements/syntax/valid/grammar-field-accessor.js
+runtime error: SyntaxError: Unexpected identifier '$'
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--1.js
+runtime error: Test262Error: Expected a ReferenceError but got a TypeError
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--11.js
+runtime error: Test262Error: Expected a ReferenceError but got a TypeError
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--13.js
+runtime error: Test262Error: Expected a ReferenceError but got a TypeError
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--15.js
+runtime error: Test262Error: Expected a ReferenceError but got a TypeError
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--17.js
+runtime error: Test262Error: Expected a ReferenceError but got a TypeError
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--19.js
+runtime error: Test262Error: Expected a ReferenceError but got a TypeError
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--21.js
+runtime error: Test262Error: Expected a ReferenceError but got a TypeError
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--3.js
+runtime error: Test262Error: Expected a ReferenceError but got a TypeError
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--5.js
+runtime error: Test262Error: Expected a ReferenceError but got a TypeError
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--7.js
+runtime error: Test262Error: Expected a ReferenceError but got a TypeError
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--9.js
+runtime error: Test262Error: Expected a ReferenceError but got a TypeError
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/always-create-new-promise.js
+runtime error: Test262Error: p1 constructor is %Promise% Expected SameValue(«function Promise() { [native code] }», «function Promise() { [native code] }») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/assignment-expression/additive-expr.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/assignment-expression/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/assignment-expression/array-literal.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/assignment-expression/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/assignment-expression/arrow-function.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/assignment-expression/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/assignment-expression/await-expr.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/assignment-expression/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/assignment-expression/await-identifier.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/assignment-expression/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/assignment-expression/call-expr-arguments.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/assignment-expression/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/assignment-expression/call-expr-expr.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/assignment-expression/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/assignment-expression/call-expr-identifier.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/assignment-expression/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/assignment-expression/cover-call-expr.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/assignment-expression/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/assignment-expression/cover-parenthesized-expr.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/assignment-expression/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/assignment-expression/identifier.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/assignment-expression/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/assignment-expression/lhs-assign-operator-assign-expr.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/assignment-expression/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/assignment-expression/lhs-eq-assign-expr-nostrict.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/assignment-expression/module-code-other_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/assignment-expression/lhs-eq-assign-expr.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/assignment-expression/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/assignment-expression/logical-and-expr.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/assignment-expression/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/assignment-expression/logical-or-expr.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/assignment-expression/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/assignment-expression/member-expr.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/assignment-expression/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/assignment-expression/new-target.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/assignment-expression/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/assignment-expression/object-literal.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/assignment-expression/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/assignment-expression/tagged-function-call.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/assignment-expression/module-code-other_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/assignment-expression/ternary.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/assignment-expression/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/assignment-expression/this.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/assignment-expression/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/assignment-expression/yield-assign-expr.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/assignment-expression/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/assignment-expression/yield-expr.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/assignment-expression/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/assignment-expression/yield-identifier.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/assignment-expression/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/await-import-evaluation.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/await-import-evaluation_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-arrow-import-catch-eval-rqstd-abrupt-typeerror.js
+runtime error: Test262Error: Expected SameValue(«Error», «TypeError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-arrow-import-catch-eval-rqstd-abrupt-urierror.js
+runtime error: Test262Error: Expected SameValue(«Error», «URIError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-arrow-import-catch-eval-script-code-target.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-arrow-import-catch-instn-iee-err-ambiguous-import.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-arrow-import-catch-instn-iee-err-circular.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-arrow-function-await-eval-rqstd-abrupt-typeerror.js
+runtime error: Test262Error: Expected SameValue(«Error», «TypeError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-arrow-function-await-eval-rqstd-abrupt-urierror.js
+runtime error: Test262Error: Expected SameValue(«Error», «URIError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-arrow-function-await-eval-script-code-target.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-arrow-function-await-instn-iee-err-ambiguous-import.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-arrow-function-await-instn-iee-err-circular.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-arrow-function-return-await-eval-rqstd-abrupt-typeerror.js
+runtime error: Test262Error: Expected SameValue(«Error», «TypeError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-arrow-function-return-await-eval-rqstd-abrupt-urierror.js
+runtime error: Test262Error: Expected SameValue(«Error», «URIError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-arrow-function-return-await-eval-script-code-target.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-arrow-function-return-await-instn-iee-err-ambiguous-import.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-arrow-function-return-await-instn-iee-err-circular.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-function-await-eval-rqstd-abrupt-typeerror.js
+runtime error: Test262Error: Expected SameValue(«Error», «TypeError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-function-await-eval-rqstd-abrupt-urierror.js
+runtime error: Test262Error: Expected SameValue(«Error», «URIError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-function-await-eval-script-code-target.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-function-await-instn-iee-err-ambiguous-import.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-function-await-instn-iee-err-circular.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-function-eval-rqstd-abrupt-typeerror.js
+runtime error: Test262Error: Expected SameValue(«Error», «TypeError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-function-eval-rqstd-abrupt-urierror.js
+runtime error: Test262Error: Expected SameValue(«Error», «URIError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-function-eval-script-code-target.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-function-instn-iee-err-ambiguous-import.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-function-instn-iee-err-circular.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-function-return-await-eval-rqstd-abrupt-typeerror.js
+runtime error: Test262Error: Expected SameValue(«Error», «TypeError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-function-return-await-eval-rqstd-abrupt-urierror.js
+runtime error: Test262Error: Expected SameValue(«Error», «URIError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-function-return-await-eval-script-code-target.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-function-return-await-instn-iee-err-ambiguous-import.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-function-return-await-instn-iee-err-circular.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-gen-await-eval-rqstd-abrupt-typeerror.js
+runtime error: Test262Error: Expected SameValue(«Error», «TypeError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-gen-await-eval-rqstd-abrupt-urierror.js
+runtime error: Test262Error: Expected SameValue(«Error», «URIError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-gen-await-eval-script-code-target.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-gen-await-instn-iee-err-ambiguous-import.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-gen-await-instn-iee-err-circular.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-gen-return-await-eval-rqstd-abrupt-typeerror.js
+runtime error: Test262Error: Expected SameValue(«Error», «TypeError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-gen-return-await-eval-rqstd-abrupt-urierror.js
+runtime error: Test262Error: Expected SameValue(«Error», «URIError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-gen-return-await-eval-script-code-target.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-gen-return-await-instn-iee-err-ambiguous-import.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-gen-return-await-instn-iee-err-circular.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-block-import-catch-eval-rqstd-abrupt-typeerror.js
+runtime error: Test262Error: Expected SameValue(«Error», «TypeError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-block-import-catch-eval-rqstd-abrupt-urierror.js
+runtime error: Test262Error: Expected SameValue(«Error», «URIError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-block-import-catch-eval-script-code-target.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-block-import-catch-instn-iee-err-ambiguous-import.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-block-import-catch-instn-iee-err-circular.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-block-labeled-eval-rqstd-abrupt-typeerror.js
+runtime error: Test262Error: Expected SameValue(«Error», «TypeError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-block-labeled-eval-rqstd-abrupt-urierror.js
+runtime error: Test262Error: Expected SameValue(«Error», «URIError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-block-labeled-eval-script-code-target.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-block-labeled-instn-iee-err-ambiguous-import.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-block-labeled-instn-iee-err-circular.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-do-while-eval-rqstd-abrupt-typeerror.js
+runtime error: Test262Error: Expected SameValue(«Error», «TypeError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-do-while-eval-rqstd-abrupt-urierror.js
+runtime error: Test262Error: Expected SameValue(«Error», «URIError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-do-while-eval-script-code-target.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-do-while-instn-iee-err-ambiguous-import.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-do-while-instn-iee-err-circular.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-else-import-catch-eval-rqstd-abrupt-typeerror.js
+runtime error: Test262Error: Expected SameValue(«Error», «TypeError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-else-import-catch-eval-rqstd-abrupt-urierror.js
+runtime error: Test262Error: Expected SameValue(«Error», «URIError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-else-import-catch-eval-script-code-target.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-else-import-catch-instn-iee-err-ambiguous-import.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-else-import-catch-instn-iee-err-circular.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-function-import-catch-eval-rqstd-abrupt-typeerror.js
+runtime error: Test262Error: Expected SameValue(«Error», «TypeError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-function-import-catch-eval-rqstd-abrupt-urierror.js
+runtime error: Test262Error: Expected SameValue(«Error», «URIError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-function-import-catch-eval-script-code-target.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-function-import-catch-instn-iee-err-ambiguous-import.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-function-import-catch-instn-iee-err-circular.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-if-import-catch-eval-rqstd-abrupt-typeerror.js
+runtime error: Test262Error: Expected SameValue(«Error», «TypeError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-if-import-catch-eval-rqstd-abrupt-urierror.js
+runtime error: Test262Error: Expected SameValue(«Error», «URIError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-if-import-catch-eval-script-code-target.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-if-import-catch-instn-iee-err-ambiguous-import.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-if-import-catch-instn-iee-err-circular.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-while-import-catch-eval-rqstd-abrupt-typeerror.js
+runtime error: Test262Error: Expected SameValue(«Error», «TypeError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-while-import-catch-eval-rqstd-abrupt-urierror.js
+runtime error: Test262Error: Expected SameValue(«Error», «URIError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-while-import-catch-eval-script-code-target.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-while-import-catch-instn-iee-err-ambiguous-import.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-while-import-catch-instn-iee-err-circular.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/top-level-import-catch-eval-rqstd-abrupt-typeerror.js
+runtime error: Test262Error: Expected SameValue(«Error», «TypeError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/top-level-import-catch-eval-rqstd-abrupt-urierror.js
+runtime error: Test262Error: Expected SameValue(«Error», «URIError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/top-level-import-catch-eval-script-code-target.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/top-level-import-catch-instn-iee-err-ambiguous-import.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/top-level-import-catch-instn-iee-err-circular.js
+runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/custom-primitive.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/custom-tostring_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/eval-export-dflt-cls-anon.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/eval-export-dflt-cls-anon.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/eval-export-dflt-cls-name-meth.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/eval-export-dflt-cls-name-meth.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/eval-export-dflt-cls-named.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/eval-export-dflt-cls-named.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/eval-export-dflt-expr-cls-anon.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/eval-export-dflt-expr-cls-anon.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/eval-export-dflt-expr-cls-name-meth.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/eval-export-dflt-expr-cls-name-meth.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/eval-export-dflt-expr-cls-named.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/eval-export-dflt-expr-cls-named.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/eval-export-dflt-expr-fn-anon.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/eval-export-dflt-expr-fn-anon.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/eval-export-dflt-expr-fn-named.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/eval-export-dflt-expr-fn-named.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/eval-export-dflt-expr-gen-anon.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/eval-export-dflt-expr-gen-anon.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/eval-export-dflt-expr-gen-named.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/eval-export-dflt-expr-gen-named.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/eval-export-dflt-expr-in.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/eval-export-dflt-expr-in.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/eval-rqstd-once.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/eval-rqstd-once_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/eval-self-once-module.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/eval-self-once-module.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/eval-self-once-script.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/eval-self-once-script.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/for-await-resolution-and-error-agen-yield.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/for-await-resolution-and-error-a_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/for-await-resolution-and-error-agen.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/for-await-resolution-and-error-a_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/for-await-resolution-and-error.js
+runtime error: Test262Error: Expected [] and [42, 39] to have the same contents. 
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/import-attributes/2nd-param-await-expr.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/import-attributes/2nd-param_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/import-attributes/2nd-param-await-ident.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/import-attributes/2nd-param_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/import-attributes/2nd-param-in.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/import-attributes/2nd-param_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/import-attributes/2nd-param-trailing-comma-fulfill.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/import-attributes/2nd-param_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/import-attributes/2nd-param-with-enumeration.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/import-attributes/2nd-param_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/import-attributes/2nd-param-with-undefined.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/import-attributes/2nd-param_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/import-attributes/2nd-param-yield-expr.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/import-attributes/2nd-param_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/import-attributes/2nd-param-yield-ident-valid.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/import-attributes/2nd-param_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/import-attributes/trailing-comma-fulfill.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/import-attributes/2nd-param_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/imported-self-update.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/imported-self-update.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/indirect-resolution.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/indirect-resolution-1_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/await-ns-Symbol-toStringTag.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/await-ns-define-own-property.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/define-own-property_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/await-ns-delete-exported-init-no-strict.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/await-ns-delete-exported-init-strict.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/await-ns-delete-non-exported-no-strict.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/empty_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/await-ns-delete-non-exported-strict.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/empty_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/await-ns-extensible.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/await-ns-get-nested-namespace-dflt-direct.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/get-nested-namespace-dflt-skip-prod_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/await-ns-get-nested-namespace-dflt-indirect.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/get-nested-namespace-dflt-skip-named_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/await-ns-get-nested-namespace-props-nrml.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/get-nested-namespace-props-nrml-1_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/await-ns-get-own-property-str-found-init.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/await-ns-get-own-property-str-not-found.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/await-ns-get-own-property-sym.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/await-ns-get-str-found.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/await-ns-get-str-not-found.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/await-ns-get-sym-found.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/await-ns-get-sym-not-found.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/await-ns-has-property-str-found-init.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/await-ns-has-property-str-not-found.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/await-ns-has-property-sym-found.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/await-ns-has-property-sym-not-found.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/await-ns-no-iterator.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/await-ns-own-property-keys-sort.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/own-keys-sort_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/await-ns-prevent-extensions-object.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/empty_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/await-ns-prevent-extensions-reflect.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/empty_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/await-ns-prop-descs.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/await-ns-prototype.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/await-ns-set-no-strict.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/await-ns-set-prototype-of-null.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/empty_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/await-ns-set-prototype-of.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/await-ns-set-same-values-no-strict.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/await-ns-set-same-values-strict.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/await-ns-set-strict.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/default-property-not-set-own.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/empty_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/promise-then-ns-Symbol-toStringTag.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/promise-then-ns-define-own-property.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/define-own-property_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/promise-then-ns-delete-exported-init-no-strict.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/promise-then-ns-delete-exported-init-strict.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/promise-then-ns-delete-non-exported-no-strict.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/empty_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/promise-then-ns-delete-non-exported-strict.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/empty_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/promise-then-ns-extensible.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/promise-then-ns-get-nested-namespace-dflt-direct.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/get-nested-namespace-dflt-skip-prod_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/promise-then-ns-get-nested-namespace-dflt-indirect.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/get-nested-namespace-dflt-skip-named_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/promise-then-ns-get-nested-namespace-props-nrml.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/get-nested-namespace-props-nrml-1_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/promise-then-ns-get-own-property-str-found-init.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/promise-then-ns-get-own-property-str-not-found.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/promise-then-ns-get-own-property-sym.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/promise-then-ns-get-str-found.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/promise-then-ns-get-str-not-found.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/promise-then-ns-get-sym-found.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/promise-then-ns-get-sym-not-found.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/promise-then-ns-has-property-str-found-init.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/promise-then-ns-has-property-str-not-found.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/promise-then-ns-has-property-sym-found.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/promise-then-ns-has-property-sym-not-found.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/promise-then-ns-no-iterator.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/promise-then-ns-own-property-keys-sort.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/own-keys-sort_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/promise-then-ns-prevent-extensions-object.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/empty_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/promise-then-ns-prevent-extensions-reflect.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/empty_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/promise-then-ns-prop-descs.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/promise-then-ns-prototype.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/promise-then-ns-set-no-strict.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/promise-then-ns-set-prototype-of-null.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/empty_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/promise-then-ns-set-prototype-of.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/promise-then-ns-set-same-values-no-strict.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/promise-then-ns-set-same-values-strict.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/promise-then-ns-set-strict.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/namespace/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/returns-promise.js
+runtime error: Test262Error: constructor is %Promise% Expected SameValue(«function Promise() { [native code] }», «function Promise() { [native code] }») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/reuse-namespace-object-from-import.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/reuse-namespace-object-from-script.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/empty_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/reuse-namespace-object.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/dynamic-import-module_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-with-expression-empty-str-is-valid-assign-expr.js
+runtime error: Test262Error: Expected SameValue(«function then() { [native code] }», «function then() { [native code] }») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-with-expression-import-attributes-trailing-comma-first.js
+runtime error: Test262Error: Expected SameValue(«function then() { [native code] }», «function then() { [native code] }») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-with-expression-import-attributes-trailing-comma-second.js
+runtime error: Test262Error: Expected SameValue(«function then() { [native code] }», «function then() { [native code] }») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-with-expression-nested-imports.js
+runtime error: Test262Error: Expected SameValue(«function then() { [native code] }», «function then() { [native code] }») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-with-expression-script-code-valid.js
+runtime error: Test262Error: Expected SameValue(«function then() { [native code] }», «function then() { [native code] }») to be true
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/update-to-dynamic-import.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/update-to-dynamic-import_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-arrow-assignment-expression-eval-gtbndng-indirect-update-dflt.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/eval-gtbndng-indirect-update-dflt_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-arrow-assignment-expression-eval-gtbndng-indirect-update.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/eval-gtbndng-indirect-update_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-arrow-assignment-expression-eval-script-code-host-resolves-module-code.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-arrow-assignment-expression-is-call-expression-square-brackets.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/dynamic-import-module_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-arrow-assignment-expression-returns-thenable.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/dynamic-import-module_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-arrow-assignment-expression-specifier-tostring.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-arrow-import-then-eval-gtbndng-indirect-update-dflt.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/eval-gtbndng-indirect-update-dflt_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-arrow-import-then-eval-gtbndng-indirect-update.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/eval-gtbndng-indirect-update_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-arrow-import-then-eval-script-code-host-resolves-module-code.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-arrow-import-then-is-call-expression-square-brackets.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/dynamic-import-module_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-arrow-import-then-returns-thenable.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/dynamic-import-module_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-arrow-import-then-specifier-tostring.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-arrow-function-await-eval-gtbndng-indirect-update-dflt.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/eval-gtbndng-indirect-update-dflt_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-arrow-function-await-eval-gtbndng-indirect-update.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/eval-gtbndng-indirect-update_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-arrow-function-await-eval-script-code-host-resolves-module-code.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-arrow-function-await-is-call-expression-square-brackets.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/dynamic-import-module_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-arrow-function-await-returns-thenable.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/dynamic-import-module_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-arrow-function-await-specifier-tostring.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-arrow-function-return-await-eval-gtbndng-indirect-update-dflt.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/eval-gtbndng-indirect-update-dflt_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-arrow-function-return-await-eval-gtbndng-indirect-update.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/eval-gtbndng-indirect-update_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-arrow-function-return-await-eval-script-code-host-resolves-module-code.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-arrow-function-return-await-is-call-expression-square-brackets.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/dynamic-import-module_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-arrow-function-return-await-returns-thenable.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/dynamic-import-module_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-arrow-function-return-await-specifier-tostring.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-function-await-eval-gtbndng-indirect-update-dflt.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/eval-gtbndng-indirect-update-dflt_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-function-await-eval-gtbndng-indirect-update.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/eval-gtbndng-indirect-update_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-function-await-eval-script-code-host-resolves-module-code.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-function-await-is-call-expression-square-brackets.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/dynamic-import-module_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-function-await-returns-thenable.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/dynamic-import-module_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-function-await-specifier-tostring.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-function-eval-gtbndng-indirect-update-dflt.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/eval-gtbndng-indirect-update-dflt_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-function-eval-gtbndng-indirect-update.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/eval-gtbndng-indirect-update_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-function-eval-script-code-host-resolves-module-code.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-function-is-call-expression-square-brackets.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/dynamic-import-module_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-function-return-await-eval-gtbndng-indirect-update-dflt.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/eval-gtbndng-indirect-update-dflt_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-function-return-await-eval-gtbndng-indirect-update.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/eval-gtbndng-indirect-update_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-function-return-await-eval-script-code-host-resolves-module-code.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-function-return-await-is-call-expression-square-brackets.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/dynamic-import-module_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-function-return-await-returns-thenable.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/dynamic-import-module_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-function-return-await-specifier-tostring.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-function-returns-thenable.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/dynamic-import-module_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-function-specifier-tostring.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-gen-await-eval-gtbndng-indirect-update-dflt.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/eval-gtbndng-indirect-update-dflt_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-gen-await-eval-gtbndng-indirect-update.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/eval-gtbndng-indirect-update_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-gen-await-eval-script-code-host-resolves-module-code.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-gen-await-is-call-expression-square-brackets.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/dynamic-import-module_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-gen-await-returns-thenable.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/dynamic-import-module_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-gen-await-specifier-tostring.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-gen-return-await-eval-gtbndng-indirect-update-dflt.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/eval-gtbndng-indirect-update-dflt_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-gen-return-await-eval-gtbndng-indirect-update.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/eval-gtbndng-indirect-update_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-gen-return-await-eval-script-code-host-resolves-module-code.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-gen-return-await-is-call-expression-square-brackets.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/dynamic-import-module_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-gen-return-await-returns-thenable.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/dynamic-import-module_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-async-gen-return-await-specifier-tostring.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-block-import-then-eval-gtbndng-indirect-update-dflt.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/eval-gtbndng-indirect-update-dflt_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-block-import-then-eval-gtbndng-indirect-update.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/eval-gtbndng-indirect-update_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-block-import-then-eval-script-code-host-resolves-module-code.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-block-import-then-is-call-expression-square-brackets.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/dynamic-import-module_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-block-import-then-returns-thenable.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/dynamic-import-module_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-block-import-then-specifier-tostring.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-do-while-eval-gtbndng-indirect-update-dflt.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/eval-gtbndng-indirect-update-dflt_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-do-while-eval-gtbndng-indirect-update.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/eval-gtbndng-indirect-update_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-do-while-eval-script-code-host-resolves-module-code.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-do-while-is-call-expression-square-brackets.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/dynamic-import-module_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-do-while-returns-thenable.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/dynamic-import-module_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-do-while-specifier-tostring.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-else-import-then-eval-gtbndng-indirect-update-dflt.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/eval-gtbndng-indirect-update-dflt_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-else-import-then-eval-gtbndng-indirect-update.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/eval-gtbndng-indirect-update_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-else-import-then-eval-script-code-host-resolves-module-code.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-else-import-then-is-call-expression-square-brackets.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/dynamic-import-module_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-else-import-then-returns-thenable.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/dynamic-import-module_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-else-import-then-specifier-tostring.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-function-import-then-eval-gtbndng-indirect-update-dflt.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/eval-gtbndng-indirect-update-dflt_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-function-import-then-eval-gtbndng-indirect-update.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/eval-gtbndng-indirect-update_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-function-import-then-eval-script-code-host-resolves-module-code.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-function-import-then-is-call-expression-square-brackets.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/dynamic-import-module_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-function-import-then-returns-thenable.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/dynamic-import-module_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-function-import-then-specifier-tostring.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-if-braceless-eval-gtbndng-indirect-update-dflt.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/eval-gtbndng-indirect-update-dflt_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-if-braceless-eval-gtbndng-indirect-update.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/eval-gtbndng-indirect-update_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-if-braceless-eval-script-code-host-resolves-module-code.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-if-braceless-is-call-expression-square-brackets.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/dynamic-import-module_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-if-braceless-returns-thenable.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/dynamic-import-module_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-if-braceless-specifier-tostring.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-if-import-then-eval-gtbndng-indirect-update-dflt.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/eval-gtbndng-indirect-update-dflt_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-if-import-then-eval-gtbndng-indirect-update.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/eval-gtbndng-indirect-update_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-if-import-then-eval-script-code-host-resolves-module-code.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-if-import-then-is-call-expression-square-brackets.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/dynamic-import-module_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-if-import-then-returns-thenable.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/dynamic-import-module_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-if-import-then-specifier-tostring.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-while-import-then-eval-gtbndng-indirect-update-dflt.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/eval-gtbndng-indirect-update-dflt_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-while-import-then-eval-gtbndng-indirect-update.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/eval-gtbndng-indirect-update_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-while-import-then-eval-script-code-host-resolves-module-code.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-while-import-then-is-call-expression-square-brackets.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/dynamic-import-module_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-while-import-then-returns-thenable.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/dynamic-import-module_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/nested-while-import-then-specifier-tostring.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/syntax-nested-block-labeled-eval-gtbndng-indirect-update-dflt.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/eval-gtbndng-indirect-update-dflt_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/syntax-nested-block-labeled-eval-gtbndng-indirect-update.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/eval-gtbndng-indirect-update_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/syntax-nested-block-labeled-eval-script-code-host-resolves-module-code.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/syntax-nested-block-labeled-is-call-expression-square-brackets.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/dynamic-import-module_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/syntax-nested-block-labeled-returns-thenable.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/dynamic-import-module_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/syntax-nested-block-labeled-specifier-tostring.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/top-level-import-then-eval-gtbndng-indirect-update-dflt.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/eval-gtbndng-indirect-update-dflt_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/top-level-import-then-eval-gtbndng-indirect-update.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/eval-gtbndng-indirect-update_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/top-level-import-then-eval-script-code-host-resolves-module-code.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/top-level-import-then-is-call-expression-square-brackets.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/dynamic-import-module_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/top-level-import-then-returns-thenable.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/dynamic-import-module_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/top-level-import-then-specifier-tostring.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/usage/module-code_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage-from-eval.js
+runtime error: Test262Error: constructor is %Promise% Expected SameValue(«[object Promise]», «[object Promise]») to be true
+
+tasks/coverage/test262/test/language/expressions/import.meta/distinct-for-each-module.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/import.meta/distinct-for-each-module_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/in/private-field-rhs-non-object.js
+runtime error: Test262Error: Expected SameValue(«null», «null») to be false
+
+tasks/coverage/test262/test/language/expressions/object/__proto__-permitted-dup-shorthand.js
+runtime error: SyntaxError: Duplicate __proto__ fields are not allowed in object literals
+
+tasks/coverage/test262/test/language/expressions/postfix-decrement/operator-x-postfix-decrement-calls-putvalue-lhs-newvalue--1.js
+runtime error: Test262Error: Expected a ReferenceError but got a TypeError
+
+tasks/coverage/test262/test/language/expressions/postfix-increment/operator-x-postfix-increment-calls-putvalue-lhs-newvalue--1.js
+runtime error: Test262Error: Expected a ReferenceError but got a TypeError
+
+tasks/coverage/test262/test/language/expressions/prefix-decrement/operator-prefix-decrement-x-calls-putvalue-lhs-newvalue--1.js
+runtime error: Test262Error: Expected a ReferenceError but got a TypeError
+
+tasks/coverage/test262/test/language/expressions/prefix-increment/operator-prefix-increment-x-calls-putvalue-lhs-newvalue--1.js
+runtime error: Test262Error: Expected a ReferenceError but got a TypeError
+
+tasks/coverage/test262/test/language/global-code/decl-func.js
+runtime error: Test262Error: descriptor should not be configurable
+
+tasks/coverage/test262/test/language/literals/regexp/u-surrogate-pairs-atom-escape-decimal.js
+runtime error: Test262Error: Expected SameValue(«true», «false») to be true
+
+tasks/coverage/test262/test/language/module-code/eval-export-dflt-cls-anon.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/eval-export-dflt-cls-anon.js'
+
+tasks/coverage/test262/test/language/module-code/eval-export-dflt-cls-name-meth.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/eval-export-dflt-cls-name-meth.js'
+
+tasks/coverage/test262/test/language/module-code/eval-export-dflt-cls-named.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/eval-export-dflt-cls-named.js'
+
+tasks/coverage/test262/test/language/module-code/eval-export-dflt-expr-cls-anon.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/eval-export-dflt-expr-cls-anon.js'
+
+tasks/coverage/test262/test/language/module-code/eval-export-dflt-expr-cls-name-meth.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/eval-export-dflt-expr-cls-name-meth.js'
+
+tasks/coverage/test262/test/language/module-code/eval-export-dflt-expr-cls-named.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/eval-export-dflt-expr-cls-named.js'
+
+tasks/coverage/test262/test/language/module-code/eval-export-dflt-expr-fn-anon.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/eval-export-dflt-expr-fn-anon.js'
+
+tasks/coverage/test262/test/language/module-code/eval-export-dflt-expr-fn-named.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/eval-export-dflt-expr-fn-named.js'
+
+tasks/coverage/test262/test/language/module-code/eval-export-dflt-expr-gen-anon.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/eval-export-dflt-expr-gen-anon.js'
+
+tasks/coverage/test262/test/language/module-code/eval-export-dflt-expr-gen-named.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/eval-export-dflt-expr-gen-named.js'
+
+tasks/coverage/test262/test/language/module-code/eval-export-dflt-expr-in.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/eval-export-dflt-expr-in.js'
+
+tasks/coverage/test262/test/language/module-code/eval-gtbndng-indirect-trlng-comma.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/eval-gtbndng-indirect-trlng-comma_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/eval-gtbndng-indirect-update-as.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/eval-gtbndng-indirect-update-as_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/eval-gtbndng-indirect-update-dflt.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/eval-gtbndng-indirect-update-dflt_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/eval-gtbndng-indirect-update.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/eval-gtbndng-indirect-update_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/eval-rqstd-abrupt.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/eval-rqstd-abrupt-err-type_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/eval-rqstd-once.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/eval-rqstd-once_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/eval-rqstd-order.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/eval-rqstd-order-1_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/eval-self-once.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/eval-self-once.js'
+
+tasks/coverage/test262/test/language/module-code/export-expname-binding-index.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/export-expname-binding-index_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/export-expname-binding-string.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/export-expname_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/export-expname-from-binding-string.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/export-expname-from-binding-string.js'
+
+tasks/coverage/test262/test/language/module-code/export-expname-from-star-string.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/export-expname-from-star-string.js'
+
+tasks/coverage/test262/test/language/module-code/export-expname-from-star.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/export-expname-from-star.js'
+
+tasks/coverage/test262/test/language/module-code/export-expname-from-string-binding.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/export-expname-from-string-binding.js'
+
+tasks/coverage/test262/test/language/module-code/export-expname-from-string-string.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/export-expname-from-string-string.js'
+
+tasks/coverage/test262/test/language/module-code/export-expname-from-string.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/export-expname-from-string.js'
+
+tasks/coverage/test262/test/language/module-code/export-expname-import-string-binding.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/export-expname_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/export-star-as-dflt.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/export-star-as-dflt_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/import-attributes/import-attribute-empty.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/import-attributes/import-attribute-1_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/instn-iee-bndng-cls.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-iee-bndng-cls_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/instn-iee-bndng-const.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-iee-bndng-const_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/instn-iee-bndng-fun.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-iee-bndng-fun_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/instn-iee-bndng-gen.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-iee-bndng-gen_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/instn-iee-bndng-let.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-iee-bndng-let_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/instn-iee-bndng-var.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-iee-bndng-var_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/instn-iee-iee-cycle.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-iee-iee-cycle-2_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/instn-iee-star-cycle.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-iee-star-cycle-2_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/instn-iee-trlng-comma.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-iee-trlng-comma_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/instn-named-bndng-cls.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-named-bndng-cls.js'
+
+tasks/coverage/test262/test/language/module-code/instn-named-bndng-const.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-named-bndng-const.js'
+
+tasks/coverage/test262/test/language/module-code/instn-named-bndng-dflt-cls.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-named-bndng-dflt-cls.js'
+
+tasks/coverage/test262/test/language/module-code/instn-named-bndng-dflt-expr.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-named-bndng-dflt-expr.js'
+
+tasks/coverage/test262/test/language/module-code/instn-named-bndng-dflt-fun-anon.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-named-bndng-dflt-fun-anon.js'
+
+tasks/coverage/test262/test/language/module-code/instn-named-bndng-dflt-fun-named.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-named-bndng-dflt-fun-named.js'
+
+tasks/coverage/test262/test/language/module-code/instn-named-bndng-dflt-gen-anon.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-named-bndng-dflt-gen-anon.js'
+
+tasks/coverage/test262/test/language/module-code/instn-named-bndng-dflt-gen-named.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-named-bndng-dflt-gen-named.js'
+
+tasks/coverage/test262/test/language/module-code/instn-named-bndng-dflt-named.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-named-bndng-dflt-named.js'
+
+tasks/coverage/test262/test/language/module-code/instn-named-bndng-dflt-star.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-named-bndng-dflt-star.js'
+
+tasks/coverage/test262/test/language/module-code/instn-named-bndng-fun.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-named-bndng-fun.js'
+
+tasks/coverage/test262/test/language/module-code/instn-named-bndng-gen.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-named-bndng-gen.js'
+
+tasks/coverage/test262/test/language/module-code/instn-named-bndng-let.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-named-bndng-let.js'
+
+tasks/coverage/test262/test/language/module-code/instn-named-bndng-trlng-comma.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-named-bndng-trlng-comma.js'
+
+tasks/coverage/test262/test/language/module-code/instn-named-bndng-var.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-named-bndng-var.js'
+
+tasks/coverage/test262/test/language/module-code/instn-named-id-name.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-named-id-name.js'
+
+tasks/coverage/test262/test/language/module-code/instn-named-iee-cycle.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-named-iee-cycle-2_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/instn-named-star-cycle.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-named-star-cycle-2_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/instn-once.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-once.js'
+
+tasks/coverage/test262/test/language/module-code/instn-same-global.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-same-global-set_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/instn-star-ambiguous.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-star-ambiguous_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/instn-star-as-props-dflt-skip.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-star-props-dflt-skip-star-as-named_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/instn-star-binding.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-star-binding.js'
+
+tasks/coverage/test262/test/language/module-code/instn-star-equality.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-star-equality.js'
+
+tasks/coverage/test262/test/language/module-code/instn-star-id-name.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-star-id-name.js'
+
+tasks/coverage/test262/test/language/module-code/instn-star-iee-cycle.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-star-iee-cycle-2_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/instn-star-props-circular.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-star-props-circular-a_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/instn-star-props-dflt-keep-indirect.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-star-props-dflt-keep-indirect-reexport_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/instn-star-props-dflt-keep-local.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-star-props-dflt-keep-local-named_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/instn-star-props-dflt-skip.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-star-props-dflt-skip-star-named_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/instn-star-props-nrml.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-star-props-nrml-1_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/instn-star-star-cycle.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-star-star-cycle-2_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/instn-uniq-env-rec.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/instn-uniq-env-rec-other_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/namespace/Symbol.iterator.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/namespace/Symbol.iterator.js'
+
+tasks/coverage/test262/test/language/module-code/namespace/Symbol.toStringTag.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/namespace/Symbol.toStringTag.js'
+
+tasks/coverage/test262/test/language/module-code/namespace/internals/define-own-property.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/namespace/internals/define-own-property.js'
+
+tasks/coverage/test262/test/language/module-code/namespace/internals/delete-exported-init.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/namespace/internals/delete-exported-init.js'
+
+tasks/coverage/test262/test/language/module-code/namespace/internals/delete-exported-uninit.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/namespace/internals/delete-exported-uninit.js'
+
+tasks/coverage/test262/test/language/module-code/namespace/internals/delete-non-exported.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/namespace/internals/delete-non-exported.js'
+
+tasks/coverage/test262/test/language/module-code/namespace/internals/enumerate-binding-uninit.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/namespace/internals/enumerate-binding-uninit.js'
+
+tasks/coverage/test262/test/language/module-code/namespace/internals/get-nested-namespace-dflt-skip.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/namespace/internals/get-nested-namespace-dflt-skip-named_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/namespace/internals/get-nested-namespace-props-nrml.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/namespace/internals/get-nested-namespace-props-nrml-1_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/namespace/internals/get-own-property-str-found-init.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/namespace/internals/get-own-property-str-found-init.js'
+
+tasks/coverage/test262/test/language/module-code/namespace/internals/get-own-property-str-found-uninit.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/namespace/internals/get-own-property-str-found-uninit.js'
+
+tasks/coverage/test262/test/language/module-code/namespace/internals/get-own-property-str-not-found.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/namespace/internals/get-own-property-str-not-found.js'
+
+tasks/coverage/test262/test/language/module-code/namespace/internals/get-own-property-sym.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/namespace/internals/get-own-property-sym.js'
+
+tasks/coverage/test262/test/language/module-code/namespace/internals/get-prototype-of.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/namespace/internals/get-prototype-of.js'
+
+tasks/coverage/test262/test/language/module-code/namespace/internals/get-str-found-init.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/namespace/internals/get-str-found-init.js'
+
+tasks/coverage/test262/test/language/module-code/namespace/internals/get-str-found-uninit.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/namespace/internals/get-str-found-uninit.js'
+
+tasks/coverage/test262/test/language/module-code/namespace/internals/get-str-initialize.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/namespace/internals/get-str-initialize.js'
+
+tasks/coverage/test262/test/language/module-code/namespace/internals/get-str-not-found.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/namespace/internals/get-str-not-found.js'
+
+tasks/coverage/test262/test/language/module-code/namespace/internals/get-str-update.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/namespace/internals/get-str-update.js'
+
+tasks/coverage/test262/test/language/module-code/namespace/internals/get-sym-found.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/namespace/internals/get-sym-found.js'
+
+tasks/coverage/test262/test/language/module-code/namespace/internals/get-sym-not-found.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/namespace/internals/get-sym-not-found.js'
+
+tasks/coverage/test262/test/language/module-code/namespace/internals/has-property-str-found-init.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/namespace/internals/has-property-str-found-init.js'
+
+tasks/coverage/test262/test/language/module-code/namespace/internals/has-property-str-found-uninit.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/namespace/internals/has-property-str-found-uninit.js'
+
+tasks/coverage/test262/test/language/module-code/namespace/internals/has-property-str-not-found.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/namespace/internals/has-property-str-not-found.js'
+
+tasks/coverage/test262/test/language/module-code/namespace/internals/has-property-sym-found.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/namespace/internals/has-property-sym-found.js'
+
+tasks/coverage/test262/test/language/module-code/namespace/internals/has-property-sym-not-found.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/namespace/internals/has-property-sym-not-found.js'
+
+tasks/coverage/test262/test/language/module-code/namespace/internals/is-extensible.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/namespace/internals/is-extensible.js'
+
+tasks/coverage/test262/test/language/module-code/namespace/internals/object-hasOwnProperty-binding-uninit.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/namespace/internals/object-hasOwnProperty-binding-uninit.js'
+
+tasks/coverage/test262/test/language/module-code/namespace/internals/object-keys-binding-uninit.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/namespace/internals/object-keys-binding-uninit.js'
+
+tasks/coverage/test262/test/language/module-code/namespace/internals/object-propertyIsEnumerable-binding-uninit.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/namespace/internals/object-propertyIsEnumerable-binding-uninit.js'
+
+tasks/coverage/test262/test/language/module-code/namespace/internals/own-property-keys-binding-types.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/namespace/internals/own-property-keys-binding-types.js'
+
+tasks/coverage/test262/test/language/module-code/namespace/internals/own-property-keys-sort.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/namespace/internals/own-property-keys-sort.js'
+
+tasks/coverage/test262/test/language/module-code/namespace/internals/prevent-extensions.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/namespace/internals/prevent-extensions.js'
+
+tasks/coverage/test262/test/language/module-code/namespace/internals/set-prototype-of-null.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/namespace/internals/set-prototype-of-null.js'
+
+tasks/coverage/test262/test/language/module-code/namespace/internals/set-prototype-of.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/namespace/internals/set-prototype-of.js'
+
+tasks/coverage/test262/test/language/module-code/namespace/internals/set.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/namespace/internals/set.js'
+
+tasks/coverage/test262/test/language/module-code/top-level-await/async-module-does-not-block-sibling-modules.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/top-level-await/async-module-tla_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/top-level-await/await-dynamic-import-rejection.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/top-level-await/module-import-rejection-body_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/top-level-await/await-dynamic-import-resolution.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/top-level-await/module-import-resolution_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/top-level-await/dfs-invariant.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/top-level-await/dfs-invariant-direct-1_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/top-level-await/dynamic-import-rejection.js
+runtime error: Test262Error: Expected true but got false
+
+tasks/coverage/test262/test/language/module-code/top-level-await/dynamic-import-resolution.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/top-level-await/module-import-resolution_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/top-level-await/module-async-import-async-resolution-ticks.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/top-level-await/module-import-resolution_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/top-level-await/module-import-rejection-body.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/top-level-await/module-import-rejection-body_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/top-level-await/module-import-rejection-tick.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/top-level-await/module-import-rejection-tick_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/top-level-await/module-import-rejection.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/top-level-await/module-import-rejection_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/top-level-await/module-import-resolution.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/top-level-await/module-import-resolution_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/top-level-await/module-import-unwrapped.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/top-level-await/module-import-unwrapped_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/top-level-await/module-self-import-async-resolution-ticks.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/top-level-await/module-self-import-async-resolution-ticks.js'
+
+tasks/coverage/test262/test/language/module-code/top-level-await/module-sync-import-async-resolution-ticks.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/top-level-await/module-import-resolution_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/verify-dfs.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/verify-dfs-a_FIXTURE.js'
+
+tasks/coverage/test262/test/language/statements/class/elements/syntax/valid/grammar-field-accessor.js
+runtime error: SyntaxError: Unexpected identifier '$'
+
+tasks/coverage/test262/test/language/statements/for-of/string-astral-truncated.js
+runtime error: Test262Error: Expected SameValue(«\», «\ud801») to be true
+

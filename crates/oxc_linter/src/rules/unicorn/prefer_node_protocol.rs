@@ -9,10 +9,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn prefer_node_protocol_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
+fn prefer_node_protocol_diagnostic(span: Span, module_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer using the `node:` protocol when importing Node.js builtin modules.")
-        .with_help(format!("Prefer `node:{x1}` over `{x1}`."))
-        .with_label(span0)
+        .with_help(format!("Prefer `node:{module_name}` over `{module_name}`."))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -24,14 +24,19 @@ declare_oxc_lint!(
     ///
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Bad
     /// import fs from "fs";
-    /// // Good
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// import fs from "node:fs";
     /// ```
     PreferNodeProtocol,
-    restriction
+    restriction,
+    fix
 );
 
 impl Rule for PreferNodeProtocol {
@@ -66,15 +71,14 @@ impl Rule for PreferNodeProtocol {
         let module_name = if let Some((prefix, postfix)) = string_lit_value.split_once('/') {
             // `e.g. ignore "assert/"`
             if postfix.is_empty() {
-                string_lit_value.to_string()
+                string_lit_value.as_str()
             } else {
-                prefix.to_string()
+                prefix
             }
         } else {
-            string_lit_value.to_string()
+            string_lit_value.as_str()
         };
-        if module_name.starts_with("node:")
-            || NODEJS_BUILTINS.binary_search(&module_name.as_str()).is_err()
+        if module_name.starts_with("node:") || NODEJS_BUILTINS.binary_search(&module_name).is_err()
         {
             return;
         }

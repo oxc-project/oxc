@@ -1,5 +1,4 @@
 use std::{
-    collections::HashMap,
     ffi::OsStr,
     fs,
     path::{Path, PathBuf},
@@ -10,27 +9,67 @@ use std::{
 use dashmap::DashMap;
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic};
-use oxc_parser::Parser;
+use oxc_parser::{ParseOptions, Parser};
 use oxc_resolver::Resolver;
 use oxc_semantic::{ModuleRecord, SemanticBuilder};
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 use rayon::{iter::ParallelBridge, prelude::ParallelIterator};
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
-    partial_loader::{JavaScriptSource, PartialLoader, LINT_PARTIAL_LOADER_EXT},
+    loader::{JavaScriptSource, PartialLoader, LINT_PARTIAL_LOADER_EXT},
+    utils::read_to_string,
     Fixer, Linter, Message,
 };
 
 pub struct LintServiceOptions {
     /// Current working directory
-    pub cwd: Box<Path>,
+    cwd: Box<Path>,
 
     /// All paths to lint
-    pub paths: Vec<Box<Path>>,
+    paths: Vec<Box<Path>>,
 
     /// TypeScript `tsconfig.json` path for reading path alias and project references
-    pub tsconfig: Option<PathBuf>,
+    tsconfig: Option<PathBuf>,
+
+    cross_module: bool,
+}
+
+impl LintServiceOptions {
+    #[must_use]
+    pub fn new<T>(cwd: T, paths: Vec<Box<Path>>) -> Self
+    where
+        T: Into<Box<Path>>,
+    {
+        Self { cwd: cwd.into(), paths, tsconfig: None, cross_module: false }
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn with_tsconfig<T>(mut self, tsconfig: T) -> Self
+    where
+        T: Into<PathBuf>,
+    {
+        let tsconfig = tsconfig.into();
+        // Should this be canonicalized?
+        let tsconfig = if tsconfig.is_relative() { self.cwd.join(tsconfig) } else { tsconfig };
+        debug_assert!(tsconfig.is_file());
+
+        self.tsconfig = Some(tsconfig);
+        self
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn with_cross_module(mut self, cross_module: bool) -> Self {
+        self.cross_module = cross_module;
+        self
+    }
+
+    #[inline]
+    pub fn cwd(&self) -> &Path {
+        &self.cwd
+    }
 }
 
 #[derive(Clone)]
@@ -105,7 +144,7 @@ impl LintService {
 ///
 /// See the "problem section" in <https://medium.com/@polyglot_factotum/rust-concurrency-patterns-condvars-and-locks-e278f18db74f>
 /// and the solution is copied here to fix the issue.
-type CacheState = Mutex<HashMap<Box<Path>, Arc<(Mutex<CacheStateEntry>, Condvar)>>>;
+type CacheState = Mutex<FxHashMap<Box<Path>, Arc<(Mutex<CacheStateEntry>, Condvar)>>>;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum CacheStateEntry {
@@ -134,7 +173,7 @@ pub struct Runtime {
 
 impl Runtime {
     fn new(linter: Linter, options: LintServiceOptions) -> Self {
-        let resolver = linter.options().import_plugin.then(|| {
+        let resolver = options.cross_module.then(|| {
             Self::get_resolver(options.tsconfig.or_else(|| Some(options.cwd.join("tsconfig.json"))))
         });
         Self {
@@ -176,7 +215,7 @@ impl Runtime {
             return None;
         }
         let source_type = source_type.unwrap_or_default();
-        let file_result = fs::read_to_string(path).map_err(|e| {
+        let file_result = read_to_string(path).map_err(|e| {
             Error::new(OxcDiagnostic::error(format!(
                 "Failed to open file {path:?} with error \"{e}\""
             )))
@@ -213,8 +252,8 @@ impl Runtime {
 
         let sources = PartialLoader::parse(ext, &source_text);
         let is_processed_by_partial_loader = sources.is_some();
-        let sources =
-            sources.unwrap_or_else(|| vec![JavaScriptSource::new(&source_text, source_type, 0)]);
+        let sources = sources
+            .unwrap_or_else(|| vec![JavaScriptSource::partial(&source_text, source_type, 0)]);
 
         if sources.is_empty() {
             self.ignore_path(path);
@@ -229,13 +268,15 @@ impl Runtime {
             // TODO: Span is wrong, ban this feature for file process by `PartialLoader`.
             if !is_processed_by_partial_loader && self.linter.options().fix.is_some() {
                 let fix_result = Fixer::new(source_text, messages).fix();
-                fs::write(path, fix_result.fixed_code.as_bytes()).unwrap();
+                if fix_result.fixed {
+                    fs::write(path, fix_result.fixed_code.as_bytes()).unwrap();
+                }
                 messages = fix_result.messages;
             }
 
             if !messages.is_empty() {
                 self.ignore_path(path);
-                let errors = messages.into_iter().map(|m| m.error).collect();
+                let errors = messages.into_iter().map(Into::into).collect();
                 let path = path.strip_prefix(&self.cwd).unwrap_or(path);
                 let diagnostics = DiagnosticService::wrap_diagnostics(path, source_text, errors);
                 tx_error.send(Some(diagnostics)).unwrap();
@@ -254,7 +295,11 @@ impl Runtime {
         tx_error: &DiagnosticSender,
     ) -> Vec<Message<'a>> {
         let ret = Parser::new(allocator, source_text, source_type)
-            .allow_return_outside_function(true)
+            .with_options(ParseOptions {
+                parse_regular_expression: true,
+                allow_return_outside_function: true,
+                ..ParseOptions::default()
+            })
             .parse();
 
         if !ret.errors.is_empty() {
@@ -267,15 +312,15 @@ impl Runtime {
 
         // Build the module record to unblock other threads from waiting for too long.
         // The semantic model is not built at this stage.
-        let semantic_builder = SemanticBuilder::new(source_text, source_type)
+        let semantic_builder = SemanticBuilder::new(source_text)
             .with_cfg(true)
-            .with_build_jsdoc(true)
             .with_trivias(trivias)
+            .with_build_jsdoc(true)
             .with_check_syntax_error(check_syntax_errors)
-            .build_module_record(path.to_path_buf(), program);
+            .build_module_record(path, program);
         let module_record = semantic_builder.module_record();
 
-        if self.linter.options().import_plugin {
+        if self.resolver.is_some() {
             self.module_map.insert(
                 path.to_path_buf().into_boxed_path(),
                 ModuleState::Resolved(Arc::clone(&module_record)),
@@ -357,7 +402,7 @@ impl Runtime {
     }
 
     fn init_cache_state(&self, path: &Path) -> bool {
-        if !self.linter.options().import_plugin {
+        if self.resolver.is_none() {
             return false;
         }
 
@@ -412,7 +457,7 @@ impl Runtime {
     }
 
     fn ignore_path(&self, path: &Path) {
-        if self.linter.options().import_plugin {
+        if self.resolver.is_some() {
             self.module_map.insert(path.to_path_buf().into_boxed_path(), ModuleState::Ignored);
             self.update_cache_state(path);
         }

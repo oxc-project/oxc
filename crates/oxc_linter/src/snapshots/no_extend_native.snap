@@ -1,0 +1,158 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-extend-native): Object prototype is read-only, properties should not be added.
+   ╭─[no_extend_native.tsx:1:1]
+ 1 │ Object.prototype.p = 0
+   · ──────────────────────
+   ╰────
+
+  ⚠ eslint(no-extend-native): BigInt prototype is read-only, properties should not be added.
+   ╭─[no_extend_native.tsx:1:1]
+ 1 │ BigInt.prototype.p = 0
+   · ──────────────────────
+   ╰────
+
+  ⚠ eslint(no-extend-native): WeakRef prototype is read-only, properties should not be added.
+   ╭─[no_extend_native.tsx:1:1]
+ 1 │ WeakRef.prototype.p = 0
+   · ───────────────────────
+   ╰────
+
+  ⚠ eslint(no-extend-native): FinalizationRegistry prototype is read-only, properties should not be added.
+   ╭─[no_extend_native.tsx:1:1]
+ 1 │ FinalizationRegistry.prototype.p = 0
+   · ────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-extend-native): AggregateError prototype is read-only, properties should not be added.
+   ╭─[no_extend_native.tsx:1:1]
+ 1 │ AggregateError.prototype.p = 0
+   · ──────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-extend-native): Function prototype is read-only, properties should not be added.
+   ╭─[no_extend_native.tsx:1:1]
+ 1 │ Function.prototype['p'] = 0
+   · ───────────────────────────
+   ╰────
+
+  ⚠ eslint(no-extend-native): String prototype is read-only, properties should not be added.
+   ╭─[no_extend_native.tsx:1:1]
+ 1 │ String['prototype'].p = 0
+   · ─────────────────────────
+   ╰────
+
+  ⚠ eslint(no-extend-native): Number prototype is read-only, properties should not be added.
+   ╭─[no_extend_native.tsx:1:1]
+ 1 │ Number['prototype']['p'] = 0
+   · ────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-extend-native): Array prototype is read-only, properties should not be added.
+   ╭─[no_extend_native.tsx:1:1]
+ 1 │ Object.defineProperty(Array.prototype, 'p', {value: 0})
+   · ───────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-extend-native): Array prototype is read-only, properties should not be added.
+   ╭─[no_extend_native.tsx:1:1]
+ 1 │ Object['defineProperty'](Array.prototype, 'p', {value: 0})
+   · ──────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-extend-native): Array prototype is read-only, properties should not be added.
+   ╭─[no_extend_native.tsx:1:1]
+ 1 │ Object['defineProperty'](Array['prototype'], 'p', {value: 0})
+   · ─────────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-extend-native): Array prototype is read-only, properties should not be added.
+   ╭─[no_extend_native.tsx:1:1]
+ 1 │ Object.defineProperties(Array.prototype, {p: {value: 0}})
+   · ─────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-extend-native): Array prototype is read-only, properties should not be added.
+   ╭─[no_extend_native.tsx:1:1]
+ 1 │ Object.defineProperties(Array.prototype, {p: {value: 0}, q: {value: 0}})
+   · ────────────────────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-extend-native): Number prototype is read-only, properties should not be added.
+   ╭─[no_extend_native.tsx:1:1]
+ 1 │ Number['prototype']['p'] = 0
+   · ────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-extend-native): Object prototype is read-only, properties should not be added.
+   ╭─[no_extend_native.tsx:1:1]
+ 1 │ Object.prototype.p = 0; Object.prototype.q = 0
+   · ──────────────────────
+   ╰────
+
+  ⚠ eslint(no-extend-native): Object prototype is read-only, properties should not be added.
+   ╭─[no_extend_native.tsx:1:25]
+ 1 │ Object.prototype.p = 0; Object.prototype.q = 0
+   ·                         ──────────────────────
+   ╰────
+
+  ⚠ eslint(no-extend-native): Object prototype is read-only, properties should not be added.
+   ╭─[no_extend_native.tsx:1:18]
+ 1 │ function foo() { Object.prototype.p = 0 }
+   ·                  ──────────────────────
+   ╰────
+
+  ⚠ eslint(no-extend-native): Object prototype is read-only, properties should not be added.
+   ╭─[no_extend_native.tsx:1:1]
+ 1 │ (Object?.prototype).p = 0
+   · ─────────────────────────
+   ╰────
+
+  ⚠ eslint(no-extend-native): Object prototype is read-only, properties should not be added.
+   ╭─[no_extend_native.tsx:1:1]
+ 1 │ (Object?.['prototype'])['p'] = 0
+   · ────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-extend-native): Object prototype is read-only, properties should not be added.
+   ╭─[no_extend_native.tsx:1:1]
+ 1 │ Object.defineProperty(Object?.prototype, 'p', { value: 0 })
+   · ───────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-extend-native): Object prototype is read-only, properties should not be added.
+   ╭─[no_extend_native.tsx:1:1]
+ 1 │ Object?.defineProperty(Object.prototype, 'p', { value: 0 })
+   · ───────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-extend-native): Object prototype is read-only, properties should not be added.
+   ╭─[no_extend_native.tsx:1:1]
+ 1 │ Object?.['defineProperty'](Object?.['prototype'], 'p', {value: 0})
+   · ──────────────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-extend-native): Object prototype is read-only, properties should not be added.
+   ╭─[no_extend_native.tsx:1:1]
+ 1 │ (Object?.defineProperty)(Object.prototype, 'p', { value: 0 })
+   · ─────────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-extend-native): Array prototype is read-only, properties should not be added.
+   ╭─[no_extend_native.tsx:1:1]
+ 1 │ Array.prototype.p &&= 0
+   · ───────────────────────
+   ╰────
+
+  ⚠ eslint(no-extend-native): Array prototype is read-only, properties should not be added.
+   ╭─[no_extend_native.tsx:1:1]
+ 1 │ Array.prototype.p ||= 0
+   · ───────────────────────
+   ╰────
+
+  ⚠ eslint(no-extend-native): Array prototype is read-only, properties should not be added.
+   ╭─[no_extend_native.tsx:1:1]
+ 1 │ Array.prototype.p ??= 0
+   · ───────────────────────
+   ╰────

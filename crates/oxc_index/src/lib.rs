@@ -5,9 +5,9 @@
 //!
 //! ## Example / Overview
 //! ```rust
-//! use index_vec::{IndexVec, IndexSlice, index_vec};
+//! use oxc_index::{IndexVec, IndexSlice, index_vec};
 //!
-//! index_vec::define_index_type! {
+//! oxc_index::define_index_type! {
 //!     // Define StrIdx to use only 32 bits internally (you can use usize, u16,
 //!     // and even u8).
 //!     pub struct StrIdx = u32;
@@ -153,6 +153,10 @@ mod idxslice;
 mod indexing;
 pub use idxslice::{IndexBox, IndexSlice};
 pub use indexing::{IdxRangeBounds, IdxSliceIndex};
+#[cfg(feature = "rayon")]
+pub use rayon_impl::*;
+#[cfg(feature = "rayon")]
+mod rayon_impl;
 
 #[macro_use]
 mod macros;
@@ -343,12 +347,11 @@ impl<I: Idx, T> IndexVec<I, T> {
         self.raw.pop()
     }
 
-    /// Converts the vector into an owned IdxSlice, dropping excess capacity.
+    /// Converts the vector into an owned [`IndexSlice`], dropping excess capacity.
     #[inline]
-    pub fn into_boxed_slice(self) -> alloc::boxed::Box<IndexSlice<I, [T]>> {
+    pub fn into_boxed_slice(self) -> Box<IndexSlice<I, [T]>> {
         let b = self.raw.into_boxed_slice();
         // SAFETY: `IndexSlice` is a thin wrapper around `[T]` with the added marker for the index.
-
         unsafe { Box::from_raw(Box::into_raw(b) as *mut IndexSlice<I, [T]>) }
     }
 
@@ -366,6 +369,12 @@ impl<I: Idx, T> IndexVec<I, T> {
     #[inline]
     pub fn shrink_to_fit(&mut self) {
         self.raw.shrink_to_fit();
+    }
+
+    /// Shrinks the capacity of the vector with a lower bound.
+    #[inline]
+    pub fn shrink_to(&mut self, min_capacity: usize) {
+        self.raw.shrink_to(min_capacity);
     }
 
     /// Shortens the vector, keeping the first `len` elements and dropping
@@ -784,5 +793,50 @@ impl<I: Idx, T: serde::ser::Serialize> serde::ser::Serialize for IndexBox<I, T> 
 impl<'de, I: Idx, T: serde::de::Deserialize<'de>> serde::de::Deserialize<'de> for IndexBox<I, [T]> {
     fn deserialize<D: serde::de::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         Box::<[T]>::deserialize(deserializer).map(Into::into)
+    }
+}
+
+#[cfg(test)]
+#[allow(clippy::legacy_numeric_constants)]
+mod test {
+    use super::*;
+
+    define_index_type! {
+        pub struct TestIdx = u32;
+    }
+
+    #[test]
+    fn test_resize() {
+        let mut v = IndexVec::<TestIdx, u32>::with_capacity(10);
+        assert_eq!(v.len(), 0);
+        assert!(v.is_empty());
+
+        v.push(1);
+        assert_eq!(v.len(), 1);
+
+        v.resize(5, 1);
+        assert_eq!(v.len(), 5);
+        assert_eq!(v.as_slice(), &[1, 1, 1, 1, 1]);
+
+        v.shrink_to_fit();
+        assert_eq!(v.len(), 5);
+    }
+
+    #[test]
+    fn test_push_pop() {
+        let mut v = IndexVec::<TestIdx, u32>::new();
+        v.push(1);
+        assert_eq!(v.pop(), Some(1));
+    }
+
+    #[test]
+    fn test_clear() {
+        let mut v: IndexVec<TestIdx, u32> = [1, 2, 3].into_iter().collect();
+        assert_eq!(v.len(), 3);
+
+        v.clear();
+        assert_eq!(v.len(), 0);
+        assert_eq!(v.as_slice(), &[]);
+        assert_eq!(v, IndexVec::<TestIdx, u32>::new());
     }
 }

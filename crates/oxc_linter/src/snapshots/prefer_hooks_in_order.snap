@@ -1,409 +1,606 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 216
 ---
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-   ╭─[prefer_hooks_in_order.tsx:6:21]
- 5 │                         });
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+   ╭─[prefer_hooks_in_order.tsx:3:21]
+ 2 │                     const withDatabase = () => {
+ 3 │ ╭─▶                     afterAll(() => {
+ 4 │ │                           removeMyDatabase();
+ 5 │ ├─▶                     });
+   · ╰──── "beforeAll" hook should be called before this
  6 │ ╭─▶                     beforeAll(() => {
  7 │ │                           createMyDatabase();
- 8 │ ╰─▶                     });
+ 8 │ ├─▶                     });
+   · ╰──── this should be moved to before the "afterAll" hook
  9 │                     };
    ╰────
   help: "beforeAll" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-   ╭─[prefer_hooks_in_order.tsx:5:17]
- 4 │                     });
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+   ╭─[prefer_hooks_in_order.tsx:2:17]
+ 1 │     
+ 2 │ ╭─▶                 afterAll(() => {
+ 3 │ │                       removeMyDatabase();
+ 4 │ ├─▶                 });
+   · ╰──── "beforeAll" hook should be called before this
  5 │ ╭─▶                 beforeAll(() => {
  6 │ │                       createMyDatabase();
- 7 │ ╰─▶                 });
+ 7 │ ├─▶                 });
+   · ╰──── this should be moved to before the "afterAll" hook
  8 │                 
    ╰────
   help: "beforeAll" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-   ╭─[prefer_hooks_in_order.tsx:3:17]
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+   ╭─[prefer_hooks_in_order.tsx:2:17]
+ 1 │ 
  2 │                 afterAll(() => {});
+   ·                 ─────────┬────────
+   ·                          ╰── "beforeAll" hook should be called before this
  3 │                 beforeAll(() => {});
-   ·                 ───────────────────
+   ·                 ─────────┬─────────
+   ·                          ╰── this should be moved to before the "afterAll" hook
  4 │             
    ╰────
   help: "beforeAll" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-   ╭─[prefer_hooks_in_order.tsx:3:17]
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+   ╭─[prefer_hooks_in_order.tsx:2:17]
+ 1 │ 
  2 │                 afterEach(() => {});
+   ·                 ─────────┬─────────
+   ·                          ╰── "beforeEach" hook should be called before this
  3 │                 beforeEach(() => {});
-   ·                 ────────────────────
+   ·                 ──────────┬─────────
+   ·                           ╰── this should be moved to before the "afterEach" hook
  4 │             
    ╰────
   help: "beforeEach" hooks should be before any "afterEach" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-   ╭─[prefer_hooks_in_order.tsx:3:17]
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+   ╭─[prefer_hooks_in_order.tsx:2:17]
+ 1 │ 
  2 │                 afterEach(() => {});
+   ·                 ─────────┬─────────
+   ·                          ╰── "beforeAll" hook should be called before this
  3 │                 beforeAll(() => {});
-   ·                 ───────────────────
+   ·                 ─────────┬─────────
+   ·                          ╰── this should be moved to before the "afterEach" hook
  4 │             
    ╰────
   help: "beforeAll" hooks should be before any "afterEach" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-   ╭─[prefer_hooks_in_order.tsx:3:17]
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+   ╭─[prefer_hooks_in_order.tsx:2:17]
+ 1 │ 
  2 │                 beforeEach(() => {});
+   ·                 ──────────┬─────────
+   ·                           ╰── "beforeAll" hook should be called before this
  3 │                 beforeAll(() => {});
-   ·                 ───────────────────
+   ·                 ─────────┬─────────
+   ·                          ╰── this should be moved to before the "beforeEach" hook
  4 │             
    ╰────
   help: "beforeAll" hooks should be before any "beforeEach" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-   ╭─[prefer_hooks_in_order.tsx:3:17]
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+   ╭─[prefer_hooks_in_order.tsx:2:17]
+ 1 │ 
  2 │                 afterAll(() => {});
+   ·                 ─────────┬────────
+   ·                          ╰── "afterEach" hook should be called before this
  3 │                 afterEach(() => {});
-   ·                 ───────────────────
+   ·                 ─────────┬─────────
+   ·                          ╰── this should be moved to before the "afterAll" hook
  4 │             
    ╰────
   help: "afterEach" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-   ╭─[prefer_hooks_in_order.tsx:5:17]
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+   ╭─[prefer_hooks_in_order.tsx:2:17]
+ 1 │ 
+ 2 │                 afterAll(() => {});
+   ·                 ─────────┬────────
+   ·                          ╰── "afterEach" hook should be called before this
+ 3 │                 // The afterEach should do this
  4 │                 // This comment does not matter for the order
  5 │                 afterEach(() => {});
-   ·                 ───────────────────
+   ·                 ─────────┬─────────
+   ·                          ╰── this should be moved to before the "afterAll" hook
  6 │             
    ╰────
   help: "afterEach" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-   ╭─[prefer_hooks_in_order.tsx:4:17]
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+   ╭─[prefer_hooks_in_order.tsx:3:17]
+ 2 │                 afterAll(() => {});
  3 │                 afterAll(() => {});
+   ·                 ─────────┬────────
+   ·                          ╰── "afterEach" hook should be called before this
  4 │                 afterEach(() => {});
-   ·                 ───────────────────
+   ·                 ─────────┬─────────
+   ·                          ╰── this should be moved to before the "afterAll" hook
  5 │             
    ╰────
   help: "afterEach" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-   ╭─[prefer_hooks_in_order.tsx:4:21]
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+   ╭─[prefer_hooks_in_order.tsx:3:21]
+ 2 │                 describe('my test', () => {
  3 │                     afterAll(() => {});
+   ·                     ─────────┬────────
+   ·                              ╰── "afterEach" hook should be called before this
  4 │                     afterEach(() => {});
-   ·                     ───────────────────
+   ·                     ─────────┬─────────
+   ·                              ╰── this should be moved to before the "afterAll" hook
  5 │                 });
    ╰────
   help: "afterEach" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-   ╭─[prefer_hooks_in_order.tsx:4:21]
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+   ╭─[prefer_hooks_in_order.tsx:3:21]
+ 2 │                 describe('my test', () => {
  3 │                     afterAll(() => {});
+   ·                     ─────────┬────────
+   ·                              ╰── "afterEach" hook should be called before this
  4 │                     afterEach(() => {});
-   ·                     ───────────────────
+   ·                     ─────────┬─────────
+   ·                              ╰── this should be moved to before the "afterAll" hook
  5 │ 
    ╰────
   help: "afterEach" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-    ╭─[prefer_hooks_in_order.tsx:9:21]
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+    ╭─[prefer_hooks_in_order.tsx:8:21]
+  7 │ 
   8 │                     beforeEach(() => {});
+    ·                     ──────────┬─────────
+    ·                               ╰── "beforeAll" hook should be called before this
   9 │                     beforeAll(() => {});
-    ·                     ───────────────────
+    ·                     ─────────┬─────────
+    ·                              ╰── this should be moved to before the "beforeEach" hook
  10 │                 });
     ╰────
   help: "beforeAll" hooks should be before any "beforeEach" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-   ╭─[prefer_hooks_in_order.tsx:4:21]
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+   ╭─[prefer_hooks_in_order.tsx:3:21]
+ 2 │                 describe('my test', () => {
  3 │                     afterAll(() => {});
+   ·                     ─────────┬────────
+   ·                              ╰── "afterEach" hook should be called before this
  4 │                     afterEach(() => {});
-   ·                     ───────────────────
+   ·                     ─────────┬─────────
+   ·                              ╰── this should be moved to before the "afterAll" hook
  5 │ 
    ╰────
   help: "afterEach" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-    ╭─[prefer_hooks_in_order.tsx:9:21]
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+    ╭─[prefer_hooks_in_order.tsx:8:21]
+  7 │ 
   8 │                     beforeEach(() => {});
+    ·                     ──────────┬─────────
+    ·                               ╰── "beforeAll" hook should be called before this
   9 │                     beforeAll(() => {});
-    ·                     ───────────────────
+    ·                     ─────────┬─────────
+    ·                              ╰── this should be moved to before the "beforeEach" hook
  10 │                 });
     ╰────
   help: "beforeAll" hooks should be before any "beforeEach" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-   ╭─[prefer_hooks_in_order.tsx:7:25]
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+   ╭─[prefer_hooks_in_order.tsx:6:25]
+ 5 │                     describe('when something is true', () => {
  6 │                         beforeEach(() => {});
+   ·                         ──────────┬─────────
+   ·                                   ╰── "beforeAll" hook should be called before this
  7 │                         beforeAll(() => {});
-   ·                         ───────────────────
+   ·                         ─────────┬─────────
+   ·                                  ╰── this should be moved to before the "beforeEach" hook
  8 │                     });
    ╰────
   help: "beforeAll" hooks should be before any "beforeEach" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-   ╭─[prefer_hooks_in_order.tsx:5:21]
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+   ╭─[prefer_hooks_in_order.tsx:4:21]
+ 3 │                     beforeAll(() => {});
  4 │                     afterAll(() => {});
+   ·                     ─────────┬────────
+   ·                              ╰── "beforeAll" hook should be called before this
  5 │                     beforeAll(() => {});
-   ·                     ───────────────────
+   ·                     ─────────┬─────────
+   ·                              ╰── this should be moved to before the "afterAll" hook
  6 │ 
    ╰────
   help: "beforeAll" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-    ╭─[prefer_hooks_in_order.tsx:10:25]
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+    ╭─[prefer_hooks_in_order.tsx:9:25]
+  8 │                         beforeAll(() => {});
   9 │                         afterEach(() => {});
+    ·                         ─────────┬─────────
+    ·                                  ╰── "beforeEach" hook should be called before this
  10 │                         beforeEach(() => {});
-    ·                         ────────────────────
+    ·                         ──────────┬─────────
+    ·                                   ╰── this should be moved to before the "afterEach" hook
  11 │                         afterEach(() => {});
     ╰────
   help: "beforeEach" hooks should be before any "afterEach" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-    ╭─[prefer_hooks_in_order.tsx:23:29]
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+    ╭─[prefer_hooks_in_order.tsx:21:29]
+ 20 │                             afterAll(() => {});
+ 21 │                             afterAll(() => {});
+    ·                             ─────────┬────────
+    ·                                      ╰── "afterEach" hook should be called before this
  22 │                             // This comment does nothing
  23 │                             afterEach(() => {});
-    ·                             ───────────────────
+    ·                             ─────────┬─────────
+    ·                                      ╰── this should be moved to before the "afterAll" hook
  24 │ 
     ╰────
   help: "afterEach" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-    ╭─[prefer_hooks_in_order.tsx:8:25]
-  7 │                             });
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+    ╭─[prefer_hooks_in_order.tsx:4:25]
+  3 │                         const setupDatabase = () => {
+  4 │ ╭─▶                         beforeEach(() => {
+  5 │ │                               initDatabase();
+  6 │ │                               fillWithData();
+  7 │ ├─▶                         });
+    · ╰──── "beforeAll" hook should be called before this
   8 │ ╭─▶                         beforeAll(() => {
   9 │ │                               setupMocks();
- 10 │ ╰─▶                         });
+ 10 │ ├─▶                         });
+    · ╰──── this should be moved to before the "beforeEach" hook
  11 │                         };
     ╰────
   help: "beforeAll" hooks should be before any "beforeEach" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-    ╭─[prefer_hooks_in_order.tsx:19:25]
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+    ╭─[prefer_hooks_in_order.tsx:18:25]
+ 17 │                     describe('my nested test', () => {
  18 │                         afterAll(() => {});
+    ·                         ─────────┬────────
+    ·                                  ╰── "afterEach" hook should be called before this
  19 │                         afterEach(() => {});
-    ·                         ───────────────────
+    ·                         ─────────┬─────────
+    ·                                  ╰── this should be moved to before the "afterAll" hook
  20 │ 
     ╰────
   help: "afterEach" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-    ╭─[prefer_hooks_in_order.tsx:38:25]
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+    ╭─[prefer_hooks_in_order.tsx:3:21]
+  2 │                     describe('foo', () => {
+  3 │ ╭─▶                     beforeEach(() => {
+  4 │ │                           seedMyDatabase();
+  5 │ ├─▶                     });
+    · ╰──── "beforeAll" hook should be called before this
+  6 │     
+  7 │ ╭─▶                     beforeAll(() => {
+  8 │ │                           createMyDatabase();
+  9 │ ├─▶                     });
+    · ╰──── this should be moved to before the "beforeEach" hook
+ 10 │     
+    ╰────
+  help: "beforeAll" hooks should be before any "beforeEach" hooks
+
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+    ╭─[prefer_hooks_in_order.tsx:34:25]
+ 33 │     
+ 34 │ ╭─▶                         afterEach(() => {
+ 35 │ │                               clearLogger();
+ 36 │ ├─▶                         });
+    · ╰──── "beforeEach" hook should be called before this
  37 │     
  38 │ ╭─▶                         beforeEach(() => {
  39 │ │                               mockLogger();
- 40 │ ╰─▶                         });
+ 40 │ ├─▶                         });
+    · ╰──── this should be moved to before the "afterEach" hook
  41 │     
     ╰────
   help: "beforeEach" hooks should be before any "afterEach" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-    ╭─[prefer_hooks_in_order.tsx:7:21]
-  6 │     
-  7 │ ╭─▶                     beforeAll(() => {
-  8 │ │                           createMyDatabase();
-  9 │ ╰─▶                     });
- 10 │     
-    ╰────
-  help: "beforeAll" hooks should be before any "beforeEach" hooks
-
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-   ╭─[prefer_hooks_in_order.tsx:6:17]
- 5 │                     });
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+   ╭─[prefer_hooks_in_order.tsx:3:17]
+ 2 │                 const withDatabase = () => {
+ 3 │ ╭─▶                 afterAll(() => {
+ 4 │ │                       removeMyDatabase();
+ 5 │ ├─▶                 });
+   · ╰──── "beforeAll" hook should be called before this
  6 │ ╭─▶                 beforeAll(() => {
  7 │ │                       createMyDatabase();
- 8 │ ╰─▶                 });
+ 8 │ ├─▶                 });
+   · ╰──── this should be moved to before the "afterAll" hook
  9 │                 };
    ╰────
   help: "beforeAll" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-   ╭─[prefer_hooks_in_order.tsx:5:13]
- 4 │                 });
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+   ╭─[prefer_hooks_in_order.tsx:2:13]
+ 1 │     
+ 2 │ ╭─▶             afterAll(() => {
+ 3 │ │                   removeMyDatabase();
+ 4 │ ├─▶             });
+   · ╰──── "beforeAll" hook should be called before this
  5 │ ╭─▶             beforeAll(() => {
  6 │ │                   createMyDatabase();
- 7 │ ╰─▶             });
+ 7 │ ├─▶             });
+   · ╰──── this should be moved to before the "afterAll" hook
  8 │             
    ╰────
   help: "beforeAll" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-   ╭─[prefer_hooks_in_order.tsx:3:13]
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+   ╭─[prefer_hooks_in_order.tsx:2:13]
+ 1 │ 
  2 │             afterAll(() => {});
+   ·             ─────────┬────────
+   ·                      ╰── "beforeAll" hook should be called before this
  3 │             beforeAll(() => {});
-   ·             ───────────────────
+   ·             ─────────┬─────────
+   ·                      ╰── this should be moved to before the "afterAll" hook
  4 │         
    ╰────
   help: "beforeAll" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-   ╭─[prefer_hooks_in_order.tsx:3:13]
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+   ╭─[prefer_hooks_in_order.tsx:2:13]
+ 1 │ 
  2 │             afterEach(() => {});
+   ·             ─────────┬─────────
+   ·                      ╰── "beforeEach" hook should be called before this
  3 │             beforeEach(() => {});
-   ·             ────────────────────
+   ·             ──────────┬─────────
+   ·                       ╰── this should be moved to before the "afterEach" hook
  4 │         
    ╰────
   help: "beforeEach" hooks should be before any "afterEach" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-   ╭─[prefer_hooks_in_order.tsx:3:13]
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+   ╭─[prefer_hooks_in_order.tsx:2:13]
+ 1 │ 
  2 │             afterEach(() => {});
+   ·             ─────────┬─────────
+   ·                      ╰── "beforeAll" hook should be called before this
  3 │             beforeAll(() => {});
-   ·             ───────────────────
+   ·             ─────────┬─────────
+   ·                      ╰── this should be moved to before the "afterEach" hook
  4 │         
    ╰────
   help: "beforeAll" hooks should be before any "afterEach" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-   ╭─[prefer_hooks_in_order.tsx:3:13]
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+   ╭─[prefer_hooks_in_order.tsx:2:13]
+ 1 │ 
  2 │             beforeEach(() => {});
+   ·             ──────────┬─────────
+   ·                       ╰── "beforeAll" hook should be called before this
  3 │             beforeAll(() => {});
-   ·             ───────────────────
+   ·             ─────────┬─────────
+   ·                      ╰── this should be moved to before the "beforeEach" hook
  4 │         
    ╰────
   help: "beforeAll" hooks should be before any "beforeEach" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-   ╭─[prefer_hooks_in_order.tsx:3:13]
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+   ╭─[prefer_hooks_in_order.tsx:2:13]
+ 1 │ 
  2 │             afterAll(() => {});
+   ·             ─────────┬────────
+   ·                      ╰── "afterEach" hook should be called before this
  3 │             afterEach(() => {});
-   ·             ───────────────────
+   ·             ─────────┬─────────
+   ·                      ╰── this should be moved to before the "afterAll" hook
  4 │         
    ╰────
   help: "afterEach" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-   ╭─[prefer_hooks_in_order.tsx:5:13]
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+   ╭─[prefer_hooks_in_order.tsx:2:13]
+ 1 │ 
+ 2 │             afterAll(() => {});
+   ·             ─────────┬────────
+   ·                      ╰── "afterEach" hook should be called before this
+ 3 │             // The afterEach should do this
  4 │             // This comment does not matter for the order
  5 │             afterEach(() => {});
-   ·             ───────────────────
+   ·             ─────────┬─────────
+   ·                      ╰── this should be moved to before the "afterAll" hook
  6 │         
    ╰────
   help: "afterEach" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-   ╭─[prefer_hooks_in_order.tsx:4:13]
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+   ╭─[prefer_hooks_in_order.tsx:3:13]
+ 2 │             afterAll(() => {});
  3 │             afterAll(() => {});
+   ·             ─────────┬────────
+   ·                      ╰── "afterEach" hook should be called before this
  4 │             afterEach(() => {});
-   ·             ───────────────────
+   ·             ─────────┬─────────
+   ·                      ╰── this should be moved to before the "afterAll" hook
  5 │         
    ╰────
   help: "afterEach" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-   ╭─[prefer_hooks_in_order.tsx:4:17]
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+   ╭─[prefer_hooks_in_order.tsx:3:17]
+ 2 │             describe('my test', () => {
  3 │                 afterAll(() => {});
+   ·                 ─────────┬────────
+   ·                          ╰── "afterEach" hook should be called before this
  4 │                 afterEach(() => {});
-   ·                 ───────────────────
+   ·                 ─────────┬─────────
+   ·                          ╰── this should be moved to before the "afterAll" hook
  5 │             });
    ╰────
   help: "afterEach" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-   ╭─[prefer_hooks_in_order.tsx:4:17]
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+   ╭─[prefer_hooks_in_order.tsx:3:17]
+ 2 │             describe('my test', () => {
  3 │                 afterAll(() => {});
+   ·                 ─────────┬────────
+   ·                          ╰── "afterEach" hook should be called before this
  4 │                 afterEach(() => {});
-   ·                 ───────────────────
+   ·                 ─────────┬─────────
+   ·                          ╰── this should be moved to before the "afterAll" hook
  5 │ 
    ╰────
   help: "afterEach" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-    ╭─[prefer_hooks_in_order.tsx:9:17]
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+    ╭─[prefer_hooks_in_order.tsx:8:17]
+  7 │ 
   8 │                 beforeEach(() => {});
+    ·                 ──────────┬─────────
+    ·                           ╰── "beforeAll" hook should be called before this
   9 │                 beforeAll(() => {});
-    ·                 ───────────────────
+    ·                 ─────────┬─────────
+    ·                          ╰── this should be moved to before the "beforeEach" hook
  10 │             });
     ╰────
   help: "beforeAll" hooks should be before any "beforeEach" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-   ╭─[prefer_hooks_in_order.tsx:4:17]
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+   ╭─[prefer_hooks_in_order.tsx:3:17]
+ 2 │             describe('my test', () => {
  3 │                 afterAll(() => {});
+   ·                 ─────────┬────────
+   ·                          ╰── "afterEach" hook should be called before this
  4 │                 afterEach(() => {});
-   ·                 ───────────────────
+   ·                 ─────────┬─────────
+   ·                          ╰── this should be moved to before the "afterAll" hook
  5 │ 
    ╰────
   help: "afterEach" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-    ╭─[prefer_hooks_in_order.tsx:9:17]
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+    ╭─[prefer_hooks_in_order.tsx:8:17]
+  7 │ 
   8 │                 beforeEach(() => {});
+    ·                 ──────────┬─────────
+    ·                           ╰── "beforeAll" hook should be called before this
   9 │                 beforeAll(() => {});
-    ·                 ───────────────────
+    ·                 ─────────┬─────────
+    ·                          ╰── this should be moved to before the "beforeEach" hook
  10 │             });
     ╰────
   help: "beforeAll" hooks should be before any "beforeEach" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-   ╭─[prefer_hooks_in_order.tsx:7:21]
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+   ╭─[prefer_hooks_in_order.tsx:6:21]
+ 5 │                 describe('when something is true', () => {
  6 │                     beforeEach(() => {});
+   ·                     ──────────┬─────────
+   ·                               ╰── "beforeAll" hook should be called before this
  7 │                     beforeAll(() => {});
-   ·                     ───────────────────
+   ·                     ─────────┬─────────
+   ·                              ╰── this should be moved to before the "beforeEach" hook
  8 │                 });
    ╰────
   help: "beforeAll" hooks should be before any "beforeEach" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-   ╭─[prefer_hooks_in_order.tsx:5:17]
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+   ╭─[prefer_hooks_in_order.tsx:4:17]
+ 3 │                 beforeAll(() => {});
  4 │                 afterAll(() => {});
+   ·                 ─────────┬────────
+   ·                          ╰── "beforeAll" hook should be called before this
  5 │                 beforeAll(() => {});
-   ·                 ───────────────────
+   ·                 ─────────┬─────────
+   ·                          ╰── this should be moved to before the "afterAll" hook
  6 │ 
    ╰────
   help: "beforeAll" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-    ╭─[prefer_hooks_in_order.tsx:10:21]
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+    ╭─[prefer_hooks_in_order.tsx:9:21]
+  8 │                     beforeAll(() => {});
   9 │                     afterEach(() => {});
+    ·                     ─────────┬─────────
+    ·                              ╰── "beforeEach" hook should be called before this
  10 │                     beforeEach(() => {});
-    ·                     ────────────────────
+    ·                     ──────────┬─────────
+    ·                               ╰── this should be moved to before the "afterEach" hook
  11 │                     afterEach(() => {});
     ╰────
   help: "beforeEach" hooks should be before any "afterEach" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-    ╭─[prefer_hooks_in_order.tsx:23:25]
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+    ╭─[prefer_hooks_in_order.tsx:21:25]
+ 20 │                         afterAll(() => {});
+ 21 │                         afterAll(() => {});
+    ·                         ─────────┬────────
+    ·                                  ╰── "afterEach" hook should be called before this
  22 │                         // This comment does nothing
  23 │                         afterEach(() => {});
-    ·                         ───────────────────
+    ·                         ─────────┬─────────
+    ·                                  ╰── this should be moved to before the "afterAll" hook
  24 │                 
     ╰────
   help: "afterEach" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-    ╭─[prefer_hooks_in_order.tsx:8:21]
-  7 │                         });
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+    ╭─[prefer_hooks_in_order.tsx:4:21]
+  3 │                     const setupDatabase = () => {
+  4 │ ╭─▶                     beforeEach(() => {
+  5 │ │                           initDatabase();
+  6 │ │                           fillWithData();
+  7 │ ├─▶                     });
+    · ╰──── "beforeAll" hook should be called before this
   8 │ ╭─▶                     beforeAll(() => {
   9 │ │                           setupMocks();
- 10 │ ╰─▶                     });
+ 10 │ ├─▶                     });
+    · ╰──── this should be moved to before the "beforeEach" hook
  11 │                     };
     ╰────
   help: "beforeAll" hooks should be before any "beforeEach" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-    ╭─[prefer_hooks_in_order.tsx:19:21]
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+    ╭─[prefer_hooks_in_order.tsx:18:21]
+ 17 │                 describe('my nested test', () => {
  18 │                     afterAll(() => {});
+    ·                     ─────────┬────────
+    ·                              ╰── "afterEach" hook should be called before this
  19 │                     afterEach(() => {});
-    ·                     ───────────────────
+    ·                     ─────────┬─────────
+    ·                              ╰── this should be moved to before the "afterAll" hook
  20 │ 
     ╰────
   help: "afterEach" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-    ╭─[prefer_hooks_in_order.tsx:38:21]
- 37 │     
- 38 │ ╭─▶                     beforeEach(() => {
- 39 │ │                           mockLogger();
- 40 │ ╰─▶                     });
- 41 │                     
-    ╰────
-  help: "beforeEach" hooks should be before any "afterEach" hooks
-
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-    ╭─[prefer_hooks_in_order.tsx:7:17]
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+    ╭─[prefer_hooks_in_order.tsx:3:17]
+  2 │                 describe('foo', () => {
+  3 │ ╭─▶                 beforeEach(() => {
+  4 │ │                       seedMyDatabase();
+  5 │ ├─▶                 });
+    · ╰──── "beforeAll" hook should be called before this
   6 │     
   7 │ ╭─▶                 beforeAll(() => {
   8 │ │                       createMyDatabase();
-  9 │ ╰─▶                 });
+  9 │ ├─▶                 });
+    · ╰──── this should be moved to before the "beforeEach" hook
  10 │     
     ╰────
   help: "beforeAll" hooks should be before any "beforeEach" hooks
+
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+    ╭─[prefer_hooks_in_order.tsx:34:21]
+ 33 │                     
+ 34 │ ╭─▶                     afterEach(() => {
+ 35 │ │                           clearLogger();
+ 36 │ ├─▶                     });
+    · ╰──── "beforeEach" hook should be called before this
+ 37 │     
+ 38 │ ╭─▶                     beforeEach(() => {
+ 39 │ │                           mockLogger();
+ 40 │ ├─▶                     });
+    · ╰──── this should be moved to before the "afterEach" hook
+ 41 │                     
+    ╰────
+  help: "beforeEach" hooks should be before any "afterEach" hooks

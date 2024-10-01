@@ -5,9 +5,6 @@
     "build": "napi build --platform --release",
     "test": "node test.mjs"
   },
-  "devDependencies": {
-    "@napi-rs/cli": "3.0.0-alpha.61"
-  },
   "engines": {
     "node": ">=14.*"
   },

@@ -4,8 +4,6 @@
 #![allow(dead_code)]
 
 /// origin file: https://github.com/zkat/miette/blob/75fea0935e495d0215518c80d32dd820910982e3/src/handlers/theme.rs
-use std::io::IsTerminal;
-
 use miette::ThemeCharacters;
 use owo_colors::Style;
 
@@ -19,6 +17,9 @@ and the
 
 You can create your own custom graphical theme using this type, or you can use
 one of the predefined ones using the methods below.
+
+When created by [`Default::default`], themes are automatically selected based on the `NO_COLOR`
+environment variable and whether the process is running in a terminal.
 */
 #[derive(Debug, Clone)]
 pub struct GraphicalTheme {
@@ -29,6 +30,14 @@ pub struct GraphicalTheme {
 }
 
 impl GraphicalTheme {
+    pub fn new(is_terminal: bool) -> Self {
+        match std::env::var("NO_COLOR") {
+            _ if !is_terminal => Self::none(),
+            Ok(string) if string != "0" => Self::unicode_nocolor(),
+            _ => Self::unicode(),
+        }
+    }
+
     /// ASCII-art-based graphical drawing, with ANSI styling.
     pub fn ascii() -> Self {
         Self { characters: ThemeCharacters::ascii(), styles: ThemeStyles::ansi() }
@@ -57,18 +66,6 @@ impl GraphicalTheme {
     /// rendering of your [`Diagnostic`](crate::Diagnostic)s
     pub fn none() -> Self {
         Self { characters: ThemeCharacters::ascii(), styles: ThemeStyles::none() }
-    }
-}
-
-impl Default for GraphicalTheme {
-    fn default() -> Self {
-        match std::env::var("NO_COLOR") {
-            _ if !std::io::stdout().is_terminal() || !std::io::stderr().is_terminal() => {
-                Self::none()
-            }
-            Ok(string) if string != "0" => Self::unicode_nocolor(),
-            _ => Self::unicode(),
-        }
     }
 }
 

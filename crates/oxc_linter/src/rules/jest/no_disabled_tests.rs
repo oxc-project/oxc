@@ -104,7 +104,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
             let ParsedGeneralJestFnCall { kind, members, name, .. } = jest_fn_call;
             // `test('foo')`
             let kind = match kind {
-                JestFnKind::Expect | JestFnKind::Unknown => return,
+                JestFnKind::Expect | JestFnKind::ExpectTypeOf | JestFnKind::Unknown => return,
                 JestFnKind::General(kind) => kind,
             };
             if matches!(kind, JestGeneralFnKind::Test)

@@ -1,17 +1,17 @@
 use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNodeId, SymbolId};
+use oxc_semantic::{NodeId, SymbolId};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 use phf::phf_set;
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_import_assign_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_import_assign_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("do not assign to imported bindings")
         .with_help("imported bindings are readonly")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -52,7 +52,7 @@ const REFLECT_MUTATION_METHODS: phf::Set<&'static str> =
 impl Rule for NoImportAssign {
     fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
         let symbol_table = ctx.semantic().symbols();
-        if symbol_table.get_flag(symbol_id).is_import() {
+        if symbol_table.get_flags(symbol_id).is_import() {
             let kind = ctx.nodes().kind(symbol_table.get_declaration(symbol_id));
             let is_namespace_specifier = matches!(kind, AstKind::ImportNamespaceSpecifier(_));
             for reference in symbol_table.get_resolved_references(symbol_id) {
@@ -106,7 +106,7 @@ impl Rule for NoImportAssign {
 /// - `Reflect.deleteProperty`
 /// - `Reflect.set`
 /// - `Reflect.setPrototypeOf`
-fn is_argument_of_well_known_mutation_function(node_id: AstNodeId, ctx: &LintContext<'_>) -> bool {
+fn is_argument_of_well_known_mutation_function(node_id: NodeId, ctx: &LintContext<'_>) -> bool {
     let current_node = ctx.nodes().get_node(node_id);
     let call_expression_node =
         ctx.nodes().parent_node(node_id).and_then(|node| ctx.nodes().parent_kind(node.id()));

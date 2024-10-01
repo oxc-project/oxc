@@ -1,51 +1,51 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-jest(no-deprecated-functions): Disallow use of deprecated functions
+  ⚠ eslint-plugin-jest(no-deprecated-functions): "jest.resetModuleRegistry" has been deprecated in favor of "jest.resetModules"
    ╭─[no_deprecated_functions.tsx:1:1]
  1 │ jest.resetModuleRegistry
    · ────────────────────────
    ╰────
-  help: "jest.resetModuleRegistry" has been deprecated in favor of "jest.resetModules"
+  help: Replace `jest.resetModuleRegistry` with `jest.resetModules`.
 
-  ⚠ eslint-plugin-jest(no-deprecated-functions): Disallow use of deprecated functions
+  ⚠ eslint-plugin-jest(no-deprecated-functions): "jest.resetModuleRegistry" has been deprecated in favor of "jest.resetModules"
    ╭─[no_deprecated_functions.tsx:1:1]
  1 │ jest.resetModuleRegistry
    · ────────────────────────
    ╰────
-  help: "jest.resetModuleRegistry" has been deprecated in favor of "jest.resetModules"
+  help: Replace `jest.resetModuleRegistry` with `jest.resetModules`.
 
-  ⚠ eslint-plugin-jest(no-deprecated-functions): Disallow use of deprecated functions
+  ⚠ eslint-plugin-jest(no-deprecated-functions): "jest.addMatchers" has been deprecated in favor of "expect.extend"
    ╭─[no_deprecated_functions.tsx:1:1]
  1 │ jest.addMatchers
    · ────────────────
    ╰────
-  help: "jest.addMatchers" has been deprecated in favor of "expect.extend"
+  help: Replace `jest.addMatchers` with `expect.extend`.
 
-  ⚠ eslint-plugin-jest(no-deprecated-functions): Disallow use of deprecated functions
+  ⚠ eslint-plugin-jest(no-deprecated-functions): "require.requireMock" has been deprecated in favor of "jest.requireMock"
    ╭─[no_deprecated_functions.tsx:1:1]
  1 │ require.requireMock
    · ───────────────────
    ╰────
-  help: "require.requireMock" has been deprecated in favor of "jest.requireMock"
+  help: Replace `require.requireMock` with `jest.requireMock`.
 
-  ⚠ eslint-plugin-jest(no-deprecated-functions): Disallow use of deprecated functions
+  ⚠ eslint-plugin-jest(no-deprecated-functions): "require.requireActual" has been deprecated in favor of "jest.requireMock"
    ╭─[no_deprecated_functions.tsx:1:1]
  1 │ require.requireActual
    · ─────────────────────
    ╰────
-  help: "require.requireActual" has been deprecated in favor of "jest.requireMock"
+  help: Replace `require.requireActual` with `jest.requireMock`.
 
-  ⚠ eslint-plugin-jest(no-deprecated-functions): Disallow use of deprecated functions
+  ⚠ eslint-plugin-jest(no-deprecated-functions): "jest.runTimersToTime" has been deprecated in favor of "jest.advanceTimersByTime"
    ╭─[no_deprecated_functions.tsx:1:1]
  1 │ jest.runTimersToTime
    · ────────────────────
    ╰────
-  help: "jest.runTimersToTime" has been deprecated in favor of "jest.advanceTimersByTime"
+  help: Replace `jest.runTimersToTime` with `jest.advanceTimersByTime`.
 
-  ⚠ eslint-plugin-jest(no-deprecated-functions): Disallow use of deprecated functions
+  ⚠ eslint-plugin-jest(no-deprecated-functions): "jest.genMockFromModule" has been deprecated in favor of "jest.createMockFromModule"
    ╭─[no_deprecated_functions.tsx:1:1]
  1 │ jest.genMockFromModule
    · ──────────────────────
    ╰────
-  help: "jest.genMockFromModule" has been deprecated in favor of "jest.createMockFromModule"
+  help: Replace `jest.genMockFromModule` with `jest.createMockFromModule`.

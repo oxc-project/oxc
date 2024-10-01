@@ -10,6 +10,13 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-jsx-a11y(lang): Lang attribute must have a valid value.
    ╭─[lang.tsx:1:7]
+ 1 │ <html lang='n'></html>
+   ·       ────────
+   ╰────
+  help: Set a valid value for lang attribute.
+
+  ⚠ eslint-plugin-jsx-a11y(lang): Lang attribute must have a valid value.
+   ╭─[lang.tsx:1:7]
  1 │ <html lang='zz-LL' />
    ·       ────────────
    ╰────

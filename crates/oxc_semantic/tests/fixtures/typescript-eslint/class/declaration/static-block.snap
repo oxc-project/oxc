@@ -2,6 +2,10 @@
 source: crates/oxc_semantic/tests/main.rs
 input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declaration/static-block.ts
 ---
+================================================================================
+SCOPES
+================================================================================
+
 [
   {
     "children": [
@@ -9,24 +13,24 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
         "children": [
           {
             "children": [],
-            "flag": "ScopeFlags(StrictMode | ClassStaticBlock)",
+            "flags": "ScopeFlags(StrictMode | ClassStaticBlock)",
             "id": 2,
             "node": "StaticBlock",
             "symbols": []
           }
         ],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 1,
         "node": "Class(A)",
         "symbols": []
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(Class)",
+        "flags": "SymbolFlags(Class)",
         "id": 0,
         "name": "A",
         "node": "Class(A)",
@@ -35,3 +39,9 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
     ]
   }
 ]
+
+================================================================================
+CONFORMANCE
+================================================================================
+
+All tests passed.

@@ -6,10 +6,9 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_unreadable_array_destructuring_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow unreadable array destructuring")
-        .with_help("Array destructuring may not contain consecutive ignored values.")
-        .with_label(span0)
+fn no_unreadable_array_destructuring_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Array destructuring may not contain consecutive ignored values.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -26,11 +25,14 @@ declare_oxc_lint!(
     /// This rule prevents ignoring consecutive values when destructuring from an array.
     ///
     /// ### Example
-    /// ```javascript
-    /// // Bad
-    /// const [,, foo] = parts;
     ///
-    /// // Good
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// const [,, foo] = parts;
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// const [foo] = parts;
     /// ```
     NoUnreadableArrayDestructuring,

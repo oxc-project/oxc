@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.28.0] - 2024-09-11
+
+- 4a8aec1 span: [**BREAKING**] Change `SourceType::js` to `SourceType::cjs` and `SourceType::mjs` (#5606) (Boshen)
+
+### Features
+
+
+## [0.26.0] - 2024-09-03
+
+### Features
+
+- d22bd20 module_lexer: Distinguish for types-only imports and exports (#5184) (Kevin Deng 三咲智子)
+
 ## [0.16.0] - 2024-06-26
 
 - 4456034 ast: [**BREAKING**] Add `IdentifierReference` to `ExportSpecifier` (#3820) (Boshen)

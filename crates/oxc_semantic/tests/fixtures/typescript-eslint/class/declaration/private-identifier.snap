@@ -2,6 +2,10 @@
 source: crates/oxc_semantic/tests/main.rs
 input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declaration/private-identifier.ts
 ---
+================================================================================
+SCOPES
+================================================================================
+
 [
   {
     "children": [
@@ -9,24 +13,24 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
         "children": [
           {
             "children": [],
-            "flag": "ScopeFlags(StrictMode | Function | Constructor)",
+            "flags": "ScopeFlags(StrictMode | Function | Constructor)",
             "id": 2,
             "node": "Function(<anonymous>)",
             "symbols": []
           }
         ],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 1,
         "node": "Class(Foo)",
         "symbols": []
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(Class)",
+        "flags": "SymbolFlags(Class)",
         "id": 0,
         "name": "Foo",
         "node": "Class(Foo)",
@@ -35,3 +39,9 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
     ]
   }
 ]
+
+================================================================================
+CONFORMANCE
+================================================================================
+
+All tests passed.

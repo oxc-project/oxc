@@ -1,36 +1,76 @@
 // See https://go.microsoft.com/fwlink/?LinkId=733558
 // for the documentation about the tasks.json format
 {
-	"version": "2.0.0",
-	"tasks": [
-		{
-			"type": "npm",
-			"script": "compile",
-			"group": "build",
-			"presentation": {
-				"panel": "dedicated",
-				"reveal": "never"
-			},
-			"problemMatcher": [
-				"$tsc"
-			]
-		},
-		{
-			"type": "shell",
-			"command": "cd ./editors/vscode && npm run watch",
+  "version": "2.0.0",
+  "tasks": [
+    // format code, then build tests (but do not run them).
+    {
+      "label": "rust: cargo test --no-run",
+      "type": "cargo",
+      "command": "test",
+      "args": [
+        "--no-run"
+      ],
+      "problemMatcher": [
+        "$rustc"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "dependsOn": [
+        "rust: cargo fmt"
+      ]
+    },
+    {
+      "type": "cargo",
+      "command": "fmt",
+      "problemMatcher": [
+        "$rustc"
+      ],
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "label": "rust: cargo fmt"
+    },
+    {
+      "type": "npm",
+      "script": "compile",
+      "group": "build",
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "never"
+      },
+      "problemMatcher": [
+        "$tsc"
+      ]
+    },
+    {
+      "type": "shell",
+      "command": "cd ./editors/vscode && npm run watch",
       "windows": {
-        "command": "cd ./editors/vscode; npm run watch",
+        "command": "cd ./editors/vscode; npm run watch"
       },
       "label": "watch",
-			"isBackground": true,
-			"group": {
-				"kind": "build",
-				"isDefault": true
-			},
-			"presentation": {
-				"panel": "dedicated",
-				"reveal": "never"
-			}
-		}
-	]
+      "isBackground": true,
+      "group": "build",
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "never"
+      }
+    }
+  ]
 }

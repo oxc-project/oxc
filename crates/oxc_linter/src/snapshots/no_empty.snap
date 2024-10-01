@@ -1,114 +1,100 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint(no-empty): Disallow empty block statements
+  ⚠ eslint(no-empty): Unexpected empty block statements
    ╭─[no_empty.tsx:1:5]
  1 │ try {} catch (ex) {throw ex}
-   ·     ─┬
-   ·      ╰── Empty block statement
+   ·     ──
    ╰────
-  help: Add comment inside empty block statement
+  help: Remove this block or add a comment inside it
 
-  ⚠ eslint(no-empty): Disallow empty block statements
+  ⚠ eslint(no-empty): Unexpected empty block statements
    ╭─[no_empty.tsx:1:45]
  1 │ try { foo() } catch (ex) {throw ex} finally {}
-   ·                                             ─┬
-   ·                                              ╰── Empty block statement
+   ·                                             ──
    ╰────
-  help: Add comment inside empty block statement
+  help: Remove this block or add a comment inside it
 
-  ⚠ eslint(no-empty): Disallow empty block statements
+  ⚠ eslint(no-empty): Unexpected empty block statements
    ╭─[no_empty.tsx:1:26]
  1 │ try { foo() } catch (ex) {}
-   ·                          ─┬
-   ·                           ╰── Empty block statement
+   ·                          ──
    ╰────
-  help: Add comment inside empty block statement
+  help: Remove this block or add a comment inside it
 
-  ⚠ eslint(no-empty): Disallow empty block statements
+  ⚠ eslint(no-empty): Unexpected empty block statements
    ╭─[no_empty.tsx:1:10]
  1 │ if (foo) {}
-   ·          ─┬
-   ·           ╰── Empty block statement
+   ·          ──
    ╰────
-  help: Add comment inside empty block statement
+  help: Remove this block or add a comment inside it
 
-  ⚠ eslint(no-empty): Disallow empty block statements
+  ⚠ eslint(no-empty): Unexpected empty block statements
    ╭─[no_empty.tsx:1:13]
  1 │ while (foo) {}
-   ·             ─┬
-   ·              ╰── Empty block statement
+   ·             ──
    ╰────
-  help: Add comment inside empty block statement
+  help: Remove this block or add a comment inside it
 
-  ⚠ eslint(no-empty): Disallow empty block statements
+  ⚠ eslint(no-empty): Unexpected empty block statements
    ╭─[no_empty.tsx:1:13]
  1 │ for (;foo;) {}
-   ·             ─┬
-   ·              ╰── Empty block statement
+   ·             ──
    ╰────
-  help: Add comment inside empty block statement
+  help: Remove this block or add a comment inside it
 
-  ⚠ eslint(no-empty): Disallow empty block statements
+  ⚠ eslint(no-empty): Unexpected empty block statements
    ╭─[no_empty.tsx:1:1]
  1 │ switch(foo) {}
-   · ───────┬──────
-   ·        ╰── Empty switch statement
+   · ──────────────
    ╰────
-  help: Add comment inside empty switch statement
+  help: Remove this switch or add a comment inside it
 
-  ⚠ eslint(no-empty): Disallow empty block statements
+  ⚠ eslint(no-empty): Unexpected empty block statements
    ╭─[no_empty.tsx:1:1]
  1 │ switch (foo) { /* empty */ }
-   · ──────────────┬─────────────
-   ·               ╰── Empty switch statement
+   · ────────────────────────────
    ╰────
-  help: Add comment inside empty switch statement
+  help: Remove this switch or add a comment inside it
 
-  ⚠ eslint(no-empty): Disallow empty block statements
+  ⚠ eslint(no-empty): Unexpected empty block statements
    ╭─[no_empty.tsx:1:5]
  1 │ try {} catch (ex) {}
-   ·     ─┬
-   ·      ╰── Empty block statement
+   ·     ──
    ╰────
-  help: Add comment inside empty block statement
+  help: Remove this block or add a comment inside it
 
-  ⚠ eslint(no-empty): Disallow empty block statements
+  ⚠ eslint(no-empty): Unexpected empty block statements
    ╭─[no_empty.tsx:1:38]
  1 │ try { foo(); } catch (ex) {} finally {}
-   ·                                      ─┬
-   ·                                       ╰── Empty block statement
+   ·                                      ──
    ╰────
-  help: Add comment inside empty block statement
+  help: Remove this block or add a comment inside it
 
-  ⚠ eslint(no-empty): Disallow empty block statements
+  ⚠ eslint(no-empty): Unexpected empty block statements
    ╭─[no_empty.tsx:1:5]
  1 │ try {} catch (ex) {} finally {}
-   ·     ─┬
-   ·      ╰── Empty block statement
+   ·     ──
    ╰────
-  help: Add comment inside empty block statement
+  help: Remove this block or add a comment inside it
 
-  ⚠ eslint(no-empty): Disallow empty block statements
+  ⚠ eslint(no-empty): Unexpected empty block statements
    ╭─[no_empty.tsx:1:30]
  1 │ try {} catch (ex) {} finally {}
-   ·                              ─┬
-   ·                               ╰── Empty block statement
+   ·                              ──
    ╰────
-  help: Add comment inside empty block statement
+  help: Remove this block or add a comment inside it
 
-  ⚠ eslint(no-empty): Disallow empty block statements
+  ⚠ eslint(no-empty): Unexpected empty block statements
    ╭─[no_empty.tsx:1:27]
  1 │ try { foo(); } catch (ex) {} finally {}
-   ·                           ─┬
-   ·                            ╰── Empty block statement
+   ·                           ──
    ╰────
-  help: Add comment inside empty block statement
+  help: Remove this block or add a comment inside it
 
-  ⚠ eslint(no-empty): Disallow empty block statements
+  ⚠ eslint(no-empty): Unexpected empty block statements
    ╭─[no_empty.tsx:1:38]
  1 │ try { foo(); } catch (ex) {} finally {}
-   ·                                      ─┬
-   ·                                       ╰── Empty block statement
+   ·                                      ──
    ╰────
-  help: Add comment inside empty block statement
+  help: Remove this block or add a comment inside it

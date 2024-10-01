@@ -8,14 +8,14 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn uninvoked_array_callback_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
+fn uninvoked_array_callback_diagnostic(cb_span: Span, arr_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Uninvoked array callback")
         .with_help(
             "consider filling the array with `undefined` values using `Array.prototype.fill()`",
         )
         .with_labels([
-            span0.label("this callback will not be invoked"),
-            span1.label("because this is an array with only empty slots"),
+            cb_span.label("this callback will not be invoked"),
+            arr_span.label("because this is an array with only empty slots"),
         ])
 }
 

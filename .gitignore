@@ -1,29 +1,36 @@
+# Rust
 target/
 **/*.rs.bk
 
+# node_modules
 /node_modules/
 /website/node_modules/
 /benchmark/node_modules/
 /tasks/benchmark/codspeed/node_modules/
+
+# vscode
 /editors/vscode/node_modules/
 /editors/vscode/icon.png
-
 /editors/vscode/out/
 /editors/vscode/*.vsix
 
-npm/cli-*
+# Cloned conformance repos
+tasks/coverage/babel/
+tasks/coverage/test262/
+tasks/coverage/typescript/
+tasks/prettier_conformance/prettier/
 
 # Ignore accidental files from the root
 /*.js
 /*.jsx
 /*.ts
 /*.tsx
-/tasks/transform_conformance/fixtures/*
 /*.ast.txt
 /*.cfg.txt
 /*.dot
 
-tasks/coverage/babel/
-tasks/coverage/test262/
-tasks/coverage/typescript/
-tasks/prettier_conformance/prettier/
+# NOTE: For non-project files such as `.vscode` or `.idea`, please add them to your `.gitignore_global`.
+# In `.gitconfig`, add `[core] excludesfile = ~/.gitignore_global`
+# See also
+# * https://stackoverflow.com/a/7335487
+# * https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files#configuring-ignored-files-for-all-repositories-on-your-computer

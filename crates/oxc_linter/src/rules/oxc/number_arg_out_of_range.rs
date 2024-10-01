@@ -6,18 +6,18 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn number_arg_out_of_range_diagnostic(
-    x0: &str,
-    x1: usize,
-    x2: usize,
-    span3: Span,
+    method_name: &str,
+    min: usize,
+    max: usize,
+    span: Span,
 ) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "Radix or precision arguments of number-related functions should not exceed the limit",
     )
     .with_help(format!(
-        "The first argument of 'Number.prototype.{x0}' should be a number between {x1} and {x2}"
+        "The first argument of 'Number.prototype.{method_name}' should be a number between {min} and {max}"
     ))
-    .with_label(span3)
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -43,34 +43,29 @@ impl Rule for NumberArgOutOfRange {
         let AstKind::CallExpression(expr) = node.kind() else {
             return;
         };
+        let Some(member) = expr.callee.get_member_expr() else {
+            return;
+        };
 
-        if let Some(member) = expr.callee.get_member_expr() {
-            if let Some(Argument::NumericLiteral(literal)) = expr.arguments.first() {
-                let value = literal.value;
-                match member.static_property_name() {
-                    Some(name @ "toString") => {
-                        if !(2.0_f64..=36.0_f64).contains(&value) {
-                            ctx.diagnostic(number_arg_out_of_range_diagnostic(
-                                name, 2, 36, expr.span,
-                            ));
-                        }
+        if let Some(Argument::NumericLiteral(literal)) = expr.arguments.first() {
+            let value = literal.value;
+            match member.static_property_name() {
+                Some(name @ "toString") => {
+                    if !(2.0_f64..=36.0_f64).contains(&value) {
+                        ctx.diagnostic(number_arg_out_of_range_diagnostic(name, 2, 36, expr.span));
                     }
-                    Some(name @ ("toFixed" | "toExponential")) => {
-                        if !(0.0_f64..=20.0_f64).contains(&value) {
-                            ctx.diagnostic(number_arg_out_of_range_diagnostic(
-                                name, 0, 20, expr.span,
-                            ));
-                        }
-                    }
-                    Some(name @ "toPrecision") => {
-                        if !(1.0_f64..=21.0_f64).contains(&value) {
-                            ctx.diagnostic(number_arg_out_of_range_diagnostic(
-                                name, 1, 21, expr.span,
-                            ));
-                        }
-                    }
-                    _ => {}
                 }
+                Some(name @ ("toFixed" | "toExponential")) => {
+                    if !(0.0_f64..=20.0_f64).contains(&value) {
+                        ctx.diagnostic(number_arg_out_of_range_diagnostic(name, 0, 20, expr.span));
+                    }
+                }
+                Some(name @ "toPrecision") => {
+                    if !(1.0_f64..=21.0_f64).contains(&value) {
+                        ctx.diagnostic(number_arg_out_of_range_diagnostic(name, 1, 21, expr.span));
+                    }
+                }
+                _ => {}
             }
         }
     }

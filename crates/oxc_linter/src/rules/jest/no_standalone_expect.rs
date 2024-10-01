@@ -1,10 +1,9 @@
-use std::collections::HashMap;
-
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNodeId;
+use oxc_semantic::NodeId;
 use oxc_span::Span;
+use rustc_hash::FxHashMap;
 
 use crate::{
     context::LintContext,
@@ -17,10 +16,10 @@ use crate::{
     AstNode,
 };
 
-fn no_standalone_expect_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_standalone_expect_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Expect must be inside of a test block.")
         .with_help("Did you forget to wrap `expect` in a `test` or `it` block?")
-        .with_label(span0)
+        .with_label(span)
 }
 
 /// <https://github.com/jest-community/eslint-plugin-jest/blob/main/docs/rules/no-standalone-expect.md>
@@ -76,10 +75,11 @@ impl Rule for NoStandaloneExpect {
 
     fn run_once(&self, ctx: &LintContext<'_>) {
         let possible_jest_nodes = collect_possible_jest_call_node(ctx);
-        let id_nodes_mapping = possible_jest_nodes.iter().fold(HashMap::new(), |mut acc, cur| {
-            acc.entry(cur.node.id()).or_insert(cur);
-            acc
-        });
+        let id_nodes_mapping =
+            possible_jest_nodes.iter().fold(FxHashMap::default(), |mut acc, cur| {
+                acc.entry(cur.node.id()).or_insert(cur);
+                acc
+            });
 
         for possible_jest_node in &possible_jest_nodes {
             self.run(possible_jest_node, &id_nodes_mapping, ctx);
@@ -91,7 +91,7 @@ impl NoStandaloneExpect {
     fn run<'a>(
         &self,
         possible_jest_node: &PossibleJestNode<'a, '_>,
-        id_nodes_mapping: &HashMap<AstNodeId, &PossibleJestNode<'a, '_>>,
+        id_nodes_mapping: &FxHashMap<NodeId, &PossibleJestNode<'a, '_>>,
         ctx: &LintContext<'a>,
     ) {
         let node = possible_jest_node.node;
@@ -129,7 +129,7 @@ impl NoStandaloneExpect {
 fn is_correct_place_to_call_expect<'a>(
     node: &AstNode<'a>,
     additional_test_block_functions: &[String],
-    id_nodes_mapping: &HashMap<AstNodeId, &PossibleJestNode<'a, '_>>,
+    id_nodes_mapping: &FxHashMap<NodeId, &PossibleJestNode<'a, '_>>,
     ctx: &LintContext<'a>,
 ) -> Option<()> {
     let mut parent = ctx.nodes().parent_node(node.id())?;
@@ -197,7 +197,7 @@ fn is_correct_place_to_call_expect<'a>(
 fn is_var_declarator_or_test_block<'a>(
     node: &AstNode<'a>,
     additional_test_block_functions: &[String],
-    id_nodes_mapping: &HashMap<AstNodeId, &PossibleJestNode<'a, '_>>,
+    id_nodes_mapping: &FxHashMap<NodeId, &PossibleJestNode<'a, '_>>,
     ctx: &LintContext<'a>,
 ) -> bool {
     match node.kind() {

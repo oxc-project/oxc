@@ -9,9 +9,15 @@ use oxc_span::{CompactStr, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn catch_error_name_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("The catch parameter {x0:?} should be named {x1:?}"))
-        .with_label(span2)
+fn catch_error_name_diagnostic(
+    caught_ident: &str,
+    expected_name: &str,
+    span: Span,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "The catch parameter {caught_ident:?} should be named {expected_name:?}"
+    ))
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -42,18 +48,22 @@ declare_oxc_lint!(
     ///
     /// This rule enforces naming conventions for catch statements.
     ///
-    /// ### Example
+    /// ### Why is this bad?
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    ///
-    /// // fail
     /// try { } catch (foo) { }
+    /// ```
     ///
-    /// // pass
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// try { } catch (error) { }
-    ///
     /// ```
     CatchErrorName,
-    style
+    style,
+    pending
 );
 
 impl Rule for CatchErrorName {
@@ -65,7 +75,7 @@ impl Rule for CatchErrorName {
             .unwrap_or(&vec![])
             .iter()
             .map(serde_json::Value::as_str)
-            .filter(std::option::Option::is_some)
+            .filter(Option::is_some)
             .map(|x| CompactStr::from(x.unwrap()))
             .collect::<Vec<CompactStr>>();
 
@@ -141,7 +151,7 @@ impl CatchErrorName {
         ctx: &LintContext,
     ) -> Option<OxcDiagnostic> {
         let expr = arg0.as_expression()?;
-        let expr = expr.without_parenthesized();
+        let expr = expr.without_parentheses();
 
         if let Expression::ArrowFunctionExpression(arrow_expr) = expr {
             if let Some(arg0) = arrow_expr.params.items.first() {

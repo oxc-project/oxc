@@ -95,12 +95,26 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
         return;
     }
 
-    if call_expr.arguments.len() == 0 {
+    let arg_len = call_expr.arguments.len();
+
+    // Handle describe.todo("runPrettierFormat")
+    if ctx.frameworks().is_vitest() && arg_len == 1 {
+        if let Some(member_expr) = call_expr.callee.as_member_expression() {
+            let Some(property_name) = member_expr.static_property_name() else {
+                return;
+            };
+            if property_name == "todo" {
+                return;
+            }
+        }
+    }
+
+    if arg_len == 0 {
         diagnostic(ctx, call_expr.span, Message::NameAndCallback);
         return;
     }
 
-    if call_expr.arguments.len() == 1 {
+    if arg_len == 1 {
         // For better error notice, we locate it to arguments[0]
         diagnostic(ctx, call_expr.arguments[0].span(), Message::NameAndCallback);
         return;
@@ -353,7 +367,13 @@ fn test() {
         ("fdescribe(\"foo\", () => {})", None),
         ("describe.only(\"foo\", () => {})", None),
         ("describe.skip(\"foo\", () => {})", None),
-        ("describe.todo(\"runPrettierFormat\");", None),
+        (
+            "
+                import { describe } from 'vitest';
+                describe.todo(\"runPrettierFormat\");
+            ",
+            None,
+        ),
         (
             "
                 describe('foo', () => {

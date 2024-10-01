@@ -9,10 +9,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_named_as_default_diagnostic(x0: &str, span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Unexpected `!` in `{x0}`."))
+fn no_named_as_default_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Unexpected `!` in `{name}`."))
         .with_help("Do not use import syntax to configure webpack loaders")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -21,20 +21,31 @@ pub struct NoWebpackLoaderSyntax;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Forbid Webpack loader syntax in imports.
+    /// Forbids using Webpack loader syntax directly in import or require statements.
     ///
     /// ### Why is this bad?
     ///
     /// This loader syntax is non-standard, so it couples the code to Webpack. The recommended way to
     /// specify Webpack loader configuration is in a [Webpack configuration file](https://webpack.js.org/concepts/loaders/#configuration).
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// import myModule from 'my-loader!my-module';
     /// import theme from 'style!css!./theme.css';
     ///
     /// var myModule = require('my-loader!./my-module');
     /// var theme = require('style!css!./theme.css');
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// import myModule from './my-module';
+    /// import theme from './theme.css';
+    ///
+    /// var myModule = require('./my-module');
+    /// var theme = require('./theme.css');
     /// ```
     NoWebpackLoaderSyntax,
     restriction,

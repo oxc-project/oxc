@@ -5,10 +5,10 @@ use oxc_span::Span;
 
 use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
 
-fn no_await_in_promise_methods_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Promise in `Promise.{x1}()` should not be awaited."))
+fn no_await_in_promise_methods_diagnostic(span: Span, method_name: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Promise in `Promise.{method_name}()` should not be awaited."))
         .with_help("Remove the `await`")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -21,25 +21,30 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Using `await` on promises passed as arguments to `Promise.all()`, `Promise.allSettled()`, `Promise.any()`, or `Promise.race()` is likely a mistake.
+    /// Using `await` on promises passed as arguments to `Promise.all()`,
+    /// `Promise.allSettled()`, `Promise.any()`, or `Promise.race()` is likely a
+    /// mistake.
     ///
     /// ### Example
-    /// Bad
     ///
-    /// ```js
-    /// Promise.all([await promise, anotherPromise]);
-    /// Promise.allSettled([await promise, anotherPromise]);
-    /// Promise.any([await promise, anotherPromise]);
-    /// Promise.race([await promise, anotherPromise]);
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// async function foo() {
+    ///     Promise.all([await promise, anotherPromise]);
+    ///     Promise.allSettled([await promise, anotherPromise]);
+    ///     Promise.any([await promise, anotherPromise]);
+    ///     Promise.race([await promise, anotherPromise]);
+    /// }
     /// ```
     ///
-    /// Good
-    ///
-    /// ```js
-    /// Promise.all([promise, anotherPromise]);
-    /// Promise.allSettled([promise, anotherPromise]);
-    /// Promise.any([promise, anotherPromise]);
-    /// Promise.race([promise, anotherPromise]);
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// async function foo() {
+    ///     Promise.all([promise, anotherPromise]);
+    ///     Promise.allSettled([promise, anotherPromise]);
+    ///     Promise.any([promise, anotherPromise]);
+    ///     Promise.race([promise, anotherPromise]);
+    /// }
     /// ```
     NoAwaitInPromiseMethods,
     correctness
@@ -64,15 +69,14 @@ impl Rule for NoAwaitInPromiseMethods {
         let Some(first_argument) = call_expr.arguments[0].as_expression() else {
             return;
         };
-        let first_argument = first_argument.without_parenthesized();
+        let first_argument = first_argument.without_parentheses();
         let Expression::ArrayExpression(first_argument_array_expr) = first_argument else {
             return;
         };
 
         for element in &first_argument_array_expr.elements {
             if let Some(element_expr) = element.as_expression() {
-                if let Expression::AwaitExpression(await_expr) =
-                    element_expr.without_parenthesized()
+                if let Expression::AwaitExpression(await_expr) = element_expr.without_parentheses()
                 {
                     let property_name = call_expr
                         .callee

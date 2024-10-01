@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use oxc_ast::{
     ast::{Statement, TSModuleReference},
     AstKind,
@@ -7,13 +5,17 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use rustc_hash::FxHashMap;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+};
 
-fn triple_slash_reference_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Do not use a triple slash reference for {x0}, use `import` style instead."))
+fn triple_slash_reference_diagnostic(ref_kind: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Do not use a triple slash reference for {ref_kind}, use `import` style instead."))
         .with_help("Use of triple-slash reference type directives is generally discouraged in favor of ECMAScript Module imports.")
-        .with_label(span1)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -61,7 +63,7 @@ declare_oxc_lint!(
     /// Use of triple-slash reference type directives is generally discouraged in favor of ECMAScript Module imports.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```ts
     /// /// <reference lib="code" />
     /// globalThis.value;
     /// ```
@@ -110,7 +112,7 @@ impl Rule for TripleSlashReference {
         // We don't need to iterate over all comments since Triple-slash directives are only valid at the top of their containing file.
         // We are trying to get the first statement start potioin, falling back to the program end if statement does not exist
         let comments_range_end = program.body.first().map_or(program.span.end, |v| v.span().start);
-        let mut refs_for_import = HashMap::new();
+        let mut refs_for_import = FxHashMap::default();
 
         for comment in ctx.semantic().trivias().comments_range(0..comments_range_end) {
             let raw = &ctx.semantic().source_text()
@@ -163,7 +165,7 @@ impl Rule for TripleSlashReference {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
     }
 }

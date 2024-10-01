@@ -2,6 +2,10 @@
 source: crates/oxc_semantic/tests/main.rs
 input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaration/conditional1.ts
 ---
+================================================================================
+SCOPES
+================================================================================
+
 [
   {
     "children": [
@@ -9,18 +13,18 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         "children": [
           {
             "children": [],
-            "flag": "ScopeFlags(StrictMode)",
+            "flags": "ScopeFlags(StrictMode)",
             "id": 2,
             "node": "TSConditionalType",
             "symbols": [
               {
-                "flag": "SymbolFlags(TypeParameter)",
+                "flags": "SymbolFlags(TypeParameter)",
                 "id": 2,
                 "name": "V",
-                "node": "TSTypeParameter",
+                "node": "TSTypeParameter(V)",
                 "references": [
                   {
-                    "flag": "ReferenceFlag(Type)",
+                    "flags": "ReferenceFlags(Type)",
                     "id": 1,
                     "name": "V",
                     "node_id": 15
@@ -30,18 +34,18 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
             ]
           }
         ],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 1,
         "node": "TSTypeAliasDeclaration",
         "symbols": [
           {
-            "flag": "SymbolFlags(TypeParameter)",
+            "flags": "SymbolFlags(TypeParameter)",
             "id": 1,
             "name": "U",
-            "node": "TSTypeParameter",
+            "node": "TSTypeParameter(U)",
             "references": [
               {
-                "flag": "ReferenceFlag(Type)",
+                "flags": "ReferenceFlags(Type)",
                 "id": 0,
                 "name": "U",
                 "node_id": 9
@@ -52,25 +56,25 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
       },
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 3,
         "node": "TSTypeAliasDeclaration",
         "symbols": []
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(TypeAlias)",
+        "flags": "SymbolFlags(TypeAlias)",
         "id": 0,
         "name": "T",
         "node": "TSTypeAliasDeclaration",
         "references": []
       },
       {
-        "flag": "SymbolFlags(TypeAlias)",
+        "flags": "SymbolFlags(TypeAlias)",
         "id": 3,
         "name": "Unresolved",
         "node": "TSTypeAliasDeclaration",
@@ -79,3 +83,9 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
     ]
   }
 ]
+
+================================================================================
+CONFORMANCE
+================================================================================
+
+All tests passed.

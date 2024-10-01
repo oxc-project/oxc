@@ -1,4 +1,4 @@
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, NONE};
 use oxc_diagnostics::Result;
 use oxc_span::{GetSpan, Span};
 
@@ -89,7 +89,6 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn parse_rest_binding(&mut self) -> Result<BindingRestElement<'a>> {
-        // self.eat_decorators()?;
         let elem = self.parse_rest_element()?;
         if self.at(Kind::Comma) {
             if matches!(self.peek_kind(), Kind::RCurly | Kind::RBrack) {
@@ -125,7 +124,7 @@ impl<'a> ParserImpl<'a> {
             .context(Context::In, Context::empty(), |p| p.parse_initializer(init_span, pattern))?;
         let span = self.end_span(span);
 
-        Ok(BindingRestElement { span, argument })
+        Ok(self.ast.binding_rest_element(span, argument))
     }
 
     /// `BindingProperty`[Yield, Await] :
@@ -146,8 +145,7 @@ impl<'a> ParserImpl<'a> {
                 shorthand = true;
                 let identifier =
                     self.ast.binding_pattern_kind_binding_identifier(ident.span, &ident.name);
-                let left =
-                    self.ast.binding_pattern(identifier, Option::<TSTypeAnnotation>::None, false);
+                let left = self.ast.binding_pattern(identifier, NONE, false);
                 self.context(Context::In, Context::empty(), |p| p.parse_initializer(span, left))?
             } else {
                 return Err(self.unexpected());
@@ -173,7 +171,7 @@ impl<'a> ParserImpl<'a> {
             let expr = self.parse_assignment_expression_or_higher()?;
             Ok(self.ast.binding_pattern(
                 self.ast.binding_pattern_kind_assignment_pattern(self.end_span(span), left, expr),
-                Option::<TSTypeAnnotation>::None,
+                NONE,
                 false,
             ))
         } else {

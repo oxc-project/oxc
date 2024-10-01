@@ -1,41 +1,34 @@
-use std::collections::BTreeMap;
+use rustc_hash::FxHashMap;
 
 use oxc_ast::{AstKind, Comment, Trivias};
 use oxc_span::{GetSpan, Span};
-use rustc_hash::FxHashSet;
 
-use super::parser::JSDoc;
 use crate::jsdoc::JSDocFinder;
 
+use super::parser::JSDoc;
+
 pub struct JSDocBuilder<'a> {
-    source_text: &'a str,
-    trivias: Trivias,
-    attached_docs: BTreeMap<Span, Vec<JSDoc<'a>>>,
-    leading_comments_seen: FxHashSet<u32>,
-    /// End span of the previous successful comment search.
-    previous_span_end: u32,
+    not_attached_docs: FxHashMap<u32, Vec<JSDoc<'a>>>,
+    attached_docs: FxHashMap<u32, Vec<JSDoc<'a>>>,
 }
 
 impl<'a> JSDocBuilder<'a> {
-    pub fn new(source_text: &'a str, trivias: Trivias) -> Self {
-        Self {
-            source_text,
-            trivias,
-            attached_docs: BTreeMap::default(),
-            leading_comments_seen: FxHashSet::default(),
-            previous_span_end: 0,
+    pub fn new(source_text: &'a str, trivias: &Trivias) -> Self {
+        let mut not_attached_docs: FxHashMap<u32, Vec<_>> = FxHashMap::default();
+        for comment in trivias.comments().filter(|comment| comment.is_jsdoc(source_text)) {
+            not_attached_docs
+                .entry(comment.attached_to)
+                .or_default()
+                .push(Self::parse_jsdoc_comment(comment, source_text));
         }
+        Self { not_attached_docs, attached_docs: FxHashMap::default() }
     }
 
     pub fn build(self) -> JSDocFinder<'a> {
-        let not_attached_docs = self
-            .trivias
-            .comments()
-            .filter(|comment| !self.leading_comments_seen.contains(&comment.span.start))
-            .filter_map(|comment| self.parse_if_jsdoc_comment(comment))
-            .collect::<Vec<_>>();
-
-        JSDocFinder::new(self.attached_docs, not_attached_docs)
+        JSDocFinder::new(
+            self.attached_docs,
+            self.not_attached_docs.into_iter().flat_map(|(_, v)| v).collect::<Vec<_>>(),
+        )
     }
 
     // ## Current architecture
@@ -114,51 +107,21 @@ impl<'a> JSDocBuilder<'a> {
     // If one day we want to add a performance-affecting kind,
     // we might as well give up pre-flagging architecture itself?
     pub fn retrieve_attached_jsdoc(&mut self, kind: &AstKind<'a>) -> bool {
-        if !should_attach_jsdoc(kind) {
-            return false;
-        }
-
-        let span = kind.span();
-        let comments_range = self.trivias.comments_range(self.previous_span_end..span.start);
-        let comments_len = comments_range.size_hint().1;
-        let mut leading_jsdoc_comments = Vec::with_capacity(comments_len.unwrap_or(0));
-
-        for comment in comments_range {
-            if self.leading_comments_seen.contains(&comment.span.start) {
-                continue;
-            }
-
-            self.leading_comments_seen.insert(comment.span.start);
-            if let Some(jsdoc) = self.parse_if_jsdoc_comment(comment) {
-                leading_jsdoc_comments.push(jsdoc);
+        if should_attach_jsdoc(kind) {
+            let start = kind.span().start;
+            if let Some(docs) = self.not_attached_docs.remove(&start) {
+                self.attached_docs.insert(start, docs);
+                return true;
             }
         }
-
-        if leading_jsdoc_comments.is_empty() {
-            return false;
-        }
-
-        leading_jsdoc_comments.shrink_to_fit();
-        self.attached_docs.insert(span, leading_jsdoc_comments);
-        self.previous_span_end = span.end;
-        true
+        false
     }
 
-    fn parse_if_jsdoc_comment(&self, comment: &Comment) -> Option<JSDoc<'a>> {
-        if !comment.kind.is_multi_line() {
-            return None;
-        }
-
-        // Inside of marker: /*CONTENT*/ => CONTENT
-        let comment_content = comment.span.source_text(self.source_text);
-        // Should start with "*"
-        if !comment_content.starts_with('*') {
-            return None;
-        }
-
+    fn parse_jsdoc_comment(comment: &Comment, source_text: &'a str) -> JSDoc<'a> {
         // Remove the very first `*`
         let jsdoc_span = Span::new(comment.span.start + 1, comment.span.end);
-        Some(JSDoc::new(&comment_content[1..], jsdoc_span))
+        let comment_content = jsdoc_span.source_text(source_text);
+        JSDoc::new(comment_content, jsdoc_span)
     }
 }
 
@@ -198,8 +161,6 @@ fn should_attach_jsdoc(kind: &AstKind) -> bool {
 
         | AstKind::VariableDeclaration(_)
         | AstKind::VariableDeclarator(_)
-
-        | AstKind::UsingDeclaration(_)
 
         // This is slow
         // | AstKind::IdentifierName(_)
@@ -246,7 +207,7 @@ mod test {
         let source_type = source_type.unwrap_or_default();
         let ret = Parser::new(allocator, source_text, source_type).parse();
         let program = allocator.alloc(ret.program);
-        let semantic = SemanticBuilder::new(source_text, source_type)
+        let semantic = SemanticBuilder::new(source_text)
             .with_trivias(ret.trivias)
             .with_build_jsdoc(true)
             .build(program)

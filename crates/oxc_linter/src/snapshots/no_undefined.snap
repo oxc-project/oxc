@@ -1,247 +1,212 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint(no-undefined): Disallow the use of `undefined` as an identifier
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
    ╭─[no_undefined.tsx:1:1]
  1 │ undefined
    · ─────────
    ╰────
-  help: Unexpected use of undefined.
 
-  ⚠ eslint(no-undefined): Disallow the use of `undefined` as an identifier
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
    ╭─[no_undefined.tsx:1:1]
  1 │ undefined.a
    · ─────────
    ╰────
-  help: Unexpected use of undefined.
 
-  ⚠ eslint(no-undefined): Disallow the use of `undefined` as an identifier
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
    ╭─[no_undefined.tsx:1:3]
  1 │ a[undefined]
    ·   ─────────
    ╰────
-  help: Unexpected use of undefined.
 
-  ⚠ eslint(no-undefined): Disallow the use of `undefined` as an identifier
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
    ╭─[no_undefined.tsx:1:1]
  1 │ undefined[0]
    · ─────────
    ╰────
-  help: Unexpected use of undefined.
 
-  ⚠ eslint(no-undefined): Disallow the use of `undefined` as an identifier
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
    ╭─[no_undefined.tsx:1:3]
  1 │ f(undefined)
    ·   ─────────
    ╰────
-  help: Unexpected use of undefined.
 
-  ⚠ eslint(no-undefined): Disallow the use of `undefined` as an identifier
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
    ╭─[no_undefined.tsx:1:12]
  1 │ function f(undefined) {}
    ·            ─────────
    ╰────
-  help: Unexpected use of undefined.
 
-  ⚠ eslint(no-undefined): Disallow the use of `undefined` as an identifier
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
    ╭─[no_undefined.tsx:1:20]
  1 │ function f() { var undefined; }
    ·                    ─────────
    ╰────
-  help: Unexpected use of undefined.
 
-  ⚠ eslint(no-undefined): Disallow the use of `undefined` as an identifier
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
    ╭─[no_undefined.tsx:1:16]
  1 │ function f() { undefined = true; }
    ·                ─────────
    ╰────
-  help: Unexpected use of undefined.
 
-  ⚠ eslint(no-undefined): Disallow the use of `undefined` as an identifier
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
    ╭─[no_undefined.tsx:1:5]
  1 │ var undefined;
    ·     ─────────
    ╰────
-  help: Unexpected use of undefined.
 
-  ⚠ eslint(no-undefined): Disallow the use of `undefined` as an identifier
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
    ╭─[no_undefined.tsx:1:14]
  1 │ try {} catch(undefined) {}
    ·              ─────────
    ╰────
-  help: Unexpected use of undefined.
 
-  ⚠ eslint(no-undefined): Disallow the use of `undefined` as an identifier
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
    ╭─[no_undefined.tsx:1:10]
  1 │ function undefined() {}
    ·          ─────────
    ╰────
-  help: Unexpected use of undefined.
 
-  ⚠ eslint(no-undefined): Disallow the use of `undefined` as an identifier
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
    ╭─[no_undefined.tsx:1:11]
  1 │ (function undefined(){}())
    ·           ─────────
    ╰────
-  help: Unexpected use of undefined.
 
-  ⚠ eslint(no-undefined): Disallow the use of `undefined` as an identifier
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
    ╭─[no_undefined.tsx:1:20]
  1 │ var foo = function undefined() {}
    ·                    ─────────
    ╰────
-  help: Unexpected use of undefined.
 
-  ⚠ eslint(no-undefined): Disallow the use of `undefined` as an identifier
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
    ╭─[no_undefined.tsx:1:16]
  1 │ foo = function undefined() {}
    ·                ─────────
    ╰────
-  help: Unexpected use of undefined.
 
-  ⚠ eslint(no-undefined): Disallow the use of `undefined` as an identifier
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
    ╭─[no_undefined.tsx:1:1]
  1 │ undefined = true
    · ─────────
    ╰────
-  help: Unexpected use of undefined.
 
-  ⚠ eslint(no-undefined): Disallow the use of `undefined` as an identifier
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
    ╭─[no_undefined.tsx:1:5]
  1 │ var undefined = true
    ·     ─────────
    ╰────
-  help: Unexpected use of undefined.
 
-  ⚠ eslint(no-undefined): Disallow the use of `undefined` as an identifier
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
    ╭─[no_undefined.tsx:1:4]
  1 │ ({ undefined })
    ·    ─────────
    ╰────
-  help: Unexpected use of undefined.
 
-  ⚠ eslint(no-undefined): Disallow the use of `undefined` as an identifier
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
    ╭─[no_undefined.tsx:1:5]
  1 │ ({ [undefined]: foo })
    ·     ─────────
    ╰────
-  help: Unexpected use of undefined.
 
-  ⚠ eslint(no-undefined): Disallow the use of `undefined` as an identifier
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
    ╭─[no_undefined.tsx:1:9]
  1 │ ({ bar: undefined })
    ·         ─────────
    ╰────
-  help: Unexpected use of undefined.
 
-  ⚠ eslint(no-undefined): Disallow the use of `undefined` as an identifier
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
    ╭─[no_undefined.tsx:1:9]
  1 │ ({ bar: undefined } = foo)
    ·         ─────────
    ╰────
-  help: Unexpected use of undefined.
 
-  ⚠ eslint(no-undefined): Disallow the use of `undefined` as an identifier
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
    ╭─[no_undefined.tsx:1:7]
  1 │ var { undefined } = foo
    ·       ─────────
    ╰────
-  help: Unexpected use of undefined.
 
-  ⚠ eslint(no-undefined): Disallow the use of `undefined` as an identifier
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
    ╭─[no_undefined.tsx:1:12]
  1 │ var { bar: undefined } = foo
    ·            ─────────
    ╰────
-  help: Unexpected use of undefined.
 
-  ⚠ eslint(no-undefined): Disallow the use of `undefined` as an identifier
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
    ╭─[no_undefined.tsx:1:24]
  1 │ ({ undefined: function undefined() {} })
    ·                        ─────────
    ╰────
-  help: Unexpected use of undefined.
 
-  ⚠ eslint(no-undefined): Disallow the use of `undefined` as an identifier
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
    ╭─[no_undefined.tsx:1:18]
  1 │ ({ foo: function undefined() {} })
    ·                  ─────────
    ╰────
-  help: Unexpected use of undefined.
 
-  ⚠ eslint(no-undefined): Disallow the use of `undefined` as an identifier
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
    ╭─[no_undefined.tsx:1:14]
  1 │ class Foo { [undefined]() {} }
    ·              ─────────
    ╰────
-  help: Unexpected use of undefined.
 
-  ⚠ eslint(no-undefined): Disallow the use of `undefined` as an identifier
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
    ╭─[no_undefined.tsx:1:11]
  1 │ (class { [undefined]() {} })
    ·           ─────────
    ╰────
-  help: Unexpected use of undefined.
 
-  ⚠ eslint(no-undefined): Disallow the use of `undefined` as an identifier
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
    ╭─[no_undefined.tsx:1:5]
  1 │ var undefined = true; undefined = false;
    ·     ─────────
    ╰────
-  help: Unexpected use of undefined.
 
-  ⚠ eslint(no-undefined): Disallow the use of `undefined` as an identifier
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
    ╭─[no_undefined.tsx:1:23]
  1 │ var undefined = true; undefined = false;
    ·                       ─────────
    ╰────
-  help: Unexpected use of undefined.
 
-  ⚠ eslint(no-undefined): Disallow the use of `undefined` as an identifier
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
    ╭─[no_undefined.tsx:1:8]
  1 │ import undefined from 'foo'
    ·        ─────────
    ╰────
-  help: Unexpected use of undefined.
 
-  ⚠ eslint(no-undefined): Disallow the use of `undefined` as an identifier
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
    ╭─[no_undefined.tsx:1:13]
  1 │ import * as undefined from 'foo'
    ·             ─────────
    ╰────
-  help: Unexpected use of undefined.
 
-  ⚠ eslint(no-undefined): Disallow the use of `undefined` as an identifier
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
    ╭─[no_undefined.tsx:1:10]
  1 │ import { undefined } from 'foo'
    ·          ─────────
    ╰────
-  help: Unexpected use of undefined.
 
-  ⚠ eslint(no-undefined): Disallow the use of `undefined` as an identifier
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
    ╭─[no_undefined.tsx:1:15]
  1 │ import { a as undefined } from 'foo'
    ·               ─────────
    ╰────
-  help: Unexpected use of undefined.
 
-  ⚠ eslint(no-undefined): Disallow the use of `undefined` as an identifier
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
    ╭─[no_undefined.tsx:1:16]
  1 │ let a = [b, ...undefined]
    ·                ─────────
    ╰────
-  help: Unexpected use of undefined.
 
-  ⚠ eslint(no-undefined): Disallow the use of `undefined` as an identifier
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
    ╭─[no_undefined.tsx:1:8]
  1 │ [a, ...undefined] = b
    ·        ─────────
    ╰────
-  help: Unexpected use of undefined.
 
-  ⚠ eslint(no-undefined): Disallow the use of `undefined` as an identifier
+  ⚠ eslint(no-undefined): Unexpected use of `undefined`
    ╭─[no_undefined.tsx:1:6]
  1 │ [a = undefined] = b
    ·      ─────────
    ╰────
-  help: Unexpected use of undefined.

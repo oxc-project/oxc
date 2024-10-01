@@ -2,7 +2,7 @@
 //!
 //! A port of <https://github.com/prettier/prettier>
 
-#![allow(clippy::wildcard_imports)]
+#![allow(unused, clippy::wildcard_imports, clippy::unused_self)]
 
 mod binaryish;
 mod comments;
@@ -14,10 +14,10 @@ mod options;
 mod printer;
 mod utils;
 
-use std::{iter::Peekable, vec};
+use std::vec;
 
 use oxc_allocator::Allocator;
-use oxc_ast::{ast::Program, AstKind, Comment, Trivias};
+use oxc_ast::{ast::Program, AstKind, Trivias};
 use oxc_span::Span;
 use oxc_syntax::identifier::is_line_terminator;
 
@@ -54,8 +54,7 @@ pub struct Prettier<'a> {
 
     options: PrettierOptions,
 
-    /// A stack of comments that will be carefully placed in the right places.
-    trivias: Peekable<vec::IntoIter<Comment>>,
+    trivias: Trivias,
 
     /// The stack of AST Nodes
     /// See <https://github.com/prettier/prettier/blob/main/src/common/ast-path.js>
@@ -84,15 +83,15 @@ impl<'a> Prettier<'a> {
             allocator,
             source_text,
             options,
-            trivias: trivias.comments().copied().collect::<Vec<_>>().into_iter().peekable(),
+            trivias,
             stack: vec![],
             group_id_builder: GroupIdBuilder::default(),
             args: PrettierArgs::default(),
         }
     }
 
-    pub fn build(mut self, program: &Program<'a>) -> String {
-        let doc = program.format(&mut self);
+    pub fn build(&mut self, program: &Program<'a>) -> String {
+        let doc = program.format(self);
         Printer::new(doc, self.source_text, self.options, self.allocator).build()
     }
 
@@ -145,7 +144,6 @@ impl<'a> Prettier<'a> {
         self.should_print_comma_impl(false)
     }
 
-    #[allow(unused)]
     fn should_print_all_comma(&self) -> bool {
         self.should_print_comma_impl(true)
     }

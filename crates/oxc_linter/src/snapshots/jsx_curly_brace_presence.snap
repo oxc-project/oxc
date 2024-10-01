@@ -1,0 +1,403 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:12]
+ 1 │ <App prop={`foo`} />
+   ·            ─────
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:7]
+ 1 │ <App>{<myApp></myApp>}</App>
+   ·       ───────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:7]
+ 1 │ <App>{<myApp></myApp>}</App>
+   ·       ───────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:12]
+ 1 │ <App prop={`foo`}>foo</App>
+   ·            ─────
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:7]
+ 1 │ <App>{`foo`}</App>
+   ·       ─────
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:4]
+ 1 │ <>{`foo`}</>
+   ·    ─────
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:15]
+ 1 │ <MyComponent>{'foo'}</MyComponent>
+   ·               ─────
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:20]
+ 1 │ <MyComponent prop={'bar'}>foo</MyComponent>
+   ·                    ─────
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:15]
+ 1 │ <MyComponent>{'foo'}</MyComponent>
+   ·               ─────
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:20]
+ 1 │ <MyComponent prop={'bar'}>foo</MyComponent>
+   ·                    ─────
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:3:15]
+ 2 │                     <MyComponent>
+ 3 │                       {'%'}
+   ·                        ───
+ 4 │                     </MyComponent>
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:3:15]
+ 2 │                     <MyComponent>
+ 3 │                       {'foo'}
+   ·                        ─────
+ 4 │                       <div>
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:7:15]
+ 6 │                       </div>
+ 7 │                       {'baz'}
+   ·                        ─────
+ 8 │                     </MyComponent>
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:5:17]
+ 4 │                       <div>
+ 5 │                         {'bar'}
+   ·                          ─────
+ 6 │                       </div>
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:3:15]
+ 2 │                     <MyComponent>
+ 3 │                       {'foo'}
+   ·                        ─────
+ 4 │                       <div>
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:7:15]
+ 6 │                       </div>
+ 7 │                       {'baz'}
+   ·                        ─────
+ 8 │                       {'some-complicated-exp'}
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:8:15]
+ 7 │                       {'baz'}
+ 8 │                       {'some-complicated-exp'}
+   ·                        ──────────────────────
+ 9 │                     </MyComponent>
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:5:17]
+ 4 │                       <div>
+ 5 │                         {'bar'}
+   ·                          ─────
+ 6 │                       </div>
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:19]
+ 1 │ <MyComponent prop='bar'>foo</MyComponent>
+   ·                   ──┬──
+   ·                     ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:19]
+ 1 │ <MyComponent prop="foo 'bar'">foo</MyComponent>
+   ·                   ─────┬─────
+   ·                        ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:19]
+ 1 │ <MyComponent prop='foo "bar"'>foo</MyComponent>
+   ·                   ─────┬─────
+   ·                        ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:19]
+ 1 │ <MyComponent prop="foo 'bar'">foo</MyComponent>
+   ·                   ─────┬─────
+   ·                        ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:14]
+ 1 │ <MyComponent>foo bar </MyComponent>
+   ·              ────┬───
+   ·                  ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:19]
+ 1 │ <MyComponent prop="foo 'bar' \n ">foo</MyComponent>
+   ·                   ───────┬───────
+   ·                          ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:14]
+ 1 │ <MyComponent>foo bar  </MyComponent>
+   ·              ────┬────
+   ·                  ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:14]
+ 1 │ <MyComponent>foo bar 'foo'</MyComponent>
+   ·              ──────┬──────
+   ·                    ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:14]
+ 1 │ <MyComponent>foo bar "foo"</MyComponent>
+   ·              ──────┬──────
+   ·                    ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:14]
+ 1 │ ╭─▶ <MyComponent>foo 
+ 2 │ ├─▶  bar</MyComponent>
+   · ╰──── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:14]
+ 1 │ <MyComponent>foo \u1234 bar</MyComponent>
+   ·              ───────┬──────
+   ·                     ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:19]
+ 1 │ <MyComponent prop='foo \u1234 bar' />
+   ·                   ────────┬───────
+   ·                           ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:20]
+ 1 │ <MyComponent prop={'bar'}>{'foo'}</MyComponent>
+   ·                    ─────
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:28]
+ 1 │ <MyComponent prop={'bar'}>{'foo'}</MyComponent>
+   ·                            ─────
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:19]
+ 1 │ <MyComponent prop='bar'>foo</MyComponent>
+   ·                   ──┬──
+   ·                     ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:25]
+ 1 │ <MyComponent prop='bar'>foo</MyComponent>
+   ·                         ─┬─
+   ·                          ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:12]
+ 1 │ <App prop={'foo'} attr={" foo "} />
+   ·            ─────
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:11]
+ 1 │ <App prop='foo' attr="bar" />
+   ·           ──┬──
+   ·             ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:22]
+ 1 │ <App prop='foo' attr="bar" />
+   ·                      ──┬──
+   ·                        ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:11]
+ 1 │ <App prop='foo' attr={"bar"} />
+   ·           ──┬──
+   ·             ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:24]
+ 1 │ <App prop={'foo'} attr='bar' />
+   ·                        ──┬──
+   ·                          ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:11]
+ 1 │ <App prop='foo &middot; bar' />
+   ·           ─────────┬────────
+   ·                    ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:6]
+ 1 │ <App>foo &middot; bar</App>
+   ·      ────────┬───────
+   ·              ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:7]
+ 1 │ <App>{'foo "bar"'}</App>
+   ·       ───────────
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:7]
+ 1 │ <App>{"foo 'bar'"}</App>
+   ·       ───────────
+   ╰────
+
+  × Unterminated string
+   ╭─[jsx_curly_brace_presence.tsx:2:22]
+ 1 │ 
+ 2 │                     <App prop="
+   ·                               ─
+   ╰────
+
+  × Unterminated string
+   ╭─[jsx_curly_brace_presence.tsx:2:22]
+ 1 │ 
+ 2 │                     <App prop='
+   ·                               ─
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:4:19]
+ 3 │                       foo bar
+ 4 │                       <div>foo bar foo</div>
+   ·                            ─────┬─────
+   ·                                 ╰── Wrap this value in curly braces
+ 5 │                       <span>
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:6:27]
+ 5 │                       <span>
+ 6 │                         foo bar <i>foo bar</i>
+   ·                                    ───┬───
+   ·                                       ╰── Wrap this value in curly braces
+ 7 │                         <strong>
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+    ╭─[jsx_curly_brace_presence.tsx:7:24]
+  6 │                             foo bar <i>foo bar</i>
+  7 │ ╭─▶                         <strong>
+  8 │ │                             foo bar
+  9 │ ├─▶                         </strong>
+    · ╰──── Wrap this value in curly braces
+ 10 │                           </span>
+    ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:2:21]
+ 1 │ 
+ 2 │                     <Box mb={'1rem'} />
+   ·                              ──────
+ 3 │                   
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:2:27]
+ 1 │ 
+ 2 │                     <Box mb={'1rem {}'} />
+   ·                              ─────────
+ 3 │                   
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:20]
+ 1 │ <MyComponent prop={"{ style: true }"}>bar</MyComponent>
+   ·                    ─────────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:20]
+ 1 │ <MyComponent prop={"< style: true >"}>foo</MyComponent>
+   ·                    ─────────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
+   ╭─[jsx_curly_brace_presence.tsx:1:13]
+ 1 │ <App horror=<div /> />
+   ·             ───┬───
+   ·                ╰── Wrap this value in curly braces
+   ╰────
+  help: Wrap this value in curly braces
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:14]
+ 1 │ <App horror={<div />} />
+   ·              ───────
+   ╰────

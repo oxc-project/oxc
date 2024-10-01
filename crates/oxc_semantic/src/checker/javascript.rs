@@ -1,3 +1,6 @@
+use phf::{phf_set, Set};
+use rustc_hash::FxHashMap;
+
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{
     ast::*,
@@ -11,8 +14,6 @@ use oxc_syntax::{
     number::NumberBase,
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
 };
-use phf::{phf_set, Set};
-use rustc_hash::FxHashMap;
 
 use crate::{builder::SemanticBuilder, diagnostics::redeclaration, scope::ScopeFlags, AstNode};
 
@@ -107,8 +108,8 @@ pub fn check_module_record(ctx: &SemanticBuilder<'_>) {
     }
 }
 
-fn class_static_block_await(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Cannot use await in class static initialization block").with_label(span0)
+fn class_static_block_await(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Cannot use await in class static initialization block").with_label(span)
 }
 
 fn reserved_keyword(x0: &str, span1: Span) -> OxcDiagnostic {
@@ -268,16 +269,16 @@ fn check_private_identifier(ctx: &SemanticBuilder<'_>) {
     }
 }
 
-fn legacy_octal(span0: Span) -> OxcDiagnostic {
+fn legacy_octal(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("'0'-prefixed octal literals and octal escape sequences are deprecated")
         .with_help("for octal literals use the '0o' prefix instead")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn leading_zero_decimal(span0: Span) -> OxcDiagnostic {
+fn leading_zero_decimal(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Decimals with leading zeros are not allowed in strict mode")
         .with_help("remove the leading zero")
-        .with_label(span0)
+        .with_label(span)
 }
 
 pub fn check_number_literal(lit: &NumericLiteral, ctx: &SemanticBuilder<'_>) {
@@ -307,10 +308,10 @@ pub fn check_number_literal(lit: &NumericLiteral, ctx: &SemanticBuilder<'_>) {
     }
 }
 
-fn non_octal_decimal_escape_sequence(span0: Span) -> OxcDiagnostic {
+fn non_octal_decimal_escape_sequence(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Invalid escape sequence")
         .with_help("\\8 and \\9 are not allowed in strict mode")
-        .with_label(span0)
+        .with_label(span)
 }
 
 pub fn check_string_literal(lit: &StringLiteral, ctx: &SemanticBuilder<'_>) {
@@ -343,11 +344,11 @@ pub fn check_string_literal(lit: &StringLiteral, ctx: &SemanticBuilder<'_>) {
     }
 }
 
-fn illegal_use_strict(span0: Span) -> OxcDiagnostic {
+fn illegal_use_strict(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(
         "Illegal 'use strict' directive in function with non-simple parameter list",
     )
-    .with_label(span0)
+    .with_label(span)
 }
 
 // It is a Syntax Error if FunctionBodyContainsUseStrict of AsyncFunctionBody is true and IsSimpleParameterList of FormalParameters is false.
@@ -404,6 +405,10 @@ pub fn check_module_declaration<'a>(
     let start = decl.span().start;
     let span = Span::new(start, start + 6);
     match ctx.source_type.module_kind() {
+        ModuleKind::Unambiguous => {
+            #[cfg(debug_assertions)]
+            panic!("Technically unreachable, omit to avoid panic.");
+        }
         ModuleKind::Script => {
             ctx.error(module_code(text, span));
         }
@@ -416,24 +421,24 @@ pub fn check_module_declaration<'a>(
     }
 }
 
-fn new_target(span0: Span) -> OxcDiagnostic {
+fn new_target(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Unexpected new.target expression")
 .with_help("new.target is only allowed in constructors and functions invoked using thew `new` operator")
-.with_label(span0)
+.with_label(span)
 }
 
-fn new_target_property(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("The only valid meta property for new is new.target").with_label(span0)
+fn new_target_property(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("The only valid meta property for new is new.target").with_label(span)
 }
 
-fn import_meta(span0: Span) -> OxcDiagnostic {
+fn import_meta(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Unexpected import.meta expression")
         .with_help("import.meta is only allowed in module code")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn import_meta_property(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("The only valid meta property for import is import.meta").with_label(span0)
+fn import_meta_property(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("The only valid meta property for import is import.meta").with_label(span)
 }
 
 pub fn check_meta_property<'a>(prop: &MetaProperty, node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
@@ -472,18 +477,18 @@ pub fn check_meta_property<'a>(prop: &MetaProperty, node: &AstNode<'a>, ctx: &Se
     }
 }
 
-fn function_declaration_strict(span0: Span) -> OxcDiagnostic {
+fn function_declaration_strict(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Invalid function declaration")
         .with_help(
             "In strict mode code, functions can only be declared at top level or inside a block",
         )
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn function_declaration_non_strict(span0: Span) -> OxcDiagnostic {
+fn function_declaration_non_strict(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Invalid function declaration")
 .with_help("In non-strict mode code, functions can only be declared at top level, inside a block, or as the body of an if statement")
-.with_label(span0)
+.with_label(span)
 }
 
 pub fn check_function_declaration<'a>(
@@ -501,11 +506,11 @@ pub fn check_function_declaration<'a>(
     };
 }
 
-fn reg_exp_flag_u_and_v(span0: Span) -> OxcDiagnostic {
+fn reg_exp_flag_u_and_v(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(
         "The 'u' and 'v' regular expression flags cannot be enabled at the same time",
     )
-    .with_label(span0)
+    .with_label(span)
 }
 
 pub fn check_regexp_literal(lit: &RegExpLiteral, ctx: &SemanticBuilder<'_>) {
@@ -515,8 +520,8 @@ pub fn check_regexp_literal(lit: &RegExpLiteral, ctx: &SemanticBuilder<'_>) {
     }
 }
 
-fn with_statement(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("'with' statements are not allowed").with_label(span0)
+fn with_statement(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("'with' statements are not allowed").with_label(span)
 }
 
 pub fn check_with_statement(stmt: &WithStatement, ctx: &SemanticBuilder<'_>) {
@@ -538,12 +543,12 @@ pub fn check_switch_statement<'a>(stmt: &SwitchStatement<'a>, ctx: &SemanticBuil
     }
 }
 
-fn invalid_label_jump_target(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Jump target cannot cross function boundary.").with_label(span0)
+fn invalid_label_jump_target(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Jump target cannot cross function boundary.").with_label(span)
 }
 
-fn invalid_label_target(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Use of undefined label").with_label(span0)
+fn invalid_label_target(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Use of undefined label").with_label(span)
 }
 
 fn invalid_label_non_iteration(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
@@ -554,35 +559,10 @@ fn invalid_label_non_iteration(x0: &str, span1: Span, span2: Span) -> OxcDiagnos
         ])
 }
 
-fn check_label(label: &LabelIdentifier, ctx: &SemanticBuilder, is_continue: bool) {
-    if ctx.label_builder.is_inside_labeled_statement() {
-        for labeled in ctx.label_builder.get_accessible_labels() {
-            if label.name == labeled.name {
-                if is_continue
-                    && matches!(ctx.nodes.kind(labeled.id), AstKind::LabeledStatement(stmt) if {
-                        let mut body = &stmt.body;
-                        while let Statement::LabeledStatement(stmt) = body {
-                            body = &stmt.body;
-                        }
-                        !body.is_iteration_statement()
-                    })
-                {
-                    ctx.error(invalid_label_non_iteration("continue", labeled.span, label.span));
-                }
-                return;
-            }
-        }
-        if ctx.label_builder.is_inside_function_or_static_block() {
-            return ctx.error(invalid_label_jump_target(label.span));
-        }
-    }
-    ctx.error(invalid_label_target(label.span));
-}
-
-fn invalid_break(span0: Span) -> OxcDiagnostic {
+fn invalid_break(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Illegal break statement")
 .with_help("A `break` statement can only be used within an enclosing iteration or switch statement.")
-.with_label(span0)
+.with_label(span)
 }
 
 pub fn check_break_statement<'a>(
@@ -590,15 +570,29 @@ pub fn check_break_statement<'a>(
     node: &AstNode<'a>,
     ctx: &SemanticBuilder<'a>,
 ) {
-    if let Some(label) = &stmt.label {
-        return check_label(label, ctx, false);
-    }
-
     // It is a Syntax Error if this BreakStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement or a SwitchStatement.
     for node_id in ctx.nodes.ancestors(node.id()).skip(1) {
         match ctx.nodes.kind(node_id) {
-            AstKind::Program(_) | AstKind::Function(_) | AstKind::StaticBlock(_) => {
-                ctx.error(invalid_break(stmt.span));
+            AstKind::Program(_) => {
+                return stmt.label.as_ref().map_or_else(
+                    || ctx.error(invalid_break(stmt.span)),
+                    |label| ctx.error(invalid_label_target(label.span)),
+                );
+            }
+            AstKind::Function(_) | AstKind::StaticBlock(_) => {
+                return stmt.label.as_ref().map_or_else(
+                    || ctx.error(invalid_break(stmt.span)),
+                    |label| ctx.error(invalid_label_jump_target(label.span)),
+                );
+            }
+            AstKind::LabeledStatement(labeled_statement) => {
+                if stmt
+                    .label
+                    .as_ref()
+                    .is_some_and(|label| label.name == labeled_statement.label.name)
+                {
+                    break;
+                }
             }
             kind if (kind.is_iteration_statement()
                 || matches!(kind, AstKind::SwitchStatement(_)))
@@ -611,10 +605,10 @@ pub fn check_break_statement<'a>(
     }
 }
 
-fn invalid_continue(span0: Span) -> OxcDiagnostic {
+fn invalid_continue(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Illegal continue statement: no surrounding iteration statement")
 .with_help("A `continue` statement can only be used within an enclosing `for`, `while` or `do while` ")
-.with_label(span0)
+.with_label(span)
 }
 
 pub fn check_continue_statement<'a>(
@@ -622,34 +616,75 @@ pub fn check_continue_statement<'a>(
     node: &AstNode<'a>,
     ctx: &SemanticBuilder<'a>,
 ) {
-    if let Some(label) = &stmt.label {
-        return check_label(label, ctx, true);
-    }
-
     // It is a Syntax Error if this ContinueStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement.
     for node_id in ctx.nodes.ancestors(node.id()).skip(1) {
         match ctx.nodes.kind(node_id) {
-            AstKind::Program(_) | AstKind::Function(_) | AstKind::StaticBlock(_) => {
-                ctx.error(invalid_continue(stmt.span));
+            AstKind::Program(_) => {
+                return stmt.label.as_ref().map_or_else(
+                    || ctx.error(invalid_continue(stmt.span)),
+                    |label| ctx.error(invalid_label_target(label.span)),
+                );
             }
+            AstKind::Function(_) | AstKind::StaticBlock(_) => {
+                return stmt.label.as_ref().map_or_else(
+                    || ctx.error(invalid_continue(stmt.span)),
+                    |label| ctx.error(invalid_label_jump_target(label.span)),
+                );
+            }
+            AstKind::LabeledStatement(labeled_statement) => match &stmt.label {
+                Some(label) if label.name == labeled_statement.label.name => {
+                    if matches!(
+                        labeled_statement.body,
+                        Statement::LabeledStatement(_)
+                            | Statement::DoWhileStatement(_)
+                            | Statement::WhileStatement(_)
+                            | Statement::ForStatement(_)
+                            | Statement::ForInStatement(_)
+                            | Statement::ForOfStatement(_)
+                    ) {
+                        break;
+                    }
+                    return ctx.error(invalid_label_non_iteration(
+                        "continue",
+                        labeled_statement.label.span,
+                        label.span,
+                    ));
+                }
+                _ => {}
+            },
             kind if kind.is_iteration_statement() && stmt.label.is_none() => break,
             _ => {}
         }
     }
 }
 
-#[allow(clippy::option_if_let_else)]
-pub fn check_labeled_statement(ctx: &SemanticBuilder) {
-    ctx.label_builder.labels.iter().for_each(|labels| {
-        let mut defined = FxHashMap::default();
-        for labeled in labels {
-            if let Some(span) = defined.get(labeled.name) {
-                ctx.error(redeclaration(labeled.name, *span, labeled.span));
-            } else {
-                defined.insert(labeled.name, labeled.span);
+fn label_redeclaration(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("Label `{x0}` has already been declared")).with_labels([
+        span1.label(format!("`{x0}` has already been declared here")),
+        span2.label("It can not be redeclared here"),
+    ])
+}
+
+pub fn check_labeled_statement<'a>(
+    stmt: &LabeledStatement,
+    node: &AstNode<'a>,
+    ctx: &SemanticBuilder<'a>,
+) {
+    for node_id in ctx.nodes.ancestors(node.id()).skip(1) {
+        match ctx.nodes.kind(node_id) {
+            // label cannot cross boundary on function or static block
+            AstKind::Function(_) | AstKind::StaticBlock(_) | AstKind::Program(_) => break,
+            // check label name redeclaration
+            AstKind::LabeledStatement(label_stmt) if stmt.label.name == label_stmt.label.name => {
+                return ctx.error(label_redeclaration(
+                    stmt.label.name.as_str(),
+                    label_stmt.label.span,
+                    stmt.label.span,
+                ));
             }
+            _ => {}
         }
-    });
+    }
 }
 
 fn multiple_declaration_in_for_loop_head(x0: &str, span1: Span) -> OxcDiagnostic {
@@ -696,18 +731,15 @@ pub fn check_for_statement_left<'a>(
     }
 }
 
-fn duplicate_constructor(span0: Span, span1: Span) -> OxcDiagnostic {
+fn duplicate_constructor(span: Span, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Multiple constructor implementations are not allowed.").with_labels([
-        LabeledSpan::new_with_span(
-            Some("constructor has already been declared here".into()),
-            span0,
-        ),
+        LabeledSpan::new_with_span(Some("constructor has already been declared here".into()), span),
         LabeledSpan::new_with_span(Some("it cannot be redeclared here".into()), span1),
     ])
 }
 
-fn require_class_name(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("A class name is required.").with_label(span0)
+fn require_class_name(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("A class name is required.").with_label(span)
 }
 
 pub fn check_class(class: &Class, node: &AstNode<'_>, ctx: &SemanticBuilder<'_>) {
@@ -742,12 +774,12 @@ pub fn check_class(class: &Class, node: &AstNode<'_>, ctx: &SemanticBuilder<'_>)
     }
 }
 
-fn setter_with_parameters(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("A 'set' accessor must have exactly one parameter.").with_label(span0)
+fn setter_with_parameters(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("A 'set' accessor must have exactly one parameter.").with_label(span)
 }
 
-fn setter_with_rest_parameter(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("A 'set' accessor cannot have rest parameter.").with_label(span0)
+fn setter_with_rest_parameter(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("A 'set' accessor cannot have rest parameter.").with_label(span)
 }
 
 fn check_setter(function: &Function<'_>, ctx: &SemanticBuilder<'_>) {
@@ -763,8 +795,8 @@ fn check_setter(function: &Function<'_>, ctx: &SemanticBuilder<'_>) {
     );
 }
 
-fn getter_parameters(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("A 'get' accessor must not have any formal parameters.").with_label(span0)
+fn getter_parameters(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("A 'get' accessor must not have any formal parameters.").with_label(span)
 }
 
 fn check_getter(function: &Function<'_>, ctx: &SemanticBuilder<'_>) {
@@ -781,23 +813,23 @@ pub fn check_method_definition(method: &MethodDefinition<'_>, ctx: &SemanticBuil
     }
 }
 
-fn super_without_derived_class(span0: Span, span1: Span) -> OxcDiagnostic {
+fn super_without_derived_class(span: Span, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("'super' can only be referenced in a derived class.")
         .with_help("either remove this super, or extend the class")
         .with_labels([
-            span0.into(),
+            span.into(),
             LabeledSpan::new_with_span(Some("class does not have `extends`".into()), span1),
         ])
 }
 
-fn unexpected_super_call(span0: Span) -> OxcDiagnostic {
+fn unexpected_super_call(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Super calls are not permitted outside constructors or in nested functions inside constructors.")
-.with_label(span0)
+.with_label(span)
 }
 
-fn unexpected_super_reference(span0: Span) -> OxcDiagnostic {
+fn unexpected_super_reference(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("'super' can only be referenced in members of derived classes or object literal expressions.")
-.with_label(span0)
+.with_label(span)
 }
 
 pub fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
@@ -885,10 +917,10 @@ pub fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &SemanticBuilder<'a
     }
 }
 
-fn cover_initialized_name(span0: Span) -> OxcDiagnostic {
+fn cover_initialized_name(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Invalid assignment in object literal")
 .with_help("Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.")
-.with_label(span0)
+.with_label(span)
 }
 
 pub fn check_object_property(prop: &ObjectProperty, ctx: &SemanticBuilder<'_>) {
@@ -907,8 +939,8 @@ pub fn check_object_property(prop: &ObjectProperty, ctx: &SemanticBuilder<'_>) {
     }
 }
 
-fn a_rest_parameter_cannot_have_an_initializer(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("A rest parameter cannot have an initializer").with_label(span0)
+fn a_rest_parameter_cannot_have_an_initializer(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("A rest parameter cannot have an initializer").with_label(span)
 }
 
 pub fn check_formal_parameters<'a>(
@@ -933,8 +965,8 @@ pub fn check_array_pattern(pattern: &ArrayPattern, ctx: &SemanticBuilder<'_>) {
     }
 }
 
-fn assignment_is_not_simple(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Invalid left-hand side in assignment").with_label(span0)
+fn assignment_is_not_simple(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Invalid left-hand side in assignment").with_label(span)
 }
 
 pub fn check_assignment_expression(assign_expr: &AssignmentExpression, ctx: &SemanticBuilder<'_>) {
@@ -990,10 +1022,10 @@ pub fn check_binary_expression(binary_expr: &BinaryExpression, ctx: &SemanticBui
     }
 }
 
-fn mixed_coalesce(span0: Span) -> OxcDiagnostic {
+fn mixed_coalesce(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Logical expressions and coalesce expressions cannot be mixed")
         .with_help("Wrap either expression by parentheses")
-        .with_label(span0)
+        .with_label(span)
 }
 
 pub fn check_logical_expression(logical_expr: &LogicalExpression, ctx: &SemanticBuilder<'_>) {
@@ -1017,8 +1049,8 @@ pub fn check_logical_expression(logical_expr: &LogicalExpression, ctx: &Semantic
     }
 }
 
-fn super_private(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Private fields cannot be accessed on super").with_label(span0)
+fn super_private(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Private fields cannot be accessed on super").with_label(span)
 }
 
 pub fn check_member_expression(member_expr: &MemberExpression, ctx: &SemanticBuilder<'_>) {
@@ -1030,12 +1062,12 @@ pub fn check_member_expression(member_expr: &MemberExpression, ctx: &SemanticBui
     }
 }
 
-fn delete_of_unqualified(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Delete of an unqualified identifier in strict mode.").with_label(span0)
+fn delete_of_unqualified(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Delete of an unqualified identifier in strict mode.").with_label(span)
 }
 
-fn delete_private_field(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Private fields can not be deleted").with_label(span0)
+fn delete_private_field(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Private fields can not be deleted").with_label(span)
 }
 
 pub fn check_unary_expression<'a>(

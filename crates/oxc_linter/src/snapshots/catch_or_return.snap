@@ -1,0 +1,170 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-promise(catch-or-return): eslint-plugin-promise(catch-or-return): Expected catch or return
+   ╭─[catch_or_return.tsx:1:37]
+ 1 │ function callPromise(promise, cb) { promise.then(cb) }
+   ·                                     ────────────────
+   ╰────
+  help: Return the promise or chain a catch()
+
+  ⚠ eslint-plugin-promise(catch-or-return): eslint-plugin-promise(catch-or-return): Expected catch or return
+   ╭─[catch_or_return.tsx:1:1]
+ 1 │ fetch("http://www.yahoo.com").then(console.log.bind(console))
+   · ─────────────────────────────────────────────────────────────
+   ╰────
+  help: Return the promise or chain a catch()
+
+  ⚠ eslint-plugin-promise(catch-or-return): eslint-plugin-promise(catch-or-return): Expected catch or return
+   ╭─[catch_or_return.tsx:1:1]
+ 1 │ a.then(function() { return "x"; }).then(function(y) { throw y; })
+   · ─────────────────────────────────────────────────────────────────
+   ╰────
+  help: Return the promise or chain a catch()
+
+  ⚠ eslint-plugin-promise(catch-or-return): eslint-plugin-promise(catch-or-return): Expected catch or return
+   ╭─[catch_or_return.tsx:1:1]
+ 1 │ Promise.resolve(frank)
+   · ──────────────────────
+   ╰────
+  help: Return the promise or chain a catch()
+
+  ⚠ eslint-plugin-promise(catch-or-return): eslint-plugin-promise(catch-or-return): Expected catch or return
+   ╭─[catch_or_return.tsx:1:1]
+ 1 │ Promise.all([])
+   · ───────────────
+   ╰────
+  help: Return the promise or chain a catch()
+
+  ⚠ eslint-plugin-promise(catch-or-return): eslint-plugin-promise(catch-or-return): Expected catch or return
+   ╭─[catch_or_return.tsx:1:1]
+ 1 │ Promise.allSettled([])
+   · ──────────────────────
+   ╰────
+  help: Return the promise or chain a catch()
+
+  ⚠ eslint-plugin-promise(catch-or-return): eslint-plugin-promise(catch-or-return): Expected catch or return
+   ╭─[catch_or_return.tsx:1:1]
+ 1 │ Promise.any([])
+   · ───────────────
+   ╰────
+  help: Return the promise or chain a catch()
+
+  ⚠ eslint-plugin-promise(catch-or-return): eslint-plugin-promise(catch-or-return): Expected catch or return
+   ╭─[catch_or_return.tsx:1:1]
+ 1 │ Promise.race([])
+   · ────────────────
+   ╰────
+  help: Return the promise or chain a catch()
+
+  ⚠ eslint-plugin-promise(catch-or-return): eslint-plugin-promise(catch-or-return): Expected catch or return
+   ╭─[catch_or_return.tsx:1:1]
+ 1 │ frank().then(to).catch(fn).then(foo)
+   · ────────────────────────────────────
+   ╰────
+  help: Return the promise or chain a catch()
+
+  ⚠ eslint-plugin-promise(catch-or-return): eslint-plugin-promise(catch-or-return): Expected catch or return
+   ╭─[catch_or_return.tsx:1:1]
+ 1 │ frank().finally(fn)
+   · ───────────────────
+   ╰────
+  help: Return the promise or chain a catch()
+
+  ⚠ eslint-plugin-promise(catch-or-return): eslint-plugin-promise(catch-or-return): Expected catch or return
+   ╭─[catch_or_return.tsx:1:1]
+ 1 │ frank().then(to).finally(fn)
+   · ────────────────────────────
+   ╰────
+  help: Return the promise or chain a catch()
+
+  ⚠ eslint-plugin-promise(catch-or-return): eslint-plugin-promise(catch-or-return): Expected catch or return
+   ╭─[catch_or_return.tsx:1:1]
+ 1 │ frank().then(go).catch(doIt).finally(fn)
+   · ────────────────────────────────────────
+   ╰────
+  help: Return the promise or chain a catch()
+
+  ⚠ eslint-plugin-promise(catch-or-return): eslint-plugin-promise(catch-or-return): Expected catch or return
+   ╭─[catch_or_return.tsx:1:1]
+ 1 │ frank().then(go).then().then().then().catch(doIt).finally(fn)
+   · ─────────────────────────────────────────────────────────────
+   ╰────
+  help: Return the promise or chain a catch()
+
+  ⚠ eslint-plugin-promise(catch-or-return): eslint-plugin-promise(catch-or-return): Expected catch or return
+   ╭─[catch_or_return.tsx:1:1]
+ 1 │ frank().then(go).then().catch(function() { /* why bother */ }).finally(fn)
+   · ──────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Return the promise or chain a catch()
+
+  ⚠ eslint-plugin-promise(catch-or-return): eslint-plugin-promise(catch-or-return): Expected catch or return
+   ╭─[catch_or_return.tsx:1:16]
+ 1 │ function a() { frank().then(go) }
+   ·                ────────────────
+   ╰────
+  help: Return the promise or chain a catch()
+
+  ⚠ eslint-plugin-promise(catch-or-return): eslint-plugin-promise(catch-or-return): Expected catch or return
+   ╭─[catch_or_return.tsx:1:16]
+ 1 │ function a() { frank().then(go).then().then().then() }
+   ·                ─────────────────────────────────────
+   ╰────
+  help: Return the promise or chain a catch()
+
+  ⚠ eslint-plugin-promise(catch-or-return): eslint-plugin-promise(catch-or-return): Expected catch or return
+   ╭─[catch_or_return.tsx:1:16]
+ 1 │ function a() { frank().then(go).then()}
+   ·                ───────────────────────
+   ╰────
+  help: Return the promise or chain a catch()
+
+  ⚠ eslint-plugin-promise(catch-or-return): eslint-plugin-promise(catch-or-return): Expected catch or return
+   ╭─[catch_or_return.tsx:1:16]
+ 1 │ function a() { frank.then(go).then(to) }
+   ·                ───────────────────────
+   ╰────
+  help: Return the promise or chain a catch()
+
+  ⚠ eslint-plugin-promise(catch-or-return): eslint-plugin-promise(catch-or-return): Expected catch or return
+   ╭─[catch_or_return.tsx:1:1]
+ 1 │ frank().then(go).catch(doIt).finally(fn).then(foo)
+   · ──────────────────────────────────────────────────
+   ╰────
+  help: Return the promise or chain a catch()
+
+  ⚠ eslint-plugin-promise(catch-or-return): eslint-plugin-promise(catch-or-return): Expected catch or return
+   ╭─[catch_or_return.tsx:1:1]
+ 1 │ frank().then(go).catch(doIt).finally(fn).foobar(foo)
+   · ────────────────────────────────────────────────────
+   ╰────
+  help: Return the promise or chain a catch()
+
+  ⚠ eslint-plugin-promise(catch-or-return): eslint-plugin-promise(catch-or-return): Expected done or return
+   ╭─[catch_or_return.tsx:1:1]
+ 1 │ frank().then(go)
+   · ────────────────
+   ╰────
+  help: Return the promise or chain a done()
+
+  ⚠ eslint-plugin-promise(catch-or-return): eslint-plugin-promise(catch-or-return): Expected done or return
+   ╭─[catch_or_return.tsx:1:1]
+ 1 │ frank().catch(go)
+   · ─────────────────
+   ╰────
+  help: Return the promise or chain a done()
+
+  ⚠ eslint-plugin-promise(catch-or-return): eslint-plugin-promise(catch-or-return): Expected catch or return
+   ╭─[catch_or_return.tsx:1:1]
+ 1 │ frank().catch(go).someOtherMethod()
+   · ───────────────────────────────────
+   ╰────
+  help: Return the promise or chain a catch()
+
+  ⚠ eslint-plugin-promise(catch-or-return): eslint-plugin-promise(catch-or-return): Expected catch or return
+   ╭─[catch_or_return.tsx:1:1]
+ 1 │ frank()['catch'](go).someOtherMethod()
+   · ──────────────────────────────────────
+   ╰────
+  help: Return the promise or chain a catch()

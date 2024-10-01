@@ -4,6 +4,350 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.30.2] - 2024-09-27
+
+### Features
+
+- 60c52ba ast: Allow passing span to `void_0` method (#6065) (Dunqing)
+- 28da771 transformer: Do not transform `**` with bigint literals (#6023) (Boshen)
+
+### Bug Fixes
+
+- b1af73d semantic: Do not create a `global` symbol for `declare global {}` (#6040) (DonIsaac)
+
+### Refactor
+
+- 1fc80d1 ast: Move all ts ast related impl methods to `ast_impl` (#6015) (Dunqing)
+
+## [0.30.1] - 2024-09-24
+
+### Documentation
+
+- 5a0d17c ast: Document more AST nodes (#6000) (DonIsaac)
+- 1abfe8f semantic: Document `SymbolTable` (#5998) (DonIsaac)
+
+## [0.30.0] - 2024-09-23
+
+- 033b907 ast: [**BREAKING**] Apply `#[non_exhaustive]`, must use `AstBuilder` (#5787) (Boshen)
+
+### Features
+
+- ae89145 ast: Revert `#[non_exhaustive]` change (#5885) (Boshen)
+- e8bf30a ast: Add `Comment::real_span` (#5764) (Boshen)
+- bcdbba3 codegen: Print jsdoc comments that are attached to statements and class elements (#5845) (Boshen)
+- 4a62703 isolated-declarations: Handle `export` in the `namespace` correctly (#5950) (Dunqing)
+- 3bf7b24 linter: Make `typescript/no-duplicate-enum-values` a `correctness` rule (#5810) (DonIsaac)
+- 8e7556f parser: Calculate leading and trailing position for comments (#5785) (Boshen)
+- 65c337a prettier: Improve ts compatibility (#5900) (Alexander S.)
+- 6d9ccdd prettier: Support TSMappedType (#5834) (Alexander S.)
+- b5ac5a6 prettier: Support TSModuleDeclaration (#5813) (Alexander S.)
+
+### Bug Fixes
+
+- 66e919e ast: Correct TS types for JSX (#5884) (overlookmotel)
+- 0d10521 ast: Serialize `JSXMemberExpressionObject` to estree (#5883) (overlookmotel)
+- a822c9d ast: Serialize `JSXElementName` to estree (#5882) (Boshen)
+- 8780c54 isolated-declarations: Do not union a undefined when the param type is any or unknown (#5930) (Dunqing)
+
+### Documentation
+
+- acc2d16 ast: Document most TypeScript AST nodes (#5983) (DonIsaac)
+- 47c2faa ast: Document TryStatement and related nodes (#5970) (DonIsaac)
+
+### Refactor
+
+- f4fac0f ast: Remove `.iter()` where not needed (#5904) (camchenry)
+- 6dd6f7c ast: Change `Comment` struct (#5783) (Boshen)
+- 7caae5b codegen: Add `GetSpan` requirement to `Gen` trait (#5772) (Boshen)
+- 1c1353b transformer: Use AstBuilder instead of using struct constructor (#5778) (Boshen)
+
+## [0.29.0] - 2024-09-13
+
+- c3dd2a0 ast: [**BREAKING**] Revert: reduce byte size of `TaggedTemplateExpression::quasi` by `Boxing` it (#5679) (#5715) (overlookmotel)
+
+### Features
+
+- 953fe17 ast: Provide `NONE` type for AST builder calls (#5737) (overlookmotel)
+
+### Performance
+
+
+## [0.28.0] - 2024-09-11
+
+- afc4548 ast: [**BREAKING**] Educe byte size of `TaggedTemplateExpression::quasi` by `Boxing` it (#5679) (Boshen)
+
+- 7415e85 ast: [**BREAKING**] Reduce byte size of `TSImportType::attributes` by `Box`ing it (#5678) (Boshen)
+
+- ee4fb42 ast: [**BREAKING**] Reduce size of `WithClause` by `Box`ing it (#5677) (Boshen)
+
+### Features
+
+- 2da5ad1 ast: Add `JSXElementName::get_identifier` method (#5556) (overlookmotel)
+- 68c3cf5 minifier: Fold `void 1` -> `void 0` (#5670) (Boshen)
+- c6bbf94 minifier: Constant fold unary expression (#5669) (Boshen)
+
+### Bug Fixes
+
+- 28b934c coverage: Apply `always_strict` to test262 and typescript per the specifcation (#5555) (Boshen)
+- 0511d55 regular_expression: Report more MayContainStrings error in (nested)class (#5661) (leaysgur)
+
+### Performance
+
+
+### Refactor
+
+- 14ee086 ast: Inline `AstKind::as_*` methods (#5547) (overlookmotel)
+- 2da42ef regular_expression: Improve AST docs with refactoring may_contain_strings (#5665) (leaysgur)- 26d9235 Enable clippy::ref_as_ptr  (#5577) (夕舞八弦)
+
+## [0.27.0] - 2024-09-06
+
+- cba93f5 ast: [**BREAKING**] Add `ThisExpression` variants to `JSXElementName` and `JSXMemberExpressionObject` (#5466) (overlookmotel)
+
+- 87c5df2 ast: [**BREAKING**] Rename `Expression::without_parentheses` (#5448) (overlookmotel)
+
+### Features
+
+- 90facd3 ast: Add `ContentHash` trait; remove noop `Hash` implementation from `Span` (#5451) (rzvxa)
+- 23285f4 ast: Add `ContentEq` trait. (#5427) (rzvxa)
+- 59abf27 ast, parser: Add `oxc_regular_expression` types to the parser and AST. (#5256) (rzvxa)
+- 68a1c01 ast_tools: Add dedicated `Derive` trait. (#5278) (rzvxa)
+- 62f7fff semantic: Check for non-declared, non-abstract object accessors without bodies (#5461) (DonIsaac)
+- 5407143 semantic: Check for non-declared, non-abstract class accessors without bodies (#5460) (DonIsaac)
+- cedf7a4 xtask: Impl `as_ast_kind` method for each variant (#5491) (IWANABETHATGUY)
+
+### Bug Fixes
+
+- 0df1d9d ast, codegen, linter: Panics in fixers. (#5431) (rzvxa)- b96bea4 Add back lifetime (#5507) (IWANABETHATGUY)
+
+### Documentation
+
+- 64db1b4 ast: Clarify docs for `RegExpPattern` (#5497) (overlookmotel)
+
+### Refactor
+
+- a43e951 ast: Use loop instead of recursion (#5447) (overlookmotel)
+- 2224cc4 ast: Renumber `JSXMemberExpressionObject` discriminants (#5464) (overlookmotel)
+- a952c47 ast: Use loop not recursion (#5449) (overlookmotel)
+- d9d7e7c ast: Remove `IdentifierName` from `TSThisParameter` (#5327) (overlookmotel)
+- ccc8a27 ast, ast_tools: Use full method path for generated derives trait calls. (#5462) (rzvxa)
+- fdb8857 linter: Use "parsed pattern" in `no_div_regex` rule. (#5417) (rzvxa)
+- b47aca0 syntax: Use `generate_derive` for `CloneIn` in types outside of `oxc_ast` crate. (#5280) (rzvxa)
+
+## [0.26.0] - 2024-09-03
+
+- 1aa49af ast: [**BREAKING**] Remove `JSXMemberExpressionObject::Identifier` variant (#5358) (Dunqing)
+
+- 32f7300 ast: [**BREAKING**] Add `JSXElementName::IdentifierReference` and `JSXMemberExpressionObject::IdentifierReference` (#5223) (Dunqing)
+
+- 234a24c ast: [**BREAKING**] Merge `UsingDeclaration` into `VariableDeclaration` (#5270) (Kevin Deng 三咲智子)
+
+- c100826 semantic: [**BREAKING**] Always create a scope for `for` statements (#5110) (overlookmotel)
+
+- d304d6f semantic: [**BREAKING**] Always create a scope for `CatchClause` (#5109) (overlookmotel)
+
+### Features
+
+- 180b1a1 ast: Add `Function::name()` (#5361) (DonIsaac)
+- 5505749 ast: Add `accessibility` field to `AccessorProperty` (#5290) (Dunqing)
+- 49cd5db ast,parser: Add `definite` flag to `AccessorProperty` node (#5182) (DonIsaac)
+- c2fa725 ast,parser: Parse `TSTypeAnnotations` on `AccessorProperty` (#5179) (DonIsaac)
+- f81e8a1 linter: Add `oxc/no-async-endpoint-handlers` (#5364) (DonIsaac)
+
+### Bug Fixes
+
+- 8ebc23f ast: Serialize `TSParenthesizedType` with camelCase (#5199) (Kevin Deng 三咲智子)
+- 8a17807 parser: Treat JSX element tags starting with `_` or `$` as `IdentifierReference`s (#5343) (overlookmotel)
+
+### Performance
+
+- 292f217 ast: Optimize `JSXIdentifier::is_reference` (#5344) (overlookmotel)
+
+### Refactor
+
+- c2d8c9e ast: Reduce allocations in `AstBuilder::move_assignment_target` (#5367) (overlookmotel)
+- 946c867 ast: Box `TSThisParameter` (#5325) (overlookmotel)
+- 960e1d5 ast: Rename `IdentifierReference::new_with_reference_id` (#5157) (overlookmotel)
+- f63b568 ast: Remove `#[non_exhaustive]` attr from `AstBuilder` (#5130) (overlookmotel)
+- d236554 parser: Move `JSXIdentifier` conversion code into parser (#5345) (overlookmotel)
+
+## [0.25.0] - 2024-08-23
+
+- 78f135d ast: [**BREAKING**] Remove `ReferenceFlag` from `IdentifierReference` (#5077) (Boshen)
+
+- c4c08a7 ast: [**BREAKING**] Rename `IdentifierReference::reference_flags` field (#5024) (overlookmotel)
+
+- d262a58 syntax: [**BREAKING**] Rename `ReferenceFlag` to `ReferenceFlags` (#5023) (overlookmotel)
+
+- f88970b ast: [**BREAKING**] Change order of fields in CallExpression (#4859) (Burlin)
+
+### Features
+
+- 714373d ast: `inherit_variants!` macro add `into_*` methods (#5005) (overlookmotel)
+
+### Bug Fixes
+
+- 7f3129e ast: Correct code comment (#5004) (overlookmotel)
+- 1365feb transformer: Remove an `AstBuilder::copy` call for TS `AssignmentTarget` transform (#4984) (overlookmotel)- b7db235 Comments gen regression (#5003) (IWANABETHATGUY)
+
+### Refactor
+
+- cca7440 ast: Replace `AstBuilder::move_statement_vec` with `move_vec` (#4988) (overlookmotel)
+- 4012260 ast: `AstBuilder::move_identifier_reference` do not allocate empty string (#4977) (overlookmotel)
+- 96422b6 ast: Make AstBuilder non-exhaustive (#4925) (DonIsaac)
+- 4796ece transformer: TS annotations transform use `move_expression` (#4982) (overlookmotel)
+
+## [0.24.3] - 2024-08-18
+
+### Features
+
+- fd34640 traverse: Support `generate_uid_based_on_node` method in `TraverseCtx` (#4940) (Dunqing)
+
+### Bug Fixes
+
+- c0b26f4 ast: Do not include `scope_id` fields in JSON AST (#4858) (overlookmotel)
+- 879a271 minifier: Do not join `require` calls for `cjs-module-lexer` (#4875) (Boshen)
+- 248a757 transformer/typescript: Typescript syntax within `SimpleAssignmentTarget` with `MemberExpressions` is not stripped (#4920) (Dunqing)
+
+### Documentation
+
+- 47c9552 ast, ast_macros, ast_tools: Better documentation for `Ast` helper attributes. (#4856) (rzvxa)
+
+### Refactor
+
+- 90d0b2b allocator, ast, span, ast_tools: Use `allocator` as var name for `Allocator` (#4900) (overlookmotel)
+- 1eb59d2 ast, isolated_declarations, transformer: Mark `AstBuilder::copy` as an unsafe function (#4907) (overlookmotel)
+- 8e8fcd0 ast_tools: Rename `oxc_ast_codegen` to `oxc_ast_tools`. (#4846) (rzvxa)
+
+## [0.24.2] - 2024-08-12
+
+### Documentation
+
+- 8827659 ast: More doc comments for JSX nodes (#4830) (DonIsaac)
+
+### Refactor
+
+- 0ea697b ast, ast_codegen: `CloneIn` implementations now initialize semantic related cells with `Default` value. (#4819) (rzvxa)
+- ecfa124 ast_codegen: Add line break to generated code (#4829) (overlookmotel)
+- 096ac7b linter: Clean up jsx-a11y/anchor-is-valid (#4831) (DonIsaac)
+
+## [0.24.1] - 2024-08-10
+
+### Bug Fixes
+
+- fff9da3 ast, ast_codegen: Use `generate_derive` instead of visitable for generating span derives. (#4747) (rzvxa)
+- f5eeebd ast_macros: Raise compile error on invalid `generate_derive` input. (#4766) (rzvxa)
+
+### Refactor
+
+- daa0b2e ast: `oxc_ast` crate re-export AST types from other crates (#4773) (overlookmotel)
+- d4a3be8 ast_codegen: Line breaks between types in layout assertions (#4781) (overlookmotel)
+- dbb5f4c ast_codegen: Remove unnecessary imports from generated files (#4774) (overlookmotel)
+- 2dea0ca ast_codegen: Consistent import order (#4761) (overlookmotel)
+
+## [0.24.0] - 2024-08-08
+
+### Features
+
+- 51c1ca0 ast: Derive `CloneIn` for AST types, using `generate_derive`. (#4732) (rzvxa)
+- e12bd1e ast: Allow conversion from TSAccessibility into &'static str (#4711) (DonIsaac)
+- fd2d9da ast: Improve `AstKind::debug_name` (#4553) (DonIsaac)
+- b3b7028 ast: Implement missing Clone, Hash, and Display traits for literals (#4552) (DonIsaac)
+- 54047e0 ast: `GetSpanMut` trait (#4609) (overlookmotel)
+- eae401c ast, ast_macros: Apply stable repr to all `#[ast]` enums (#4373) (rzvxa)
+- ec0b4cb ast_codegen: Add `derive_clone_in` generator. (#4731) (rzvxa)
+- 82e2f6b ast_codegen: Process AST-related `syntax` types. (#4694) (rzvxa)
+- 0c52c0d ast_codegen: Add alignment and size data to the schema. (#4615) (rzvxa)
+- 07607d3 ast_codegen, span: Process `Span` through ast_codegen (#4703) (overlookmotel)
+- 125c5fd ast_codegen, span: Process `SourceType` through ast_codegen. (#4696) (rzvxa)
+- eaddc8f linter: Add fixer for eslint/func_names (#4714) (DonIsaac)
+
+### Bug Fixes
+
+- a40a217 parser: Parse `assert` keyword in `TSImportAttributes` (#4610) (Boshen)
+
+### Documentation
+
+- c69ada4 ast: Improve AST node documentation (#4051) (Rintaro Itokawa)
+
+### Refactor
+
+- 579b797 ast: Use type identifier instead of `CloneIn::Cloned` GAT. (#4738) (rzvxa)
+- 475266d ast: Use correct lifetimes for name-related methods (#4712) (DonIsaac)
+- 83b6ca9 ast: Add explicit enum discriminants. (#4689) (rzvxa)
+- ba70001 ast: Put `assert_layouts.rs` behind `debug_assertions` (#4621) (rzvxa)
+- 2218340 ast, ast_codegen: Use `generate_derive` for implementing `GetSpan` and `GetSpanMut` traits. (#4735) (rzvxa)
+
+### Testing
+
+- 49d5196 ast: Fix `assert_layouts.rs` offset tests on 32bit platforms. (#4620) (rzvxa)
+
+## [0.23.1] - 2024-08-06
+
+### Features
+
+- fd2d9da ast: Improve `AstKind::debug_name` (#4553) (DonIsaac)
+- b3b7028 ast: Implement missing Clone, Hash, and Display traits for literals (#4552) (DonIsaac)
+- 54047e0 ast: `GetSpanMut` trait (#4609) (overlookmotel)
+- eae401c ast, ast_macros: Apply stable repr to all `#[ast]` enums (#4373) (rzvxa)
+- 0c52c0d ast_codegen: Add alignment and size data to the schema. (#4615) (rzvxa)
+
+### Bug Fixes
+
+- a40a217 parser: Parse `assert` keyword in `TSImportAttributes` (#4610) (Boshen)
+
+### Documentation
+
+- c69ada4 ast: Improve AST node documentation (#4051) (Rintaro Itokawa)
+
+### Refactor
+
+- ba70001 ast: Put `assert_layouts.rs` behind `debug_assertions` (#4621) (rzvxa)
+
+### Testing
+
+- 49d5196 ast: Fix `assert_layouts.rs` offset tests on 32bit platforms. (#4620) (rzvxa)
+
+## [0.23.0] - 2024-08-01
+
+### Features
+
+- 35654e6 codegen: Align operator precedence with esbuild (#4509) (Boshen)
+- b952942 linter: Add eslint/no-unused-vars (⭐ attempt 3.2) (#4445) (DonIsaac)
+- 85e8418 linter: Add react/jsx-curly-brace-presence (#3949) (Don Isaac)
+
+### Bug Fixes
+
+- d5c4b19 parser: Fix enum member parsing (#4543) (DonIsaac)
+
+### Performance
+
+- c9c38a1 parser: Support peeking over bytes (#4304) (lucab)
+
+### Documentation
+
+- 0914e47 ast: Add doc comments to literal nodes (#4551) (DonIsaac)
+- c6a11be ast: Auto-generate doc comments for AstBuilder methods (#4471) (DonIsaac)
+
+## [0.22.1] - 2024-07-27
+
+### Features
+
+- 2477330 ast: Add `AstKind::TSExportAssignment` (#4501) (Dunqing)
+- aaee07e ast: Add `AstKind::AssignmentTargetPattern`, `AstKind::ArrayAssignmentTarget` and `AstKind::ObjectAssignmentTarget` (#4456) (Dunqing)
+- fd363d1 ast: Add AstKind::get_container_scope_id (#4450) (DonIsaac)
+
+### Bug Fixes
+
+- 368112c ast: Remove `#[visit(ignore)]` from `ExportDefaultDeclarationKind`'s `TSInterfaceDeclaration` (#4497) (Dunqing)
+
+### Documentation
+
+- f5f0ba8 ast: Add doc comments to more AST nodes (#4413) (Don Isaac)
+
+### Refactor
+
+- 9c5d2f9 ast/builder: Use `Box::new_in` over `.into_in` (#4428) (overlookmotel)
+
 ## [0.22.0] - 2024-07-23
 
 - f68b659 ast: [**BREAKING**] Reorder fields of `ArrowFunctionExpression` (#4364) (Dunqing)

@@ -1,0 +1,16 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-vitest(no-import-node-test): Do not import from `node:test`
+   ╭─[no_import_node_test.tsx:1:22]
+ 1 │ import { test } from "node:test"
+   ·                      ───────────
+   ╰────
+  help: Import from `vitest` instead.
+
+  ⚠ eslint-plugin-vitest(no-import-node-test): Do not import from `node:test`
+   ╭─[no_import_node_test.tsx:1:22]
+ 1 │ import * as foo from 'node:test'
+   ·                      ───────────
+   ╰────
+  help: Import from `vitest` instead.

@@ -1,22 +1,19 @@
-#![cfg(not(miri))] // Miri does not support custom allocators
-
-#[cfg(feature = "allocator")]
-#[cfg(not(target_env = "msvc"))]
+// NB: Miri does not support custom allocators
+#[cfg(all(feature = "allocator", not(miri), not(target_env = "msvc"), not(target_os = "windows")))]
 #[global_allocator]
 static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
 
-#[cfg(feature = "allocator")]
-#[cfg(target_os = "windows")]
+#[cfg(all(feature = "allocator", not(miri), target_os = "windows"))]
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
-use oxlint::{CliRunResult, LintRunner, Runner};
+use oxlint::cli::{CliRunResult, LintRunner, Runner};
 
 fn main() -> CliRunResult {
     init_tracing();
     init_miette();
 
-    let command = oxlint::lint_command().run();
+    let command = oxlint::cli::lint_command().run();
     command.handle_threads();
     LintRunner::new(command).run()
 }

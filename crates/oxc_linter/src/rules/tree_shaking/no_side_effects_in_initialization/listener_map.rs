@@ -7,15 +7,15 @@ use oxc_ast::{
         ConditionalExpression, Declaration, ExportSpecifier, Expression, ForStatementInit,
         FormalParameter, Function, IdentifierReference, JSXAttribute, JSXAttributeItem,
         JSXAttributeValue, JSXChild, JSXElement, JSXElementName, JSXExpression,
-        JSXExpressionContainer, JSXFragment, JSXIdentifier, JSXOpeningElement, LogicalExpression,
-        MemberExpression, NewExpression, ObjectExpression, ObjectPropertyKind,
-        ParenthesizedExpression, PrivateFieldExpression, Program, PropertyKey, SequenceExpression,
-        SimpleAssignmentTarget, Statement, StaticMemberExpression, SwitchCase, ThisExpression,
-        UnaryExpression, VariableDeclarator,
+        JSXExpressionContainer, JSXFragment, JSXMemberExpression, JSXOpeningElement,
+        LogicalExpression, MemberExpression, ModuleExportName, NewExpression, ObjectExpression,
+        ObjectPropertyKind, ParenthesizedExpression, PrivateFieldExpression, Program, PropertyKey,
+        SequenceExpression, SimpleAssignmentTarget, Statement, StaticMemberExpression, SwitchCase,
+        ThisExpression, UnaryExpression, VariableDeclarator,
     },
     AstKind,
 };
-use oxc_semantic::{AstNode, AstNodeId};
+use oxc_semantic::{AstNode, NodeId};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{LogicalOperator, UnaryOperator};
 
@@ -183,9 +183,6 @@ impl<'a> ListenerMap for ForStatementInit<'a> {
     fn report_effects(&self, options: &NodeListenerOptions) {
         match self {
             match_expression!(Self) => self.to_expression().report_effects(options),
-            Self::UsingDeclaration(decl) => {
-                decl.declarations.iter().for_each(|decl| decl.report_effects(options));
-            }
             Self::VariableDeclaration(decl) => {
                 decl.declarations.iter().for_each(|decl| decl.report_effects(options));
             }
@@ -198,9 +195,10 @@ impl<'a> ListenerMap for ExportSpecifier<'a> {
         let ctx = options.ctx;
         let symbol_table = ctx.symbols();
         if has_comment_about_side_effect_check(self.exported.span(), ctx) {
-            let Some(name) = self.exported.identifier_name() else { return };
-            let Some(symbol_id) = options.ctx.symbols().get_symbol_id_from_name(name.as_str())
-            else {
+            let ModuleExportName::IdentifierReference(ident) = &self.local else {
+                return;
+            };
+            let Some(symbol_id) = get_symbol_id_of_variable(ident, ctx) else {
                 return;
             };
 
@@ -304,12 +302,7 @@ impl<'a> ListenerMap for AstNode<'a> {
     }
 }
 
-fn report_on_imported_call(
-    span: Span,
-    name: &str,
-    node_id: AstNodeId,
-    options: &NodeListenerOptions,
-) {
+fn report_on_imported_call(span: Span, name: &str, node_id: NodeId, options: &NodeListenerOptions) {
     if has_comment_about_side_effect_check(span, options.ctx) {
         return;
     }
@@ -791,41 +784,17 @@ impl<'a> ListenerMap for JSXOpeningElement<'a> {
 impl<'a> ListenerMap for JSXElementName<'a> {
     fn report_effects_when_called(&self, options: &NodeListenerOptions) {
         match self {
-            Self::Identifier(ident) => ident.report_effects_when_called(options),
-            Self::NamespacedName(name) => name.property.report_effects_when_called(options),
-            Self::MemberExpression(member) => {
-                member.property.report_effects_when_called(options);
-            }
+            Self::Identifier(_) | Self::NamespacedName(_) => {}
+            Self::IdentifierReference(ident) => ident.report_effects_when_called(options),
+            Self::MemberExpression(member) => member.report_effects_when_called(options),
+            Self::ThisExpression(expr) => expr.report_effects_when_called(options),
         }
     }
 }
 
-impl<'a> ListenerMap for JSXIdentifier<'a> {
+impl<'a> ListenerMap for JSXMemberExpression<'a> {
     fn report_effects_when_called(&self, options: &NodeListenerOptions) {
-        if self.name.chars().next().is_some_and(char::is_uppercase) {
-            let Some(symbol_id) = options.ctx.symbols().get_symbol_id_from_name(&self.name) else {
-                options.ctx.diagnostic(super::call_global(self.name.as_str(), self.span));
-                return;
-            };
-
-            for reference in options.ctx.symbols().get_resolved_references(symbol_id) {
-                if reference.is_write() {
-                    let node_id = reference.node_id();
-                    if let Some(expr) = get_write_expr(node_id, options.ctx) {
-                        let old_val = options.called_with_new.get();
-                        options.called_with_new.set(true);
-                        expr.report_effects_when_called(options);
-                        options.called_with_new.set(old_val);
-                    }
-                }
-            }
-            let symbol_table = options.ctx.semantic().symbols();
-            let node = options.ctx.nodes().get_node(symbol_table.get_declaration(symbol_id));
-            let old_val = options.called_with_new.get();
-            options.called_with_new.set(true);
-            node.report_effects_when_called(options);
-            options.called_with_new.set(old_val);
-        }
+        options.ctx.diagnostic(super::call_member(self.property.span()));
     }
 }
 
@@ -1132,7 +1101,36 @@ impl<'a> ListenerMap for IdentifierReference<'a> {
         }
 
         let ctx = options.ctx;
+
         if let Some(symbol_id) = get_symbol_id_of_variable(self, ctx) {
+            let is_used_in_jsx = matches!(
+                ctx.nodes().parent_kind(
+                    ctx.symbols().get_reference(self.reference_id.get().unwrap()).node_id()
+                ),
+                Some(AstKind::JSXElementName(_) | AstKind::JSXMemberExpressionObject(_))
+            );
+
+            if is_used_in_jsx {
+                for reference in options.ctx.symbols().get_resolved_references(symbol_id) {
+                    if reference.is_write() {
+                        let node_id = reference.node_id();
+                        if let Some(expr) = get_write_expr(node_id, options.ctx) {
+                            let old_val = options.called_with_new.get();
+                            options.called_with_new.set(true);
+                            expr.report_effects_when_called(options);
+                            options.called_with_new.set(old_val);
+                        }
+                    }
+                }
+                let symbol_table = options.ctx.semantic().symbols();
+                let node = options.ctx.nodes().get_node(symbol_table.get_declaration(symbol_id));
+                let old_val = options.called_with_new.get();
+                options.called_with_new.set(true);
+                node.report_effects_when_called(options);
+                options.called_with_new.set(old_val);
+                return;
+            }
+
             if options.insert_called_node(symbol_id) {
                 let symbol_table = ctx.semantic().symbols();
                 for reference in symbol_table.get_resolved_references(symbol_id) {

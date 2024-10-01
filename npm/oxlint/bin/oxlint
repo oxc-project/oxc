@@ -90,7 +90,12 @@ const PLATFORMS = {
   },
 };
 
-let binPath = PLATFORMS[platform]?.[arch]?.[isMusl() ? "musl" : "gnu"];
+let binPath = (
+  PLATFORMS && 
+  PLATFORMS[platform] && 
+  PLATFORMS[platform][arch] && 
+  PLATFORMS[platform][arch][isMusl() ? "musl" : "gnu"]
+) || null;
 
 if (binPath) {
   const result = require("child_process").spawnSync(

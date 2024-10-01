@@ -4,6 +4,126 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.30.3] - 2024-09-27
+
+### Bug Fixes
+
+- 933a743 semantic: Add interfaces and functions to `SymbolFlags::ClassExcludes`  (#6057) (DonIsaac)
+
+## [0.30.2] - 2024-09-27
+
+### Bug Fixes
+
+- e0a8959 minifier: Compute `void number` as `undefined` (#6028) (Boshen)
+
+## [0.30.0] - 2024-09-23
+
+- c96b712 syntax: [**BREAKING**] Remove `SymbolFlags::ArrowFunction` (#5857) (overlookmotel)
+
+### Documentation
+
+- 1ccf290 semantic: Document `AstNode` and `AstNodes` (#5872) (DonIsaac)
+- e04841c syntax: Add ModuleRecord documentation (#5818) (DonIsaac)
+
+### Refactor
+
+
+## [0.29.0] - 2024-09-13
+
+### Bug Fixes
+
+- 042afa9 syntax: Correctly check for valid `RedeclarationId`s (#5759) (overlookmotel)
+
+### Refactor
+
+- cc0408b semantic: S/AstNodeId/NodeId (#5740) (Boshen)
+
+## [0.27.0] - 2024-09-06
+
+### Features
+
+- 90facd3 ast: Add `ContentHash` trait; remove noop `Hash` implementation from `Span` (#5451) (rzvxa)
+- 23285f4 ast: Add `ContentEq` trait. (#5427) (rzvxa)
+
+### Performance
+
+- bfabd8f syntax: Further optimize `is_identifier_name` (#5426) (overlookmotel)
+- aeda84f syntax: Optimize `is_identifier_name` (#5425) (overlookmotel)
+
+### Refactor
+
+- ccc8a27 ast, ast_tools: Use full method path for generated derives trait calls. (#5462) (rzvxa)
+- e4ed41d semantic: Change the reference flag to `ReferenceFlags::Type` if it is used within a `TSTypeQuery` (#5444) (Dunqing)
+- b47aca0 syntax: Use `generate_derive` for `CloneIn` in types outside of `oxc_ast` crate. (#5280) (rzvxa)
+
+## [0.25.0] - 2024-08-23
+
+- d262a58 syntax: [**BREAKING**] Rename `ReferenceFlag` to `ReferenceFlags` (#5023) (overlookmotel)
+
+### Refactor
+
+
+## [0.24.3] - 2024-08-18
+
+### Features
+
+- 48821c0 semantic,syntax: Add SymbolFlags::ArrowFunction (#4946) (DonIsaac)
+
+### Documentation
+
+- 0a01a47 semantic: Improve documentation (#4850) (DonIsaac)
+
+### Refactor
+
+- 48a1c32 syntax: Inline trivial bitflags methods (#4877) (overlookmotel)
+
+## [0.24.0] - 2024-08-08
+
+### Features
+
+- 82e2f6b ast_codegen: Process AST-related `syntax` types. (#4694) (rzvxa)
+- 6a36616 syntax: Derive `CloneIn` for the AST-related items. (#4730) (rzvxa)
+
+### Bug Fixes
+
+- 9f8f299 syntax: Prevent creating invalid u32 IDs (#4675) (overlookmotel)
+
+### Refactor
+
+- e24fb5b syntax: Add explicit enum discriminants to AST related types. (#4691) (rzvxa)
+- 3f3cb62 syntax, span: Reduce #[cfg_attr] boilerplate in type defs (#4698) (overlookmotel)
+
+## [0.23.1] - 2024-08-06
+
+### Bug Fixes
+
+- 9f8f299 syntax: Prevent creating invalid u32 IDs (#4675) (overlookmotel)
+
+## [0.23.0] - 2024-08-01
+
+### Features
+
+- a558492 codegen: Implement `BinaryExpressionVisitor` (#4548) (Boshen)
+- 35654e6 codegen: Align operator precedence with esbuild (#4509) (Boshen)
+- b952942 linter: Add eslint/no-unused-vars (⭐ attempt 3.2) (#4445) (DonIsaac)
+
+## [0.22.1] - 2024-07-27
+
+### Bug Fixes
+
+- 1667491 syntax: Correct `is_reserved_keyword_or_global_object`'s incorrect function calling. (#4484) (Ethan Goh)
+- 82ba2a0 syntax: Fix unsound use of `NonZeroU32` (#4466) (overlookmotel)
+
+### Performance
+
+- 24beaeb semantic: Give `AstNodeId` a niche (#4469) (overlookmotel)
+- 6a9f4db semantic: Reduce storage size for symbol redeclarations (#4463) (overlookmotel)
+
+### Refactor
+
+- c99b3eb syntax: Give `ScopeId` a niche (#4468) (overlookmotel)
+- 96fc94f syntax: Use `NonMaxU32` for IDs (#4467) (overlookmotel)
+
 ## [0.22.0] - 2024-07-23
 
 ### Bug Fixes

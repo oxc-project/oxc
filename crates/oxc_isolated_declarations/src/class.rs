@@ -1,7 +1,9 @@
-use oxc_allocator::Box;
+use std::borrow::Cow;
+
+use oxc_allocator::{Box, CloneIn};
 #[allow(clippy::wildcard_imports)]
-use oxc_ast::ast::*;
-use oxc_span::{Atom, GetSpan, SPAN};
+use oxc_ast::{ast::*, NONE};
+use oxc_span::{GetSpan, SPAN};
 use rustc_hash::FxHashMap;
 
 use crate::{
@@ -59,7 +61,8 @@ impl<'a> IsolatedDeclarations<'a> {
 
         if property.accessibility.map_or(true, |a| !a.is_private()) {
             if property.type_annotation.is_some() {
-                type_annotations = self.ast.copy(&property.type_annotation);
+                // SAFETY: `ast.copy` is unsound! We need to fix.
+                type_annotations = unsafe { self.ast.copy(&property.type_annotation) };
             } else if let Some(expr) = property.value.as_ref() {
                 let ts_type = if property.readonly {
                     // `field = 'string'` remain `field = 'string'` instead of `field: 'string'`
@@ -71,7 +74,8 @@ impl<'a> IsolatedDeclarations<'a> {
                                 .transform_template_to_string(lit)
                                 .map(Expression::StringLiteral);
                         } else {
-                            value = Some(self.ast.copy(expr));
+                            // SAFETY: `ast.copy` is unsound! We need to fix.
+                            value = Some(unsafe { self.ast.copy(expr) });
                         }
                         None
                     }
@@ -91,11 +95,12 @@ impl<'a> IsolatedDeclarations<'a> {
             property.r#type,
             property.span,
             self.ast.vec(),
-            self.ast.copy(&property.key),
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            unsafe { self.ast.copy(&property.key) },
             value,
             property.computed,
             property.r#static,
-            property.declare,
+            false,
             property.r#override,
             property.optional,
             property.definite,
@@ -116,22 +121,26 @@ impl<'a> IsolatedDeclarations<'a> {
         let value = self.ast.alloc_function(
             FunctionType::TSEmptyBodyFunctionExpression,
             function.span,
-            self.ast.copy(&function.id),
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            unsafe { self.ast.copy(&function.id) },
             false,
             false,
             false,
-            self.ast.copy(&function.type_parameters),
-            self.ast.copy(&function.this_param),
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            unsafe { self.ast.copy(&function.type_parameters) },
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            unsafe { self.ast.copy(&function.this_param) },
             params,
             return_type,
-            Option::<FunctionBody>::None,
+            NONE,
         );
 
         self.ast.class_element_method_definition(
             definition.r#type,
             definition.span,
             self.ast.vec(),
-            self.ast.copy(&definition.key),
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            unsafe { self.ast.copy(&definition.key) },
             value,
             definition.kind,
             definition.computed,
@@ -145,6 +154,7 @@ impl<'a> IsolatedDeclarations<'a> {
     fn create_class_property(
         &self,
         r#type: PropertyDefinitionType,
+        span: Span,
         key: PropertyKey<'a>,
         r#static: bool,
         r#override: bool,
@@ -152,7 +162,7 @@ impl<'a> IsolatedDeclarations<'a> {
     ) -> ClassElement<'a> {
         self.ast.class_element_property_definition(
             r#type,
-            SPAN,
+            span,
             self.ast.vec(),
             key,
             None,
@@ -163,7 +173,7 @@ impl<'a> IsolatedDeclarations<'a> {
             false,
             false,
             false,
-            Option::<TSTypeAnnotation>::None,
+            NONE,
             accessibility,
         )
     }
@@ -209,7 +219,9 @@ impl<'a> IsolatedDeclarations<'a> {
                 };
                 self.create_class_property(
                     r#type,
-                    self.ast.copy(&method.key),
+                    method.span,
+                    // SAFETY: `ast.copy` is unsound! We need to fix.
+                    unsafe { self.ast.copy(&method.key) },
                     method.r#static,
                     method.r#override,
                     self.transform_accessibility(method.accessibility),
@@ -220,14 +232,13 @@ impl<'a> IsolatedDeclarations<'a> {
                     SPAN,
                     FormalParameterKind::Signature,
                     self.ast.vec(),
-                    Option::<BindingRestElement>::None,
+                    NONE,
                 );
                 self.transform_class_method_definition(method, params, None)
             }
             MethodDefinitionKind::Set => {
                 let params = self.create_formal_parameters(
                     self.ast.binding_pattern_kind_binding_identifier(SPAN, "value"),
-                    None,
                 );
                 self.transform_class_method_definition(method, params, None)
             }
@@ -242,12 +253,14 @@ impl<'a> IsolatedDeclarations<'a> {
         let mut elements = self.ast.vec();
         for (index, param) in function.params.items.iter().enumerate() {
             if param.accessibility.is_some() || param.readonly {
-                let type_annotation = if param.accessibility.is_some_and(|a| a.is_private()) {
-                    None
-                } else {
-                    // transformed params will definitely have type annotation
-                    self.ast.copy(&params.items[index].pattern.type_annotation)
-                };
+                let type_annotation =
+                    if param.accessibility.is_some_and(TSAccessibility::is_private) {
+                        None
+                    } else {
+                        // transformed params will definitely have type annotation
+                        // SAFETY: `ast.copy` is unsound! We need to fix.
+                        unsafe { self.ast.copy(&params.items[index].pattern.type_annotation) }
+                    };
                 if let Some(new_element) =
                     self.transform_formal_parameter_to_class_property(param, type_annotation)
                 {
@@ -258,60 +271,61 @@ impl<'a> IsolatedDeclarations<'a> {
         elements
     }
 
-    /// Infer get accessor return type from set accessor
-    /// Infer set accessor parameter type from get accessor return type
-    fn collect_inferred_accessor_types(
+    /// Collect return_type of getter and first parma type of setter
+    ///
+    /// ### Getter
+    ///
+    /// 1. If it has return type, use it
+    /// 2. If it has no return type, infer it from the function body
+    ///
+    /// ### Setter
+    ///
+    /// 1. If it has no parameter type, infer it from the getter method's return type
+    fn collect_getter_or_setter_annotations(
         &self,
         decl: &Class<'a>,
-    ) -> FxHashMap<Atom, Box<'a, TSTypeAnnotation<'a>>> {
-        let mut inferred_accessor_types: FxHashMap<Atom<'a>, Box<'a, TSTypeAnnotation<'a>>> =
-            FxHashMap::default();
-
+    ) -> FxHashMap<Cow<str>, Box<'a, TSTypeAnnotation<'a>>> {
+        let mut method_annotations = FxHashMap::default();
         for element in &decl.body.body {
             if let ClassElement::MethodDefinition(method) = element {
-                if method.key.is_private_identifier()
-                    || method.accessibility.is_some_and(|a| a.is_private())
+                if (method.key.is_private_identifier()
+                    || method.accessibility.is_some_and(TSAccessibility::is_private))
                     || (method.computed && !self.is_literal_key(&method.key))
                 {
                     continue;
                 }
+
                 let Some(name) = method.key.static_name() else {
                     continue;
                 };
-                let name = self.ast.atom(&name);
-                if inferred_accessor_types.contains_key(&name) {
-                    // We've inferred that accessor type already
-                    continue;
-                }
-                let function = &method.value;
+
                 match method.kind {
-                    MethodDefinitionKind::Get => {
-                        let return_type = self.infer_function_return_type(function);
-                        if let Some(return_type) = return_type {
-                            inferred_accessor_types.insert(name, self.ast.copy(&return_type));
-                        }
-                    }
                     MethodDefinitionKind::Set => {
-                        if let Some(param) = function.params.items.first() {
-                            let type_annotation =
-                                param.pattern.type_annotation.as_ref().map_or_else(
-                                    || {
-                                        self.infer_type_from_formal_parameter(param)
-                                            .map(|x| self.ast.alloc_ts_type_annotation(SPAN, x))
-                                    },
-                                    |t| Some(self.ast.copy(t)),
-                                );
-                            if let Some(type_annotation) = type_annotation {
-                                inferred_accessor_types.insert(name, type_annotation);
-                            }
+                        let Some(first_param) = method.value.params.items.first() else {
+                            continue;
+                        };
+                        if let Some(annotation) =
+                            first_param.pattern.type_annotation.clone_in(self.ast.allocator)
+                        {
+                            method_annotations.insert(name, annotation);
                         }
                     }
-                    _ => {}
-                }
+                    MethodDefinitionKind::Get => {
+                        let function = &method.value;
+                        if let Some(annotation) = function
+                            .return_type
+                            .clone_in(self.ast.allocator)
+                            .or_else(|| self.infer_function_return_type(function))
+                        {
+                            method_annotations.insert(name, annotation);
+                        }
+                    }
+                    _ => continue,
+                };
             }
         }
 
-        inferred_accessor_types
+        method_annotations
     }
 
     pub fn transform_class(
@@ -336,6 +350,7 @@ impl<'a> IsolatedDeclarations<'a> {
             }
         }
 
+        let setter_getter_annotations = self.collect_getter_or_setter_annotations(decl);
         let mut has_private_key = false;
         let mut elements = self.ast.vec();
         let mut is_function_overloads = false;
@@ -343,6 +358,9 @@ impl<'a> IsolatedDeclarations<'a> {
             match element {
                 ClassElement::StaticBlock(_) => {}
                 ClassElement::MethodDefinition(ref method) => {
+                    if self.has_internal_annotation(method.span) {
+                        continue;
+                    }
                     if !(method.r#type.is_abstract() || method.optional)
                         && method.value.body.is_none()
                     {
@@ -359,36 +377,59 @@ impl<'a> IsolatedDeclarations<'a> {
                     if self.report_property_key(&method.key, method.computed) {
                         continue;
                     }
-                    if method.accessibility.is_some_and(|a| a.is_private()) {
-                        elements.push(self.transform_private_modifier_method(method));
-                        continue;
-                    }
 
-                    let inferred_accessor_types = self.collect_inferred_accessor_types(decl);
                     let function = &method.value;
-                    let params = if method.kind.is_set() {
-                        method.key.static_name().map_or_else(
-                            || self.transform_formal_parameters(&function.params),
-                            |n| {
-                                self.transform_set_accessor_params(
-                                    &function.params,
-                                    inferred_accessor_types
-                                        .get(&self.ast.atom(&n))
-                                        .map(|t| self.ast.copy(t)),
+                    let params = match method.kind {
+                        MethodDefinitionKind::Set => {
+                            if method.accessibility.is_some_and(TSAccessibility::is_private) {
+                                elements.push(self.transform_private_modifier_method(method));
+                                continue;
+                            }
+                            let params = &method.value.params;
+                            if params.items.is_empty() {
+                                self.create_formal_parameters(
+                                    self.ast.binding_pattern_kind_binding_identifier(SPAN, "value"),
                                 )
-                            },
-                        )
-                    } else {
-                        self.transform_formal_parameters(&function.params)
-                    };
+                            } else {
+                                let mut params = params.clone_in(self.ast.allocator);
+                                if let Some(param) = params.items.first_mut() {
+                                    if let Some(annotation) =
+                                        method.key.static_name().and_then(|name| {
+                                            setter_getter_annotations
+                                                .get(&name)
+                                                .map(|a| a.clone_in(self.ast.allocator))
+                                        })
+                                    {
+                                        param.pattern.type_annotation = Some(annotation);
+                                    }
+                                }
+                                params
+                            }
+                        }
+                        MethodDefinitionKind::Constructor => {
+                            let params = self.transform_formal_parameters(&function.params);
+                            elements.splice(
+                                0..0,
+                                self.transform_constructor_params_to_class_properties(
+                                    function, &params,
+                                ),
+                            );
 
-                    if let MethodDefinitionKind::Constructor = method.kind {
-                        elements.extend(
-                            self.transform_constructor_params_to_class_properties(
-                                function, &params,
-                            ),
-                        );
-                    }
+                            if method.accessibility.is_some_and(TSAccessibility::is_private) {
+                                elements.push(self.transform_private_modifier_method(method));
+                                continue;
+                            }
+
+                            params
+                        }
+                        _ => {
+                            if method.accessibility.is_some_and(TSAccessibility::is_private) {
+                                elements.push(self.transform_private_modifier_method(method));
+                                continue;
+                            }
+                            self.transform_formal_parameters(&function.params)
+                        }
+                    };
 
                     let return_type = match method.kind {
                         MethodDefinitionKind::Method => {
@@ -401,11 +442,15 @@ impl<'a> IsolatedDeclarations<'a> {
                             rt
                         }
                         MethodDefinitionKind::Get => {
-                            let rt = method.key.static_name().and_then(|name| {
-                                inferred_accessor_types
-                                    .get(&self.ast.atom(&name))
-                                    .map(|t| self.ast.copy(t))
-                            });
+                            let rt = method.value.return_type.clone_in(self.ast.allocator).or_else(
+                                || {
+                                    method
+                                        .key
+                                        .static_name()
+                                        .and_then(|name| setter_getter_annotations.get(&name))
+                                        .map(|a| a.clone_in(self.ast.allocator))
+                                },
+                            );
                             if rt.is_none() {
                                 self.error(accessor_must_have_explicit_return_type(
                                     method.key.span(),
@@ -420,6 +465,10 @@ impl<'a> IsolatedDeclarations<'a> {
                     elements.push(new_element);
                 }
                 ClassElement::PropertyDefinition(property) => {
+                    if self.has_internal_annotation(property.span) {
+                        continue;
+                    }
+
                     if self.report_property_key(&property.key, property.computed) {
                         continue;
                     }
@@ -431,6 +480,10 @@ impl<'a> IsolatedDeclarations<'a> {
                     }
                 }
                 ClassElement::AccessorProperty(property) => {
+                    if self.has_internal_annotation(property.span) {
+                        continue;
+                    }
+
                     if self.report_property_key(&property.key, property.computed) {
                         return None;
                     }
@@ -445,14 +498,25 @@ impl<'a> IsolatedDeclarations<'a> {
                         property.r#type,
                         property.span,
                         self.ast.vec(),
-                        self.ast.copy(&property.key),
+                        // SAFETY: `ast.copy` is unsound! We need to fix.
+                        unsafe { self.ast.copy(&property.key) },
                         None,
                         property.computed,
                         property.r#static,
+                        property.definite,
+                        // SAFETY: `ast.copy` is unsound! We need to fix.
+                        unsafe { self.ast.copy(&property.type_annotation) },
+                        property.accessibility,
                     );
                     elements.push(new_element);
                 }
-                ClassElement::TSIndexSignature(_) => elements.push(self.ast.copy(element)),
+                ClassElement::TSIndexSignature(signature) => elements.push({
+                    if self.has_internal_annotation(signature.span) {
+                        continue;
+                    }
+                    // SAFETY: `ast.copy` is unsound! We need to fix.
+                    unsafe { self.ast.copy(element) }
+                }),
             }
         }
 
@@ -464,20 +528,8 @@ impl<'a> IsolatedDeclarations<'a> {
             let r#type = PropertyDefinitionType::PropertyDefinition;
             let decorators = self.ast.vec();
             let element = self.ast.class_element_property_definition(
-                r#type,
-                SPAN,
-                decorators,
-                ident,
-                None,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                Option::<TSTypeAnnotation>::None,
-                None,
+                r#type, SPAN, decorators, ident, None, false, false, false, false, false, false,
+                false, NONE, None,
             );
 
             elements.insert(0, element);
@@ -489,49 +541,30 @@ impl<'a> IsolatedDeclarations<'a> {
             decl.r#type,
             decl.span,
             self.ast.vec(),
-            self.ast.copy(&decl.id),
-            self.ast.copy(&decl.type_parameters),
-            self.ast.copy(&decl.super_class),
-            self.ast.copy(&decl.super_type_parameters),
-            self.ast.copy(&decl.implements),
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            unsafe { self.ast.copy(&decl.id) },
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            unsafe { self.ast.copy(&decl.type_parameters) },
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            unsafe { self.ast.copy(&decl.super_class) },
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            unsafe { self.ast.copy(&decl.super_type_parameters) },
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            unsafe { self.ast.copy(&decl.implements) },
             body,
             decl.r#abstract,
             declare.unwrap_or_else(|| self.is_declare()),
         ))
     }
 
-    pub fn transform_set_accessor_params(
-        &self,
-        params: &Box<'a, FormalParameters<'a>>,
-        type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
-    ) -> Box<'a, FormalParameters<'a>> {
-        let items = &params.items;
-        if items.first().map_or(true, |item| item.pattern.type_annotation.is_none()) {
-            let kind = items.first().map_or_else(
-                || self.ast.binding_pattern_kind_binding_identifier(SPAN, "value"),
-                |item| self.ast.copy(&item.pattern.kind),
-            );
-
-            self.create_formal_parameters(kind, type_annotation)
-        } else {
-            self.transform_formal_parameters(params)
-        }
-    }
-
     pub fn create_formal_parameters(
         &self,
         kind: BindingPatternKind<'a>,
-        type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     ) -> Box<'a, FormalParameters<'a>> {
-        let pattern = BindingPattern { kind, type_annotation, optional: false };
+        let pattern = self.ast.binding_pattern(kind, None::<TSTypeAnnotation<'a>>, false);
         let parameter =
             self.ast.formal_parameter(SPAN, self.ast.vec(), pattern, None, false, false);
         let items = self.ast.vec1(parameter);
-        self.ast.alloc_formal_parameters(
-            SPAN,
-            FormalParameterKind::Signature,
-            items,
-            Option::<BindingRestElement>::None,
-        )
+        self.ast.alloc_formal_parameters(SPAN, FormalParameterKind::Signature, items, NONE)
     }
 }

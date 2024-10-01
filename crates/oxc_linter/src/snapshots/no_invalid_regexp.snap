@@ -1,0 +1,206 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unterminated character class
+   ╭─[no_invalid_regexp.tsx:1:9]
+ 1 │ RegExp('[');
+   ·         ─
+   ╰────
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unknown flag
+   ╭─[no_invalid_regexp.tsx:1:14]
+ 1 │ RegExp('.', 'z');
+   ·              ▲
+   ╰────
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unknown flag
+   ╭─[no_invalid_regexp.tsx:1:14]
+ 1 │ RegExp('.', 'a');
+   ·              ▲
+   ╰────
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unknown flag
+   ╭─[no_invalid_regexp.tsx:1:18]
+ 1 │ new RegExp('.', 'a');
+   ·                  ▲
+   ╰────
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unknown flag
+   ╭─[no_invalid_regexp.tsx:1:18]
+ 1 │ new RegExp('.', 'z');
+   ·                  ▲
+   ╰────
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unknown flag
+   ╭─[no_invalid_regexp.tsx:1:14]
+ 1 │ RegExp('.', 'a');
+   ·              ▲
+   ╰────
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unknown flag
+   ╭─[no_invalid_regexp.tsx:1:14]
+ 1 │ RegExp('.', 'A');
+   ·              ▲
+   ╰────
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unknown flag
+   ╭─[no_invalid_regexp.tsx:1:18]
+ 1 │ new RegExp('.', 'az');
+   ·                  ▲
+   ╰────
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Duplicated flag
+   ╭─[no_invalid_regexp.tsx:1:19]
+ 1 │ new RegExp('.', 'aa');
+   ·                   ▲
+   ╰────
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Duplicated flag
+   ╭─[no_invalid_regexp.tsx:1:19]
+ 1 │ new RegExp('.', 'aa');
+   ·                   ▲
+   ╰────
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unknown flag
+   ╭─[no_invalid_regexp.tsx:1:18]
+ 1 │ new RegExp('.', 'aA');
+   ·                  ▲
+   ╰────
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Duplicated flag
+   ╭─[no_invalid_regexp.tsx:1:19]
+ 1 │ new RegExp('.', 'aaz');
+   ·                   ▲
+   ╰────
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Duplicated flag
+   ╭─[no_invalid_regexp.tsx:1:20]
+ 1 │ new RegExp('.', 'azz');
+   ·                    ▲
+   ╰────
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Duplicated flag
+   ╭─[no_invalid_regexp.tsx:1:20]
+ 1 │ new RegExp('.', 'aga');
+   ·                    ▲
+   ╰────
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Duplicated flag
+   ╭─[no_invalid_regexp.tsx:1:19]
+ 1 │ new RegExp('.', 'uu');
+   ·                   ▲
+   ╰────
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Duplicated flag
+   ╭─[no_invalid_regexp.tsx:1:20]
+ 1 │ new RegExp('.', 'ouo');
+   ·                    ▲
+   ╰────
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Could not parse the entire pattern
+   ╭─[no_invalid_regexp.tsx:1:13]
+ 1 │ new RegExp(')');
+   ·             ▲
+   ╰────
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Could not parse the entire pattern
+   ╭─[no_invalid_regexp.tsx:1:14]
+ 1 │ new RegExp('\\a', 'u');
+   ·              ▲
+   ╰────
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Could not parse the entire pattern
+   ╭─[no_invalid_regexp.tsx:1:14]
+ 1 │ new RegExp('\\a', 'u');
+   ·              ▲
+   ╰────
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Invalid braced quantifier
+   ╭─[no_invalid_regexp.tsx:1:14]
+ 1 │ RegExp('\\u{0}*');
+   ·              ─
+   ╰────
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Invalid braced quantifier
+   ╭─[no_invalid_regexp.tsx:1:18]
+ 1 │ new RegExp('\\u{0}*');
+   ·                  ─
+   ╰────
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Invalid braced quantifier
+   ╭─[no_invalid_regexp.tsx:1:18]
+ 1 │ new RegExp('\\u{0}*', '');
+   ·                  ─
+   ╰────
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Invalid braced quantifier
+   ╭─[no_invalid_regexp.tsx:1:18]
+ 1 │ new RegExp('\\u{0}*', 'a');
+   ·                  ─
+   ╰────
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Invalid braced quantifier
+   ╭─[no_invalid_regexp.tsx:1:14]
+ 1 │ RegExp('\\u{0}*');
+   ·              ─
+   ╰────
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Invalid extended atom escape
+   ╭─[no_invalid_regexp.tsx:1:13]
+ 1 │ new RegExp('\\');
+   ·             ─
+   ╰────
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unknown flag
+   ╭─[no_invalid_regexp.tsx:1:19]
+ 1 │ RegExp(')' + '', 'a');
+   ·                   ▲
+   ╰────
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unknown flag
+   ╭─[no_invalid_regexp.tsx:1:23]
+ 1 │ new RegExp('.' + '', 'az');
+   ·                       ▲
+   ╰────
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unknown flag
+   ╭─[no_invalid_regexp.tsx:1:22]
+ 1 │ new RegExp(pattern, 'az');
+   ·                      ▲
+   ╰────
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unterminated character class
+   ╭─[no_invalid_regexp.tsx:1:13]
+ 1 │ new RegExp('[[]', 'v');
+   ·             ───
+   ╰────
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Invalid flags, `u` and `v` should be used alone
+   ╭─[no_invalid_regexp.tsx:1:18]
+ 1 │ new RegExp('.', 'uv');
+   ·                  ──
+   ╰────
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Invalid flags, `u` and `v` should be used alone
+   ╭─[no_invalid_regexp.tsx:1:22]
+ 1 │ new RegExp(pattern, 'uv');
+   ·                      ──
+   ╰────
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Character class atom range out of order
+   ╭─[no_invalid_regexp.tsx:1:15]
+ 1 │ new RegExp('[A--B]' /* valid only with `v` flag */, 'u')
+   ·               ──
+   ╰────
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unterminated character class
+   ╭─[no_invalid_regexp.tsx:1:13]
+ 1 │ new RegExp('[[]\\u{0}*' /* valid only with `u` flag */, 'v')
+   ·             ────────
+   ╰────
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Duplicated capturing group names
+   ╭─[no_invalid_regexp.tsx:1:23]
+ 1 │ new RegExp('(?<k>a)(?<k>b)')
+   ·                       ─
+   ╰────

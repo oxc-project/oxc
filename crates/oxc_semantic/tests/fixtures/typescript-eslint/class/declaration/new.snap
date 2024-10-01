@@ -2,29 +2,33 @@
 source: crates/oxc_semantic/tests/main.rs
 input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declaration/new.ts
 ---
+================================================================================
+SCOPES
+================================================================================
+
 [
   {
     "children": [
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 1,
         "node": "Class(A)",
         "symbols": []
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(Class)",
+        "flags": "SymbolFlags(Class)",
         "id": 0,
         "name": "A",
         "node": "Class(A)",
         "references": [
           {
-            "flag": "ReferenceFlag(Read)",
+            "flags": "ReferenceFlags(Read)",
             "id": 0,
             "name": "A",
             "node_id": 6
@@ -34,3 +38,9 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
     ]
   }
 ]
+
+================================================================================
+CONFORMANCE
+================================================================================
+
+All tests passed.

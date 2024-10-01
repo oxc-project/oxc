@@ -1,5 +1,6 @@
-use std::collections::{hash_map::HashMap, hash_set::HashSet};
+use std::borrow::Cow;
 
+use cow_utils::CowUtils;
 use itertools::Itertools;
 use once_cell::sync::Lazy;
 use oxc_ast::{
@@ -11,34 +12,40 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use phf::{phf_map, phf_set, Map, Set};
 use regex::Regex;
+use rustc_hash::{FxHashMap, FxHashSet};
 use serde::Deserialize;
 
-use crate::{context::LintContext, rule::Rule, utils::get_jsx_attribute_name, AstNode};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    utils::get_jsx_attribute_name,
+    AstNode,
+};
 
-fn invalid_prop_on_tag(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
+fn invalid_prop_on_tag(span: Span, prop: &str, tag: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Invalid property found")
-        .with_help(format!("Property '{x1}' is only allowed on: {x2}"))
-        .with_label(span0)
+        .with_help(format!("Property '{prop}' is only allowed on: {tag}"))
+        .with_label(span)
 }
 
-fn data_lowercase_required(span0: Span, x1: &str) -> OxcDiagnostic {
+fn data_lowercase_required(span: Span, suggested_prop: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "React does not recognize data-* props with uppercase characters on a DOM element",
     )
-    .with_help(format!("Use '{x1}' instead"))
-    .with_label(span0)
+    .with_help(format!("Use '{suggested_prop}' instead"))
+    .with_label(span)
 }
 
-fn unknown_prop_with_standard_name(span0: Span, x1: &str) -> OxcDiagnostic {
+fn unknown_prop_with_standard_name(span: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unknown property found")
         .with_help(format!("Use '{x1}' instead"))
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn unknown_prop(span0: Span) -> OxcDiagnostic {
+fn unknown_prop(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unknown property found")
         .with_help("Remove unknown property")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -48,7 +55,7 @@ pub struct NoUnknownProperty(Box<NoUnknownPropertyConfig>);
 #[serde(rename_all = "camelCase")]
 pub struct NoUnknownPropertyConfig {
     #[serde(default)]
-    ignore: HashSet<String>,
+    ignore: FxHashSet<Cow<'static, str>>,
     #[serde(default)]
     require_data_lowercase: bool,
 }
@@ -70,8 +77,10 @@ declare_oxc_lint!(
     ///  const IconButton = <div aria-foo="bar" />;
     /// ```
     NoUnknownProperty,
-    restriction
+    restriction,
+    pending
 );
+
 const ATTRIBUTE_TAGS_MAP: Map<&'static str, Set<&'static str>> = phf_map! {
     "abbr" => phf_set! {"th", "td"},
     "charset" => phf_set! {"meta"},
@@ -417,8 +426,11 @@ const DOM_PROPERTIES_IGNORE_CASE: [&str; 5] = [
     "webkitDirectory",
 ];
 
-static DOM_PROPERTIES_LOWER_MAP: Lazy<HashMap<String, &'static str>> = Lazy::new(|| {
-    DOM_PROPERTIES_NAMES.iter().map(|it| (it.to_lowercase(), *it)).collect::<HashMap<_, _>>()
+static DOM_PROPERTIES_LOWER_MAP: Lazy<FxHashMap<String, &'static str>> = Lazy::new(|| {
+    DOM_PROPERTIES_NAMES
+        .iter()
+        .map(|it| (it.cow_to_lowercase().into_owned(), *it))
+        .collect::<FxHashMap<_, _>>()
 });
 
 ///
@@ -430,13 +442,13 @@ static DOM_PROPERTIES_LOWER_MAP: Lazy<HashMap<String, &'static str>> = Lazy::new
 fn is_valid_data_attr(name: &str) -> bool {
     static DATA_ATTR_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"^data(-?[^:]*)$").unwrap());
 
-    !name.to_lowercase().starts_with("data-xml") && DATA_ATTR_REGEX.is_match(name)
+    !name.cow_to_lowercase().starts_with("data-xml") && DATA_ATTR_REGEX.is_match(name)
 }
 
 fn normalize_attribute_case(name: &str) -> &str {
     DOM_PROPERTIES_IGNORE_CASE
         .iter()
-        .find(|camel_name| camel_name.to_lowercase() == name.to_lowercase())
+        .find(|camel_name| camel_name.eq_ignore_ascii_case(name))
         .unwrap_or(&name)
 }
 fn has_uppercase(name: &str) -> bool {
@@ -491,16 +503,19 @@ impl Rule for NoUnknownProperty {
                 if self.0.ignore.contains(&(actual_name)) {
                     return;
                 };
-                if is_valid_data_attr(actual_name.as_str()) {
-                    if self.0.require_data_lowercase && has_uppercase(actual_name.as_str()) {
-                        ctx.diagnostic(data_lowercase_required(span, &actual_name.to_lowercase()));
+                if is_valid_data_attr(&actual_name) {
+                    if self.0.require_data_lowercase && has_uppercase(&actual_name) {
+                        ctx.diagnostic(data_lowercase_required(
+                            span,
+                            &actual_name.cow_to_lowercase(),
+                        ));
                     }
                     return;
                 };
-                if ARIA_PROPERTIES.contains(actual_name.as_str()) || !is_valid_html_tag {
+                if ARIA_PROPERTIES.contains(&actual_name) || !is_valid_html_tag {
                     return;
                 };
-                let name = normalize_attribute_case(actual_name.as_str());
+                let name = normalize_attribute_case(&actual_name);
                 if let Some(tags) = ATTRIBUTE_TAGS_MAP.get(name) {
                     if !tags.contains(el_type) {
                         ctx.diagnostic(invalid_prop_on_tag(
@@ -517,7 +532,7 @@ impl Rule for NoUnknownProperty {
                 }
 
                 DOM_PROPERTIES_LOWER_MAP
-                    .get(&name.to_lowercase())
+                    .get(&name.cow_to_lowercase().into_owned())
                     .or_else(|| DOM_ATTRIBUTES_TO_CAMEL.get(name))
                     .map_or_else(
                         || {
@@ -530,7 +545,7 @@ impl Rule for NoUnknownProperty {
             });
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_jsx()
     }
 }

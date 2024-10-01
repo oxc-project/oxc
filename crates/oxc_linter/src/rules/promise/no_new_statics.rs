@@ -3,10 +3,14 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, utils::PROMISE_STATIC_METHODS, AstNode};
 
-fn static_promise_diagnostic(x0: &str, span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Disallow calling `new` on a `Promise.{x0}`")).with_label(span0)
+fn static_promise_diagnostic(static_name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Do not use `new` on `Promise.{static_name}`"))
+        .with_help(format!(
+            "`Promise.{static_name}` is not a constructor. Call it as a function instead."
+        ))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -15,18 +19,27 @@ pub struct NoNewStatics;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow calling new on a Promise static method.
+    /// Disallows calling new on static `Promise` methods.
     ///
     /// ### Why is this bad?
     ///
-    /// Calling a Promise static method with new is invalid, resulting in a TypeError at runtime.
+    /// Calling a static `Promise` method with `new` is invalid and will result
+    /// in a `TypeError` at runtime.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// new Promise.resolve(value);
+    /// const x = new Promise.resolve(value);
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// const x = Promise.resolve(value);
     /// ```
     NoNewStatics,
-    correctness
+    correctness,
+    fix
 );
 
 impl Rule for NoNewStatics {
@@ -51,11 +64,7 @@ impl Rule for NoNewStatics {
             return;
         };
 
-        // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise
-        if matches!(
-            prop_name,
-            "resolve" | "reject" | "all" | "allSettled" | "race" | "any" | "withResolvers"
-        ) {
+        if PROMISE_STATIC_METHODS.contains(prop_name) {
             ctx.diagnostic_with_fix(
                 static_promise_diagnostic(
                     prop_name,

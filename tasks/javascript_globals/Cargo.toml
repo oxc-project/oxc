@@ -1,21 +1,22 @@
 [package]
-name              = "javascript_globals"
-version           = "0.0.0"
-publish           = false
+name = "javascript_globals"
+version = "0.0.0"
 edition.workspace = true
 license.workspace = true
+publish = false
 
 [lints]
 workspace = true
 
 [[bin]]
-name    = "javascript_globals"
-test    = false
+name = "javascript_globals"
+test = false
 doctest = false
 
 [dependencies]
+handlebars = { workspace = true }
 oxc_tasks_common = { workspace = true }
-handlebars       = { workspace = true }
 
-serde       = { workspace = true, features = ["derive"] }
 lazy_static = { workspace = true }
+rustc-hash = { workspace = true }
+serde = { workspace = true, features = ["derive"] }

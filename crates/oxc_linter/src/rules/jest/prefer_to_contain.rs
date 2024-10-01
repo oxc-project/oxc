@@ -15,8 +15,8 @@ use crate::{
     },
 };
 
-fn use_to_contain(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Suggest using `toContain()`.").with_label(span0)
+fn use_to_contain(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Suggest using `toContain()`.").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

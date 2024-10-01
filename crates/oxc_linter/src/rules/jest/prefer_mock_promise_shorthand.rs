@@ -52,6 +52,7 @@ declare_oxc_lint!(
     ///
     PreferMockPromiseShorthand,
     style,
+    conditional_fix
 );
 
 impl Rule for PreferMockPromiseShorthand {

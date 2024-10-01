@@ -2,6 +2,9 @@
 
 use std::fmt;
 
+/// Lexer token kind
+///
+/// Exported for other oxc crates to use. You generally don't need to use this directly.
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
 #[non_exhaustive]
 pub enum Kind {
@@ -206,12 +209,13 @@ impl Kind {
         )
     }
 
-    pub fn matches_number_char(self, c: char) -> bool {
+    #[inline] // Inline into `read_non_decimal` - see comment there as to why
+    pub fn matches_number_byte(self, b: u8) -> bool {
         match self {
-            Decimal => c.is_ascii_digit(),
-            Binary => matches!(c, '0'..='1'),
-            Octal => matches!(c, '0'..='7'),
-            Hex => c.is_ascii_hexdigit(),
+            Decimal => b.is_ascii_digit(),
+            Binary => matches!(b, b'0'..=b'1'),
+            Octal => matches!(b, b'0'..=b'7'),
+            Hex => b.is_ascii_hexdigit(),
             _ => unreachable!(),
         }
     }
@@ -243,8 +247,11 @@ impl Kind {
         matches!(self, Ident) || self.is_all_keyword()
     }
 
-    /// Check the succeeding token of a `let` keyword
-    // let { a, b } = c, let [a, b] = c, let ident
+    /// Check the succeeding token of a `let` keyword.
+    ///
+    /// ```javascript
+    /// let { a, b } = c, let [a, b] = c, let ident
+    /// ```
     pub fn is_after_let(self) -> bool {
         self != Self::In && (matches!(self, LCurly | LBrack | Ident) || self.is_all_keyword())
     }
@@ -351,16 +358,6 @@ impl Kind {
     #[rustfmt::skip]
     pub fn is_future_reserved_keyword(self) -> bool {
         matches!(self, Implements | Interface | Package | Private | Protected | Public | Static)
-    }
-
-    #[rustfmt::skip]
-    pub fn is_at_expression(self) -> bool {
-        self.is_unary_operator()
-            || self.is_update_operator()
-            || self.is_reserved_keyword()
-            || self.is_literal()
-            || matches!(self, Neq | LParen | LBrack | LCurly | LAngle | Dot3
-                | Slash | SlashEq | TemplateHead | NoSubstitutionTemplate | PrivateIdentifier | Ident | Async)
     }
 
     pub fn is_template_start_of_tagged_template(self) -> bool {

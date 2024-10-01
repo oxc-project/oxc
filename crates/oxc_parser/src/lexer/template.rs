@@ -40,7 +40,7 @@ impl<'a> Lexer<'a> {
                             if unsafe { after_dollar.read() } == b'{' {
                                 // Skip `${` and stop searching.
                                 // SAFETY: Consuming `${` leaves `pos` on a UTF-8 char boundary.
-                                pos = unsafe { after_dollar.add(1) };
+                                pos = unsafe { pos.add(2) };
                                 false
                             } else {
                                 // Not `${`. Continue searching.
@@ -212,7 +212,7 @@ impl<'a> Lexer<'a> {
 
                             // Skip `${` and stop searching.
                             // SAFETY: Consuming `${` leaves `pos` on a UTF-8 char boundary.
-                            pos = after_dollar.add(1);
+                            pos = pos.add(2);
                             false
                         } else {
                             // Not `${`. Continue searching.

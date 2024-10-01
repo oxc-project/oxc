@@ -16,18 +16,19 @@ use crate::{
     utils::{collect_possible_jest_call_node, parse_expect_jest_fn_call, PossibleJestNode},
 };
 
-fn no_snapshot(x0: usize, span0: Span) -> OxcDiagnostic {
+// TODO: re-word diagnostic messages
+fn no_snapshot(x0: usize, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow large snapshots.")
         .with_help(format!("`{x0:?}`s should begin with lowercase"))
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn too_long_snapshots(x0: usize, x1: usize, span0: Span) -> OxcDiagnostic {
+fn too_long_snapshots(x0: usize, x1: usize, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow large snapshots.")
         .with_help(format!(
             "Expected Jest snapshot to be smaller than {x0:?} lines but was {x1:?} lines long"
         ))
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

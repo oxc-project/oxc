@@ -8,10 +8,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn bad_min_max_func_diagnostic(x0: f64, span1: Span) -> OxcDiagnostic {
+fn bad_min_max_func_diagnostic(constant_result: f64, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Math.min and Math.max combination leads to constant result")
         .with_help(format!(
-            "This evaluates to {x0:?} because of the incorrect `Math.min`/`Math.max` combination"
+            "This evaluates to {constant_result:?} because of the incorrect `Math.min`/`Math.max` combination"
         ))
         .with_label(span1)
 }
@@ -39,31 +39,32 @@ impl Rule for BadMinMaxFunc {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
+        let Some((out_min_max, inner_exprs)) = Self::min_max(call_expr) else {
+            return;
+        };
 
-        if let Some((out_min_max, inner_exprs)) = Self::min_max(call_expr) {
-            for expr in inner_exprs {
-                if let Some((inner_min_max, ..)) = Self::min_max(expr) {
-                    let constant_result = match (&out_min_max, &inner_min_max) {
-                        (MinMax::Max(max), MinMax::Min(min)) => {
-                            if max > min {
-                                Some(max)
-                            } else {
-                                None
-                            }
+        for expr in inner_exprs {
+            if let Some((inner_min_max, ..)) = Self::min_max(expr) {
+                let constant_result = match (&out_min_max, &inner_min_max) {
+                    (MinMax::Max(max), MinMax::Min(min)) => {
+                        if max > min {
+                            Some(max)
+                        } else {
+                            None
                         }
-                        (MinMax::Min(min), MinMax::Max(max)) => {
-                            if min < max {
-                                Some(min)
-                            } else {
-                                None
-                            }
-                        }
-                        _ => None,
-                    };
-
-                    if let Some(constant) = constant_result {
-                        ctx.diagnostic(bad_min_max_func_diagnostic(*constant, call_expr.span));
                     }
+                    (MinMax::Min(min), MinMax::Max(max)) => {
+                        if min < max {
+                            Some(min)
+                        } else {
+                            None
+                        }
+                    }
+                    _ => None,
+                };
+
+                if let Some(constant) = constant_result {
+                    ctx.diagnostic(bad_min_max_func_diagnostic(*constant, call_expr.span));
                 }
             }
         }

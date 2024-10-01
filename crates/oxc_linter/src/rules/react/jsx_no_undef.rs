@@ -1,17 +1,19 @@
 use oxc_ast::{
-    ast::{JSXElementName, JSXIdentifier, JSXMemberExpression, JSXMemberExpressionObject},
+    ast::{IdentifierReference, JSXElementName, JSXMemberExpression, JSXMemberExpressionObject},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    AstNode,
+};
 
-fn jsx_no_undef_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow undeclared variables in JSX")
-        .with_help(format!("'{x0}' is not defined."))
-        .with_label(span1)
+fn jsx_no_undef_diagnostic(ident_name: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("'{ident_name}' is not defined.")).with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -33,22 +35,25 @@ declare_oxc_lint!(
     correctness
 );
 
-fn get_resolvable_ident<'a>(node: &'a JSXElementName<'a>) -> Option<&'a JSXIdentifier> {
+fn get_resolvable_ident<'a>(node: &'a JSXElementName<'a>) -> Option<&'a IdentifierReference> {
     match node {
-        JSXElementName::Identifier(ref ident)
-            if !(ident.name.as_str().starts_with(char::is_lowercase)) =>
-        {
-            Some(ident)
-        }
-        JSXElementName::Identifier(_) | JSXElementName::NamespacedName(_) => None,
-        JSXElementName::MemberExpression(expr) => Some(get_member_ident(expr)),
+        JSXElementName::Identifier(_)
+        | JSXElementName::NamespacedName(_)
+        | JSXElementName::ThisExpression(_) => None,
+        JSXElementName::IdentifierReference(ref ident) => Some(ident),
+        JSXElementName::MemberExpression(expr) => get_member_ident(expr),
     }
 }
 
-fn get_member_ident<'a>(expr: &'a JSXMemberExpression<'a>) -> &'a JSXIdentifier {
-    match &expr.object {
-        JSXMemberExpressionObject::Identifier(ident) => ident,
-        JSXMemberExpressionObject::MemberExpression(next_expr) => get_member_ident(next_expr),
+fn get_member_ident<'a>(mut expr: &'a JSXMemberExpression<'a>) -> Option<&'a IdentifierReference> {
+    loop {
+        match &expr.object {
+            JSXMemberExpressionObject::IdentifierReference(ident) => return Some(ident),
+            JSXMemberExpressionObject::ThisExpression(_) => return None,
+            JSXMemberExpressionObject::MemberExpression(next_expr) => {
+                expr = next_expr;
+            }
+        }
     }
 }
 
@@ -56,24 +61,20 @@ impl Rule for JsxNoUndef {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXOpeningElement(elem) = &node.kind() {
             if let Some(ident) = get_resolvable_ident(&elem.name) {
-                let name = ident.name.as_str();
-                if name == "this" {
+                let reference = ctx.symbols().get_reference(ident.reference_id().unwrap());
+                if reference.symbol_id().is_some() {
                     return;
                 }
-                for scope_id in ctx.scopes().ancestors(node.scope_id()) {
-                    if ctx.scopes().has_binding(scope_id, name) {
-                        return;
-                    }
-                }
+                let name = ident.name.as_str();
                 if ctx.globals().is_enabled(name) {
                     return;
                 }
-                ctx.diagnostic(jsx_no_undef_diagnostic(ident.name.as_str(), ident.span));
+                ctx.diagnostic(jsx_no_undef_diagnostic(name, ident.span));
             }
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_jsx()
     }
 }

@@ -8,37 +8,105 @@ use std::{
 
 use oxc_span::Span;
 
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum CommentKind {
+    Line,
+    Block,
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum CommentPosition {
+    /// Comments prior to a token until another token or trailing comment.
+    ///
+    /// e.g.
+    ///
+    /// ```
+    /// /* leading */ token;
+    /// /* leading */
+    /// // leading
+    /// token;
+    /// ```
+    Leading,
+
+    /// Comments tailing a token until a newline.
+    /// e.g. `token /* trailing */ // trailing`
+    Trailing,
+}
+
 /// Single or multiline comment
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub struct Comment {
-    pub kind: CommentKind,
     /// The span of the comment text (without leading/trailing delimiters).
     pub span: Span,
+
+    /// Line or block comment
+    pub kind: CommentKind,
+
+    /// Leading or trailing comment
+    pub position: CommentPosition,
+
+    /// Start of token this leading comment is attached to.
+    /// `/* Leading */ token`
+    ///                ^ This start
+    /// NOTE: Trailing comment attachment is not computed yet.
+    pub attached_to: u32,
+
+    /// Whether this comment has a preceding newline.
+    /// Used to avoid becoming a trailing comment in codegen.
+    pub preceded_by_newline: bool,
+
+    /// Whether this comment has a tailing newline.
+    pub followed_by_newline: bool,
 }
 
 impl Comment {
     #[inline]
     pub fn new(start: u32, end: u32, kind: CommentKind) -> Self {
         let span = Span::new(start, end);
-        Self { kind, span }
-    }
-}
-
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub enum CommentKind {
-    SingleLine,
-    MultiLine,
-}
-
-impl CommentKind {
-    #[inline]
-    pub fn is_single_line(self) -> bool {
-        self == Self::SingleLine
+        Self {
+            span,
+            kind,
+            position: CommentPosition::Trailing,
+            attached_to: 0,
+            preceded_by_newline: false,
+            followed_by_newline: false,
+        }
     }
 
-    #[inline]
-    pub fn is_multi_line(self) -> bool {
-        self == Self::MultiLine
+    pub fn is_line(self) -> bool {
+        self.kind == CommentKind::Line
+    }
+
+    pub fn is_block(self) -> bool {
+        self.kind == CommentKind::Block
+    }
+
+    pub fn is_leading(self) -> bool {
+        self.position == CommentPosition::Leading
+    }
+
+    pub fn is_trailing(self) -> bool {
+        self.position == CommentPosition::Trailing
+    }
+
+    pub fn real_span(&self) -> Span {
+        Span::new(self.real_span_start(), self.real_span_end())
+    }
+
+    pub fn real_span_end(&self) -> u32 {
+        match self.kind {
+            CommentKind::Line => self.span.end,
+            // length of `*/`
+            CommentKind::Block => self.span.end + 2,
+        }
+    }
+
+    pub fn real_span_start(&self) -> u32 {
+        self.span.start - 2
+    }
+
+    pub fn is_jsdoc(&self, source_text: &str) -> bool {
+        self.is_leading() && self.is_block() && self.span.source_text(source_text).starts_with('*')
     }
 }
 
@@ -174,11 +242,11 @@ mod test {
     #[test]
     fn test_comments_range() {
         let comments: SortedComments = vec![
-            Comment { span: Span::new(0, 4), kind: CommentKind::SingleLine },
-            Comment { span: Span::new(5, 9), kind: CommentKind::SingleLine },
-            Comment { span: Span::new(10, 13), kind: CommentKind::SingleLine },
-            Comment { span: Span::new(14, 17), kind: CommentKind::SingleLine },
-            Comment { span: Span::new(18, 23), kind: CommentKind::SingleLine },
+            Comment::new(0, 4, CommentKind::Line),
+            Comment::new(5, 9, CommentKind::Line),
+            Comment::new(10, 13, CommentKind::Line),
+            Comment::new(14, 17, CommentKind::Line),
+            Comment::new(18, 23, CommentKind::Line),
         ]
         .into_boxed_slice();
         let full_len = comments.len();

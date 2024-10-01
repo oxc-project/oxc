@@ -1,6 +1,5 @@
 use std::fmt;
 
-use crate::{rule::Rule, AstNode, LintContext};
 use oxc_ast::{
     ast::{
         BindingIdentifier, BindingPattern, BindingPatternKind, Expression, JSXAttributeItem,
@@ -11,6 +10,8 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::SymbolId;
 use oxc_span::Span;
+
+use crate::{context::ContextHost, rule::Rule, AstNode, LintContext};
 
 fn react_perf_inline_diagnostic(message: &'static str, attr_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(message)
@@ -118,7 +119,7 @@ where
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_jsx()
     }
 }

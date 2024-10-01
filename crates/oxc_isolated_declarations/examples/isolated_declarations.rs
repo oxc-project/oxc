@@ -2,15 +2,15 @@
 use std::{env, path::Path};
 
 use oxc_allocator::Allocator;
-use oxc_codegen::CodeGenerator;
-use oxc_isolated_declarations::IsolatedDeclarations;
+use oxc_codegen::{CodeGenerator, CommentOptions};
+use oxc_isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
 // Instruction:
 // create a `test.js`,
 // run `cargo run -p oxc_isolated_declarations --example isolated_declarations`
-// or `just watch "run -p oxc_isolated_declarations --example isolated_declarations"`
+// or `just example isolated_declarations`
 
 fn main() {
     let name = env::args().nth(1).unwrap_or_else(|| "test.tsx".to_string());
@@ -32,15 +32,28 @@ fn main() {
     println!("Original:\n");
     println!("{source_text}\n");
 
-    let ret = IsolatedDeclarations::new(&allocator).build(&ret.program);
-    let printed = CodeGenerator::new().build(&ret.program).source_text;
+    let id_ret = IsolatedDeclarations::new(
+        &allocator,
+        &source_text,
+        &ret.trivias,
+        IsolatedDeclarationsOptions { strip_internal: true },
+    )
+    .build(&ret.program);
+    let printed = CodeGenerator::new()
+        .enable_comment(
+            &source_text,
+            ret.trivias,
+            CommentOptions { preserve_annotate_comments: false },
+        )
+        .build(&id_ret.program)
+        .source_text;
 
     println!("Dts Emit:\n");
     println!("{printed}\n");
 
-    if !ret.errors.is_empty() {
+    if !id_ret.errors.is_empty() {
         println!("Transformed dts failed:\n");
-        for error in ret.errors {
+        for error in id_ret.errors {
             let error = error.with_source_code(source_text.clone());
             println!("{error:?}");
         }

@@ -12,10 +12,10 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 #[derive(Debug, Default, Clone)]
 pub struct NoUselessConcat;
 
-fn no_useless_concat_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_useless_concat_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected string concatenation of literals.")
         .with_help("Rewrite into one string literal")
-        .with_label(span0)
+        .with_label(span)
 }
 
 declare_oxc_lint!(

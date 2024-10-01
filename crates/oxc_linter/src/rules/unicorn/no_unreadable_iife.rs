@@ -8,10 +8,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_unreadable_iife_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_unreadable_iife_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("IIFE with parenthesized arrow function body is considered unreadable.")
         .with_help("Rewrite the IIFE to avoid having a parenthesized arrow function body.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -19,19 +19,24 @@ pub struct NoUnreadableIife;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// This rule disallows IIFEs with a parenthesized arrow function body.
     ///
     /// ### Why is this bad?
+    ///
     /// IIFEs with a parenthesized arrow function body are unreadable.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Fail
     /// const foo = (bar => (bar ? bar.baz : baz))(getBar());
     ///
     /// const foo = ((bar, baz) => ({bar, baz}))(bar, baz);
+    /// ```
     ///
-    /// // Pass
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// const bar = getBar();
     /// const foo = bar ? bar.baz : baz;
     ///
@@ -53,7 +58,7 @@ impl Rule for NoUnreadableIife {
         };
 
         let Expression::ArrowFunctionExpression(arrow_expr) =
-            &call_expr.callee.without_parenthesized()
+            &call_expr.callee.without_parentheses()
         else {
             return;
         };

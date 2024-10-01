@@ -11,7 +11,7 @@
 /// The rough usage pattern of this macro is:
 ///
 /// ```rust,no_run
-/// index_vec::define_index_type! {
+/// oxc_index::define_index_type! {
 ///     // Note that isn't actually a type alias, `MyIndex` is
 ///     // actually defined as a struct. XXX is this too confusing?
 ///     pub struct MyIndex = u32;
@@ -31,7 +31,7 @@
 /// the macro uses to customize how the type it generates behaves. For example:
 ///
 /// ```rust,no_run
-/// index_vec::define_index_type! {
+/// oxc_index::define_index_type! {
 ///     pub struct Span = u32;
 ///
 ///     // Don't allow any spans with values higher this.
@@ -78,12 +78,12 @@
 ///
 /// #### `DEFAULT = <expr>;`
 /// If provided, we'll implement `Default` for the index type using this
-/// expresson.
+/// expression.
 ///
 /// Example:
 ///
 /// ```rust,no_run
-/// index_vec::define_index_type! {
+/// oxc_index::define_index_type! {
 ///     pub struct MyIdx = u16;
 ///     MAX_INDEX = (u16::max_value() - 1) as usize;
 ///     // Set the default index to be an invalid index, as
@@ -101,7 +101,7 @@
 /// the index. This can be done via `DEBUG_FORMAT`:
 ///
 /// ```rust
-/// index_vec::define_index_type! {
+/// oxc_index::define_index_type! {
 ///     struct FooIdx = usize;
 ///     DEBUG_FORMAT = "Foo({})";
 /// }
@@ -119,7 +119,7 @@
 /// the index type.
 ///
 /// ```rust
-/// index_vec::define_index_type! {
+/// oxc_index::define_index_type! {
 ///     struct FooIdx = usize;
 ///     DISPLAY_FORMAT = "{}";
 ///     // Note that you can use both DEBUG_FORMAT and DISPLAY_FORMAT.
@@ -141,7 +141,7 @@
 /// via this option. It's an error to use this if your raw type is usize.
 ///
 /// ```rust
-/// index_vec::define_index_type! {
+/// oxc_index::define_index_type! {
 ///     struct FooIdx = u32;
 ///     IMPL_RAW_CONVERSIONS = true;
 /// }

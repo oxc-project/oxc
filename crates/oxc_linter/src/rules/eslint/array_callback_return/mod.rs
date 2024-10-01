@@ -17,16 +17,20 @@ use crate::{
     AstNode,
 };
 
-fn expect_return(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Missing return on some path for array method {x0:?}"))
-        .with_help(format!("Array method {x0:?} needs to have valid return on all code paths"))
-        .with_label(span1)
+fn expect_return(method_name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Missing return on some path for array method {method_name:?}"))
+        .with_help(format!(
+            "Array method {method_name:?} needs to have valid return on all code paths"
+        ))
+        .with_label(span)
 }
 
-fn expect_no_return(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Unexpected return for array method {x0:?}"))
-        .with_help(format!("Array method {x0:?} expects no useless return from the function"))
-        .with_label(span1)
+fn expect_no_return(method_name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Unexpected return for array method {method_name:?}"))
+        .with_help(format!(
+            "Array method {method_name:?} expects no useless return from the function"
+        ))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

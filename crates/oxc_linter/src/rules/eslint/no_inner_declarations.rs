@@ -5,10 +5,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_inner_declarations_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
+fn no_inner_declarations_diagnostic(decl_type: &str, body: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Variable or `function` declarations are not allowed in nested blocks")
-        .with_help(format!("Move {x0} declaration to {x1} root"))
-        .with_label(span2)
+        .with_help(format!("Move {decl_type} declaration to {body} root"))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

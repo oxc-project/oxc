@@ -9,13 +9,12 @@ use wasm_bindgen::prelude::*;
 
 #[derive(Debug, Default, Clone, Deserialize, Tsify)]
 #[tsify(from_wasm_abi)]
+#[serde(rename_all = "camelCase")]
 pub struct ParserOptions {
-    #[serde(rename = "sourceType")]
     #[tsify(optional, type = "\"script\" | \"module\"")]
     pub source_type: Option<String>,
 
     /// "module" and "jsx" will be inferred from `sourceFilename`.
-    #[serde(rename = "sourceFilename")]
     #[tsify(optional)]
     pub source_filename: Option<String>,
 }

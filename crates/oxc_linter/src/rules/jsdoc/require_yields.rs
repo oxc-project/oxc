@@ -16,22 +16,22 @@ use crate::{
     AstNode,
 };
 
-fn missing_yields(span0: Span) -> OxcDiagnostic {
+fn missing_yields(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing JSDoc `@yields` declaration for generator function.")
         .with_help("Add `@yields` tag to the JSDoc comment.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn duplicate_yields(span0: Span) -> OxcDiagnostic {
+fn duplicate_yields(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Duplicate `@yields` tags.")
         .with_help("Remove redundunt `@yields` tag.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn missing_yields_with_generator(span0: Span) -> OxcDiagnostic {
+fn missing_yields_with_generator(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`@yields` tag is required when using `@generator` tag.")
         .with_help("Add `@yields` tag to the JSDoc comment.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -39,25 +39,31 @@ pub struct RequireYields(Box<RequireYieldsConfig>);
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Requires that yields are documented.
     /// Will also report if multiple `@yields` tags are present.
     ///
     /// ### Why is this bad?
+    ///
     /// The rule is intended to prevent the omission of `@yields` tags when they are necessary.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Passing
-    /// /** * @yields Foo */
     /// function * quux (foo) { yield foo; }
     ///
-    /// // Failing
-    /// function * quux (foo) { yield foo; }
     /// /**
     ///  * @yields {undefined}
     ///  * @yields {void}
     ///  */
     /// function * quux (foo) {}
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// /** * @yields Foo */
+    /// function * quux (foo) { yield foo; }
     /// ```
     RequireYields,
     correctness
@@ -142,7 +148,7 @@ impl Rule for RequireYields {
                 // Without this option, need to check `yield` value.
                 // Check will be performed in `YieldExpression` branch.
                 if config.force_require_yields
-                    && is_missing_yields_tag(&jsdoc_tags, &resolved_yields_tag_name)
+                    && is_missing_yields_tag(&jsdoc_tags, resolved_yields_tag_name)
                 {
                     ctx.diagnostic(missing_yields(func.span));
                     return;
@@ -150,7 +156,7 @@ impl Rule for RequireYields {
 
                 // Other checks are always performed
 
-                if let Some(span) = is_duplicated_yields_tag(&jsdoc_tags, &resolved_yields_tag_name)
+                if let Some(span) = is_duplicated_yields_tag(&jsdoc_tags, resolved_yields_tag_name)
                 {
                     ctx.diagnostic(duplicate_yields(span));
                     return;
@@ -161,8 +167,8 @@ impl Rule for RequireYields {
 
                     if let Some(span) = is_missing_yields_tag_with_generator_tag(
                         &jsdoc_tags,
-                        &resolved_yields_tag_name,
-                        &resolved_generator_tag_name,
+                        resolved_yields_tag_name,
+                        resolved_generator_tag_name,
                     ) {
                         ctx.diagnostic(missing_yields_with_generator(span));
                     }
@@ -229,7 +235,7 @@ impl Rule for RequireYields {
                 let jsdoc_tags = jsdocs.iter().flat_map(JSDoc::tags).collect::<Vec<_>>();
                 let resolved_yields_tag_name = settings.resolve_tag_name("yields");
 
-                if is_missing_yields_tag(&jsdoc_tags, &resolved_yields_tag_name) {
+                if is_missing_yields_tag(&jsdoc_tags, resolved_yields_tag_name) {
                     ctx.diagnostic(missing_yields(generator_func.span));
                 }
             }

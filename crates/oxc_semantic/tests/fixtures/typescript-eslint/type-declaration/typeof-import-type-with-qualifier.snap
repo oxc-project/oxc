@@ -2,23 +2,27 @@
 source: crates/oxc_semantic/tests/main.rs
 input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaration/typeof-import-type-with-qualifier.ts
 ---
+================================================================================
+SCOPES
+================================================================================
+
 [
   {
     "children": [
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 1,
         "node": "TSTypeAliasDeclaration",
         "symbols": []
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(TypeAlias)",
+        "flags": "SymbolFlags(TypeAlias)",
         "id": 0,
         "name": "T",
         "node": "TSTypeAliasDeclaration",
@@ -27,3 +31,9 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
     ]
   }
 ]
+
+================================================================================
+CONFORMANCE
+================================================================================
+
+All tests passed.

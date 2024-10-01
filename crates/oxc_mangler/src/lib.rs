@@ -1,25 +1,14 @@
 use itertools::Itertools;
 use oxc_ast::ast::Program;
 use oxc_index::{index_vec, Idx, IndexVec};
-use oxc_semantic::{ReferenceId, SemanticBuilder, SymbolId, SymbolTable};
+use oxc_semantic::{ReferenceId, ScopeTree, SemanticBuilder, SymbolId, SymbolTable};
 use oxc_span::CompactStr;
 
 type Slot = usize;
 
-#[derive(Debug)]
-pub struct Mangler {
-    symbol_table: SymbolTable,
-}
-
-impl Mangler {
-    pub fn get_symbol_name(&self, symbol_id: SymbolId) -> &str {
-        self.symbol_table.get_name(symbol_id)
-    }
-
-    pub fn get_reference_name(&self, reference_id: ReferenceId) -> Option<&str> {
-        let symbol_id = self.symbol_table.get_reference(reference_id).symbol_id()?;
-        Some(self.symbol_table.get_name(symbol_id))
-    }
+#[derive(Default)]
+pub struct MangleOptions {
+    pub debug: bool,
 }
 
 /// # Name Mangler / Symbol Minification
@@ -63,21 +52,37 @@ impl Mangler {
 ///     }
 /// }
 /// ```
-#[derive(Debug, Default)]
-pub struct ManglerBuilder {
-    debug: bool,
+#[derive(Default)]
+pub struct Mangler {
+    symbol_table: SymbolTable,
+
+    options: MangleOptions,
 }
 
-impl ManglerBuilder {
+impl Mangler {
     #[must_use]
-    pub fn debug(mut self, yes: bool) -> Self {
-        self.debug = yes;
-        self
+    pub fn new() -> Self {
+        Self::default()
     }
 
     #[must_use]
-    pub fn build<'a>(self, program: &'a Program<'a>) -> Mangler {
-        let semantic = SemanticBuilder::new("", program.source_type).build(program).semantic;
+    pub fn with_options(mut self, options: MangleOptions) -> Self {
+        self.options = options;
+        self
+    }
+
+    pub fn get_symbol_name(&self, symbol_id: SymbolId) -> &str {
+        self.symbol_table.get_name(symbol_id)
+    }
+
+    pub fn get_reference_name(&self, reference_id: ReferenceId) -> Option<&str> {
+        let symbol_id = self.symbol_table.get_reference(reference_id).symbol_id()?;
+        Some(self.symbol_table.get_name(symbol_id))
+    }
+
+    #[must_use]
+    pub fn build<'a>(mut self, program: &'a Program<'a>) -> Mangler {
+        let semantic = SemanticBuilder::new("").build(program).semantic;
 
         // Mangle the symbol table by computing slots from the scope tree.
         // A slot is the occurrence index of a binding identifier inside a scope.
@@ -105,8 +110,8 @@ impl ManglerBuilder {
 
             if !bindings.is_empty() {
                 // `bindings` are stored in order, traverse and increment slot
-                for symbol_id in bindings.values() {
-                    slots[*symbol_id] = slot;
+                for symbol_id in bindings.values().copied() {
+                    slots[symbol_id] = slot;
                     slot += 1;
                 }
             }
@@ -119,24 +124,30 @@ impl ManglerBuilder {
         }
 
         let frequencies =
-            Self::tally_slot_frequencies(&symbol_table, total_number_of_slots, &slots);
+            Self::tally_slot_frequencies(&symbol_table, &scope_tree, total_number_of_slots, &slots);
 
-        let unresolved_references =
-            scope_tree.root_unresolved_references().keys().collect::<Vec<_>>();
+        let root_unresolved_references = scope_tree.root_unresolved_references();
+        let root_bindings = scope_tree.get_bindings(scope_tree.root_scope_id());
 
-        let mut names = Vec::with_capacity(total_number_of_slots);
+        let mut reserved_names = Vec::with_capacity(total_number_of_slots);
 
-        let generate_name = if self.debug { debug_name } else { base54 };
+        let generate_name = if self.options.debug { debug_name } else { base54 };
         let mut count = 0;
         for _ in 0..total_number_of_slots {
-            names.push(loop {
+            let name = loop {
                 let name = generate_name(count);
                 count += 1;
                 // Do not mangle keywords and unresolved references
-                if !is_keyword(&name) && !unresolved_references.iter().any(|n| **n == name) {
+                let n = name.as_str();
+                if !is_keyword(n)
+                    && !is_special_name(n)
+                    && !root_unresolved_references.contains_key(n)
+                    && !root_bindings.contains_key(n)
+                {
                     break name;
                 }
-            });
+            };
+            reserved_names.push(name);
         }
 
         // Group similar symbols for smaller gzipped file
@@ -155,7 +166,9 @@ impl ManglerBuilder {
 
         let mut freq_iter = frequencies.iter();
         // 2. "N number of vars are going to be assigned names of the same length"
-        for (_, slice_of_same_len_strings_group) in &names.into_iter().chunk_by(CompactStr::len) {
+        for (_, slice_of_same_len_strings_group) in
+            &reserved_names.into_iter().chunk_by(CompactStr::len)
+        {
             // 1. "The most frequent vars get the shorter names"
             // (freq_iter is sorted by frequency from highest to lowest,
             //  so taking means take the N most frequent symbols remaining)
@@ -169,7 +182,7 @@ impl ManglerBuilder {
             // sorting by slot enables us to sort by the order at which the vars first appear in the source
             // (this is possible because the slots are discovered currently in a DFS method which is the same order
             //  as variables appear in the source code)
-            symbols_renamed_in_this_batch.sort_by(|a, b| a.slot.cmp(&b.slot.clone()));
+            symbols_renamed_in_this_batch.sort_unstable_by_key(|a| a.slot);
 
             // here we just zip the iterator of symbols to rename with the iterator of new names for the next for loop
             let symbols_to_rename_with_new_names =
@@ -183,19 +196,23 @@ impl ManglerBuilder {
             }
         }
 
-        Mangler { symbol_table }
+        self.symbol_table = symbol_table;
+        self
     }
 
     fn tally_slot_frequencies(
         symbol_table: &SymbolTable,
+        scope_tree: &ScopeTree,
         total_number_of_slots: usize,
         slots: &IndexVec<SymbolId, Slot>,
     ) -> Vec<SlotFrequency> {
+        let root_scope_id = scope_tree.root_scope_id();
         let mut frequencies = vec![SlotFrequency::default(); total_number_of_slots];
         for (symbol_id, slot) in slots.iter_enumerated() {
-            let symbol_flag = symbol_table.get_flag(symbol_id);
-            // omit renaming `export { x }`
-            if !symbol_flag.is_variable() || symbol_flag.is_export() {
+            if symbol_table.get_scope_id(symbol_id) == root_scope_id {
+                continue;
+            }
+            if is_special_name(symbol_table.get_name(symbol_id)) {
                 continue;
             }
             let index = *slot;
@@ -204,9 +221,13 @@ impl ManglerBuilder {
                 symbol_table.get_resolved_reference_ids(symbol_id).len();
             frequencies[index].symbol_ids.push(symbol_id);
         }
-        frequencies.sort_by_key(|x| (std::cmp::Reverse(x.frequency)));
+        frequencies.sort_unstable_by_key(|x| std::cmp::Reverse(x.frequency));
         frequencies
     }
+}
+
+fn is_special_name(name: &str) -> bool {
+    matches!(name, "exports" | "arguments")
 }
 
 #[derive(Debug, Default, Clone)]

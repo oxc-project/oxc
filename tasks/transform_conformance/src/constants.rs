@@ -8,31 +8,31 @@ pub(crate) const PLUGINS: &[&str] = &[
     // "babel-plugin-transform-private-methods",
     // "babel-plugin-transform-private-property-in-object",
     // // [Syntax] "babel-plugin-transform-syntax-top-level-await",
-    // // ES2021
-    // "babel-plugin-transform-logical-assignment-operators",
+    // ES2021
+    "babel-plugin-transform-logical-assignment-operators",
     // "babel-plugin-transform-numeric-separator",
-    // // ES2020
+    // ES2020
     // "babel-plugin-transform-export-namespace-from",
     // "babel-plugin-transform-dynamic-import",
-    // "babel-plugin-transform-nullish-coalescing-operator",
+    "babel-plugin-transform-nullish-coalescing-operator",
     // "babel-plugin-transform-optional-chaining",
     // // [Syntax] "babel-plugin-transform-syntax-bigint",
     // // [Syntax] "babel-plugin-transform-syntax-dynamic-import",
     // // [Syntax] "babel-plugin-transform-syntax-import-meta",
-    // // ES2019
-    // "babel-plugin-transform-optional-catch-binding",
+    // ES2019
+    "babel-plugin-transform-optional-catch-binding",
     // "babel-plugin-transform-json-strings",
     // // ES2018
     // "babel-plugin-transform-async-generator-functions",
-    // "babel-plugin-transform-object-rest-spread",
+    "babel-plugin-transform-object-rest-spread",
     // // [Regex] "babel-plugin-transform-unicode-property-regex",
     // "babel-plugin-transform-dotall-regex",
     // // [Regex] "babel-plugin-transform-named-capturing-groups-regex",
     // // ES2017
     // "babel-plugin-transform-async-to-generator",
-    // // ES2016
-    // "babel-plugin-transform-exponentiation-operator",
-    // // ES2015
+    // ES2016
+    "babel-plugin-transform-exponentiation-operator",
+    // ES2015
     "babel-plugin-transform-arrow-functions",
     // "babel-plugin-transform-function-name",
     // "babel-plugin-transform-shorthand-properties",
@@ -56,6 +56,9 @@ pub(crate) const PLUGINS: &[&str] = &[
     "babel-plugin-transform-react-jsx-development",
     // // Proposal
     // "babel-plugin-proposal-decorators",
+
+    // RegExp tests ported from esbuild + a few additions
+    "regexp",
 ];
 
 pub(crate) const PLUGINS_NOT_SUPPORTED_YET: &[&str] = &[
@@ -64,7 +67,6 @@ pub(crate) const PLUGINS_NOT_SUPPORTED_YET: &[&str] = &[
     "transform-classes",
     "transform-destructuring",
     "transform-modules-commonjs",
-    "transform-object-rest-spread",
     "transform-optional-chaining",
     "transform-parameters",
     "transform-private-methods",
@@ -82,7 +84,6 @@ pub(crate) const SKIP_TESTS: &[&str] = &[
     // Report error for deprecate option or oxc doesn’t follow error message
     "typescript/test/fixtures/opts/allowDeclareFields/input.ts",
     "react-jsx/test/fixtures/react-automatic/should-throw-when-filter-is-specified/input.js",
-    "react-jsx-development/test/fixtures/cross-platform/source-and-self-defined/input.js",
     // Not standard JavaScript or TypeScript syntax
     "typescript/test/fixtures/exports/export-type-star-from/input.ts",
     // The output is valid and semantically correct

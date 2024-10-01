@@ -12,24 +12,34 @@ use oxc_syntax::module_record::{ExportExportName, ExportImportName, ImportImport
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_export(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("{x1:?} not found in imported namespace {x2:?}.")).with_label(span0)
-}
-
-fn no_export_in_deeply_imported_namespace(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("{x1:?} not found in deeply imported namespace {x2:?}."))
-        .with_label(span0)
-}
-
-fn computed_reference(span0: Span, x1: &str) -> OxcDiagnostic {
+fn no_export(span: Span, specifier_name: &str, namespace_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
-        "Unable to validate computed reference to imported namespace {x1:?}."
+        "{specifier_name:?} not found in imported namespace {namespace_name:?}."
     ))
-    .with_label(span0)
+    .with_label(span)
 }
 
-fn assignment(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Assignment to member of namespace {x1:?}.'")).with_label(span0)
+fn no_export_in_deeply_imported_namespace(
+    span: Span,
+    specifier_name: &str,
+    namespace_name: &str,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "{specifier_name:?} not found in deeply imported namespace {namespace_name:?}."
+    ))
+    .with_label(span)
+}
+
+fn computed_reference(span: Span, namespace_name: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "Unable to validate computed reference to imported namespace {namespace_name:?}."
+    ))
+    .with_label(span)
+}
+
+fn assignment(span: Span, namespace_name: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Assignment to member of namespace {namespace_name:?}.'"))
+        .with_label(span)
 }
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/namespace.md>
@@ -40,10 +50,54 @@ pub struct Namespace {
 
 declare_oxc_lint!(
     /// ### What it does
-    /// Enforces names exist at the time they are dereferenced, when imported as a full namespace (i.e. import * as foo from './foo'; foo.bar(); will report if bar is not exported by ./foo.).
-    /// Will report at the import declaration if there are no exported names found.
-    /// Also, will report for computed references (i.e. foo["bar"]()).
-    /// Reports on assignment to a member of an imported namespace.
+    ///
+    /// Enforces names exist at the time they are dereferenced, when imported as
+    /// a full namespace (i.e. `import * as foo from './foo'; foo.bar();` will
+    /// report if bar is not exported by `./foo.`).  Will report at the import
+    /// declaration if there are no exported names found.  Also, will report for
+    /// computed references (i.e. `foo["bar"]()`).  Reports on assignment to a
+    /// member of an imported namespace.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// Dereferencing a name that does not exist can lead to runtime errors and
+    /// unexpected behavior in your code. It makes the code less reliable and
+    /// harder to maintain, as it may not be clear which names are valid. This
+    /// rule helps ensure that all referenced names are defined, improving
+    /// the clarity and robustness of your code.
+    ///
+    /// ### Examples
+    ///
+    /// Given
+    /// ```javascript
+    /// // ./foo.js
+    /// export const bar = "I'm bar";
+    /// ```
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// // ./qux.js
+    /// import * as foo from './foo';
+    /// foo.notExported(); // Error: notExported is not exported
+    ///
+    /// // Assignment to a member of an imported namespace
+    /// foo.bar = "new value"; // Error: bar cannot be reassigned
+    ///
+    /// // Computed reference to a non-existent export
+    /// const method = "notExported";
+    /// foo[method](); // Error: notExported does not exist
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// // ./baz.js
+    /// import * as foo from './foo';
+    /// console.log(foo.bar); // Valid: bar is exported
+    ///
+    /// // Computed reference
+    /// const method = "bar";
+    /// foo[method](); // Valid: method refers to an exported function
+    /// ```
     Namespace,
     correctness
 );
@@ -212,42 +266,32 @@ fn check_deep_namespace_for_node(
     namespaces: &[String],
     module: &Arc<ModuleRecord>,
     ctx: &LintContext<'_>,
-) {
-    if let AstKind::MemberExpression(expr) = node.kind() {
-        let Some((span, name)) = expr.static_property_info() else {
-            return;
-        };
+) -> Option<()> {
+    let expr = node.kind().as_member_expression()?;
+    let (span, name) = expr.static_property_info()?;
 
-        if let Some(module_source) = get_module_request_name(name, module) {
-            let Some(parent_node) = ctx.nodes().parent_node(node.id()) else {
-                return;
-            };
-            if let Some(module_record) = module.loaded_modules.get(module_source.as_str()) {
-                let mut namespaces = namespaces.to_owned();
-                namespaces.push(name.into());
-                check_deep_namespace_for_node(
-                    parent_node,
-                    source,
-                    &namespaces,
-                    module_record.value(),
-                    ctx,
-                );
-            }
-        } else {
-            check_binding_exported(
-                name,
-                || {
-                    if namespaces.len() > 1 {
-                        no_export_in_deeply_imported_namespace(span, name, &namespaces.join("."))
-                    } else {
-                        no_export(span, name, source)
-                    }
-                },
-                module,
-                ctx,
-            );
-        }
+    if let Some(module_source) = get_module_request_name(name, module) {
+        let parent_node = ctx.nodes().parent_node(node.id())?;
+        let module_record = module.loaded_modules.get(module_source.as_str())?;
+        let mut namespaces = namespaces.to_owned();
+        namespaces.push(name.into());
+        check_deep_namespace_for_node(parent_node, source, &namespaces, module_record.value(), ctx);
+    } else {
+        check_binding_exported(
+            name,
+            || {
+                if namespaces.len() > 1 {
+                    no_export_in_deeply_imported_namespace(span, name, &namespaces.join("."))
+                } else {
+                    no_export(span, name, source)
+                }
+            },
+            module,
+            ctx,
+        );
     }
+
+    None
 }
 
 fn check_deep_namespace_for_object_pattern(

@@ -30,12 +30,11 @@ fn main() -> std::io::Result<()> {
     }
 
     let program = allocator.alloc(ret.program);
-    let semantic_ret =
-        SemanticBuilder::new(&source_text, source_type).with_trivias(ret.trivias).build(program);
+    let semantic_ret = SemanticBuilder::new(&source_text).with_trivias(ret.trivias).build(program);
 
     let mut errors: Vec<OxcDiagnostic> = vec![];
 
-    for node in semantic_ret.semantic.nodes().iter() {
+    for node in semantic_ret.semantic.nodes() {
         match node.kind() {
             AstKind::DebuggerStatement(stmt) => {
                 errors.push(no_debugger(stmt.span));

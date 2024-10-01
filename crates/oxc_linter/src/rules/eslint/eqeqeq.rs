@@ -35,7 +35,8 @@ declare_oxc_lint!(
     /// a == b
     /// ```
     Eqeqeq,
-    pedantic
+    pedantic,
+    conditional_fix
 );
 
 impl Rule for Eqeqeq {

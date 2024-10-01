@@ -1,0 +1,58 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-vitest(prefer-to-be-object): Prefer `toBeObject()` for object assertions
+   ╭─[prefer_to_be_object.tsx:1:36]
+ 1 │ expectTypeOf({} instanceof Object).toBeTruthy();
+   ·                                    ──────────
+   ╰────
+  help: Consider using `toBeObject()` to test if a value is an object.
+
+  ⚠ eslint-plugin-vitest(prefer-to-be-object): Prefer `toBeObject()` for object assertions
+   ╭─[prefer_to_be_object.tsx:1:40]
+ 1 │ expectTypeOf({} instanceof Object).not.toBeTruthy();
+   ·                                        ──────────
+   ╰────
+  help: Consider using `toBeObject()` to test if a value is an object.
+
+  ⚠ eslint-plugin-vitest(prefer-to-be-object): Prefer `toBeObject()` for object assertions
+   ╭─[prefer_to_be_object.tsx:1:36]
+ 1 │ expectTypeOf({} instanceof Object).toBeFalsy();
+   ·                                    ─────────
+   ╰────
+  help: Consider using `toBeObject()` to test if a value is an object.
+
+  ⚠ eslint-plugin-vitest(prefer-to-be-object): Prefer `toBeObject()` for object assertions
+   ╭─[prefer_to_be_object.tsx:1:40]
+ 1 │ expectTypeOf({} instanceof Object).not.toBeFalsy();
+   ·                                        ─────────
+   ╰────
+  help: Consider using `toBeObject()` to test if a value is an object.
+
+  ⚠ eslint-plugin-vitest(prefer-to-be-object): Prefer `toBeObject()` for object assertions
+   ╭─[prefer_to_be_object.tsx:1:18]
+ 1 │ expectTypeOf({}).toBeInstanceOf(Object);
+   ·                  ──────────────
+   ╰────
+  help: Consider using `toBeObject()` to test if a value is an object.
+
+  ⚠ eslint-plugin-vitest(prefer-to-be-object): Prefer `toBeObject()` for object assertions
+   ╭─[prefer_to_be_object.tsx:1:22]
+ 1 │ expectTypeOf({}).not.toBeInstanceOf(Object);
+   ·                      ──────────────
+   ╰────
+  help: Consider using `toBeObject()` to test if a value is an object.
+
+  ⚠ eslint-plugin-vitest(prefer-to-be-object): Prefer `toBeObject()` for object assertions
+   ╭─[prefer_to_be_object.tsx:1:40]
+ 1 │ expectTypeOf(requestValues()).resolves.toBeInstanceOf(Object);
+   ·                                        ──────────────
+   ╰────
+  help: Consider using `toBeObject()` to test if a value is an object.
+
+  ⚠ eslint-plugin-vitest(prefer-to-be-object): Prefer `toBeObject()` for object assertions
+   ╭─[prefer_to_be_object.tsx:1:39]
+ 1 │ expectTypeOf(queryApi()).resolves.not.toBeInstanceOf(Object);
+   ·                                       ──────────────
+   ╰────
+  help: Consider using `toBeObject()` to test if a value is an object.

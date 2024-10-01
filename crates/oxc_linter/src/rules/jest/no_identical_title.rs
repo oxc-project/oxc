@@ -1,13 +1,12 @@
-use std::collections::HashMap;
-
 use oxc_ast::{
     ast::{Argument, CallExpression},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNodeId;
+use oxc_semantic::NodeId;
 use oxc_span::Span;
+use rustc_hash::FxHashMap;
 
 use crate::{
     context::LintContext,
@@ -19,16 +18,16 @@ use crate::{
     AstNode,
 };
 
-fn describe_repeat(span0: Span) -> OxcDiagnostic {
+fn describe_repeat(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Describe block title is used multiple times in the same describe block.")
         .with_help("Change the title of describe block.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn test_repeat(span0: Span) -> OxcDiagnostic {
+fn test_repeat(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Test title is used multiple times in the same describe block.")
         .with_help("Change the title of test.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -74,8 +73,8 @@ declare_oxc_lint!(
 impl Rule for NoIdenticalTitle {
     fn run_once(&self, ctx: &LintContext) {
         let possible_jest_nodes = collect_possible_jest_call_node(ctx);
-        let mut title_to_span_mapping = HashMap::new();
-        let mut span_to_parent_mapping = HashMap::new();
+        let mut title_to_span_mapping = FxHashMap::default();
+        let mut span_to_parent_mapping = FxHashMap::default();
 
         possible_jest_nodes
             .iter()
@@ -100,7 +99,7 @@ impl Rule for NoIdenticalTitle {
                     let parent = span_to_parent_mapping.get(span)?;
                     Some((*span, *kind, *parent))
                 })
-                .collect::<Vec<(Span, JestFnKind, AstNodeId)>>();
+                .collect::<Vec<(Span, JestFnKind, NodeId)>>();
             // After being sorted by parent_id, the span with the same parent will be placed nearby.
             kind_and_spans.sort_by(|a, b| a.2.cmp(&b.2));
 
@@ -129,7 +128,7 @@ fn filter_and_process_jest_result<'a>(
     call_expr: &'a CallExpression<'a>,
     possible_jest_node: &PossibleJestNode<'a, '_>,
     ctx: &LintContext<'a>,
-) -> Option<(Span, &'a str, JestFnKind, AstNodeId)> {
+) -> Option<(Span, &'a str, JestFnKind, NodeId)> {
     let result = parse_general_jest_fn_call(call_expr, possible_jest_node, ctx)?;
     let kind = result.kind;
     // we only need check `describe` or `test` block
@@ -154,7 +153,7 @@ fn filter_and_process_jest_result<'a>(
     }
 }
 
-fn get_closest_block(node: &AstNode, ctx: &LintContext) -> Option<AstNodeId> {
+fn get_closest_block(node: &AstNode, ctx: &LintContext) -> Option<NodeId> {
     match node.kind() {
         AstKind::BlockStatement(_) | AstKind::FunctionBody(_) | AstKind::Program(_) => {
             Some(node.id())

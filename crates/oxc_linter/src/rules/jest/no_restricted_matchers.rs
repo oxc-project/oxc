@@ -16,6 +16,7 @@ use crate::{
     },
 };
 
+// TODO: re-word diagnostic messages
 fn restricted_chain(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow specific matchers & modifiers")
         .with_help(format!("Use of `{x0:?}` is disallowed`"))
@@ -53,7 +54,7 @@ declare_oxc_lint!(
     /// ```javascript
     ///
     /// it('is false', () => {
-    ///   if this has a modifier (i.e. `not.toBeFalsy`), it would be considered fine
+    ///   // if this has a modifier (i.e. `not.toBeFalsy`), it would be considered fine
     ///   expect(a).toBeFalsy();
     /// });
     ///
@@ -68,6 +69,7 @@ declare_oxc_lint!(
     ///     expect(uploadFileMock).not.toHaveBeenCalledWith('file.name');
     ///   });
     /// });
+    /// ```
     ///
     NoRestrictedMatchers,
     style,

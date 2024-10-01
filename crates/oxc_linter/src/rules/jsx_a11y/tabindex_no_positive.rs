@@ -6,14 +6,14 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{has_jsx_prop_lowercase, parse_jsx_value},
+    utils::{has_jsx_prop_ignore_case, parse_jsx_value},
     AstNode,
 };
 
-fn tabindex_no_positive_diagnostic(span0: Span) -> OxcDiagnostic {
+fn tabindex_no_positive_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Avoid positive integer values for tabIndex.")
         .with_help("Change the tabIndex prop to a non-negative value")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -21,22 +21,31 @@ pub struct TabindexNoPositive;
 
 declare_oxc_lint!(
     /// ### What it does
-    /// Enforces that positive values for the tabIndex attribute are not used in JSX.
+    ///
+    /// Enforces that positive values for the `tabIndex` attribute are not used
+    /// in JSX.
     ///
     /// ### Why is this bad?
-    /// Using tabIndex values greater than 0 can make navigation and interaction difficult for keyboard and assistive technology users, disrupting the logical order of content.
+    ///
+    /// Using `tabIndex` values greater than `0` can make navigation and
+    /// interaction difficult for keyboard and assistive technology users,
+    /// disrupting the logical order of content.
     ///
     /// ### Example
-    /// ```javascript
-    /// // Bad
-    /// <span tabIndex="1">foo</span>
     ///
-    /// // Good
+    /// Examples of **incorrect** code for this rule:
+    /// ```jsx
+    /// <span tabIndex="1">foo</span>
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
     /// <span tabIndex="0">foo</span>
     /// <span tabIndex="-1">bar</span>
     /// ```
     TabindexNoPositive,
-    correctness
+    correctness,
+    pending
 );
 
 impl Rule for TabindexNoPositive {
@@ -44,7 +53,7 @@ impl Rule for TabindexNoPositive {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
             return;
         };
-        if let Some(tab_index_prop) = has_jsx_prop_lowercase(jsx_el, "tabIndex") {
+        if let Some(tab_index_prop) = has_jsx_prop_ignore_case(jsx_el, "tabIndex") {
             check_and_diagnose(tab_index_prop, ctx);
         }
     }

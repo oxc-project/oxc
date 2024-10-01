@@ -58,13 +58,24 @@ fn print_semicolon_after_export_declaration<'a>(
     match decl {
         ModuleDeclaration::ExportDefaultDeclaration(decl) => match decl.declaration {
             match_expression!(ExportDefaultDeclarationKind) => Some(ss!(";")),
-            ExportDefaultDeclarationKind::FunctionDeclaration(_)
-            | ExportDefaultDeclarationKind::ClassDeclaration(_)
-            | ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => None,
+            _ => None,
         },
-        ModuleDeclaration::ExportAllDeclaration(_)
-        | ModuleDeclaration::ExportNamedDeclaration(_)
-        | ModuleDeclaration::TSExportAssignment(_) => Some(ss!(";")),
+        ModuleDeclaration::ExportNamedDeclaration(decl) => {
+            let Some(declaration) = &decl.declaration else {
+                return Some(ss!(";"));
+            };
+
+            match declaration {
+                Declaration::TSInterfaceDeclaration(_)
+                | Declaration::VariableDeclaration(_)
+                | Declaration::ClassDeclaration(_)
+                | Declaration::TSModuleDeclaration(_) => None,
+                _ => Some(ss!(";")),
+            }
+        }
+        ModuleDeclaration::ExportAllDeclaration(_) | ModuleDeclaration::TSExportAssignment(_) => {
+            Some(ss!(";"))
+        }
         _ => None,
     }
 }

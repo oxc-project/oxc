@@ -8,10 +8,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_amd_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
+fn no_amd_diagnostic(span: Span, name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use AMD `require` and `define` calls.")
-        .with_help(format!("Expected imports instead of AMD {x1}()"))
-        .with_label(span0)
+        .with_help(format!("Expected imports instead of AMD {name}()"))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -20,14 +20,26 @@ pub struct NoAmd;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Forbid AMD `require` and `define` calls.
+    /// Forbids the use of AMD `require` and `define` calls.
     ///
-    /// ### Example
+    /// ### Why is this bad?
     ///
+    /// AMD (Asynchronous Module Definition) is an older module format
+    /// that is less common in modern JavaScript development, especially
+    /// with the widespread use of ES6 modules and CommonJS in Node.js.
+    /// AMD introduces unnecessary complexity and is often considered outdated.
+    /// This rule enforces the use of more modern module systems to improve
+    /// maintainability and consistency across the codebase.
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // fail
     /// require([a, b], function() {} );
-    /// // pass
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// require('../name');
     /// require(`../name`);
     /// ```

@@ -2,43 +2,47 @@
 source: crates/oxc_semantic/tests/main.rs
 input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaration/index-access2.ts
 ---
+================================================================================
+SCOPES
+================================================================================
+
 [
   {
     "children": [
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 1,
         "node": "TSTypeAliasDeclaration",
         "symbols": []
       },
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 2,
         "node": "TSTypeAliasDeclaration",
         "symbols": []
       },
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 3,
         "node": "TSTypeAliasDeclaration",
         "symbols": []
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(TypeAlias)",
+        "flags": "SymbolFlags(TypeAlias)",
         "id": 0,
         "name": "T",
         "node": "TSTypeAliasDeclaration",
         "references": [
           {
-            "flag": "ReferenceFlag(Type)",
+            "flags": "ReferenceFlags(Type)",
             "id": 0,
             "name": "T",
             "node_id": 18
@@ -46,13 +50,13 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         ]
       },
       {
-        "flag": "SymbolFlags(TypeAlias)",
+        "flags": "SymbolFlags(TypeAlias)",
         "id": 1,
         "name": "K",
         "node": "TSTypeAliasDeclaration",
         "references": [
           {
-            "flag": "ReferenceFlag(Type)",
+            "flags": "ReferenceFlags(Type)",
             "id": 1,
             "name": "K",
             "node_id": 21
@@ -60,7 +64,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         ]
       },
       {
-        "flag": "SymbolFlags(TypeAlias)",
+        "flags": "SymbolFlags(TypeAlias)",
         "id": 2,
         "name": "A",
         "node": "TSTypeAliasDeclaration",
@@ -69,3 +73,9 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
     ]
   }
 ]
+
+================================================================================
+CONFORMANCE
+================================================================================
+
+All tests passed.

@@ -1,72 +1,62 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-unicorn(no-static-only-class): Disallow classes that only have static members.
+  ⚠ eslint-plugin-unicorn(no-static-only-class): Use an object instead of a class with only static members.
    ╭─[no_static_only_class.tsx:1:1]
  1 │ class A { static a() {}; }
    · ──────────────────────────
    ╰────
-  help: A class with only static members could just be an object instead.
 
-  ⚠ eslint-plugin-unicorn(no-static-only-class): Disallow classes that only have static members.
+  ⚠ eslint-plugin-unicorn(no-static-only-class): Use an object instead of a class with only static members.
    ╭─[no_static_only_class.tsx:1:1]
  1 │ class A { static a() {} }
    · ─────────────────────────
    ╰────
-  help: A class with only static members could just be an object instead.
 
-  ⚠ eslint-plugin-unicorn(no-static-only-class): Disallow classes that only have static members.
+  ⚠ eslint-plugin-unicorn(no-static-only-class): Use an object instead of a class with only static members.
    ╭─[no_static_only_class.tsx:1:11]
  1 │ const A = class A { static a() {}; }
    ·           ──────────────────────────
    ╰────
-  help: A class with only static members could just be an object instead.
 
-  ⚠ eslint-plugin-unicorn(no-static-only-class): Disallow classes that only have static members.
+  ⚠ eslint-plugin-unicorn(no-static-only-class): Use an object instead of a class with only static members.
    ╭─[no_static_only_class.tsx:1:11]
  1 │ const A = class { static a() {}; }
    ·           ────────────────────────
    ╰────
-  help: A class with only static members could just be an object instead.
 
-  ⚠ eslint-plugin-unicorn(no-static-only-class): Disallow classes that only have static members.
+  ⚠ eslint-plugin-unicorn(no-static-only-class): Use an object instead of a class with only static members.
    ╭─[no_static_only_class.tsx:1:1]
  1 │ class A { static constructor() {}; }
    · ────────────────────────────────────
    ╰────
-  help: A class with only static members could just be an object instead.
 
-  ⚠ eslint-plugin-unicorn(no-static-only-class): Disallow classes that only have static members.
+  ⚠ eslint-plugin-unicorn(no-static-only-class): Use an object instead of a class with only static members.
    ╭─[no_static_only_class.tsx:1:16]
  1 │ export default class A { static a() {}; }
    ·                ──────────────────────────
    ╰────
-  help: A class with only static members could just be an object instead.
 
-  ⚠ eslint-plugin-unicorn(no-static-only-class): Disallow classes that only have static members.
+  ⚠ eslint-plugin-unicorn(no-static-only-class): Use an object instead of a class with only static members.
    ╭─[no_static_only_class.tsx:1:16]
  1 │ export default class { static a() {}; }
    ·                ────────────────────────
    ╰────
-  help: A class with only static members could just be an object instead.
 
-  ⚠ eslint-plugin-unicorn(no-static-only-class): Disallow classes that only have static members.
+  ⚠ eslint-plugin-unicorn(no-static-only-class): Use an object instead of a class with only static members.
    ╭─[no_static_only_class.tsx:1:8]
  1 │ export class A { static a() {}; }
    ·        ──────────────────────────
    ╰────
-  help: A class with only static members could just be an object instead.
 
-  ⚠ eslint-plugin-unicorn(no-static-only-class): Disallow classes that only have static members.
+  ⚠ eslint-plugin-unicorn(no-static-only-class): Use an object instead of a class with only static members.
    ╭─[no_static_only_class.tsx:1:1]
  1 │ class A {static [this.a] = 1}
    · ─────────────────────────────
    ╰────
-  help: A class with only static members could just be an object instead.
 
-  ⚠ eslint-plugin-unicorn(no-static-only-class): Disallow classes that only have static members.
+  ⚠ eslint-plugin-unicorn(no-static-only-class): Use an object instead of a class with only static members.
    ╭─[no_static_only_class.tsx:1:1]
  1 │ class A { static a() {} }
    · ─────────────────────────
    ╰────
-  help: A class with only static members could just be an object instead.

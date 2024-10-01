@@ -5,10 +5,10 @@ use oxc_syntax::module_record::ImportImportName;
 
 use crate::{context::LintContext, rule::Rule};
 
-fn default_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("No default export found in imported module {x0:?}"))
-        .with_help(format!("does {x0:?} have the default export?"))
-        .with_label(span1)
+fn default_diagnostic(imported_name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("No default export found in imported module {imported_name:?}"))
+        .with_help(format!("does {imported_name:?} have the default export?"))
+        .with_label(span)
 }
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/default.md>
@@ -18,16 +18,34 @@ pub struct Default;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// If a default import is requested, this rule will report if there is no default export in the imported module.
+    /// If a default import is requested, this rule will report if there is no
+    /// default export in the imported module.
     ///
-    /// ### Example
+    /// ### Why is this bad?
     ///
+    /// Using a default import when there is no default export can lead to
+    /// confusion and runtime errors. It can make the code harder to understand
+    /// and maintain, as it may suggest that a module has a default export
+    /// when it does not, leading to unexpected behavior.
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// // ./bar.js
     /// export function bar() { return null }
     ///
     /// // ./foo.js
     /// import bar from './bar' // no default export found in ./bar
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// // ./bar.js
+    /// export default function bar() { return null }
+    ///
+    /// // ./foo.js
+    /// import { bar } from './bar' // correct usage of named import
     /// ```
     Default,
     correctness

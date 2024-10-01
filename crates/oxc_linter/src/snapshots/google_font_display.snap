@@ -2,11 +2,11 @@
 source: crates/oxc_linter/src/tester.rs
 ---
   ⚠ eslint-plugin-next(google-font-display): A font-display parameter is missing (adding `&display=optional` is recommended).
-   ╭─[google_font_display.tsx:6:16]
- 5 │                      <Head>
- 6 │                        <link
-   ·                         ────
- 7 │                          href="https://fonts.googleapis.com/css2?family=Krona+One"
+   ╭─[google_font_display.tsx:6:7]
+ 5 │                     <Head>
+ 6 │                     <link
+   ·                      ────
+ 7 │                         href="https://fonts.googleapis.com/css2?family=Krona+One"
    ╰────
   help: See https://nextjs.org/docs/messages/google-font-display
 

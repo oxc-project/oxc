@@ -1,0 +1,160 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-unexpected-multiline): Unexpected newline between function name and open parenthesis of function call
+   ╭─[no_unexpected_multiline.tsx:2:1]
+ 1 │ var a = b
+ 2 │ (x || y).doSomething()
+   · ┬
+   · ╰── this is parsed as a function call, which may be unintentional
+   ╰────
+  help: If you did not intend to make a function call, insert ';' before the parenthesis
+
+  ⚠ eslint(no-unexpected-multiline): Unexpected newline between function name and open parenthesis of function call
+   ╭─[no_unexpected_multiline.tsx:2:1]
+ 1 │ var a = (a || b)
+ 2 │ (x || y).doSomething()
+   · ┬
+   · ╰── this is parsed as a function call, which may be unintentional
+   ╰────
+  help: If you did not intend to make a function call, insert ';' before the parenthesis
+
+  ⚠ eslint(no-unexpected-multiline): Unexpected newline between function name and open parenthesis of function call
+   ╭─[no_unexpected_multiline.tsx:2:1]
+ 1 │ var a = (a || b)
+ 2 │ (x).doSomething()
+   · ┬
+   · ╰── this is parsed as a function call, which may be unintentional
+   ╰────
+  help: If you did not intend to make a function call, insert ';' before the parenthesis
+
+  ⚠ eslint(no-unexpected-multiline): Unexpected newline between object and open bracket of property access
+   ╭─[no_unexpected_multiline.tsx:2:1]
+ 1 │ var a = b
+ 2 │ [a, b, c].forEach(doSomething)
+   · ┬
+   · ╰── this is parsed as a property access, which may be unintentional
+   ╰────
+  help: If you did not intend to access a property, insert ';' before the bracket
+
+  ⚠ eslint(no-unexpected-multiline): Unexpected newline between function name and open parenthesis of function call
+   ╭─[no_unexpected_multiline.tsx:2:5]
+ 1 │ var a = b
+ 2 │     (x || y).doSomething()
+   ·     ┬
+   ·     ╰── this is parsed as a function call, which may be unintentional
+   ╰────
+  help: If you did not intend to make a function call, insert ';' before the parenthesis
+
+  ⚠ eslint(no-unexpected-multiline): Unexpected newline between object and open bracket of property access
+   ╭─[no_unexpected_multiline.tsx:2:3]
+ 1 │ var a = b
+ 2 │   [a, b, c].forEach(doSomething)
+   ·   ┬
+   ·   ╰── this is parsed as a property access, which may be unintentional
+   ╰────
+  help: If you did not intend to access a property, insert ';' before the bracket
+
+  ⚠ eslint(no-unexpected-multiline): Unexpected newline between template tag and template literal
+   ╭─[no_unexpected_multiline.tsx:2:2]
+ 1 │ let x = function() {}
+ 2 │  `hello`
+   ·  ┬
+   ·  ╰── this is parsed as a tagged template, which may be unintentional
+   ╰────
+  help: If you did not intend for this to be a tagged template, insert ';' before the backtick
+
+  ⚠ eslint(no-unexpected-multiline): Unexpected newline between template tag and template literal
+   ╭─[no_unexpected_multiline.tsx:3:1]
+ 2 │ x
+ 3 │ `hello`
+   · ┬
+   · ╰── this is parsed as a tagged template, which may be unintentional
+   ╰────
+  help: If you did not intend for this to be a tagged template, insert ';' before the backtick
+
+  ⚠ eslint(no-unexpected-multiline): Unexpected newline between template tag and template literal
+   ╭─[no_unexpected_multiline.tsx:4:1]
+ 3 │ z
+ 4 │ `Invalid Test Case`
+   · ┬
+   · ╰── this is parsed as a tagged template, which may be unintentional
+   ╰────
+  help: If you did not intend for this to be a tagged template, insert ';' before the backtick
+
+  ⚠ eslint(no-unexpected-multiline): Unexpected newline between numerator and division operator
+   ╭─[no_unexpected_multiline.tsx:3:4]
+ 2 │             foo
+ 3 │             / bar /gym
+   ·             ┬
+   ·             ╰── this is parsed as division, which may be unintentional
+ 4 │         
+   ╰────
+  help: If you did not intend to divide, insert ';' before the slash
+
+  ⚠ eslint(no-unexpected-multiline): Unexpected newline between numerator and division operator
+   ╭─[no_unexpected_multiline.tsx:3:4]
+ 2 │             foo
+ 3 │             / bar /g
+   ·             ┬
+   ·             ╰── this is parsed as division, which may be unintentional
+ 4 │         
+   ╰────
+  help: If you did not intend to divide, insert ';' before the slash
+
+  ⚠ eslint(no-unexpected-multiline): Unexpected newline between numerator and division operator
+   ╭─[no_unexpected_multiline.tsx:3:4]
+ 2 │             foo
+ 3 │             / bar /g.test(baz)
+   ·             ┬
+   ·             ╰── this is parsed as division, which may be unintentional
+ 4 │         
+   ╰────
+  help: If you did not intend to divide, insert ';' before the slash
+
+  ⚠ eslint(no-unexpected-multiline): Unexpected newline between numerator and division operator
+   ╭─[no_unexpected_multiline.tsx:3:4]
+ 2 │             foo
+ 3 │             /bar/gimuygimuygimuy.test(baz)
+   ·             ┬
+   ·             ╰── this is parsed as division, which may be unintentional
+ 4 │         
+   ╰────
+  help: If you did not intend to divide, insert ';' before the slash
+
+  ⚠ eslint(no-unexpected-multiline): Unexpected newline between numerator and division operator
+   ╭─[no_unexpected_multiline.tsx:3:4]
+ 2 │             foo
+ 3 │             /bar/s.test(baz)
+   ·             ┬
+   ·             ╰── this is parsed as division, which may be unintentional
+ 4 │         
+   ╰────
+  help: If you did not intend to divide, insert ';' before the slash
+
+  ⚠ eslint(no-unexpected-multiline): Unexpected newline between template tag and template literal
+   ╭─[no_unexpected_multiline.tsx:5:3]
+ 4 │ test
+ 5 │ */`foo`
+   ·   ┬
+   ·   ╰── this is parsed as a tagged template, which may be unintentional
+   ╰────
+  help: If you did not intend for this to be a tagged template, insert ';' before the backtick
+
+  ⚠ eslint(no-unexpected-multiline): Unexpected newline between object and open bracket of property access
+   ╭─[no_unexpected_multiline.tsx:2:1]
+ 1 │ class C { field1 = obj
+ 2 │ [field2]; }
+   · ┬
+   · ╰── this is parsed as a property access, which may be unintentional
+   ╰────
+  help: If you did not intend to access a property, insert ';' before the bracket
+
+  ⚠ eslint(no-unexpected-multiline): Unexpected newline between object and open bracket of property access
+   ╭─[no_unexpected_multiline.tsx:2:1]
+ 1 │ class C { field1 = function() {}
+ 2 │ [field2]; }
+   · ┬
+   · ╰── this is parsed as a property access, which may be unintentional
+   ╰────
+  help: If you did not intend to access a property, insert ';' before the bracket

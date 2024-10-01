@@ -17,10 +17,10 @@ use crate::{
     },
 };
 
-fn use_hook(span0: Span) -> OxcDiagnostic {
+fn use_hook(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Require setup and teardown code to be within a hook.")
         .with_help("This should be done within a hook")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -622,5 +622,5 @@ fn tests() {
         ),
     ];
 
-    Tester::new(RequireHook::NAME, pass, fail).test_and_snapshot();
+    Tester::new(RequireHook::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
 }

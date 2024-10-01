@@ -6,6 +6,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ <div aria-="foobar" />
    ·      ──────────────
    ╰────
+  help: You can find a list of valid ARIA attributes at https://www.w3.org/TR/wai-aria-1.1/#state_prop_def
 
   ⚠ eslint-plugin-jsx-a11y(aria-props): 'aria-labeledby' is not a valid ARIA attribute.
    ╭─[aria_props.tsx:1:6]
@@ -19,3 +20,4 @@ source: crates/oxc_linter/src/tester.rs
  1 │ <div aria-skldjfaria-klajsd="foobar" />
    ·      ───────────────────────────────
    ╰────
+  help: You can find a list of valid ARIA attributes at https://www.w3.org/TR/wai-aria-1.1/#state_prop_def

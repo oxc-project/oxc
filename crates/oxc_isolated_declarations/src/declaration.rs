@@ -1,12 +1,16 @@
 use std::cell::Cell;
 
 use oxc_allocator::Box;
+use oxc_allocator::CloneIn;
+use oxc_allocator::Vec;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
-use oxc_ast::{syntax_directed_operations::BoundNames, Visit};
+use oxc_ast::visit::walk_mut::walk_ts_signatures;
+use oxc_ast::{syntax_directed_operations::BoundNames, Visit, VisitMut};
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::scope::ScopeFlags;
 
+use crate::diagnostics::accessor_must_have_explicit_return_type;
 use crate::{
     diagnostics::{
         binding_element_export, inferred_type_of_expression, signature_computed_property_name,
@@ -77,7 +81,8 @@ impl<'a> IsolatedDeclarations<'a> {
                         init =
                             self.transform_template_to_string(lit).map(Expression::StringLiteral);
                     } else {
-                        init = Some(self.ast.copy(init_expr));
+                        // SAFETY: `ast.copy` is unsound! We need to fix.
+                        init = Some(unsafe { self.ast.copy(init_expr) });
                     }
                 } else if !decl.kind.is_const()
                     || !matches!(init_expr, Expression::TemplateLiteral(_))
@@ -94,10 +99,14 @@ impl<'a> IsolatedDeclarations<'a> {
             }
         }
         let id = binding_type.map_or_else(
-            || self.ast.copy(&decl.id),
+            || {
+                // SAFETY: `ast.copy` is unsound! We need to fix.
+                unsafe { self.ast.copy(&decl.id) }
+            },
             |ts_type| {
                 self.ast.binding_pattern(
-                    self.ast.copy(&decl.id.kind),
+                    // SAFETY: `ast.copy` is unsound! We need to fix.
+                    unsafe { self.ast.copy(&decl.id.kind) },
                     Some(self.ast.ts_type_annotation(SPAN, ts_type)),
                     decl.id.optional,
                 )
@@ -109,7 +118,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
     pub fn transform_using_declaration(
         &self,
-        decl: &UsingDeclaration<'a>,
+        decl: &VariableDeclaration<'a>,
         check_binding: bool,
     ) -> Box<'a, VariableDeclaration<'a>> {
         let declarations =
@@ -121,7 +130,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
     pub fn transform_using_declaration_with_new_declarations(
         &self,
-        decl: &UsingDeclaration<'a>,
+        decl: &VariableDeclaration<'a>,
         declarations: oxc_allocator::Vec<'a, VariableDeclarator<'a>>,
     ) -> Box<'a, VariableDeclaration<'a>> {
         self.ast.alloc_variable_declaration(
@@ -149,11 +158,13 @@ impl<'a> IsolatedDeclarations<'a> {
         decl: &Box<'a, TSModuleDeclaration<'a>>,
     ) -> Box<'a, TSModuleDeclaration<'a>> {
         if decl.declare {
-            return self.ast.copy(decl);
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            return unsafe { self.ast.copy(decl) };
         }
 
         let Some(body) = &decl.body else {
-            return self.ast.copy(decl);
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            return unsafe { self.ast.copy(decl) };
         };
 
         match body {
@@ -161,7 +172,8 @@ impl<'a> IsolatedDeclarations<'a> {
                 let inner = self.transform_ts_module_declaration(decl);
                 self.ast.alloc_ts_module_declaration(
                     decl.span,
-                    self.ast.copy(&decl.id),
+                    // SAFETY: `ast.copy` is unsound! We need to fix.
+                    unsafe { self.ast.copy(&decl.id) },
                     Some(TSModuleDeclarationBody::TSModuleDeclaration(inner)),
                     decl.kind,
                     self.is_declare(),
@@ -171,7 +183,8 @@ impl<'a> IsolatedDeclarations<'a> {
                 let body = self.transform_ts_module_block(block);
                 self.ast.alloc_ts_module_declaration(
                     decl.span,
-                    self.ast.copy(&decl.id),
+                    // SAFETY: `ast.copy` is unsound! We need to fix.
+                    unsafe { self.ast.copy(&decl.id) },
                     Some(TSModuleDeclarationBody::TSModuleBlock(body)),
                     decl.kind,
                     self.is_declare(),
@@ -198,9 +211,6 @@ impl<'a> IsolatedDeclarations<'a> {
             Declaration::VariableDeclaration(decl) => self
                 .transform_variable_declaration(decl, check_binding)
                 .map(Declaration::VariableDeclaration),
-            Declaration::UsingDeclaration(decl) => Some(Declaration::VariableDeclaration(
-                self.transform_using_declaration(decl, check_binding),
-            )),
             Declaration::ClassDeclaration(decl) => {
                 if !check_binding
                     || decl.id.as_ref().is_some_and(|id| self.scope.has_reference(&id.name))
@@ -211,17 +221,19 @@ impl<'a> IsolatedDeclarations<'a> {
                 }
             }
             Declaration::TSTypeAliasDeclaration(alias_decl) => {
-                self.visit_ts_type_alias_declaration(alias_decl);
                 if !check_binding || self.scope.has_reference(&alias_decl.id.name) {
-                    Some(self.ast.copy(decl))
+                    let mut decl = decl.clone_in(self.ast.allocator);
+                    self.visit_declaration(&mut decl);
+                    Some(decl)
                 } else {
                     None
                 }
             }
             Declaration::TSInterfaceDeclaration(interface_decl) => {
-                self.visit_ts_interface_declaration(interface_decl);
                 if !check_binding || self.scope.has_reference(&interface_decl.id.name) {
-                    Some(self.ast.copy(decl))
+                    let mut decl = decl.clone_in(self.ast.allocator);
+                    self.visit_declaration(&mut decl);
+                    Some(decl)
                 } else {
                     None
                 }
@@ -250,7 +262,8 @@ impl<'a> IsolatedDeclarations<'a> {
             }
             Declaration::TSImportEqualsDeclaration(decl) => {
                 if !check_binding || self.scope.has_reference(&decl.id.name) {
-                    Some(Declaration::TSImportEqualsDeclaration(self.ast.copy(decl)))
+                    // SAFETY: `ast.copy` is unsound! We need to fix.
+                    Some(Declaration::TSImportEqualsDeclaration(unsafe { self.ast.copy(decl) }))
                 } else {
                     None
                 }
@@ -277,15 +290,30 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 }
 
-impl<'a> Visit<'a> for IsolatedDeclarations<'a> {
-    fn visit_ts_method_signature(&mut self, signature: &TSMethodSignature<'a>) {
-        if signature.return_type.is_none() {
-            self.error(inferred_type_of_expression(signature.span));
-        }
-        self.report_signature_property_key(&signature.key, signature.computed);
+impl<'a> VisitMut<'a> for IsolatedDeclarations<'a> {
+    fn visit_ts_signatures(&mut self, signatures: &mut Vec<'a, TSSignature<'a>>) {
+        self.transform_ts_signatures(signatures);
+        walk_ts_signatures(self, signatures);
     }
 
-    fn visit_ts_property_signature(&mut self, signature: &TSPropertySignature<'a>) {
+    fn visit_ts_method_signature(&mut self, signature: &mut TSMethodSignature<'a>) {
+        self.report_signature_property_key(&signature.key, signature.computed);
+        if signature.return_type.is_none() {
+            match signature.kind {
+                TSMethodSignatureKind::Method => {
+                    self.error(inferred_type_of_expression(signature.span));
+                }
+                TSMethodSignatureKind::Get => {
+                    self.error(accessor_must_have_explicit_return_type(signature.key.span()));
+                }
+                TSMethodSignatureKind::Set => {
+                    // setter method don't need return type
+                }
+            }
+        }
+    }
+
+    fn visit_ts_property_signature(&mut self, signature: &mut TSPropertySignature<'a>) {
         self.report_signature_property_key(&signature.key, signature.computed);
     }
 }

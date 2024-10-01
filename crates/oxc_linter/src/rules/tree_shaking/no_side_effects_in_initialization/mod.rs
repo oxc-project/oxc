@@ -18,8 +18,8 @@ fn assignment(x0: &str, span1: Span) -> OxcDiagnostic {
         .with_label(span1)
 }
 
-fn mutate(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Cannot determine side-effects of mutating").with_label(span0)
+fn mutate(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Cannot determine side-effects of mutating").with_label(span)
 }
 
 fn mutate_with_name(x0: &str, span1: Span) -> OxcDiagnostic {
@@ -27,33 +27,33 @@ fn mutate_with_name(x0: &str, span1: Span) -> OxcDiagnostic {
         .with_label(span1)
 }
 
-fn mutate_function_return_value(span0: Span) -> OxcDiagnostic {
+fn mutate_function_return_value(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Cannot determine side-effects of mutating function return value")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn mutate_parameter(span0: Span) -> OxcDiagnostic {
+fn mutate_parameter(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Cannot determine side-effects of mutating function parameter")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn mutate_of_this(span0: Span) -> OxcDiagnostic {
+fn mutate_of_this(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Cannot determine side-effects of mutating unknown this value")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn mutate_import(span0: Span) -> OxcDiagnostic {
+fn mutate_import(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Cannot determine side-effects of mutating imported variable")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn call(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Cannot determine side-effects of calling").with_label(span0)
+fn call(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Cannot determine side-effects of calling").with_label(span)
 }
 
-fn call_return_value(span0: Span) -> OxcDiagnostic {
+fn call_return_value(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Cannot determine side-effects of calling function return value")
-        .with_label(span0)
+        .with_label(span)
 }
 
 fn call_global(x0: &str, span1: Span) -> OxcDiagnostic {
@@ -61,32 +61,31 @@ fn call_global(x0: &str, span1: Span) -> OxcDiagnostic {
         .with_label(span1)
 }
 
-fn call_parameter(span0: Span) -> OxcDiagnostic {
+fn call_parameter(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Cannot determine side-effects of calling function parameter")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn call_import(span0: Span) -> OxcDiagnostic {
+fn call_import(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Cannot determine side-effects of calling imported function")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn call_member(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Cannot determine side-effects of calling member function")
-        .with_label(span0)
+fn call_member(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Cannot determine side-effects of calling member function").with_label(span)
 }
 
-fn debugger(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Debugger statements are side-effects").with_label(span0)
+fn debugger(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Debugger statements are side-effects").with_label(span)
 }
 
-fn delete(span0: Span) -> OxcDiagnostic {
+fn delete(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Cannot determine side-effects of deleting anything but a MemberExpression")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn throw(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Throwing an error is a side-effect").with_label(span0)
+fn throw(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Throwing an error is a side-effect").with_label(span)
 }
 
 /// <https://github.com/lukastaegert/eslint-plugin-tree-shaking/blob/master/src/rules/no-side-effects-in-initialization.ts>
@@ -117,12 +116,23 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// ### Example
+    /// Side-effects in module initialization can hinder tree-shaking, which aims to remove
+    /// unused code. If side-effects exist, it's harder for the bundler to safely eliminate
+    /// code, leading to larger bundles and potentially unexpected behavior. Ensuring minimal
+    /// side-effects allows bundlers to optimize code effectively.
     ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// myGlobal = 17; // Cannot determine side-effects of assignment to global variable
     /// const x = { [globalFunction()]: "myString" }; // Cannot determine side-effects of calling global function
-    /// export default 42;
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// const localVar = 17; // Local variable assignment, no global side-effects
+    /// export default 42; // Pure export with no side-effects
     /// ```
     ///
     /// ### Options
@@ -347,6 +357,11 @@ fn test() {
         r#"export {x as default} from "import""#,
         "export const /* tree-shaking no-side-effects-when-called */ x = function(){}",
         "export function /* tree-shaking no-side-effects-when-called */ x(){}",
+        "
+            { let x = ext; }
+            let x =  () => {}
+            export {/* tree-shaking no-side-effects-when-called */ x}
+        ",
         "const x = function(){}; export {/* tree-shaking no-side-effects-when-called */ x}",
         // ExpressionStatement
         "const x = 1",
@@ -633,6 +648,11 @@ fn test() {
         "export const /* tree-shaking no-side-effects-when-called */ x = ext",
         "export function /* tree-shaking no-side-effects-when-called */ x(){ext()}",
         "const x = ext; export {/* tree-shaking no-side-effects-when-called */ x}",
+        "
+            { let x = () => {}; }
+            let x = ext 
+            export {/* tree-shaking no-side-effects-when-called */ x}
+        ",
         // ExpressionStatement
         "ext()",
         // ForInStatement

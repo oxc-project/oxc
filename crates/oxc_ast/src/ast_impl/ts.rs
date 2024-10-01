@@ -3,7 +3,7 @@
 //! [AST Spec](https://github.com/typescript-eslint/typescript-eslint/tree/main/packages/ast-spec)
 //! [Archived TypeScript spec](https://github.com/microsoft/TypeScript/blob/3c99d50da5a579d9fa92d02664b1b66d4ff55944/doc/spec-ARCHIVED.md)
 
-use std::{cell::Cell, hash::Hash};
+use std::{cell::Cell, fmt};
 
 use oxc_allocator::Vec;
 use oxc_span::{Atom, Span};
@@ -21,13 +21,15 @@ impl<'a> TSEnumDeclaration<'a> {
         Self { span, id, members, r#const, declare, scope_id: Cell::default() }
     }
 }
-
-impl<'a> Hash for TSEnumDeclaration<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.id.hash(state);
-        self.members.hash(state);
-        self.r#const.hash(state);
-        self.declare.hash(state);
+impl<'a> TSEnumMemberName<'a> {
+    pub fn static_name(&self) -> Option<&'a str> {
+        match self {
+            Self::StaticIdentifier(ident) => Some(ident.name.as_str()),
+            Self::StaticStringLiteral(lit) => Some(lit.value.as_str()),
+            Self::NumericLiteral(lit) => Some(lit.raw),
+            Self::StaticTemplateLiteral(lit) => lit.quasi().map(Into::into),
+            _ => None,
+        }
     }
 }
 
@@ -53,7 +55,9 @@ impl<'a> TSType<'a> {
     /// Check if type maybe `undefined`
     pub fn is_maybe_undefined(&self) -> bool {
         match self {
-            TSType::TSUndefinedKeyword(_) => true,
+            TSType::TSAnyKeyword(_)
+            | TSType::TSUnknownKeyword(_)
+            | TSType::TSUndefinedKeyword(_) => true,
             TSType::TSUnionType(un) => un.types.iter().any(Self::is_maybe_undefined),
             _ => false,
         }
@@ -100,6 +104,21 @@ impl<'a> TSTypeName<'a> {
     }
 }
 
+impl<'a> fmt::Display for TSTypeName<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            TSTypeName::IdentifierReference(ident) => ident.fmt(f),
+            TSTypeName::QualifiedName(qualified) => qualified.fmt(f),
+        }
+    }
+}
+
+impl<'a> fmt::Display for TSQualifiedName<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}.{}", self.left, self.right)
+    }
+}
+
 impl<'a> TSType<'a> {
     /// Remove nested parentheses from this type.
     pub fn without_parenthesized(&self) -> &Self {
@@ -111,8 +130,29 @@ impl<'a> TSType<'a> {
 }
 
 impl TSAccessibility {
-    pub fn is_private(&self) -> bool {
-        matches!(self, TSAccessibility::Private)
+    #[inline]
+    pub fn is_private(self) -> bool {
+        matches!(self, Self::Private)
+    }
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Public => "public",
+            Self::Private => "private",
+            Self::Protected => "protected",
+        }
+    }
+}
+
+impl From<TSAccessibility> for &'static str {
+    fn from(accessibility: TSAccessibility) -> Self {
+        accessibility.as_str()
+    }
+}
+
+impl fmt::Display for TSAccessibility {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
     }
 }
 
@@ -132,12 +172,17 @@ impl<'a> TSModuleDeclaration<'a> {
     }
 }
 
-impl<'a> Hash for TSModuleDeclaration<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.id.hash(state);
-        self.body.hash(state);
-        self.kind.hash(state);
-        self.declare.hash(state);
+impl TSModuleDeclarationKind {
+    pub fn is_global(self) -> bool {
+        matches!(self, TSModuleDeclarationKind::Global)
+    }
+
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Global => "global",
+            Self::Module => "module",
+            Self::Namespace => "namespace",
+        }
     }
 }
 
@@ -154,9 +199,34 @@ impl<'a> TSModuleDeclarationName<'a> {
     }
 }
 
+impl<'a> fmt::Display for TSModuleDeclarationName<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Identifier(id) => id.fmt(f),
+            Self::StringLiteral(lit) => lit.fmt(f),
+        }
+    }
+}
+
 impl<'a> TSModuleDeclarationBody<'a> {
     pub fn is_strict(&self) -> bool {
         matches!(self, Self::TSModuleBlock(block) if block.is_strict())
+    }
+
+    pub fn is_empty(&self) -> bool {
+        match self {
+            TSModuleDeclarationBody::TSModuleDeclaration(declaration) => declaration.body.is_none(),
+            TSModuleDeclarationBody::TSModuleBlock(block) => block.body.len() == 0,
+        }
+    }
+
+    pub fn as_module_block_mut(&mut self) -> Option<&mut TSModuleBlock<'a>> {
+        match self {
+            TSModuleDeclarationBody::TSModuleBlock(block) => Some(block.as_mut()),
+            TSModuleDeclarationBody::TSModuleDeclaration(decl) => {
+                decl.body.as_mut().and_then(|body| body.as_module_block_mut())
+            }
+        }
     }
 }
 
@@ -176,20 +246,20 @@ impl<'a> TSModuleReference<'a> {
 impl<'a> Decorator<'a> {
     /// Get the name of the decorator
     /// ```ts
+    /// // The name of the decorator is `decorator`
     /// @decorator
     /// @decorator.a.b
     /// @decorator(xx)
     /// @decorator.a.b(xx)
-    /// The name of the decorator is `decorator`
     /// ```
-    pub fn name(&self) -> Option<&str> {
+    pub fn name(&self) -> Option<&'a str> {
         match &self.expression {
-            Expression::Identifier(ident) => Some(&ident.name),
+            Expression::Identifier(ident) => Some(ident.name.as_str()),
             expr @ match_member_expression!(Expression) => {
                 expr.to_member_expression().static_property_name()
             }
             Expression::CallExpression(call) => {
-                call.callee.get_member_expr().map(|member| member.static_property_name())?
+                call.callee.get_member_expr().and_then(MemberExpression::static_property_name)
             }
             _ => None,
         }
@@ -206,67 +276,12 @@ impl ImportOrExportKind {
     }
 }
 
-impl<'a> Hash for TSMappedType<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.span.hash(state);
-        self.type_parameter.hash(state);
-        self.name_type.hash(state);
-        self.type_annotation.hash(state);
-        self.optional.hash(state);
-        self.readonly.hash(state);
-    }
-}
-
-impl<'a> Hash for TSConditionalType<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.span.hash(state);
-        self.check_type.hash(state);
-        self.extends_type.hash(state);
-        self.true_type.hash(state);
-        self.false_type.hash(state);
-    }
-}
-
-impl<'a> Hash for TSInterfaceDeclaration<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.span.hash(state);
-        self.id.hash(state);
-        self.type_parameters.hash(state);
-        self.extends.hash(state);
-        self.body.hash(state);
-        self.declare.hash(state);
-    }
-}
-
-impl<'a> Hash for TSTypeAliasDeclaration<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.span.hash(state);
-        self.id.hash(state);
-        self.type_parameters.hash(state);
-        self.type_annotation.hash(state);
-        self.declare.hash(state);
-    }
-}
-
-impl<'a> Hash for TSMethodSignature<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.span.hash(state);
-        self.key.hash(state);
-        self.computed.hash(state);
-        self.optional.hash(state);
-        self.kind.hash(state);
-        self.this_param.hash(state);
-        self.params.hash(state);
-        self.return_type.hash(state);
-        self.type_parameters.hash(state);
-    }
-}
-
-impl<'a> Hash for TSConstructSignatureDeclaration<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.span.hash(state);
-        self.params.hash(state);
-        self.return_type.hash(state);
-        self.type_parameters.hash(state);
+impl TSTypeOperatorOperator {
+    pub fn to_str(self) -> &'static str {
+        match self {
+            TSTypeOperatorOperator::Keyof => "keyof",
+            TSTypeOperatorOperator::Readonly => "readonly",
+            TSTypeOperatorOperator::Unique => "unique",
+        }
     }
 }

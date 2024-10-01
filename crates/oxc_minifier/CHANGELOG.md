@@ -4,6 +4,192 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.30.2] - 2024-09-27
+
+### Features
+
+- 60c52ba ast: Allow passing span to `void_0` method (#6065) (Dunqing)
+
+### Bug Fixes
+
+- e0a8959 minifier: Compute `void number` as `undefined` (#6028) (Boshen)
+
+## [0.30.1] - 2024-09-24
+
+### Features
+
+- 5c323a2 minifier: Loop compressor passes (#6013) (Boshen)
+
+### Refactor
+
+- 0a2f687 minifier: Move dce conditional expression to `RemoveDeadCode` (#5971) (Boshen)
+
+## [0.30.0] - 2024-09-23
+
+### Features
+
+- 9076dee minifier: Implement part of `StatementFusion` (#5936) (Boshen)
+
+### Bug Fixes
+
+- 362c427 mangler,codegen: Do not mangle top level symbols (#5965) (Boshen)
+
+### Refactor
+
+- 943bd76 minifier: Move tests to their src files (#5912) (Boshen)
+- cbaeea6 minifier: Clean up some tests (#5910) (Boshen)
+- 144611e minifier: Align ast pass names with closure compiler (#5908) (Boshen)
+
+## [0.29.0] - 2024-09-13
+
+### Features
+
+- 953fe17 ast: Provide `NONE` type for AST builder calls (#5737) (overlookmotel)
+- e968e9f minifier: Constant fold nullish coalescing operator (#5761) (Boshen)
+- 6bc13f6 minifier: Add `MinimizeConditions` pass (#5747) (Boshen)
+
+### Bug Fixes
+
+- 8ff013a minifier: Handle dce CallExpression::callee (#5752) (Boshen)
+
+### Performance
+
+- d18c896 rust: Use `cow_utils` instead (#5664) (dalaoshu)
+
+### Refactor
+
+- 2890c98 minifier: Add tests for `remove_syntax` (#5749) (Boshen)
+- 9a9d8f6 minifier: Replace `self.ast` with `ctx.ast` (#5748) (Boshen)
+- 746f7b3 minifier: Align code with closure compiler (#5717) (Boshen)
+- 21e2df5 minifier: Replace `VisitMut` with `Traverse` for inject and define plugins (#5705) (Boshen)
+
+## [0.28.0] - 2024-09-11
+
+- ee4fb42 ast: [**BREAKING**] Reduce size of `WithClause` by `Box`ing it (#5677) (Boshen)
+
+- 4a8aec1 span: [**BREAKING**] Change `SourceType::js` to `SourceType::cjs` and `SourceType::mjs` (#5606) (Boshen)
+
+- b060525 semantic: [**BREAKING**] Remove `source_type` argument from `SemanticBuilder::new` (#5553) (Boshen)
+
+### Features
+
+- 68c3cf5 minifier: Fold `void 1` -> `void 0` (#5670) (Boshen)
+- c6bbf94 minifier: Constant fold unary expression (#5669) (Boshen)
+- 86256ea minifier: Constant fold `typeof` (#5666) (Boshen)
+
+### Bug Fixes
+
+- b8f8dd6 minifier/replace_global_defines: Do not replace shadowed identifiers (#5691) (Boshen)
+
+### Performance
+
+
+### Refactor
+
+- 067f9b5 semantic: Introduce `IsGlobalReference` trait (#5672) (Boshen)
+
+## [0.27.0] - 2024-09-06
+
+### Features
+
+- ba4b68c minifier: Remove parenthesized expression for dce (#5439) (Boshen)
+
+## [0.25.0] - 2024-08-23
+
+- 78f135d ast: [**BREAKING**] Remove `ReferenceFlag` from `IdentifierReference` (#5077) (Boshen)
+
+- c4c08a7 ast: [**BREAKING**] Rename `IdentifierReference::reference_flags` field (#5024) (overlookmotel)
+
+- d262a58 syntax: [**BREAKING**] Rename `ReferenceFlag` to `ReferenceFlags` (#5023) (overlookmotel)
+
+- ce4d469 codegen: [**BREAKING**] Remove const generic `MINIFY` (#5001) (Boshen)
+
+### Features
+
+- 2b21be3 oxc_minifier: Define plugin with postfix wildcard (#4979) (IWANABETHATGUY)
+
+### Refactor
+
+- 0f64d10 minifier: Remove duplicated helper `move_out_expression` (#5007) (IWANABETHATGUY)
+- b4407c4 oxc,mangler: `oxc` crate add mangler; mangler use options API (Boshen)
+
+## [0.24.3] - 2024-08-18
+
+### Bug Fixes
+
+- 46cb1c1 minifier: Handle `Object.definedPropert(exports` for @babel/types/lib/index.js (#4933) (Boshen)
+- 81fd637 minifier: Do not fold `0 && (module.exports = {})` for `cjs-module-lexer` (#4878) (Boshen)
+- 879a271 minifier: Do not join `require` calls for `cjs-module-lexer` (#4875) (Boshen)
+
+## [0.24.2] - 2024-08-12
+
+### Performance
+
+- 504ac0b minifier: `InjectGlobalVariables` only add to `replaced_dot_defines` once for each (#4803) (overlookmotel)
+- 35f2742 minifier: Avoid repeated `Atom` creation in `InjectGlobalVariables` (#4802) (overlookmotel)
+
+## [0.24.1] - 2024-08-10
+
+### Features
+
+- c519295 minifier: Add `InjectGlobalVariables` plugin (`@rollup/plugin-inject`) (#4759) (Boshen)
+
+## [0.24.0] - 2024-08-08
+
+### Features
+
+- 229a0e9 minifier: Implement dot define for member expressions (#3959) (camc314)
+
+### Bug Fixes
+
+- 94d3c31 minifier: Avoid removing function declaration from `KeepVar` (#4722) (Boshen)
+- bf43148 minifier: Do not `remove_syntax` in dead_code_elimination (Boshen)
+- bf48c7f minifier: Fix `keep_var` keeping vars from arrow functions (#4680) (Boshen)
+- 9be29af minifier: Temporarily fix shadowed `undefined` variable (#4678) (Boshen)
+- e8b662a minifier: Various fixes to pass minifier conformance (#4667) (Boshen)
+
+### Performance
+
+- 0f5e982 minifier: Only visit arrow expression after dropping `console.log` (#4677) (Boshen)
+
+### Refactor
+
+- fbfd852 minifier: Add `NodeUtil` trait for accessing symbols on ast nodes (#4734) (Boshen)
+- e0832f8 minifier: Use `oxc_traverse` for AST passes (#4725) (Boshen)
+- 17602db minifier: Move tests and files around (Boshen)
+- 3289477 minifier: Clean up tests (#4724) (Boshen)
+- e78cba6 minifier: Ast passes infrastructure (#4625) (Boshen)
+
+## [0.23.1] - 2024-08-06
+
+### Features
+
+- 229a0e9 minifier: Implement dot define for member expressions (#3959) (camc314)
+
+### Bug Fixes
+
+- bf48c7f minifier: Fix `keep_var` keeping vars from arrow functions (#4680) (Boshen)
+- 9be29af minifier: Temporarily fix shadowed `undefined` variable (#4678) (Boshen)
+- e8b662a minifier: Various fixes to pass minifier conformance (#4667) (Boshen)
+
+### Performance
+
+- 0f5e982 minifier: Only visit arrow expression after dropping `console.log` (#4677) (Boshen)
+
+### Refactor
+
+- e78cba6 minifier: Ast passes infrastructure (#4625) (Boshen)
+
+## [0.23.0] - 2024-08-01
+
+### Features
+
+- a558492 codegen: Implement `BinaryExpressionVisitor` (#4548) (Boshen)
+
+### Bug Fixes
+
+- 6a94e3f codegen: Fixes for esbuild test cases (#4503) (Boshen)
+
 ## [0.22.0] - 2024-07-23
 
 ### Features

@@ -3,7 +3,7 @@ use std::path::Path;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::CodeGenerator;
-use oxc_mangler::ManglerBuilder;
+use oxc_mangler::{MangleOptions, Mangler};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 use pico_args::Arguments;
@@ -39,6 +39,6 @@ fn mangler(source_text: &str, source_type: SourceType, debug: bool) -> String {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let program = allocator.alloc(ret.program);
-    let mangler = ManglerBuilder::default().debug(debug).build(program);
+    let mangler = Mangler::new().with_options(MangleOptions { debug }).build(program);
     CodeGenerator::new().with_mangler(Some(mangler)).build(program).source_text
 }

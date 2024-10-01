@@ -6,8 +6,8 @@ use regex::Regex;
 
 use crate::{context::LintContext, rule::Rule};
 
-fn ban_tslint_comment_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("tslint comment detected: \"{x0}\"")).with_label(span1)
+fn ban_tslint_comment_diagnostic(tslint_comment: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("tslint comment detected: \"{tslint_comment}\"")).with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -22,12 +22,13 @@ declare_oxc_lint!(
     /// removed, this rule helps locate TSLint annotations
     ///
     /// ### Example
-    /// ```javascript
+    /// ```ts
     /// // tslint:disable-next-line
     /// someCode();
     /// ```
     BanTslintComment,
-    style
+    style,
+    fix
 );
 
 impl Rule for BanTslintComment {
@@ -43,7 +44,7 @@ impl Rule for BanTslintComment {
                     source_text_len,
                     comment.span.start,
                     comment.span.end,
-                    comment.kind.is_multi_line(),
+                    comment.is_block(),
                 );
 
                 ctx.diagnostic_with_fix(

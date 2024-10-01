@@ -2,12 +2,16 @@
 source: crates/oxc_semantic/tests/main.rs
 input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declaration/static-with-constructor.ts
 ---
+================================================================================
+SCOPES
+================================================================================
+
 [
   {
     "children": [
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode | Function)",
+        "flags": "ScopeFlags(StrictMode | Function)",
         "id": 1,
         "node": "Function(f)",
         "symbols": []
@@ -16,37 +20,37 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
         "children": [
           {
             "children": [],
-            "flag": "ScopeFlags(StrictMode | ClassStaticBlock)",
+            "flags": "ScopeFlags(StrictMode | ClassStaticBlock)",
             "id": 3,
             "node": "StaticBlock",
             "symbols": []
           },
           {
             "children": [],
-            "flag": "ScopeFlags(StrictMode | Function | Constructor)",
+            "flags": "ScopeFlags(StrictMode | Function | Constructor)",
             "id": 4,
             "node": "Function(<anonymous>)",
             "symbols": []
           }
         ],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 2,
         "node": "Class(A)",
         "symbols": []
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(BlockScopedVariable | Function)",
+        "flags": "SymbolFlags(BlockScopedVariable | Function)",
         "id": 0,
         "name": "f",
         "node": "Function(f)",
         "references": [
           {
-            "flag": "ReferenceFlag(Read)",
+            "flags": "ReferenceFlags(Read)",
             "id": 0,
             "name": "f",
             "node_id": 17
@@ -54,7 +58,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
         ]
       },
       {
-        "flag": "SymbolFlags(Class)",
+        "flags": "SymbolFlags(Class)",
         "id": 1,
         "name": "A",
         "node": "Class(A)",
@@ -63,3 +67,9 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
     ]
   }
 ]
+
+================================================================================
+CONFORMANCE
+================================================================================
+
+All tests passed.

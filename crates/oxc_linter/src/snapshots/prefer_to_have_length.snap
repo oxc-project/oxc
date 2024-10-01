@@ -70,3 +70,18 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ─────────────
    ╰────
   help: Replace `expect(files.length).not.toStrictEqual` with `expect(files).not.toHaveLength`.
+
+  ⚠ eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.
+   ╭─[prefer_to_have_length.tsx:1:55]
+ 1 │ expect((meta.get('pages') as YArray<unknown>).length).toBe((originalMeta.get('pages') as YArray<unknown>).length);
+   ·                                                       ────
+   ╰────
+  help: Replace `expect((meta.get('pages') as YArray<unknown>).length).toBe` with `expect((meta.get('pages') as YArray<unknown>)).toHaveLength`.
+
+  ⚠ eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.
+   ╭─[prefer_to_have_length.tsx:1:64]
+ 1 │ expect(assetTypeContainer.getElementsByTagName('time').length).toEqual(
+   ·                                                                ───────
+ 2 │           0,
+   ╰────
+  help: Replace `expect(assetTypeContainer.getElementsByTagName('time').length).toEqual` with `expect(assetTypeContainer.getElementsByTagName('time')).toHaveLength`.

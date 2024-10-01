@@ -2,36 +2,40 @@
 source: crates/oxc_semantic/tests/main.rs
 input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaration/type-query-qualified.ts
 ---
+================================================================================
+SCOPES
+================================================================================
+
 [
   {
     "children": [
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 1,
         "node": "TSTypeAliasDeclaration",
         "symbols": []
       },
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 2,
         "node": "TSTypeAliasDeclaration",
         "symbols": []
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 0,
         "name": "x",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(x)",
         "references": [
           {
-            "flag": "ReferenceFlag(Read | TSTypeQuery)",
+            "flags": "ReferenceFlags(Type)",
             "id": 0,
             "name": "x",
             "node_id": 21
@@ -39,14 +43,14 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         ]
       },
       {
-        "flag": "SymbolFlags(TypeAlias)",
+        "flags": "SymbolFlags(TypeAlias)",
         "id": 1,
         "name": "T",
         "node": "TSTypeAliasDeclaration",
         "references": []
       },
       {
-        "flag": "SymbolFlags(TypeAlias)",
+        "flags": "SymbolFlags(TypeAlias)",
         "id": 2,
         "name": "Unresolved",
         "node": "TSTypeAliasDeclaration",
@@ -55,3 +59,9 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
     ]
   }
 ]
+
+================================================================================
+CONFORMANCE
+================================================================================
+
+All tests passed.

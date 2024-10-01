@@ -12,10 +12,10 @@ use crate::{context::LintContext, rule::Rule};
 const GLOBAL_THIS: &str = "globalThis";
 const NON_CALLABLE_GLOBALS: [&str; 5] = ["Atomics", "Intl", "JSON", "Math", "Reflect"];
 
-fn no_obj_calls_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow calling some global objects as functions")
-        .with_help(format!("{x0} is not a function."))
-        .with_label(span1)
+fn no_obj_calls_diagnostic(obj_name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("`{obj_name}` is not a function and cannot be called"))
+        .with_help("This call will throw a TypeError at runtime.")
+        .with_label(span)
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -36,8 +36,9 @@ declare_oxc_lint! {
     /// Calling them as functions will usually result in a TypeError being thrown.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Bad
     /// let math = Math();
     /// let newMath = new Math();
     ///
@@ -52,8 +53,10 @@ declare_oxc_lint! {
     ///
     /// let reflect = Reflect();
     /// let newReflect = new Reflect();
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// let area = r => 2 * Math.PI * r * r;
     /// let object = JSON.parse("{}");
     /// let first = Atomics.load(sharedArray, 0);
@@ -80,49 +83,45 @@ fn resolve_global_binding<'a, 'b: 'a>(
     scope_id: ScopeId,
     ctx: &LintContext<'a>,
 ) -> Option<&'a str> {
+    let scope = ctx.scopes();
+    let nodes = ctx.nodes();
+    let symbols = ctx.symbols();
+
     if ctx.semantic().is_reference_to_global_variable(ident) {
-        Some(ident.name.as_str())
-    } else {
-        let scope = ctx.scopes();
-        let nodes = ctx.nodes();
-        let symbols = ctx.symbols();
-        scope.ancestors(scope_id).find_map(|id| scope.get_binding(id, &ident.name)).map_or_else(
-            // panic in debug builds, but fail gracefully in release builds
-            || {
-                debug_assert!(
-                    false,
-                    "No binding id found for {}, but this IdentifierReference
+        return Some(ident.name.as_str());
+    }
+
+    let Some(binding_id) = scope.find_binding(scope_id, &ident.name) else {
+        // Panic in debug builds, but fail gracefully in release builds.
+        debug_assert!(
+            false,
+            "No binding id found for {}, but this IdentifierReference
                 is not a global",
-                    &ident.name
-                );
-                None
-            },
-            |binding_id| {
-                let decl = nodes.get_node(symbols.get_declaration(binding_id));
-                let decl_scope = decl.scope_id();
-                match decl.kind() {
-                    AstKind::VariableDeclarator(parent_decl) => {
-                        if !parent_decl.id.kind.is_binding_identifier() {
-                            return Some(ident.name.as_str());
-                        }
-                        match &parent_decl.init {
-                            // handles "let a = JSON; let b = a; a();"
-                            Some(Expression::Identifier(parent_ident))
-                                if parent_ident.name != ident.name =>
-                            {
-                                resolve_global_binding(parent_ident, decl_scope, ctx)
-                            }
-                            // handles "let a = globalThis.JSON; let b = a; a();"
-                            Some(parent_expr) if parent_expr.is_member_expression() => {
-                                global_this_member(parent_expr.to_member_expression())
-                            }
-                            _ => None,
-                        }
-                    }
-                    _ => None,
+            &ident.name
+        );
+        return None;
+    };
+
+    let decl = nodes.get_node(symbols.get_declaration(binding_id));
+    match decl.kind() {
+        AstKind::VariableDeclarator(parent_decl) => {
+            if !parent_decl.id.kind.is_binding_identifier() {
+                return Some(ident.name.as_str());
+            }
+            match &parent_decl.init {
+                // handles "let a = JSON; let b = a; a();"
+                Some(Expression::Identifier(parent_ident)) if parent_ident.name != ident.name => {
+                    let decl_scope = decl.scope_id();
+                    return resolve_global_binding(parent_ident, decl_scope, ctx);
                 }
-            },
-        )
+                // handles "let a = globalThis.JSON; let b = a; a();"
+                Some(parent_expr) if parent_expr.is_member_expression() => {
+                    return global_this_member(parent_expr.to_member_expression());
+                }
+                _ => None,
+            }
+        }
+        _ => None,
     }
 }
 

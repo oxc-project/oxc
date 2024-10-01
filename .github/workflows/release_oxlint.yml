@@ -18,6 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version_changed: ${{ steps.version.outputs.changed }}
+      version: ${{ steps.version.outputs.version }}
     steps:
       - uses: taiki-e/checkout-action@v1
 
@@ -29,10 +30,10 @@ jobs:
           file-url: https://unpkg.com/oxlint@latest/package.json
           file-name: npm/oxlint/package.json
 
-      - name: Set version name
+      - name: Print version
         if: steps.version.outputs.changed == 'true'
         run: |
-          echo "Version change found! New version: ${{ steps.version.outputs.version }} (${{ steps.version.outputs.version_type }})"
+          echo "Version change found! New version: ${{ steps.version.outputs.version }}"
 
   build:
     needs: check
@@ -77,6 +78,8 @@ jobs:
     defaults:
       run:
         shell: bash
+    env:
+      OXC_VERSION: ${{ needs.check.outputs.version }}
     steps:
       - uses: taiki-e/checkout-action@v1
 
@@ -138,13 +141,11 @@ jobs:
 
   publish:
     name: Publish
-    needs: build
+    needs: [check, build]
     runs-on: ubuntu-latest
     permissions:
       contents: write # for softprops/action-gh-release@v1
-      id-token: write # for `npm publish --provenance`
-    outputs:
-      version: ${{ steps.run.outputs.VERSION }}
+      id-token: write # for `pnpm publish --provenance`
     steps:
       - uses: actions/checkout@v4
         with:
@@ -160,7 +161,6 @@ jobs:
         run: |
           mkdir -p target
           cargo release-oxc changelog --release oxlint
-          echo "VERSION=$(cat ./target/OXC_VERSION)" >> $GITHUB_OUTPUT
           {
             echo 'CHANGELOG<<EOF'
             cat ./target/OXC_CHANGELOG
@@ -179,10 +179,7 @@ jobs:
       - name: Untar
         run: ls *.gz | xargs -i tar xf {}
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .node-version
-          registry-url: 'https://registry.npmjs.org'
+      - uses: ./.github/actions/pnpm
 
       - name: Generate npm packages
         run: |
@@ -197,7 +194,7 @@ jobs:
         run: |
           for package in npm/oxlint*
           do
-            npm publish $package/ --tag latest --provenance --access public
+            pnpm publish $package/ --tag latest --provenance --access public --no-git-checks
             echo '----'
           done
 
@@ -207,8 +204,8 @@ jobs:
           body: ${{ steps.run.outputs.CHANGELOG }}
           draft: true
           files: oxlint-*
-          name: oxlint v${{ steps.run.outputs.VERSION }}
-          tag_name: oxlint_v${{ steps.run.outputs.VERSION }}
+          name: oxlint v${{ needs.check.outputs.version }}
+          tag_name: oxlint_v${{ needs.check.outputs.version }}
           fail_on_unmatched_files: true
           target_commitish: ${{ github.sha }}
 
@@ -216,7 +213,7 @@ jobs:
         run: sleep 60s
 
   smoke:
-    needs: publish
+    needs: [check, publish]
     strategy:
       matrix:
         include:
@@ -236,7 +233,7 @@ jobs:
           npx oxlint@${{ needs.check.outputs.version }} ./test.js
 
   eslint-plugin-oxlint:
-    needs: publish
+    needs: [check, publish]
     name: Update eslint-plugin-oxlint
     runs-on: ubuntu-latest
     steps:
@@ -245,6 +242,6 @@ jobs:
         with:
           repo: oxc-project/eslint-plugin-oxlint
           workflow: bump_oxlint.yml
-          token: ${{ secrets.PAT }}
+          token: ${{ secrets.OXC_BOT_PAT }}
           ref: main
-          inputs: '{ "version": "${{ needs.publish.outputs.version }}" }'
+          inputs: '{ "version": "${{ needs.check.outputs.version }}" }'

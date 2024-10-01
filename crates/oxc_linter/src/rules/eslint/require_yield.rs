@@ -5,8 +5,8 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn require_yield_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("This generator function does not have 'yield'").with_label(span0)
+fn require_yield_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("This generator function does not have 'yield'").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -4,10 +4,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_irregular_whitespace_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_irregular_whitespace_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected irregular whitespace")
         .with_help("Try to remove the irregular whitespace")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

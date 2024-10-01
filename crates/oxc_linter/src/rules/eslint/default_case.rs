@@ -6,10 +6,10 @@ use regex::{Regex, RegexBuilder};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn default_case_diagnostic(span0: Span) -> OxcDiagnostic {
+fn default_case_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Require default cases in switch statements.")
         .with_help("Add a default case.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -65,25 +65,30 @@ impl Rule for DefaultCase {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::SwitchStatement(switch) = node.kind() {
             let cases = &switch.cases;
-            if !cases.is_empty() && !cases.iter().any(|case| case.test.is_none()) {
-                if let Some(last_case) = cases.last() {
-                    let has_default_comment = ctx
-                        .semantic()
-                        .trivias()
-                        .comments_range(last_case.span.start..switch.span.end)
-                        .last()
-                        .is_some_and(|comment| {
-                            let raw = comment.span.source_text(ctx.semantic().source_text()).trim();
-                            match &self.comment_pattern {
-                                Some(comment_pattern) => comment_pattern.is_match(raw),
-                                None => raw.eq_ignore_ascii_case("no default"),
-                            }
-                        });
 
-                    if !has_default_comment {
-                        ctx.diagnostic(default_case_diagnostic(switch.span));
+            if cases.is_empty() || cases.iter().any(|case| case.test.is_none()) {
+                return;
+            }
+
+            let Some(last_case) = cases.last() else {
+                return;
+            };
+
+            let has_default_comment = ctx
+                .semantic()
+                .trivias()
+                .comments_range(last_case.span.start..switch.span.end)
+                .last()
+                .is_some_and(|comment| {
+                    let raw = comment.span.source_text(ctx.semantic().source_text()).trim();
+                    match &self.comment_pattern {
+                        Some(comment_pattern) => comment_pattern.is_match(raw),
+                        None => raw.eq_ignore_ascii_case("no default"),
                     }
-                }
+                });
+
+            if !has_default_comment {
+                ctx.diagnostic(default_case_diagnostic(switch.span));
             }
         }
     }

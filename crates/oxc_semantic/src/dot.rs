@@ -7,10 +7,10 @@ use oxc_cfg::{
         dot::{Config, Dot},
         visit::EdgeRef,
     },
-    BasicBlock, ControlFlowGraph, EdgeType, Instruction, InstructionKind, IterationInstructionKind,
-    LabeledInstruction, ReturnInstructionKind,
+    BasicBlock, ControlFlowGraph, EdgeType, ErrorEdgeKind, Instruction, InstructionKind,
+    IterationInstructionKind, LabeledInstruction, ReturnInstructionKind,
 };
-use oxc_syntax::node::AstNodeId;
+use oxc_syntax::node::NodeId;
 
 use crate::{AstNode, AstNodes};
 
@@ -23,15 +23,24 @@ pub trait DebugDot {
 }
 
 #[derive(Clone, Copy)]
-pub struct DebugDotContext<'a, 'b>(&'b AstNodes<'a>);
+pub struct DebugDotContext<'a, 'b> {
+    nodes: &'b AstNodes<'a>,
+    verbose: bool,
+}
 
 impl<'a, 'b> DebugDotContext<'a, 'b> {
-    fn debug_ast_kind(self, id: AstNodeId) -> String {
-        self.0.kind(id).debug_name().into_owned()
+    pub fn new(nodes: &'b AstNodes<'a>, verbose: bool) -> DebugDotContext<'a, 'b> {
+        DebugDotContext { nodes, verbose }
+    }
+}
+
+impl<'a, 'b> DebugDotContext<'a, 'b> {
+    fn debug_ast_kind(self, id: NodeId) -> String {
+        self.nodes.kind(id).debug_name().into_owned()
     }
 
-    fn try_eval_literal(self, id: AstNodeId) -> Option<String> {
-        match self.0.kind(id) {
+    fn try_eval_literal(self, id: NodeId) -> Option<String> {
+        match self.nodes.kind(id) {
             AstKind::NumericLiteral(lit) => Some(lit.value.to_string()),
             AstKind::BooleanLiteral(lit) => Some(lit.value.to_string()),
             AstKind::StringLiteral(lit) => Some(lit.value.to_string()),
@@ -44,7 +53,7 @@ impl<'a, 'b> DebugDotContext<'a, 'b> {
 
 impl<'a, 'b> From<&'b AstNodes<'a>> for DebugDotContext<'a, 'b> {
     fn from(value: &'b AstNodes<'a>) -> Self {
-        Self(value)
+        Self::new(value, true)
     }
 }
 
@@ -57,6 +66,9 @@ impl DebugDot for ControlFlowGraph {
                 &[Config::EdgeNoLabel, Config::NodeNoLabel],
                 &|_graph, edge| {
                     let weight = edge.weight();
+                    if !ctx.verbose && matches!(weight, EdgeType::Error(ErrorEdgeKind::Implicit)) {
+                        return String::new();
+                    }
                     let label = format!("label = \"{weight:?}\" ");
                     if matches!(weight, EdgeType::Unreachable)
                         || self.basic_block(edge.source()).unreachable
@@ -66,10 +78,18 @@ impl DebugDot for ControlFlowGraph {
                         label
                     }
                 },
-                &|_graph, node| format!(
-                    "label = {:?} ",
-                    self.basic_blocks[*node.1].debug_dot(ctx).trim()
-                ),
+                &|_graph, node| {
+                    let basic_block_index = *node.1;
+                    let basic_block_debug_str = self.basic_blocks[*node.1].debug_dot(ctx);
+                    let trimmed_debug_str = basic_block_debug_str.trim();
+                    if trimmed_debug_str.is_empty() {
+                        format!("label = \"bb{basic_block_index}\" shape = box",)
+                    } else {
+                        format!(
+                            "label = \"bb{basic_block_index}\n{trimmed_debug_str}\" shape = box",
+                        )
+                    }
+                },
             )
         )
     }
@@ -110,11 +130,11 @@ impl DebugDot for Instruction {
             }
             InstructionKind::Break(LabeledInstruction::Labeled) => {
                 let Some(AstKind::BreakStatement(BreakStatement { label: Some(label), .. })) =
-                    self.node_id.map(|id| ctx.0.get_node(id)).map(AstNode::kind)
+                    self.node_id.map(|id| ctx.nodes.get_node(id)).map(AstNode::kind)
                 else {
                     unreachable!(
                         "Expected a label node to be associated with an labeled break instruction. {:?}",
-                        ctx.0.kind(self.node_id.unwrap())
+                        ctx.nodes.kind(self.node_id.unwrap())
                     )
                 };
                 format!("break <{}>", label.name)
@@ -123,11 +143,11 @@ impl DebugDot for Instruction {
             InstructionKind::Continue(LabeledInstruction::Labeled) => {
                 let Some(AstKind::ContinueStatement(ContinueStatement {
                     label: Some(label), ..
-                })) = self.node_id.map(|id| ctx.0.get_node(id)).map(AstNode::kind)
+                })) = self.node_id.map(|id| ctx.nodes.get_node(id)).map(AstNode::kind)
                 else {
                     unreachable!(
                         "Expected a label node to be associated with an labeled continue instruction. {:?}",
-                        ctx.0.kind(self.node_id.unwrap())
+                        ctx.nodes.kind(self.node_id.unwrap())
                     )
                 };
                 format!("continue <{}>", label.name)

@@ -12,27 +12,27 @@ use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
 use crate::{context::LintContext, rule::Rule, utils::is_same_reference, AstNode};
 
-fn redundant_left_hand_side(span0: Span, span1: Span, x2: &str) -> OxcDiagnostic {
+fn redundant_left_hand_side(span: Span, span1: Span, help: String) -> OxcDiagnostic {
     OxcDiagnostic::warn("Left-hand side of `&&` operator has no effect.")
-        .with_help(x2.to_string())
+        .with_help(help)
         .with_labels([
-            span0.label("If this evaluates to `true`"),
+            span.label("If this evaluates to `true`"),
             span1.label("This will always evaluate to true."),
         ])
 }
 
-fn redundant_right_hand_side(span0: Span, span1: Span, x2: &str) -> OxcDiagnostic {
+fn redundant_right_hand_side(span: Span, span1: Span, help: String) -> OxcDiagnostic {
     OxcDiagnostic::warn("Right-hand side of `&&` operator has no effect.")
-        .with_help(x2.to_string())
+        .with_help(help)
         .with_labels([
-            span0.label("If this evaluates to `true`"),
+            span.label("If this evaluates to `true`"),
             span1.label("This will always evaluate to true."),
         ])
 }
 
-fn impossible(span0: Span, span1: Span, x2: &str, x3: &str, x4: &str) -> OxcDiagnostic {
+fn impossible(span: Span, span1: Span, x2: &str, x3: &str, x4: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected constant comparison").with_help(x4.to_string()).with_labels([
-        span0.label(format!("Requires that {x2}")),
+        span.label(format!("Requires that {x2}")),
         span1.label(format!("Requires that {x3}")),
     ])
 }
@@ -54,13 +54,16 @@ declare_oxc_lint!(
     /// Only one of the comparisons has any effect on the result, the programmer probably intended to flip one of the comparison operators, or compare a different value entirely.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Bad
     /// status_code <= 400 && status_code > 500;
     /// status_code < 200 && status_code <= 299;
     /// status_code > 500 && status_code >= 500;
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// status_code >= 400 && status_code < 500;
     /// 500 <= status_code && 600 > status_code;
     /// 500 <= status_code && status_code <= 600;
@@ -80,13 +83,13 @@ impl Rule for ConstComparisons {
         }
 
         let Some((right_cmp_op, right_expr, right_const_expr, _)) =
-            comparison_to_const(logical_expr.right.without_parenthesized())
+            comparison_to_const(logical_expr.right.without_parentheses())
         else {
             return;
         };
 
         for (left_cmp_op, left_expr, left_const_expr, left_span) in
-            all_and_comparison_to_const(logical_expr.left.without_parenthesized())
+            all_and_comparison_to_const(logical_expr.left.without_parentheses())
         {
             let Some(ordering) = left_const_expr.value.partial_cmp(&right_const_expr.value) else {
                 return;
@@ -111,9 +114,9 @@ impl Rule for ConstComparisons {
                 // We already know that either side of `&&` has no effect,
                 // but emit a different error message depending on which side it is
                 if left_side_is_useless(left_cmp_op, ordering) {
-                    ctx.diagnostic(redundant_left_hand_side(left_span, logical_expr.right.span(), &format!("if `{rhs_str}` evaluates to true, `{lhs_str}` will always evaluate to true as well")));
+                    ctx.diagnostic(redundant_left_hand_side(left_span, logical_expr.right.span(), format!("if `{rhs_str}` evaluates to true, `{lhs_str}` will always evaluate to true as well")));
                 } else {
-                    ctx.diagnostic(redundant_right_hand_side(logical_expr.right.span(), left_span, &format!("if `{lhs_str}` evaluates to true, `{rhs_str}` will always evaluate to true as well")));
+                    ctx.diagnostic(redundant_right_hand_side(logical_expr.right.span(), left_span, format!("if `{lhs_str}` evaluates to true, `{rhs_str}` will always evaluate to true as well")));
                 }
             } else if !comparison_is_possible(left_cmp_op.direction(), ordering) {
                 let lhs_str = left_const_expr.span.source_text(ctx.source_text());
@@ -135,7 +138,7 @@ impl Rule for ConstComparisons {
 
                 ctx.diagnostic(impossible(
                     left_span,
-                    logical_expr.right.without_parenthesized().span(),
+                    logical_expr.right.without_parentheses().span(),
                     &format!(
                         "`{} {} {}` ",
                         expr_str,
@@ -162,8 +165,7 @@ fn comparison_to_const<'a, 'b>(
 ) -> Option<(CmpOp, &'b Expression<'a>, &'b NumericLiteral<'a>, Span)> {
     if let Expression::BinaryExpression(bin_expr) = expr {
         if let Ok(cmp_op) = CmpOp::try_from(bin_expr.operator) {
-            match (&bin_expr.left.without_parenthesized(), &bin_expr.right.without_parenthesized())
-            {
+            match (&bin_expr.left.without_parentheses(), &bin_expr.right.without_parentheses()) {
                 (Expression::NumericLiteral(lit), _) => {
                     return Some((cmp_op.reverse(), &bin_expr.right, lit, bin_expr.span));
                 }
@@ -185,9 +187,8 @@ fn all_and_comparison_to_const<'a, 'b>(
         Expression::LogicalExpression(logical_expr)
             if logical_expr.operator == LogicalOperator::And =>
         {
-            let left_iter = all_and_comparison_to_const(logical_expr.left.without_parenthesized());
-            let right_iter =
-                all_and_comparison_to_const(logical_expr.right.without_parenthesized());
+            let left_iter = all_and_comparison_to_const(logical_expr.left.without_parentheses());
+            let right_iter = all_and_comparison_to_const(logical_expr.right.without_parentheses());
             Box::new(left_iter.chain(right_iter))
         }
         _ => {

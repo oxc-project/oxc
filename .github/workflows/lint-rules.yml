@@ -5,8 +5,8 @@ on:
     branches:
       - main
     paths:
-      - 'crates/oxc_linter/src/rules.rs'
-      - 'tasks/lint_rules/**'
+      - "crates/oxc_linter/src/rules.rs"
+      - "tasks/lint_rules/**"
 
 jobs:
   lint_rules:
@@ -15,8 +15,7 @@ jobs:
       - name: Checkout Branch
         uses: taiki-e/checkout-action@v1
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version-file: .node-version
 

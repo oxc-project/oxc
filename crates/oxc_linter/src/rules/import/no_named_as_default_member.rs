@@ -12,14 +12,14 @@ use rustc_hash::FxHashMap;
 use crate::{context::LintContext, rule::Rule};
 
 fn no_named_as_default_member_dignostic(
-    span0: Span,
-    x1: &str,
-    x2: &str,
-    x3: &str,
+    span: Span,
+    module_name: &str,
+    export_name: &str,
+    suggested_module_name: &str,
 ) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("{x1:?} also has a named export {x2:?}"))
-        .with_help(format!("Check if you meant to write `import {{{x2:}}} from {x3:?}`"))
-        .with_label(span0)
+    OxcDiagnostic::warn(format!("{module_name:?} also has a named export {export_name:?}"))
+        .with_help(format!("Check if you meant to write `import {{ {export_name} }} from {suggested_module_name:?}`"))
+        .with_label(span)
 }
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/no-named-as-default-member.md>
@@ -29,18 +29,37 @@ pub struct NoNamedAsDefaultMember;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Reports use of an exported name as a property on the default export.
+    /// Reports the use of an exported name (named export) as a property on the
+    /// default export. This occurs when trying to access a named export through
+    /// the default export, which is incorrect.
     ///
-    /// ### Example
+    /// ### Why is this bad?
     ///
+    /// Accessing a named export via the default export is incorrect and will not
+    /// work as expected. Named exports should be imported directly, while default
+    /// exports are accessed without properties. This mistake can lead to runtime
+    /// errors or undefined behavior.
+    ///
+    /// ### Examples
+    ///
+    /// Given
     /// ```javascript
     /// // ./bar.js
     /// export function bar() { return null }
     /// export default () => { return 1 }
+    /// ```
     ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
     /// // ./foo.js
-    /// import bar from './bar'
-    /// const bar = foo.bar // trying to access named export via default
+    /// import foo from './bar'
+    /// const bar = foo.bar; // Incorrect: trying to access named export via default
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// // ./foo.js
+    /// import { bar } from './bar'; // Correct: accessing named export directly
     /// ```
     NoNamedAsDefaultMember,
     suspicious
@@ -86,7 +105,7 @@ impl Rule for NoNamedAsDefaultMember {
                     .and_then(|symbol_id| has_members_map.get(&symbol_id))
                     .and_then(|it| {
                         if it.0.exported_bindings.contains_key(entry_name) {
-                            Some(it.1.to_string())
+                            Some(&it.1)
                         } else {
                             None
                         }
@@ -109,12 +128,12 @@ impl Rule for NoNamedAsDefaultMember {
                     },
                     &ident.name,
                     prop_str,
-                    &module_name,
+                    module_name,
                 ));
             };
         };
 
-        for item in ctx.semantic().nodes().iter() {
+        for item in ctx.semantic().nodes() {
             match item.kind() {
                 AstKind::MemberExpression(member_expr) => process_member_expr(member_expr),
                 AstKind::VariableDeclarator(decl) => {
@@ -136,7 +155,7 @@ impl Rule for NoNamedAsDefaultMember {
                                 decl.span,
                                 &ident.name,
                                 &name,
-                                &module_name,
+                                module_name,
                             ));
                         }
                     }

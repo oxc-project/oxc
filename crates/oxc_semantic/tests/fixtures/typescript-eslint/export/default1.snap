@@ -2,23 +2,27 @@
 source: crates/oxc_semantic/tests/main.rs
 input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/export/default1.ts
 ---
+================================================================================
+SCOPES
+================================================================================
+
 [
   {
     "children": [
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode | Function)",
+        "flags": "ScopeFlags(StrictMode | Function)",
         "id": 1,
         "node": "Function(f)",
         "symbols": []
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(BlockScopedVariable | Export | Function)",
+        "flags": "SymbolFlags(BlockScopedVariable | Export | Function)",
         "id": 0,
         "name": "f",
         "node": "Function(f)",
@@ -27,3 +31,9 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/export/default1
     ]
   }
 ]
+
+================================================================================
+CONFORMANCE
+================================================================================
+
+All tests passed.

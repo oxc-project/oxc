@@ -1,14 +1,15 @@
-use crate::ast::*;
-
-use std::{borrow::Cow, cell::Cell, fmt, hash::Hash};
+use std::{borrow::Cow, cell::Cell, fmt};
 
 use oxc_allocator::{Box, FromIn, Vec};
 use oxc_span::{Atom, GetSpan, SourceType, Span};
 use oxc_syntax::{
     operator::UnaryOperator,
-    reference::{ReferenceFlag, ReferenceId},
-    scope::ScopeFlags,
+    reference::ReferenceId,
+    scope::{ScopeFlags, ScopeId},
+    symbol::SymbolId,
 };
+
+use crate::ast::*;
 
 #[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
@@ -36,15 +37,6 @@ impl<'a> Program<'a> {
         body: Vec<'a, Statement<'a>>,
     ) -> Self {
         Self { span, source_type, directives, hashbang, body, scope_id: Cell::default() }
-    }
-}
-
-impl<'a> Hash for Program<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.source_type.hash(state);
-        self.directives.hash(state);
-        self.hashbang.hash(state);
-        self.body.hash(state);
     }
 }
 
@@ -84,6 +76,12 @@ impl<'a> Expression<'a> {
             )
     }
 
+    /// `true` if this [`Expression`] is a literal expression for a primitive value.
+    ///
+    /// Does not include [`TemplateLiteral`]s, [`object literals`], or [`array literals`].
+    ///
+    /// [`object literals`]: ObjectExpression
+    /// [`array literals`]: ArrayExpression
     pub fn is_literal(&self) -> bool {
         // Note: TemplateLiteral is not `Literal`
         matches!(
@@ -103,6 +101,10 @@ impl<'a> Expression<'a> {
 
     pub fn is_number_literal(&self) -> bool {
         matches!(self, Self::NumericLiteral(_) | Self::BigIntLiteral(_))
+    }
+
+    pub fn is_big_int_literal(&self) -> bool {
+        matches!(self, Self::BigIntLiteral(_))
     }
 
     pub fn is_specific_string_literal(&self, string: &str) -> bool {
@@ -137,12 +139,16 @@ impl<'a> Expression<'a> {
         }
     }
 
+    pub fn is_number(&self) -> bool {
+        matches!(self, Self::NumericLiteral(_))
+    }
+
     /// Determines whether the given expr is a `0`
     pub fn is_number_0(&self) -> bool {
         matches!(self, Self::NumericLiteral(lit) if lit.value == 0.0)
     }
 
-    pub fn is_number(&self, val: f64) -> bool {
+    pub fn is_number_value(&self, val: f64) -> bool {
         matches!(self, Self::NumericLiteral(lit) if (lit.value - val).abs() < f64::EPSILON)
     }
 
@@ -157,6 +163,8 @@ impl<'a> Expression<'a> {
     }
 
     /// Determines whether the given expr is a `null` or `undefined` or `void 0`
+    ///
+    /// Corresponds to a [nullish value check](https://developer.mozilla.org/en-US/docs/Glossary/Nullish).
     pub fn is_null_or_undefined(&self) -> bool {
         self.is_null() || self.evaluate_to_undefined()
     }
@@ -167,11 +175,12 @@ impl<'a> Expression<'a> {
     }
 
     /// Remove nested parentheses from this expression.
-    pub fn without_parenthesized(&self) -> &Self {
-        match self {
-            Expression::ParenthesizedExpression(expr) => expr.expression.without_parenthesized(),
-            _ => self,
+    pub fn without_parentheses(&self) -> &Self {
+        let mut expr = self;
+        while let Expression::ParenthesizedExpression(paran_expr) = expr {
+            expr = &paran_expr.expression;
         }
+        expr
     }
 
     pub fn is_specific_id(&self, name: &str) -> bool {
@@ -197,15 +206,35 @@ impl<'a> Expression<'a> {
     }
 
     pub fn get_inner_expression(&self) -> &Expression<'a> {
-        match self {
-            Expression::ParenthesizedExpression(expr) => expr.expression.get_inner_expression(),
-            Expression::TSAsExpression(expr) => expr.expression.get_inner_expression(),
-            Expression::TSSatisfiesExpression(expr) => expr.expression.get_inner_expression(),
-            Expression::TSInstantiationExpression(expr) => expr.expression.get_inner_expression(),
-            Expression::TSNonNullExpression(expr) => expr.expression.get_inner_expression(),
-            Expression::TSTypeAssertion(expr) => expr.expression.get_inner_expression(),
-            _ => self,
+        let mut expr = self;
+        loop {
+            expr = match expr {
+                Expression::ParenthesizedExpression(e) => &e.expression,
+                Expression::TSAsExpression(e) => &e.expression,
+                Expression::TSSatisfiesExpression(e) => &e.expression,
+                Expression::TSInstantiationExpression(e) => &e.expression,
+                Expression::TSNonNullExpression(e) => &e.expression,
+                Expression::TSTypeAssertion(e) => &e.expression,
+                _ => break,
+            };
         }
+        expr
+    }
+
+    pub fn get_inner_expression_mut(&mut self) -> &mut Expression<'a> {
+        let mut expr = self;
+        loop {
+            expr = match expr {
+                Expression::ParenthesizedExpression(e) => &mut e.expression,
+                Expression::TSAsExpression(e) => &mut e.expression,
+                Expression::TSSatisfiesExpression(e) => &mut e.expression,
+                Expression::TSInstantiationExpression(e) => &mut e.expression,
+                Expression::TSNonNullExpression(e) => &mut e.expression,
+                Expression::TSTypeAssertion(e) => &mut e.expression,
+                _ => break,
+            };
+        }
+        expr
     }
 
     pub fn is_identifier_reference(&self) -> bool {
@@ -242,7 +271,10 @@ impl<'a> Expression<'a> {
 
     /// Returns literal's value converted to the Boolean type
     /// returns `true` when node is truthy, `false` when node is falsy, `None` when it cannot be determined.
-    pub fn get_boolean_value(&self) -> Option<bool> {
+    /// <https://tc39.es/ecma262/#sec-toboolean>
+    /// 1. If argument is a Boolean, return argument.
+    /// 2. If argument is one of undefined, null, +0𝔽, -0𝔽, NaN, 0ℤ, or the empty String, return false.
+    pub fn to_boolean(&self) -> Option<bool> {
         match self {
             Self::BooleanLiteral(lit) => Some(lit.value),
             Self::NullLiteral(_) => Some(false),
@@ -277,6 +309,14 @@ impl<'a> Expression<'a> {
             _ => false,
         }
     }
+
+    pub fn is_require_call(&self) -> bool {
+        if let Self::CallExpression(call_expr) = self {
+            call_expr.is_require_call()
+        } else {
+            false
+        }
+    }
 }
 
 impl<'a> IdentifierName<'a> {
@@ -285,24 +325,26 @@ impl<'a> IdentifierName<'a> {
     }
 }
 
-impl<'a> Hash for IdentifierReference<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.name.hash(state);
+impl<'a> fmt::Display for IdentifierName<'a> {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.name.fmt(f)
     }
 }
 
 impl<'a> IdentifierReference<'a> {
+    #[inline]
     pub fn new(span: Span, name: Atom<'a>) -> Self {
-        Self { span, name, reference_id: Cell::default(), reference_flag: ReferenceFlag::default() }
+        Self { span, name, reference_id: Cell::default() }
     }
 
-    pub fn new_read(span: Span, name: Atom<'a>, reference_id: Option<ReferenceId>) -> Self {
-        Self {
-            span,
-            name,
-            reference_id: Cell::new(reference_id),
-            reference_flag: ReferenceFlag::Read,
-        }
+    #[inline]
+    pub fn new_with_reference_id(
+        span: Span,
+        name: Atom<'a>,
+        reference_id: Option<ReferenceId>,
+    ) -> Self {
+        Self { span, name, reference_id: Cell::new(reference_id) }
     }
 
     #[inline]
@@ -311,15 +353,26 @@ impl<'a> IdentifierReference<'a> {
     }
 }
 
-impl<'a> Hash for BindingIdentifier<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.name.hash(state);
+impl<'a> fmt::Display for IdentifierReference<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.name.fmt(f)
     }
 }
 
 impl<'a> BindingIdentifier<'a> {
     pub fn new(span: Span, name: Atom<'a>) -> Self {
         Self { span, name, symbol_id: Cell::default() }
+    }
+
+    pub fn new_with_symbol_id(span: Span, name: Atom<'a>, symbol_id: SymbolId) -> Self {
+        Self { span, name, symbol_id: Cell::new(Some(symbol_id)) }
+    }
+}
+
+impl<'a> fmt::Display for BindingIdentifier<'a> {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.name.fmt(f)
     }
 }
 
@@ -330,6 +383,7 @@ impl<'a> ArrayExpressionElement<'a> {
 }
 
 impl<'a> ObjectExpression<'a> {
+    /// Returns `true` if this object has a property named `__proto__`
     pub fn has_proto(&self) -> bool {
         use crate::syntax_directed_operations::PropName;
         self.properties.iter().any(|p| p.prop_name().is_some_and(|name| name.0 == "__proto__"))
@@ -345,12 +399,9 @@ impl<'a> PropertyKey<'a> {
             Self::NumericLiteral(lit) => Some(Cow::Owned(lit.value.to_string())),
             Self::BigIntLiteral(lit) => Some(Cow::Borrowed(lit.raw.as_str())),
             Self::NullLiteral(_) => Some(Cow::Borrowed("null")),
-            Self::TemplateLiteral(lit) => lit
-                .expressions
-                .is_empty()
-                .then(|| lit.quasi())
-                .flatten()
-                .map(std::convert::Into::into),
+            Self::TemplateLiteral(lit) => {
+                lit.expressions.is_empty().then(|| lit.quasi()).flatten().map(Into::into)
+            }
             _ => None,
         }
     }
@@ -394,6 +445,15 @@ impl<'a> PropertyKey<'a> {
     }
 }
 
+impl PropertyKind {
+    /// Returns `true` if this property is a getter or setter.
+    ///
+    /// Analogous to [`MethodDefinitionKind::is_accessor`].
+    pub fn is_accessor(self) -> bool {
+        matches!(self, Self::Get | Self::Set)
+    }
+}
+
 impl<'a> TemplateLiteral<'a> {
     pub fn is_no_substitution_template(&self) -> bool {
         self.expressions.is_empty() && self.quasis.len() == 1
@@ -426,7 +486,7 @@ impl<'a> MemberExpression<'a> {
         }
     }
 
-    pub fn static_property_name(&self) -> Option<&str> {
+    pub fn static_property_name(&self) -> Option<&'a str> {
         match self {
             MemberExpression::ComputedMemberExpression(expr) => {
                 expr.static_property_name().map(|name| name.as_str())
@@ -436,13 +496,13 @@ impl<'a> MemberExpression<'a> {
         }
     }
 
-    pub fn static_property_info(&self) -> Option<(Span, &str)> {
+    pub fn static_property_info(&self) -> Option<(Span, &'a str)> {
         match self {
             MemberExpression::ComputedMemberExpression(expr) => match &expr.expression {
-                Expression::StringLiteral(lit) => Some((lit.span, &lit.value)),
+                Expression::StringLiteral(lit) => Some((lit.span, lit.value.as_str())),
                 Expression::TemplateLiteral(lit) => {
                     if lit.expressions.is_empty() && lit.quasis.len() == 1 {
-                        Some((lit.span, &lit.quasis[0].value.raw))
+                        Some((lit.span, lit.quasis[0].value.raw.as_str()))
                     } else {
                         None
                     }
@@ -450,19 +510,19 @@ impl<'a> MemberExpression<'a> {
                 _ => None,
             },
             MemberExpression::StaticMemberExpression(expr) => {
-                Some((expr.property.span, &expr.property.name))
+                Some((expr.property.span, expr.property.name.as_str()))
             }
             MemberExpression::PrivateFieldExpression(_) => None,
         }
     }
 
     pub fn through_optional_is_specific_member_access(&self, object: &str, property: &str) -> bool {
-        let object_matches = match self.object().without_parenthesized() {
+        let object_matches = match self.object().without_parentheses() {
             Expression::ChainExpression(x) => match &x.expression {
                 ChainElement::CallExpression(_) => false,
                 match_member_expression!(ChainElement) => {
                     let member_expr = x.expression.to_member_expression();
-                    member_expr.object().without_parenthesized().is_specific_id(object)
+                    member_expr.object().without_parentheses().is_specific_id(object)
                 }
             },
             x => x.is_specific_id(object),
@@ -571,17 +631,21 @@ impl Argument<'_> {
 }
 
 impl<'a> AssignmentTarget<'a> {
-    pub fn get_identifier(&self) -> Option<&str> {
-        self.as_simple_assignment_target().and_then(|it| it.get_identifier())
+    pub fn get_identifier(&self) -> Option<&'a str> {
+        self.as_simple_assignment_target().and_then(SimpleAssignmentTarget::get_identifier)
     }
 
     pub fn get_expression(&self) -> Option<&Expression<'a>> {
-        self.as_simple_assignment_target().and_then(|it| it.get_expression())
+        self.as_simple_assignment_target().and_then(SimpleAssignmentTarget::get_expression)
+    }
+
+    pub fn get_expression_mut(&mut self) -> Option<&mut Expression<'a>> {
+        self.as_simple_assignment_target_mut().and_then(SimpleAssignmentTarget::get_expression_mut)
     }
 }
 
 impl<'a> SimpleAssignmentTarget<'a> {
-    pub fn get_identifier(&self) -> Option<&str> {
+    pub fn get_identifier(&self) -> Option<&'a str> {
         match self {
             Self::AssignmentTargetIdentifier(ident) => Some(ident.name.as_str()),
             match_member_expression!(Self) => self.to_member_expression().static_property_name(),
@@ -595,6 +659,17 @@ impl<'a> SimpleAssignmentTarget<'a> {
             Self::TSSatisfiesExpression(expr) => Some(&expr.expression),
             Self::TSNonNullExpression(expr) => Some(&expr.expression),
             Self::TSTypeAssertion(expr) => Some(&expr.expression),
+            _ => None,
+        }
+    }
+
+    pub fn get_expression_mut(&mut self) -> Option<&mut Expression<'a>> {
+        match self {
+            Self::TSAsExpression(expr) => Some(&mut expr.expression),
+            Self::TSSatisfiesExpression(expr) => Some(&mut expr.expression),
+            Self::TSNonNullExpression(expr) => Some(&mut expr.expression),
+            Self::TSTypeAssertion(expr) => Some(&mut expr.expression),
+            Self::TSInstantiationExpression(expr) => Some(&mut expr.expression),
             _ => None,
         }
     }
@@ -668,10 +743,10 @@ impl<'a> Statement<'a> {
 }
 
 impl<'a> FromIn<'a, Expression<'a>> for Statement<'a> {
-    fn from_in(expression: Expression<'a>, alloc: &'a oxc_allocator::Allocator) -> Self {
+    fn from_in(expression: Expression<'a>, allocator: &'a oxc_allocator::Allocator) -> Self {
         Statement::ExpressionStatement(Box::from_in(
             ExpressionStatement { span: expression.span(), expression },
-            alloc,
+            allocator,
         ))
     }
 }
@@ -689,11 +764,9 @@ impl<'a> BlockStatement<'a> {
     pub fn new(span: Span, body: Vec<'a, Statement<'a>>) -> Self {
         Self { span, body, scope_id: Cell::default() }
     }
-}
 
-impl<'a> Hash for BlockStatement<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.body.hash(state);
+    pub fn new_with_scope_id(span: Span, body: Vec<'a, Statement<'a>>, scope_id: ScopeId) -> Self {
+        Self { span, body, scope_id: Cell::new(Some(scope_id)) }
     }
 }
 
@@ -703,7 +776,6 @@ impl<'a> Declaration<'a> {
             Self::VariableDeclaration(decl) => decl.is_typescript_syntax(),
             Self::FunctionDeclaration(func) => func.is_typescript_syntax(),
             Self::ClassDeclaration(class) => class.is_typescript_syntax(),
-            Self::UsingDeclaration(_) => false,
             _ => true,
         }
     }
@@ -729,7 +801,7 @@ impl<'a> Declaration<'a> {
             Declaration::TSTypeAliasDeclaration(decl) => decl.declare,
             Declaration::TSModuleDeclaration(decl) => decl.declare,
             Declaration::TSInterfaceDeclaration(decl) => decl.declare,
-            _ => false,
+            Declaration::TSImportEqualsDeclaration(_) => false,
         }
     }
 }
@@ -757,11 +829,17 @@ impl VariableDeclarationKind {
         matches!(self, Self::Const | Self::Let)
     }
 
+    pub fn is_await(&self) -> bool {
+        matches!(self, Self::AwaitUsing)
+    }
+
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::Var => "var",
             Self::Const => "const",
             Self::Let => "let",
+            Self::Using => "using",
+            Self::AwaitUsing => "await using",
         }
     }
 }
@@ -785,15 +863,6 @@ impl<'a> ForStatement<'a> {
     }
 }
 
-impl<'a> Hash for ForStatement<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.init.hash(state);
-        self.test.hash(state);
-        self.update.hash(state);
-        self.body.hash(state);
-    }
-}
-
 impl<'a> ForStatementInit<'a> {
     /// LexicalDeclaration[In, Yield, Await] :
     ///   LetOrConst BindingList[?In, ?Yield, ?Await] ;
@@ -813,14 +882,6 @@ impl<'a> ForInStatement<'a> {
     }
 }
 
-impl<'a> Hash for ForInStatement<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.left.hash(state);
-        self.right.hash(state);
-        self.body.hash(state);
-    }
-}
-
 impl<'a> ForOfStatement<'a> {
     pub fn new(
         span: Span,
@@ -830,15 +891,6 @@ impl<'a> ForOfStatement<'a> {
         body: Statement<'a>,
     ) -> Self {
         Self { span, r#await, left, right, body, scope_id: Cell::default() }
-    }
-}
-
-impl<'a> Hash for ForOfStatement<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.r#await.hash(state);
-        self.left.hash(state);
-        self.right.hash(state);
-        self.body.hash(state);
     }
 }
 
@@ -853,13 +905,6 @@ impl<'a> ForStatementLeft<'a> {
 impl<'a> SwitchStatement<'a> {
     pub fn new(span: Span, discriminant: Expression<'a>, cases: Vec<'a, SwitchCase<'a>>) -> Self {
         Self { span, discriminant, cases, scope_id: Cell::default() }
-    }
-}
-
-impl<'a> Hash for SwitchStatement<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.discriminant.hash(state);
-        self.cases.hash(state);
     }
 }
 
@@ -879,18 +924,7 @@ impl<'a> CatchClause<'a> {
     }
 }
 
-impl<'a> Hash for CatchClause<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.param.hash(state);
-        self.body.hash(state);
-    }
-}
-
 impl<'a> BindingPattern<'a> {
-    pub fn new_with_kind(kind: BindingPatternKind<'a>) -> Self {
-        Self { kind, type_annotation: None, optional: false }
-    }
-
     pub fn get_identifier(&self) -> Option<Atom<'a>> {
         self.kind.get_identifier()
     }
@@ -963,7 +997,7 @@ impl<'a> Function<'a> {
         generator: bool,
         r#async: bool,
         declare: bool,
-        this_param: Option<TSThisParameter<'a>>,
+        this_param: Option<Box<'a, TSThisParameter<'a>>>,
         params: Box<'a, FormalParameters<'a>>,
         body: Option<Box<'a, FunctionBody<'a>>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
@@ -983,6 +1017,20 @@ impl<'a> Function<'a> {
             return_type,
             scope_id: Cell::default(),
         }
+    }
+
+    /// Returns this [`Function`]'s name, if it has one.
+    #[inline]
+    pub fn name(&self) -> Option<Atom<'a>> {
+        self.id.as_ref().map(|id| id.name.clone())
+    }
+
+    /// Get the [`SymbolId`] this [`Function`] is bound to.
+    ///
+    /// Returns [`None`] for anonymous functions, or if semantic analysis was skipped.
+    #[inline]
+    pub fn symbol_id(&self) -> Option<SymbolId> {
+        self.id.as_ref().and_then(|id| id.symbol_id.get())
     }
 
     pub fn is_typescript_syntax(&self) -> bool {
@@ -1011,21 +1059,6 @@ impl<'a> Function<'a> {
 
     pub fn is_strict(&self) -> bool {
         self.body.as_ref().is_some_and(|body| body.has_use_strict_directive())
-    }
-}
-
-impl<'a> Hash for Function<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.r#type.hash(state);
-        self.id.hash(state);
-        self.generator.hash(state);
-        self.r#async.hash(state);
-        self.declare.hash(state);
-        self.this_param.hash(state);
-        self.params.hash(state);
-        self.body.hash(state);
-        self.type_parameters.hash(state);
-        self.return_type.hash(state);
     }
 }
 
@@ -1064,6 +1097,7 @@ impl<'a> FormalParameters<'a> {
     pub fn is_empty(&self) -> bool {
         self.items.is_empty()
     }
+
     pub fn has_parameter(&self) -> bool {
         !self.is_empty() || self.rest.is_some()
     }
@@ -1109,17 +1143,6 @@ impl<'a> ArrowFunctionExpression<'a> {
             }
         }
         None
-    }
-}
-
-impl<'a> Hash for ArrowFunctionExpression<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.expression.hash(state);
-        self.r#async.hash(state);
-        self.params.hash(state);
-        self.body.hash(state);
-        self.type_parameters.hash(state);
-        self.return_type.hash(state);
     }
 }
 
@@ -1181,22 +1204,14 @@ impl<'a> Class<'a> {
     }
 }
 
-impl<'a> Hash for Class<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.r#type.hash(state);
-        self.decorators.hash(state);
-        self.id.hash(state);
-        self.super_class.hash(state);
-        self.body.hash(state);
-        self.type_parameters.hash(state);
-        self.super_type_parameters.hash(state);
-        self.implements.hash(state);
-        self.r#abstract.hash(state);
-        self.declare.hash(state);
-    }
-}
-
 impl<'a> ClassElement<'a> {
+    /// Returns `true` if this is a [`ClassElement::StaticBlock`].
+    pub fn is_static_block(&self) -> bool {
+        matches!(self, Self::StaticBlock(_))
+    }
+
+    /// Returns `true` if this [`ClassElement`] is a static block or has a
+    /// static modifier.
     pub fn r#static(&self) -> bool {
         match self {
             Self::TSIndexSignature(_) | Self::StaticBlock(_) => false,
@@ -1251,6 +1266,7 @@ impl<'a> ClassElement<'a> {
         }
     }
 
+    /// Returns `true` if this [`ClassElement`] is a property or accessor
     pub fn is_property(&self) -> bool {
         matches!(self, Self::PropertyDefinition(_) | Self::AccessorProperty(_))
     }
@@ -1327,6 +1343,13 @@ impl MethodDefinitionKind {
         matches!(self, Self::Get)
     }
 
+    /// Returns `true` if this method is a getter or a setter.
+    ///
+    /// Analogous to [`PropertyKind::is_accessor`].
+    pub fn is_accessor(&self) -> bool {
+        matches!(self, Self::Get | Self::Set)
+    }
+
     pub fn scope_flags(self) -> ScopeFlags {
         match self {
             Self::Constructor => ScopeFlags::Constructor | ScopeFlags::Function,
@@ -1352,12 +1375,6 @@ impl<'a> PrivateIdentifier<'a> {
 impl<'a> StaticBlock<'a> {
     pub fn new(span: Span, body: Vec<'a, Statement<'a>>) -> Self {
         Self { span, body, scope_id: Cell::default() }
-    }
-}
-
-impl<'a> Hash for StaticBlock<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.body.hash(state);
     }
 }
 
@@ -1403,7 +1420,7 @@ impl<'a> ModuleDeclaration<'a> {
         }
     }
 
-    pub fn with_clause(&self) -> Option<&WithClause<'a>> {
+    pub fn with_clause(&self) -> Option<&Box<'a, WithClause<'a>>> {
         match self {
             Self::ImportDeclaration(decl) => decl.with_clause.as_ref(),
             Self::ExportAllDeclaration(decl) => decl.with_clause.as_ref(),
@@ -1429,6 +1446,7 @@ impl<'a> ImportDeclarationSpecifier<'a> {
             ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => &specifier.local,
         }
     }
+
     pub fn name(&self) -> Cow<'a, str> {
         Cow::Borrowed(self.local().name.as_str())
     }

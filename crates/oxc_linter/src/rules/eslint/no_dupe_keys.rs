@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{ObjectPropertyKind, PropertyKind},
+    ast::{ObjectPropertyKind, PropertyKey, PropertyKind},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -9,10 +9,13 @@ use rustc_hash::{FxBuildHasher, FxHashMap};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_dupe_keys_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow duplicate keys in object literals")
+fn no_dupe_keys_diagnostic(first: Span, second: Span, key: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Duplicate key '{key}'"))
         .with_help("Consider removing the duplicated key")
-        .with_labels([span0, span1])
+        .with_labels([
+            first.label("Key is first defined here"),
+            second.label("and duplicated here"),
+        ])
 }
 
 #[derive(Debug, Default, Clone)]
@@ -25,14 +28,38 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Multiple properties with the same key in object literals can cause unexpected behavior in your application.
+    /// Multiple properties with the same key in object literals can cause
+    /// unexpected behavior in your application.
+    ///
+    /// It is safe to disable this rule when using TypeScript because
+    /// TypeScript's compiler enforces this check.
     ///
     /// ### Example
-    /// ```javascript
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```js
     /// var foo = {
     ///     bar: "baz",
     ///     bar: "qux"
-    /// }
+    /// };
+    ///
+    /// var foo = {
+    ///     "bar": "baz",
+    ///     bar: "qux"
+    /// };
+    ///
+    /// var foo = {
+    ///     0x1: "baz",
+    ///     1: "qux"
+    /// };
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```js
+    /// var foo = {
+    ///     bar: "baz",
+    ///     qux: "qux"
+    /// };
     /// ```
     NoDupeKeys,
     correctness
@@ -60,13 +87,24 @@ impl Rule for NoDupeKeys {
                     || prop.kind == PropertyKind::Init
                     || prev_kind == prop.kind
                 {
-                    ctx.diagnostic(no_dupe_keys_diagnostic(prev_span, prop.key.span()));
+                    let name = prop_key_name(&prop.key, ctx);
+                    ctx.diagnostic(no_dupe_keys_diagnostic(prev_span, prop.key.span(), name));
                 }
             }
         }
     }
 }
 
+fn prop_key_name<'a>(key: &PropertyKey<'a>, ctx: &LintContext<'a>) -> &'a str {
+    match key {
+        PropertyKey::Identifier(ident) => ident.name.as_str(),
+        PropertyKey::StaticIdentifier(ident) => ident.name.as_str(),
+        PropertyKey::PrivateIdentifier(ident) => ident.name.as_str(),
+        PropertyKey::StringLiteral(lit) => lit.value.as_str(),
+        PropertyKey::NumericLiteral(lit) => lit.raw,
+        _ => ctx.source_range(key.span()),
+    }
+}
 #[test]
 fn test() {
     use crate::tester::Tester;

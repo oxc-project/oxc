@@ -20,18 +20,22 @@ bitflags! {
 }
 
 impl ElementKind {
+    #[inline]
     pub fn is_property(self) -> bool {
         self.contains(Self::Property)
     }
 
+    #[inline]
     pub fn is_method(self) -> bool {
         self.contains(Self::Method)
     }
 
+    #[inline]
     pub fn is_accessor(self) -> bool {
         self.contains(Self::Accessor)
     }
 
+    #[inline]
     pub fn is_setter_or_getter(self) -> bool {
         self.intersects(Self::Setter | Self::Getter)
     }

@@ -4,10 +4,14 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use phf::{phf_map, Map};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    AstNode,
+};
 
-fn no_unescaped_entities_diagnostic(span0: Span, x1: char, x2: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("`{x1}` can be escaped with {x2}")).with_label(span0)
+fn no_unescaped_entities_diagnostic(span: Span, unescaped: char, escaped: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("`{unescaped}` can be escaped with {escaped}")).with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -62,7 +66,7 @@ impl Rule for NoUnescapedEntities {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_jsx()
     }
 }

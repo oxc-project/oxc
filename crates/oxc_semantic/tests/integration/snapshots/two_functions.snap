@@ -44,16 +44,20 @@ bb9: {
 }
 
 digraph {
-    0 [ label = "" ]
-    1 [ label = "" ]
-    2 [ label = "" ]
-    3 [ label = "return <value>" ]
-    4 [ label = "unreachable" ]
-    5 [ label = "" ]
-    6 [ label = "" ]
-    7 [ label = "return <value>" ]
-    8 [ label = "unreachable" ]
-    9 [ label = "" ]
+    0 [ label = "bb0" shape = box]
+    1 [ label = "bb1" shape = box]
+    2 [ label = "bb2" shape = box]
+    3 [ label = "bb3
+return <value>" shape = box]
+    4 [ label = "bb4
+unreachable" shape = box]
+    5 [ label = "bb5" shape = box]
+    6 [ label = "bb6" shape = box]
+    7 [ label = "bb7
+return <value>" shape = box]
+    8 [ label = "bb8
+unreachable" shape = box]
+    9 [ label = "bb9" shape = box]
     1 -> 0 [ label = "Error(Implicit)" ]
     3 -> 2 [ label = "Error(Implicit)" ]
     1 -> 3 [ label = "NewFunction" ]

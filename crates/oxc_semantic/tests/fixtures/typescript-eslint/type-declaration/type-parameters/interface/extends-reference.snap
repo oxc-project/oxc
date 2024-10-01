@@ -2,38 +2,42 @@
 source: crates/oxc_semantic/tests/main.rs
 input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaration/type-parameters/interface/extends-reference.ts
 ---
+================================================================================
+SCOPES
+================================================================================
+
 [
   {
     "children": [
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 1,
         "node": "TSInterfaceDeclaration",
         "symbols": [
           {
-            "flag": "SymbolFlags(TypeParameter)",
+            "flags": "SymbolFlags(TypeParameter)",
             "id": 1,
             "name": "T",
-            "node": "TSTypeParameter",
+            "node": "TSTypeParameter(T)",
             "references": []
           }
         ]
       },
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 2,
         "node": "TSInterfaceDeclaration",
         "symbols": [
           {
-            "flag": "SymbolFlags(TypeParameter)",
+            "flags": "SymbolFlags(TypeParameter)",
             "id": 3,
             "name": "T",
-            "node": "TSTypeParameter",
+            "node": "TSTypeParameter(T)",
             "references": [
               {
-                "flag": "ReferenceFlag(Type)",
+                "flags": "ReferenceFlags(Type)",
                 "id": 1,
                 "name": "T",
                 "node_id": 13
@@ -43,18 +47,18 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         ]
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(Interface)",
+        "flags": "SymbolFlags(Interface)",
         "id": 0,
         "name": "A",
         "node": "TSInterfaceDeclaration",
         "references": [
           {
-            "flag": "ReferenceFlag(Type)",
+            "flags": "ReferenceFlags(Type)",
             "id": 0,
             "name": "A",
             "node_id": 9
@@ -62,7 +66,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         ]
       },
       {
-        "flag": "SymbolFlags(Interface)",
+        "flags": "SymbolFlags(Interface)",
         "id": 2,
         "name": "Foo",
         "node": "TSInterfaceDeclaration",
@@ -71,3 +75,9 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
     ]
   }
 ]
+
+================================================================================
+CONFORMANCE
+================================================================================
+
+All tests passed.

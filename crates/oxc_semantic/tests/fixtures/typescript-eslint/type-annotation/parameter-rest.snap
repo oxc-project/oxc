@@ -2,24 +2,28 @@
 source: crates/oxc_semantic/tests/main.rs
 input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-annotation/parameter-rest.ts
 ---
+================================================================================
+SCOPES
+================================================================================
+
 [
   {
     "children": [
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 1,
         "node": "TSTypeAliasDeclaration",
         "symbols": []
       },
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode | Function)",
+        "flags": "ScopeFlags(StrictMode | Function)",
         "id": 2,
         "node": "Function(foo)",
         "symbols": [
           {
-            "flag": "SymbolFlags(FunctionScopedVariable)",
+            "flags": "SymbolFlags(FunctionScopedVariable)",
             "id": 2,
             "name": "a",
             "node": "BindingRestElement",
@@ -28,18 +32,18 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-annotation
         ]
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(TypeAlias)",
+        "flags": "SymbolFlags(TypeAlias)",
         "id": 0,
         "name": "T",
         "node": "TSTypeAliasDeclaration",
         "references": [
           {
-            "flag": "ReferenceFlag(Type)",
+            "flags": "ReferenceFlags(Type)",
             "id": 0,
             "name": "T",
             "node_id": 13
@@ -47,7 +51,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-annotation
         ]
       },
       {
-        "flag": "SymbolFlags(BlockScopedVariable | Function)",
+        "flags": "SymbolFlags(BlockScopedVariable | Function)",
         "id": 1,
         "name": "foo",
         "node": "Function(foo)",
@@ -56,3 +60,9 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-annotation
     ]
   }
 ]
+
+================================================================================
+CONFORMANCE
+================================================================================
+
+All tests passed.

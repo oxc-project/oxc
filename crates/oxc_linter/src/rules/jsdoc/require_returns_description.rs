@@ -10,10 +10,10 @@ use crate::{
     AstNode,
 };
 
-fn missing_description_diagnostic(span0: Span) -> OxcDiagnostic {
+fn missing_description_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing JSDoc `@returns` description.")
         .with_help("Add description comment to `@returns` tag.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -21,20 +21,25 @@ pub struct RequireReturnsDescription;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Requires that the `@returns` tag has a description value.
     /// The error will not be reported if the return value is `void `or `undefined` or if it is `Promise<void>` or `Promise<undefined>`.
     ///
     /// ### Why is this bad?
+    ///
     /// A `@returns` tag should have a description value.
     ///
-    /// ### Example
-    /// ```javascript
-    /// // Passing
-    /// /** @returns Foo. */
-    /// function quux (foo) {}
+    /// ### Examples
     ///
-    /// // Failing
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
     /// /** @returns */
+    /// function quux (foo) {}
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// /** @returns Foo. */
     /// function quux (foo) {}
     /// ```
     RequireReturnsDescription,

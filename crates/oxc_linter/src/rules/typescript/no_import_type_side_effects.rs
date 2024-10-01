@@ -6,12 +6,17 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
+use crate::{
+    context::{ContextHost, LintContext},
+    fixer::Fix,
+    rule::Rule,
+    AstNode,
+};
 
-fn no_import_type_side_effects_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_import_type_side_effects_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("TypeScript will only remove the inline type specifiers which will leave behind a side effect import at runtime.")
         .with_help("Convert this to a top-level type qualifier to properly remove the entire import.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -20,31 +25,37 @@ pub struct NoImportTypeSideEffects;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce the use of top-level import type qualifier when an import only has specifiers with inline type qualifiers.
+    /// Enforce the use of top-level `import type` qualifier when an import only
+    /// has specifiers with inline type qualifiers.
     ///
     /// ### Why is this bad?
     ///
-    /// The `--verbatimModuleSyntax` compiler option causes TypeScript to do simple and predictable transpilation on import declarations.
-    /// Namely, it completely removes import declarations with a top-level type qualifier, and it removes any import specifiers with an inline type qualifier.
+    /// The `--verbatimModuleSyntax` compiler option causes TypeScript to do
+    /// simple and predictable transpilation on import declarations.  Namely, it
+    /// completely removes import declarations with a top-level type qualifier,
+    /// and it removes any import specifiers with an inline type qualifier.
     ///
-    /// The latter behavior does have one potentially surprising effect in that in certain cases TS can leave behind a "side effect" import at runtime:
-
-    /// ```javascript
+    /// The latter behavior does have one potentially surprising effect in that
+    /// in certain cases TS can leave behind a "side effect" import at runtime:
+    ///
+    /// ```ts
     /// import { type A, type B } from 'mod';
     /// ```
-
+    ///
     /// is transpiled to
     ///
-    /// ```javascript
+    /// ```ts
     /// import {} from 'mod';
-    /// which is the same as
+    /// // which is the same as
     /// import 'mod';
     /// ```
-
-    /// For the rare case of needing to import for side effects, this may be desirable - but for most cases you will not want to leave behind an unnecessary side effect import.
+    ///
+    /// For the rare case of needing to import for side effects, this may be
+    /// desirable - but for most cases you will not want to leave behind an
+    /// unnecessary side effect import.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```ts
     /// import { type A } from 'mod';
     /// import { type A as AA } from 'mod';
     /// import { type A, type B } from 'mod';
@@ -52,6 +63,7 @@ declare_oxc_lint!(
     /// ```
     NoImportTypeSideEffects,
     restriction,
+    fix
 );
 
 impl Rule for NoImportTypeSideEffects {
@@ -110,7 +122,7 @@ impl Rule for NoImportTypeSideEffects {
         );
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
     }
 }

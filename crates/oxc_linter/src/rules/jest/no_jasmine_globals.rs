@@ -34,7 +34,8 @@ declare_oxc_lint!(
     /// });
     /// ```
     NoJasmineGlobals,
-    style
+    style,
+    conditional_fix
 );
 
 const NON_JASMINE_PROPERTY_NAMES: [&str; 4] = ["spyOn", "spyOnProperty", "fail", "pending"];
@@ -51,7 +52,7 @@ impl Rule for NoJasmineGlobals {
             .filter(|(key, _)| NON_JASMINE_PROPERTY_NAMES.contains(&key.as_str()));
 
         for (name, reference_ids) in jasmine_references {
-            for &(reference_id, _) in reference_ids {
+            for &reference_id in reference_ids {
                 let reference = symbol_table.get_reference(reference_id);
                 if let Some((error, help)) = get_non_jasmine_property_messages(name) {
                     ctx.diagnostic(no_jasmine_globals_diagnostic(

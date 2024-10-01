@@ -78,6 +78,7 @@ declare_oxc_lint!(
     ///```
     NoUselessConstructor,
     suspicious,
+    fix
 );
 
 impl Rule for NoUselessConstructor {

@@ -1,150 +1,150 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-unicorn(no-process-exit): Disallow `process.exit()`.
+  ⚠ eslint-plugin-unicorn(no-process-exit): Don't use `process.exit()`
    ╭─[no_process_exit.tsx:1:1]
  1 │ process.exit();
    · ──────────────
    ╰────
-  help: Only use `process.exit()` in CLI apps. Throw an error instead.
+  help: Throw an error instead.
 
-  ⚠ eslint-plugin-unicorn(no-process-exit): Disallow `process.exit()`.
+  ⚠ eslint-plugin-unicorn(no-process-exit): Don't use `process.exit()`
    ╭─[no_process_exit.tsx:1:1]
  1 │ process.exit(1);
    · ───────────────
    ╰────
-  help: Only use `process.exit()` in CLI apps. Throw an error instead.
+  help: Throw an error instead.
 
-  ⚠ eslint-plugin-unicorn(no-process-exit): Disallow `process.exit()`.
+  ⚠ eslint-plugin-unicorn(no-process-exit): Don't use `process.exit()`
    ╭─[no_process_exit.tsx:1:3]
  1 │ x(process.exit(1));
    ·   ───────────────
    ╰────
-  help: Only use `process.exit()` in CLI apps. Throw an error instead.
+  help: Throw an error instead.
 
-  ⚠ eslint-plugin-unicorn(no-process-exit): Disallow `process.exit()`.
+  ⚠ eslint-plugin-unicorn(no-process-exit): Don't use `process.exit()`
    ╭─[no_process_exit.tsx:1:37]
  1 │ process.on("SIGINT", function() {});process.exit();
    ·                                     ──────────────
    ╰────
-  help: Only use `process.exit()` in CLI apps. Throw an error instead.
+  help: Throw an error instead.
 
-  ⚠ eslint-plugin-unicorn(no-process-exit): Disallow `process.exit()`.
+  ⚠ eslint-plugin-unicorn(no-process-exit): Don't use `process.exit()`
    ╭─[no_process_exit.tsx:1:40]
  1 │ process.once("SIGINT", function() {}); process.exit(0)
    ·                                        ───────────────
    ╰────
-  help: Only use `process.exit()` in CLI apps. Throw an error instead.
+  help: Throw an error instead.
 
-  ⚠ eslint-plugin-unicorn(no-process-exit): Disallow `process.exit()`.
+  ⚠ eslint-plugin-unicorn(no-process-exit): Don't use `process.exit()`
    ╭─[no_process_exit.tsx:3:13]
  2 │             const mod = require('not_worker_threads');
  3 │             process.exit(1);
    ·             ───────────────
  4 │         
    ╰────
-  help: Only use `process.exit()` in CLI apps. Throw an error instead.
+  help: Throw an error instead.
 
-  ⚠ eslint-plugin-unicorn(no-process-exit): Disallow `process.exit()`.
+  ⚠ eslint-plugin-unicorn(no-process-exit): Don't use `process.exit()`
    ╭─[no_process_exit.tsx:3:13]
  2 │             import mod from 'not_worker_threads';
  3 │             process.exit(1);
    ·             ───────────────
  4 │         
    ╰────
-  help: Only use `process.exit()` in CLI apps. Throw an error instead.
+  help: Throw an error instead.
 
-  ⚠ eslint-plugin-unicorn(no-process-exit): Disallow `process.exit()`.
+  ⚠ eslint-plugin-unicorn(no-process-exit): Don't use `process.exit()`
    ╭─[no_process_exit.tsx:3:13]
  2 │             const mod = new require('worker_threads');
  3 │             process.exit(1);
    ·             ───────────────
  4 │         
    ╰────
-  help: Only use `process.exit()` in CLI apps. Throw an error instead.
+  help: Throw an error instead.
 
-  ⚠ eslint-plugin-unicorn(no-process-exit): Disallow `process.exit()`.
+  ⚠ eslint-plugin-unicorn(no-process-exit): Don't use `process.exit()`
    ╭─[no_process_exit.tsx:3:13]
  2 │             const mod = require(worker_threads);
  3 │             process.exit(1);
    ·             ───────────────
  4 │         
    ╰────
-  help: Only use `process.exit()` in CLI apps. Throw an error instead.
+  help: Throw an error instead.
 
-  ⚠ eslint-plugin-unicorn(no-process-exit): Disallow `process.exit()`.
+  ⚠ eslint-plugin-unicorn(no-process-exit): Don't use `process.exit()`
    ╭─[no_process_exit.tsx:1:39]
  1 │ new process.on("SIGINT", function() { process.exit(1); })
    ·                                       ───────────────
    ╰────
-  help: Only use `process.exit()` in CLI apps. Throw an error instead.
+  help: Throw an error instead.
 
-  ⚠ eslint-plugin-unicorn(no-process-exit): Disallow `process.exit()`.
+  ⚠ eslint-plugin-unicorn(no-process-exit): Don't use `process.exit()`
    ╭─[no_process_exit.tsx:1:41]
  1 │ new process.once("SIGINT", function() { process.exit(1); })
    ·                                         ───────────────
    ╰────
-  help: Only use `process.exit()` in CLI apps. Throw an error instead.
+  help: Throw an error instead.
 
-  ⚠ eslint-plugin-unicorn(no-process-exit): Disallow `process.exit()`.
+  ⚠ eslint-plugin-unicorn(no-process-exit): Don't use `process.exit()`
    ╭─[no_process_exit.tsx:1:27]
  1 │ on("SIGINT", function() { process.exit(1); })
    ·                           ───────────────
    ╰────
-  help: Only use `process.exit()` in CLI apps. Throw an error instead.
+  help: Throw an error instead.
 
-  ⚠ eslint-plugin-unicorn(no-process-exit): Disallow `process.exit()`.
+  ⚠ eslint-plugin-unicorn(no-process-exit): Don't use `process.exit()`
    ╭─[no_process_exit.tsx:1:29]
  1 │ once("SIGINT", function() { process.exit(1); })
    ·                             ───────────────
    ╰────
-  help: Only use `process.exit()` in CLI apps. Throw an error instead.
+  help: Throw an error instead.
 
-  ⚠ eslint-plugin-unicorn(no-process-exit): Disallow `process.exit()`.
+  ⚠ eslint-plugin-unicorn(no-process-exit): Don't use `process.exit()`
    ╭─[no_process_exit.tsx:1:36]
  1 │ process[on]("SIGINT", function() { process.exit(1); })
    ·                                    ───────────────
    ╰────
-  help: Only use `process.exit()` in CLI apps. Throw an error instead.
+  help: Throw an error instead.
 
-  ⚠ eslint-plugin-unicorn(no-process-exit): Disallow `process.exit()`.
+  ⚠ eslint-plugin-unicorn(no-process-exit): Don't use `process.exit()`
    ╭─[no_process_exit.tsx:1:38]
  1 │ process[once]("SIGINT", function() { process.exit(1); })
    ·                                      ───────────────
    ╰────
-  help: Only use `process.exit()` in CLI apps. Throw an error instead.
+  help: Throw an error instead.
 
-  ⚠ eslint-plugin-unicorn(no-process-exit): Disallow `process.exit()`.
+  ⚠ eslint-plugin-unicorn(no-process-exit): Don't use `process.exit()`
    ╭─[no_process_exit.tsx:1:36]
  1 │ process.foo("SIGINT", function() { process.exit(1); })
    ·                                    ───────────────
    ╰────
-  help: Only use `process.exit()` in CLI apps. Throw an error instead.
+  help: Throw an error instead.
 
-  ⚠ eslint-plugin-unicorn(no-process-exit): Disallow `process.exit()`.
+  ⚠ eslint-plugin-unicorn(no-process-exit): Don't use `process.exit()`
    ╭─[no_process_exit.tsx:1:31]
  1 │ foo.on("SIGINT", function() { process.exit(1); })
    ·                               ───────────────
    ╰────
-  help: Only use `process.exit()` in CLI apps. Throw an error instead.
+  help: Throw an error instead.
 
-  ⚠ eslint-plugin-unicorn(no-process-exit): Disallow `process.exit()`.
+  ⚠ eslint-plugin-unicorn(no-process-exit): Don't use `process.exit()`
    ╭─[no_process_exit.tsx:1:33]
  1 │ foo.once("SIGINT", function() { process.exit(1); })
    ·                                 ───────────────
    ╰────
-  help: Only use `process.exit()` in CLI apps. Throw an error instead.
+  help: Throw an error instead.
 
-  ⚠ eslint-plugin-unicorn(no-process-exit): Disallow `process.exit()`.
+  ⚠ eslint-plugin-unicorn(no-process-exit): Don't use `process.exit()`
    ╭─[no_process_exit.tsx:1:39]
  1 │ lib.process.on("SIGINT", function() { process.exit(1); })
    ·                                       ───────────────
    ╰────
-  help: Only use `process.exit()` in CLI apps. Throw an error instead.
+  help: Throw an error instead.
 
-  ⚠ eslint-plugin-unicorn(no-process-exit): Disallow `process.exit()`.
+  ⚠ eslint-plugin-unicorn(no-process-exit): Don't use `process.exit()`
    ╭─[no_process_exit.tsx:1:41]
  1 │ lib.process.once("SIGINT", function() { process.exit(1); })
    ·                                         ───────────────
    ╰────
-  help: Only use `process.exit()` in CLI apps. Throw an error instead.
+  help: Throw an error instead.

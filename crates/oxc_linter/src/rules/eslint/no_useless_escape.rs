@@ -1,14 +1,18 @@
 use memchr::memmem;
-use oxc_ast::AstKind;
+use oxc_ast::{ast::RegExpFlags, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNodeId;
+use oxc_regular_expression::{
+    ast::{Character, CharacterClass},
+    visit::{RegExpAstKind, Visit},
+};
+use oxc_semantic::NodeId;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_useless_escape_diagnostic(x0: char, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Unnecessary escape character {x0:?}")).with_label(span1)
+fn no_useless_escape_diagnostic(escape_char: char, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Unnecessary escape character {escape_char:?}")).with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -23,10 +27,49 @@ declare_oxc_lint!(
     ///
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
+    ///
     /// ```javascript
+    /// /*eslint no-useless-escape: "error"*/
+    ///
+    /// "\'";
+    /// '\"';
+    /// "\#";
+    /// "\e";
+    /// `\"`;
+    /// `\"${foo}\"`;
+    /// `\#{foo}`;
+    /// /\!/;
+    /// /\@/;
+    /// /[\[]/;
+    /// /[a-z\-]/;
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    ///
+    /// ```javascript
+    /// /*eslint no-useless-escape: "error"*/
+    ///
+    /// "\"";
+    /// '\'';
+    /// "\x12";
+    /// "\u00a9";
+    /// "\371";
+    /// "xs\u2111";
+    /// `\``;
+    /// `\${${foo}}`;
+    /// `$\{${foo}}`;
+    /// /\\/g;
+    /// /\t/g;
+    /// /\w\$\*\^\./;
+    /// /[[]/;
+    /// /[\]]/;
+    /// /[a-z-]/;
     /// ```
     NoUselessEscape,
-    correctness
+    correctness,
+    fix
 );
 
 impl Rule for NoUselessEscape {
@@ -36,12 +79,21 @@ impl Rule for NoUselessEscape {
                 if literal.regex.pattern.len() + literal.regex.flags.iter().count()
                     != literal.span.size() as usize =>
             {
-                check(
-                    ctx,
-                    node.id(),
-                    literal.span.start,
-                    &check_regexp(literal.span.source_text(ctx.source_text())),
-                );
+                if let Some(pattern) = literal.regex.pattern.as_pattern() {
+                    let mut finder = UselessEscapeFinder {
+                        useless_escape_spans: vec![],
+                        character_classes: vec![],
+                        unicode_sets: literal.regex.flags.contains(RegExpFlags::V),
+                        source_text: ctx.source_text(),
+                    };
+                    finder.visit_pattern(pattern);
+                    for span in finder.useless_escape_spans {
+                        let c = span.source_text(ctx.source_text()).chars().last().unwrap();
+                        ctx.diagnostic_with_fix(no_useless_escape_diagnostic(c, span), |fixer| {
+                            fixer.replace(span, c.to_string())
+                        });
+                    }
+                }
             }
             AstKind::StringLiteral(literal) => check(
                 ctx,
@@ -64,7 +116,7 @@ impl Rule for NoUselessEscape {
     }
 }
 
-fn is_within_jsx_attribute_item(id: AstNodeId, ctx: &LintContext) -> bool {
+fn is_within_jsx_attribute_item(id: NodeId, ctx: &LintContext) -> bool {
     if matches!(ctx.nodes().parent_kind(id), Some(AstKind::JSXAttributeItem(_))) {
         return true;
     }
@@ -72,7 +124,7 @@ fn is_within_jsx_attribute_item(id: AstNodeId, ctx: &LintContext) -> bool {
 }
 
 #[allow(clippy::cast_possible_truncation)]
-fn check(ctx: &LintContext<'_>, node_id: AstNodeId, start: u32, offsets: &[usize]) {
+fn check(ctx: &LintContext<'_>, node_id: NodeId, start: u32, offsets: &[usize]) {
     let source_text = ctx.source_text();
     for offset in offsets {
         let offset = start as usize + offset;
@@ -91,52 +143,88 @@ fn check(ctx: &LintContext<'_>, node_id: AstNodeId, start: u32, offsets: &[usize
 
 const REGEX_GENERAL_ESCAPES: &str = "\\bcdDfnpPrsStvwWxu0123456789]";
 const REGEX_NON_CHARCLASS_ESCAPES: &str = "\\bcdDfnpPrsStvwWxu0123456789]^/.$*+?[{}|()Bk";
+const REGEX_CLASSSET_CHARACTER_ESCAPES: &str = "\\bcdDfnpPrsStvwWxu0123456789]q/[{}|()-";
+const REGEX_CLASS_SET_RESERVED_DOUBLE_PUNCTUATOR: &str = "!#$%&*+,.:;<=>?@^`~";
 
-fn check_regexp(regex: &str) -> Vec<usize> {
-    let mut offsets = vec![];
-    let mut in_escape = false;
-    let mut in_character_class = false;
-    let mut start_char_class = false;
-    let mut offset = 1;
+fn check_character(
+    source_text: &str,
+    character: &Character,
+    character_class: Option<&CharacterClass>,
+    unicode_sets: bool,
+) -> Option<Span> {
+    let char_text = character.span.source_text(source_text);
+    // The character is escaped if it has at least two characters and the first character is a backslash
+    let is_escaped = char_text.starts_with('\\') && char_text.len() >= 2;
+    if !is_escaped {
+        return None;
+    }
+    let span = character.span;
+    let escape_char = char_text.chars().nth(1).unwrap();
+    let escapes = if character_class.is_some() {
+        if unicode_sets {
+            REGEX_CLASSSET_CHARACTER_ESCAPES
+        } else {
+            REGEX_GENERAL_ESCAPES
+        }
+    } else {
+        REGEX_NON_CHARCLASS_ESCAPES
+    };
+    if escapes.contains(escape_char) {
+        return None;
+    }
 
-    // Skip the leading and trailing `/`
-    let mut chars = regex[1..regex.len() - 1].chars().peekable();
-    while let Some(c) = chars.next() {
-        if in_escape {
-            in_escape = false;
-            match c {
-                '-' if in_character_class
-                    && !start_char_class
-                    && !chars.peek().is_some_and(|c| *c == ']') =>
-                { /* noop */ }
-                '^' if start_char_class => { /* noop */ }
-                _ => {
-                    let escapes = if in_character_class {
-                        REGEX_GENERAL_ESCAPES
-                    } else {
-                        REGEX_NON_CHARCLASS_ESCAPES
-                    };
-                    if !escapes.contains(c) {
-                        offsets.push(offset);
+    if let Some(class) = character_class {
+        if escape_char == '^' {
+            /* The '^' character is also a special case; it must always be escaped outside of character classes, but
+             * it only needs to be escaped in character classes if it's at the beginning of the character class. To
+             * account for this, consider it to be a valid escape character outside of character classes, and filter
+             * out '^' characters that appear at the start of a character class.
+             * (From ESLint source: https://github.com/eslint/eslint/blob/main/lib/rules/no-useless-escape.js)
+             */
+            if class.span.start + 1 == span.start {
+                return None;
+            }
+        }
+        if unicode_sets {
+            if REGEX_CLASS_SET_RESERVED_DOUBLE_PUNCTUATOR.contains(escape_char) {
+                if let Some(prev_char) = source_text.chars().nth(span.end as usize) {
+                    // Escaping is valid when it is a reserved double punctuator
+                    if prev_char == escape_char {
+                        return None;
+                    }
+                }
+                if let Some(prev_prev_char) = source_text.chars().nth(span.start as usize - 1) {
+                    if prev_prev_char == escape_char {
+                        if escape_char != '^' {
+                            return None;
+                        }
+
+                        // Escaping caret is unnecessary if the previous character is a `negate` caret(`^`).
+                        if !class.negative {
+                            return None;
+                        }
+
+                        let caret_index = class.span.start + 1;
+                        if caret_index < span.start - 1 {
+                            return None;
+                        }
                     }
                 }
             }
-        } else if c == '/' && !in_character_class {
-            break;
-        } else if c == '[' {
-            in_character_class = true;
-            start_char_class = true;
-        } else if c == '\\' {
-            in_escape = true;
-        } else if c == ']' {
-            in_character_class = false;
-        } else {
-            start_char_class = false;
+        } else if escape_char == '-' {
+            /* The '-' character is a special case, because it's only valid to escape it if it's in a character
+             * class, and is not at either edge of the character class. To account for this, don't consider '-'
+             * characters to be valid in general, and filter out '-' characters that appear in the middle of a
+             * character class.
+             * (From ESLint source: https://github.com/eslint/eslint/blob/main/lib/rules/no-useless-escape.js)
+             */
+            if class.span.start + 1 != span.start && span.end != class.span.end - 1 {
+                return None;
+            }
         }
-        offset += c.len_utf8();
     }
 
-    offsets
+    Some(span)
 }
 
 const VALID_STRING_ESCAPES: &str = "\\nrvtbfux\n\r\u{2028}\u{2029}";
@@ -221,6 +309,35 @@ fn check_template(string: &str) -> Vec<usize> {
     }
 
     offsets
+}
+
+struct UselessEscapeFinder<'a> {
+    useless_escape_spans: Vec<Span>,
+    character_classes: Vec<&'a CharacterClass<'a>>,
+    unicode_sets: bool,
+    source_text: &'a str,
+}
+
+impl<'a> Visit<'a> for UselessEscapeFinder<'a> {
+    fn enter_node(&mut self, kind: RegExpAstKind<'a>) {
+        if let RegExpAstKind::CharacterClass(class) = kind {
+            self.character_classes.push(class);
+        }
+    }
+    fn leave_node(&mut self, kind: RegExpAstKind<'a>) {
+        if let RegExpAstKind::CharacterClass(_) = kind {
+            self.character_classes.pop();
+        }
+    }
+
+    fn visit_character(&mut self, ch: &Character) {
+        let character_class = self.character_classes.last().copied();
+        if let Some(span) =
+            check_character(self.source_text, ch, character_class, self.unicode_sets)
+        {
+            self.useless_escape_spans.push(span);
+        }
+    }
 }
 
 #[test]
@@ -330,6 +447,64 @@ fn test() {
         "var foo = /[\\p{ASCII}]/u",
         "var foo = /[\\P{ASCII}]/u",
         "`${/\\s+/g}`",
+        // Carets
+        "/[^^]/u", // { "ecmaVersion": 2015 },
+        // ES2024
+        r"/[\q{abc}]/v", // { "ecmaVersion": 2024 },
+        r"/[\(]/v",      // { "ecmaVersion": 2024 },
+        r"/[\)]/v",      // { "ecmaVersion": 2024 },
+        r"/[\{]/v",      // { "ecmaVersion": 2024 },
+        r"/[\]]/v",      // { "ecmaVersion": 2024 },
+        r"/[\}]/v",      // { "ecmaVersion": 2024 },
+        r"/[\/]/v",      // { "ecmaVersion": 2024 },
+        r"/[\-]/v",      // { "ecmaVersion": 2024 },
+        r"/[\|]/v",      // { "ecmaVersion": 2024 },
+        r"/[\$$]/v",     // { "ecmaVersion": 2024 },
+        r"/[\&&]/v",     // { "ecmaVersion": 2024 },
+        r"/[\!!]/v",     // { "ecmaVersion": 2024 },
+        r"/[\##]/v",     // { "ecmaVersion": 2024 },
+        r"/[\%%]/v",     // { "ecmaVersion": 2024 },
+        r"/[\**]/v",     // { "ecmaVersion": 2024 },
+        r"/[\++]/v",     // { "ecmaVersion": 2024 },
+        r"/[\,,]/v",     // { "ecmaVersion": 2024 },
+        r"/[\..]/v",     // { "ecmaVersion": 2024 },
+        r"/[\::]/v",     // { "ecmaVersion": 2024 },
+        r"/[\;;]/v",     // { "ecmaVersion": 2024 },
+        r"/[\<<]/v",     // { "ecmaVersion": 2024 },
+        r"/[\==]/v",     // { "ecmaVersion": 2024 },
+        r"/[\>>]/v",     // { "ecmaVersion": 2024 },
+        r"/[\??]/v",     // { "ecmaVersion": 2024 },
+        r"/[\@@]/v",     // { "ecmaVersion": 2024 },
+        "/[\\``]/v",     // { "ecmaVersion": 2024 },
+        r"/[\~~]/v",     // { "ecmaVersion": 2024 },
+        r"/[^\^^]/v",    // { "ecmaVersion": 2024 },
+        r"/[_\^^]/v",    // { "ecmaVersion": 2024 },
+        r"/[$\$]/v",     // { "ecmaVersion": 2024 },
+        r"/[&\&]/v",     // { "ecmaVersion": 2024 },
+        r"/[!\!]/v",     // { "ecmaVersion": 2024 },
+        r"/[#\#]/v",     // { "ecmaVersion": 2024 },
+        r"/[%\%]/v",     // { "ecmaVersion": 2024 },
+        r"/[*\*]/v",     // { "ecmaVersion": 2024 },
+        r"/[+\+]/v",     // { "ecmaVersion": 2024 },
+        r"/[,\,]/v",     // { "ecmaVersion": 2024 },
+        r"/[.\.]/v",     // { "ecmaVersion": 2024 },
+        r"/[:\:]/v",     // { "ecmaVersion": 2024 },
+        r"/[;\;]/v",     // { "ecmaVersion": 2024 },
+        r"/[<\<]/v",     // { "ecmaVersion": 2024 },
+        r"/[=\=]/v",     // { "ecmaVersion": 2024 },
+        r"/[>\>]/v",     // { "ecmaVersion": 2024 },
+        r"/[?\?]/v",     // { "ecmaVersion": 2024 },
+        r"/[@\@]/v",     // { "ecmaVersion": 2024 },
+        "/[`\\`]/v",     // { "ecmaVersion": 2024 },
+        r"/[~\~]/v",     // { "ecmaVersion": 2024 },
+        r"/[^^\^]/v",    // { "ecmaVersion": 2024 },
+        r"/[_^\^]/v",    // { "ecmaVersion": 2024 },
+        r"/[\&&&\&]/v",  // { "ecmaVersion": 2024 },
+        r"/[[\-]\-]/v",  // { "ecmaVersion": 2024 },
+        r"/[\^]/v",      // { "ecmaVersion": 2024 }
+        r"/[\s\-(]/",    // https://github.com/oxc-project/oxc/issues/5227
+        r"/\c/",         // https://github.com/oxc-project/oxc/issues/6046
+        r"/\\c/",        // https://github.com/oxc-project/oxc/issues/6046
     ];
 
     let fail = vec![
@@ -385,6 +560,43 @@ fn test() {
         r"var foo = /\（([^\）\（]+)\）$|\(([^\)\)]+)\)$/;",
         r#"var stringLiteralWithNextLine = "line 1\line 2";"#,
         r"var stringLiteralWithNextLine = `line 1\line 2`;",
+        r#""use\ strict";"#,
+        // spellchecker:off
+        r#"({ foo() { "foo"; "bar"; "ba\z" } })"#, // { "ecmaVersion": 6 }
+        // spellchecker:on
+        // Carets
+        r"/[^\^]/",
+        r"/[^\^]/u",          // { "ecmaVersion": 2015 },
+        // ES2024
+        r"/[\$]/v",           // { "ecmaVersion": 2024 },
+        r"/[\&\&]/v",          // { "ecmaVersion": 2024 },
+        r"/[\!\!]/v",          // { "ecmaVersion": 2024 },
+        r"/[\#\#]/v",          // { "ecmaVersion": 2024 },
+        r"/[\%\%]/v",          // { "ecmaVersion": 2024 },
+        r"/[\*\*]/v",          // { "ecmaVersion": 2024 },
+        r"/[\+\+]/v",          // { "ecmaVersion": 2024 },
+        r"/[\,\,]/v",          // { "ecmaVersion": 2024 },
+        r"/[\.\.]/v",          // { "ecmaVersion": 2024 },
+        r"/[\:\:]/v",          // { "ecmaVersion": 2024 },
+        r"/[\;\;]/v",          // { "ecmaVersion": 2024 },
+        r"/[\<\<]/v",          // { "ecmaVersion": 2024 },
+        r"/[\=\=]/v",          // { "ecmaVersion": 2024 },
+        r"/[\>\>]/v",          // { "ecmaVersion": 2024 },
+        r"/[\?\?]/v",          // { "ecmaVersion": 2024 },
+        r"/[\@\@]/v",          // { "ecmaVersion": 2024 },
+        "/[\\`\\`]/v",       // { "ecmaVersion": 2024 },
+        r"/[\~\~]/v",          // { "ecmaVersion": 2024 },
+        r"/[^\^\^]/v",         // { "ecmaVersion": 2024 },
+        r"/[_\^\^]/v",         // { "ecmaVersion": 2024 },
+        r"/[\&\&&\&]/v",        // { "ecmaVersion": 2024 },
+        r"/[\p{ASCII}--\.]/v", // { "ecmaVersion": 2024 },
+        r"/[\p{ASCII}&&\.]/v", // { "ecmaVersion": 2024 },
+        r"/[\.--[.&]]/v",     // { "ecmaVersion": 2024 },
+        r"/[\.&&[.&]]/v",     // { "ecmaVersion": 2024 },
+        r"/[\.--\.--\.]/v",     // { "ecmaVersion": 2024 },
+        r"/[\.&&\.&&\.]/v",     // { "ecmaVersion": 2024 },
+        r"/[[\.&]--[\.&]]/v",  // { "ecmaVersion": 2024 },
+        r"/[[\.&]&&[\.&]]/v",  // { "ecmaVersion": 2024 }
     ];
 
     let fix = vec![
@@ -413,6 +625,49 @@ fn test() {
         ("let foo = '\\ ';", "let foo = ' ';", None),
         ("let foo = /\\ /;", "let foo = / /;", None),
         ("var foo = `\\$\\{{${foo}`;", "var foo = `$\\{{${foo}`;", None),
+        (r#""use\ strict";"#, r#""use strict";"#, None),
+        // spellchecker:off
+        (r#"({ foo() { "foo"; "bar"; "ba\z" } })"#, r#"({ foo() { "foo"; "bar"; "baz" } })"#, None), // { "ecmaVersion": 6 }
+        // spellchecker:on
+        // Carets
+        (r"/[^\^]/", r"/[^^]/", None),
+        (r"/[^\^]/u", r"/[^^]/u", None), // { "ecmaVersion": 2015 },
+        // ES2024
+        (r"/[\$]/v", r"/[$]/v", None),       // { "ecmaVersion": 2024 },
+        (r"/[\&\&]/v", r"/[&\&]/v", None),   // { "ecmaVersion": 2024 },
+        (r"/[\!\!]/v", r"/[!\!]/v", None),   // { "ecmaVersion": 2024 },
+        (r"/[\#\#]/v", r"/[#\#]/v", None),   // { "ecmaVersion": 2024 },
+        (r"/[\%\%]/v", r"/[%\%]/v", None),   // { "ecmaVersion": 2024 },
+        (r"/[\*\*]/v", r"/[*\*]/v", None),   // { "ecmaVersion": 2024 },
+        (r"/[\+\+]/v", r"/[+\+]/v", None),   // { "ecmaVersion": 2024 },
+        (r"/[\,\,]/v", r"/[,\,]/v", None),   // { "ecmaVersion": 2024 },
+        (r"/[\.\.]/v", r"/[.\.]/v", None),   // { "ecmaVersion": 2024 },
+        (r"/[\:\:]/v", r"/[:\:]/v", None),   // { "ecmaVersion": 2024 },
+        (r"/[\;\;]/v", r"/[;\;]/v", None),   // { "ecmaVersion": 2024 },
+        (r"/[\<\<]/v", r"/[<\<]/v", None),   // { "ecmaVersion": 2024 },
+        (r"/[\=\=]/v", r"/[=\=]/v", None),   // { "ecmaVersion": 2024 },
+        (r"/[\>\>]/v", r"/[>\>]/v", None),   // { "ecmaVersion": 2024 },
+        (r"/[\?\?]/v", r"/[?\?]/v", None),   // { "ecmaVersion": 2024 },
+        (r"/[\@\@]/v", r"/[@\@]/v", None),   // { "ecmaVersion": 2024 },
+        (r"/[\`\`]/v", r"/[`\`]/v", None),   // { "ecmaVersion": 2024 },
+        (r"/[\~\~]/v", r"/[~\~]/v", None),   // { "ecmaVersion": 2024 },
+        (r"/[^\^\^]/v", r"/[^^\^]/v", None), // { "ecmaVersion": 2024 },
+        (r"/[_\^\^]/v", r"/[_^\^]/v", None), // { "ecmaVersion": 2024 },
+        (r"/[\&\&&\&]/v", r"/[&\&&\&]/v", None), // { "ecmaVersion": 2024 },
+        (r"/[\p{ASCII}--\.]/v", r"/[\p{ASCII}--.]/v", None), // { "ecmaVersion": 2024 },
+        (r"/[\p{ASCII}&&\.]/v", r"/[\p{ASCII}&&.]/v", None), // { "ecmaVersion": 2024 },
+        (r"/[\.--[.&]]/v", r"/[.--[.&]]/v", None), // { "ecmaVersion": 2024 },
+        (r"/[\.&&[.&]]/v", r"/[.&&[.&]]/v", None), // { "ecmaVersion": 2024 },
+        (r"/[\.--\.--\.]/v", r"/[.--.--.]/v", None), // { "ecmaVersion": 2024 },
+        (r"/[\.&&\.&&\.]/v", r"/[.&&.&&.]/v", None), // { "ecmaVersion": 2024 },
+        (r"/[[\.&]--[\.&]]/v", r"/[[.&]--[.&]]/v", None), // { "ecmaVersion": 2024 },
+        (r"/[[\.&]&&[\.&]]/v", r"/[[.&]&&[.&]]/v", None), // { "ecmaVersion": 2024 }
+        (
+            // https://github.com/oxc-project/oxc/issues/5227
+            r"const regex = /(https?:\/\/github\.com\/(([^\s]+)\/([^\s]+))\/([^\s]+\/)?(issues|pull)\/([0-9]+))|(([^\s]+)\/([^\s]+))?#([1-9][0-9]*)($|[\s\:\;\-\(\=])/;",
+            r"const regex = /(https?:\/\/github\.com\/(([^\s]+)\/([^\s]+))\/([^\s]+\/)?(issues|pull)\/([0-9]+))|(([^\s]+)\/([^\s]+))?#([1-9][0-9]*)($|[\s:;\-(=])/;",
+            None,
+        ),
     ];
 
     Tester::new(NoUselessEscape::NAME, pass, fail).expect_fix(fix).test_and_snapshot();

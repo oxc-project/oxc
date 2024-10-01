@@ -1,0 +1,79 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-import(no-dynamic-require): Expected a literal string or immutable template literal
+   ╭─[no_dynamic_require.tsx:1:1]
+ 1 │ require("../" + name)
+   · ───────
+   ╰────
+  help: Replace the argument with a literal string or immutable template literal
+
+  ⚠ eslint-plugin-import(no-dynamic-require): Expected a literal string or immutable template literal
+   ╭─[no_dynamic_require.tsx:1:1]
+ 1 │ require(`../${name}`)
+   · ───────
+   ╰────
+  help: Replace the argument with a literal string or immutable template literal
+
+  ⚠ eslint-plugin-import(no-dynamic-require): Expected a literal string or immutable template literal
+   ╭─[no_dynamic_require.tsx:1:1]
+ 1 │ require(name)
+   · ───────
+   ╰────
+  help: Replace the argument with a literal string or immutable template literal
+
+  ⚠ eslint-plugin-import(no-dynamic-require): Expected a literal string or immutable template literal
+   ╭─[no_dynamic_require.tsx:1:1]
+ 1 │ require(name())
+   · ───────
+   ╰────
+  help: Replace the argument with a literal string or immutable template literal
+
+  ⚠ eslint-plugin-import(no-dynamic-require): Expected a literal string or immutable template literal
+   ╭─[no_dynamic_require.tsx:1:1]
+ 1 │ require(`foo${x}`)
+   · ───────
+   ╰────
+  help: Replace the argument with a literal string or immutable template literal
+
+  ⚠ eslint-plugin-import(no-dynamic-require): Expected a literal string or immutable template literal
+   ╭─[no_dynamic_require.tsx:1:11]
+ 1 │ var foo = require(`foo${x}`)
+   ·           ───────
+   ╰────
+  help: Replace the argument with a literal string or immutable template literal
+
+  ⚠ eslint-plugin-import(no-dynamic-require): Expected a literal string or immutable template literal
+   ╭─[no_dynamic_require.tsx:1:1]
+ 1 │ require(name + "foo", "bar")
+   · ───────
+   ╰────
+  help: Replace the argument with a literal string or immutable template literal
+
+  ⚠ eslint-plugin-import(no-dynamic-require): Expected a literal string or immutable template literal
+   ╭─[no_dynamic_require.tsx:1:8]
+ 1 │ import("../" + "name")
+   ·        ──────────────
+   ╰────
+  help: Replace the argument with a literal string or immutable template literal
+
+  ⚠ eslint-plugin-import(no-dynamic-require): Expected a literal string or immutable template literal
+   ╭─[no_dynamic_require.tsx:1:8]
+ 1 │ import(`../${name}`)
+   ·        ────────────
+   ╰────
+  help: Replace the argument with a literal string or immutable template literal
+
+  ⚠ eslint-plugin-import(no-dynamic-require): Expected a literal string or immutable template literal
+   ╭─[no_dynamic_require.tsx:1:8]
+ 1 │ import(name)
+   ·        ────
+   ╰────
+  help: Replace the argument with a literal string or immutable template literal
+
+  ⚠ eslint-plugin-import(no-dynamic-require): Expected a literal string or immutable template literal
+   ╭─[no_dynamic_require.tsx:1:8]
+ 1 │ import(name())
+   ·        ──────
+   ╰────
+  help: Replace the argument with a literal string or immutable template literal

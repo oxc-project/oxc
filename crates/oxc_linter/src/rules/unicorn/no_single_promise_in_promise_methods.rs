@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNodeId;
+use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
 
 use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
@@ -27,30 +27,36 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Passing a single-element array to `Promise.all()`, `Promise.any()`, or `Promise.race()` is likely a mistake.
+    /// Passing a single-element array to `Promise.all()`, `Promise.any()`, or
+    /// `Promise.race()` is likely a mistake.
     ///
     ///
     /// ### Example
     ///
-    /// Bad
-    /// ```js
-    /// const foo = await Promise.all([promise]);
-    /// const foo = await Promise.any([promise]);
-    /// const foo = await Promise.race([promise]);
-    /// const promise = Promise.all([nonPromise]);
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// async function bad() {
+    ///     const foo = await Promise.all([promise]);
+    ///     const foo = await Promise.any([promise]);
+    ///     const foo = await Promise.race([promise]);
+    ///     const promise = Promise.all([nonPromise]);
+    /// }
     /// ```
     ///
-    /// Good
-    /// ```js
-    /// const foo = await promise;
-    /// const promise = Promise.resolve(nonPromise);
-    /// const foo = await Promise.all(promises);
-    /// const foo = await Promise.any([promise, anotherPromise]);
-    /// const [{ value: foo, reason: error }] = await Promise.allSettled([promise]);
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// async function good() {
+    ///     const foo = await promise;
+    ///     const promise = Promise.resolve(nonPromise);
+    ///     const foo = await Promise.all(promises);
+    ///     const foo = await Promise.any([promise, anotherPromise]);
+    ///     const [{ value: foo, reason: error }] = await Promise.allSettled([promise]);
+    /// }
     /// ```
     ///
     NoSinglePromiseInPromiseMethods,
-    correctness
+    correctness,
+    conditional_fix
 );
 
 impl Rule for NoSinglePromiseInPromiseMethods {
@@ -119,7 +125,7 @@ fn is_promise_method_with_single_argument(call_expr: &CallExpression) -> bool {
     is_method_call(call_expr, Some(&["Promise"]), Some(&["all", "any", "race"]), Some(1), Some(1))
 }
 
-fn is_fixable(call_node_id: AstNodeId, ctx: &LintContext<'_>) -> bool {
+fn is_fixable(call_node_id: NodeId, ctx: &LintContext<'_>) -> bool {
     for parent in ctx.semantic().nodes().iter_parents(call_node_id).skip(1) {
         match parent.kind() {
             AstKind::CallExpression(_)

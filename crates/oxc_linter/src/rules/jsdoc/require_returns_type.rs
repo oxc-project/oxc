@@ -10,10 +10,10 @@ use crate::{
     AstNode,
 };
 
-fn missing_type_diagnostic(span0: Span) -> OxcDiagnostic {
+fn missing_type_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing JSDoc `@returns` type.")
         .with_help("Add {type} to `@returns` tag.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -21,19 +21,24 @@ pub struct RequireReturnsType;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Requires that `@returns` tag has a type value (in curly brackets).
     ///
     /// ### Why is this bad?
+    ///
     /// A `@returns` tag should have a type value.
     ///
-    /// ### Example
-    /// ```javascript
-    /// // Passing
-    /// /** @returns {string} */
-    /// function quux (foo) {}
+    /// ### Examples
     ///
-    /// // Failing
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
     /// /** @returns */
+    /// function quux (foo) {}
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// /** @returns {string} */
     /// function quux (foo) {}
     /// ```
     RequireReturnsType,

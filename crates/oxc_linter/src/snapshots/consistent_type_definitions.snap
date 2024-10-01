@@ -120,6 +120,15 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use an `type` instead of a `interface`
 
+  ⚠ typescript-eslint(consistent-type-definitions): Use an `type` instead of a `interface`
+   ╭─[consistent_type_definitions.tsx:2:19]
+ 1 │ 
+ 2 │             export default interface Test {
+   ·                            ─────────
+ 3 │               bar(): string;
+   ╰────
+  help: Use an `type` instead of a `interface`
+
   ⚠ typescript-eslint(consistent-type-definitions): Use an `interface` instead of a `type`
    ╭─[consistent_type_definitions.tsx:2:19]
  1 │ 
