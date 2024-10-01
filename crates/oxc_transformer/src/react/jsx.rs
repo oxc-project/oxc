@@ -201,7 +201,7 @@ impl<'a, 'ctx> AutomaticScriptBindings<'a, 'ctx> {
         let variable_name = ctx.ast.atom(&ctx.symbols().names[symbol_id]);
 
         let import = NamedImport::new(variable_name.clone(), None, symbol_id);
-        self.ctx.module_imports.add_require(source, import, front);
+        self.ctx.module_imports.add_import(source, import, front);
         BoundIdentifier { name: variable_name, symbol_id }
     }
 }
@@ -302,7 +302,7 @@ impl<'a, 'ctx> AutomaticModuleBindings<'a, 'ctx> {
         let local = ctx.ast.atom(&ctx.symbols().names[symbol_id]);
 
         let import = NamedImport::new(Atom::from(name), Some(local.clone()), symbol_id);
-        self.ctx.module_imports.add_import(source, import);
+        self.ctx.module_imports.add_import(source, import, false);
         BoundIdentifier { name: local, symbol_id }
     }
 }

@@ -49,11 +49,10 @@ impl<'a, 'ctx> ModuleImports<'a, 'ctx> {
 impl<'a, 'ctx> Traverse<'a> for ModuleImports<'a, 'ctx> {
     fn exit_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         let mut imports = self.ctx.module_imports.imports.borrow_mut();
-        let Some((first_import_type, _)) = imports.first() else { return };
-        // Assume all imports are of the same kind
-        match first_import_type.kind {
-            ImportKind::Import => self.insert_import_statements(&mut imports, ctx),
-            ImportKind::Require => self.insert_require_statements(&mut imports, ctx),
+        if self.ctx.source_type.is_script() {
+            self.insert_require_statements(&mut imports, ctx);
+        } else {
+            self.insert_import_statements(&mut imports, ctx);
         }
     }
 }
@@ -70,46 +69,23 @@ impl<'a> NamedImport<'a> {
     }
 }
 
-#[derive(Clone, Copy, Hash, Eq, PartialEq)]
-pub enum ImportKind {
-    Import,
-    Require,
-}
-
-#[derive(Hash, Eq, PartialEq)]
-pub struct ImportType<'a> {
-    kind: ImportKind,
-    source: Atom<'a>,
-}
-
-impl<'a> ImportType<'a> {
-    fn new(kind: ImportKind, source: Atom<'a>) -> Self {
-        Self { kind, source }
-    }
-}
-
 impl<'a, 'ctx> ModuleImports<'a, 'ctx> {
     fn insert_import_statements(
         &mut self,
-        imports: &mut IndexMap<ImportType<'a>, Vec<NamedImport<'a>>>,
+        imports: &mut IndexMap<Atom<'a>, Vec<NamedImport<'a>>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let stmts = imports.drain(..).map(|(import_type, names)| {
-            debug_assert!(import_type.kind == ImportKind::Import);
-            Self::get_named_import(import_type.source, names, ctx)
-        });
+        let stmts =
+            imports.drain(..).map(|(source, names)| Self::get_named_import(source, names, ctx));
         self.ctx.top_level_statements.insert_statements(stmts);
     }
 
     fn insert_require_statements(
         &mut self,
-        imports: &mut IndexMap<ImportType<'a>, Vec<NamedImport<'a>>>,
+        imports: &mut IndexMap<Atom<'a>, Vec<NamedImport<'a>>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let stmts = imports.drain(..).map(|(import_type, names)| {
-            debug_assert!(import_type.kind == ImportKind::Require);
-            Self::get_require(import_type.source, names, ctx)
-        });
+        let stmts = imports.drain(..).map(|(source, names)| Self::get_require(source, names, ctx));
         self.ctx.top_level_statements.insert_statements(stmts);
     }
 
@@ -171,9 +147,13 @@ impl<'a, 'ctx> ModuleImports<'a, 'ctx> {
     }
 }
 
-/// Store for `import` / `require` statements to be added at top of program
+/// Store for `import` / `require` statements to be added at top of program.
+///
+/// TODO(improve-on-babel): Insertion order does not matter. We only have to use `IndexMap`
+/// to produce output that's the same as Babel's.
+/// Substitute `FxHashMap` once we don't need to match Babel's output exactly.
 pub struct ModuleImportsStore<'a> {
-    imports: RefCell<IndexMap<ImportType<'a>, Vec<NamedImport<'a>>>>,
+    imports: RefCell<IndexMap<Atom<'a>, Vec<NamedImport<'a>>>>,
 }
 
 impl<'a> ModuleImportsStore<'a> {
@@ -181,22 +161,18 @@ impl<'a> ModuleImportsStore<'a> {
         Self { imports: RefCell::new(IndexMap::default()) }
     }
 
-    /// Add `import { named_import } from 'source'`
-    pub fn add_import(&self, source: Atom<'a>, import: NamedImport<'a>) {
-        self.imports
-            .borrow_mut()
-            .entry(ImportType::new(ImportKind::Import, source))
-            .or_default()
-            .push(import);
-    }
-
-    /// Add `var named_import from 'source'`.
+    /// Add `import` or `require` to top of program.
     ///
-    /// If `front` is true, `require` is added to top of the `require`s.
+    /// Which it will be depends on the source type.
+    ///
+    /// * `import { named_import } from 'source';` or
+    /// * `var named_import = require('source');`
+    ///
+    /// If `front` is `true`, `import`/`require` is added to front of the `import`s/`require`s.
     /// TODO(improve-on-babel): `front` option is only required to pass one of Babel's tests. Output
     /// without it is still valid. Remove this once our output doesn't need to match Babel exactly.
-    pub fn add_require(&self, source: Atom<'a>, import: NamedImport<'a>, front: bool) {
-        match self.imports.borrow_mut().entry(ImportType::new(ImportKind::Require, source)) {
+    pub fn add_import(&self, source: Atom<'a>, import: NamedImport<'a>, front: bool) {
+        match self.imports.borrow_mut().entry(source) {
             IndexMapEntry::Occupied(mut entry) => {
                 entry.get_mut().push(import);
                 if front && entry.index() != 0 {
