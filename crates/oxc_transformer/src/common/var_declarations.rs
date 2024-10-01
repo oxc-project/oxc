@@ -19,7 +19,7 @@ use oxc_ast::{ast::*, NONE};
 use oxc_data_structures::stack::SparseStack;
 use oxc_span::SPAN;
 use oxc_syntax::symbol::SymbolId;
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
 use crate::TransformCtx;
 
@@ -59,9 +59,8 @@ impl<'a, 'ctx> Traverse<'a> for VarDeclarations<'a, 'ctx> {
     }
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.ancestors_depth() == 2 {
-            // Top level. Handle in `exit_program` instead.
-            // (depth 1 = None, depth 2 = Program)
+        if matches!(ctx.parent(), Ancestor::ProgramBody(_)) {
+            // Handle in `exit_program` instead
             return;
         }
 
