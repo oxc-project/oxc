@@ -294,9 +294,12 @@ impl<T> NonEmptyStack<T> {
         <Self as StackCommon<T>>::len(self)
     }
 
+    /// Get if stack is empty. Always returns `false`.
     #[inline]
     pub fn is_empty(&self) -> bool {
-        self.len() == 0
+        // This method is pointless, as the stack is never empty. But provide it to override
+        // the default method from `slice::is_empty` which is inherited via `Deref`
+        false
     }
 
     /// Get capacity.

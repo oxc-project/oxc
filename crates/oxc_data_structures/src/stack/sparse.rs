@@ -187,13 +187,9 @@ impl<T> SparseStack<T> {
     ///
     /// Number of entries is always at least 1. Stack is never empty.
     #[inline]
+    #[expect(clippy::len_without_is_empty)] // `is_empty` method is pointless. It's never empty.
     pub fn len(&self) -> usize {
         self.has_values.len()
-    }
-
-    #[inline]
-    pub fn is_empty(&self) -> bool {
-        self.has_values.len() == 0
     }
 
     /// Get capacity of stack for any entries (either `Some` or `None`).
