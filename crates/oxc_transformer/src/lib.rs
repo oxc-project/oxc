@@ -52,7 +52,7 @@ pub use crate::{
     env::{EnvOptions, Targets},
     es2015::{ArrowFunctionsOptions, ES2015Options},
     options::{BabelOptions, TransformOptions},
-    react::{ReactJsxRuntime, ReactOptions, ReactRefreshOptions},
+    react::{JsxOptions, JsxRuntime, ReactRefreshOptions},
     typescript::{RewriteExtensionsMode, TypeScriptOptions},
 };
 use crate::{context::TransformCtx, es2015::ES2015, react::React, typescript::TypeScript};

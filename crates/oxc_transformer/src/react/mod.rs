@@ -16,7 +16,7 @@ use refresh::ReactRefresh;
 pub use self::{
     display_name::ReactDisplayName,
     jsx::ReactJsx,
-    options::{ReactJsxRuntime, ReactOptions, ReactRefreshOptions},
+    options::{JsxOptions, JsxRuntime, ReactRefreshOptions},
 };
 use crate::TransformCtx;
 
@@ -43,17 +43,13 @@ pub struct React<'a, 'ctx> {
 
 // Constructors
 impl<'a, 'ctx> React<'a, 'ctx> {
-    pub fn new(mut options: ReactOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(mut options: JsxOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
         if options.jsx_plugin || options.development {
             update_options_with_comments(&mut options, ctx);
             options.conform();
         }
-        let ReactOptions {
-            jsx_plugin,
-            display_name_plugin,
-            jsx_self_plugin,
-            jsx_source_plugin,
-            ..
+        let JsxOptions {
+            jsx_plugin, display_name_plugin, jsx_self_plugin, jsx_source_plugin, ..
         } = options;
         let refresh = options.refresh.clone();
         Self {

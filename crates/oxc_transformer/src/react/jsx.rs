@@ -103,7 +103,7 @@ use super::diagnostics;
 pub use super::{
     jsx_self::ReactJsxSelf,
     jsx_source::ReactJsxSource,
-    options::{ReactJsxRuntime, ReactOptions},
+    options::{JsxOptions, JsxRuntime},
 };
 use crate::{
     helpers::{bindings::BoundIdentifier, module_imports::NamedImport},
@@ -111,7 +111,7 @@ use crate::{
 };
 
 pub struct ReactJsx<'a, 'ctx> {
-    options: ReactOptions,
+    options: JsxOptions,
 
     ctx: &'ctx TransformCtx<'a>,
 
@@ -370,9 +370,9 @@ impl<'a> Pragma<'a> {
 }
 
 impl<'a, 'ctx> ReactJsx<'a, 'ctx> {
-    pub fn new(options: ReactOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(options: JsxOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
         let bindings = match options.runtime {
-            ReactJsxRuntime::Classic => {
+            JsxRuntime::Classic => {
                 if options.import_source.is_some() {
                     ctx.error(diagnostics::import_source_cannot_be_set());
                 }
@@ -380,7 +380,7 @@ impl<'a, 'ctx> ReactJsx<'a, 'ctx> {
                 let pragma_frag = Pragma::parse(options.pragma_frag.as_ref(), "Fragment", ctx);
                 Bindings::Classic(ClassicBindings { pragma, pragma_frag })
             }
-            ReactJsxRuntime::Automatic => {
+            JsxRuntime::Automatic => {
                 if options.pragma.is_some() || options.pragma_frag.is_some() {
                     ctx.error(diagnostics::pragma_and_pragma_frag_cannot_be_set());
                 }

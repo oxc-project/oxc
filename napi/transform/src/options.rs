@@ -4,10 +4,7 @@ use std::path::PathBuf;
 
 use napi::Either;
 use napi_derive::napi;
-use oxc_transformer::{
-    ArrowFunctionsOptions, ES2015Options, ReactJsxRuntime, ReactOptions, ReactRefreshOptions,
-    RewriteExtensionsMode, TypeScriptOptions,
-};
+use oxc_transformer::{ArrowFunctionsOptions, ES2015Options, JsxRuntime, RewriteExtensionsMode};
 
 use crate::IsolatedDeclarationsOptions;
 
@@ -25,10 +22,10 @@ pub struct TransformOptions {
     pub cwd: Option<String>,
 
     /// Configure how TypeScript is transformed.
-    pub typescript: Option<TypeScriptBindingOptions>,
+    pub typescript: Option<TypeScriptOptions>,
 
     /// Configure how TSX and JSX are transformed.
-    pub react: Option<ReactBindingOptions>,
+    pub react: Option<JsxOptions>,
 
     /// Enable ES2015 transformations.
     pub es2015: Option<ES2015BindingOptions>,
@@ -57,7 +54,7 @@ impl From<TransformOptions> for oxc_transformer::TransformOptions {
 
 #[napi(object)]
 #[derive(Default)]
-pub struct TypeScriptBindingOptions {
+pub struct TypeScriptOptions {
     pub jsx_pragma: Option<String>,
     pub jsx_pragma_frag: Option<String>,
     pub only_remove_type_imports: Option<bool>,
@@ -83,10 +80,10 @@ pub struct TypeScriptBindingOptions {
     pub rewrite_import_extensions: Option<Either<bool, String>>,
 }
 
-impl From<TypeScriptBindingOptions> for TypeScriptOptions {
-    fn from(options: TypeScriptBindingOptions) -> Self {
-        let ops = TypeScriptOptions::default();
-        TypeScriptOptions {
+impl From<TypeScriptOptions> for oxc_transformer::TypeScriptOptions {
+    fn from(options: TypeScriptOptions) -> Self {
+        let ops = oxc_transformer::TypeScriptOptions::default();
+        oxc_transformer::TypeScriptOptions {
             jsx_pragma: options.jsx_pragma.map(Into::into).unwrap_or(ops.jsx_pragma),
             jsx_pragma_frag: options.jsx_pragma_frag.map(Into::into).unwrap_or(ops.jsx_pragma_frag),
             only_remove_type_imports: options
@@ -119,7 +116,7 @@ impl From<TypeScriptBindingOptions> for TypeScriptOptions {
 ///
 /// @see {@link https://babeljs.io/docs/babel-plugin-transform-react-jsx#options}
 #[napi(object)]
-pub struct ReactBindingOptions {
+pub struct JsxOptions {
     /// Decides which runtime to use.
     ///
     /// - 'automatic' - auto-import the correct JSX factories
@@ -196,16 +193,16 @@ pub struct ReactBindingOptions {
     /// Conforms to the implementation in {@link https://github.com/facebook/react/tree/main/packages/react-refresh}
     ///
     /// @default false
-    pub refresh: Option<Either<bool, ReactRefreshBindingOptions>>,
+    pub refresh: Option<Either<bool, ReactRefreshOptions>>,
 }
 
-impl From<ReactBindingOptions> for ReactOptions {
-    fn from(options: ReactBindingOptions) -> Self {
-        let ops = ReactOptions::default();
-        ReactOptions {
+impl From<JsxOptions> for oxc_transformer::JsxOptions {
+    fn from(options: JsxOptions) -> Self {
+        let ops = oxc_transformer::JsxOptions::default();
+        oxc_transformer::JsxOptions {
             runtime: match options.runtime.as_deref() {
-                Some("classic") => ReactJsxRuntime::Classic,
-                /* "automatic" */ _ => ReactJsxRuntime::Automatic,
+                Some("classic") => JsxRuntime::Classic,
+                /* "automatic" */ _ => JsxRuntime::Automatic,
             },
             development: options.development.unwrap_or(ops.development),
             throw_if_namespace: options.throw_if_namespace.unwrap_or(ops.throw_if_namespace),
@@ -216,8 +213,8 @@ impl From<ReactBindingOptions> for ReactOptions {
             use_built_ins: options.use_built_ins,
             use_spread: options.use_spread,
             refresh: options.refresh.and_then(|value| match value {
-                Either::A(b) => b.then(ReactRefreshOptions::default),
-                Either::B(options) => Some(ReactRefreshOptions::from(options)),
+                Either::A(b) => b.then(oxc_transformer::ReactRefreshOptions::default),
+                Either::B(options) => Some(oxc_transformer::ReactRefreshOptions::from(options)),
             }),
             ..Default::default()
         }
@@ -225,7 +222,7 @@ impl From<ReactBindingOptions> for ReactOptions {
 }
 
 #[napi(object)]
-pub struct ReactRefreshBindingOptions {
+pub struct ReactRefreshOptions {
     /// Specify the identifier of the refresh registration variable.
     ///
     /// @default `$RefreshReg$`.
@@ -239,10 +236,10 @@ pub struct ReactRefreshBindingOptions {
     pub emit_full_signatures: Option<bool>,
 }
 
-impl From<ReactRefreshBindingOptions> for ReactRefreshOptions {
-    fn from(options: ReactRefreshBindingOptions) -> Self {
-        let ops = ReactRefreshOptions::default();
-        ReactRefreshOptions {
+impl From<ReactRefreshOptions> for oxc_transformer::ReactRefreshOptions {
+    fn from(options: ReactRefreshOptions) -> Self {
+        let ops = oxc_transformer::ReactRefreshOptions::default();
+        oxc_transformer::ReactRefreshOptions {
             refresh_reg: options.refresh_reg.unwrap_or(ops.refresh_reg),
             refresh_sig: options.refresh_sig.unwrap_or(ops.refresh_sig),
             emit_full_signatures: options.emit_full_signatures.unwrap_or(ops.emit_full_signatures),

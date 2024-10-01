@@ -1,7 +1,7 @@
 use oxc_ast::{Comment, CommentKind};
 use oxc_syntax::identifier::is_irregular_whitespace;
 
-use crate::{ReactJsxRuntime, ReactOptions, TransformCtx};
+use crate::{JsxOptions, JsxRuntime, TransformCtx};
 
 /// Scan through all comments and find the following pragmas:
 ///
@@ -14,13 +14,13 @@ use crate::{ReactJsxRuntime, ReactOptions, TransformCtx};
 /// otherwise `JSDoc` could be used instead.
 ///
 /// This behavior is aligned with Babel.
-pub(crate) fn update_options_with_comments(options: &mut ReactOptions, ctx: &TransformCtx) {
+pub(crate) fn update_options_with_comments(options: &mut JsxOptions, ctx: &TransformCtx) {
     for comment in ctx.trivias.comments() {
         update_options_with_comment(options, comment, ctx.source_text);
     }
 }
 
-fn update_options_with_comment(options: &mut ReactOptions, comment: &Comment, source_text: &str) {
+fn update_options_with_comment(options: &mut JsxOptions, comment: &Comment, source_text: &str) {
     let Some((keyword, remainder)) = find_jsx_pragma(comment, source_text) else { return };
 
     match keyword {
@@ -31,8 +31,8 @@ fn update_options_with_comment(options: &mut ReactOptions, comment: &Comment, so
         // @jsxRuntime
         "Runtime" => {
             options.runtime = match remainder {
-                "classic" => ReactJsxRuntime::Classic,
-                "automatic" => ReactJsxRuntime::Automatic,
+                "classic" => JsxRuntime::Classic,
+                "automatic" => JsxRuntime::Automatic,
                 _ => return,
             };
         }

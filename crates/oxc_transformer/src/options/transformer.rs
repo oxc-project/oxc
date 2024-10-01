@@ -13,7 +13,7 @@ use crate::{
     es2020::ES2020Options,
     es2021::ES2021Options,
     options::babel::BabelOptions,
-    react::ReactOptions,
+    react::JsxOptions,
     regexp::RegExpOptions,
     typescript::TypeScriptOptions,
     ReactRefreshOptions,
@@ -38,7 +38,7 @@ pub struct TransformOptions {
     pub typescript: TypeScriptOptions,
 
     /// [preset-react](https://babeljs.io/docs/babel-preset-react)
-    pub react: ReactOptions,
+    pub react: JsxOptions,
 
     pub regexp: RegExpOptions,
 
@@ -62,10 +62,10 @@ impl TransformOptions {
             cwd: PathBuf::new(),
             assumptions: CompilerAssumptions::default(),
             typescript: TypeScriptOptions::default(),
-            react: ReactOptions {
+            react: JsxOptions {
                 development: true,
                 refresh: Some(ReactRefreshOptions::default()),
-                ..ReactOptions::default()
+                ..JsxOptions::default()
             },
             regexp: RegExpOptions {
                 sticky_flag: true,
@@ -155,11 +155,11 @@ impl TransformOptions {
 
         let preset_name = "react";
         transformer_options.react = if let Some(value) = get_preset_options(preset_name, options) {
-            match from_value::<ReactOptions>(value) {
+            match from_value::<JsxOptions>(value) {
                 Ok(res) => res,
                 Err(err) => {
                     report_error(preset_name, &err, true, &mut errors);
-                    ReactOptions::default()
+                    JsxOptions::default()
                 }
             }
         } else {
@@ -168,17 +168,17 @@ impl TransformOptions {
             let mut react_options =
                 if has_jsx_plugin {
                     let plugin_name = "transform-react-jsx";
-                    from_value::<ReactOptions>(get_plugin_options(plugin_name, options))
+                    from_value::<JsxOptions>(get_plugin_options(plugin_name, options))
                         .unwrap_or_else(|err| {
                             report_error(plugin_name, &err, false, &mut errors);
-                            ReactOptions::default()
+                            JsxOptions::default()
                         })
                 } else {
                     let plugin_name = "transform-react-jsx-development";
-                    from_value::<ReactOptions>(get_plugin_options(plugin_name, options))
+                    from_value::<JsxOptions>(get_plugin_options(plugin_name, options))
                         .unwrap_or_else(|err| {
                             report_error(plugin_name, &err, false, &mut errors);
-                            ReactOptions::default()
+                            JsxOptions::default()
                         })
                 };
             react_options.development = has_jsx_development_plugin;

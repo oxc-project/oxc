@@ -44,7 +44,7 @@ export interface IsolatedDeclarationsResult {
  *
  * @see {@link https://babeljs.io/docs/babel-plugin-transform-react-jsx#options}
  */
-export interface ReactBindingOptions {
+export interface JsxOptions {
   /**
    * Decides which runtime to use.
    *
@@ -131,10 +131,10 @@ export interface ReactBindingOptions {
    *
    * @default false
    */
-  refresh?: boolean | ReactRefreshBindingOptions
+  refresh?: boolean | ReactRefreshOptions
 }
 
-export interface ReactRefreshBindingOptions {
+export interface ReactRefreshOptions {
   /**
    * Specify the identifier of the refresh registration variable.
    *
@@ -188,9 +188,9 @@ export interface TransformOptions {
    */
   cwd?: string
   /** Configure how TypeScript is transformed. */
-  typescript?: TypeScriptBindingOptions
+  typescript?: TypeScriptOptions
   /** Configure how TSX and JSX are transformed. */
-  react?: ReactBindingOptions
+  react?: JsxOptions
   /** Enable ES2015 transformations. */
   es2015?: ES2015BindingOptions
   /**
@@ -245,7 +245,7 @@ export interface TransformResult {
   errors: Array<string>
 }
 
-export interface TypeScriptBindingOptions {
+export interface TypeScriptOptions {
   jsxPragma?: string
   jsxPragmaFrag?: string
   onlyRemoveTypeImports?: boolean
