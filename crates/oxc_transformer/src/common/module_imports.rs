@@ -26,7 +26,7 @@
 
 use std::cell::RefCell;
 
-use indexmap::IndexMap;
+use indexmap::{map::Entry as IndexMapEntry, IndexMap};
 
 use oxc_ast::{ast::*, NONE};
 use oxc_semantic::ReferenceFlags;
@@ -196,14 +196,21 @@ impl<'a> ModuleImportsStore<'a> {
     /// TODO(improve-on-babel): `front` option is only required to pass one of Babel's tests. Output
     /// without it is still valid. Remove this once our output doesn't need to match Babel exactly.
     pub fn add_require(&self, source: Atom<'a>, import: NamedImport<'a>, front: bool) {
-        let len = self.imports.borrow().len();
-        self.imports
-            .borrow_mut()
-            .entry(ImportType::new(ImportKind::Require, source))
-            .or_default()
-            .push(import);
-        if front {
-            self.imports.borrow_mut().move_index(len, 0);
+        match self.imports.borrow_mut().entry(ImportType::new(ImportKind::Require, source)) {
+            IndexMapEntry::Occupied(mut entry) => {
+                entry.get_mut().push(import);
+                if front && entry.index() != 0 {
+                    entry.move_index(0);
+                }
+            }
+            IndexMapEntry::Vacant(entry) => {
+                let named_imports = vec![import];
+                if front {
+                    entry.shift_insert(0, named_imports);
+                } else {
+                    entry.insert(named_imports);
+                }
+            }
         }
     }
 
