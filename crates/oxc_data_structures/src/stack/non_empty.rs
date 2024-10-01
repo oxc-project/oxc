@@ -86,6 +86,19 @@ impl<T> StackCommon<T> for NonEmptyStack<T> {
     fn set_cursor(&mut self, cursor: NonNull<T>) {
         self.cursor = cursor;
     }
+
+    #[inline]
+    fn len(&self) -> usize {
+        // SAFETY: `self.start` and `self.cursor` are both derived from same pointer.
+        // `self.cursor` is always >= `self.start`.
+        // Distance between pointers is always a multiple of `size_of::<T>()`.
+        let offset = unsafe { self.cursor_offset() };
+
+        // When stack has 1 entry, `start - cursor == 0`, so add 1 to get number of entries.
+        // SAFETY: Capacity cannot exceed `Self::MAX_CAPACITY`, which is `<= isize::MAX`,
+        // and offset can't exceed capacity, so `+ 1` cannot wrap around.
+        offset + 1
+    }
 }
 
 impl<T> NonEmptyStack<T> {
@@ -275,15 +288,7 @@ impl<T> NonEmptyStack<T> {
     /// Number of entries is always at least 1. Stack is never empty.
     #[inline]
     pub fn len(&self) -> usize {
-        // SAFETY: `self.start` and `self.cursor` are both derived from same pointer.
-        // `self.cursor` is always >= `self.start`.
-        // Distance between pointers is always a multiple of `size_of::<T>()`.
-        let offset = unsafe { self.cursor_offset() };
-
-        // When stack has 1 entry, `start - cursor == 0`, so add 1 to get number of entries.
-        // SAFETY: Capacity cannot exceed `Self::MAX_CAPACITY`, which is `<= isize::MAX`,
-        // and offset can't exceed capacity, so `+ 1` cannot wrap around.
-        offset + 1
+        <Self as StackCommon<T>>::len(self)
     }
 
     #[inline]
@@ -303,7 +308,7 @@ impl<T> Drop for NonEmptyStack<T> {
         // Drop contents.
         // SAFETY: Stack is always allocated, and contains `self.len()` initialized entries,
         // starting at `self.start`.
-        unsafe { self.drop_contents(self.len()) };
+        unsafe { self.drop_contents() };
 
         // Drop the memory
         // SAFETY: Stack is always allocated.

@@ -74,6 +74,13 @@ impl<T> StackCommon<T> for Stack<T> {
     fn set_cursor(&mut self, cursor: NonNull<T>) {
         self.cursor = cursor;
     }
+
+    fn len(&self) -> usize {
+        // SAFETY: `self.start` and `self.cursor` are both derived from same pointer.
+        // `self.cursor` is always >= `self.start`.
+        // Distance between pointers is always a multiple of `size_of::<T>()`.
+        unsafe { self.cursor_offset() }
+    }
 }
 
 impl<T> Stack<T> {
@@ -303,10 +310,7 @@ impl<T> Stack<T> {
     /// Get number of entries on stack.
     #[inline]
     pub fn len(&self) -> usize {
-        // SAFETY: `self.start` and `self.cursor` are both derived from same pointer.
-        // `self.cursor` is always >= `self.start`.
-        // Distance between pointers is always a multiple of `size_of::<T>()`.
-        unsafe { self.cursor_offset() }
+        <Self as StackCommon<T>>::len(self)
     }
 
     /// Get if stack is empty.
@@ -332,7 +336,7 @@ impl<T> Drop for Stack<T> {
         if !self.is_empty() {
             // SAFETY: Checked above that stack is allocated.
             // Stack contains `self.len()` initialized entries, starting at `self.start`
-            unsafe { self.drop_contents(self.len()) };
+            unsafe { self.drop_contents() };
         }
 
         // Drop the memory
