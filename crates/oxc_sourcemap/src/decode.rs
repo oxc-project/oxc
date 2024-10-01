@@ -23,6 +23,8 @@ pub struct JSONSourceMap {
     pub sources_content: Option<Vec<Option<String>>>,
     /// A list of symbol names used by the “mappings” entry.
     pub names: Vec<String>,
+    /// An optional field containing the debugId for this sourcemap.
+    pub debug_id: Option<String>,
 }
 
 pub fn decode(json: JSONSourceMap) -> Result<SourceMap> {
@@ -38,6 +40,7 @@ pub fn decode(json: JSONSourceMap) -> Result<SourceMap> {
         tokens,
         token_chunks: None,
         x_google_ignore_list: None,
+        debug_id: json.debug_id,
     })
 }
 
