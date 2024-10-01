@@ -36,6 +36,12 @@ pub struct Stack<T> {
     end: NonNull<T>,
 }
 
+impl<T> Default for Stack<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<T> StackCapacity<T> for Stack<T> {}
 
 impl<T> StackCommon<T> for Stack<T> {
@@ -117,7 +123,8 @@ impl<T> Stack<T> {
     /// # Panics
     /// Panics if `T` is a zero-sized type.
     ///
-    /// # SAFETY
+    /// # Safety
+    ///
     /// * `capacity` must not be 0.
     /// * `capacity` must not exceed [`Self::MAX_CAPACITY`].
     #[inline]
@@ -154,7 +161,6 @@ impl<T> Stack<T> {
 
     /// Get reference to last value on stack.
     #[inline]
-    #[cfg_attr(not(test), expect(dead_code))]
     pub fn last(&self) -> Option<&T> {
         #[expect(clippy::if_not_else)]
         if !self.is_empty() {
@@ -167,8 +173,9 @@ impl<T> Stack<T> {
 
     /// Get reference to last value on stack, without checking stack isn't empty.
     ///
-    /// # SAFETY
-    /// Stack must not be empty.
+    /// # Safety
+    ///
+    /// * Stack must not be empty.
     #[inline]
     pub unsafe fn last_unchecked(&self) -> &T {
         debug_assert!(self.end > self.start);
@@ -182,7 +189,6 @@ impl<T> Stack<T> {
 
     /// Get mutable reference to last value on stack.
     #[inline]
-    #[cfg_attr(not(test), expect(dead_code))]
     pub fn last_mut(&mut self) -> Option<&mut T> {
         #[expect(clippy::if_not_else)]
         if !self.is_empty() {
@@ -195,8 +201,9 @@ impl<T> Stack<T> {
 
     /// Get mutable reference to last value on stack, without checking stack isn't empty.
     ///
-    /// # SAFETY
-    /// Stack must not be empty.
+    /// # Safety
+    ///
+    /// * Stack must not be empty.
     #[inline]
     pub unsafe fn last_mut_unchecked(&mut self) -> &mut T {
         debug_assert!(self.end > self.start);
@@ -265,7 +272,6 @@ impl<T> Stack<T> {
 
     /// Pop value from stack.
     #[inline]
-    #[cfg_attr(not(test), expect(dead_code))]
     pub fn pop(&mut self) -> Option<T> {
         #[expect(clippy::if_not_else)]
         if !self.is_empty() {
@@ -278,8 +284,9 @@ impl<T> Stack<T> {
 
     /// Pop value from stack, without checking that stack isn't empty.
     ///
-    /// # SAFETY
-    /// Stack must not be empty.
+    /// # Safety
+    ///
+    /// * Stack must not be empty.
     #[inline]
     pub unsafe fn pop_unchecked(&mut self) -> T {
         debug_assert!(self.end > self.start);

@@ -31,7 +31,6 @@ mod plugins;
 
 mod helpers {
     pub mod bindings;
-    pub mod stack;
 }
 
 use std::path::Path;

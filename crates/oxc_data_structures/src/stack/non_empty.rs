@@ -132,7 +132,8 @@ impl<T> NonEmptyStack<T> {
     /// # Panics
     /// Panics if `T` is a zero-sized type.
     ///
-    /// # SAFETY
+    /// # Safety
+    ///
     /// * `capacity` must not be 0.
     /// * `capacity` must not exceed [`Self::MAX_CAPACITY`].
     #[inline]
@@ -253,8 +254,9 @@ impl<T> NonEmptyStack<T> {
 
     /// Pop value from stack, without checking that stack isn't empty.
     ///
-    /// # SAFETY
-    /// Stack must have at least 2 entries, so that after pop, it still has at least 1.
+    /// # Safety
+    ///
+    /// * Stack must have at least 2 entries, so that after pop, it still has at least 1.
     #[inline]
     pub unsafe fn pop_unchecked(&mut self) -> T {
         debug_assert!(self.cursor > self.start);
@@ -282,6 +284,11 @@ impl<T> NonEmptyStack<T> {
         // SAFETY: Capacity cannot exceed `Self::MAX_CAPACITY`, which is `<= isize::MAX`,
         // and offset can't exceed capacity, so `+ 1` cannot wrap around.
         offset + 1
+    }
+
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 
     /// Get capacity.

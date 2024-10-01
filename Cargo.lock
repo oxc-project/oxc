@@ -1570,6 +1570,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_data_structures"
+version = "0.30.5"
+dependencies = [
+ "assert-unchecked",
+]
+
+[[package]]
 name = "oxc_diagnostics"
 version = "0.30.5"
 dependencies = [
@@ -1985,7 +1992,6 @@ dependencies = [
 name = "oxc_transformer"
 version = "0.30.5"
 dependencies = [
- "assert-unchecked",
  "base64",
  "cow-utils",
  "dashmap 6.0.1",
@@ -1994,6 +2000,7 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast",
  "oxc_codegen",
+ "oxc_data_structures",
  "oxc_diagnostics",
  "oxc_parser",
  "oxc_regular_expression",
