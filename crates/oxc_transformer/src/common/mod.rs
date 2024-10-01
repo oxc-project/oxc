@@ -6,24 +6,30 @@ use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::TransformCtx;
 
+pub mod top_level_statements;
 pub mod var_declarations;
 
+use top_level_statements::TopLevelStatements;
 use var_declarations::VarDeclarations;
 
 pub struct Common<'a, 'ctx> {
     var_declarations: VarDeclarations<'a, 'ctx>,
+    top_level_statements: TopLevelStatements<'a, 'ctx>,
 }
 
 impl<'a, 'ctx> Common<'a, 'ctx> {
     pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self { var_declarations: VarDeclarations::new(ctx) }
+        Self {
+            var_declarations: VarDeclarations::new(ctx),
+            top_level_statements: TopLevelStatements::new(ctx),
+        }
     }
 }
 
 impl<'a, 'ctx> Traverse<'a> for Common<'a, 'ctx> {
-    #[inline] // Inline because it's no-op in release mode
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.var_declarations.exit_program(program, ctx);
+        self.top_level_statements.exit_program(program, ctx);
     }
 
     fn enter_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {

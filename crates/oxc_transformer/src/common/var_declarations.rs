@@ -25,7 +25,7 @@ use crate::{helpers::stack::SparseStack, TransformCtx};
 /// Transform that maintains the stack of `Vec<VariableDeclarator>`s, and adds a `var` statement
 /// to top of a statement block if another transform has requested that.
 ///
-/// Must run after all other transforms.
+/// Must run after all other transforms except `TopLevelStatements`.
 pub struct VarDeclarations<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,
 }
@@ -37,8 +37,12 @@ impl<'a, 'ctx> VarDeclarations<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> Traverse<'a> for VarDeclarations<'a, 'ctx> {
-    #[inline] // Inline because it's no-op in release mode
-    fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
+    fn exit_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Some(stmt) = self.get_var_statement(ctx) {
+            // Delegate to `TopLevelStatements`
+            self.ctx.top_level_statements.insert_statement(stmt);
+        }
+
         let declarators = self.ctx.var_declarations.declarators.borrow();
         debug_assert!(declarators.len() == 1);
         debug_assert!(declarators.last().is_none());
@@ -54,17 +58,31 @@ impl<'a, 'ctx> Traverse<'a> for VarDeclarations<'a, 'ctx> {
     }
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
-        let mut declarators = self.ctx.var_declarations.declarators.borrow_mut();
-        if let Some(declarators) = declarators.pop() {
-            debug_assert!(!declarators.is_empty());
-            let variable = ctx.ast.alloc_variable_declaration(
-                SPAN,
-                VariableDeclarationKind::Var,
-                declarators,
-                false,
-            );
-            stmts.insert(0, Statement::VariableDeclaration(variable));
+        if ctx.ancestors_depth() == 2 {
+            // Top level. Handle in `exit_program` instead.
+            // (depth 1 = None, depth 2 = Program)
+            return;
         }
+
+        if let Some(stmt) = self.get_var_statement(ctx) {
+            stmts.insert(0, stmt);
+        }
+    }
+}
+
+impl<'a, 'ctx> VarDeclarations<'a, 'ctx> {
+    fn get_var_statement(&mut self, ctx: &mut TraverseCtx<'a>) -> Option<Statement<'a>> {
+        let mut declarators = self.ctx.var_declarations.declarators.borrow_mut();
+        let declarators = declarators.pop()?;
+        debug_assert!(!declarators.is_empty());
+
+        let stmt = Statement::VariableDeclaration(ctx.ast.alloc_variable_declaration(
+            SPAN,
+            VariableDeclarationKind::Var,
+            declarators,
+            false,
+        ));
+        Some(stmt)
     }
 }
 

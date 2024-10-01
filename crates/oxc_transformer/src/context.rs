@@ -10,7 +10,10 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::SourceType;
 
 use crate::{
-    common::var_declarations::VarDeclarationsStore, helpers::module_imports::ModuleImports,
+    common::{
+        top_level_statements::TopLevelStatementsStore, var_declarations::VarDeclarationsStore,
+    },
+    helpers::module_imports::ModuleImports,
     TransformOptions,
 };
 
@@ -36,6 +39,8 @@ pub struct TransformCtx<'a> {
     pub module_imports: ModuleImports<'a>,
     /// Manage inserting `var` statements globally
     pub var_declarations: VarDeclarationsStore<'a>,
+    /// Manage inserting statements at top of program globally
+    pub top_level_statements: TopLevelStatementsStore<'a>,
 }
 
 impl<'a> TransformCtx<'a> {
@@ -65,6 +70,7 @@ impl<'a> TransformCtx<'a> {
             trivias,
             module_imports: ModuleImports::new(),
             var_declarations: VarDeclarationsStore::new(),
+            top_level_statements: TopLevelStatementsStore::new(),
         }
     }
 
