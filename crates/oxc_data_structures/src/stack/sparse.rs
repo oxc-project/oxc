@@ -175,6 +175,7 @@ impl<T> SparseStack<T> {
             self.values.push(init());
         }
 
+        debug_assert!(!self.values.is_empty());
         // SAFETY: Last `self.has_values` is only `true` if there's a corresponding value in `self.values`.
         // This invariant is maintained in `push`, `pop`, `take_last`, and `last_or_init`.
         // Here either last `self.has_values` was already `true`, or it's just been set to `true`
