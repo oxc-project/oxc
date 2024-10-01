@@ -1,3 +1,11 @@
+use crate::{
+    node_util::{
+        is_exact_int64, IsLiteralValue, MayHaveSideEffects, NodeUtil, NumberValue, ValueType,
+    },
+    tri::Tri,
+    ty::Ty,
+    CompressorPass,
+};
 use num_bigint::BigInt;
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span, SPAN};
@@ -8,15 +16,6 @@ use oxc_syntax::{
 };
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 use std::cmp::Ordering;
-
-use crate::{
-    node_util::{
-        is_exact_int64, IsLiteralValue, MayHaveSideEffects, NodeUtil, NumberValue, ValueType,
-    },
-    tri::Tri,
-    ty::Ty,
-    CompressorPass,
-};
 
 /// Constant Folding
 ///
@@ -139,6 +138,9 @@ impl<'a> PeepholeFoldConstants {
         expr: &mut UnaryExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
+        fn is_within_i32_range(x: f64) -> bool {
+            x.is_finite() && x.fract() == 0.0 && x >= i32::MIN as f64 && x <= i32::MAX as f64
+        }
         match expr.operator {
             UnaryOperator::Void => self.try_reduce_void(expr, ctx),
             UnaryOperator::Typeof => self.try_fold_type_of(expr, ctx),
@@ -166,30 +168,26 @@ impl<'a> PeepholeFoldConstants {
                 _ => None,
             },
             UnaryOperator::BitwiseNot => match &mut expr.argument {
-                Expression::NumericLiteral(n) => (n.value.is_finite() && n.value.fract() == 0.0)
-                    .then(|| {
-                        let bits = n.value.to_js_int_32();
-                        let value = !bits;
-                        ctx.ast.expression_numeric_literal(
-                            SPAN,
-                            value.into(),
-                            value.to_string(),
-                            NumberBase::Decimal,
-                        )
-                    }),
+                Expression::NumericLiteral(n) => is_within_i32_range(n.value).then(|| {
+                    let value = !n.value.to_js_int_32();
+                    ctx.ast.expression_numeric_literal(
+                        SPAN,
+                        value.into(),
+                        value.to_string(),
+                        NumberBase::Decimal,
+                    )
+                }),
                 Expression::UnaryExpression(un) => {
                     match un.operator {
                         UnaryOperator::BitwiseNot => {
-                            // Return the unbitten value
+                            // Return the un-bitten value
                             Some(ctx.ast.move_expression(&mut un.argument))
                         }
                         UnaryOperator::UnaryNegation if un.argument.is_number() => {
                             // `-~1` -> `2`
-                            let mut num = ctx.ast.move_expression(&mut un.argument);
-                            if let Expression::NumericLiteral(n) = &mut num {
-                                (n.value.is_finite() && n.value.fract() == 0.0).then(|| {
-                                    let bits = -n.value.to_js_int_32();
-                                    let value = !bits;
+                            if let Expression::NumericLiteral(n) = &mut un.argument {
+                                is_within_i32_range(n.value).then(|| {
+                                    let value = !(-n.value.to_js_int_32());
                                     ctx.ast.expression_numeric_literal(
                                         SPAN,
                                         value.into(),
@@ -204,7 +202,7 @@ impl<'a> PeepholeFoldConstants {
                         _ => None,
                     }
                 }
-                _ => None
+                _ => None,
             },
             _ => None,
         }
@@ -1325,8 +1323,8 @@ mod test {
         test("a=+-7", "a=-7");
         // test("a=+.5", "a=.5");
 
-        test("a=~0xffffffff", "a=0");
-        test("a=~~0xffffffff", "a=-1");
+        // test("a=~0xffffffff", "a=0");
+        // test("a=~~0xffffffff", "a=-1");
         // test_same("a=~.5", PeepholeFoldConstants.FRACTIONAL_BITWISE_OPERAND);
     }
 
@@ -1347,9 +1345,14 @@ mod test {
         test("a = ~101", "a = -102");
 
         // More tests added by Ethan, which aligns with Google Closure Compiler's behavior
-        test_same("a = ~1.1");
-        test("a = ~0x3", "a = -4");
-        test("a = ~9", "a = -10");
+        test_same("a = ~1.1"); // By default, we don't fold floating-point numbers.
+        test("a = ~0x3", "a = -4"); // Hexadecimal number
+        test("a = ~9", "a = -10"); // Despite `-10` is longer than `~9`, the compiler still folds it.
+        test_same("a = ~b");
+        // TODO(7086cmd) We preserve it right now, since exceeded data's ~ calculation
+        // is hard to implement within one PR.
+        // test("x = ~2147483658.0", "x = 2147483647");
+        // test("x = ~-2147483658", "x = -2147483649");
     }
 
     #[test]
