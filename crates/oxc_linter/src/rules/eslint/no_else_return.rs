@@ -1,4 +1,5 @@
 use crate::{context::LintContext, rule::Rule, AstNode};
+use cow_utils::CowUtils;
 use oxc_ast::{ast::Statement, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -94,8 +95,9 @@ fn no_else_return_diagnostic_fix(
     let else_code = ctx.source_range(span);
     let else_code_prev_token = ctx
         .source_range(Span::new(prev_span.end, span.end))
-        .replacen("else ", "", 1)
-        .replace(else_code, "");
+        .cow_replacen("else ", "", 1)
+        .cow_replace(else_code, "")
+        .to_string();
     let fix_else_code = else_code_prev_token + &replace_block(else_code);
 
     ctx.diagnostic_with_fix(no_else_return_diagnostic(else_stmt), |fixer| {
