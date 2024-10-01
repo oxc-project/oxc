@@ -30,11 +30,16 @@ pub struct SparseStack<T> {
     values: Stack<T>,
 }
 
+impl<T> Default for SparseStack<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<T> SparseStack<T> {
     /// Maximum capacity for entries (either `Some` or `None`).
     ///
     /// Effectively unlimited on 64-bit systems.
-    #[expect(dead_code)]
     pub const MAX_TOTAL_CAPACITY: usize = NonEmptyStack::<bool>::MAX_CAPACITY;
 
     /// Maximum capacity for filled entries (`Some`).
@@ -44,7 +49,6 @@ impl<T> SparseStack<T> {
     /// Both are effectively unlimited on 64-bit systems.
     ///
     /// [`MAX_TOTAL_CAPACITY`]: Self::MAX_TOTAL_CAPACITY
-    #[expect(dead_code)]
     pub const MAX_FILLED_CAPACITY: usize = Stack::<T>::MAX_CAPACITY;
 
     /// Create new `SparseStack`.
@@ -70,7 +74,6 @@ impl<T> SparseStack<T> {
     /// * `total_capacity` must not exceed `Self::MAX_TOTAL_CAPACITY`.
     /// * `filled_capacity` must not exceed `Self::MAX_FILLED_CAPACITY`.
     #[inline]
-    #[expect(dead_code)]
     pub fn with_capacity(total_capacity: usize, filled_capacity: usize) -> Self {
         Self {
             has_values: NonEmptyStack::with_capacity(total_capacity, false),
@@ -172,6 +175,7 @@ impl<T> SparseStack<T> {
             self.values.push(init());
         }
 
+        debug_assert!(!self.values.is_empty());
         // SAFETY: Last `self.has_values` is only `true` if there's a corresponding value in `self.values`.
         // This invariant is maintained in `push`, `pop`, `take_last`, and `last_or_init`.
         // Here either last `self.has_values` was already `true`, or it's just been set to `true`
@@ -187,11 +191,15 @@ impl<T> SparseStack<T> {
         self.has_values.len()
     }
 
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.has_values.len() == 0
+    }
+
     /// Get capacity of stack for any entries (either `Some` or `None`).
     ///
     /// Capacity is always at least 1. Stack is never empty.
     #[inline]
-    #[expect(dead_code)]
     pub fn total_capacity(&self) -> usize {
         self.has_values.capacity()
     }
@@ -202,7 +210,6 @@ impl<T> SparseStack<T> {
     ///
     /// [`total_capacity`]: Self::total_capacity
     #[inline]
-    #[expect(dead_code)]
     pub fn filled_capacity(&self) -> usize {
         self.values.capacity()
     }

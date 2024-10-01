@@ -31,7 +31,6 @@ mod plugins;
 
 mod helpers {
     pub mod bindings;
-    pub mod stack;
 }
 
 use std::path::Path;
@@ -87,7 +86,7 @@ impl<'a> Transformer<'a> {
     }
 
     pub fn build_with_symbols_and_scopes(
-        self,
+        mut self,
         symbols: SymbolTable,
         scopes: ScopeTree,
         program: &mut Program<'a>,
@@ -95,8 +94,10 @@ impl<'a> Transformer<'a> {
         let allocator = self.allocator;
         let ast_builder = AstBuilder::new(allocator);
 
+        react::update_options_with_comments(&mut self.options, &self.ctx);
+
         let mut transformer = TransformerImpl {
-            x0_typescript: TypeScript::new(self.options.typescript, &self.ctx),
+            x0_typescript: TypeScript::new(&self.options.typescript, &self.ctx),
             x1_react: React::new(self.options.react, ast_builder, &self.ctx),
             x2_es2021: ES2021::new(self.options.es2021, &self.ctx),
             x2_es2020: ES2020::new(self.options.es2020, &self.ctx),

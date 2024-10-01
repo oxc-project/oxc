@@ -3,7 +3,7 @@
 use std::{
     alloc::{self, Layout},
     mem::{align_of, size_of},
-    ptr,
+    ptr, slice,
 };
 
 use assert_unchecked::assert_unchecked;
@@ -11,13 +11,16 @@ use assert_unchecked::assert_unchecked;
 use super::{NonNull, StackCapacity};
 
 pub trait StackCommon<T>: StackCapacity<T> {
-    // Getter setter methods defined by implementer
+    // Getter + setter methods defined by implementer
     fn start(&self) -> NonNull<T>;
     fn end(&self) -> NonNull<T>;
     fn cursor(&self) -> NonNull<T>;
     fn set_start(&mut self, start: NonNull<T>);
     fn set_end(&mut self, end: NonNull<T>);
     fn set_cursor(&mut self, cursor: NonNull<T>);
+
+    // Defined by implementer
+    fn len(&self) -> usize;
 
     /// Make allocation of `capacity_bytes` bytes, aligned for `T`.
     ///
@@ -98,12 +101,12 @@ pub trait StackCommon<T>: StackCapacity<T> {
     ///
     /// # SAFETY
     /// * Stack must be allocated.
-    /// * Stack must contain `len` initialized entries, starting at `self.start()`.
+    /// * Stack must contain `self.len()` initialized entries, starting at `self.start()`.
     #[inline]
-    unsafe fn drop_contents(&self, len: usize) {
+    unsafe fn drop_contents(&self) {
         // Drop contents. Next line copied from `std`'s `Vec`.
         // SAFETY: Caller guarantees stack contains `len` initialized entries, starting at `start`.
-        ptr::drop_in_place(ptr::slice_from_raw_parts_mut(self.start().as_ptr(), len));
+        ptr::drop_in_place(ptr::slice_from_raw_parts_mut(self.start().as_ptr(), self.len()));
     }
 
     /// Get layout for allocation of `capacity_bytes` bytes.
@@ -182,6 +185,20 @@ pub trait StackCommon<T>: StackCapacity<T> {
             assert_unchecked!(self.end() >= self.start());
             self.end().byte_offset_from(self.start()) as usize
         }
+    }
+
+    /// Get contents of stack as a slice `&[T]`.
+    #[inline]
+    fn as_slice(&self) -> &[T] {
+        // SAFETY: Stack always contains `self.len()` entries, starting at `self.start()`
+        unsafe { slice::from_raw_parts(self.start().as_ptr(), self.len()) }
+    }
+
+    /// Get contents of stack as a mutable slice `&mut [T]`.
+    #[inline]
+    fn as_mut_slice(&mut self) -> &mut [T] {
+        // SAFETY: Stack always contains `self.len()` entries, starting at `self.start()`
+        unsafe { slice::from_raw_parts_mut(self.start().as_ptr(), self.len()) }
     }
 }
 
