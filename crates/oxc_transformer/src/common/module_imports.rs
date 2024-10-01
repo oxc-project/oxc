@@ -85,7 +85,14 @@ impl<'a, 'ctx> ModuleImports<'a, 'ctx> {
         imports: &mut IndexMap<Atom<'a>, Vec<NamedImport<'a>>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let stmts = imports.drain(..).map(|(source, names)| Self::get_require(source, names, ctx));
+        if imports.is_empty() {
+            return;
+        }
+
+        let require_symbol_id = ctx.scopes().get_root_binding("require");
+        let stmts = imports
+            .drain(..)
+            .map(|(source, names)| Self::get_require(source, names, require_symbol_id, ctx));
         self.ctx.top_level_statements.insert_statements(stmts);
     }
 
@@ -116,12 +123,16 @@ impl<'a, 'ctx> ModuleImports<'a, 'ctx> {
     fn get_require(
         source: Atom<'a>,
         names: std::vec::Vec<NamedImport<'a>>,
+        require_symbol_id: Option<SymbolId>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
         let var_kind = VariableDeclarationKind::Var;
-        let symbol_id = ctx.scopes().get_root_binding("require");
-        let ident =
-            ctx.create_reference_id(SPAN, Atom::from("require"), symbol_id, ReferenceFlags::read());
+        let ident = ctx.create_reference_id(
+            SPAN,
+            Atom::from("require"),
+            require_symbol_id,
+            ReferenceFlags::read(),
+        );
         let callee = ctx.ast.expression_from_identifier_reference(ident);
 
         let args = {
