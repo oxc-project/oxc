@@ -1,3 +1,4 @@
+mod collapse_variable_declarations;
 mod dead_code_elimination;
 
 use oxc_minifier::CompressOptions;
