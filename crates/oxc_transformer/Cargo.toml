@@ -24,6 +24,7 @@ doctest = false
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
 oxc_diagnostics = { workspace = true }
+oxc_parser = { workspace = true }
 oxc_regular_expression = { workspace = true }
 oxc_semantic = { workspace = true }
 oxc_span = { workspace = true }
@@ -32,6 +33,7 @@ oxc_traverse = { workspace = true }
 
 assert-unchecked = { workspace = true }
 base64 = { workspace = true }
+cow-utils = { workspace = true }
 dashmap = { workspace = true }
 indexmap = { workspace = true }
 oxc-browserslist = { workspace = true }

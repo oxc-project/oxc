@@ -1706,7 +1706,6 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast",
  "oxc_codegen",
- "oxc_diagnostics",
  "oxc_mangler",
  "oxc_parser",
  "oxc_semantic",
@@ -1988,6 +1987,7 @@ version = "0.30.5"
 dependencies = [
  "assert-unchecked",
  "base64",
+ "cow-utils",
  "dashmap 6.0.1",
  "indexmap",
  "oxc-browserslist",

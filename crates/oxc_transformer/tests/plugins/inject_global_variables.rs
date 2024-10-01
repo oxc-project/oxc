@@ -4,12 +4,12 @@
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{CodeGenerator, CodegenOptions};
-use oxc_minifier::{InjectGlobalVariables, InjectGlobalVariablesConfig, InjectImport};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
+use oxc_transformer::{InjectGlobalVariables, InjectGlobalVariablesConfig, InjectImport};
 
-use crate::run;
+use super::run;
 
 pub(crate) fn test(source_text: &str, expected: &str, config: InjectGlobalVariablesConfig) {
     let source_type = SourceType::default();
@@ -25,7 +25,7 @@ pub(crate) fn test(source_text: &str, expected: &str, config: InjectGlobalVariab
         .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
         .build(program)
         .source_text;
-    let expected = run(expected, source_type, None);
+    let expected = run(expected, source_type);
     assert_eq!(result, expected, "for source {source_text}");
 }
 
