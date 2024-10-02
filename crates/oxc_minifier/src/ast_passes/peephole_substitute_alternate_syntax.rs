@@ -324,23 +324,21 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
             } else if new_expr.callee.is_global_reference_name("Array", ctx.symbols()) {
                 // `new Array` -> `[]`
                 if new_expr.arguments.is_empty() {
-                    *expr =
-                        ctx.ast.expression_array(expr.span(), Vec::new_in(ctx.ast.allocator), None);
+                    *expr = self.empty_array_literal(ctx);
                     self.changed = true;
                 } else if new_expr.arguments.len() == 1 {
                     let Some(arg) = new_expr.arguments[0].as_expression() else { return };
                     // `new Array(0)` -> `[]`
                     if arg.is_number_0() {
-                        *expr = ctx.ast.expression_array(
-                            expr.span(),
-                            Vec::new_in(ctx.ast.allocator),
-                            None,
-                        );
+                        *expr = self.empty_array_literal(ctx);
                         self.changed = true;
                     }
                     // `new Array(8)` -> `Array(8)`
                     else if arg.is_number_literal() {
-                        *expr = self.array_constructor_call(&new_expr.arguments, ctx);
+                        *expr = self.array_constructor_call(
+                            new_expr.arguments.clone_in(ctx.ast.allocator),
+                            ctx,
+                        );
                         self.changed = true;
                     }
                     // `new Array(literal)` -> `[literal]`
@@ -350,14 +348,31 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
                             (*arg).clone_in(ctx.ast.allocator),
                         );
                         elements.push(element);
-                        *expr = ctx.ast.expression_array(expr.span(), elements, None);
+                        *expr = self.array_literal(elements, ctx);
                         self.changed = true;
                     }
                     // `new Array()` -> `Array()`
                     else {
-                        *expr = self.array_constructor_call(&new_expr.arguments, ctx);
+                        *expr = self.array_constructor_call(
+                            new_expr.arguments.clone_in(ctx.ast.allocator),
+                            ctx,
+                        );
                         self.changed = true;
                     }
+                } else {
+                    // `new Array(1, 2, 3)` -> `[1, 2, 3]`
+                    let elements = Vec::from_iter_in(
+                        new_expr.arguments.iter().filter_map(|arg| arg.as_expression()).map(
+                            |arg| {
+                                ctx.ast.array_expression_element_expression(
+                                    (*arg).clone_in(ctx.ast.allocator),
+                                )
+                            },
+                        ),
+                        ctx.ast.allocator,
+                    );
+                    *expr = self.array_literal(elements, ctx);
+                    self.changed = true;
                 }
             }
         }
@@ -383,14 +398,28 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
         }
     }
 
-    /// returns an `Array()` constructor call with zero, one, or more arguments
+    /// returns an `Array()` constructor call with zero, one, or more arguments, copying from the input
     fn array_constructor_call(
         &self,
-        arguments: &Vec<'a, Argument<'a>>,
+        arguments: Vec<'a, Argument<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let callee = ctx.ast.expression_identifier_reference(SPAN, "Array");
-        ctx.ast.expression_call(SPAN, callee, NONE, arguments.clone_in(ctx.ast.allocator), false)
+        ctx.ast.expression_call(SPAN, callee, NONE, arguments, false)
+    }
+
+    /// returns an array literal `[]` of zero, one, or more elements, copying from the input
+    fn array_literal(
+        &self,
+        elements: Vec<'a, ArrayExpressionElement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        ctx.ast.expression_array(SPAN, elements, None)
+    }
+
+    /// returns a new empty array literal expression: `[]`
+    fn empty_array_literal(&self, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+        self.array_literal(Vec::new_in(ctx.ast.allocator), ctx)
     }
 }
 
@@ -486,10 +515,10 @@ mod test {
         // test_same("x = Array(y)");
         // test_same("x = Array(foo())");
 
-        // // 1+ arguments
-        // test("x = new Array(1, 2, 3, 4)", "x = [1, 2, 3, 4]");
+        // 1+ arguments
+        test("x = new Array(1, 2, 3, 4)", "x = [1, 2, 3, 4]");
         // test("x = Array(1, 2, 3, 4)", "x = [1, 2, 3, 4]");
-        // test("x = new Array('a', 1, 2, 'bc', 3, {}, 'abc')", "x = ['a', 1, 2, 'bc', 3, {}, 'abc']");
+        test("x = new Array('a', 1, 2, 'bc', 3, {}, 'abc')", "x = ['a', 1, 2, 'bc', 3, {}, 'abc']");
         // test("x = Array('a', 1, 2, 'bc', 3, {}, 'abc')", "x = ['a', 1, 2, 'bc', 3, {}, 'abc']");
         // test("x = new Array(Array(1, '2', 3, '4'))", "x = [[1, '2', 3, '4']]");
         // test("x = Array(Array(1, '2', 3, '4'))", "x = [[1, '2', 3, '4']]");
