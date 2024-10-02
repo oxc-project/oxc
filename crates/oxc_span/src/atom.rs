@@ -3,6 +3,7 @@ use std::{
     fmt, hash,
     ops::Deref,
 };
+use oxc_fastcmp::Compare;
 
 use oxc_allocator::{Allocator, CloneIn, FromIn};
 #[cfg(feature = "serialize")]
@@ -147,31 +148,31 @@ impl<'a> Borrow<str> for Atom<'a> {
 
 impl<'a, T: AsRef<str>> PartialEq<T> for Atom<'a> {
     fn eq(&self, other: &T) -> bool {
-        self.as_str() == other.as_ref()
+        self.as_bytes().feq(other.as_ref().as_bytes())
     }
 }
 
 impl<'a> PartialEq<Atom<'a>> for &str {
     fn eq(&self, other: &Atom<'a>) -> bool {
-        *self == other.as_str()
+        self.as_bytes().feq(other.as_bytes())
     }
 }
 
 impl<'a> PartialEq<str> for Atom<'a> {
     fn eq(&self, other: &str) -> bool {
-        self.as_str() == other
+        self.as_bytes().feq(other.as_bytes())
     }
 }
 
 impl<'a> PartialEq<Atom<'a>> for Cow<'_, str> {
     fn eq(&self, other: &Atom<'a>) -> bool {
-        self.as_ref() == other.as_str()
+        self.as_bytes().feq(other.as_bytes())
     }
 }
 
 impl<'a> PartialEq<&Atom<'a>> for Cow<'_, str> {
     fn eq(&self, other: &&Atom<'a>) -> bool {
-        self.as_ref() == other.as_str()
+        self.as_bytes().feq(other.as_bytes())
     }
 }
 

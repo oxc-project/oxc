@@ -1588,6 +1588,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_fastcmp"
+version = "0.1.0"
+dependencies = [
+ "rand",
+]
+
+[[package]]
 name = "oxc_index"
 version = "0.30.5"
 dependencies = [
@@ -1919,6 +1926,7 @@ dependencies = [
  "miette",
  "oxc_allocator",
  "oxc_ast_macros",
+ "oxc_fastcmp",
  "schemars",
  "serde",
  "tsify",

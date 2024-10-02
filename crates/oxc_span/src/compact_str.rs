@@ -3,6 +3,7 @@ use std::{
     fmt, hash,
     ops::{Deref, Index},
 };
+use oxc_fastcmp::Compare;
 
 use compact_str::CompactString;
 #[cfg(feature = "serialize")]
@@ -174,31 +175,31 @@ impl Borrow<str> for CompactStr {
 
 impl<T: AsRef<str>> PartialEq<T> for CompactStr {
     fn eq(&self, other: &T) -> bool {
-        self.as_str() == other.as_ref()
+        self.as_bytes().feq(other.as_ref().as_bytes())
     }
 }
 
 impl PartialEq<CompactStr> for &str {
     fn eq(&self, other: &CompactStr) -> bool {
-        *self == other.as_str()
+        self.as_bytes().feq(other.as_bytes())
     }
 }
 
 impl PartialEq<CompactStr> for str {
     fn eq(&self, other: &CompactStr) -> bool {
-        self == other.as_str()
+        self.as_bytes().feq(other.as_bytes())
     }
 }
 
 impl PartialEq<str> for CompactStr {
     fn eq(&self, other: &str) -> bool {
-        self.as_str() == other
+        self.as_bytes().feq(other.as_bytes())
     }
 }
 
 impl PartialEq<CompactStr> for Cow<'_, str> {
     fn eq(&self, other: &CompactStr) -> bool {
-        self.as_ref() == other.as_str()
+        self.as_bytes().feq(other.as_bytes())
     }
 }
 
