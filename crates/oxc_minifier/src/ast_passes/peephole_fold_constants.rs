@@ -1,4 +1,5 @@
 use std::cmp::Ordering;
+use std::ops::Neg;
 
 use num_bigint::BigInt;
 use oxc_ast::ast::*;
@@ -162,6 +163,15 @@ impl<'a> PeepholeFoldConstants {
             UnaryOperator::UnaryNegation if expr.argument.is_nan() => {
                 Some(ctx.ast.move_expression(&mut expr.argument))
             }
+            // `--1` -> `1`
+            UnaryOperator::UnaryNegation => match &mut expr.argument {
+                Expression::UnaryExpression(unary)
+                    if matches!(unary.operator, UnaryOperator::UnaryNegation) =>
+                {
+                    Some(ctx.ast.move_expression(&mut unary.argument))
+                }
+                _ => None,
+            },
             // `+1` -> `1`
             UnaryOperator::UnaryPlus => match &expr.argument {
                 Expression::UnaryExpression(unary) => {
@@ -177,6 +187,17 @@ impl<'a> PeepholeFoldConstants {
                 _ => None,
             },
             UnaryOperator::BitwiseNot => match &mut expr.argument {
+                Expression::BigIntLiteral(n) => {
+                    let value = ctx.get_string_bigint_value(n.raw.as_str().trim_end_matches('n'));
+                    value.map(|value| {
+                        let value = !value;
+                        ctx.ast.expression_big_int_literal(
+                            SPAN,
+                            value.to_string() + "n",
+                            BigintBase::Decimal,
+                        )
+                    })
+                }
                 Expression::NumericLiteral(n) => is_within_i32_range(n.value).then(|| {
                     let value = !n.value.to_js_int_32();
                     ctx.ast.expression_numeric_literal(
@@ -191,6 +212,24 @@ impl<'a> PeepholeFoldConstants {
                         UnaryOperator::BitwiseNot => {
                             // Return the un-bitten value
                             Some(ctx.ast.move_expression(&mut un.argument))
+                        }
+                        UnaryOperator::UnaryNegation if un.argument.is_big_int_literal() => {
+                            // `~-1n` -> `0n`
+                            if let Expression::BigIntLiteral(n) = &mut un.argument {
+                                let value = ctx
+                                    .get_string_bigint_value(n.raw.as_str().trim_end_matches('n'));
+                                value.and_then(|value| value.checked_sub(&BigInt::from(1))).map(
+                                    |value| {
+                                        ctx.ast.expression_big_int_literal(
+                                            SPAN,
+                                            value.neg().to_string() + "n",
+                                            BigintBase::Decimal,
+                                        )
+                                    },
+                                )
+                            } else {
+                                None
+                            }
                         }
                         UnaryOperator::UnaryNegation if un.argument.is_number() => {
                             // `-~1` -> `2`
@@ -213,7 +252,7 @@ impl<'a> PeepholeFoldConstants {
                 }
                 _ => None,
             },
-            _ => None,
+            UnaryOperator::Delete => None,
         }
     }
 
@@ -1338,12 +1377,17 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn unary_with_big_int() {
         test("-(1n)", "-1n");
         test("- -1n", "1n");
         test("!1n", "false");
         test("~0n", "-1n");
+
+        test("~-1n", "0n");
+        test("~~1n", "1n");
+
+        test("~0x3n", "-4n");
+        test("~0b11n", "-4n");
     }
 
     #[test]
