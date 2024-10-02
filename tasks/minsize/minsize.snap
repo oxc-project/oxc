@@ -10,7 +10,7 @@ Original   | Minified   | esbuild    | Gzip       | esbuild
 
 544.10 kB  | 74.12 kB   | 72.48 kB   | 26.22 kB   | 26.20 kB   | lodash.js 
 
-555.77 kB  | 278.70 kB  | 270.13 kB  | 91.39 kB   | 90.80 kB   | d3.js     
+555.77 kB  | 278.68 kB  | 270.13 kB  | 91.39 kB   | 90.80 kB   | d3.js     
 
 1.01 MB    | 470.09 kB  | 458.89 kB  | 126.96 kB  | 126.71 kB  | bundle.min.js
 
