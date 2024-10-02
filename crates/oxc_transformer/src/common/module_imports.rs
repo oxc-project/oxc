@@ -48,12 +48,7 @@ impl<'a, 'ctx> ModuleImports<'a, 'ctx> {
 
 impl<'a, 'ctx> Traverse<'a> for ModuleImports<'a, 'ctx> {
     fn exit_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        let mut imports = self.ctx.module_imports.imports.borrow_mut();
-        if self.ctx.source_type.is_script() {
-            self.insert_require_statements(&mut imports, ctx);
-        } else {
-            self.insert_import_statements(&mut imports, ctx);
-        }
+        self.ctx.module_imports.insert_into_program(self.ctx, ctx);
     }
 }
 
@@ -69,22 +64,85 @@ impl<'a> NamedImport<'a> {
     }
 }
 
-impl<'a, 'ctx> ModuleImports<'a, 'ctx> {
+/// Store for `import` / `require` statements to be added at top of program.
+///
+/// TODO(improve-on-babel): Insertion order does not matter. We only have to use `IndexMap`
+/// to produce output that's the same as Babel's.
+/// Substitute `FxHashMap` once we don't need to match Babel's output exactly.
+pub struct ModuleImportsStore<'a> {
+    imports: RefCell<IndexMap<Atom<'a>, Vec<NamedImport<'a>>>>,
+}
+
+// Public methods
+impl<'a> ModuleImportsStore<'a> {
+    /// Create new `ModuleImportsStore`.
+    pub fn new() -> Self {
+        Self { imports: RefCell::new(IndexMap::default()) }
+    }
+
+    /// Add `import` or `require` to top of program.
+    ///
+    /// Which it will be depends on the source type.
+    ///
+    /// * `import { named_import } from 'source';` or
+    /// * `var named_import = require('source');`
+    ///
+    /// If `front` is `true`, `import`/`require` is added to front of the `import`s/`require`s.
+    /// TODO(improve-on-babel): `front` option is only required to pass one of Babel's tests. Output
+    /// without it is still valid. Remove this once our output doesn't need to match Babel exactly.
+    pub fn add_import(&self, source: Atom<'a>, import: NamedImport<'a>, front: bool) {
+        match self.imports.borrow_mut().entry(source) {
+            IndexMapEntry::Occupied(mut entry) => {
+                entry.get_mut().push(import);
+                if front && entry.index() != 0 {
+                    entry.move_index(0);
+                }
+            }
+            IndexMapEntry::Vacant(entry) => {
+                let named_imports = vec![import];
+                if front {
+                    entry.shift_insert(0, named_imports);
+                } else {
+                    entry.insert(named_imports);
+                }
+            }
+        }
+    }
+
+    /// Returns `true` if no imports have been scheduled for insertion.
+    pub fn is_empty(&self) -> bool {
+        self.imports.borrow().is_empty()
+    }
+}
+
+// Internal methods
+impl<'a> ModuleImportsStore<'a> {
+    /// Insert `import` / `require` statements at top of program.
+    fn insert_into_program(&self, transform_ctx: &TransformCtx<'a>, ctx: &mut TraverseCtx<'a>) {
+        if transform_ctx.source_type.is_script() {
+            self.insert_require_statements(transform_ctx, ctx);
+        } else {
+            self.insert_import_statements(transform_ctx, ctx);
+        }
+    }
+
     fn insert_import_statements(
-        &mut self,
-        imports: &mut IndexMap<Atom<'a>, Vec<NamedImport<'a>>>,
+        &self,
+        transform_ctx: &TransformCtx<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        let mut imports = self.imports.borrow_mut();
         let stmts =
             imports.drain(..).map(|(source, names)| Self::get_named_import(source, names, ctx));
-        self.ctx.top_level_statements.insert_statements(stmts);
+        transform_ctx.top_level_statements.insert_statements(stmts);
     }
 
     fn insert_require_statements(
-        &mut self,
-        imports: &mut IndexMap<Atom<'a>, Vec<NamedImport<'a>>>,
+        &self,
+        transform_ctx: &TransformCtx<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        let mut imports = self.imports.borrow_mut();
         if imports.is_empty() {
             return;
         }
@@ -93,7 +151,7 @@ impl<'a, 'ctx> ModuleImports<'a, 'ctx> {
         let stmts = imports
             .drain(..)
             .map(|(source, names)| Self::get_require(source, names, require_symbol_id, ctx));
-        self.ctx.top_level_statements.insert_statements(stmts);
+        transform_ctx.top_level_statements.insert_statements(stmts);
     }
 
     fn get_named_import(
@@ -155,53 +213,5 @@ impl<'a, 'ctx> ModuleImports<'a, 'ctx> {
         };
         let var_decl = ctx.ast.declaration_variable(SPAN, var_kind, decl, false);
         ctx.ast.statement_declaration(var_decl)
-    }
-}
-
-/// Store for `import` / `require` statements to be added at top of program.
-///
-/// TODO(improve-on-babel): Insertion order does not matter. We only have to use `IndexMap`
-/// to produce output that's the same as Babel's.
-/// Substitute `FxHashMap` once we don't need to match Babel's output exactly.
-pub struct ModuleImportsStore<'a> {
-    imports: RefCell<IndexMap<Atom<'a>, Vec<NamedImport<'a>>>>,
-}
-
-impl<'a> ModuleImportsStore<'a> {
-    pub fn new() -> ModuleImportsStore<'a> {
-        Self { imports: RefCell::new(IndexMap::default()) }
-    }
-
-    /// Add `import` or `require` to top of program.
-    ///
-    /// Which it will be depends on the source type.
-    ///
-    /// * `import { named_import } from 'source';` or
-    /// * `var named_import = require('source');`
-    ///
-    /// If `front` is `true`, `import`/`require` is added to front of the `import`s/`require`s.
-    /// TODO(improve-on-babel): `front` option is only required to pass one of Babel's tests. Output
-    /// without it is still valid. Remove this once our output doesn't need to match Babel exactly.
-    pub fn add_import(&self, source: Atom<'a>, import: NamedImport<'a>, front: bool) {
-        match self.imports.borrow_mut().entry(source) {
-            IndexMapEntry::Occupied(mut entry) => {
-                entry.get_mut().push(import);
-                if front && entry.index() != 0 {
-                    entry.move_index(0);
-                }
-            }
-            IndexMapEntry::Vacant(entry) => {
-                let named_imports = vec![import];
-                if front {
-                    entry.shift_insert(0, named_imports);
-                } else {
-                    entry.insert(named_imports);
-                }
-            }
-        }
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.imports.borrow().is_empty()
     }
 }
