@@ -322,6 +322,13 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
                     ctx.ast.expression_object(expr.span(), Vec::new_in(ctx.ast.allocator), None);
                 self.changed = true;
             }
+            // `new Array` -> `[]`
+            else if new_expr.arguments.is_empty()
+                && new_expr.callee.is_global_reference_name("Array", ctx.symbols())
+            {
+                *expr = ctx.ast.expression_array(expr.span(), Vec::new_in(ctx.ast.allocator), None);
+                self.changed = true;
+            }
         }
     }
 
@@ -333,6 +340,13 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
             {
                 *expr =
                     ctx.ast.expression_object(expr.span(), Vec::new_in(ctx.ast.allocator), None);
+                self.changed = true;
+            }
+            // `Array()` -> `[]`
+            else if call_expr.arguments.is_empty()
+                && call_expr.callee.is_global_reference_name("Array", ctx.symbols())
+            {
+                *expr = ctx.ast.expression_array(expr.span(), Vec::new_in(ctx.ast.allocator), None);
                 self.changed = true;
             }
         }
@@ -408,5 +422,43 @@ mod test {
         test("x = Object()", "x = ({})");
 
         test_same("x = (function f(){function Object(){this.x=4}return new Object();})();");
+    }
+
+    // tests from closure compiler
+    #[test]
+    fn fold_literal_array_constructors() {
+        test("x = new Array", "x = []");
+        test("x = new Array()", "x = []");
+        test("x = Array()", "x = []");
+        // do not fold optional chains
+        test_same("x = Array?.()");
+
+        // One argument
+        // test("x = new Array(0)", "x = []");
+        // test("x = Array(0)", "x = []");
+        // test("x = new Array(\"a\")", "x = [\"a\"]");
+        // test("x = Array(\"a\")", "x = [\"a\"]");
+        // test("x = new Array(7)", "x = Array(7)");
+        // test_same("x = Array(7)");
+        // test("x = new Array(y)", "x = Array(y)");
+        // test_same("x = Array(y)");
+        // test("x = new Array(foo())", "x = Array(foo())");
+        // test_same("x = Array(foo())");
+
+        // // 1+ arguments
+        // test("x = new Array(1, 2, 3, 4)", "x = [1, 2, 3, 4]");
+        // test("x = Array(1, 2, 3, 4)", "x = [1, 2, 3, 4]");
+        // test("x = new Array('a', 1, 2, 'bc', 3, {}, 'abc')", "x = ['a', 1, 2, 'bc', 3, {}, 'abc']");
+        // test("x = Array('a', 1, 2, 'bc', 3, {}, 'abc')", "x = ['a', 1, 2, 'bc', 3, {}, 'abc']");
+        // test("x = new Array(Array(1, '2', 3, '4'))", "x = [[1, '2', 3, '4']]");
+        // test("x = Array(Array(1, '2', 3, '4'))", "x = [[1, '2', 3, '4']]");
+        // test(
+        //     "x = new Array(Object(), Array(\"abc\", Object(), Array(Array())))",
+        //     "x = [{}, [\"abc\", {}, [[]]]]",
+        // );
+        // test(
+        //     "x = new Array(Object(), Array(\"abc\", Object(), Array(Array())))",
+        //     "x = [{}, [\"abc\", {}, [[]]]]",
+        // );
     }
 }
