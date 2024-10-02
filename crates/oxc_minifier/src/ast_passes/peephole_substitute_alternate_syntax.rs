@@ -340,16 +340,8 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
                     }
                     // `new Array(8)` -> `Array(8)`
                     else if arg.is_number_literal() {
-                        let mut arguments = Vec::new_in(ctx.ast.allocator);
-                        arguments
-                            .push(ctx.ast.argument_expression((*arg).clone_in(ctx.ast.allocator)));
-                        *expr = ctx.ast.expression_call(
-                            new_expr.span,
-                            new_expr.callee.clone_in(ctx.ast.allocator),
-                            NONE,
-                            arguments,
-                            false,
-                        )
+                        *expr = self.array_constructor_call(&new_expr.arguments, ctx);
+                        self.changed = true;
                     }
                     // `new Array(literal)` -> `[literal]`
                     else if arg.is_literal() {
@@ -363,13 +355,8 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
                     }
                     // `new Array()` -> `Array()`
                     else {
-                        *expr = ctx.ast.expression_call(
-                            new_expr.span,
-                            new_expr.callee.clone_in(ctx.ast.allocator),
-                            NONE,
-                            new_expr.arguments.clone_in(ctx.ast.allocator),
-                            false,
-                        )
+                        *expr = self.array_constructor_call(&new_expr.arguments, ctx);
+                        self.changed = true;
                     }
                 }
             }
@@ -394,6 +381,16 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
                 self.changed = true;
             }
         }
+    }
+
+    /// returns an `Array()` constructor call with zero, one, or more arguments
+    fn array_constructor_call(
+        &self,
+        arguments: &Vec<'a, Argument<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        let callee = ctx.ast.expression_identifier_reference(SPAN, "Array");
+        ctx.ast.expression_call(SPAN, callee, NONE, arguments.clone_in(ctx.ast.allocator), false)
     }
 }
 
