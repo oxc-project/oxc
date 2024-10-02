@@ -39,7 +39,7 @@ pub struct TransformOptions {
     pub jsx: Option<JsxOptions>,
 
     /// Enable ES2015 transformations.
-    pub es2015: Option<Es2015BindingOptions>,
+    pub es2015: Option<ES2015BindingOptions>,
 
     /// Define Plugin
     #[napi(ts_type = "Record<string, string>")]
@@ -274,14 +274,14 @@ impl From<ArrowFunctionsBindingOptions> for ArrowFunctionsOptions {
     }
 }
 
-#[napi(object)]
-pub struct Es2015BindingOptions {
+#[napi(object, js_name = "ES2015BindingOptions")]
+pub struct ES2015BindingOptions {
     /// Transform arrow functions into function expressions.
     pub arrow_function: Option<ArrowFunctionsBindingOptions>,
 }
 
-impl From<Es2015BindingOptions> for ES2015Options {
-    fn from(options: Es2015BindingOptions) -> Self {
+impl From<ES2015BindingOptions> for ES2015Options {
+    fn from(options: ES2015BindingOptions) -> Self {
         ES2015Options { arrow_function: options.arrow_function.map(Into::into) }
     }
 }

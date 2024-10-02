@@ -12,7 +12,7 @@ export interface ArrowFunctionsBindingOptions {
   spec?: boolean
 }
 
-export interface Es2015BindingOptions {
+export interface ES2015BindingOptions {
   /** Transform arrow functions into function expressions. */
   arrowFunction?: ArrowFunctionsBindingOptions
 }
@@ -202,7 +202,7 @@ export interface TransformOptions {
   /** Configure how TSX and JSX are transformed. */
   jsx?: JsxOptions
   /** Enable ES2015 transformations. */
-  es2015?: Es2015BindingOptions
+  es2015?: ES2015BindingOptions
   /** Define Plugin */
   define?: Record<string, string>
   /** Inject Plugin */
