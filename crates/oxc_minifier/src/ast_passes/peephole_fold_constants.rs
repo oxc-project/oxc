@@ -1,3 +1,14 @@
+use std::cmp::Ordering;
+
+use num_bigint::BigInt;
+use oxc_ast::ast::*;
+use oxc_span::{GetSpan, Span, SPAN};
+use oxc_syntax::{
+    number::{NumberBase, ToJsInt32},
+    operator::{BinaryOperator, LogicalOperator, UnaryOperator},
+};
+use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
+
 use crate::{
     node_util::{
         is_exact_int64, IsLiteralValue, MayHaveSideEffects, NodeUtil, NumberValue, ValueType,
@@ -6,16 +17,6 @@ use crate::{
     ty::Ty,
     CompressorPass,
 };
-use num_bigint::BigInt;
-use oxc_ast::ast::*;
-use oxc_span::{GetSpan, Span, SPAN};
-use oxc_syntax::number::ToJsInt32;
-use oxc_syntax::{
-    number::NumberBase,
-    operator::{BinaryOperator, LogicalOperator, UnaryOperator},
-};
-use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
-use std::cmp::Ordering;
 
 /// Constant Folding
 ///
