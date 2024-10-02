@@ -202,7 +202,7 @@ export interface TransformOptions {
   /** Configure how TSX and JSX are transformed. */
   jsx?: JsxOptions
   /** Enable ES2015 transformations. */
-  es2015?: ES2015BindingOptions
+  es2015?: Es2015BindingOptions
   /** Define Plugin */
   define?: Record<string, string>
   /** Inject Plugin */
