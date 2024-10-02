@@ -10,7 +10,7 @@ Original   | Minified   | esbuild    | Gzip       | esbuild
 
 544.10 kB  | 74.12 kB   | 72.48 kB   | 26.22 kB   | 26.20 kB   | lodash.js 
 
-555.77 kB  | 278.70 kB  | 270.13 kB  | 91.39 kB   | 90.80 kB   | d3.js     
+555.77 kB  | 278.68 kB  | 270.13 kB  | 91.39 kB   | 90.80 kB   | d3.js     
 
 1.01 MB    | 470.09 kB  | 458.89 kB  | 126.96 kB  | 126.71 kB  | bundle.min.js
 
@@ -20,7 +20,7 @@ Original   | Minified   | esbuild    | Gzip       | esbuild
 
 3.20 MB    | 1.05 MB    | 1.01 MB    | 334.06 kB  | 331.56 kB  | echarts.js
 
-6.69 MB    | 2.44 MB    | 2.31 MB    | 498.83 kB  | 488.28 kB  | antd.js   
+4.12 MB    | 1.68 MB    | 2.31 MB    | 484.15 kB  | 488.28 kB  | antd.js   
 
 10.95 MB   | 3.59 MB    | 3.49 MB    | 913.92 kB  | 915.50 kB  | typescript.js
 
