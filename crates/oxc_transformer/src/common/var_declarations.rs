@@ -44,9 +44,9 @@ impl<'a, 'ctx> Traverse<'a> for VarDeclarations<'a, 'ctx> {
             self.ctx.top_level_statements.insert_statement(stmt);
         }
 
-        let declarators = self.ctx.var_declarations.declarators.borrow();
-        debug_assert!(declarators.len() == 1);
-        debug_assert!(declarators.last().is_none());
+        let stack = self.ctx.var_declarations.stack.borrow();
+        debug_assert!(stack.len() == 1);
+        debug_assert!(stack.last().is_none());
     }
 
     fn enter_statements(
@@ -54,8 +54,8 @@ impl<'a, 'ctx> Traverse<'a> for VarDeclarations<'a, 'ctx> {
         _stmts: &mut Vec<'a, Statement<'a>>,
         _ctx: &mut TraverseCtx<'a>,
     ) {
-        let mut declarators = self.ctx.var_declarations.declarators.borrow_mut();
-        declarators.push(None);
+        let mut stack = self.ctx.var_declarations.stack.borrow_mut();
+        stack.push(None);
     }
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
@@ -72,8 +72,8 @@ impl<'a, 'ctx> Traverse<'a> for VarDeclarations<'a, 'ctx> {
 
 impl<'a, 'ctx> VarDeclarations<'a, 'ctx> {
     fn get_var_statement(&mut self, ctx: &mut TraverseCtx<'a>) -> Option<Statement<'a>> {
-        let mut declarators = self.ctx.var_declarations.declarators.borrow_mut();
-        let declarators = declarators.pop()?;
+        let mut stack = self.ctx.var_declarations.stack.borrow_mut();
+        let declarators = stack.pop()?;
         debug_assert!(!declarators.is_empty());
 
         let stmt = Statement::VariableDeclaration(ctx.ast.alloc_variable_declaration(
@@ -88,12 +88,12 @@ impl<'a, 'ctx> VarDeclarations<'a, 'ctx> {
 
 /// Store for `VariableDeclarator`s to be added to enclosing statement block.
 pub struct VarDeclarationsStore<'a> {
-    declarators: RefCell<SparseStack<Vec<'a, VariableDeclarator<'a>>>>,
+    stack: RefCell<SparseStack<Vec<'a, VariableDeclarator<'a>>>>,
 }
 
 impl<'a> VarDeclarationsStore<'a> {
     pub fn new() -> Self {
-        Self { declarators: RefCell::new(SparseStack::new()) }
+        Self { stack: RefCell::new(SparseStack::new()) }
     }
 }
 
@@ -128,7 +128,7 @@ impl<'a> VarDeclarationsStore<'a> {
 
     /// Add a `VariableDeclarator` to be inserted at top of current enclosing statement block.
     pub fn insert_declarator(&self, declarator: VariableDeclarator<'a>, ctx: &mut TraverseCtx<'a>) {
-        let mut declarators = self.declarators.borrow_mut();
-        declarators.last_mut_or_init(|| ctx.ast.vec()).push(declarator);
+        let mut stack = self.stack.borrow_mut();
+        stack.last_mut_or_init(|| ctx.ast.vec()).push(declarator);
     }
 }
