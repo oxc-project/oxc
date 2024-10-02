@@ -1,9 +1,9 @@
+use oxc_fastcmp::Compare;
 use std::{
     borrow::{Borrow, Cow},
     fmt, hash,
     ops::{Deref, Index},
 };
-use oxc_fastcmp::Compare;
 
 use compact_str::CompactString;
 #[cfg(feature = "serialize")]

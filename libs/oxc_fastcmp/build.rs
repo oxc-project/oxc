@@ -16,11 +16,11 @@
 
 static OPT_LEN: usize = 256;
 
-use std::{env, iter, io};
+use std::error::Error;
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
-use std::error::Error;
+use std::{env, io, iter};
 
 pub fn main() {
     run().expect("Could not generate needed source code.");
@@ -65,9 +65,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         writeln!(f, ",")?;
     }
 
-    writeln!(f,
-             "{}_ => unsafe {{ memcmp($a, $b, $len) == 0 }},",
-             fill(12))?;
+    writeln!(f, "{}_ => unsafe {{ memcmp($a, $b, $len) == 0 }},", fill(12))?;
 
     writeln!(f, "{}}}", fill(8))?;
     writeln!(f, "{}}}}}", fill(4))?;

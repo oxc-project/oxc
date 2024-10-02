@@ -1,9 +1,9 @@
+use oxc_fastcmp::Compare;
 use std::{
     borrow::{Borrow, Cow},
     fmt, hash,
     ops::Deref,
 };
-use oxc_fastcmp::Compare;
 
 use oxc_allocator::{Allocator, CloneIn, FromIn};
 #[cfg(feature = "serialize")]

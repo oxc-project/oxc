@@ -30,7 +30,6 @@ pub trait Compare {
 impl Compare for [u8] {
     #[inline(always)]
     fn feq(&self, to: &[u8]) -> bool {
-
         // Fallback if the slices are too large
         extern "C" {
             fn memcmp(s1: *const i8, s2: *const i8, n: usize) -> i32;
