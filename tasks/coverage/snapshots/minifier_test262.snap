@@ -2,4 +2,8 @@ commit: d62fa93c
 
 minifier_test262 Summary:
 AST Parsed     : 43765/43765 (100.00%)
-Positive Passed: 43765/43765 (100.00%)
+Positive Passed: 43761/43765 (99.99%)
+Compress: tasks/coverage/test262/test/language/expressions/void/S11.4.2_A2_T1.js
+Compress: tasks/coverage/test262/test/language/expressions/void/S11.4.2_A4_T1.js
+Compress: tasks/coverage/test262/test/language/expressions/void/S11.4.2_A4_T2.js
+Compress: tasks/coverage/test262/test/language/expressions/void/S11.4.2_A4_T3.js

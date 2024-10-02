@@ -37,7 +37,7 @@ impl<'a> CollapseVariableDeclarations {
 
     /// Join consecutive var statements
     fn join_vars(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
-        if self.options.join_vars {
+        if !self.options.join_vars {
             return;
         }
         // Collect all the consecutive ranges that contain joinable vars.
