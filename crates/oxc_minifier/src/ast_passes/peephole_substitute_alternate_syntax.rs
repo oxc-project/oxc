@@ -1,4 +1,6 @@
+use oxc_allocator::Vec;
 use oxc_ast::ast::*;
+use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::number::ToJsInt32;
 use oxc_syntax::{
@@ -87,6 +89,9 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
         if !self.compress_undefined(expr, ctx) {
             self.compress_boolean(expr, ctx);
         }
+
+        self.compress_new_expression(expr, ctx);
+        self.compress_call_expression(expr, ctx);
     }
 
     fn enter_binary_expression(
@@ -323,6 +328,32 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
             None
         }
     }
+
+    fn compress_new_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Expression::NewExpression(new_expr) = expr {
+            // `new Object` -> `{}`
+            if new_expr.arguments.is_empty()
+                && new_expr.callee.is_global_reference_name("Object", ctx.symbols())
+            {
+                *expr =
+                    ctx.ast.expression_object(expr.span(), Vec::new_in(ctx.ast.allocator), None);
+                self.changed = true;
+            }
+        }
+    }
+
+    fn compress_call_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Expression::CallExpression(call_expr) = expr {
+            // `Object()` -> `{}`
+            if call_expr.arguments.is_empty()
+                && call_expr.callee.is_global_reference_name("Object", ctx.symbols())
+            {
+                *expr =
+                    ctx.ast.expression_object(expr.span(), Vec::new_in(ctx.ast.allocator), None);
+                self.changed = true;
+            }
+        }
+    }
 }
 
 /// <https://github.com/google/closure-compiler/blob/master/test/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntax.java>
@@ -392,5 +423,14 @@ mod test {
         test_same("x -= 2");
         test_same("x += 1"); // The string concatenation may be triggered, so we don't fold this.
         test_same("x += -1");
+    }
+
+    #[test]
+    fn fold_literal_object_constructors() {
+        test("x = new Object", "x = ({})");
+        test("x = new Object()", "x = ({})");
+        test("x = Object()", "x = ({})");
+
+        test_same("x = (function f(){function Object(){this.x=4}return new Object();})();");
     }
 }
