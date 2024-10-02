@@ -78,17 +78,17 @@ impl<'a> Display for Alternative<'a> {
 impl<'a> Display for Term<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::BoundaryAssertion(it) => write!(f, "{it}"),
+            Self::BoundaryAssertion(it) => write!(f, "{}", it.as_ref()),
             Self::LookAroundAssertion(it) => write!(f, "{}", it.as_ref()),
             Self::Quantifier(it) => write!(f, "{}", it.as_ref()),
-            Self::Character(it) => write!(f, "{it}"),
+            Self::Character(it) => write!(f, "{}", it.as_ref()),
             Self::Dot(it) => write!(f, "{it}"),
-            Self::CharacterClassEscape(it) => write!(f, "{it}"),
+            Self::CharacterClassEscape(it) => write!(f, "{}", it.as_ref()),
             Self::UnicodePropertyEscape(it) => write!(f, "{}", it.as_ref()),
             Self::CharacterClass(it) => write!(f, "{}", it.as_ref()),
             Self::CapturingGroup(it) => write!(f, "{}", it.as_ref()),
             Self::IgnoreGroup(it) => write!(f, "{}", it.as_ref()),
-            Self::IndexedReference(it) => write!(f, "{it}"),
+            Self::IndexedReference(it) => write!(f, "{}", it.as_ref()),
             Self::NamedReference(it) => write!(f, "{}", it.as_ref()),
         }
     }
@@ -246,9 +246,9 @@ impl<'a> Display for CharacterClassContents<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::CharacterClassRange(it) => write!(f, "{}", it.as_ref()),
-            Self::CharacterClassEscape(it) => write!(f, "{it}"),
+            Self::CharacterClassEscape(it) => write!(f, "{}", it.as_ref()),
             Self::UnicodePropertyEscape(it) => write!(f, "{}", it.as_ref()),
-            Self::Character(it) => write!(f, "{it}"),
+            Self::Character(it) => write!(f, "{}", it.as_ref()),
             Self::NestedCharacterClass(it) => write!(f, "{}", it.as_ref()),
             Self::ClassStringDisjunction(it) => write!(f, "{}", it.as_ref()),
         }

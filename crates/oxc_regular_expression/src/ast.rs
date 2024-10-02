@@ -1,7 +1,3 @@
-// NB: `#[span]`, `#[scope(...)]`,`#[visit(...)]` and `#[generate_derive(...)]` do NOT do anything to the code.
-// They are purely markers for codegen used in `tasks/ast_tools` and `crates/oxc_traverse/scripts`. See docs in those crates.
-// Read [`macro@oxc_ast_macros::ast`] for more information.
-
 // Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
 #![allow(non_snake_case)]
 
@@ -76,19 +72,19 @@ pub struct Alternative<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum Term<'a> {
     // Assertion, QuantifiableAssertion
-    BoundaryAssertion(BoundaryAssertion) = 0,
+    BoundaryAssertion(Box<'a, BoundaryAssertion>) = 0,
     LookAroundAssertion(Box<'a, LookAroundAssertion<'a>>) = 1,
     // Quantifier
     Quantifier(Box<'a, Quantifier<'a>>) = 2,
     // Atom, ExtendedAtom
-    Character(Character) = 3,
+    Character(Box<'a, Character>) = 3,
     Dot(Dot) = 4,
-    CharacterClassEscape(CharacterClassEscape) = 5,
+    CharacterClassEscape(Box<'a, CharacterClassEscape>) = 5,
     UnicodePropertyEscape(Box<'a, UnicodePropertyEscape<'a>>) = 6,
     CharacterClass(Box<'a, CharacterClass<'a>>) = 7,
     CapturingGroup(Box<'a, CapturingGroup<'a>>) = 8,
     IgnoreGroup(Box<'a, IgnoreGroup<'a>>) = 9,
-    IndexedReference(IndexedReference) = 10,
+    IndexedReference(Box<'a, IndexedReference>) = 10,
     NamedReference(Box<'a, NamedReference<'a>>) = 11,
 }
 
@@ -286,9 +282,9 @@ pub enum CharacterClassContentsKind {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum CharacterClassContents<'a> {
     CharacterClassRange(Box<'a, CharacterClassRange>) = 0,
-    CharacterClassEscape(CharacterClassEscape) = 1,
+    CharacterClassEscape(Box<'a, CharacterClassEscape>) = 1,
     UnicodePropertyEscape(Box<'a, UnicodePropertyEscape<'a>>) = 2,
-    Character(Character) = 3,
+    Character(Box<'a, Character>) = 3,
     /// `UnicodeSetsMode` only
     NestedCharacterClass(Box<'a, CharacterClass<'a>>) = 4,
     /// `UnicodeSetsMode` only
@@ -403,4 +399,14 @@ pub struct IndexedReference {
 pub struct NamedReference<'a> {
     pub span: Span,
     pub name: Atom<'a>,
+}
+
+// See `oxc_ast/src/lib.rs` for the details
+#[cfg(target_pointer_width = "64")]
+#[test]
+fn size_asserts() {
+    use std::mem::size_of;
+
+    assert!(size_of::<Term>() == 16);
+    assert!(size_of::<CharacterClassContents>() == 16);
 }

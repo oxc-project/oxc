@@ -1,15 +1,13 @@
 #![allow(clippy::missing_errors_doc)]
 
-pub mod ast;
+mod ast_impl;
 mod body_parser;
 mod diagnostics;
-mod display;
-mod flag_parser;
+mod flags_parser;
 mod literal_parser;
 mod options;
-mod span;
+mod span_factory;
 mod surrogate_pair;
-pub mod visit;
 
 mod generated {
     mod derive_clone_in;
@@ -17,7 +15,8 @@ mod generated {
     mod derive_content_hash;
 }
 
+pub mod ast;
 pub use crate::{
-    body_parser::PatternParser, flag_parser::FlagsParser, literal_parser::Parser,
+    ast_impl::visit, body_parser::PatternParser, flags_parser::FlagsParser, literal_parser::Parser,
     options::ParserOptions,
 };

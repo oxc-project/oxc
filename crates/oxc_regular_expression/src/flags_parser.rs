@@ -2,7 +2,7 @@ use oxc_allocator::Allocator;
 use oxc_diagnostics::Result;
 use rustc_hash::FxHashSet;
 
-use crate::{ast, diagnostics, options::ParserOptions, span::SpanFactory};
+use crate::{ast, diagnostics, options::ParserOptions, span_factory::SpanFactory};
 
 pub struct FlagsParser<'a> {
     source_text: &'a str,

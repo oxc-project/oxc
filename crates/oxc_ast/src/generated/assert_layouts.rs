@@ -1445,7 +1445,7 @@ const _: () = {
     assert!(offset_of!(Alternative, span) == 0usize);
     assert!(offset_of!(Alternative, body) == 8usize);
 
-    assert!(size_of::<Term>() == 24usize);
+    assert!(size_of::<Term>() == 16usize);
     assert!(align_of::<Term>() == 8usize);
 
     assert!(size_of::<BoundaryAssertion>() == 12usize);
@@ -1465,7 +1465,7 @@ const _: () = {
     assert!(size_of::<LookAroundAssertionKind>() == 1usize);
     assert!(align_of::<LookAroundAssertionKind>() == 1usize);
 
-    assert!(size_of::<Quantifier>() == 64usize);
+    assert!(size_of::<Quantifier>() == 56usize);
     assert!(align_of::<Quantifier>() == 8usize);
     assert!(offset_of!(Quantifier, span) == 0usize);
     assert!(offset_of!(Quantifier, min) == 8usize);
@@ -1513,7 +1513,7 @@ const _: () = {
     assert!(size_of::<CharacterClassContentsKind>() == 1usize);
     assert!(align_of::<CharacterClassContentsKind>() == 1usize);
 
-    assert!(size_of::<CharacterClassContents>() == 24usize);
+    assert!(size_of::<CharacterClassContents>() == 16usize);
     assert!(align_of::<CharacterClassContents>() == 8usize);
 
     assert!(size_of::<CharacterClassRange>() == 40usize);
@@ -3000,7 +3000,7 @@ const _: () = {
     assert!(offset_of!(Alternative, span) == 0usize);
     assert!(offset_of!(Alternative, body) == 8usize);
 
-    assert!(size_of::<Term>() == 20usize);
+    assert!(size_of::<Term>() == 12usize);
     assert!(align_of::<Term>() == 4usize);
 
     assert!(size_of::<BoundaryAssertion>() == 12usize);
@@ -3020,7 +3020,7 @@ const _: () = {
     assert!(size_of::<LookAroundAssertionKind>() == 1usize);
     assert!(align_of::<LookAroundAssertionKind>() == 1usize);
 
-    assert!(size_of::<Quantifier>() == 56usize);
+    assert!(size_of::<Quantifier>() == 48usize);
     assert!(align_of::<Quantifier>() == 8usize);
     assert!(offset_of!(Quantifier, span) == 0usize);
     assert!(offset_of!(Quantifier, min) == 8usize);
@@ -3068,7 +3068,7 @@ const _: () = {
     assert!(size_of::<CharacterClassContentsKind>() == 1usize);
     assert!(align_of::<CharacterClassContentsKind>() == 1usize);
 
-    assert!(size_of::<CharacterClassContents>() == 20usize);
+    assert!(size_of::<CharacterClassContents>() == 8usize);
     assert!(align_of::<CharacterClassContents>() == 4usize);
 
     assert!(size_of::<CharacterClassRange>() == 40usize);
