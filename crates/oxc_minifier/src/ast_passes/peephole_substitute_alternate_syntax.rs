@@ -1,5 +1,5 @@
-use oxc_allocator::Vec;
-use oxc_ast::ast::*;
+use oxc_allocator::{CloneIn, Vec};
+use oxc_ast::{ast::*, NONE};
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::number::ToJsInt32;
@@ -338,13 +338,57 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
                 *expr =
                     ctx.ast.expression_object(expr.span(), Vec::new_in(ctx.ast.allocator), None);
                 self.changed = true;
-            }
-            // `new Array` -> `[]`
-            else if new_expr.arguments.is_empty()
-                && new_expr.callee.is_global_reference_name("Array", ctx.symbols())
-            {
-                *expr = ctx.ast.expression_array(expr.span(), Vec::new_in(ctx.ast.allocator), None);
-                self.changed = true;
+            } else if new_expr.callee.is_global_reference_name("Array", ctx.symbols()) {
+                // `new Array` -> `[]`
+                if new_expr.arguments.is_empty() {
+                    *expr =
+                        ctx.ast.expression_array(expr.span(), Vec::new_in(ctx.ast.allocator), None);
+                    self.changed = true;
+                } else if new_expr.arguments.len() == 1 {
+                    let Some(arg) = new_expr.arguments[0].as_expression() else { return };
+                    // `new Array(0)` -> `[]`
+                    if arg.is_number_0() {
+                        *expr = ctx.ast.expression_array(
+                            expr.span(),
+                            Vec::new_in(ctx.ast.allocator),
+                            None,
+                        );
+                        self.changed = true;
+                    }
+                    // `new Array(8)` -> `Array(8)`
+                    else if arg.is_number_literal() {
+                        let mut arguments = Vec::new_in(ctx.ast.allocator);
+                        arguments
+                            .push(ctx.ast.argument_expression((*arg).clone_in(ctx.ast.allocator)));
+                        *expr = ctx.ast.expression_call(
+                            new_expr.span,
+                            new_expr.callee.clone_in(ctx.ast.allocator),
+                            NONE,
+                            arguments,
+                            false,
+                        )
+                    }
+                    // `new Array(literal)` -> `[literal]`
+                    else if arg.is_literal() {
+                        let mut elements = Vec::new_in(ctx.ast.allocator);
+                        let element = ctx.ast.array_expression_element_expression(
+                            (*arg).clone_in(ctx.ast.allocator),
+                        );
+                        elements.push(element);
+                        *expr = ctx.ast.expression_array(expr.span(), elements, None);
+                        self.changed = true;
+                    }
+                    // `new Array()` -> `Array()`
+                    else {
+                        *expr = ctx.ast.expression_call(
+                            new_expr.span,
+                            new_expr.callee.clone_in(ctx.ast.allocator),
+                            NONE,
+                            new_expr.arguments.clone_in(ctx.ast.allocator),
+                            false,
+                        )
+                    }
+                }
             }
         }
     }
@@ -458,15 +502,15 @@ mod test {
         test_same("x = Array?.()");
 
         // One argument
-        // test("x = new Array(0)", "x = []");
+        test("x = new Array(0)", "x = []");
+        test("x = new Array(\"a\")", "x = [\"a\"]");
+        test("x = new Array(7)", "x = Array(7)");
+        test("x = new Array(y)", "x = Array(y)");
+        test("x = new Array(foo())", "x = Array(foo())");
         // test("x = Array(0)", "x = []");
-        // test("x = new Array(\"a\")", "x = [\"a\"]");
         // test("x = Array(\"a\")", "x = [\"a\"]");
-        // test("x = new Array(7)", "x = Array(7)");
         // test_same("x = Array(7)");
-        // test("x = new Array(y)", "x = Array(y)");
         // test_same("x = Array(y)");
-        // test("x = new Array(foo())", "x = Array(foo())");
         // test_same("x = Array(foo())");
 
         // // 1+ arguments
