@@ -5,7 +5,7 @@ use oxc_syntax::{
     number::NumberBase,
     operator::{BinaryOperator, UnaryOperator},
 };
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
 use crate::{node_util::NodeUtil, CompressOptions, CompressorPass};
 
@@ -89,7 +89,7 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
         }
     }
 
-    fn exit_binary_expression(
+    fn enter_binary_expression(
         &mut self,
         expr: &mut BinaryExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -168,16 +168,33 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
     fn compress_boolean(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
         let Expression::BooleanLiteral(lit) = expr else { return false };
         if self.options.booleans && !self.in_define_export {
+            let parent = ctx.ancestry.parent();
+            let no_unary = {
+                if let Ancestor::BinaryExpressionRight(u) = parent {
+                    !matches!(
+                        u.operator(),
+                        BinaryOperator::Addition | BinaryOperator::Instanceof | BinaryOperator::In
+                    )
+                } else {
+                    false
+                }
+            };
+            // XOR: We should use `!neg` when it is not in binary expression.
             let num = ctx.ast.expression_numeric_literal(
                 SPAN,
-                if lit.value { 0.0 } else { 1.0 },
-                if lit.value { "0" } else { "1" },
+                if lit.value ^ no_unary { 0.0 } else { 1.0 },
+                if lit.value ^ no_unary { "0" } else { "1" },
                 NumberBase::Decimal,
             );
-            *expr = ctx.ast.expression_unary(SPAN, UnaryOperator::LogicalNot, num);
-            return true;
+            *expr = if no_unary {
+                num
+            } else {
+                ctx.ast.expression_unary(SPAN, UnaryOperator::LogicalNot, num)
+            };
+            true
+        } else {
+            false
         }
-        false
     }
 
     /// Compress `typeof foo == "undefined"` into `typeof foo > "u"`
@@ -350,7 +367,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn fold_true_false_comparison() {
         test("x == true", "x == 1");
         test("x == false", "x == 0");
@@ -359,6 +375,14 @@ mod test {
         test("x <= true", "x <= 1");
         test("x > true", "x > 1");
         test("x >= true", "x >= 1");
+
+        test("x instanceof true", "x instanceof !0");
+        test("x + false", "x + !1");
+
+        // Order: should perform the nearest.
+        test("x == x instanceof false", "x == x instanceof !1");
+        test("x in x >> true", "x in x >> 1");
+        test("x == fake(false)", "x == fake(!1)");
     }
 
     #[test]
