@@ -1986,6 +1986,7 @@ dependencies = [
  "oxc_sourcemap",
  "oxc_span",
  "oxc_transformer",
+ "rustc-hash",
 ]
 
 [[package]]

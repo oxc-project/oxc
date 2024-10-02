@@ -1,9 +1,15 @@
+use napi::Either;
 use napi_derive::napi;
+use rustc_hash::FxHashMap;
+
 use oxc_allocator::Allocator;
 use oxc_codegen::CodegenReturn;
-use oxc_semantic::SemanticBuilder;
+use oxc_semantic::{ScopeTree, SemanticBuilder, SymbolTable};
 use oxc_span::SourceType;
-use oxc_transformer::{ReplaceGlobalDefines, ReplaceGlobalDefinesConfig, Transformer};
+use oxc_transformer::{
+    InjectGlobalVariables, InjectGlobalVariablesConfig, InjectImport, ReplaceGlobalDefines,
+    ReplaceGlobalDefinesConfig, Transformer,
+};
 
 use crate::{context::TransformContext, isolated_declaration, SourceMap, TransformOptions};
 
@@ -107,6 +113,7 @@ fn transpile(ctx: &TransformContext<'_>, options: Option<TransformOptions>) -> C
 
     let mut options = options;
     let define = options.as_mut().and_then(|options| options.define.take());
+    let inject = options.as_mut().and_then(|options| options.inject.take());
 
     let options = options.map(oxc_transformer::TransformOptions::from).unwrap_or_default();
 
@@ -126,22 +133,72 @@ fn transpile(ctx: &TransformContext<'_>, options: Option<TransformOptions>) -> C
     scopes = ret.scopes;
 
     if let Some(define) = define {
-        let define = define.into_iter().collect::<Vec<_>>();
-        match ReplaceGlobalDefinesConfig::new(&define) {
-            Ok(config) => {
-                let _ret = ReplaceGlobalDefines::new(ctx.allocator, config).build(
-                    symbols,
-                    scopes,
-                    &mut ctx.program_mut(),
-                );
-                // symbols = ret.symbols;
-                // scopes = ret.scopes;
-            }
-            Err(errors) => {
-                ctx.add_diagnostics(errors);
-            }
-        }
+        (symbols, scopes) = define_plugin(ctx, define, symbols, scopes);
+    }
+
+    if let Some(inject) = inject {
+        _ = inject_plugin(ctx, inject, symbols, scopes);
     }
 
     ctx.codegen().build(&ctx.program())
+}
+
+fn define_plugin(
+    ctx: &TransformContext<'_>,
+    define: FxHashMap<String, String>,
+    symbols: SymbolTable,
+    scopes: ScopeTree,
+) -> (SymbolTable, ScopeTree) {
+    let define = define.into_iter().collect::<Vec<_>>();
+    match ReplaceGlobalDefinesConfig::new(&define) {
+        Ok(config) => {
+            let ret = ReplaceGlobalDefines::new(ctx.allocator, config).build(
+                symbols,
+                scopes,
+                &mut ctx.program_mut(),
+            );
+            (ret.symbols, ret.scopes)
+        }
+        Err(errors) => {
+            ctx.add_diagnostics(errors);
+            (symbols, scopes)
+        }
+    }
+}
+
+fn inject_plugin(
+    ctx: &TransformContext<'_>,
+    inject: FxHashMap<String, Either<String, Vec<String>>>,
+    symbols: SymbolTable,
+    scopes: ScopeTree,
+) -> (SymbolTable, ScopeTree) {
+    let Ok(injects) = inject
+        .into_iter()
+        .map(|(local, value)| match value {
+            Either::A(source) => Ok(InjectImport::default_specifier(&source, &local)),
+            Either::B(v) => {
+                if v.len() != 2 {
+                    return Err(());
+                }
+                let source = v[0].to_string();
+                Ok(if v[1] == "*" {
+                    InjectImport::namespace_specifier(&source, &local)
+                } else {
+                    InjectImport::named_specifier(&source, Some(&v[1]), &local)
+                })
+            }
+        })
+        .collect::<Result<Vec<_>, ()>>()
+    else {
+        return (symbols, scopes);
+    };
+
+    let config = InjectGlobalVariablesConfig::new(injects);
+    let ret = InjectGlobalVariables::new(ctx.allocator, config).build(
+        symbols,
+        scopes,
+        &mut ctx.program_mut(),
+    );
+
+    (ret.symbols, ret.scopes)
 }

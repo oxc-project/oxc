@@ -83,4 +83,29 @@ test(
   },
 );
 
+// Test define plugin
+// TODO: should be constant folded
+test(
+  oxc.transform('test.ts', 'if (process.env.NODE_ENV === "production") { foo; }', {
+    define: {
+      'process.env.NODE_ENV': 'false',
+    },
+  }),
+  {
+    code: 'if (false === "production") {\n\tfoo;\n}\n',
+  },
+);
+
+// Test inject plugin
+test(
+  oxc.transform('test.ts', 'let _ = Object.assign', {
+    inject: {
+      'Object.assign': 'foo',
+    },
+  }),
+  {
+    code: 'import $inject_Object_assign from "foo";\nlet _ = $inject_Object_assign;\n',
+  },
+);
+
 console.log('Success.');

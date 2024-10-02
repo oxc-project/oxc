@@ -1,11 +1,11 @@
 #![allow(rustdoc::bare_urls)]
-#![allow(clippy::disallowed_types)] // allow HashMap
 
-use std::collections::HashMap;
 use std::path::PathBuf;
 
 use napi::Either;
 use napi_derive::napi;
+use rustc_hash::FxHashMap;
+
 use oxc_transformer::{ArrowFunctionsOptions, ES2015Options, JsxRuntime, RewriteExtensionsMode};
 
 use crate::IsolatedDeclarationsOptions;
@@ -42,7 +42,12 @@ pub struct TransformOptions {
     pub es2015: Option<ES2015BindingOptions>,
 
     /// Define Plugin
-    pub define: Option<HashMap<String, String>>,
+    #[napi(ts_type = "Record<string, string>")]
+    pub define: Option<FxHashMap<String, String>>,
+
+    /// Inject Plugin
+    #[napi(ts_type = "Record<string, string | [string, string]>")]
+    pub inject: Option<FxHashMap<String, Either<String, Vec<String>>>>,
 }
 
 impl From<TransformOptions> for oxc_transformer::TransformOptions {

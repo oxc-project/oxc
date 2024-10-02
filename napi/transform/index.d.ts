@@ -205,6 +205,8 @@ export interface TransformOptions {
   es2015?: ES2015BindingOptions
   /** Define Plugin */
   define?: Record<string, string>
+  /** Inject Plugin */
+  inject?: Record<string, string | [string, string]>
 }
 
 export interface TransformResult {
