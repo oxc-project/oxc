@@ -12,7 +12,7 @@
 //! self.ctx.var_declarations.insert_declarator(name, symbol_id, None, ctx);
 //! ```
 
-use std::cell::RefCell;
+use std::cell::UnsafeCell;
 
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, NONE};
@@ -56,21 +56,90 @@ impl<'a, 'ctx> Traverse<'a> for VarDeclarations<'a, 'ctx> {
 }
 
 /// Store for `VariableDeclarator`s to be added to enclosing statement block.
-pub struct VarDeclarationsStore<'a> {
-    stack: RefCell<SparseStack<Vec<'a, VariableDeclarator<'a>>>>,
-}
+pub struct VarDeclarationsStore<'a>(UnsafeCell<VarDeclarationsState<'a>>);
 
 // Public methods
 impl<'a> VarDeclarationsStore<'a> {
     /// Create new `VarDeclarationsStore`.
     pub fn new() -> Self {
-        Self { stack: RefCell::new(SparseStack::new()) }
+        Self(UnsafeCell::new(VarDeclarationsState::new()))
     }
 
     /// Add a `VariableDeclarator` to be inserted at top of current enclosing statement block,
     /// given `name` and `symbol_id`.
     pub fn insert(
         &self,
+        name: Atom<'a>,
+        symbol_id: SymbolId,
+        init: Option<Expression<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        // SAFETY: We only borrow state once during this function and borrow expires before exiting it
+        let state = unsafe { &mut *self.0.get() };
+        state.insert(name, symbol_id, init, ctx);
+    }
+
+    /// Add a `VariableDeclarator` to be inserted at top of current enclosing statement block,
+    /// given a `BindingPattern`.
+    pub fn insert_binding_pattern(
+        &self,
+        ident: BindingPattern<'a>,
+        init: Option<Expression<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        // SAFETY: We only borrow state once during this function and borrow expires before exiting it
+        let state = unsafe { &mut *self.0.get() };
+        state.insert_binding_pattern(ident, init, ctx);
+    }
+
+    /// Add a `VariableDeclarator` to be inserted at top of current enclosing statement block.
+    pub fn insert_declarator(&self, declarator: VariableDeclarator<'a>, ctx: &mut TraverseCtx<'a>) {
+        // SAFETY: We only borrow state once during this function and borrow expires before exiting it
+        let state = unsafe { &mut *self.0.get() };
+        state.insert_declarator(declarator, ctx);
+    }
+}
+
+// Internal methods
+impl<'a> VarDeclarationsStore<'a> {
+    fn record_entering_statements(&self) {
+        // SAFETY: We only borrow state once during this function and borrow expires before exiting it
+        let state = unsafe { &mut *self.0.get() };
+        state.record_entering_statements();
+    }
+
+    fn insert_into_statements(
+        &self,
+        stmts: &mut Vec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        // SAFETY: We only borrow state once during this function and borrow expires before exiting it
+        let state = unsafe { &mut *self.0.get() };
+        state.insert_into_statements(stmts, ctx);
+    }
+
+    fn insert_into_program(&self, transform_ctx: &TransformCtx<'a>, ctx: &mut TraverseCtx<'a>) {
+        // SAFETY: We only borrow state once during this function and borrow expires before exiting it
+        let state = unsafe { &mut *self.0.get() };
+        state.insert_into_program(transform_ctx, ctx);
+    }
+}
+
+/// Store for `VariableDeclarator`s to be added to enclosing statement block.
+struct VarDeclarationsState<'a> {
+    stack: SparseStack<Vec<'a, VariableDeclarator<'a>>>,
+}
+
+impl<'a> VarDeclarationsState<'a> {
+    /// Create new `VarDeclarationsState`.
+    pub fn new() -> Self {
+        Self { stack: SparseStack::new() }
+    }
+
+    /// Add a `VariableDeclarator` to be inserted at top of current enclosing statement block,
+    /// given `name` and `symbol_id`.
+    pub fn insert(
+        &mut self,
         name: Atom<'a>,
         symbol_id: SymbolId,
         init: Option<Expression<'a>>,
@@ -85,7 +154,7 @@ impl<'a> VarDeclarationsStore<'a> {
     /// Add a `VariableDeclarator` to be inserted at top of current enclosing statement block,
     /// given a `BindingPattern`.
     pub fn insert_binding_pattern(
-        &self,
+        &mut self,
         ident: BindingPattern<'a>,
         init: Option<Expression<'a>>,
         ctx: &mut TraverseCtx<'a>,
@@ -96,21 +165,23 @@ impl<'a> VarDeclarationsStore<'a> {
     }
 
     /// Add a `VariableDeclarator` to be inserted at top of current enclosing statement block.
-    pub fn insert_declarator(&self, declarator: VariableDeclarator<'a>, ctx: &mut TraverseCtx<'a>) {
-        let mut stack = self.stack.borrow_mut();
-        stack.last_mut_or_init(|| ctx.ast.vec()).push(declarator);
+    pub fn insert_declarator(
+        &mut self,
+        declarator: VariableDeclarator<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.stack.last_mut_or_init(|| ctx.ast.vec()).push(declarator);
     }
 }
 
 // Internal methods
-impl<'a> VarDeclarationsStore<'a> {
-    fn record_entering_statements(&self) {
-        let mut stack = self.stack.borrow_mut();
-        stack.push(None);
+impl<'a> VarDeclarationsState<'a> {
+    fn record_entering_statements(&mut self) {
+        self.stack.push(None);
     }
 
     fn insert_into_statements(
-        &self,
+        &mut self,
         stmts: &mut Vec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
@@ -124,21 +195,19 @@ impl<'a> VarDeclarationsStore<'a> {
         }
     }
 
-    fn insert_into_program(&self, transform_ctx: &TransformCtx<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn insert_into_program(&mut self, transform_ctx: &TransformCtx<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(stmt) = self.get_var_statement(ctx) {
             // Delegate to `TopLevelStatements`
             transform_ctx.top_level_statements.insert_statement(stmt);
         }
 
         // Check stack is emptied
-        let stack = self.stack.borrow();
-        debug_assert!(stack.len() == 1);
-        debug_assert!(stack.last().is_none());
+        debug_assert!(self.stack.len() == 1);
+        debug_assert!(self.stack.last().is_none());
     }
 
-    fn get_var_statement(&self, ctx: &mut TraverseCtx<'a>) -> Option<Statement<'a>> {
-        let mut stack = self.stack.borrow_mut();
-        let declarators = stack.pop()?;
+    fn get_var_statement(&mut self, ctx: &mut TraverseCtx<'a>) -> Option<Statement<'a>> {
+        let declarators = self.stack.pop()?;
         debug_assert!(!declarators.is_empty());
 
         let stmt = Statement::VariableDeclaration(ctx.ast.alloc_variable_declaration(
