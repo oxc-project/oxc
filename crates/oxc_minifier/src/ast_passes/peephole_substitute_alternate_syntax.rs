@@ -89,7 +89,9 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
         if !self.compress_undefined(expr, ctx) {
             self.compress_boolean(expr, ctx);
         }
+    }
 
+    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         self.compress_new_expression(expr, ctx);
         self.compress_call_expression(expr, ctx);
     }
@@ -342,7 +344,7 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
                         self.changed = true;
                     }
                     // `new Array(literal)` -> `[literal]`
-                    else if arg.is_literal() {
+                    else if arg.is_literal() || matches!(arg, Expression::ArrayExpression(_)) {
                         let mut elements = Vec::new_in(ctx.ast.allocator);
                         let element = ctx.ast.array_expression_element_expression(
                             (*arg).clone_in(ctx.ast.allocator),
@@ -387,13 +389,51 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
                 *expr =
                     ctx.ast.expression_object(expr.span(), Vec::new_in(ctx.ast.allocator), None);
                 self.changed = true;
-            }
-            // `Array()` -> `[]`
-            else if call_expr.arguments.is_empty()
-                && call_expr.callee.is_global_reference_name("Array", ctx.symbols())
-            {
-                *expr = ctx.ast.expression_array(expr.span(), Vec::new_in(ctx.ast.allocator), None);
-                self.changed = true;
+            } else if call_expr.callee.is_global_reference_name("Array", ctx.symbols()) {
+                // `Array()` -> `[]`
+                if call_expr.arguments.is_empty() {
+                    *expr = self.empty_array_literal(ctx);
+                    self.changed = true;
+                } else if call_expr.arguments.len() == 1 {
+                    let Some(arg) = call_expr.arguments[0].as_expression() else { return };
+                    // `Array(0)` -> `[]`
+                    if arg.is_number_0() {
+                        *expr = self.empty_array_literal(ctx);
+                        self.changed = true;
+                    }
+                    // `Array(8)` -> `Array(8)`
+                    else if arg.is_number_literal() {
+                        *expr = self.array_constructor_call(
+                            call_expr.arguments.clone_in(ctx.ast.allocator),
+                            ctx,
+                        );
+                        self.changed = true;
+                    }
+                    // `Array(literal)` -> `[literal]`
+                    else if arg.is_literal() || matches!(arg, Expression::ArrayExpression(_)) {
+                        let mut elements = Vec::new_in(ctx.ast.allocator);
+                        let element = ctx.ast.array_expression_element_expression(
+                            (*arg).clone_in(ctx.ast.allocator),
+                        );
+                        elements.push(element);
+                        *expr = self.array_literal(elements, ctx);
+                        self.changed = true;
+                    }
+                } else {
+                    // `Array(1, 2, 3)` -> `[1, 2, 3]`
+                    let elements = Vec::from_iter_in(
+                        call_expr.arguments.iter().filter_map(|arg| arg.as_expression()).map(
+                            |arg| {
+                                ctx.ast.array_expression_element_expression(
+                                    (*arg).clone_in(ctx.ast.allocator),
+                                )
+                            },
+                        ),
+                        ctx.ast.allocator,
+                    );
+                    *expr = self.array_literal(elements, ctx);
+                    self.changed = true;
+                }
             }
         }
     }
@@ -509,26 +549,26 @@ mod test {
         test("x = new Array(7)", "x = Array(7)");
         test("x = new Array(y)", "x = Array(y)");
         test("x = new Array(foo())", "x = Array(foo())");
-        // test("x = Array(0)", "x = []");
-        // test("x = Array(\"a\")", "x = [\"a\"]");
-        // test_same("x = Array(7)");
-        // test_same("x = Array(y)");
-        // test_same("x = Array(foo())");
+        test("x = Array(0)", "x = []");
+        test("x = Array(\"a\")", "x = [\"a\"]");
+        test_same("x = Array(7)");
+        test_same("x = Array(y)");
+        test_same("x = Array(foo())");
 
         // 1+ arguments
         test("x = new Array(1, 2, 3, 4)", "x = [1, 2, 3, 4]");
-        // test("x = Array(1, 2, 3, 4)", "x = [1, 2, 3, 4]");
+        test("x = Array(1, 2, 3, 4)", "x = [1, 2, 3, 4]");
         test("x = new Array('a', 1, 2, 'bc', 3, {}, 'abc')", "x = ['a', 1, 2, 'bc', 3, {}, 'abc']");
-        // test("x = Array('a', 1, 2, 'bc', 3, {}, 'abc')", "x = ['a', 1, 2, 'bc', 3, {}, 'abc']");
-        // test("x = new Array(Array(1, '2', 3, '4'))", "x = [[1, '2', 3, '4']]");
-        // test("x = Array(Array(1, '2', 3, '4'))", "x = [[1, '2', 3, '4']]");
-        // test(
-        //     "x = new Array(Object(), Array(\"abc\", Object(), Array(Array())))",
-        //     "x = [{}, [\"abc\", {}, [[]]]]",
-        // );
-        // test(
-        //     "x = new Array(Object(), Array(\"abc\", Object(), Array(Array())))",
-        //     "x = [{}, [\"abc\", {}, [[]]]]",
-        // );
+        test("x = Array('a', 1, 2, 'bc', 3, {}, 'abc')", "x = ['a', 1, 2, 'bc', 3, {}, 'abc']");
+        test("x = new Array(Array(1, '2', 3, '4'))", "x = [[1, '2', 3, '4']]");
+        test("x = Array(Array(1, '2', 3, '4'))", "x = [[1, '2', 3, '4']]");
+        test(
+            "x = new Array(Object(), Array(\"abc\", Object(), Array(Array())))",
+            "x = [{}, [\"abc\", {}, [[]]]]",
+        );
+        test(
+            "x = new Array(Object(), Array(\"abc\", Object(), Array(Array())))",
+            "x = [{}, [\"abc\", {}, [[]]]]",
+        );
     }
 }
