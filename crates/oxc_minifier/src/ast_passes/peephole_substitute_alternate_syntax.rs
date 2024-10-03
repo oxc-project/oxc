@@ -173,7 +173,11 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
                 if let Ancestor::BinaryExpressionRight(u) = parent {
                     !matches!(
                         u.operator(),
-                        BinaryOperator::Addition | BinaryOperator::Instanceof | BinaryOperator::In
+                        BinaryOperator::Addition // Other effect, like string concatenation.
+                            | BinaryOperator::Instanceof // Relational operator.
+                            | BinaryOperator::In
+                            | BinaryOperator::StrictEquality // It checks type, so we should not fold.
+                            | BinaryOperator::StrictInequality
                     )
                 } else {
                     false
@@ -383,6 +387,10 @@ mod test {
         test("x == x instanceof false", "x == x instanceof !1");
         test("x in x >> true", "x in x >> 1");
         test("x == fake(false)", "x == fake(!1)");
+
+        // The following should not be folded.
+        test("x === true", "x === !0");
+        test("x !== false", "x !== !1");
     }
 
     #[test]
