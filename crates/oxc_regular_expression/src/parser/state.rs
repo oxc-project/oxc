@@ -1,6 +1,6 @@
 use rustc_hash::FxHashSet;
 
-use crate::body_parser::reader::Reader;
+use crate::parser::reader::Reader;
 
 /// Currently all of properties are read only from outside of this module.
 /// Even inside of this module, it is not changed after initialized.

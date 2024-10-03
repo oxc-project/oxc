@@ -10,26 +10,6 @@ use oxc_span::hash::ContentHash;
 #[allow(clippy::wildcard_imports)]
 use crate::ast::*;
 
-impl<'a> ContentHash for RegularExpression<'a> {
-    fn content_hash<H: Hasher>(&self, state: &mut H) {
-        ContentHash::content_hash(&self.pattern, state);
-        ContentHash::content_hash(&self.flags, state);
-    }
-}
-
-impl ContentHash for Flags {
-    fn content_hash<H: Hasher>(&self, state: &mut H) {
-        ContentHash::content_hash(&self.global, state);
-        ContentHash::content_hash(&self.ignore_case, state);
-        ContentHash::content_hash(&self.multiline, state);
-        ContentHash::content_hash(&self.unicode, state);
-        ContentHash::content_hash(&self.sticky, state);
-        ContentHash::content_hash(&self.dot_all, state);
-        ContentHash::content_hash(&self.has_indices, state);
-        ContentHash::content_hash(&self.unicode_sets, state);
-    }
-}
-
 impl<'a> ContentHash for Pattern<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.body, state);

@@ -1,8 +1,5 @@
 use oxc_allocator::Allocator;
-use oxc_ast::{
-    ast::{Argument, RegExpFlags},
-    AstKind,
-};
+use oxc_ast::{ast::Argument, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_regular_expression::{
@@ -92,25 +89,19 @@ impl Rule for NoControlRegex {
                         // get pattern from arguments. Missing or non-string arguments
                         // will be runtime errors, but are not covered by this rule.
                         let alloc = Allocator::default();
-                        let pattern_with_slashes = format!("/{}/", &pattern.value);
                         let flags = extract_regex_flags(&expr.arguments);
+                        let flags_text = flags.map_or(String::new(), |f| f.to_string());
                         let parser = Parser::new(
                             &alloc,
-                            pattern_with_slashes.as_str(),
-                            ParserOptions {
-                                span_offset: expr
-                                    .arguments
-                                    .first()
-                                    .map_or(0, |arg| arg.span().start),
-                                unicode_mode: flags
-                                    .is_some_and(|flags| flags.contains(RegExpFlags::U)),
-                                unicode_sets_mode: flags
-                                    .is_some_and(|flags| flags.contains(RegExpFlags::V)),
-                            },
+                            pattern.value.as_str(),
+                            ParserOptions::default()
+                                .with_span_offset(
+                                    expr.arguments.first().map_or(0, |arg| arg.span().start),
+                                )
+                                .with_flags(&flags_text),
                         );
 
-                        let Some(pattern) = parser.parse().ok().map(|pattern| pattern.pattern)
-                        else {
+                        let Ok(pattern) = parser.parse() else {
                             return;
                         };
 
@@ -133,25 +124,19 @@ impl Rule for NoControlRegex {
                         // get pattern from arguments. Missing or non-string arguments
                         // will be runtime errors, but are not covered by this rule.
                         let alloc = Allocator::default();
-                        let pattern_with_slashes = format!("/{}/", &pattern.value);
                         let flags = extract_regex_flags(&expr.arguments);
+                        let flags_text = flags.map_or(String::new(), |f| f.to_string());
                         let parser = Parser::new(
                             &alloc,
-                            pattern_with_slashes.as_str(),
-                            ParserOptions {
-                                span_offset: expr
-                                    .arguments
-                                    .first()
-                                    .map_or(0, |arg| arg.span().start),
-                                unicode_mode: flags
-                                    .is_some_and(|flags| flags.contains(RegExpFlags::U)),
-                                unicode_sets_mode: flags
-                                    .is_some_and(|flags| flags.contains(RegExpFlags::V)),
-                            },
+                            pattern.value.as_str(),
+                            ParserOptions::default()
+                                .with_span_offset(
+                                    expr.arguments.first().map_or(0, |arg| arg.span().start),
+                                )
+                                .with_flags(&flags_text),
                         );
 
-                        let Some(pattern) = parser.parse().ok().map(|pattern| pattern.pattern)
-                        else {
+                        let Ok(pattern) = parser.parse() else {
                             return;
                         };
 

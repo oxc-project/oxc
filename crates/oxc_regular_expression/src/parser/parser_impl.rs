@@ -3,15 +3,13 @@ use oxc_diagnostics::Result;
 use oxc_span::Atom as SpanAtom;
 
 use crate::{
-    ast,
-    body_parser::{reader::Reader, state::State, unicode, unicode_property},
-    diagnostics,
+    ast, diagnostics,
     options::ParserOptions,
-    span_factory::SpanFactory,
+    parser::{reader::Reader, span_factory::SpanFactory, state::State, unicode, unicode_property},
     surrogate_pair,
 };
 
-pub struct PatternParser<'a> {
+pub struct Parser<'a> {
     allocator: &'a Allocator,
     source_text: &'a str,
     span_factory: SpanFactory,
@@ -19,7 +17,7 @@ pub struct PatternParser<'a> {
     state: State<'a>,
 }
 
-impl<'a> PatternParser<'a> {
+impl<'a> Parser<'a> {
     pub fn new(allocator: &'a Allocator, source_text: &'a str, options: ParserOptions) -> Self {
         // `RegExp` can not be empty.
         // - Literal `//` means just a single line comment
@@ -35,7 +33,7 @@ impl<'a> PatternParser<'a> {
         }
     }
 
-    pub fn parse(&mut self) -> Result<ast::Pattern<'a>> {
+    pub fn parse(mut self) -> Result<ast::Pattern<'a>> {
         // Pre parse whole pattern to collect:
         // - the number of (named|unnamed) capturing groups
         //   - For `\1` in `\1()` to be handled as indexed reference
@@ -757,7 +755,7 @@ impl<'a> PatternParser<'a> {
             let (kind, body) = self.parse_class_contents()?;
 
             if self.reader.eat(']') {
-                let strings = PatternParser::may_contain_strings_in_class_contents(&kind, &body);
+                let strings = Parser::may_contain_strings_in_class_contents(&kind, &body);
 
                 // [SS:EE] CharacterClass :: [^ ClassContents ]
                 // It is a Syntax Error if MayContainStrings of the ClassContents is true.
@@ -1317,7 +1315,7 @@ impl<'a> PatternParser<'a> {
             let (kind, body) = self.parse_class_contents()?;
 
             if self.reader.eat(']') {
-                let strings = PatternParser::may_contain_strings_in_class_contents(&kind, &body);
+                let strings = Parser::may_contain_strings_in_class_contents(&kind, &body);
 
                 // [SS:EE] NestedClass :: [^ ClassContents ]
                 // It is a Syntax Error if MayContainStrings of the ClassContents is true.

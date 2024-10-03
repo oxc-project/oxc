@@ -9,32 +9,6 @@ use serde::Serialize;
 #[cfg(feature = "serialize")]
 use tsify::Tsify;
 
-#[ast]
-#[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-pub struct RegularExpression<'a> {
-    pub span: Span,
-    pub pattern: Pattern<'a>,
-    pub flags: Flags,
-}
-
-#[ast]
-#[derive(Debug, Clone)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-pub struct Flags {
-    pub span: Span,
-    pub global: bool,
-    pub ignore_case: bool,
-    pub multiline: bool,
-    pub unicode: bool,
-    pub sticky: bool,
-    pub dot_all: bool,
-    pub has_indices: bool,
-    pub unicode_sets: bool,
-}
-
 /// The root of the `PatternParser` result.
 #[ast]
 #[derive(Debug)]

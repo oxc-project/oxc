@@ -62,9 +62,9 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unknown flag
-   ╭─[no_invalid_regexp.tsx:1:18]
+   ╭─[no_invalid_regexp.tsx:1:19]
  1 │ new RegExp('.', 'aA');
-   ·                  ▲
+   ·                   ▲
    ╰────
 
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Duplicated flag
@@ -91,10 +91,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ▲
    ╰────
 
-  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Duplicated flag
-   ╭─[no_invalid_regexp.tsx:1:20]
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unknown flag
+   ╭─[no_invalid_regexp.tsx:1:18]
  1 │ new RegExp('.', 'ouo');
-   ·                    ▲
+   ·                  ▲
    ╰────
 
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Could not parse the entire pattern
@@ -164,9 +164,9 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unknown flag
-   ╭─[no_invalid_regexp.tsx:1:22]
+   ╭─[no_invalid_regexp.tsx:1:23]
  1 │ new RegExp(pattern, 'az');
-   ·                      ▲
+   ·                       ▲
    ╰────
 
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unterminated character class
@@ -175,16 +175,16 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───
    ╰────
 
-  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Invalid flags, `u` and `v` should be used alone
-   ╭─[no_invalid_regexp.tsx:1:18]
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: `u` and `v` flags should be used alone
+   ╭─[no_invalid_regexp.tsx:1:19]
  1 │ new RegExp('.', 'uv');
-   ·                  ──
+   ·                   ▲
    ╰────
 
-  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Invalid flags, `u` and `v` should be used alone
-   ╭─[no_invalid_regexp.tsx:1:22]
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: `u` and `v` flags should be used alone
+   ╭─[no_invalid_regexp.tsx:1:23]
  1 │ new RegExp(pattern, 'uv');
-   ·                      ──
+   ·                       ▲
    ╰────
 
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Character class atom range out of order

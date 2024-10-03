@@ -1,12 +1,9 @@
 #![allow(clippy::missing_errors_doc)]
 
 mod ast_impl;
-mod body_parser;
 mod diagnostics;
-mod flags_parser;
-mod literal_parser;
 mod options;
-mod span_factory;
+mod parser;
 mod surrogate_pair;
 
 mod generated {
@@ -16,7 +13,4 @@ mod generated {
 }
 
 pub mod ast;
-pub use crate::{
-    ast_impl::visit, body_parser::PatternParser, flags_parser::FlagsParser, literal_parser::Parser,
-    options::ParserOptions,
-};
+pub use crate::{ast_impl::visit, options::ParserOptions, parser::Parser};
