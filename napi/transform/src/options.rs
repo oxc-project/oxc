@@ -4,10 +4,9 @@ use std::path::PathBuf;
 
 use napi::Either;
 use napi_derive::napi;
-use oxc_transformer::{
-    ArrowFunctionsOptions, ES2015Options, ReactJsxRuntime, ReactOptions, ReactRefreshOptions,
-    RewriteExtensionsMode, TypeScriptOptions,
-};
+use rustc_hash::FxHashMap;
+
+use oxc_transformer::{JsxRuntime, RewriteExtensionsMode};
 
 use crate::IsolatedDeclarationsOptions;
 
@@ -24,15 +23,6 @@ pub struct TransformOptions {
     /// options.
     pub cwd: Option<String>,
 
-    /// Configure how TypeScript is transformed.
-    pub typescript: Option<TypeScriptBindingOptions>,
-
-    /// Configure how TSX and JSX are transformed.
-    pub react: Option<ReactBindingOptions>,
-
-    /// Enable ES2015 transformations.
-    pub es2015: Option<ES2015BindingOptions>,
-
     /// Enable source map generation.
     ///
     /// When `true`, the `sourceMap` field of transform result objects will be populated.
@@ -41,6 +31,23 @@ pub struct TransformOptions {
     ///
     /// @see {@link SourceMap}
     pub sourcemap: Option<bool>,
+
+    /// Configure how TypeScript is transformed.
+    pub typescript: Option<TypeScriptOptions>,
+
+    /// Configure how TSX and JSX are transformed.
+    pub jsx: Option<JsxOptions>,
+
+    /// Enable ES2015 transformations.
+    pub es2015: Option<Es2015Options>,
+
+    /// Define Plugin
+    #[napi(ts_type = "Record<string, string>")]
+    pub define: Option<FxHashMap<String, String>>,
+
+    /// Inject Plugin
+    #[napi(ts_type = "Record<string, string | [string, string]>")]
+    pub inject: Option<FxHashMap<String, Either<String, Vec<String>>>>,
 }
 
 impl From<TransformOptions> for oxc_transformer::TransformOptions {
@@ -48,7 +55,7 @@ impl From<TransformOptions> for oxc_transformer::TransformOptions {
         Self {
             cwd: options.cwd.map(PathBuf::from).unwrap_or_default(),
             typescript: options.typescript.map(Into::into).unwrap_or_default(),
-            react: options.react.map(Into::into).unwrap_or_default(),
+            react: options.jsx.map(Into::into).unwrap_or_default(),
             es2015: options.es2015.map(Into::into).unwrap_or_default(),
             ..Self::default()
         }
@@ -57,7 +64,7 @@ impl From<TransformOptions> for oxc_transformer::TransformOptions {
 
 #[napi(object)]
 #[derive(Default)]
-pub struct TypeScriptBindingOptions {
+pub struct TypeScriptOptions {
     pub jsx_pragma: Option<String>,
     pub jsx_pragma_frag: Option<String>,
     pub only_remove_type_imports: Option<bool>,
@@ -83,10 +90,10 @@ pub struct TypeScriptBindingOptions {
     pub rewrite_import_extensions: Option<Either<bool, String>>,
 }
 
-impl From<TypeScriptBindingOptions> for TypeScriptOptions {
-    fn from(options: TypeScriptBindingOptions) -> Self {
-        let ops = TypeScriptOptions::default();
-        TypeScriptOptions {
+impl From<TypeScriptOptions> for oxc_transformer::TypeScriptOptions {
+    fn from(options: TypeScriptOptions) -> Self {
+        let ops = oxc_transformer::TypeScriptOptions::default();
+        oxc_transformer::TypeScriptOptions {
             jsx_pragma: options.jsx_pragma.map(Into::into).unwrap_or(ops.jsx_pragma),
             jsx_pragma_frag: options.jsx_pragma_frag.map(Into::into).unwrap_or(ops.jsx_pragma_frag),
             only_remove_type_imports: options
@@ -119,7 +126,7 @@ impl From<TypeScriptBindingOptions> for TypeScriptOptions {
 ///
 /// @see {@link https://babeljs.io/docs/babel-plugin-transform-react-jsx#options}
 #[napi(object)]
-pub struct ReactBindingOptions {
+pub struct JsxOptions {
     /// Decides which runtime to use.
     ///
     /// - 'automatic' - auto-import the correct JSX factories
@@ -196,16 +203,16 @@ pub struct ReactBindingOptions {
     /// Conforms to the implementation in {@link https://github.com/facebook/react/tree/main/packages/react-refresh}
     ///
     /// @default false
-    pub refresh: Option<Either<bool, ReactRefreshBindingOptions>>,
+    pub refresh: Option<Either<bool, ReactRefreshOptions>>,
 }
 
-impl From<ReactBindingOptions> for ReactOptions {
-    fn from(options: ReactBindingOptions) -> Self {
-        let ops = ReactOptions::default();
-        ReactOptions {
+impl From<JsxOptions> for oxc_transformer::JsxOptions {
+    fn from(options: JsxOptions) -> Self {
+        let ops = oxc_transformer::JsxOptions::default();
+        oxc_transformer::JsxOptions {
             runtime: match options.runtime.as_deref() {
-                Some("classic") => ReactJsxRuntime::Classic,
-                /* "automatic" */ _ => ReactJsxRuntime::Automatic,
+                Some("classic") => JsxRuntime::Classic,
+                /* "automatic" */ _ => JsxRuntime::Automatic,
             },
             development: options.development.unwrap_or(ops.development),
             throw_if_namespace: options.throw_if_namespace.unwrap_or(ops.throw_if_namespace),
@@ -216,8 +223,8 @@ impl From<ReactBindingOptions> for ReactOptions {
             use_built_ins: options.use_built_ins,
             use_spread: options.use_spread,
             refresh: options.refresh.and_then(|value| match value {
-                Either::A(b) => b.then(ReactRefreshOptions::default),
-                Either::B(options) => Some(ReactRefreshOptions::from(options)),
+                Either::A(b) => b.then(oxc_transformer::ReactRefreshOptions::default),
+                Either::B(options) => Some(oxc_transformer::ReactRefreshOptions::from(options)),
             }),
             ..Default::default()
         }
@@ -225,7 +232,7 @@ impl From<ReactBindingOptions> for ReactOptions {
 }
 
 #[napi(object)]
-pub struct ReactRefreshBindingOptions {
+pub struct ReactRefreshOptions {
     /// Specify the identifier of the refresh registration variable.
     ///
     /// @default `$RefreshReg$`.
@@ -239,10 +246,10 @@ pub struct ReactRefreshBindingOptions {
     pub emit_full_signatures: Option<bool>,
 }
 
-impl From<ReactRefreshBindingOptions> for ReactRefreshOptions {
-    fn from(options: ReactRefreshBindingOptions) -> Self {
-        let ops = ReactRefreshOptions::default();
-        ReactRefreshOptions {
+impl From<ReactRefreshOptions> for oxc_transformer::ReactRefreshOptions {
+    fn from(options: ReactRefreshOptions) -> Self {
+        let ops = oxc_transformer::ReactRefreshOptions::default();
+        oxc_transformer::ReactRefreshOptions {
             refresh_reg: options.refresh_reg.unwrap_or(ops.refresh_reg),
             refresh_sig: options.refresh_sig.unwrap_or(ops.refresh_sig),
             emit_full_signatures: options.emit_full_signatures.unwrap_or(ops.emit_full_signatures),
@@ -251,7 +258,7 @@ impl From<ReactRefreshBindingOptions> for ReactRefreshOptions {
 }
 
 #[napi(object)]
-pub struct ArrowFunctionsBindingOptions {
+pub struct ArrowFunctionsOptions {
     /// This option enables the following:
     /// * Wrap the generated function in .bind(this) and keeps uses of this inside the function as-is, instead of using a renamed this.
     /// * Add a runtime check to ensure the functions are not instantiated.
@@ -261,20 +268,20 @@ pub struct ArrowFunctionsBindingOptions {
     pub spec: Option<bool>,
 }
 
-impl From<ArrowFunctionsBindingOptions> for ArrowFunctionsOptions {
-    fn from(options: ArrowFunctionsBindingOptions) -> Self {
-        ArrowFunctionsOptions { spec: options.spec.unwrap_or_default() }
+impl From<ArrowFunctionsOptions> for oxc_transformer::ArrowFunctionsOptions {
+    fn from(options: ArrowFunctionsOptions) -> Self {
+        oxc_transformer::ArrowFunctionsOptions { spec: options.spec.unwrap_or_default() }
     }
 }
 
 #[napi(object)]
-pub struct ES2015BindingOptions {
+pub struct Es2015Options {
     /// Transform arrow functions into function expressions.
-    pub arrow_function: Option<ArrowFunctionsBindingOptions>,
+    pub arrow_function: Option<ArrowFunctionsOptions>,
 }
 
-impl From<ES2015BindingOptions> for ES2015Options {
-    fn from(options: ES2015BindingOptions) -> Self {
-        ES2015Options { arrow_function: options.arrow_function.map(Into::into) }
+impl From<Es2015Options> for oxc_transformer::ES2015Options {
+    fn from(options: Es2015Options) -> Self {
+        oxc_transformer::ES2015Options { arrow_function: options.arrow_function.map(Into::into) }
     }
 }

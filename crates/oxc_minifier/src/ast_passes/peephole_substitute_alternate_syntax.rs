@@ -1,10 +1,11 @@
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, SPAN};
+use oxc_syntax::number::ToJsInt32;
 use oxc_syntax::{
     number::NumberBase,
     operator::{BinaryOperator, UnaryOperator},
 };
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
 use crate::{node_util::NodeUtil, CompressOptions, CompressorPass};
 
@@ -77,12 +78,18 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
     }
 
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Expression::AssignmentExpression(assignment_expr) = expr {
+            if let Some(new_expr) = self.try_compress_assignment_expression(assignment_expr, ctx) {
+                *expr = new_expr;
+                self.changed = true;
+            }
+        }
         if !self.compress_undefined(expr, ctx) {
             self.compress_boolean(expr, ctx);
         }
     }
 
-    fn exit_binary_expression(
+    fn enter_binary_expression(
         &mut self,
         expr: &mut BinaryExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -161,16 +168,33 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
     fn compress_boolean(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
         let Expression::BooleanLiteral(lit) = expr else { return false };
         if self.options.booleans && !self.in_define_export {
+            let parent = ctx.ancestry.parent();
+            let no_unary = {
+                if let Ancestor::BinaryExpressionRight(u) = parent {
+                    !matches!(
+                        u.operator(),
+                        BinaryOperator::Addition | BinaryOperator::Instanceof | BinaryOperator::In
+                    )
+                } else {
+                    false
+                }
+            };
+            // XOR: We should use `!neg` when it is not in binary expression.
             let num = ctx.ast.expression_numeric_literal(
                 SPAN,
-                if lit.value { 0.0 } else { 1.0 },
-                if lit.value { "0" } else { "1" },
+                if lit.value ^ no_unary { 0.0 } else { 1.0 },
+                if lit.value ^ no_unary { "0" } else { "1" },
                 NumberBase::Decimal,
             );
-            *expr = ctx.ast.expression_unary(SPAN, UnaryOperator::LogicalNot, num);
-            return true;
+            *expr = if no_unary {
+                num
+            } else {
+                ctx.ast.expression_unary(SPAN, UnaryOperator::LogicalNot, num)
+            };
+            true
+        } else {
+            false
         }
-        false
     }
 
     /// Compress `typeof foo == "undefined"` into `typeof foo > "u"`
@@ -260,6 +284,45 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
             self.changed = true;
         }
     }
+
+    fn try_compress_assignment_expression(
+        &mut self,
+        expr: &mut AssignmentExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        let target = expr.left.as_simple_assignment_target_mut()?;
+        if matches!(expr.operator, AssignmentOperator::Subtraction) {
+            match &expr.right {
+                Expression::NumericLiteral(num) if num.value.to_js_int_32() == 1 => {
+                    // The `_` will not be placed to the target code.
+                    let target = std::mem::replace(
+                        target,
+                        ctx.ast.simple_assignment_target_identifier_reference(SPAN, "_"),
+                    );
+                    Some(ctx.ast.expression_update(SPAN, UpdateOperator::Decrement, true, target))
+                }
+                Expression::UnaryExpression(un)
+                    if matches!(un.operator, UnaryOperator::UnaryNegation) =>
+                {
+                    if let Expression::NumericLiteral(num) = &un.argument {
+                        (num.value.to_js_int_32() == 1).then(|| {
+                            // The `_` will not be placed to the target code.
+                            let target = std::mem::replace(
+                                target,
+                                ctx.ast.simple_assignment_target_identifier_reference(SPAN, "_"),
+                            );
+                            ctx.ast.expression_update(SPAN, UpdateOperator::Increment, true, target)
+                        })
+                    } else {
+                        None
+                    }
+                }
+                _ => None,
+            }
+        } else {
+            None
+        }
+    }
 }
 
 /// <https://github.com/google/closure-compiler/blob/master/test/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntax.java>
@@ -301,5 +364,33 @@ mod test {
 
         // shadowd
         test_same("(function(undefined) { let x = typeof undefined; })()");
+    }
+
+    #[test]
+    fn fold_true_false_comparison() {
+        test("x == true", "x == 1");
+        test("x == false", "x == 0");
+        test("x != true", "x != 1");
+        test("x < true", "x < 1");
+        test("x <= true", "x <= 1");
+        test("x > true", "x > 1");
+        test("x >= true", "x >= 1");
+
+        test("x instanceof true", "x instanceof !0");
+        test("x + false", "x + !1");
+
+        // Order: should perform the nearest.
+        test("x == x instanceof false", "x == x instanceof !1");
+        test("x in x >> true", "x in x >> 1");
+        test("x == fake(false)", "x == fake(!1)");
+    }
+
+    #[test]
+    fn test_fold_subtraction_assignment() {
+        test("x -= 1", "--x");
+        test("x -= -1", "++x");
+        test_same("x -= 2");
+        test_same("x += 1"); // The string concatenation may be triggered, so we don't fold this.
+        test_same("x += -1");
     }
 }

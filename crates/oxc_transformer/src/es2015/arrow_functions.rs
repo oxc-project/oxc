@@ -123,15 +123,17 @@
 
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, NONE};
+use oxc_data_structures::stack::SparseStack;
 use oxc_span::SPAN;
 use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolFlags,
 };
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
+
 use serde::Deserialize;
 
-use crate::helpers::{bindings::BoundIdentifier, stack::SparseStack};
+use crate::helpers::bindings::BoundIdentifier;
 
 #[derive(Debug, Default, Clone, Deserialize)]
 pub struct ArrowFunctionsOptions {

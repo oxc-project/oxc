@@ -32,6 +32,8 @@ oxc_sourcemap = { workspace = true }
 oxc_span = { workspace = true }
 oxc_transformer = { workspace = true }
 
+rustc-hash = { workspace = true }
+
 napi = { workspace = true }
 napi-derive = { workspace = true }
 

@@ -1,5 +1,5 @@
 use std::{
-    cell::{OnceCell, Ref, RefCell, RefMut},
+    cell::{Ref, RefCell, RefMut},
     path::Path,
     sync::Arc,
 };
@@ -19,9 +19,6 @@ pub(crate) struct TransformContext<'a> {
     program: RefCell<Program<'a>>,
     pub trivias: Trivias,
 
-    /// Will be initialized if provided to constructor or first accessed.
-    /// Prevents allocations for codegen tasks that don't require options.
-    options: OnceCell<oxc_transformer::TransformOptions>,
     /// Generate source maps?
     source_map: bool,
     /// Generate `.d.ts` files?
@@ -45,7 +42,7 @@ impl<'a> TransformContext<'a> {
         filename: &'a str,
         source_text: &'a str,
         source_type: SourceType,
-        options: Option<TransformOptions>,
+        options: Option<&TransformOptions>,
     ) -> Self {
         let ParserReturn { errors, program, trivias, .. } =
             Parser::new(allocator, source_text, source_type).parse();
@@ -56,19 +53,11 @@ impl<'a> TransformContext<'a> {
         let declarations =
             options.as_ref().and_then(|o| o.typescript.as_ref()).and_then(|t| t.declaration);
 
-        // Insert options into the cell if provided. Otherwise they will be
-        // initialized to default when first accessed.
-        let options_cell = OnceCell::new();
-        if let Some(options) = options {
-            options_cell.set(options.into()).unwrap();
-        }
-
         Self {
             allocator,
             program: RefCell::new(program),
             trivias,
 
-            options: options_cell,
             source_map,
             declarations,
 
@@ -95,18 +84,8 @@ impl<'a> TransformContext<'a> {
     }
 
     #[inline]
-    pub fn oxc_options(&self) -> oxc_transformer::TransformOptions {
-        self.options.get_or_init(Default::default).clone()
-    }
-
-    #[inline]
     pub(crate) fn declarations(&self) -> Option<&IsolatedDeclarationsOptions> {
         self.declarations.as_ref()
-    }
-
-    #[inline]
-    pub fn source_type(&self) -> SourceType {
-        self.source_type
     }
 
     #[inline]

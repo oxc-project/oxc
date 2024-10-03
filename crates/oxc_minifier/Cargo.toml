@@ -21,11 +21,9 @@ test = true
 doctest = false
 
 [dependencies]
-cow-utils = { workspace = true }
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
 oxc_codegen = { workspace = true }
-oxc_diagnostics = { workspace = true }
 oxc_mangler = { workspace = true }
 oxc_parser = { workspace = true }
 oxc_semantic = { workspace = true }
@@ -33,12 +31,12 @@ oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 oxc_traverse = { workspace = true }
 
+cow-utils = { workspace = true }
 num-bigint = { workspace = true }
 num-traits = { workspace = true }
 
 [dev-dependencies]
 oxc_parser = { workspace = true }
 
-cow-utils = { workspace = true }
 insta = { workspace = true }
 pico-args = { workspace = true }

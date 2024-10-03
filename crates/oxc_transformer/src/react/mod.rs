@@ -9,18 +9,18 @@ mod refresh;
 mod utils;
 
 use oxc_allocator::Vec;
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, AstBuilder};
 use oxc_traverse::{Traverse, TraverseCtx};
 use refresh::ReactRefresh;
 
 pub use self::{
     display_name::ReactDisplayName,
     jsx::ReactJsx,
-    options::{ReactJsxRuntime, ReactOptions, ReactRefreshOptions},
+    options::{JsxOptions, JsxRuntime, ReactRefreshOptions},
 };
 use crate::TransformCtx;
 
-use comments::update_options_with_comments;
+pub(crate) use comments::update_options_with_comments;
 
 /// [Preset React](https://babel.dev/docs/babel-preset-react)
 ///
@@ -43,28 +43,23 @@ pub struct React<'a, 'ctx> {
 
 // Constructors
 impl<'a, 'ctx> React<'a, 'ctx> {
-    pub fn new(mut options: ReactOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(mut options: JsxOptions, ast: AstBuilder<'a>, ctx: &'ctx TransformCtx<'a>) -> Self {
         if options.jsx_plugin || options.development {
-            update_options_with_comments(&mut options, ctx);
             options.conform();
         }
-        let ReactOptions {
-            jsx_plugin,
-            display_name_plugin,
-            jsx_self_plugin,
-            jsx_source_plugin,
-            ..
+        let JsxOptions {
+            jsx_plugin, display_name_plugin, jsx_self_plugin, jsx_source_plugin, ..
         } = options;
         let refresh = options.refresh.clone();
         Self {
-            jsx: ReactJsx::new(options, ctx),
+            jsx: ReactJsx::new(options, ast, ctx),
             display_name: ReactDisplayName::new(ctx),
             jsx_plugin,
             display_name_plugin,
             jsx_self_plugin,
             jsx_source_plugin,
             refresh_plugin: refresh.is_some(),
-            refresh: ReactRefresh::new(&refresh.unwrap_or_default(), ctx),
+            refresh: ReactRefresh::new(&refresh.unwrap_or_default(), ast, ctx),
         }
     }
 }

@@ -125,7 +125,7 @@ impl<'a, 'ctx> Traverse<'a> for ReactDisplayName<'a, 'ctx> {
             }
         };
 
-        self.add_display_name(obj_expr, name);
+        Self::add_display_name(obj_expr, name, ctx);
     }
 }
 
@@ -155,7 +155,11 @@ impl<'a, 'ctx> ReactDisplayName<'a, 'ctx> {
     }
 
     /// Add key value `displayName: name` to the `React.createClass` object.
-    fn add_display_name(&self, obj_expr: &mut ObjectExpression<'a>, name: Atom<'a>) {
+    fn add_display_name(
+        obj_expr: &mut ObjectExpression<'a>,
+        name: Atom<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) {
         const DISPLAY_NAME: &str = "displayName";
         // Not safe with existing display name.
         let not_safe = obj_expr.properties.iter().any(|prop| {
@@ -166,11 +170,11 @@ impl<'a, 'ctx> ReactDisplayName<'a, 'ctx> {
         }
         obj_expr.properties.insert(
             0,
-            self.ctx.ast.object_property_kind_object_property(
+            ctx.ast.object_property_kind_object_property(
                 SPAN,
                 PropertyKind::Init,
-                self.ctx.ast.property_key_identifier_name(SPAN, DISPLAY_NAME),
-                self.ctx.ast.expression_string_literal(SPAN, name),
+                ctx.ast.property_key_identifier_name(SPAN, DISPLAY_NAME),
+                ctx.ast.expression_string_literal(SPAN, name),
                 None,
                 false,
                 false,

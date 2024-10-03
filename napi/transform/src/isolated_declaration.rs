@@ -43,7 +43,7 @@ pub fn isolated_declaration(
         &filename,
         &source_text,
         source_type,
-        Some(TransformOptions { sourcemap: options.sourcemap, ..Default::default() }),
+        Some(&TransformOptions { sourcemap: options.sourcemap, ..Default::default() }),
     );
     let transformed_ret = build_declarations(&ctx, options);
 

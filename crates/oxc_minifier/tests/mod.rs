@@ -1,6 +1,5 @@
 mod ast_passes;
 mod mangler;
-mod plugins;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{CodeGenerator, CodegenOptions};

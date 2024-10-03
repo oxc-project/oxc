@@ -1,6 +1,9 @@
 #![expect(clippy::unnecessary_safety_comment)]
 
-use std::mem::size_of;
+use std::{
+    mem::size_of,
+    ops::{Deref, DerefMut},
+};
 
 use super::{NonNull, StackCapacity, StackCommon};
 
@@ -86,6 +89,21 @@ impl<T> StackCommon<T> for NonEmptyStack<T> {
     fn set_cursor(&mut self, cursor: NonNull<T>) {
         self.cursor = cursor;
     }
+
+    #[inline]
+    fn len(&self) -> usize {
+        // SAFETY: `self.start` and `self.cursor` are both derived from same pointer.
+        // `self.cursor` is always >= `self.start`.
+        // Distance between pointers is always a multiple of `size_of::<T>()`.
+        let offset = unsafe { self.cursor_offset() };
+
+        // When stack has 1 entry, `start - cursor == 0`, so add 1 to get number of entries.
+        // SAFETY: Capacity cannot exceed `Self::MAX_CAPACITY`, which is `<= isize::MAX`,
+        // and offset can't exceed capacity, so `+ 1` cannot wrap around.
+        // `checked_add(1).unwrap_unchecked()` instead of just `+ 1` to hint to compiler
+        // that return value can never be zero.
+        unsafe { offset.checked_add(1).unwrap_unchecked() }
+    }
 }
 
 impl<T> NonEmptyStack<T> {
@@ -132,7 +150,8 @@ impl<T> NonEmptyStack<T> {
     /// # Panics
     /// Panics if `T` is a zero-sized type.
     ///
-    /// # SAFETY
+    /// # Safety
+    ///
     /// * `capacity` must not be 0.
     /// * `capacity` must not exceed [`Self::MAX_CAPACITY`].
     #[inline]
@@ -253,8 +272,9 @@ impl<T> NonEmptyStack<T> {
 
     /// Pop value from stack, without checking that stack isn't empty.
     ///
-    /// # SAFETY
-    /// Stack must have at least 2 entries, so that after pop, it still has at least 1.
+    /// # Safety
+    ///
+    /// * Stack must have at least 2 entries, so that after pop, it still has at least 1.
     #[inline]
     pub unsafe fn pop_unchecked(&mut self) -> T {
         debug_assert!(self.cursor > self.start);
@@ -273,21 +293,33 @@ impl<T> NonEmptyStack<T> {
     /// Number of entries is always at least 1. Stack is never empty.
     #[inline]
     pub fn len(&self) -> usize {
-        // SAFETY: `self.start` and `self.cursor` are both derived from same pointer.
-        // `self.cursor` is always >= `self.start`.
-        // Distance between pointers is always a multiple of `size_of::<T>()`.
-        let offset = unsafe { self.cursor_offset() };
+        <Self as StackCommon<T>>::len(self)
+    }
 
-        // When stack has 1 entry, `start - cursor == 0`, so add 1 to get number of entries.
-        // SAFETY: Capacity cannot exceed `Self::MAX_CAPACITY`, which is `<= isize::MAX`,
-        // and offset can't exceed capacity, so `+ 1` cannot wrap around.
-        offset + 1
+    /// Get if stack is empty. Always returns `false`.
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        // This method is pointless, as the stack is never empty. But provide it to override
+        // the default method from `slice::is_empty` which is inherited via `Deref`
+        false
     }
 
     /// Get capacity.
     #[inline]
     pub fn capacity(&self) -> usize {
         <Self as StackCommon<T>>::capacity(self)
+    }
+
+    /// Get contents of stack as a slice `&[T]`.
+    #[inline]
+    pub fn as_slice(&self) -> &[T] {
+        <Self as StackCommon<T>>::as_slice(self)
+    }
+
+    /// Get contents of stack as a mutable slice `&mut [T]`.
+    #[inline]
+    pub fn as_mut_slice(&mut self) -> &mut [T] {
+        <Self as StackCommon<T>>::as_mut_slice(self)
     }
 }
 
@@ -296,11 +328,27 @@ impl<T> Drop for NonEmptyStack<T> {
         // Drop contents.
         // SAFETY: Stack is always allocated, and contains `self.len()` initialized entries,
         // starting at `self.start`.
-        unsafe { self.drop_contents(self.len()) };
+        unsafe { self.drop_contents() };
 
         // Drop the memory
         // SAFETY: Stack is always allocated.
         unsafe { self.deallocate() };
+    }
+}
+
+impl<T> Deref for NonEmptyStack<T> {
+    type Target = [T];
+
+    #[inline]
+    fn deref(&self) -> &[T] {
+        self.as_slice()
+    }
+}
+
+impl<T> DerefMut for NonEmptyStack<T> {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut [T] {
+        self.as_mut_slice()
     }
 }
 

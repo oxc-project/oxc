@@ -50,7 +50,6 @@ fn bench_transformer(criterion: &mut Criterion) {
                     let ret = Transformer::new(
                         &allocator,
                         Path::new(&file.file_name),
-                        source_type,
                         source_text,
                         trivias,
                         options,

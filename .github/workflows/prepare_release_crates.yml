@@ -28,3 +28,25 @@ jobs:
       name: crates
     secrets:
       OXC_BOT_PAT: ${{ secrets.OXC_BOT_PAT }}
+
+  ecosystem-ci:
+    needs: prepare
+    name: Trigger Monitor Oxc
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@v1
+
+      - uses: peter-evans/create-or-update-comment@v4
+        id: comment
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ needs.prepare.outputs.pull-request-number }}
+          body: Triggering Monitor Oxc https://github.com/oxc-project/monitor-oxc/actions/workflows/ci.yml
+
+      - uses: benc-uk/workflow-dispatch@v1
+        with:
+          repo: oxc-project/monitor-oxc
+          workflow: ci.yml
+          token: ${{ secrets.OXC_BOT_PAT }}
+          ref: main
+          inputs: '{ "issue-number": "${{ needs.prepare.outputs.pull-request-number }}", "comment-id": "${{ steps.comment.outputs.comment-id }}" }'

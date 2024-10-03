@@ -1,6 +1,9 @@
 #![expect(clippy::unnecessary_safety_comment)]
 
-use std::mem::size_of;
+use std::{
+    mem::size_of,
+    ops::{Deref, DerefMut},
+};
 
 use super::{NonNull, StackCapacity, StackCommon};
 
@@ -36,6 +39,12 @@ pub struct Stack<T> {
     end: NonNull<T>,
 }
 
+impl<T> Default for Stack<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<T> StackCapacity<T> for Stack<T> {}
 
 impl<T> StackCommon<T> for Stack<T> {
@@ -67,6 +76,13 @@ impl<T> StackCommon<T> for Stack<T> {
     #[inline]
     fn set_cursor(&mut self, cursor: NonNull<T>) {
         self.cursor = cursor;
+    }
+
+    fn len(&self) -> usize {
+        // SAFETY: `self.start` and `self.cursor` are both derived from same pointer.
+        // `self.cursor` is always >= `self.start`.
+        // Distance between pointers is always a multiple of `size_of::<T>()`.
+        unsafe { self.cursor_offset() }
     }
 }
 
@@ -117,7 +133,8 @@ impl<T> Stack<T> {
     /// # Panics
     /// Panics if `T` is a zero-sized type.
     ///
-    /// # SAFETY
+    /// # Safety
+    ///
     /// * `capacity` must not be 0.
     /// * `capacity` must not exceed [`Self::MAX_CAPACITY`].
     #[inline]
@@ -154,7 +171,6 @@ impl<T> Stack<T> {
 
     /// Get reference to last value on stack.
     #[inline]
-    #[cfg_attr(not(test), expect(dead_code))]
     pub fn last(&self) -> Option<&T> {
         #[expect(clippy::if_not_else)]
         if !self.is_empty() {
@@ -167,8 +183,9 @@ impl<T> Stack<T> {
 
     /// Get reference to last value on stack, without checking stack isn't empty.
     ///
-    /// # SAFETY
-    /// Stack must not be empty.
+    /// # Safety
+    ///
+    /// * Stack must not be empty.
     #[inline]
     pub unsafe fn last_unchecked(&self) -> &T {
         debug_assert!(self.end > self.start);
@@ -182,7 +199,6 @@ impl<T> Stack<T> {
 
     /// Get mutable reference to last value on stack.
     #[inline]
-    #[cfg_attr(not(test), expect(dead_code))]
     pub fn last_mut(&mut self) -> Option<&mut T> {
         #[expect(clippy::if_not_else)]
         if !self.is_empty() {
@@ -195,8 +211,9 @@ impl<T> Stack<T> {
 
     /// Get mutable reference to last value on stack, without checking stack isn't empty.
     ///
-    /// # SAFETY
-    /// Stack must not be empty.
+    /// # Safety
+    ///
+    /// * Stack must not be empty.
     #[inline]
     pub unsafe fn last_mut_unchecked(&mut self) -> &mut T {
         debug_assert!(self.end > self.start);
@@ -265,7 +282,6 @@ impl<T> Stack<T> {
 
     /// Pop value from stack.
     #[inline]
-    #[cfg_attr(not(test), expect(dead_code))]
     pub fn pop(&mut self) -> Option<T> {
         #[expect(clippy::if_not_else)]
         if !self.is_empty() {
@@ -278,8 +294,9 @@ impl<T> Stack<T> {
 
     /// Pop value from stack, without checking that stack isn't empty.
     ///
-    /// # SAFETY
-    /// Stack must not be empty.
+    /// # Safety
+    ///
+    /// * Stack must not be empty.
     #[inline]
     pub unsafe fn pop_unchecked(&mut self) -> T {
         debug_assert!(self.end > self.start);
@@ -296,10 +313,7 @@ impl<T> Stack<T> {
     /// Get number of entries on stack.
     #[inline]
     pub fn len(&self) -> usize {
-        // SAFETY: `self.start` and `self.cursor` are both derived from same pointer.
-        // `self.cursor` is always >= `self.start`.
-        // Distance between pointers is always a multiple of `size_of::<T>()`.
-        unsafe { self.cursor_offset() }
+        <Self as StackCommon<T>>::len(self)
     }
 
     /// Get if stack is empty.
@@ -313,6 +327,18 @@ impl<T> Stack<T> {
     pub fn capacity(&self) -> usize {
         <Self as StackCommon<T>>::capacity(self)
     }
+
+    /// Get contents of stack as a slice `&[T]`.
+    #[inline]
+    pub fn as_slice(&self) -> &[T] {
+        <Self as StackCommon<T>>::as_slice(self)
+    }
+
+    /// Get contents of stack as a mutable slice `&mut [T]`.
+    #[inline]
+    pub fn as_mut_slice(&mut self) -> &mut [T] {
+        <Self as StackCommon<T>>::as_mut_slice(self)
+    }
 }
 
 impl<T> Drop for Stack<T> {
@@ -325,12 +351,28 @@ impl<T> Drop for Stack<T> {
         if !self.is_empty() {
             // SAFETY: Checked above that stack is allocated.
             // Stack contains `self.len()` initialized entries, starting at `self.start`
-            unsafe { self.drop_contents(self.len()) };
+            unsafe { self.drop_contents() };
         }
 
         // Drop the memory
         // SAFETY: Checked above that stack is allocated.
         unsafe { self.deallocate() };
+    }
+}
+
+impl<T> Deref for Stack<T> {
+    type Target = [T];
+
+    #[inline]
+    fn deref(&self) -> &[T] {
+        self.as_slice()
+    }
+}
+
+impl<T> DerefMut for Stack<T> {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut [T] {
+        self.as_mut_slice()
     }
 }
 

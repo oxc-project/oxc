@@ -1412,24 +1412,6 @@ const _: () = {
     assert!(size_of::<LanguageVariant>() == 1usize);
     assert!(align_of::<LanguageVariant>() == 1usize);
 
-    assert!(size_of::<RegularExpression>() == 72usize);
-    assert!(align_of::<RegularExpression>() == 8usize);
-    assert!(offset_of!(RegularExpression, span) == 0usize);
-    assert!(offset_of!(RegularExpression, pattern) == 8usize);
-    assert!(offset_of!(RegularExpression, flags) == 56usize);
-
-    assert!(size_of::<Flags>() == 16usize);
-    assert!(align_of::<Flags>() == 4usize);
-    assert!(offset_of!(Flags, span) == 0usize);
-    assert!(offset_of!(Flags, global) == 8usize);
-    assert!(offset_of!(Flags, ignore_case) == 9usize);
-    assert!(offset_of!(Flags, multiline) == 10usize);
-    assert!(offset_of!(Flags, unicode) == 11usize);
-    assert!(offset_of!(Flags, sticky) == 12usize);
-    assert!(offset_of!(Flags, dot_all) == 13usize);
-    assert!(offset_of!(Flags, has_indices) == 14usize);
-    assert!(offset_of!(Flags, unicode_sets) == 15usize);
-
     assert!(size_of::<Pattern>() == 48usize);
     assert!(align_of::<Pattern>() == 8usize);
     assert!(offset_of!(Pattern, span) == 0usize);
@@ -1445,7 +1427,7 @@ const _: () = {
     assert!(offset_of!(Alternative, span) == 0usize);
     assert!(offset_of!(Alternative, body) == 8usize);
 
-    assert!(size_of::<Term>() == 24usize);
+    assert!(size_of::<Term>() == 16usize);
     assert!(align_of::<Term>() == 8usize);
 
     assert!(size_of::<BoundaryAssertion>() == 12usize);
@@ -1465,7 +1447,7 @@ const _: () = {
     assert!(size_of::<LookAroundAssertionKind>() == 1usize);
     assert!(align_of::<LookAroundAssertionKind>() == 1usize);
 
-    assert!(size_of::<Quantifier>() == 64usize);
+    assert!(size_of::<Quantifier>() == 56usize);
     assert!(align_of::<Quantifier>() == 8usize);
     assert!(offset_of!(Quantifier, span) == 0usize);
     assert!(offset_of!(Quantifier, min) == 8usize);
@@ -1513,7 +1495,7 @@ const _: () = {
     assert!(size_of::<CharacterClassContentsKind>() == 1usize);
     assert!(align_of::<CharacterClassContentsKind>() == 1usize);
 
-    assert!(size_of::<CharacterClassContents>() == 24usize);
+    assert!(size_of::<CharacterClassContents>() == 16usize);
     assert!(align_of::<CharacterClassContents>() == 8usize);
 
     assert!(size_of::<CharacterClassRange>() == 40usize);
@@ -2967,24 +2949,6 @@ const _: () = {
     assert!(size_of::<LanguageVariant>() == 1usize);
     assert!(align_of::<LanguageVariant>() == 1usize);
 
-    assert!(size_of::<RegularExpression>() == 56usize);
-    assert!(align_of::<RegularExpression>() == 4usize);
-    assert!(offset_of!(RegularExpression, span) == 0usize);
-    assert!(offset_of!(RegularExpression, pattern) == 8usize);
-    assert!(offset_of!(RegularExpression, flags) == 40usize);
-
-    assert!(size_of::<Flags>() == 16usize);
-    assert!(align_of::<Flags>() == 4usize);
-    assert!(offset_of!(Flags, span) == 0usize);
-    assert!(offset_of!(Flags, global) == 8usize);
-    assert!(offset_of!(Flags, ignore_case) == 9usize);
-    assert!(offset_of!(Flags, multiline) == 10usize);
-    assert!(offset_of!(Flags, unicode) == 11usize);
-    assert!(offset_of!(Flags, sticky) == 12usize);
-    assert!(offset_of!(Flags, dot_all) == 13usize);
-    assert!(offset_of!(Flags, has_indices) == 14usize);
-    assert!(offset_of!(Flags, unicode_sets) == 15usize);
-
     assert!(size_of::<Pattern>() == 32usize);
     assert!(align_of::<Pattern>() == 4usize);
     assert!(offset_of!(Pattern, span) == 0usize);
@@ -3000,7 +2964,7 @@ const _: () = {
     assert!(offset_of!(Alternative, span) == 0usize);
     assert!(offset_of!(Alternative, body) == 8usize);
 
-    assert!(size_of::<Term>() == 20usize);
+    assert!(size_of::<Term>() == 12usize);
     assert!(align_of::<Term>() == 4usize);
 
     assert!(size_of::<BoundaryAssertion>() == 12usize);
@@ -3020,7 +2984,7 @@ const _: () = {
     assert!(size_of::<LookAroundAssertionKind>() == 1usize);
     assert!(align_of::<LookAroundAssertionKind>() == 1usize);
 
-    assert!(size_of::<Quantifier>() == 56usize);
+    assert!(size_of::<Quantifier>() == 48usize);
     assert!(align_of::<Quantifier>() == 8usize);
     assert!(offset_of!(Quantifier, span) == 0usize);
     assert!(offset_of!(Quantifier, min) == 8usize);
@@ -3068,7 +3032,7 @@ const _: () = {
     assert!(size_of::<CharacterClassContentsKind>() == 1usize);
     assert!(align_of::<CharacterClassContentsKind>() == 1usize);
 
-    assert!(size_of::<CharacterClassContents>() == 20usize);
+    assert!(size_of::<CharacterClassContents>() == 8usize);
     assert!(align_of::<CharacterClassContents>() == 4usize);
 
     assert!(size_of::<CharacterClassRange>() == 40usize);

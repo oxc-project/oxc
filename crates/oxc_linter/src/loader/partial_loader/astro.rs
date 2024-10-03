@@ -42,8 +42,9 @@ impl<'a> AstroPartialLoader<'a> {
             return None;
         };
 
-        let js_code =
-            Span::new(start + ASTRO_SPLIT.len() as u32, end).source_text(self.source_text);
+        // move start to the end of the ASTRO_SPLIT
+        let start = start + ASTRO_SPLIT.len() as u32;
+        let js_code = Span::new(start, end).source_text(self.source_text);
         Some(JavaScriptSource::partial(js_code, SourceType::ts(), start))
     }
 
@@ -118,6 +119,7 @@ mod test {
         let sources = parse_astro(source_text);
         assert_eq!(sources.len(), 1);
         assert_eq!(sources[0].source_text.trim(), r#"console.log("Hi");"#);
+        assert_eq!(sources[0].start, 51);
     }
 
     #[test]
@@ -140,7 +142,9 @@ mod test {
             sources[0].source_text.trim(),
             "const { message = 'Welcome, world!' } = Astro.props;"
         );
+        assert_eq!(sources[0].start, 12);
         assert_eq!(sources[1].source_text.trim(), r#"console.log("Hi");"#);
+        assert_eq!(sources[1].start, 141);
     }
 
     #[test]
@@ -158,7 +162,9 @@ mod test {
         let sources = parse_astro(source_text);
         assert_eq!(sources.len(), 2);
         assert!(sources[0].source_text.is_empty());
+        assert_eq!(sources[0].start, 102);
         assert_eq!(sources[1].source_text.trim(), r#"console.log("Hi");"#);
+        assert_eq!(sources[1].start, 129);
     }
 
     #[test]
@@ -176,6 +182,8 @@ mod test {
         let sources = parse_astro(source_text);
         assert_eq!(sources.len(), 2);
         assert!(sources[0].source_text.is_empty());
+        assert_eq!(sources[0].start, 104);
         assert_eq!(sources[1].source_text.trim(), r#"console.log("Hi");"#);
+        assert_eq!(sources[1].start, 122);
     }
 }

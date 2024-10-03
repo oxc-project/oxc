@@ -82,6 +82,7 @@ oxc_ast = { version = "0.30.5", path = "crates/oxc_ast" }
 oxc_ast_macros = { version = "0.30.5", path = "crates/oxc_ast_macros" }
 oxc_cfg = { version = "0.30.5", path = "crates/oxc_cfg" }
 oxc_codegen = { version = "0.30.5", path = "crates/oxc_codegen" }
+oxc_data_structures = { version = "0.30.5", path = "crates/oxc_data_structures" }
 oxc_diagnostics = { version = "0.30.5", path = "crates/oxc_diagnostics" }
 oxc_index = { version = "0.30.5", path = "crates/oxc_index" }
 oxc_isolated_declarations = { version = "0.30.5", path = "crates/oxc_isolated_declarations" }
@@ -219,6 +220,13 @@ codegen-units = 1
 strip = "symbols" # Set to `false` for debug information
 debug = false # Set to `true` for debug information
 panic = "abort" # Let it crash and force ourselves to write safe Rust
+
+# Profile used for release mode, but with debugging information for profiling
+# and debugging. Use `cargo build --profile=release-with-debug` to build with this profile.
+[profile.release-with-debug]
+inherits = "release"
+strip = false # Keep debug information in binary
+debug = true # Include maximum amount of debug information
 
 # Profile for `cargo coverage`
 [profile.coverage]

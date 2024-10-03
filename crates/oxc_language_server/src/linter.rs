@@ -288,12 +288,12 @@ impl IsolatedLintHandler {
                         range: Range {
                             start: offset_to_position(
                                 (f.span.start + start) as usize,
-                                javascript_source_text,
+                                source_text.as_str(),
                             )
                             .unwrap_or_default(),
                             end: offset_to_position(
                                 (f.span.end + start) as usize,
-                                javascript_source_text,
+                                source_text.as_str(),
                             )
                             .unwrap_or_default(),
                         },

@@ -1,6 +1,7 @@
 use napi::{bindgen_prelude::AsyncTask, Task};
 use napi_derive::napi;
-use oxc_allocator::Allocator;
+
+use oxc::allocator::Allocator;
 use oxc_module_lexer::ImportType;
 
 use crate::{parse, ParserOptions};

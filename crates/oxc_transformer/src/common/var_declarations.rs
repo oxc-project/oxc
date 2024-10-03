@@ -16,16 +16,17 @@ use std::cell::RefCell;
 
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, NONE};
+use oxc_data_structures::stack::SparseStack;
 use oxc_span::SPAN;
 use oxc_syntax::symbol::SymbolId;
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
-use crate::{context::TransformCtx, helpers::stack::SparseStack};
+use crate::TransformCtx;
 
 /// Transform that maintains the stack of `Vec<VariableDeclarator>`s, and adds a `var` statement
 /// to top of a statement block if another transform has requested that.
 ///
-/// Must run after all other transforms.
+/// Must run after all other transforms except `TopLevelStatements`.
 pub struct VarDeclarations<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,
 }
@@ -37,52 +38,38 @@ impl<'a, 'ctx> VarDeclarations<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> Traverse<'a> for VarDeclarations<'a, 'ctx> {
-    #[inline] // Inline because it's no-op in release mode
-    fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
-        let declarators = self.ctx.var_declarations.declarators.borrow();
-        debug_assert!(declarators.len() == 1);
-        debug_assert!(declarators.last().is_none());
-    }
-
     fn enter_statements(
         &mut self,
         _stmts: &mut Vec<'a, Statement<'a>>,
         _ctx: &mut TraverseCtx<'a>,
     ) {
-        let mut declarators = self.ctx.var_declarations.declarators.borrow_mut();
-        declarators.push(None);
+        self.ctx.var_declarations.record_entering_statements();
     }
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
-        let mut declarators = self.ctx.var_declarations.declarators.borrow_mut();
-        if let Some(declarators) = declarators.pop() {
-            debug_assert!(!declarators.is_empty());
-            let variable = ctx.ast.alloc_variable_declaration(
-                SPAN,
-                VariableDeclarationKind::Var,
-                declarators,
-                false,
-            );
-            stmts.insert(0, Statement::VariableDeclaration(variable));
-        }
+        self.ctx.var_declarations.insert_into_statements(stmts, ctx);
+    }
+
+    fn exit_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.ctx.var_declarations.insert_into_program(self.ctx, ctx);
     }
 }
 
 /// Store for `VariableDeclarator`s to be added to enclosing statement block.
 pub struct VarDeclarationsStore<'a> {
-    declarators: RefCell<SparseStack<Vec<'a, VariableDeclarator<'a>>>>,
+    stack: RefCell<SparseStack<Vec<'a, VariableDeclarator<'a>>>>,
 }
 
+// Public methods
 impl<'a> VarDeclarationsStore<'a> {
+    /// Create new `VarDeclarationsStore`.
     pub fn new() -> Self {
-        Self { declarators: RefCell::new(SparseStack::new()) }
+        Self { stack: RefCell::new(SparseStack::new()) }
     }
-}
 
-impl<'a> VarDeclarationsStore<'a> {
     /// Add a `VariableDeclarator` to be inserted at top of current enclosing statement block,
     /// given `name` and `symbol_id`.
-    pub fn insert_declarator(
+    pub fn insert(
         &self,
         name: Atom<'a>,
         symbol_id: SymbolId,
@@ -92,12 +79,12 @@ impl<'a> VarDeclarationsStore<'a> {
         let ident = BindingIdentifier::new_with_symbol_id(SPAN, name, symbol_id);
         let ident = ctx.ast.binding_pattern_kind_from_binding_identifier(ident);
         let ident = ctx.ast.binding_pattern(ident, NONE, false);
-        self.insert_declarator_binding_pattern(ident, init, ctx);
+        self.insert_binding_pattern(ident, init, ctx);
     }
 
     /// Add a `VariableDeclarator` to be inserted at top of current enclosing statement block,
     /// given a `BindingPattern`.
-    pub fn insert_declarator_binding_pattern(
+    pub fn insert_binding_pattern(
         &self,
         ident: BindingPattern<'a>,
         init: Option<Expression<'a>>,
@@ -105,7 +92,61 @@ impl<'a> VarDeclarationsStore<'a> {
     ) {
         let declarator =
             ctx.ast.variable_declarator(SPAN, VariableDeclarationKind::Var, ident, init, false);
-        let mut declarators = self.declarators.borrow_mut();
-        declarators.last_mut_or_init(|| ctx.ast.vec()).push(declarator);
+        self.insert_declarator(declarator, ctx);
+    }
+
+    /// Add a `VariableDeclarator` to be inserted at top of current enclosing statement block.
+    pub fn insert_declarator(&self, declarator: VariableDeclarator<'a>, ctx: &mut TraverseCtx<'a>) {
+        let mut stack = self.stack.borrow_mut();
+        stack.last_mut_or_init(|| ctx.ast.vec()).push(declarator);
+    }
+}
+
+// Internal methods
+impl<'a> VarDeclarationsStore<'a> {
+    fn record_entering_statements(&self) {
+        let mut stack = self.stack.borrow_mut();
+        stack.push(None);
+    }
+
+    fn insert_into_statements(
+        &self,
+        stmts: &mut Vec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if matches!(ctx.parent(), Ancestor::ProgramBody(_)) {
+            // Handle in `insert_into_program` instead
+            return;
+        }
+
+        if let Some(stmt) = self.get_var_statement(ctx) {
+            stmts.insert(0, stmt);
+        }
+    }
+
+    fn insert_into_program(&self, transform_ctx: &TransformCtx<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Some(stmt) = self.get_var_statement(ctx) {
+            // Delegate to `TopLevelStatements`
+            transform_ctx.top_level_statements.insert_statement(stmt);
+        }
+
+        // Check stack is emptied
+        let stack = self.stack.borrow();
+        debug_assert!(stack.len() == 1);
+        debug_assert!(stack.last().is_none());
+    }
+
+    fn get_var_statement(&self, ctx: &mut TraverseCtx<'a>) -> Option<Statement<'a>> {
+        let mut stack = self.stack.borrow_mut();
+        let declarators = stack.pop()?;
+        debug_assert!(!declarators.is_empty());
+
+        let stmt = Statement::VariableDeclaration(ctx.ast.alloc_variable_declaration(
+            SPAN,
+            VariableDeclarationKind::Var,
+            declarators,
+            false,
+        ));
+        Some(stmt)
     }
 }
