@@ -837,17 +837,19 @@ impl<'a> PeepholeFoldConstants {
                 return None;
             }
 
-            let right_val_int = right_val as i32;
-            let bits = NumericLiteral::ecmascript_to_int32(left_val);
+            #[allow(clippy::cast_sign_loss)]
+            let right_val_int = right_val as u32;
+            let bits = left_val.to_js_int_32();
 
             let result_val: f64 = match op {
-                BinaryOperator::ShiftLeft => f64::from(bits << right_val_int),
-                BinaryOperator::ShiftRight => f64::from(bits >> right_val_int),
+                BinaryOperator::ShiftLeft => f64::from(bits.wrapping_shl(right_val_int)),
+                BinaryOperator::ShiftRight => f64::from(bits.wrapping_shr(right_val_int)),
                 BinaryOperator::ShiftRightZeroFill => {
                     // JavaScript always treats the result of >>> as unsigned.
                     // We must force Rust to do the same here.
                     #[allow(clippy::cast_sign_loss)]
-                    let res = bits as u32 >> right_val_int as u32;
+                    let bits = bits as u32;
+                    let res = bits.wrapping_shr(right_val_int);
                     f64::from(res)
                 }
                 _ => unreachable!("Unknown binary operator {:?}", op),
@@ -1555,5 +1557,19 @@ mod test {
         test("1 << 32", "1<<32");
         test("1 << -1", "1<<-1");
         test("1 >> 32", "1>>32");
+
+        // Regression on #6161, ported from <https://github.com/tc39/test262/blob/main/test/language/expressions/unsigned-right-shift/S9.6_A2.2.js>.
+        test("-2147483647 >>> 0", "2147483649");
+        test("-2147483648 >>> 0", "2147483648");
+        test("-2147483649 >>> 0", "2147483647");
+        test("-4294967295 >>> 0", "1");
+        test("-4294967296 >>> 0", "0");
+        test("-4294967297 >>> 0", "4294967295");
+        test("4294967295 >>> 0", "4294967295");
+        test("4294967296 >>> 0", "0");
+        test("4294967297 >>> 0", "1");
+        test("8589934591 >>> 0", "4294967295");
+        test("8589934592 >>> 0", "0");
+        test("8589934593 >>> 0", "1");
     }
 }
