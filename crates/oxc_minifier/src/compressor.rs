@@ -50,7 +50,7 @@ impl<'a> Compressor<'a> {
             &mut StatementFusion::new(),
             &mut PeepholeRemoveDeadCode::new(),
             // TODO: MinimizeExitPoints
-            &mut PeepholeMinimizeConditions::new(),
+            &mut PeepholeMinimizeConditions::new(self.options),
             &mut PeepholeSubstituteAlternateSyntax::new(self.options),
             &mut PeepholeReplaceKnownMethods::new(),
             &mut PeepholeFoldConstants::new(),
@@ -78,7 +78,7 @@ impl<'a> Compressor<'a> {
 
     fn dead_code_elimination(self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         PeepholeFoldConstants::new().build(program, ctx);
-        PeepholeMinimizeConditions::new().build(program, ctx);
+        PeepholeMinimizeConditions::new(self.options).build(program, ctx);
         PeepholeRemoveDeadCode::new().build(program, ctx);
     }
 }
