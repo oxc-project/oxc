@@ -137,7 +137,6 @@ pub trait CompilerInterface {
                 &mut program,
                 source_path,
                 source_text,
-                source_type,
                 &trivias,
                 symbols,
                 scopes,
@@ -208,12 +207,11 @@ pub trait CompilerInterface {
         program: &mut Program<'a>,
         source_path: &Path,
         source_text: &'a str,
-        source_type: SourceType,
         trivias: &Trivias,
         symbols: SymbolTable,
         scopes: ScopeTree,
     ) -> TransformerReturn {
-        Transformer::new(allocator, source_path, source_type, source_text, trivias.clone(), options)
+        Transformer::new(allocator, source_path, source_text, trivias.clone(), options)
             .build_with_symbols_and_scopes(symbols, scopes, program)
     }
 

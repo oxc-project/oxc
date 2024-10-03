@@ -122,7 +122,6 @@ fn transpile(ctx: &TransformContext<'_>, options: Option<TransformOptions>) -> C
     let ret = Transformer::new(
         ctx.allocator,
         ctx.file_path(),
-        ctx.source_type(),
         ctx.source_text(),
         ctx.trivias.clone(),
         options,

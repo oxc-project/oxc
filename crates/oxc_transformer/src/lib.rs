@@ -45,7 +45,7 @@ use oxc_allocator::{Allocator, Vec};
 use oxc_ast::{ast::*, Trivias};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{ScopeTree, SymbolTable};
-use oxc_span::{SourceType, SPAN};
+use oxc_span::SPAN;
 use oxc_traverse::{traverse_mut, Traverse, TraverseCtx};
 use regexp::RegExp;
 
@@ -76,12 +76,11 @@ impl<'a> Transformer<'a> {
     pub fn new(
         allocator: &'a Allocator,
         source_path: &Path,
-        source_type: SourceType,
         source_text: &'a str,
         trivias: Trivias,
         options: TransformOptions,
     ) -> Self {
-        let ctx = TransformCtx::new(source_path, source_type, source_text, trivias, &options);
+        let ctx = TransformCtx::new(source_path, source_text, trivias, &options);
         Self { ctx, options, allocator }
     }
 
@@ -94,6 +93,7 @@ impl<'a> Transformer<'a> {
         let allocator = self.allocator;
         let ast_builder = AstBuilder::new(allocator);
 
+        self.ctx.source_type = program.source_type;
         react::update_options_with_comments(&mut self.options, &self.ctx);
 
         let mut transformer = TransformerImpl {

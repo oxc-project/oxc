@@ -65,15 +65,8 @@ fn main() {
         TransformOptions::enable_all()
     };
 
-    let ret = Transformer::new(
-        &allocator,
-        path,
-        source_type,
-        &source_text,
-        trivias.clone(),
-        transform_options,
-    )
-    .build_with_symbols_and_scopes(symbols, scopes, &mut program);
+    let ret = Transformer::new(&allocator, path, &source_text, trivias.clone(), transform_options)
+        .build_with_symbols_and_scopes(symbols, scopes, &mut program);
 
     if !ret.errors.is_empty() {
         println!("Transformer Errors:");

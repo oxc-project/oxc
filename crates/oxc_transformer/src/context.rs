@@ -43,7 +43,6 @@ pub struct TransformCtx<'a> {
 impl<'a> TransformCtx<'a> {
     pub fn new(
         source_path: &Path,
-        source_type: SourceType,
         source_text: &'a str,
         trivias: Trivias,
         options: &TransformOptions,
@@ -60,7 +59,7 @@ impl<'a> TransformCtx<'a> {
             errors: RefCell::new(vec![]),
             filename,
             source_path,
-            source_type,
+            source_type: SourceType::default(),
             source_text,
             trivias,
             module_imports: ModuleImportsStore::new(),

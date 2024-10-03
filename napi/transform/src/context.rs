@@ -89,11 +89,6 @@ impl<'a> TransformContext<'a> {
     }
 
     #[inline]
-    pub fn source_type(&self) -> SourceType {
-        self.source_type
-    }
-
-    #[inline]
     pub fn program(&self) -> Ref<'_, Program<'a>> {
         self.program.borrow()
     }

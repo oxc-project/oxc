@@ -2,7 +2,7 @@ commit: a709f989
 
 semantic_typescript Summary:
 AST Parsed     : 6479/6479 (100.00%)
-Positive Passed: 2672/6479 (41.24%)
+Positive Passed: 2668/6479 (41.18%)
 tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 semantic error: Symbol reference IDs mismatch:
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -514,9 +514,8 @@ after transform: SymbolId(0): SymbolFlags(Export | ConstEnum)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Export)
 
 tasks/coverage/typescript/tests/cases/compiler/amdModuleName1.ts
-semantic error: Symbol reference IDs mismatch:
-after transform: SymbolId(0): [ReferenceId(0)]
-rebuilt        : SymbolId(0): []
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/anonClassDeclarationEmitIsAnon.ts
 semantic error: Bindings mismatch:
@@ -2185,61 +2184,8 @@ after transform: ["m1"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/clinterfaces.ts
-semantic error: Missing SymbolId: M
-Missing SymbolId: _M
-Missing ReferenceId: M
-Missing ReferenceId: M
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(3), SymbolId(6)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(4), SymbolId(5)]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(5)]
-Binding symbols mismatch:
-after transform: ScopeId(1): [SymbolId(1), SymbolId(2), SymbolId(9)]
-rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2), SymbolId(3)]
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
-rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
-Bindings mismatch:
-after transform: ScopeId(7): ["T"]
-rebuilt        : ScopeId(4): []
-Bindings mismatch:
-after transform: ScopeId(8): ["T"]
-rebuilt        : ScopeId(5): []
-Symbol flags mismatch:
-after transform: SymbolId(1): SymbolFlags(Class | Interface)
-rebuilt        : SymbolId(2): SymbolFlags(Class)
-Symbol redeclarations mismatch:
-after transform: SymbolId(1): [Span { start: 41, end: 42 }]
-rebuilt        : SymbolId(2): []
-Symbol flags mismatch:
-after transform: SymbolId(2): SymbolFlags(Class | Interface)
-rebuilt        : SymbolId(3): SymbolFlags(Class)
-Symbol span mismatch:
-after transform: SymbolId(2): Span { start: 61, end: 62 }
-rebuilt        : SymbolId(3): Span { start: 77, end: 78 }
-Symbol redeclarations mismatch:
-after transform: SymbolId(2): [Span { start: 77, end: 78 }]
-rebuilt        : SymbolId(3): []
-Symbol flags mismatch:
-after transform: SymbolId(3): SymbolFlags(Class | Interface)
-rebuilt        : SymbolId(4): SymbolFlags(Class)
-Symbol span mismatch:
-after transform: SymbolId(3): Span { start: 96, end: 99 }
-rebuilt        : SymbolId(4): Span { start: 129, end: 132 }
-Symbol reference IDs mismatch:
-after transform: SymbolId(3): [ReferenceId(0)]
-rebuilt        : SymbolId(4): []
-Symbol redeclarations mismatch:
-after transform: SymbolId(3): [Span { start: 129, end: 132 }]
-rebuilt        : SymbolId(4): []
-Symbol flags mismatch:
-after transform: SymbolId(6): SymbolFlags(Class | Interface)
-rebuilt        : SymbolId(5): SymbolFlags(Class)
-Symbol redeclarations mismatch:
-after transform: SymbolId(6): [Span { start: 197, end: 200 }]
-rebuilt        : SymbolId(5): []
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/cloduleAcrossModuleDefinitions.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -3561,8 +3507,8 @@ rebuilt        : ReferenceId(13): Some("multiM")
 
 tasks/coverage/typescript/tests/cases/compiler/commentsOnJSXExpressionsArePreserved.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Component", "JSX", "_jsx", "_jsxFileName"]
-rebuilt        : ScopeId(0): ["Component", "_jsx", "_jsxFileName"]
+after transform: ScopeId(0): ["Component", "JSX", "_jsxFileName", "_reactJsxRuntime"]
+rebuilt        : ScopeId(0): ["Component", "_jsxFileName", "_reactJsxRuntime"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
@@ -4166,136 +4112,24 @@ semantic error: `export = <value>;` is only supported when compiling modules to 
 Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/constEnumMergingWithValues1.ts
-semantic error: Missing SymbolId: _foo
-Missing ReferenceId: foo
-Missing ReferenceId: foo
-Binding symbols mismatch:
-after transform: ScopeId(2): [SymbolId(1), SymbolId(3)]
-rebuilt        : ScopeId(2): [SymbolId(1), SymbolId(2)]
-Bindings mismatch:
-after transform: ScopeId(3): ["E", "X"]
-rebuilt        : ScopeId(3): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch:
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Function | NameSpaceModule | ValueModule)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Function)
-Symbol reference IDs mismatch:
-after transform: SymbolId(0): [ReferenceId(0)]
-rebuilt        : SymbolId(0): [ReferenceId(3), ReferenceId(4)]
-Symbol redeclarations mismatch:
-after transform: SymbolId(0): [Span { start: 25, end: 28 }]
-rebuilt        : SymbolId(0): []
-Symbol flags mismatch:
-after transform: SymbolId(1): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/constEnumMergingWithValues2.ts
-semantic error: Missing SymbolId: _foo
-Missing ReferenceId: foo
-Missing ReferenceId: foo
-Binding symbols mismatch:
-after transform: ScopeId(2): [SymbolId(1), SymbolId(3)]
-rebuilt        : ScopeId(2): [SymbolId(1), SymbolId(2)]
-Bindings mismatch:
-after transform: ScopeId(3): ["E", "X"]
-rebuilt        : ScopeId(3): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch:
-after transform: SymbolId(0): SymbolFlags(Class | NameSpaceModule | ValueModule)
-rebuilt        : SymbolId(0): SymbolFlags(Class)
-Symbol reference IDs mismatch:
-after transform: SymbolId(0): [ReferenceId(0)]
-rebuilt        : SymbolId(0): [ReferenceId(3), ReferenceId(4)]
-Symbol redeclarations mismatch:
-after transform: SymbolId(0): [Span { start: 20, end: 23 }]
-rebuilt        : SymbolId(0): []
-Symbol flags mismatch:
-after transform: SymbolId(1): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/constEnumMergingWithValues3.ts
-semantic error: Missing SymbolId: _foo
-Missing ReferenceId: foo
-Missing ReferenceId: foo
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "foo"]
-rebuilt        : ScopeId(1): ["foo"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Binding symbols mismatch:
-after transform: ScopeId(2): [SymbolId(2), SymbolId(4)]
-rebuilt        : ScopeId(2): [SymbolId(2), SymbolId(3)]
-Bindings mismatch:
-after transform: ScopeId(3): ["E", "X"]
-rebuilt        : ScopeId(3): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch:
-after transform: SymbolId(0): SymbolFlags(RegularEnum | NameSpaceModule | ValueModule)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol reference IDs mismatch:
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(4)]
-rebuilt        : SymbolId(0): [ReferenceId(3), ReferenceId(7), ReferenceId(8)]
-Symbol redeclarations mismatch:
-after transform: SymbolId(0): [Span { start: 22, end: 25 }]
-rebuilt        : SymbolId(0): []
-Symbol flags mismatch:
-after transform: SymbolId(2): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/constEnumMergingWithValues4.ts
-semantic error: Missing SymbolId: foo
-Missing SymbolId: _foo
-Missing ReferenceId: foo
-Missing ReferenceId: foo
-Missing SymbolId: _foo2
-Missing ReferenceId: foo
-Missing ReferenceId: foo
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
-Binding symbols mismatch:
-after transform: ScopeId(1): [SymbolId(1), SymbolId(4)]
-rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2)]
-Bindings mismatch:
-after transform: ScopeId(2): ["E", "X"]
-rebuilt        : ScopeId(2): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
-Binding symbols mismatch:
-after transform: ScopeId(3): [SymbolId(3), SymbolId(5)]
-rebuilt        : ScopeId(3): [SymbolId(4), SymbolId(5)]
-Symbol flags mismatch:
-after transform: SymbolId(1): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/constEnumMergingWithValues5.ts
-semantic error: Missing SymbolId: foo
-Missing SymbolId: _foo
-Missing ReferenceId: foo
-Missing ReferenceId: foo
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
-Binding symbols mismatch:
-after transform: ScopeId(1): [SymbolId(1), SymbolId(3)]
-rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2)]
-Bindings mismatch:
-after transform: ScopeId(2): ["E", "X"]
-rebuilt        : ScopeId(2): ["E"]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch:
-after transform: SymbolId(1): SymbolFlags(ConstEnum)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/constEnumNamespaceReferenceCausesNoImport.ts
 semantic error: Bindings mismatch:
@@ -5362,14 +5196,14 @@ rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/contextualTypingOfOptionalMembers.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["ActionsArray", "ActionsObject", "ActionsObjectOr", "Bar", "JSX", "Options", "Options2", "_jsx", "_jsxFileName", "a", "y"]
-rebuilt        : ScopeId(0): ["_jsx", "_jsxFileName", "a", "y"]
+after transform: ScopeId(0): ["ActionsArray", "ActionsObject", "ActionsObjectOr", "Bar", "JSX", "Options", "Options2", "_jsxFileName", "_reactJsxRuntime", "a", "y"]
+rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime", "a", "y"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(20), ScopeId(21), ScopeId(22)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8)]
 Unresolved references mismatch:
-after transform: ["App4", "JSX", "app", "app2", "app3", "foo", "undefined"]
-rebuilt        : ["App4", "app", "app2", "app3", "foo", "undefined"]
+after transform: ["App4", "JSX", "app", "app2", "app3", "foo", "require", "undefined"]
+rebuilt        : ["App4", "app", "app2", "app3", "foo", "require", "undefined"]
 
 tasks/coverage/typescript/tests/cases/compiler/contextualTypingOfTooShortOverloads.ts
 semantic error: Bindings mismatch:
@@ -5453,8 +5287,8 @@ rebuilt        : ScopeId(1): ["arg"]
 
 tasks/coverage/typescript/tests/cases/compiler/contextuallyTypedJsxAttribute.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Elements", "Props", "_jsx", "_jsxFileName"]
-rebuilt        : ScopeId(0): ["_jsx", "_jsxFileName"]
+after transform: ScopeId(0): ["Elements", "Props", "_jsxFileName", "_reactJsxRuntime"]
+rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
@@ -6190,6 +6024,8 @@ rebuilt        : SymbolId(8): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/declFileExportAssignmentImportInternalModule.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+`export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/declFileExportAssignmentOfGenericInterface.ts
 semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
@@ -6555,41 +6391,8 @@ after transform: ["IElementController", "mvc", "templa"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/declFileImportChainInExportAssignment.ts
-semantic error: Missing SymbolId: m
-Missing SymbolId: _m
-Missing SymbolId: c
-Missing SymbolId: _c
-Missing ReferenceId: _c
-Missing ReferenceId: c
-Missing ReferenceId: c
-Missing ReferenceId: c
-Missing ReferenceId: _m
-Missing ReferenceId: _m
-Missing ReferenceId: m
-Missing ReferenceId: m
-Missing SymbolId: a
-Missing SymbolId: b
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(3), SymbolId(4)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(5), SymbolId(6)]
-Binding symbols mismatch:
-after transform: ScopeId(1): [SymbolId(1), SymbolId(5)]
-rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2)]
-Binding symbols mismatch:
-after transform: ScopeId(2): [SymbolId(2), SymbolId(6)]
-rebuilt        : ScopeId(2): [SymbolId(3), SymbolId(4)]
-Symbol flags mismatch:
-after transform: SymbolId(2): SymbolFlags(Export | Class)
-rebuilt        : SymbolId(4): SymbolFlags(Class)
-Symbol reference IDs mismatch:
-after transform: SymbolId(2): []
-rebuilt        : SymbolId(4): [ReferenceId(1)]
-Reference symbol mismatch:
-after transform: ReferenceId(0): Some("m")
-rebuilt        : ReferenceId(8): Some("m")
-Reference symbol mismatch:
-after transform: ReferenceId(1): Some("a")
-rebuilt        : ReferenceId(9): Some("a")
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/declFileImportModuleWithExportAssignment.ts
 semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
@@ -8574,6 +8377,8 @@ rebuilt        : ["dual"]
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitImportInExportAssignmentModule.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+`export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitIndexTypeArray.ts
 semantic error: Bindings mismatch:
@@ -8581,9 +8386,8 @@ after transform: ScopeId(1): ["T", "keys"]
 rebuilt        : ScopeId(1): ["keys"]
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitInferredDefaultExportType2.ts
-semantic error: Unresolved references mismatch:
-after transform: ["undefined"]
-rebuilt        : []
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitInferredTypeAlias4.ts
 semantic error: Bindings mismatch:
@@ -9371,24 +9175,8 @@ semantic error: `export = <value>;` is only supported when compiling modules to 
 Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/declarationMaps.ts
-semantic error: Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(4)]
-rebuilt        : ScopeId(0): []
-Symbol flags mismatch:
-after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | NameSpaceModule)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol span mismatch:
-after transform: SymbolId(0): Span { start: 7, end: 9 }
-rebuilt        : SymbolId(0): Span { start: 230, end: 323 }
-Symbol reference IDs mismatch:
-after transform: SymbolId(0): [ReferenceId(5)]
-rebuilt        : SymbolId(0): []
-Symbol redeclarations mismatch:
-after transform: SymbolId(0): [Span { start: 230, end: 323 }]
-rebuilt        : SymbolId(0): []
-Unresolved references mismatch:
-after transform: ["m2"]
-rebuilt        : []
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/declarationMerging1.ts
 semantic error: Bindings mismatch:
@@ -9507,44 +9295,12 @@ after transform: ["Function", "RegExp", "express"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/declareFileExportAssignment.ts
-semantic error: Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(4)]
-rebuilt        : ScopeId(0): []
-Symbol flags mismatch:
-after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | NameSpaceModule)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol span mismatch:
-after transform: SymbolId(0): Span { start: 7, end: 9 }
-rebuilt        : SymbolId(0): Span { start: 230, end: 323 }
-Symbol reference IDs mismatch:
-after transform: SymbolId(0): [ReferenceId(5)]
-rebuilt        : SymbolId(0): []
-Symbol redeclarations mismatch:
-after transform: SymbolId(0): [Span { start: 230, end: 323 }]
-rebuilt        : SymbolId(0): []
-Unresolved references mismatch:
-after transform: ["m2"]
-rebuilt        : []
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/declareFileExportAssignmentWithVarFromVariableStatement.ts
-semantic error: Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(4)]
-rebuilt        : ScopeId(0): []
-Symbol flags mismatch:
-after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | NameSpaceModule)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
-Symbol span mismatch:
-after transform: SymbolId(0): Span { start: 7, end: 9 }
-rebuilt        : SymbolId(1): Span { start: 238, end: 331 }
-Symbol reference IDs mismatch:
-after transform: SymbolId(0): [ReferenceId(5)]
-rebuilt        : SymbolId(1): []
-Symbol redeclarations mismatch:
-after transform: SymbolId(0): [Span { start: 238, end: 331 }]
-rebuilt        : SymbolId(1): []
-Unresolved references mismatch:
-after transform: ["m2"]
-rebuilt        : []
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/declareModifierOnTypeAlias.ts
 semantic error: Bindings mismatch:
@@ -10387,8 +10143,8 @@ rebuilt        : ["getVariableValues"]
 
 tasks/coverage/typescript/tests/cases/compiler/discriminatedUnionJsxElement.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["IData", "IListItemData", "ListItem", "ListItemVariant", "Menu", "_jsx", "_jsxFileName"]
-rebuilt        : ScopeId(0): ["ListItem", "ListItemVariant", "Menu", "_jsx", "_jsxFileName"]
+after transform: ScopeId(0): ["IData", "IListItemData", "ListItem", "ListItemVariant", "Menu", "_jsxFileName", "_reactJsxRuntime"]
+rebuilt        : ScopeId(0): ["ListItem", "ListItemVariant", "Menu", "_jsxFileName", "_reactJsxRuntime"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
@@ -10406,7 +10162,7 @@ after transform: SymbolId(7): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(5): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch:
 after transform: SymbolId(7): [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(4), ReferenceId(8), ReferenceId(11), ReferenceId(12), ReferenceId(21)]
-rebuilt        : SymbolId(5): [ReferenceId(1), ReferenceId(11)]
+rebuilt        : SymbolId(5): [ReferenceId(2), ReferenceId(12)]
 
 tasks/coverage/typescript/tests/cases/compiler/discriminatedUnionWithIndexSignature.ts
 semantic error: Bindings mismatch:
@@ -13328,9 +13084,8 @@ after transform: []
 rebuilt        : ["x", "y"]
 
 tasks/coverage/typescript/tests/cases/compiler/es5-umd4.ts
-semantic error: Symbol reference IDs mismatch:
-after transform: SymbolId(0): [ReferenceId(0)]
-rebuilt        : SymbolId(0): []
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/es5ExportDefaultClassDeclaration4.ts
 semantic error: Bindings mismatch:
@@ -13357,18 +13112,8 @@ after transform: ["func"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/es5ExportEqualsDts.ts
-semantic error: Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
-Symbol flags mismatch:
-after transform: SymbolId(0): SymbolFlags(Class | NameSpaceModule)
-rebuilt        : SymbolId(0): SymbolFlags(Class)
-Symbol reference IDs mismatch:
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2)]
-rebuilt        : SymbolId(0): []
-Symbol redeclarations mismatch:
-after transform: SymbolId(0): [Span { start: 82, end: 83 }]
-rebuilt        : SymbolId(0): []
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/es6ClassTest2.ts
 semantic error: Bindings mismatch:
@@ -14133,30 +13878,8 @@ semantic error: `export = <value>;` is only supported when compiling modules to 
 Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignValueAndType.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["http", "server", "x"]
-rebuilt        : ScopeId(0): ["server", "x"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
-rebuilt        : ScopeId(0): []
-Symbol flags mismatch:
-after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable | Interface)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
-Symbol span mismatch:
-after transform: SymbolId(2): Span { start: 82, end: 88 }
-rebuilt        : SymbolId(1): Span { start: 152, end: 158 }
-Symbol reference IDs mismatch:
-after transform: SymbolId(2): [ReferenceId(3)]
-rebuilt        : SymbolId(1): []
-Symbol redeclarations mismatch:
-after transform: SymbolId(2): [Span { start: 152, end: 158 }]
-rebuilt        : SymbolId(1): []
-Unresolved references mismatch:
-after transform: ["Date", "http"]
-rebuilt        : ["Date"]
-Unresolved reference IDs mismatch for "Date":
-after transform: [ReferenceId(1), ReferenceId(2)]
-rebuilt        : [ReferenceId(0)]
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignedTypeAsTypeAnnotation.ts
 semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
@@ -14172,6 +13895,8 @@ Please consider using `export default <value>;`, or add @babel/plugin-transform-
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentError.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+`export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentFunction.ts
 semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
@@ -14207,22 +13932,16 @@ Please consider using `export default <value>;`, or add @babel/plugin-transform-
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentWithImportStatementPrivacyError.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+`export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentWithPrivacyError.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["connectexport", "connectmodule", "server"]
-rebuilt        : ScopeId(0): ["server"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
-rebuilt        : ScopeId(0): []
-Symbol reference IDs mismatch:
-after transform: SymbolId(2): [ReferenceId(5)]
-rebuilt        : SymbolId(0): []
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentWithoutIdentifier1.ts
-semantic error: Symbol reference IDs mismatch:
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
-rebuilt        : SymbolId(0): [ReferenceId(0)]
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/exportClassExtendingIntersection.ts
 semantic error: Bindings mismatch:
@@ -14378,32 +14097,20 @@ semantic error: `export = <value>;` is only supported when compiling modules to 
 Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/exportEqualNamespaces.ts
-semantic error: Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
-rebuilt        : ScopeId(0): []
-Symbol flags mismatch:
-after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | Interface | NameSpaceModule | Ambient)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
-Symbol span mismatch:
-after transform: SymbolId(0): Span { start: 15, end: 21 }
-rebuilt        : SymbolId(1): Span { start: 149, end: 155 }
-Symbol reference IDs mismatch:
-after transform: SymbolId(0): [ReferenceId(1), ReferenceId(4)]
-rebuilt        : SymbolId(1): []
-Symbol redeclarations mismatch:
-after transform: SymbolId(0): [Span { start: 77, end: 83 }, Span { start: 149, end: 155 }]
-rebuilt        : SymbolId(1): []
-Unresolved references mismatch:
-after transform: ["Date", "Object"]
-rebuilt        : ["Date"]
-Unresolved reference IDs mismatch for "Date":
-after transform: [ReferenceId(2), ReferenceId(3)]
-rebuilt        : [ReferenceId(0)]
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+
+tasks/coverage/typescript/tests/cases/compiler/exportEqualsAmd.ts
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/exportEqualsClassNoRedeclarationError.ts
-semantic error: Symbol reference IDs mismatch:
-after transform: SymbolId(0): [ReferenceId(0)]
-rebuilt        : SymbolId(0): []
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+
+tasks/coverage/typescript/tests/cases/compiler/exportEqualsCommonJs.ts
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/exportEqualsDefaultProperty.ts
 semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
@@ -14425,6 +14132,10 @@ semantic error: `export = <value>;` is only supported when compiling modules to 
 Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/exportEqualsProperty2.ts
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+
+tasks/coverage/typescript/tests/cases/compiler/exportEqualsUmd.ts
 semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
 Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
@@ -14571,15 +14282,8 @@ semantic error: `export = <value>;` is only supported when compiling modules to 
 Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/exportNamespaceDeclarationRetainsVisibility.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["X"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["X"]
-rebuilt        : []
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/exportPrivateType.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -21042,16 +20746,16 @@ rebuilt        : [ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/jsxContainsOnlyTriviaWhiteSpacesNotCountedAsChild.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["JSX", "NoticeList", "Props", "_jsx", "_jsxFileName"]
-rebuilt        : ScopeId(0): ["NoticeList", "_jsx", "_jsxFileName"]
+after transform: ScopeId(0): ["JSX", "NoticeList", "Props", "_jsxFileName", "_reactJsxRuntime"]
+rebuilt        : ScopeId(0): ["NoticeList", "_jsxFileName", "_reactJsxRuntime"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/jsxElementClassTooManyParams.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["ElemClass", "JSX", "_jsx", "_jsxFileName", "elem"]
-rebuilt        : ScopeId(0): ["ElemClass", "_jsx", "_jsxFileName", "elem"]
+after transform: ScopeId(0): ["ElemClass", "JSX", "_jsxFileName", "_reactJsxRuntime", "elem"]
+rebuilt        : ScopeId(0): ["ElemClass", "_jsxFileName", "_reactJsxRuntime", "elem"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(9)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
@@ -21059,8 +20763,8 @@ Bindings mismatch:
 after transform: ScopeId(9): ["T"]
 rebuilt        : ScopeId(1): []
 Unresolved references mismatch:
-after transform: ["JSX"]
-rebuilt        : []
+after transform: ["JSX", "require"]
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/jsxElementsAsIdentifierNames.tsx
 semantic error: Bindings mismatch:
@@ -21081,8 +20785,8 @@ rebuilt        : ["React"]
 
 tasks/coverage/typescript/tests/cases/compiler/jsxEmitAttributeWithPreserve.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["React", "_jsx", "_jsxFileName"]
-rebuilt        : ScopeId(0): ["_jsx", "_jsxFileName"]
+after transform: ScopeId(0): ["React", "_jsxFileName", "_reactJsxRuntime"]
+rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime"]
 
 tasks/coverage/typescript/tests/cases/compiler/jsxEmitWithAttributes.ts
 semantic error: Missing SymbolId: Element
@@ -21234,17 +20938,17 @@ rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/jsxGenericComponentWithSpreadingResultOfGenericFunction.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["_jsx", "_jsxFileName", "otherProps"]
-rebuilt        : ScopeId(0): ["_jsx", "_jsxFileName"]
+after transform: ScopeId(0): ["_jsxFileName", "_reactJsxRuntime", "otherProps"]
+rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): []
 Reference symbol mismatch:
 after transform: ReferenceId(13): Some("otherProps")
-rebuilt        : ReferenceId(3): None
+rebuilt        : ReferenceId(4): None
 Unresolved references mismatch:
-after transform: ["GenericComponent", "Omit", "omit"]
-rebuilt        : ["GenericComponent", "omit", "otherProps"]
+after transform: ["GenericComponent", "Omit", "omit", "require"]
+rebuilt        : ["GenericComponent", "omit", "otherProps", "require"]
 
 tasks/coverage/typescript/tests/cases/compiler/jsxHasLiteralType.tsx
 semantic error: Bindings mismatch:
@@ -21288,14 +20992,14 @@ rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/jsxIntrinsicElementsExtendsRecord.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["JSX", "_jsx", "_jsxFileName"]
-rebuilt        : ScopeId(0): ["_jsx", "_jsxFileName"]
+after transform: ScopeId(0): ["JSX", "_jsxFileName", "_reactJsxRuntime"]
+rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
-after transform: ["Record"]
-rebuilt        : []
+after transform: ["Record", "require"]
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/jsxLibraryManagedAttributesUnusedGeneric.tsx
 semantic error: Bindings mismatch:
@@ -24067,15 +23771,8 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/module_augmentUninstantiatedModule2.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["ng"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["ng"]
-rebuilt        : []
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/moduledecl.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -24967,21 +24664,8 @@ after transform: ScopeId(0): ["C"]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/noCircularDefinitionOnExportOfPrivateInMergedNamespace.ts
-semantic error: Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
-Symbol flags mismatch:
-after transform: SymbolId(1): SymbolFlags(Class | NameSpaceModule | Ambient)
-rebuilt        : SymbolId(1): SymbolFlags(Class)
-Symbol reference IDs mismatch:
-after transform: SymbolId(1): [ReferenceId(0)]
-rebuilt        : SymbolId(1): []
-Symbol redeclarations mismatch:
-after transform: SymbolId(1): [Span { start: 61, end: 64 }]
-rebuilt        : SymbolId(1): []
-Unresolved references mismatch:
-after transform: ["cat"]
-rebuilt        : []
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/noCollisionThisExpressionAndLocalVarInFunction.ts
 semantic error: Scope children mismatch:
@@ -26747,24 +26431,13 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/privacyCheckExportAssignmentOnExportedGenericInterface1.ts
-semantic error: Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
-rebuilt        : ScopeId(0): []
-Symbol flags mismatch:
-after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | Interface | NameSpaceModule)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol span mismatch:
-after transform: SymbolId(0): Span { start: 7, end: 10 }
-rebuilt        : SymbolId(0): Span { start: 74, end: 107 }
-Symbol reference IDs mismatch:
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
-rebuilt        : SymbolId(0): []
-Symbol redeclarations mismatch:
-after transform: SymbolId(0): [Span { start: 59, end: 62 }, Span { start: 74, end: 107 }]
-rebuilt        : SymbolId(0): []
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/privacyCheckExportAssignmentOnExportedGenericInterface2.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+`export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/privacyCheckExternalModuleExportAssignmentOfGenericClass.ts
 semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
@@ -33535,14 +33208,12 @@ after transform: []
 rebuilt        : ["console"]
 
 tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationExportAssignment.ts
-semantic error: Symbol reference IDs mismatch:
-after transform: SymbolId(0): [ReferenceId(0)]
-rebuilt        : SymbolId(0): []
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationExportAssignmentCommonjs.ts
-semantic error: Symbol reference IDs mismatch:
-after transform: SymbolId(0): [ReferenceId(0)]
-rebuilt        : SymbolId(0): []
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationImport.ts
 semantic error: Missing SymbolId: m
@@ -35262,8 +34933,8 @@ rebuilt        : ["decorator"]
 
 tasks/coverage/typescript/tests/cases/compiler/tsxAttributeQuickinfoTypesSameAsObjectLiteral.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Foo", "JSX", "_jsx", "_jsxFileName"]
-rebuilt        : ScopeId(0): ["Foo", "_jsx", "_jsxFileName"]
+after transform: ScopeId(0): ["Foo", "JSX", "_jsxFileName", "_reactJsxRuntime"]
+rebuilt        : ScopeId(0): ["Foo", "_jsxFileName", "_reactJsxRuntime"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
@@ -35298,14 +34969,14 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/tsxDiscriminantPropertyInference.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["DiscriminatorFalse", "DiscriminatorTrue", "JSX", "Props", "_jsx", "_jsxFileName"]
-rebuilt        : ScopeId(0): ["_jsx", "_jsxFileName"]
+after transform: ScopeId(0): ["DiscriminatorFalse", "DiscriminatorTrue", "JSX", "Props", "_jsxFileName", "_reactJsxRuntime"]
+rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 Unresolved references mismatch:
-after transform: ["Comp", "JSX", "parseInt", "true", "undefined"]
-rebuilt        : ["Comp", "parseInt", "undefined"]
+after transform: ["Comp", "JSX", "parseInt", "require", "true", "undefined"]
+rebuilt        : ["Comp", "parseInt", "require", "undefined"]
 
 tasks/coverage/typescript/tests/cases/compiler/tsxFragmentChildrenCheck.ts
 semantic error: Bindings mismatch:
@@ -35320,8 +34991,8 @@ rebuilt        : ["React"]
 
 tasks/coverage/typescript/tests/cases/compiler/tsxInferenceShouldNotYieldAnyOnUnions.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["JSX", "Props", "PropsBase", "PropsWithConvert", "ShouldInferFromData", "_jsx", "_jsxFileName", "f1", "f2", "f3"]
-rebuilt        : ScopeId(0): ["ShouldInferFromData", "_jsx", "_jsxFileName", "f1", "f2", "f3"]
+after transform: ScopeId(0): ["JSX", "Props", "PropsBase", "PropsWithConvert", "ShouldInferFromData", "_jsxFileName", "_reactJsxRuntime", "f1", "f2", "f3"]
+rebuilt        : ScopeId(0): ["ShouldInferFromData", "_jsxFileName", "_reactJsxRuntime", "f1", "f2", "f3"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
@@ -35329,8 +35000,8 @@ Bindings mismatch:
 after transform: ScopeId(6): ["T", "props"]
 rebuilt        : ScopeId(1): ["props"]
 Unresolved references mismatch:
-after transform: ["JSX"]
-rebuilt        : []
+after transform: ["JSX", "require"]
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/tsxReactPropsInferenceSucceedsOnIntersections.tsx
 semantic error: Bindings mismatch:
@@ -35910,14 +35581,17 @@ tasks/coverage/typescript/tests/cases/compiler/typeInferenceWithExcessProperties
 semantic error: Missing SymbolId: React
 Missing ReferenceId: require
 Bindings mismatch:
-after transform: ScopeId(0): ["React", "TProps", "TranslationEntry", "Translations", "_jsx", "_jsxFileName"]
-rebuilt        : ScopeId(0): ["React", "_jsx", "_jsxFileName"]
+after transform: ScopeId(0): ["React", "TProps", "TranslationEntry", "Translations", "_jsxFileName", "_reactJsxRuntime"]
+rebuilt        : ScopeId(0): ["React", "_jsxFileName", "_reactJsxRuntime"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(6)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Unresolved references mismatch:
-after transform: ["JSX", "T"]
+after transform: ["JSX", "T", "require"]
 rebuilt        : ["T", "require"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(13)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/typeInferenceWithTypeAnnotation.ts
 semantic error: Scope children mismatch:
@@ -49502,27 +49176,30 @@ tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty1.
 semantic error: Missing SymbolId: React
 Missing ReferenceId: require
 Bindings mismatch:
-after transform: ScopeId(0): ["Comp", "Prop", "React", "_jsx", "_jsxFileName", "k", "k1", "k2"]
-rebuilt        : ScopeId(0): ["Comp", "React", "_jsx", "_jsxFileName", "k", "k1", "k2"]
+after transform: ScopeId(0): ["Comp", "Prop", "React", "_jsxFileName", "_reactJsxRuntime", "k", "k1", "k2"]
+rebuilt        : ScopeId(0): ["Comp", "React", "_jsxFileName", "_reactJsxRuntime", "k", "k1", "k2"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Unresolved references mismatch:
-after transform: ["JSX"]
+after transform: ["JSX", "require"]
 rebuilt        : ["require"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(18)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty10.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Button", "JSX", "_jsx", "_jsxFileName", "_jsxs", "k1", "k2", "k3", "k4"]
-rebuilt        : ScopeId(0): ["Button", "_jsx", "_jsxFileName", "_jsxs", "k1", "k2", "k3", "k4"]
+after transform: ScopeId(0): ["Button", "JSX", "_jsxFileName", "_reactJsxRuntime", "k1", "k2", "k3", "k4"]
+rebuilt        : ScopeId(0): ["Button", "_jsxFileName", "_reactJsxRuntime", "k1", "k2", "k3", "k4"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(5), ScopeId(7)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty11.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Button", "JSX", "_jsx", "_jsxFileName", "_jsxs", "k1", "k2", "k3", "k4"]
-rebuilt        : ScopeId(0): ["Button", "_jsx", "_jsxFileName", "_jsxs", "k1", "k2", "k3", "k4"]
+after transform: ScopeId(0): ["Button", "JSX", "_jsxFileName", "_reactJsxRuntime", "k1", "k2", "k3", "k4"]
+rebuilt        : ScopeId(0): ["Button", "_jsxFileName", "_reactJsxRuntime", "k1", "k2", "k3", "k4"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(5), ScopeId(7)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
@@ -49531,99 +49208,99 @@ tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty12
 semantic error: Missing SymbolId: React
 Missing ReferenceId: require
 Bindings mismatch:
-after transform: ScopeId(0): ["Button", "ButtonProp", "InnerButton", "InnerButtonProp", "React", "_jsx", "_jsxFileName", "_jsxs"]
-rebuilt        : ScopeId(0): ["Button", "InnerButton", "React", "_jsx", "_jsxFileName", "_jsxs"]
+after transform: ScopeId(0): ["Button", "ButtonProp", "InnerButton", "InnerButtonProp", "React", "_jsxFileName", "_reactJsxRuntime"]
+rebuilt        : ScopeId(0): ["Button", "InnerButton", "React", "_jsxFileName", "_reactJsxRuntime"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(6), ScopeId(7)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(5)]
 Symbol reference IDs mismatch:
 after transform: SymbolId(2): [ReferenceId(0)]
-rebuilt        : SymbolId(4): []
+rebuilt        : SymbolId(3): []
 Reference symbol mismatch:
 after transform: ReferenceId(1): Some("React")
-rebuilt        : ReferenceId(1): Some("React")
+rebuilt        : ReferenceId(2): Some("React")
 Reference symbol mismatch:
 after transform: ReferenceId(7): Some("React")
-rebuilt        : ReferenceId(11): Some("React")
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["require"]
+rebuilt        : ReferenceId(12): Some("React")
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(17)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty16.tsx
-semantic error: Missing SymbolId: React
-Missing ReferenceId: require
-Bindings mismatch:
-after transform: ScopeId(0): ["Props", "React", "Test", "_Fragment", "_jsx", "_jsxFileName", "_jsxs"]
-rebuilt        : ScopeId(0): ["React", "Test", "_Fragment", "_jsx", "_jsxFileName", "_jsxs"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
-Unresolved references mismatch:
-after transform: ["Foo", "JSX", "true"]
-rebuilt        : ["Foo", "require"]
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty3.tsx
 semantic error: Missing SymbolId: React
 Missing ReferenceId: require
 Bindings mismatch:
-after transform: ScopeId(0): ["FetchUser", "IFetchUserProps", "IUser", "React", "UserName0", "UserName1", "_jsx", "_jsxFileName"]
-rebuilt        : ScopeId(0): ["FetchUser", "React", "UserName0", "UserName1", "_jsx", "_jsxFileName"]
+after transform: ScopeId(0): ["FetchUser", "IFetchUserProps", "IUser", "React", "UserName0", "UserName1", "_jsxFileName", "_reactJsxRuntime"]
+rebuilt        : ScopeId(0): ["FetchUser", "React", "UserName0", "UserName1", "_jsxFileName", "_reactJsxRuntime"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(7)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5)]
 Reference symbol mismatch:
 after transform: ReferenceId(2): Some("React")
-rebuilt        : ReferenceId(1): Some("React")
+rebuilt        : ReferenceId(2): Some("React")
 Unresolved references mismatch:
-after transform: ["JSX"]
+after transform: ["JSX", "require"]
 rebuilt        : ["require"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(18)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty6.tsx
 semantic error: Missing SymbolId: React
 Missing ReferenceId: require
 Bindings mismatch:
-after transform: ScopeId(0): ["AnotherButton", "Button", "Comp", "Prop", "React", "_jsx", "_jsxFileName", "_jsxs", "k1", "k2", "k3", "k4"]
-rebuilt        : ScopeId(0): ["AnotherButton", "Button", "Comp", "React", "_jsx", "_jsxFileName", "_jsxs", "k1", "k2", "k3", "k4"]
+after transform: ScopeId(0): ["AnotherButton", "Button", "Comp", "Prop", "React", "_jsxFileName", "_reactJsxRuntime", "k1", "k2", "k3", "k4"]
+rebuilt        : ScopeId(0): ["AnotherButton", "Button", "Comp", "React", "_jsxFileName", "_reactJsxRuntime", "k1", "k2", "k3", "k4"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
 Reference symbol mismatch:
 after transform: ReferenceId(2): Some("React")
-rebuilt        : ReferenceId(1): Some("React")
+rebuilt        : ReferenceId(2): Some("React")
 Unresolved references mismatch:
-after transform: ["JSX"]
+after transform: ["JSX", "require"]
 rebuilt        : ["require"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(48)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty8.tsx
 semantic error: Missing SymbolId: React
 Missing ReferenceId: require
 Bindings mismatch:
-after transform: ScopeId(0): ["AnotherButton", "Button", "Comp", "Prop", "React", "_jsx", "_jsxFileName", "_jsxs", "k1", "k2", "k3", "k4"]
-rebuilt        : ScopeId(0): ["AnotherButton", "Button", "Comp", "React", "_jsx", "_jsxFileName", "_jsxs", "k1", "k2", "k3", "k4"]
+after transform: ScopeId(0): ["AnotherButton", "Button", "Comp", "Prop", "React", "_jsxFileName", "_reactJsxRuntime", "k1", "k2", "k3", "k4"]
+rebuilt        : ScopeId(0): ["AnotherButton", "Button", "Comp", "React", "_jsxFileName", "_reactJsxRuntime", "k1", "k2", "k3", "k4"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
 Reference symbol mismatch:
 after transform: ReferenceId(2): Some("React")
-rebuilt        : ReferenceId(1): Some("React")
+rebuilt        : ReferenceId(2): Some("React")
 Unresolved references mismatch:
-after transform: ["JSX"]
+after transform: ["JSX", "require"]
 rebuilt        : ["require"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(48)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty9.tsx
 semantic error: Missing SymbolId: React
 Missing ReferenceId: require
 Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(7)]
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["require"]
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(4), SymbolId(5), SymbolId(6)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(6)]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(15)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxIntersectionElementPropsType.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "JSX", "_jsx", "_jsxFileName", "x", "y"]
-rebuilt        : ScopeId(0): ["C", "_jsx", "_jsxFileName", "x", "y"]
+after transform: ScopeId(0): ["C", "JSX", "_jsxFileName", "_reactJsxRuntime", "x", "y"]
+rebuilt        : ScopeId(0): ["C", "_jsxFileName", "_reactJsxRuntime", "x", "y"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
@@ -49631,8 +49308,8 @@ Bindings mismatch:
 after transform: ScopeId(5): ["T"]
 rebuilt        : ScopeId(1): []
 Unresolved references mismatch:
-after transform: ["Component", "Readonly"]
-rebuilt        : ["Component"]
+after transform: ["Component", "Readonly", "require"]
+rebuilt        : ["Component", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxSubtleSkipContextSensitiveBug.tsx
 semantic error: Bindings mismatch:
@@ -49663,11 +49340,11 @@ tasks/coverage/typescript/tests/cases/conformance/jsx/commentEmittingInPreserveJ
 semantic error: Missing SymbolId: React
 Missing ReferenceId: require
 Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["require"]
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(8)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/inline/inlineJsxAndJsxFragPragmaOverridesCompilerOptions.tsx
 semantic error: Bindings mismatch:
@@ -49698,92 +49375,92 @@ rebuilt        : ["React"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/jsxReactTestSuite.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Child", "Component", "Composite", "Composite2", "Namespace", "React", "_jsx", "_jsxFileName", "_jsxs", "bar", "foo", "hasOwnProperty", "x", "y", "z"]
-rebuilt        : ScopeId(0): ["_jsx", "_jsxFileName", "_jsxs", "x"]
+after transform: ScopeId(0): ["Child", "Component", "Composite", "Composite2", "Namespace", "React", "_jsxFileName", "_reactJsxRuntime", "bar", "foo", "hasOwnProperty", "x", "y", "z"]
+rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime", "x"]
 Symbol span mismatch:
 after transform: SymbolId(9): Span { start: 231, end: 236 }
-rebuilt        : SymbolId(3): Span { start: 537, end: 538 }
+rebuilt        : SymbolId(2): Span { start: 537, end: 538 }
 Symbol redeclarations mismatch:
 after transform: SymbolId(9): [Span { start: 537, end: 538 }]
-rebuilt        : SymbolId(3): []
+rebuilt        : SymbolId(2): []
 Reference symbol mismatch:
 after transform: ReferenceId(0): Some("Component")
-rebuilt        : ReferenceId(10): None
-Reference symbol mismatch:
-after transform: ReferenceId(2): Some("foo")
 rebuilt        : ReferenceId(11): None
 Reference symbol mismatch:
+after transform: ReferenceId(2): Some("foo")
+rebuilt        : ReferenceId(12): None
+Reference symbol mismatch:
 after transform: ReferenceId(3): Some("bar")
-rebuilt        : ReferenceId(14): None
+rebuilt        : ReferenceId(15): None
 Reference symbol mismatch:
 after transform: ReferenceId(4): Some("Composite")
-rebuilt        : ReferenceId(20): None
+rebuilt        : ReferenceId(21): None
 Reference symbol mismatch:
 after transform: ReferenceId(6): Some("Composite")
-rebuilt        : ReferenceId(23): None
+rebuilt        : ReferenceId(24): None
 Reference symbol mismatch:
 after transform: ReferenceId(8): Some("Composite2")
-rebuilt        : ReferenceId(25): None
+rebuilt        : ReferenceId(26): None
 Reference symbol mismatch:
 after transform: ReferenceId(9): Some("Component")
-rebuilt        : ReferenceId(47): None
+rebuilt        : ReferenceId(48): None
 Reference symbol mismatch:
 after transform: ReferenceId(10): Some("Namespace")
-rebuilt        : ReferenceId(50): None
+rebuilt        : ReferenceId(51): None
 Reference symbol mismatch:
 after transform: ReferenceId(11): Some("Namespace")
-rebuilt        : ReferenceId(53): None
+rebuilt        : ReferenceId(54): None
 Reference symbol mismatch:
 after transform: ReferenceId(12): Some("Component")
-rebuilt        : ReferenceId(56): None
+rebuilt        : ReferenceId(57): None
 Reference symbol mismatch:
 after transform: ReferenceId(14): Some("Component")
-rebuilt        : ReferenceId(60): None
+rebuilt        : ReferenceId(61): None
 Reference symbol mismatch:
 after transform: ReferenceId(15): Some("Component")
-rebuilt        : ReferenceId(65): None
-Reference symbol mismatch:
-after transform: ReferenceId(16): Some("y")
 rebuilt        : ReferenceId(66): None
 Reference symbol mismatch:
+after transform: ReferenceId(16): Some("y")
+rebuilt        : ReferenceId(67): None
+Reference symbol mismatch:
 after transform: ReferenceId(17): Some("Component")
-rebuilt        : ReferenceId(71): None
+rebuilt        : ReferenceId(72): None
 Reference symbol mismatch:
 after transform: ReferenceId(19): Some("Component")
-rebuilt        : ReferenceId(75): None
+rebuilt        : ReferenceId(76): None
 Reference symbol mismatch:
 after transform: ReferenceId(21): Some("Component")
-rebuilt        : ReferenceId(79): None
+rebuilt        : ReferenceId(80): None
 Reference symbol mismatch:
 after transform: ReferenceId(23): Some("Component")
-rebuilt        : ReferenceId(83): None
-Reference symbol mismatch:
-after transform: ReferenceId(24): Some("y")
 rebuilt        : ReferenceId(84): None
 Reference symbol mismatch:
-after transform: ReferenceId(25): Some("Component")
-rebuilt        : ReferenceId(87): None
+after transform: ReferenceId(24): Some("y")
+rebuilt        : ReferenceId(85): None
 Reference symbol mismatch:
-after transform: ReferenceId(26): Some("z")
+after transform: ReferenceId(25): Some("Component")
 rebuilt        : ReferenceId(88): None
 Reference symbol mismatch:
-after transform: ReferenceId(27): Some("z")
+after transform: ReferenceId(26): Some("z")
 rebuilt        : ReferenceId(89): None
 Reference symbol mismatch:
+after transform: ReferenceId(27): Some("z")
+rebuilt        : ReferenceId(90): None
+Reference symbol mismatch:
 after transform: ReferenceId(29): Some("Child")
-rebuilt        : ReferenceId(91): None
+rebuilt        : ReferenceId(92): None
 Reference symbol mismatch:
 after transform: ReferenceId(30): Some("Component")
-rebuilt        : ReferenceId(95): None
-Reference symbol mismatch:
-after transform: ReferenceId(31): Some("z")
 rebuilt        : ReferenceId(96): None
 Reference symbol mismatch:
-after transform: ReferenceId(32): Some("z")
+after transform: ReferenceId(31): Some("z")
 rebuilt        : ReferenceId(97): None
+Reference symbol mismatch:
+after transform: ReferenceId(32): Some("z")
+rebuilt        : ReferenceId(98): None
 Unresolved references mismatch:
-after transform: []
-rebuilt        : ["Child", "Component", "Composite", "Composite2", "Namespace", "bar", "foo", "y", "z"]
+after transform: ["require"]
+rebuilt        : ["Child", "Component", "Composite", "Composite2", "Namespace", "bar", "foo", "require", "y", "z"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/jsxs/jsxJsxsCjsTransformNestedSelfClosingChild.tsx
 semantic error: Bindings mismatch:
@@ -49799,25 +49476,13 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxAttributeResolution16.tsx
-semantic error: Missing SymbolId: React
-Missing ReferenceId: require
-Bindings mismatch:
-after transform: ScopeId(0): ["Address", "AddressComp", "AmericanAddress", "CanadianAddress", "Properties", "React", "_jsx", "_jsxFileName", "a"]
-rebuilt        : ScopeId(0): ["AddressComp", "React", "_jsx", "_jsxFileName", "a"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
-Reference symbol mismatch:
-after transform: ReferenceId(4): Some("React")
-rebuilt        : ReferenceId(1): Some("React")
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["require"]
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxAttributeResolution8.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["JSX", "_jsx", "_jsxFileName", "x"]
-rebuilt        : ScopeId(0): ["_jsx", "_jsxFileName", "x"]
+after transform: ScopeId(0): ["JSX", "_jsxFileName", "_reactJsxRuntime", "x"]
+rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime", "x"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
@@ -49843,46 +49508,49 @@ tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDefaultAttributesResolu
 semantic error: Missing SymbolId: React
 Missing ReferenceId: require
 Bindings mismatch:
-after transform: ScopeId(0): ["Poisoned", "Prop", "React", "_jsx", "_jsxFileName", "p"]
-rebuilt        : ScopeId(0): ["Poisoned", "React", "_jsx", "_jsxFileName", "p"]
+after transform: ScopeId(0): ["Poisoned", "Prop", "React", "_jsxFileName", "_reactJsxRuntime", "p"]
+rebuilt        : ScopeId(0): ["Poisoned", "React", "_jsxFileName", "_reactJsxRuntime", "p"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Reference symbol mismatch:
 after transform: ReferenceId(0): Some("React")
-rebuilt        : ReferenceId(1): Some("React")
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["require"]
+rebuilt        : ReferenceId(2): Some("React")
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(7)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDefaultAttributesResolution2.tsx
 semantic error: Missing SymbolId: React
 Missing ReferenceId: require
 Bindings mismatch:
-after transform: ScopeId(0): ["Poisoned", "Prop", "React", "_jsx", "_jsxFileName", "p"]
-rebuilt        : ScopeId(0): ["Poisoned", "React", "_jsx", "_jsxFileName", "p"]
+after transform: ScopeId(0): ["Poisoned", "Prop", "React", "_jsxFileName", "_reactJsxRuntime", "p"]
+rebuilt        : ScopeId(0): ["Poisoned", "React", "_jsxFileName", "_reactJsxRuntime", "p"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Reference symbol mismatch:
 after transform: ReferenceId(1): Some("React")
-rebuilt        : ReferenceId(1): Some("React")
+rebuilt        : ReferenceId(2): Some("React")
 Unresolved references mismatch:
-after transform: ["true"]
+after transform: ["require", "true"]
 rebuilt        : ["require"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(8)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDynamicTagName4.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["CustomTag", "JSX", "_jsx", "_jsxFileName"]
-rebuilt        : ScopeId(0): ["CustomTag", "_jsx", "_jsxFileName"]
+after transform: ScopeId(0): ["CustomTag", "JSX", "_jsxFileName", "_reactJsxRuntime"]
+rebuilt        : ScopeId(0): ["CustomTag", "_jsxFileName", "_reactJsxRuntime"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDynamicTagName6.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["JSX", "_jsx", "_jsxFileName", "foo", "t"]
-rebuilt        : ScopeId(0): ["_jsx", "_jsxFileName", "foo", "t"]
+after transform: ScopeId(0): ["JSX", "_jsxFileName", "_reactJsxRuntime", "foo", "t"]
+rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime", "foo", "t"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
@@ -49895,8 +49563,8 @@ Missing ReferenceId: Name
 Missing ReferenceId: Dotted
 Missing ReferenceId: Dotted
 Bindings mismatch:
-after transform: ScopeId(0): ["Dotted", "JSX", "Other", "_jsx", "_jsxFileName", "a", "b", "d", "e", "foundFirst"]
-rebuilt        : ScopeId(0): ["Dotted", "Other", "_jsx", "_jsxFileName", "a", "b", "d", "e", "foundFirst"]
+after transform: ScopeId(0): ["Dotted", "JSX", "Other", "_jsxFileName", "_reactJsxRuntime", "a", "b", "d", "e", "foundFirst"]
+rebuilt        : ScopeId(0): ["Dotted", "Other", "_jsxFileName", "_reactJsxRuntime", "a", "b", "d", "e", "foundFirst"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
@@ -49911,23 +49579,23 @@ after transform: SymbolId(5): SymbolFlags(Export | Class)
 rebuilt        : SymbolId(6): SymbolFlags(Class)
 Symbol reference IDs mismatch:
 after transform: SymbolId(5): []
-rebuilt        : SymbolId(6): [ReferenceId(1)]
+rebuilt        : SymbolId(6): [ReferenceId(2)]
 Reference symbol mismatch:
 after transform: ReferenceId(1): Some("Dotted")
-rebuilt        : ReferenceId(12): Some("Dotted")
+rebuilt        : ReferenceId(13): Some("Dotted")
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxElementResolution13.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["JSX", "Obj1", "_jsx", "_jsxFileName", "obj1"]
-rebuilt        : ScopeId(0): ["_jsx", "_jsxFileName", "obj1"]
+after transform: ScopeId(0): ["JSX", "Obj1", "_jsxFileName", "_reactJsxRuntime", "obj1"]
+rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime", "obj1"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxElementResolution14.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["JSX", "Obj1", "_jsx", "_jsxFileName", "obj1"]
-rebuilt        : ScopeId(0): ["_jsx", "_jsxFileName", "obj1"]
+after transform: ScopeId(0): ["JSX", "Obj1", "_jsxFileName", "_reactJsxRuntime", "obj1"]
+rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime", "obj1"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): []
@@ -49950,32 +49618,32 @@ rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxElementResolution2.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["JSX", "_jsx", "_jsxFileName"]
-rebuilt        : ScopeId(0): ["_jsx", "_jsxFileName"]
+after transform: ScopeId(0): ["JSX", "_jsxFileName", "_reactJsxRuntime"]
+rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxElementResolution5.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["JSX", "_jsx", "_jsxFileName"]
-rebuilt        : ScopeId(0): ["_jsx", "_jsxFileName"]
+after transform: ScopeId(0): ["JSX", "_jsxFileName", "_reactJsxRuntime"]
+rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxEmit1.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["JSX", "SomeClass", "_jsx", "_jsxFileName", "_jsxs", "openClosed1", "openClosed2", "openClosed3", "openClosed4", "openClosed5", "p", "selfClosed1", "selfClosed2", "selfClosed3", "selfClosed4", "selfClosed5", "selfClosed6", "selfClosed7", "whitespace1", "whitespace2", "whitespace3"]
-rebuilt        : ScopeId(0): ["SomeClass", "_jsx", "_jsxFileName", "_jsxs", "openClosed1", "openClosed2", "openClosed3", "openClosed4", "openClosed5", "p", "selfClosed1", "selfClosed2", "selfClosed3", "selfClosed4", "selfClosed5", "selfClosed6", "selfClosed7", "whitespace1", "whitespace2", "whitespace3"]
+after transform: ScopeId(0): ["JSX", "SomeClass", "_jsxFileName", "_reactJsxRuntime", "openClosed1", "openClosed2", "openClosed3", "openClosed4", "openClosed5", "p", "selfClosed1", "selfClosed2", "selfClosed3", "selfClosed4", "selfClosed5", "selfClosed6", "selfClosed7", "whitespace1", "whitespace2", "whitespace3"]
+rebuilt        : ScopeId(0): ["SomeClass", "_jsxFileName", "_reactJsxRuntime", "openClosed1", "openClosed2", "openClosed3", "openClosed4", "openClosed5", "p", "selfClosed1", "selfClosed2", "selfClosed3", "selfClosed4", "selfClosed5", "selfClosed6", "selfClosed7", "whitespace1", "whitespace2", "whitespace3"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxEmit2.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["JSX", "_jsx", "_jsxFileName", "p1", "p2", "p3", "spreads1", "spreads2", "spreads3", "spreads4", "spreads5"]
-rebuilt        : ScopeId(0): ["_jsx", "_jsxFileName", "p1", "p2", "p3", "spreads1", "spreads2", "spreads3", "spreads4", "spreads5"]
+after transform: ScopeId(0): ["JSX", "_jsxFileName", "_reactJsxRuntime", "p1", "p2", "p3", "spreads1", "spreads2", "spreads3", "spreads4", "spreads5"]
+rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime", "p1", "p2", "p3", "spreads1", "spreads2", "spreads3", "spreads4", "spreads5"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
@@ -50049,8 +49717,8 @@ rebuilt        : ["Foo", "React"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxFragmentPreserveEmit.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["JSX", "React", "_Fragment", "_jsx", "_jsxFileName", "_jsxs"]
-rebuilt        : ScopeId(0): ["_Fragment", "_jsx", "_jsxFileName", "_jsxs"]
+after transform: ScopeId(0): ["JSX", "React", "_jsxFileName", "_reactJsxRuntime"]
+rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
@@ -50147,9 +49815,9 @@ rebuilt        : ScopeId(3): ["Component"]
 Bindings mismatch:
 after transform: ScopeId(5): ["Component", "T", "U"]
 rebuilt        : ScopeId(5): ["Component"]
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["require"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(27)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType2.tsx
 semantic error: Missing SymbolId: React
@@ -50160,9 +49828,9 @@ rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)
 Bindings mismatch:
 after transform: ScopeId(1): ["Component", "T"]
 rebuilt        : ScopeId(1): ["Component"]
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["require"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(9)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType3.tsx
 semantic error: Missing SymbolId: React
@@ -50178,13 +49846,13 @@ after transform: ScopeId(3): ["U"]
 rebuilt        : ScopeId(3): []
 Reference symbol mismatch:
 after transform: ReferenceId(0): Some("React")
-rebuilt        : ReferenceId(1): Some("React")
+rebuilt        : ReferenceId(2): Some("React")
 Reference symbol mismatch:
 after transform: ReferenceId(2): Some("React")
-rebuilt        : ReferenceId(4): Some("React")
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["require"]
+rebuilt        : ReferenceId(5): Some("React")
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(9)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType4.tsx
 semantic error: Missing SymbolId: React
@@ -50200,13 +49868,13 @@ after transform: ScopeId(3): ["U"]
 rebuilt        : ScopeId(3): []
 Reference symbol mismatch:
 after transform: ReferenceId(0): Some("React")
-rebuilt        : ReferenceId(1): Some("React")
+rebuilt        : ReferenceId(2): Some("React")
 Reference symbol mismatch:
 after transform: ReferenceId(2): Some("React")
-rebuilt        : ReferenceId(4): Some("React")
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["require"]
+rebuilt        : ReferenceId(5): Some("React")
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(9)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType5.tsx
 semantic error: Missing SymbolId: React
@@ -50222,13 +49890,13 @@ after transform: ScopeId(3): ["U"]
 rebuilt        : ScopeId(3): []
 Reference symbol mismatch:
 after transform: ReferenceId(0): Some("React")
-rebuilt        : ReferenceId(1): Some("React")
+rebuilt        : ReferenceId(2): Some("React")
 Reference symbol mismatch:
 after transform: ReferenceId(2): Some("React")
-rebuilt        : ReferenceId(4): Some("React")
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["require"]
+rebuilt        : ReferenceId(5): Some("React")
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(10)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType6.tsx
 semantic error: Missing SymbolId: React
@@ -50244,13 +49912,13 @@ after transform: ScopeId(3): ["U"]
 rebuilt        : ScopeId(3): []
 Reference symbol mismatch:
 after transform: ReferenceId(0): Some("React")
-rebuilt        : ReferenceId(1): Some("React")
+rebuilt        : ReferenceId(2): Some("React")
 Reference symbol mismatch:
 after transform: ReferenceId(2): Some("React")
-rebuilt        : ReferenceId(4): Some("React")
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["require"]
+rebuilt        : ReferenceId(5): Some("React")
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(10)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType7.tsx
 semantic error: Missing SymbolId: React
@@ -50268,8 +49936,11 @@ Bindings mismatch:
 after transform: ScopeId(3): ["U", "props"]
 rebuilt        : ScopeId(2): ["props"]
 Unresolved references mismatch:
-after transform: ["Component", "JSX"]
+after transform: ["Component", "JSX", "require"]
 rebuilt        : ["Component", "require"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(12)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType8.tsx
 semantic error: Missing SymbolId: React
@@ -50287,29 +49958,20 @@ Bindings mismatch:
 after transform: ScopeId(3): ["U", "props"]
 rebuilt        : ScopeId(2): ["props"]
 Unresolved references mismatch:
-after transform: ["Component", "JSX"]
+after transform: ["Component", "JSX", "require"]
 rebuilt        : ["Component", "require"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(12)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType9.tsx
-semantic error: Missing SymbolId: React
-Missing ReferenceId: require
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(4), SymbolId(5)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
-Bindings mismatch:
-after transform: ScopeId(1): ["Ctor", "P"]
-rebuilt        : ScopeId(1): ["Ctor"]
-Reference symbol mismatch:
-after transform: ReferenceId(2): Some("React")
-rebuilt        : ReferenceId(1): Some("React")
-Unresolved references mismatch:
-after transform: ["JSX"]
-rebuilt        : ["require"]
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxInArrowFunction.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["JSX", "_jsx", "_jsxFileName"]
-rebuilt        : ScopeId(0): ["_jsx", "_jsxFileName"]
+after transform: ScopeId(0): ["JSX", "_jsxFileName", "_reactJsxRuntime"]
+rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
@@ -50330,24 +49992,24 @@ Namespace tags are not supported by default. React's JSX doesn't support namespa
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxOpeningClosingNames.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A", "JSX", "_jsx", "_jsxFileName"]
-rebuilt        : ScopeId(0): ["_jsx", "_jsxFileName"]
+after transform: ScopeId(0): ["A", "JSX", "_jsxFileName", "_reactJsxRuntime"]
+rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxParseTests1.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["JSX", "_jsx", "_jsxFileName", "x"]
-rebuilt        : ScopeId(0): ["_jsx", "_jsxFileName", "x"]
+after transform: ScopeId(0): ["JSX", "_jsxFileName", "_reactJsxRuntime", "x"]
+rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime", "x"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxParseTests2.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["JSX", "_jsx", "_jsxFileName", "x"]
-rebuilt        : ScopeId(0): ["_jsx", "_jsxFileName", "x"]
+after transform: ScopeId(0): ["JSX", "_jsxFileName", "_reactJsxRuntime", "x"]
+rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime", "x"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
@@ -50371,27 +50033,27 @@ tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactComponentWithDefau
 semantic error: Missing SymbolId: React
 Missing ReferenceId: require
 Bindings mismatch:
-after transform: ScopeId(0): ["Prop", "React", "_jsx", "_jsxFileName", "x"]
-rebuilt        : ScopeId(0): ["React", "_jsx", "_jsxFileName", "x"]
+after transform: ScopeId(0): ["Prop", "React", "_jsxFileName", "_reactJsxRuntime", "x"]
+rebuilt        : ScopeId(0): ["React", "_jsxFileName", "_reactJsxRuntime", "x"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["MyComp"]
-rebuilt        : ["MyComp", "require"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(7)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactComponentWithDefaultTypeParameter2.tsx
 semantic error: Missing SymbolId: React
 Missing ReferenceId: require
 Bindings mismatch:
-after transform: ScopeId(0): ["Prop", "React", "_jsx", "_jsxFileName", "x", "x1"]
-rebuilt        : ScopeId(0): ["React", "_jsx", "_jsxFileName", "x", "x1"]
+after transform: ScopeId(0): ["Prop", "React", "_jsxFileName", "_reactJsxRuntime", "x", "x1"]
+rebuilt        : ScopeId(0): ["React", "_jsxFileName", "_reactJsxRuntime", "x", "x1"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["MyComp"]
-rebuilt        : ["MyComp", "require"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(10)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmit1.tsx
 semantic error: Bindings mismatch:
@@ -50683,9 +50345,9 @@ Missing ReferenceId: require
 Binding symbols mismatch:
 after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3), SymbolId(5), SymbolId(6), SymbolId(7), SymbolId(8)]
 rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(5), SymbolId(7), SymbolId(8)]
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["require"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(6)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSfcReturnNullStrictNullChecks.tsx
 semantic error: Missing SymbolId: React
@@ -50693,9 +50355,9 @@ Missing ReferenceId: require
 Binding symbols mismatch:
 after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3), SymbolId(5), SymbolId(6), SymbolId(7), SymbolId(8)]
 rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(5), SymbolId(7), SymbolId(8)]
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["require"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(6)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution1.tsx
 semantic error: Missing SymbolId: React
@@ -50705,116 +50367,104 @@ after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)
 rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6)]
 Reference symbol mismatch:
 after transform: ReferenceId(0): Some("React")
-rebuilt        : ReferenceId(1): Some("React")
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["require"]
+rebuilt        : ReferenceId(2): Some("React")
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(10)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution11.tsx
 semantic error: Missing SymbolId: React
 Missing ReferenceId: require
 Bindings mismatch:
-after transform: ScopeId(0): ["OverWriteAttr", "Prop", "React", "_jsx", "_jsxFileName", "anyobj", "obj", "obj1", "obj3", "x", "x1", "x2", "x3", "x4", "x5"]
-rebuilt        : ScopeId(0): ["OverWriteAttr", "React", "_jsx", "_jsxFileName", "anyobj", "obj", "obj1", "obj3", "x", "x1", "x2", "x3", "x4", "x5"]
+after transform: ScopeId(0): ["OverWriteAttr", "Prop", "React", "_jsxFileName", "_reactJsxRuntime", "anyobj", "obj", "obj1", "obj3", "x", "x1", "x2", "x3", "x4", "x5"]
+rebuilt        : ScopeId(0): ["OverWriteAttr", "React", "_jsxFileName", "_reactJsxRuntime", "anyobj", "obj", "obj1", "obj3", "x", "x1", "x2", "x3", "x4", "x5"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Reference symbol mismatch:
 after transform: ReferenceId(2): Some("React")
-rebuilt        : ReferenceId(1): Some("React")
+rebuilt        : ReferenceId(2): Some("React")
 Unresolved references mismatch:
-after transform: ["true"]
+after transform: ["require", "true"]
 rebuilt        : ["require"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(31)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution13.tsx
-semantic error: Missing SymbolId: React
-Missing ReferenceId: require
-Bindings mismatch:
-after transform: ScopeId(0): ["AnotherComponentProps", "ChildComponent", "Component", "ComponentProps", "React", "_jsx", "_jsxFileName"]
-rebuilt        : ScopeId(0): ["ChildComponent", "Component", "React", "_jsx", "_jsxFileName"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(5), ScopeId(6)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(4)]
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["require"]
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution15.tsx
-semantic error: Missing SymbolId: React
-Missing ReferenceId: require
-Bindings mismatch:
-after transform: ScopeId(0): ["AnotherComponent", "AnotherComponentProps", "Component", "ComponentProps", "React", "_jsx", "_jsxFileName"]
-rebuilt        : ScopeId(0): ["AnotherComponent", "Component", "React", "_jsx", "_jsxFileName"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["require"]
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution3.tsx
 semantic error: Missing SymbolId: React
 Missing ReferenceId: require
 Bindings mismatch:
-after transform: ScopeId(0): ["Poisoned", "PoisonedProp", "React", "_jsx", "_jsxFileName", "obj", "p", "y"]
-rebuilt        : ScopeId(0): ["Poisoned", "React", "_jsx", "_jsxFileName", "obj", "p", "y"]
+after transform: ScopeId(0): ["Poisoned", "PoisonedProp", "React", "_jsxFileName", "_reactJsxRuntime", "obj", "p", "y"]
+rebuilt        : ScopeId(0): ["Poisoned", "React", "_jsxFileName", "_reactJsxRuntime", "obj", "p", "y"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Reference symbol mismatch:
 after transform: ReferenceId(0): Some("React")
-rebuilt        : ReferenceId(1): Some("React")
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["require"]
+rebuilt        : ReferenceId(2): Some("React")
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(11)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution7.tsx
 semantic error: Missing SymbolId: React
 Missing ReferenceId: require
 Bindings mismatch:
-after transform: ScopeId(0): ["React", "TextComponent", "TextProps", "_jsx", "_jsxFileName", "textPropsFalse", "textPropsTrue", "y1", "y2"]
-rebuilt        : ScopeId(0): ["React", "TextComponent", "_jsx", "_jsxFileName", "textPropsFalse", "textPropsTrue", "y1", "y2"]
+after transform: ScopeId(0): ["React", "TextComponent", "TextProps", "_jsxFileName", "_reactJsxRuntime", "textPropsFalse", "textPropsTrue", "y1", "y2"]
+rebuilt        : ScopeId(0): ["React", "TextComponent", "_jsxFileName", "_reactJsxRuntime", "textPropsFalse", "textPropsTrue", "y1", "y2"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
 Reference symbol mismatch:
 after transform: ReferenceId(1): Some("React")
-rebuilt        : ReferenceId(1): Some("React")
+rebuilt        : ReferenceId(2): Some("React")
 Unresolved references mismatch:
-after transform: ["true"]
+after transform: ["require", "true"]
 rebuilt        : ["require"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(15)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution8.tsx
 semantic error: Missing SymbolId: React
 Missing ReferenceId: require
 Bindings mismatch:
-after transform: ScopeId(0): ["OverWriteAttr", "Prop", "React", "_jsx", "_jsxFileName", "obj", "obj1", "obj3", "x", "x1"]
-rebuilt        : ScopeId(0): ["OverWriteAttr", "React", "_jsx", "_jsxFileName", "obj", "obj1", "obj3", "x", "x1"]
+after transform: ScopeId(0): ["OverWriteAttr", "Prop", "React", "_jsxFileName", "_reactJsxRuntime", "obj", "obj1", "obj3", "x", "x1"]
+rebuilt        : ScopeId(0): ["OverWriteAttr", "React", "_jsxFileName", "_reactJsxRuntime", "obj", "obj1", "obj3", "x", "x1"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Reference symbol mismatch:
 after transform: ReferenceId(0): Some("React")
-rebuilt        : ReferenceId(1): Some("React")
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["require"]
+rebuilt        : ReferenceId(2): Some("React")
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(14)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution9.tsx
 semantic error: Missing SymbolId: React
 Missing ReferenceId: require
 Bindings mismatch:
-after transform: ScopeId(0): ["Opt", "OptionProp", "React", "_jsx", "_jsxFileName", "obj", "obj1", "p", "y", "y1", "y2", "y3"]
-rebuilt        : ScopeId(0): ["Opt", "React", "_jsx", "_jsxFileName", "obj", "obj1", "p", "y", "y1", "y2", "y3"]
+after transform: ScopeId(0): ["Opt", "OptionProp", "React", "_jsxFileName", "_reactJsxRuntime", "obj", "obj1", "p", "y", "y1", "y2", "y3"]
+rebuilt        : ScopeId(0): ["Opt", "React", "_jsxFileName", "_reactJsxRuntime", "obj", "obj1", "p", "y", "y1", "y2", "y3"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Reference symbol mismatch:
 after transform: ReferenceId(0): Some("React")
-rebuilt        : ReferenceId(1): Some("React")
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["require"]
+rebuilt        : ReferenceId(2): Some("React")
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(24)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadChildren.tsx
 semantic error: Spread children are not supported in React.
@@ -50833,65 +50483,59 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
-after transform: ["JSX", "OneThing"]
+after transform: ["JSX", "OneThing", "require"]
 rebuilt        : ["OneThing", "require"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(40)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentOverload3.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Context", "_jsx", "_jsxFileName", "obj2", "three1", "three2", "three3", "two1", "two2", "two3", "two4", "two5"]
-rebuilt        : ScopeId(0): ["_jsx", "_jsxFileName", "obj2", "three1", "three2", "three3", "two1", "two2", "two3", "two4", "two5"]
+after transform: ScopeId(0): ["Context", "_jsxFileName", "_reactJsxRuntime", "obj2", "three1", "three2", "three3", "two1", "two2", "two3", "two4", "two5"]
+rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime", "obj2", "three1", "three2", "three3", "two1", "two2", "two3", "two4", "two5"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
-after transform: ["JSX", "ThreeThing", "ZeroThingOrTwoThing"]
-rebuilt        : ["ThreeThing", "ZeroThingOrTwoThing"]
+after transform: ["JSX", "ThreeThing", "ZeroThingOrTwoThing", "require"]
+rebuilt        : ["ThreeThing", "ZeroThingOrTwoThing", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentOverload6.tsx
-semantic error: Missing SymbolId: React
-Missing ReferenceId: require
-Bindings mismatch:
-after transform: ScopeId(0): ["ButtonProps", "ClickableProps", "HyphenProps", "LinkProps", "MainButton", "React", "_jsx", "_jsxFileName", "b0", "b1", "b10", "b11", "b12", "b2", "b3", "b4", "b5", "b6", "b7", "b8", "b9", "obj", "obj1", "obj2"]
-rebuilt        : ScopeId(0): ["MainButton", "React", "_jsx", "_jsxFileName", "b0", "b1", "b10", "b11", "b12", "b2", "b3", "b4", "b5", "b6", "b7", "b8", "b9", "obj", "obj1", "obj2"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
-Unresolved references mismatch:
-after transform: ["JSX", "console"]
-rebuilt        : ["console", "require"]
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentWithDefaultTypeParameter1.tsx
 semantic error: Missing SymbolId: React
 Missing ReferenceId: require
 Bindings mismatch:
-after transform: ScopeId(0): ["MyComponent", "MyComponentProp", "React", "_jsx", "_jsxFileName", "i", "i1"]
-rebuilt        : ScopeId(0): ["MyComponent", "React", "_jsx", "_jsxFileName", "i", "i1"]
+after transform: ScopeId(0): ["MyComponent", "MyComponentProp", "React", "_jsxFileName", "_reactJsxRuntime", "i", "i1"]
+rebuilt        : ScopeId(0): ["MyComponent", "React", "_jsxFileName", "_reactJsxRuntime", "i", "i1"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Bindings mismatch:
 after transform: ScopeId(2): ["T", "attr"]
 rebuilt        : ScopeId(1): ["attr"]
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["require"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(10)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponents3.tsx
 semantic error: Missing SymbolId: React
 Missing ReferenceId: require
 Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3), SymbolId(4), SymbolId(6), SymbolId(8), SymbolId(9), SymbolId(10)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(6), SymbolId(7), SymbolId(9)]
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["require"]
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3), SymbolId(4), SymbolId(6), SymbolId(8), SymbolId(9)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(5), SymbolId(6), SymbolId(8)]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(16)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentsWithTypeArguments1.tsx
 semantic error: Missing SymbolId: React
 Missing ReferenceId: require
 Bindings mismatch:
-after transform: ScopeId(0): ["Baz", "InferParamProp", "React", "_createElement", "_jsx", "_jsxFileName", "createLink", "createLink1", "i"]
-rebuilt        : ScopeId(0): ["Baz", "React", "_createElement", "_jsx", "_jsxFileName", "createLink", "createLink1", "i"]
+after transform: ScopeId(0): ["Baz", "InferParamProp", "React", "_jsxFileName", "_react", "_reactJsxRuntime", "createLink", "createLink1", "i"]
+rebuilt        : ScopeId(0): ["Baz", "React", "_jsxFileName", "_react", "_reactJsxRuntime", "createLink", "createLink1", "i"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
@@ -50899,8 +50543,11 @@ Bindings mismatch:
 after transform: ScopeId(2): ["T", "U", "a0", "a1", "key1", "value"]
 rebuilt        : ScopeId(1): ["a0", "a1", "key1", "value"]
 Unresolved references mismatch:
-after transform: ["Array", "ComponentWithTwoAttributes", "InferParamComponent", "JSX", "Link"]
+after transform: ["Array", "ComponentWithTwoAttributes", "InferParamComponent", "JSX", "Link", "require"]
 rebuilt        : ["ComponentWithTwoAttributes", "InferParamComponent", "Link", "require"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(34), ReferenceId(35)]
+rebuilt        : [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentsWithTypeArguments3.tsx
 semantic error: Missing SymbolId: React
@@ -50915,8 +50562,11 @@ Bindings mismatch:
 after transform: ScopeId(4): ["T", "U", "a0", "a1", "a2", "a3", "a4", "a5", "a6", "arg1", "arg2"]
 rebuilt        : ScopeId(1): ["a0", "a1", "a2", "a3", "a4", "a5", "a6", "arg1", "arg2"]
 Unresolved references mismatch:
-after transform: ["JSX", "Link", "OverloadComponent"]
+after transform: ["JSX", "Link", "OverloadComponent", "require"]
 rebuilt        : ["Link", "OverloadComponent", "require"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(48)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentsWithTypeArguments5.tsx
 semantic error: Missing SymbolId: React
@@ -50934,24 +50584,27 @@ Bindings mismatch:
 after transform: ScopeId(5): ["T", "a1", "a2", "a3", "a4", "arg"]
 rebuilt        : ScopeId(2): ["a1", "a2", "a3", "a4", "arg"]
 Unresolved references mismatch:
-after transform: ["Component", "ComponentSpecific", "ComponentSpecific1", "JSX"]
+after transform: ["Component", "ComponentSpecific", "ComponentSpecific1", "JSX", "require"]
 rebuilt        : ["Component", "ComponentSpecific", "ComponentSpecific1", "require"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(32)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxTypeArgumentsJsxPreserveOutput.tsx
 semantic error: Missing SymbolId: React
 Missing ReferenceId: require
 Bindings mismatch:
-after transform: ScopeId(0): ["Foo", "InterfaceProps", "React", "TypeProps", "_Fragment", "_jsx", "_jsxFileName", "_jsxs"]
-rebuilt        : ScopeId(0): ["Foo", "React", "_Fragment", "_jsx", "_jsxFileName", "_jsxs"]
+after transform: ScopeId(0): ["Foo", "InterfaceProps", "React", "TypeProps", "_jsxFileName", "_reactJsxRuntime"]
+rebuilt        : ScopeId(0): ["Foo", "React", "_jsxFileName", "_reactJsxRuntime"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Bindings mismatch:
 after transform: ScopeId(3): ["T"]
 rebuilt        : ScopeId(1): []
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["require"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(76)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxUnionElementType5.tsx
 semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
@@ -52039,6 +51692,10 @@ rebuilt        : ReferenceId(4): None
 Unresolved references mismatch:
 after transform: ["Symbol"]
 rebuilt        : ["Symbol", "dec"]
+
+tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsTopLevelOfModule.2.ts
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithESClassDecorators.1.ts
 semantic error: Bindings mismatch:
@@ -59073,8 +58730,8 @@ rebuilt        : ["f1", "f2", "f3", "s"]
 
 tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/intraExpressionInferencesJsx.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A", "AnimatedViewProps", "Animations", "B", "C", "Component", "Foo", "Props", "StyleParam", "_Fragment", "_jsx", "_jsxFileName"]
-rebuilt        : ScopeId(0): ["Component", "Foo", "_Fragment", "_jsx", "_jsxFileName"]
+after transform: ScopeId(0): ["A", "AnimatedViewProps", "Animations", "B", "C", "Component", "Foo", "Props", "StyleParam", "_jsxFileName", "_reactJsxRuntime"]
+rebuilt        : ScopeId(0): ["Component", "Foo", "_jsxFileName", "_reactJsxRuntime"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(23)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13)]
@@ -59085,8 +58742,8 @@ Bindings mismatch:
 after transform: ScopeId(17): ["T", "props"]
 rebuilt        : ScopeId(7): ["props"]
 Unresolved references mismatch:
-after transform: ["Partial", "Record"]
-rebuilt        : []
+after transform: ["Partial", "Record", "require"]
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/keyofInferenceIntersectsResults.ts
 semantic error: Bindings mismatch:
