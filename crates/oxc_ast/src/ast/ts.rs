@@ -345,12 +345,36 @@ pub struct TSConditionalType<'a> {
     #[serde(flatten)]
     pub span: Span,
     /// The type before `extends` in the test expression.
+    ///
+    /// ## Example
+    /// ```ts
+    /// type F<T> = T extends string ? string : number;
+    /// //          ^
+    /// ```
     pub check_type: TSType<'a>,
     /// The type `check_type` is being tested against.
+    ///
+    /// ## Example
+    /// ```ts
+    /// type F<T> = T extends string ? string : number;
+    /// //                    ^^^^^^
+    /// ```
     pub extends_type: TSType<'a>,
     /// The type evaluated to if the test is true.
+    ///
+    /// ## Example
+    /// ```ts
+    /// type F<T> = T extends string ? string : number;
+    /// //                             ^^^^^^
+    /// ```
     pub true_type: TSType<'a>,
     /// The type evaluated to if the test is false.
+    ///
+    /// ## Example
+    /// ```ts
+    /// type F<T> = T extends string ? string : number;
+    /// //                                      ^^^^^^
+    /// ```
     pub false_type: TSType<'a>,
     #[serde(skip)]
     #[clone_in(default)]

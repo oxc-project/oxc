@@ -1740,6 +1740,18 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
         self.leave_scope();
     }
+
+    fn visit_ts_conditional_type(&mut self, it: &TSConditionalType<'a>) {
+        let kind = AstKind::TSConditionalType(self.alloc(it));
+        self.enter_node(kind);
+        self.visit_ts_type(&it.check_type);
+        self.enter_scope(ScopeFlags::empty(), &it.scope_id);
+        self.visit_ts_type(&it.extends_type);
+        self.visit_ts_type(&it.true_type);
+        self.leave_scope();
+        self.visit_ts_type(&it.false_type);
+        self.leave_node(kind);
+    }
 }
 
 impl<'a> SemanticBuilder<'a> {

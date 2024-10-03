@@ -982,6 +982,10 @@ fn test_type_references() {
             accessor y!: Foo
         }
         ",
+        "
+        type S<A> = A extends (infer B extends number ? string : never) ? B : false;
+        export { S };
+        ",
     ];
 
     let fail = vec![
