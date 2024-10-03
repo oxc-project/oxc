@@ -5,11 +5,11 @@ AST Parsed     : 2101/2101 (100.00%)
 Positive Passed: 1739/2101 (82.77%)
 tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body/input.js
 semantic error: Symbol scope ID mismatch:
-after transform: SymbolId(0): ScopeId(4294967294)
-rebuilt        : SymbolId(0): ScopeId(4294967294)
+after transform: SymbolId(0): ScopeId(4278190079)
+rebuilt        : SymbolId(0): ScopeId(4278190079)
 Symbol scope ID mismatch:
-after transform: SymbolId(1): ScopeId(4294967294)
-rebuilt        : SymbolId(1): ScopeId(4294967294)
+after transform: SymbolId(1): ScopeId(4278190079)
+rebuilt        : SymbolId(1): ScopeId(4278190079)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/interpreter-directive/interpreter-directive-import/input.js
 semantic error: Bindings mismatch:
@@ -27,8 +27,8 @@ Unexpected new.target expression
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/core/scope/dupl-bind-catch-hang-func/input.js
 semantic error: Symbol scope ID mismatch:
-after transform: SymbolId(1): ScopeId(4294967294)
-rebuilt        : SymbolId(1): ScopeId(4294967294)
+after transform: SymbolId(1): ScopeId(4278190079)
+rebuilt        : SymbolId(1): ScopeId(4278190079)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/core/uncategorised/327/input.js
 semantic error: A 'return' statement can only be used within a function body.
@@ -138,8 +138,8 @@ rebuilt        : ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/statement-if/migrated_0003/input.js
 semantic error: Symbol scope ID mismatch:
-after transform: SymbolId(0): ScopeId(4294967294)
-rebuilt        : SymbolId(0): ScopeId(4294967294)
+after transform: SymbolId(0): ScopeId(4278190079)
+rebuilt        : SymbolId(0): ScopeId(4278190079)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/arrow-function-with-newline/input.ts
 semantic error: Unresolved references mismatch:

@@ -28,7 +28,6 @@ oxc_span = { workspace = true }
 assert-unchecked = { workspace = true }
 bitflags = { workspace = true }
 dashmap = { workspace = true }
-nonmax = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }
 unicode-id-start = { workspace = true }
