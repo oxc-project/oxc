@@ -140,11 +140,8 @@ impl<'a> PeepholeFoldConstants {
         expr: &mut UnaryExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        fn is_within_i32_range(x: f64) -> bool {
-            x.is_finite()
-                && x.fract() == 0.0
-                && x >= f64::from(i32::MIN)
-                && x <= f64::from(i32::MAX)
+        fn is_valid(x: f64) -> bool {
+            x.is_finite() && x.fract() == 0.0
         }
         match expr.operator {
             UnaryOperator::Void => self.try_reduce_void(expr, ctx),
@@ -198,7 +195,7 @@ impl<'a> PeepholeFoldConstants {
                         )
                     })
                 }
-                Expression::NumericLiteral(n) => is_within_i32_range(n.value).then(|| {
+                Expression::NumericLiteral(n) => is_valid(n.value).then(|| {
                     let value = !n.value.to_js_int_32();
                     ctx.ast.expression_numeric_literal(
                         SPAN,
@@ -234,8 +231,8 @@ impl<'a> PeepholeFoldConstants {
                         UnaryOperator::UnaryNegation if un.argument.is_number() => {
                             // `-~1` -> `2`
                             if let Expression::NumericLiteral(n) = &mut un.argument {
-                                is_within_i32_range(n.value).then(|| {
-                                    let value = !(-n.value.to_js_int_32());
+                                is_valid(n.value).then(|| {
+                                    let value = !n.value.to_js_int_32().wrapping_neg();
                                     ctx.ast.expression_numeric_literal(
                                         SPAN,
                                         value.into(),
@@ -1371,8 +1368,8 @@ mod test {
         test("a=+-7", "a=-7");
         // test("a=+.5", "a=.5");
 
-        // test("a=~0xffffffff", "a=0");
-        // test("a=~~0xffffffff", "a=-1");
+        test("a=~0xffffffff", "a=0");
+        test("a=~~0xffffffff", "a=-1");
         // test_same("a=~.5", PeepholeFoldConstants.FRACTIONAL_BITWISE_OPERAND);
     }
 
@@ -1404,10 +1401,8 @@ mod test {
         test_same("a = ~b");
         test_same("a = ~NaN");
         test_same("a = ~-Infinity");
-        // TODO(7086cmd) We preserve it right now, since exceeded data's ~ calculation
-        // is hard to implement within one PR.
-        // test("x = ~2147483658.0", "x = 2147483647");
-        // test("x = ~-2147483658", "x = -2147483649");
+        test("x = ~2147483658.0", "x = 2147483637");
+        test("x = ~-2147483658", "x = -2147483639");
     }
 
     #[test]
