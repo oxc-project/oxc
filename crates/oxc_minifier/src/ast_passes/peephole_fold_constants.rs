@@ -1004,8 +1004,8 @@ mod test {
 
         test("null == 0", "false");
         test("null == 1", "false");
-        // test("null == 0n", "false");
-        // test("null == 1n", "false");
+        test("null == 0n", "false");
+        test("null == 1n", "false");
         test("null == 'hi'", "false");
         test("null == true", "false");
         test("null == false", "false");
@@ -1045,16 +1045,16 @@ mod test {
         test("0 < null", "false");
         test("0 > null", "false");
         test("0 >= null", "true");
-        // test("0n < null", "false");
-        // test("0n > null", "false");
-        // test("0n >= null", "true");
+        test("0n < null", "false");
+        test("0n > null", "false");
+        test("0n >= null", "true");
         test("true > null", "true");
         test("'hi' < null", "false");
         test("'hi' >= null", "false");
         test("null <= null", "true");
 
         test("null < 0", "false");
-        // test("null < 0n", "false");
+        test("null < 0n", "false");
         test("null > true", "false");
         test("null < 'hi'", "false");
         test("null >= 'hi'", "false");
