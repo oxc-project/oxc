@@ -1400,6 +1400,8 @@ checksum = "caff54706df99d2a78a5a4e3455ff45448d81ef1bb63c22cd14052ca0e993a3f"
 name = "oxc"
 version = "0.30.5"
 dependencies = [
+ "napi",
+ "napi-derive",
  "oxc_allocator",
  "oxc_ast",
  "oxc_cfg",
@@ -1790,12 +1792,8 @@ dependencies = [
  "napi",
  "napi-build",
  "napi-derive",
- "oxc_allocator",
- "oxc_ast",
- "oxc_diagnostics",
+ "oxc",
  "oxc_module_lexer",
- "oxc_parser",
- "oxc_span",
  "serde_json",
 ]
 
