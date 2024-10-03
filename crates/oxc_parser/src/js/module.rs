@@ -187,6 +187,7 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::Eq)?;
         let expression = self.parse_assignment_expression_or_higher()?;
         self.asi()?;
+        self.set_source_type_to_module_if_unambiguous();
         Ok(self.ast.alloc_ts_export_assignment(self.end_span(start_span), expression))
     }
 
