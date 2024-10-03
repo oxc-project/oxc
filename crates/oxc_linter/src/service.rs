@@ -1,4 +1,5 @@
 use std::{
+    borrow::Cow,
     ffi::OsStr,
     fs,
     path::{Path, PathBuf},
@@ -226,6 +227,9 @@ impl Runtime {
         })
     }
 
+    // clippy: the source field is checked and assumed to be less than 4GB, and
+    // we assume that the fix offset will not exceed 2GB in either direction
+    #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
     fn process_path(&self, path: &Path, tx_error: &DiagnosticSender) {
         if self.init_cache_state(path) {
             return;
@@ -250,9 +254,7 @@ impl Runtime {
             }
         };
 
-        let sources = PartialLoader::parse(ext, &source_text);
-        let is_processed_by_partial_loader = sources.is_some();
-        let sources = sources
+        let sources = PartialLoader::parse(ext, &source_text)
             .unwrap_or_else(|| vec![JavaScriptSource::partial(&source_text, source_type, 0)]);
 
         if sources.is_empty() {
@@ -260,16 +262,37 @@ impl Runtime {
             return;
         }
 
-        for JavaScriptSource { source_text, source_type, .. } in sources {
-            let allocator = Allocator::default();
-            let mut messages =
-                self.process_source(path, &allocator, source_text, source_type, true, tx_error);
+        // If there are fixes, we will accumulate all of them and write to the file at the end.
+        // This means we do not write multiple times to the same file if there are multiple sources
+        // in the same file (for example, multiple scripts in an `.astro` file).
+        let mut new_source_text = Cow::from(&source_text);
+        // This is used to keep track of the cumulative offset from applying fixes.
+        // Otherwise, spans for fixes will be incorrect due to varying size of the
+        // source code after each fix.
+        let mut fix_offset: i32 = 0;
 
-            // TODO: Span is wrong, ban this feature for file process by `PartialLoader`.
-            if !is_processed_by_partial_loader && self.linter.options().fix.is_some() {
-                let fix_result = Fixer::new(source_text, messages).fix();
+        for source in sources {
+            let allocator = Allocator::default();
+            let mut messages = self.process_source(
+                path,
+                &allocator,
+                source.source_text,
+                source_type,
+                true,
+                tx_error,
+            );
+
+            if self.linter.options().fix.is_some() {
+                let fix_result = Fixer::new(source.source_text, messages).fix();
                 if fix_result.fixed {
-                    fs::write(path, fix_result.fixed_code.as_bytes()).unwrap();
+                    // write to file, replacing only the changed part
+                    let start = source.start.saturating_add_signed(fix_offset) as usize;
+                    let end = start + source.source_text.len();
+                    new_source_text.to_mut().replace_range(start..end, &fix_result.fixed_code);
+                    let old_code_len = source.source_text.len() as u32;
+                    let new_code_len = fix_result.fixed_code.len() as u32;
+                    fix_offset += new_code_len as i32;
+                    fix_offset -= old_code_len as i32;
                 }
                 messages = fix_result.messages;
             }
@@ -278,9 +301,16 @@ impl Runtime {
                 self.ignore_path(path);
                 let errors = messages.into_iter().map(Into::into).collect();
                 let path = path.strip_prefix(&self.cwd).unwrap_or(path);
-                let diagnostics = DiagnosticService::wrap_diagnostics(path, source_text, errors);
+                let diagnostics =
+                    DiagnosticService::wrap_diagnostics(path, source.source_text, errors);
                 tx_error.send(Some(diagnostics)).unwrap();
             }
+        }
+
+        // If the new source text is owned, that means it was modified,
+        // so we write the new source text to the file.
+        if let Cow::Owned(new_source_text) = new_source_text {
+            fs::write(path, new_source_text).unwrap();
         }
     }
 
