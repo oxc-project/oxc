@@ -226,7 +226,7 @@ panic = "abort" # Let it crash and force ourselves to write safe Rust
 [profile.release-with-debug]
 inherits = "release"
 strip = false # Keep debug information in binary
-debug = true # Include maxiumum amount of debug information
+debug = true # Include maximum amount of debug information
 
 # Profile for `cargo coverage`
 [profile.coverage]
