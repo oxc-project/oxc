@@ -47,6 +47,8 @@ oxc_transformer = { workspace = true, optional = true }
 napi = { workspace = true, optional = true, features = ["async"] }
 napi-derive = { workspace = true, optional = true }
 
+rustc-hash = { workspace = true, optional = true }
+
 [features]
 full = [
   "codegen",
@@ -59,6 +61,7 @@ full = [
   "cfg",
 ]
 
+parser = [] # for napi
 semantic = ["oxc_semantic"]
 transformer = ["oxc_transformer"]
 minifier = ["oxc_mangler", "oxc_minifier"]
@@ -78,7 +81,7 @@ sourcemap = ["oxc_sourcemap"]
 sourcemap_concurrent = ["oxc_sourcemap/concurrent", "sourcemap"]
 
 wasm = ["oxc_transformer/wasm"]
-napi = ["dep:napi", "dep:napi-derive"]
+napi = ["dep:napi", "dep:napi-derive", "dep:rustc-hash"]
 
 [package.metadata.docs.rs]
 all-features = true

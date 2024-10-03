@@ -21,16 +21,7 @@ test = false
 doctest = false
 
 [dependencies]
-oxc_allocator = { workspace = true }
-oxc_ast = { workspace = true }
-oxc_codegen = { workspace = true }
-oxc_diagnostics = { workspace = true }
-oxc_isolated_declarations = { workspace = true }
-oxc_parser = { workspace = true }
-oxc_semantic = { workspace = true }
-oxc_sourcemap = { workspace = true }
-oxc_span = { workspace = true }
-oxc_transformer = { workspace = true }
+oxc = { workspace = true, features = ["napi", "isolated_declarations", "transformer", "sourcemap", "codegen", "semantic"] }
 
 rustc-hash = { workspace = true }
 

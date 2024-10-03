@@ -1,31 +1,16 @@
 use napi_derive::napi;
-use oxc_allocator::Allocator;
-use oxc_codegen::{CodegenReturn, CommentOptions};
-use oxc_isolated_declarations::IsolatedDeclarations;
-use oxc_span::SourceType;
+use oxc::{
+    allocator::Allocator,
+    codegen::{CodegenReturn, CommentOptions},
+    isolated_declarations::IsolatedDeclarations,
+    napi::{
+        isolated_declarations::{IsolatedDeclarationsOptions, IsolatedDeclarationsResult},
+        transform::TransformOptions,
+    },
+    span::SourceType,
+};
 
-use crate::{context::TransformContext, SourceMap, TransformOptions};
-
-#[napi(object)]
-pub struct IsolatedDeclarationsResult {
-    pub code: String,
-    pub map: Option<SourceMap>,
-    pub errors: Vec<String>,
-}
-
-#[napi(object)]
-#[derive(Debug, Default, Clone, Copy)]
-pub struct IsolatedDeclarationsOptions {
-    /// Do not emit declarations for code that has an @internal annotation in its JSDoc comment.
-    /// This is an internal compiler option; use at your own risk, because the compiler does not check that the result is valid.
-    ///
-    /// Default: `false`
-    ///
-    /// See <https://www.typescriptlang.org/tsconfig/#stripInternal>
-    pub strip_internal: Option<bool>,
-
-    pub sourcemap: Option<bool>,
-}
+use crate::context::TransformContext;
 
 /// TypeScript Isolated Declarations for Standalone DTS Emit
 #[allow(clippy::needless_pass_by_value)]
@@ -62,7 +47,7 @@ pub(crate) fn build_declarations(
         ctx.allocator,
         ctx.source_text(),
         &ctx.trivias,
-        oxc_isolated_declarations::IsolatedDeclarationsOptions {
+        oxc::isolated_declarations::IsolatedDeclarationsOptions {
             strip_internal: options.strip_internal.unwrap_or(false),
         },
     )

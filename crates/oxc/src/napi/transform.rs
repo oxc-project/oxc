@@ -8,7 +8,7 @@ use rustc_hash::FxHashMap;
 
 use oxc_transformer::{JsxRuntime, RewriteExtensionsMode};
 
-use crate::IsolatedDeclarationsOptions;
+use super::isolated_declarations::IsolatedDeclarationsOptions;
 
 /// Options for transforming a JavaScript or TypeScript file.
 ///

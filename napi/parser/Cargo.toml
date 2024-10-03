@@ -21,7 +21,7 @@ test = false
 doctest = false
 
 [dependencies]
-oxc = { workspace = true, features = ["napi", "serialize"] }
+oxc = { workspace = true, features = ["napi", "serialize", "parser"] }
 oxc_module_lexer = { workspace = true }
 
 napi = { workspace = true, features = ["async"] }

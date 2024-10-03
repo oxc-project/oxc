@@ -2,16 +2,19 @@ use napi::Either;
 use napi_derive::napi;
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::Allocator;
-use oxc_codegen::CodegenReturn;
-use oxc_semantic::{ScopeTree, SemanticBuilder, SymbolTable};
-use oxc_span::SourceType;
-use oxc_transformer::{
-    InjectGlobalVariables, InjectGlobalVariablesConfig, InjectImport, ReplaceGlobalDefines,
-    ReplaceGlobalDefinesConfig, Transformer,
+use oxc::{
+    allocator::Allocator,
+    codegen::CodegenReturn,
+    napi::{source_map::SourceMap, transform::TransformOptions},
+    semantic::{ScopeTree, SemanticBuilder, SymbolTable},
+    span::SourceType,
+    transformer::{
+        InjectGlobalVariables, InjectGlobalVariablesConfig, InjectImport, ReplaceGlobalDefines,
+        ReplaceGlobalDefinesConfig, Transformer,
+    },
 };
 
-use crate::{context::TransformContext, isolated_declaration, SourceMap, TransformOptions};
+use crate::{context::TransformContext, isolated_declaration};
 
 // NOTE: Use JSDoc syntax for all doc comments, not rustdoc.
 // NOTE: Types must be aligned with [@types/babel__core](https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/babel__core/index.d.ts).
@@ -115,7 +118,7 @@ fn transpile(ctx: &TransformContext<'_>, options: Option<TransformOptions>) -> C
     let define = options.as_mut().and_then(|options| options.define.take());
     let inject = options.as_mut().and_then(|options| options.inject.take());
 
-    let options = options.map(oxc_transformer::TransformOptions::from).unwrap_or_default();
+    let options = options.map(oxc::transformer::TransformOptions::from).unwrap_or_default();
 
     let (mut symbols, mut scopes) = semantic_ret.semantic.into_symbol_table_and_scope_tree();
 

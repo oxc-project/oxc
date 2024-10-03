@@ -9,7 +9,7 @@ use oxc::{
     allocator::Allocator,
     ast::CommentKind,
     diagnostics::{Error, NamedSource},
-    napi::{Comment, ParseResult, ParserOptions},
+    napi::parse::{Comment, ParseResult, ParserOptions},
     parser::{ParseOptions, Parser, ParserReturn},
     span::SourceType,
 };

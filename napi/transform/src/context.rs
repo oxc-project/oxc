@@ -4,14 +4,15 @@ use std::{
     sync::Arc,
 };
 
-use oxc_allocator::Allocator;
-use oxc_ast::{ast::Program, Trivias};
-use oxc_codegen::Codegen;
-use oxc_diagnostics::{Error, NamedSource, OxcDiagnostic};
-use oxc_parser::{Parser, ParserReturn};
-use oxc_span::SourceType;
-
-use crate::{IsolatedDeclarationsOptions, TransformOptions};
+use oxc::{
+    allocator::Allocator,
+    ast::{ast::Program, Trivias},
+    codegen::Codegen,
+    diagnostics::{Error, NamedSource, OxcDiagnostic},
+    napi::{isolated_declarations::IsolatedDeclarationsOptions, transform::TransformOptions},
+    parser::{Parser, ParserReturn},
+    span::SourceType,
+};
 
 #[must_use]
 pub(crate) struct TransformContext<'a> {
@@ -21,13 +22,13 @@ pub(crate) struct TransformContext<'a> {
 
     /// Generate source maps?
     source_map: bool,
+
     /// Generate `.d.ts` files?
-    ///
-    /// Used by [`crate::transform`].
     declarations: Option<IsolatedDeclarationsOptions>,
 
     /// Path to the file being transformed.
     filename: &'a str,
+
     /// Source text of the file being transformed.
     source_text: &'a str,
     source_type: SourceType,
