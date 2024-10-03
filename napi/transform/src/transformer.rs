@@ -34,12 +34,12 @@ pub struct TransformResult {
     ///
     /// If parsing failed and `declaration` is set, this will be an empty string.
     ///
-    /// @see {@link TypeScriptBindingOptions#declaration}
+    /// @see {@link TypeScriptOptions#declaration}
     /// @see [declaration tsconfig option](https://www.typescriptlang.org/tsconfig/#declaration)
     pub declaration: Option<String>,
 
     /// Declaration source map. Only generated if both
-    /// {@link TypeScriptBindingOptions#declaration declaration} and
+    /// {@link TypeScriptOptions#declaration declaration} and
     /// {@link TransformOptions#sourcemap sourcemap} are set to `true`.
     pub declaration_map: Option<SourceMap>,
 

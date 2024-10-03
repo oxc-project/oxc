@@ -6,7 +6,7 @@ use napi::Either;
 use napi_derive::napi;
 use rustc_hash::FxHashMap;
 
-use oxc_transformer::{ArrowFunctionsOptions, ES2015Options, JsxRuntime, RewriteExtensionsMode};
+use oxc_transformer::{JsxRuntime, RewriteExtensionsMode};
 
 use crate::IsolatedDeclarationsOptions;
 
@@ -39,7 +39,7 @@ pub struct TransformOptions {
     pub jsx: Option<JsxOptions>,
 
     /// Enable ES2015 transformations.
-    pub es2015: Option<ES2015BindingOptions>,
+    pub es2015: Option<Es2015Options>,
 
     /// Define Plugin
     #[napi(ts_type = "Record<string, string>")]
@@ -258,7 +258,7 @@ impl From<ReactRefreshOptions> for oxc_transformer::ReactRefreshOptions {
 }
 
 #[napi(object)]
-pub struct ArrowFunctionsBindingOptions {
+pub struct ArrowFunctionsOptions {
     /// This option enables the following:
     /// * Wrap the generated function in .bind(this) and keeps uses of this inside the function as-is, instead of using a renamed this.
     /// * Add a runtime check to ensure the functions are not instantiated.
@@ -268,20 +268,20 @@ pub struct ArrowFunctionsBindingOptions {
     pub spec: Option<bool>,
 }
 
-impl From<ArrowFunctionsBindingOptions> for ArrowFunctionsOptions {
-    fn from(options: ArrowFunctionsBindingOptions) -> Self {
-        ArrowFunctionsOptions { spec: options.spec.unwrap_or_default() }
+impl From<ArrowFunctionsOptions> for oxc_transformer::ArrowFunctionsOptions {
+    fn from(options: ArrowFunctionsOptions) -> Self {
+        oxc_transformer::ArrowFunctionsOptions { spec: options.spec.unwrap_or_default() }
     }
 }
 
 #[napi(object)]
-pub struct ES2015BindingOptions {
+pub struct Es2015Options {
     /// Transform arrow functions into function expressions.
-    pub arrow_function: Option<ArrowFunctionsBindingOptions>,
+    pub arrow_function: Option<ArrowFunctionsOptions>,
 }
 
-impl From<ES2015BindingOptions> for ES2015Options {
-    fn from(options: ES2015BindingOptions) -> Self {
-        ES2015Options { arrow_function: options.arrow_function.map(Into::into) }
+impl From<Es2015Options> for oxc_transformer::ES2015Options {
+    fn from(options: Es2015Options) -> Self {
+        oxc_transformer::ES2015Options { arrow_function: options.arrow_function.map(Into::into) }
     }
 }
