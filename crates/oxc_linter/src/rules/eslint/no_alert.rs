@@ -4,6 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeId;
 use oxc_span::{GetSpan, Span};
 
+use crate::ast_util::is_shadowed;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_alert_diagnostic(span: Span) -> OxcDiagnostic {
@@ -81,10 +82,6 @@ fn is_global_this_ref_or_global_window<'a>(
     }
 
     false
-}
-
-fn is_shadowed<'a>(scope_id: ScopeId, name: &'a str, ctx: &LintContext<'a>) -> bool {
-    ctx.scopes().find_binding(scope_id, name).is_some()
 }
 
 impl Rule for NoAlert {

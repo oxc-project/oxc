@@ -1,0 +1,158 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-undef-init): It's not necessary to initialize a to undefined.
+   ╭─[no_undef_init.tsx:1:6]
+ 1 │ var a = undefined;
+   ·      ──────┬─────
+   ·            ╰── A variable that is declared and not initialized to any value automatically gets the value of undefined.
+   ╰────
+
+  ⚠ eslint(no-undef-init): It's not necessary to initialize a to undefined.
+   ╭─[no_undef_init.tsx:1:6]
+ 1 │ var a = undefined, b = 1;
+   ·      ──────┬─────
+   ·            ╰── A variable that is declared and not initialized to any value automatically gets the value of undefined.
+   ╰────
+
+  ⚠ eslint(no-undef-init): It's not necessary to initialize b to undefined.
+   ╭─[no_undef_init.tsx:1:13]
+ 1 │ var a = 1, b = undefined, c = 5;
+   ·             ──────┬─────
+   ·                   ╰── A variable that is declared and not initialized to any value automatically gets the value of undefined.
+   ╰────
+
+  ⚠ eslint(no-undef-init): It's not necessary to initialize [a] to undefined.
+   ╭─[no_undef_init.tsx:1:8]
+ 1 │ var [a] = undefined;
+   ·        ──────┬─────
+   ·              ╰── A variable that is declared and not initialized to any value automatically gets the value of undefined.
+   ╰────
+
+  ⚠ eslint(no-undef-init): It's not necessary to initialize {a} to undefined.
+   ╭─[no_undef_init.tsx:1:8]
+ 1 │ var {a} = undefined;
+   ·        ──────┬─────
+   ·              ╰── A variable that is declared and not initialized to any value automatically gets the value of undefined.
+   ╰────
+
+  ⚠ eslint(no-undef-init): It's not necessary to initialize a to undefined.
+   ╭─[no_undef_init.tsx:1:28]
+ 1 │ for(var i in [1,2,3]){var a = undefined; for(var j in [1,2,3]){}}
+   ·                            ──────┬─────
+   ·                                  ╰── A variable that is declared and not initialized to any value automatically gets the value of undefined.
+   ╰────
+
+  ⚠ eslint(no-undef-init): It's not necessary to initialize a to undefined.
+   ╭─[no_undef_init.tsx:1:6]
+ 1 │ let a = undefined;
+   ·      ──────┬─────
+   ·            ╰── A variable that is declared and not initialized to any value automatically gets the value of undefined.
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(no-undef-init): It's not necessary to initialize a to undefined.
+   ╭─[no_undef_init.tsx:1:6]
+ 1 │ let a = undefined, b = 1;
+   ·      ──────┬─────
+   ·            ╰── A variable that is declared and not initialized to any value automatically gets the value of undefined.
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(no-undef-init): It's not necessary to initialize b to undefined.
+   ╭─[no_undef_init.tsx:1:13]
+ 1 │ let a = 1, b = undefined, c = 5;
+   ·             ──────┬─────
+   ·                   ╰── A variable that is declared and not initialized to any value automatically gets the value of undefined.
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(no-undef-init): It's not necessary to initialize [a] to undefined.
+   ╭─[no_undef_init.tsx:1:8]
+ 1 │ let [a] = undefined;
+   ·        ──────┬─────
+   ·              ╰── A variable that is declared and not initialized to any value automatically gets the value of undefined.
+   ╰────
+
+  ⚠ eslint(no-undef-init): It's not necessary to initialize {a} to undefined.
+   ╭─[no_undef_init.tsx:1:8]
+ 1 │ let {a} = undefined;
+   ·        ──────┬─────
+   ·              ╰── A variable that is declared and not initialized to any value automatically gets the value of undefined.
+   ╰────
+
+  ⚠ eslint(no-undef-init): It's not necessary to initialize a to undefined.
+   ╭─[no_undef_init.tsx:1:28]
+ 1 │ for(var i in [1,2,3]){let a = undefined; for(var j in [1,2,3]){}}
+   ·                            ──────┬─────
+   ·                                  ╰── A variable that is declared and not initialized to any value automatically gets the value of undefined.
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(no-undef-init): It's not necessary to initialize a to undefined.
+   ╭─[no_undef_init.tsx:1:19]
+ 1 │ let /* comment */a = undefined;
+   ·                   ──────┬─────
+   ·                         ╰── A variable that is declared and not initialized to any value automatically gets the value of undefined.
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(no-undef-init): It's not necessary to initialize a to undefined.
+   ╭─[no_undef_init.tsx:1:6]
+ 1 │ let a/**/ = undefined;
+   ·      ────────┬───────
+   ·              ╰── A variable that is declared and not initialized to any value automatically gets the value of undefined.
+   ╰────
+
+  ⚠ eslint(no-undef-init): It's not necessary to initialize a to undefined.
+   ╭─[no_undef_init.tsx:1:6]
+ 1 │ let a /**/ = undefined;
+   ·      ────────┬────────
+   ·              ╰── A variable that is declared and not initialized to any value automatically gets the value of undefined.
+   ╰────
+
+  ⚠ eslint(no-undef-init): It's not necessary to initialize a to undefined.
+   ╭─[no_undef_init.tsx:1:6]
+ 1 │ ╭─▶ let a//
+ 2 │ ├─▶             = undefined;
+   · ╰──── A variable that is declared and not initialized to any value automatically gets the value of undefined.
+   ╰────
+
+  ⚠ eslint(no-undef-init): It's not necessary to initialize a to undefined.
+   ╭─[no_undef_init.tsx:1:6]
+ 1 │ let a = /**/undefined;
+   ·      ────────┬───────
+   ·              ╰── A variable that is declared and not initialized to any value automatically gets the value of undefined.
+   ╰────
+
+  ⚠ eslint(no-undef-init): It's not necessary to initialize a to undefined.
+   ╭─[no_undef_init.tsx:1:6]
+ 1 │ ╭─▶ let a = //
+ 2 │ ├─▶             undefined;
+   · ╰──── A variable that is declared and not initialized to any value automatically gets the value of undefined.
+   ╰────
+
+  ⚠ eslint(no-undef-init): It's not necessary to initialize a to undefined.
+   ╭─[no_undef_init.tsx:1:6]
+ 1 │ let a = undefined/* comment */;
+   ·      ──────┬─────
+   ·            ╰── A variable that is declared and not initialized to any value automatically gets the value of undefined.
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(no-undef-init): It's not necessary to initialize a to undefined.
+   ╭─[no_undef_init.tsx:1:6]
+ 1 │ let a = undefined/* comment */, b;
+   ·      ──────┬─────
+   ·            ╰── A variable that is declared and not initialized to any value automatically gets the value of undefined.
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(no-undef-init): It's not necessary to initialize a to undefined.
+   ╭─[no_undef_init.tsx:1:6]
+ 1 │ let a = undefined//comment
+   ·      ──────┬─────
+   ·            ╰── A variable that is declared and not initialized to any value automatically gets the value of undefined.
+ 2 │             , b;
+   ╰────
+  help: Delete this code.

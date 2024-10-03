@@ -3,10 +3,10 @@ use oxc_semantic::{AstNode, IsGlobalReference, NodeId, SymbolId};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};
 
+use crate::context::LintContext;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
-
-use crate::context::LintContext;
+use oxc_syntax::scope::ScopeId;
 
 /// Test if an AST node is a boolean value that never changes. Specifically we
 /// test for:
@@ -398,6 +398,10 @@ pub fn is_function_node(node: &AstNode) -> bool {
         AstKind::ArrowFunctionExpression(_) => true,
         _ => false,
     }
+}
+
+pub fn is_shadowed<'a>(scope_id: ScopeId, name: &'a str, ctx: &LintContext<'a>) -> bool {
+    ctx.scopes().find_binding(scope_id, name).is_some()
 }
 
 pub fn get_function_like_declaration<'b>(
