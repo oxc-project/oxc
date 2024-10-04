@@ -12,6 +12,7 @@ use crate::{node_util::NodeUtil, CompressOptions, CompressorPass};
 /// A peephole optimization that minimizes code by simplifying conditional
 /// expressions, replacing IFs with HOOKs, replacing object constructors
 /// with literals, and simplifying returns.
+/// <https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntax.java>
 pub struct PeepholeSubstituteAlternateSyntax {
     options: CompressOptions,
     in_define_export: bool,
@@ -329,7 +330,7 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
     }
 }
 
-/// <https://github.com/google/closure-compiler/blob/master/test/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntax.java>
+/// <https://github.com/google/closure-compiler/blob/master/test/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntaxTest.java>
 #[cfg(test)]
 mod test {
     use oxc_allocator::Allocator;

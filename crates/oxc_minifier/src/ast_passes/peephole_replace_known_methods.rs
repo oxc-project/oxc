@@ -4,7 +4,7 @@ use oxc_traverse::{Traverse, TraverseCtx};
 use crate::CompressorPass;
 
 /// Minimize With Known Methods
-/// <https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeMinimizeReplacements.java>
+/// <https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeReplaceKnownMethods.java>
 pub struct PeepholeReplaceKnownMethods {
     changed: bool,
 }

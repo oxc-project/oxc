@@ -10,6 +10,7 @@ use crate::{keep_var::KeepVar, node_util::NodeUtil, tri::Tri, CompressorPass};
 /// Terser option: `dead_code: true`.
 ///
 /// See `KeepVar` at the end of this file for `var` hoisting logic.
+/// <https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeRemoveDeadCode.java>
 pub struct PeepholeRemoveDeadCode {
     changed: bool,
 }
@@ -181,5 +182,52 @@ impl<'a> PeepholeRemoveDeadCode {
             Tri::False => Some(ctx.ast.move_expression(&mut expr.alternate)),
             Tri::Unknown => None,
         }
+    }
+}
+
+/// <https://github.com/google/closure-compiler/blob/master/test/com/google/javascript/jscomp/PeepholeRemoveDeadCodeTest.java>
+#[cfg(test)]
+mod test {
+    use oxc_allocator::Allocator;
+
+    use crate::tester;
+
+    fn test(source_text: &str, positive: &str) {
+        let allocator = Allocator::default();
+        let mut pass = super::PeepholeRemoveDeadCode::new();
+        tester::test(&allocator, source_text, positive, &mut pass);
+    }
+
+    fn test_same(source_text: &str) {
+        test(source_text, source_text);
+    }
+
+    fn fold_same(js: &str) {
+        test_same(js);
+    }
+
+    fn fold(js: &str, expected: &str) {
+        test(js, expected);
+    }
+
+    #[test]
+    #[ignore]
+    fn test_remove_no_op_labelled_statement() {
+        fold("a: break a;", "");
+        fold("a: { break a; }", "");
+
+        fold(
+            //
+            "a: { break a; console.log('unreachable'); }", //
+            "",
+        );
+        fold(
+            //
+            "a: { break a; var x = 1; } x = 2;", //
+            "var x; x = 2;",
+        );
+
+        fold_same("b: { var x = 1; } x = 2;");
+        fold_same("a: b: { var x = 1; } x = 2;");
     }
 }
