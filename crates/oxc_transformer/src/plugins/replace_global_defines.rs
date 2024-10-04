@@ -23,6 +23,11 @@ struct ReplaceGlobalDefinesConfigImpl {
     identifier: Vec<(/* key */ CompactStr, /* value */ CompactStr)>,
     dot: Vec<DotDefine>,
     meta_property: Vec<MetaPropertyDefine>,
+    /// extra field to avoid linear scan `meta_property` to check if it has `import.meta` every
+    /// time
+    /// Some(replacement): import.meta -> replacement
+    /// None -> no need to replace import.meta
+    import_meta: Option<CompactStr>,
 }
 
 #[derive(Debug)]
@@ -56,7 +61,9 @@ enum IdentifierType {
     Identifier,
     DotDefines { parts: Vec<CompactStr> },
     // import.meta.a
-    ImportMeta { parts: Vec<CompactStr>, postfix_wildcard: bool },
+    ImportMetaWithParts { parts: Vec<CompactStr>, postfix_wildcard: bool },
+    // import.meta or import.meta.*
+    ImportMeta(bool),
 }
 
 impl ReplaceGlobalDefinesConfig {
@@ -68,7 +75,8 @@ impl ReplaceGlobalDefinesConfig {
         let allocator = Allocator::default();
         let mut identifier_defines = vec![];
         let mut dot_defines = vec![];
-        let mut meta_property_defines = vec![];
+        let mut meta_properties_defines = vec![];
+        let mut import_meta = None;
         for (key, value) in defines {
             let key = key.as_ref();
 
@@ -82,19 +90,30 @@ impl ReplaceGlobalDefinesConfig {
                 IdentifierType::DotDefines { parts } => {
                     dot_defines.push(DotDefine::new(parts, CompactStr::new(value)));
                 }
-                IdentifierType::ImportMeta { parts, postfix_wildcard } => {
-                    meta_property_defines.push(MetaPropertyDefine::new(
+                IdentifierType::ImportMetaWithParts { parts, postfix_wildcard } => {
+                    meta_properties_defines.push(MetaPropertyDefine::new(
                         parts,
                         CompactStr::new(value),
                         postfix_wildcard,
                     ));
+                }
+                IdentifierType::ImportMeta(postfix_wildcard) => {
+                    if postfix_wildcard {
+                        meta_properties_defines.push(MetaPropertyDefine::new(
+                            vec![],
+                            CompactStr::new(value),
+                            postfix_wildcard,
+                        ));
+                    } else {
+                        import_meta = Some(CompactStr::new(value));
+                    }
                 }
             }
         }
         // Always move specific meta define before wildcard dot define
         // Keep other order unchanged
         // see test case replace_global_definitions_dot_with_postfix_mixed as an example
-        meta_property_defines.sort_by(|a, b| {
+        meta_properties_defines.sort_by(|a, b| {
             if !a.postfix_wildcard && b.postfix_wildcard {
                 Ordering::Less
             } else if a.postfix_wildcard && b.postfix_wildcard {
@@ -106,7 +125,8 @@ impl ReplaceGlobalDefinesConfig {
         Ok(Self(Arc::new(ReplaceGlobalDefinesConfigImpl {
             identifier: identifier_defines,
             dot: dot_defines,
-            meta_property: meta_property_defines,
+            meta_property: meta_properties_defines,
+            import_meta,
         })))
     }
 
@@ -132,15 +152,18 @@ impl ReplaceGlobalDefinesConfig {
             }
         }
         if is_import_meta {
-            Ok(IdentifierType::ImportMeta {
-                parts: parts
-                    .iter()
-                    .skip(2)
-                    .take(normalized_parts_len - 2)
-                    .map(|s| CompactStr::new(s))
-                    .collect(),
-                postfix_wildcard: normalized_parts_len != parts.len(),
-            })
+            match normalized_parts_len {
+                2 => Ok(IdentifierType::ImportMeta(normalized_parts_len != parts.len())),
+                _ => Ok(IdentifierType::ImportMetaWithParts {
+                    parts: parts
+                        .iter()
+                        .skip(2)
+                        .take(normalized_parts_len - 2)
+                        .map(|s| CompactStr::new(s))
+                        .collect(),
+                    postfix_wildcard: normalized_parts_len != parts.len(),
+                }),
+            }
         // StaticMemberExpression with postfix wildcard
         } else if normalized_parts_len != parts.len() {
             Err(vec![OxcDiagnostic::error(
@@ -226,22 +249,33 @@ impl<'a> ReplaceGlobalDefines<'a> {
     }
 
     fn replace_dot_defines(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::StaticMemberExpression(member) = expr else {
-            return;
-        };
-        for dot_define in &self.config.0.dot {
-            if Self::is_dot_define(ctx.symbols(), dot_define, member) {
-                let value = self.parse_value(&dot_define.value);
-                *expr = value;
-                return;
+        match expr {
+            Expression::StaticMemberExpression(member) => {
+                for dot_define in &self.config.0.dot {
+                    if Self::is_dot_define(ctx.symbols(), dot_define, member) {
+                        let value = self.parse_value(&dot_define.value);
+                        *expr = value;
+                        return;
+                    }
+                }
+                for meta_proeperty_define in &self.config.0.meta_property {
+                    if Self::is_meta_property_define(meta_proeperty_define, member) {
+                        let value = self.parse_value(&meta_proeperty_define.value);
+                        *expr = value;
+                        return;
+                    }
+                }
             }
-        }
-        for meta_property_define in &self.config.0.meta_property {
-            if Self::is_meta_property_define(meta_property_define, member) {
-                let value = self.parse_value(&meta_property_define.value);
-                *expr = value;
-                return;
+            Expression::MetaProperty(meta_property) => {
+                if let Some(ref replacement) = self.config.0.import_meta {
+                    if meta_property.meta.name == "import" && meta_property.property.name == "meta"
+                    {
+                        let value = self.parse_value(replacement);
+                        *expr = value;
+                    }
+                }
             }
+            _ => {}
         }
     }
 
@@ -249,6 +283,14 @@ impl<'a> ReplaceGlobalDefines<'a> {
         meta_define: &MetaPropertyDefine,
         member: &StaticMemberExpression<'a>,
     ) -> bool {
+        if meta_define.parts.is_empty() && meta_define.postfix_wildcard {
+            match member.object {
+                Expression::MetaProperty(ref meta) => {
+                    return meta.meta.name == "import" && meta.property.name == "meta";
+                }
+                _ => return false,
+            }
+        }
         debug_assert!(!meta_define.parts.is_empty());
 
         let mut current_part_member_expression = Some(member);

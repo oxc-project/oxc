@@ -76,11 +76,13 @@ fn dot_with_postfix_mixed() {
     let config = ReplaceGlobalDefinesConfig::new(&[
         ("import.meta.env.*", "undefined"),
         ("import.meta.env", "env"),
+        ("import.meta.*", "metaProperty"),
+        ("import.meta", "1"),
     ])
     .unwrap();
     test("import.meta.env.result", "undefined", config.clone());
     test("import.meta.env.result.many.nested", "undefined", config.clone());
     test("import.meta.env", "env", config.clone());
-    test("import.meta.somethingelse", "import.meta.somethingelse", config.clone());
-    test("import.meta", "import.meta", config);
+    test("import.meta.somethingelse", "metaProperty", config.clone());
+    test("import.meta", "1", config);
 }
