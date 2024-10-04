@@ -22,7 +22,7 @@ pub struct ReplaceGlobalDefinesConfig(Arc<ReplaceGlobalDefinesConfigImpl>);
 struct ReplaceGlobalDefinesConfigImpl {
     identifier: Vec<(/* key */ CompactStr, /* value */ CompactStr)>,
     dot: Vec<DotDefine>,
-    meta_proeperty: Vec<MetaPropertyDefine>,
+    meta_property: Vec<MetaPropertyDefine>,
 }
 
 #[derive(Debug)]
@@ -68,7 +68,7 @@ impl ReplaceGlobalDefinesConfig {
         let allocator = Allocator::default();
         let mut identifier_defines = vec![];
         let mut dot_defines = vec![];
-        let mut meta_proeperty_defines = vec![];
+        let mut meta_property_defines = vec![];
         for (key, value) in defines {
             let key = key.as_ref();
 
@@ -83,7 +83,7 @@ impl ReplaceGlobalDefinesConfig {
                     dot_defines.push(DotDefine::new(parts, CompactStr::new(value)));
                 }
                 IdentifierType::ImportMeta { parts, postfix_wildcard } => {
-                    meta_proeperty_defines.push(MetaPropertyDefine::new(
+                    meta_property_defines.push(MetaPropertyDefine::new(
                         parts,
                         CompactStr::new(value),
                         postfix_wildcard,
@@ -94,7 +94,7 @@ impl ReplaceGlobalDefinesConfig {
         // Always move specific meta define before wildcard dot define
         // Keep other order unchanged
         // see test case replace_global_definitions_dot_with_postfix_mixed as an example
-        meta_proeperty_defines.sort_by(|a, b| {
+        meta_property_defines.sort_by(|a, b| {
             if !a.postfix_wildcard && b.postfix_wildcard {
                 Ordering::Less
             } else if a.postfix_wildcard && b.postfix_wildcard {
@@ -106,7 +106,7 @@ impl ReplaceGlobalDefinesConfig {
         Ok(Self(Arc::new(ReplaceGlobalDefinesConfigImpl {
             identifier: identifier_defines,
             dot: dot_defines,
-            meta_proeperty: meta_proeperty_defines,
+            meta_property: meta_property_defines,
         })))
     }
 
@@ -236,9 +236,9 @@ impl<'a> ReplaceGlobalDefines<'a> {
                 return;
             }
         }
-        for meta_proeperty_define in &self.config.0.meta_proeperty {
-            if Self::is_meta_property_define(meta_proeperty_define, member) {
-                let value = self.parse_value(&meta_proeperty_define.value);
+        for meta_property_define in &self.config.0.meta_property {
+            if Self::is_meta_property_define(meta_property_define, member) {
+                let value = self.parse_value(&meta_property_define.value);
                 *expr = value;
                 return;
             }
