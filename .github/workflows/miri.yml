@@ -5,15 +5,19 @@ on:
   pull_request:
     types: [opened, synchronize]
     paths:
-      - "crates/oxc_parser/**"
       - "crates/oxc_allocator/**"
+      - "crates/oxc_data_structures/**"
+      - "crates/oxc_parser/**"
+      - "crates/oxc_traverse/**"
       - ".github/workflows/miri.yml"
   push:
     branches:
       - main
     paths:
-      - "crates/oxc_parser/**"
       - "crates/oxc_allocator/**"
+      - "crates/oxc_data_structures/**"
+      - "crates/oxc_parser/**"
+      - "crates/oxc_traverse/**"
       - ".github/workflows/miri.yml"
 
 concurrency:

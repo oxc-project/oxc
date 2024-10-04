@@ -27,7 +27,13 @@ impl<'a> CompressorPass<'a> for PeepholeRemoveDeadCode {
 
 impl<'a> Traverse<'a> for PeepholeRemoveDeadCode {
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.fold_if_statement(stmt, ctx);
+        if let Some(new_stmt) = match stmt {
+            Statement::IfStatement(if_stmt) => self.try_fold_if(if_stmt, ctx),
+            _ => None,
+        } {
+            *stmt = new_stmt;
+            self.changed = true;
+        }
     }
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
@@ -116,25 +122,30 @@ impl<'a> PeepholeRemoveDeadCode {
         }
     }
 
-    fn fold_if_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Statement::IfStatement(if_stmt) = stmt else { return };
-
+    fn try_fold_if(
+        &mut self,
+        if_stmt: &mut IfStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Statement<'a>> {
         // Descend and remove `else` blocks first.
-        if let Some(alternate) = &mut if_stmt.alternate {
-            self.fold_if_statement(alternate, ctx);
-            if matches!(alternate, Statement::EmptyStatement(_)) {
-                if_stmt.alternate = None;
-                self.changed = true;
+        if let Some(Statement::IfStatement(alternate)) = &mut if_stmt.alternate {
+            if let Some(new_stmt) = self.try_fold_if(alternate, ctx) {
+                if matches!(new_stmt, Statement::EmptyStatement(_)) {
+                    if_stmt.alternate = None;
+                    self.changed = true;
+                } else {
+                    if_stmt.alternate = Some(new_stmt);
+                }
             }
         }
 
         match ctx.get_boolean_value(&if_stmt.test) {
             Tri::True => {
-                *stmt = ctx.ast.move_statement(&mut if_stmt.consequent);
-                self.changed = true;
+                // self.changed = true;
+                Some(ctx.ast.move_statement(&mut if_stmt.consequent))
             }
             Tri::False => {
-                *stmt = if let Some(alternate) = &mut if_stmt.alternate {
+                Some(if let Some(alternate) = &mut if_stmt.alternate {
                     ctx.ast.move_statement(alternate)
                 } else {
                     // Keep hoisted `vars` from the consequent block.
@@ -143,10 +154,10 @@ impl<'a> PeepholeRemoveDeadCode {
                     keep_var
                         .get_variable_declaration_statement()
                         .unwrap_or_else(|| ctx.ast.statement_empty(SPAN))
-                };
-                self.changed = true;
+                })
+                // self.changed = true;
             }
-            Tri::Unknown => {}
+            Tri::Unknown => None,
         }
     }
 

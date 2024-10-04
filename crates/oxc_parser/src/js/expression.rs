@@ -340,14 +340,16 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         // split out pattern
         let (pattern_end, flags) = self.read_regex()?;
-        let pattern_start = self.cur_token().start + 1; // +1 to exclude `/`
+        let pattern_start = self.cur_token().start + 1; // +1 to exclude left `/`
         let pattern_text = &self.source_text[pattern_start as usize..pattern_end as usize];
+        let flags_start = pattern_end + 1; // +1 to include right `/`
+        let flags_text = &self.source_text[flags_start as usize..self.cur_token().end as usize];
         self.bump_any();
         let pattern = self
             .options
             .parse_regular_expression
             .then_some(())
-            .map(|()| self.parse_regex_pattern(pattern_start, pattern_text, flags))
+            .map(|()| self.parse_regex_pattern(pattern_start, pattern_text, flags_text))
             .map_or_else(
                 || RegExpPattern::Raw(pattern_text),
                 |pat| {
@@ -361,15 +363,11 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         span_offset: u32,
         pattern: &'a str,
-        flags: RegExpFlags,
+        flags: &'a str,
     ) -> Option<Box<'a, Pattern<'a>>> {
-        use oxc_regular_expression::{ParserOptions, PatternParser};
-        let options = ParserOptions {
-            span_offset,
-            unicode_mode: flags.contains(RegExpFlags::U) || flags.contains(RegExpFlags::V),
-            unicode_sets_mode: flags.contains(RegExpFlags::V),
-        };
-        match PatternParser::new(self.ast.allocator, pattern, options).parse() {
+        use oxc_regular_expression::{Parser, ParserOptions};
+        let options = ParserOptions::default().with_span_offset(span_offset).with_flags(flags);
+        match Parser::new(self.ast.allocator, pattern, options).parse() {
             Ok(regular_expression) => Some(self.ast.alloc(regular_expression)),
             Err(diagnostic) => {
                 self.error(diagnostic);

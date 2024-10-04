@@ -37,7 +37,7 @@ use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator};
 use oxc_traverse::{Traverse, TraverseCtx};
 
-use crate::helpers::stack::SparseStack;
+use crate::TransformCtx;
 
 /// ES2016: Exponentiation Operator
 ///
@@ -45,8 +45,8 @@ use crate::helpers::stack::SparseStack;
 /// * <https://babel.dev/docs/babel-plugin-transform-exponentiation-operator>
 /// * <https://github.com/babel/babel/blob/main/packages/babel-plugin-transform-exponentiation-operator>
 /// * <https://github.com/babel/babel/blob/main/packages/babel-helper-builder-binary-assignment-operator-visitor>
-pub struct ExponentiationOperator<'a> {
-    var_declarations: SparseStack<Vec<'a, VariableDeclarator<'a>>>,
+pub struct ExponentiationOperator<'a, 'ctx> {
+    ctx: &'ctx TransformCtx<'a>,
 }
 
 #[derive(Debug)]
@@ -55,44 +55,13 @@ struct Exploded<'a> {
     uid: Expression<'a>,
 }
 
-impl<'a> ExponentiationOperator<'a> {
-    pub fn new() -> Self {
-        Self { var_declarations: SparseStack::new() }
+impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
+    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
+        Self { ctx }
     }
 }
 
-impl<'a> Traverse<'a> for ExponentiationOperator<'a> {
-    #[inline] // Inline because it's no-op in release mode
-    fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
-        debug_assert!(self.var_declarations.len() == 1);
-        debug_assert!(self.var_declarations.last().is_none());
-    }
-
-    fn enter_statements(
-        &mut self,
-        _statements: &mut Vec<'a, Statement<'a>>,
-        _ctx: &mut TraverseCtx<'a>,
-    ) {
-        self.var_declarations.push(None);
-    }
-
-    fn exit_statements(
-        &mut self,
-        statements: &mut Vec<'a, Statement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if let Some(declarations) = self.var_declarations.pop() {
-            debug_assert!(!declarations.is_empty());
-            let variable = ctx.ast.alloc_variable_declaration(
-                SPAN,
-                VariableDeclarationKind::Var,
-                declarations,
-                false,
-            );
-            statements.insert(0, Statement::VariableDeclaration(variable));
-        }
-    }
-
+impl<'a, 'ctx> Traverse<'a> for ExponentiationOperator<'a, 'ctx> {
     // NOTE: Bail bigint arguments to `Math.pow`, which are runtime errors.
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         match expr {
@@ -139,7 +108,7 @@ impl<'a> Traverse<'a> for ExponentiationOperator<'a> {
     }
 }
 
-impl<'a> ExponentiationOperator<'a> {
+impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
     fn clone_expression(expr: &Expression<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         match expr {
             Expression::Identifier(ident) => ctx.ast.expression_from_identifier_reference(
@@ -325,17 +294,8 @@ impl<'a> ExponentiationOperator<'a> {
             ctx.generate_uid_in_current_scope(name, SymbolFlags::FunctionScopedVariable);
         let symbol_name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
 
-        {
-            // var _name;
-            let binding_identifier =
-                BindingIdentifier::new_with_symbol_id(SPAN, symbol_name.clone(), symbol_id);
-            let kind = VariableDeclarationKind::Var;
-            let id = ctx.ast.binding_pattern_kind_from_binding_identifier(binding_identifier);
-            let id = ctx.ast.binding_pattern(id, NONE, false);
-            self.var_declarations
-                .last_mut_or_init(|| ctx.ast.vec())
-                .push(ctx.ast.variable_declarator(SPAN, kind, id, None, false));
-        }
+        // var _name;
+        self.ctx.var_declarations.insert(symbol_name.clone(), symbol_id, None, ctx);
 
         let ident =
             ctx.create_reference_id(SPAN, symbol_name, Some(symbol_id), ReferenceFlags::Read);

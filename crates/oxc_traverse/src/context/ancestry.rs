@@ -1,5 +1,7 @@
 use std::mem::transmute;
 
+use oxc_data_structures::stack::NonEmptyStack;
+
 use crate::ancestor::{Ancestor, AncestorType};
 
 const INITIAL_STACK_CAPACITY: usize = 64; // 64 entries = 1 KiB
@@ -37,7 +39,7 @@ const INITIAL_STACK_CAPACITY: usize = 64; // 64 entries = 1 KiB
 ///    b. cannot obtain an owned `TraverseAncestry` from a `&TraverseAncestry`
 ///       - `TraverseAncestry` is not `Clone`.
 pub struct TraverseAncestry<'a> {
-    stack: Vec<Ancestor<'a, 'static>>,
+    stack: NonEmptyStack<Ancestor<'a, 'static>>,
 }
 
 // Public methods
@@ -45,10 +47,7 @@ impl<'a> TraverseAncestry<'a> {
     /// Get parent of current node.
     #[inline]
     pub fn parent<'t>(&'t self) -> Ancestor<'a, 't> {
-        debug_assert!(!self.stack.is_empty());
-        // SAFETY: Stack contains 1 entry initially. Entries are pushed as traverse down the AST,
-        // and popped as go back up. So even when visiting `Program`, the initial entry is in the stack.
-        let ancestor = unsafe { *self.stack.last().unwrap_unchecked() };
+        let ancestor = *self.stack.last();
         // Shrink `Ancestor`'s `'t` lifetime to lifetime of `&'t self`.
         // SAFETY: The `Ancestor` is guaranteed valid for `'t`. It is not possible to obtain
         // a `&mut` ref to any AST node which this `Ancestor` gives access to during `'t`.
@@ -74,7 +73,6 @@ impl<'a> TraverseAncestry<'a> {
         // `self.stack.len()` is always at least 1, so `self.stack.len() - 1` cannot wrap around.
         // `level <= last_index` would also work here, but `level < last_index` avoids a read from memory
         // when that read would just get `Ancestor::None` anyway.
-        debug_assert!(!self.stack.is_empty());
         let last_index = self.stack.len() - 1;
         if level < last_index {
             // SAFETY: We just checked that `level < last_index` so `last_index - level` cannot wrap around,
@@ -94,7 +92,6 @@ impl<'a> TraverseAncestry<'a> {
     ///
     /// Last `Ancestor` returned will be `Program`. `Ancestor::None` is not included in iteration.
     pub fn ancestors<'t>(&'t self) -> impl Iterator<Item = Ancestor<'a, 't>> {
-        debug_assert!(!self.stack.is_empty());
         // SAFETY: Stack always has at least 1 entry
         let stack_without_first = unsafe { self.stack.get_unchecked(1..) };
         stack_without_first.iter().rev().map(|&ancestor| {
@@ -121,9 +118,7 @@ impl<'a> TraverseAncestry<'a> {
     /// # SAFETY
     /// This method must not be public outside this crate, or consumer could break safety invariants.
     pub(super) fn new() -> Self {
-        let mut stack = Vec::with_capacity(INITIAL_STACK_CAPACITY);
-        stack.push(Ancestor::None);
-        Self { stack }
+        Self { stack: NonEmptyStack::with_capacity(INITIAL_STACK_CAPACITY, Ancestor::None) }
     }
 
     /// Push item onto ancestry stack.
@@ -145,13 +140,12 @@ impl<'a> TraverseAncestry<'a> {
     #[inline]
     #[allow(unused_variables, clippy::needless_pass_by_value)]
     pub(crate) fn pop_stack(&mut self, token: PopToken) {
-        debug_assert!(self.stack.len() >= 2);
         // SAFETY: `PopToken`s are only created in `push_stack`, so the fact that caller provides one
         // guarantees that a push has happened. This method consumes the token which guarantees another
         // pop hasn't occurred already corresponding to that push.
         // Therefore the stack cannot by empty.
         // The stack starts with 1 entry, so also it cannot be left empty after this pop.
-        unsafe { self.stack.pop().unwrap_unchecked() };
+        unsafe { self.stack.pop_unchecked() };
     }
 
     /// Retag last item on ancestry stack.
@@ -178,7 +172,7 @@ impl<'a> TraverseAncestry<'a> {
     #[allow(unsafe_code, clippy::ptr_as_ptr, clippy::ref_as_ptr)]
     pub(crate) unsafe fn retag_stack(&mut self, ty: AncestorType) {
         debug_assert!(self.stack.len() >= 2);
-        *(self.stack.last_mut().unwrap_unchecked() as *mut _ as *mut AncestorType) = ty;
+        *(self.stack.last_mut() as *mut _ as *mut AncestorType) = ty;
     }
 }
 

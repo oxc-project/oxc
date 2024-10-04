@@ -3,6 +3,9 @@
 #[cfg(feature = "full")]
 mod compiler;
 
+#[cfg(feature = "napi")]
+pub mod napi;
+
 #[cfg(feature = "full")]
 pub use compiler::{Compiler, CompilerInterface};
 

@@ -2,15 +2,12 @@ use std::{ops::ControlFlow, path::PathBuf};
 
 use oxc::{
     allocator::Allocator,
-    ast::{
-        ast::{Program, RegExpFlags},
-        Trivias,
-    },
+    ast::{ast::Program, Trivias},
     codegen::CodegenOptions,
     diagnostics::OxcDiagnostic,
     minifier::CompressOptions,
     parser::{ParseOptions, ParserReturn},
-    regular_expression::{ParserOptions, PatternParser},
+    regular_expression::{Parser, ParserOptions},
     semantic::{
         post_transform_checker::{check_semantic_after_transform, check_semantic_ids},
         Semantic, SemanticBuilderReturn,
@@ -166,15 +163,11 @@ impl Driver {
                 continue;
             };
             let printed1 = pattern.to_string();
-            let flags = literal.regex.flags;
-            let printed2 = match PatternParser::new(
+            let flags = literal.regex.flags.to_string();
+            let printed2 = match Parser::new(
                 &allocator,
                 &printed1,
-                ParserOptions {
-                    span_offset: 0,
-                    unicode_mode: flags.contains(RegExpFlags::U) || flags.contains(RegExpFlags::V),
-                    unicode_sets_mode: flags.contains(RegExpFlags::V),
-                },
+                ParserOptions::default().with_flags(&flags),
             )
             .parse()
             {

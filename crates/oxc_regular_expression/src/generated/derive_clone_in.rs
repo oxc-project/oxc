@@ -8,34 +8,6 @@ use oxc_allocator::{Allocator, CloneIn};
 #[allow(clippy::wildcard_imports)]
 use crate::ast::*;
 
-impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for RegularExpression<'old_alloc> {
-    type Cloned = RegularExpression<'new_alloc>;
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        RegularExpression {
-            span: CloneIn::clone_in(&self.span, allocator),
-            pattern: CloneIn::clone_in(&self.pattern, allocator),
-            flags: CloneIn::clone_in(&self.flags, allocator),
-        }
-    }
-}
-
-impl<'alloc> CloneIn<'alloc> for Flags {
-    type Cloned = Flags;
-    fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
-        Flags {
-            span: CloneIn::clone_in(&self.span, allocator),
-            global: CloneIn::clone_in(&self.global, allocator),
-            ignore_case: CloneIn::clone_in(&self.ignore_case, allocator),
-            multiline: CloneIn::clone_in(&self.multiline, allocator),
-            unicode: CloneIn::clone_in(&self.unicode, allocator),
-            sticky: CloneIn::clone_in(&self.sticky, allocator),
-            dot_all: CloneIn::clone_in(&self.dot_all, allocator),
-            has_indices: CloneIn::clone_in(&self.has_indices, allocator),
-            unicode_sets: CloneIn::clone_in(&self.unicode_sets, allocator),
-        }
-    }
-}
-
 impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for Pattern<'old_alloc> {
     type Cloned = Pattern<'new_alloc>;
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
