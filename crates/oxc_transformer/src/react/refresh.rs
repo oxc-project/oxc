@@ -275,10 +275,10 @@ impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
                 let id = declarator.id().get_binding_identifier().unwrap();
                 let symbol_id = id.symbol_id.get().unwrap();
                 let first_argument = Argument::from(ctx.ast.expression_from_identifier_reference(
-                    ctx.create_reference_id(
+                    ctx.create_bound_reference_id(
                         SPAN,
                         id.name.clone(),
-                        Some(symbol_id),
+                        symbol_id,
                         ReferenceFlags::Read,
                     ),
                 ));
@@ -409,10 +409,10 @@ impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
                             binding_name.as_str(),
                         )
                         .map(|symbol_id| {
-                            let ident = ctx.create_reference_id(
+                            let ident = ctx.create_bound_reference_id(
                                 SPAN,
                                 binding_name,
-                                Some(symbol_id),
+                                symbol_id,
                                 ReferenceFlags::Read,
                             );
                             let mut expr = ctx.ast.expression_from_identifier_reference(ident);
@@ -470,7 +470,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
         let symbol_id = ctx.generate_uid_in_root_scope("c", SymbolFlags::FunctionScopedVariable);
         self.registrations.push((symbol_id, persistent_id));
         let name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
-        let ident = ctx.create_reference_id(SPAN, name, Some(symbol_id), reference_flags);
+        let ident = ctx.create_bound_reference_id(SPAN, name, symbol_id, reference_flags);
         let ident = ctx.ast.simple_assignment_target_from_identifier_reference(ident);
         ctx.ast.assignment_target_simple(ident)
     }
@@ -569,10 +569,10 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
         id: &BindingIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        ctx.ast.expression_from_identifier_reference(ctx.create_reference_id(
+        ctx.ast.expression_from_identifier_reference(ctx.create_bound_reference_id(
             SPAN,
             id.name.clone(),
-            id.symbol_id.get(),
+            id.symbol_id.get().unwrap(),
             ReferenceFlags::Read,
         ))
     }

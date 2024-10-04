@@ -192,10 +192,10 @@ impl<'a> TypeScriptEnum<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Vec<'a, Statement<'a>> {
         let create_identifier_reference = |ctx: &mut TraverseCtx<'a>| {
-            let ident = ctx.create_reference_id(
+            let ident = ctx.create_bound_reference_id(
                 param.span,
                 param.name.clone(),
-                param.symbol_id.get(),
+                param.symbol_id.get().unwrap(),
                 ReferenceFlags::Read,
             );
             ctx.ast.expression_from_identifier_reference(ident)

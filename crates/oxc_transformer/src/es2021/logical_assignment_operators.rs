@@ -362,6 +362,6 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
         self.ctx.var_declarations.insert(symbol_name.clone(), symbol_id, None, ctx);
 
         // _name = name
-        Some(ctx.create_reference_id(SPAN, symbol_name, Some(symbol_id), ReferenceFlags::Write))
+        Some(ctx.create_bound_reference_id(SPAN, symbol_name, symbol_id, ReferenceFlags::Write))
     }
 }

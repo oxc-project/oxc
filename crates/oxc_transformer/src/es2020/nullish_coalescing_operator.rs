@@ -161,7 +161,7 @@ impl<'a, 'ctx> NullishCoalescingOperator<'a, 'ctx> {
         let id = ctx.ast.binding_pattern_kind_from_binding_identifier(binding_identifier);
         let id = ctx.ast.binding_pattern(id, NONE, false);
         let reference =
-            ctx.create_reference_id(SPAN, symbol_name, Some(symbol_id), ReferenceFlags::Read);
+            ctx.create_bound_reference_id(SPAN, symbol_name, symbol_id, ReferenceFlags::Read);
 
         (id, reference)
     }

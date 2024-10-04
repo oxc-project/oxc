@@ -125,7 +125,7 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let ident_math =
-            ctx.create_reference_id(SPAN, ctx.ast.atom("Math"), None, ReferenceFlags::Read);
+            ctx.create_unbound_reference_id(SPAN, ctx.ast.atom("Math"), ReferenceFlags::Read);
         let object = ctx.ast.expression_from_identifier_reference(ident_math);
         let property = ctx.ast.identifier_name(SPAN, "pow");
         let callee =
@@ -298,7 +298,7 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
         self.ctx.var_declarations.insert(symbol_name.clone(), symbol_id, None, ctx);
 
         let ident =
-            ctx.create_reference_id(SPAN, symbol_name, Some(symbol_id), ReferenceFlags::Read);
+            ctx.create_bound_reference_id(SPAN, symbol_name, symbol_id, ReferenceFlags::Read);
 
         // let ident = self.create_new_var_with_expression(&expr);
         // Add new reference `_name = name` to nodes
