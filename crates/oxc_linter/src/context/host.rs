@@ -145,7 +145,7 @@ impl<'a> ContextHost<'a> {
     /// Creates a new [`LintContext`] for a specific rule.
     pub fn spawn(self: Rc<Self>, rule: &RuleWithSeverity) -> LintContext<'a> {
         let rule_name = rule.name();
-        let plugin_name = self.map_jest(rule.plugin_name(), rule_name);
+        let plugin_name = self.map_jest_rule_to_vitest(rule);
 
         LintContext {
             parent: self,
@@ -176,10 +176,11 @@ impl<'a> ContextHost<'a> {
     ///
     /// Many Vitest rules are essentially ports of the Jest plugin rules with minor modifications.
     /// For these rules, we use the corresponding jest rules with some adjustments for compatibility.
-    fn map_jest(&self, plugin_name: &'static str, rule_name: &str) -> &'static str {
+    fn map_jest_rule_to_vitest(&self, rule: &RuleWithSeverity) -> &'static str {
+        let plugin_name = rule.plugin_name();
         if self.plugins.has_vitest()
             && plugin_name == "jest"
-            && utils::is_jest_rule_adapted_to_vitest(rule_name)
+            && utils::is_jest_rule_adapted_to_vitest(rule.name())
         {
             "vitest"
         } else {
