@@ -30,7 +30,7 @@
 
 use oxc_allocator::CloneIn;
 use oxc_ast::{ast::*, NONE};
-use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
+use oxc_semantic::{ReferenceFlags, ScopeFlags, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
@@ -84,28 +84,33 @@ impl<'a, 'ctx> Traverse<'a> for NullishCoalescingOperator<'a, 'ctx> {
             ctx.current_scope_id()
         };
 
-        let (id, ident) =
-            Self::create_new_var_with_expression(&logical_expr.left, current_scope_id, ctx);
+        // Add `var _name` to scope
+        let binding = ctx.generate_uid_based_on_node(
+            &logical_expr.left,
+            current_scope_id,
+            SymbolFlags::FunctionScopedVariable,
+        );
 
         let left =
             AssignmentTarget::from(ctx.ast.simple_assignment_target_from_identifier_reference(
-                ctx.clone_identifier_reference(&ident, ReferenceFlags::read_write()),
+                binding.create_read_write_reference(ctx),
             ));
 
-        let reference = ctx.ast.expression_from_identifier_reference(ident);
+        let reference =
+            ctx.ast.expression_from_identifier_reference(binding.create_read_reference(ctx));
         let assignment = ctx.ast.expression_assignment(
             SPAN,
             AssignmentOperator::Assign,
             left,
             logical_expr.left,
         );
-
         let mut new_expr =
             Self::create_conditional_expression(reference, assignment, logical_expr.right, ctx);
 
         if is_parent_formal_parameter {
             // Replace `function (a, x = a.b ?? c) {}` to `function (a, x = (() => a.b ?? c)() ){}`
             // so the temporary variable can be injected in correct scope
+            let id = binding.create_binding_pattern(ctx);
             let param = ctx.ast.formal_parameter(SPAN, ctx.ast.vec(), id, None, false, false);
             let params = ctx.ast.formal_parameters(
                 SPAN,
@@ -125,7 +130,7 @@ impl<'a, 'ctx> Traverse<'a> for NullishCoalescingOperator<'a, 'ctx> {
             // `(x) => x;` -> `((x) => x)();`
             new_expr = ctx.ast.expression_call(SPAN, arrow_function, NONE, ctx.ast.vec(), false);
         } else {
-            self.ctx.var_declarations.insert_binding_pattern(id, None, ctx);
+            self.ctx.var_declarations.insert(&binding, None, ctx);
         }
 
         *expr = new_expr;
@@ -140,25 +145,6 @@ impl<'a, 'ctx> NullishCoalescingOperator<'a, 'ctx> {
             ),
             _ => expr.clone_in(ctx.ast.allocator),
         }
-    }
-
-    fn create_new_var_with_expression(
-        expr: &Expression<'a>,
-        current_scope_id: ScopeId,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> (BindingPattern<'a>, IdentifierReference<'a>) {
-        // Add `var name` to scope
-        let binding = ctx.generate_uid_based_on_node(
-            expr,
-            current_scope_id,
-            SymbolFlags::FunctionScopedVariable,
-        );
-
-        // var _name;
-        let id = binding.create_binding_pattern(ctx);
-
-        let reference = binding.create_read_reference(ctx);
-        (id, reference)
     }
 
     /// Create a conditional expression
