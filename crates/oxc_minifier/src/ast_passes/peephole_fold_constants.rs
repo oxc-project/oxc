@@ -867,7 +867,7 @@ impl<'a> PeepholeFoldConstants {
     }
 }
 
-/// <https://github.com/google/closure-compiler/blob/master/test/com/google/javascript/jscomp/PeepholeFoldConstants.java>
+/// <https://github.com/google/closure-compiler/blob/master/test/com/google/javascript/jscomp/PeepholeFoldConstantsTest.java>
 #[cfg(test)]
 mod test {
     use oxc_allocator::Allocator;

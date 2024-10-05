@@ -7,6 +7,7 @@ use crate::{CompressOptions, CompressorPass};
 /// Collapse variable declarations.
 ///
 /// `var a; var b = 1; var c = 2` => `var a, b = 1; c = 2`
+/// <https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/CollapseVariableDeclarations.java>
 pub struct CollapseVariableDeclarations {
     options: CompressOptions,
 
@@ -99,7 +100,7 @@ impl<'a> CollapseVariableDeclarations {
     }
 }
 
-/// <https://github.com/google/closure-compiler/blob/master/test/com/google/javascript/jscomp/CollapseVariableDeclarations.java>
+/// <https://github.com/google/closure-compiler/blob/master/test/com/google/javascript/jscomp/CollapseVariableDeclarationsTest.java>
 #[cfg(test)]
 mod test {
     use oxc_allocator::Allocator;
