@@ -1,8 +1,9 @@
 commit: 3bcfee23
 
-Passed: 333/1022
+Passed: 336/1022
 
 # All Passed:
+* babel-plugin-transform-logical-assignment-operators
 * babel-plugin-transform-optional-catch-binding
 * babel-preset-react
 * babel-plugin-transform-react-display-name
@@ -1438,35 +1439,6 @@ x Output mismatch
 
 * shipped-proposals/new-class-features-firefox-70/input.js
 x Output mismatch
-
-
-# babel-plugin-transform-logical-assignment-operators (3/6)
-* logical-assignment/general-semantics/input.js
-Symbol reference IDs mismatch for "_deep$obj5":
-after transform: SymbolId(15): [ReferenceId(117), ReferenceId(118), ReferenceId(121)]
-rebuilt        : SymbolId(8): [ReferenceId(87), ReferenceId(91)]
-Symbol reference IDs mismatch for "_deep$obj6":
-after transform: SymbolId(17): [ReferenceId(122), ReferenceId(123), ReferenceId(126)]
-rebuilt        : SymbolId(10): [ReferenceId(99), ReferenceId(103)]
-Symbol reference IDs mismatch for "_deep$obj7":
-after transform: SymbolId(19): [ReferenceId(127), ReferenceId(128), ReferenceId(131)]
-rebuilt        : SymbolId(12): [ReferenceId(111), ReferenceId(115)]
-Symbol reference IDs mismatch for "_deep$obj8":
-after transform: SymbolId(21): [ReferenceId(132), ReferenceId(133), ReferenceId(136)]
-rebuilt        : SymbolId(14): [ReferenceId(123), ReferenceId(127)]
-
-* logical-assignment/null-coalescing/input.js
-Symbol reference IDs mismatch for "_deep$obj3":
-after transform: SymbolId(17): [ReferenceId(86), ReferenceId(87), ReferenceId(90)]
-rebuilt        : SymbolId(10): [ReferenceId(73), ReferenceId(79)]
-Symbol reference IDs mismatch for "_deep$obj4":
-after transform: SymbolId(20): [ReferenceId(94), ReferenceId(95), ReferenceId(98)]
-rebuilt        : SymbolId(13): [ReferenceId(88), ReferenceId(94)]
-
-* logical-assignment/null-coalescing-without-other/input.js
-Symbol reference IDs mismatch for "_o2":
-after transform: SymbolId(2): [ReferenceId(6), ReferenceId(7), ReferenceId(10)]
-rebuilt        : SymbolId(1): [ReferenceId(5), ReferenceId(8)]
 
 
 # babel-plugin-transform-nullish-coalescing-operator (5/12)

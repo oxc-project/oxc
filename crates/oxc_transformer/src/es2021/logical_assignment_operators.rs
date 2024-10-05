@@ -242,11 +242,11 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
             }
 
             // _o[_b]
+            let reference = ctx.symbols_mut().get_reference_mut(ident.reference_id().unwrap());
+            *reference.flags_mut() = ReferenceFlags::Read;
             let assign_target = AssignmentTarget::from(ctx.ast.member_expression_computed(
                 SPAN,
-                ctx.ast.expression_from_identifier_reference(
-                    ctx.clone_identifier_reference(&ident, ReferenceFlags::Read),
-                ),
+                ctx.ast.expression_from_identifier_reference(ident),
                 property.map_or_else(
                     || expression.clone_in(ctx.ast.allocator),
                     |ident| {
