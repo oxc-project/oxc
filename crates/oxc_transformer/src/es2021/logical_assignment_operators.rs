@@ -60,7 +60,7 @@ use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, LogicalOperator};
 use oxc_traverse::{Traverse, TraverseCtx};
 
-use crate::TransformCtx;
+use crate::{helpers::bindings::BoundIdentifier, TransformCtx};
 
 pub struct LogicalAssignmentOperators<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,
@@ -149,7 +149,7 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
             let right = ctx.ast.move_expression(&mut static_expr.object);
             let target =
                 AssignmentTarget::from(ctx.ast.simple_assignment_target_from_identifier_reference(
-                    ctx.clone_identifier_reference(&ident, ReferenceFlags::read_write()),
+                    ident.create_read_write_reference(ctx),
                 ));
             let object =
                 ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, target, right);
@@ -161,12 +161,9 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
             ));
 
             // (_o.a = 1)
-            let reference = ctx.symbols_mut().get_reference_mut(ident.reference_id().unwrap());
-            *reference.flags_mut() = ReferenceFlags::Read;
-
             let assign_expr = ctx.ast.member_expression_static(
                 SPAN,
-                ctx.ast.expression_from_identifier_reference(ident),
+                ctx.ast.expression_from_identifier_reference(ident.create_read_reference(ctx)),
                 static_expr.property.clone_in(ctx.ast.allocator),
                 false,
             );
@@ -217,7 +214,7 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
             let right = ctx.ast.move_expression(&mut computed_expr.object);
             let target =
                 AssignmentTarget::from(ctx.ast.simple_assignment_target_from_identifier_reference(
-                    ctx.clone_identifier_reference(&ident, ReferenceFlags::read_write()),
+                    ident.create_read_write_reference(ctx),
                 ));
             let object =
                 ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, target, right);
@@ -230,7 +227,7 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
             if let Some(ref property) = property {
                 let left = AssignmentTarget::from(
                     ctx.ast.simple_assignment_target_from_identifier_reference(
-                        ctx.clone_identifier_reference(property, ReferenceFlags::read_write()),
+                        property.create_read_write_reference(ctx),
                     ),
                 );
                 expression = ctx.ast.expression_assignment(
@@ -242,18 +239,14 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
             }
 
             // _o[_b]
-            let reference = ctx.symbols_mut().get_reference_mut(ident.reference_id().unwrap());
-            *reference.flags_mut() = ReferenceFlags::Read;
             let assign_target = AssignmentTarget::from(ctx.ast.member_expression_computed(
                 SPAN,
-                ctx.ast.expression_from_identifier_reference(ident),
+                ctx.ast.expression_from_identifier_reference(ident.create_read_reference(ctx)),
                 property.map_or_else(
                     || expression.clone_in(ctx.ast.allocator),
                     |ident| {
-                        let reference =
-                            ctx.symbols_mut().get_reference_mut(ident.reference_id().unwrap());
-                        *reference.flags_mut() = ReferenceFlags::Read;
-                        ctx.ast.expression_from_identifier_reference(ident)
+                        ctx.ast
+                            .expression_from_identifier_reference(ident.create_read_reference(ctx))
                     },
                 ),
                 false,
@@ -281,10 +274,7 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
                     if let Some(property_ident) = &property_ident {
                         let left = AssignmentTarget::from(
                             ctx.ast.simple_assignment_target_from_identifier_reference(
-                                ctx.clone_identifier_reference(
-                                    property_ident,
-                                    ReferenceFlags::read_write(),
-                                ),
+                                property_ident.create_read_write_reference(ctx),
                             ),
                         );
                         ctx.ast.expression_assignment(
@@ -310,11 +300,9 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
                 object,
                 {
                     if let Some(property_ident) = property_ident {
-                        let reference = ctx
-                            .symbols_mut()
-                            .get_reference_mut(property_ident.reference_id().unwrap());
-                        *reference.flags_mut() = ReferenceFlags::Read;
-                        ctx.ast.expression_from_identifier_reference(property_ident)
+                        ctx.ast.expression_from_identifier_reference(
+                            property_ident.create_read_reference(ctx),
+                        )
                     } else {
                         expression
                     }
@@ -349,19 +337,18 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
         &mut self,
         expr: &Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Option<IdentifierReference<'a>> {
+    ) -> Option<BoundIdentifier<'a>> {
         if ctx.is_static(expr) {
             return None;
         }
 
         let symbol_id = ctx
             .generate_uid_in_current_scope_based_on_node(expr, SymbolFlags::FunctionScopedVariable);
-        let symbol_name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
+        let name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
 
         // var _name;
-        self.ctx.var_declarations.insert(symbol_name.clone(), symbol_id, None, ctx);
+        self.ctx.var_declarations.insert(name.clone(), symbol_id, None, ctx);
 
-        // _name = name
-        Some(ctx.create_bound_reference_id(SPAN, symbol_name, symbol_id, ReferenceFlags::Write))
+        Some(BoundIdentifier::new(name, symbol_id))
     }
 }

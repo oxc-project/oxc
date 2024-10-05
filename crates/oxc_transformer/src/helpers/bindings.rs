@@ -41,6 +41,11 @@ pub struct BoundIdentifier<'a> {
 }
 
 impl<'a> BoundIdentifier<'a> {
+    /// Create `BoundIdentifier` for `name` and `symbol_id`
+    pub fn new(name: Atom<'a>, symbol_id: SymbolId) -> Self {
+        Self { name, symbol_id }
+    }
+
     /// Create `BoundIdentifier` for new binding in specified scope
     pub fn new_uid(
         name: &str,
