@@ -148,21 +148,16 @@ impl<'a, 'ctx> NullishCoalescingOperator<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) -> (BindingPattern<'a>, IdentifierReference<'a>) {
         // Add `var name` to scope
-        let symbol_id = ctx.generate_uid_based_on_node(
+        let binding = ctx.generate_uid_based_on_node(
             expr,
             current_scope_id,
             SymbolFlags::FunctionScopedVariable,
         );
-        let symbol_name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
 
         // var _name;
-        let binding_identifier =
-            BindingIdentifier::new_with_symbol_id(SPAN, symbol_name.clone(), symbol_id);
-        let id = ctx.ast.binding_pattern_kind_from_binding_identifier(binding_identifier);
-        let id = ctx.ast.binding_pattern(id, NONE, false);
-        let reference =
-            ctx.create_bound_reference_id(SPAN, symbol_name, symbol_id, ReferenceFlags::Read);
+        let id = binding.create_binding_pattern(ctx);
 
+        let reference = binding.create_read_reference(ctx);
         (id, reference)
     }
 

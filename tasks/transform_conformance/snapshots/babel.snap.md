@@ -1645,7 +1645,7 @@ x Output mismatch
 
 * regression/4403/input.js
 Reference flags mismatch for "_ref":
-after transform: ReferenceId(3): ReferenceFlags(Write)
+after transform: ReferenceId(2): ReferenceFlags(Write)
 rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
 
 

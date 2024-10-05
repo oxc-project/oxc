@@ -220,14 +220,12 @@ impl<'a, 'ctx> ReactJsxSource<'a, 'ctx> {
         Some(decl)
     }
 
-    fn get_filename_var(&mut self, ctx: &mut TraverseCtx<'a>) -> BoundIdentifier<'a> {
+    fn get_filename_var(&mut self, ctx: &mut TraverseCtx<'a>) -> &BoundIdentifier<'a> {
         if self.filename_var.is_none() {
-            self.filename_var = Some(BoundIdentifier::new_uid_in_root_scope(
-                FILE_NAME_VAR,
-                SymbolFlags::FunctionScopedVariable,
-                ctx,
-            ));
+            self.filename_var = Some(
+                ctx.generate_uid_in_root_scope(FILE_NAME_VAR, SymbolFlags::FunctionScopedVariable),
+            );
         }
-        self.filename_var.as_ref().unwrap().clone()
+        self.filename_var.as_ref().unwrap()
     }
 }

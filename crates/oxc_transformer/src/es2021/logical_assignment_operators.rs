@@ -342,13 +342,11 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
             return None;
         }
 
-        let symbol_id = ctx
-            .generate_uid_in_current_scope_based_on_node(expr, SymbolFlags::FunctionScopedVariable);
-        let name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
-
         // var _name;
-        self.ctx.var_declarations.insert(name.clone(), symbol_id, None, ctx);
+        let binding = ctx
+            .generate_uid_in_current_scope_based_on_node(expr, SymbolFlags::FunctionScopedVariable);
+        self.ctx.var_declarations.insert(&binding, None, ctx);
 
-        Some(BoundIdentifier::new(name, symbol_id))
+        Some(binding)
     }
 }

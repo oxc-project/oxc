@@ -284,13 +284,7 @@ impl<'a> ArrowFunctions<'a> {
                     ) && !scope_flags.contains(ScopeFlags::Arrow)
                 })
                 .unwrap();
-
-            BoundIdentifier::new_uid(
-                "this",
-                target_scope_id,
-                SymbolFlags::FunctionScopedVariable,
-                ctx,
-            )
+            ctx.generate_uid("this", target_scope_id, SymbolFlags::FunctionScopedVariable)
         });
         Some(this_var.create_spanned_read_reference(span, ctx))
     }

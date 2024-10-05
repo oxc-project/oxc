@@ -290,23 +290,18 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
             _ => "ref",
         };
 
-        let symbol_id =
-            ctx.generate_uid_in_current_scope(name, SymbolFlags::FunctionScopedVariable);
-        let symbol_name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
+        let binding = ctx.generate_uid_in_current_scope(name, SymbolFlags::FunctionScopedVariable);
 
         // var _name;
-        self.ctx.var_declarations.insert(symbol_name.clone(), symbol_id, None, ctx);
+        self.ctx.var_declarations.insert(&binding, None, ctx);
 
-        let ident =
-            ctx.create_bound_reference_id(SPAN, symbol_name, symbol_id, ReferenceFlags::Read);
-
-        // let ident = self.create_new_var_with_expression(&expr);
         // Add new reference `_name = name` to nodes
         let left = ctx.ast.simple_assignment_target_from_identifier_reference(
-            ctx.clone_identifier_reference(&ident, ReferenceFlags::Write),
+            binding.create_write_reference(ctx),
         );
         let op = AssignmentOperator::Assign;
         nodes.push(ctx.ast.expression_assignment(SPAN, op, AssignmentTarget::from(left), expr));
-        ctx.ast.expression_from_identifier_reference(ident)
+
+        ctx.ast.expression_from_identifier_reference(binding.create_read_reference(ctx))
     }
 }

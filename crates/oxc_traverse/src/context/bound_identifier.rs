@@ -1,10 +1,9 @@
-use oxc_ast::ast::{BindingIdentifier, IdentifierReference};
-use oxc_span::{Atom, Span, SPAN};
-use oxc_syntax::{
-    reference::ReferenceFlags,
-    scope::ScopeId,
-    symbol::{SymbolFlags, SymbolId},
+use oxc_ast::{
+    ast::{BindingIdentifier, BindingPattern, IdentifierReference},
+    NONE,
 };
+use oxc_span::{Atom, Span, SPAN};
+use oxc_syntax::{reference::ReferenceFlags, symbol::SymbolId};
 
 use crate::TraverseCtx;
 
@@ -47,42 +46,16 @@ impl<'a> BoundIdentifier<'a> {
         Self { name, symbol_id }
     }
 
-    /// Create `BoundIdentifier` for new binding in specified scope
-    pub fn new_uid(
-        name: &str,
-        scope_id: ScopeId,
-        flags: SymbolFlags,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Self {
-        let symbol_id = ctx.generate_uid(name, scope_id, flags);
-        let name = ctx.ast.atom(&ctx.symbols().names[symbol_id]);
-        Self { name, symbol_id }
-    }
-
-    /// Create `BoundIdentifier` for new binding in root scope
-    pub fn new_uid_in_root_scope(
-        name: &str,
-        flags: SymbolFlags,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Self {
-        let scope_id = ctx.scopes().root_scope_id();
-        Self::new_uid(name, scope_id, flags, ctx)
-    }
-
-    /// Create `BoundIdentifier` for new binding in current scope
-    #[allow(unused)]
-    pub fn new_uid_in_current_scope(
-        name: &str,
-        flags: SymbolFlags,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Self {
-        let scope_id = ctx.current_scope_id();
-        Self::new_uid(name, scope_id, flags, ctx)
-    }
-
     /// Create `BindingIdentifier` for this binding
     pub fn create_binding_identifier(&self) -> BindingIdentifier<'a> {
         BindingIdentifier::new_with_symbol_id(SPAN, self.name.clone(), self.symbol_id)
+    }
+
+    /// Create `BindingPattern` for this binding
+    pub fn create_binding_pattern(&self, ctx: &mut TraverseCtx<'a>) -> BindingPattern<'a> {
+        let ident = self.create_binding_identifier();
+        let binding_pattern_kind = ctx.ast.binding_pattern_kind_from_binding_identifier(ident);
+        ctx.ast.binding_pattern(binding_pattern_kind, NONE, false)
     }
 
     /// Create `IdentifierReference` referencing this binding, which is read from, with dummy `Span`
@@ -132,6 +105,15 @@ impl<'a> BoundIdentifier<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> IdentifierReference<'a> {
         self.create_spanned_reference(span, ReferenceFlags::Read | ReferenceFlags::Write, ctx)
+    }
+
+    /// Create `IdentifierReference` referencing this binding, with specified `ReferenceFlags`
+    pub fn create_reference(
+        &self,
+        flags: ReferenceFlags,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> IdentifierReference<'a> {
+        self.create_spanned_reference(SPAN, flags, ctx)
     }
 
     /// Create `IdentifierReference` referencing this binding, with specified `Span` and `ReferenceFlags`

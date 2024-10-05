@@ -3,8 +3,8 @@ use oxc_ast::{
     ast::{Expression, IdentifierReference, Statement},
     AstBuilder,
 };
-use oxc_semantic::{ScopeTree, SymbolTable};
-use oxc_span::{Atom, CompactStr, Span};
+use oxc_semantic::{NodeId, ScopeTree, SymbolTable};
+use oxc_span::{Atom, CompactStr, Span, SPAN};
 use oxc_syntax::{
     reference::{ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
@@ -15,11 +15,13 @@ use crate::ancestor::{Ancestor, AncestorType};
 
 mod ancestry;
 mod ast_operations;
+use ast_operations::GatherNodeParts;
 mod bound_identifier;
 use ancestry::PopToken;
 pub use ancestry::TraverseAncestry;
 pub use bound_identifier::BoundIdentifier;
 mod identifier;
+use identifier::to_identifier;
 mod scoping;
 pub use scoping::TraverseScoping;
 
@@ -299,49 +301,73 @@ impl<'a> TraverseCtx<'a> {
     ///
     /// See also comments on [`TraverseScoping::generate_uid_name`] for important information
     /// on how UIDs are generated. There are some potential "gotchas".
-    ///
-    /// This is a shortcut for `ctx.scoping.generate_uid`.
     #[inline]
-    pub fn generate_uid(&mut self, name: &str, scope_id: ScopeId, flags: SymbolFlags) -> SymbolId {
-        self.scoping.generate_uid(name, scope_id, flags)
+    pub fn generate_uid(
+        &mut self,
+        name: &str,
+        scope_id: ScopeId,
+        flags: SymbolFlags,
+    ) -> BoundIdentifier<'a> {
+        // Get name for UID
+        let name = self.generate_uid_name(name);
+        let name_atom = self.ast.atom(&name);
+
+        // Add binding to scope
+        let symbol_id =
+            self.symbols_mut().create_symbol(SPAN, name.clone(), flags, scope_id, NodeId::DUMMY);
+        self.scopes_mut().add_binding(scope_id, name, symbol_id);
+
+        BoundIdentifier::new(name_atom, symbol_id)
     }
 
     /// Generate UID in current scope.
     ///
     /// See also comments on [`TraverseScoping::generate_uid_name`] for important information
     /// on how UIDs are generated. There are some potential "gotchas".
-    ///
-    /// This is a shortcut for `ctx.scoping.generate_uid_in_current_scope`.
     #[inline]
-    pub fn generate_uid_in_current_scope(&mut self, name: &str, flags: SymbolFlags) -> SymbolId {
-        self.scoping.generate_uid_in_current_scope(name, flags)
+    pub fn generate_uid_in_current_scope(
+        &mut self,
+        name: &str,
+        flags: SymbolFlags,
+    ) -> BoundIdentifier<'a> {
+        self.generate_uid(name, self.current_scope_id(), flags)
     }
 
     /// Generate UID in root scope.
     ///
     /// See also comments on [`TraverseScoping::generate_uid_name`] for important information
     /// on how UIDs are generated. There are some potential "gotchas".
-    ///
-    /// This is a shortcut for `ctx.scoping.generate_uid_in_root_scope`.
     #[inline]
-    pub fn generate_uid_in_root_scope(&mut self, name: &str, flags: SymbolFlags) -> SymbolId {
-        self.scoping.generate_uid_in_root_scope(name, flags)
+    pub fn generate_uid_in_root_scope(
+        &mut self,
+        name: &str,
+        flags: SymbolFlags,
+    ) -> BoundIdentifier<'a> {
+        self.generate_uid(name, self.scopes().root_scope_id(), flags)
     }
 
     /// Generate UID based on node.
     ///
-    /// See also comments on [`TraverseScoping::generate_uid_name`] for important information
-    /// on how UIDs are generated. There are some potential "gotchas".
+    /// Recursively gathers the identifying names of a node, and joins them with `$`.
     ///
-    /// This is a shortcut for `ctx.scoping.generate_uid_based_on_node`.
+    /// Based on Babel's `scope.generateUidBasedOnNode` logic.
+    /// <https://github.com/babel/babel/blob/419644f27c5c59deb19e71aaabd417a3bc5483ca/packages/babel-traverse/src/scope/index.ts#L543>
     #[inline]
     pub fn generate_uid_based_on_node(
         &mut self,
         node: &Expression<'a>,
         scope_id: ScopeId,
         flags: SymbolFlags,
-    ) -> SymbolId {
-        self.scoping.generate_uid_based_on_node(node, scope_id, flags)
+    ) -> BoundIdentifier<'a> {
+        let mut parts = String::new();
+        node.gather(&mut |part| {
+            if !parts.is_empty() {
+                parts.push('$');
+            }
+            parts.push_str(part);
+        });
+        let name = if parts.is_empty() { "ref" } else { parts.trim_start_matches('_') };
+        self.generate_uid(&to_identifier(name.get(..20).unwrap_or(name)), scope_id, flags)
     }
 
     /// Generate UID in current scope based on node.
@@ -355,8 +381,8 @@ impl<'a> TraverseCtx<'a> {
         &mut self,
         node: &Expression<'a>,
         flags: SymbolFlags,
-    ) -> SymbolId {
-        self.scoping.generate_uid_in_current_scope_based_on_node(node, flags)
+    ) -> BoundIdentifier<'a> {
+        self.generate_uid_based_on_node(node, self.current_scope_id(), flags)
     }
 
     /// Create a reference bound to a `SymbolId`.
