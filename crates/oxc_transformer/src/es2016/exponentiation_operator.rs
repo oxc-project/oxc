@@ -208,22 +208,26 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
     ) -> Option<Expression<'a>> {
         let reference = match node {
             SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
-                if ident
-                    .reference_id
-                    .get()
-                    .is_some_and(|reference_id| ctx.symbols().has_binding(reference_id))
-                {
+                let reference = ctx.symbols().get_reference(ident.reference_id().unwrap());
+                if let Some(symbol_id) = reference.symbol_id() {
                     // this variable is declared in scope so we can be 100% sure
                     // that evaluating it multiple times won't trigger a getter
                     // or something else
                     return Some(ctx.ast.expression_from_identifier_reference(
-                        ctx.clone_identifier_reference(ident, ReferenceFlags::Write),
+                        ctx.create_bound_reference_id(
+                            SPAN,
+                            ident.name.clone(),
+                            symbol_id,
+                            ReferenceFlags::Write,
+                        ),
                     ));
                 }
                 // could possibly trigger a getter so we need to only evaluate it once
-                ctx.ast.expression_from_identifier_reference(
-                    ctx.clone_identifier_reference(ident, ReferenceFlags::Read),
-                )
+                ctx.ast.expression_from_identifier_reference(ctx.create_unbound_reference_id(
+                    SPAN,
+                    ident.name.clone(),
+                    ReferenceFlags::Read,
+                ))
             }
             match_member_expression!(SimpleAssignmentTarget) => {
                 let expr = match node {
