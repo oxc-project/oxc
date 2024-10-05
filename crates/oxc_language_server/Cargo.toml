@@ -22,19 +22,21 @@ test = false
 doctest = false
 
 [dependencies]
-dashmap = { workspace = true }
-env_logger = { workspace = true, features = ["humantime"] }
-futures = { workspace = true }
-globset = { workspace = true }
-ignore = { workspace = true, features = ["simd-accel"] }
-log = { workspace = true }
 oxc_allocator = { workspace = true }
 oxc_diagnostics = { workspace = true }
 oxc_linter = { workspace = true }
 oxc_parser = { workspace = true }
 oxc_semantic = { workspace = true }
 oxc_span = { workspace = true }
+
+dashmap = { workspace = true }
+env_logger = { workspace = true, features = ["humantime"] }
+futures = { workspace = true }
+globset = { workspace = true }
+ignore = { workspace = true, features = ["simd-accel"] }
+log = { workspace = true }
 ropey = { workspace = true }
+rustc-hash = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 tokio = { workspace = true, features = ["full"] }

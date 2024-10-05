@@ -34,7 +34,11 @@ use super::{plugin_name_to_prefix, LintContext};
 #[must_use]
 #[non_exhaustive]
 pub(crate) struct ContextHost<'a> {
+    /// Shared semantic information about the file being linted, which includes scopes, symbols
+    /// and AST nodes. See [`Semantic`].
     pub(super) semantic: Rc<Semantic<'a>>,
+    /// Information about specific rules that should be disabled or enabled, via comment directives like
+    /// `eslint-disable` or `eslint-disable-next-line`.
     pub(super) disable_directives: DisableDirectives<'a>,
     /// Diagnostics reported by the linter.
     ///
@@ -46,9 +50,14 @@ pub(crate) struct ContextHost<'a> {
     /// Set via the `--fix`, `--fix-suggestions`, and `--fix-dangerously` CLI
     /// flags.
     pub(super) fix: FixKind,
+    /// Path to the file being linted.
     pub(super) file_path: Box<Path>,
+    /// Global linter configuration, such as globals to include and the target
+    /// environments, and other settings.
     pub(super) config: Arc<LintConfig>,
+    /// Front-end frameworks that might be in use in the target file.
     pub(super) frameworks: FrameworkFlags,
+    /// A list of all available linter plugins.
     pub(super) plugins: LintPlugins,
 }
 
@@ -88,12 +97,14 @@ impl<'a> ContextHost<'a> {
         .sniff_for_frameworks()
     }
 
+    /// Set the linter configuration for this context.
     #[inline]
     pub fn with_config(mut self, config: &Arc<LintConfig>) -> Self {
         self.config = Arc::clone(config);
         self
     }
 
+    /// Shared reference to the [`Semantic`] analysis of the file.
     #[inline]
     pub fn semantic(&self) -> &Semantic<'a> {
         &self.semantic
@@ -115,12 +126,14 @@ impl<'a> ContextHost<'a> {
         self.semantic.source_type()
     }
 
+    /// Add a diagnostic message to the end of the list of diagnostics. Can be used
+    /// by any rule to report issues.
     #[inline]
     pub(super) fn push_diagnostic(&self, diagnostic: Message<'a>) {
         self.diagnostics.borrow_mut().push(diagnostic);
     }
 
-    /// Take all diagnostics collected during linting.
+    /// Take ownership of all diagnostics collected during linting.
     pub fn take_diagnostics(&self) -> Vec<Message<'a>> {
         // NOTE: diagnostics are only ever borrowed here and in push_diagnostic.
         // The latter drops the reference as soon as the function returns, so
@@ -129,9 +142,10 @@ impl<'a> ContextHost<'a> {
         std::mem::take(&mut *messages)
     }
 
+    /// Creates a new [`LintContext`] for a specific rule.
     pub fn spawn(self: Rc<Self>, rule: &RuleWithSeverity) -> LintContext<'a> {
         let rule_name = rule.name();
-        let plugin_name = self.map_jest(rule.plugin_name(), rule_name);
+        let plugin_name = self.map_jest_rule_to_vitest(rule);
 
         LintContext {
             parent: self,
@@ -144,6 +158,7 @@ impl<'a> ContextHost<'a> {
         }
     }
 
+    /// Creates a new [`LintContext`] for testing purposes only.
     #[cfg(test)]
     pub(crate) fn spawn_for_test(self: Rc<Self>) -> LintContext<'a> {
         LintContext {
@@ -157,10 +172,15 @@ impl<'a> ContextHost<'a> {
         }
     }
 
-    fn map_jest(&self, plugin_name: &'static str, rule_name: &str) -> &'static str {
+    /// Maps Jest rule names and maps to Vitest rules when possible, returning the original plugin otherwise.
+    ///
+    /// Many Vitest rules are essentially ports of the Jest plugin rules with minor modifications.
+    /// For these rules, we use the corresponding jest rules with some adjustments for compatibility.
+    fn map_jest_rule_to_vitest(&self, rule: &RuleWithSeverity) -> &'static str {
+        let plugin_name = rule.plugin_name();
         if self.plugins.has_vitest()
             && plugin_name == "jest"
-            && utils::is_jest_rule_adapted_to_vitest(rule_name)
+            && utils::is_jest_rule_adapted_to_vitest(rule.name())
         {
             "vitest"
         } else {

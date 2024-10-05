@@ -7,16 +7,16 @@ use oxc_syntax::identifier::is_line_terminator;
 
 use crate::Codegen;
 
-pub static ANNOTATION_MATCHER: Lazy<DoubleArrayAhoCorasick<usize>> = Lazy::new(|| {
+static ANNOTATION_MATCHER: Lazy<DoubleArrayAhoCorasick<usize>> = Lazy::new(|| {
     let patterns = vec!["#__NO_SIDE_EFFECTS__", "@__NO_SIDE_EFFECTS__", "@__PURE__", "#__PURE__"];
 
     DoubleArrayAhoCorasick::new(patterns).unwrap()
 });
 
-pub type CommentsMap = FxHashMap</* attached_to */ u32, Vec<Comment>>;
+pub(crate) type CommentsMap = FxHashMap</* attached_to */ u32, Vec<Comment>>;
 
 impl<'a> Codegen<'a> {
-    pub fn preserve_annotate_comments(&self) -> bool {
+    pub(crate) fn preserve_annotate_comments(&self) -> bool {
         self.comment_options.preserve_annotate_comments && !self.options.minify
     }
 
@@ -26,11 +26,11 @@ impl<'a> Codegen<'a> {
         }
     }
 
-    pub fn has_comment(&self, start: u32) -> bool {
+    pub(crate) fn has_comment(&self, start: u32) -> bool {
         self.comments.contains_key(&start)
     }
 
-    pub fn has_annotation_comment(&self, start: u32) -> bool {
+    pub(crate) fn has_annotation_comment(&self, start: u32) -> bool {
         if !self.preserve_annotate_comments() {
             return false;
         }
@@ -40,7 +40,7 @@ impl<'a> Codegen<'a> {
         })
     }
 
-    pub fn has_non_annotation_comment(&self, start: u32) -> bool {
+    pub(crate) fn has_non_annotation_comment(&self, start: u32) -> bool {
         if !self.preserve_annotate_comments() {
             return self.has_comment(start);
         }

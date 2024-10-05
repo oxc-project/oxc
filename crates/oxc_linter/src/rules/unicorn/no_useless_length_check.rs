@@ -1,6 +1,5 @@
 use std::fmt::Debug;
 
-use itertools::concat;
 use oxc_ast::{
     ast::{Expression, LogicalExpression},
     AstKind,
@@ -158,11 +157,10 @@ impl Rule for NoUselessLengthCheck {
             if ![LogicalOperator::And, LogicalOperator::Or].contains(&log_expr.operator) {
                 return;
             }
-            let flat_expr = flat_logical_expression(log_expr);
-            for i in 0..flat_expr.len() - 1 {
-                if let Some(diag) =
-                    is_useless_check(flat_expr[i], flat_expr[i + 1], log_expr.operator)
-                {
+            let mut flat_exprs = Vec::new();
+            make_flat_logical_expression(log_expr, &mut flat_exprs);
+            for window in flat_exprs.windows(2) {
+                if let Some(diag) = is_useless_check(window[0], window[1], log_expr.operator) {
                     ctx.diagnostic(diag);
                 }
             }
@@ -170,30 +168,31 @@ impl Rule for NoUselessLengthCheck {
     }
 }
 
-fn flat_logical_expression<'a>(node: &'a LogicalExpression<'a>) -> Vec<&'a Expression<'a>> {
-    let left = match &node.left.without_parentheses() {
+fn make_flat_logical_expression<'a>(
+    node: &'a LogicalExpression<'a>,
+    result: &mut Vec<&'a Expression<'a>>,
+) {
+    match &node.left.without_parentheses() {
         Expression::LogicalExpression(le) => {
             if le.operator == node.operator {
-                flat_logical_expression(le)
+                make_flat_logical_expression(le, result);
             } else {
-                vec![&node.left]
+                result.push(&node.left);
             }
         }
-        _ => vec![&node.left],
+        _ => result.push(&node.left),
     };
 
-    let right = match &node.right.without_parentheses() {
+    match &node.right.without_parentheses() {
         Expression::LogicalExpression(le) => {
             if le.operator == node.operator {
-                flat_logical_expression(le)
+                make_flat_logical_expression(le, result);
             } else {
-                vec![&node.right]
+                result.push(&node.right);
             }
         }
-        _ => vec![&node.right],
+        _ => result.push(&node.right),
     };
-
-    concat(vec![left, right])
 }
 
 #[test]

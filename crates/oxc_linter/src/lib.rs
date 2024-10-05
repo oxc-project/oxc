@@ -18,7 +18,7 @@ mod rules;
 mod service;
 mod utils;
 
-pub mod partial_loader;
+pub mod loader;
 pub mod table;
 
 use std::{io::Write, path::Path, rc::Rc, sync::Arc};

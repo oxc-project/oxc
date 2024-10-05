@@ -1456,7 +1456,12 @@ after transform: SymbolId(21): [ReferenceId(132), ReferenceId(133), ReferenceId(
 rebuilt        : SymbolId(14): [ReferenceId(123), ReferenceId(127)]
 
 * logical-assignment/null-coalescing/input.js
-x Output mismatch
+Symbol reference IDs mismatch:
+after transform: SymbolId(17): [ReferenceId(86), ReferenceId(87), ReferenceId(90)]
+rebuilt        : SymbolId(10): [ReferenceId(73), ReferenceId(79)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(20): [ReferenceId(94), ReferenceId(95), ReferenceId(98)]
+rebuilt        : SymbolId(13): [ReferenceId(88), ReferenceId(94)]
 
 * logical-assignment/null-coalescing-without-other/input.js
 Symbol reference IDs mismatch:

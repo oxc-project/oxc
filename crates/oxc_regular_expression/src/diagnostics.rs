@@ -3,43 +3,6 @@ use oxc_span::Span;
 
 const PREFIX: &str = "Invalid regular expression:";
 
-// For (Literal)Parser ---
-
-#[cold]
-pub fn unexpected_literal_char(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("{PREFIX} Unexpected literal character")).with_label(span)
-}
-
-#[cold]
-pub fn unterminated_literal(span: Span, kind: &str) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("{PREFIX} Unterminated {kind}")).with_label(span)
-}
-
-#[cold]
-pub fn empty_literal(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("{PREFIX} Empty literal")).with_label(span)
-}
-
-// For FlagsParser ---
-
-#[cold]
-pub fn duplicated_flag(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("{PREFIX} Duplicated flag")).with_label(span)
-}
-
-#[cold]
-pub fn unknown_flag(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("{PREFIX} Unknown flag")).with_label(span)
-}
-
-#[cold]
-pub fn invalid_unicode_flags(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("{PREFIX} Invalid flags, `u` and `v` should be used alone"))
-        .with_label(span)
-}
-
-// For PatternParser ---
-
 #[cold]
 pub fn duplicated_capturing_group_names(spans: Vec<Span>) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("{PREFIX} Duplicated capturing group names")).with_labels(spans)

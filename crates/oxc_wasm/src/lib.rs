@@ -241,15 +241,9 @@ impl Oxc {
                 targets: Targets::from_query("chrome 51"),
                 ..EnvOptions::default()
             }) {
-                let result = Transformer::new(
-                    &allocator,
-                    &path,
-                    source_type,
-                    source_text,
-                    trivias.clone(),
-                    options,
-                )
-                .build_with_symbols_and_scopes(symbols, scopes, &mut program);
+                let result =
+                    Transformer::new(&allocator, &path, source_text, trivias.clone(), options)
+                        .build_with_symbols_and_scopes(symbols, scopes, &mut program);
                 if !result.errors.is_empty() {
                     self.save_diagnostics(
                         result.errors.into_iter().map(Error::from).collect::<Vec<_>>(),

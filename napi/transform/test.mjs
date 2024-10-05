@@ -62,7 +62,7 @@ test(
     return <button onClick={() => setCount(count + 1)}>count is {count}</button>;
   };
 `,
-    { react: { refresh: {} } },
+    { jsx: { refresh: {} } },
   ),
   {
     code: 'var _s = $RefreshSig$();\n' +
@@ -80,6 +80,31 @@ test(
       '_c = App;\n' +
       'var _c;\n' +
       '$RefreshReg$(_c, "App");\n',
+  },
+);
+
+// Test define plugin
+// TODO: should be constant folded
+test(
+  oxc.transform('test.ts', 'if (process.env.NODE_ENV === "production") { foo; }', {
+    define: {
+      'process.env.NODE_ENV': 'false',
+    },
+  }),
+  {
+    code: 'if (false === "production") {\n\tfoo;\n}\n',
+  },
+);
+
+// Test inject plugin
+test(
+  oxc.transform('test.ts', 'let _ = Object.assign', {
+    inject: {
+      'Object.assign': 'foo',
+    },
+  }),
+  {
+    code: 'import $inject_Object_assign from "foo";\nlet _ = $inject_Object_assign;\n',
   },
 );
 

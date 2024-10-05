@@ -5,8 +5,6 @@ use serde::{
     Deserialize, Deserializer,
 };
 
-use crate::context::TransformCtx;
-
 fn default_for_jsx_pragma() -> Cow<'static, str> {
     Cow::Borrowed("React.createElement")
 }
@@ -58,41 +56,6 @@ pub struct TypeScriptOptions {
     /// When set to `true`, same as [`RewriteExtensionsMode::Rewrite`]. Defaults to `false` (do nothing).
     #[serde(deserialize_with = "deserialize_rewrite_import_extensions")]
     pub rewrite_import_extensions: Option<RewriteExtensionsMode>,
-}
-
-impl TypeScriptOptions {
-    /// Scan through all comments and find the following pragmas
-    ///
-    /// * @jsx React.createElement
-    /// * @jsxFrag React.Fragment
-    ///
-    /// The comment does not need to be a jsdoc,
-    /// otherwise `JSDoc` could be used instead.
-    ///
-    /// This behavior is aligned with babel.
-    pub(crate) fn update_with_comments(&mut self, ctx: &TransformCtx) {
-        for comment in ctx.trivias.comments() {
-            let mut comment = comment.span.source_text(ctx.source_text).trim_start();
-            // strip leading jsdoc comment `*` and then whitespaces
-            while let Some(cur_comment) = comment.strip_prefix('*') {
-                comment = cur_comment.trim_start();
-            }
-            // strip leading `@`
-            let Some(comment) = comment.strip_prefix('@') else { continue };
-
-            // read jsxFrag
-            if let Some(pragma_frag) = comment.strip_prefix("jsxFrag").map(str::trim) {
-                self.jsx_pragma_frag = Cow::from(pragma_frag.to_string());
-                continue;
-            }
-
-            // Put this condition at the end to avoid breaking @jsxXX
-            // read jsx
-            if let Some(pragma) = comment.strip_prefix("jsx").map(str::trim) {
-                self.jsx_pragma = Cow::from(pragma.to_string());
-            }
-        }
-    }
 }
 
 impl Default for TypeScriptOptions {

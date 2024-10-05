@@ -21,12 +21,8 @@ test = false
 doctest = false
 
 [dependencies]
-oxc_allocator = { workspace = true }
-oxc_ast = { workspace = true, features = ["serialize"] }
-oxc_diagnostics = { workspace = true }
-oxc_module_lexer = { path = "../../crates/oxc_module_lexer" }
-oxc_parser = { workspace = true }
-oxc_span = { workspace = true }
+oxc = { workspace = true, features = ["napi", "serialize", "parser"] }
+oxc_module_lexer = { workspace = true }
 
 napi = { workspace = true, features = ["async"] }
 napi-derive = { workspace = true }

@@ -201,7 +201,7 @@ impl Deref for NoUnusedVars {
 
 impl Rule for NoUnusedVars {
     fn from_configuration(value: serde_json::Value) -> Self {
-        Self(Box::new(NoUnusedVarsOptions::from(value)))
+        Self(Box::new(NoUnusedVarsOptions::try_from(value).unwrap()))
     }
 
     fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {

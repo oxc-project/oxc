@@ -1,7 +1,5 @@
 use serde::Deserialize;
 
-use crate::TransformCtx;
-
 #[inline]
 fn default_as_true() -> bool {
     true
@@ -13,14 +11,14 @@ fn default_as_true() -> bool {
 /// classic does not automatic import anything.
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub enum ReactJsxRuntime {
+pub enum JsxRuntime {
     Classic,
     /// The default runtime is switched to automatic in Babel 8.
     #[default]
     Automatic,
 }
 
-impl ReactJsxRuntime {
+impl JsxRuntime {
     pub fn is_classic(self) -> bool {
         self == Self::Classic
     }
@@ -32,7 +30,7 @@ impl ReactJsxRuntime {
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(default, rename_all = "camelCase", deny_unknown_fields)]
-pub struct ReactOptions {
+pub struct JsxOptions {
     #[serde(skip)]
     pub jsx_plugin: bool,
 
@@ -48,7 +46,7 @@ pub struct ReactOptions {
     // Both Runtimes
     //
     /// Decides which runtime to use.
-    pub runtime: ReactJsxRuntime,
+    pub runtime: JsxRuntime,
 
     /// This toggles behavior specific to development, such as adding __source and __self.
     ///
@@ -109,14 +107,14 @@ pub struct ReactOptions {
     pub refresh: Option<ReactRefreshOptions>,
 }
 
-impl Default for ReactOptions {
+impl Default for JsxOptions {
     fn default() -> Self {
         Self {
             jsx_plugin: true,
             display_name_plugin: true,
             jsx_self_plugin: false,
             jsx_source_plugin: false,
-            runtime: ReactJsxRuntime::default(),
+            runtime: JsxRuntime::default(),
             development: false,
             throw_if_namespace: default_as_true(),
             pure: default_as_true(),
@@ -130,63 +128,12 @@ impl Default for ReactOptions {
     }
 }
 
-impl ReactOptions {
+impl JsxOptions {
     pub fn conform(&mut self) {
         if self.development {
             self.jsx_plugin = true;
             self.jsx_self_plugin = true;
             self.jsx_source_plugin = true;
-        }
-    }
-
-    /// Scan through all comments and find the following pragmas:
-    ///
-    /// * @jsxRuntime classic / automatic
-    /// * @jsxImportSource custom-jsx-library
-    /// * @jsxFrag Preact.Fragment
-    /// * @jsx Preact.h
-    ///
-    /// The comment does not need to be a jsdoc comment,
-    /// otherwise `JSDoc` could be used instead.
-    ///
-    /// This behavior is aligned with babel.
-    pub(crate) fn update_with_comments(&mut self, ctx: &TransformCtx) {
-        for comment in ctx.trivias.comments() {
-            let mut comment = comment.span.source_text(ctx.source_text).trim_start();
-            // strip leading jsdoc comment `*` and then whitespaces
-            while let Some(cur_comment) = comment.strip_prefix('*') {
-                comment = cur_comment.trim_start();
-            }
-            // strip leading `@`
-            let Some(comment) = comment.strip_prefix('@') else { continue };
-
-            // read jsxRuntime
-            if let Some(runtime) = comment.strip_prefix("jsxRuntime") {
-                self.runtime = match runtime.trim() {
-                    "classic" => ReactJsxRuntime::Classic,
-                    "automatic" => ReactJsxRuntime::Automatic,
-                    _ => continue,
-                };
-                continue;
-            }
-
-            // read jsxImportSource
-            if let Some(import_source) = comment.strip_prefix("jsxImportSource").map(str::trim) {
-                self.import_source = Some(import_source.to_string());
-                continue;
-            }
-
-            // read jsxFrag
-            if let Some(pragma_frag) = comment.strip_prefix("jsxFrag").map(str::trim) {
-                self.pragma_frag = Some(pragma_frag.to_string());
-                continue;
-            }
-
-            // Put this condition at the end to avoid breaking @jsxXX
-            // read jsx
-            if let Some(pragma) = comment.strip_prefix("jsx").map(str::trim) {
-                self.pragma = Some(pragma.to_string());
-            }
         }
     }
 }

@@ -272,9 +272,11 @@ pub trait NodeUtil {
                     None
                 }
             }
-            Expression::BigIntLiteral(_bigint_literal) => {
-                // TODO: evaluate the bigint value
-                None
+            Expression::BigIntLiteral(bigint_literal) => {
+                let value =
+                    self.get_string_bigint_value(bigint_literal.raw.as_str().trim_end_matches('n'));
+                debug_assert!(value.is_some(), "Failed to parse {}", bigint_literal.raw);
+                value
             }
             Expression::BooleanLiteral(bool_literal) => {
                 if bool_literal.value {

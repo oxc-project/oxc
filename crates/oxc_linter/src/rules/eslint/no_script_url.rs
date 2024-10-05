@@ -7,7 +7,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_script_url_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpeced `javascript:` url")
+    OxcDiagnostic::warn("Unexpected `javascript:` url")
         .with_help("Execute the code directly instead.")
         .with_label(span)
 }
