@@ -162,7 +162,8 @@ impl<'a> PeepholeFoldConstants {
             }
             // -0 -> -0.0
             UnaryOperator::UnaryNegation if expr.argument.is_number_0() => {
-                let new_literal = ctx.ast.expression_numeric_literal(SPAN, -0.0, "-0.0", NumberBase::Float);
+                let new_literal =
+                    ctx.ast.expression_numeric_literal(SPAN, -0.0, "-0.0", NumberBase::Float);
                 Some(new_literal)
             }
             // `--1` -> `1`
