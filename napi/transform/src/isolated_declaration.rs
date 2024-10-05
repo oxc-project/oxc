@@ -3,10 +3,7 @@ use oxc::{
     allocator::Allocator,
     codegen::{CodegenReturn, CommentOptions},
     isolated_declarations::IsolatedDeclarations,
-    napi::{
-        isolated_declarations::{IsolatedDeclarationsOptions, IsolatedDeclarationsResult},
-        transform::TransformOptions,
-    },
+    napi::isolated_declarations::{IsolatedDeclarationsOptions, IsolatedDeclarationsResult},
     span::SourceType,
 };
 
@@ -23,13 +20,8 @@ pub fn isolated_declaration(
     let source_type = SourceType::from_path(&filename).unwrap_or_default().with_typescript(true);
     let allocator = Allocator::default();
     let options = options.unwrap_or_default();
-    let ctx = TransformContext::new(
-        &allocator,
-        &filename,
-        &source_text,
-        source_type,
-        Some(&TransformOptions { sourcemap: options.sourcemap, ..Default::default() }),
-    );
+    let ctx =
+        TransformContext::new(&allocator, &filename, &source_text, source_type, options.sourcemap);
     let transformed_ret = build_declarations(&ctx, options);
 
     IsolatedDeclarationsResult {

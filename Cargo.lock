@@ -1992,7 +1992,6 @@ dependencies = [
  "napi-build",
  "napi-derive",
  "oxc",
- "rustc-hash",
 ]
 
 [[package]]

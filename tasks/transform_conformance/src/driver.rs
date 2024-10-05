@@ -1,9 +1,8 @@
 use std::{mem, ops::ControlFlow, path::Path};
 
 use oxc::{
-    ast::ast::Program,
-    ast::Trivias,
-    codegen::{CodeGenerator, CodegenOptions},
+    ast::{ast::Program, Trivias},
+    codegen::{CodeGenerator, CodegenOptions, CodegenReturn},
     diagnostics::OxcDiagnostic,
     mangler::Mangler,
     span::SourceType,
@@ -36,8 +35,8 @@ impl CompilerInterface for Driver {
         self.errors.extend(errors);
     }
 
-    fn after_codegen(&mut self, printed: String) {
-        self.printed = printed;
+    fn after_codegen(&mut self, ret: CodegenReturn) {
+        self.printed = ret.source_text;
     }
 
     fn after_transform(
@@ -62,11 +61,12 @@ impl CompilerInterface for Driver {
         &self,
         program: &Program<'a>,
         _source_text: &'a str,
+        _source_path: &Path,
         _trivias: &Trivias,
         mangler: Option<Mangler>,
         options: CodegenOptions,
-    ) -> String {
-        CodeGenerator::new().with_options(options).with_mangler(mangler).build(program).source_text
+    ) -> CodegenReturn {
+        CodeGenerator::new().with_options(options).with_mangler(mangler).build(program)
     }
 }
 

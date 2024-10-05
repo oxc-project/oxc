@@ -1,57 +1,123 @@
+use std::{path::Path, sync::Arc};
+
 use napi::Either;
 use napi_derive::napi;
-use rustc_hash::FxHashMap;
 
 use oxc::{
-    allocator::Allocator,
     codegen::CodegenReturn,
-    napi::{source_map::SourceMap, transform::TransformOptions},
-    semantic::{ScopeTree, SemanticBuilder, SymbolTable},
-    span::SourceType,
-    transformer::{
-        InjectGlobalVariables, InjectGlobalVariablesConfig, InjectImport, ReplaceGlobalDefines,
-        ReplaceGlobalDefinesConfig, Transformer,
+    diagnostics::{Error, NamedSource, OxcDiagnostic},
+    napi::{
+        source_map::SourceMap,
+        transform::{TransformOptions, TransformResult},
     },
+    span::SourceType,
+    transformer::{InjectGlobalVariablesConfig, InjectImport, ReplaceGlobalDefinesConfig},
+    CompilerInterface,
 };
 
-use crate::{context::TransformContext, isolated_declaration};
+#[derive(Default)]
+struct Compiler {
+    transform_options: oxc::transformer::TransformOptions,
+    sourcemap: bool,
 
-// NOTE: Use JSDoc syntax for all doc comments, not rustdoc.
-// NOTE: Types must be aligned with [@types/babel__core](https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/babel__core/index.d.ts).
+    printed: String,
+    printed_sourcemap: Option<SourceMap>,
 
-#[napi(object)]
-pub struct TransformResult {
-    /// The transformed code.
-    ///
-    /// If parsing failed, this will be an empty string.
-    pub code: String,
+    declaration: Option<String>,
+    declaration_map: Option<SourceMap>,
 
-    /// The source map for the transformed code.
-    ///
-    /// This will be set if {@link TransformOptions#sourcemap} is `true`.
-    pub map: Option<SourceMap>,
+    define: Option<ReplaceGlobalDefinesConfig>,
+    inject: Option<InjectGlobalVariablesConfig>,
 
-    /// The `.d.ts` declaration file for the transformed code. Declarations are
-    /// only generated if `declaration` is set to `true` and a TypeScript file
-    /// is provided.
-    ///
-    /// If parsing failed and `declaration` is set, this will be an empty string.
-    ///
-    /// @see {@link TypeScriptOptions#declaration}
-    /// @see [declaration tsconfig option](https://www.typescriptlang.org/tsconfig/#declaration)
-    pub declaration: Option<String>,
+    errors: Vec<OxcDiagnostic>,
+}
 
-    /// Declaration source map. Only generated if both
-    /// {@link TypeScriptOptions#declaration declaration} and
-    /// {@link TransformOptions#sourcemap sourcemap} are set to `true`.
-    pub declaration_map: Option<SourceMap>,
+impl Compiler {
+    fn new(options: Option<TransformOptions>) -> Result<Self, Vec<OxcDiagnostic>> {
+        let mut options = options;
+        let sourcemap = options.as_ref().and_then(|o| o.sourcemap).unwrap_or_default();
 
-    /// Parse and transformation errors.
-    ///
-    /// Oxc's parser recovers from common syntax errors, meaning that
-    /// transformed code may still be available even if there are errors in this
-    /// list.
-    pub errors: Vec<String>,
+        let define = options
+            .as_mut()
+            .and_then(|options| options.define.take())
+            .map(|map| {
+                let define = map.into_iter().collect::<Vec<_>>();
+                ReplaceGlobalDefinesConfig::new(&define)
+            })
+            .transpose()?;
+
+        let inject = options
+            .as_mut()
+            .and_then(|options| options.inject.take())
+            .map(|map| {
+                map.into_iter()
+                    .map(|(local, value)| match value {
+                        Either::A(source) => Ok(InjectImport::default_specifier(&source, &local)),
+                        Either::B(v) => {
+                            if v.len() != 2 {
+                                return Err(vec![OxcDiagnostic::error(
+                                    "Inject plugin did not receive a tuple [string, string].",
+                                )]);
+                            }
+                            let source = v[0].to_string();
+                            Ok(if v[1] == "*" {
+                                InjectImport::namespace_specifier(&source, &local)
+                            } else {
+                                InjectImport::named_specifier(&source, Some(&v[1]), &local)
+                            })
+                        }
+                    })
+                    .collect::<Result<Vec<_>, _>>()
+            })
+            .transpose()?
+            .map(InjectGlobalVariablesConfig::new);
+
+        let transform_options =
+            options.map(oxc::transformer::TransformOptions::from).unwrap_or_default();
+        Ok(Self {
+            transform_options,
+            sourcemap,
+            printed: String::default(),
+            printed_sourcemap: None,
+            declaration: None,
+            declaration_map: None,
+            define,
+            inject,
+            errors: vec![],
+        })
+    }
+}
+
+impl CompilerInterface for Compiler {
+    fn handle_errors(&mut self, errors: Vec<OxcDiagnostic>) {
+        self.errors.extend(errors);
+    }
+
+    fn enable_sourcemap(&self) -> bool {
+        self.sourcemap
+    }
+
+    fn transform_options(&self) -> Option<oxc::transformer::TransformOptions> {
+        Some(self.transform_options.clone())
+    }
+
+    fn define_options(&self) -> Option<ReplaceGlobalDefinesConfig> {
+        self.define.clone()
+    }
+
+    fn inject_options(&self) -> Option<InjectGlobalVariablesConfig> {
+        self.inject.clone()
+    }
+
+    fn after_codegen(&mut self, ret: CodegenReturn) {
+        self.printed = ret.source_text;
+        self.printed_sourcemap = ret.source_map.map(SourceMap::from);
+    }
+
+    fn after_isolated_declarations(&mut self, ret: CodegenReturn) {
+        self.declaration.replace(ret.source_text);
+        self.declaration_map = ret.source_map.map(SourceMap::from);
+    }
 }
 
 /// Transpile a JavaScript or TypeScript into a target ECMAScript version.
@@ -71,8 +137,9 @@ pub fn transform(
     source_text: String,
     options: Option<TransformOptions>,
 ) -> TransformResult {
+    let source_path = Path::new(&filename);
     let source_type = {
-        let mut source_type = SourceType::from_path(&filename).unwrap_or_default();
+        let mut source_type = SourceType::from_path(source_path).unwrap_or_default();
         // Force `script` or `module`
         match options.as_ref().and_then(|options| options.source_type.as_deref()) {
             Some("script") => source_type = source_type.with_script(true),
@@ -82,125 +149,56 @@ pub fn transform(
         source_type
     };
 
-    let allocator = Allocator::default();
-    let ctx =
-        TransformContext::new(&allocator, &filename, &source_text, source_type, options.as_ref());
-
-    let declarations_result = source_type
-        .is_typescript()
-        .then(|| ctx.declarations())
-        .flatten()
-        .map(|options| isolated_declaration::build_declarations(&ctx, *options));
-
-    let transpile_result = transpile(&ctx, options);
-
-    let (declaration, declaration_map) = declarations_result
-        .map_or((None, None), |d| (Some(d.source_text), d.source_map.map(Into::into)));
+    let mut compiler = match Compiler::new(options) {
+        Ok(compiler) => compiler,
+        Err(errors) => {
+            return TransformResult {
+                errors: wrap_diagnostics(&filename, source_type, &source_text, errors),
+                ..Default::default()
+            }
+        }
+    };
+    compiler.compile(&source_text, source_type, source_path);
 
     TransformResult {
-        code: transpile_result.source_text,
-        map: transpile_result.source_map.map(Into::into),
-        declaration,
-        declaration_map,
-        errors: ctx.take_and_render_reports(),
+        code: compiler.printed,
+        map: compiler.printed_sourcemap,
+        declaration: compiler.declaration,
+        declaration_map: compiler.declaration_map,
+        errors: wrap_diagnostics(&filename, source_type, &source_text, compiler.errors),
     }
 }
 
-fn transpile(ctx: &TransformContext<'_>, options: Option<TransformOptions>) -> CodegenReturn {
-    let semantic_ret = SemanticBuilder::new(ctx.source_text())
-        // Estimate transformer will triple scopes, symbols, references
-        .with_excess_capacity(2.0)
-        .with_check_syntax_error(true)
-        .build(&ctx.program());
-    ctx.add_diagnostics(semantic_ret.errors);
-
-    let mut options = options;
-    let define = options.as_mut().and_then(|options| options.define.take());
-    let inject = options.as_mut().and_then(|options| options.inject.take());
-
-    let options = options.map(oxc::transformer::TransformOptions::from).unwrap_or_default();
-
-    let (mut symbols, mut scopes) = semantic_ret.semantic.into_symbol_table_and_scope_tree();
-
-    let ret = Transformer::new(
-        ctx.allocator,
-        ctx.file_path(),
-        ctx.source_text(),
-        ctx.trivias.clone(),
-        options,
-    )
-    .build_with_symbols_and_scopes(symbols, scopes, &mut ctx.program_mut());
-    ctx.add_diagnostics(ret.errors);
-    symbols = ret.symbols;
-    scopes = ret.scopes;
-
-    if let Some(define) = define {
-        (symbols, scopes) = define_plugin(ctx, define, symbols, scopes);
+fn wrap_diagnostics(
+    filename: &str,
+    source_type: SourceType,
+    source_text: &str,
+    errors: Vec<OxcDiagnostic>,
+) -> Vec<String> {
+    if errors.is_empty() {
+        return vec![];
     }
-
-    if let Some(inject) = inject {
-        _ = inject_plugin(ctx, inject, symbols, scopes);
-    }
-
-    ctx.codegen().build(&ctx.program())
-}
-
-fn define_plugin(
-    ctx: &TransformContext<'_>,
-    define: FxHashMap<String, String>,
-    symbols: SymbolTable,
-    scopes: ScopeTree,
-) -> (SymbolTable, ScopeTree) {
-    let define = define.into_iter().collect::<Vec<_>>();
-    match ReplaceGlobalDefinesConfig::new(&define) {
-        Ok(config) => {
-            let ret = ReplaceGlobalDefines::new(ctx.allocator, config).build(
-                symbols,
-                scopes,
-                &mut ctx.program_mut(),
-            );
-            (ret.symbols, ret.scopes)
-        }
-        Err(errors) => {
-            ctx.add_diagnostics(errors);
-            (symbols, scopes)
-        }
-    }
-}
-
-fn inject_plugin(
-    ctx: &TransformContext<'_>,
-    inject: FxHashMap<String, Either<String, Vec<String>>>,
-    symbols: SymbolTable,
-    scopes: ScopeTree,
-) -> (SymbolTable, ScopeTree) {
-    let Ok(injects) = inject
-        .into_iter()
-        .map(|(local, value)| match value {
-            Either::A(source) => Ok(InjectImport::default_specifier(&source, &local)),
-            Either::B(v) => {
-                if v.len() != 2 {
-                    return Err(());
-                }
-                let source = v[0].to_string();
-                Ok(if v[1] == "*" {
-                    InjectImport::namespace_specifier(&source, &local)
+    let source = {
+        let lang = match (source_type.is_javascript(), source_type.is_jsx()) {
+            (true, false) => "JavaScript",
+            (true, true) => "JSX",
+            (false, true) => "TypeScript React",
+            (false, false) => {
+                if source_type.is_typescript_definition() {
+                    "TypeScript Declaration"
                 } else {
-                    InjectImport::named_specifier(&source, Some(&v[1]), &local)
-                })
+                    "TypeScript"
+                }
             }
-        })
-        .collect::<Result<Vec<_>, ()>>()
-    else {
-        return (symbols, scopes);
+        };
+
+        let ns = NamedSource::new(filename, source_text.to_string()).with_language(lang);
+        Arc::new(ns)
     };
 
-    let config = InjectGlobalVariablesConfig::new(injects);
-    let ret = InjectGlobalVariables::new(ctx.allocator, config).build(
-        symbols,
-        scopes,
-        &mut ctx.program_mut(),
-    );
-
-    (ret.symbols, ret.scopes)
+    errors
+        .into_iter()
+        .map(move |diagnostic| Error::from(diagnostic).with_source_code(Arc::clone(&source)))
+        .map(|error| format!("{error:?}"))
+        .collect()
 }

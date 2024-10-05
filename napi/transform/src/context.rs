@@ -1,6 +1,5 @@
 use std::{
-    cell::{Ref, RefCell, RefMut},
-    path::Path,
+    cell::{Ref, RefCell},
     sync::Arc,
 };
 
@@ -9,7 +8,6 @@ use oxc::{
     ast::{ast::Program, Trivias},
     codegen::Codegen,
     diagnostics::{Error, NamedSource, OxcDiagnostic},
-    napi::{isolated_declarations::IsolatedDeclarationsOptions, transform::TransformOptions},
     parser::{Parser, ParserReturn},
     span::SourceType,
 };
@@ -22,9 +20,6 @@ pub(crate) struct TransformContext<'a> {
 
     /// Generate source maps?
     source_map: bool,
-
-    /// Generate `.d.ts` files?
-    declarations: Option<IsolatedDeclarationsOptions>,
 
     /// Path to the file being transformed.
     filename: &'a str,
@@ -43,24 +38,17 @@ impl<'a> TransformContext<'a> {
         filename: &'a str,
         source_text: &'a str,
         source_type: SourceType,
-        options: Option<&TransformOptions>,
+        source_map: Option<bool>,
     ) -> Self {
         let ParserReturn { errors, program, trivias, .. } =
             Parser::new(allocator, source_text, source_type).parse();
-
-        // Options that are added by this napi crates and don't exist in
-        // oxc_transformer.
-        let source_map = options.as_ref().and_then(|o| o.sourcemap).unwrap_or_default();
-        let declarations =
-            options.as_ref().and_then(|o| o.typescript.as_ref()).and_then(|t| t.declaration);
-
+        let source_map = source_map.unwrap_or_default();
         Self {
             allocator,
             program: RefCell::new(program),
             trivias,
 
             source_map,
-            declarations,
 
             filename,
             source_text,
@@ -75,28 +63,13 @@ impl<'a> TransformContext<'a> {
     }
 
     #[inline]
-    pub fn file_path(&self) -> &'a Path {
-        Path::new(self.filename)
-    }
-
-    #[inline]
     pub fn source_text(&self) -> &'a str {
         self.source_text
     }
 
     #[inline]
-    pub(crate) fn declarations(&self) -> Option<&IsolatedDeclarationsOptions> {
-        self.declarations.as_ref()
-    }
-
-    #[inline]
     pub fn program(&self) -> Ref<'_, Program<'a>> {
         self.program.borrow()
-    }
-
-    #[inline]
-    pub fn program_mut(&self) -> RefMut<'_, Program<'a>> {
-        self.program.borrow_mut()
     }
 
     pub fn codegen(&self) -> Codegen<'a> {
