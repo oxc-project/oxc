@@ -130,12 +130,18 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
     ) -> (Expression<'a>, AssignmentTarget<'a>) {
         let reference = ctx.symbols_mut().get_reference_mut(ident.reference_id().unwrap());
         *reference.flags_mut() = ReferenceFlags::Read;
+        let symbol_id = reference.symbol_id();
         let left_expr = ctx.ast.expression_from_identifier_reference(ident.clone());
 
-        let assign_target =
-            AssignmentTarget::from(ctx.ast.simple_assignment_target_from_identifier_reference(
-                ctx.clone_identifier_reference(ident, ReferenceFlags::read_write()),
-            ));
+        let ident = ctx.create_reference_id(
+            SPAN,
+            ident.name.clone(),
+            symbol_id,
+            ReferenceFlags::read_write(),
+        );
+        let assign_target = AssignmentTarget::from(
+            ctx.ast.simple_assignment_target_from_identifier_reference(ident),
+        );
         (left_expr, assign_target)
     }
 
