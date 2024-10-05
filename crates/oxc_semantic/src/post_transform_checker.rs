@@ -113,13 +113,13 @@ type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
 pub fn check_semantic_after_transform(
     symbols_after_transform: &SymbolTable,
     scopes_after_transform: &ScopeTree,
-    program: &Program<'_>,
+    program: &Program,
 ) -> Option<Vec<OxcDiagnostic>> {
     let mut errors = Errors::default();
 
     let source_type = program.source_type;
     if !source_type.is_typescript_definition() && !source_type.is_javascript() {
-        errors.push(format!("SourceType is not javascript: {:?}", program.source_type));
+        errors.push(format!("SourceType is not javascript: {source_type:?}"));
     }
 
     // Collect `ScopeId`s, `SymbolId`s and `ReferenceId`s from AST after transformer
@@ -172,7 +172,7 @@ pub fn check_semantic_after_transform(
 }
 
 /// Check all AST nodes have scope, symbol and reference IDs
-pub fn check_semantic_ids(program: &Program<'_>) -> Option<Vec<OxcDiagnostic>> {
+pub fn check_semantic_ids(program: &Program) -> Option<Vec<OxcDiagnostic>> {
     let mut errors = Errors::default();
     SemanticIdsCollector::new(&mut errors).collect(program);
     errors.get()
@@ -264,7 +264,7 @@ impl<T> AsRef<Pair<T>> for Pair<T> {
     }
 }
 
-#[allow(clippy::expl_impl_clone_on_copy)]
+#[expect(clippy::expl_impl_clone_on_copy)]
 impl<T: Clone> Clone for Pair<T> {
     fn clone(&self) -> Self {
         Self::new(self.after_transform.clone(), self.rebuilt.clone())
@@ -498,7 +498,7 @@ impl<'a, 's> PostTransformChecker<'a, 's> {
     fn check_unresolved_references(&mut self) {
         let unresolved_names = self.get_static_pair(|scoping| {
             let mut names =
-                scoping.scopes.root_unresolved_references.keys().cloned().collect::<Vec<_>>();
+                scoping.scopes.root_unresolved_references().keys().cloned().collect::<Vec<_>>();
             names.sort_unstable();
             names
         });
@@ -507,10 +507,10 @@ impl<'a, 's> PostTransformChecker<'a, 's> {
         }
 
         for (name, reference_ids_after_transform) in
-            &self.scoping_after_transform.scopes.root_unresolved_references
+            self.scoping_after_transform.scopes.root_unresolved_references()
         {
             if let Some(reference_ids_rebuilt) =
-                &self.scoping_rebuilt.scopes.root_unresolved_references.get(name)
+                self.scoping_rebuilt.scopes.root_unresolved_references().get(name)
             {
                 let reference_ids = Pair::new(reference_ids_after_transform, reference_ids_rebuilt);
                 if self.remap_reference_ids_sets(&reference_ids).is_mismatch() {
@@ -631,7 +631,7 @@ impl<'a, 'e> SemanticIdsCollector<'a, 'e> {
     }
 
     /// Collect IDs and check for errors
-    #[allow(clippy::type_complexity)]
+    #[expect(clippy::type_complexity)]
     fn collect(
         mut self,
         program: &Program<'a>,
