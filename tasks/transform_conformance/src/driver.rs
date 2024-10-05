@@ -6,11 +6,11 @@ use oxc::{
     codegen::{CodeGenerator, CodegenOptions},
     diagnostics::OxcDiagnostic,
     mangler::Mangler,
-    semantic::post_transform_checker::check_semantic_after_transform,
     span::SourceType,
     transformer::{TransformOptions, TransformerReturn},
     CompilerInterface,
 };
+use oxc_tasks_transform_checker::check_semantic_after_transform;
 
 pub struct Driver {
     check_semantic: bool,

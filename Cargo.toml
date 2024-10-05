@@ -104,6 +104,7 @@ oxc_linter = { path = "crates/oxc_linter" }
 oxc_macros = { path = "crates/oxc_macros" }
 oxc_prettier = { path = "crates/oxc_prettier" }
 oxc_tasks_common = { path = "tasks/common" }
+oxc_tasks_transform_checker = { path = "tasks/transform_checker" }
 
 napi = "3.0.0-alpha"
 napi-build = "2.1.3"

@@ -17,7 +17,6 @@ pub use oxc_syntax::{
 };
 
 pub mod dot;
-pub mod post_transform_checker;
 
 mod binder;
 mod builder;

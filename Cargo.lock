@@ -1559,6 +1559,7 @@ dependencies = [
  "oxc",
  "oxc_prettier",
  "oxc_tasks_common",
+ "oxc_tasks_transform_checker",
  "phf 0.11.2",
  "pico-args",
  "rayon",
@@ -1957,6 +1958,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_tasks_transform_checker"
+version = "0.0.0"
+dependencies = [
+ "indexmap",
+ "oxc_allocator",
+ "oxc_ast",
+ "oxc_diagnostics",
+ "oxc_semantic",
+ "oxc_span",
+ "oxc_syntax",
+ "rustc-hash",
+]
+
+[[package]]
 name = "oxc_transform_conformance"
 version = "0.0.0"
 dependencies = [
@@ -1964,6 +1979,7 @@ dependencies = [
  "indexmap",
  "oxc",
  "oxc_tasks_common",
+ "oxc_tasks_transform_checker",
  "pico-args",
  "walkdir",
 ]

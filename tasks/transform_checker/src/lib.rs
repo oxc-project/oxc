@@ -95,17 +95,16 @@ use indexmap::IndexMap;
 use rustc_hash::FxHasher;
 
 use oxc_allocator::{Allocator, CloneIn};
-#[allow(clippy::wildcard_imports)]
+#[allow(clippy::wildcard_imports, clippy::allow_attributes)]
 use oxc_ast::{ast::*, visit::walk, Visit};
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_semantic::{ScopeTree, SemanticBuilder, SymbolTable};
 use oxc_span::CompactStr;
 use oxc_syntax::{
     reference::ReferenceId,
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolId,
 };
-
-use crate::{ScopeTree, SemanticBuilder, SymbolTable};
 
 type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
 
