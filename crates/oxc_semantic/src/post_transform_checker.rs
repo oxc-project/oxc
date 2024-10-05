@@ -125,8 +125,12 @@ pub fn check_semantic_after_transform(
     // Collect `ScopeId`s, `SymbolId`s and `ReferenceId`s from AST after transformer
     let scoping_after_transform =
         Scoping { symbols: symbols_after_transform, scopes: scopes_after_transform };
-    let (scope_ids_after_transform, symbol_ids_after_transform, reference_ids_after_transform) =
-        SemanticIdsCollector::new(&mut errors).collect(program);
+    let (
+        scope_ids_after_transform,
+        symbol_ids_after_transform,
+        reference_ids_after_transform,
+        reference_names,
+    ) = SemanticIdsCollector::new(&mut errors).collect(program);
 
     // Clone the post-transform AST, re-run semantic analysis on it, and collect `ScopeId`s,
     // `SymbolId`s and `ReferenceId`s from AST.
@@ -141,7 +145,7 @@ pub fn check_semantic_after_transform(
         .into_symbol_table_and_scope_tree();
     let scoping_rebuilt = Scoping { symbols: &symbols_rebuilt, scopes: &scopes_rebuilt };
 
-    let (scope_ids_rebuilt, symbol_ids_rebuilt, reference_ids_rebuilt) =
+    let (scope_ids_rebuilt, symbol_ids_rebuilt, reference_ids_rebuilt, _) =
         SemanticIdsCollector::new(&mut errors).collect(&program);
 
     // Create mappings from after transform IDs to rebuilt IDs
@@ -156,6 +160,7 @@ pub fn check_semantic_after_transform(
         scope_ids_map,
         symbol_ids_map,
         reference_ids_map,
+        reference_names,
         errors,
     };
     checker.check_scopes();
@@ -173,13 +178,14 @@ pub fn check_semantic_ids(program: &Program<'_>) -> Option<Vec<OxcDiagnostic>> {
     errors.get()
 }
 
-struct PostTransformChecker<'s> {
+struct PostTransformChecker<'a, 's> {
     scoping_after_transform: Scoping<'s>,
     scoping_rebuilt: Scoping<'s>,
     // Mappings from after transform ID to rebuilt ID
     scope_ids_map: IdMapping<ScopeId>,
     symbol_ids_map: IdMapping<SymbolId>,
     reference_ids_map: IdMapping<ReferenceId>,
+    reference_names: Vec<Atom<'a>>,
     errors: Errors,
 }
 
@@ -327,7 +333,7 @@ rebuilt        : {value_rebuilt}
     }
 }
 
-impl<'s> PostTransformChecker<'s> {
+impl<'a, 's> PostTransformChecker<'a, 's> {
     fn check_scopes(&mut self) {
         for scope_ids in self.scope_ids_map.pairs() {
             // Check bindings are the same
@@ -393,28 +399,30 @@ impl<'s> PostTransformChecker<'s> {
                 scoping.symbols.names[symbol_id].clone()
             });
             if names.is_mismatch() {
-                self.errors.push_mismatch("Symbol name mismatch", symbol_ids, names);
+                self.errors.push_mismatch("Symbol name mismatch", symbol_ids, &names);
             }
+            let symbol_name = names.rebuilt.as_str();
+            let mismatch_title = |field| format!("Symbol {field} mismatch for {symbol_name:?}");
 
             // Check flags match
             let flags =
                 self.get_pair(symbol_ids, |scoping, symbol_id| scoping.symbols.flags[symbol_id]);
             if flags.is_mismatch() {
-                self.errors.push_mismatch("Symbol flags mismatch", symbol_ids, flags);
+                self.errors.push_mismatch(&mismatch_title("flags"), symbol_ids, flags);
             }
 
             // Check spans match
             let spans =
                 self.get_pair(symbol_ids, |scoping, symbol_id| scoping.symbols.spans[symbol_id]);
             if spans.is_mismatch() {
-                self.errors.push_mismatch("Symbol span mismatch", symbol_ids, spans);
+                self.errors.push_mismatch(&mismatch_title("span"), symbol_ids, spans);
             }
 
             // Check scope IDs match
             let scope_ids = self
                 .get_pair(symbol_ids, |scoping, symbol_id| scoping.symbols.scope_ids[symbol_id]);
             if self.remap_scope_ids(scope_ids).is_mismatch() {
-                self.errors.push_mismatch("Symbol scope ID mismatch", symbol_ids, scope_ids);
+                self.errors.push_mismatch(&mismatch_title("scope ID"), symbol_ids, scope_ids);
             }
 
             // NB: Skip checking declarations match - transformer does not set `NodeId`s
@@ -425,7 +433,7 @@ impl<'s> PostTransformChecker<'s> {
             });
             if self.remap_reference_ids_sets(&reference_ids).is_mismatch() {
                 self.errors.push_mismatch(
-                    "Symbol reference IDs mismatch",
+                    &mismatch_title("reference IDs"),
                     symbol_ids,
                     reference_ids,
                 );
@@ -439,7 +447,7 @@ impl<'s> PostTransformChecker<'s> {
             });
             if redeclaration_spans.is_mismatch() {
                 self.errors.push_mismatch(
-                    "Symbol redeclarations mismatch",
+                    &mismatch_title("redeclarations"),
                     symbol_ids,
                     redeclaration_spans,
                 );
@@ -448,7 +456,7 @@ impl<'s> PostTransformChecker<'s> {
     }
 
     fn check_references(&mut self) {
-        for reference_ids in self.reference_ids_map.pairs() {
+        for (reference_ids, name) in self.reference_ids_map.pairs().zip(&self.reference_names) {
             // Check symbol IDs match
             let symbol_ids = self.get_pair(reference_ids, |scoping, reference_id| {
                 scoping.symbols.references[reference_id].symbol_id()
@@ -458,10 +466,19 @@ impl<'s> PostTransformChecker<'s> {
                 symbol_ids.rebuilt.map(Option::Some),
             );
             if symbol_ids_remapped.is_mismatch() {
-                let symbol_names = self.get_pair(symbol_ids, |scoping, symbol_id| {
-                    symbol_id.map(|symbol_id| scoping.symbols.names[symbol_id].clone())
+                let mismatch_strs = self.get_pair(reference_ids, |scoping, reference_id| {
+                    match scoping.symbols.references[reference_id].symbol_id() {
+                        Some(symbol_id) => {
+                            let symbol_name = &scoping.symbols.names[symbol_id];
+                            format!("{symbol_id:?} {symbol_name:?}")
+                        }
+                        None => "<None>".to_string(),
+                    }
                 });
-                self.errors.push_mismatch("Reference symbol mismatch", reference_ids, symbol_names);
+                self.errors.push_mismatch_strs(
+                    &format!("Reference symbol mismatch for {name:?}"),
+                    mismatch_strs,
+                );
             }
 
             // Check flags match
@@ -469,7 +486,11 @@ impl<'s> PostTransformChecker<'s> {
                 scoping.symbols.references[reference_id].flags()
             });
             if flags.is_mismatch() {
-                self.errors.push_mismatch("Reference flags mismatch", reference_ids, flags);
+                self.errors.push_mismatch(
+                    &format!("Reference flags mismatch for {name:?}"),
+                    reference_ids,
+                    flags,
+                );
             }
         }
     }
@@ -590,32 +611,40 @@ impl<'s> PostTransformChecker<'s> {
 /// Collector of `ScopeId`s, `SymbolId`s and `ReferenceId`s from an AST.
 ///
 /// `scope_ids`, `symbol_ids` and `reference_ids` lists are filled in visitation order.
-struct SemanticIdsCollector<'e> {
+struct SemanticIdsCollector<'a, 'e> {
     scope_ids: Vec<Option<ScopeId>>,
     symbol_ids: Vec<Option<SymbolId>>,
     reference_ids: Vec<Option<ReferenceId>>,
+    reference_names: Vec<Atom<'a>>,
     errors: &'e mut Errors,
 }
 
-impl<'e> SemanticIdsCollector<'e> {
+impl<'a, 'e> SemanticIdsCollector<'a, 'e> {
     fn new(errors: &'e mut Errors) -> Self {
-        Self { scope_ids: vec![], symbol_ids: vec![], reference_ids: vec![], errors }
+        Self {
+            scope_ids: vec![],
+            symbol_ids: vec![],
+            reference_ids: vec![],
+            reference_names: vec![],
+            errors,
+        }
     }
 
     /// Collect IDs and check for errors
     #[allow(clippy::type_complexity)]
     fn collect(
         mut self,
-        program: &Program<'_>,
-    ) -> (Vec<Option<ScopeId>>, Vec<Option<SymbolId>>, Vec<Option<ReferenceId>>) {
+        program: &Program<'a>,
+    ) -> (Vec<Option<ScopeId>>, Vec<Option<SymbolId>>, Vec<Option<ReferenceId>>, Vec<Atom<'a>>)
+    {
         if !program.source_type.is_typescript_definition() {
             self.visit_program(program);
         }
-        (self.scope_ids, self.symbol_ids, self.reference_ids)
+        (self.scope_ids, self.symbol_ids, self.reference_ids, self.reference_names)
     }
 }
 
-impl<'a, 'e> Visit<'a> for SemanticIdsCollector<'e> {
+impl<'a, 'e> Visit<'a> for SemanticIdsCollector<'a, 'e> {
     fn enter_scope(&mut self, _flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
         let scope_id = scope_id.get();
         self.scope_ids.push(scope_id);
@@ -627,8 +656,10 @@ impl<'a, 'e> Visit<'a> for SemanticIdsCollector<'e> {
     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
         let reference_id = ident.reference_id.get();
         self.reference_ids.push(reference_id);
-        if reference_id.is_none() {
-            self.errors.push(format!("Missing ReferenceId: {}", ident.name));
+        if reference_id.is_some() {
+            self.reference_names.push(ident.name.clone());
+        } else {
+            self.errors.push(format!("Missing ReferenceId: {:?}", ident.name));
         }
     }
 
@@ -636,7 +667,7 @@ impl<'a, 'e> Visit<'a> for SemanticIdsCollector<'e> {
         let symbol_id = ident.symbol_id.get();
         self.symbol_ids.push(symbol_id);
         if symbol_id.is_none() {
-            self.errors.push(format!("Missing SymbolId: {}", ident.name));
+            self.errors.push(format!("Missing SymbolId: {:?}", ident.name));
         }
     }
 
