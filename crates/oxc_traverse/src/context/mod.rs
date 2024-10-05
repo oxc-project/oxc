@@ -12,10 +12,13 @@ use oxc_syntax::{
 };
 
 use crate::ancestor::{Ancestor, AncestorType};
+
 mod ancestry;
 mod ast_operations;
+mod bound_identifier;
 use ancestry::PopToken;
 pub use ancestry::TraverseAncestry;
+pub use bound_identifier::BoundIdentifier;
 mod identifier;
 mod scoping;
 pub use scoping::TraverseScoping;

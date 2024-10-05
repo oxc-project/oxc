@@ -97,16 +97,15 @@ use oxc_syntax::{
     symbol::SymbolFlags,
     xml_entities::XML_ENTITIES,
 };
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
+
+use crate::{common::module_imports::NamedImport, TransformCtx};
 
 use super::diagnostics;
 pub use super::{
     jsx_self::ReactJsxSelf,
     jsx_source::ReactJsxSource,
     options::{JsxOptions, JsxRuntime},
-};
-use crate::{
-    common::module_imports::NamedImport, helpers::bindings::BoundIdentifier, TransformCtx,
 };
 
 pub struct ReactJsx<'a, 'ctx> {

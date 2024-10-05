@@ -58,9 +58,9 @@ use oxc_ast::ast::*;
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, LogicalOperator};
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
 
-use crate::{helpers::bindings::BoundIdentifier, TransformCtx};
+use crate::TransformCtx;
 
 pub struct LogicalAssignmentOperators<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,

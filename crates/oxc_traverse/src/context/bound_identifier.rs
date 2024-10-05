@@ -5,7 +5,8 @@ use oxc_syntax::{
     scope::ScopeId,
     symbol::{SymbolFlags, SymbolId},
 };
-use oxc_traverse::TraverseCtx;
+
+use crate::TraverseCtx;
 
 /// Info about a binding, from which one can create a `BindingIdentifier` or `IdentifierReference`s.
 ///
