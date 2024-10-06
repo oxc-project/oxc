@@ -37,7 +37,7 @@ use oxc_ast::{ast::*, NONE};
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator};
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_traverse::{ast_operations::get_var_name_from_node, Traverse, TraverseCtx};
 
 use crate::TransformCtx;
 
@@ -151,7 +151,8 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
             let reference = ctx.ast.expression_from_identifier_reference(
                 ctx.create_unbound_reference_id(SPAN, ident.name.clone(), ReferenceFlags::Read),
             );
-            self.add_new_reference(reference, &mut nodes, ctx)
+            let name = ident.name.as_str();
+            self.add_new_reference(reference, name, &mut nodes, ctx)
         };
 
         let reference = ctx.ast.move_assignment_target(assign_target);
@@ -228,6 +229,7 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
         let mut obj = ctx.ast.move_expression(obj);
         // If the object reference that we need to save is locally declared, evaluating it multiple times
         // will not trigger getters or setters. `super` cannot be directly assigned, so use it directly too.
+        // TODO(improve-on-babel): We could also skip creating a temp var for `this.x **= 2`.
         let needs_temp_var = match &obj {
             Expression::Super(_) => false,
             Expression::Identifier(ident) => {
@@ -236,7 +238,8 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
             _ => true,
         };
         if needs_temp_var {
-            obj = self.add_new_reference(obj, nodes, ctx);
+            let name = get_var_name_from_node(&obj);
+            obj = self.add_new_reference(obj, &name, nodes, ctx);
         }
 
         let computed = member_expr.is_computed();
@@ -311,7 +314,8 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
                 if expr.is_literal() {
                     return expr;
                 }
-                self.add_new_reference(expr, nodes, ctx)
+                let name = get_var_name_from_node(&expr);
+                self.add_new_reference(expr, &name, nodes, ctx)
             }
             MemberExpression::StaticMemberExpression(expr) => {
                 ctx.ast.expression_string_literal(SPAN, expr.property.name.clone())
@@ -324,14 +328,10 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
     fn add_new_reference(
         &mut self,
         expr: Expression<'a>,
+        name: &str,
         nodes: &mut Vec<'a, Expression<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let name = match expr {
-            Expression::Identifier(ref ident) => ident.name.clone().as_str(),
-            _ => "ref",
-        };
-
         let binding = ctx.generate_uid_in_current_scope(name, SymbolFlags::FunctionScopedVariable);
 
         // var _name;
