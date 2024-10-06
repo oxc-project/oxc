@@ -1,9 +1,7 @@
 use std::{path::Path, sync::Arc};
 
-use oxc::{
-    diagnostics::{Error, NamedSource, OxcDiagnostic},
-    span::SourceType,
-};
+use oxc_diagnostics::{Error, NamedSource, OxcDiagnostic};
+use oxc_span::SourceType;
 
 pub fn wrap_diagnostics(
     filename: &Path,

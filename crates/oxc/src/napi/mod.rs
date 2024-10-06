@@ -1,3 +1,6 @@
+#[cfg(any(feature = "transformer", feature = "isolated_declarations"))]
+mod errors;
+
 #[cfg(feature = "parser")]
 pub mod parse;
 

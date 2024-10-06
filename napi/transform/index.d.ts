@@ -17,7 +17,6 @@ export interface Es2015Options {
   arrowFunction?: ArrowFunctionsOptions
 }
 
-/** TypeScript Isolated Declarations for Standalone DTS Emit */
 export declare function isolatedDeclaration(filename: string, sourceText: string, options?: IsolatedDeclarationsOptions | undefined | null): IsolatedDeclarationsResult
 
 export interface IsolatedDeclarationsOptions {
@@ -161,18 +160,6 @@ export interface SourceMap {
   x_google_ignoreList?: Array<number>
 }
 
-/**
- * Transpile a JavaScript or TypeScript into a target ECMAScript version.
- *
- * @param filename The name of the file being transformed. If this is a
- * relative path, consider setting the {@link TransformOptions#cwd} option..
- * @param sourceText the source code itself
- * @param options The options for the transformation. See {@link
- * TransformOptions} for more information.
- *
- * @returns an object containing the transformed code, source maps, and any
- * errors that occurred during parsing or transformation.
- */
 export declare function transform(filename: string, sourceText: string, options?: TransformOptions | undefined | null): TransformResult
 
 /**

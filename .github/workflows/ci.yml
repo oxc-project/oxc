@@ -47,7 +47,6 @@ jobs:
       - run: git diff --exit-code # Must commit everything
 
   test-windows:
-    if: false
     name: Test (windows-latest)
     runs-on: windows-latest
     steps:
