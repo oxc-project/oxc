@@ -192,3 +192,4 @@ pub use oxc_syntax::{
 };
 
 pub use self::{js::*, jsx::*, literal::*, ts::*};
+pub use oxc_regular_expression::ast as regex;
