@@ -171,10 +171,10 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
                 (ident, obj)
             }
             match_member_expression!(AssignmentTarget) => {
-                let obj = self.get_obj_ref(node, nodes, ctx).unwrap();
+                let obj = self.get_obj_ref(node, nodes, ctx)?;
                 let member_expr = node.to_member_expression_mut();
                 let computed = member_expr.is_computed();
-                let prop = self.get_prop_ref(member_expr, nodes, ctx)?;
+                let prop = self.get_prop_ref(member_expr, nodes, ctx);
                 let optional = false;
                 let obj_clone = Self::clone_expression(&obj, ctx);
                 let (reference, uid) = match &prop {
@@ -248,7 +248,11 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
                 let expr = match node.to_member_expression_mut() {
                     MemberExpression::ComputedMemberExpression(e) => &mut e.object,
                     MemberExpression::StaticMemberExpression(e) => &mut e.object,
-                    MemberExpression::PrivateFieldExpression(e) => &mut e.object,
+                    // From Babel: "We can't generate property ref for private name, please install
+                    // `@babel/plugin-transform-class-properties`".
+                    // TODO: Ensure this plugin interacts correctly with class private properties
+                    // transform, so the property is transformed before this transform.
+                    MemberExpression::PrivateFieldExpression(_) => return None,
                 };
                 let expr = ctx.ast.move_expression(expr);
                 // the object reference that we need to save is locally declared
@@ -277,24 +281,21 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
         node: &mut MemberExpression<'a>,
         nodes: &mut Vec<'a, Expression<'a>>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Option<Expression<'a>> {
-        let expr = match node {
+    ) -> Expression<'a> {
+        match node {
             MemberExpression::ComputedMemberExpression(expr) => {
                 let expr = ctx.ast.move_expression(&mut expr.expression);
                 if expr.is_literal() {
-                    return Some(expr);
+                    return expr;
                 }
-                expr
+                self.add_new_reference(expr, nodes, ctx)
             }
             MemberExpression::StaticMemberExpression(expr) => {
-                return Some(ctx.ast.expression_string_literal(SPAN, expr.property.name.clone()));
+                ctx.ast.expression_string_literal(SPAN, expr.property.name.clone())
             }
-            MemberExpression::PrivateFieldExpression(_) => {
-                // From babel: "We can't generate property ref for private name, please install `@babel/plugin-transform-class-properties`"
-                return None;
-            }
-        };
-        Some(self.add_new_reference(expr, nodes, ctx))
+            // This possibility is ruled out in earlier call to `get_obj_ref`
+            MemberExpression::PrivateFieldExpression(_) => unreachable!(),
+        }
     }
 
     fn add_new_reference(
