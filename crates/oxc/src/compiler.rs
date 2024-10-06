@@ -27,7 +27,7 @@ impl CompilerInterface for Compiler {
     }
 
     fn after_codegen(&mut self, ret: CodegenReturn) {
-        self.printed = ret.source_text;
+        self.printed = ret.code;
     }
 }
 

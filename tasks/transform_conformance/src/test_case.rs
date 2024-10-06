@@ -306,7 +306,7 @@ impl TestCase for ConformanceTestCase {
                         // CommentOptions { preserve_annotate_comments: true },
                         // )
                         .build(&ret.program)
-                        .source_text
+                        .code
                 },
             );
 
@@ -396,7 +396,7 @@ impl ExecTestCase {
         let source_text = fs::read_to_string(&target_path).unwrap();
         let source_type = SourceType::from_path(&target_path).unwrap();
         let transformed_ret = Parser::new(&allocator, &source_text, source_type).parse();
-        let result = CodeGenerator::new().build(&transformed_ret.program).source_text;
+        let result = CodeGenerator::new().build(&transformed_ret.program).code;
         fs::write(&target_path, result).unwrap();
         target_path
     }

@@ -76,7 +76,7 @@ fn main() {
         }
     }
 
-    let printed = CodeGenerator::new().build(&program).source_text;
+    let printed = CodeGenerator::new().build(&program).code;
     println!("Transformed:\n");
     println!("{printed}");
 }

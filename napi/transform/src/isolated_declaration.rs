@@ -55,8 +55,8 @@ pub fn isolated_declaration(
     let errors = wrap_diagnostics(source_path, source_type, &source_text, errors);
 
     IsolatedDeclarationsResult {
-        code: codegen_ret.source_text,
-        map: codegen_ret.source_map.map(SourceMap::from),
+        code: codegen_ret.code,
+        map: codegen_ret.map.map(SourceMap::from),
         errors,
     }
 }

@@ -24,7 +24,7 @@ pub(crate) fn test(source_text: &str, expected: &str, config: InjectGlobalVariab
     let result = CodeGenerator::new()
         .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
         .build(program)
-        .source_text;
+        .code;
     let expected = run(expected, source_type);
     assert_eq!(result, expected, "for source {source_text}");
 }

@@ -24,5 +24,5 @@ pub fn minify(filename: String, source_text: String) -> String {
         .with_mangler(mangler)
         .with_capacity(source_text.len())
         .build(&program)
-        .source_text
+        .code
 }

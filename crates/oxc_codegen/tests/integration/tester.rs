@@ -14,7 +14,7 @@ pub fn test(source_text: &str, expected: &str) {
             CommentOptions { preserve_annotate_comments: true },
         )
         .build(&ret.program)
-        .source_text;
+        .code;
     assert_eq!(result, expected, "\nfor source: {source_text:?}");
 }
 
@@ -22,7 +22,7 @@ pub fn test_without_source(source_text: &str, expected: &str) {
     let source_type = SourceType::jsx();
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
-    let result = CodeGenerator::new().build(&ret.program).source_text;
+    let result = CodeGenerator::new().build(&ret.program).code;
     assert_eq!(result, expected, "\nfor source: {source_text:?}");
 }
 
@@ -33,6 +33,6 @@ pub fn test_minify(source_text: &str, expected: &str) {
     let result = CodeGenerator::new()
         .with_options(CodegenOptions { minify: true, ..CodegenOptions::default() })
         .build(&ret.program)
-        .source_text;
+        .code;
     assert_eq!(result, expected, "\nfor minify source: {source_text}");
 }

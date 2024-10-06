@@ -115,7 +115,7 @@ fn minify(source_text: &str, source_type: SourceType, options: MinifierOptions) 
         .with_options(CodegenOptions { minify: true, ..CodegenOptions::default() })
         .with_mangler(ret.mangler)
         .build(program)
-        .source_text
+        .code
 }
 
 fn gzip_size(s: &str) -> usize {

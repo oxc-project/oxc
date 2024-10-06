@@ -58,11 +58,11 @@ pub struct CommentOptions {
 /// Output from [`Codegen::build`]
 pub struct CodegenReturn {
     /// The generated source code.
-    pub source_text: String,
+    pub code: String,
     /// The source map from the input source code to the generated source code.
     ///
     /// You must use [`Codegen::enable_source_map`] for this to be [`Some`].
-    pub source_map: Option<oxc_sourcemap::SourceMap>,
+    pub map: Option<oxc_sourcemap::SourceMap>,
 }
 
 pub struct Codegen<'a> {
@@ -228,9 +228,9 @@ impl<'a> Codegen<'a> {
     #[must_use]
     pub fn build(mut self, program: &Program<'_>) -> CodegenReturn {
         program.print(&mut self, Context::default());
-        let source_text = self.into_source_text();
-        let source_map = self.sourcemap_builder.map(SourcemapBuilder::into_sourcemap);
-        CodegenReturn { source_text, source_map }
+        let code = self.into_source_text();
+        let map = self.sourcemap_builder.map(SourcemapBuilder::into_sourcemap);
+        CodegenReturn { code, map }
     }
 
     #[must_use]

@@ -68,5 +68,5 @@ fn codegen(source_text: &str, ret: &ParserReturn<'_>, minify: bool) -> String {
         )
         .with_options(CodegenOptions { minify, ..CodegenOptions::default() })
         .build(&ret.program)
-        .source_text
+        .code
 }

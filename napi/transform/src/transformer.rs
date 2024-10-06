@@ -112,13 +112,13 @@ impl CompilerInterface for Compiler {
     }
 
     fn after_codegen(&mut self, ret: CodegenReturn) {
-        self.printed = ret.source_text;
-        self.printed_sourcemap = ret.source_map.map(SourceMap::from);
+        self.printed = ret.code;
+        self.printed_sourcemap = ret.map.map(SourceMap::from);
     }
 
     fn after_isolated_declarations(&mut self, ret: CodegenReturn) {
-        self.declaration.replace(ret.source_text);
-        self.declaration_map = ret.source_map.map(SourceMap::from);
+        self.declaration.replace(ret.code);
+        self.declaration_map = ret.map.map(SourceMap::from);
     }
 }
 

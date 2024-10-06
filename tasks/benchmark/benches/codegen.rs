@@ -15,7 +15,7 @@ fn bench_codegen(criterion: &mut Criterion) {
 
         let mut group = criterion.benchmark_group("codegen");
         group.bench_with_input(id.clone(), &ret.program, |b, program| {
-            b.iter_with_large_drop(|| CodeGenerator::new().build(program).source_map);
+            b.iter_with_large_drop(|| CodeGenerator::new().build(program).map);
         });
         group.finish();
 
