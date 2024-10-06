@@ -26,7 +26,9 @@
 //!
 //! ## References:
 //!
-//! * Babel plugin implementation: <https://github.com/babel/babel/blob/main/packages/babel-plugin-transform-exponentiation-operator>
+//! * Babel plugin implementation:
+//!   <https://github.com/babel/babel/blob/main/packages/babel-plugin-transform-exponentiation-operator>
+//!   <https://github.com/babel/babel/tree/main/packages/babel-helper-builder-binary-assignment-operator-visitor>
 //! * Exponentiation operator TC39 proposal: <https://github.com/tc39/proposal-exponentiation-operator>
 //! * Exponentiation operator specification: <https://tc39.es/ecma262/#sec-exp-operator>
 
@@ -39,12 +41,6 @@ use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::TransformCtx;
 
-/// ES2016: Exponentiation Operator
-///
-/// References:
-/// * <https://babel.dev/docs/babel-plugin-transform-exponentiation-operator>
-/// * <https://github.com/babel/babel/blob/main/packages/babel-plugin-transform-exponentiation-operator>
-/// * <https://github.com/babel/babel/blob/main/packages/babel-helper-builder-binary-assignment-operator-visitor>
 pub struct ExponentiationOperator<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,
 }
