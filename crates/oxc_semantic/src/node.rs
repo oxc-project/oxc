@@ -222,7 +222,7 @@ impl<'a> AstNodes<'a> {
     /// [`Program`]: oxc_ast::ast::Program
     pub fn ancestors(&self, ast_node_id: NodeId) -> impl Iterator<Item = NodeId> + '_ {
         let parent_ids = &self.parent_ids;
-        std::iter::successors(Some(ast_node_id), |node_id| parent_ids[*node_id])
+        std::iter::successors(Some(ast_node_id), |&node_id| parent_ids[node_id])
     }
 
     /// Create and add an [`AstNode`] to the [`AstNodes`] tree and get its [`NodeId`].
