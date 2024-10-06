@@ -140,22 +140,35 @@ pub fn transform(
     options: Option<TransformOptions>,
 ) -> TransformResult {
     let source_path = Path::new(&filename);
-    let source_type = {
-        let mut source_type = SourceType::from_path(source_path).unwrap_or_default();
-        // Force `script` or `module`
-        match options.as_ref().and_then(|options| options.source_type.as_deref()) {
-            Some("script") => source_type = source_type.with_script(true),
-            Some("module") => source_type = source_type.with_module(true),
-            _ => {}
+
+    let source_type = match options.as_ref().and_then(|options| options.lang.as_deref()) {
+        Some("js") => SourceType::mjs(),
+        Some("jsx") => SourceType::jsx(),
+        Some("ts") => SourceType::ts(),
+        Some("tsx") => SourceType::tsx(),
+        Some(lang) => {
+            return TransformResult {
+                errors: vec![format!("Incorrect lang '{lang}'")],
+                ..Default::default()
+            }
         }
-        source_type
+        None => {
+            let mut source_type = SourceType::from_path(source_path).unwrap_or_default();
+            // Force `script` or `module`
+            match options.as_ref().and_then(|options| options.source_type.as_deref()) {
+                Some("script") => source_type = source_type.with_script(true),
+                Some("module") => source_type = source_type.with_module(true),
+                _ => {}
+            }
+            source_type
+        }
     };
 
     let mut compiler = match Compiler::new(options) {
         Ok(compiler) => compiler,
         Err(errors) => {
             return TransformResult {
-                errors: wrap_diagnostics(&filename, source_type, &source_text, errors),
+                errors: wrap_diagnostics(source_path, source_type, &source_text, errors),
                 ..Default::default()
             }
         }
@@ -167,6 +180,6 @@ pub fn transform(
         map: compiler.printed_sourcemap,
         declaration: compiler.declaration,
         declaration_map: compiler.declaration_map,
-        errors: wrap_diagnostics(&filename, source_type, &source_text, compiler.errors),
+        errors: wrap_diagnostics(source_path, source_type, &source_text, compiler.errors),
     }
 }

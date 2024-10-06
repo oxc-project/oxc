@@ -7,8 +7,9 @@ describe('transform', () => {
 
   it('matches output', () => {
     const ret = oxc.transform('test.ts', code, { sourcemap: true });
-    assert(ret, {
+    assert.deepEqual(ret, {
       code: 'class A {}\n',
+      errors: [],
       map: {
         mappings: 'AAAA,MAAM,EAAK,CAAE',
         names: [],
@@ -17,6 +18,11 @@ describe('transform', () => {
         version: 3,
       },
     });
+  });
+
+  it('lang', () => {
+    const ret = oxc.transform('test.vue', code, { lang: 'ts' });
+    assert.equal(ret.code, 'class A {}\n');
   });
 });
 
@@ -29,8 +35,9 @@ describe('react refresh plugin', () => {
 
   it('matches output', () => {
     const ret = oxc.transform('test.tsx', code, { jsx: { refresh: {} } });
-    assert(ret, {
-      code: 'var _s = $RefreshSig$();\n' +
+    assert.equal(
+      ret.code,
+      'var _s = $RefreshSig$();\n' +
         'import { useState } from "react";\n' +
         'import { jsxs as _jsxs } from "react/jsx-runtime";\n' +
         'export const App = () => {\n' +
@@ -45,7 +52,7 @@ describe('react refresh plugin', () => {
         '_c = App;\n' +
         'var _c;\n' +
         '$RefreshReg$(_c, "App");\n',
-    });
+    );
   });
 });
 
@@ -58,10 +65,8 @@ describe('define plugin', () => {
         'process.env.NODE_ENV': 'false',
       },
     });
-    assert(ret, {
-      // TODO: should be constant folded
-      code: 'if (false === "production") {\n\tfoo;\n}\n',
-    });
+    // TODO: should be constant folded
+    assert.equal(ret.code, 'if (false === "production") {\n\tfoo;\n}\n');
   });
 });
 
@@ -70,12 +75,10 @@ describe('inject plugin', () => {
 
   it('matches output', () => {
     const ret = oxc.transform('test.tsx', code, {
-      define: {
-        'process.env.NODE_ENV': 'false',
+      inject: {
+        'Object.assign': 'foo',
       },
     });
-    assert(ret, {
-      code: 'import $inject_Object_assign from "foo";\nlet _ = $inject_Object_assign;\n',
-    });
+    assert.equal(ret.code, 'import $inject_Object_assign from "foo";\nlet _ = $inject_Object_assign;\n');
   });
 });

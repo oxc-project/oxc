@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{path::Path, sync::Arc};
 
 use oxc::{
     diagnostics::{Error, NamedSource, OxcDiagnostic},
@@ -6,7 +6,7 @@ use oxc::{
 };
 
 pub fn wrap_diagnostics(
-    filename: &str,
+    filename: &Path,
     source_type: SourceType,
     source_text: &str,
     errors: Vec<OxcDiagnostic>,
@@ -28,7 +28,8 @@ pub fn wrap_diagnostics(
             }
         };
 
-        let ns = NamedSource::new(filename, source_text.to_string()).with_language(lang);
+        let ns = NamedSource::new(filename.to_string_lossy(), source_text.to_string())
+            .with_language(lang);
         Arc::new(ns)
     };
 

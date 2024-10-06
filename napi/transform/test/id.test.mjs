@@ -17,7 +17,7 @@ describe('isolated declaration', () => {
 
   it('matches output', () => {
     const ret = oxc.isolatedDeclaration('test.ts', code, { sourcemap: true });
-    assert(ret, {
+    assert.deepEqual(ret, {
       code: '/**\n' +
         '* jsdoc 1\n' +
         '*/\n' +
@@ -28,12 +28,13 @@ describe('isolated declaration', () => {
         '\tfoo: string;\n' +
         '}\n',
       map: {
-        mappings: ';;;AAIA,OAAO,cAAM,EAAE;;;;CAIb;AACD',
+        mappings: ';;;AAIE,OAAO,cAAM,EAAE;;;;CAIb;AACD',
         names: [],
         sources: ['test.ts'],
         sourcesContent: [code],
         version: 3,
       },
+      errors: [],
     });
   });
 });

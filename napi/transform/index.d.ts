@@ -182,6 +182,8 @@ export declare function transform(filename: string, sourceText: string, options?
  */
 export interface TransformOptions {
   sourceType?: 'script' | 'module' | 'unambiguous' | undefined
+  /** Treat the source text as `js`, `jsx`, `ts`, or `tsx`. */
+  lang?: 'js' | 'jsx' | 'ts' | 'tsx'
   /**
    * The current working directory. Used to resolve relative paths in other
    * options.

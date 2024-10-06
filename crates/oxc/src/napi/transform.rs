@@ -57,6 +57,10 @@ pub struct TransformOptions {
     #[napi(ts_type = "'script' | 'module' | 'unambiguous' | undefined")]
     pub source_type: Option<String>,
 
+    /// Treat the source text as `js`, `jsx`, `ts`, or `tsx`.
+    #[napi(ts_type = "'js' | 'jsx' | 'ts' | 'tsx'")]
+    pub lang: Option<String>,
+
     /// The current working directory. Used to resolve relative paths in other
     /// options.
     pub cwd: Option<String>,
