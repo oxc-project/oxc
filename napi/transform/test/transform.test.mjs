@@ -62,11 +62,10 @@ describe('define plugin', () => {
   it('matches output', () => {
     const ret = oxc.transform('test.tsx', code, {
       define: {
-        'process.env.NODE_ENV': 'false',
+        'process.env.NODE_ENV': '"development"',
       },
     });
-    // TODO: should be constant folded
-    assert.equal(ret.code, 'if (false === "production") {\n\tfoo;\n}\n');
+    assert.equal(ret.code, '');
   });
 });
 

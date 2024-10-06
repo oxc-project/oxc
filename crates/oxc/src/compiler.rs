@@ -189,16 +189,18 @@ pub trait CompilerInterface {
             scopes = transformer_return.scopes;
         }
 
-        if let Some(config) = self.define_options() {
+        if let Some(config) = self.inject_options() {
             let ret =
-                ReplaceGlobalDefines::new(&allocator, config).build(symbols, scopes, &mut program);
+                InjectGlobalVariables::new(&allocator, config).build(symbols, scopes, &mut program);
             symbols = ret.symbols;
             scopes = ret.scopes;
         }
 
-        if let Some(config) = self.inject_options() {
-            let _ret =
-                InjectGlobalVariables::new(&allocator, config).build(symbols, scopes, &mut program);
+        if let Some(config) = self.define_options() {
+            let ret =
+                ReplaceGlobalDefines::new(&allocator, config).build(symbols, scopes, &mut program);
+            Compressor::new(&allocator, CompressOptions::dead_code_elimination())
+                .build_with_symbols_and_scopes(ret.symbols, ret.scopes, &mut program);
             // symbols = ret.symbols;
             // scopes = ret.scopes;
         }
