@@ -4,14 +4,14 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{CompactStr, GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-static CALLBACKS: [&str; 4] = ["done", "cb", "callback", "next"];
-
 fn no_callback_in_promise_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Avoid calling back inside of a promise").with_label(span)
+    OxcDiagnostic::warn("Avoid calling back inside of a promise")
+        .with_help("Use `then` and `catch` directly, avoid callbacks")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -19,7 +19,7 @@ pub struct NoCallbackInPromise(Box<NoCallbackInPromiseConfig>);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoCallbackInPromiseConfig {
-    exceptions: Vec<String>,
+    callbacks: Vec<CompactStr>,
 }
 
 impl std::ops::Deref for NoCallbackInPromise {
@@ -60,8 +60,8 @@ declare_oxc_lint!(
     /// Examples of **correct** code for this rule:
     /// ```js
     /// Promise.resolve()
-    ///   .then(() => setTimeout(() => callback(null, 'data'), 0))
-    ///   .catch((err) => setTimeout(() => callback(err.message, null), 0))
+    ///   .then((data) => { console.log(data) })
+    ///   .catch((err) => { console.error(err) })
     /// ```
     NoCallbackInPromise,
     correctness,
@@ -69,18 +69,23 @@ declare_oxc_lint!(
 
 impl Rule for NoCallbackInPromise {
     fn from_configuration(value: serde_json::Value) -> Self {
+        let default_callbacks: Vec<CompactStr> =
+            ["done", "cb", "callback", "next"].map(Into::into).to_vec();
+
+        let exceptions: Vec<String> = value
+            .get(0)
+            .and_then(|v| v.get("exceptions"))
+            .and_then(serde_json::Value::as_array)
+            .map(|v| {
+                v.iter().filter_map(serde_json::Value::as_str).map(ToString::to_string).collect()
+            })
+            .unwrap_or_default();
+
         Self(Box::new(NoCallbackInPromiseConfig {
-            exceptions: value
-                .get(0)
-                .and_then(|v| v.get("exceptions"))
-                .and_then(serde_json::Value::as_array)
-                .map(|v| {
-                    v.iter()
-                        .filter_map(serde_json::Value::as_str)
-                        .map(ToString::to_string)
-                        .collect()
-                })
-                .unwrap_or_default(),
+            callbacks: default_callbacks
+                .into_iter()
+                .filter(|item| !exceptions.contains(&item.to_string()))
+                .collect(),
         }))
     }
 
@@ -98,9 +103,7 @@ impl Rule for NoCallbackInPromise {
                 };
 
                 let name = id.name.as_str();
-                if !self.exceptions.iter().any(|exception| exception == name)
-                    && CALLBACKS.contains(&name)
-                {
+                if self.callbacks.contains(&name.into()) {
                     ctx.diagnostic(no_callback_in_promise_diagnostic(id.span));
                 }
             }
@@ -145,14 +148,10 @@ impl NoCallbackInPromise {
             return false;
         };
 
-        call_expr.callee.get_identifier_reference().is_some_and(|id| {
-            let callbacks: Vec<_> = CALLBACKS
-                .iter()
-                .filter(|&&item| !self.exceptions.iter().any(|exception| exception == item))
-                .collect();
-
-            callbacks.contains(&&id.name.as_str())
-        })
+        call_expr
+            .callee
+            .get_identifier_reference()
+            .is_some_and(|id| self.callbacks.contains(&id.name.as_str().into()))
     }
 }
 
