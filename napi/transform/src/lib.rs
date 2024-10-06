@@ -1,4 +1,4 @@
-mod context;
+mod errors;
 
 pub use oxc::napi::{isolated_declarations, transform};
 

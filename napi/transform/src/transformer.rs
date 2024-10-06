@@ -1,11 +1,11 @@
-use std::{path::Path, sync::Arc};
+use std::path::Path;
 
 use napi::Either;
 use napi_derive::napi;
 
 use oxc::{
     codegen::CodegenReturn,
-    diagnostics::{Error, NamedSource, OxcDiagnostic},
+    diagnostics::OxcDiagnostic,
     napi::{
         source_map::SourceMap,
         transform::{TransformOptions, TransformResult},
@@ -14,6 +14,8 @@ use oxc::{
     transformer::{InjectGlobalVariablesConfig, InjectImport, ReplaceGlobalDefinesConfig},
     CompilerInterface,
 };
+
+use crate::errors::wrap_diagnostics;
 
 #[derive(Default)]
 struct Compiler {
@@ -167,38 +169,4 @@ pub fn transform(
         declaration_map: compiler.declaration_map,
         errors: wrap_diagnostics(&filename, source_type, &source_text, compiler.errors),
     }
-}
-
-fn wrap_diagnostics(
-    filename: &str,
-    source_type: SourceType,
-    source_text: &str,
-    errors: Vec<OxcDiagnostic>,
-) -> Vec<String> {
-    if errors.is_empty() {
-        return vec![];
-    }
-    let source = {
-        let lang = match (source_type.is_javascript(), source_type.is_jsx()) {
-            (true, false) => "JavaScript",
-            (true, true) => "JSX",
-            (false, true) => "TypeScript React",
-            (false, false) => {
-                if source_type.is_typescript_definition() {
-                    "TypeScript Declaration"
-                } else {
-                    "TypeScript"
-                }
-            }
-        };
-
-        let ns = NamedSource::new(filename, source_text.to_string()).with_language(lang);
-        Arc::new(ns)
-    };
-
-    errors
-        .into_iter()
-        .map(move |diagnostic| Error::from(diagnostic).with_source_code(Arc::clone(&source)))
-        .map(|error| format!("{error:?}"))
-        .collect()
 }
