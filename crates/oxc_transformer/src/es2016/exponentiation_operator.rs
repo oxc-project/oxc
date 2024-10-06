@@ -65,7 +65,7 @@ impl<'a, 'ctx> Traverse<'a> for ExponentiationOperator<'a, 'ctx> {
     // NOTE: Bail bigint arguments to `Math.pow`, which are runtime errors.
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         match expr {
-            // left ** right
+            // `left ** right`
             Expression::BinaryExpression(binary_expr) => {
                 if binary_expr.operator != BinaryOperator::Exponential
                     || binary_expr.left.is_big_int_literal()
@@ -74,11 +74,9 @@ impl<'a, 'ctx> Traverse<'a> for ExponentiationOperator<'a, 'ctx> {
                     return;
                 }
 
-                let left = ctx.ast.move_expression(&mut binary_expr.left);
-                let right = ctx.ast.move_expression(&mut binary_expr.right);
-                *expr = Self::math_pow(left, right, ctx);
+                Self::convert_binary_expression(expr, ctx);
             }
-            // left **= right
+            // `left **= right`
             Expression::AssignmentExpression(assign_expr) => {
                 if assign_expr.operator != AssignmentOperator::Exponential
                     || assign_expr.right.is_big_int_literal()
@@ -86,22 +84,7 @@ impl<'a, 'ctx> Traverse<'a> for ExponentiationOperator<'a, 'ctx> {
                     return;
                 }
 
-                let mut nodes = ctx.ast.vec();
-                let Some(Exploded { reference, uid }) =
-                    self.explode(&mut assign_expr.left, &mut nodes, ctx)
-                else {
-                    return;
-                };
-                let right = ctx.ast.move_expression(&mut assign_expr.right);
-                let right = Self::math_pow(uid, right, ctx);
-                let assign_expr = ctx.ast.expression_assignment(
-                    SPAN,
-                    AssignmentOperator::Assign,
-                    reference,
-                    right,
-                );
-                nodes.push(assign_expr);
-                *expr = ctx.ast.expression_sequence(SPAN, nodes);
+                self.convert_assignment_expression(expr, ctx);
             }
             _ => {}
         }
@@ -109,6 +92,40 @@ impl<'a, 'ctx> Traverse<'a> for ExponentiationOperator<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
+    /// Convert `BinaryExpression`.
+    /// `left ** right` -> `Math.pow(left, right)`
+    fn convert_binary_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        let binary_expr = match ctx.ast.move_expression(expr) {
+            Expression::BinaryExpression(binary_expr) => binary_expr.unbox(),
+            _ => unreachable!(),
+        };
+        *expr = Self::math_pow(binary_expr.left, binary_expr.right, ctx);
+    }
+
+    /// Convert `AssignmentExpression`.
+    // `left **= right` -> `left = Math.pow(left, right)`
+    fn convert_assignment_expression(
+        &mut self,
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let Expression::AssignmentExpression(assign_expr) = expr else { unreachable!() };
+
+        let mut nodes = ctx.ast.vec();
+        let Some(Exploded { reference, uid }) =
+            self.explode(&mut assign_expr.left, &mut nodes, ctx)
+        else {
+            return;
+        };
+        let right = ctx.ast.move_expression(&mut assign_expr.right);
+        let right = Self::math_pow(uid, right, ctx);
+        let assign_expr =
+            ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, reference, right);
+        nodes.push(assign_expr);
+
+        *expr = ctx.ast.expression_sequence(SPAN, nodes);
+    }
+
     fn clone_expression(expr: &Expression<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         match expr {
             Expression::Identifier(ident) => ctx.ast.expression_from_identifier_reference(
