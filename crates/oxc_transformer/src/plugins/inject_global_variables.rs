@@ -236,13 +236,12 @@ impl<'a> InjectGlobalVariables<'a> {
                 if ReplaceGlobalDefines::is_dot_define(ctx.symbols(), dot_define, member) {
                     // If this is first replacement made for this dot define,
                     // create `Atom` for replacement, and record in `replaced_dot_defines`
-                    if value_atom.is_none() {
-                        *value_atom = Some(self.ast.atom(dot_define.value.as_str()));
-
+                    let value_atom = value_atom.get_or_insert_with(|| {
                         self.replaced_dot_defines
                             .push((dot_define.parts[0].clone(), dot_define.value.clone()));
-                    }
-                    let value_atom = value_atom.as_ref().unwrap().clone();
+                        self.ast.atom(dot_define.value.as_str())
+                    });
+                    let value_atom = value_atom.clone();
 
                     let value = self.ast.expression_identifier_reference(SPAN, value_atom);
                     *expr = value;

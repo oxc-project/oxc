@@ -77,10 +77,9 @@ impl<'a, 'ctx> Traverse<'a> for ReactJsxSource<'a, 'ctx> {
 
 impl<'a, 'ctx> ReactJsxSource<'a, 'ctx> {
     pub fn get_line_column(&mut self, offset: u32) -> (usize, usize) {
-        if self.source_rope.is_none() {
-            self.source_rope = Some(Rope::from_str(self.ctx.source_text));
-        }
-        get_line_column(self.source_rope.as_ref().unwrap(), offset, self.ctx.source_text)
+        let source_rope =
+            self.source_rope.get_or_insert_with(|| Rope::from_str(self.ctx.source_text));
+        get_line_column(source_rope, offset, self.ctx.source_text)
     }
 
     pub fn get_object_property_kind_for_jsx_plugin(
@@ -221,11 +220,8 @@ impl<'a, 'ctx> ReactJsxSource<'a, 'ctx> {
     }
 
     fn get_filename_var(&mut self, ctx: &mut TraverseCtx<'a>) -> &BoundIdentifier<'a> {
-        if self.filename_var.is_none() {
-            self.filename_var = Some(
-                ctx.generate_uid_in_root_scope(FILE_NAME_VAR, SymbolFlags::FunctionScopedVariable),
-            );
-        }
-        self.filename_var.as_ref().unwrap()
+        self.filename_var.get_or_insert_with(|| {
+            ctx.generate_uid_in_root_scope(FILE_NAME_VAR, SymbolFlags::FunctionScopedVariable)
+        })
     }
 }
