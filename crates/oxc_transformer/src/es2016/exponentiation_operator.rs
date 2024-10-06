@@ -135,14 +135,15 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
         }
     }
 
-    /// `left ** right` -> `Math.pow(left, right)`
+    /// `Math.pow(left, right)`
     fn math_pow(
         left: Expression<'a>,
         right: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
+        let math_symbol_id = ctx.scopes().find_binding(ctx.current_scope_id(), "Math");
         let ident_math =
-            ctx.create_unbound_reference_id(SPAN, ctx.ast.atom("Math"), ReferenceFlags::Read);
+            ctx.create_reference_id(SPAN, Atom::from("Math"), math_symbol_id, ReferenceFlags::Read);
         let object = ctx.ast.expression_from_identifier_reference(ident_math);
         let property = ctx.ast.identifier_name(SPAN, "pow");
         let callee =
