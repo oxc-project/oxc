@@ -109,8 +109,6 @@ pub struct SemanticBuilder<'a> {
     pub(crate) cfg: Option<ControlFlowGraphBuilder<'a>>,
 
     pub(crate) class_table_builder: ClassTableBuilder,
-
-    ast_node_records: Vec<NodeId>,
 }
 
 /// Data returned by [`SemanticBuilder::build`].
@@ -151,7 +149,6 @@ impl<'a> SemanticBuilder<'a> {
             check_syntax_error: false,
             cfg: None,
             class_table_builder: ClassTableBuilder::new(),
-            ast_node_records: Vec::new(),
         }
     }
 
@@ -346,7 +343,6 @@ impl<'a> SemanticBuilder<'a> {
             control_flow!(self, |cfg| cfg.current_node_ix),
             flags,
         );
-        self.record_ast_node();
     }
 
     fn pop_ast_node(&mut self) {
@@ -356,34 +352,9 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     #[inline]
-    fn record_ast_nodes(&mut self) {
-        if self.cfg.is_some() {
-            self.ast_node_records.push(NodeId::DUMMY);
-        }
-    }
-
-    #[inline]
-    #[allow(clippy::unnecessary_wraps)]
-    fn retrieve_recorded_ast_node(&mut self) -> Option<NodeId> {
-        if self.cfg.is_some() {
-            Some(self.ast_node_records.pop().expect("there is no ast node record to stop."))
-        } else {
-            None
-        }
-    }
-
-    #[inline]
-    fn record_ast_node(&mut self) {
-        // The `self.cfg.is_some()` check here could be removed, since `ast_node_records` is empty
-        // if CFG is disabled. But benchmarks showed removing the extra check is a perf regression.
-        // <https://github.com/oxc-project/oxc/pull/4273>
-        if self.cfg.is_some() {
-            if let Some(record) = self.ast_node_records.last_mut() {
-                if *record == NodeId::DUMMY {
-                    *record = self.current_node_id;
-                }
-            }
-        }
+    #[allow(clippy::cast_possible_truncation)]
+    fn get_next_node_index(&mut self) -> u32 {
+        self.nodes.len() as u32
     }
 
     #[inline]
@@ -816,12 +787,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         });
         /* cfg */
 
-        self.record_ast_nodes();
+        let test_node_index = self.get_next_node_index();
         self.visit_expression(&stmt.test);
-        let test_node_id = self.retrieve_recorded_ast_node();
 
         /* cfg */
         control_flow!(self, |cfg| {
+            // SAFETY: `test_node_index` must be a valid `NodeId`.
+            // If it was out of bounds, would have panicked already when pushing to `AstNodes`.
+            let test_node_id = Some(unsafe { NodeId::new_unchecked(test_node_index) });
             cfg.append_condition_to(start_of_condition_graph_ix, test_node_id);
             let end_of_condition_graph_ix = cfg.current_node_ix;
 
@@ -935,13 +908,15 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             });
         /* cfg */
 
-        self.record_ast_nodes();
+        let test_node_index = self.get_next_node_index();
         self.visit_expression(&expr.test);
-        let test_node_id = self.retrieve_recorded_ast_node();
 
         /* cfg */
         let (after_condition_graph_ix, before_consequent_expr_graph_ix) =
             control_flow!(self, |cfg| {
+                // SAFETY: `test_node_index` must be a valid `NodeId`.
+                // If it was out of bounds, would have panicked already when pushing to `AstNodes`.
+                let test_node_id = Some(unsafe { NodeId::new_unchecked(test_node_index) });
                 cfg.append_condition_to(start_of_condition_graph_ix, test_node_id);
                 let after_condition_graph_ix = cfg.current_node_ix;
                 // conditional expression basic block
@@ -1006,12 +981,16 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
 
         if let Some(test) = &stmt.test {
-            self.record_ast_nodes();
+            let test_node_index = self.get_next_node_index();
             self.visit_expression(test);
-            let test_node_id = self.retrieve_recorded_ast_node();
 
             /* cfg */
-            control_flow!(self, |cfg| cfg.append_condition_to(test_graph_ix, test_node_id));
+            control_flow!(self, |cfg| {
+                // SAFETY: `test_node_index` must be a valid `NodeId`.
+                // If it was out of bounds, would have panicked already when pushing to `AstNodes`.
+                let test_node_id = Some(unsafe { NodeId::new_unchecked(test_node_index) });
+                cfg.append_condition_to(test_graph_ix, test_node_id);
+            });
             /* cfg */
         }
 
@@ -1067,13 +1046,15 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             control_flow!(self, |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal(),));
         /* cfg */
 
-        self.record_ast_nodes();
+        let right_node_index = self.get_next_node_index();
         self.visit_expression(&stmt.right);
-        let right_node_id = self.retrieve_recorded_ast_node();
 
         /* cfg */
         let (end_of_prepare_cond_graph_ix, iteration_graph_ix, body_graph_ix) =
             control_flow!(self, |cfg| {
+                // SAFETY: `right_node_index` must be a valid `NodeId`.
+                // If it was out of bounds, would have panicked already when pushing to `AstNodes`.
+                let right_node_id = Some(unsafe { NodeId::new_unchecked(right_node_index) });
                 let end_of_prepare_cond_graph_ix = cfg.current_node_ix;
                 let iteration_graph_ix = cfg.new_basic_block_normal();
                 cfg.append_iteration(right_node_id, IterationInstructionKind::In);
@@ -1126,13 +1107,15 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             control_flow!(self, |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal()));
         /* cfg */
 
-        self.record_ast_nodes();
+        let right_node_index = self.get_next_node_index();
         self.visit_expression(&stmt.right);
-        let right_node_id = self.retrieve_recorded_ast_node();
 
         /* cfg */
         let (end_of_prepare_cond_graph_ix, iteration_graph_ix, body_graph_ix) =
             control_flow!(self, |cfg| {
+                // SAFETY: `right_node_index` must be a valid `NodeId`.
+                // If it was out of bounds, would have panicked already when pushing to `AstNodes`.
+                let right_node_id = Some(unsafe { NodeId::new_unchecked(right_node_index) });
                 let end_of_prepare_cond_graph_ix = cfg.current_node_ix;
                 let iteration_graph_ix = cfg.new_basic_block_normal();
                 cfg.append_iteration(right_node_id, IterationInstructionKind::Of);
@@ -1181,12 +1164,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             control_flow!(self, |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal(),));
         /* cfg */
 
-        self.record_ast_nodes();
+        let test_node_index = self.get_next_node_index();
         self.visit_expression(&stmt.test);
-        let test_node_id = self.retrieve_recorded_ast_node();
 
         /* cfg */
         let (after_test_graph_ix, before_consequent_stmt_graph_ix) = control_flow!(self, |cfg| {
+            // SAFETY: `test_node_index` must be a valid `NodeId`.
+            // If it was out of bounds, would have panicked already when pushing to `AstNodes`.
+            let test_node_id = Some(unsafe { NodeId::new_unchecked(test_node_index) });
             cfg.append_condition_to(start_of_condition_graph_ix, test_node_id);
             (cfg.current_node_ix, cfg.new_basic_block_normal())
         });
@@ -1373,10 +1358,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
 
         if let Some(expr) = &case.test {
-            self.record_ast_nodes();
+            let test_node_index = self.get_next_node_index();
             self.visit_expression(expr);
-            let test_node_id = self.retrieve_recorded_ast_node();
-            control_flow!(self, |cfg| cfg.append_condition_to(cfg.current_node_ix, test_node_id));
+            control_flow!(self, |cfg| {
+                // SAFETY: `test_node_index` must be a valid `NodeId`.
+                // If it was out of bounds, would have panicked already when pushing to `AstNodes`.
+                let test_node_id = Some(unsafe { NodeId::new_unchecked(test_node_index) });
+                cfg.append_condition_to(cfg.current_node_ix, test_node_id);
+            });
         }
 
         /* cfg */
@@ -1551,12 +1540,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             control_flow!(self, |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal()));
         /* cfg */
 
-        self.record_ast_nodes();
+        let test_node_index = self.get_next_node_index();
         self.visit_expression(&stmt.test);
-        let test_node_id = self.retrieve_recorded_ast_node();
 
         /* cfg - body basic block */
         let body_graph_ix = control_flow!(self, |cfg| {
+            // SAFETY: `test_node_index` must be a valid `NodeId`.
+            // If it was out of bounds, would have panicked already when pushing to `AstNodes`.
+            let test_node_id = Some(unsafe { NodeId::new_unchecked(test_node_index) });
             cfg.append_condition_to(condition_graph_ix, test_node_id);
             let body_graph_ix = cfg.new_basic_block_normal();
 
