@@ -1630,12 +1630,6 @@ x Output mismatch
 
 # babel-plugin-transform-exponentiation-operator (1/4)
 * exponentiation-operator/assignment/input.js
-Symbol reference IDs mismatch for "num":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
-rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2)]
-Reference flags mismatch for "num":
-after transform: ReferenceId(2): ReferenceFlags(Write)
-rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
 Reference flags mismatch for "num":
 after transform: ReferenceId(1): ReferenceFlags(Write)
 rebuilt        : ReferenceId(2): ReferenceFlags(Read)

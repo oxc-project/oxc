@@ -146,17 +146,14 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
         nodes: &mut Vec<'a, Expression<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Exploded<'a>> {
-        let node = node.as_simple_assignment_target_mut()?;
-        let obj = self.get_obj_ref(node, nodes, ctx)?;
         let (reference, uid) = match node {
-            SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
-                let reference =
-                    AssignmentTarget::AssignmentTargetIdentifier(ctx.ast.alloc(
-                        ctx.clone_identifier_reference(ident.as_ref(), ReferenceFlags::Write),
-                    ));
-                (reference, obj)
+            AssignmentTarget::AssignmentTargetIdentifier(_) => {
+                let obj = self.get_obj_ref(node, nodes, ctx).unwrap();
+                let ident = ctx.ast.move_assignment_target(node);
+                (ident, obj)
             }
-            match_member_expression!(SimpleAssignmentTarget) => {
+            match_member_expression!(AssignmentTarget) => {
+                let obj = self.get_obj_ref(node, nodes, ctx).unwrap();
                 let member_expr = node.to_member_expression_mut();
                 let computed = member_expr.is_computed();
                 let prop = self.get_prop_ref(member_expr, nodes, ctx)?;
@@ -202,12 +199,12 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
     /// Make sure side-effects of evaluating `obj` of `obj.ref` and `obj[ref]` only happen once.
     fn get_obj_ref(
         &mut self,
-        node: &mut SimpleAssignmentTarget<'a>,
+        node: &mut AssignmentTarget<'a>,
         nodes: &mut Vec<'a, Expression<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         let reference = match node {
-            SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
+            AssignmentTarget::AssignmentTargetIdentifier(ident) => {
                 let reference = ctx.symbols().get_reference(ident.reference_id().unwrap());
                 if let Some(symbol_id) = reference.symbol_id() {
                     // this variable is declared in scope so we can be 100% sure
@@ -229,12 +226,11 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
                     ReferenceFlags::Read,
                 ))
             }
-            match_member_expression!(SimpleAssignmentTarget) => {
-                let expr = match node {
-                    SimpleAssignmentTarget::ComputedMemberExpression(e) => &mut e.object,
-                    SimpleAssignmentTarget::StaticMemberExpression(e) => &mut e.object,
-                    SimpleAssignmentTarget::PrivateFieldExpression(e) => &mut e.object,
-                    _ => unreachable!(),
+            match_member_expression!(AssignmentTarget) => {
+                let expr = match node.to_member_expression_mut() {
+                    MemberExpression::ComputedMemberExpression(e) => &mut e.object,
+                    MemberExpression::StaticMemberExpression(e) => &mut e.object,
+                    MemberExpression::PrivateFieldExpression(e) => &mut e.object,
                 };
                 let expr = ctx.ast.move_expression(expr);
                 // the object reference that we need to save is locally declared
