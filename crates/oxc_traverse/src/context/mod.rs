@@ -11,17 +11,16 @@ use oxc_syntax::{
     symbol::{SymbolFlags, SymbolId},
 };
 
-use crate::ancestor::{Ancestor, AncestorType};
+use crate::{
+    ancestor::{Ancestor, AncestorType},
+    ast_operations::get_var_name_from_node,
+};
 
 mod ancestry;
-mod ast_operations;
-use ast_operations::GatherNodeParts;
 mod bound_identifier;
 use ancestry::PopToken;
 pub use ancestry::TraverseAncestry;
 pub use bound_identifier::BoundIdentifier;
-mod identifier;
-use identifier::to_identifier;
 mod scoping;
 pub use scoping::TraverseScoping;
 
@@ -359,15 +358,8 @@ impl<'a> TraverseCtx<'a> {
         scope_id: ScopeId,
         flags: SymbolFlags,
     ) -> BoundIdentifier<'a> {
-        let mut parts = String::new();
-        node.gather(&mut |part| {
-            if !parts.is_empty() {
-                parts.push('$');
-            }
-            parts.push_str(part);
-        });
-        let name = if parts.is_empty() { "ref" } else { parts.trim_start_matches('_') };
-        self.generate_uid(&to_identifier(name.get(..20).unwrap_or(name)), scope_id, flags)
+        let name = get_var_name_from_node(node);
+        self.generate_uid(&name, scope_id, flags)
     }
 
     /// Generate UID in current scope based on node.

@@ -64,6 +64,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 use oxc_semantic::{ScopeTree, SymbolTable};
 
+pub mod ast_operations;
 mod context;
 pub use context::{BoundIdentifier, TraverseAncestry, TraverseCtx, TraverseScoping};
 
