@@ -2,8 +2,9 @@ use memchr::memmem;
 use oxc_ast::{ast::RegExpFlags, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_regular_expression::ast::{
-    Alternative, Character, CharacterClass, CharacterClassContents, Disjunction, Pattern, Term,
+use oxc_regular_expression::{
+    ast::{Character, CharacterClass},
+    visit::{RegExpAstKind, Visit},
 };
 use oxc_semantic::NodeId;
 use oxc_span::Span;
@@ -79,9 +80,14 @@ impl Rule for NoUselessEscape {
                     != literal.span.size() as usize =>
             {
                 if let Some(pattern) = literal.regex.pattern.as_pattern() {
-                    let unicode_sets = literal.regex.flags.contains(RegExpFlags::V);
-                    let useless_escape_spans = check_pattern(ctx, pattern, unicode_sets);
-                    for span in useless_escape_spans {
+                    let mut finder = UselessEscapeFinder {
+                        useless_escape_spans: vec![],
+                        character_classes: vec![],
+                        unicode_sets: literal.regex.flags.contains(RegExpFlags::V),
+                        source_text: ctx.source_text(),
+                    };
+                    finder.visit_pattern(pattern);
+                    for span in finder.useless_escape_spans {
                         let c = span.source_text(ctx.source_text()).chars().last().unwrap();
                         ctx.diagnostic_with_fix(no_useless_escape_diagnostic(c, span), |fixer| {
                             fixer.replace(span, c.to_string())
@@ -140,56 +146,13 @@ const REGEX_NON_CHARCLASS_ESCAPES: &str = "\\bcdDfnpPrsStvwWxu0123456789]^/.$*+?
 const REGEX_CLASSSET_CHARACTER_ESCAPES: &str = "\\bcdDfnpPrsStvwWxu0123456789]q/[{}|()-";
 const REGEX_CLASS_SET_RESERVED_DOUBLE_PUNCTUATOR: &str = "!#$%&*+,.:;<=>?@^`~";
 
-fn check_pattern(ctx: &LintContext, pattern: &Pattern, unicode_sets: bool) -> Vec<Span> {
-    let mut spans = vec![];
-
-    visit_terms(pattern, &mut |term, stack| match term {
-        Term::CharacterClass(class) => {
-            check_character_class(ctx, class, unicode_sets, &mut spans);
-        }
-        Term::Character(ch) => {
-            let character_class = stack.iter().find_map(|visit| match visit {
-                Visit::Term(Term::CharacterClass(class)) => Some(class),
-                Visit::Term(_) => None,
-            });
-            if let Some(span) = check_character(ctx, ch, character_class, unicode_sets) {
-                spans.push(span);
-            }
-        }
-        _ => (),
-    });
-
-    spans
-}
-
-fn check_character_class(
-    ctx: &LintContext,
-    character_class: &oxc_allocator::Box<CharacterClass>,
-    unicode_sets: bool,
-    spans: &mut Vec<Span>,
-) {
-    for term in &character_class.body {
-        match term {
-            CharacterClassContents::Character(ch) => {
-                if let Some(span) = check_character(ctx, ch, Some(character_class), unicode_sets) {
-                    spans.push(span);
-                }
-            }
-            CharacterClassContents::NestedCharacterClass(nested_class) => {
-                check_character_class(ctx, nested_class, unicode_sets, spans);
-            }
-            _ => (),
-        }
-    }
-}
-
 fn check_character(
-    ctx: &LintContext,
+    source_text: &str,
     character: &Character,
-    character_class: Option<&oxc_allocator::Box<CharacterClass>>,
+    character_class: Option<&CharacterClass>,
     unicode_sets: bool,
 ) -> Option<Span> {
-    let char_text = character.span.source_text(ctx.source_text());
+    let char_text = character.span.source_text(source_text);
     // The character is escaped if it has at least two characters and the first character is a backslash
     let is_escaped = char_text.starts_with('\\') && char_text.len() >= 2;
     if !is_escaped {
@@ -224,14 +187,13 @@ fn check_character(
         }
         if unicode_sets {
             if REGEX_CLASS_SET_RESERVED_DOUBLE_PUNCTUATOR.contains(escape_char) {
-                if let Some(prev_char) = ctx.source_text().chars().nth(span.end as usize) {
+                if let Some(prev_char) = source_text.chars().nth(span.end as usize) {
                     // Escaping is valid when it is a reserved double punctuator
                     if prev_char == escape_char {
                         return None;
                     }
                 }
-                if let Some(prev_prev_char) = ctx.source_text().chars().nth(span.start as usize - 1)
-                {
+                if let Some(prev_prev_char) = source_text.chars().nth(span.start as usize - 1) {
                     if prev_prev_char == escape_char {
                         if escape_char != '^' {
                             return None;
@@ -349,64 +311,31 @@ fn check_template(string: &str) -> Vec<usize> {
     offsets
 }
 
-#[derive(Debug, Clone, Copy)]
-enum Visit<'a> {
-    Term(&'a Term<'a>),
+struct UselessEscapeFinder<'a> {
+    useless_escape_spans: Vec<Span>,
+    character_classes: Vec<&'a CharacterClass<'a>>,
+    unicode_sets: bool,
+    source_text: &'a str,
 }
 
-// TODO: Replace with proper visitor pattern for the regex AST when available
-/// Calls the given closure on every [`Term`] in the [`Pattern`].
-fn visit_terms<'a, F: FnMut(&'a Term<'a>, &Vec<Visit<'a>>)>(pattern: &'a Pattern, f: &mut F) {
-    // initialize visit stack with enough initial capacity so we will not need to reallocate
-    // in general (most regex patterns will probably not be this many items deep)
-    let mut stack: Vec<Visit> = Vec::with_capacity(16);
-    visit_terms_disjunction(&pattern.body, f, &mut stack);
-}
-
-/// Calls the given closure on every [`Term`] in the [`Disjunction`].
-fn visit_terms_disjunction<'a, F: FnMut(&'a Term<'a>, &Vec<Visit<'a>>)>(
-    disjunction: &'a Disjunction,
-    f: &mut F,
-    stack: &mut Vec<Visit<'a>>,
-) {
-    for alternative in &disjunction.body {
-        visit_terms_alternative(alternative, f, stack);
+impl<'a> Visit<'a> for UselessEscapeFinder<'a> {
+    fn enter_node(&mut self, kind: RegExpAstKind<'a>) {
+        if let RegExpAstKind::CharacterClass(class) = kind {
+            self.character_classes.push(class);
+        }
     }
-}
+    fn leave_node(&mut self, kind: RegExpAstKind<'a>) {
+        if let RegExpAstKind::CharacterClass(_) = kind {
+            self.character_classes.pop();
+        }
+    }
 
-/// Calls the given closure on every [`Term`] in the [`Alternative`].
-fn visit_terms_alternative<'a, F: FnMut(&'a Term<'a>, &Vec<Visit<'a>>)>(
-    alternative: &'a Alternative,
-    f: &mut F,
-    stack: &mut Vec<Visit<'a>>,
-) {
-    for term in &alternative.body {
-        match term {
-            Term::LookAroundAssertion(lookaround) => {
-                stack.push(Visit::Term(term));
-                f(term, stack);
-                visit_terms_disjunction(&lookaround.body, f, stack);
-                stack.pop();
-            }
-            Term::Quantifier(quant) => {
-                stack.push(Visit::Term(term));
-                f(term, stack);
-                f(&quant.body, stack);
-                stack.pop();
-            }
-            Term::CapturingGroup(group) => {
-                stack.push(Visit::Term(term));
-                f(term, stack);
-                visit_terms_disjunction(&group.body, f, stack);
-                stack.pop();
-            }
-            Term::IgnoreGroup(group) => {
-                stack.push(Visit::Term(term));
-                f(term, stack);
-                visit_terms_disjunction(&group.body, f, stack);
-                stack.pop();
-            }
-            _ => f(term, stack),
+    fn visit_character(&mut self, ch: &Character) {
+        let character_class = self.character_classes.last().copied();
+        if let Some(span) =
+            check_character(self.source_text, ch, character_class, self.unicode_sets)
+        {
+            self.useless_escape_spans.push(span);
         }
     }
 }

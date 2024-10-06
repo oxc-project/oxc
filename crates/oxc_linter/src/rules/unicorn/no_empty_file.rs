@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
-    context::LintContext, partial_loader::LINT_PARTIAL_LOADER_EXT, rule::Rule, utils::is_empty_stmt,
+    context::LintContext, loader::LINT_PARTIAL_LOADER_EXT, rule::Rule, utils::is_empty_stmt,
 };
 
 fn no_empty_file_diagnostic(span: Span) -> OxcDiagnostic {

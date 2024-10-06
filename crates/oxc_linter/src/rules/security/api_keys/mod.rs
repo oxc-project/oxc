@@ -57,6 +57,7 @@ declare_oxc_lint!(
     /// ```
     ///
     /// ### What To Do Instead
+    ///
     /// :::warning
     /// The Oxc team are not security experts. We do not endorse any particular
     /// key management service or strategy. Do your research and choose the best

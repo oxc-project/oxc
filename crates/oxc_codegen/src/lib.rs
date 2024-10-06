@@ -17,7 +17,7 @@ use oxc_ast::{
     Trivias,
 };
 use oxc_mangler::Mangler;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::{
     identifier::is_identifier_part,
     operator::{BinaryOperator, UnaryOperator, UpdateOperator},
@@ -58,11 +58,11 @@ pub struct CommentOptions {
 /// Output from [`Codegen::build`]
 pub struct CodegenReturn {
     /// The generated source code.
-    pub source_text: String,
+    pub code: String,
     /// The source map from the input source code to the generated source code.
     ///
     /// You must use [`Codegen::enable_source_map`] for this to be [`Some`].
-    pub source_map: Option<oxc_sourcemap::SourceMap>,
+    pub map: Option<oxc_sourcemap::SourceMap>,
 }
 
 pub struct Codegen<'a> {
@@ -228,9 +228,9 @@ impl<'a> Codegen<'a> {
     #[must_use]
     pub fn build(mut self, program: &Program<'_>) -> CodegenReturn {
         program.print(&mut self, Context::default());
-        let source_text = self.into_source_text();
-        let source_map = self.sourcemap_builder.map(SourcemapBuilder::into_sourcemap);
-        CodegenReturn { source_text, source_map }
+        let code = self.into_source_text();
+        let map = self.sourcemap_builder.map(SourcemapBuilder::into_sourcemap);
+        CodegenReturn { code, map }
     }
 
     #[must_use]
@@ -463,6 +463,22 @@ impl<'a> Codegen<'a> {
             if index != 0 {
                 self.print_comma();
                 self.print_soft_space();
+            }
+            item.print(self, ctx);
+        }
+    }
+
+    fn print_list_with_comments<T: Gen + GetSpan>(&mut self, items: &[T], ctx: Context) {
+        for (index, item) in items.iter().enumerate() {
+            if index != 0 {
+                self.print_comma();
+            }
+            if self.has_non_annotation_comment(item.span().start) {
+                self.print_expr_comments(item.span().start);
+                self.print_indent();
+            } else {
+                self.print_soft_newline();
+                self.print_indent();
             }
             item.print(self, ctx);
         }

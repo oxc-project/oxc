@@ -39,7 +39,7 @@ impl<'a> JSDocFinder<'a> {
         self.attached.get(&span.start).cloned()
     }
 
-    pub fn iter_all<'b>(&'b self) -> impl Iterator<Item = &JSDoc<'a>> + 'b {
+    pub fn iter_all<'b>(&'b self) -> impl Iterator<Item = &'b JSDoc<'a>> + 'b {
         self.attached.values().flatten().chain(self.not_attached.iter())
     }
 }

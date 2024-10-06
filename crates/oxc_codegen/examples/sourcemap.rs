@@ -27,19 +27,14 @@ fn main() -> std::io::Result<()> {
         return Ok(());
     }
 
-    let CodegenReturn { source_text, source_map } = CodeGenerator::new()
+    let CodegenReturn { code, map } = CodeGenerator::new()
         .enable_source_map(path.to_string_lossy().as_ref(), &source_text)
         .build(&ret.program);
 
-    if let Some(source_map) = source_map {
+    if let Some(source_map) = map {
         let result = source_map.to_json_string();
-        let hash = BASE64_STANDARD.encode(format!(
-            "{}\0{}{}\0{}",
-            source_text.len(),
-            source_text,
-            result.len(),
-            result
-        ));
+        let hash =
+            BASE64_STANDARD.encode(format!("{}\0{}{}\0{}", code.len(), code, result.len(), result));
         println!("https://evanw.github.io/source-map-visualization/#{hash}");
     }
 

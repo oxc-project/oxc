@@ -8,26 +8,6 @@ use oxc_span::cmp::ContentEq;
 #[allow(clippy::wildcard_imports)]
 use crate::ast::*;
 
-impl<'a> ContentEq for RegularExpression<'a> {
-    fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.pattern, &other.pattern)
-            && ContentEq::content_eq(&self.flags, &other.flags)
-    }
-}
-
-impl ContentEq for Flags {
-    fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.global, &other.global)
-            && ContentEq::content_eq(&self.ignore_case, &other.ignore_case)
-            && ContentEq::content_eq(&self.multiline, &other.multiline)
-            && ContentEq::content_eq(&self.unicode, &other.unicode)
-            && ContentEq::content_eq(&self.sticky, &other.sticky)
-            && ContentEq::content_eq(&self.dot_all, &other.dot_all)
-            && ContentEq::content_eq(&self.has_indices, &other.has_indices)
-            && ContentEq::content_eq(&self.unicode_sets, &other.unicode_sets)
-    }
-}
-
 impl<'a> ContentEq for Pattern<'a> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.body, &other.body)

@@ -2,24 +2,24 @@ use std::{
     cell::RefCell,
     mem,
     path::{Path, PathBuf},
-    rc::Rc,
 };
 
-use oxc_allocator::Allocator;
-use oxc_ast::{AstBuilder, Trivias};
+use oxc_ast::Trivias;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::SourceType;
 
-use crate::{helpers::module_imports::ModuleImports, TransformOptions};
-
-pub type Ctx<'a> = Rc<TransformCtx<'a>>;
+use crate::{
+    common::{
+        module_imports::ModuleImportsStore, top_level_statements::TopLevelStatementsStore,
+        var_declarations::VarDeclarationsStore,
+    },
+    TransformOptions,
+};
 
 pub struct TransformCtx<'a> {
     errors: RefCell<Vec<OxcDiagnostic>>,
 
     pub trivias: Trivias,
-
-    pub ast: AstBuilder<'a>,
 
     /// <https://babeljs.io/docs/options#filename>
     pub filename: String,
@@ -33,14 +33,16 @@ pub struct TransformCtx<'a> {
 
     // Helpers
     /// Manage import statement globally
-    pub module_imports: ModuleImports<'a>,
+    pub module_imports: ModuleImportsStore<'a>,
+    /// Manage inserting `var` statements globally
+    pub var_declarations: VarDeclarationsStore<'a>,
+    /// Manage inserting statements at top of program globally
+    pub top_level_statements: TopLevelStatementsStore<'a>,
 }
 
 impl<'a> TransformCtx<'a> {
     pub fn new(
-        allocator: &'a Allocator,
         source_path: &Path,
-        source_type: SourceType,
         source_text: &'a str,
         trivias: Trivias,
         options: &TransformOptions,
@@ -55,13 +57,14 @@ impl<'a> TransformCtx<'a> {
 
         Self {
             errors: RefCell::new(vec![]),
-            ast: AstBuilder::new(allocator),
             filename,
             source_path,
-            source_type,
+            source_type: SourceType::default(),
             source_text,
             trivias,
-            module_imports: ModuleImports::new(allocator),
+            module_imports: ModuleImportsStore::new(),
+            var_declarations: VarDeclarationsStore::new(),
+            top_level_statements: TopLevelStatementsStore::new(),
         }
     }
 

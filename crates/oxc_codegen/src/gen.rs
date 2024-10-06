@@ -562,7 +562,7 @@ impl<'a> Gen for VariableDeclaration<'a> {
             && p.start_of_annotation_comment.is_none()
             && matches!(self.kind, VariableDeclarationKind::Const)
             && matches!(self.declarations.first(), Some(VariableDeclarator { init: Some(init), .. }) if init.is_function())
-            && p.has_annotation_comments(self.span.start)
+            && p.has_annotation_comment(self.span.start)
         {
             p.start_of_annotation_comment = Some(self.span.start);
         }
@@ -834,7 +834,7 @@ impl<'a> Gen for ExportNamedDeclaration<'a> {
                     if matches!(var_decl.kind, VariableDeclarationKind::Const) =>
                 {
                     if matches!(var_decl.declarations.first(), Some(VariableDeclarator { init: Some(init), .. }) if init.is_function())
-                        && p.has_annotation_comments(self.span.start)
+                        && p.has_annotation_comment(self.span.start)
                     {
                         p.start_of_annotation_comment = Some(self.span.start);
                     }
@@ -1328,7 +1328,7 @@ impl<'a> GenExpr for ComputedMemberExpression<'a> {
         // `(let[0] = 100);` -> `(let)[0] = 100`;
         let wrap = self.object.get_identifier_reference().is_some_and(|r| r.name == "let");
         p.wrap(wrap, |p| {
-            self.object.print_expr(p, Precedence::Prefix, ctx.intersection(Context::FORBID_CALL));
+            self.object.print_expr(p, Precedence::Postfix, ctx.intersection(Context::FORBID_CALL));
         });
         if self.optional {
             p.print_str("?.");
@@ -1368,7 +1368,7 @@ impl<'a> GenExpr for CallExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         let is_export_default = p.start_of_default_export == p.code_len();
         let mut wrap = precedence >= Precedence::New || ctx.intersects(Context::FORBID_CALL);
-        if p.has_annotation_comments(self.span.start) && precedence >= Precedence::Postfix {
+        if p.has_annotation_comment(self.span.start) && precedence >= Precedence::Postfix {
             wrap = true;
         }
 
@@ -1386,7 +1386,19 @@ impl<'a> GenExpr for CallExpression<'a> {
                 type_parameters.print(p, ctx);
             }
             p.print_char(b'(');
-            p.print_list(&self.arguments, ctx);
+            let has_comment = (self.span.end > 0 && p.has_comment(self.span.end - 1))
+                || self.arguments.iter().any(|item| p.has_comment(item.span().start));
+            if has_comment {
+                p.indent();
+                p.print_list_with_comments(&self.arguments, ctx);
+                // Handle `/* comment */);`
+                if !p.print_expr_comments(self.span.end - 1) {
+                    p.print_soft_newline();
+                }
+                p.dedent();
+            } else {
+                p.print_list(&self.arguments, ctx);
+            }
             p.print_char(b')');
             p.add_source_mapping(self.span.end);
         });
@@ -1949,13 +1961,39 @@ impl<'a> GenExpr for SequenceExpression<'a> {
 impl<'a> GenExpr for ImportExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         let wrap = precedence >= Precedence::New || ctx.intersects(Context::FORBID_CALL);
+        let has_comment = (self.span.end > 0 && p.has_comment(self.span.end - 1))
+            || p.has_comment(self.source.span().start)
+            || self.arguments.first().is_some_and(|argument| p.has_comment(argument.span().start));
+
         p.wrap(wrap, |p| {
             p.add_source_mapping(self.span.start);
             p.print_str("import(");
+            if has_comment {
+                p.indent();
+            }
+            if p.print_expr_comments(self.source.span().start) {
+                p.print_indent();
+            } else if has_comment {
+                p.print_soft_newline();
+                p.print_indent();
+            }
             self.source.print_expr(p, Precedence::Comma, Context::empty());
             if !self.arguments.is_empty() {
                 p.print_comma();
+                if has_comment {
+                    p.print_soft_newline();
+                    p.print_indent();
+                } else {
+                    p.print_soft_space();
+                }
                 p.print_expressions(&self.arguments, Precedence::Comma, Context::empty());
+            }
+            if has_comment {
+                // Handle `/* comment */);`
+                if !p.print_expr_comments(self.span.end - 1) {
+                    p.print_soft_newline();
+                }
+                p.dedent();
             }
             p.print_char(b')');
         });
@@ -2024,7 +2062,7 @@ impl<'a> GenExpr for ChainExpression<'a> {
 impl<'a> GenExpr for NewExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         let mut wrap = precedence >= self.precedence();
-        if p.has_annotation_comments(self.span.start) && precedence >= Precedence::Postfix {
+        if p.has_annotation_comment(self.span.start) && precedence >= Precedence::Postfix {
             wrap = true;
         }
         p.wrap(wrap, |p| {
@@ -2034,7 +2072,19 @@ impl<'a> GenExpr for NewExpression<'a> {
             p.print_str("new ");
             self.callee.print_expr(p, Precedence::New, Context::FORBID_CALL);
             p.print_char(b'(');
-            p.print_list(&self.arguments, ctx);
+            let has_comment = p.has_comment(self.span.end - 1)
+                || self.arguments.iter().any(|item| p.has_comment(item.span().start));
+            if has_comment {
+                p.indent();
+                p.print_list_with_comments(&self.arguments, ctx);
+                // Handle `/* comment */);`
+                if !p.print_expr_comments(self.span.end - 1) {
+                    p.print_soft_newline();
+                }
+                p.dedent();
+            } else {
+                p.print_list(&self.arguments, ctx);
+            }
             p.print_char(b')');
         });
     }

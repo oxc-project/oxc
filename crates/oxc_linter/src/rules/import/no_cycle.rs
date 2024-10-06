@@ -55,20 +55,37 @@ declare_oxc_lint!(
     /// ### Why is this bad?
     ///
     /// Dependency cycles lead to confusing architectures where bugs become hard to find.
-    ///
     /// It is common to import an `undefined` value that is caused by a cyclic dependency.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// // dep-b.js
     /// import './dep-a.js'
     /// export function b() { /* ... */ }
     /// ```
-    ///
     /// ```javascript
     /// // dep-a.js
     /// import { b } from './dep-b.js' // reported: Dependency cycle detected.
+    /// export function a() { /* ... */ }
     /// ```
+    ///
+    /// In this example, `dep-a.js` and `dep-b.js` import each other, creating a circular
+    /// dependency, which is problematic.
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// // dep-b.js
+    /// export function b() { /* ... */ }
+    /// ```
+    /// ```javascript
+    /// // dep-a.js
+    /// import { b } from './dep-b.js' // no circular dependency
+    /// export function a() { /* ... */ }
+    /// ```
+    ///
+    /// In this corrected version, `dep-b.js` no longer imports `dep-a.js`, breaking the cycle.
     NoCycle,
     restriction
 );

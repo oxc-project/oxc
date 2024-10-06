@@ -123,15 +123,15 @@
 
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, NONE};
+use oxc_data_structures::stack::SparseStack;
 use oxc_span::SPAN;
 use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolFlags,
 };
-use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
-use serde::Deserialize;
+use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
 
-use crate::helpers::{bindings::BoundIdentifier, stack::SparseStack};
+use serde::Deserialize;
 
 #[derive(Debug, Default, Clone, Deserialize)]
 pub struct ArrowFunctionsOptions {
@@ -161,7 +161,7 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
 
     /// Insert `var _this = this;` for the global scope.
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Some(this_var) = self.this_var_stack.take() {
+        if let Some(this_var) = self.this_var_stack.take_last() {
             self.insert_this_var_statement_at_the_top_of_statements(
                 &mut program.body,
                 &this_var,
@@ -169,6 +169,7 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
             );
         }
         debug_assert!(self.this_var_stack.len() == 1);
+        debug_assert!(self.this_var_stack.last().is_none());
     }
 
     fn enter_function(&mut self, _func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
@@ -270,7 +271,7 @@ impl<'a> ArrowFunctions<'a> {
         // `this` can be in scope at a time. We could create a single `_this` UID and reuse it in each
         // scope. But this does not match output for some of Babel's test cases.
         // <https://github.com/oxc-project/oxc/pull/5840>
-        let this_var = self.this_var_stack.get_or_init(|| {
+        let this_var = self.this_var_stack.last_or_init(|| {
             let target_scope_id = ctx
                 .scopes()
                 .ancestors(arrow_scope_id)
@@ -283,13 +284,7 @@ impl<'a> ArrowFunctions<'a> {
                     ) && !scope_flags.contains(ScopeFlags::Arrow)
                 })
                 .unwrap();
-
-            BoundIdentifier::new_uid(
-                "this",
-                target_scope_id,
-                SymbolFlags::FunctionScopedVariable,
-                ctx,
-            )
+            ctx.generate_uid("this", target_scope_id, SymbolFlags::FunctionScopedVariable)
         });
         Some(this_var.create_spanned_read_reference(span, ctx))
     }

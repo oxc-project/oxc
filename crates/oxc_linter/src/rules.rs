@@ -63,6 +63,7 @@ mod eslint {
     pub mod no_dupe_else_if;
     pub mod no_dupe_keys;
     pub mod no_duplicate_case;
+    pub mod no_else_return;
     pub mod no_empty;
     pub mod no_empty_character_class;
     pub mod no_empty_function;
@@ -97,6 +98,7 @@ mod eslint {
     pub mod no_redeclare;
     pub mod no_regex_spaces;
     pub mod no_restricted_globals;
+    pub mod no_return_assign;
     pub mod no_script_url;
     pub mod no_self_assign;
     pub mod no_self_compare;
@@ -470,6 +472,7 @@ mod promise {
     pub mod no_new_statics;
     pub mod no_return_in_finally;
     pub mod param_names;
+    pub mod prefer_await_to_callbacks;
     pub mod prefer_await_to_then;
     pub mod spec_only;
     pub mod valid_params;
@@ -534,6 +537,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_empty_function,
     eslint::no_empty_pattern,
     eslint::no_empty_static_block,
+    eslint::no_else_return,
     eslint::no_eq_null,
     eslint::no_eval,
     eslint::no_ex_assign,
@@ -563,6 +567,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_redeclare,
     eslint::no_regex_spaces,
     eslint::no_restricted_globals,
+    eslint::no_return_assign,
     eslint::no_script_url,
     eslint::no_self_assign,
     eslint::no_self_compare,
@@ -758,6 +763,7 @@ oxc_macros::declare_all_lint_rules! {
     promise::no_new_statics,
     promise::no_return_in_finally,
     promise::param_names,
+    promise::prefer_await_to_callbacks,
     promise::prefer_await_to_then,
     promise::spec_only,
     promise::valid_params,

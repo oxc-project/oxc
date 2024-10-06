@@ -4,6 +4,41 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.9.9] - 2024-09-27
+
+### Bug Fixes
+
+- bd8f786 linter: Rule and generic filters do not re-configure existing rules (#6087) (DonIsaac)
+- c5cdb4c linter: Disable all rules in a plugin when that plugin gets turned off (#6086) (DonIsaac)
+- 6c855af linter: Only write fix results if source code has changed (#6096) (DonIsaac)
+- 8759528 linter: Category filters not re-configuring already-enabled rules (#6085) (DonIsaac)
+- c2616f7 linter: Fix panic in fixer for `oxc/only-used-in-recursion` (#6070) (camc314)
+- 3da3845 linter: Malformed snippets in `eslint/for-direction` docs (#6060) (DonIsaac)
+- c047d42 linter: `no-useless-escape`: do not crash on backslash character (#6048) (camchenry)
+- 6f76ebe linter: Ignore invalid or partial disable directives (#6045) (camchenry)
+- 09a24cd linter: Fix false positives for generics in `no-unexpected-multiline` (#6039) (camchenry)
+- d05fd20 linter: Newline in type parameters causing false positive in `no-unexpected-multiline` (#6031) (DonIsaac)
+
+### Performance
+
+- f8464a3 linter: `no-magic-numbers` remove redudant checks in `is_array_index` (#6033) (Alexander S.)
+- c16ae60 linter: `jest/prefer-hooks-in-order`: rewrite rule to allocate less and iterate fewer times (#6030) (camchenry)
+
+### Documentation
+
+- a4fdf1b linter: Improve docs for promise rules (#6051) (dalaoshu)
+- 21cdb78 linter: Fix incorrect "bad" example in `only-used-in-recursion` (#6029) (Boshen)
+
+### Refactor
+
+- 1f92d61 linter: `jest/prefer-hooks-in-order`: improve diagnostic messages (#6036) (camchenry)
+
+### Testing
+
+- 55949eb linter: Add `OxlintRules::override_rules` tests (#6081) (DonIsaac)
+- 1a6923a linter: Add filter parsing test cases (#6080) (DonIsaac)
+- 58d333a linter: Add more test cases for disable directives (#6047) (camchenry)
+
 ## [0.9.8] - 2024-09-24
 
 ### Bug Fixes

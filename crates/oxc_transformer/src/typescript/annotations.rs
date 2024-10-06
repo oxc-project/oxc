@@ -1,6 +1,6 @@
 #![allow(clippy::unused_self)]
 
-use std::{cell::Cell, rc::Rc};
+use std::cell::Cell;
 
 use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast::*;
@@ -16,12 +16,14 @@ use oxc_syntax::{
 use oxc_traverse::{Traverse, TraverseCtx};
 use rustc_hash::FxHashSet;
 
-use crate::{context::Ctx, TypeScriptOptions};
+use crate::{TransformCtx, TypeScriptOptions};
 
-pub struct TypeScriptAnnotations<'a> {
-    #[allow(dead_code)]
-    options: Rc<TypeScriptOptions>,
-    ctx: Ctx<'a>,
+pub struct TypeScriptAnnotations<'a, 'ctx> {
+    ctx: &'ctx TransformCtx<'a>,
+
+    // Options
+    only_remove_type_imports: bool,
+
     /// Assignments to be added to the constructor body
     assignments: Vec<Assignment<'a>>,
     has_super_call: bool,
@@ -33,8 +35,8 @@ pub struct TypeScriptAnnotations<'a> {
     type_identifier_names: FxHashSet<Atom<'a>>,
 }
 
-impl<'a> TypeScriptAnnotations<'a> {
-    pub fn new(options: Rc<TypeScriptOptions>, ctx: Ctx<'a>) -> Self {
+impl<'a, 'ctx> TypeScriptAnnotations<'a, 'ctx> {
+    pub fn new(options: &TypeScriptOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
         let jsx_element_import_name = if options.jsx_pragma.contains('.') {
             options.jsx_pragma.split('.').next().map(String::from).unwrap()
         } else {
@@ -48,10 +50,10 @@ impl<'a> TypeScriptAnnotations<'a> {
         };
 
         Self {
+            ctx,
+            only_remove_type_imports: options.only_remove_type_imports,
             has_super_call: false,
             assignments: vec![],
-            options,
-            ctx,
             has_jsx_element: false,
             has_jsx_fragment: false,
             jsx_element_import_name,
@@ -60,7 +62,8 @@ impl<'a> TypeScriptAnnotations<'a> {
         }
     }
 }
-impl<'a> Traverse<'a> for TypeScriptAnnotations<'a> {
+
+impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         let mut no_modules_remaining = true;
         let mut some_modules_deleted = false;
@@ -99,7 +102,7 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a> {
                 Statement::ImportDeclaration(decl) => {
                     if decl.import_kind.is_type() {
                         false
-                    } else if self.options.only_remove_type_imports {
+                    } else if self.only_remove_type_imports {
                         true
                     } else if let Some(specifiers) = &mut decl.specifiers {
                         if specifiers.is_empty() {
@@ -148,11 +151,11 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a> {
         // Determine if we still have import/export statements, otherwise we
         // need to inject an empty statement (`export {}`) so that the file is
         // still considered a module
-        if no_modules_remaining && some_modules_deleted {
+        if no_modules_remaining && some_modules_deleted && self.ctx.module_imports.is_empty() {
             let export_decl = ModuleDeclaration::ExportNamedDeclaration(
-                self.ctx.ast.plain_export_named_declaration(SPAN, self.ctx.ast.vec(), None),
+                ctx.ast.plain_export_named_declaration(SPAN, ctx.ast.vec(), None),
             );
-            program.body.push(self.ctx.ast.statement_module_declaration(export_decl));
+            program.body.push(ctx.ast.statement_module_declaration(export_decl));
         }
     }
 
@@ -214,23 +217,23 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a> {
         });
     }
 
-    fn enter_expression(&mut self, expr: &mut Expression<'a>, _ctx: &mut TraverseCtx<'a>) {
+    fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if expr.is_typescript_syntax() {
             let inner_expr = expr.get_inner_expression_mut();
-            *expr = self.ctx.ast.move_expression(inner_expr);
+            *expr = ctx.ast.move_expression(inner_expr);
         }
     }
 
     fn enter_simple_assignment_target(
         &mut self,
         target: &mut SimpleAssignmentTarget<'a>,
-        _ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         if let Some(expr) = target.get_expression_mut() {
             match expr.get_inner_expression_mut() {
                 // `foo!++` to `foo++`
                 inner_expr @ Expression::Identifier(_) => {
-                    let inner_expr = self.ctx.ast.move_expression(inner_expr);
+                    let inner_expr = ctx.ast.move_expression(inner_expr);
                     let Expression::Identifier(ident) = inner_expr else {
                         unreachable!();
                     };
@@ -238,7 +241,7 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a> {
                 }
                 // `foo.bar!++` to `foo.bar++`
                 inner_expr @ match_member_expression!(Expression) => {
-                    let inner_expr = self.ctx.ast.move_expression(inner_expr);
+                    let inner_expr = ctx.ast.move_expression(inner_expr);
                     let member_expr = inner_expr.into_member_expression();
                     *target = SimpleAssignmentTarget::from(member_expr);
                 }
@@ -253,12 +256,12 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a> {
     fn enter_assignment_target(
         &mut self,
         target: &mut AssignmentTarget<'a>,
-        _ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         if let Some(expr) = target.get_expression_mut() {
             let inner_expr = expr.get_inner_expression_mut();
             if inner_expr.is_member_expression() {
-                let inner_expr = self.ctx.ast.move_expression(inner_expr);
+                let inner_expr = ctx.ast.move_expression(inner_expr);
                 let member_expr = inner_expr.into_member_expression();
                 *target = AssignmentTarget::from(member_expr);
             }
@@ -331,11 +334,7 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a> {
                 def.value
                     .body
                     .get_or_insert_with(|| {
-                        self.ctx.ast.alloc_function_body(
-                            SPAN,
-                            self.ctx.ast.vec(),
-                            self.ctx.ast.vec(),
-                        )
+                        ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), ctx.ast.vec())
                     })
                     .statements
                     .splice(
@@ -424,7 +423,7 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a> {
                 matches!(stmt, Statement::ExpressionStatement(stmt) if stmt.expression.is_super_call_expression())
             });
             if has_super_call {
-                let mut new_stmts = self.ctx.ast.vec();
+                let mut new_stmts = ctx.ast.vec();
                 for stmt in stmts.drain(..) {
                     let is_super_call = matches!(stmt, Statement::ExpressionStatement(ref stmt) if stmt.expression.is_super_call_expression());
                     new_stmts.push(stmt);
@@ -548,7 +547,7 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a> {
     }
 }
 
-impl<'a> TypeScriptAnnotations<'a> {
+impl<'a, 'ctx> TypeScriptAnnotations<'a, 'ctx> {
     /// Check if the given name is a JSX pragma or fragment pragma import
     /// and if the file contains JSX elements or fragments
     fn is_jsx_imports(&self, name: &str) -> bool {

@@ -18,7 +18,7 @@ mod rules;
 mod service;
 mod utils;
 
-pub mod partial_loader;
+pub mod loader;
 pub mod table;
 
 use std::{io::Write, path::Path, rc::Rc, sync::Arc};
@@ -114,6 +114,11 @@ impl Linter {
 
     pub fn number_of_rules(&self) -> usize {
         self.rules.len()
+    }
+
+    #[cfg(test)]
+    pub(crate) fn rules(&self) -> &Vec<RuleWithSeverity> {
+        &self.rules
     }
 
     pub fn run<'a>(&self, path: &Path, semantic: Rc<Semantic<'a>>) -> Vec<Message<'a>> {

@@ -130,6 +130,7 @@ fn get_pattern_replacement<'a>(
         .regex
         .pattern
         .as_pattern()
+        .filter(|pattern| pattern.body.body.len() == 1)
         .and_then(|pattern| pattern.body.body.first().map(|it| &it.body))?;
     let is_simple_string = pattern_terms.iter().all(|term| matches!(term, Term::Character(_)));
 
@@ -150,6 +151,7 @@ fn test() {
     let pass = vec![
         r"foo.replace(/a/, bar)",
         r"foo.replaceAll(/a/, bar)",
+        r"foo.replaceAll(/a|b/g, bar)",
         r#"foo.replace("string", bar)"#,
         r#"foo.replaceAll("string", bar)"#,
         r"foo.replace(/a/g)",

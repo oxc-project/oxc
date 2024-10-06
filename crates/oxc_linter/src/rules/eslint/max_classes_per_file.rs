@@ -98,8 +98,8 @@ impl Rule for MaxClassesPerFile {
             return;
         }
 
-        let ast_node_id = ctx.semantic().classes().get_node_id(ClassId::from(self.max));
-        let span = if let AstKind::Class(class) = ctx.nodes().kind(ast_node_id) {
+        let node_id = ctx.semantic().classes().get_node_id(ClassId::from(self.max));
+        let span = if let AstKind::Class(class) = ctx.nodes().kind(node_id) {
             class.span
         } else {
             Span::new(0, 0)

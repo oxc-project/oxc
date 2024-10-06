@@ -10,6 +10,7 @@ use crate::{keep_var::KeepVar, node_util::NodeUtil, tri::Tri, CompressorPass};
 /// Terser option: `dead_code: true`.
 ///
 /// See `KeepVar` at the end of this file for `var` hoisting logic.
+/// <https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeRemoveDeadCode.java>
 pub struct PeepholeRemoveDeadCode {
     changed: bool,
 }
@@ -27,7 +28,13 @@ impl<'a> CompressorPass<'a> for PeepholeRemoveDeadCode {
 
 impl<'a> Traverse<'a> for PeepholeRemoveDeadCode {
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.fold_if_statement(stmt, ctx);
+        if let Some(new_stmt) = match stmt {
+            Statement::IfStatement(if_stmt) => self.try_fold_if(if_stmt, ctx),
+            _ => None,
+        } {
+            *stmt = new_stmt;
+            self.changed = true;
+        }
     }
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
@@ -116,25 +123,30 @@ impl<'a> PeepholeRemoveDeadCode {
         }
     }
 
-    fn fold_if_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Statement::IfStatement(if_stmt) = stmt else { return };
-
+    fn try_fold_if(
+        &mut self,
+        if_stmt: &mut IfStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Statement<'a>> {
         // Descend and remove `else` blocks first.
-        if let Some(alternate) = &mut if_stmt.alternate {
-            self.fold_if_statement(alternate, ctx);
-            if matches!(alternate, Statement::EmptyStatement(_)) {
-                if_stmt.alternate = None;
-                self.changed = true;
+        if let Some(Statement::IfStatement(alternate)) = &mut if_stmt.alternate {
+            if let Some(new_stmt) = self.try_fold_if(alternate, ctx) {
+                if matches!(new_stmt, Statement::EmptyStatement(_)) {
+                    if_stmt.alternate = None;
+                    self.changed = true;
+                } else {
+                    if_stmt.alternate = Some(new_stmt);
+                }
             }
         }
 
         match ctx.get_boolean_value(&if_stmt.test) {
             Tri::True => {
-                *stmt = ctx.ast.move_statement(&mut if_stmt.consequent);
-                self.changed = true;
+                // self.changed = true;
+                Some(ctx.ast.move_statement(&mut if_stmt.consequent))
             }
             Tri::False => {
-                *stmt = if let Some(alternate) = &mut if_stmt.alternate {
+                Some(if let Some(alternate) = &mut if_stmt.alternate {
                     ctx.ast.move_statement(alternate)
                 } else {
                     // Keep hoisted `vars` from the consequent block.
@@ -143,10 +155,10 @@ impl<'a> PeepholeRemoveDeadCode {
                     keep_var
                         .get_variable_declaration_statement()
                         .unwrap_or_else(|| ctx.ast.statement_empty(SPAN))
-                };
-                self.changed = true;
+                })
+                // self.changed = true;
             }
-            Tri::Unknown => {}
+            Tri::Unknown => None,
         }
     }
 
@@ -170,5 +182,52 @@ impl<'a> PeepholeRemoveDeadCode {
             Tri::False => Some(ctx.ast.move_expression(&mut expr.alternate)),
             Tri::Unknown => None,
         }
+    }
+}
+
+/// <https://github.com/google/closure-compiler/blob/master/test/com/google/javascript/jscomp/PeepholeRemoveDeadCodeTest.java>
+#[cfg(test)]
+mod test {
+    use oxc_allocator::Allocator;
+
+    use crate::tester;
+
+    fn test(source_text: &str, positive: &str) {
+        let allocator = Allocator::default();
+        let mut pass = super::PeepholeRemoveDeadCode::new();
+        tester::test(&allocator, source_text, positive, &mut pass);
+    }
+
+    fn test_same(source_text: &str) {
+        test(source_text, source_text);
+    }
+
+    fn fold_same(js: &str) {
+        test_same(js);
+    }
+
+    fn fold(js: &str, expected: &str) {
+        test(js, expected);
+    }
+
+    #[test]
+    #[ignore]
+    fn test_remove_no_op_labelled_statement() {
+        fold("a: break a;", "");
+        fold("a: { break a; }", "");
+
+        fold(
+            //
+            "a: { break a; console.log('unreachable'); }", //
+            "",
+        );
+        fold(
+            //
+            "a: { break a; var x = 1; } x = 2;", //
+            "var x; x = 2;",
+        );
+
+        fold_same("b: { var x = 1; } x = 2;");
+        fold_same("a: b: { var x = 1; } x = 2;");
     }
 }

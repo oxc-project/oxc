@@ -360,16 +360,6 @@ impl Kind {
         matches!(self, Implements | Interface | Package | Private | Protected | Public | Static)
     }
 
-    #[rustfmt::skip]
-    pub fn is_at_expression(self) -> bool {
-        self.is_unary_operator()
-            || self.is_update_operator()
-            || self.is_reserved_keyword()
-            || self.is_literal()
-            || matches!(self, Neq | LParen | LBrack | LCurly | LAngle | Dot3
-                | Slash | SlashEq | TemplateHead | NoSubstitutionTemplate | PrivateIdentifier | Ident | Async)
-    }
-
     pub fn is_template_start_of_tagged_template(self) -> bool {
         matches!(self, NoSubstitutionTemplate | TemplateHead)
     }

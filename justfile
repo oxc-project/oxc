@@ -76,8 +76,13 @@ test:
 lint:
   cargo lint -- --deny warnings
 
+[unix]
 doc:
   RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items
+
+[windows]
+doc:
+  $Env:RUSTDOCFLAGS='-D warnings'; cargo doc --no-deps --document-private-items
 
 # Fix all auto-fixable format and lint issues. Make sure your working tree is clean first.
 fix:
@@ -180,8 +185,9 @@ new-security-rule name:
     cargo run -p rulegen {{name}} security
 
 clone-submodule dir url sha:
-  git clone --depth=1 {{url}} {{dir}} || true
-  cd {{dir}} && git fetch origin {{sha}} && git reset --hard {{sha}}
+  cd {{dir}} || git init {{dir}}
+  cd {{dir}} && git remote add origin {{url}} || true
+  cd {{dir}} && git fetch --depth=1 origin {{sha}} && git reset --hard {{sha}}
 
 website path:
   cargo run -p website -- linter-rules --table {{path}}/src/docs/guide/usage/linter/generated-rules.md --rule-docs {{path}}/src/docs/guide/usage/linter/rules

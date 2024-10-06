@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.30.5] - 2024-09-29
+
+### Features
+
+- 15552ac napi/transform: Display semantic error (#6160) (Boshen)
+- f50fdcd napi/transform: Make react refresh option take a boolean (#6146) (Boshen)
+
+### Bug Fixes
+
+- f27d59f napi/transform: Remove confusing `jsx` option (#6159) (Boshen)
+
+## [0.30.4] - 2024-09-28
+
+### Bug Fixes
+
+- 6f98aad sourcemap: Align sourcemap type with Rollup (#6133) (Boshen)
+
 ## [0.30.0] - 2024-09-23
 
 ### Features

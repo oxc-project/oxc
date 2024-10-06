@@ -1,25 +1,21 @@
 use std::{ops::ControlFlow, path::PathBuf};
 
+use rustc_hash::FxHashSet;
+
 use oxc::{
     allocator::Allocator,
-    ast::{
-        ast::{Program, RegExpFlags},
-        Trivias,
-    },
-    codegen::CodegenOptions,
+    ast::{ast::Program, Trivias},
+    codegen::{CodegenOptions, CodegenReturn},
     diagnostics::OxcDiagnostic,
     minifier::CompressOptions,
     parser::{ParseOptions, ParserReturn},
-    regular_expression::{ParserOptions, PatternParser},
-    semantic::{
-        post_transform_checker::{check_semantic_after_transform, check_semantic_ids},
-        Semantic, SemanticBuilderReturn,
-    },
+    regular_expression::{Parser, ParserOptions},
+    semantic::{Semantic, SemanticBuilderReturn},
     span::{SourceType, Span},
     transformer::{TransformOptions, TransformerReturn},
     CompilerInterface,
 };
-use rustc_hash::FxHashSet;
+use oxc_tasks_transform_checker::{check_semantic_after_transform, check_semantic_ids};
 
 use crate::suite::TestResult;
 
@@ -114,8 +110,8 @@ impl CompilerInterface for Driver {
         ControlFlow::Continue(())
     }
 
-    fn after_codegen(&mut self, printed: String) {
-        self.printed = printed;
+    fn after_codegen(&mut self, ret: CodegenReturn) {
+        self.printed = ret.code;
     }
 }
 
@@ -166,15 +162,11 @@ impl Driver {
                 continue;
             };
             let printed1 = pattern.to_string();
-            let flags = literal.regex.flags;
-            let printed2 = match PatternParser::new(
+            let flags = literal.regex.flags.to_string();
+            let printed2 = match Parser::new(
                 &allocator,
                 &printed1,
-                ParserOptions {
-                    span_offset: 0,
-                    unicode_mode: flags.contains(RegExpFlags::U) || flags.contains(RegExpFlags::V),
-                    unicode_sets_mode: flags.contains(RegExpFlags::V),
-                },
+                ParserOptions::default().with_flags(&flags),
             )
             .parse()
             {

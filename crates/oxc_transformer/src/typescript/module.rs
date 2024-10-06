@@ -4,19 +4,19 @@ use oxc_span::SPAN;
 use oxc_syntax::reference::ReferenceFlags;
 use oxc_traverse::{Traverse, TraverseCtx};
 
-use crate::context::Ctx;
+use crate::TransformCtx;
 
-pub struct TypeScriptModule<'a> {
-    ctx: Ctx<'a>,
+pub struct TypeScriptModule<'a, 'ctx> {
+    ctx: &'ctx TransformCtx<'a>,
 }
 
-impl<'a> TypeScriptModule<'a> {
-    pub fn new(ctx: Ctx<'a>) -> Self {
+impl<'a, 'ctx> TypeScriptModule<'a, 'ctx> {
+    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
         Self { ctx }
     }
 }
 
-impl<'a> Traverse<'a> for TypeScriptModule<'a> {
+impl<'a, 'ctx> Traverse<'a> for TypeScriptModule<'a, 'ctx> {
     /// ```TypeScript
     /// import b = babel;
     /// import AliasModule = LongNameModule;
@@ -48,7 +48,7 @@ impl<'a> Traverse<'a> for TypeScriptModule<'a> {
     }
 }
 
-impl<'a> TypeScriptModule<'a> {
+impl<'a, 'ctx> TypeScriptModule<'a, 'ctx> {
     fn transform_ts_import_equals(
         &self,
         decl: &mut Box<'a, TSImportEqualsDeclaration<'a>>,

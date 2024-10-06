@@ -4,7 +4,7 @@ use std::{env, fs, path::Path, sync::Arc};
 use oxc_allocator::Allocator;
 use oxc_ast::{ast, AstKind, Visit};
 use oxc_parser::{ParseOptions, Parser};
-use oxc_regular_expression::{FlagsParser, ParserOptions, PatternParser};
+use oxc_regular_expression::{Parser as RegExpParser, ParserOptions as RegExpParserOptions};
 use oxc_span::SourceType;
 
 // `cargo run -p oxc_parser --example regular_expression`
@@ -45,6 +45,7 @@ struct RegularExpressionVisitor {
 impl<'a> Visit<'a> for RegularExpressionVisitor {
     fn enter_node(&mut self, kind: AstKind<'a>) {
         let allocator = Allocator::default();
+
         match kind {
             AstKind::RegExpLiteral(re) => {
                 println!("🍀 {}", re.span.source_text(self.source_text.as_ref()));
@@ -61,12 +62,12 @@ impl<'a> Visit<'a> for RegularExpressionVisitor {
             {
                 println!("🍀 {}", new_expr.span.source_text(&self.source_text));
 
-                let pattern = match new_expr.arguments.first() {
-                    Some(ast::Argument::StringLiteral(sl)) => &sl.value,
+                let (pattern, pattern_span) = match new_expr.arguments.first() {
+                    Some(ast::Argument::StringLiteral(sl)) => (&sl.value, &sl.span),
                     Some(ast::Argument::TemplateLiteral(tl))
                         if tl.is_no_substitution_template() =>
                     {
-                        &tl.quasi().unwrap()
+                        (&tl.quasi().unwrap(), &tl.span)
                     }
                     _ => return,
                 };
@@ -81,16 +82,12 @@ impl<'a> Visit<'a> for RegularExpressionVisitor {
                     _ => "",
                 };
 
-                let flags =
-                    FlagsParser::new(&allocator, flags, ParserOptions::default()).parse().unwrap();
-                let parsed = PatternParser::new(
+                let parsed = RegExpParser::new(
                     &allocator,
                     pattern,
-                    ParserOptions {
-                        span_offset: new_expr.span.start + 12, // = "new RegExp(\"".len()
-                        unicode_mode: flags.unicode || flags.unicode_sets,
-                        unicode_sets_mode: flags.unicode_sets,
-                    },
+                    RegExpParserOptions::default()
+                        .with_span_offset(pattern_span.start + 1)
+                        .with_flags(flags),
                 )
                 .parse();
 

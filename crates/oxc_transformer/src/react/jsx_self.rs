@@ -33,31 +33,31 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Span, SPAN};
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
-use crate::context::Ctx;
+use crate::TransformCtx;
 
 const SELF: &str = "__self";
 
-pub struct ReactJsxSelf<'a> {
-    ctx: Ctx<'a>,
+pub struct ReactJsxSelf<'a, 'ctx> {
+    ctx: &'ctx TransformCtx<'a>,
 }
 
-impl<'a> ReactJsxSelf<'a> {
-    pub fn new(ctx: Ctx<'a>) -> Self {
+impl<'a, 'ctx> ReactJsxSelf<'a, 'ctx> {
+    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
         Self { ctx }
     }
 }
 
-impl<'a> Traverse<'a> for ReactJsxSelf<'a> {
+impl<'a, 'ctx> Traverse<'a> for ReactJsxSelf<'a, 'ctx> {
     fn enter_jsx_opening_element(
         &mut self,
         elem: &mut JSXOpeningElement<'a>,
-        _ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
-        self.add_self_this_attribute(elem);
+        self.add_self_this_attribute(elem, ctx);
     }
 }
 
-impl<'a> ReactJsxSelf<'a> {
+impl<'a, 'ctx> ReactJsxSelf<'a, 'ctx> {
     pub fn report_error(&self, span: Span) {
         let error = OxcDiagnostic::warn("Duplicate __self prop found.").with_label(span);
         self.ctx.error(error);
@@ -84,12 +84,13 @@ impl<'a> ReactJsxSelf<'a> {
         true
     }
 
-    pub fn get_object_property_kind_for_jsx_plugin(&self) -> ObjectPropertyKind<'a> {
+    pub fn get_object_property_kind_for_jsx_plugin(
+        ctx: &mut TraverseCtx<'a>,
+    ) -> ObjectPropertyKind<'a> {
         let kind = PropertyKind::Init;
-        let key = self.ctx.ast.property_key_identifier_name(SPAN, SELF);
-        let value = self.ctx.ast.expression_this(SPAN);
-        self.ctx
-            .ast
+        let key = ctx.ast.property_key_identifier_name(SPAN, SELF);
+        let value = ctx.ast.expression_this(SPAN);
+        ctx.ast
             .object_property_kind_object_property(SPAN, kind, key, value, None, false, false, false)
     }
 
@@ -99,7 +100,7 @@ impl<'a> ReactJsxSelf<'a> {
 
     /// `<div __self={this} />`
     ///       ^^^^^^^^^^^^^
-    fn add_self_this_attribute(&self, elem: &mut JSXOpeningElement<'a>) {
+    fn add_self_this_attribute(&self, elem: &mut JSXOpeningElement<'a>, ctx: &TraverseCtx<'a>) {
         // Check if `__self` attribute already exists
         for item in &elem.attributes {
             if let JSXAttributeItem::Attribute(attribute) = item {
@@ -112,12 +113,12 @@ impl<'a> ReactJsxSelf<'a> {
             }
         }
 
-        let name = self.ctx.ast.jsx_attribute_name_jsx_identifier(SPAN, SELF);
+        let name = ctx.ast.jsx_attribute_name_jsx_identifier(SPAN, SELF);
         let value = {
-            let jsx_expr = JSXExpression::from(self.ctx.ast.expression_this(SPAN));
-            self.ctx.ast.jsx_attribute_value_jsx_expression_container(SPAN, jsx_expr)
+            let jsx_expr = JSXExpression::from(ctx.ast.expression_this(SPAN));
+            ctx.ast.jsx_attribute_value_jsx_expression_container(SPAN, jsx_expr)
         };
-        let attribute = self.ctx.ast.jsx_attribute_item_jsx_attribute(SPAN, name, Some(value));
+        let attribute = ctx.ast.jsx_attribute_item_jsx_attribute(SPAN, name, Some(value));
         elem.attributes.push(attribute);
     }
 }

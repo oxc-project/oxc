@@ -1,0 +1,24 @@
+[package]
+name = "oxc_tasks_transform_checker"
+version = "0.0.0"
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[lib]
+test = false
+doctest = false
+
+[dependencies]
+oxc_allocator = { workspace = true }
+oxc_ast = { workspace = true }
+oxc_diagnostics = { workspace = true }
+oxc_semantic = { workspace = true }
+oxc_span = { workspace = true }
+oxc_syntax = { workspace = true }
+
+indexmap = { workspace = true }
+rustc-hash = { workspace = true }

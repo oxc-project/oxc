@@ -28,56 +28,26 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/main/packages/babel-plugin-transform-nullish-coalescing-operator>
 //! * Nullish coalescing TC39 proposal: <https://github.com/tc39-transfer/proposal-nullish-coalescing>
 
-use oxc_allocator::{CloneIn, Vec};
+use oxc_allocator::CloneIn;
 use oxc_ast::{ast::*, NONE};
-use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
+use oxc_semantic::{ReferenceFlags, ScopeFlags, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
-use crate::helpers::stack::SparseStack;
+use crate::TransformCtx;
 
-pub struct NullishCoalescingOperator<'a> {
-    var_declarations: SparseStack<Vec<'a, VariableDeclarator<'a>>>,
+pub struct NullishCoalescingOperator<'a, 'ctx> {
+    ctx: &'ctx TransformCtx<'a>,
 }
 
-impl<'a> NullishCoalescingOperator<'a> {
-    pub fn new() -> Self {
-        Self { var_declarations: SparseStack::new() }
+impl<'a, 'ctx> NullishCoalescingOperator<'a, 'ctx> {
+    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
+        Self { ctx }
     }
 }
 
-impl<'a> Traverse<'a> for NullishCoalescingOperator<'a> {
-    #[inline] // Inline because it's no-op in release mode
-    fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
-        debug_assert!(self.var_declarations.len() == 1);
-    }
-
-    fn enter_statements(
-        &mut self,
-        _stmts: &mut Vec<'a, Statement<'a>>,
-        _ctx: &mut TraverseCtx<'a>,
-    ) {
-        self.var_declarations.push(None);
-    }
-
-    fn exit_statements(
-        &mut self,
-        statements: &mut Vec<'a, Statement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if let Some(declarations) = self.var_declarations.pop() {
-            debug_assert!(!declarations.is_empty());
-            let variable = ctx.ast.alloc_variable_declaration(
-                SPAN,
-                VariableDeclarationKind::Var,
-                declarations,
-                false,
-            );
-            statements.insert(0, Statement::VariableDeclaration(variable));
-        }
-    }
-
+impl<'a, 'ctx> Traverse<'a> for NullishCoalescingOperator<'a, 'ctx> {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         // left ?? right
         if !matches!(expr, Expression::LogicalExpression(logical_expr) if logical_expr.operator == LogicalOperator::Coalesce)
@@ -114,28 +84,33 @@ impl<'a> Traverse<'a> for NullishCoalescingOperator<'a> {
             ctx.current_scope_id()
         };
 
-        let (id, ident) =
-            Self::create_new_var_with_expression(&logical_expr.left, current_scope_id, ctx);
+        // Add `var _name` to scope
+        let binding = ctx.generate_uid_based_on_node(
+            &logical_expr.left,
+            current_scope_id,
+            SymbolFlags::FunctionScopedVariable,
+        );
 
         let left =
             AssignmentTarget::from(ctx.ast.simple_assignment_target_from_identifier_reference(
-                ctx.clone_identifier_reference(&ident, ReferenceFlags::read_write()),
+                binding.create_read_write_reference(ctx),
             ));
 
-        let reference = ctx.ast.expression_from_identifier_reference(ident);
+        let reference =
+            ctx.ast.expression_from_identifier_reference(binding.create_read_reference(ctx));
         let assignment = ctx.ast.expression_assignment(
             SPAN,
             AssignmentOperator::Assign,
             left,
             logical_expr.left,
         );
-
         let mut new_expr =
             Self::create_conditional_expression(reference, assignment, logical_expr.right, ctx);
 
         if is_parent_formal_parameter {
             // Replace `function (a, x = a.b ?? c) {}` to `function (a, x = (() => a.b ?? c)() ){}`
             // so the temporary variable can be injected in correct scope
+            let id = binding.create_binding_pattern(ctx);
             let param = ctx.ast.formal_parameter(SPAN, ctx.ast.vec(), id, None, false, false);
             let params = ctx.ast.formal_parameters(
                 SPAN,
@@ -155,17 +130,14 @@ impl<'a> Traverse<'a> for NullishCoalescingOperator<'a> {
             // `(x) => x;` -> `((x) => x)();`
             new_expr = ctx.ast.expression_call(SPAN, arrow_function, NONE, ctx.ast.vec(), false);
         } else {
-            let kind = VariableDeclarationKind::Var;
-            self.var_declarations
-                .get_mut_or_init(|| ctx.ast.vec())
-                .push(ctx.ast.variable_declarator(SPAN, kind, id, None, false));
+            self.ctx.var_declarations.insert(&binding, None, ctx);
         }
 
         *expr = new_expr;
     }
 }
 
-impl<'a> NullishCoalescingOperator<'a> {
+impl<'a, 'ctx> NullishCoalescingOperator<'a, 'ctx> {
     fn clone_expression(expr: &Expression<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         match expr {
             Expression::Identifier(ident) => ctx.ast.expression_from_identifier_reference(
@@ -173,30 +145,6 @@ impl<'a> NullishCoalescingOperator<'a> {
             ),
             _ => expr.clone_in(ctx.ast.allocator),
         }
-    }
-
-    fn create_new_var_with_expression(
-        expr: &Expression<'a>,
-        current_scope_id: ScopeId,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> (BindingPattern<'a>, IdentifierReference<'a>) {
-        // Add `var name` to scope
-        let symbol_id = ctx.generate_uid_based_on_node(
-            expr,
-            current_scope_id,
-            SymbolFlags::FunctionScopedVariable,
-        );
-        let symbol_name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
-
-        // var _name;
-        let binding_identifier =
-            BindingIdentifier::new_with_symbol_id(SPAN, symbol_name.clone(), symbol_id);
-        let id = ctx.ast.binding_pattern_kind_from_binding_identifier(binding_identifier);
-        let id = ctx.ast.binding_pattern(id, NONE, false);
-        let reference =
-            ctx.create_reference_id(SPAN, symbol_name, Some(symbol_id), ReferenceFlags::Read);
-
-        (id, reference)
     }
 
     /// Create a conditional expression
@@ -224,7 +172,7 @@ impl<'a> NullishCoalescingOperator<'a> {
             SPAN,
             Self::clone_expression(&reference, ctx),
             op,
-            ctx.ast.void_0(),
+            ctx.ast.void_0(SPAN),
         );
         let test = ctx.ast.expression_logical(SPAN, left, LogicalOperator::And, right);
 

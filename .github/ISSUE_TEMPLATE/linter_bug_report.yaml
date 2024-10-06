@@ -1,0 +1,37 @@
+name: Linter bug report
+description: Report a bug in Oxlint
+title: "linter: "
+labels: ["C-bug", "A-linter"]
+assignees:
+  - DonIsaac
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping us improve Oxlint! Please fill out the sections below to help us understand and reproduce the issue you're experiencing.
+
+  - type: input
+    id: version
+    attributes:
+      label: What version of Oxlint are you using?
+      description: You can find the version by running `oxlint -V`. If you ran Oxlint using `npx`, use 'latest'. If you're not sure, please say 'not sure'.
+      placeholder: 0.9.8
+
+  - type: input
+    id: command
+    attributes:
+      label: What command did you run?
+      description: Please include the full command with all arguments. If you're not certain (e.g. you're using the VSCode extension), please provide as much detail as possible.
+
+  - type: textarea
+    id: config
+    attributes:
+      label: What does your `.oxlint.json` config file look like?
+      description: If you're not using a config file, please say so. Otherwise paste please paste its contents here.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Please describe the issue you're experiencing.

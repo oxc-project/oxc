@@ -46,7 +46,7 @@ fn main() {
             CommentOptions { preserve_annotate_comments: false },
         )
         .build(&id_ret.program)
-        .source_text;
+        .code;
 
     println!("Dts Emit:\n");
     println!("{printed}\n");

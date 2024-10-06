@@ -6,8 +6,8 @@ use oxc_traverse::TraverseCtx;
 use crate::{
     ast_passes::{
         CollapseVariableDeclarations, ExploitAssigns, PeepholeFoldConstants,
-        PeepholeMinimizeConditions, PeepholeRemoveDeadCode, PeepholeSubstituteAlternateSyntax,
-        RemoveSyntax, StatementFusion,
+        PeepholeMinimizeConditions, PeepholeRemoveDeadCode, PeepholeReplaceKnownMethods,
+        PeepholeSubstituteAlternateSyntax, RemoveSyntax, StatementFusion,
     },
     CompressOptions, CompressorPass,
 };
@@ -46,13 +46,13 @@ impl<'a> Compressor<'a> {
         CollapseVariableDeclarations::new(self.options).build(program, &mut ctx);
 
         // See `latePeepholeOptimizations`
-        let mut passes: [&mut dyn CompressorPass; 5] = [
+        let mut passes: [&mut dyn CompressorPass; 6] = [
             &mut StatementFusion::new(),
             &mut PeepholeRemoveDeadCode::new(),
             // TODO: MinimizeExitPoints
             &mut PeepholeMinimizeConditions::new(),
             &mut PeepholeSubstituteAlternateSyntax::new(self.options),
-            // TODO: PeepholeReplaceKnownMethods
+            &mut PeepholeReplaceKnownMethods::new(),
             &mut PeepholeFoldConstants::new(),
         ];
 

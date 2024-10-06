@@ -2025,8 +2025,8 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     fn make_all_namespaces_valuelike(&mut self) {
-        for symbol_id in &self.namespace_stack {
-            let Some(symbol_id) = *symbol_id else {
+        for &symbol_id in &self.namespace_stack {
+            let Some(symbol_id) = symbol_id else {
                 continue;
             };
 
