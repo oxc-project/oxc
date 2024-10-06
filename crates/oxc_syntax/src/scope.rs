@@ -13,11 +13,10 @@ impl ScopeId {
     /// # Panics
     /// Panics if `idx` is `u32::MAX`.
     pub const fn new(idx: u32) -> Self {
-        // We could use `NonMaxU32::new(idx).unwrap()` but `Option::unwrap` is not a const function
-        // and we want this function to be
-        assert!(idx != u32::MAX);
-        // SAFETY: We have checked that `idx` is not `u32::MAX`
-        unsafe { Self::new_unchecked(idx) }
+        if let Some(idx) = NonMaxU32::new(idx) {
+            return Self(idx);
+        }
+        panic!();
     }
 
     /// Create `ScopeId` from `u32` unchecked.
@@ -35,7 +34,7 @@ impl Idx for ScopeId {
     #[allow(clippy::cast_possible_truncation)]
     fn from_usize(idx: usize) -> Self {
         assert!(idx < u32::MAX as usize);
-        // SAFETY: We just checked `idx` is valid for `NonMaxU32`
+        // SAFETY: We just checked `idx` is a legal value for `NonMaxU32`
         Self(unsafe { NonMaxU32::new_unchecked(idx as u32) })
     }
 
