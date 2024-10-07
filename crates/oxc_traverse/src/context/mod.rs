@@ -366,8 +366,6 @@ impl<'a> TraverseCtx<'a> {
     ///
     /// See also comments on [`TraverseScoping::generate_uid_name`] for important information
     /// on how UIDs are generated. There are some potential "gotchas".
-    ///
-    /// This is a shortcut for `ctx.scoping.generate_uid_in_current_scope_based_on_node`.
     #[inline]
     pub fn generate_uid_in_current_scope_based_on_node(
         &mut self,
