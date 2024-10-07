@@ -108,6 +108,7 @@ mod eslint {
     pub mod no_template_curly_in_string;
     pub mod no_ternary;
     pub mod no_this_before_super;
+    pub mod no_throw_literal;
     pub mod no_undef;
     pub mod no_undefined;
     pub mod no_unexpected_multiline;
@@ -577,6 +578,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_template_curly_in_string,
     eslint::no_ternary,
     eslint::no_this_before_super,
+    eslint::no_throw_literal,
     eslint::no_undef,
     eslint::no_undefined,
     eslint::no_unexpected_multiline,
