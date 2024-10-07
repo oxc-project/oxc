@@ -3,7 +3,7 @@ use petgraph::stable_graph::NodeIndex;
 
 pub type BasicBlockId = NodeIndex;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct BasicBlock {
     pub instructions: Vec<Instruction>,
     pub unreachable: bool,
@@ -31,7 +31,7 @@ impl Instruction {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum InstructionKind {
     Unreachable,
     Statement,
@@ -43,19 +43,19 @@ pub enum InstructionKind {
     Iteration(IterationInstructionKind),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ReturnInstructionKind {
     ImplicitUndefined,
     NotImplicitUndefined,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LabeledInstruction {
     Labeled,
     Unlabeled,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum IterationInstructionKind {
     Of,
     In,
