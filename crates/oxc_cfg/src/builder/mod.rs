@@ -2,28 +2,29 @@ mod context;
 
 use context::Ctx;
 pub use context::{CtxCursor, CtxFlags};
+use oxc_index::IndexVec;
 use oxc_syntax::node::NodeId;
 use petgraph::Direction;
 
 use super::{
-    BasicBlock, BasicBlockId, ControlFlowGraph, EdgeType, ErrorEdgeKind, Graph, Instruction,
+    BasicBlock, BlockNodeId, ControlFlowGraph, EdgeType, ErrorEdgeKind, Graph, Instruction,
     InstructionKind, IterationInstructionKind, LabeledInstruction,
 };
-use crate::ReturnInstructionKind;
+use crate::{BasicBlockId, ReturnInstructionKind};
 
 #[derive(Debug, Default)]
-struct ErrorHarness(ErrorEdgeKind, BasicBlockId);
+struct ErrorHarness(ErrorEdgeKind, BlockNodeId);
 
 #[derive(Debug, Default)]
 pub struct ControlFlowGraphBuilder<'a> {
     pub graph: Graph,
-    pub basic_blocks: Vec<BasicBlock>,
-    pub current_node_ix: BasicBlockId,
+    pub basic_blocks: IndexVec<BasicBlockId, BasicBlock>,
+    pub current_node_ix: BlockNodeId,
     ctx_stack: Vec<Ctx<'a>>,
     /// Contains the error unwinding path represented as a stack of `ErrorHarness`es
     error_path: Vec<ErrorHarness>,
     /// Stack of finalizers, the top most element is always the appropriate one for current node.
-    finalizers: Vec<Option<BasicBlockId>>,
+    finalizers: Vec<Option<BlockNodeId>>,
 }
 
 impl<'a> ControlFlowGraphBuilder<'a> {
@@ -36,7 +37,7 @@ impl<'a> ControlFlowGraphBuilder<'a> {
     }
 
     /// # Panics
-    pub fn basic_block(&self, basic_block: BasicBlockId) -> &BasicBlock {
+    pub fn basic_block(&self, basic_block: BlockNodeId) -> &BasicBlock {
         let idx = *self
             .graph
             .node_weight(basic_block)
@@ -47,7 +48,7 @@ impl<'a> ControlFlowGraphBuilder<'a> {
     }
 
     /// # Panics
-    pub fn basic_block_mut(&mut self, basic_block: BasicBlockId) -> &mut BasicBlock {
+    pub fn basic_block_mut(&mut self, basic_block: BlockNodeId) -> &mut BasicBlock {
         let idx = *self
             .graph
             .node_weight(basic_block)
@@ -57,15 +58,14 @@ impl<'a> ControlFlowGraphBuilder<'a> {
             .expect("expected `self.current_node_ix` to be a valid node index in self.graph")
     }
 
-    pub(self) fn new_basic_block(&mut self) -> BasicBlockId {
+    pub(self) fn new_basic_block(&mut self) -> BlockNodeId {
         // current length would be the index of block we are adding on the next line.
-        let basic_block_ix = self.basic_blocks.len();
-        self.basic_blocks.push(BasicBlock::new());
+        let basic_block_ix = self.basic_blocks.push(BasicBlock::new());
         self.graph.add_node(basic_block_ix)
     }
 
     #[must_use]
-    pub fn new_basic_block_function(&mut self) -> BasicBlockId {
+    pub fn new_basic_block_function(&mut self) -> BlockNodeId {
         // we might want to differentiate between function blocks and normal blocks down the road.
         self.new_basic_block_normal()
     }
@@ -73,7 +73,7 @@ impl<'a> ControlFlowGraphBuilder<'a> {
     /// # Panics
     /// if there is no error harness to attach to.
     #[must_use]
-    pub fn new_basic_block_normal(&mut self) -> BasicBlockId {
+    pub fn new_basic_block_normal(&mut self) -> BlockNodeId {
         let graph_ix = self.new_basic_block();
         self.current_node_ix = graph_ix;
 
@@ -89,7 +89,7 @@ impl<'a> ControlFlowGraphBuilder<'a> {
         graph_ix
     }
 
-    pub fn add_edge(&mut self, a: BasicBlockId, b: BasicBlockId, weight: EdgeType) {
+    pub fn add_edge(&mut self, a: BlockNodeId, b: BlockNodeId, weight: EdgeType) {
         if matches!(weight, EdgeType::NewFunction) {
             self.basic_block_mut(b).mark_as_reachable();
         } else if matches!(weight, EdgeType::Unreachable) || self.basic_block(a).is_unreachable() {
@@ -117,7 +117,7 @@ impl<'a> ControlFlowGraphBuilder<'a> {
 
     /// Creates and push a new `BasicBlockId` onto `self.error_path` stack.
     /// Returns the `BasicBlockId` of the created error harness block.
-    pub fn attach_error_harness(&mut self, kind: ErrorEdgeKind) -> BasicBlockId {
+    pub fn attach_error_harness(&mut self, kind: ErrorEdgeKind) -> BlockNodeId {
         let graph_ix = self.new_basic_block();
         self.error_path.push(ErrorHarness(kind, graph_ix));
         graph_ix
@@ -126,7 +126,7 @@ impl<'a> ControlFlowGraphBuilder<'a> {
     /// # Panics
     /// if there is no error harness pushed onto the stack,
     /// Or last harness doesn't match the expected `BasicBlockId`.
-    pub fn release_error_harness(&mut self, expect: BasicBlockId) {
+    pub fn release_error_harness(&mut self, expect: BlockNodeId) {
         let harness = self
             .error_path
             .pop()
@@ -139,7 +139,7 @@ impl<'a> ControlFlowGraphBuilder<'a> {
 
     /// Creates and push a new `BasicBlockId` onto `self.finalizers` stack.
     /// Returns the `BasicBlockId` of the created finalizer block.
-    pub fn attach_finalizer(&mut self) -> BasicBlockId {
+    pub fn attach_finalizer(&mut self) -> BlockNodeId {
         let graph_ix = self.new_basic_block();
         self.finalizers.push(Some(graph_ix));
         graph_ix
@@ -156,7 +156,7 @@ impl<'a> ControlFlowGraphBuilder<'a> {
 
     /// # Panics
     /// if last finalizer doesn't match the expected `BasicBlockId`.
-    pub fn release_finalizer(&mut self, expect: BasicBlockId) {
+    pub fn release_finalizer(&mut self, expect: BlockNodeId) {
         // return early if there is no finalizer.
         let Some(finalizer) = self.finalizers.pop() else { return };
         assert_eq!(
@@ -166,7 +166,7 @@ impl<'a> ControlFlowGraphBuilder<'a> {
         );
     }
 
-    pub fn append_condition_to(&mut self, block: BasicBlockId, node: Option<NodeId>) {
+    pub fn append_condition_to(&mut self, block: BlockNodeId, node: Option<NodeId>) {
         self.push_instruction_to(block, InstructionKind::Condition, node);
     }
 
@@ -228,7 +228,7 @@ impl<'a> ControlFlowGraphBuilder<'a> {
     #[inline]
     pub(self) fn push_instruction_to(
         &mut self,
-        block: BasicBlockId,
+        block: BlockNodeId,
         kind: InstructionKind,
         node_id: Option<NodeId>,
     ) {

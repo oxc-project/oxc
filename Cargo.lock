@@ -1519,6 +1519,8 @@ version = "0.30.5"
 dependencies = [
  "bitflags 2.6.0",
  "itertools",
+ "nonmax",
+ "oxc_index",
  "oxc_syntax",
  "petgraph",
  "rustc-hash",

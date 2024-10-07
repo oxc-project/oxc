@@ -86,10 +86,9 @@ fn main() -> std::io::Result<()> {
 
     let basic_blocks_printed = cfg
         .basic_blocks
-        .iter()
-        .map(DisplayDot::display_dot)
-        .enumerate()
+        .iter_enumerated()
         .map(|(i, it)| {
+            let it = it.display_dot();
             format!(
                 "bb{i}: {{\n{}\n---\n{}\n}}",
                 it.lines().map(|x| format!("\t{}", x.trim())).join("\n"),

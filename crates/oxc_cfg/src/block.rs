@@ -1,7 +1,4 @@
 use oxc_syntax::node::NodeId;
-use petgraph::stable_graph::NodeIndex;
-
-pub type BasicBlockId = NodeIndex;
 
 #[derive(Debug, Clone)]
 pub struct BasicBlock {

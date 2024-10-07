@@ -1,5 +1,5 @@
 use oxc_ast::AstKind;
-use oxc_cfg::BasicBlockId;
+use oxc_cfg::BlockNodeId;
 use oxc_index::IndexVec;
 use oxc_span::GetSpan;
 pub use oxc_syntax::node::{NodeFlags, NodeId};
@@ -17,7 +17,7 @@ pub struct AstNode<'a> {
     scope_id: ScopeId,
 
     /// Associated `BasicBlockId` in CFG (initialized by control_flow)
-    cfg_id: BasicBlockId,
+    cfg_id: BlockNodeId,
 
     flags: NodeFlags,
 }
@@ -27,7 +27,7 @@ impl<'a> AstNode<'a> {
     pub(crate) fn new(
         kind: AstKind<'a>,
         scope_id: ScopeId,
-        cfg_id: BasicBlockId,
+        cfg_id: BlockNodeId,
         flags: NodeFlags,
         id: NodeId,
     ) -> Self {
@@ -44,7 +44,7 @@ impl<'a> AstNode<'a> {
     ///
     /// See [oxc_cfg::ControlFlowGraph] for more information.
     #[inline]
-    pub fn cfg_id(&self) -> BasicBlockId {
+    pub fn cfg_id(&self) -> BlockNodeId {
         self.cfg_id
     }
 
@@ -236,7 +236,7 @@ impl<'a> AstNodes<'a> {
         kind: AstKind<'a>,
         scope_id: ScopeId,
         parent_node_id: NodeId,
-        cfg_id: BasicBlockId,
+        cfg_id: BlockNodeId,
         flags: NodeFlags,
     ) -> NodeId {
         let node_id = self.parent_ids.push(Some(parent_node_id));
@@ -250,7 +250,7 @@ impl<'a> AstNodes<'a> {
         &mut self,
         kind: AstKind<'a>,
         scope_id: ScopeId,
-        cfg_id: BasicBlockId,
+        cfg_id: BlockNodeId,
         flags: NodeFlags,
     ) -> NodeId {
         let node_id = self.parent_ids.push(None);
