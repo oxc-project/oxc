@@ -10,7 +10,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_callback_in_promise_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Avoid calling back inside of a promise")
-        .with_help("Use `then` and `catch` directly, avoid callbacks")
+        .with_help("Use `then` and `catch` directly")
         .with_label(span)
 }
 
