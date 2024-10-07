@@ -16,9 +16,9 @@ declare_oxc_lint!(
     /// Disallow `else` blocks after `return` statements in `if` statements
     ///
     /// ### Why is this bad?
-    /// If an if block contains a return statement, the else block becomes unnecessary. Its contents can be placed outside of the block.
+    /// If an `if` block contains a `return` statement, the `else` block becomes
+    /// unnecessary. Its contents can be placed outside of the block.
     ///
-    /// ### Example
     /// ```javascript
     /// function foo() {
     ///   if (x) {
@@ -28,15 +28,146 @@ declare_oxc_lint!(
     ///   }
     /// }
     /// ```
+    ///
+    /// This rule is aimed at highlighting an unnecessary block of code
+    /// following an `if` containing a return statement. As such, it will warn
+    /// when it encounters an `else` following a chain of `if`s, all of them
+    /// containing a `return` statement.
+    ///
+    /// Options
+    /// This rule has an object option:
+    ///
+    /// - `allowElseIf`: `true` _(default)_ allows `else if` blocks after a return
+    /// - `allowElseIf`: `false` disallows `else if` blocks after a return
+    ///
+    /// ### Examples
+    ///
+    /// #### `allowElseIf: true`
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// function foo1() {
+    ///     if (x) {
+    ///         return y;
+    ///     } else {
+    ///         return z;
+    ///     }
+    /// }
+    ///
+    /// function foo2() {
+    ///     if (x) {
+    ///         return y;
+    ///     } else if (z) {
+    ///         return w;
+    ///     } else {
+    ///         return t;
+    ///     }
+    /// }
+    ///
+    /// function foo3() {
+    ///     if (x) {
+    ///         return y;
+    ///     } else {
+    ///         var t = "foo";
+    ///     }
+    ///
+    ///     return t;
+    /// }
+    ///
+    /// function foo4() {
+    ///     if (error) {
+    ///         return 'It failed';
+    ///     } else {
+    ///         if (loading) {
+    ///             return "It's still loading";
+    ///         }
+    ///     }
+    /// }
+    ///
+    /// // Two warnings for nested occurrences
+    /// function foo5() {
+    ///     if (x) {
+    ///         if (y) {
+    ///             return y;
+    ///         } else {
+    ///             return x;
+    ///         }
+    ///     } else {
+    ///         return z;
+    ///     }
+    /// }
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// function foo1() {
+    ///     if (x) {
+    ///         return y;
+    ///     }
+    ///
+    ///     return z;
+    /// }
+    ///
+    /// function foo2() {
+    ///     if (x) {
+    ///         return y;
+    ///     } else if (z) {
+    ///         var t = "foo";
+    ///     } else {
+    ///         return w;
+    ///     }
+    /// }
+    ///
+    /// function foo3() {
+    ///     if (x) {
+    ///         if (z) {
+    ///             return y;
+    ///         }
+    ///     } else {
+    ///         return z;
+    ///     }
+    /// }
+    ///
+    /// function foo4() {
+    ///     if (error) {
+    ///         return 'It failed';
+    ///     } else if (loading) {
+    ///         return "It's still loading";
+    ///     }
+    /// }
+    /// ```
+    ///
+    /// #### `allowElseIf: false`
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// function foo() {
+    ///     if (error) {
+    ///         return 'It failed';
+    ///     } else if (loading) {
+    ///         return "It's still loading";
+    ///     }
+    /// }
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// function foo() {
+    ///     if (error) {
+    ///         return 'It failed';
+    ///     }
+    ///
+    ///     if (loading) {
+    ///         return "It's still loading";
+    ///     }
+    /// }
+    /// ```
     NoElseReturn,
     suspicious,
     fix
 );
 
 fn no_else_return_diagnostic(else_stmt: &Statement) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow `else` blocks after `return` statements in `if` statements")
-        .with_help("Unnecessary 'else' after 'return'.")
-        .with_label(else_stmt.span())
+    OxcDiagnostic::warn("Unnecessary 'else' after 'return'.").with_label(else_stmt.span())
 }
 
 fn is_safe_from_name_collisions(
