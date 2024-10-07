@@ -1,38 +1,4 @@
-var _obj$foo$bar,
-  _boundPropName,
-  _unboundPropName,
-  _obj$foo2$bar,
-  _boundPropName2,
-  _obj$foo3$bar,
-  _unboundPropName2,
-  _boundPropObj$foo$bar,
-  _unboundPropObj$foo$b,
-  _unboundObj,
-  _unboundObj2,
-  _unboundObj$foo$bar,
-  _unboundObj3,
-  _boundPropName3,
-  _unboundObj4,
-  _unboundPropName3,
-  _unboundObj$foo2$bar,
-  _boundPropName4,
-  _unboundObj$foo3$bar,
-  _unboundPropName4,
-  _unboundObj5,
-  _boundPropObj2$foo$ba,
-  _unboundObj6,
-  _unboundPropObj2$foo$,
-  _fn,
-  _fn$foo$bar,
-  _fn$prop,
-  _fn2,
-  _fn$prop2,
-  _ref,
-  _this,
-  _this$foo$bar,
-  _this2,
-  _this3,
-  _fn4$foo$bar$qux;
+var _obj$foo$bar, _boundPropName, _unboundPropName, _obj$foo2$bar, _boundPropName2, _obj$foo3$bar, _unboundPropName2, _boundPropObj$foo$bar, _unboundPropObj$foo$b, _unboundObj, _unboundObj2, _unboundObj$foo$bar, _unboundObj3, _boundPropName3, _unboundObj4, _unboundPropName3, _unboundObj$foo2$bar, _boundPropName4, _unboundObj$foo3$bar, _unboundPropName4, _unboundObj5, _boundPropObj2$foo$ba, _unboundObj6, _unboundPropObj2$foo$, _fn, _fn$foo$bar, _fn$prop, _fn2, _fn$prop2, _ref, _this, _this$foo$bar, _this2, _this3, _fn4$foo$bar$qux, _unbound, _bound, _unbound2;
 
 // Bound root of member expression
 let obj;
@@ -139,3 +105,10 @@ function outer() {
     (_fn4$foo$bar$qux2 = fn4().foo.bar.qux()),
     (_this6[_fn4$foo$bar$qux2] = Math.pow(_this6[_fn4$foo$bar$qux2], 31));
 }
+
+// Underscore var names
+let ___bound;
+___bound["prop"] = Math.pow(___bound["prop"], 32);
+(_unbound = ___unbound), (_unbound["prop"] = Math.pow(_unbound["prop"], 33));
+(_bound = ___bound), (obj[_bound] = Math.pow(obj[_bound], 34));
+(_unbound2 = ___unbound), (obj[_unbound2] = Math.pow(obj[_unbound2], 35));

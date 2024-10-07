@@ -37,7 +37,7 @@ use oxc_ast::{ast::*, NONE};
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator};
-use oxc_traverse::{ast_operations::get_var_name_from_node, Traverse, TraverseCtx};
+use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::TransformCtx;
 
@@ -151,8 +151,7 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
             let reference = ctx.ast.expression_from_identifier_reference(
                 ctx.create_unbound_reference_id(SPAN, ident.name.clone(), ReferenceFlags::Read),
             );
-            let name = ident.name.as_str();
-            self.add_new_reference(reference, name, &mut nodes, ctx)
+            self.add_new_reference(reference, &mut nodes, ctx)
         };
 
         let reference = ctx.ast.move_assignment_target(assign_target);
@@ -238,8 +237,7 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
             _ => true,
         };
         if needs_temp_var {
-            let name = get_var_name_from_node(&obj);
-            obj = self.add_new_reference(obj, &name, nodes, ctx);
+            obj = self.add_new_reference(obj, nodes, ctx);
         }
 
         let computed = member_expr.is_computed();
@@ -314,8 +312,7 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
                 if expr.is_literal() {
                     return expr;
                 }
-                let name = get_var_name_from_node(&expr);
-                self.add_new_reference(expr, &name, nodes, ctx)
+                self.add_new_reference(expr, nodes, ctx)
             }
             MemberExpression::StaticMemberExpression(expr) => {
                 ctx.ast.expression_string_literal(SPAN, expr.property.name.clone())
@@ -328,11 +325,13 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
     fn add_new_reference(
         &mut self,
         expr: Expression<'a>,
-        name: &str,
         nodes: &mut Vec<'a, Expression<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let binding = ctx.generate_uid_in_current_scope(name, SymbolFlags::FunctionScopedVariable);
+        let binding = ctx.generate_uid_in_current_scope_based_on_node(
+            &expr,
+            SymbolFlags::FunctionScopedVariable,
+        );
 
         // var _name;
         self.ctx.var_declarations.insert(&binding, None, ctx);

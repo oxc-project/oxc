@@ -14,139 +14,154 @@ Passed: 57/68
 # babel-plugin-transform-exponentiation-operator (2/4)
 * assign-to-identifier/input.js
 Reference flags mismatch for "x":
-after transform: ReferenceId(6): ReferenceFlags(Write)
+after transform: ReferenceId(8): ReferenceFlags(Write)
 rebuilt        : ReferenceId(2): ReferenceFlags(Read)
 Reference flags mismatch for "_y":
-after transform: ReferenceId(9): ReferenceFlags(Write)
+after transform: ReferenceId(11): ReferenceFlags(Write)
 rebuilt        : ReferenceId(3): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_z":
-after transform: ReferenceId(13): ReferenceFlags(Write)
+after transform: ReferenceId(15): ReferenceFlags(Write)
 rebuilt        : ReferenceId(8): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_q":
-after transform: ReferenceId(17): ReferenceFlags(Write)
+after transform: ReferenceId(19): ReferenceFlags(Write)
 rebuilt        : ReferenceId(14): ReferenceFlags(Read | Write)
+Reference flags mismatch for "___bound":
+after transform: ReferenceId(22): ReferenceFlags(Write)
+rebuilt        : ReferenceId(22): ReferenceFlags(Read)
+Reference flags mismatch for "_unbound":
+after transform: ReferenceId(25): ReferenceFlags(Write)
+rebuilt        : ReferenceId(23): ReferenceFlags(Read | Write)
 
 * assign-to-member-expression/input.js
 Reference flags mismatch for "_obj$foo$bar":
-after transform: ReferenceId(42): ReferenceFlags(Write)
+after transform: ReferenceId(48): ReferenceFlags(Write)
 rebuilt        : ReferenceId(6): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_boundPropName":
-after transform: ReferenceId(46): ReferenceFlags(Write)
+after transform: ReferenceId(52): ReferenceFlags(Write)
 rebuilt        : ReferenceId(11): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_unboundPropName":
-after transform: ReferenceId(51): ReferenceFlags(Write)
+after transform: ReferenceId(57): ReferenceFlags(Write)
 rebuilt        : ReferenceId(18): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_obj$foo2$bar":
-after transform: ReferenceId(56): ReferenceFlags(Write)
+after transform: ReferenceId(62): ReferenceFlags(Write)
 rebuilt        : ReferenceId(25): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_boundPropName2":
-after transform: ReferenceId(58): ReferenceFlags(Write)
+after transform: ReferenceId(64): ReferenceFlags(Write)
 rebuilt        : ReferenceId(27): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_obj$foo3$bar":
-after transform: ReferenceId(63): ReferenceFlags(Write)
+after transform: ReferenceId(69): ReferenceFlags(Write)
 rebuilt        : ReferenceId(34): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_unboundPropName2":
-after transform: ReferenceId(65): ReferenceFlags(Write)
+after transform: ReferenceId(71): ReferenceFlags(Write)
 rebuilt        : ReferenceId(36): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_boundPropObj$foo$bar":
-after transform: ReferenceId(70): ReferenceFlags(Write)
+after transform: ReferenceId(76): ReferenceFlags(Write)
 rebuilt        : ReferenceId(43): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_unboundPropObj$foo$b":
-after transform: ReferenceId(75): ReferenceFlags(Write)
+after transform: ReferenceId(81): ReferenceFlags(Write)
 rebuilt        : ReferenceId(50): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_unboundObj":
-after transform: ReferenceId(80): ReferenceFlags(Write)
+after transform: ReferenceId(86): ReferenceFlags(Write)
 rebuilt        : ReferenceId(57): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_unboundObj2":
-after transform: ReferenceId(84): ReferenceFlags(Write)
+after transform: ReferenceId(90): ReferenceFlags(Write)
 rebuilt        : ReferenceId(62): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_unboundObj$foo$bar":
-after transform: ReferenceId(88): ReferenceFlags(Write)
+after transform: ReferenceId(94): ReferenceFlags(Write)
 rebuilt        : ReferenceId(67): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_unboundObj3":
-after transform: ReferenceId(92): ReferenceFlags(Write)
+after transform: ReferenceId(98): ReferenceFlags(Write)
 rebuilt        : ReferenceId(72): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_boundPropName3":
-after transform: ReferenceId(94): ReferenceFlags(Write)
+after transform: ReferenceId(100): ReferenceFlags(Write)
 rebuilt        : ReferenceId(74): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_unboundObj4":
-after transform: ReferenceId(99): ReferenceFlags(Write)
+after transform: ReferenceId(105): ReferenceFlags(Write)
 rebuilt        : ReferenceId(81): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_unboundPropName3":
-after transform: ReferenceId(101): ReferenceFlags(Write)
+after transform: ReferenceId(107): ReferenceFlags(Write)
 rebuilt        : ReferenceId(83): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_unboundObj$foo2$bar":
-after transform: ReferenceId(106): ReferenceFlags(Write)
+after transform: ReferenceId(112): ReferenceFlags(Write)
 rebuilt        : ReferenceId(90): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_boundPropName4":
-after transform: ReferenceId(108): ReferenceFlags(Write)
+after transform: ReferenceId(114): ReferenceFlags(Write)
 rebuilt        : ReferenceId(92): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_unboundObj$foo3$bar":
-after transform: ReferenceId(113): ReferenceFlags(Write)
+after transform: ReferenceId(119): ReferenceFlags(Write)
 rebuilt        : ReferenceId(99): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_unboundPropName4":
-after transform: ReferenceId(115): ReferenceFlags(Write)
+after transform: ReferenceId(121): ReferenceFlags(Write)
 rebuilt        : ReferenceId(101): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_unboundObj5":
-after transform: ReferenceId(120): ReferenceFlags(Write)
+after transform: ReferenceId(126): ReferenceFlags(Write)
 rebuilt        : ReferenceId(108): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_boundPropObj2$foo$ba":
-after transform: ReferenceId(122): ReferenceFlags(Write)
+after transform: ReferenceId(128): ReferenceFlags(Write)
 rebuilt        : ReferenceId(110): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_unboundObj6":
-after transform: ReferenceId(127): ReferenceFlags(Write)
+after transform: ReferenceId(133): ReferenceFlags(Write)
 rebuilt        : ReferenceId(117): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_unboundPropObj2$foo$":
-after transform: ReferenceId(129): ReferenceFlags(Write)
+after transform: ReferenceId(135): ReferenceFlags(Write)
 rebuilt        : ReferenceId(119): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_fn":
-after transform: ReferenceId(134): ReferenceFlags(Write)
+after transform: ReferenceId(140): ReferenceFlags(Write)
 rebuilt        : ReferenceId(126): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_fn$foo$bar":
-after transform: ReferenceId(138): ReferenceFlags(Write)
+after transform: ReferenceId(144): ReferenceFlags(Write)
 rebuilt        : ReferenceId(131): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_fn$prop":
-after transform: ReferenceId(142): ReferenceFlags(Write)
+after transform: ReferenceId(148): ReferenceFlags(Write)
 rebuilt        : ReferenceId(136): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_fn2":
-after transform: ReferenceId(144): ReferenceFlags(Write)
+after transform: ReferenceId(150): ReferenceFlags(Write)
 rebuilt        : ReferenceId(138): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_fn$prop2":
-after transform: ReferenceId(149): ReferenceFlags(Write)
+after transform: ReferenceId(155): ReferenceFlags(Write)
 rebuilt        : ReferenceId(145): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_ref":
-after transform: ReferenceId(151): ReferenceFlags(Write)
+after transform: ReferenceId(157): ReferenceFlags(Write)
 rebuilt        : ReferenceId(147): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_this":
-after transform: ReferenceId(156): ReferenceFlags(Write)
+after transform: ReferenceId(162): ReferenceFlags(Write)
 rebuilt        : ReferenceId(154): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_this$foo$bar":
-after transform: ReferenceId(160): ReferenceFlags(Write)
+after transform: ReferenceId(166): ReferenceFlags(Write)
 rebuilt        : ReferenceId(158): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_this2":
-after transform: ReferenceId(164): ReferenceFlags(Write)
+after transform: ReferenceId(170): ReferenceFlags(Write)
 rebuilt        : ReferenceId(162): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_this3":
-after transform: ReferenceId(168): ReferenceFlags(Write)
+after transform: ReferenceId(174): ReferenceFlags(Write)
 rebuilt        : ReferenceId(166): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_fn4$foo$bar$qux":
-after transform: ReferenceId(170): ReferenceFlags(Write)
+after transform: ReferenceId(176): ReferenceFlags(Write)
 rebuilt        : ReferenceId(167): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_this4":
-after transform: ReferenceId(175): ReferenceFlags(Write)
+after transform: ReferenceId(181): ReferenceFlags(Write)
 rebuilt        : ReferenceId(174): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_this$foo$bar2":
-after transform: ReferenceId(179): ReferenceFlags(Write)
+after transform: ReferenceId(185): ReferenceFlags(Write)
 rebuilt        : ReferenceId(178): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_this5":
-after transform: ReferenceId(183): ReferenceFlags(Write)
+after transform: ReferenceId(189): ReferenceFlags(Write)
 rebuilt        : ReferenceId(182): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_this6":
-after transform: ReferenceId(187): ReferenceFlags(Write)
+after transform: ReferenceId(193): ReferenceFlags(Write)
 rebuilt        : ReferenceId(186): ReferenceFlags(Read | Write)
 Reference flags mismatch for "_fn4$foo$bar$qux2":
-after transform: ReferenceId(189): ReferenceFlags(Write)
+after transform: ReferenceId(195): ReferenceFlags(Write)
 rebuilt        : ReferenceId(187): ReferenceFlags(Read | Write)
+Reference flags mismatch for "_unbound":
+after transform: ReferenceId(202): ReferenceFlags(Write)
+rebuilt        : ReferenceId(197): ReferenceFlags(Read | Write)
+Reference flags mismatch for "_bound":
+after transform: ReferenceId(206): ReferenceFlags(Write)
+rebuilt        : ReferenceId(202): ReferenceFlags(Read | Write)
+Reference flags mismatch for "_unbound2":
+after transform: ReferenceId(211): ReferenceFlags(Write)
+rebuilt        : ReferenceId(209): ReferenceFlags(Read | Write)
 
 
 # babel-plugin-transform-typescript (1/8)

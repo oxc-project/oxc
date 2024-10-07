@@ -52,3 +52,10 @@ function outer() {
   this['prop blah'] **= 30;
   this[fn4().foo.bar.qux()] **= 31;
 }
+
+// Underscore var names
+let ___bound;
+___bound.prop **= 32;
+___unbound.prop **= 33;
+obj[___bound] **= 34;
+obj[___unbound] **= 35;
