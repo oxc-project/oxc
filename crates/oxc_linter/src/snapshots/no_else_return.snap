@@ -6,14 +6,14 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function foo1() { if (true) { return x; } else { return y; } }
    ·                                                ─────────────
    ╰────
-  help: Replace ` else { return y; }` with `  return y; `.
+  help: Replace ` else { return y; }` with ` return y;`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:61]
  1 │ function foo2() { if (true) { var x = bar; return x; } else { var y = baz; return y; } }
    ·                                                             ──────────────────────────
    ╰────
-  help: Replace ` else { var y = baz; return y; }` with `  var y = baz; return y; `.
+  help: Replace ` else { var y = baz; return y; }` with ` var y = baz; return y;`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:44]
@@ -27,7 +27,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function foo4() { if (true) { if (false) return x; else return y; } else { return z; } }
    ·                                                                          ─────────────
    ╰────
-  help: Replace ` else { return z; }` with `  return z; `.
+  help: Replace ` else { return z; }` with ` return z;`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:57]
@@ -41,7 +41,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function foo5() { if (true) { if (false) { if (true) return x; else { w = y; } } else { w = x; } } else { return z; } }
    ·                                                                     ──────────
    ╰────
-  help: Replace ` else { w = y; }` with `  w = y; `.
+  help: Replace ` else { w = y; }` with ` w = y;`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:69]
@@ -55,7 +55,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function foo7() { if (true) { if (false) { if (true) return x; else return y; } return w; } else { return z; } }
    ·                                                                                                  ─────────────
    ╰────
-  help: Replace ` else { return z; }` with `  return z; `.
+  help: Replace ` else { return z; }` with ` return z;`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:69]
@@ -69,7 +69,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function foo8() { if (true) { if (false) { if (true) return x; else return y; } else { w = x; } } else { return z; } }
    ·                                                                                      ──────────
    ╰────
-  help: Replace ` else { w = x; }` with `  w = x; `.
+  help: Replace ` else { w = x; }` with ` w = x;`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:69]
@@ -83,7 +83,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function foo9() {if (x) { return true; } else if (y) { return true; } else { notAReturn(); } }
    ·                                                                            ─────────────────
    ╰────
-  help: Replace ` else { notAReturn(); }` with `  notAReturn(); `.
+  help: Replace ` else { notAReturn(); }` with ` notAReturn();`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:48]
@@ -97,7 +97,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function foo9b() {if (x) { return true; } if (y) { return true; } else { notAReturn(); } }
    ·                                                                        ─────────────────
    ╰────
-  help: Replace ` else { notAReturn(); }` with `  notAReturn(); `.
+  help: Replace ` else { notAReturn(); }` with ` notAReturn();`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:46]
@@ -114,7 +114,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `
         			else { [1, 2, 3].map(foo) }` with `
-        			 [1, 2, 3].map(foo) `.
+         [1, 2, 3].map(foo)`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:2:9]
@@ -125,7 +125,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `
         			else { baz() }` with `
-        			 baz() `.
+         baz()`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:2:9]
@@ -134,8 +134,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ──────────────────────
    ╰────
   help: Replace `
-        			else { [1, 2, 3].map(foo) }` with `
-        			 [1, 2, 3].map(foo) `.
+        			else { [1, 2, 3].map(foo) }` with ` [1, 2, 3].map(foo)`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:2:9]
@@ -146,14 +145,14 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `
         			else { baz(); }` with `
-        			 baz(); `.
+         baz();`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:46]
  1 │ function foo15() { if (foo) return bar; else { baz() } qaz() }
    ·                                              ─────────
    ╰────
-  help: Replace ` else { baz() }` with `  baz() `.
+  help: Replace ` else { baz() }` with ` baz()`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:2:9]
@@ -163,7 +162,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `
         			else { baz() }` with `
-        			 baz() `.
+         baz()`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:2:9]
@@ -174,7 +173,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `
         			else { baz() }` with `
-        			 baz() `.
+         baz()`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:2:9]
@@ -184,7 +183,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `
         			else [1, 2, 3].map(bar)` with `
-        			[1, 2, 3].map(bar)`.
+         [1, 2, 3].map(bar)`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:49]
@@ -212,28 +211,28 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function foo() { var a; if (bar) { return true; } else { var a; } }
    ·                                                        ──────────
    ╰────
-  help: Replace ` else { var a; }` with `  var a; `.
+  help: Replace ` else { var a; }` with ` var a;`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:67]
  1 │ function foo() { if (bar) { var a; if (baz) { return true; } else { var a; } } }
    ·                                                                   ──────────
    ╰────
-  help: Replace ` else { var a; }` with `  var a; `.
+  help: Replace ` else { var a; }` with ` var a;`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:56]
  1 │ function foo() { var a; if (bar) { return true; } else { var a; } }
    ·                                                        ──────────
    ╰────
-  help: Replace ` else { var a; }` with `  var a; `.
+  help: Replace ` else { var a; }` with ` var a;`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:67]
  1 │ function foo() { if (bar) { var a; if (baz) { return true; } else { var a; } } }
    ·                                                                   ──────────
    ╰────
-  help: Replace ` else { var a; }` with `  var a; `.
+  help: Replace ` else { var a; }` with ` var a;`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:56]
@@ -258,7 +257,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function foo() {let a; if (bar) { if (baz) { return true; } else { let a; } } }
    ·                                                                  ──────────
    ╰────
-  help: Replace ` else { let a; }` with `  let a; `.
+  help: Replace ` else { let a; }` with ` let a;`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:62]
@@ -367,7 +366,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function foo() { try {} catch (a) { if (bar) { if (baz) { return true; } else { let a; } } } }
    ·                                                                               ──────────
    ╰────
-  help: Replace ` else { let a; }` with `  let a; `.
+  help: Replace ` else { let a; }` with ` let a;`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:79]
@@ -380,98 +379,98 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function foo() { if (bar) { return true; } else { let arguments; } }
    ·                                                 ──────────────────
    ╰────
-  help: Replace ` else { let arguments; }` with `  let arguments; `.
+  help: Replace ` else { let arguments; }` with ` let arguments;`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:49]
  1 │ function foo() { if (bar) { return true; } else { let arguments; } return arguments[0]; }
    ·                                                 ──────────────────
    ╰────
-  help: Replace ` else { let arguments; }` with `  let arguments; `.
+  help: Replace ` else { let arguments; }` with ` let arguments;`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:49]
  1 │ function foo() { if (bar) { return true; } else { let arguments; } if (baz) { return arguments[0]; } }
    ·                                                 ──────────────────
    ╰────
-  help: Replace ` else { let arguments; }` with `  let arguments; `.
+  help: Replace ` else { let arguments; }` with ` let arguments;`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:60]
  1 │ function foo() { if (bar) { if (baz) { return true; } else { let arguments; } } }
    ·                                                            ──────────────────
    ╰────
-  help: Replace ` else { let arguments; }` with `  let arguments; `.
+  help: Replace ` else { let arguments; }` with ` let arguments;`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:49]
  1 │ function foo() { if (bar) { return true; } else { let a; } a; }
    ·                                                 ──────────
    ╰────
-  help: Replace ` else { let a; }` with `  let a; `.
+  help: Replace ` else { let a; }` with ` let a;`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:49]
  1 │ function foo() { if (bar) { return true; } else { let a; } if (baz) { a; } }
    ·                                                 ──────────
    ╰────
-  help: Replace ` else { let a; }` with `  let a; `.
+  help: Replace ` else { let a; }` with ` let a;`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:60]
  1 │ function foo() { if (bar) { if (baz) { return true; } else { let a; } } a; }
    ·                                                            ──────────
    ╰────
-  help: Replace ` else { let a; }` with `  let a; `.
+  help: Replace ` else { let a; }` with ` let a;`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:60]
  1 │ function foo() { if (bar) { if (baz) { return true; } else { let a; } a; } }
    ·                                                            ──────────
    ╰────
-  help: Replace ` else { let a; }` with `  let a; `.
+  help: Replace ` else { let a; }` with ` let a;`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:60]
  1 │ function foo() { if (bar) { if (baz) { return true; } else { let a; } if (quux) { a; } } }
    ·                                                            ──────────
    ╰────
-  help: Replace ` else { let a; }` with `  let a; `.
+  help: Replace ` else { let a; }` with ` let a;`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:47]
  1 │ function a() { if (foo) { return true; } else { let a; } a(); }
    ·                                               ──────────
    ╰────
-  help: Replace ` else { let a; }` with `  let a; `.
+  help: Replace ` else { let a; }` with ` let a;`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:45]
  1 │ function a() { if (a) { return true; } else { let a; } }
    ·                                             ──────────
    ╰────
-  help: Replace ` else { let a; }` with `  let a; `.
+  help: Replace ` else { let a; }` with ` let a;`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:44]
  1 │ function a() { if (foo) { return a; } else { let a; } }
    ·                                            ──────────
    ╰────
-  help: Replace ` else { let a; }` with `  let a; `.
+  help: Replace ` else { let a; }` with ` let a;`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:49]
  1 │ function foo() { if (bar) { return true; } else { let a; } function baz() { a; } }
    ·                                                 ──────────
    ╰────
-  help: Replace ` else { let a; }` with `  let a; `.
+  help: Replace ` else { let a; }` with ` let a;`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:60]
  1 │ function foo() { if (bar) { if (baz) { return true; } else { let a; } (() => a) } }
    ·                                                            ──────────
    ╰────
-  help: Replace ` else { let a; }` with `  let a; `.
+  help: Replace ` else { let a; }` with ` let a;`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:49]
@@ -484,35 +483,35 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function foo() { if (bar) { if (baz) { return true; } else { let a; } var a; } }
    ·                                                            ──────────
    ╰────
-  help: Replace ` else { let a; }` with `  let a; `.
+  help: Replace ` else { let a; }` with ` let a;`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:60]
  1 │ function foo() { if (bar) { if (baz) { return true; } else { let a; } var { a } = {}; } }
    ·                                                            ──────────
    ╰────
-  help: Replace ` else { let a; }` with `  let a; `.
+  help: Replace ` else { let a; }` with ` let a;`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:60]
  1 │ function foo() { if (bar) { if (baz) { return true; } else { let a; } if (quux) { var a; } } }
    ·                                                            ──────────
    ╰────
-  help: Replace ` else { let a; }` with `  let a; `.
+  help: Replace ` else { let a; }` with ` let a;`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:60]
  1 │ function foo() { if (bar) { if (baz) { return true; } else { let a; } } if (quux) { var a; } }
    ·                                                            ──────────
    ╰────
-  help: Replace ` else { let a; }` with `  let a; `.
+  help: Replace ` else { let a; }` with ` let a;`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:81]
  1 │ function foo() { if (quux) { var a; } if (bar) { if (baz) { return true; } else { let a; } } }
    ·                                                                                 ──────────
    ╰────
-  help: Replace ` else { let a; }` with `  let a; `.
+  help: Replace ` else { let a; }` with ` let a;`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:49]
@@ -531,14 +530,14 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function foo() { if (bar) { if (baz) { return true; } else { let a; } } if (quux) { function a(){}  } }
    ·                                                            ──────────
    ╰────
-  help: Replace ` else { let a; }` with `  let a; `.
+  help: Replace ` else { let a; }` with ` let a;`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:60]
  1 │ function foo() { if (bar) { if (baz) { return true; } else { let a; } } function a(){} }
    ·                                                            ──────────
    ╰────
-  help: Replace ` else { let a; }` with `  let a; `.
+  help: Replace ` else { let a; }` with ` let a;`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:56]
@@ -563,7 +562,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ if (foo) { return true; } else { let a; }
    ·                                ──────────
    ╰────
-  help: Replace ` else { let a; }` with `  let a; `.
+  help: Replace ` else { let a; }` with ` let a;`.
 
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:39]
