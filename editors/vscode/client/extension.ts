@@ -181,6 +181,13 @@ export async function activate(context: ExtensionContext) {
     serverOptions,
     clientOptions,
   );
+
+  workspace.onDidDeleteFiles((event) => {
+    event.files.forEach((fileUri) => {
+      client.diagnostics?.delete(fileUri);
+    });
+  });
+
   workspace.onDidChangeConfiguration((e) => {
     let isAffected = e.affectsConfiguration('oxc_language_server');
     if (!isAffected) {
