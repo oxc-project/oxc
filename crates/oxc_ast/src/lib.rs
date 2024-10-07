@@ -33,7 +33,6 @@ mod ast_builder_impl;
 mod ast_impl;
 mod ast_kind_impl;
 pub mod precedence;
-pub mod syntax_directed_operations;
 mod trivia;
 
 mod generated {

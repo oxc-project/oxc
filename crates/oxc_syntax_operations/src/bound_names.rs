@@ -1,4 +1,9 @@
-use crate::ast::*;
+use oxc_ast::ast::{
+    ArrayPattern, AssignmentPattern, BindingIdentifier, BindingPattern, BindingPatternKind,
+    BindingRestElement, Class, Declaration, ExportNamedDeclaration, FormalParameter,
+    FormalParameters, Function, ImportDeclaration, ImportDeclarationSpecifier, ModuleDeclaration,
+    ObjectPattern, VariableDeclaration,
+};
 
 /// [`BoundName`](https://tc39.es/ecma262/#sec-static-semantics-boundnames)
 pub trait BoundName<'a> {

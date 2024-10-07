@@ -1559,6 +1559,7 @@ dependencies = [
  "oxc",
  "oxc_prettier",
  "oxc_tasks_common",
+ "oxc_tasks_transform_checker",
  "phf 0.11.2",
  "pico-args",
  "rayon",
@@ -1611,6 +1612,7 @@ dependencies = [
  "oxc_parser",
  "oxc_span",
  "oxc_syntax",
+ "oxc_syntax_operations",
  "rustc-hash",
 ]
 
@@ -1721,6 +1723,7 @@ dependencies = [
  "oxc_semantic",
  "oxc_span",
  "oxc_syntax",
+ "oxc_syntax_operations",
  "oxc_traverse",
  "pico-args",
 ]
@@ -1762,6 +1765,7 @@ dependencies = [
  "oxc_ast",
  "oxc_parser",
  "oxc_span",
+ "oxc_syntax_operations",
 ]
 
 [[package]]
@@ -1780,6 +1784,7 @@ dependencies = [
  "oxc_regular_expression",
  "oxc_span",
  "oxc_syntax",
+ "oxc_syntax_operations",
  "pico-args",
  "rustc-hash",
  "seq-macro",
@@ -1889,6 +1894,7 @@ dependencies = [
  "oxc_parser",
  "oxc_span",
  "oxc_syntax",
+ "oxc_syntax_operations",
  "phf 0.11.2",
  "rustc-hash",
  "serde",
@@ -1946,6 +1952,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_syntax_operations"
+version = "0.30.5"
+dependencies = [
+ "oxc_ast",
+ "oxc_span",
+]
+
+[[package]]
 name = "oxc_tasks_common"
 version = "0.0.0"
 dependencies = [
@@ -1957,6 +1971,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_tasks_transform_checker"
+version = "0.0.0"
+dependencies = [
+ "indexmap",
+ "oxc_allocator",
+ "oxc_ast",
+ "oxc_diagnostics",
+ "oxc_semantic",
+ "oxc_span",
+ "oxc_syntax",
+ "rustc-hash",
+]
+
+[[package]]
 name = "oxc_transform_conformance"
 version = "0.0.0"
 dependencies = [
@@ -1964,6 +1992,7 @@ dependencies = [
  "indexmap",
  "oxc",
  "oxc_tasks_common",
+ "oxc_tasks_transform_checker",
  "pico-args",
  "walkdir",
 ]
@@ -1976,7 +2005,6 @@ dependencies = [
  "napi-build",
  "napi-derive",
  "oxc",
- "rustc-hash",
 ]
 
 [[package]]
@@ -1998,6 +2026,7 @@ dependencies = [
  "oxc_semantic",
  "oxc_span",
  "oxc_syntax",
+ "oxc_syntax_operations",
  "oxc_traverse",
  "pico-args",
  "ropey",
@@ -2020,6 +2049,7 @@ dependencies = [
  "oxc_semantic",
  "oxc_span",
  "oxc_syntax",
+ "oxc_syntax_operations",
  "rustc-hash",
 ]
 

@@ -1,4 +1,4 @@
-use crate::ast::*;
+use oxc_ast::ast::FormalParameters;
 
 /// [`IsSimpleParameterList`](https://tc39.es/ecma262/#sec-static-semantics-issimpleparameterlist)
 pub trait IsSimpleParameterList {

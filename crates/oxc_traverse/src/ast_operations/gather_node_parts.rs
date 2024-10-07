@@ -6,7 +6,29 @@
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
-use oxc_ast::syntax_directed_operations::BoundNames;
+use oxc_syntax_operations::BoundNames;
+
+use super::to_identifier;
+
+pub fn get_var_name_from_node<'a, N: GatherNodeParts<'a>>(node: &N) -> String {
+    let mut name = String::new();
+    node.gather(&mut |mut part| {
+        if name.is_empty() {
+            part = part.trim_start_matches('_');
+        } else {
+            name.push('$');
+        }
+        name.push_str(part);
+    });
+
+    if name.is_empty() {
+        name = "ref".to_string();
+    } else {
+        name.truncate(20);
+    }
+
+    to_identifier(name)
+}
 
 pub trait GatherNodeParts<'a> {
     fn gather<F: FnMut(&str)>(&self, f: &mut F);

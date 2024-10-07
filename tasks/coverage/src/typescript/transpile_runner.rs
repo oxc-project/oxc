@@ -185,6 +185,6 @@ fn transpile(path: &Path, source_text: &str) -> (String, Vec<OxcDiagnostic>) {
         IsolatedDeclarationsOptions { strip_internal: true },
     )
     .build(&ret.program);
-    let printed = CodeGenerator::new().build(&ret.program).source_text;
+    let printed = CodeGenerator::new().build(&ret.program).code;
     (printed, ret.errors)
 }

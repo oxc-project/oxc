@@ -6,3 +6,4 @@ packages:
 
 catalog:
   "@napi-rs/cli": 3.0.0-alpha.61
+  "vitest": 2.1.2

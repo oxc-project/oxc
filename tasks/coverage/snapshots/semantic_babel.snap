@@ -4,10 +4,10 @@ semantic_babel Summary:
 AST Parsed     : 2101/2101 (100.00%)
 Positive Passed: 1739/2101 (82.77%)
 tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body/input.js
-semantic error: Symbol scope ID mismatch:
+semantic error: Symbol scope ID mismatch for "f":
 after transform: SymbolId(0): ScopeId(4294967294)
 rebuilt        : SymbolId(0): ScopeId(4294967294)
-Symbol scope ID mismatch:
+Symbol scope ID mismatch for "g":
 after transform: SymbolId(1): ScopeId(4294967294)
 rebuilt        : SymbolId(1): ScopeId(4294967294)
 
@@ -26,7 +26,7 @@ semantic error: Unexpected new.target expression
 Unexpected new.target expression
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/core/scope/dupl-bind-catch-hang-func/input.js
-semantic error: Symbol scope ID mismatch:
+semantic error: Symbol scope ID mismatch for "foo":
 after transform: SymbolId(1): ScopeId(4294967294)
 rebuilt        : SymbolId(1): ScopeId(4294967294)
 
@@ -137,7 +137,7 @@ after transform: ScopeId(0): ["nil"]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/statement-if/migrated_0003/input.js
-semantic error: Symbol scope ID mismatch:
+semantic error: Symbol scope ID mismatch for "a":
 after transform: SymbolId(0): ScopeId(4294967294)
 rebuilt        : SymbolId(0): ScopeId(4294967294)
 
@@ -223,7 +223,7 @@ after transform: ["asserts"]
 rebuilt        : []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/assert-predicate/asserts-this-with-predicate/input.ts
-semantic error: Symbol reference IDs mismatch:
+semantic error: Symbol reference IDs mismatch for "Foo":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
 rebuilt        : SymbolId(0): []
 
@@ -246,10 +246,10 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/assign/TSTyp
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["M"]
 rebuilt        : ScopeId(1): []
-Symbol reference IDs mismatch:
+Symbol reference IDs mismatch for "AbstractClass":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(3)]
 rebuilt        : SymbolId(0): [ReferenceId(0)]
-Symbol reference IDs mismatch:
+Symbol reference IDs mismatch for "ConcreteClass":
 after transform: SymbolId(2): [ReferenceId(4), ReferenceId(6)]
 rebuilt        : SymbolId(1): [ReferenceId(1)]
 
@@ -257,10 +257,10 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/assign/TSTyp
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["M"]
 rebuilt        : ScopeId(1): []
-Symbol reference IDs mismatch:
+Symbol reference IDs mismatch for "AbstractClass":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(3)]
 rebuilt        : SymbolId(0): [ReferenceId(0)]
-Symbol reference IDs mismatch:
+Symbol reference IDs mismatch for "ConcreteClass":
 after transform: SymbolId(2): [ReferenceId(4), ReferenceId(6)]
 rebuilt        : SymbolId(1): [ReferenceId(1)]
 
@@ -634,7 +634,7 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/const/i
 semantic error: Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch:
+Symbol flags mismatch for "E":
 after transform: SymbolId(0): SymbolFlags(ConstEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
@@ -666,7 +666,7 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/export/
 semantic error: Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch:
+Symbol flags mismatch for "E":
 after transform: SymbolId(0): SymbolFlags(Export | RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Export)
 
@@ -674,7 +674,7 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/export-
 semantic error: Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch:
+Symbol flags mismatch for "E":
 after transform: SymbolId(0): SymbolFlags(Export | ConstEnum)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Export)
 
@@ -693,7 +693,7 @@ rebuilt        : ScopeId(1): ["E"]
 Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch:
+Symbol flags mismatch for "E":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
@@ -704,7 +704,7 @@ rebuilt        : ScopeId(1): ["E"]
 Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch:
+Symbol flags mismatch for "E":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
@@ -715,7 +715,7 @@ rebuilt        : ScopeId(1): ["E"]
 Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch:
+Symbol flags mismatch for "E":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
@@ -726,7 +726,7 @@ rebuilt        : ScopeId(1): ["E"]
 Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch:
+Symbol flags mismatch for "E":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
@@ -737,7 +737,7 @@ rebuilt        : ScopeId(1): ["E"]
 Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch:
+Symbol flags mismatch for "E":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
@@ -791,23 +791,23 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch:
+Symbol flags mismatch for "D":
 after transform: SymbolId(3): SymbolFlags(Export | RegularEnum)
 rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable | Export)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/nested-same-name/input.ts
-semantic error: Missing SymbolId: N
-Missing SymbolId: _N
-Missing ReferenceId: _N
-Missing ReferenceId: N
-Missing ReferenceId: N
+semantic error: Missing SymbolId: "N"
+Missing SymbolId: "_N"
+Missing ReferenceId: "_N"
+Missing ReferenceId: "N"
+Missing ReferenceId: "N"
 Binding symbols mismatch:
 after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
 rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
 Binding symbols mismatch:
 after transform: ScopeId(1): [SymbolId(2), SymbolId(3)]
 rebuilt        : ScopeId(1): [SymbolId(2), SymbolId(3)]
-Symbol flags mismatch:
+Symbol flags mismatch for "x":
 after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable | Export)
 rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable | ConstVariable)
 
@@ -871,13 +871,13 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals/input.ts
-semantic error: Missing SymbolId: A
+semantic error: Missing SymbolId: "A"
 Binding symbols mismatch:
 after transform: ScopeId(0): [SymbolId(0)]
 rebuilt        : ScopeId(0): [SymbolId(0)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals-in-unambiguous/input.ts
-semantic error: Missing SymbolId: A
+semantic error: Missing SymbolId: "A"
 Binding symbols mismatch:
 after transform: ScopeId(0): [SymbolId(0)]
 rebuilt        : ScopeId(0): [SymbolId(0)]
@@ -887,8 +887,8 @@ semantic error: `import lib = require(...);` is only supported when compiling mo
 Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals-require-in-unambiguous/input.ts
-semantic error: Missing SymbolId: a
-Missing ReferenceId: require
+semantic error: Missing SymbolId: "a"
+Missing ReferenceId: "require"
 Binding symbols mismatch:
 after transform: ScopeId(0): [SymbolId(0)]
 rebuilt        : ScopeId(0): [SymbolId(0)]
@@ -897,7 +897,7 @@ after transform: []
 rebuilt        : ["require"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/export-import/input.ts
-semantic error: Missing SymbolId: A
+semantic error: Missing SymbolId: "A"
 Binding symbols mismatch:
 after transform: ScopeId(0): [SymbolId(0)]
 rebuilt        : ScopeId(0): [SymbolId(0)]
@@ -1278,10 +1278,10 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body/input.ts
-semantic error: Missing SymbolId: N
-Missing SymbolId: _N
-Missing ReferenceId: N
-Missing ReferenceId: N
+semantic error: Missing SymbolId: "N"
+Missing SymbolId: "_N"
+Missing ReferenceId: "N"
+Missing ReferenceId: "N"
 Binding symbols mismatch:
 after transform: ScopeId(0): [SymbolId(0)]
 rebuilt        : ScopeId(0): [SymbolId(0)]
@@ -1400,7 +1400,7 @@ rebuilt        : ScopeId(0): [ScopeId(1)]
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch:
+Symbol flags mismatch for "E":
 after transform: SymbolId(1): SymbolFlags(Export | RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Export)
 
@@ -1484,7 +1484,7 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/enum-b
 semantic error: Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch:
+Symbol flags mismatch for "Foo":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
@@ -1508,7 +1508,7 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export
 semantic error: Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch:
+Symbol flags mismatch for "Test":
 after transform: SymbolId(0): SymbolFlags(Export | RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable | Export)
 
@@ -1516,7 +1516,7 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export
 semantic error: Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch:
+Symbol flags mismatch for "Test":
 after transform: SymbolId(0): SymbolFlags(Export | RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable | Export)
 
@@ -1607,10 +1607,10 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redecl
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
-Symbol flags mismatch:
+Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(Class | Interface)
 rebuilt        : SymbolId(0): SymbolFlags(Class)
-Symbol redeclarations mismatch:
+Symbol redeclarations mismatch for "A":
 after transform: SymbolId(0): [Span { start: 21, end: 22 }]
 rebuilt        : SymbolId(0): []
 
@@ -1618,10 +1618,10 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redecl
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-Symbol flags mismatch:
+Symbol flags mismatch for "X":
 after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | TypeAlias)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable)
-Symbol redeclarations mismatch:
+Symbol redeclarations mismatch for "X":
 after transform: SymbolId(0): [Span { start: 19, end: 20 }]
 rebuilt        : SymbolId(0): []
 
@@ -1632,10 +1632,10 @@ rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch:
+Symbol flags mismatch for "Foo":
 after transform: SymbolId(0): SymbolFlags(ConstEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol redeclarations mismatch:
+Symbol redeclarations mismatch for "Foo":
 after transform: SymbolId(0): [Span { start: 29, end: 32 }]
 rebuilt        : SymbolId(0): []
 
@@ -1646,10 +1646,10 @@ rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch:
+Symbol flags mismatch for "Foo":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol redeclarations mismatch:
+Symbol redeclarations mismatch for "Foo":
 after transform: SymbolId(0): [Span { start: 17, end: 20 }]
 rebuilt        : SymbolId(0): []
 
@@ -1657,10 +1657,10 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redecl
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
-Symbol flags mismatch:
+Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Function | Interface)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Function)
-Symbol redeclarations mismatch:
+Symbol redeclarations mismatch for "A":
 after transform: SymbolId(0): [Span { start: 26, end: 27 }]
 rebuilt        : SymbolId(0): []
 
@@ -1668,10 +1668,10 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redecl
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
-Symbol flags mismatch:
+Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Function | TypeAlias)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Function)
-Symbol redeclarations mismatch:
+Symbol redeclarations mismatch for "A":
 after transform: SymbolId(0): [Span { start: 21, end: 22 }]
 rebuilt        : SymbolId(0): []
 
@@ -1684,93 +1684,93 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-equals-var/input.ts
-semantic error: Missing SymbolId: a
+semantic error: Missing SymbolId: "a"
 Bindings mismatch:
 after transform: ScopeId(0): ["M", "a"]
 rebuilt        : ScopeId(0): ["a"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-Symbol flags mismatch:
+Symbol flags mismatch for "a":
 after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable | Import)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol span mismatch:
+Symbol span mismatch for "a":
 after transform: SymbolId(1): Span { start: 20, end: 21 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-let/input.ts
-semantic error: Symbol flags mismatch:
+semantic error: Symbol flags mismatch for "Context":
 after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | Import)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch:
+Symbol span mismatch for "Context":
 after transform: SymbolId(1): Span { start: 16, end: 23 }
 rebuilt        : SymbolId(1): Span { start: 104, end: 124 }
-Symbol reference IDs mismatch:
+Symbol reference IDs mismatch for "Context":
 after transform: SymbolId(1): [ReferenceId(0)]
 rebuilt        : SymbolId(1): []
-Symbol redeclarations mismatch:
+Symbol redeclarations mismatch for "Context":
 after transform: SymbolId(1): [Span { start: 104, end: 124 }]
 rebuilt        : SymbolId(1): []
-Symbol flags mismatch:
+Symbol flags mismatch for "a":
 after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | Import)
 rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch:
+Symbol span mismatch for "a":
 after transform: SymbolId(2): Span { start: 49, end: 50 }
 rebuilt        : SymbolId(2): Span { start: 156, end: 160 }
-Symbol reference IDs mismatch:
+Symbol reference IDs mismatch for "a":
 after transform: SymbolId(2): [ReferenceId(2)]
 rebuilt        : SymbolId(2): []
-Symbol redeclarations mismatch:
+Symbol redeclarations mismatch for "a":
 after transform: SymbolId(2): [Span { start: 156, end: 160 }]
 rebuilt        : SymbolId(2): []
-Symbol flags mismatch:
+Symbol flags mismatch for "b":
 after transform: SymbolId(3): SymbolFlags(BlockScopedVariable | Import)
 rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch:
+Symbol span mismatch for "b":
 after transform: SymbolId(3): Span { start: 81, end: 82 }
 rebuilt        : SymbolId(3): Span { start: 170, end: 174 }
-Symbol reference IDs mismatch:
+Symbol reference IDs mismatch for "b":
 after transform: SymbolId(3): [ReferenceId(3)]
 rebuilt        : SymbolId(3): []
-Symbol redeclarations mismatch:
+Symbol redeclarations mismatch for "b":
 after transform: SymbolId(3): [Span { start: 170, end: 174 }]
 rebuilt        : SymbolId(3): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-type-let/input.ts
-semantic error: Symbol flags mismatch:
+semantic error: Symbol flags mismatch for "Context":
 after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | TypeImport)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch:
+Symbol span mismatch for "Context":
 after transform: SymbolId(1): Span { start: 21, end: 28 }
 rebuilt        : SymbolId(1): Span { start: 119, end: 139 }
-Symbol reference IDs mismatch:
+Symbol reference IDs mismatch for "Context":
 after transform: SymbolId(1): [ReferenceId(0)]
 rebuilt        : SymbolId(1): []
-Symbol redeclarations mismatch:
+Symbol redeclarations mismatch for "Context":
 after transform: SymbolId(1): [Span { start: 119, end: 139 }]
 rebuilt        : SymbolId(1): []
-Symbol flags mismatch:
+Symbol flags mismatch for "a":
 after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | TypeImport)
 rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch:
+Symbol span mismatch for "a":
 after transform: SymbolId(2): Span { start: 59, end: 60 }
 rebuilt        : SymbolId(2): Span { start: 171, end: 175 }
-Symbol reference IDs mismatch:
+Symbol reference IDs mismatch for "a":
 after transform: SymbolId(2): [ReferenceId(2)]
 rebuilt        : SymbolId(2): []
-Symbol redeclarations mismatch:
+Symbol redeclarations mismatch for "a":
 after transform: SymbolId(2): [Span { start: 171, end: 175 }]
 rebuilt        : SymbolId(2): []
-Symbol flags mismatch:
+Symbol flags mismatch for "b":
 after transform: SymbolId(3): SymbolFlags(BlockScopedVariable | TypeImport)
 rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch:
+Symbol span mismatch for "b":
 after transform: SymbolId(3): Span { start: 96, end: 97 }
 rebuilt        : SymbolId(3): Span { start: 185, end: 189 }
-Symbol reference IDs mismatch:
+Symbol reference IDs mismatch for "b":
 after transform: SymbolId(3): [ReferenceId(3)]
 rebuilt        : SymbolId(3): []
-Symbol redeclarations mismatch:
+Symbol redeclarations mismatch for "b":
 after transform: SymbolId(3): [Span { start: 185, end: 189 }]
 rebuilt        : SymbolId(3): []
 
@@ -1783,78 +1783,78 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-type-var/input.ts
-semantic error: Symbol flags mismatch:
+semantic error: Symbol flags mismatch for "Context":
 after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable | TypeImport)
 rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
-Symbol span mismatch:
+Symbol span mismatch for "Context":
 after transform: SymbolId(1): Span { start: 21, end: 28 }
 rebuilt        : SymbolId(1): Span { start: 119, end: 139 }
-Symbol reference IDs mismatch:
+Symbol reference IDs mismatch for "Context":
 after transform: SymbolId(1): [ReferenceId(0)]
 rebuilt        : SymbolId(1): []
-Symbol redeclarations mismatch:
+Symbol redeclarations mismatch for "Context":
 after transform: SymbolId(1): [Span { start: 119, end: 139 }]
 rebuilt        : SymbolId(1): []
-Symbol flags mismatch:
+Symbol flags mismatch for "a":
 after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable | TypeImport)
 rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
-Symbol span mismatch:
+Symbol span mismatch for "a":
 after transform: SymbolId(2): Span { start: 59, end: 60 }
 rebuilt        : SymbolId(2): Span { start: 171, end: 175 }
-Symbol reference IDs mismatch:
+Symbol reference IDs mismatch for "a":
 after transform: SymbolId(2): [ReferenceId(2)]
 rebuilt        : SymbolId(2): []
-Symbol redeclarations mismatch:
+Symbol redeclarations mismatch for "a":
 after transform: SymbolId(2): [Span { start: 171, end: 175 }]
 rebuilt        : SymbolId(2): []
-Symbol flags mismatch:
+Symbol flags mismatch for "b":
 after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable | TypeImport)
 rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
-Symbol span mismatch:
+Symbol span mismatch for "b":
 after transform: SymbolId(3): Span { start: 96, end: 97 }
 rebuilt        : SymbolId(3): Span { start: 185, end: 189 }
-Symbol reference IDs mismatch:
+Symbol reference IDs mismatch for "b":
 after transform: SymbolId(3): [ReferenceId(3)]
 rebuilt        : SymbolId(3): []
-Symbol redeclarations mismatch:
+Symbol redeclarations mismatch for "b":
 after transform: SymbolId(3): [Span { start: 185, end: 189 }]
 rebuilt        : SymbolId(3): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-var/input.ts
-semantic error: Symbol flags mismatch:
+semantic error: Symbol flags mismatch for "Context":
 after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable | Import)
 rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
-Symbol span mismatch:
+Symbol span mismatch for "Context":
 after transform: SymbolId(1): Span { start: 16, end: 23 }
 rebuilt        : SymbolId(1): Span { start: 104, end: 124 }
-Symbol reference IDs mismatch:
+Symbol reference IDs mismatch for "Context":
 after transform: SymbolId(1): [ReferenceId(0)]
 rebuilt        : SymbolId(1): []
-Symbol redeclarations mismatch:
+Symbol redeclarations mismatch for "Context":
 after transform: SymbolId(1): [Span { start: 104, end: 124 }]
 rebuilt        : SymbolId(1): []
-Symbol flags mismatch:
+Symbol flags mismatch for "a":
 after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable | Import)
 rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
-Symbol span mismatch:
+Symbol span mismatch for "a":
 after transform: SymbolId(2): Span { start: 49, end: 50 }
 rebuilt        : SymbolId(2): Span { start: 156, end: 160 }
-Symbol reference IDs mismatch:
+Symbol reference IDs mismatch for "a":
 after transform: SymbolId(2): [ReferenceId(2)]
 rebuilt        : SymbolId(2): []
-Symbol redeclarations mismatch:
+Symbol redeclarations mismatch for "a":
 after transform: SymbolId(2): [Span { start: 156, end: 160 }]
 rebuilt        : SymbolId(2): []
-Symbol flags mismatch:
+Symbol flags mismatch for "b":
 after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable | Import)
 rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
-Symbol span mismatch:
+Symbol span mismatch for "b":
 after transform: SymbolId(3): Span { start: 81, end: 82 }
 rebuilt        : SymbolId(3): Span { start: 170, end: 174 }
-Symbol reference IDs mismatch:
+Symbol reference IDs mismatch for "b":
 after transform: SymbolId(3): [ReferenceId(3)]
 rebuilt        : SymbolId(3): []
-Symbol redeclarations mismatch:
+Symbol redeclarations mismatch for "b":
 after transform: SymbolId(3): [Span { start: 170, end: 174 }]
 rebuilt        : SymbolId(3): []
 
@@ -1873,7 +1873,7 @@ rebuilt        : ScopeId(0): ["foo", "fooBar"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): []
-Symbol reference IDs mismatch:
+Symbol reference IDs mismatch for "fooBar":
 after transform: SymbolId(1): [ReferenceId(1), ReferenceId(4)]
 rebuilt        : SymbolId(0): [ReferenceId(0)]
 
@@ -1889,13 +1889,13 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redecl
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
-Symbol flags mismatch:
+Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(Class | Interface)
 rebuilt        : SymbolId(0): SymbolFlags(Class)
-Symbol span mismatch:
+Symbol span mismatch for "A":
 after transform: SymbolId(0): Span { start: 10, end: 11 }
 rebuilt        : SymbolId(0): Span { start: 21, end: 22 }
-Symbol redeclarations mismatch:
+Symbol redeclarations mismatch for "A":
 after transform: SymbolId(0): [Span { start: 21, end: 22 }]
 rebuilt        : SymbolId(0): []
 
@@ -1903,13 +1903,13 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redecl
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
-Symbol flags mismatch:
+Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Function | Interface)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Function)
-Symbol span mismatch:
+Symbol span mismatch for "A":
 after transform: SymbolId(0): Span { start: 10, end: 11 }
 rebuilt        : SymbolId(0): Span { start: 24, end: 25 }
-Symbol redeclarations mismatch:
+Symbol redeclarations mismatch for "A":
 after transform: SymbolId(0): [Span { start: 24, end: 25 }]
 rebuilt        : SymbolId(0): []
 
@@ -1925,13 +1925,13 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redecl
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-Symbol flags mismatch:
+Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Interface)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch:
+Symbol span mismatch for "A":
 after transform: SymbolId(0): Span { start: 10, end: 11 }
 rebuilt        : SymbolId(0): Span { start: 19, end: 20 }
-Symbol redeclarations mismatch:
+Symbol redeclarations mismatch for "A":
 after transform: SymbolId(0): [Span { start: 19, end: 20 }]
 rebuilt        : SymbolId(0): []
 
@@ -1939,13 +1939,13 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redecl
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-Symbol flags mismatch:
+Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | Interface)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol span mismatch:
+Symbol span mismatch for "A":
 after transform: SymbolId(0): Span { start: 10, end: 11 }
 rebuilt        : SymbolId(0): Span { start: 19, end: 20 }
-Symbol redeclarations mismatch:
+Symbol redeclarations mismatch for "A":
 after transform: SymbolId(0): [Span { start: 19, end: 20 }]
 rebuilt        : SymbolId(0): []
 
@@ -1953,10 +1953,10 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redecl
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-Symbol flags mismatch:
+Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Interface)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-Symbol redeclarations mismatch:
+Symbol redeclarations mismatch for "A":
 after transform: SymbolId(0): [Span { start: 17, end: 18 }]
 rebuilt        : SymbolId(0): []
 
@@ -1964,10 +1964,10 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redecl
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-Symbol flags mismatch:
+Symbol flags mismatch for "X":
 after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | TypeAlias)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-Symbol redeclarations mismatch:
+Symbol redeclarations mismatch for "X":
 after transform: SymbolId(0): [Span { start: 17, end: 18 }]
 rebuilt        : SymbolId(0): []
 
@@ -1975,13 +1975,13 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redecl
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
-Symbol flags mismatch:
+Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Function | TypeAlias)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Function)
-Symbol span mismatch:
+Symbol span mismatch for "A":
 after transform: SymbolId(0): Span { start: 5, end: 6 }
 rebuilt        : SymbolId(0): Span { start: 26, end: 27 }
-Symbol redeclarations mismatch:
+Symbol redeclarations mismatch for "A":
 after transform: SymbolId(0): [Span { start: 26, end: 27 }]
 rebuilt        : SymbolId(0): []
 
@@ -1989,13 +1989,13 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redecl
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-Symbol flags mismatch:
+Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | TypeAlias)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch:
+Symbol span mismatch for "A":
 after transform: SymbolId(0): Span { start: 5, end: 6 }
 rebuilt        : SymbolId(0): Span { start: 21, end: 22 }
-Symbol redeclarations mismatch:
+Symbol redeclarations mismatch for "A":
 after transform: SymbolId(0): [Span { start: 21, end: 22 }]
 rebuilt        : SymbolId(0): []
 
@@ -2003,13 +2003,13 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redecl
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-Symbol flags mismatch:
+Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | TypeAlias)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol span mismatch:
+Symbol span mismatch for "A":
 after transform: SymbolId(0): Span { start: 5, end: 6 }
 rebuilt        : SymbolId(0): Span { start: 21, end: 22 }
-Symbol redeclarations mismatch:
+Symbol redeclarations mismatch for "A":
 after transform: SymbolId(0): [Span { start: 21, end: 22 }]
 rebuilt        : SymbolId(0): []
 
@@ -2017,10 +2017,10 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redecl
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-Symbol flags mismatch:
+Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | Interface)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol redeclarations mismatch:
+Symbol redeclarations mismatch for "A":
 after transform: SymbolId(0): [Span { start: 17, end: 18 }]
 rebuilt        : SymbolId(0): []
 
@@ -2028,10 +2028,10 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redecl
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-Symbol flags mismatch:
+Symbol flags mismatch for "X":
 after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | TypeAlias)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol redeclarations mismatch:
+Symbol redeclarations mismatch for "X":
 after transform: SymbolId(0): [Span { start: 17, end: 18 }]
 rebuilt        : SymbolId(0): []
 

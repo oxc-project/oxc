@@ -382,14 +382,6 @@ impl<'a> ArrayExpressionElement<'a> {
     }
 }
 
-impl<'a> ObjectExpression<'a> {
-    /// Returns `true` if this object has a property named `__proto__`
-    pub fn has_proto(&self) -> bool {
-        use crate::syntax_directed_operations::PropName;
-        self.properties.iter().any(|p| p.prop_name().is_some_and(|name| name.0 == "__proto__"))
-    }
-}
-
 impl<'a> PropertyKey<'a> {
     pub fn static_name(&self) -> Option<Cow<'a, str>> {
         match self {

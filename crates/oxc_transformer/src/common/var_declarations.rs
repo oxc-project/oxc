@@ -18,8 +18,7 @@ use oxc_allocator::Vec;
 use oxc_ast::{ast::*, NONE};
 use oxc_data_structures::stack::SparseStack;
 use oxc_span::SPAN;
-use oxc_syntax::symbol::SymbolId;
-use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
+use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
 
 use crate::TransformCtx;
 
@@ -68,15 +67,14 @@ impl<'a> VarDeclarationsStore<'a> {
     }
 
     /// Add a `VariableDeclarator` to be inserted at top of current enclosing statement block,
-    /// given `name` and `symbol_id`.
+    /// given a `BoundIdentifier`.
     pub fn insert(
         &self,
-        name: Atom<'a>,
-        symbol_id: SymbolId,
+        binding: &BoundIdentifier<'a>,
         init: Option<Expression<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let ident = BindingIdentifier::new_with_symbol_id(SPAN, name, symbol_id);
+        let ident = binding.create_binding_identifier();
         let ident = ctx.ast.binding_pattern_kind_from_binding_identifier(ident);
         let ident = ctx.ast.binding_pattern(ident, NONE, false);
         self.insert_binding_pattern(ident, init, ctx);

@@ -467,10 +467,9 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
         reference_flags: ReferenceFlags,
         ctx: &mut TraverseCtx<'a>,
     ) -> AssignmentTarget<'a> {
-        let symbol_id = ctx.generate_uid_in_root_scope("c", SymbolFlags::FunctionScopedVariable);
-        self.registrations.push((symbol_id, persistent_id));
-        let name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
-        let ident = ctx.create_bound_reference_id(SPAN, name, symbol_id, reference_flags);
+        let binding = ctx.generate_uid_in_root_scope("c", SymbolFlags::FunctionScopedVariable);
+        self.registrations.push((binding.symbol_id, persistent_id));
+        let ident = binding.create_reference(reference_flags, ctx);
         let ident = ctx.ast.simple_assignment_target_from_identifier_reference(ident);
         ctx.ast.assignment_target_simple(ident)
     }
@@ -683,12 +682,8 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
             .find(|scope_id| ctx.scopes().get_flags(*scope_id).is_var())
             .unwrap_or_else(|| ctx.current_scope_id());
 
-        let symbol_id = ctx.generate_uid("s", target_scope_id, SymbolFlags::FunctionScopedVariable);
-
-        let symbol_name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
-
-        let binding_identifier =
-            BindingIdentifier::new_with_symbol_id(SPAN, symbol_name.clone(), symbol_id);
+        let binding = ctx.generate_uid("s", target_scope_id, SymbolFlags::FunctionScopedVariable);
+        let binding_identifier = binding.create_binding_identifier();
 
         // _s();
         let call_expression = ctx.ast.statement_expression(

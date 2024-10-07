@@ -23,7 +23,7 @@ pub fn codegen(source_text: &str) -> String {
             CommentOptions { preserve_annotate_comments: true },
         )
         .build(&ret.program)
-        .source_text
+        .code
 }
 
 pub fn snapshot(name: &str, cases: &[&str]) {

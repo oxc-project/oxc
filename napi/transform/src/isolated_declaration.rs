@@ -1,16 +1,20 @@
+use std::path::Path;
+
 use napi_derive::napi;
+
 use oxc::{
     allocator::Allocator,
-    codegen::{CodegenReturn, CommentOptions},
+    codegen::{CodeGenerator, CommentOptions},
     isolated_declarations::IsolatedDeclarations,
     napi::{
         isolated_declarations::{IsolatedDeclarationsOptions, IsolatedDeclarationsResult},
-        transform::TransformOptions,
+        source_map::SourceMap,
     },
+    parser::Parser,
     span::SourceType,
 };
 
-use crate::context::TransformContext;
+use crate::errors::wrap_diagnostics;
 
 /// TypeScript Isolated Declarations for Standalone DTS Emit
 #[allow(clippy::needless_pass_by_value)]
@@ -20,44 +24,39 @@ pub fn isolated_declaration(
     source_text: String,
     options: Option<IsolatedDeclarationsOptions>,
 ) -> IsolatedDeclarationsResult {
-    let source_type = SourceType::from_path(&filename).unwrap_or_default().with_typescript(true);
+    let source_path = Path::new(&filename);
+    let source_type = SourceType::from_path(source_path).unwrap_or_default().with_typescript(true);
     let allocator = Allocator::default();
     let options = options.unwrap_or_default();
-    let ctx = TransformContext::new(
-        &allocator,
-        &filename,
-        &source_text,
-        source_type,
-        Some(&TransformOptions { sourcemap: options.sourcemap, ..Default::default() }),
-    );
-    let transformed_ret = build_declarations(&ctx, options);
 
-    IsolatedDeclarationsResult {
-        code: transformed_ret.source_text,
-        map: options.sourcemap.and_then(|_| transformed_ret.source_map.map(Into::into)),
-        errors: ctx.take_and_render_reports(),
-    }
-}
+    let ret = Parser::new(&allocator, &source_text, source_type).parse();
 
-pub(crate) fn build_declarations(
-    ctx: &TransformContext<'_>,
-    options: IsolatedDeclarationsOptions,
-) -> CodegenReturn {
     let transformed_ret = IsolatedDeclarations::new(
-        ctx.allocator,
-        ctx.source_text(),
-        &ctx.trivias,
+        &allocator,
+        &source_text,
+        &ret.trivias,
         oxc::isolated_declarations::IsolatedDeclarationsOptions {
             strip_internal: options.strip_internal.unwrap_or(false),
         },
     )
-    .build(&ctx.program());
-    ctx.add_diagnostics(transformed_ret.errors);
-    ctx.codegen()
-        .enable_comment(
-            ctx.source_text(),
-            ctx.trivias.clone(),
-            CommentOptions { preserve_annotate_comments: false },
-        )
-        .build(&transformed_ret.program)
+    .build(&ret.program);
+
+    let mut codegen = CodeGenerator::new().enable_comment(
+        &source_text,
+        ret.trivias.clone(),
+        CommentOptions { preserve_annotate_comments: false },
+    );
+    if options.sourcemap == Some(true) {
+        codegen = codegen.enable_source_map(&filename, &source_text);
+    }
+    let codegen_ret = codegen.build(&transformed_ret.program);
+
+    let errors = ret.errors.into_iter().chain(transformed_ret.errors).collect();
+    let errors = wrap_diagnostics(source_path, source_type, &source_text, errors);
+
+    IsolatedDeclarationsResult {
+        code: codegen_ret.code,
+        map: codegen_ret.map.map(SourceMap::from),
+        errors,
+    }
 }

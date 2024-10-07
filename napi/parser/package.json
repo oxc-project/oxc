@@ -4,8 +4,7 @@
   "private": true,
   "scripts": {
     "build": "napi build --platform --release",
-    "test": "node test.mjs",
-    "bench": "node parse.bench.mjs"
+    "test": "vitest run ./test"
   },
   "engines": {
     "node": ">=14.*"
@@ -22,10 +21,5 @@
       "x86_64-apple-darwin",
       "aarch64-apple-darwin"
     ]
-  },
-  "devDependencies": {
-    "@napi-rs/cli": "catalog:",
-    "es-module-lexer": "^1.4.1",
-    "tinybench": "^2.6.0"
   }
 }

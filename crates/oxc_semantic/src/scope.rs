@@ -73,7 +73,7 @@ impl ScopeTree {
     /// The first element of this iterator will be the scope itself. This
     /// guarantees the iterator will have at least 1 element.
     pub fn ancestors(&self, scope_id: ScopeId) -> impl Iterator<Item = ScopeId> + '_ {
-        std::iter::successors(Some(scope_id), |scope_id| self.parent_ids[*scope_id])
+        std::iter::successors(Some(scope_id), |&scope_id| self.parent_ids[scope_id])
     }
 
     pub fn descendants_from_root(&self) -> impl Iterator<Item = ScopeId> + '_ {
@@ -206,8 +206,8 @@ impl ScopeTree {
     /// found. If no binding is found, [`None`] is returned.
     pub fn find_binding(&self, scope_id: ScopeId, name: &str) -> Option<SymbolId> {
         for scope_id in self.ancestors(scope_id) {
-            if let Some(symbol_id) = self.bindings[scope_id].get(name) {
-                return Some(*symbol_id);
+            if let Some(&symbol_id) = self.bindings[scope_id].get(name) {
+                return Some(symbol_id);
             }
         }
         None
@@ -234,7 +234,7 @@ impl ScopeTree {
     /// [`iter_bindings_in`]: ScopeTree::iter_bindings_in
     pub fn iter_bindings(&self) -> impl Iterator<Item = (ScopeId, SymbolId, &'_ CompactStr)> + '_ {
         self.bindings.iter_enumerated().flat_map(|(scope_id, bindings)| {
-            bindings.iter().map(move |(name, symbol_id)| (scope_id, *symbol_id, name))
+            bindings.iter().map(move |(name, &symbol_id)| (scope_id, symbol_id, name))
         })
     }
 

@@ -37,5 +37,5 @@ fn run<'a, P: CompressorPass<'a>>(
     CodeGenerator::new()
         .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
         .build(&program)
-        .source_text
+        .code
 }

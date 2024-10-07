@@ -29,6 +29,7 @@ oxc_parser = { workspace = true }
 oxc_semantic = { workspace = true }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
+oxc_syntax_operations = { workspace = true }
 oxc_traverse = { workspace = true }
 
 cow-utils = { workspace = true }

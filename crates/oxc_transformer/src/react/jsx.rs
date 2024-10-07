@@ -97,16 +97,16 @@ use oxc_syntax::{
     symbol::SymbolFlags,
     xml_entities::XML_ENTITIES,
 };
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_syntax_operations::HasProto;
+use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
+
+use crate::{common::module_imports::NamedImport, TransformCtx};
 
 use super::diagnostics;
 pub use super::{
     jsx_self::ReactJsxSelf,
     jsx_source::ReactJsxSource,
     options::{JsxOptions, JsxRuntime},
-};
-use crate::{
-    common::module_imports::NamedImport, helpers::bindings::BoundIdentifier, TransformCtx,
 };
 
 pub struct ReactJsx<'a, 'ctx> {
@@ -196,13 +196,11 @@ impl<'a, 'ctx> AutomaticScriptBindings<'a, 'ctx> {
         front: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> BoundIdentifier<'a> {
-        let symbol_id =
+        let binding =
             ctx.generate_uid_in_root_scope(variable_name, SymbolFlags::FunctionScopedVariable);
-        let variable_name = ctx.ast.atom(&ctx.symbols().names[symbol_id]);
-
-        let import = NamedImport::new(variable_name.clone(), None, symbol_id);
+        let import = NamedImport::new(binding.name.clone(), None, binding.symbol_id);
         self.ctx.module_imports.add_import(source, import, front);
-        BoundIdentifier { name: variable_name, symbol_id }
+        binding
     }
 }
 
@@ -298,12 +296,11 @@ impl<'a, 'ctx> AutomaticModuleBindings<'a, 'ctx> {
         source: Atom<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> BoundIdentifier<'a> {
-        let symbol_id = ctx.generate_uid_in_root_scope(name, SymbolFlags::Import);
-        let local = ctx.ast.atom(&ctx.symbols().names[symbol_id]);
-
-        let import = NamedImport::new(Atom::from(name), Some(local.clone()), symbol_id);
+        let binding = ctx.generate_uid_in_root_scope(name, SymbolFlags::Import);
+        let import =
+            NamedImport::new(Atom::from(name), Some(binding.name.clone()), binding.symbol_id);
         self.ctx.module_imports.add_import(source, import, false);
-        BoundIdentifier { name: local, symbol_id }
+        binding
     }
 }
 

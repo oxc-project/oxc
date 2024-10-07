@@ -21,6 +21,7 @@ pub fn encode(sourcemap: &SourceMap) -> JSONSourceMap {
             .as_ref()
             .map(|x| x.iter().map(ToString::to_string).map(Some).collect()),
         names: sourcemap.names.iter().map(ToString::to_string).collect(),
+        debug_id: sourcemap.get_debug_id().map(ToString::to_string),
     }
 }
 
@@ -76,6 +77,12 @@ pub fn encode_to_string(sourcemap: &SourceMap) -> String {
 
     contents.push("],\"mappings\":\"".into());
     contents.push(serialize_sourcemap_mappings(sourcemap).into());
+
+    if let Some(debug_id) = sourcemap.get_debug_id() {
+        contents.push("\",\"debugId\":\"".into());
+        contents.push(debug_id.into());
+    }
+
     contents.push("\"}".into());
 
     // Check we calculated number of segments required correctly
@@ -401,9 +408,10 @@ fn test_encode_escape_string() {
         None,
     );
     sm.set_x_google_ignore_list(vec![0]);
+    sm.set_debug_id("56431d54-c0a6-451d-8ea2-ba5de5d8ca2e");
     assert_eq!(
         sm.to_json_string(),
-        r#"{"version":3,"names":["name_length_greater_than_16_\u0000"],"sources":["\u0000"],"sourcesContent":["emoji-👀-\u0000"],"x_google_ignoreList":[0],"mappings":""}"#
+        r#"{"version":3,"names":["name_length_greater_than_16_\u0000"],"sources":["\u0000"],"sourcesContent":["emoji-👀-\u0000"],"x_google_ignoreList":[0],"mappings":"","debugId":"56431d54-c0a6-451d-8ea2-ba5de5d8ca2e"}"#
     );
 }
 

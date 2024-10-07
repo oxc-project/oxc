@@ -285,7 +285,7 @@ impl Oxc {
                 ..CodegenOptions::default()
             })
             .build(&program)
-            .source_text;
+            .code;
 
         Ok(())
     }

@@ -2,14 +2,18 @@ use std::{mem, ops::ControlFlow, path::Path};
 
 use oxc_allocator::Allocator;
 use oxc_ast::{ast::Program, Trivias};
-use oxc_codegen::{CodeGenerator, CodegenOptions, CommentOptions};
+use oxc_codegen::{CodeGenerator, CodegenOptions, CodegenReturn, CommentOptions};
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions};
 use oxc_mangler::{MangleOptions, Mangler};
 use oxc_minifier::{CompressOptions, Compressor};
 use oxc_parser::{ParseOptions, Parser, ParserReturn};
 use oxc_semantic::{ScopeTree, SemanticBuilder, SemanticBuilderReturn, SymbolTable};
 use oxc_span::SourceType;
-use oxc_transformer::{TransformOptions, Transformer, TransformerReturn};
+use oxc_transformer::{
+    InjectGlobalVariables, InjectGlobalVariablesConfig, ReplaceGlobalDefines,
+    ReplaceGlobalDefinesConfig, TransformOptions, Transformer, TransformerReturn,
+};
 
 #[derive(Default)]
 pub struct Compiler {
@@ -22,8 +26,8 @@ impl CompilerInterface for Compiler {
         self.errors.extend(errors);
     }
 
-    fn after_codegen(&mut self, printed: String) {
-        self.printed = printed;
+    fn after_codegen(&mut self, ret: CodegenReturn) {
+        self.printed = ret.code;
     }
 }
 
@@ -49,12 +53,28 @@ impl Compiler {
 pub trait CompilerInterface {
     fn handle_errors(&mut self, _errors: Vec<OxcDiagnostic>) {}
 
+    fn enable_sourcemap(&self) -> bool {
+        false
+    }
+
     fn parse_options(&self) -> ParseOptions {
         ParseOptions::default()
     }
 
+    fn isolated_declaration_options(&self) -> Option<IsolatedDeclarationsOptions> {
+        None
+    }
+
     fn transform_options(&self) -> Option<TransformOptions> {
         Some(TransformOptions::default())
+    }
+
+    fn define_options(&self) -> Option<ReplaceGlobalDefinesConfig> {
+        None
+    }
+
+    fn inject_options(&self) -> Option<InjectGlobalVariablesConfig> {
+        None
     }
 
     fn compress_options(&self) -> Option<CompressOptions> {
@@ -89,6 +109,8 @@ pub trait CompilerInterface {
         ControlFlow::Continue(())
     }
 
+    fn after_isolated_declarations(&mut self, _ret: CodegenReturn) {}
+
     fn after_transform(
         &mut self,
         _program: &mut Program<'_>,
@@ -97,7 +119,7 @@ pub trait CompilerInterface {
         ControlFlow::Continue(())
     }
 
-    fn after_codegen(&mut self, _printed: String) {}
+    fn after_codegen(&mut self, _ret: CodegenReturn) {}
 
     fn compile(&mut self, source_text: &str, source_type: SourceType, source_path: &Path) {
         let allocator = Allocator::default();
@@ -112,10 +134,22 @@ pub trait CompilerInterface {
             self.handle_errors(parser_return.errors);
         }
 
-        /* Semantic */
-
         let mut program = parser_return.program;
         let trivias = parser_return.trivias;
+
+        /* Isolated Declarations */
+        if let Some(options) = self.isolated_declaration_options() {
+            self.isolated_declaration(
+                options,
+                &allocator,
+                &program,
+                source_text,
+                source_path,
+                &trivias,
+            );
+        }
+
+        /* Semantic */
 
         let mut semantic_return = self.semantic(&program, source_text, source_path);
         if !semantic_return.errors.is_empty() {
@@ -126,7 +160,7 @@ pub trait CompilerInterface {
             return;
         }
 
-        let (symbols, scopes) = semantic_return.semantic.into_symbol_table_and_scope_tree();
+        let (mut symbols, mut scopes) = semantic_return.semantic.into_symbol_table_and_scope_tree();
 
         /* Transform */
 
@@ -150,6 +184,25 @@ pub trait CompilerInterface {
             if self.after_transform(&mut program, &mut transformer_return).is_break() {
                 return;
             }
+
+            symbols = transformer_return.symbols;
+            scopes = transformer_return.scopes;
+        }
+
+        if let Some(config) = self.inject_options() {
+            let ret =
+                InjectGlobalVariables::new(&allocator, config).build(symbols, scopes, &mut program);
+            symbols = ret.symbols;
+            scopes = ret.scopes;
+        }
+
+        if let Some(config) = self.define_options() {
+            let ret =
+                ReplaceGlobalDefines::new(&allocator, config).build(symbols, scopes, &mut program);
+            Compressor::new(&allocator, CompressOptions::dead_code_elimination())
+                .build_with_symbols_and_scopes(ret.symbols, ret.scopes, &mut program);
+            // symbols = ret.symbols;
+            // scopes = ret.scopes;
         }
 
         /* Compress */
@@ -165,8 +218,8 @@ pub trait CompilerInterface {
         /* Codegen */
 
         if let Some(options) = self.codegen_options() {
-            let printed = self.codegen(&program, source_text, &trivias, mangler, options);
-            self.after_codegen(printed);
+            let ret = self.codegen(&program, source_text, source_path, &trivias, mangler, options);
+            self.after_codegen(ret);
         }
     }
 
@@ -197,6 +250,29 @@ pub trait CompilerInterface {
             .with_scope_tree_child_ids(self.semantic_child_scope_ids())
             .build_module_record(source_path, program)
             .build(program)
+    }
+
+    fn isolated_declaration<'a>(
+        &mut self,
+        options: IsolatedDeclarationsOptions,
+        allocator: &'a Allocator,
+        program: &Program<'a>,
+        source_text: &'a str,
+        source_path: &Path,
+        trivias: &Trivias,
+    ) {
+        let ret =
+            IsolatedDeclarations::new(allocator, source_text, trivias, options).build(program);
+        self.handle_errors(ret.errors);
+        let ret = self.codegen(
+            &ret.program,
+            source_text,
+            source_path,
+            trivias,
+            None,
+            self.codegen_options().unwrap_or_default(),
+        );
+        self.after_isolated_declarations(ret);
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -232,16 +308,20 @@ pub trait CompilerInterface {
         &self,
         program: &Program<'a>,
         source_text: &'a str,
+        source_path: &Path,
         trivias: &Trivias,
         mangler: Option<Mangler>,
         options: CodegenOptions,
-    ) -> String {
+    ) -> CodegenReturn {
         let comment_options = CommentOptions { preserve_annotate_comments: true };
-        CodeGenerator::new()
+        let mut codegen = CodeGenerator::new()
             .with_options(options)
             .with_mangler(mangler)
-            .enable_comment(source_text, trivias.clone(), comment_options)
-            .build(program)
-            .source_text
+            .enable_comment(source_text, trivias.clone(), comment_options);
+        if self.enable_sourcemap() {
+            codegen =
+                codegen.enable_source_map(source_path.to_string_lossy().as_ref(), source_text);
+        }
+        codegen.build(program)
     }
 }

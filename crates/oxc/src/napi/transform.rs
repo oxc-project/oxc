@@ -1,3 +1,5 @@
+// NOTE: Types must be aligned with [@types/babel__core](https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/babel__core/index.d.ts).
+
 #![allow(rustdoc::bare_urls)]
 
 use std::path::PathBuf;
@@ -8,7 +10,43 @@ use rustc_hash::FxHashMap;
 
 use oxc_transformer::{JsxRuntime, RewriteExtensionsMode};
 
-use super::isolated_declarations::IsolatedDeclarationsOptions;
+use super::{isolated_declarations::IsolatedDeclarationsOptions, source_map::SourceMap};
+
+#[derive(Default)]
+#[napi(object)]
+pub struct TransformResult {
+    /// The transformed code.
+    ///
+    /// If parsing failed, this will be an empty string.
+    pub code: String,
+
+    /// The source map for the transformed code.
+    ///
+    /// This will be set if {@link TransformOptions#sourcemap} is `true`.
+    pub map: Option<SourceMap>,
+
+    /// The `.d.ts` declaration file for the transformed code. Declarations are
+    /// only generated if `declaration` is set to `true` and a TypeScript file
+    /// is provided.
+    ///
+    /// If parsing failed and `declaration` is set, this will be an empty string.
+    ///
+    /// @see {@link TypeScriptOptions#declaration}
+    /// @see [declaration tsconfig option](https://www.typescriptlang.org/tsconfig/#declaration)
+    pub declaration: Option<String>,
+
+    /// Declaration source map. Only generated if both
+    /// {@link TypeScriptOptions#declaration declaration} and
+    /// {@link TransformOptions#sourcemap sourcemap} are set to `true`.
+    pub declaration_map: Option<SourceMap>,
+
+    /// Parse and transformation errors.
+    ///
+    /// Oxc's parser recovers from common syntax errors, meaning that
+    /// transformed code may still be available even if there are errors in this
+    /// list.
+    pub errors: Vec<String>,
+}
 
 /// Options for transforming a JavaScript or TypeScript file.
 ///
@@ -18,6 +56,10 @@ use super::isolated_declarations::IsolatedDeclarationsOptions;
 pub struct TransformOptions {
     #[napi(ts_type = "'script' | 'module' | 'unambiguous' | undefined")]
     pub source_type: Option<String>,
+
+    /// Treat the source text as `js`, `jsx`, `ts`, or `tsx`.
+    #[napi(ts_type = "'js' | 'jsx' | 'ts' | 'tsx'")]
+    pub lang: Option<String>,
 
     /// The current working directory. Used to resolve relative paths in other
     /// options.

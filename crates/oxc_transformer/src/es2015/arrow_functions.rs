@@ -129,11 +129,9 @@ use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolFlags,
 };
-use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
+use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
 
 use serde::Deserialize;
-
-use crate::helpers::bindings::BoundIdentifier;
 
 #[derive(Debug, Default, Clone, Deserialize)]
 pub struct ArrowFunctionsOptions {
@@ -286,13 +284,7 @@ impl<'a> ArrowFunctions<'a> {
                     ) && !scope_flags.contains(ScopeFlags::Arrow)
                 })
                 .unwrap();
-
-            BoundIdentifier::new_uid(
-                "this",
-                target_scope_id,
-                SymbolFlags::FunctionScopedVariable,
-                ctx,
-            )
+            ctx.generate_uid("this", target_scope_id, SymbolFlags::FunctionScopedVariable)
         });
         Some(this_var.create_spanned_read_reference(span, ctx))
     }

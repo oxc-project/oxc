@@ -274,13 +274,7 @@ jobs:
           cache-key: warm
       - uses: ./.github/actions/pnpm
         if: steps.filter.outputs.src == 'true'
-      - name: Test napi/parser
-        run: pnpm build && pnpm test
+      - run: pnpm run build
         if: steps.filter.outputs.src == 'true'
-        working-directory: napi/parser
-      - name: Test napi/transform
-        if: steps.filter.outputs.src == 'true'
-        working-directory: napi/transform
-        run: pnpm build && pnpm test
-      - run: git diff --exit-code
+      - run: pnpm run test
         if: steps.filter.outputs.src == 'true'

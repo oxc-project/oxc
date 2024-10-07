@@ -1,22 +1,21 @@
 use std::{ops::ControlFlow, path::PathBuf};
 
+use rustc_hash::FxHashSet;
+
 use oxc::{
     allocator::Allocator,
     ast::{ast::Program, Trivias},
-    codegen::CodegenOptions,
+    codegen::{CodegenOptions, CodegenReturn},
     diagnostics::OxcDiagnostic,
     minifier::CompressOptions,
     parser::{ParseOptions, ParserReturn},
     regular_expression::{Parser, ParserOptions},
-    semantic::{
-        post_transform_checker::{check_semantic_after_transform, check_semantic_ids},
-        Semantic, SemanticBuilderReturn,
-    },
+    semantic::{Semantic, SemanticBuilderReturn},
     span::{SourceType, Span},
     transformer::{TransformOptions, TransformerReturn},
     CompilerInterface,
 };
-use rustc_hash::FxHashSet;
+use oxc_tasks_transform_checker::{check_semantic_after_transform, check_semantic_ids};
 
 use crate::suite::TestResult;
 
@@ -111,8 +110,8 @@ impl CompilerInterface for Driver {
         ControlFlow::Continue(())
     }
 
-    fn after_codegen(&mut self, printed: String) {
-        self.printed = printed;
+    fn after_codegen(&mut self, ret: CodegenReturn) {
+        self.printed = ret.code;
     }
 }
 

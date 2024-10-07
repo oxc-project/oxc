@@ -7,8 +7,9 @@ use oxc_ast::visit::walk::{
     walk_import_expression, walk_meta_property, walk_module_declaration, walk_statement,
 };
 #[allow(clippy::wildcard_imports)]
-use oxc_ast::{ast::*, syntax_directed_operations::BoundNames, Visit};
+use oxc_ast::{ast::*, Visit};
 use oxc_span::{Atom, GetSpan};
+use oxc_syntax_operations::BoundNames;
 
 #[derive(Debug, Clone)]
 pub struct ImportSpecifier<'a> {

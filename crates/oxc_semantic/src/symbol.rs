@@ -77,8 +77,8 @@ impl SymbolTable {
     /// let classes = semantic
     ///     .scopes()
     ///     .symbol_ids()
-    ///     .filter(|symbol_id| {
-    ///         let flags = semantic.symbols().get_flags(*symbol_id);
+    ///     .filter(|&symbol_id| {
+    ///         let flags = semantic.symbols().get_flags(symbol_id);
     ///         flags.is_class()
     ///      })
     ///      .collect::<Vec<_>>();
@@ -238,7 +238,7 @@ impl SymbolTable {
     ) -> impl DoubleEndedIterator<Item = &Reference> + '_ {
         self.resolved_references[symbol_id]
             .iter()
-            .map(|reference_id| &self.references[*reference_id])
+            .map(|&reference_id| &self.references[reference_id])
     }
 
     /// Delete a reference to a symbol.

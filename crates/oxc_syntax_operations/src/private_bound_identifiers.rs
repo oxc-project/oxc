@@ -1,4 +1,7 @@
-use crate::ast::*;
+use oxc_ast::ast::{
+    AccessorProperty, ClassElement, MethodDefinition, PrivateIdentifier, PropertyDefinition,
+    PropertyKey,
+};
 
 /// [`PrivateBoundIdentifiers`](https://tc39.es/ecma262/#sec-static-semantics-privateboundidentifiers)
 pub trait PrivateBoundIdentifiers {

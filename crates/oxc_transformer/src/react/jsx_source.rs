@@ -37,11 +37,12 @@ use oxc_ast::{ast::*, NONE};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Span, SPAN};
 use oxc_syntax::{number::NumberBase, symbol::SymbolFlags};
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
 use ropey::Rope;
 
+use crate::TransformCtx;
+
 use super::utils::get_line_column;
-use crate::{helpers::bindings::BoundIdentifier, TransformCtx};
 
 const SOURCE: &str = "__source";
 const FILE_NAME_VAR: &str = "jsxFileName";
@@ -76,10 +77,9 @@ impl<'a, 'ctx> Traverse<'a> for ReactJsxSource<'a, 'ctx> {
 
 impl<'a, 'ctx> ReactJsxSource<'a, 'ctx> {
     pub fn get_line_column(&mut self, offset: u32) -> (usize, usize) {
-        if self.source_rope.is_none() {
-            self.source_rope = Some(Rope::from_str(self.ctx.source_text));
-        }
-        get_line_column(self.source_rope.as_ref().unwrap(), offset, self.ctx.source_text)
+        let source_rope =
+            self.source_rope.get_or_insert_with(|| Rope::from_str(self.ctx.source_text));
+        get_line_column(source_rope, offset, self.ctx.source_text)
     }
 
     pub fn get_object_property_kind_for_jsx_plugin(
@@ -219,14 +219,9 @@ impl<'a, 'ctx> ReactJsxSource<'a, 'ctx> {
         Some(decl)
     }
 
-    fn get_filename_var(&mut self, ctx: &mut TraverseCtx<'a>) -> BoundIdentifier<'a> {
-        if self.filename_var.is_none() {
-            self.filename_var = Some(BoundIdentifier::new_uid_in_root_scope(
-                FILE_NAME_VAR,
-                SymbolFlags::FunctionScopedVariable,
-                ctx,
-            ));
-        }
-        self.filename_var.as_ref().unwrap().clone()
+    fn get_filename_var(&mut self, ctx: &mut TraverseCtx<'a>) -> &BoundIdentifier<'a> {
+        self.filename_var.get_or_insert_with(|| {
+            ctx.generate_uid_in_root_scope(FILE_NAME_VAR, SymbolFlags::FunctionScopedVariable)
+        })
     }
 }

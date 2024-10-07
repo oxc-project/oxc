@@ -34,7 +34,7 @@ See more at [oxc.rs](https://oxc.rs)!
 
 ## ⚡️ Linter Quick Start
 
-The linter is ready to catch mistakes for you. It comes with 93 rules turned on by default (out of 400+ in total) and no configuration is required.
+The linter is ready to catch mistakes for you. It comes with 93 rules turned on by default (out of 430+ in total) and no configuration is required.
 
 To get started, run [oxlint][npm-oxlint] or via `npx`:
 
@@ -79,7 +79,7 @@ where warm runs complete in 3 minutes.
 
 ### Node.js
 
-- via napi: [oxc-parser][npm-napi], [oxc-transform][npm-napi-transform]
+- via napi: [oxc-parser][npm-napi-parser], [oxc-transform][npm-napi-transform]
 
 ### Wasm
 

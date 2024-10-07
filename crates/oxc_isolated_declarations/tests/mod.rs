@@ -27,7 +27,7 @@ fn transform(path: &Path, source_text: &str) -> String {
             CommentOptions { preserve_annotate_comments: false },
         )
         .build(&id_ret.program)
-        .source_text;
+        .code;
 
     let mut snapshot =
         format!("```\n==================== .D.TS ====================\n\n{code}\n\n");

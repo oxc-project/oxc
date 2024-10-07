@@ -5,7 +5,12 @@
   "volta": {
     "node": "22.7.0"
   },
+  "scripts": {
+    "build": "pnpm --workspace-concurrency=1 --filter './napi/*' build",
+    "test": "pnpm --workspace-concurrency=1 --filter './napi/*' test"
+  },
   "devDependencies": {
-    "@napi-rs/cli": "catalog:"
+    "@napi-rs/cli": "catalog:",
+    "vitest": "catalog:"
   }
 }

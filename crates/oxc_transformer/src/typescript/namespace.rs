@@ -1,12 +1,14 @@
 use oxc_allocator::{Box, Vec};
-use oxc_ast::{ast::*, syntax_directed_operations::BoundNames, NONE};
+use oxc_ast::{ast::*, NONE};
 use oxc_span::{Atom, CompactStr, SPAN};
 use oxc_syntax::{
     operator::{AssignmentOperator, LogicalOperator},
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolFlags,
 };
+use oxc_syntax_operations::BoundNames;
 use oxc_traverse::{Traverse, TraverseCtx};
+
 use rustc_hash::FxHashSet;
 
 use super::{
@@ -158,8 +160,8 @@ impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
 
         // Reuse `TSModuleDeclaration`'s scope in transformed function
         let scope_id = decl.scope_id.get().unwrap();
-        let symbol_id = ctx.generate_uid(&real_name, scope_id, SymbolFlags::FunctionScopedVariable);
-        let name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
+        let binding = ctx.generate_uid(&real_name, scope_id, SymbolFlags::FunctionScopedVariable);
+        let name = binding.name;
 
         let directives;
         let namespace_top_level;

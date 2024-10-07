@@ -29,10 +29,6 @@ mod typescript;
 
 mod plugins;
 
-mod helpers {
-    pub mod bindings;
-}
-
 use std::path::Path;
 
 use common::Common;
