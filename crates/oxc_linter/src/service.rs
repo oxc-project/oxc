@@ -271,8 +271,11 @@ impl Runtime {
         // source code after each fix.
         let mut fix_offset: i32 = 0;
 
-        for source in sources {
-            let allocator = Allocator::default();
+        let mut allocator = Allocator::default();
+        for (i, source) in sources.into_iter().enumerate() {
+            if i >= 1 {
+                allocator.reset();
+            }
             let mut messages = self.process_source(
                 path,
                 &allocator,
