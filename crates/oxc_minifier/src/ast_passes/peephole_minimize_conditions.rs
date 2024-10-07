@@ -1,7 +1,8 @@
 use oxc_ast::ast::*;
+use oxc_span::SPAN;
 use oxc_traverse::{Traverse, TraverseCtx};
 
-use crate::CompressorPass;
+use crate::{CompressOptions, CompressorPass};
 
 /// Minimize Conditions
 ///
@@ -11,6 +12,7 @@ use crate::CompressorPass;
 ///
 /// <https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeMinimizeConditions.java>
 pub struct PeepholeMinimizeConditions {
+    options: CompressOptions,
     changed: bool,
 }
 
@@ -21,7 +23,9 @@ impl<'a> CompressorPass<'a> for PeepholeMinimizeConditions {
 
     fn build(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.changed = false;
-        oxc_traverse::walk_program(self, program, ctx);
+        if self.options.conditions {
+            oxc_traverse::walk_program(self, program, ctx);
+        }
     }
 }
 
@@ -35,11 +39,31 @@ impl<'a> Traverse<'a> for PeepholeMinimizeConditions {
             self.changed = true;
         };
     }
+
+    fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        match stmt {
+            Statement::BlockStatement(block) => {
+                if let Some(folded_stmt) = self.try_fold_block_statement(block, ctx) {
+                    *stmt = folded_stmt;
+                    self.changed = true;
+                }
+            }
+            Statement::IfStatement(if_stmt) => {
+                if let Some(folded_stmt) =
+                    self.try_fold_single_consequent_without_alternate(if_stmt, ctx)
+                {
+                    *stmt = folded_stmt;
+                    self.changed = true;
+                }
+            }
+            _ => {}
+        }
+    }
 }
 
 impl<'a> PeepholeMinimizeConditions {
-    pub fn new() -> Self {
-        Self { changed: false }
+    pub fn new(options: CompressOptions) -> Self {
+        Self { changed: false, options }
     }
 
     /// Try to minimize NOT nodes such as `!(x==y)`.
@@ -57,6 +81,57 @@ impl<'a> PeepholeMinimizeConditions {
         }
         None
     }
+
+    fn try_fold_block_statement(
+        &self,
+        stmt: &mut BlockStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Statement<'a>> {
+        // It must have only one statement, so using unwrap is safe.
+        (stmt.body.len() == 1)
+            .then(|| {
+                stmt.body.get_mut(0).and_then(|stmt| {
+                    matches!(stmt, Statement::ExpressionStatement(_))
+                        .then(|| ctx.ast.move_statement(stmt))
+                })
+            })
+            .unwrap_or(None)
+    }
+
+    fn try_fold_single_consequent_without_alternate(
+        &mut self,
+        stmt: &mut IfStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Statement<'a>> {
+        if stmt.alternate.is_some() {
+            return None;
+        };
+        let consequence = match &mut stmt.consequent {
+            Statement::BlockStatement(block) => {
+                if block.body.len() != 1 {
+                    return None;
+                }
+                block.body.get_mut(0)?
+            }
+            _ => &mut stmt.consequent,
+        };
+        if matches!(consequence, Statement::ExpressionStatement(_)) && !stmt.test.is_literal() {
+            let condition = ctx.ast.move_expression(&mut stmt.test);
+            let consequent = ctx.ast.move_statement(consequence);
+            let expression = match consequent {
+                Statement::ExpressionStatement(mut expr) => {
+                    ctx.ast.move_expression(&mut expr.expression)
+                }
+                _ => unreachable!(),
+            };
+
+            let new_expr =
+                ctx.ast.expression_logical(SPAN, condition, LogicalOperator::And, expression);
+            Some(ctx.ast.statement_expression(SPAN, new_expr))
+        } else {
+            None
+        }
+    }
 }
 
 /// <https://github.com/google/closure-compiler/blob/master/test/com/google/javascript/jscomp/PeepholeMinimizeConditionsTest.java>
@@ -64,11 +139,11 @@ impl<'a> PeepholeMinimizeConditions {
 mod test {
     use oxc_allocator::Allocator;
 
-    use crate::tester;
+    use crate::{tester, CompressOptions};
 
     fn test(source_text: &str, positive: &str) {
         let allocator = Allocator::default();
-        let mut pass = super::PeepholeMinimizeConditions::new();
+        let mut pass = super::PeepholeMinimizeConditions::new(CompressOptions::all_true());
         tester::test(&allocator, source_text, positive, &mut pass);
     }
 
@@ -86,7 +161,6 @@ mod test {
 
     /** Check that removing blocks with 1 child works */
     #[test]
-    #[ignore]
     fn test_fold_one_child_blocks() {
         // late = false;
         fold("function f(){if(x)a();x=3}", "function f(){x&&a();x=3}");
@@ -95,16 +169,16 @@ mod test {
         fold("function f(){if(x){a()}x=3}", "function f(){x&&a();x=3}");
         fold("function f(){if(x){a?.()}x=3}", "function f(){x&&a?.();x=3}");
 
-        fold("function f(){if(x){return 3}}", "function f(){if(x)return 3}");
+        // fold("function f(){if(x){return 3}}", "function f(){if(x)return 3}");
         fold("function f(){if(x){a()}}", "function f(){x&&a()}");
-        fold("function f(){if(x){throw 1}}", "function f(){if(x)throw 1;}");
+        // fold("function f(){if(x){throw 1}}", "function f(){if(x)throw 1;}");
 
         // Try it out with functions
         fold("function f(){if(x){foo()}}", "function f(){x&&foo()}");
-        fold("function f(){if(x){foo()}else{bar()}}", "function f(){x?foo():bar()}");
+        // fold("function f(){if(x){foo()}else{bar()}}", "function f(){x?foo():bar()}");
 
         // Try it out with properties and methods
-        fold("function f(){if(x){a.b=1}}", "function f(){if(x)a.b=1}");
+        fold("function f(){if(x){a.b=1}}", "function f(){x&&(a.b=1)}");
         fold("function f(){if(x){a.b*=1}}", "function f(){x&&(a.b*=1)}");
         fold("function f(){if(x){a.b+=1}}", "function f(){x&&(a.b+=1)}");
         fold("function f(){if(x){++a.b}}", "function f(){x&&++a.b}");
@@ -112,53 +186,53 @@ mod test {
         fold("function f(){if(x){a?.foo()}}", "function f(){x&&a?.foo()}");
 
         // Try it out with throw/catch/finally [which should not change]
-        fold_same("function f(){try{foo()}catch(e){bar(e)}finally{baz()}}");
+        // fold_same("function f(){try{foo()}catch(e){bar(e)}finally{baz()}}");
 
         // Try it out with switch statements
-        fold_same("function f(){switch(x){case 1:break}}");
+        // fold_same("function f(){switch(x){case 1:break}}");
 
         // Do while loops stay in a block if that's where they started
-        fold_same("function f(){if(e1){do foo();while(e2)}else foo2()}");
+        // fold_same("function f(){if(e1){do foo();while(e2)}else foo2()}");
         // Test an obscure case with do and while
-        fold("if(x){do{foo()}while(y)}else bar()", "if(x){do foo();while(y)}else bar()");
+        // fold("if(x){do{foo()}while(y)}else bar()", "if(x){do foo();while(y)}else bar()");
 
         // Play with nested IFs
         fold("function f(){if(x){if(y)foo()}}", "function f(){x && (y && foo())}");
-        fold("function f(){if(x){if(y)foo();else bar()}}", "function f(){x&&(y?foo():bar())}");
-        fold("function f(){if(x){if(y)foo()}else bar()}", "function f(){x?y&&foo():bar()}");
-        fold(
-            "function f(){if(x){if(y)foo();else bar()}else{baz()}}",
-            "function f(){x?y?foo():bar():baz()}",
-        );
+        // fold("function f(){if(x){if(y)foo();else bar()}}", "function f(){x&&(y?foo():bar())}");
+        // fold("function f(){if(x){if(y)foo()}else bar()}", "function f(){x?y&&foo():bar()}");
+        // fold(
+        //     "function f(){if(x){if(y)foo();else bar()}else{baz()}}",
+        //     "function f(){x?y?foo():bar():baz()}",
+        // );
 
-        fold("if(e1){while(e2){if(e3){foo()}}}else{bar()}", "if(e1)while(e2)e3&&foo();else bar()");
+        // fold("if(e1){while(e2){if(e3){foo()}}}else{bar()}", "if(e1)while(e2)e3&&foo();else bar()");
 
-        fold("if(e1){with(e2){if(e3){foo()}}}else{bar()}", "if(e1)with(e2)e3&&foo();else bar()");
+        // fold("if(e1){with(e2){if(e3){foo()}}}else{bar()}", "if(e1)with(e2)e3&&foo();else bar()");
 
-        fold("if(a||b){if(c||d){var x;}}", "if(a||b)if(c||d)var x");
-        fold("if(x){ if(y){var x;}else{var z;} }", "if(x)if(y)var x;else var z");
+        // fold("if(a||b){if(c||d){var x;}}", "if(a||b)if(c||d)var x");
+        // fold("if(x){ if(y){var x;}else{var z;} }", "if(x)if(y)var x;else var z");
 
         // NOTE - technically we can remove the blocks since both the parent
         // and child have elses. But we don't since it causes ambiguities in
         // some cases where not all descendent ifs having elses
-        fold(
-            "if(x){ if(y){var x;}else{var z;} }else{var w}",
-            "if(x)if(y)var x;else var z;else var w",
-        );
-        fold("if (x) {var x;}else { if (y) { var y;} }", "if(x)var x;else if(y)var y");
+        // fold(
+        //     "if(x){ if(y){var x;}else{var z;} }else{var w}",
+        //     "if(x)if(y)var x;else var z;else var w",
+        // );
+        // fold("if (x) {var x;}else { if (y) { var y;} }", "if(x)var x;else if(y)var y");
 
         // Here's some of the ambiguous cases
-        fold(
-            "if(a){if(b){f1();f2();}else if(c){f3();}}else {if(d){f4();}}",
-            "if(a)if(b){f1();f2()}else c&&f3();else d&&f4()",
-        );
+        // fold(
+        //     "if(a){if(b){f1();f2();}else if(c){f3();}}else {if(d){f4();}}",
+        //     "if(a)if(b){f1();f2()}else c&&f3();else d&&f4()",
+        // );
 
-        fold("function f(){foo()}", "function f(){foo()}");
-        fold("switch(x){case y: foo()}", "switch(x){case y:foo()}");
-        fold(
-            "try{foo()}catch(ex){bar()}finally{baz()}",
-            "try{foo()}catch(ex){bar()}finally{baz()}",
-        );
+        // fold("function f(){foo()}", "function f(){foo()}");
+        // fold("switch(x){case y: foo()}", "switch(x){case y:foo()}");
+        // fold(
+        //     "try{foo()}catch(ex){bar()}finally{baz()}",
+        //     "try{foo()}catch(ex){bar()}finally{baz()}",
+        // );
     }
 
     /** Try to minimize returns */

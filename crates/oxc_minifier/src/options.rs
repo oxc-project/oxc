@@ -2,6 +2,11 @@
 pub struct CompressOptions {
     pub dead_code_elimination: bool,
 
+    /// Optimize conditions, for example from `if (a) { b } else { c }` to `a ? b : c`.
+    ///
+    /// Default `true`
+    pub conditions: bool,
+
     /// Various optimizations for boolean context, for example `!!a ? b : c` → `a ? b : c`.
     ///
     /// Default `true`
@@ -49,6 +54,7 @@ impl CompressOptions {
     pub fn all_true() -> Self {
         Self {
             dead_code_elimination: false,
+            conditions: true,
             booleans: true,
             drop_debugger: true,
             drop_console: true,
@@ -62,6 +68,7 @@ impl CompressOptions {
     pub fn all_false() -> Self {
         Self {
             dead_code_elimination: false,
+            conditions: false,
             booleans: false,
             drop_debugger: false,
             drop_console: false,
