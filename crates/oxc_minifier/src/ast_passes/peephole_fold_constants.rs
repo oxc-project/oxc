@@ -1572,4 +1572,56 @@ mod test {
         test("8589934592 >>> 0", "0");
         test("8589934593 >>> 0", "1");
     }
+
+    #[test]
+    #[ignore]
+    fn test_fold_arithmetic() {
+        test("x = 10 + 20", "x = 30");
+        test("x = 2 / 4", "x = 0.5");
+        test("x = 2.25 * 3", "x = 6.75");
+        test_same("z = x * y");
+        test_same("x = y * 5");
+        test_same("x = 1 / 0");
+        test("x = 3 % 2", "x = 1");
+        test("x = 3 % -2", "x = 1");
+        test("x = -1 % 3", "x = -1");
+        test_same("x = 1 % 0");
+        test("x = 2 ** 3", "x = 8");
+        test("x = 2 ** -3", "x = 0.125");
+        test_same("x = 2 ** 55"); // backs off folding because 2 ** 55 is too large
+        test_same("x = 3 ** -1"); // backs off because 3**-1 is shorter than 0.3333333333333333
+    }
+
+    #[test]
+    #[ignore]
+    fn test_fold_arithmetic2() {
+        test_same("x = y + 10 + 20");
+        test_same("x = y / 2 / 4");
+        test("x = y * 2.25 * 3", "x = y * 6.75");
+        test_same("x = y * 2.25 * z * 3");
+        test_same("z = x * y");
+        test_same("x = y * 5");
+        test("x = y + (z * 24 * 60 * 60 * 1000)", "x = y + z * 864E5");
+    }
+
+    #[test]
+    #[ignore]
+    fn test_fold_arithmetic3() {
+        test("x = null * undefined", "x = NaN");
+        test("x = null * 1", "x = 0");
+        test("x = (null - 1) * 2", "x = -2");
+        test("x = (null + 1) * 2", "x = 2");
+        test("x = null ** 0", "x = 1");
+        test("x = (-0) ** 3", "x = -0");
+    }
+
+    #[test]
+    #[ignore]
+    fn test_fold_arithmetic_infinity() {
+        test("x=-Infinity-2", "x=-Infinity");
+        test("x=Infinity-2", "x=Infinity");
+        test("x=Infinity*5", "x=Infinity");
+        test("x = Infinity ** 2", "x = Infinity");
+        test("x = Infinity ** -2", "x = 0");
+    }
 }
