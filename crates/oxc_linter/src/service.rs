@@ -277,7 +277,7 @@ impl Runtime {
                 path,
                 &allocator,
                 source.source_text,
-                source_type,
+                source.source_type,
                 true,
                 tx_error,
             );
