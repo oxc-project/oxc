@@ -2,6 +2,7 @@ use std::cmp::Ordering;
 use std::ops::Neg;
 
 use num_bigint::BigInt;
+use num_traits::Zero;
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span, SPAN};
 use oxc_syntax::{
@@ -18,6 +19,9 @@ use crate::{
     ty::Ty,
     CompressorPass,
 };
+
+static MAX_SAFE_FLOAT: f64 = 9_007_199_254_740_991_f64;
+static NEG_MAX_SAFE_FLOAT: f64 = -9_007_199_254_740_991_f64;
 
 /// Constant Folding
 ///
@@ -65,6 +69,19 @@ impl<'a> Traverse<'a> for PeepholeFoldConstants {
 impl<'a> PeepholeFoldConstants {
     pub fn new() -> Self {
         Self { changed: false }
+    }
+
+    fn try_get_number_literal_value(&self, expr: &mut Expression<'a>) -> Option<f64> {
+        match expr {
+            Expression::NumericLiteral(n) => Some(n.value),
+            Expression::UnaryExpression(unary)
+                if unary.operator == UnaryOperator::UnaryNegation =>
+            {
+                let Expression::NumericLiteral(arg) = &mut unary.argument else { return None };
+                Some(-arg.value)
+            }
+            _ => None,
+        }
     }
 
     fn try_fold_useless_object_dot_define_properties_call(
@@ -409,13 +426,9 @@ impl<'a> PeepholeFoldConstants {
             BinaryOperator::Subtraction
             | BinaryOperator::Division
             | BinaryOperator::Remainder
-            | BinaryOperator::Exponential => {
-                self.try_fold_arithmetic_op(e.span, &e.left, &e.right, ctx)
-            }
-            BinaryOperator::Multiplication
-            | BinaryOperator::BitwiseAnd
-            | BinaryOperator::BitwiseOR
-            | BinaryOperator::BitwiseXOR => {
+            | BinaryOperator::Multiplication
+            | BinaryOperator::Exponential => self.try_fold_arithmetic_op(e, ctx),
+            BinaryOperator::BitwiseAnd | BinaryOperator::BitwiseOR | BinaryOperator::BitwiseXOR => {
                 // TODO:
                 // self.try_fold_arithmetic_op(e.span, &e.left, &e.right, ctx)
                 // if (result != subtree) {
@@ -475,14 +488,65 @@ impl<'a> PeepholeFoldConstants {
         }
     }
 
-    fn try_fold_arithmetic_op<'b>(
+    fn try_fold_arithmetic_op(
         &self,
-        _span: Span,
-        _left: &'b Expression<'a>,
-        _right: &'b Expression<'a>,
-        _ctx: &mut TraverseCtx<'a>,
+        operation: &mut BinaryExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        None
+        fn shorter_than_original(result: f64, left: f64, right: f64) -> bool {
+            if result > MAX_SAFE_FLOAT
+                || result < NEG_MAX_SAFE_FLOAT
+                || result.is_nan()
+                || result.is_infinite()
+            {
+                return false;
+            }
+            let result_str = result.to_string().len();
+            let original_str = left.to_string().len() + right.to_string().len() + 1;
+            result_str <= original_str
+        }
+        if !operation.operator.is_arithmetic() {
+            return None;
+        };
+        let left = self.try_get_number_literal_value(&mut operation.left)?;
+        let right = self.try_get_number_literal_value(&mut operation.right)?;
+        if !left.is_finite() || !right.is_finite() {
+            return None;
+        }
+        let result = match operation.operator {
+            BinaryOperator::Addition => left + right,
+            BinaryOperator::Subtraction => left - right,
+            BinaryOperator::Multiplication => {
+                let result = left * right;
+                if shorter_than_original(result, left, right) {
+                    result
+                } else {
+                    return None;
+                }
+            }
+            BinaryOperator::Division if !right.is_zero() => {
+                if right == 0.0 {
+                    return None;
+                }
+                let result = left / right;
+                if shorter_than_original(result, left, right) {
+                    result
+                } else {
+                    return None;
+                }
+            }
+            BinaryOperator::Remainder if !right.is_zero() && right.is_finite() => left % right,
+            // TODO BinaryOperator::Exponential if
+            _ => return None,
+        };
+        let number_base =
+            if is_exact_int64(result) { NumberBase::Decimal } else { NumberBase::Float };
+        Some(ctx.ast.expression_numeric_literal(
+            operation.span,
+            result,
+            result.to_string(),
+            number_base,
+        ))
     }
 
     fn try_fold_instanceof<'b>(
@@ -870,7 +934,11 @@ impl<'a> PeepholeFoldConstants {
 /// <https://github.com/google/closure-compiler/blob/master/test/com/google/javascript/jscomp/PeepholeFoldConstantsTest.java>
 #[cfg(test)]
 mod test {
+    use super::{MAX_SAFE_FLOAT, NEG_MAX_SAFE_FLOAT};
     use oxc_allocator::Allocator;
+
+    static MAX_SAFE_INT: i64 = 9_007_199_254_740_991_i64;
+    static NEG_MAX_SAFE_INT: i64 = -9_007_199_254_740_991_i64;
 
     use crate::tester;
 
@@ -1232,18 +1300,14 @@ mod test {
         test("-1n > -0.9", "false");
 
         // Don't fold unsafely large numbers because there might be floating-point error
-        let max_safe_int = 9_007_199_254_740_991_i64;
-        let neg_max_safe_int = -9_007_199_254_740_991_i64;
-        let max_safe_float = 9_007_199_254_740_991_f64;
-        let neg_max_safe_float = -9_007_199_254_740_991_f64;
-        test(&format!("0n > {max_safe_int}"), "false");
-        test(&format!("0n < {max_safe_int}"), "true");
-        test(&format!("0n > {neg_max_safe_int}"), "true");
-        test(&format!("0n < {neg_max_safe_int}"), "false");
-        test(&format!("0n > {max_safe_float}"), "false");
-        test(&format!("0n < {max_safe_float}"), "true");
-        test(&format!("0n > {neg_max_safe_float}"), "true");
-        test(&format!("0n < {neg_max_safe_float}"), "false");
+        test(&format!("0n > {MAX_SAFE_INT}"), "false");
+        test(&format!("0n < {MAX_SAFE_INT}"), "true");
+        test(&format!("0n > {NEG_MAX_SAFE_INT}"), "true");
+        test(&format!("0n < {NEG_MAX_SAFE_INT}"), "false");
+        test(&format!("0n > {MAX_SAFE_FLOAT}"), "false");
+        test(&format!("0n < {MAX_SAFE_FLOAT}"), "true");
+        test(&format!("0n > {NEG_MAX_SAFE_FLOAT}"), "true");
+        test(&format!("0n < {NEG_MAX_SAFE_FLOAT}"), "false");
 
         // comparing with Infinity is allowed
         test("1n < Infinity", "true");
@@ -1574,7 +1638,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_fold_arithmetic() {
         test("x = 10 + 20", "x = 30");
         test("x = 2 / 4", "x = 0.5");
@@ -1586,10 +1649,12 @@ mod test {
         test("x = 3 % -2", "x = 1");
         test("x = -1 % 3", "x = -1");
         test_same("x = 1 % 0");
-        test("x = 2 ** 3", "x = 8");
-        test("x = 2 ** -3", "x = 0.125");
-        test_same("x = 2 ** 55"); // backs off folding because 2 ** 55 is too large
-        test_same("x = 3 ** -1"); // backs off because 3**-1 is shorter than 0.3333333333333333
+        // We should not fold this because it's not safe to fold.
+        test_same(format!("x = {} * {}", MAX_SAFE_INT / 2, MAX_SAFE_INT / 2).as_str());
+        // test("x = 2 ** 3", "x = 8");
+        // test("x = 2 ** -3", "x = 0.125");
+        // test_same("x = 2 ** 55"); // backs off folding because 2 ** 55 is too large
+        // test_same("x = 3 ** -1"); // backs off because 3**-1 is shorter than 0.3333333333333333
     }
 
     #[test]
