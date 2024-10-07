@@ -6,7 +6,7 @@ pub mod visit;
 use itertools::Itertools;
 use petgraph::{
     visit::{Control, DfsEvent, EdgeRef},
-    Direction, Graph,
+    Direction,
 };
 
 pub mod graph {
@@ -22,6 +22,8 @@ pub use block::*;
 pub use builder::{ControlFlowGraphBuilder, CtxCursor, CtxFlags};
 pub use dot::DisplayDot;
 use visit::set_depth_first_search;
+
+pub type Graph = petgraph::graph::DiGraph<usize, EdgeType>;
 
 #[derive(Debug, Clone)]
 pub enum EdgeType {
@@ -62,12 +64,12 @@ pub enum EvalConstConditionResult {
 
 #[derive(Debug)]
 pub struct ControlFlowGraph {
-    pub graph: Graph<usize, EdgeType>,
+    pub graph: Graph,
     pub basic_blocks: Vec<BasicBlock>,
 }
 
 impl ControlFlowGraph {
-    pub fn graph(&self) -> &Graph<usize, EdgeType> {
+    pub fn graph(&self) -> &Graph {
         &self.graph
     }
 
@@ -131,10 +133,7 @@ impl ControlFlowGraph {
     where
         F: Fn(&Instruction) -> EvalConstConditionResult,
     {
-        fn get_jump_target(
-            graph: &Graph<usize, EdgeType>,
-            node: BasicBlockId,
-        ) -> Option<BasicBlockId> {
+        fn get_jump_target(graph: &Graph, node: BasicBlockId) -> Option<BasicBlockId> {
             graph
                 .edges_directed(node, Direction::Outgoing)
                 .find_or_first(|e| matches!(e.weight(), EdgeType::Jump))

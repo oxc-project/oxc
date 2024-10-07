@@ -16,7 +16,7 @@ struct ErrorHarness(ErrorEdgeKind, BasicBlockId);
 
 #[derive(Debug, Default)]
 pub struct ControlFlowGraphBuilder<'a> {
-    pub graph: Graph<usize, EdgeType>,
+    pub graph: Graph,
     pub basic_blocks: Vec<BasicBlock>,
     pub current_node_ix: BasicBlockId,
     ctx_stack: Vec<Ctx<'a>>,
