@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{Expression, MemberExpression},
+    ast::{CallExpression, Expression, MemberExpression},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -17,9 +17,15 @@ fn no_callback_in_promise_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct NoCallbackInPromise(Box<NoCallbackInPromiseConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct NoCallbackInPromiseConfig {
     callbacks: Vec<CompactStr>,
+}
+
+impl Default for NoCallbackInPromiseConfig {
+    fn default() -> Self {
+        Self { callbacks: vec!["callback".into(), "cb".into(), "done".into(), "next".into()] }
+    }
 }
 
 impl std::ops::Deref for NoCallbackInPromise {
@@ -69,8 +75,7 @@ declare_oxc_lint!(
 
 impl Rule for NoCallbackInPromise {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let default_callbacks: Vec<CompactStr> =
-            ["done", "cb", "callback", "next"].map(Into::into).to_vec();
+        let mut default_config = NoCallbackInPromiseConfig::default();
 
         let exceptions: Vec<String> = value
             .get(0)
@@ -81,21 +86,23 @@ impl Rule for NoCallbackInPromise {
             })
             .unwrap_or_default();
 
-        Self(Box::new(NoCallbackInPromiseConfig {
-            callbacks: default_callbacks
-                .into_iter()
-                .filter(|item| !exceptions.contains(&item.to_string()))
-                .collect(),
-        }))
+        default_config.callbacks.retain(|item| !exceptions.contains(&item.to_string()));
+
+        Self(Box::new(default_config))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if !self.is_callback(node) {
-            if Self::has_promise_callback(node) {
-                let Some(call_expr) = node.kind().as_call_expression() else {
-                    return;
-                };
+        let Some(call_expr) = node.kind().as_call_expression() else {
+            return;
+        };
 
+        let is_not_callback = call_expr
+            .callee
+            .get_identifier_reference()
+            .map_or(true, |id| self.callbacks.binary_search(&id.name.as_str().into()).is_err());
+
+        if is_not_callback {
+            if Self::has_promise_callback(call_expr) {
                 let Some(id) = call_expr.arguments.first().and_then(|arg| {
                     arg.as_expression().and_then(Expression::get_identifier_reference)
                 }) else {
@@ -103,7 +110,7 @@ impl Rule for NoCallbackInPromise {
                 };
 
                 let name = id.name.as_str();
-                if self.callbacks.contains(&name.into()) {
+                if self.callbacks.binary_search(&name.into()).is_ok() {
                     ctx.diagnostic(no_callback_in_promise_diagnostic(id.span));
                 }
             }
@@ -126,14 +133,12 @@ impl NoCallbackInPromise {
             return false;
         }
 
-        ctx.nodes().iter_parents(node.id()).nth(2).is_some_and(Self::has_promise_callback)
+        ctx.nodes().iter_parents(node.id()).nth(2).is_some_and(|node| {
+            node.kind().as_call_expression().is_some_and(Self::has_promise_callback)
+        })
     }
 
-    fn has_promise_callback(node: &AstNode) -> bool {
-        let AstKind::CallExpression(call_expr) = node.kind() else {
-            return false;
-        };
-
+    fn has_promise_callback(call_expr: &CallExpression) -> bool {
         matches!(
             call_expr
                 .callee
@@ -141,17 +146,6 @@ impl NoCallbackInPromise {
                 .and_then(MemberExpression::static_property_name),
             Some("then" | "catch")
         )
-    }
-
-    fn is_callback(&self, node: &AstNode) -> bool {
-        let AstKind::CallExpression(call_expr) = node.kind() else {
-            return false;
-        };
-
-        call_expr
-            .callee
-            .get_identifier_reference()
-            .is_some_and(|id| self.callbacks.contains(&id.name.as_str().into()))
     }
 }
 
