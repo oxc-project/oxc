@@ -4,38 +4,46 @@ expression: snapshot
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/private_in.js
 ---
 bb0: {
-
+	(BasicBlockFlags(Implicit | Error))
 }
 
 bb1: {
-
+	(BasicBlockFlags(Start | Referenced | Shared))
 }
 
 bb2: {
-
+	(BasicBlockFlags(Implicit | Error))
 }
 
 bb3: {
+	(BasicBlockFlags(Start | Referenced))
 	return <value>
 }
 
 bb4: {
+	(BasicBlockFlags(Unreachable))
 	unreachable
 }
 
 bb5: {
-
+	(BasicBlockFlags(0x0))
 }
 
 digraph {
-    0 [ label = "bb0" shape = box]
-    1 [ label = "bb1" shape = box]
-    2 [ label = "bb2" shape = box]
+    0 [ label = "bb0
+(BasicBlockFlags(Implicit | Error))" shape = box]
+    1 [ label = "bb1
+(BasicBlockFlags(Start | Referenced | Shared))" shape = box]
+    2 [ label = "bb2
+(BasicBlockFlags(Implicit | Error))" shape = box]
     3 [ label = "bb3
+(BasicBlockFlags(Start | Referenced))
 return <value>" shape = box]
     4 [ label = "bb4
+(BasicBlockFlags(Unreachable))
 unreachable" shape = box]
-    5 [ label = "bb5" shape = box]
+    5 [ label = "bb5
+(BasicBlockFlags(0x0))" shape = box]
     1 -> 0 [ label="Error(Implicit)", style=dashed, color=red]
     3 -> 2 [ label="Error(Implicit)", style=dashed, color=red]
     1 -> 3 [ label="NewFunction"]

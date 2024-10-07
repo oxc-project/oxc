@@ -4,50 +4,62 @@ expression: snapshot
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/assignment_operators.js
 ---
 bb0: {
-
+	(BasicBlockFlags(Implicit | Error))
 }
 
 bb1: {
+	(BasicBlockFlags(Start | Referenced | Shared))
 	statement
 }
 
 bb2: {
-
+	(BasicBlockFlags(Assignment | Referenced))
 }
 
 bb3: {
+	(BasicBlockFlags(Referenced | Shared))
 	statement
 }
 
 bb4: {
-
+	(BasicBlockFlags(Assignment | Referenced))
 }
 
 bb5: {
+	(BasicBlockFlags(Referenced | Shared))
 	statement
 }
 
 bb6: {
-
+	(BasicBlockFlags(Assignment | Referenced))
 }
 
 bb7: {
+	(BasicBlockFlags(0x0))
 	statement
 	statement
 }
 
 digraph {
-    0 [ label = "bb0" shape = box]
+    0 [ label = "bb0
+(BasicBlockFlags(Implicit | Error))" shape = box]
     1 [ label = "bb1
+(BasicBlockFlags(Start | Referenced | Shared))
 ExpressionStatement" shape = box]
-    2 [ label = "bb2" shape = box]
+    2 [ label = "bb2
+(BasicBlockFlags(Assignment | Referenced))" shape = box]
     3 [ label = "bb3
+(BasicBlockFlags(Referenced | Shared))
 ExpressionStatement" shape = box]
-    4 [ label = "bb4" shape = box]
+    4 [ label = "bb4
+(BasicBlockFlags(Assignment | Referenced))" shape = box]
     5 [ label = "bb5
+(BasicBlockFlags(Referenced | Shared))
 ExpressionStatement" shape = box]
-    6 [ label = "bb6" shape = box]
+    6 [ label = "bb6
+(BasicBlockFlags(Assignment | Referenced))" shape = box]
     7 [ label = "bb7
+(BasicBlockFlags(0x0))
 ExpressionStatement
 ExpressionStatement" shape = box]
     1 -> 0 [ label="Error(Implicit)", style=dashed, color=red]

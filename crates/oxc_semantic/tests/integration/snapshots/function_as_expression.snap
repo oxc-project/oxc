@@ -4,211 +4,260 @@ expression: snapshot
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/function_as_expression.js
 ---
 bb0: {
-
+	(BasicBlockFlags(Implicit | Error))
 }
 
 bb1: {
+	(BasicBlockFlags(Start | Referenced | Shared))
 	statement
 }
 
 bb2: {
-
+	(BasicBlockFlags(Implicit | Error))
 }
 
 bb3: {
-
+	(BasicBlockFlags(Start))
 }
 
 bb4: {
+	(BasicBlockFlags(Referenced | Shared))
 	statement
 }
 
 bb5: {
-
+	(BasicBlockFlags(Implicit | Error))
 }
 
 bb6: {
-
+	(BasicBlockFlags(Start))
 }
 
 bb7: {
-
+	(BasicBlockFlags(Referenced | Shared))
 }
 
 bb8: {
-
+	(BasicBlockFlags(Implicit | Error))
 }
 
 bb9: {
-
+	(BasicBlockFlags(Start))
 }
 
 bb10: {
+	(BasicBlockFlags(Referenced | Shared))
 	statement
 }
 
 bb11: {
-
+	(BasicBlockFlags(Implicit | Error))
 }
 
 bb12: {
-
+	(BasicBlockFlags(Start))
 }
 
 bb13: {
+	(BasicBlockFlags(Referenced | Shared))
 	statement
 }
 
 bb14: {
-
+	(BasicBlockFlags(Implicit | Error))
 }
 
 bb15: {
-
+	(BasicBlockFlags(Start))
 }
 
 bb16: {
+	(BasicBlockFlags(Referenced | Shared))
 	statement
 }
 
 bb17: {
-
+	(BasicBlockFlags(Implicit | Error))
 }
 
 bb18: {
-
+	(BasicBlockFlags(Start))
 }
 
 bb19: {
+	(BasicBlockFlags(Referenced | Shared))
 	statement
 }
 
 bb20: {
-
+	(BasicBlockFlags(Implicit | Error))
 }
 
 bb21: {
-
+	(BasicBlockFlags(Start))
 }
 
 bb22: {
+	(BasicBlockFlags(Referenced | Shared))
 	statement
 }
 
 bb23: {
-
+	(BasicBlockFlags(Implicit | Error))
 }
 
 bb24: {
-
+	(BasicBlockFlags(Start))
 }
 
 bb25: {
-
+	(BasicBlockFlags(Referenced | Shared))
 }
 
 bb26: {
-
+	(BasicBlockFlags(Referenced))
 }
 
 bb27: {
+	(BasicBlockFlags(Referenced | Shared))
 	statement
 }
 
 bb28: {
-
+	(BasicBlockFlags(Implicit | Error))
 }
 
 bb29: {
-
+	(BasicBlockFlags(Start))
 }
 
 bb30: {
-
+	(BasicBlockFlags(Referenced | Shared))
 }
 
 bb31: {
-
+	(BasicBlockFlags(Referenced))
 }
 
 bb32: {
+	(BasicBlockFlags(Referenced | Shared))
 	statement
 }
 
 bb33: {
-
+	(BasicBlockFlags(Implicit | Error))
 }
 
 bb34: {
-
+	(BasicBlockFlags(Start))
 }
 
 bb35: {
+	(BasicBlockFlags(Referenced | Shared))
 	statement
 }
 
 bb36: {
-
+	(BasicBlockFlags(Implicit | Error))
 }
 
 bb37: {
-
+	(BasicBlockFlags(Start))
 }
 
 bb38: {
-
+	(BasicBlockFlags(0x0))
 }
 
 digraph {
-    0 [ label = "bb0" shape = box]
+    0 [ label = "bb0
+(BasicBlockFlags(Implicit | Error))" shape = box]
     1 [ label = "bb1
+(BasicBlockFlags(Start | Referenced | Shared))
 ExpressionStatement" shape = box]
-    2 [ label = "bb2" shape = box]
-    3 [ label = "bb3" shape = box]
+    2 [ label = "bb2
+(BasicBlockFlags(Implicit | Error))" shape = box]
+    3 [ label = "bb3
+(BasicBlockFlags(Start))" shape = box]
     4 [ label = "bb4
+(BasicBlockFlags(Referenced | Shared))
 ExpressionStatement" shape = box]
-    5 [ label = "bb5" shape = box]
-    6 [ label = "bb6" shape = box]
-    7 [ label = "bb7" shape = box]
-    8 [ label = "bb8" shape = box]
-    9 [ label = "bb9" shape = box]
+    5 [ label = "bb5
+(BasicBlockFlags(Implicit | Error))" shape = box]
+    6 [ label = "bb6
+(BasicBlockFlags(Start))" shape = box]
+    7 [ label = "bb7
+(BasicBlockFlags(Referenced | Shared))" shape = box]
+    8 [ label = "bb8
+(BasicBlockFlags(Implicit | Error))" shape = box]
+    9 [ label = "bb9
+(BasicBlockFlags(Start))" shape = box]
     10 [ label = "bb10
+(BasicBlockFlags(Referenced | Shared))
 ExpressionStatement" shape = box]
-    11 [ label = "bb11" shape = box]
-    12 [ label = "bb12" shape = box]
+    11 [ label = "bb11
+(BasicBlockFlags(Implicit | Error))" shape = box]
+    12 [ label = "bb12
+(BasicBlockFlags(Start))" shape = box]
     13 [ label = "bb13
+(BasicBlockFlags(Referenced | Shared))
 ExpressionStatement" shape = box]
-    14 [ label = "bb14" shape = box]
-    15 [ label = "bb15" shape = box]
+    14 [ label = "bb14
+(BasicBlockFlags(Implicit | Error))" shape = box]
+    15 [ label = "bb15
+(BasicBlockFlags(Start))" shape = box]
     16 [ label = "bb16
+(BasicBlockFlags(Referenced | Shared))
 ExpressionStatement" shape = box]
-    17 [ label = "bb17" shape = box]
-    18 [ label = "bb18" shape = box]
+    17 [ label = "bb17
+(BasicBlockFlags(Implicit | Error))" shape = box]
+    18 [ label = "bb18
+(BasicBlockFlags(Start))" shape = box]
     19 [ label = "bb19
+(BasicBlockFlags(Referenced | Shared))
 ExpressionStatement" shape = box]
-    20 [ label = "bb20" shape = box]
-    21 [ label = "bb21" shape = box]
+    20 [ label = "bb20
+(BasicBlockFlags(Implicit | Error))" shape = box]
+    21 [ label = "bb21
+(BasicBlockFlags(Start))" shape = box]
     22 [ label = "bb22
+(BasicBlockFlags(Referenced | Shared))
 ExpressionStatement" shape = box]
-    23 [ label = "bb23" shape = box]
-    24 [ label = "bb24" shape = box]
-    25 [ label = "bb25" shape = box]
-    26 [ label = "bb26" shape = box]
+    23 [ label = "bb23
+(BasicBlockFlags(Implicit | Error))" shape = box]
+    24 [ label = "bb24
+(BasicBlockFlags(Start))" shape = box]
+    25 [ label = "bb25
+(BasicBlockFlags(Referenced | Shared))" shape = box]
+    26 [ label = "bb26
+(BasicBlockFlags(Referenced))" shape = box]
     27 [ label = "bb27
+(BasicBlockFlags(Referenced | Shared))
 ExpressionStatement" shape = box]
-    28 [ label = "bb28" shape = box]
-    29 [ label = "bb29" shape = box]
-    30 [ label = "bb30" shape = box]
-    31 [ label = "bb31" shape = box]
+    28 [ label = "bb28
+(BasicBlockFlags(Implicit | Error))" shape = box]
+    29 [ label = "bb29
+(BasicBlockFlags(Start))" shape = box]
+    30 [ label = "bb30
+(BasicBlockFlags(Referenced | Shared))" shape = box]
+    31 [ label = "bb31
+(BasicBlockFlags(Referenced))" shape = box]
     32 [ label = "bb32
+(BasicBlockFlags(Referenced | Shared))
 ExpressionStatement" shape = box]
-    33 [ label = "bb33" shape = box]
-    34 [ label = "bb34" shape = box]
+    33 [ label = "bb33
+(BasicBlockFlags(Implicit | Error))" shape = box]
+    34 [ label = "bb34
+(BasicBlockFlags(Start))" shape = box]
     35 [ label = "bb35
+(BasicBlockFlags(Referenced | Shared))
 ExpressionStatement" shape = box]
-    36 [ label = "bb36" shape = box]
-    37 [ label = "bb37" shape = box]
-    38 [ label = "bb38" shape = box]
+    36 [ label = "bb36
+(BasicBlockFlags(Implicit | Error))" shape = box]
+    37 [ label = "bb37
+(BasicBlockFlags(Start))" shape = box]
+    38 [ label = "bb38
+(BasicBlockFlags(0x0))" shape = box]
     1 -> 0 [ label="Error(Implicit)", style=dashed, color=red]
     3 -> 2 [ label="Error(Implicit)", style=dashed, color=red]
     1 -> 3 [ label="NewFunction"]

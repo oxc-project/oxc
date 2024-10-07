@@ -1,3 +1,4 @@
+use itertools::Itertools as _;
 use oxc_ast::{
     ast::{BreakStatement, ContinueStatement},
     AstKind,
@@ -114,11 +115,9 @@ impl DebugDot for ControlFlowGraph {
 
 impl DebugDot for BasicBlock {
     fn debug_dot(&self, ctx: DebugDotContext) -> String {
-        self.instructions().iter().fold(String::new(), |mut acc, it| {
-            acc.push_str(it.debug_dot(ctx).as_str());
-            acc.push('\n');
-            acc
-        })
+        std::iter::once(format!("({:?})", self.flags()))
+            .chain(self.instructions.iter().map(|it| it.debug_dot(ctx)))
+            .join("\n")
     }
 }
 

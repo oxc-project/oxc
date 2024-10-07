@@ -4,73 +4,92 @@ expression: snapshot
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/switch_in_while.js
 ---
 bb0: {
-
+	(BasicBlockFlags(Implicit | Error))
 }
 
 bb1: {
+	(BasicBlockFlags(Start | Referenced))
 	statement
 }
 
 bb2: {
+	(BasicBlockFlags(LoopLabel | Referenced | Shared))
 	condition
 }
 
 bb3: {
+	(BasicBlockFlags(Referenced | Shared))
 	statement
 	statement
 }
 
 bb4: {
+	(BasicBlockFlags(Referenced | Shared))
 	condition
 }
 
 bb5: {
+	(BasicBlockFlags(Referenced | Shared))
 	statement
 	continue
 }
 
 bb6: {
+	(BasicBlockFlags(Unreachable | Referenced))
 	unreachable
 }
 
 bb7: {
+	(BasicBlockFlags(Referenced))
 	condition
 }
 
 bb8: {
+	(BasicBlockFlags(Referenced))
 	statement
 }
 
 bb9: {
-
+	(BasicBlockFlags(Referenced))
 }
 
 bb10: {
-
+	(BasicBlockFlags(0x0))
 }
 
 digraph {
-    0 [ label = "bb0" shape = box]
+    0 [ label = "bb0
+(BasicBlockFlags(Implicit | Error))" shape = box]
     1 [ label = "bb1
+(BasicBlockFlags(Start | Referenced))
 WhileStatement" shape = box]
     2 [ label = "bb2
+(BasicBlockFlags(LoopLabel | Referenced | Shared))
 Condition(IdentifierReference(a))" shape = box]
     3 [ label = "bb3
+(BasicBlockFlags(Referenced | Shared))
 BlockStatement
 SwitchStatement" shape = box]
     4 [ label = "bb4
+(BasicBlockFlags(Referenced | Shared))
 Condition(0)" shape = box]
     5 [ label = "bb5
+(BasicBlockFlags(Referenced | Shared))
 ExpressionStatement
 continue" shape = box]
     6 [ label = "bb6
+(BasicBlockFlags(Unreachable | Referenced))
 unreachable" shape = box]
     7 [ label = "bb7
+(BasicBlockFlags(Referenced))
 Condition(1)" shape = box]
     8 [ label = "bb8
+(BasicBlockFlags(Referenced))
 ExpressionStatement" shape = box]
-    9 [ label = "bb9" shape = box]
-    10 [ label = "bb10" shape = box]
+    9 [ label = "bb9
+(BasicBlockFlags(Referenced))" shape = box]
+    10 [ label = "bb10
+(BasicBlockFlags(0x0))" shape = box]
     1 -> 0 [ label="Error(Implicit)", style=dashed, color=red]
     2 -> 0 [ label="Error(Implicit)", style=dashed, color=red]
     3 -> 0 [ label="Error(Implicit)", style=dashed, color=red]

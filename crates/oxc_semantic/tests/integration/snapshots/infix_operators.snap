@@ -4,29 +4,34 @@ expression: snapshot
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/infix_operators.js
 ---
 bb0: {
-
+	(BasicBlockFlags(Implicit | Error))
 }
 
 bb1: {
+	(BasicBlockFlags(Start | Referenced | Shared))
 	statement
 	statement
 }
 
 bb2: {
-
+	(BasicBlockFlags(Referenced))
 }
 
 bb3: {
-
+	(BasicBlockFlags(0x0))
 }
 
 digraph {
-    0 [ label = "bb0" shape = box]
+    0 [ label = "bb0
+(BasicBlockFlags(Implicit | Error))" shape = box]
     1 [ label = "bb1
+(BasicBlockFlags(Start | Referenced | Shared))
 ExpressionStatement
 ExpressionStatement" shape = box]
-    2 [ label = "bb2" shape = box]
-    3 [ label = "bb3" shape = box]
+    2 [ label = "bb2
+(BasicBlockFlags(Referenced))" shape = box]
+    3 [ label = "bb3
+(BasicBlockFlags(0x0))" shape = box]
     1 -> 0 [ label="Error(Implicit)", style=dashed, color=red]
     2 -> 0 [ label="Error(Implicit)", style=dashed, color=red]
     3 -> 0 [ label="Error(Implicit)", style=dashed, color=red]

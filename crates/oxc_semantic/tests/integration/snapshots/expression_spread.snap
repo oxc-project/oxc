@@ -4,16 +4,19 @@ expression: snapshot
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/expression_spread.js
 ---
 bb0: {
-
+	(BasicBlockFlags(Implicit | Error))
 }
 
 bb1: {
+	(BasicBlockFlags(Start))
 	statement
 }
 
 digraph {
-    0 [ label = "bb0" shape = box]
+    0 [ label = "bb0
+(BasicBlockFlags(Implicit | Error))" shape = box]
     1 [ label = "bb1
+(BasicBlockFlags(Start))
 VariableDeclaration" shape = box]
     1 -> 0 [ label="Error(Implicit)", style=dashed, color=red]
 }

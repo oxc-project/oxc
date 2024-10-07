@@ -10,7 +10,7 @@ use super::{
     BasicBlock, BlockNodeId, ControlFlowGraph, EdgeType, ErrorEdgeKind, Graph, Instruction,
     InstructionKind, IterationInstructionKind, LabeledInstruction,
 };
-use crate::{BasicBlockId, ReturnInstructionKind};
+use crate::{BasicBlockFlags, BasicBlockId, ReturnInstructionKind};
 
 #[derive(Debug, Default)]
 struct ErrorHarness(ErrorEdgeKind, BlockNodeId);
@@ -58,23 +58,32 @@ impl<'a> ControlFlowGraphBuilder<'a> {
             .expect("expected `self.current_node_ix` to be a valid node index in self.graph")
     }
 
-    pub(self) fn new_basic_block(&mut self) -> BlockNodeId {
+    pub(self) fn add_new_basic_block(&mut self, flags: BasicBlockFlags) -> BlockNodeId {
         // current length would be the index of block we are adding on the next line.
-        let basic_block_ix = self.basic_blocks.push(BasicBlock::new());
+        let basic_block_ix = self.basic_blocks.push(BasicBlock::new(flags));
         self.graph.add_node(basic_block_ix)
     }
 
     #[must_use]
+    #[inline]
     pub fn new_basic_block_function(&mut self) -> BlockNodeId {
         // we might want to differentiate between function blocks and normal blocks down the road.
-        self.new_basic_block_normal()
+        self.new_basic_block(BasicBlockFlags::Start)
     }
 
     /// # Panics
     /// if there is no error harness to attach to.
     #[must_use]
+    #[inline]
     pub fn new_basic_block_normal(&mut self) -> BlockNodeId {
-        let graph_ix = self.new_basic_block();
+        self.new_basic_block(BasicBlockFlags::empty())
+    }
+
+    /// # Panics
+    /// if there is no error harness to attach to.
+    #[must_use]
+    pub fn new_basic_block(&mut self, flags: BasicBlockFlags) -> BlockNodeId {
+        let graph_ix = self.add_new_basic_block(flags);
         self.current_node_ix = graph_ix;
 
         // add an error edge to this block.
@@ -104,6 +113,11 @@ impl<'a> ControlFlowGraphBuilder<'a> {
         {
             self.basic_block_mut(b).mark_as_reachable();
         }
+
+        if !matches!(weight, EdgeType::Error(ErrorEdgeKind::Implicit)) {
+            self.basic_block_mut(a).set_referenced();
+        }
+
         self.graph.add_edge(a, b, weight);
     }
 
@@ -118,7 +132,12 @@ impl<'a> ControlFlowGraphBuilder<'a> {
     /// Creates and push a new `BasicBlockId` onto `self.error_path` stack.
     /// Returns the `BasicBlockId` of the created error harness block.
     pub fn attach_error_harness(&mut self, kind: ErrorEdgeKind) -> BlockNodeId {
-        let graph_ix = self.new_basic_block();
+        let flags = if matches!(kind, ErrorEdgeKind::Implicit) {
+            BasicBlockFlags::ImplicitError
+        } else {
+            BasicBlockFlags::Error
+        };
+        let graph_ix = self.add_new_basic_block(flags);
         self.error_path.push(ErrorHarness(kind, graph_ix));
         graph_ix
     }
@@ -140,7 +159,7 @@ impl<'a> ControlFlowGraphBuilder<'a> {
     /// Creates and push a new `BasicBlockId` onto `self.finalizers` stack.
     /// Returns the `BasicBlockId` of the created finalizer block.
     pub fn attach_finalizer(&mut self) -> BlockNodeId {
-        let graph_ix = self.new_basic_block();
+        let graph_ix = self.add_new_basic_block(BasicBlockFlags::Finalize);
         self.finalizers.push(Some(graph_ix));
         graph_ix
     }
@@ -209,7 +228,8 @@ impl<'a> ControlFlowGraphBuilder<'a> {
 
     pub fn append_unreachable(&mut self) {
         let current_node_ix = self.current_node_ix;
-        let basic_block_with_unreachable_graph_ix = self.new_basic_block_normal();
+        let basic_block_with_unreachable_graph_ix =
+            self.new_basic_block(BasicBlockFlags::Unreachable);
         self.push_instruction(InstructionKind::Unreachable, None);
         self.current_basic_block().mark_as_unreachable();
         self.add_edge(
