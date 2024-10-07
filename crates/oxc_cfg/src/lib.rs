@@ -1,5 +1,5 @@
 mod builder;
-mod dot;
+pub mod dot;
 pub mod visit;
 
 use itertools::Itertools;

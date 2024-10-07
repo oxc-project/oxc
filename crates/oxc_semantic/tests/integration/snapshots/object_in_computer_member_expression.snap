@@ -15,5 +15,5 @@ digraph {
     0 [ label = "bb0" shape = box]
     1 [ label = "bb1
 ExpressionStatement" shape = box]
-    1 -> 0 [ label = "Error(Implicit)" ]
+    1 -> 0 [ label="Error(Implicit)", style=dashed, color=red]
 }
