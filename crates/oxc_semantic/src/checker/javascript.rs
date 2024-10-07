@@ -2,11 +2,7 @@ use phf::{phf_set, Set};
 use rustc_hash::FxHashMap;
 
 #[allow(clippy::wildcard_imports)]
-use oxc_ast::{
-    ast::*,
-    syntax_directed_operations::{IsSimpleParameterList, PropName},
-    AstKind,
-};
+use oxc_ast::{ast::*, AstKind};
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_span::{GetSpan, ModuleKind, Span};
 use oxc_syntax::{
@@ -14,6 +10,7 @@ use oxc_syntax::{
     number::NumberBase,
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
 };
+use oxc_syntax_operations::{IsSimpleParameterList, PropName};
 
 use crate::{builder::SemanticBuilder, diagnostics::redeclaration, scope::ScopeFlags, AstNode};
 

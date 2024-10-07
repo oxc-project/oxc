@@ -6,7 +6,7 @@
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
-use oxc_ast::syntax_directed_operations::BoundNames;
+use oxc_syntax_operations::BoundNames;
 
 use super::to_identifier;
 

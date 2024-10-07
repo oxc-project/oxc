@@ -6,9 +6,10 @@ use oxc_allocator::Vec;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 use oxc_ast::visit::walk_mut::walk_ts_signatures;
-use oxc_ast::{syntax_directed_operations::BoundNames, Visit, VisitMut};
+use oxc_ast::{Visit, VisitMut};
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::scope::ScopeFlags;
+use oxc_syntax_operations::BoundNames;
 
 use crate::diagnostics::accessor_must_have_explicit_return_type;
 use crate::{

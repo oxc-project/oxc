@@ -97,6 +97,7 @@ use oxc_syntax::{
     symbol::SymbolFlags,
     xml_entities::XML_ENTITIES,
 };
+use oxc_syntax_operations::HasProto;
 use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
 
 use crate::{common::module_imports::NamedImport, TransformCtx};

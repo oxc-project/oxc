@@ -1,11 +1,11 @@
 [package]
-name = "oxc_module_lexer"
+name = "oxc_syntax_operations"
 version = "0.30.5"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
 homepage.workspace = true
-include = ["/examples", "/src"]
+include = ["/src"]
 keywords.workspace = true
 license.workspace = true
 publish = true
@@ -23,8 +23,3 @@ doctest = false
 [dependencies]
 oxc_ast = { workspace = true }
 oxc_span = { workspace = true }
-oxc_syntax_operations = { workspace = true }
-
-[dev-dependencies]
-oxc_allocator = { workspace = true }
-oxc_parser = { workspace = true }
