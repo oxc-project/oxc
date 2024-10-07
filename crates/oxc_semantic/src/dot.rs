@@ -72,7 +72,7 @@ impl DebugDot for ControlFlowGraph {
                     }
                     let mut attrs = Attrs::from_iter([("label", format!("{weight:?}"))]);
                     if matches!(weight, EdgeType::Unreachable)
-                        || self.basic_block(edge.source()).unreachable
+                        || self.basic_block(edge.source()).is_unreachable()
                     {
                         attrs += ("style", "dotted");
                     }

@@ -115,7 +115,7 @@ fn main() -> std::io::Result<()> {
                 let weight = edge.weight();
                 let label = format!("label = \"{weight:?}\"");
                 if matches!(weight, EdgeType::Unreachable)
-                    || cfg.basic_block(edge.source()).unreachable
+                    || cfg.basic_block(edge.source()).is_unreachable()
                 {
                     format!("{label}, style = \"dotted\" ")
                 } else {

@@ -295,7 +295,7 @@ impl Rule for NoFallthrough {
                 if tests.contains_key(&node) {
                     return (last_cond, true);
                 }
-                if cfg.basic_block(node).unreachable {
+                if cfg.basic_block(node).is_unreachable() {
                     return (None, false);
                 }
 

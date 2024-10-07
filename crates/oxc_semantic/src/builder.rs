@@ -1528,7 +1528,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
                     cfg.add_edge(
                         finally_block_end_ix,
                         after_try_statement_block_ix,
-                        if cfg.basic_block(after_try_block_graph_ix).unreachable {
+                        if cfg.basic_block(after_try_block_graph_ix).is_unreachable() {
                             EdgeType::Unreachable
                         } else {
                             EdgeType::Join

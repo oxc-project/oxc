@@ -91,10 +91,10 @@ impl<'a> ControlFlowGraphBuilder<'a> {
 
     pub fn add_edge(&mut self, a: BasicBlockId, b: BasicBlockId, weight: EdgeType) {
         if matches!(weight, EdgeType::NewFunction) {
-            self.basic_block_mut(b).unreachable = false;
-        } else if matches!(weight, EdgeType::Unreachable) || self.basic_block(a).unreachable {
+            self.basic_block_mut(b).mark_as_reachable();
+        } else if matches!(weight, EdgeType::Unreachable) || self.basic_block(a).is_unreachable() {
             if self.graph.edges_directed(b, Direction::Incoming).count() == 0 {
-                self.basic_block_mut(b).unreachable = true;
+                self.basic_block_mut(b).mark_as_unreachable();
             }
         } else if !self
             .basic_block(b)
@@ -102,7 +102,7 @@ impl<'a> ControlFlowGraphBuilder<'a> {
             .iter()
             .any(|it| matches!(it, Instruction { kind: InstructionKind::Unreachable, .. }))
         {
-            self.basic_block_mut(b).unreachable = false;
+            self.basic_block_mut(b).mark_as_reachable();
         }
         self.graph.add_edge(a, b, weight);
     }
@@ -211,7 +211,7 @@ impl<'a> ControlFlowGraphBuilder<'a> {
         let current_node_ix = self.current_node_ix;
         let basic_block_with_unreachable_graph_ix = self.new_basic_block_normal();
         self.push_instruction(InstructionKind::Unreachable, None);
-        self.current_basic_block().unreachable = true;
+        self.current_basic_block().mark_as_unreachable();
         self.add_edge(
             current_node_ix,
             basic_block_with_unreachable_graph_ix,

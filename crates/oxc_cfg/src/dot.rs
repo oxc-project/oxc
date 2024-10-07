@@ -29,7 +29,7 @@ impl DisplayDot for ControlFlowGraph {
                     let mut attrs = Attrs::default().with("label", format!("{weight:?}"));
 
                     if matches!(weight, EdgeType::Unreachable)
-                        || self.basic_block(edge.source()).unreachable
+                        || self.basic_block(edge.source()).is_unreachable()
                     {
                         attrs += ("style", "dotted");
                     } else if matches!(weight, EdgeType::Error(_)) {
@@ -45,7 +45,7 @@ impl DisplayDot for ControlFlowGraph {
                     if *node.1 == 0 {
                         attrs += ("color", "green");
                     }
-                    if block.unreachable {
+                    if block.is_unreachable() {
                         attrs += ("style", "dotted");
                     }
 
