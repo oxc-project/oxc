@@ -143,7 +143,7 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
                 SPAN,
                 ident.name.clone(),
                 symbol_id,
-                ReferenceFlags::Write,
+                ReferenceFlags::Read,
             ))
         } else {
             // Unbound reference. Could possibly trigger a getter so we need to only evaluate it once.
@@ -338,7 +338,7 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
 
         // Add new reference `_name = name` to nodes
         let left = ctx.ast.simple_assignment_target_from_identifier_reference(
-            binding.create_write_reference(ctx),
+            binding.create_read_write_reference(ctx),
         );
         let op = AssignmentOperator::Assign;
         nodes.push(ctx.ast.expression_assignment(SPAN, op, AssignmentTarget::from(left), expr));

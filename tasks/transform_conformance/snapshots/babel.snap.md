@@ -1,6 +1,6 @@
 commit: 3bcfee23
 
-Passed: 336/1022
+Passed: 338/1022
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1628,19 +1628,9 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-exponentiation-operator (1/4)
-* exponentiation-operator/assignment/input.js
-Reference flags mismatch for "num":
-after transform: ReferenceId(1): ReferenceFlags(Write)
-rebuilt        : ReferenceId(2): ReferenceFlags(Read)
-
+# babel-plugin-transform-exponentiation-operator (3/4)
 * regression/4349/input.js
 x Output mismatch
-
-* regression/4403/input.js
-Reference flags mismatch for "_ref":
-after transform: ReferenceId(2): ReferenceFlags(Write)
-rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
 
 
 # babel-plugin-transform-arrow-functions (1/6)
