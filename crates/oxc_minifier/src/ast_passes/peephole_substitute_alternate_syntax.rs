@@ -358,7 +358,7 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
         if new_expr.arguments.is_empty()
             && new_expr.callee.is_global_reference_name("Object", ctx.symbols())
         {
-            Some(ctx.ast.expression_object(new_expr.span, Vec::new_in(ctx.ast.allocator), None))
+            Some(ctx.ast.expression_object(new_expr.span, ctx.ast.vec(), None))
         } else if new_expr.callee.is_global_reference_name("Array", ctx.symbols()) {
             // `new Array` -> `[]`
             if new_expr.arguments.is_empty() {
@@ -377,7 +377,7 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
                 }
                 // `new Array(literal)` -> `[literal]`
                 else if arg.is_literal() || matches!(arg, Expression::ArrayExpression(_)) {
-                    let mut elements = Vec::new_in(ctx.ast.allocator);
+                    let mut elements = ctx.ast.vec();
                     let element =
                         ctx.ast.array_expression_element_expression(ctx.ast.move_expression(arg));
                     elements.push(element);
@@ -391,14 +391,13 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
                 }
             } else {
                 // `new Array(1, 2, 3)` -> `[1, 2, 3]`
-                let elements = Vec::from_iter_in(
+                let elements = ctx.ast.vec_from_iter(
                     new_expr.arguments.iter_mut().filter_map(|arg| arg.as_expression_mut()).map(
                         |arg| {
                             ctx.ast
                                 .array_expression_element_expression(ctx.ast.move_expression(arg))
                         },
                     ),
-                    ctx.ast.allocator,
                 );
                 Some(self.array_literal(elements, ctx))
             }
@@ -416,7 +415,7 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
         if call_expr.arguments.is_empty()
             && call_expr.callee.is_global_reference_name("Object", ctx.symbols())
         {
-            Some(ctx.ast.expression_object(call_expr.span, Vec::new_in(ctx.ast.allocator), None))
+            Some(ctx.ast.expression_object(call_expr.span, ctx.ast.vec(), None))
         } else if call_expr.callee.is_global_reference_name("Array", ctx.symbols()) {
             // `Array()` -> `[]`
             if call_expr.arguments.is_empty() {
@@ -438,7 +437,7 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
                 }
                 // `Array(literal)` -> `[literal]`
                 else if arg.is_literal() || matches!(arg, Expression::ArrayExpression(_)) {
-                    let mut elements = Vec::new_in(ctx.ast.allocator);
+                    let mut elements = ctx.ast.vec();
                     let element =
                         ctx.ast.array_expression_element_expression(ctx.ast.move_expression(arg));
                     elements.push(element);
@@ -448,14 +447,13 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
                 }
             } else {
                 // `Array(1, 2, 3)` -> `[1, 2, 3]`
-                let elements = Vec::from_iter_in(
+                let elements = ctx.ast.vec_from_iter(
                     call_expr.arguments.iter_mut().filter_map(|arg| arg.as_expression_mut()).map(
                         |arg| {
                             ctx.ast
                                 .array_expression_element_expression(ctx.ast.move_expression(arg))
                         },
                     ),
-                    ctx.ast.allocator,
                 );
                 Some(self.array_literal(elements, ctx))
             }
@@ -485,7 +483,7 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
 
     /// returns a new empty array literal expression: `[]`
     fn empty_array_literal(&self, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        self.array_literal(Vec::new_in(ctx.ast.allocator), ctx)
+        self.array_literal(ctx.ast.vec(), ctx)
     }
 }
 
