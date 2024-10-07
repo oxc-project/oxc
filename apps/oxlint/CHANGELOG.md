@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.9.10] - 2024-10-07
+
+### Bug Fixes
+
+- 9e9808b linter: Fix regression when parsing ts in vue files (#6336) (Boshen)
+
+### Refactor
+
+- ea908f7 linter: Consolidate file loading logic (#6130) (DonIsaac)
+
 ## [0.9.7] - 2024-09-23
 
 ### Features

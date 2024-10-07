@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.9.10] - 2024-10-07
+
+### Features
+
+- f272137 editors/vscode: Clear diagnostics on file deletion (#6326) (dalaoshu)
+- 1a5f293 editors/vscode: Update VSCode extention to use project's language server (#6132) (dalaoshu)
+
 ## [0.9.3] - 2024-09-07
 
 ### Styling
