@@ -493,7 +493,12 @@ impl<'a> PeepholeFoldConstants {
         operation: &mut BinaryExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        fn shorter_than_original(result: f64, left: f64, right: f64) -> bool {
+        fn shorter_than_original(
+            result: f64,
+            left: f64,
+            right: f64,
+            length_of_operator: usize,
+        ) -> bool {
             if result > MAX_SAFE_FLOAT
                 || result < NEG_MAX_SAFE_FLOAT
                 || result.is_nan()
@@ -502,7 +507,8 @@ impl<'a> PeepholeFoldConstants {
                 return false;
             }
             let result_str = result.to_string().len();
-            let original_str = left.to_string().len() + right.to_string().len() + 1;
+            let original_str =
+                left.to_string().len() + right.to_string().len() + length_of_operator;
             result_str <= original_str
         }
         if !operation.operator.is_arithmetic() {
@@ -518,7 +524,7 @@ impl<'a> PeepholeFoldConstants {
             BinaryOperator::Subtraction => left - right,
             BinaryOperator::Multiplication => {
                 let result = left * right;
-                if shorter_than_original(result, left, right) {
+                if shorter_than_original(result, left, right, 1) {
                     result
                 } else {
                     return None;
@@ -529,14 +535,21 @@ impl<'a> PeepholeFoldConstants {
                     return None;
                 }
                 let result = left / right;
-                if shorter_than_original(result, left, right) {
+                if shorter_than_original(result, left, right, 1) {
                     result
                 } else {
                     return None;
                 }
             }
             BinaryOperator::Remainder if !right.is_zero() && right.is_finite() => left % right,
-            // TODO BinaryOperator::Exponential if
+            BinaryOperator::Exponential => {
+                let result = left.powf(right);
+                if shorter_than_original(result, left, right, 2) {
+                    result
+                } else {
+                    return None;
+                }
+            }
             _ => return None,
         };
         let number_base =
@@ -1651,10 +1664,15 @@ mod test {
         test_same("x = 1 % 0");
         // We should not fold this because it's not safe to fold.
         test_same(format!("x = {} * {}", MAX_SAFE_INT / 2, MAX_SAFE_INT / 2).as_str());
-        // test("x = 2 ** 3", "x = 8");
-        // test("x = 2 ** -3", "x = 0.125");
-        // test_same("x = 2 ** 55"); // backs off folding because 2 ** 55 is too large
-        // test_same("x = 3 ** -1"); // backs off because 3**-1 is shorter than 0.3333333333333333
+
+        test("x = 2 ** 3", "x = 8");
+        test("x = 2 ** -3", "x = 0.125");
+        test_same("x = 2 ** 55"); // backs off folding because 2 ** 55 is too large
+        test_same("x = 3 ** -1"); // backs off because 3**-1 is shorter than 0.3333333333333333
+
+        test_same("x = 0 / 0");
+        test_same("x = 0 % 0");
+        test_same("x = -1 ** 0.5");
     }
 
     #[test]
