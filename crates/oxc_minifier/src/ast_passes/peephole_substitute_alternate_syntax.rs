@@ -1,4 +1,6 @@
-use oxc_ast::ast::*;
+use oxc_allocator::Vec;
+use oxc_ast::{ast::*, NONE};
+use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::number::ToJsInt32;
 use oxc_syntax::{
@@ -87,6 +89,24 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
         }
         if !self.compress_undefined(expr, ctx) {
             self.compress_boolean(expr, ctx);
+        }
+    }
+
+    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        match expr {
+            Expression::NewExpression(new_expr) => {
+                if let Some(new_expr) = self.try_fold_new_expression(new_expr, ctx) {
+                    *expr = new_expr;
+                    self.changed = true;
+                }
+            }
+            Expression::CallExpression(call_expr) => {
+                if let Some(call_expr) = self.try_fold_call_expression(call_expr, ctx) {
+                    *expr = call_expr;
+                    self.changed = true;
+                }
+            }
+            _ => {}
         }
     }
 
@@ -328,6 +348,145 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
             None
         }
     }
+
+    fn try_fold_new_expression(
+        &mut self,
+        new_expr: &mut NewExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        // `new Object` -> `{}`
+        if new_expr.arguments.is_empty()
+            && new_expr.callee.is_global_reference_name("Object", ctx.symbols())
+        {
+            Some(ctx.ast.expression_object(new_expr.span, Vec::new_in(ctx.ast.allocator), None))
+        } else if new_expr.callee.is_global_reference_name("Array", ctx.symbols()) {
+            // `new Array` -> `[]`
+            if new_expr.arguments.is_empty() {
+                Some(self.empty_array_literal(ctx))
+            } else if new_expr.arguments.len() == 1 {
+                let arg = new_expr.arguments.get_mut(0).and_then(|arg| arg.as_expression_mut())?;
+                // `new Array(0)` -> `[]`
+                if arg.is_number_0() {
+                    Some(self.empty_array_literal(ctx))
+                }
+                // `new Array(8)` -> `Array(8)`
+                else if arg.is_number_literal() {
+                    Some(
+                        self.array_constructor_call(ctx.ast.move_vec(&mut new_expr.arguments), ctx),
+                    )
+                }
+                // `new Array(literal)` -> `[literal]`
+                else if arg.is_literal() || matches!(arg, Expression::ArrayExpression(_)) {
+                    let mut elements = Vec::new_in(ctx.ast.allocator);
+                    let element =
+                        ctx.ast.array_expression_element_expression(ctx.ast.move_expression(arg));
+                    elements.push(element);
+                    Some(self.array_literal(elements, ctx))
+                }
+                // `new Array()` -> `Array()`
+                else {
+                    Some(
+                        self.array_constructor_call(ctx.ast.move_vec(&mut new_expr.arguments), ctx),
+                    )
+                }
+            } else {
+                // `new Array(1, 2, 3)` -> `[1, 2, 3]`
+                let elements = Vec::from_iter_in(
+                    new_expr.arguments.iter_mut().filter_map(|arg| arg.as_expression_mut()).map(
+                        |arg| {
+                            ctx.ast
+                                .array_expression_element_expression(ctx.ast.move_expression(arg))
+                        },
+                    ),
+                    ctx.ast.allocator,
+                );
+                Some(self.array_literal(elements, ctx))
+            }
+        } else {
+            None
+        }
+    }
+
+    fn try_fold_call_expression(
+        &mut self,
+        call_expr: &mut CallExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        // `Object()` -> `{}`
+        if call_expr.arguments.is_empty()
+            && call_expr.callee.is_global_reference_name("Object", ctx.symbols())
+        {
+            Some(ctx.ast.expression_object(call_expr.span, Vec::new_in(ctx.ast.allocator), None))
+        } else if call_expr.callee.is_global_reference_name("Array", ctx.symbols()) {
+            // `Array()` -> `[]`
+            if call_expr.arguments.is_empty() {
+                Some(self.empty_array_literal(ctx))
+            } else if call_expr.arguments.len() == 1 {
+                let arg = call_expr.arguments.get_mut(0).and_then(|arg| arg.as_expression_mut())?;
+                // `Array(0)` -> `[]`
+                if arg.is_number_0() {
+                    Some(self.empty_array_literal(ctx))
+                }
+                // `Array(8)` -> `Array(8)`
+                else if arg.is_number_literal() {
+                    Some(
+                        self.array_constructor_call(
+                            ctx.ast.move_vec(&mut call_expr.arguments),
+                            ctx,
+                        ),
+                    )
+                }
+                // `Array(literal)` -> `[literal]`
+                else if arg.is_literal() || matches!(arg, Expression::ArrayExpression(_)) {
+                    let mut elements = Vec::new_in(ctx.ast.allocator);
+                    let element =
+                        ctx.ast.array_expression_element_expression(ctx.ast.move_expression(arg));
+                    elements.push(element);
+                    Some(self.array_literal(elements, ctx))
+                } else {
+                    None
+                }
+            } else {
+                // `Array(1, 2, 3)` -> `[1, 2, 3]`
+                let elements = Vec::from_iter_in(
+                    call_expr.arguments.iter_mut().filter_map(|arg| arg.as_expression_mut()).map(
+                        |arg| {
+                            ctx.ast
+                                .array_expression_element_expression(ctx.ast.move_expression(arg))
+                        },
+                    ),
+                    ctx.ast.allocator,
+                );
+                Some(self.array_literal(elements, ctx))
+            }
+        } else {
+            None
+        }
+    }
+
+    /// returns an `Array()` constructor call with zero, one, or more arguments, copying from the input
+    fn array_constructor_call(
+        &self,
+        arguments: Vec<'a, Argument<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        let callee = ctx.ast.expression_identifier_reference(SPAN, "Array");
+        ctx.ast.expression_call(SPAN, callee, NONE, arguments, false)
+    }
+
+    /// returns an array literal `[]` of zero, one, or more elements, copying from the input
+    fn array_literal(
+        &self,
+        elements: Vec<'a, ArrayExpressionElement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        ctx.ast.expression_array(SPAN, elements, None)
+    }
+
+    /// returns a new empty array literal expression: `[]`
+    fn empty_array_literal(&self, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+        self.array_literal(Vec::new_in(ctx.ast.allocator), ctx)
+    }
 }
 
 /// <https://github.com/google/closure-compiler/blob/master/test/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntaxTest.java>
@@ -401,5 +560,52 @@ mod test {
         test_same("x -= 2");
         test_same("x += 1"); // The string concatenation may be triggered, so we don't fold this.
         test_same("x += -1");
+    }
+
+    #[test]
+    fn fold_literal_object_constructors() {
+        test("x = new Object", "x = ({})");
+        test("x = new Object()", "x = ({})");
+        test("x = Object()", "x = ({})");
+
+        test_same("x = (function f(){function Object(){this.x=4}return new Object();})();");
+    }
+
+    // tests from closure compiler
+    #[test]
+    fn fold_literal_array_constructors() {
+        test("x = new Array", "x = []");
+        test("x = new Array()", "x = []");
+        test("x = Array()", "x = []");
+        // do not fold optional chains
+        test_same("x = Array?.()");
+
+        // One argument
+        test("x = new Array(0)", "x = []");
+        test("x = new Array(\"a\")", "x = [\"a\"]");
+        test("x = new Array(7)", "x = Array(7)");
+        test("x = new Array(y)", "x = Array(y)");
+        test("x = new Array(foo())", "x = Array(foo())");
+        test("x = Array(0)", "x = []");
+        test("x = Array(\"a\")", "x = [\"a\"]");
+        test_same("x = Array(7)");
+        test_same("x = Array(y)");
+        test_same("x = Array(foo())");
+
+        // 1+ arguments
+        test("x = new Array(1, 2, 3, 4)", "x = [1, 2, 3, 4]");
+        test("x = Array(1, 2, 3, 4)", "x = [1, 2, 3, 4]");
+        test("x = new Array('a', 1, 2, 'bc', 3, {}, 'abc')", "x = ['a', 1, 2, 'bc', 3, {}, 'abc']");
+        test("x = Array('a', 1, 2, 'bc', 3, {}, 'abc')", "x = ['a', 1, 2, 'bc', 3, {}, 'abc']");
+        test("x = new Array(Array(1, '2', 3, '4'))", "x = [[1, '2', 3, '4']]");
+        test("x = Array(Array(1, '2', 3, '4'))", "x = [[1, '2', 3, '4']]");
+        test(
+            "x = new Array(Object(), Array(\"abc\", Object(), Array(Array())))",
+            "x = [{}, [\"abc\", {}, [[]]]]",
+        );
+        test(
+            "x = new Array(Object(), Array(\"abc\", Object(), Array(Array())))",
+            "x = [{}, [\"abc\", {}, [[]]]]",
+        );
     }
 }
