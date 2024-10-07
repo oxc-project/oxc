@@ -1,9 +1,10 @@
 use oxc_ast::{
-    ast::{BindingIdentifier, BindingPatternKind, Expression},
+    ast::{BindingIdentifier, BindingPatternKind, CallExpression, Expression},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -167,48 +168,57 @@ fn is_argument_only_used_in_recursion<'a>(
     arg_index: usize,
     ctx: &'a LintContext<'_>,
 ) -> bool {
-    let mut is_used_only_in_recursion = true;
-    let mut has_references = false;
+    let mut references = ctx
+        .semantic()
+        .symbol_references(arg.symbol_id.get().expect("`symbol_id` should be set"))
+        .peekable();
 
-    for reference in
-        ctx.semantic().symbol_references(arg.symbol_id.get().expect("`symbol_id` should be set"))
-    {
-        has_references = true;
-        if let Some(AstKind::Argument(argument)) = ctx.nodes().parent_kind(reference.node_id()) {
-            if let Some(AstKind::CallExpression(call_expr)) =
-                ctx.nodes().parent_kind(ctx.nodes().parent_node(reference.node_id()).unwrap().id())
-            {
-                if !call_expr.arguments.iter().enumerate().any(|(index, arg)| {
-                    index == arg_index
-                        && arg.span() == argument.span()
-                        && if let Expression::Identifier(identifier) = &call_expr.callee {
-                            identifier
-                                .reference_id()
-                                .and_then(|id| ctx.symbols().get_reference(id).symbol_id())
-                                .is_some_and(|v| {
-                                    let function_symbol_id = function_id.symbol_id.get();
-                                    debug_assert!(function_symbol_id.is_some());
-                                    function_symbol_id
-                                        .is_some_and(|function_symbol_id| function_symbol_id == v)
-                                })
-                        } else {
-                            false
-                        }
-                }) {
-                    is_used_only_in_recursion = false;
-                    break;
-                }
-            } else {
-                is_used_only_in_recursion = false;
-                break;
-            }
-        } else {
-            is_used_only_in_recursion = false;
-            break;
+    // Avoid returning true for an empty iterator
+    if references.peek().is_none() {
+        return false;
+    }
+
+    let function_symbol_id = function_id.symbol_id.get().unwrap();
+
+    for reference in references {
+        let Some(AstKind::Argument(argument)) = ctx.nodes().parent_kind(reference.node_id()) else {
+            return false;
+        };
+        let Some(AstKind::CallExpression(call_expr)) =
+            ctx.nodes().parent_kind(ctx.nodes().parent_node(reference.node_id()).unwrap().id())
+        else {
+            return false;
+        };
+
+        let Some(call_arg) = call_expr.arguments.get(arg_index) else {
+            return false;
+        };
+
+        if argument.span() != call_arg.span() {
+            return false;
+        }
+
+        if !is_recursive_call(call_expr, function_symbol_id, ctx) {
+            return false;
         }
     }
 
-    has_references && is_used_only_in_recursion
+    true
+}
+
+fn is_recursive_call(
+    call_expr: &CallExpression,
+    function_symbol_id: SymbolId,
+    ctx: &LintContext,
+) -> bool {
+    if let Expression::Identifier(identifier) = &call_expr.callee {
+        if let Some(symbol_id) =
+            identifier.reference_id().and_then(|id| ctx.symbols().get_reference(id).symbol_id())
+        {
+            return symbol_id == function_symbol_id;
+        }
+    }
+    false
 }
 
 fn is_function_maybe_reassigned<'a>(
