@@ -162,7 +162,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoElseReturn,
-    suspicious,
+    pedantic,
     fix
 );
 

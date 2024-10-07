@@ -65,7 +65,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoThrowLiteral,
-    correctness,
+    pedantic,
     conditional_suggestion,
 );
 
