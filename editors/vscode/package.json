@@ -1,7 +1,7 @@
 {
   "name": "oxc-vscode",
   "description": "oxc vscode extension",
-  "packageManager": "pnpm@9.10.0",
+  "packageManager": "pnpm@9.12.1",
   "license": "MIT",
   "version": "0.9.10",
   "icon": "icon.png",
@@ -144,7 +144,7 @@
     "@types/vscode": "1.80.0",
     "@vscode/vsce": "^3.0.0",
     "cross-env": "^7.0.3",
-    "esbuild": "^0.23.0",
+    "esbuild": "^0.24.0",
     "ovsx": "^0.9.1",
     "prettier": "^3.3.1",
     "typescript": "^5.4.5"
