@@ -505,7 +505,7 @@ mod test {
     }
 
     #[test]
-    fn fold_return_result() {
+    fn test_fold_return_result() {
         test("function f(){return !1;}", "function f(){return !1}");
         test("function f(){return null;}", "function f(){return null}");
         test("function f(){return void 0;}", "function f(){return}");
@@ -515,21 +515,21 @@ mod test {
     }
 
     #[test]
-    fn undefined() {
+    fn test_undefined() {
         test("var x = undefined", "var x");
         test_same("var undefined = 1;function f() {var undefined=2;var x;}");
         test("function f(undefined) {}", "function f(undefined){}");
         test("try {} catch(undefined) {}", "try{}catch(undefined){}");
         test("for (undefined in {}) {}", "for(undefined in {}){}");
-        test("undefined++", "undefined++");
-        test("undefined += undefined", "undefined+=void 0");
+        test("undefined++;", "undefined++");
+        test("undefined += undefined;", "undefined+=void 0");
 
         // shadowd
         test_same("(function(undefined) { let x = typeof undefined; })()");
     }
 
     #[test]
-    fn fold_true_false_comparison() {
+    fn test_fold_true_false_comparison() {
         test("x == true", "x == 1");
         test("x == false", "x == 0");
         test("x != true", "x != 1");
@@ -561,7 +561,7 @@ mod test {
     }
 
     #[test]
-    fn fold_literal_object_constructors() {
+    fn test_fold_literal_object_constructors() {
         test("x = new Object", "x = ({})");
         test("x = new Object()", "x = ({})");
         test("x = Object()", "x = ({})");
@@ -569,9 +569,8 @@ mod test {
         test_same("x = (function f(){function Object(){this.x=4}return new Object();})();");
     }
 
-    // tests from closure compiler
     #[test]
-    fn fold_literal_array_constructors() {
+    fn test_fold_literal_array_constructors() {
         test("x = new Array", "x = []");
         test("x = new Array()", "x = []");
         test("x = Array()", "x = []");
