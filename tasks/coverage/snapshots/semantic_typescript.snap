@@ -41863,7 +41863,12 @@ after transform: []
 rebuilt        : ["x"]
 
 tasks/coverage/typescript/tests/cases/conformance/es2022/arbitraryModuleNamespaceIdentifiers/arbitraryModuleNamespaceIdentifiers_module.ts
-semantic error: Expected `,` but found `string`
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["importStarTestA", "importTest", "otherType", "reimportTest", "someType", "someValue", "typeA", "typeB", "typeC", "valueX", "valueY", "valueZ"]
+rebuilt        : ScopeId(0): ["importStarTestA", "importTest", "reimportTest", "someValue", "valueX", "valueY", "valueZ"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/es2022/es2022IntlAPIs.ts
 semantic error: Unresolved references mismatch:

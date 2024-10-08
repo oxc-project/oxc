@@ -433,7 +433,7 @@ impl<'a> ParserImpl<'a> {
                 } else if !self.nth_kind(2).is_identifier_name() {
                     import_kind = ImportOrExportKind::Type;
                 }
-            } else if peek_kind.is_identifier_name() {
+            } else if peek_kind.is_identifier_name() || matches!(peek_kind, Kind::Str) {
                 import_kind = ImportOrExportKind::Type;
             }
         }

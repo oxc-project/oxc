@@ -1,8 +1,8 @@
 commit: a709f989
 
 parser_typescript Summary:
-AST Parsed     : 6469/6479 (99.85%)
-Positive Passed: 6458/6479 (99.68%)
+AST Parsed     : 6470/6479 (99.86%)
+Positive Passed: 6459/6479 (99.69%)
 Negative Passed: 1234/5715 (21.59%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration10.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration11.ts
@@ -4666,16 +4666,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es2019/import
  3 │ export let z = import.import.import.malkovich;
    ·                ─────────────
    ╰────
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es2022/arbitraryModuleNamespaceIdentifiers/arbitraryModuleNamespaceIdentifiers_module.ts
-
-  × Expected `,` but found `string`
-    ╭─[typescript/tests/cases/conformance/es2022/arbitraryModuleNamespaceIdentifiers/arbitraryModuleNamespaceIdentifiers_module.ts:19:15]
- 18 │ export { type someType as "<A>" };
- 19 │ import { type "<A>" as typeA } from "./arbitraryModuleNamespaceIdentifiers_module";
-    ·               ──┬──
-    ·                 ╰── `,` expected
- 20 │ const importTest: typeA = "expect error about someType";
-    ╰────
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/moduleExportsSystem/topLevelVarHoistingCommonJS.ts
 
   × 'with' statements are not allowed
