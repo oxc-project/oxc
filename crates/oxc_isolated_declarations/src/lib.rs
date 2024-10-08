@@ -44,6 +44,24 @@ pub struct IsolatedDeclarationsOptions {
     pub strip_internal: bool,
 }
 
+impl IsolatedDeclarationsOptions {
+    /// Create a new options instance with default values set.
+    #[must_use]
+    #[inline]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Sets [`IsolatedDeclarationsOptions::strip_internal`] to `true`, causing
+    /// code with `@internal` JSDoc annotations to be stripped from the output.
+    #[must_use]
+    #[inline]
+    pub fn strip_internal(mut self) -> Self {
+        self.strip_internal = true;
+        self
+    }
+}
+
 pub struct IsolatedDeclarationsReturn<'a> {
     pub program: Program<'a>,
     pub errors: Vec<OxcDiagnostic>,
