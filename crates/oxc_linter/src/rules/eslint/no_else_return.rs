@@ -165,8 +165,13 @@ declare_oxc_lint!(
     conditional_fix
 );
 
-fn no_else_return_diagnostic(else_stmt: &Statement) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unnecessary 'else' after 'return'.").with_label(else_stmt.span())
+fn no_else_return_diagnostic(else_keyword: Span, last_return: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unnecessary 'else' after 'return'.")
+        .with_labels([
+            last_return.label("This consequent block always returns,"),
+            else_keyword.label("Making this `else` block unnecessary."),
+        ])
+        .with_help("Remove the `else` block, moving its contents outside of the `if` statement.")
 }
 
 fn is_safe_from_name_collisions(
@@ -201,11 +206,15 @@ fn is_safe_from_name_collisions(
 
 fn no_else_return_diagnostic_fix(
     ctx: &LintContext,
+    last_return_span: Span,
     else_stmt_prev: &Statement,
     else_stmt: &Statement,
     if_block_node: &AstNode,
 ) {
-    let diagnostic = no_else_return_diagnostic(else_stmt);
+    let prev_span = else_stmt_prev.span();
+    let else_content_span = else_stmt.span();
+    let else_keyword_span = Span::new(prev_span.end, else_content_span.start);
+    let diagnostic = no_else_return_diagnostic(else_keyword_span, last_return_span);
     let parent_scope_id = if_block_node.scope_id();
 
     if !is_safe_from_name_collisions(ctx, else_stmt, parent_scope_id) {
@@ -213,8 +222,6 @@ fn no_else_return_diagnostic_fix(
         return;
     }
     ctx.diagnostic_with_fix(diagnostic, |fixer| {
-        let prev_span = else_stmt_prev.span();
-        let else_content_span = else_stmt.span();
         let target_span = Span::new(prev_span.end, else_content_span.end);
 
         // Capture the contents of the `else` statement, removing curly braces
@@ -262,35 +269,41 @@ fn left_offset_for_whitespace(ctx: &LintContext, position: u32) -> u32 {
     offset as u32
 }
 
-fn naive_has_return(node: &Statement) -> bool {
+fn naive_has_return(node: &Statement) -> Option<Span> {
     match node {
         Statement::BlockStatement(block) => {
-            let Some(last_child) = block.body.last() else {
-                return false;
-            };
-            matches!(last_child, Statement::ReturnStatement(_))
+            let last_child = block.body.last()?;
+            if let Statement::ReturnStatement(r) = last_child {
+                Some(r.span)
+            } else {
+                None
+            }
         }
-        Statement::ReturnStatement(_) => true,
-        _ => false,
+        Statement::ReturnStatement(r) => Some(r.span),
+        _ => None,
     }
 }
 
-fn check_for_return_or_if(node: &Statement) -> bool {
+fn check_for_return_or_if(node: &Statement) -> Option<Span> {
     match node {
-        Statement::ReturnStatement(_) => true,
+        Statement::ReturnStatement(r) => Some(r.span),
         Statement::IfStatement(if_stmt) => {
-            let Some(alternate) = &if_stmt.alternate else {
-                return false;
-            };
-            naive_has_return(alternate) && naive_has_return(&if_stmt.consequent)
+            let alternate = if_stmt.alternate.as_ref()?;
+            if let (Some(_), Some(ret_span)) =
+                (naive_has_return(alternate), naive_has_return(&if_stmt.consequent))
+            {
+                Some(ret_span)
+            } else {
+                None
+            }
         }
-        _ => false,
+        _ => None,
     }
 }
 
-fn always_returns(stmt: &Statement) -> bool {
+fn always_returns(stmt: &Statement) -> Option<Span> {
     match stmt {
-        Statement::BlockStatement(block) => block.body.iter().any(check_for_return_or_if),
+        Statement::BlockStatement(block) => block.body.iter().find_map(check_for_return_or_if),
         node => check_for_return_or_if(node),
     }
 }
@@ -303,8 +316,8 @@ fn check_if_with_else(ctx: &LintContext, node: &AstNode) {
         return;
     };
 
-    if always_returns(&if_stmt.consequent) {
-        no_else_return_diagnostic_fix(ctx, &if_stmt.consequent, alternate, node);
+    if let Some(last_return_span) = always_returns(&if_stmt.consequent) {
+        no_else_return_diagnostic_fix(ctx, last_return_span, &if_stmt.consequent, alternate, node);
     }
 }
 
@@ -315,16 +328,18 @@ fn check_if_without_else(ctx: &LintContext, node: &AstNode) {
     let mut current_node = if_stmt;
     let mut last_alternate;
     let mut last_alternate_prev;
+    let mut last_return_span;
 
     loop {
         let Some(alternate) = &current_node.alternate else {
             return;
         };
-        if !always_returns(&current_node.consequent) {
+        let Some(ret_span) = always_returns(&current_node.consequent) else {
             return;
-        }
+        };
         last_alternate_prev = &current_node.consequent;
         last_alternate = alternate;
+        last_return_span = ret_span;
         match alternate {
             Statement::IfStatement(if_stmt) => {
                 current_node = if_stmt;
@@ -333,7 +348,7 @@ fn check_if_without_else(ctx: &LintContext, node: &AstNode) {
         }
     }
 
-    no_else_return_diagnostic_fix(ctx, last_alternate_prev, last_alternate, node);
+    no_else_return_diagnostic_fix(ctx, last_return_span, last_alternate_prev, last_alternate, node);
 }
 
 impl Rule for NoElseReturn {
