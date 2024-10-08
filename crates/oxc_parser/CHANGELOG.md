@@ -4,6 +4,27 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.31.0] - 2024-10-08
+
+- 01b878e parser: [**BREAKING**] Use `BindingIdentifier` for `namespace` declaration names (#6003) (DonIsaac)
+
+- 5a73a66 regular_expression: [**BREAKING**] Simplify public APIs (#6262) (leaysgur)
+
+- 32d972e parser: [**BREAKING**] Treat unambiguous files containing TS export assignments as modules (#6253) (overlookmotel)
+
+### Features
+
+- 9e62396 syntax_operations: Add crate `oxc_syntax_operations` (#6202) (Boshen)
+
+### Bug Fixes
+
+- 6159560 parser: String `ImportSpecifier`s for type imports (#6352) (DonIsaac)
+- 1380d8b parser: Should regard comments where after `=` as leading comments of next token (#6355) (Dunqing)
+
+### Refactor
+
+- 3b53dd4 parser: Provide better error messages for `const` modifiers on class elements (#6353) (DonIsaac)
+
 ## [0.30.4] - 2024-09-28
 
 ### Bug Fixes

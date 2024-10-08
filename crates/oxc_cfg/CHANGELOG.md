@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.31.0] - 2024-10-08
+
+- 95ca01c cfg: [**BREAKING**] Make BasicBlock::unreachable private (#6321) (DonIsaac)
+
+### Features
+
+- fa4d505 cfg: Derive more base traits for CFG blocks (#6320) (DonIsaac)
+- 14275b1 cfg: Color-code edges in CFG dot diagrams (#6314) (DonIsaac)
+
+### Refactor
+
+- 40932f7 cfg: Use IndexVec for storing basic blocks (#6323) (DonIsaac)
+- a1e0d30 cfg: Add type alias for Graph (#6322) (DonIsaac)
+- 7672793 cfg: Move block data types to separate file (#6319) (DonIsaac)
+
 ## [0.29.0] - 2024-09-13
 
 ### Refactor

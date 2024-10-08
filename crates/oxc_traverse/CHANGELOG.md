@@ -4,6 +4,27 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.31.0] - 2024-10-08
+
+- 01b878e parser: [**BREAKING**] Use `BindingIdentifier` for `namespace` declaration names (#6003) (DonIsaac)
+
+- 409dffc traverse: [**BREAKING**] `generate_uid` return a `BoundIdentifier` (#6294) (overlookmotel)
+
+### Features
+
+- 9e62396 syntax_operations: Add crate `oxc_syntax_operations` (#6202) (Boshen)
+
+### Documentation
+
+- c7636d7 traverse: Remove erroneous doc comment (#6328) (overlookmotel)
+
+### Refactor
+
+- 7b62966 transformer: Move `BoundIdentifier` into `oxc_traverse` crate (#6293) (overlookmotel)
+- 0dd9a2e traverse: Add helper methods to `BoundIdentifier` (#6341) (overlookmotel)
+- c0e2fef traverse: Function to get var name from node (#6317) (overlookmotel)
+- adc5381 traverse: `TraverseAncestry` use `NonEmptyStack` (#6217) (overlookmotel)
+
 ## [0.30.0] - 2024-09-23
 
 ### Features
