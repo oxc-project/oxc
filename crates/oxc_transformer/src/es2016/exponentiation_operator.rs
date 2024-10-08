@@ -78,16 +78,17 @@ impl<'a, 'ctx> Traverse<'a> for ExponentiationOperator<'a, 'ctx> {
                     AssignmentTarget::AssignmentTargetIdentifier(_) => {
                         self.convert_identifier_assignment(expr, ctx);
                     }
-                    // Note: We do not match `AssignmentTarget::PrivateFieldExpression` here.
-                    // From Babel: "We can't generate property ref for private name, please install
-                    // `@babel/plugin-transform-class-properties`".
-                    // TODO: Ensure this plugin interacts correctly with class private properties
-                    // transform, so the property is transformed before this transform.
                     AssignmentTarget::StaticMemberExpression(_) => {
                         self.convert_static_member_expression_assignment(expr, ctx);
                     }
                     AssignmentTarget::ComputedMemberExpression(_) => {
                         self.convert_computed_member_expression_assignment(expr, ctx);
+                    }
+                    // Babel refuses to transform this: "We can't generate property ref for private name,
+                    // please install `@babel/plugin-transform-class-properties`".
+                    // But there's no reason not to.
+                    AssignmentTarget::PrivateFieldExpression(_) => {
+                        self.convert_private_field_assignment(expr, ctx);
                     }
                     _ => {}
                 }
@@ -360,6 +361,82 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
         //                       ^^^^^^^^^^
         // ```
         let pow_left = Expression::from(ctx.ast.member_expression_computed(SPAN, obj, prop, false));
+
+        (pow_left, temp_var_inits)
+    }
+
+    /// Convert `AssignmentExpression` where assignee is a private field member expression.
+    ///
+    /// `obj.#prop **= right` transformed to:
+    /// * If `obj` is a bound symbol:
+    ///   -> `obj.#prop = Math.pow(obj.#prop, right)`
+    /// * If `obj` is unbound:
+    ///   -> `var _obj; _obj = obj, _obj.#prop = Math.pow(_obj.#prop, right)`
+    ///
+    /// `obj.foo.bar.#qux **= right` transformed to:
+    /// ```js
+    /// var _obj$foo$bar;
+    /// _obj$foo$bar = obj.foo.bar, _obj$foo$bar.#qux = Math.pow(_obj$foo$bar.#qux, right)
+    /// ```
+    ///
+    /// Temporary variable is to avoid side-effects of getting `obj` / `obj.foo.bar` being run twice.
+    //
+    // `#[inline]` so compiler knows `expr` is an `AssignmentExpression` with `PrivateFieldExpression` on left
+    #[inline]
+    fn convert_private_field_assignment(
+        &mut self,
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let Expression::AssignmentExpression(assign_expr) = expr else { unreachable!() };
+        let AssignmentTarget::PrivateFieldExpression(member_expr) = &mut assign_expr.left else {
+            unreachable!()
+        };
+
+        let (pow_left, temp_var_inits) = self.get_pow_left_private_field(member_expr, ctx);
+        Self::convert_assignment(assign_expr, pow_left, ctx);
+        Self::revise_expression(expr, temp_var_inits, ctx);
+    }
+
+    /// Get left side of `Math.pow(pow_left, ...)` for static member expression
+    /// and replacement for left side of assignment.
+    fn get_pow_left_private_field(
+        &mut self,
+        field_expr: &mut PrivateFieldExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> (
+        // Left side of `Math.pow(pow_left, ...)`
+        Expression<'a>,
+        // Temporary var initializations
+        Vec<'a, Expression<'a>>,
+    ) {
+        // Object part of 2nd member expression
+        // ```
+        // obj.#prop = Math.pow(obj.#prop, right)
+        //                      ^^^
+        // ```
+        let mut temp_var_inits = ctx.ast.vec();
+        let obj = self.get_second_member_expression_object(
+            &mut field_expr.object,
+            &mut temp_var_inits,
+            ctx,
+        );
+
+        // Property part of 2nd member expression
+        // ```
+        // obj.#prop = Math.pow(obj.#prop, right)
+        //                          ^^^^^
+        // ```
+        let field = field_expr.field.clone_in(ctx.ast.allocator);
+
+        // Complete 2nd member expression
+        // ```
+        // obj.#prop = Math.pow(obj.#prop, right)
+        //                      ^^^^^^^^^
+        // ```
+        let pow_left = Expression::from(
+            ctx.ast.member_expression_private_field_expression(SPAN, obj, field, false),
+        );
 
         (pow_left, temp_var_inits)
     }
