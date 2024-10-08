@@ -469,9 +469,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
     ) -> AssignmentTarget<'a> {
         let binding = ctx.generate_uid_in_root_scope("c", SymbolFlags::FunctionScopedVariable);
         self.registrations.push((binding.symbol_id, persistent_id));
-        let ident = binding.create_reference(reference_flags, ctx);
-        let ident = ctx.ast.simple_assignment_target_from_identifier_reference(ident);
-        ctx.ast.assignment_target_simple(ident)
+        binding.create_target(reference_flags, ctx)
     }
 
     /// Similar to the `findInnerComponents` function in `react-refresh/babel`.

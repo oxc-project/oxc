@@ -170,7 +170,7 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
                 ctx.create_unbound_reference_id(SPAN, ident.name.clone(), ReferenceFlags::Read),
             );
             let binding = self.create_temp_var(reference, &mut temp_var_inits, ctx);
-            ctx.ast.expression_from_identifier_reference(binding.create_read_reference(ctx))
+            binding.create_read_expression(ctx)
         };
 
         (pow_left, temp_var_inits)
@@ -345,10 +345,8 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
         } else {
             let owned_prop = ctx.ast.move_expression(prop);
             let binding = self.create_temp_var(owned_prop, &mut temp_var_inits, ctx);
-            let mut create_ident =
-                || ctx.ast.expression_from_identifier_reference(binding.create_read_reference(ctx));
-            *prop = create_ident();
-            create_ident()
+            *prop = binding.create_read_expression(ctx);
+            binding.create_read_expression(ctx)
         };
 
         // Complete 2nd member expression
@@ -434,10 +432,8 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
         }
 
         let binding = self.create_temp_var(ctx.ast.move_expression(obj), temp_var_inits, ctx);
-        let mut create_id =
-            || ctx.ast.expression_from_identifier_reference(binding.create_read_reference(ctx));
-        *obj = create_id();
-        create_id()
+        *obj = binding.create_read_expression(ctx);
+        binding.create_read_expression(ctx)
     }
 
     /// `x **= right` -> `x = Math.pow(pow_left, right)` (with provided `pow_left`)
@@ -498,12 +494,12 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
         self.ctx.var_declarations.insert(&binding, None, ctx);
 
         // Add new reference `_name = name` to `temp_var_inits`
-        let left =
-            AssignmentTarget::from(ctx.ast.simple_assignment_target_from_identifier_reference(
-                binding.create_read_write_reference(ctx),
-            ));
-        let op = AssignmentOperator::Assign;
-        temp_var_inits.push(ctx.ast.expression_assignment(SPAN, op, left, expr));
+        temp_var_inits.push(ctx.ast.expression_assignment(
+            SPAN,
+            AssignmentOperator::Assign,
+            binding.create_read_write_target(ctx),
+            expr,
+        ));
 
         binding
     }

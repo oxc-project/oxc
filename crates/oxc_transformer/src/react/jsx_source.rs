@@ -147,8 +147,7 @@ impl<'a, 'ctx> ReactJsxSource<'a, 'ctx> {
 
         let filename = {
             let key = ctx.ast.property_key_identifier_name(SPAN, "fileName");
-            let ident = self.get_filename_var(ctx).create_read_reference(ctx);
-            let value = ctx.ast.expression_from_identifier_reference(ident);
+            let value = self.get_filename_var(ctx).create_read_expression(ctx);
             ctx.ast.object_property_kind_object_property(
                 SPAN, kind, key, value, None, false, false, false,
             )

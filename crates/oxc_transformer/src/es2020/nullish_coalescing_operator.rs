@@ -91,17 +91,11 @@ impl<'a, 'ctx> Traverse<'a> for NullishCoalescingOperator<'a, 'ctx> {
             SymbolFlags::FunctionScopedVariable,
         );
 
-        let left =
-            AssignmentTarget::from(ctx.ast.simple_assignment_target_from_identifier_reference(
-                binding.create_read_write_reference(ctx),
-            ));
-
-        let reference =
-            ctx.ast.expression_from_identifier_reference(binding.create_read_reference(ctx));
+        let reference = binding.create_read_expression(ctx);
         let assignment = ctx.ast.expression_assignment(
             SPAN,
             AssignmentOperator::Assign,
-            left,
+            binding.create_read_write_target(ctx),
             logical_expr.left,
         );
         let mut new_expr =

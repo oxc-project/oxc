@@ -153,10 +153,7 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
         if let Some(ident) = self.maybe_generate_memoised(&static_expr.object, ctx) {
             // (_o = o).a
             let right = ctx.ast.move_expression(&mut static_expr.object);
-            let target =
-                AssignmentTarget::from(ctx.ast.simple_assignment_target_from_identifier_reference(
-                    ident.create_read_write_reference(ctx),
-                ));
+            let target = ident.create_read_write_target(ctx);
             let object =
                 ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, target, right);
             let left_expr = Expression::from(ctx.ast.member_expression_static(
@@ -169,7 +166,7 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
             // (_o.a = 1)
             let assign_expr = ctx.ast.member_expression_static(
                 SPAN,
-                ctx.ast.expression_from_identifier_reference(ident.create_read_reference(ctx)),
+                ident.create_read_expression(ctx),
                 static_expr.property.clone_in(ctx.ast.allocator),
                 false,
             );
@@ -218,10 +215,7 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
         if let Some(ident) = self.maybe_generate_memoised(&computed_expr.object, ctx) {
             // (_o = object)
             let right = ctx.ast.move_expression(&mut computed_expr.object);
-            let target =
-                AssignmentTarget::from(ctx.ast.simple_assignment_target_from_identifier_reference(
-                    ident.create_read_write_reference(ctx),
-                ));
+            let target = ident.create_read_write_target(ctx);
             let object =
                 ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, target, right);
 
@@ -230,16 +224,11 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
             // _b = expression
             let property = self.maybe_generate_memoised(&expression, ctx);
 
-            if let Some(ref property) = property {
-                let left = AssignmentTarget::from(
-                    ctx.ast.simple_assignment_target_from_identifier_reference(
-                        property.create_read_write_reference(ctx),
-                    ),
-                );
+            if let Some(property) = &property {
                 expression = ctx.ast.expression_assignment(
                     SPAN,
                     AssignmentOperator::Assign,
-                    left,
+                    property.create_read_write_target(ctx),
                     expression,
                 );
             }
@@ -247,13 +236,10 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
             // _o[_b]
             let assign_target = AssignmentTarget::from(ctx.ast.member_expression_computed(
                 SPAN,
-                ctx.ast.expression_from_identifier_reference(ident.create_read_reference(ctx)),
+                ident.create_read_expression(ctx),
                 property.map_or_else(
                     || expression.clone_in(ctx.ast.allocator),
-                    |ident| {
-                        ctx.ast
-                            .expression_from_identifier_reference(ident.create_read_reference(ctx))
-                    },
+                    |ident| ident.create_read_expression(ctx),
                 ),
                 false,
             ));
@@ -278,15 +264,10 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
                 {
                     // _key = ++key
                     if let Some(property_ident) = &property_ident {
-                        let left = AssignmentTarget::from(
-                            ctx.ast.simple_assignment_target_from_identifier_reference(
-                                property_ident.create_read_write_reference(ctx),
-                            ),
-                        );
                         ctx.ast.expression_assignment(
                             SPAN,
                             AssignmentOperator::Assign,
-                            left,
+                            property_ident.create_read_write_target(ctx),
                             ctx.ast.move_expression(&mut expression),
                         )
                     } else {
@@ -306,9 +287,7 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
                 object,
                 {
                     if let Some(property_ident) = property_ident {
-                        ctx.ast.expression_from_identifier_reference(
-                            property_ident.create_read_reference(ctx),
-                        )
+                        property_ident.create_read_expression(ctx)
                     } else {
                         expression
                     }
