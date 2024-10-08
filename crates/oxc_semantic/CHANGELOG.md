@@ -4,6 +4,32 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.31.0] - 2024-10-08
+
+- 01b878e parser: [**BREAKING**] Use `BindingIdentifier` for `namespace` declaration names (#6003) (DonIsaac)
+
+- 95ca01c cfg: [**BREAKING**] Make BasicBlock::unreachable private (#6321) (DonIsaac)
+
+### Features
+
+- 14275b1 cfg: Color-code edges in CFG dot diagrams (#6314) (DonIsaac)
+- 9e62396 syntax_operations: Add crate `oxc_syntax_operations` (#6202) (Boshen)
+
+### Bug Fixes
+
+- 6159560 parser: String `ImportSpecifier`s for type imports (#6352) (DonIsaac)
+
+### Refactor
+
+- 40932f7 cfg: Use IndexVec for storing basic blocks (#6323) (DonIsaac)
+- bdd9e92 semantic: Rename vars from `ast_node_id` to `node_id` (#6304) (overlookmotel)
+- d110700 semantic: Dereference IDs as quickly as possible (#6303) (overlookmotel)
+
+### Testing
+
+- d4f2ee9 transformer: Tidy up transform checker (#6287) (overlookmotel)
+- 0f5afd7 transformer: Transform checker output symbol name for mismatches (#6286) (overlookmotel)
+
 ## [0.30.4] - 2024-09-28
 
 ### Refactor

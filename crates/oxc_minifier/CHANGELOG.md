@@ -4,6 +4,43 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.31.0] - 2024-10-08
+
+- 020bb80 codegen: [**BREAKING**] Change to `CodegenReturn::code` and `CodegenReturn::map` (#6310) (Boshen)
+
+- 82ab689 transformer,minifier: [**BREAKING**] Move define and inject plugin from minifier to transformer (#6199) (Boshen)
+
+### Features
+
+- e304e8c minifier: Minify exponential arithmetic operation. (#6281) (7086cmd)
+- f9ae70c minifier: Minify basic arithmetic calculations. (#6280) (7086cmd)
+- 4008afe minifier: Fold array and object constructors (#6257) (camchenry)
+- 115ccc9 minifier: Bitwise not in exceeded value. (#6235) (7086cmd)
+- ee6c850 minifier: Scaffold peephole replace known methods. (#6245) (7086cmd)
+- c32af57 minifier: Fold demical bitwise not for bigint. (#6233) (7086cmd)
+- 23b6464 minifier: Fold true / false comparison. (#6225) (7086cmd)
+- 585ccda minifier: Support subtraction assignment. (#6214) (7086cmd)
+- cca0034 minifier: Handle positive `NaN` and `Infinity`. (#6207) (7086cmd)
+- dac8f09 minifier: Minify unary plus negation. (#6203) (7086cmd)
+- 3b79e1b minifier: Evaluate bigint in fold constant (#6178) (Boshen)
+- 9e62396 syntax_operations: Add crate `oxc_syntax_operations` (#6202) (Boshen)
+
+### Bug Fixes
+
+- d953a6b minifier: Correct the reference link (#6283) (dalaoshu)
+- 37cbabb minifier: Should not handle the strict operation for bool comparison. (#6261) (7086cmd)
+- e29c067 minifier: Handle exceeded shifts. (#6237) (7086cmd)
+
+### Refactor
+
+- ac5a23f minifier: Use ctx.ast.vec instead of Vec::new. (#6331) (7086cmd)
+- 1cee207 minifier: Some boilerplate work for PeepholeFoldConstants (#6054) (Boshen)
+
+### Testing
+
+- 964d71e minifier: Add arithmetic tests for fold constants. (#6269) (7086cmd)
+- fcb4651 minifier: Enable null comparison with bigint. (#6252) (7086cmd)
+
 ## [0.30.2] - 2024-09-27
 
 ### Features

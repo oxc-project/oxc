@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.31.0] - 2024-10-08
+
+- 020bb80 codegen: [**BREAKING**] Change to `CodegenReturn::code` and `CodegenReturn::map` (#6310) (Boshen)
+
+- 4f6bc79 transformer: [**BREAKING**] Remove `source_type` param from `Transformer::new` (#6251) (overlookmotel)
+
+### Features
+
+- abd3a9f napi/transform: Perform dce after define plugin (#6312) (Boshen)
+- a0ccc26 napi/transform: Add `lang` option to change source type (#6309) (Boshen)
+- 2f888ed oxc: Add napi transform options (#6268) (Boshen)
+- 8729755 oxc,napi/transform: Napi/transform use oxc compiler pipeline (#6298) (Boshen)
+
+### Refactor
+
+- aa0dbb6 oxc: Add `napi` feature, change napi parser to use `oxc` crate (#6265) (Boshen)
+
 ## [0.30.2] - 2024-09-27
 
 ### Documentation

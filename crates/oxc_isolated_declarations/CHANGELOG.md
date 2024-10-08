@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.31.0] - 2024-10-08
+
+- 020bb80 codegen: [**BREAKING**] Change to `CodegenReturn::code` and `CodegenReturn::map` (#6310) (Boshen)
+
+### Features
+
+- 9e62396 syntax_operations: Add crate `oxc_syntax_operations` (#6202) (Boshen)
+
+### Bug Fixes
+
+- e9eeae0 isolated-declarations: False positive for function with a type asserted parameters (#6181) (Dunqing)
+
+### Refactor
+
+
 ## [0.30.3] - 2024-09-27
 
 ### Bug Fixes

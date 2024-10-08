@@ -4,6 +4,81 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.31.0] - 2024-10-08
+
+- 01b878e parser: [**BREAKING**] Use `BindingIdentifier` for `namespace` declaration names (#6003) (DonIsaac)
+
+- 020bb80 codegen: [**BREAKING**] Change to `CodegenReturn::code` and `CodegenReturn::map` (#6310) (Boshen)
+
+- 409dffc traverse: [**BREAKING**] `generate_uid` return a `BoundIdentifier` (#6294) (overlookmotel)
+
+- 5a73a66 regular_expression: [**BREAKING**] Simplify public APIs (#6262) (leaysgur)
+
+- 4f6bc79 transformer: [**BREAKING**] Remove `source_type` param from `Transformer::new` (#6251) (overlookmotel)
+
+- 82ab689 transformer,minifier: [**BREAKING**] Move define and inject plugin from minifier to transformer (#6199) (Boshen)
+
+### Features
+
+- c3c3447 data_structures: Add `oxc_data_structures` crate; add stack (#6206) (Boshen)
+- 51a78d5 napi/transform: Rename all mention of React to Jsx; remove mention of `Binding` (#6198) (Boshen)
+- 9e62396 syntax_operations: Add crate `oxc_syntax_operations` (#6202) (Boshen)
+- cf20f3a transformer: Exponentiation transform: support private fields (#6345) (overlookmotel)
+
+### Bug Fixes
+
+- 9736aa0 oxc_transformer: Define `import.meta` and `import.meta.*` (#6277) (IWANABETHATGUY)
+- 2bcd12a transformer: Exponentiation transform: fix reference flags (#6330) (overlookmotel)
+- 28cbfa7 transformer: Exponentiation transform: fix temp var names (#6329) (overlookmotel)
+- 3a4bcc7 transformer: Exponentiation transform: fix temp var names (#6318) (overlookmotel)
+- ccb7bdc transformer: Exponentiation transform: do not replace object when private property (#6313) (overlookmotel)
+- 56d50cf transformer: Exponentiation transform: do not assume `Math` is not a local var (#6302) (overlookmotel)
+- bd81c51 transformer: Exponentiation transform: fix duplicate symbols (#6300) (overlookmotel)
+- 06797b6 transformer: Logical assignment operator transform: fix reference IDs (#6289) (overlookmotel)
+- 4b42047 transformer: Fix memory leak in `ReplaceGlobalDefines` (#6224) (overlookmotel)
+- a28926f transformer: Fix inserting `require` with `front` option (#6188) (overlookmotel)
+- b92fe84 transformer: `NonEmptyStack::push` write value before updating cursor (#6169) (overlookmotel)
+
+### Performance
+
+- 788e444 transformer: Parse options from comments only once (#6152) (overlookmotel)
+- da2b2a4 transformer: Look up `SymbolId` for `require` only once (#6192) (overlookmotel)
+- 40bd919 transformer: Faster parsing JSX pragmas from comments (#6151) (overlookmotel)
+
+### Documentation
+
+- eb1d0b8 transformer: Exponentiation transform: update doc comments (#6315) (overlookmotel)
+
+### Refactor
+
+- bd5fb5a transformer: Exponentiation transform: rename methods (#6344) (overlookmotel)
+- 4aa4e6b transformer: Exponentiation transform: do not wrap in `SequenceExpression` if not needed (#6343) (overlookmotel)
+- a15235a transformer: Exponentiation transform: no cloning (#6338) (overlookmotel)
+- 7d93b25 transformer: Exponentiation transform: split into 2 paths (#6316) (overlookmotel)
+- 15cc8af transformer: Exponentiation transform: break up into functions (#6301) (overlookmotel)
+- 7f5a94b transformer: Use `Option::get_or_insert_with` (#6299) (overlookmotel)
+- 0cea6e9 transformer: Exponentiation transform: reduce identifier cloning (#6297) (overlookmotel)
+- ac7a3ed transformer: Logical assignment transform: reduce identifier cloning (#6296) (overlookmotel)
+- 527f7c8 transformer: Nullish coalescing transform: no cloning identifier references (#6295) (overlookmotel)
+- 7b62966 transformer: Move `BoundIdentifier` into `oxc_traverse` crate (#6293) (overlookmotel)
+- c7fbf68 transformer: Logical assignment operator transform: no cloning identifier references (#6290) (overlookmotel)
+- f0a74ca transformer: Prefer `create_bound_reference_id` to `create_reference_id` (#6282) (overlookmotel)
+- ba3e85b transformer: Fix spelling (#6279) (overlookmotel)
+- bc757c8 transformer: Move functionality of common transforms into stores (#6243) (overlookmotel)
+- 1c31932 transformer: Rename var in `VarDeclarations` common transform (#6242) (overlookmotel)
+- 0400ff9 transformer: `VarDeclarations` common transform: check if at top level with `ctx.parent()` (#6231) (overlookmotel)
+- 235cdba transformer: Use AstBuilder instance from TraverseCtx (#6209) (overlookmotel)
+- a7ed29e transformer: Insert `import` statement or `require` depending on source type (#6191) (overlookmotel)
+- 4c63f0e transformer: Rename methods (#6190) (overlookmotel)
+- 900cb46 transformer: Convert `ModuleImports` into common transform (#6186) (overlookmotel)
+- 00e2802 transformer: Introduce `TopLevelStatements` common transform (#6185) (overlookmotel)
+- 70d4c56 transformer: Rename `VarDeclarationsStore` methods (#6184) (overlookmotel)
+- 81be545 transformer: Export `var_declarations` module from `common` module (#6183) (overlookmotel)
+- 02fedf5 transformer: Shorten import (#6180) (overlookmotel)
+- f2ac584 transformer: Use TraverseCtx's ast in ModuleImports (#6175) (Dunqing)
+- 21b08ba transformer: Shared `VarDeclarations` (#6170) (overlookmotel)
+- 0dd9a2e traverse: Add helper methods to `BoundIdentifier` (#6341) (overlookmotel)
+
 ## [0.30.5] - 2024-09-29
 
 ### Bug Fixes
