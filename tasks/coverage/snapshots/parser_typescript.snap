@@ -3,7 +3,7 @@ commit: a709f989
 parser_typescript Summary:
 AST Parsed     : 6470/6479 (99.86%)
 Positive Passed: 6459/6479 (99.69%)
-Negative Passed: 1234/5715 (21.59%)
+Negative Passed: 1235/5715 (21.61%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration10.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration11.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration13.ts
@@ -1906,7 +1906,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/statics.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/staticsNotInScopeInClodule.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/strictFunctionTypesErrors.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/strictModeInConstructor.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/strictModeReservedWordInModuleDeclaration.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/strictNullEmptyDestructuring.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/strictNullNotNullIndexTypeNoLib.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/strictOptionalProperties3.ts
@@ -12021,6 +12020,37 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·        ──────
    ╰────
 
+  × The keyword 'public' is reserved
+   ╭─[typescript/tests/cases/compiler/strictModeReservedWordInModuleDeclaration.ts:2:8]
+ 1 │ "use strict"
+ 2 │ module public { }
+   ·        ──────
+ 3 │ module private { }
+   ╰────
+
+  × The keyword 'private' is reserved
+   ╭─[typescript/tests/cases/compiler/strictModeReservedWordInModuleDeclaration.ts:3:8]
+ 2 │ module public { }
+ 3 │ module private { }
+   ·        ───────
+ 4 │ module public.whatever {
+   ╰────
+
+  × The keyword 'public' is reserved
+   ╭─[typescript/tests/cases/compiler/strictModeReservedWordInModuleDeclaration.ts:4:8]
+ 3 │ module private { }
+ 4 │ module public.whatever {
+   ·        ──────
+ 5 │ }
+   ╰────
+
+  × The keyword 'private' is reserved
+   ╭─[typescript/tests/cases/compiler/strictModeReservedWordInModuleDeclaration.ts:6:8]
+ 5 │ }
+ 6 │ module private.public.foo { }
+   ·        ───────
+   ╰────
+
   × The keyword 'package' is reserved
    ╭─[typescript/tests/cases/compiler/strictModeWordInImportDeclaration.ts:2:13]
  1 │ "use strict"
@@ -13041,21 +13071,20 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ 
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[typescript/tests/cases/conformance/ambient/ambientModuleDeclarationWithReservedIdentifierInDottedPath.ts:11:8]
- 10 │ 
- 11 │ declare module debugger {} // still an error
-    ·        ▲
-    ╰────
-  help: Try insert a semicolon here
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/ambient/ambientModuleDeclarationWithReservedIdentifierInDottedPath2.ts:9:8]
- 8 │ 
- 9 │ declare namespace debugger {} // still an error
-   ·        ▲
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/ambient/ambientModuleDeclarationWithReservedIdentifierInDottedPath.ts:3:23]
+ 2 │ 
+ 3 │ declare module chrome.debugger {
+   ·                       ────────
+ 4 │     declare var tabId: number;
    ╰────
-  help: Try insert a semicolon here
+
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/ambient/ambientModuleDeclarationWithReservedIdentifierInDottedPath2.ts:1:26]
+ 1 │ declare namespace chrome.debugger {
+   ·                          ────────
+ 2 │     declare var tabId: number;
+   ╰────
 
   × Cannot use `await` as an identifier in an async context
    ╭─[typescript/tests/cases/conformance/async/es2017/asyncArrowFunction/asyncArrowFunction5_es2017.ts:1:18]

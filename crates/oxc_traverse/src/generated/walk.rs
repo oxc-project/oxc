@@ -4987,7 +4987,7 @@ pub(crate) unsafe fn walk_ts_module_declaration_name<'a, Tr: Traverse<'a>>(
     traverser.enter_ts_module_declaration_name(&mut *node, ctx);
     match &mut *node {
         TSModuleDeclarationName::Identifier(node) => {
-            walk_identifier_name(traverser, node as *mut _, ctx)
+            walk_binding_identifier(traverser, node as *mut _, ctx)
         }
         TSModuleDeclarationName::StringLiteral(node) => {
             walk_string_literal(traverser, node as *mut _, ctx)

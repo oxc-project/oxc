@@ -4109,7 +4109,7 @@ pub mod walk_mut {
         it: &mut TSModuleDeclarationName<'a>,
     ) {
         match it {
-            TSModuleDeclarationName::Identifier(it) => visitor.visit_identifier_name(it),
+            TSModuleDeclarationName::Identifier(it) => visitor.visit_binding_identifier(it),
             TSModuleDeclarationName::StringLiteral(it) => visitor.visit_string_literal(it),
         }
     }

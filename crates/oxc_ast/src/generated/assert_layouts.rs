@@ -1091,19 +1091,19 @@ const _: () = {
     assert!(size_of::<TSTypePredicateName>() == 16usize);
     assert!(align_of::<TSTypePredicateName>() == 8usize);
 
-    assert!(size_of::<TSModuleDeclaration>() == 64usize);
+    assert!(size_of::<TSModuleDeclaration>() == 72usize);
     assert!(align_of::<TSModuleDeclaration>() == 8usize);
     assert!(offset_of!(TSModuleDeclaration, span) == 0usize);
     assert!(offset_of!(TSModuleDeclaration, id) == 8usize);
-    assert!(offset_of!(TSModuleDeclaration, body) == 40usize);
-    assert!(offset_of!(TSModuleDeclaration, kind) == 56usize);
-    assert!(offset_of!(TSModuleDeclaration, declare) == 57usize);
-    assert!(offset_of!(TSModuleDeclaration, scope_id) == 60usize);
+    assert!(offset_of!(TSModuleDeclaration, body) == 48usize);
+    assert!(offset_of!(TSModuleDeclaration, kind) == 64usize);
+    assert!(offset_of!(TSModuleDeclaration, declare) == 65usize);
+    assert!(offset_of!(TSModuleDeclaration, scope_id) == 68usize);
 
     assert!(size_of::<TSModuleDeclarationKind>() == 1usize);
     assert!(align_of::<TSModuleDeclarationKind>() == 1usize);
 
-    assert!(size_of::<TSModuleDeclarationName>() == 32usize);
+    assert!(size_of::<TSModuleDeclarationName>() == 40usize);
     assert!(align_of::<TSModuleDeclarationName>() == 8usize);
 
     assert!(size_of::<TSModuleDeclarationBody>() == 16usize);
@@ -2628,19 +2628,19 @@ const _: () = {
     assert!(size_of::<TSTypePredicateName>() == 12usize);
     assert!(align_of::<TSTypePredicateName>() == 4usize);
 
-    assert!(size_of::<TSModuleDeclaration>() == 44usize);
+    assert!(size_of::<TSModuleDeclaration>() == 48usize);
     assert!(align_of::<TSModuleDeclaration>() == 4usize);
     assert!(offset_of!(TSModuleDeclaration, span) == 0usize);
     assert!(offset_of!(TSModuleDeclaration, id) == 8usize);
-    assert!(offset_of!(TSModuleDeclaration, body) == 28usize);
-    assert!(offset_of!(TSModuleDeclaration, kind) == 36usize);
-    assert!(offset_of!(TSModuleDeclaration, declare) == 37usize);
-    assert!(offset_of!(TSModuleDeclaration, scope_id) == 40usize);
+    assert!(offset_of!(TSModuleDeclaration, body) == 32usize);
+    assert!(offset_of!(TSModuleDeclaration, kind) == 40usize);
+    assert!(offset_of!(TSModuleDeclaration, declare) == 41usize);
+    assert!(offset_of!(TSModuleDeclaration, scope_id) == 44usize);
 
     assert!(size_of::<TSModuleDeclarationKind>() == 1usize);
     assert!(align_of::<TSModuleDeclarationKind>() == 1usize);
 
-    assert!(size_of::<TSModuleDeclarationName>() == 20usize);
+    assert!(size_of::<TSModuleDeclarationName>() == 24usize);
     assert!(align_of::<TSModuleDeclarationName>() == 4usize);
 
     assert!(size_of::<TSModuleDeclarationBody>() == 8usize);
