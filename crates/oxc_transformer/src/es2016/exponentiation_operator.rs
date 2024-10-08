@@ -37,7 +37,7 @@ use oxc_ast::{ast::*, NONE};
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator};
-use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
+use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
 
 use crate::TransformCtx;
 
@@ -142,7 +142,7 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
     /// Get left side of `Math.pow(pow_left, ...)` for identifier
     fn get_pow_left_identifier(
         &mut self,
-        ident: &IdentifierReference<'a>,
+        ident: &mut IdentifierReference<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> (
         // Left side of `Math.pow(pow_left, ...)`
@@ -153,10 +153,16 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
         let mut temp_var_inits = ctx.ast.vec();
 
         // Make sure side-effects of evaluating `left` only happen once
-        let symbol_id = ctx.symbols().get_reference(ident.reference_id().unwrap()).symbol_id();
-        let pow_left = if let Some(symbol_id) = symbol_id {
+        let reference = ctx.scoping.symbols_mut().get_reference_mut(ident.reference_id().unwrap());
+        let pow_left = if let Some(symbol_id) = reference.symbol_id() {
             // This variable is declared in scope so evaluating it multiple times can't trigger a getter.
             // No need for a temp var.
+            // `left **= right` is being transformed to `left = Math.pow(left, right)`,
+            // so if `left` is no longer being read from, update its `ReferenceFlags`.
+            if matches!(ctx.ancestry.parent(), Ancestor::ExpressionStatementExpression(_)) {
+                *reference.flags_mut() = ReferenceFlags::Write;
+            }
+
             ctx.ast.expression_from_identifier_reference(ctx.create_bound_reference_id(
                 SPAN,
                 ident.name.clone(),
@@ -447,15 +453,17 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
         assign_expr.operator = AssignmentOperator::Assign;
     }
 
-    /// Replace expression `expr` with `(temp1, temp2, expr)` (temp1, temp2 etc from `temp_var_inits`)
+    /// If needs temp var initializers, replace expression `expr` with `(temp1, temp2, expr)`.
     fn revise_expression(
         expr: &mut Expression<'a>,
         mut temp_var_inits: Vec<'a, Expression<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        temp_var_inits.reserve_exact(1);
-        temp_var_inits.push(ctx.ast.move_expression(expr));
-        *expr = ctx.ast.expression_sequence(SPAN, temp_var_inits);
+        if !temp_var_inits.is_empty() {
+            temp_var_inits.reserve_exact(1);
+            temp_var_inits.push(ctx.ast.move_expression(expr));
+            *expr = ctx.ast.expression_sequence(SPAN, temp_var_inits);
+        }
     }
 
     /// `Math.pow(left, right)`
