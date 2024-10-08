@@ -213,7 +213,7 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
         };
 
         let (replacement_left, pow_left, temp_var_inits) =
-            self.get_pow_left_identifier_static_member(member_expr, ctx);
+            self.get_pow_left_static_member(member_expr, ctx);
         assign_expr.left = replacement_left;
         Self::convert_assignment(assign_expr, pow_left, ctx);
         Self::revise_expression(expr, temp_var_inits, ctx);
@@ -221,7 +221,7 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
 
     /// Get left side of `Math.pow(pow_left, ...)` for static member expression
     /// and replacement for left side of assignment.
-    fn get_pow_left_identifier_static_member(
+    fn get_pow_left_static_member(
         &mut self,
         member_expr: &mut StaticMemberExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -311,14 +311,13 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
             unreachable!()
         };
 
-        let (pow_left, temp_var_inits) =
-            self.get_pow_left_identifier_computed_member(member_expr, ctx);
+        let (pow_left, temp_var_inits) = self.get_pow_left_computed_member(member_expr, ctx);
         Self::convert_assignment(assign_expr, pow_left, ctx);
         Self::revise_expression(expr, temp_var_inits, ctx);
     }
 
     /// Get left side of `Math.pow(pow_left, ...)` for computed member expression
-    fn get_pow_left_identifier_computed_member(
+    fn get_pow_left_computed_member(
         &mut self,
         member_expr: &mut ComputedMemberExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
