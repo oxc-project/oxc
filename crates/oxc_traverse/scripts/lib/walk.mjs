@@ -1,6 +1,16 @@
 import assert from 'assert';
 import { camelToSnake, snakeToCamel } from './utils.mjs';
 
+/**
+ * @typedef {import('./parse.mjs').Types} Types
+ * @typedef {import('./parse.mjs').StructType} StructType
+ * @typedef {import('./parse.mjs').EnumType} EnumType
+ * @typedef {import('./parse.mjs').Field} Field
+ */
+
+/**
+ * @param {Types} types
+ */
 export default function generateWalkFunctionsCode(types) {
   let walkMethods = '';
   for (const type of Object.values(types)) {
@@ -49,7 +59,12 @@ export default function generateWalkFunctionsCode(types) {
   `;
 }
 
+/**
+ * @param {StructType} type
+ * @param {Types} types
+ */
 function generateWalkForStruct(type, types) {
+  /** @type {Field | undefined} */
   let scopeIdField;
   const visitedFields = type.fields.filter(field => {
     if (field.name === 'scope_id' && field.typeName === `Cell<Option<ScopeId>>`) {
@@ -59,7 +74,10 @@ function generateWalkForStruct(type, types) {
   });
 
   const { scopeArgs } = type;
-  let scopeEnterField, enterScopeCode = '', exitScopeCode = '';
+  /** @type {Field | undefined} */
+  let scopeEnterField;
+  let enterScopeCode = '', exitScopeCode = '';
+
   if (scopeArgs && scopeIdField) {
     // Get field to enter scope before
     const enterFieldName = scopeArgs.enterScopeBefore;
@@ -204,6 +222,10 @@ function makeFieldCode(field) {
   return `(node as *mut u8).add(ancestor::${field.offsetVarName}) as *mut ${field.typeName}`;
 }
 
+/**
+ * @param {EnumType} type
+ * @param {Types} types
+ */
 function generateWalkForEnum(type, types) {
   const variantCodes = type.variants.map((variant) => {
     const variantType = types[variant.innerTypeName];
