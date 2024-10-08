@@ -1,15 +1,15 @@
 namespace Foo {
   export namespace Bar {
-    export const A = () => {};
+    export const A = () => { };
 
-    function B() {};
+    function B() { };
     export const B1 = B;
   }
 
-  export const C = () => {};
-  export function D() {};
+  export const C = () => { };
+  export function D() { };
 
   namespace NotExported {
-    export const E = () => {};
+    export const E = () => { };
   }
 }
