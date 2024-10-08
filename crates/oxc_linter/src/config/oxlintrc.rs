@@ -4,7 +4,10 @@ use oxc_diagnostics::OxcDiagnostic;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use super::{env::OxlintEnv, globals::OxlintGlobals, rules::OxlintRules, settings::OxlintSettings};
+use super::{
+    categories::OxlintCategories, env::OxlintEnv, globals::OxlintGlobals, rules::OxlintRules,
+    settings::OxlintSettings,
+};
 
 use crate::{options::LintPlugins, utils::read_to_string};
 
@@ -45,6 +48,7 @@ use crate::{options::LintPlugins, utils::read_to_string};
 #[non_exhaustive]
 pub struct Oxlintrc {
     pub plugins: LintPlugins,
+    pub categories: OxlintCategories,
     /// See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html).
     pub rules: OxlintRules,
     pub settings: OxlintSettings,
