@@ -130,12 +130,13 @@ jobs:
           mv target/${{ matrix.target }}/release/*.@(so|dll|dylib) napi/transform/transform.${{ matrix.code-target }}.node
           ls napi/transform
 
+      - uses: ./.github/actions/pnpm
+        if: ${{ contains(matrix.target, 'x86') && !contains(matrix.target, 'musl') }} # Need docker for aarch64
+
       - name: Test
         working-directory: napi/transform
         if: ${{ contains(matrix.target, 'x86') && !contains(matrix.target, 'musl') }} # Need docker for aarch64
-        run: |
-          ls
-          node test.mjs
+        run: pnpm run test
 
       # The binary is zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
       - name: Archive Binary
