@@ -129,6 +129,10 @@ const defineSSRCustomElement = () => {
   return /* @__PURE__ */ /* @__NO_SIDE_EFFECTS__ */ /* #__NO_SIDE_EFFECTS__ */ defineCustomElement(options, extraOptions, hydrate);
 };
         ",
+        "
+        const Component = // #__PURE__
+        React.forwardRef((props, ref) => {});
+        ",
     ];
 
     snapshot("pure_comments", &cases);

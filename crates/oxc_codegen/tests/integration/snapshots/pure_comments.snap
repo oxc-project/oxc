@@ -269,3 +269,11 @@ const defineSSRCustomElement = () => {
 const defineSSRCustomElement = () => {
 	return /* @__PURE__ */ /* @__NO_SIDE_EFFECTS__ */ /* #__NO_SIDE_EFFECTS__ */ defineCustomElement(options, extraOptions, hydrate);
 };
+
+########## 20
+
+        const Component = // #__PURE__
+        React.forwardRef((props, ref) => {});
+        
+----------
+const Component = /* #__PURE__*/ React.forwardRef((props, ref) => {});

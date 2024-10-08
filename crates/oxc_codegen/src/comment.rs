@@ -140,7 +140,13 @@ impl<'a> Codegen<'a> {
             if !Self::is_annotation_comment(&comment, source_text) {
                 continue;
             }
-            self.print_str(comment.real_span().source_text(source_text));
+            if comment.is_line() {
+                self.print_str("/*");
+                self.print_str(comment.span.source_text(source_text));
+                self.print_str("*/");
+            } else {
+                self.print_str(comment.real_span().source_text(source_text));
+            }
             self.print_hard_space();
         }
     }
