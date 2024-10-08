@@ -4,6 +4,56 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.9.10] - 2024-10-07
+
+- 5a73a66 regular_expression: [**BREAKING**] Simplify public APIs (#6262) (leaysgur)
+
+### Features
+
+- 376cc09 linter: Implement `no-throw-literal` (#6144) (dalaoshu)
+- 5957214 linter: Allow fixing in files with source offsets (#6197) (camchenry)
+- a089e19 linter: Eslint/no-else-return (#4305) (yoho)
+- 183739f linter: Implement prefer-await-to-callbacks (#6153) (dalaoshu)
+- ae539af linter: Implement no-return-assign (#6108) (Radu Baston)
+
+### Bug Fixes
+
+- 9e9808b linter: Fix regression when parsing ts in vue files (#6336) (Boshen)
+- 93c6db6 linter: Improve docs and diagnostics message for no-else-return (#6327) (DonIsaac)
+- e0a3378 linter: Correct false positive in `unicorn/prefer-string-replace-all` (#6263) (H11)
+- ea28ee9 linter: Improve the fixer of `prefer-namespace-keyword` (#6230) (dalaoshu)
+- f6a3450 linter: Get correct source offsets for astro files (#6196) (camchenry)
+- be0030c linter: Allow whitespace control characters in `no-control-regex` (#6140) (camchenry)
+- e7e8ead linter: False positive in `no-return-assign` (#6128) (DonIsaac)
+
+### Performance
+
+- ac0a82a linter: Reuse allocator when there are multiple source texts (#6337) (Boshen)
+- 50a0029 linter: Do not concat vec in `no-useless-length-check` (#6276) (camchenry)
+
+### Documentation
+
+- 7ca70dd linter: Add docs for `ContextHost` and `LintContext` (#6272) (camchenry)
+- a949ecb linter: Improve docs for `eslint/getter-return` (#6229) (DonIsaac)
+- 14ba263 linter: Improve docs for `eslint-plugin-import` rules (#6131) (dalaoshu)
+
+### Refactor
+
+- 642725c linter: Rename vars from `ast_node_id` to `node_id` (#6305) (overlookmotel)
+- 8413175 linter: Move shared function from utils to rule (#6127) (dalaoshu)
+- ba9c372 linter: Make jest/vitest rule mapping more clear (#6273) (camchenry)
+- 82b8f21 linter: Add schemars and serde traits to AllowWarnDeny and RuleCategories (#6119) (DonIsaac)
+- ea908f7 linter: Consolidate file loading logic (#6130) (DonIsaac)
+- db751f0 linter: Use regexp AST visitor in `no-control-regex` (#6129) (camchenry)
+- 3aa7e42 linter: Use RegExp AST visitor for `no-hex-escape` (#6117) (camchenry)
+- 9d5b44a linter: Use regex visitor in `no-regex-spaces` (#6063) (camchenry)
+- 0d44cf7 linter: Use regex visitor in `no-useless-escape` (#6062) (camchenry)
+- eeb8873 linter: Use regex visitor in `no-empty-character-class` (#6058) (camchenry)
+
+### Testing
+
+- d883562 linter: Invalid `eslint/no-unused-vars` options (#6228) (DonIsaac)
+
 ## [0.9.9] - 2024-09-27
 
 ### Bug Fixes
