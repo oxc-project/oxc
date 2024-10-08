@@ -169,6 +169,14 @@ pub fn class_declaration(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
+/// A class member cannot have the 'const' keyword. ts(1248)
+#[cold]
+pub fn const_class_member(span: Span) -> OxcDiagnostic {
+    ts_error("1248", "A class member cannot have the 'const' keyword.")
+        .with_help("Did you mean `readonly`?")
+        .with_label(span)
+}
+
 #[cold]
 pub fn binding_rest_element_last(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("A rest element must be last in a destructuring pattern").with_label(span)

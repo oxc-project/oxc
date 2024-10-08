@@ -165,10 +165,17 @@ Negative Passed: 20/20 (100.00%)
    ╰────
   help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[misc/fail/oxc-4212-1.ts:1:16]
+  × TS(1248): A class member cannot have the 'const' keyword.
+   ╭─[misc/fail/oxc-4212-1.ts:1:17]
  1 │ class a { const enum b(); }
-   ·                ▲
+   ·                 ────
+   ╰────
+  help: Did you mean `readonly`?
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/oxc-4212-1.ts:1:21]
+ 1 │ class a { const enum b(); }
+   ·                     ▲
    ╰────
   help: Try insert a semicolon here
 

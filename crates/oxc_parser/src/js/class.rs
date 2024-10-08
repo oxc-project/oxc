@@ -185,7 +185,7 @@ impl<'a> ParserImpl<'a> {
 
         let span = self.start_span();
 
-        let modifiers = self.parse_modifiers(true, false, true);
+        let modifiers = self.parse_modifiers(true, true, true);
 
         let mut kind = MethodDefinitionKind::Method;
         let mut generator = false;
@@ -275,6 +275,10 @@ impl<'a> ParserImpl<'a> {
 
         if optional && definite {
             self.error(diagnostics::optional_definite_property(optional_span.expand_right(1)));
+        }
+
+        if modifiers.contains(ModifierKind::Const) {
+            self.error(diagnostics::const_class_member(key.span()));
         }
 
         if let PropertyKey::PrivateIdentifier(private_ident) = &key {
