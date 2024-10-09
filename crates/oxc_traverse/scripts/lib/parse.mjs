@@ -57,6 +57,7 @@ const FILENAMES = ['js.rs', 'jsx.rs', 'literal.rs', 'ts.rs'];
  * @property {string} flags
  * @property {string | null} strictIf
  * @property {string | null} enterScopeBefore
+ * @property {string | null} exitScopeBefore
  */
 
 /**
@@ -87,9 +88,18 @@ class Position {
     this.index = index;
   }
 
+  /**
+   * @param {unknown} condition
+   * @param {string} [message]
+   *
+   * @returns {asserts condition}
+   */
   assert(condition, message) {
     if (!condition) this.throw(message);
   }
+  /**
+   * @param {string} [message]
+   */
   throw(message) {
     throw new Error(`${message || 'Unknown error'} (at ${this.filename}:${this.index + 1})`);
   }
@@ -198,12 +208,14 @@ function parseStruct(name, rawName, lines, scopeArgs) {
   const fields = [];
 
   while (!lines.isEnd()) {
-    let isScopeEntry = false, line;
+    let isScopeEntry = false, isScopeExit = false, line;
     while (!lines.isEnd()) {
       line = lines.next();
       if (line === '') continue;
       if (line === '#[scope(enter_before)]') {
         isScopeEntry = true;
+      } else if (line === '#[scope(exit_before)]') {
+        isScopeExit = true;
       } else if (line.startsWith('#[')) {
         while (!line.endsWith(']')) {
           line = lines.next();
@@ -222,6 +234,7 @@ function parseStruct(name, rawName, lines, scopeArgs) {
     fields.push({ name, typeName, rawName, rawTypeName, innerTypeName, wrappers });
 
     if (isScopeEntry) scopeArgs.enterScopeBefore = name;
+    if (isScopeExit) scopeArgs.exitScopeBefore = name;
   }
   return { kind: 'struct', name, rawName, fields, scopeArgs };
 }
@@ -284,13 +297,25 @@ function parseScopeArgs(lines, scopeArgs) {
 const SCOPE_ARGS_KEYS = { flags: 'flags', strict_if: 'strictIf' };
 
 /**
+ * @param {string} argsStr
+ * @param {ScopeArgs| null} args
+ * @param {Position} position
+ *
  * @returns {ScopeArgs}
  */
 function parseScopeArgsStr(argsStr, args, position) {
-  if (!args) args = { flags: 'ScopeFlags::empty()', strictIf: null, enterScopeBefore: null };
+  if (!args) {
+    args = {
+      flags: 'ScopeFlags::empty()',
+      strictIf: null,
+      enterScopeBefore: null,
+      exitScopeBefore: null,
+    };
+  }
 
   if (!argsStr) return args;
 
+  /** @param {RegExp} regex */
   const matchAndConsume = (regex) => {
     const match = argsStr.match(regex);
     position.assert(match);

@@ -75,7 +75,9 @@ function generateWalkForStruct(type, types) {
 
   const { scopeArgs } = type;
   /** @type {Field | undefined} */
-  let scopeEnterField;
+  let scopeEnterField,
+    /** @type {Field | undefined} */
+    scopeExitField;
   let enterScopeCode = '', exitScopeCode = '';
 
   if (scopeArgs && scopeIdField) {
@@ -90,6 +92,17 @@ function generateWalkForStruct(type, types) {
       );
     } else {
       scopeEnterField = visitedFields[0];
+    }
+
+    // Get field to exit scope before
+    const exitFieldName = scopeArgs.exitScopeBefore;
+    if (exitFieldName) {
+      scopeExitField = visitedFields.find(field => field.name === exitFieldName);
+      assert(
+        scopeExitField,
+        `\`ast\` attr says to exit scope before field '${exitFieldName}' ` +
+          `in '${type.name}', but that field is not visited`,
+      );
     }
 
     // TODO: Maybe this isn't quite right. `scope_id` fields are `Cell<Option<ScopeId>>`,
@@ -107,7 +120,11 @@ function generateWalkForStruct(type, types) {
   const fieldsCodes = visitedFields.map((field, index) => {
     const fieldWalkName = `walk_${camelToSnake(field.innerTypeName)}`,
       fieldCamelName = snakeToCamel(field.name);
-    const scopeCode = field === scopeEnterField ? enterScopeCode : '';
+    const scopeCode = field === scopeEnterField
+      ? enterScopeCode
+      : field === scopeExitField
+      ? exitScopeCode
+      : '';
 
     let tagCode = '', retagCode = '';
     if (index === 0) {
@@ -212,7 +229,7 @@ function generateWalkForStruct(type, types) {
     ) {
       traverser.enter_${typeSnakeName}(&mut *node, ctx);
       ${fieldsCodes.join('\n')}
-      ${exitScopeCode}
+      ${scopeExitField ? '' : exitScopeCode}
       traverser.exit_${typeSnakeName}(&mut *node, ctx);
     }
   `.replace(/\n\s*\n+/g, '\n');
