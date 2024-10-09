@@ -35,6 +35,77 @@ Example
 ```
 
 
+## categories
+
+type: `object`
+
+Configure an entire category of rules all at once.
+
+Rules enabled or disabled this way will be overwritten by individual rules in the `rules` field.
+
+# Example
+```json
+{
+  "categories": {
+    "correctness": "warn"
+  },
+  "rules": {
+    "eslint/no-unused-vars": "error"
+  }
+}
+```
+
+
+### categories.correctness
+
+
+
+
+
+
+### categories.nursery
+
+
+
+
+
+
+### categories.pedantic
+
+
+
+
+
+
+### categories.perf
+
+
+
+
+
+
+### categories.restriction
+
+
+
+
+
+
+### categories.style
+
+
+
+
+
+
+### categories.suspicious
+
+
+
+
+
+
+
 ## env
 
 type: `object`

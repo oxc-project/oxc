@@ -1,5 +1,8 @@
 import { camelToSnake } from './utils.mjs';
 
+/**
+ * @param {import('./parse.mjs').Types} types
+ */
 export default function generateTraverseTraitCode(types) {
   const typesArr = Object.values(types);
   typesArr.push({ name: 'Statements', rawName: "Vec<'a, Statement<'a>>" });

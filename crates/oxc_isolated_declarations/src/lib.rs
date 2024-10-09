@@ -31,14 +31,20 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::scope::ScopeTree;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy)]
 pub struct IsolatedDeclarationsOptions {
-    /// Do not emit declarations for code that has an @internal annotation in its JSDoc comment.
-    /// This is an internal compiler option; use at your own risk, because the compiler does not check that the result is valid.
-    /// <https://www.typescriptlang.org/tsconfig/#stripInternal>
+    /// Do not emit declarations for code that has an `@internal` annotation in its JSDoc comment.
+    /// This is an internal compiler option; use at your own risk, because the compiler does not
+    /// check that the result is valid.
+    ///
+    /// Default: `false`
+    ///
+    /// ## References
+    /// [TSConfig - `stripInternal`](https://www.typescriptlang.org/tsconfig/#stripInternal)
     pub strip_internal: bool,
 }
 
+#[non_exhaustive]
 pub struct IsolatedDeclarationsReturn<'a> {
     pub program: Program<'a>,
     pub errors: Vec<OxcDiagnostic>,

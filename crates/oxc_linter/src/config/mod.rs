@@ -1,3 +1,4 @@
+mod categories;
 mod env;
 mod globals;
 mod oxlintrc;

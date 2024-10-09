@@ -204,8 +204,19 @@ fn test() {
     pass.extend(pass_vitest);
     fail.extend(fail_vitest);
 
+    let fix = vec![
+        ("xdescribe('foo', () => {})", "describe.skip('foo', () => {})"),
+        ("fdescribe('foo', () => {})", "describe.only('foo', () => {})"),
+        ("xtest('foo', () => {})", "test.skip('foo', () => {})"),
+        // NOTE(@DonIsaac): is this intentional?
+        // ("ftest('foo', () => {})", "test.only('foo', () => {})"),
+        ("xit('foo', () => {})", "it.skip('foo', () => {})"),
+        ("fit('foo', () => {})", "it.only('foo', () => {})"),
+    ];
+
     Tester::new(NoTestPrefixes::NAME, pass, fail)
         .with_jest_plugin(true)
         .with_vitest_plugin(true)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

@@ -1913,12 +1913,12 @@ pub mod walk {
     pub fn walk_ts_conditional_type<'a, V: Visit<'a>>(visitor: &mut V, it: &TSConditionalType<'a>) {
         let kind = AstKind::TSConditionalType(visitor.alloc(it));
         visitor.enter_node(kind);
-        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_ts_type(&it.check_type);
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_ts_type(&it.extends_type);
         visitor.visit_ts_type(&it.true_type);
-        visitor.visit_ts_type(&it.false_type);
         visitor.leave_scope();
+        visitor.visit_ts_type(&it.false_type);
         visitor.leave_node(kind);
     }
 

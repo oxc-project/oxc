@@ -1,7 +1,7 @@
 {
   "name": "oxc_benchmark",
   "version": "0.0.0",
-  "packageManager": "pnpm@9.11.0",
+  "packageManager": "pnpm@9.12.1",
   "scripts": {
     "start": "node capture.mjs"
   },

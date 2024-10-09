@@ -464,6 +464,7 @@ impl<'a> VisitBuilder<'a> {
         };
 
         let mut enter_scope_at = 0;
+        let mut exit_scope_at: Option<usize> = None;
         let mut enter_node_at = 0;
         let fields_visits: Vec<TokenStream> = struct_
             .fields
@@ -481,6 +482,7 @@ impl<'a> VisitBuilder<'a> {
                 let visit_args = markers.visit.visit_args.clone();
 
                 let have_enter_scope = markers.scope.enter_before;
+                let have_exit_scope = markers.scope.exit_before;
                 let have_enter_node = markers.visit.enter_before;
 
                 let (args_def, args) = visit_args
@@ -525,6 +527,18 @@ impl<'a> VisitBuilder<'a> {
                     };
                     enter_scope_at = ix;
                 }
+                if have_exit_scope {
+                    assert!(
+                        exit_scope_at.is_none(),
+                        "Scopes cannot be exited more than once. Remove the extra `#[scope(exit_before)]` attribute(s)."
+                    );
+                    let scope_exit = &scope_events.1;
+                    result = quote! {
+                        #scope_exit
+                        #result
+                    };
+                    exit_scope_at = Some(ix);
+                }
 
                 #[expect(unreachable_code)]
                 if have_enter_node {
@@ -563,17 +577,25 @@ impl<'a> VisitBuilder<'a> {
             },
         };
 
-        let with_scope_events = |body: TokenStream| match (scope_events, enter_scope_at) {
-            ((enter, leave), 0) => quote! {
-                #enter
-                #body
-                #leave
-            },
-            ((_, leave), _) => quote! {
-                #body
-                #leave
-            },
-        };
+        let with_scope_events =
+            |body: TokenStream| match (scope_events, enter_scope_at, exit_scope_at) {
+                ((enter, leave), 0, None) => quote! {
+                    #enter
+                    #body
+                    #leave
+                },
+                ((_, leave), _, None) => quote! {
+                    #body
+                    #leave
+                },
+                ((enter, _), 0, Some(_)) => quote! {
+                    #enter
+                    #body
+                },
+                ((_, _), _, Some(_)) => quote! {
+                    #body
+                },
+            };
 
         let body = with_node_events(with_scope_events(quote!(#(#fields_visits)*)));
 

@@ -1,5 +1,8 @@
 import { camelToSnake } from './utils.mjs';
 
+/**
+ * @param {import('./parse.mjs').Types} types
+ */
 export default function generateScopesCollectorCode(types) {
   let methods = '';
   for (const type of Object.values(types)) {

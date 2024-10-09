@@ -84,7 +84,7 @@ declare_oxc_lint!(
     /// };
     /// ```
     SortKeys,
-    pedantic,
+    style,
     pending
 );
 

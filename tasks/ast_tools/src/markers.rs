@@ -64,7 +64,10 @@ pub struct VisitMarkers {
 /// A struct representing `#[scope(...)]` markers
 #[derive(Default, Debug)]
 pub struct ScopeMarkers {
+    /// `#[scope(enter_before)]`
     pub enter_before: bool,
+    /// `#[scope(exit_before)]`
+    pub exit_before: bool,
 }
 
 /// A struct representing all the helper attributes that might be used with `#[generate_derive(...)]`
@@ -204,7 +207,10 @@ where
         || Ok(ScopeMarkers::default()),
         |attr| {
             attr.parse_args_with(Ident::parse)
-                .map(|id| ScopeMarkers { enter_before: id == "enter_before" })
+                .map(|id| ScopeMarkers {
+                    enter_before: id == "enter_before",
+                    exit_before: id == "exit_before",
+                })
                 .normalize()
         },
     )

@@ -140,5 +140,22 @@ fn test() {
         ("! a <= b", Some(serde_json::json!([{ "enforceForOrderingRelations": true }]))),
     ];
 
-    Tester::new(NoUnsafeNegation::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("!a in b", "!(a in b)"),
+        ("(!a in b)", "(!(a in b))"),
+        ("!(a) in b", "!(a in b)"),
+        ("!a instanceof b", "!(a instanceof b)"),
+        ("(!a instanceof b)", "(!(a instanceof b))"),
+        ("!(a) instanceof b", "!(a instanceof b)"),
+        // FIXME: I think these should be failing. I encountered these while
+        // making sure all fix-reporting rules have fix test cases. Debugging +
+        // fixing this is out of scope for this PR.
+        // ("if (! a < b) {}", "if (!(a < b)) {}"),
+        // ("while (! a > b) {}", "while (!(a > b)) {}"),
+        // ("foo = ! a <= b;", "foo = !(a <= b);"),
+        // ("foo = ! a >= b;", "foo = !(a >= b);"),
+        // ("!a <= b", "!(a <= b)"),
+    ];
+
+    Tester::new(NoUnsafeNegation::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

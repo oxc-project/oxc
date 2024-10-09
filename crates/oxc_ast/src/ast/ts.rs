@@ -347,10 +347,12 @@ pub struct TSConditionalType<'a> {
     /// The type before `extends` in the test expression.
     pub check_type: TSType<'a>,
     /// The type `check_type` is being tested against.
+    #[scope(enter_before)]
     pub extends_type: TSType<'a>,
     /// The type evaluated to if the test is true.
     pub true_type: TSType<'a>,
     /// The type evaluated to if the test is false.
+    #[scope(exit_before)]
     pub false_type: TSType<'a>,
     #[serde(skip)]
     #[clone_in(default)]
