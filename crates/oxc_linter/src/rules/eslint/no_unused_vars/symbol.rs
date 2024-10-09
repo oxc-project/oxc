@@ -182,7 +182,16 @@ impl<'s, 'a> Symbol<'s, 'a> {
                 AstKind::ModuleDeclaration(module) => {
                     return module.is_export();
                 }
-                AstKind::VariableDeclaration(_) => {
+                AstKind::ExportDefaultDeclaration(_) => {
+                    return true;
+                }
+                AstKind::VariableDeclaration(_)
+                | AstKind::ExpressionArrayElement(_)
+                | AstKind::ArrayExpressionElement(_)
+                | AstKind::ArrayExpression(_)
+                | AstKind::ParenthesizedExpression(_)
+                | AstKind::TSAsExpression(_)
+                | AstKind::TSSatisfiesExpression(_) => {
                     continue;
                 }
                 _ => {
