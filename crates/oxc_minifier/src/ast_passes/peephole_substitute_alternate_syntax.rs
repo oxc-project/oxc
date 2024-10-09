@@ -106,6 +106,11 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
                     self.changed = true;
                 }
             }
+            Expression::ChainExpression(chain_expr) => {
+                if let ChainElement::CallExpression(call_expr) = &mut chain_expr.expression {
+                    self.try_fold_chain_call_expression(call_expr, ctx);
+                }
+            }
             _ => {}
         }
     }
@@ -349,6 +354,11 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
         }
     }
 
+    fn is_window_object(expr: &Expression) -> bool {
+        expr.as_member_expression()
+            .is_some_and(|mem_expr| mem_expr.is_specific_member_access("window", "Object"))
+    }
+
     fn try_fold_new_expression(
         &mut self,
         new_expr: &mut NewExpression<'a>,
@@ -356,7 +366,8 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
     ) -> Option<Expression<'a>> {
         // `new Object` -> `{}`
         if new_expr.arguments.is_empty()
-            && new_expr.callee.is_global_reference_name("Object", ctx.symbols())
+            && (new_expr.callee.is_global_reference_name("Object", ctx.symbols())
+                || Self::is_window_object(&new_expr.callee))
         {
             Some(ctx.ast.expression_object(new_expr.span, ctx.ast.vec(), None))
         } else if new_expr.callee.is_global_reference_name("Array", ctx.symbols()) {
@@ -413,7 +424,8 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
     ) -> Option<Expression<'a>> {
         // `Object()` -> `{}`
         if call_expr.arguments.is_empty()
-            && call_expr.callee.is_global_reference_name("Object", ctx.symbols())
+            && (call_expr.callee.is_global_reference_name("Object", ctx.symbols())
+                || Self::is_window_object(&call_expr.callee))
         {
             Some(ctx.ast.expression_object(call_expr.span, ctx.ast.vec(), None))
         } else if call_expr.callee.is_global_reference_name("Array", ctx.symbols()) {
@@ -459,6 +471,19 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
             }
         } else {
             None
+        }
+    }
+
+    fn try_fold_chain_call_expression(
+        &mut self,
+        call_expr: &mut CallExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        // `window.Object?.()` -> `Object?.()`
+        if call_expr.arguments.is_empty() && Self::is_window_object(&call_expr.callee) {
+            call_expr.callee =
+                ctx.ast.expression_identifier_reference(call_expr.callee.span(), "Object");
+            self.changed = true;
         }
     }
 
@@ -567,6 +592,21 @@ mod test {
         test("x = Object()", "x = ({})");
 
         test_same("x = (function f(){function Object(){this.x=4}return new Object();})();");
+    }
+
+    #[test]
+    fn test_fold_literal_object_constructors_on_window() {
+        test("x = new window.Object", "x = ({})");
+        test("x = new window.Object()", "x = ({})");
+
+        // Mustn't fold optional chains
+        test("x = window.Object()", "x = ({})");
+        test("x = window.Object?.()", "x = Object?.()");
+
+        test(
+            "x = (function f(){function Object(){this.x=4};return new window.Object;})();",
+            "x = (function f(){function Object(){this.x=4}return {};})();",
+        );
     }
 
     #[test]
