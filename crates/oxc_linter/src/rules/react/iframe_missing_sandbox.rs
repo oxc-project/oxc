@@ -6,6 +6,7 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use phf::{phf_set, Set};
 
 use crate::utils::{get_prop_value, has_jsx_prop_ignore_case, is_create_element_call};
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -26,6 +27,24 @@ fn invalid_sandbox_combination_prop(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("An `iframe` element defines a sandbox attribute with both allow-scripts and allow-same-origin which is invalid")
         .with_label(span)
 }
+
+const ALLOWED_VALUES: Set<&'static str> = phf_set! {
+    "",
+    "allow-downloads-without-user-activation",
+    "allow-downloads",
+    "allow-forms",
+    "allow-modals",
+    "allow-orientation-lock",
+    "allow-pointer-lock",
+    "allow-popups",
+    "allow-popups-to-escape-sandbox",
+    "allow-presentation",
+    "allow-same-origin",
+    "allow-scripts",
+    "allow-storage-access-by-user-activation",
+    "allow-top-navigation",
+    "allow-top-navigation-by-user-activation"
+};
 
 #[derive(Debug, Default, Clone)]
 pub struct IframeMissingSandbox;
@@ -74,7 +93,7 @@ impl Rule for IframeMissingSandbox {
                         ctx.diagnostic(missing_sandbox_prop(identifier.span));
                     },
                     |sandbox_prop| {
-                        self.validate_sandbox_attribute(sandbox_prop, ctx);
+                        validate_sandbox_attribute(sandbox_prop, ctx);
                     },
                 );
             }
@@ -106,7 +125,7 @@ impl Rule for IframeMissingSandbox {
                                     ctx.diagnostic(missing_sandbox_prop(obj_expr.span));
                                 },
                                 |sandbox_prop| {
-                                    self.validate_sandbox_property(sandbox_prop, ctx);
+                                    validate_sandbox_property(sandbox_prop, ctx);
                                 },
                             );
                     } else {
@@ -118,58 +137,34 @@ impl Rule for IframeMissingSandbox {
         }
     }
 }
-
-impl IframeMissingSandbox {
-    #[allow(clippy::unused_self)]
-    fn get_allowed_values(&self) -> Vec<&str> {
-        vec![
-            "",
-            "allow-downloads-without-user-activation",
-            "allow-downloads",
-            "allow-forms",
-            "allow-modals",
-            "allow-orientation-lock",
-            "allow-pointer-lock",
-            "allow-popups",
-            "allow-popups-to-escape-sandbox",
-            "allow-presentation",
-            "allow-same-origin",
-            "allow-scripts",
-            "allow-storage-access-by-user-activation",
-            "allow-top-navigation",
-            "allow-top-navigation-by-user-activation",
-        ]
-    }
-
-    fn validate_sandbox_value(&self, literal: &StringLiteral, ctx: &LintContext) {
-        let attrs = literal.value.as_str().split(' ').collect::<Vec<&str>>();
-        let mut allow_same_origin = false;
-        let mut allow_scripts = false;
-        for trimmed_atr in attrs.into_iter().map(str::trim) {
-            if !self.get_allowed_values().contains(&trimmed_atr) {
-                ctx.diagnostic(invalid_sandbox_prop(literal.span, trimmed_atr));
-            }
-            if trimmed_atr == "allow-scripts" {
-                allow_scripts = true;
-            }
-            if trimmed_atr == "allow-same-origin" {
-                allow_same_origin = true;
-            }
+fn validate_sandbox_value(literal: &StringLiteral, ctx: &LintContext) {
+    let attrs = literal.value.as_str().split(' ').collect::<Vec<&str>>();
+    let mut allow_same_origin = false;
+    let mut allow_scripts = false;
+    for trimmed_atr in attrs.into_iter().map(str::trim) {
+        if !ALLOWED_VALUES.contains(trimmed_atr) {
+            ctx.diagnostic(invalid_sandbox_prop(literal.span, trimmed_atr));
         }
-        if allow_scripts && allow_same_origin {
-            ctx.diagnostic(invalid_sandbox_combination_prop(literal.span));
+        if trimmed_atr == "allow-scripts" {
+            allow_scripts = true;
+        }
+        if trimmed_atr == "allow-same-origin" {
+            allow_same_origin = true;
         }
     }
-
-    fn validate_sandbox_property(&self, object_property: &ObjectProperty, ctx: &LintContext) {
-        if let Expression::StringLiteral(str) = object_property.value.without_parentheses() {
-            self.validate_sandbox_value(str, ctx);
-        }
+    if allow_scripts && allow_same_origin {
+        ctx.diagnostic(invalid_sandbox_combination_prop(literal.span));
     }
-    fn validate_sandbox_attribute(&self, jsx_el: &JSXAttributeItem, ctx: &LintContext) {
-        if let Some(JSXAttributeValue::StringLiteral(str)) = get_prop_value(jsx_el) {
-            self.validate_sandbox_value(str, ctx);
-        }
+}
+
+fn validate_sandbox_property(object_property: &ObjectProperty, ctx: &LintContext) {
+    if let Expression::StringLiteral(str) = object_property.value.without_parentheses() {
+        validate_sandbox_value(str, ctx);
+    }
+}
+fn validate_sandbox_attribute(jsx_el: &JSXAttributeItem, ctx: &LintContext) {
+    if let Some(JSXAttributeValue::StringLiteral(str)) = get_prop_value(jsx_el) {
+        validate_sandbox_value(str, ctx);
     }
 }
 
