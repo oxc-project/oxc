@@ -1,0 +1,97 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-react(iframe-missing-sandbox): An iframe element is missing a sandbox attribute
+   ╭─[iframe_missing_sandbox.tsx:1:2]
+ 1 │ <iframe></iframe>;
+   ·  ──────
+   ╰────
+  help: Add a `sandbox` attribute to the `iframe` element.
+
+  ⚠ eslint-plugin-react(iframe-missing-sandbox): An iframe element is missing a sandbox attribute
+   ╭─[iframe_missing_sandbox.tsx:1:2]
+ 1 │ <iframe/>;
+   ·  ──────
+   ╰────
+  help: Add a `sandbox` attribute to the `iframe` element.
+
+  ⚠ eslint-plugin-react(iframe-missing-sandbox): An iframe element is missing a sandbox attribute
+   ╭─[iframe_missing_sandbox.tsx:1:1]
+ 1 │ React.createElement("iframe");
+   · ─────────────────────────────
+   ╰────
+  help: Add a `sandbox` attribute to the `iframe` element.
+
+  ⚠ eslint-plugin-react(iframe-missing-sandbox): An iframe element is missing a sandbox attribute
+   ╭─[iframe_missing_sandbox.tsx:1:31]
+ 1 │ React.createElement("iframe", {});
+   ·                               ──
+   ╰────
+  help: Add a `sandbox` attribute to the `iframe` element.
+
+  ⚠ eslint-plugin-react(iframe-missing-sandbox): An iframe element is missing a sandbox attribute
+   ╭─[iframe_missing_sandbox.tsx:1:1]
+ 1 │ React.createElement("iframe", null);
+   · ───────────────────────────────────
+   ╰────
+  help: Add a `sandbox` attribute to the `iframe` element.
+
+  ⚠ eslint-plugin-react(iframe-missing-sandbox): An iframe element defines a sandbox attribute with invalid value: __unknown__
+   ╭─[iframe_missing_sandbox.tsx:1:17]
+ 1 │ <iframe sandbox="__unknown__"></iframe>
+   ·                 ─────────────
+   ╰────
+  help: Change the `sandbox` attribute to one of the allowed values: ``, `allow-downloads-without-user-activation`, `allow-downloads`, `allow-forms`, `allow-modals`, `allow-orientation-lock`, `allow-pointer-lock`, `allow-popups`, `allow-popups-to-escape-sandbox`, `allow-presentation`, `allow-same-origin`, `allow-scripts`, `allow-storage-access-by-user-activation`, `allow-top-navigation`,
+        `allow-top-navigation-by-user-activation`.
+
+  ⚠ eslint-plugin-react(iframe-missing-sandbox): An iframe element defines a sandbox attribute with invalid value: __unknown__
+   ╭─[iframe_missing_sandbox.tsx:1:42]
+ 1 │ React.createElement("iframe", { sandbox: "__unknown__" })
+   ·                                          ─────────────
+   ╰────
+  help: Change the `sandbox` attribute to one of the allowed values: ``, `allow-downloads-without-user-activation`, `allow-downloads`, `allow-forms`, `allow-modals`, `allow-orientation-lock`, `allow-pointer-lock`, `allow-popups`, `allow-popups-to-escape-sandbox`, `allow-presentation`, `allow-same-origin`, `allow-scripts`, `allow-storage-access-by-user-activation`, `allow-top-navigation`,
+        `allow-top-navigation-by-user-activation`.
+
+  ⚠ eslint-plugin-react(iframe-missing-sandbox): An iframe element defines a sandbox attribute with invalid value: __unknown__
+   ╭─[iframe_missing_sandbox.tsx:1:17]
+ 1 │ <iframe sandbox="allow-popups __unknown__"/>
+   ·                 ──────────────────────────
+   ╰────
+  help: Change the `sandbox` attribute to one of the allowed values: ``, `allow-downloads-without-user-activation`, `allow-downloads`, `allow-forms`, `allow-modals`, `allow-orientation-lock`, `allow-pointer-lock`, `allow-popups`, `allow-popups-to-escape-sandbox`, `allow-presentation`, `allow-same-origin`, `allow-scripts`, `allow-storage-access-by-user-activation`, `allow-top-navigation`,
+        `allow-top-navigation-by-user-activation`.
+
+  ⚠ eslint-plugin-react(iframe-missing-sandbox): An iframe element defines a sandbox attribute with invalid value: __unknown__
+   ╭─[iframe_missing_sandbox.tsx:1:17]
+ 1 │ <iframe sandbox="__unknown__ allow-popups"/>
+   ·                 ──────────────────────────
+   ╰────
+  help: Change the `sandbox` attribute to one of the allowed values: ``, `allow-downloads-without-user-activation`, `allow-downloads`, `allow-forms`, `allow-modals`, `allow-orientation-lock`, `allow-pointer-lock`, `allow-popups`, `allow-popups-to-escape-sandbox`, `allow-presentation`, `allow-same-origin`, `allow-scripts`, `allow-storage-access-by-user-activation`, `allow-top-navigation`,
+        `allow-top-navigation-by-user-activation`.
+
+  ⚠ eslint-plugin-react(iframe-missing-sandbox): An iframe element defines a sandbox attribute with invalid value: __unknown__
+   ╭─[iframe_missing_sandbox.tsx:1:17]
+ 1 │ <iframe sandbox=" allow-forms __unknown__ allow-popups __unknown__  "/>
+   ·                 ─────────────────────────────────────────────────────
+   ╰────
+  help: Change the `sandbox` attribute to one of the allowed values: ``, `allow-downloads-without-user-activation`, `allow-downloads`, `allow-forms`, `allow-modals`, `allow-orientation-lock`, `allow-pointer-lock`, `allow-popups`, `allow-popups-to-escape-sandbox`, `allow-presentation`, `allow-same-origin`, `allow-scripts`, `allow-storage-access-by-user-activation`, `allow-top-navigation`,
+        `allow-top-navigation-by-user-activation`.
+
+  ⚠ eslint-plugin-react(iframe-missing-sandbox): An iframe element defines a sandbox attribute with invalid value: __unknown__
+   ╭─[iframe_missing_sandbox.tsx:1:17]
+ 1 │ <iframe sandbox=" allow-forms __unknown__ allow-popups __unknown__  "/>
+   ·                 ─────────────────────────────────────────────────────
+   ╰────
+  help: Change the `sandbox` attribute to one of the allowed values: ``, `allow-downloads-without-user-activation`, `allow-downloads`, `allow-forms`, `allow-modals`, `allow-orientation-lock`, `allow-pointer-lock`, `allow-popups`, `allow-popups-to-escape-sandbox`, `allow-presentation`, `allow-same-origin`, `allow-scripts`, `allow-storage-access-by-user-activation`, `allow-top-navigation`,
+        `allow-top-navigation-by-user-activation`.
+
+  ⚠ eslint-plugin-react(iframe-missing-sandbox): An `iframe` element defines a sandbox attribute with both allow-scripts and allow-same-origin which is invalid
+   ╭─[iframe_missing_sandbox.tsx:1:17]
+ 1 │ <iframe sandbox="allow-scripts allow-same-origin"></iframe>;
+   ·                 ─────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(iframe-missing-sandbox): An `iframe` element defines a sandbox attribute with both allow-scripts and allow-same-origin which is invalid
+   ╭─[iframe_missing_sandbox.tsx:1:17]
+ 1 │ <iframe sandbox="allow-same-origin allow-scripts"/>;
+   ·                 ─────────────────────────────────
+   ╰────
