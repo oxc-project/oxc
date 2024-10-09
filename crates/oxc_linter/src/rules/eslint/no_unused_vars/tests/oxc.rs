@@ -690,6 +690,37 @@ fn test_imports() {
 }
 
 #[test]
+fn test_used_declarations() {
+    let pass = vec![
+        // function declarations passed as arguments, used in assignments, etc. are used, even if they are
+        // first put into an intermediate (e.g. an object or array)
+        "arr.reduce(function reducer (acc, el) { return acc + el }, 0)",
+        "console.log({ foo: function foo() {} })",
+        "test.each([ function foo() {} ])('test some function', (fn) => { expect(fn(1)).toBe(1) })",
+        "export default { foo() {}  }",
+        "const arr = [function foo() {}, function bar() {}]; console.log(arr[0]())",
+        "const foo = function foo() {}; console.log(foo())",
+        "const foo = function bar() {}; console.log(foo())",
+        // Class expressions behave similarly
+        "console.log([class Foo {}])",
+        "export default { foo: class Foo {} }",
+        "export const Foo = class Foo {}",
+        "export const Foo = class Bar {}",
+        "export const Foo = @SomeDecorator() class Foo {}",
+    ];
+    let fail = vec![
+        // array is not used, so the function is not used
+        ";[function foo() {}]",
+        ";[class Foo {}]",
+    ];
+
+    Tester::new(NoUnusedVars::NAME, pass, fail)
+        .intentionally_allow_no_fix_tests()
+        .with_snapshot_suffix("oxc-used-declarations")
+        .test_and_snapshot();
+}
+
+#[test]
 fn test_exports() {
     let pass = vec![
         "export const a = 1; console.log(a)",
