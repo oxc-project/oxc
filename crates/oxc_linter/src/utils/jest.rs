@@ -7,7 +7,7 @@ use oxc_ast::{
     },
     AstKind,
 };
-use oxc_semantic::{AstNode, ReferenceId};
+use oxc_semantic::{AstNode, ReferenceId, Semantic};
 use phf::phf_set;
 
 use crate::LintContext;
@@ -138,6 +138,7 @@ pub fn parse_expect_jest_fn_call<'a>(
     None
 }
 
+#[derive(Debug, Clone, Copy)]
 pub struct PossibleJestNode<'a, 'b> {
     pub node: &'b AstNode<'a>,
     pub original: Option<&'a str>, // if this node is imported from 'jest/globals', this field will be Some(original_name), otherwise None
@@ -146,7 +147,7 @@ pub struct PossibleJestNode<'a, 'b> {
 /// Collect all possible Jest fn Call Expression,
 /// for `expect(1).toBe(1)`, the result will be a collection of node `expect(1)` and node `expect(1).toBe(1)`.
 pub fn collect_possible_jest_call_node<'a, 'b>(
-    ctx: &'b LintContext<'a>,
+    semantic: &'b Semantic<'a>,
 ) -> Vec<PossibleJestNode<'a, 'b>> {
     // Some people may write codes like below, we need lookup imported test function and global test function.
     // ```
@@ -156,13 +157,13 @@ pub fn collect_possible_jest_call_node<'a, 'b>(
     //     expect(1 + 2).toEqual(3);
     // });
     // ```
-    let mut reference_id_with_original_list = collect_ids_referenced_to_import(ctx);
+    let mut reference_id_with_original_list = collect_ids_referenced_to_import(semantic);
     if JEST_METHOD_NAMES
         .iter()
-        .any(|name| ctx.scopes().root_unresolved_references().contains_key(*name))
+        .any(|name| semantic.scopes().root_unresolved_references().contains_key(*name))
     {
         reference_id_with_original_list.extend(
-            collect_ids_referenced_to_global(ctx)
+            collect_ids_referenced_to_global(semantic)
                 // set the original of global test function to None
                 .map(|id| (id, None)),
         );
@@ -171,9 +172,9 @@ pub fn collect_possible_jest_call_node<'a, 'b>(
     // get the longest valid chain of Jest Call Expression
     reference_id_with_original_list.iter().fold(vec![], |mut acc, id_with_original| {
         let (reference_id, original) = id_with_original;
-        let mut id = ctx.symbols().get_reference(*reference_id).node_id();
+        let mut id = semantic.symbols().get_reference(*reference_id).node_id();
         loop {
-            let parent = ctx.nodes().parent_node(id);
+            let parent = semantic.nodes().parent_node(id);
             if let Some(parent) = parent {
                 let parent_kind = parent.kind();
                 if matches!(parent_kind, AstKind::CallExpression(_)) {
@@ -196,9 +197,7 @@ pub fn collect_possible_jest_call_node<'a, 'b>(
     })
 }
 
-fn collect_ids_referenced_to_import<'a>(
-    ctx: &LintContext<'a>,
-) -> Vec<(ReferenceId, Option<&'a str>)> {
+fn collect_ids_referenced_to_import<'a>(ctx: &Semantic<'a>) -> Vec<(ReferenceId, Option<&'a str>)> {
     ctx.symbols()
         .resolved_references
         .iter_enumerated()
@@ -242,7 +241,7 @@ fn find_original_name<'a>(import_decl: &'a ImportDeclaration<'a>, name: &str) ->
 }
 
 fn collect_ids_referenced_to_global<'c>(
-    ctx: &'c LintContext,
+    ctx: &'c Semantic,
 ) -> impl Iterator<Item = ReferenceId> + 'c {
     ctx.scopes()
         .root_unresolved_references()
