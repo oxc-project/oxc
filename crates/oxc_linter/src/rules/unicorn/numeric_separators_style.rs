@@ -354,7 +354,9 @@ fn test_with_snapshot() {
         "const foo = -100000_1",
     ];
 
-    Tester::new(NumericSeparatorsStyle::NAME, vec![], fail).test_and_snapshot();
+    let fix = vec![("const foo = 0b10_10_0001", "const foo = 0b1010_0001")];
+
+    Tester::new(NumericSeparatorsStyle::NAME, vec![], fail).expect_fix(fix).test_and_snapshot();
 }
 
 #[test]
@@ -627,7 +629,7 @@ fn test_with_config() {
 
     let fail = vec![];
 
-    Tester::new(NumericSeparatorsStyle::NAME, pass, fail).test();
+    Tester::new(NumericSeparatorsStyle::NAME, pass, fail).intentionally_allow_no_fix_tests().test();
 }
 
 #[test]
@@ -642,9 +644,10 @@ fn test_misc() {
         "const foo = '1234567n'",
     ];
 
-    let fail = vec![];
+    let fail = vec!["1_23_4444"];
+    let fix = vec![("1_23_4444", "1_234_444")];
 
-    Tester::new(NumericSeparatorsStyle::NAME, pass, fail).test();
+    Tester::new(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
 }
 
 #[cfg(test)]

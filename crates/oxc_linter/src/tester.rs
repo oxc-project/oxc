@@ -164,7 +164,13 @@ pub struct Tester {
     rule_path: PathBuf,
     expect_pass: Vec<TestCase>,
     expect_fail: Vec<TestCase>,
-    expect_fix: Vec<ExpectFix>,
+    /// Intentionally not an empty array when no fix test cases are provided.
+    /// We check that rules that report a fix capability have fix test cases.
+    /// Providing `Some(vec![])` allows for intentional disabling of this behavior.
+    ///
+    /// Note that disabling this check should be done as little as possible, and
+    /// never in bad faith (e.g. no `#[test]` functions have fixer cases at all).
+    expect_fix: Option<Vec<ExpectFix>>,
     snapshot: String,
     /// Suffix added to end of snapshot name.
     ///
@@ -191,7 +197,7 @@ impl Tester {
             rule_path,
             expect_pass,
             expect_fail,
-            expect_fix: vec![],
+            expect_fix: None,
             snapshot: String::new(),
             snapshot_suffix: None,
             current_working_directory,
@@ -256,6 +262,9 @@ impl Tester {
     /// These cases will fail if no fixes are produced or if the fixed source
     /// code does not match the expected result.
     ///
+    /// Additionally, if your rule reports a fix capability but no fix cases are
+    /// provided, the test will fail.
+    ///
     /// ```
     /// use oxc_linter::tester::Tester;
     ///
@@ -273,8 +282,26 @@ impl Tester {
     /// // the first argument is normally `MyRuleStruct::NAME`.
     /// Tester::new("no-undef", pass, fail).expect_fix(fix).test();
     /// ```
+    #[must_use]
     pub fn expect_fix<F: Into<ExpectFix>>(mut self, expect_fix: Vec<F>) -> Self {
-        self.expect_fix = expect_fix.into_iter().map(std::convert::Into::into).collect::<Vec<_>>();
+        // prevent `expect_fix` abuse
+        assert!(
+            !expect_fix.is_empty(),
+            "You must provide at least one fixer test case to `expect_fix`"
+        );
+
+        self.expect_fix =
+            Some(expect_fix.into_iter().map(std::convert::Into::into).collect::<Vec<_>>());
+        self
+    }
+
+    /// Intentionally allow testing to pass if no fix test cases are provided.
+    ///
+    /// This should only be used when testing is broken up into multiple
+    /// test functions, and only some of them are testing fixes.
+    #[must_use]
+    pub fn intentionally_allow_no_fix_tests(mut self) -> Self {
+        self.expect_fix = Some(vec![]);
         self
     }
 
@@ -321,7 +348,14 @@ impl Tester {
     }
 
     fn test_fix(&mut self) {
-        for fix in self.expect_fix.clone() {
+        // If auto-fixes are reported, make sure some fix test cases are provided
+        let rule = self.find_rule();
+        let Some(fix_test_cases) = self.expect_fix.clone() else {
+            assert!(!rule.fix().has_fix(), "'{}/{}' reports that it can auto-fix violations, but no fix cases were provided. Please add fixer test cases with `tester.expect_fix()`", rule.plugin_name(), rule.name());
+            return;
+        };
+
+        for fix in fix_test_cases {
             let ExpectFix { source, expected, kind, rule_config: config } = fix;
             let result = self.run(&source, config, &None, None, kind);
             match result {

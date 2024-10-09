@@ -161,6 +161,7 @@ fn test_vars_self_use() {
     ];
 
     Tester::new(NoUnusedVars::NAME, pass, fail)
+        .intentionally_allow_no_fix_tests()
         .with_snapshot_suffix("oxc-vars-self-use")
         .test_and_snapshot();
 }
@@ -201,6 +202,7 @@ fn test_vars_discarded_reads() {
     ];
 
     Tester::new(NoUnusedVars::NAME, pass, fail)
+        .intentionally_allow_no_fix_tests()
         .with_snapshot_suffix("oxc-vars-discarded-read")
         .test_and_snapshot();
 }
@@ -288,6 +290,7 @@ fn test_vars_reassignment() {
     ];
 
     Tester::new(NoUnusedVars::NAME, pass, fail)
+        .intentionally_allow_no_fix_tests()
         .with_snapshot_suffix("oxc-vars-reassignment")
         .test_and_snapshot();
 }
@@ -408,6 +411,7 @@ fn test_vars_catch() {
     ];
 
     Tester::new(NoUnusedVars::NAME, pass, fail)
+        .intentionally_allow_no_fix_tests()
         .with_snapshot_suffix("oxc-vars-catch")
         .test_and_snapshot();
 }
@@ -419,6 +423,7 @@ fn test_vars_using() {
     let fail = vec![("using a = 1;", None)];
 
     Tester::new(NoUnusedVars::NAME, pass, fail)
+        .intentionally_allow_no_fix_tests()
         .with_snapshot_suffix("oxc-vars-using")
         .test_and_snapshot();
 }
@@ -706,7 +711,7 @@ fn test_exports() {
     let fail = vec!["import { a as b } from 'a'; export { a }"];
 
     // these are mostly pass[] cases, so do not snapshot
-    Tester::new(NoUnusedVars::NAME, pass, fail).test();
+    Tester::new(NoUnusedVars::NAME, pass, fail).intentionally_allow_no_fix_tests().test();
 }
 
 #[test]
@@ -752,7 +757,7 @@ fn test_react() {
         ",
     ];
 
-    Tester::new(NoUnusedVars::NAME, pass, fail).test();
+    Tester::new(NoUnusedVars::NAME, pass, fail).intentionally_allow_no_fix_tests().test();
 }
 
 #[test]
@@ -783,6 +788,7 @@ fn test_arguments() {
     ];
 
     Tester::new(NoUnusedVars::NAME, pass, fail)
+        .intentionally_allow_no_fix_tests()
         .with_snapshot_suffix("oxc-arguments")
         .test_and_snapshot();
 }
@@ -798,6 +804,7 @@ fn test_enums() {
     let fail = vec!["enum Foo { A }"];
 
     Tester::new(NoUnusedVars::NAME, pass, fail)
+        .intentionally_allow_no_fix_tests()
         .with_snapshot_suffix("oxc-enums")
         .test_and_snapshot();
 }
@@ -863,6 +870,7 @@ fn test_classes() {
     ];
 
     Tester::new(NoUnusedVars::NAME, pass, fail)
+        .intentionally_allow_no_fix_tests()
         .with_snapshot_suffix("oxc-classes")
         .test_and_snapshot();
 }
@@ -915,6 +923,7 @@ fn test_namespaces() {
     ];
 
     Tester::new(NoUnusedVars::NAME, pass, fail)
+        .intentionally_allow_no_fix_tests()
         .with_snapshot_suffix("oxc-namespaces")
         .test_and_snapshot();
 }
@@ -931,6 +940,7 @@ fn test_type_aliases() {
     ];
 
     Tester::new(NoUnusedVars::NAME, pass, fail)
+        .intentionally_allow_no_fix_tests()
         .with_snapshot_suffix("oxc-type-aliases")
         .test_and_snapshot();
 }
@@ -990,6 +1000,7 @@ fn test_type_references() {
     ];
 
     Tester::new(NoUnusedVars::NAME, pass, fail)
+        .intentionally_allow_no_fix_tests()
         .with_snapshot_suffix("oxc-type-references")
         .test_and_snapshot();
 }
