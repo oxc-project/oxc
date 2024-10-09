@@ -3897,13 +3897,13 @@ Bindings mismatch:
 after transform: ScopeId(2): ["P", "attrs"]
 rebuilt        : ScopeId(1): ["attrs"]
 Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
+after transform: ScopeId(2): [ScopeId(3), ScopeId(5)]
 rebuilt        : ScopeId(1): []
 Bindings mismatch:
 after transform: ScopeId(6): ["P", "attrs"]
 rebuilt        : ScopeId(2): ["attrs"]
 Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(7)]
+after transform: ScopeId(6): [ScopeId(7), ScopeId(8)]
 rebuilt        : ScopeId(2): []
 Bindings mismatch:
 after transform: ScopeId(9): ["P", "attrs"]
@@ -8852,7 +8852,7 @@ Bindings mismatch:
 after transform: ScopeId(3): ["D", "clientDef"]
 rebuilt        : ScopeId(1): ["clientDef"]
 Scope children mismatch:
-after transform: ScopeId(3): [ScopeId(4)]
+after transform: ScopeId(3): [ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(1): []
 Unresolved references mismatch:
 after transform: ["Record"]
@@ -17164,7 +17164,7 @@ Scope children mismatch:
 after transform: ScopeId(8): [ScopeId(9), ScopeId(10)]
 rebuilt        : ScopeId(2): []
 Symbol reference IDs mismatch for "state":
-after transform: SymbolId(8): [ReferenceId(11), ReferenceId(12), ReferenceId(13), ReferenceId(15)]
+after transform: SymbolId(9): [ReferenceId(11), ReferenceId(12), ReferenceId(13), ReferenceId(15)]
 rebuilt        : SymbolId(1): [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 Unresolved references mismatch:
 after transform: ["State", "true"]
@@ -52205,10 +52205,10 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(22), ScopeId(23), ScopeId(24), ScopeId(25), ScopeId(28), ScopeId(29), ScopeId(30), ScopeId(31), ScopeId(34), ScopeId(35), ScopeId(36), ScopeId(37), ScopeId(40), ScopeId(41), ScopeId(42), ScopeId(43), ScopeId(44), ScopeId(47), ScopeId(48), ScopeId(49), ScopeId(50), ScopeId(51), ScopeId(54), ScopeId(55), ScopeId(56), ScopeId(57), ScopeId(58), ScopeId(61), ScopeId(63), ScopeId(64), ScopeId(67), ScopeId(69), ScopeId(71), ScopeId(73), ScopeId(77), ScopeId(80), ScopeId(84), ScopeId(87), ScopeId(89), ScopeId(90), ScopeId(91), ScopeId(92), ScopeId(95), ScopeId(96), ScopeId(98), ScopeId(99), ScopeId(100), ScopeId(101), ScopeId(102), ScopeId(103), ScopeId(107), ScopeId(108), ScopeId(109), ScopeId(110), ScopeId(111)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Reference symbol mismatch for "x1":
-after transform: SymbolId(126) "x1"
+after transform: SymbolId(127) "x1"
 rebuilt        : <None>
 Reference symbol mismatch for "x2":
-after transform: SymbolId(132) "x2"
+after transform: SymbolId(133) "x2"
 rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Promise"]

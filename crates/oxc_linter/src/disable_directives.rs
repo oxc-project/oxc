@@ -612,6 +612,6 @@ semi*/
             ),
         ];
 
-        Tester::new("no-debugger", pass, fail).test();
+        Tester::new("no-debugger", pass, fail).intentionally_allow_no_fix_tests().test();
     }
 }

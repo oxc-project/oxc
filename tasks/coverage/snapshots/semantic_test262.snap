@@ -1,8 +1,8 @@
 commit: d62fa93c
 
 semantic_test262 Summary:
-AST Parsed     : 43765/43765 (100.00%)
-Positive Passed: 43565/43765 (99.54%)
+AST Parsed     : 43776/43776 (100.00%)
+Positive Passed: 43576/43776 (99.54%)
 tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-block-scoping.js
 semantic error: Symbol scope ID mismatch for "f":
 after transform: SymbolId(3): ScopeId(4294967294)

@@ -1700,6 +1700,7 @@ fn test() {
     ];
 
     Tester::new(NoUnusedVars::NAME, pass, fail)
+        .intentionally_allow_no_fix_tests()
         .change_rule_path_extension("ts")
         .with_snapshot_suffix("typescript-eslint")
         .test_and_snapshot();
@@ -1867,6 +1868,7 @@ fn test_tsx() {
     ];
 
     Tester::new(NoUnusedVars::NAME, pass, fail)
+        .intentionally_allow_no_fix_tests()
         .with_snapshot_suffix("typescript-eslint-tsx")
         .test_and_snapshot();
 }
@@ -1906,5 +1908,8 @@ fn test_d_ts() {
     ];
     let fail = vec![];
 
-    Tester::new(NoUnusedVars::NAME, pass, fail).change_rule_path_extension("d.ts").test();
+    Tester::new(NoUnusedVars::NAME, pass, fail)
+        .intentionally_allow_no_fix_tests()
+        .change_rule_path_extension("d.ts")
+        .test();
 }

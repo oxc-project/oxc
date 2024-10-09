@@ -988,5 +988,12 @@ if (false) {
         ),
     ];
 
-    Tester::new(BanTsComment::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("// @ts-ignore", r"// @ts-expect-error"),
+        ("// @ts-ignore: TS1234 because xyz", r"// @ts-expect-error: TS1234 because xyz"),
+        ("// @ts-ignore: TS1234", r"// @ts-expect-error: TS1234"),
+        ("// @ts-ignore    : TS1234 because xyz", r"// @ts-expect-error    : TS1234 because xyz"),
+    ];
+
+    Tester::new(BanTsComment::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }
