@@ -287,6 +287,47 @@ fn test() {
         "class A { constructor(readonly x: number) {} }",
         "class A { constructor(private readonly x: number) {} }",
         "class A extends B { constructor(override x: number) { super(x); } }",
+        "
+        class A {
+            protected foo: number | undefined;
+            constructor(foo?: number) {
+                this.foo = foo;
+            }
+        }
+        class B extends A {
+            protected foo: number;
+            constructor(foo: number = 0) {
+                super(foo);
+            }
+        }
+        ",
+        "
+        class A {
+            protected foo: number | undefined;
+            constructor(foo?: number) {
+                this.foo = foo;
+            }
+        }
+        class B extends A {
+            constructor(foo?: number) {
+                super(foo ?? 0);
+            }
+        }
+        ",
+        // TODO: type aware linting :(
+        // "
+        // class A {
+        //     protected foo: string;
+        //     constructor(foo: string) {
+        //         this.foo = foo;
+        //     }
+        // }
+        // class B extends A {
+        //     constructor(foo: 'a' | 'b') {
+        //         super(foo);
+        //     }
+        // }
+        // ",
     ];
 
     let fail = vec![
