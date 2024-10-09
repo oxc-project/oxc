@@ -53,8 +53,7 @@ declare_oxc_lint!(
     /// <iframe sandbox="allow-origin" />;
     /// ```
     IframeMissingSandbox,
-    style,
-    suggestion
+    correctness
 );
 
 impl Rule for IframeMissingSandbox {
