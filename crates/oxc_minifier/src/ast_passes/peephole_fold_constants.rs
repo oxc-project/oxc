@@ -71,25 +71,6 @@ impl<'a> PeepholeFoldConstants {
         Self { changed: false }
     }
 
-    fn try_get_number_literal_value(&self, expr: &mut Expression<'a>) -> Option<f64> {
-        match expr {
-            Expression::NumericLiteral(n) => Some(n.value),
-            Expression::Identifier(id) if id.name.as_str() == "Infinity" => Some(f64::INFINITY),
-            Expression::UnaryExpression(unary)
-                if unary.operator == UnaryOperator::UnaryNegation =>
-            {
-                match &mut unary.argument {
-                    Expression::NumericLiteral(arg) => Some(-arg.value),
-                    Expression::Identifier(id) if id.name.as_str() == "Infinity" => {
-                        Some(f64::NEG_INFINITY)
-                    }
-                    _ => None,
-                }
-            }
-            _ => None,
-        }
-    }
-
     fn try_fold_useless_object_dot_define_properties_call(
         &mut self,
         _call_expr: &mut CallExpression<'a>,
@@ -520,8 +501,8 @@ impl<'a> PeepholeFoldConstants {
         if !operation.operator.is_arithmetic() {
             return None;
         };
-        let left = self.try_get_number_literal_value(&mut operation.left)?;
-        let right = self.try_get_number_literal_value(&mut operation.right)?;
+        let left: f64 = ctx.get_number_value(&operation.left)?.try_into().ok()?;
+        let right: f64 = ctx.get_number_value(&operation.right)?.try_into().ok()?;
         if !left.is_finite() || !right.is_finite() {
             return self.try_fold_infinity_arithmetic(left, operation.operator, right, ctx);
         }
