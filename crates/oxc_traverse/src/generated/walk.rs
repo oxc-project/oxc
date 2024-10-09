@@ -3964,13 +3964,6 @@ pub(crate) unsafe fn walk_ts_conditional_type<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_conditional_type(&mut *node, ctx);
-    let previous_scope_id = ctx.current_scope_id();
-    ctx.set_current_scope_id(
-        (*((node as *mut u8).add(ancestor::OFFSET_TS_CONDITIONAL_TYPE_SCOPE_ID)
-            as *mut Cell<Option<ScopeId>>))
-            .get()
-            .unwrap(),
-    );
     let pop_token = ctx.push_stack(Ancestor::TSConditionalTypeCheckType(
         ancestor::TSConditionalTypeWithoutCheckType(node, PhantomData),
     ));
@@ -3978,6 +3971,13 @@ pub(crate) unsafe fn walk_ts_conditional_type<'a, Tr: Traverse<'a>>(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_CONDITIONAL_TYPE_CHECK_TYPE) as *mut TSType,
         ctx,
+    );
+    let previous_scope_id = ctx.current_scope_id();
+    ctx.set_current_scope_id(
+        (*((node as *mut u8).add(ancestor::OFFSET_TS_CONDITIONAL_TYPE_SCOPE_ID)
+            as *mut Cell<Option<ScopeId>>))
+            .get()
+            .unwrap(),
     );
     ctx.retag_stack(AncestorType::TSConditionalTypeExtendsType);
     walk_ts_type(
@@ -3991,6 +3991,7 @@ pub(crate) unsafe fn walk_ts_conditional_type<'a, Tr: Traverse<'a>>(
         (node as *mut u8).add(ancestor::OFFSET_TS_CONDITIONAL_TYPE_TRUE_TYPE) as *mut TSType,
         ctx,
     );
+    ctx.set_current_scope_id(previous_scope_id);
     ctx.retag_stack(AncestorType::TSConditionalTypeFalseType);
     walk_ts_type(
         traverser,
@@ -3998,7 +3999,6 @@ pub(crate) unsafe fn walk_ts_conditional_type<'a, Tr: Traverse<'a>>(
         ctx,
     );
     ctx.pop_stack(pop_token);
-    ctx.set_current_scope_id(previous_scope_id);
     traverser.exit_ts_conditional_type(&mut *node, ctx);
 }
 
