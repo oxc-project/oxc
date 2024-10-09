@@ -51,7 +51,7 @@ struct Options {
 
 impl Default for Options {
     fn default() -> Self {
-        Self { enable: true, run: Run::default(), config_path: ".eslintrc".into() }
+        Self { enable: true, run: Run::default(), config_path: ".oxlintrc.json".into() }
     }
 }
 

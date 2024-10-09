@@ -98,8 +98,8 @@
         "oxc_language_server.configPath": {
           "type": "string",
           "scope": "window",
-          "default": ".eslintrc",
-          "description": "Path to ESlint configuration."
+          "default": ".oxlintrc.json",
+          "description": "Path to oxlint (ESlint) configuration."
         }
       }
     },
