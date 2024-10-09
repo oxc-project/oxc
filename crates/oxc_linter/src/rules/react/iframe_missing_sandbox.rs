@@ -138,21 +138,21 @@ impl Rule for IframeMissingSandbox {
     }
 }
 fn validate_sandbox_value(literal: &StringLiteral, ctx: &LintContext) {
-    let attrs = literal.value.as_str().split(' ').collect::<Vec<&str>>();
-    let mut allow_same_origin = false;
-    let mut allow_scripts = false;
+    let attrs = literal.value.as_str().split(' ');
+    let mut has_allow_same_origin = false;
+    let mut has_allow_scripts = false;
     for trimmed_atr in attrs.into_iter().map(str::trim) {
         if !ALLOWED_VALUES.contains(trimmed_atr) {
             ctx.diagnostic(invalid_sandbox_prop(literal.span, trimmed_atr));
         }
         if trimmed_atr == "allow-scripts" {
-            allow_scripts = true;
+            has_allow_scripts = true;
         }
         if trimmed_atr == "allow-same-origin" {
-            allow_same_origin = true;
+            has_allow_same_origin = true;
         }
     }
-    if allow_scripts && allow_same_origin {
+    if has_allow_scripts && has_allow_same_origin {
         ctx.diagnostic(invalid_sandbox_combination_prop(literal.span));
     }
 }
