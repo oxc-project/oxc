@@ -26,7 +26,7 @@ See more at [oxc.rs](https://oxc.rs)!
 
 ## VoidZero Inc.
 
-Oxc is a project of [VoidZero](https://voidzero.dev/), see our annoucement [Announcing VoidZero - Next Generation Toolchain for JavaScript](https://voidzero.dev/blog).
+Oxc is a project of [VoidZero](https://voidzero.dev/), see our announcement [Announcing VoidZero - Next Generation Toolchain for JavaScript](https://voidzero.dev/blog).
 
 If you have requirements for JavaScript tools at scale, please [get in touch](https://forms.gle/WQgjyzYJpwurpxWKA)!
 

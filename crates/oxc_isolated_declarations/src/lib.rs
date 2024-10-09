@@ -44,6 +44,7 @@ pub struct IsolatedDeclarationsOptions {
     pub strip_internal: bool,
 }
 
+#[non_exhaustive]
 pub struct IsolatedDeclarationsReturn<'a> {
     pub program: Program<'a>,
     pub errors: Vec<OxcDiagnostic>,
