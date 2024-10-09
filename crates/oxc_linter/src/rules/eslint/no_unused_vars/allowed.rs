@@ -24,7 +24,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
             assert!(kind.is_function_like() || matches!(kind, AstKind::Class(_)));
         }
 
-        for parent in self.iter_parents() {
+        for parent in self.iter_relevant_parents() {
             match parent.kind() {
                 AstKind::MemberExpression(_) | AstKind::ParenthesizedExpression(_)
                 // e.g. `const x = [function foo() {}]`

@@ -105,7 +105,12 @@ impl<'s, 'a> Symbol<'s, 'a> {
         self.nodes().iter_parents(self.declaration_id())
     }
 
-    pub fn iter_relevant_parents(
+    #[inline]
+    pub fn iter_relevant_parents(&self) -> impl Iterator<Item = &AstNode<'a>> + Clone + '_ {
+        self.iter_relevant_parents_of(self.declaration_id())
+    }
+
+    pub fn iter_relevant_parents_of(
         &self,
         node_id: NodeId,
     ) -> impl Iterator<Item = &AstNode<'a>> + Clone + '_ {
@@ -131,7 +136,15 @@ impl<'s, 'a> Symbol<'s, 'a> {
 
     #[inline]
     const fn is_relevant_kind(kind: AstKind<'a>) -> bool {
-        !matches!(kind, AstKind::ParenthesizedExpression(_))
+        !matches!(
+            kind,
+            AstKind::ParenthesizedExpression(_)
+                | AstKind::TSAsExpression(_)
+                | AstKind::TSSatisfiesExpression(_)
+                | AstKind::TSInstantiationExpression(_)
+                | AstKind::TSNonNullExpression(_)
+                | AstKind::TSTypeAssertion(_)
+        )
     }
 
     /// <https://github.com/oxc-project/oxc/issues/4739>

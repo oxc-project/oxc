@@ -696,6 +696,7 @@ fn test_used_declarations() {
         // first put into an intermediate (e.g. an object or array)
         "arr.reduce(function reducer (acc, el) { return acc + el }, 0)",
         "console.log({ foo: function foo() {} })",
+        "console.log({ foo: function foo() {} as unknown as Function })",
         "test.each([ function foo() {} ])('test some function', (fn) => { expect(fn(1)).toBe(1) })",
         "export default { foo() {}  }",
         "const arr = [function foo() {}, function bar() {}]; console.log(arr[0]())",
