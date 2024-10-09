@@ -1,9 +1,11 @@
 commit: d62fa93c
 
 parser_test262 Summary:
-AST Parsed     : 43765/43765 (100.00%)
-Positive Passed: 43765/43765 (100.00%)
-Negative Passed: 4237/4237 (100.00%)
+AST Parsed     : 43776/43776 (100.00%)
+Positive Passed: 43776/43776 (100.00%)
+Negative Passed: 4237/4239 (99.95%)
+Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attributes/json-invalid.js
+Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attributes/json-named-bindings.js
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
     ╭─[test262/test/annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js:19:4]

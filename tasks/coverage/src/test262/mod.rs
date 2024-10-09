@@ -109,9 +109,6 @@ impl Case for Test262Case {
             "regexp-duplicate-named-groups",
             // stage 3 https://github.com/tc39/proposal-regexp-modifiers
             "regexp-modifiers",
-            // stage 3 https://github.com/tc39/proposal-json-modules
-            // ignored due to https://github.com/tc39/proposal-json-modules/issues/27
-            "json-modules",
             // stage 3 https://github.com/tc39/proposal-source-phase-imports
             "source-phase-imports",
         ]
