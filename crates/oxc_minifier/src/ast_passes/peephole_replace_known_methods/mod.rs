@@ -41,24 +41,157 @@ impl PeepholeReplaceKnownMethods {
 
         let Expression::StaticMemberExpression(member) = &call_expr.callee else { return };
         if let Expression::StringLiteral(string_lit) = &member.object {
-            if call_expr.arguments.len() == 0 {
-                let transformed_value = match member.property.name.as_str() {
-                    "toLowerCase" => Some(
-                        ctx.ast.string_literal(call_expr.span, string_lit.value.cow_to_lowercase()),
-                    ),
-                    "toUpperCase" => Some(
-                        ctx.ast.string_literal(call_expr.span, string_lit.value.cow_to_uppercase()),
-                    ),
-                    "trim" => Some(ctx.ast.string_literal(call_expr.span, string_lit.value.trim())),
-                    _ => None,
-                };
+            match call_expr.arguments.len() {
+                0 => {
+                    let transformed_value =
+                        match member.property.name.as_str() {
+                            "toLowerCase" => Some(ctx.ast.string_literal(
+                                call_expr.span,
+                                string_lit.value.cow_to_lowercase(),
+                            )),
+                            "toUpperCase" => Some(ctx.ast.string_literal(
+                                call_expr.span,
+                                string_lit.value.cow_to_uppercase(),
+                            )),
+                            "trim" => Some(
+                                ctx.ast.string_literal(call_expr.span, string_lit.value.trim()),
+                            ),
+                            _ => None,
+                        };
 
-                if let Some(transformed_value) = transformed_value {
-                    self.changed = true;
-                    *node = ctx.ast.expression_from_string_literal(transformed_value);
+                    if let Some(transformed_value) = transformed_value {
+                        self.changed = true;
+                        *node = ctx.ast.expression_from_string_literal(transformed_value);
+                    }
                 }
+                _ => match member.property.name.as_str() {
+                    "indexOf" | "lastIndexOf" => {
+                        self.try_fold_index_of(node, ctx);
+                    }
+                    "substr" => {
+                        self.try_fold_string_substr(node, ctx);
+                    }
+                    "substring" | "slice" => self.try_fold_string_substring_or_slice(node, ctx),
+                    "charAt" => self.try_fold_string_char_at(node, ctx),
+                    "charCodeAt" => self.try_fold_string_char_code_at(node, ctx),
+                    "replace" => self.try_fold_string_replace(node, ctx),
+                    "replaceAll" => self.try_fold_string_replace_all(node, ctx),
+                    _ => {}
+                },
             }
         }
+    }
+
+    fn try_fold_index_of<'a>(&mut self, node: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        let Expression::CallExpression(call_expr) = node else { unreachable!() };
+        let Expression::StaticMemberExpression(member) = &call_expr.callee else { unreachable!() };
+        let Expression::StringLiteral(string_lit) = &member.object else { unreachable!() };
+
+        #[expect(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
+        let search_start_index: usize = match call_expr.arguments.get(1) {
+            Some(Argument::NumericLiteral(numeric_lit)) => {
+                ((numeric_lit.value.floor()).max(0.0) as u64) as usize
+            }
+            None => 0,
+            _ => return,
+        };
+
+        #[allow(clippy::cast_precision_loss)]
+        if search_start_index > string_lit.value.len() {
+            self.changed = true;
+            *node = ctx.ast.expression_from_numeric_literal(ctx.ast.numeric_literal(
+                call_expr.span,
+                -1.0,
+                "",
+                NumberBase::Decimal,
+            ));
+            return;
+        }
+
+        let Some(Argument::StringLiteral(search_string)) = call_expr.arguments.first() else {
+            return;
+        };
+
+        let search_string = &search_string.value;
+
+        let is_index_of = member.property.name == "indexOf";
+
+        let result = if is_index_of {
+            string_lit
+                .value
+                .chars()
+                .skip(search_start_index)
+                .collect::<String>()
+                .find(search_string.as_str())
+        } else {
+            string_lit
+                .value
+                .chars()
+                .skip(search_start_index)
+                .collect::<String>()
+                .rfind(search_string.as_str())
+        };
+
+        #[expect(clippy::cast_precision_loss)]
+        let result = result
+            .map(|index| if is_index_of { index + search_start_index } else { index })
+            .map_or(-1.0, |index| index as f64);
+
+        self.changed = true;
+        *node = ctx.ast.expression_from_numeric_literal(ctx.ast.numeric_literal(
+            call_expr.span,
+            result,
+            result.to_string(),
+            NumberBase::Decimal,
+        ));
+    }
+
+    fn try_fold_string_substr<'a>(
+        &mut self,
+        _node: &mut Expression<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
+        // TODO
+    }
+
+    fn try_fold_string_substring_or_slice<'a>(
+        &mut self,
+        _node: &mut Expression<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
+        // TODO
+    }
+
+    fn try_fold_string_char_at<'a>(
+        &mut self,
+        _node: &mut Expression<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
+        // TODO
+    }
+
+    fn try_fold_string_char_code_at<'a>(
+        &mut self,
+        _node: &mut Expression<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
+        // TODO
+    }
+
+    fn try_fold_string_replace<'a>(
+        &mut self,
+        _node: &mut Expression<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
+        // TODO
+    }
+
+    fn try_fold_string_replace_all<'a>(
+        &mut self,
+        _node: &mut Expression<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
+        // TODO
     }
 }
 
@@ -88,7 +221,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_string_index_of() {
         fold("x = 'abcdef'.indexOf('g')", "x = -1");
         fold("x = 'abcdef'.indexOf('b')", "x = 1");
@@ -102,11 +234,12 @@ mod test {
 
         // Both elements must be strings. Don't do anything if either one is not
         // string.
-        fold("x = 'abc1def'.indexOf(1)", "x = 3");
-        fold("x = 'abcNaNdef'.indexOf(NaN)", "x = 3");
-        fold("x = 'abcundefineddef'.indexOf(undefined)", "x = 3");
-        fold("x = 'abcnulldef'.indexOf(null)", "x = 3");
-        fold("x = 'abctruedef'.indexOf(true)", "x = 3");
+        // TODO: cast first arg to a string, and fold if possible.
+        // fold("x = 'abc1def'.indexOf(1)", "x = 3");
+        // fold("x = 'abcNaNdef'.indexOf(NaN)", "x = 3");
+        // fold("x = 'abcundefineddef'.indexOf(undefined)", "x = 3");
+        // fold("x = 'abcnulldef'.indexOf(null)", "x = 3");
+        // fold("x = 'abctruedef'.indexOf(true)", "x = 3");
 
         // The following test case fails with JSC_PARSE_ERROR. Hence omitted.
         // fold_same("x = 1.indexOf('bcd');");
