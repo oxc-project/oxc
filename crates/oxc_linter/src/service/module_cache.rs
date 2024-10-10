@@ -6,6 +6,7 @@ use std::{
 use dashmap::{mapref::one::Ref, DashMap};
 use oxc_semantic::ModuleRecord;
 use rustc_hash::FxHashMap;
+use std::num::NonZeroUsize;
 
 /// `CacheState` and `CacheStateEntry` are used to fix the problem where
 /// there is a brief moment when a concurrent fetch can miss the cache.
@@ -21,7 +22,7 @@ type CacheState = Mutex<FxHashMap<Box<Path>, Arc<(Mutex<CacheStateEntry>, Condva
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum CacheStateEntry {
     ReadyToConstruct,
-    PendingStore(usize),
+    PendingStore(NonZeroUsize),
 }
 
 /// Keyed by canonicalized path
@@ -66,8 +67,9 @@ impl ModuleCache {
         let cache_hit = if self.modules.contains_key(path) {
             true
         } else {
-            let i = if let CacheStateEntry::PendingStore(i) = *state { i } else { 0 };
-            *state = CacheStateEntry::PendingStore(i + 1);
+            let i = if let CacheStateEntry::PendingStore(i) = *state { i.get() } else { 0 };
+            // SAFETY: 1 + any natural number is always non-zero.
+            *state = CacheStateEntry::PendingStore(unsafe { NonZeroUsize::new_unchecked(i + 1) });
             false
         };
 
@@ -108,13 +110,14 @@ impl ModuleCache {
         };
         let mut state = lock.lock().expect("Failed lock inner cache state");
         if let CacheStateEntry::PendingStore(i) = *state {
-            let new = i - 1;
+            let new = i.get() - 1;
             if new == 0 {
                 *state = CacheStateEntry::ReadyToConstruct;
                 // Notify the next thread waiting in line, if there is any.
                 cvar.notify_one();
             } else {
-                *state = CacheStateEntry::PendingStore(new);
+                // SAFETY: new is never 0 because the previous branch checks for it.
+                *state = CacheStateEntry::PendingStore(unsafe { NonZeroUsize::new_unchecked(new) });
             }
         }
     }
