@@ -94,3 +94,48 @@ impl Oxlintrc {
         Ok(config)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn test_oxlintrc_de_empty() {
+        let config: Oxlintrc = serde_json::from_value(json!({})).unwrap();
+        assert_eq!(config.plugins, LintPlugins::default());
+        assert_eq!(config.rules, OxlintRules::default());
+        assert!(config.rules.is_empty());
+        assert_eq!(config.settings, OxlintSettings::default());
+        assert_eq!(config.env, OxlintEnv::default());
+    }
+
+    #[test]
+    fn test_oxlintrc_de_plugins_empty_array() {
+        let config: Oxlintrc = serde_json::from_value(json!({ "plugins": [] })).unwrap();
+        assert_eq!(config.plugins, LintPlugins::default());
+    }
+
+    #[test]
+    fn test_oxlintrc_de_plugins_enabled_by_default() {
+        // NOTE(@DonIsaac): creating a Value with `json!` then deserializing it with serde_json::from_value
+        // Errs with "invalid type: string \"eslint\", expected a borrowed string" and I can't
+        // figure out why. This seems to work. Why???
+        let configs = [
+            r#"{ "plugins": ["eslint"] }"#,
+            r#"{ "plugins": ["oxc"] }"#,
+            r#"{ "plugins": ["deepscan"] }"#, // alias for oxc
+        ];
+        // ^ these plugins are enabled by default already
+        for oxlintrc in configs {
+            let config: Oxlintrc = serde_json::from_str(oxlintrc).unwrap();
+            assert_eq!(config.plugins, LintPlugins::default());
+        }
+    }
+
+    #[test]
+    fn test_oxlintrc_de_plugins_new() {
+        let config: Oxlintrc = serde_json::from_str(r#"{ "plugins": ["import"] }"#).unwrap();
+        assert_eq!(config.plugins, LintPlugins::default().union(LintPlugins::IMPORT));
+    }
+}

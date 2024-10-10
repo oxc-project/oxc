@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 
 // <https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc->
 #[derive(Debug, Deserialize, Default, Serialize, JsonSchema)]
+#[cfg_attr(test, derive(PartialEq))]
 pub struct ReactPluginSettings {
     #[serde(default)]
     #[serde(rename = "formComponents")]
@@ -31,6 +32,7 @@ impl ReactPluginSettings {
 // Deserialize helper types
 
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
+#[cfg_attr(test, derive(PartialEq))]
 #[serde(untagged)]
 enum CustomComponent {
     NameOnly(CompactStr),
