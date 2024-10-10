@@ -178,7 +178,16 @@ jobs:
         with:
           cache-key: warm
           components: clippy
+          tools: ast-grep
       - run: cargo lint -- -D warnings
+      - name: Check Char and Byte Offset
+        run: |
+          output=$(sg -p '$A.chars().enumerate()' -r '$A.char_indices()' -l rs)
+          echo "Output: $output"
+          if [ -n "$output" ]; then
+            echo "Error: Unexpected output detected"
+            exit 1
+          fi
 
   doc:
     name: Doc
