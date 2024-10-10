@@ -55,7 +55,8 @@ pub enum ModuleKind {
     ///
     /// ESM syntax includes `import` statement, `export` statement and `import.meta`.
     ///
-    /// Note: Dynamic import expression is not ESM syntax.
+    /// Note1: This value is only valid as a parser input, and does not appear on a valid AST's `Program::source_type`.
+    /// Note2: Dynamic import expression is not ESM syntax.
     ///
     /// See <https://babel.dev/docs/options#misc-options>
     Unambiguous = 2,

@@ -67,10 +67,13 @@ impl CompilerInterface for Driver {
     }
 
     fn after_parse(&mut self, parser_return: &mut ParserReturn) -> ControlFlow<()> {
-        let ParserReturn { program, trivias, panicked, .. } = parser_return;
+        let ParserReturn { program, trivias, panicked, errors } = parser_return;
         self.panicked = *panicked;
         if self.check_comments(trivias) {
             return ControlFlow::Break(());
+        }
+        if (errors.is_empty() || !*panicked) && program.source_type.is_unambiguous() {
+            self.errors.push(OxcDiagnostic::error("SourceType must not be unambiguous."));
         }
         // Make sure serialization doesn't crash; also for code coverage.
         let _serializer = program.serializer();
