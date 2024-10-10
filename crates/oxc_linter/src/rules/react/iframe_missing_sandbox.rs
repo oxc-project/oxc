@@ -19,12 +19,13 @@ fn missing_sandbox_prop(span: Span) -> OxcDiagnostic {
 
 fn invalid_sandbox_prop(span: Span, value: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("An iframe element defines a sandbox attribute with invalid value: {value}"))
-        .with_help("Change the `sandbox` attribute to one of the allowed values: ``, `allow-downloads-without-user-activation`, `allow-downloads`, `allow-forms`, `allow-modals`, `allow-orientation-lock`, `allow-pointer-lock`, `allow-popups`, `allow-popups-to-escape-sandbox`, `allow-presentation`, `allow-same-origin`, `allow-scripts`, `allow-storage-access-by-user-activation`, `allow-top-navigation`, `allow-top-navigation-by-user-activation`.")
+        .with_help("Check this link for the valid values of `sandbox` attribute: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#sandbox.")
         .with_label(span)
 }
 
 fn invalid_sandbox_combination_prop(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("An `iframe` element defines a sandbox attribute with both allow-scripts and allow-same-origin which is invalid")
+        .with_help("Remove `allow-scripts` or `allow-same-origin`.")
         .with_label(span)
 }
 
@@ -57,6 +58,7 @@ declare_oxc_lint!(
     /// ### Why is this bad?
     ///
     /// The sandbox attribute enables an extra set of restrictions for the content in the iframe. Using sandbox attribute is considered a good security practice.
+    /// https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#sandbox
     ///
     /// ### Examples
     ///
@@ -72,7 +74,8 @@ declare_oxc_lint!(
     /// <iframe sandbox="allow-origin" />;
     /// ```
     IframeMissingSandbox,
-    correctness
+    correctness,
+    pending
 );
 
 impl Rule for IframeMissingSandbox {
@@ -83,8 +86,7 @@ impl Rule for IframeMissingSandbox {
                     return;
                 };
 
-                let name = identifier.name.as_str();
-                if name != "iframe" {
+                if identifier.name != "iframe" {
                     return;
                 }
 
@@ -103,7 +105,7 @@ impl Rule for IframeMissingSandbox {
                         return;
                     };
 
-                    if str.value.as_str() != "iframe" {
+                    if str.value != "iframe" {
                         return;
                     }
 
@@ -138,7 +140,7 @@ impl Rule for IframeMissingSandbox {
     }
 }
 fn validate_sandbox_value(literal: &StringLiteral, ctx: &LintContext) {
-    let attrs = literal.value.as_str().split(' ');
+    let attrs = literal.value.split(' ');
     let mut has_allow_same_origin = false;
     let mut has_allow_scripts = false;
     for trimmed_atr in attrs.into_iter().map(str::trim) {
