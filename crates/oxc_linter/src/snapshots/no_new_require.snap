@@ -1,0 +1,16 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-node(no-new-require): Unexpected use of new with require
+   ╭─[no_new_require.tsx:1:17]
+ 1 │ var appHeader = new require('app-header')
+   ·                 ─────────────────────────
+   ╰────
+  help: Initialise the constructor separate from the import statement
+
+  ⚠ eslint-plugin-node(no-new-require): Unexpected use of new with require
+   ╭─[no_new_require.tsx:1:17]
+ 1 │ var appHeader = new require('headers').appHeader
+   ·                 ──────────────────────
+   ╰────
+  help: Initialise the constructor separate from the import statement
