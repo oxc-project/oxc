@@ -95,39 +95,46 @@ impl From<&Ident> for CloneInAttribute {
     }
 }
 
-/// A struct representing the serde attributes (`$[serde(...)]`) that we implement for structs and enums.
+/// An enum representing the serde attributes (`$[serde(...)]`) that we implement for structs.
+#[derive(Debug, Serialize)]
+pub enum ESTreeStructAttribute {
+    NoType,
+    Type(String),
+}
+
+impl Parse for ESTreeStructAttribute {
+    fn parse(input: ParseStream) -> Result<Self, syn::Error> {
+        let is_type = input.peek(Token![type]);
+        if is_type {
+            input.parse::<Token![type]>()?;
+            input.parse::<Token![=]>()?;
+            Ok(Self::Type(input.parse::<LitStr>()?.value()))
+        } else {
+            let ident = input.call(Ident::parse_any).unwrap().to_string();
+            if ident == "no_type" {
+                Ok(Self::NoType)
+            } else {
+                panic!("Unsupported #[estree(...)] argument: {ident}");
+            }
+        }
+    }
+}
+
+/// A struct representing the serde attributes (`$[serde(...)]`) that we implement for enums.
 #[derive(Debug, Serialize, Default)]
-pub struct ESTreeOuterAttribute {
-    pub tag: Option<String>,
-    pub rename: Option<String>,
+pub struct ESTreeEnumAttribute {
     pub rename_all: Option<String>,
     pub untagged: bool,
 }
 
-impl Parse for ESTreeOuterAttribute {
+impl Parse for ESTreeEnumAttribute {
     fn parse(input: ParseStream) -> Result<Self, syn::Error> {
-        let mut tag = None;
-        let mut rename = None;
         let mut rename_all = None;
         let mut untagged = false;
 
         loop {
             let ident = input.call(Ident::parse_any).unwrap().to_string();
             match ident.as_str() {
-                "tag" => {
-                    input.parse::<Token![=]>()?;
-                    assert!(
-                        tag.replace(input.parse::<LitStr>()?.value()).is_none(),
-                        "Duplicate estree(tag)"
-                    );
-                }
-                "rename" => {
-                    input.parse::<Token![=]>()?;
-                    assert!(
-                        rename.replace(input.parse::<LitStr>()?.value()).is_none(),
-                        "Duplicate estree(rename)"
-                    );
-                }
                 "rename_all" => {
                     input.parse::<Token![=]>()?;
                     assert!(
@@ -151,7 +158,7 @@ impl Parse for ESTreeOuterAttribute {
                 break;
             }
         }
-        Ok(Self { tag, rename, rename_all, untagged })
+        Ok(Self { rename_all, untagged })
     }
 }
 
@@ -382,13 +389,14 @@ where
     })
 }
 
-pub fn get_estree_attribute<'a, I>(attrs: I) -> Option<crate::Result<ESTreeOuterAttribute>>
+pub fn get_estree_attribute<'a, T, I>(attrs: I) -> Option<crate::Result<T>>
 where
     I: IntoIterator<Item = &'a Attribute>,
+    T: Parse,
 {
     let attr = attrs.into_iter().find(|it| it.path().is_ident("estree"));
     attr.map(|attr| {
         debug_assert!(attr.path().is_ident("estree"));
-        attr.parse_args_with(ESTreeOuterAttribute::parse).normalize()
+        attr.parse_args_with(T::parse).normalize()
     })
 }

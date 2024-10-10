@@ -26,7 +26,6 @@ use tsify::Tsify;
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
-#[estree(tag = "type")]
 pub struct BooleanLiteral {
     #[estree(flatten)]
     pub span: Span,
@@ -40,7 +39,6 @@ pub struct BooleanLiteral {
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
-#[estree(tag = "type")]
 pub struct NullLiteral {
     #[estree(flatten)]
     pub span: Span,
@@ -53,7 +51,6 @@ pub struct NullLiteral {
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
-#[estree(tag = "type")]
 pub struct NumericLiteral<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -71,7 +68,6 @@ pub struct NumericLiteral<'a> {
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
-#[estree(tag = "type")]
 pub struct BigIntLiteral<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -89,7 +85,6 @@ pub struct BigIntLiteral<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
-#[estree(tag = "type")]
 pub struct RegExpLiteral<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -106,6 +101,7 @@ pub struct RegExpLiteral<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
+#[estree(no_type)]
 pub struct RegExp<'a> {
     /// The regex pattern between the slashes
     pub pattern: RegExpPattern<'a>,
@@ -120,6 +116,7 @@ pub struct RegExp<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
+#[estree(untagged)]
 pub enum RegExpPattern<'a> {
     /// Unparsed pattern. Contains string slice of the pattern.
     /// Pattern was not parsed, so may be valid or invalid.
@@ -136,6 +133,7 @@ pub enum RegExpPattern<'a> {
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
+#[estree(no_type)]
 pub struct EmptyObject;
 
 /// String literal
@@ -145,7 +143,6 @@ pub struct EmptyObject;
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
-#[estree(tag = "type")]
 pub struct StringLiteral<'a> {
     #[estree(flatten)]
     pub span: Span,

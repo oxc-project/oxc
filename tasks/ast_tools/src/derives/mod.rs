@@ -48,7 +48,6 @@ macro_rules! define_derive {
                         .chain(it.strip_suffix("::mod").unwrap_or(it).split("::").skip(1))
                         .chain(["*"])
                         .join("::");
-											println!("{local_path}");
                     let use_module: syn::ItemUse =
                         syn::parse_str(format!("use {local_path};").as_str()).unwrap();
                     quote::quote! {

@@ -14,6 +14,7 @@ use crate::precedence::{GetPrecedence, Precedence};
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
+#[estree(rename_all = "camelCase")]
 pub enum AssignmentOperator {
     #[estree(rename = "=")]
     Assign = 0,
@@ -94,6 +95,7 @@ impl AssignmentOperator {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
+#[estree(rename_all = "camelCase")]
 pub enum BinaryOperator {
     #[estree(rename = "==")]
     Equality = 0,
@@ -283,6 +285,7 @@ impl GetPrecedence for BinaryOperator {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
+#[estree(rename_all = "camelCase")]
 pub enum LogicalOperator {
     #[estree(rename = "||")]
     Or = 0,
@@ -324,6 +327,7 @@ impl GetPrecedence for LogicalOperator {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
+#[estree(rename_all = "camelCase")]
 pub enum UnaryOperator {
     #[estree(rename = "-")]
     UnaryNegation = 0,
@@ -382,6 +386,7 @@ impl UnaryOperator {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
+#[estree(rename_all = "camelCase")]
 pub enum UpdateOperator {
     #[estree(rename = "++")]
     Increment = 0,

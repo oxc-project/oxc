@@ -19,7 +19,7 @@ pub use error::UnknownExtension;
 #[generate_derive(ESTree)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
-#[estree(rename_all = "camelCase")]
+#[estree(no_type)]
 pub struct SourceType {
     /// JavaScript or TypeScript, default JavaScript
     pub(super) language: Language,
@@ -36,9 +36,10 @@ pub struct SourceType {
 #[generate_derive(ESTree)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
-#[estree(rename_all = "lowercase")]
 pub enum Language {
+    #[estree(rename = "javascript")]
     JavaScript = 0,
+    #[estree(rename = "typescript")]
     TypeScript = 1,
     #[estree(rename = "typescriptDefinition")]
     TypeScriptDefinition = 2,
