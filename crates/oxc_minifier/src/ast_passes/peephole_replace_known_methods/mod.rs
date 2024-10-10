@@ -14,9 +14,9 @@ impl<'a> CompressorPass<'a> for PeepholeReplaceKnownMethods {
         self.changed
     }
 
-    fn build(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
+    fn build(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.changed = false;
-        // oxc_traverse::walk_program(self, program, ctx);
+        oxc_traverse::walk_program(self, program, ctx);
     }
 }
 
