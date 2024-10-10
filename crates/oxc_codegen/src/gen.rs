@@ -1194,7 +1194,7 @@ impl<'a> Gen for BigIntLiteral<'a> {
 impl<'a> Gen for RegExpLiteral<'a> {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span.start);
-        let last = p.peek_nth(0);
+        let last = p.peek_nth_back(0);
         let pattern_text = p.source_text.map_or_else(
             || Cow::Owned(self.regex.pattern.to_string()),
             |src| self.regex.pattern.source_text(src),

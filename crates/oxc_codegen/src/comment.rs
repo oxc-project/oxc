@@ -95,7 +95,7 @@ impl<'a> Codegen<'a> {
 
         if comments.first().is_some_and(|c| c.preceded_by_newline) {
             // Skip printing newline if this comment is already on a newline.
-            if self.peek_nth(0).is_some_and(|c| c != '\n' && c != '\t') {
+            if self.peek_nth_back(0).is_some_and(|c| c != '\n' && c != '\t') {
                 self.print_hard_newline();
                 self.print_indent();
             }
