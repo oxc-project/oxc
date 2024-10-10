@@ -2092,13 +2092,13 @@ impl<'a> GenExpr for NewExpression<'a> {
 
 impl<'a> GenExpr for TSAsExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
-        p.print_char(b'(');
-        p.print_char(b'(');
-        self.expression.print_expr(p, precedence, Context::default());
-        p.print_char(b')');
-        p.print_str(" as ");
-        self.type_annotation.print(p, ctx);
-        p.print_char(b')');
+        let wrap = precedence >= Precedence::Shift;
+
+        p.wrap(wrap, |p| {
+            self.expression.print_expr(p, Precedence::Exponentiation, ctx);
+            p.print_str(" as ");
+            self.type_annotation.print(p, ctx);
+        });
     }
 }
 

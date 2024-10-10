@@ -50,7 +50,10 @@ export type Component<
 > =
   | ConcreteComponent<Props, RawBindings, D, C, M, E, S>
   | ComponentPublicInstanceConstructor<Props>
-"
+",
+"(a || b) as any",
+"(a ** b) as any",
+"(function g() {}) as any",
     ];
 
     snapshot("ts", &cases);
