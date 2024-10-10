@@ -1,9 +1,27 @@
-mod errors;
+use napi_derive::napi;
 
-pub use oxc::napi::{isolated_declarations, transform};
+pub use oxc::napi::{
+    isolated_declarations::{IsolatedDeclarationsOptions, IsolatedDeclarationsResult},
+    transform::{
+        ArrowFunctionsOptions, Es2015Options, JsxOptions, ReactRefreshOptions, TransformOptions,
+        TransformResult, TypeScriptOptions,
+    },
+};
 
-mod isolated_declaration;
-pub use isolated_declaration::*;
+#[napi]
+pub fn transform(
+    filename: String,
+    source_text: String,
+    options: Option<TransformOptions>,
+) -> TransformResult {
+    oxc::napi::transform::transform(filename, source_text, options)
+}
 
-mod transformer;
-pub use transformer::*;
+#[napi]
+pub fn isolated_declaration(
+    filename: String,
+    source_text: String,
+    options: Option<IsolatedDeclarationsOptions>,
+) -> IsolatedDeclarationsResult {
+    oxc::napi::isolated_declarations::isolated_declaration(filename, source_text, options)
+}
