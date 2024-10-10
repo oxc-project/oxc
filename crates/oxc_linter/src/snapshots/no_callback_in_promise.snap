@@ -1,0 +1,86 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:1:8]
+ 1 │ a.then(cb)
+   ·        ──
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ eslint-plugin-promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:1:14]
+ 1 │ a.then(() => cb())
+   ·              ────
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ eslint-plugin-promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:1:24]
+ 1 │ a.then(function(err) { cb(err) })
+   ·                        ───────
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ eslint-plugin-promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:1:25]
+ 1 │ a.then(function(data) { cb(data) }, function(err) { cb(err) })
+   ·                         ────────
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ eslint-plugin-promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:1:53]
+ 1 │ a.then(function(data) { cb(data) }, function(err) { cb(err) })
+   ·                                                     ───────
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ eslint-plugin-promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:1:25]
+ 1 │ a.catch(function(err) { cb(err) })
+   ·                         ───────
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ eslint-plugin-promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:1:8]
+ 1 │ a.then(callback)
+   ·        ────────
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ eslint-plugin-promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:1:14]
+ 1 │ a.then(() => callback())
+   ·              ──────────
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ eslint-plugin-promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:1:24]
+ 1 │ a.then(function(err) { callback(err) })
+   ·                        ─────────────
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ eslint-plugin-promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:1:25]
+ 1 │ a.then(function(data) { callback(data) }, function(err) { callback(err) })
+   ·                         ──────────────
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ eslint-plugin-promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:1:59]
+ 1 │ a.then(function(data) { callback(data) }, function(err) { callback(err) })
+   ·                                                           ─────────────
+   ╰────
+  help: Use `then` and `catch` directly
+
+  ⚠ eslint-plugin-promise(no-callback-in-promise): Avoid calling back inside of a promise
+   ╭─[no_callback_in_promise.tsx:1:25]
+ 1 │ a.catch(function(err) { callback(err) })
+   ·                         ─────────────
+   ╰────
+  help: Use `then` and `catch` directly
