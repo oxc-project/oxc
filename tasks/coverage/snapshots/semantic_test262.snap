@@ -2,7 +2,7 @@ commit: d62fa93c
 
 semantic_test262 Summary:
 AST Parsed     : 43776/43776 (100.00%)
-Positive Passed: 43572/43776 (99.53%)
+Positive Passed: 43575/43776 (99.54%)
 tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-block-scoping.js
 semantic error: Symbol scope ID mismatch for "f":
 after transform: SymbolId(3): ScopeId(4294967294)
@@ -1119,18 +1119,8 @@ semantic error: Symbol scope ID mismatch for "f":
 after transform: SymbolId(0): ScopeId(4294967294)
 rebuilt        : SymbolId(0): ScopeId(4294967294)
 
-tasks/coverage/test262/test/built-ins/RegExp/S15.10.2.13_A2_T1.js
-semantic error: Regular Expression content mismatch for `/[^]a/m`: `[]a` == `[]a`
-
-tasks/coverage/test262/test/built-ins/RegExp/S15.10.2.13_A2_T2.js
-semantic error: Regular Expression content mismatch for `/a[^]/`: `a[]` == `a[]`
-
-tasks/coverage/test262/test/built-ins/RegExp/S15.10.2.13_A2_T8.js
-semantic error: Regular Expression content mismatch for `/[^]/`: `[]` == `[]`
-
 tasks/coverage/test262/test/built-ins/String/prototype/split/separator-regexp.js
-semantic error: Regular Expression content mismatch for `/[^]/`: `[]` == `[]`
-Regular Expression content mismatch for `/\cY/`: `\c` == `\c`
+semantic error: Regular Expression content mismatch for `/\cY/`: `\c` == `\c`
 
 tasks/coverage/test262/test/language/module-code/eval-rqstd-once.js
 semantic error: Bindings mismatch:

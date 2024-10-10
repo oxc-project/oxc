@@ -181,12 +181,11 @@ impl<'a> Display for CharacterClass<'a> {
         }
 
         write!(f, "[")?;
+        if self.negative {
+            write!(f, "^")?;
+        }
 
         if !self.body.is_empty() {
-            if self.negative {
-                write!(f, "^")?;
-            }
-
             let sep = match self.kind {
                 CharacterClassContentsKind::Union => "",
                 CharacterClassContentsKind::Subtraction => "--",

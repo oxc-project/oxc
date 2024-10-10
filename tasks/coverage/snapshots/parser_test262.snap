@@ -2,22 +2,11 @@ commit: d62fa93c
 
 parser_test262 Summary:
 AST Parsed     : 43776/43776 (100.00%)
-Positive Passed: 43772/43776 (99.99%)
+Positive Passed: 43775/43776 (100.00%)
 Negative Passed: 4237/4239 (99.95%)
 Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attributes/json-invalid.js
 Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attributes/json-named-bindings.js
-Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/S15.10.2.13_A2_T1.js
-
-  × Regular Expression content mismatch for `/[^]a/m`: `[]a` == `[]a`
-Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/S15.10.2.13_A2_T2.js
-
-  × Regular Expression content mismatch for `/a[^]/`: `a[]` == `a[]`
-Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/S15.10.2.13_A2_T8.js
-
-  × Regular Expression content mismatch for `/[^]/`: `[]` == `[]`
 Expect to Parse: tasks/coverage/test262/test/built-ins/String/prototype/split/separator-regexp.js
-
-  × Regular Expression content mismatch for `/[^]/`: `[]` == `[]`
 
   × Regular Expression content mismatch for `/\cY/`: `\c` == `\c`
 
