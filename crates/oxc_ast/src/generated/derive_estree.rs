@@ -148,7 +148,7 @@ impl<'a> Serialize for Program<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "Program")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("source_type", &self.source_type)?;
+        map.serialize_entry("sourceType", &self.source_type)?;
         map.serialize_entry("hashbang", &self.hashbang)?;
         map.serialize_entry("directives", &self.directives)?;
         map.serialize_entry("body", &self.body)?;
@@ -517,7 +517,7 @@ impl<'a> Serialize for TaggedTemplateExpression<'a> {
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
         map.serialize_entry("tag", &self.tag)?;
         map.serialize_entry("quasi", &self.quasi)?;
-        map.serialize_entry("type_parameters", &self.type_parameters)?;
+        map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.end()
     }
 }
@@ -624,7 +624,7 @@ impl<'a> Serialize for CallExpression<'a> {
         map.serialize_entry("type", "CallExpression")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
         map.serialize_entry("callee", &self.callee)?;
-        map.serialize_entry("type_parameters", &self.type_parameters)?;
+        map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.serialize_entry("arguments", &self.arguments)?;
         map.serialize_entry("optional", &self.optional)?;
         map.end()
@@ -642,7 +642,7 @@ impl<'a> Serialize for NewExpression<'a> {
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
         map.serialize_entry("callee", &self.callee)?;
         map.serialize_entry("arguments", &self.arguments)?;
-        map.serialize_entry("type_parameters", &self.type_parameters)?;
+        map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.end()
     }
 }
@@ -1684,7 +1684,7 @@ impl<'a> Serialize for BindingPattern<'a> {
     {
         let mut map = serializer.serialize_map(None)?;
         self.kind.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("type_annotation", &self.type_annotation)?;
+        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
         map.serialize_entry("optional", &self.optional)?;
         map.end()
     }
@@ -1764,10 +1764,10 @@ impl<'a> Serialize for Function<'a> {
         map.serialize_entry("generator", &self.generator)?;
         map.serialize_entry("async", &self.r#async)?;
         map.serialize_entry("declare", &self.declare)?;
-        map.serialize_entry("type_parameters", &self.type_parameters)?;
-        map.serialize_entry("this_param", &self.this_param)?;
+        map.serialize_entry("typeParameters", &self.type_parameters)?;
+        map.serialize_entry("thisParam", &self.this_param)?;
         map.serialize_entry("params", &self.params)?;
-        map.serialize_entry("return_type", &self.return_type)?;
+        map.serialize_entry("returnType", &self.return_type)?;
         map.serialize_entry("body", &self.body)?;
         map.end()
     }
@@ -1824,20 +1824,20 @@ impl Serialize for FormalParameterKind {
     {
         match *self {
             FormalParameterKind::FormalParameter => {
-                serializer.serialize_unit_variant("FormalParameterKind", 0u32, "formalParameter")
+                serializer.serialize_unit_variant("FormalParameterKind", 0u32, "FormalParameter")
             }
             FormalParameterKind::UniqueFormalParameters => serializer.serialize_unit_variant(
                 "FormalParameterKind",
                 1u32,
-                "uniqueFormalParameters",
+                "UniqueFormalParameters",
             ),
             FormalParameterKind::ArrowFormalParameters => serializer.serialize_unit_variant(
                 "FormalParameterKind",
                 2u32,
-                "arrowFormalParameters",
+                "ArrowFormalParameters",
             ),
             FormalParameterKind::Signature => {
-                serializer.serialize_unit_variant("FormalParameterKind", 3u32, "signature")
+                serializer.serialize_unit_variant("FormalParameterKind", 3u32, "Signature")
             }
         }
     }
@@ -1869,9 +1869,9 @@ impl<'a> Serialize for ArrowFunctionExpression<'a> {
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
         map.serialize_entry("expression", &self.expression)?;
         map.serialize_entry("async", &self.r#async)?;
-        map.serialize_entry("type_parameters", &self.type_parameters)?;
+        map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.serialize_entry("params", &self.params)?;
-        map.serialize_entry("return_type", &self.return_type)?;
+        map.serialize_entry("returnType", &self.return_type)?;
         map.serialize_entry("body", &self.body)?;
         map.end()
     }
@@ -1903,9 +1903,9 @@ impl<'a> Serialize for Class<'a> {
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
         map.serialize_entry("decorators", &self.decorators)?;
         map.serialize_entry("id", &self.id)?;
-        map.serialize_entry("type_parameters", &self.type_parameters)?;
-        map.serialize_entry("super_class", &self.super_class)?;
-        map.serialize_entry("super_type_parameters", &self.super_type_parameters)?;
+        map.serialize_entry("typeParameters", &self.type_parameters)?;
+        map.serialize_entry("superClass", &self.super_class)?;
+        map.serialize_entry("superTypeParameters", &self.super_type_parameters)?;
         map.serialize_entry("implements", &self.implements)?;
         map.serialize_entry("body", &self.body)?;
         map.serialize_entry("abstract", &self.r#abstract)?;
@@ -2021,7 +2021,7 @@ impl<'a> Serialize for PropertyDefinition<'a> {
         map.serialize_entry("optional", &self.optional)?;
         map.serialize_entry("definite", &self.definite)?;
         map.serialize_entry("readonly", &self.readonly)?;
-        map.serialize_entry("type_annotation", &self.type_annotation)?;
+        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
         map.serialize_entry("accessibility", &self.accessibility)?;
         map.end()
     }
@@ -2155,7 +2155,7 @@ impl<'a> Serialize for AccessorProperty<'a> {
         map.serialize_entry("computed", &self.computed)?;
         map.serialize_entry("static", &self.r#static)?;
         map.serialize_entry("definite", &self.definite)?;
-        map.serialize_entry("type_annotation", &self.type_annotation)?;
+        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
         map.serialize_entry("accessibility", &self.accessibility)?;
         map.end()
     }
@@ -2187,8 +2187,8 @@ impl<'a> Serialize for ImportDeclaration<'a> {
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
         map.serialize_entry("specifiers", &self.specifiers)?;
         map.serialize_entry("source", &self.source)?;
-        map.serialize_entry("with_clause", &self.with_clause)?;
-        map.serialize_entry("import_kind", &self.import_kind)?;
+        map.serialize_entry("withClause", &self.with_clause)?;
+        map.serialize_entry("importKind", &self.import_kind)?;
         map.end()
     }
 }
@@ -2224,7 +2224,7 @@ impl<'a> Serialize for ImportSpecifier<'a> {
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
         map.serialize_entry("imported", &self.imported)?;
         map.serialize_entry("local", &self.local)?;
-        map.serialize_entry("import_kind", &self.import_kind)?;
+        map.serialize_entry("importKind", &self.import_kind)?;
         map.end()
     }
 }
@@ -2266,8 +2266,8 @@ impl<'a> Serialize for WithClause<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "WithClause")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("attributes_keyword", &self.attributes_keyword)?;
-        map.serialize_entry("with_entries", &self.with_entries)?;
+        map.serialize_entry("attributesKeyword", &self.attributes_keyword)?;
+        map.serialize_entry("withEntries", &self.with_entries)?;
         map.end()
     }
 }
@@ -2312,8 +2312,8 @@ impl<'a> Serialize for ExportNamedDeclaration<'a> {
         map.serialize_entry("declaration", &self.declaration)?;
         map.serialize_entry("specifiers", &self.specifiers)?;
         map.serialize_entry("source", &self.source)?;
-        map.serialize_entry("export_kind", &self.export_kind)?;
-        map.serialize_entry("with_clause", &self.with_clause)?;
+        map.serialize_entry("exportKind", &self.export_kind)?;
+        map.serialize_entry("withClause", &self.with_clause)?;
         map.end()
     }
 }
@@ -2344,8 +2344,8 @@ impl<'a> Serialize for ExportAllDeclaration<'a> {
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
         map.serialize_entry("exported", &self.exported)?;
         map.serialize_entry("source", &self.source)?;
-        map.serialize_entry("with_clause", &self.with_clause)?;
-        map.serialize_entry("export_kind", &self.export_kind)?;
+        map.serialize_entry("withClause", &self.with_clause)?;
+        map.serialize_entry("exportKind", &self.export_kind)?;
         map.end()
     }
 }
@@ -2361,7 +2361,7 @@ impl<'a> Serialize for ExportSpecifier<'a> {
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
         map.serialize_entry("local", &self.local)?;
         map.serialize_entry("exported", &self.exported)?;
-        map.serialize_entry("export_kind", &self.export_kind)?;
+        map.serialize_entry("exportKind", &self.export_kind)?;
         map.end()
     }
 }
@@ -2525,8 +2525,8 @@ impl<'a> Serialize for TSThisParameter<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSThisParameter")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("this_span", &self.this_span)?;
-        map.serialize_entry("type_annotation", &self.type_annotation)?;
+        map.serialize_entry("thisSpan", &self.this_span)?;
+        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
         map.end()
     }
 }
@@ -2635,7 +2635,7 @@ impl<'a> Serialize for TSTypeAnnotation<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSTypeAnnotation")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("type_annotation", &self.type_annotation)?;
+        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
         map.end()
     }
 }
@@ -2731,10 +2731,10 @@ impl<'a> Serialize for TSConditionalType<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSConditionalType")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("check_type", &self.check_type)?;
-        map.serialize_entry("extends_type", &self.extends_type)?;
-        map.serialize_entry("true_type", &self.true_type)?;
-        map.serialize_entry("false_type", &self.false_type)?;
+        map.serialize_entry("checkType", &self.check_type)?;
+        map.serialize_entry("extendsType", &self.extends_type)?;
+        map.serialize_entry("trueType", &self.true_type)?;
+        map.serialize_entry("falseType", &self.false_type)?;
         map.end()
     }
 }
@@ -2776,7 +2776,7 @@ impl<'a> Serialize for TSParenthesizedType<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSParenthesizedType")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("type_annotation", &self.type_annotation)?;
+        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
         map.end()
     }
 }
@@ -2791,7 +2791,7 @@ impl<'a> Serialize for TSTypeOperator<'a> {
         map.serialize_entry("type", "TSTypeOperator")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
         map.serialize_entry("operator", &self.operator)?;
-        map.serialize_entry("type_annotation", &self.type_annotation)?;
+        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
         map.end()
     }
 }
@@ -2825,7 +2825,7 @@ impl<'a> Serialize for TSArrayType<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSArrayType")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("element_type", &self.element_type)?;
+        map.serialize_entry("elementType", &self.element_type)?;
         map.end()
     }
 }
@@ -2839,8 +2839,8 @@ impl<'a> Serialize for TSIndexedAccessType<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSIndexedAccessType")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("object_type", &self.object_type)?;
-        map.serialize_entry("index_type", &self.index_type)?;
+        map.serialize_entry("objectType", &self.object_type)?;
+        map.serialize_entry("indexType", &self.index_type)?;
         map.end()
     }
 }
@@ -2854,7 +2854,7 @@ impl<'a> Serialize for TSTupleType<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSTupleType")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("element_types", &self.element_types)?;
+        map.serialize_entry("elementTypes", &self.element_types)?;
         map.end()
     }
 }
@@ -2868,7 +2868,7 @@ impl<'a> Serialize for TSNamedTupleMember<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSNamedTupleMember")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("element_type", &self.element_type)?;
+        map.serialize_entry("elementType", &self.element_type)?;
         map.serialize_entry("label", &self.label)?;
         map.serialize_entry("optional", &self.optional)?;
         map.end()
@@ -2884,7 +2884,7 @@ impl<'a> Serialize for TSOptionalType<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSOptionalType")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("type_annotation", &self.type_annotation)?;
+        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
         map.end()
     }
 }
@@ -2898,7 +2898,7 @@ impl<'a> Serialize for TSRestType<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSRestType")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("type_annotation", &self.type_annotation)?;
+        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
         map.end()
     }
 }
@@ -3145,8 +3145,8 @@ impl<'a> Serialize for TSTypeReference<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSTypeReference")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("type_name", &self.type_name)?;
-        map.serialize_entry("type_parameters", &self.type_parameters)?;
+        map.serialize_entry("typeName", &self.type_name)?;
+        map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.end()
     }
 }
@@ -3236,8 +3236,8 @@ impl<'a> Serialize for TSTypeAliasDeclaration<'a> {
         map.serialize_entry("type", "TSTypeAliasDeclaration")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
         map.serialize_entry("id", &self.id)?;
-        map.serialize_entry("type_parameters", &self.type_parameters)?;
-        map.serialize_entry("type_annotation", &self.type_annotation)?;
+        map.serialize_entry("typeParameters", &self.type_parameters)?;
+        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
         map.serialize_entry("declare", &self.declare)?;
         map.end()
     }
@@ -3273,7 +3273,7 @@ impl<'a> Serialize for TSClassImplements<'a> {
         map.serialize_entry("type", "TSClassImplements")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
         map.serialize_entry("expression", &self.expression)?;
-        map.serialize_entry("type_parameters", &self.type_parameters)?;
+        map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.end()
     }
 }
@@ -3289,7 +3289,7 @@ impl<'a> Serialize for TSInterfaceDeclaration<'a> {
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
         map.serialize_entry("id", &self.id)?;
         map.serialize_entry("extends", &self.extends)?;
-        map.serialize_entry("type_parameters", &self.type_parameters)?;
+        map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.serialize_entry("body", &self.body)?;
         map.serialize_entry("declare", &self.declare)?;
         map.end()
@@ -3323,7 +3323,7 @@ impl<'a> Serialize for TSPropertySignature<'a> {
         map.serialize_entry("optional", &self.optional)?;
         map.serialize_entry("readonly", &self.readonly)?;
         map.serialize_entry("key", &self.key)?;
-        map.serialize_entry("type_annotation", &self.type_annotation)?;
+        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
         map.end()
     }
 }
@@ -3356,7 +3356,7 @@ impl<'a> Serialize for TSIndexSignature<'a> {
         map.serialize_entry("type", "TSIndexSignature")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
         map.serialize_entry("parameters", &self.parameters)?;
-        map.serialize_entry("type_annotation", &self.type_annotation)?;
+        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
         map.serialize_entry("readonly", &self.readonly)?;
         map.end()
     }
@@ -3371,10 +3371,10 @@ impl<'a> Serialize for TSCallSignatureDeclaration<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSCallSignatureDeclaration")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("this_param", &self.this_param)?;
+        map.serialize_entry("thisParam", &self.this_param)?;
         map.serialize_entry("params", &self.params)?;
-        map.serialize_entry("return_type", &self.return_type)?;
-        map.serialize_entry("type_parameters", &self.type_parameters)?;
+        map.serialize_entry("returnType", &self.return_type)?;
+        map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.end()
     }
 }
@@ -3412,10 +3412,10 @@ impl<'a> Serialize for TSMethodSignature<'a> {
         map.serialize_entry("computed", &self.computed)?;
         map.serialize_entry("optional", &self.optional)?;
         map.serialize_entry("kind", &self.kind)?;
-        map.serialize_entry("this_param", &self.this_param)?;
+        map.serialize_entry("thisParam", &self.this_param)?;
         map.serialize_entry("params", &self.params)?;
-        map.serialize_entry("return_type", &self.return_type)?;
-        map.serialize_entry("type_parameters", &self.type_parameters)?;
+        map.serialize_entry("returnType", &self.return_type)?;
+        map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.end()
     }
 }
@@ -3430,8 +3430,8 @@ impl<'a> Serialize for TSConstructSignatureDeclaration<'a> {
         map.serialize_entry("type", "TSConstructSignatureDeclaration")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
         map.serialize_entry("params", &self.params)?;
-        map.serialize_entry("return_type", &self.return_type)?;
-        map.serialize_entry("type_parameters", &self.type_parameters)?;
+        map.serialize_entry("returnType", &self.return_type)?;
+        map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.end()
     }
 }
@@ -3446,7 +3446,7 @@ impl<'a> Serialize for TSIndexSignatureName<'a> {
         map.serialize_entry("type", "Identifier")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
         map.serialize_entry("name", &self.name)?;
-        map.serialize_entry("type_annotation", &self.type_annotation)?;
+        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
         map.end()
     }
 }
@@ -3461,7 +3461,7 @@ impl<'a> Serialize for TSInterfaceHeritage<'a> {
         map.serialize_entry("type", "TSInterfaceHeritage")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
         map.serialize_entry("expression", &self.expression)?;
-        map.serialize_entry("type_parameters", &self.type_parameters)?;
+        map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.end()
     }
 }
@@ -3475,9 +3475,9 @@ impl<'a> Serialize for TSTypePredicate<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSTypePredicate")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("parameter_name", &self.parameter_name)?;
+        map.serialize_entry("parameterName", &self.parameter_name)?;
         map.serialize_entry("asserts", &self.asserts)?;
-        map.serialize_entry("type_annotation", &self.type_annotation)?;
+        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
         map.end()
     }
 }
@@ -3583,7 +3583,7 @@ impl<'a> Serialize for TSInferType<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSInferType")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("type_parameter", &self.type_parameter)?;
+        map.serialize_entry("typeParameter", &self.type_parameter)?;
         map.end()
     }
 }
@@ -3597,8 +3597,8 @@ impl<'a> Serialize for TSTypeQuery<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSTypeQuery")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("expr_name", &self.expr_name)?;
-        map.serialize_entry("type_parameters", &self.type_parameters)?;
+        map.serialize_entry("exprName", &self.expr_name)?;
+        map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.end()
     }
 }
@@ -3626,11 +3626,11 @@ impl<'a> Serialize for TSImportType<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSImportType")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("is_type_of", &self.is_type_of)?;
+        map.serialize_entry("isTypeOf", &self.is_type_of)?;
         map.serialize_entry("parameter", &self.parameter)?;
         map.serialize_entry("qualifier", &self.qualifier)?;
         map.serialize_entry("attributes", &self.attributes)?;
-        map.serialize_entry("type_parameters", &self.type_parameters)?;
+        map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.end()
     }
 }
@@ -3644,7 +3644,7 @@ impl<'a> Serialize for TSImportAttributes<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSImportAttributes")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("attributes_keyword", &self.attributes_keyword)?;
+        map.serialize_entry("attributesKeyword", &self.attributes_keyword)?;
         map.serialize_entry("elements", &self.elements)?;
         map.end()
     }
@@ -3687,10 +3687,10 @@ impl<'a> Serialize for TSFunctionType<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSFunctionType")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("this_param", &self.this_param)?;
+        map.serialize_entry("thisParam", &self.this_param)?;
         map.serialize_entry("params", &self.params)?;
-        map.serialize_entry("return_type", &self.return_type)?;
-        map.serialize_entry("type_parameters", &self.type_parameters)?;
+        map.serialize_entry("returnType", &self.return_type)?;
+        map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.end()
     }
 }
@@ -3706,8 +3706,8 @@ impl<'a> Serialize for TSConstructorType<'a> {
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
         map.serialize_entry("abstract", &self.r#abstract)?;
         map.serialize_entry("params", &self.params)?;
-        map.serialize_entry("return_type", &self.return_type)?;
-        map.serialize_entry("type_parameters", &self.type_parameters)?;
+        map.serialize_entry("returnType", &self.return_type)?;
+        map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.end()
     }
 }
@@ -3721,9 +3721,9 @@ impl<'a> Serialize for TSMappedType<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSMappedType")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("type_parameter", &self.type_parameter)?;
-        map.serialize_entry("name_type", &self.name_type)?;
-        map.serialize_entry("type_annotation", &self.type_annotation)?;
+        map.serialize_entry("typeParameter", &self.type_parameter)?;
+        map.serialize_entry("nameType", &self.name_type)?;
+        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
         map.serialize_entry("optional", &self.optional)?;
         map.serialize_entry("readonly", &self.readonly)?;
         map.end()
@@ -3778,7 +3778,7 @@ impl<'a> Serialize for TSAsExpression<'a> {
         map.serialize_entry("type", "TSAsExpression")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
         map.serialize_entry("expression", &self.expression)?;
-        map.serialize_entry("type_annotation", &self.type_annotation)?;
+        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
         map.end()
     }
 }
@@ -3793,7 +3793,7 @@ impl<'a> Serialize for TSSatisfiesExpression<'a> {
         map.serialize_entry("type", "TSSatisfiesExpression")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
         map.serialize_entry("expression", &self.expression)?;
-        map.serialize_entry("type_annotation", &self.type_annotation)?;
+        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
         map.end()
     }
 }
@@ -3808,7 +3808,7 @@ impl<'a> Serialize for TSTypeAssertion<'a> {
         map.serialize_entry("type", "TSTypeAssertion")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
         map.serialize_entry("expression", &self.expression)?;
-        map.serialize_entry("type_annotation", &self.type_annotation)?;
+        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
         map.end()
     }
 }
@@ -3823,8 +3823,8 @@ impl<'a> Serialize for TSImportEqualsDeclaration<'a> {
         map.serialize_entry("type", "TSImportEqualsDeclaration")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
         map.serialize_entry("id", &self.id)?;
-        map.serialize_entry("module_reference", &self.module_reference)?;
-        map.serialize_entry("import_kind", &self.import_kind)?;
+        map.serialize_entry("moduleReference", &self.module_reference)?;
+        map.serialize_entry("importKind", &self.import_kind)?;
         map.end()
     }
 }
@@ -3925,7 +3925,7 @@ impl<'a> Serialize for TSInstantiationExpression<'a> {
         map.serialize_entry("type", "TSInstantiationExpression")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
         map.serialize_entry("expression", &self.expression)?;
-        map.serialize_entry("type_parameters", &self.type_parameters)?;
+        map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.end()
     }
 }
@@ -3956,7 +3956,7 @@ impl<'a> Serialize for JSDocNullableType<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSDocNullableType")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("type_annotation", &self.type_annotation)?;
+        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
         map.serialize_entry("postfix", &self.postfix)?;
         map.end()
     }
@@ -3971,7 +3971,7 @@ impl<'a> Serialize for JSDocNonNullableType<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSDocNonNullableType")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("type_annotation", &self.type_annotation)?;
+        map.serialize_entry("typeAnnotation", &self.type_annotation)?;
         map.serialize_entry("postfix", &self.postfix)?;
         map.end()
     }
@@ -3999,8 +3999,8 @@ impl<'a> Serialize for JSXElement<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSXElement")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("opening_element", &self.opening_element)?;
-        map.serialize_entry("closing_element", &self.closing_element)?;
+        map.serialize_entry("openingElement", &self.opening_element)?;
+        map.serialize_entry("closingElement", &self.closing_element)?;
         map.serialize_entry("children", &self.children)?;
         map.end()
     }
@@ -4015,10 +4015,10 @@ impl<'a> Serialize for JSXOpeningElement<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSXOpeningElement")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("self_closing", &self.self_closing)?;
+        map.serialize_entry("selfClosing", &self.self_closing)?;
         map.serialize_entry("name", &self.name)?;
         map.serialize_entry("attributes", &self.attributes)?;
-        map.serialize_entry("type_parameters", &self.type_parameters)?;
+        map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.end()
     }
 }
@@ -4046,8 +4046,8 @@ impl<'a> Serialize for JSXFragment<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSXFragment")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("opening_fragment", &self.opening_fragment)?;
-        map.serialize_entry("closing_fragment", &self.closing_fragment)?;
+        map.serialize_entry("openingFragment", &self.opening_fragment)?;
+        map.serialize_entry("closingFragment", &self.closing_fragment)?;
         map.serialize_entry("children", &self.children)?;
         map.end()
     }

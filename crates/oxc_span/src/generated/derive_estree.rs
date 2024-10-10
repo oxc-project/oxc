@@ -15,7 +15,7 @@ impl Serialize for SourceType {
     {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("language", &self.language)?;
-        map.serialize_entry("module_kind", &self.module_kind)?;
+        map.serialize_entry("moduleKind", &self.module_kind)?;
         map.serialize_entry("variant", &self.variant)?;
         map.end()
     }

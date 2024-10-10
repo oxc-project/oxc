@@ -93,7 +93,7 @@ fn serialize_struct(def: &crate::schema::StructDef) -> TokenStream {
         }
         let name = match &field.markers.derive_attributes.estree.rename {
             Some(rename) => rename.to_string(),
-            None => field.name.clone().unwrap(),
+            None => field.name.clone().unwrap().to_case(Case::Camel),
         };
         assert!(
             !(name == "type" && type_tag.is_some()),

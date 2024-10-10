@@ -1832,7 +1832,6 @@ pub struct FormalParameter<'a> {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
-#[estree(rename_all = "camelCase")]
 pub enum FormalParameterKind {
     /// <https://tc39.es/ecma262/#prod-FormalParameters>
     FormalParameter = 0,
