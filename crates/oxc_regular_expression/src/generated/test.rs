@@ -12,7 +12,6 @@ fn test_cases() -> impl Iterator<Item = (&'static str, &'static str)> {
     use std::iter;
     let cases = vec!["abc", "^abc?", "[a-z]", "a{1,2}", "a{1,}", "a(?=b)"];
 
-    // let alloc = Allocator::default();
     // [1, 2, 3]
     let first = cases.iter();
     // [2, 3, 1]
