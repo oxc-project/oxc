@@ -3455,10 +3455,10 @@ impl<'a> ContentEq for TSIndexSignature<'a> {
 
 impl<'a> ContentEq for TSCallSignatureDeclaration<'a> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.this_param, &other.this_param)
+        ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
+            && ContentEq::content_eq(&self.this_param, &other.this_param)
             && ContentEq::content_eq(&self.params, &other.params)
             && ContentEq::content_eq(&self.return_type, &other.return_type)
-            && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
     }
 }
 
@@ -3474,18 +3474,18 @@ impl<'a> ContentEq for TSMethodSignature<'a> {
             && ContentEq::content_eq(&self.computed, &other.computed)
             && ContentEq::content_eq(&self.optional, &other.optional)
             && ContentEq::content_eq(&self.kind, &other.kind)
+            && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
             && ContentEq::content_eq(&self.this_param, &other.this_param)
             && ContentEq::content_eq(&self.params, &other.params)
             && ContentEq::content_eq(&self.return_type, &other.return_type)
-            && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
     }
 }
 
 impl<'a> ContentEq for TSConstructSignatureDeclaration<'a> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.params, &other.params)
+        ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
+            && ContentEq::content_eq(&self.params, &other.params)
             && ContentEq::content_eq(&self.return_type, &other.return_type)
-            && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
     }
 }
 
@@ -3657,19 +3657,19 @@ impl<'a> ContentEq for TSImportAttributeName<'a> {
 
 impl<'a> ContentEq for TSFunctionType<'a> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.this_param, &other.this_param)
+        ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
+            && ContentEq::content_eq(&self.this_param, &other.this_param)
             && ContentEq::content_eq(&self.params, &other.params)
             && ContentEq::content_eq(&self.return_type, &other.return_type)
-            && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
     }
 }
 
 impl<'a> ContentEq for TSConstructorType<'a> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.r#abstract, &other.r#abstract)
+            && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
             && ContentEq::content_eq(&self.params, &other.params)
             && ContentEq::content_eq(&self.return_type, &other.return_type)
-            && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
     }
 }
 

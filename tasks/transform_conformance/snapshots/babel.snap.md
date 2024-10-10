@@ -2296,7 +2296,7 @@ Bindings mismatch:
 after transform: ScopeId(1): ["M"]
 rebuilt        : ScopeId(1): []
 Symbol reference IDs mismatch for "AbstractClass":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(3)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(3)]
 rebuilt        : SymbolId(0): [ReferenceId(0)]
 Symbol reference IDs mismatch for "ConcreteClass":
 after transform: SymbolId(2): [ReferenceId(4), ReferenceId(6)]

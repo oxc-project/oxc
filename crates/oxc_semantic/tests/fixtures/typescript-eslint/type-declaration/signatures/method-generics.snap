@@ -34,7 +34,7 @@ SCOPES
                     "flags": "ReferenceFlags(Type)",
                     "id": 1,
                     "name": "U",
-                    "node_id": 21
+                    "node_id": 24
                   }
                 ]
               }
@@ -61,7 +61,7 @@ SCOPES
             "flags": "ReferenceFlags(Type)",
             "id": 0,
             "name": "T",
-            "node_id": 17
+            "node_id": 20
           }
         ]
       },

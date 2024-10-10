@@ -1925,11 +1925,11 @@ pub mod walk {
     #[inline]
     pub fn walk_ts_constructor_type<'a, V: Visit<'a>>(visitor: &mut V, it: &TSConstructorType<'a>) {
         // NOTE: AstKind doesn't exists!
-        visitor.visit_formal_parameters(&it.params);
-        visitor.visit_ts_type_annotation(&it.return_type);
         if let Some(type_parameters) = &it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
+        visitor.visit_formal_parameters(&it.params);
+        visitor.visit_ts_type_annotation(&it.return_type);
     }
 
     #[inline]
@@ -2090,14 +2090,14 @@ pub mod walk {
     #[inline]
     pub fn walk_ts_function_type<'a, V: Visit<'a>>(visitor: &mut V, it: &TSFunctionType<'a>) {
         // NOTE: AstKind doesn't exists!
+        if let Some(type_parameters) = &it.type_parameters {
+            visitor.visit_ts_type_parameter_declaration(type_parameters);
+        }
         if let Some(this_param) = &it.this_param {
             visitor.visit_ts_this_parameter(this_param);
         }
         visitor.visit_formal_parameters(&it.params);
         visitor.visit_ts_type_annotation(&it.return_type);
-        if let Some(type_parameters) = &it.type_parameters {
-            visitor.visit_ts_type_parameter_declaration(type_parameters);
-        }
     }
 
     #[inline]
@@ -2423,15 +2423,15 @@ pub mod walk {
         it: &TSCallSignatureDeclaration<'a>,
     ) {
         // NOTE: AstKind doesn't exists!
+        if let Some(type_parameters) = &it.type_parameters {
+            visitor.visit_ts_type_parameter_declaration(type_parameters);
+        }
         if let Some(this_param) = &it.this_param {
             visitor.visit_ts_this_parameter(this_param);
         }
         visitor.visit_formal_parameters(&it.params);
         if let Some(return_type) = &it.return_type {
             visitor.visit_ts_type_annotation(return_type);
-        }
-        if let Some(type_parameters) = &it.type_parameters {
-            visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
     }
 
@@ -2443,12 +2443,12 @@ pub mod walk {
         let kind = AstKind::TSConstructSignatureDeclaration(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
+        if let Some(type_parameters) = &it.type_parameters {
+            visitor.visit_ts_type_parameter_declaration(type_parameters);
+        }
         visitor.visit_formal_parameters(&it.params);
         if let Some(return_type) = &it.return_type {
             visitor.visit_ts_type_annotation(return_type);
-        }
-        if let Some(type_parameters) = &it.type_parameters {
-            visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
         visitor.leave_scope();
         visitor.leave_node(kind);
@@ -2460,15 +2460,15 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_property_key(&it.key);
+        if let Some(type_parameters) = &it.type_parameters {
+            visitor.visit_ts_type_parameter_declaration(type_parameters);
+        }
         if let Some(this_param) = &it.this_param {
             visitor.visit_ts_this_parameter(this_param);
         }
         visitor.visit_formal_parameters(&it.params);
         if let Some(return_type) = &it.return_type {
             visitor.visit_ts_type_annotation(return_type);
-        }
-        if let Some(type_parameters) = &it.type_parameters {
-            visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
         visitor.leave_scope();
         visitor.leave_node(kind);
