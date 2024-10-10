@@ -181,12 +181,11 @@ impl<'a> Display for CharacterClass<'a> {
         }
 
         write!(f, "[")?;
+        if self.negative {
+            write!(f, "^")?;
+        }
 
         if !self.body.is_empty() {
-            if self.negative {
-                write!(f, "^")?;
-            }
-
             let sep = match self.kind {
                 CharacterClassContentsKind::Union => "",
                 CharacterClassContentsKind::Subtraction => "--",
@@ -259,30 +258,29 @@ impl<'a> Display for CapturingGroup<'a> {
 
 impl<'a> Display for IgnoreGroup<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fn write_flags(
-            f: &mut fmt::Formatter<'_>,
-            prefix: char,
-            flags: &ModifierFlags,
-        ) -> fmt::Result {
+        fn write_flags(f: &mut fmt::Formatter<'_>, flags: &Modifier) -> fmt::Result {
             if flags.ignore_case {
-                write!(f, "{prefix}i")?;
-            }
-            if flags.sticky {
-                write!(f, "{prefix}y")?;
+                write!(f, "i")?;
             }
             if flags.multiline {
-                write!(f, "{prefix}m")?;
+                write!(f, "m")?;
+            }
+            if flags.sticky {
+                write!(f, "s")?;
             }
             Ok(())
         }
 
         write!(f, "(?")?;
 
-        if let Some(enabling) = &self.enabling_modifiers {
-            write_flags(f, '\0', enabling)?;
-        }
-        if let Some(disabling) = &self.disabling_modifiers {
-            write_flags(f, '-', disabling)?;
+        if let Some(modifiers) = &self.modifiers {
+            if let Some(enabling) = &modifiers.enabling {
+                write_flags(f, enabling)?;
+            }
+            if let Some(disabling) = &modifiers.disabling {
+                write!(f, "-")?;
+                write_flags(f, disabling)?;
+            }
         }
 
         write!(f, ":{})", self.body)
@@ -542,6 +540,12 @@ mod test {
         (r"/[\-]/u", None),
         (r"/[\-]/v", None),
         (r"/([\-a-z]{0,31})/iu", None),
+        // ES2025 ---
+        (r"/(?i:.)/", None),
+        (r"/(?-s:.)/", None),
+        (r"/(?im-s:.)/u", None),
+        (r"/(?m-is:.)/v", None),
+        (r"/(?smi:.)/v", Some(r"/(?ims:.)/v")),
     ];
 
     #[test]

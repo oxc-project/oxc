@@ -35,7 +35,9 @@ pub use crate::{
     context::LintContext,
     fixer::FixKind,
     frameworks::FrameworkFlags,
-    options::{AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind, OxlintOptions},
+    options::{
+        AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind, LintPlugins, OxlintOptions,
+    },
     rule::{RuleCategory, RuleFixMeta, RuleMeta, RuleWithSeverity},
     service::{LintService, LintServiceOptions},
 };

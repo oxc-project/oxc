@@ -1522,18 +1522,23 @@ const _: () = {
     assert!(offset_of!(CapturingGroup, name) == 8usize);
     assert!(offset_of!(CapturingGroup, body) == 24usize);
 
-    assert!(size_of::<IgnoreGroup>() == 56usize);
+    assert!(size_of::<IgnoreGroup>() == 64usize);
     assert!(align_of::<IgnoreGroup>() == 8usize);
     assert!(offset_of!(IgnoreGroup, span) == 0usize);
-    assert!(offset_of!(IgnoreGroup, enabling_modifiers) == 8usize);
-    assert!(offset_of!(IgnoreGroup, disabling_modifiers) == 11usize);
-    assert!(offset_of!(IgnoreGroup, body) == 16usize);
+    assert!(offset_of!(IgnoreGroup, modifiers) == 8usize);
+    assert!(offset_of!(IgnoreGroup, body) == 24usize);
 
-    assert!(size_of::<ModifierFlags>() == 3usize);
-    assert!(align_of::<ModifierFlags>() == 1usize);
-    assert!(offset_of!(ModifierFlags, ignore_case) == 0usize);
-    assert!(offset_of!(ModifierFlags, sticky) == 1usize);
-    assert!(offset_of!(ModifierFlags, multiline) == 2usize);
+    assert!(size_of::<Modifiers>() == 16usize);
+    assert!(align_of::<Modifiers>() == 4usize);
+    assert!(offset_of!(Modifiers, span) == 0usize);
+    assert!(offset_of!(Modifiers, enabling) == 8usize);
+    assert!(offset_of!(Modifiers, disabling) == 11usize);
+
+    assert!(size_of::<Modifier>() == 3usize);
+    assert!(align_of::<Modifier>() == 1usize);
+    assert!(offset_of!(Modifier, ignore_case) == 0usize);
+    assert!(offset_of!(Modifier, multiline) == 1usize);
+    assert!(offset_of!(Modifier, sticky) == 2usize);
 
     assert!(size_of::<IndexedReference>() == 12usize);
     assert!(align_of::<IndexedReference>() == 4usize);
@@ -3059,18 +3064,23 @@ const _: () = {
     assert!(offset_of!(CapturingGroup, name) == 8usize);
     assert!(offset_of!(CapturingGroup, body) == 16usize);
 
-    assert!(size_of::<IgnoreGroup>() == 40usize);
+    assert!(size_of::<IgnoreGroup>() == 48usize);
     assert!(align_of::<IgnoreGroup>() == 4usize);
     assert!(offset_of!(IgnoreGroup, span) == 0usize);
-    assert!(offset_of!(IgnoreGroup, enabling_modifiers) == 8usize);
-    assert!(offset_of!(IgnoreGroup, disabling_modifiers) == 11usize);
-    assert!(offset_of!(IgnoreGroup, body) == 16usize);
+    assert!(offset_of!(IgnoreGroup, modifiers) == 8usize);
+    assert!(offset_of!(IgnoreGroup, body) == 24usize);
 
-    assert!(size_of::<ModifierFlags>() == 3usize);
-    assert!(align_of::<ModifierFlags>() == 1usize);
-    assert!(offset_of!(ModifierFlags, ignore_case) == 0usize);
-    assert!(offset_of!(ModifierFlags, sticky) == 1usize);
-    assert!(offset_of!(ModifierFlags, multiline) == 2usize);
+    assert!(size_of::<Modifiers>() == 16usize);
+    assert!(align_of::<Modifiers>() == 4usize);
+    assert!(offset_of!(Modifiers, span) == 0usize);
+    assert!(offset_of!(Modifiers, enabling) == 8usize);
+    assert!(offset_of!(Modifiers, disabling) == 11usize);
+
+    assert!(size_of::<Modifier>() == 3usize);
+    assert!(align_of::<Modifier>() == 1usize);
+    assert!(offset_of!(Modifier, ignore_case) == 0usize);
+    assert!(offset_of!(Modifier, multiline) == 1usize);
+    assert!(offset_of!(Modifier, sticky) == 2usize);
 
     assert!(size_of::<IndexedReference>() == 12usize);
     assert!(align_of::<IndexedReference>() == 4usize);

@@ -234,6 +234,7 @@ mod jest {
 mod react {
     pub mod button_has_type;
     pub mod checked_requires_onchange_or_readonly;
+    pub mod iframe_missing_sandbox;
     pub mod jsx_boolean_value;
     pub mod jsx_curly_brace_presence;
     pub mod jsx_key;
@@ -771,6 +772,7 @@ oxc_macros::declare_all_lint_rules! {
     promise::valid_params,
     react::button_has_type,
     react::checked_requires_onchange_or_readonly,
+    react::iframe_missing_sandbox,
     react::jsx_boolean_value,
     react::jsx_curly_brace_presence,
     react::jsx_key,

@@ -127,7 +127,7 @@ fn run<'a>(
             possible_jest_node,
             ctx,
             &[JestFnKind::General(JestGeneralFnKind::Test)],
-        ) || rule.additional_test_block_functions.contains(&name.into())
+        ) || rule.additional_test_block_functions.contains(&name)
         {
             if let Some(member_expr) = call_expr.callee.as_member_expression() {
                 let Some(property_name) = member_expr.static_property_name() else {

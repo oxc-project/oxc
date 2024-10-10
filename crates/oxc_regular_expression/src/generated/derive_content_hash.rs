@@ -179,17 +179,23 @@ impl<'a> ContentHash for CapturingGroup<'a> {
 
 impl<'a> ContentHash for IgnoreGroup<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
-        ContentHash::content_hash(&self.enabling_modifiers, state);
-        ContentHash::content_hash(&self.disabling_modifiers, state);
+        ContentHash::content_hash(&self.modifiers, state);
         ContentHash::content_hash(&self.body, state);
     }
 }
 
-impl ContentHash for ModifierFlags {
+impl ContentHash for Modifiers {
+    fn content_hash<H: Hasher>(&self, state: &mut H) {
+        ContentHash::content_hash(&self.enabling, state);
+        ContentHash::content_hash(&self.disabling, state);
+    }
+}
+
+impl ContentHash for Modifier {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.ignore_case, state);
-        ContentHash::content_hash(&self.sticky, state);
         ContentHash::content_hash(&self.multiline, state);
+        ContentHash::content_hash(&self.sticky, state);
     }
 }
 

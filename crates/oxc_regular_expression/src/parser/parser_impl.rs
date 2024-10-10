@@ -304,7 +304,8 @@ impl<'a> Parser<'a> {
     //   \ AtomEscape[?UnicodeMode, ?NamedCaptureGroups]
     //   CharacterClass[?UnicodeMode, ?UnicodeSetsMode]
     //   ( GroupSpecifier[?UnicodeMode][opt] Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
-    //   (?: Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
+    //   (? RegularExpressionModifiers : Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
+    //   (? RegularExpressionModifiers - RegularExpressionModifiers : Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
     // ```
     fn parse_atom(&mut self) -> Result<Option<ast::Term<'a>>> {
         let span_start = self.reader.offset();
@@ -345,11 +346,6 @@ impl<'a> Parser<'a> {
             ))));
         }
 
-        // (?: Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
-        if let Some(ignore_group) = self.parse_ignore_group()? {
-            return Ok(Some(ast::Term::IgnoreGroup(Box::new_in(ignore_group, self.allocator))));
-        }
-
         // ( GroupSpecifier[?UnicodeMode][opt] Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
         // ( Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
         if let Some(capturing_group) = self.parse_capturing_group()? {
@@ -357,6 +353,13 @@ impl<'a> Parser<'a> {
                 capturing_group,
                 self.allocator,
             ))));
+        }
+
+        // (?: Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
+        // (? RegularExpressionModifiers : Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
+        // (? RegularExpressionModifiers - RegularExpressionModifiers : Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
+        if let Some(ignore_group) = self.parse_ignore_group()? {
+            return Ok(Some(ast::Term::IgnoreGroup(Box::new_in(ignore_group, self.allocator))));
         }
 
         Ok(None)
@@ -369,7 +372,8 @@ impl<'a> Parser<'a> {
     //   \ [lookahead = c]
     //   CharacterClass[~UnicodeMode, ~UnicodeSetsMode]
     //   ( GroupSpecifier[~UnicodeMode][opt] Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
-    //   (?: Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
+    //   (? RegularExpressionModifiers : Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
+    //   (? RegularExpressionModifiers - RegularExpressionModifiers : Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
     //   InvalidBracedQuantifier
     //   ExtendedPatternCharacter
     // ```
@@ -414,18 +418,20 @@ impl<'a> Parser<'a> {
             ))));
         }
 
-        // (?: Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
-        if let Some(ignore_group) = self.parse_ignore_group()? {
-            return Ok(Some(ast::Term::IgnoreGroup(Box::new_in(ignore_group, self.allocator))));
-        }
-
-        // ( GroupSpecifier[~UnicodeMode][opt] Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
-        // ( Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
+        // ( GroupSpecifier[?UnicodeMode][opt] Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
+        // ( Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
         if let Some(capturing_group) = self.parse_capturing_group()? {
             return Ok(Some(ast::Term::CapturingGroup(Box::new_in(
                 capturing_group,
                 self.allocator,
             ))));
+        }
+
+        // (?: Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
+        // (? RegularExpressionModifiers : Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
+        // (? RegularExpressionModifiers - RegularExpressionModifiers : Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
+        if let Some(ignore_group) = self.parse_ignore_group()? {
+            return Ok(Some(ast::Term::IgnoreGroup(Box::new_in(ignore_group, self.allocator))));
         }
 
         // InvalidBracedQuantifier
@@ -1491,6 +1497,7 @@ impl<'a> Parser<'a> {
     // ```
     fn parse_capturing_group(&mut self) -> Result<Option<ast::CapturingGroup<'a>>> {
         let span_start = self.reader.offset();
+        let checkpoint = self.reader.checkpoint();
 
         if self.reader.eat('(') {
             let mut group_name = None;
@@ -1498,10 +1505,11 @@ impl<'a> Parser<'a> {
             // GroupSpecifier is optional, but if it exists, `?` is also required
             if self.reader.eat('?') {
                 let Some(name) = self.consume_group_name()? else {
-                    return Err(diagnostics::missing_capturing_group_name(
-                        self.span_factory.create(span_start, self.reader.offset()),
-                    ));
+                    // If GroupSpecifier is not found, fallback to `parse_ignore_group()` branch
+                    self.reader.rewind(checkpoint);
+                    return Ok(None);
                 };
+
                 group_name = Some(name);
             }
 
@@ -1525,30 +1533,132 @@ impl<'a> Parser<'a> {
 
     // ```
     // (?: Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
+    // (? RegularExpressionModifiers : Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
+    // (? RegularExpressionModifiers - RegularExpressionModifiers : Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
     // ```
     fn parse_ignore_group(&mut self) -> Result<Option<ast::IgnoreGroup<'a>>> {
         let span_start = self.reader.offset();
 
-        if self.reader.eat3('(', '?', ':') {
-            let disjunction = self.parse_disjunction()?;
+        if self.reader.eat2('(', '?') {
+            let modifiers = if self.reader.peek().filter(|&cp| cp == ':' as u32).is_some() {
+                None
+            } else {
+                self.parse_modifiers()?
+            };
 
-            if !self.reader.eat(')') {
-                return Err(diagnostics::unterminated_pattern(
-                    self.span_factory.create(span_start, self.reader.offset()),
-                    "ignore group",
-                ));
+            if self.reader.eat(':') {
+                let disjunction = self.parse_disjunction()?;
+
+                if !self.reader.eat(')') {
+                    return Err(diagnostics::unterminated_pattern(
+                        self.span_factory.create(span_start, self.reader.offset()),
+                        "ignore group",
+                    ));
+                }
+
+                return Ok(Some(ast::IgnoreGroup {
+                    span: self.span_factory.create(span_start, self.reader.offset()),
+                    modifiers,
+                    body: disjunction,
+                }));
             }
-
-            return Ok(Some(ast::IgnoreGroup {
-                span: self.span_factory.create(span_start, self.reader.offset()),
-                // TODO: Stage3 ModifierFlags
-                enabling_modifiers: None,
-                disabling_modifiers: None,
-                body: disjunction,
-            }));
         }
 
         Ok(None)
+    }
+
+    // ```
+    // RegularExpressionModifiers ::
+    //   [empty]
+    //   RegularExpressionModifiers RegularExpressionModifier
+    //
+    // RegularExpressionModifier :: one of
+    //   `i` `m` `s`
+    // ```
+    fn parse_modifiers(&mut self) -> Result<Option<ast::Modifiers>> {
+        let span_start = self.reader.offset();
+
+        // Currently only `[i, m, s]` are supported
+        let mut enabling_flags = [0, 0, 0];
+        let mut disabling_flags = [0, 0, 0];
+
+        // Enabling
+        while self.reader.peek().filter(|&cp| cp == ':' as u32 || cp == '-' as u32).is_none() {
+            if self.reader.eat('i') {
+                enabling_flags[0] += 1;
+                continue;
+            }
+            if self.reader.eat('m') {
+                enabling_flags[1] += 1;
+                continue;
+            }
+            if self.reader.eat('s') {
+                enabling_flags[2] += 1;
+                continue;
+            }
+
+            return Err(diagnostics::unknown_modifiers(
+                self.span_factory.create(span_start, self.reader.offset()),
+            ));
+        }
+
+        // Disabling
+        if self.reader.eat('-') {
+            while self.reader.peek().filter(|&cp| cp == ':' as u32).is_none() {
+                if self.reader.eat('i') {
+                    disabling_flags[0] += 1;
+                    continue;
+                }
+                if self.reader.eat('m') {
+                    disabling_flags[1] += 1;
+                    continue;
+                }
+                if self.reader.eat('s') {
+                    disabling_flags[2] += 1;
+                    continue;
+                }
+
+                return Err(diagnostics::unknown_modifiers(
+                    self.span_factory.create(span_start, self.reader.offset()),
+                ));
+            }
+        }
+
+        let (enabling_iter, disabling_iter) = (enabling_flags.iter(), disabling_flags.iter());
+
+        // [SS:EE] Atom :: (? RegularExpressionModifiers : Disjunction )
+        // It is a Syntax Error if the source text matched by RegularExpressionModifiers contains the same code point more than once.
+        // [SS:EE] Atom :: (? RegularExpressionModifiers - RegularExpressionModifiers : Disjunction )
+        // It is a Syntax Error if the source text matched by the first RegularExpressionModifiers contains the same code point more than once.
+        // It is a Syntax Error if the source text matched by the second RegularExpressionModifiers contains the same code point more than once.
+        // It is a Syntax Error if any code point in the source text matched by the first RegularExpressionModifiers is also contained in the source text matched by the second RegularExpressionModifiers.
+        let flags_iter = enabling_iter.clone().zip(disabling_iter.clone());
+        if flags_iter.clone().any(|flags| !matches!(flags, (0 | 1, 0) | (0, 1))) {
+            return Err(diagnostics::invalid_modifiers(
+                self.span_factory.create(span_start, self.reader.offset()),
+            ));
+        }
+        // NOTE: Spec is not yet fixed and merged, so these may change:
+        // https://github.com/tc39/ecma262/pull/3221#pullrequestreview-2341169958
+        if flags_iter.clone().all(|flags| matches!(flags, (0, 0))) {
+            return Err(diagnostics::invalid_modifiers(
+                self.span_factory.create(span_start, self.reader.offset()),
+            ));
+        }
+
+        Ok(Some(ast::Modifiers {
+            span: self.span_factory.create(span_start, self.reader.offset()),
+            enabling: enabling_iter.clone().any(|f| *f == 1).then(|| ast::Modifier {
+                ignore_case: enabling_flags[0] == 1,
+                multiline: enabling_flags[1] == 1,
+                sticky: enabling_flags[2] == 1,
+            }),
+            disabling: disabling_iter.clone().any(|f| *f == 1).then(|| ast::Modifier {
+                ignore_case: disabling_flags[0] == 1,
+                multiline: disabling_flags[1] == 1,
+                sticky: disabling_flags[2] == 1,
+            }),
+        }))
     }
 
     // ---

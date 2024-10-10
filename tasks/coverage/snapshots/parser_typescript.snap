@@ -10936,11 +10936,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  4 │     // Pattern modifiers
    ╰────
 
-  × Invalid regular expression: Missing capturing group name
-   ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:5:3]
+  × Invalid regular expression: Unknown modifiers
+   ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:5:5]
  4 │     // Pattern modifiers
  5 │     /(?med-ium:bar)/,
-   ·      ──
+   ·        ─
  6 │     // Capturing groups
    ╰────
 
@@ -11167,11 +11167,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·                   ─────
    ╰────
 
-  × Invalid regular expression: Missing capturing group name
-   ╭─[typescript/tests/cases/compiler/regularExpressionWithNonBMPFlags.ts:7:31]
+  × Invalid regular expression: Unknown modifiers
+   ╭─[typescript/tests/cases/compiler/regularExpressionWithNonBMPFlags.ts:7:33]
  6 │ // See https://en.wikipedia.org/wiki/Mathematical_Alphanumeric_Symbols
  7 │ const 𝘳𝘦𝘨𝘦𝘹 = /(?𝘴𝘪-𝘮:^𝘧𝘰𝘰.)/𝘨𝘮𝘶;
-   ·                ──
+   ·                  ▲
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
