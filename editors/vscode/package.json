@@ -136,8 +136,7 @@
     "package": "vsce package --no-dependencies -o oxc_language_server.vsix",
     "install-extension": "code --install-extension oxc_language_server.vsix --force",
     "server:build:debug": "cargo build -p oxc_language_server",
-    "server:build:release": "cross-env CARGO_TARGET_DIR=./target cargo build -p oxc_language_server --release",
-    "fmt:js": "prettier --write ./**/*.{js,ts,json}"
+    "server:build:release": "cross-env CARGO_TARGET_DIR=./target cargo build -p oxc_language_server --release"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
