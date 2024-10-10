@@ -7,15 +7,14 @@ use std::{
     sync::{Arc, Condvar, Mutex},
 };
 
-use dashmap::DashMap;
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_resolver::Resolver;
-use oxc_semantic::{ModuleRecord, SemanticBuilder};
+use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 use rayon::{iter::ParallelBridge, prelude::ParallelIterator};
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashSet;
 
 use crate::{
     loader::{JavaScriptSource, PartialLoader, LINT_PARTIAL_LOADER_EXT},
@@ -23,157 +22,20 @@ use crate::{
     Fixer, Linter, Message,
 };
 
-pub struct LintServiceOptions {
-    /// Current working directory
-    cwd: Box<Path>,
-
-    /// All paths to lint
-    paths: Vec<Box<Path>>,
-
-    /// TypeScript `tsconfig.json` path for reading path alias and project references
-    tsconfig: Option<PathBuf>,
-
-    cross_module: bool,
-}
-
-impl LintServiceOptions {
-    #[must_use]
-    pub fn new<T>(cwd: T, paths: Vec<Box<Path>>) -> Self
-    where
-        T: Into<Box<Path>>,
-    {
-        Self { cwd: cwd.into(), paths, tsconfig: None, cross_module: false }
-    }
-
-    #[inline]
-    #[must_use]
-    pub fn with_tsconfig<T>(mut self, tsconfig: T) -> Self
-    where
-        T: Into<PathBuf>,
-    {
-        let tsconfig = tsconfig.into();
-        // Should this be canonicalized?
-        let tsconfig = if tsconfig.is_relative() { self.cwd.join(tsconfig) } else { tsconfig };
-        debug_assert!(tsconfig.is_file());
-
-        self.tsconfig = Some(tsconfig);
-        self
-    }
-
-    #[inline]
-    #[must_use]
-    pub fn with_cross_module(mut self, cross_module: bool) -> Self {
-        self.cross_module = cross_module;
-        self
-    }
-
-    #[inline]
-    pub fn cwd(&self) -> &Path {
-        &self.cwd
-    }
-}
-
-#[derive(Clone)]
-pub struct LintService {
-    runtime: Arc<Runtime>,
-}
-
-impl LintService {
-    pub fn new(linter: Linter, options: LintServiceOptions) -> Self {
-        let runtime = Arc::new(Runtime::new(linter, options));
-        Self { runtime }
-    }
-
-    #[cfg(test)]
-    pub(crate) fn from_linter(linter: Linter, options: LintServiceOptions) -> Self {
-        let runtime = Arc::new(Runtime::new(linter, options));
-        Self { runtime }
-    }
-
-    pub fn linter(&self) -> &Linter {
-        &self.runtime.linter
-    }
-
-    pub fn number_of_dependencies(&self) -> usize {
-        self.runtime.module_map.len() - self.runtime.paths.len()
-    }
-
-    /// # Panics
-    pub fn run(&self, tx_error: &DiagnosticSender) {
-        self.runtime
-            .paths
-            .iter()
-            .par_bridge()
-            .for_each_with(&self.runtime, |runtime, path| runtime.process_path(path, tx_error));
-        tx_error.send(None).unwrap();
-    }
-
-    /// For tests
-    #[cfg(test)]
-    pub(crate) fn run_source<'a>(
-        &self,
-        allocator: &'a Allocator,
-        source_text: &'a str,
-        check_syntax_errors: bool,
-        tx_error: &DiagnosticSender,
-    ) -> Vec<Message<'a>> {
-        self.runtime
-            .paths
-            .iter()
-            .flat_map(|path| {
-                let source_type = SourceType::from_path(path).unwrap();
-                self.runtime.init_cache_state(path);
-                self.runtime.process_source(
-                    path,
-                    allocator,
-                    source_text,
-                    source_type,
-                    check_syntax_errors,
-                    tx_error,
-                )
-            })
-            .collect::<Vec<_>>()
-    }
-}
-
-/// `CacheState` and `CacheStateEntry` are used to fix the problem where
-/// there is a brief moment when a concurrent fetch can miss the cache.
-///
-/// Given `ModuleMap` is a `DashMap`, which conceptually is a `RwLock<HashMap>`.
-/// When two requests read the map at the exact same time from different threads,
-/// both will miss the cache so both thread will make a request.
-///
-/// See the "problem section" in <https://medium.com/@polyglot_factotum/rust-concurrency-patterns-condvars-and-locks-e278f18db74f>
-/// and the solution is copied here to fix the issue.
-type CacheState = Mutex<FxHashMap<Box<Path>, Arc<(Mutex<CacheStateEntry>, Condvar)>>>;
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-enum CacheStateEntry {
-    ReadyToConstruct,
-    PendingStore(usize),
-}
-
-/// Keyed by canonicalized path
-type ModuleMap = DashMap<Box<Path>, ModuleState>;
-
-#[derive(Clone)]
-enum ModuleState {
-    Resolved(Arc<ModuleRecord>),
-    Ignored,
-}
+use super::{CacheState, CacheStateEntry, LintServiceOptions, ModuleMap, ModuleState};
 
 pub struct Runtime {
-    cwd: Box<Path>,
+    pub(super) cwd: Box<Path>,
     /// All paths to lint
-    paths: FxHashSet<Box<Path>>,
-    linter: Linter,
-    resolver: Option<Resolver>,
-    module_map: ModuleMap,
-    cache_state: CacheState,
+    pub(super) paths: FxHashSet<Box<Path>>,
+    pub(super) linter: Linter,
+    pub(super) resolver: Option<Resolver>,
+    pub(super) module_map: ModuleMap,
+    pub(super) cache_state: CacheState,
 }
 
 impl Runtime {
-    fn new(linter: Linter, options: LintServiceOptions) -> Self {
+    pub(super) fn new(linter: Linter, options: LintServiceOptions) -> Self {
         let resolver = options.cross_module.then(|| {
             Self::get_resolver(options.tsconfig.or_else(|| Some(options.cwd.join("tsconfig.json"))))
         });
@@ -230,7 +92,7 @@ impl Runtime {
     // clippy: the source field is checked and assumed to be less than 4GB, and
     // we assume that the fix offset will not exceed 2GB in either direction
     #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
-    fn process_path(&self, path: &Path, tx_error: &DiagnosticSender) {
+    pub(super) fn process_path(&self, path: &Path, tx_error: &DiagnosticSender) {
         if self.init_cache_state(path) {
             return;
         }
@@ -318,7 +180,7 @@ impl Runtime {
     }
 
     #[allow(clippy::too_many_arguments)]
-    fn process_source<'a>(
+    pub(super) fn process_source<'a>(
         &self,
         path: &Path,
         allocator: &'a Allocator,
@@ -434,7 +296,7 @@ impl Runtime {
         self.linter.run(path, Rc::new(semantic_ret.semantic))
     }
 
-    fn init_cache_state(&self, path: &Path) -> bool {
+    pub(super) fn init_cache_state(&self, path: &Path) -> bool {
         if self.resolver.is_none() {
             return false;
         }
