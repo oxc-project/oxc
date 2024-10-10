@@ -41,8 +41,8 @@ impl PeepholeReplaceKnownMethods {
 
         let Expression::StaticMemberExpression(member) = &call_expr.callee else { return };
         if let Expression::StringLiteral(string_lit) = &member.object {
-            match call_expr.arguments.len() {
-                0 => {
+            match member.property.name.as_str() {
+                "toLowerCase" | "toUpperCase" | "trim" => {
                     let transformed_value =
                         match member.property.name.as_str() {
                             "toLowerCase" => Some(ctx.ast.string_literal(
@@ -64,20 +64,18 @@ impl PeepholeReplaceKnownMethods {
                         *node = ctx.ast.expression_from_string_literal(transformed_value);
                     }
                 }
-                _ => match member.property.name.as_str() {
-                    "indexOf" | "lastIndexOf" => {
-                        self.try_fold_index_of(node, ctx);
-                    }
-                    "substr" => {
-                        self.try_fold_string_substr(node, ctx);
-                    }
-                    "substring" | "slice" => self.try_fold_string_substring_or_slice(node, ctx),
-                    "charAt" => self.try_fold_string_char_at(node, ctx),
-                    "charCodeAt" => self.try_fold_string_char_code_at(node, ctx),
-                    "replace" => self.try_fold_string_replace(node, ctx),
-                    "replaceAll" => self.try_fold_string_replace_all(node, ctx),
-                    _ => {}
-                },
+                "indexOf" | "lastIndexOf" => {
+                    self.try_fold_index_of(node, ctx);
+                }
+                "substr" => {
+                    self.try_fold_string_substr(node, ctx);
+                }
+                "substring" | "slice" => self.try_fold_string_substring_or_slice(node, ctx),
+                "charAt" => self.try_fold_string_char_at(node, ctx),
+                "charCodeAt" => self.try_fold_string_char_code_at(node, ctx),
+                "replace" => self.try_fold_string_replace(node, ctx),
+                "replaceAll" => self.try_fold_string_replace_all(node, ctx),
+                _ => {}
             }
         }
     }
@@ -164,10 +162,39 @@ impl PeepholeReplaceKnownMethods {
 
     fn try_fold_string_char_at<'a>(
         &mut self,
-        _node: &mut Expression<'a>,
-        _ctx: &mut TraverseCtx<'a>,
+        node: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
-        // TODO
+        let Expression::CallExpression(call_expr) = node else { unreachable!() };
+        let Expression::StaticMemberExpression(member) = &call_expr.callee else { unreachable!() };
+        let Expression::StringLiteral(string_lit) = &member.object else { unreachable!() };
+
+        #[expect(clippy::cast_possible_truncation)]
+        let search_start_index: i64 = match call_expr.arguments.first() {
+            Some(Argument::NumericLiteral(numeric_lit)) => numeric_lit.value.floor() as i64,
+            Some(Argument::UnaryExpression(unary_expr))
+                if unary_expr.operator == UnaryOperator::UnaryNegation =>
+            {
+                let Expression::NumericLiteral(numeric_lit) = &unary_expr.argument else {
+                    return;
+                };
+                -(numeric_lit.value as i64)
+            }
+            None => 0,
+            _ => return,
+        };
+
+        #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+        let char = if search_start_index < 0 {
+            None
+        } else {
+            string_lit.value.chars().nth(search_start_index as usize)
+        };
+
+        self.changed = true;
+        *node = ctx.ast.expression_from_string_literal(
+            ctx.ast.string_literal(call_expr.span, char.map_or(String::new(), |v| v.to_string())),
+        );
     }
 
     fn try_fold_string_char_code_at<'a>(
@@ -450,18 +477,19 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_fold_string_char_at() {
         fold("x = 'abcde'.charAt(0)", "x = 'a'");
         fold("x = 'abcde'.charAt(1)", "x = 'b'");
         fold("x = 'abcde'.charAt(2)", "x = 'c'");
         fold("x = 'abcde'.charAt(3)", "x = 'd'");
         fold("x = 'abcde'.charAt(4)", "x = 'e'");
-        fold_same("x = 'abcde'.charAt(5)"); // or x = ''
-        fold_same("x = 'abcde'.charAt(-1)"); // or x = ''
+        // START: note, the following test cases outputs differ from Google's
+        fold("x = 'abcde'.charAt(5)", "x = ''");
+        fold("x = 'abcde'.charAt(-1)", "x = ''");
+        fold("x = 'abcde'.charAt()", "x = 'a'");
+        fold("x = 'abcde'.charAt(0, ++z)", "x = 'a'");
+        // END
         fold_same("x = 'abcde'.charAt(y)");
-        fold_same("x = 'abcde'.charAt()"); // or x = 'a'
-        fold_same("x = 'abcde'.charAt(0, ++z)"); // or (++z, 'a')
         fold_same("x = 'abcde'.charAt(null)"); // or x = 'a'
         fold_same("x = 'abcde'.charAt(true)"); // or x = 'b'
                                                // fold("x = '\\ud834\udd1e'.charAt(0)", "x = '\\ud834'");
