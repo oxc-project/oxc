@@ -20,12 +20,6 @@ impl Derive for DeriveESTree {
 
     fn derive(&mut self, def: &TypeDef, _: &LateCtx) -> TokenStream {
         let ident = def.ident();
-        // if let TypeDef::Struct(it) = def {
-        //     // println!("{ident:?} {:?}", it.markers.estree);
-        //     // for field in &it.variants {
-        //     //     println!("- {:?}: {:?}", field.name, field.markers.derive_attributes.estree);
-        //     // }
-        // }
 
         let body = match def {
             TypeDef::Enum(def) => serialize_enum(def),
