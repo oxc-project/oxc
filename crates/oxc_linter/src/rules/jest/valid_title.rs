@@ -7,7 +7,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{CompactStr, GetSpan, Span};
 use regex::Regex;
 use rustc_hash::FxHashMap;
 
@@ -30,7 +30,7 @@ pub struct ValidTitle(Box<ValidTitleConfig>);
 #[derive(Debug, Default, Clone)]
 pub struct ValidTitleConfig {
     ignore_type_of_describe_name: bool,
-    disallowed_words: Vec<String>,
+    disallowed_words: Vec<CompactStr>,
     ignore_space: bool,
     must_not_match_patterns: FxHashMap<MatchKind, CompiledMatcherAndMessage>,
     must_match_patterns: FxHashMap<MatchKind, CompiledMatcherAndMessage>,
@@ -85,9 +85,7 @@ impl Rule for ValidTitle {
         let disallowed_words = config
             .and_then(|v| v.get("disallowedWords"))
             .and_then(|v| v.as_array())
-            .map(|v| {
-                v.iter().filter_map(|v| v.as_str().map(std::string::ToString::to_string)).collect()
-            })
+            .map(|v| v.iter().filter_map(|v| v.as_str().map(CompactStr::from)).collect())
             .unwrap_or_default();
         let must_not_match_patterns = config
             .and_then(|v| v.get("mustNotMatch"))
@@ -179,7 +177,7 @@ impl ValidTitle {
     }
 }
 
-type CompiledMatcherAndMessage = (Regex, Option<String>);
+type CompiledMatcherAndMessage = (Regex, Option<CompactStr>);
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 enum MatchKind {
@@ -263,7 +261,7 @@ fn compile_matcher_pattern(pattern: MatcherPattern) -> Option<CompiledMatcherAnd
         MatcherPattern::Vec(pattern) => {
             let reg_str = pattern.first().and_then(|v| v.as_str()).map(|v| format!("(?u){v}"))?;
             let reg = Regex::new(&reg_str).ok()?;
-            let message = pattern.get(1).map(std::string::ToString::to_string);
+            let message = pattern.get(1).and_then(serde_json::Value::as_str).map(CompactStr::from);
             Some((reg, message))
         }
     }
@@ -322,12 +320,12 @@ fn validate_title(
     if let Some((regex, message)) = valid_title.must_match_patterns.get(&jest_fn_name) {
         if !regex.is_match(title) {
             let raw_pattern = regex.as_str();
-            let message = message.as_ref().map_or_else(
-                || format!("{un_prefixed_name} should match {raw_pattern}"),
-                std::clone::Clone::clone,
-            );
+            let message = match message.as_ref() {
+                Some(message) => message.as_str(),
+                None => &format!("{un_prefixed_name} should match {raw_pattern}"),
+            };
             ctx.diagnostic(valid_title_diagnostic(
-                &message,
+                message,
                 "Make sure the title matches the `mustMatch` of your config file",
                 span,
             ));
@@ -337,13 +335,13 @@ fn validate_title(
     if let Some((regex, message)) = valid_title.must_not_match_patterns.get(&jest_fn_name) {
         if regex.is_match(title) {
             let raw_pattern = regex.as_str();
-            let message = message.as_ref().map_or_else(
-                || format!("{un_prefixed_name} should not match {raw_pattern}"),
-                std::string::ToString::to_string,
-            );
+            let message = match message.as_ref() {
+                Some(message) => message.as_str(),
+                None => &format!("{un_prefixed_name} should not match {raw_pattern}"),
+            };
 
             ctx.diagnostic(valid_title_diagnostic(
-                &message,
+                message,
                 "Make sure the title not matches the `mustNotMatch` of your config file",
                 span,
             ));
