@@ -110,11 +110,6 @@ pub fn character_class_contents_invalid_operands(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn missing_capturing_group_name(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("{PREFIX} Missing capturing group name")).with_label(span)
-}
-
-#[cold]
 pub fn too_large_number_in_braced_quantifier(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("{PREFIX} Number is too large in braced quantifier"))
         .with_label(span)
@@ -151,4 +146,14 @@ pub fn invalid_unicode_escape_sequence(span: Span) -> OxcDiagnostic {
 #[cold]
 pub fn invalid_surrogate_pair(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("{PREFIX} Invalid surrogate pair")).with_label(span)
+}
+
+#[cold]
+pub fn invalid_modifiers(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("{PREFIX} Invalid modifiers")).with_label(span)
+}
+
+#[cold]
+pub fn unknown_modifiers(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("{PREFIX} Unknown modifiers")).with_label(span)
 }

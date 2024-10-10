@@ -111,10 +111,21 @@ mod test {
             (r"\1()", default()),
             (r"\1()", with_unicode_mode()),
             (r"(?<n1>..)(?<n2>..)", default()),
-            // TODO: ES2025 Duplicate named capturing groups
+            // ES2025 ---
+            // TODO: Duplicate named capturing groups
             // (r"(?<n1>..)|(?<n1>..)", default()),
             // (r"(?<year>[0-9]{4})-[0-9]{2}|[0-9]{2}-(?<year>[0-9]{4})", default()),
             // (r"(?:(?<a>x)|(?<a>y))\k<a>", default()),
+            // Modifiers
+            (r"(?:.)", default()),
+            (r"(?s:.)", default()),
+            (r"(?ism:.)", default()),
+            (r"(?-s:.)", default()),
+            (r"(?-smi:.)", default()),
+            (r"(?s-im:.)", default()),
+            (r"(?si-m:.)", default()),
+            (r"(?im-s:.)", with_unicode_sets_mode()),
+            (r"(?ims-:.)", default()),
         ] {
             let res = Parser::new(&allocator, source_text, *options).parse();
             if let Err(err) = res {
@@ -161,6 +172,7 @@ mod test {
             ("a(?:", default()),
             ("(a", default()),
             ("(?<a>", default()),
+            ("(?<", default()),
             (r"(?<a\>.)", default()),
             (r"(?<a\>.)", with_unicode_mode()),
             (r"(?<\>.)", default()),
@@ -184,13 +196,26 @@ mod test {
             (r"[a--b&&c]", with_unicode_sets_mode()),
             (r"[\q{]", with_unicode_sets_mode()),
             (r"[\q{\a}]", with_unicode_sets_mode()),
-            // TODO: ES2025 Duplicate named capturing groups
+            // ES2025 ---
+            // TODO: Duplicate named capturing groups
             (r"(?<n>..)|(?<n>..)", default()), // This will be valid
-                                               // (r"(?<a>|(?<a>))", default()), // Nested, still invalid
+            // (r"(?<a>|(?<a>))", default()), // Nested, still invalid
+            // Modifiers
+            (r"(?a:.)", default()),
+            (r"(?-S:.)", default()),
+            (r"(?-:.)", default()),
+            (r"(?iM:.)", default()),
+            (r"(?imms:.)", default()),
+            (r"(?-sI:.)", default()),
+            (r"(?ii-s:.)", default()),
+            (r"(?i-msm:.)", default()),
+            (r"(?i", default()),
+            (r"(?i-", default()),
+            (r"(?i-s", default()),
         ] {
             assert!(
                 Parser::new(&allocator, source_text, *options).parse().is_err(),
-                "{source_text} should fail to parse with {options:?}!"
+                "{source_text} should fail to parse with {options:?}, but passed!"
             );
         }
     }
@@ -234,11 +259,16 @@ mod test {
             (r"[[z-a]]", with_unicode_sets_mode(), true),
             (r"[[[[[^[[[[\q{ng}]]]]]]]]]", with_unicode_sets_mode(), true),
             (r"[^[[[[[[[[[[[[[[[[\q{ng}]]]]]]]]]]]]]]]]]", with_unicode_sets_mode(), true),
+            // ES2025 ---
+            // Modifiers
+            (r"(?ii:.)", default(), true),
+            (r"(?-ss:.)", default(), true),
+            (r"(?im-im:.)", default(), true),
         ] {
             assert_eq!(
                 Parser::new(&allocator, source_text, *options).parse().is_err(),
                 *is_err,
-                "{source_text} should early error with {options:?}!"
+                "{source_text} should fail with early error with {options:?}, but passed!"
             );
         }
     }

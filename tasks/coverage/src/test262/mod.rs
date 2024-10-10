@@ -107,8 +107,6 @@ impl Case for Test262Case {
         [
             // ES2025 https://github.com/tc39/proposal-duplicate-named-capturing-groups
             "regexp-duplicate-named-groups",
-            // stage 3 https://github.com/tc39/proposal-regexp-modifiers
-            "regexp-modifiers",
             // stage 3 https://github.com/tc39/proposal-source-phase-imports
             "source-phase-imports",
         ]
