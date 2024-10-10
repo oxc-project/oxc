@@ -1,7 +1,7 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{CompactStr, GetSpan, Span};
 use rustc_hash::FxHashSet;
 
 use crate::{context::LintContext, rule::Rule, utils::PROMISE_STATIC_METHODS, AstNode};
@@ -16,7 +16,7 @@ pub struct SpecOnly(Box<SpecOnlyConfig>);
 
 #[derive(Debug, Default, Clone)]
 pub struct SpecOnlyConfig {
-    allowed_methods: Option<FxHashSet<String>>,
+    allowed_methods: Option<FxHashSet<CompactStr>>,
 }
 
 impl std::ops::Deref for SpecOnly {
@@ -58,7 +58,7 @@ impl Rule for SpecOnly {
             .and_then(|v| v.get("allowedMethods"))
             .and_then(serde_json::Value::as_array)
             .map(|v| {
-                v.iter().filter_map(serde_json::Value::as_str).map(ToString::to_string).collect()
+                v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect()
             });
 
         Self(Box::new(SpecOnlyConfig { allowed_methods }))

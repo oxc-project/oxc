@@ -133,9 +133,9 @@ fn min_distance(a: &str, b: &str) -> usize {
 
     let mut previous_row: Vec<usize> = (0..=n).collect();
 
-    for (i, s1) in a.chars().enumerate() {
+    for (i, s1) in a.char_indices() {
         let mut current_row = vec![i + 1];
-        for (j, s2) in b.chars().enumerate() {
+        for (j, s2) in b.char_indices() {
             let insertions = previous_row[j + 1] + 1;
             let deletions = current_row[j] + 1;
             let substitutions = previous_row[j] + usize::from(s1 != s2);

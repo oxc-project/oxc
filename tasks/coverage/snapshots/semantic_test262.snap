@@ -1,8 +1,8 @@
 commit: d62fa93c
 
 semantic_test262 Summary:
-AST Parsed     : 43776/43776 (100.00%)
-Positive Passed: 43576/43776 (99.54%)
+AST Parsed     : 43914/43914 (100.00%)
+Positive Passed: 43713/43914 (99.54%)
 tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-block-scoping.js
 semantic error: Symbol scope ID mismatch for "f":
 after transform: SymbolId(3): ScopeId(4294967294)
@@ -1118,6 +1118,9 @@ tasks/coverage/test262/test/annexB/language/global-code/if-stmt-else-decl-global
 semantic error: Symbol scope ID mismatch for "f":
 after transform: SymbolId(0): ScopeId(4294967294)
 rebuilt        : SymbolId(0): ScopeId(4294967294)
+
+tasks/coverage/test262/test/built-ins/String/prototype/split/separator-regexp.js
+semantic error: Regular Expression content mismatch for `/\cY/`: `\c` == `\c`
 
 tasks/coverage/test262/test/language/module-code/eval-rqstd-once.js
 semantic error: Bindings mismatch:

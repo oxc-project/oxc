@@ -71,19 +71,6 @@ impl<'a> PeepholeFoldConstants {
         Self { changed: false }
     }
 
-    fn try_get_number_literal_value(&self, expr: &mut Expression<'a>) -> Option<f64> {
-        match expr {
-            Expression::NumericLiteral(n) => Some(n.value),
-            Expression::UnaryExpression(unary)
-                if unary.operator == UnaryOperator::UnaryNegation =>
-            {
-                let Expression::NumericLiteral(arg) = &mut unary.argument else { return None };
-                Some(-arg.value)
-            }
-            _ => None,
-        }
-    }
-
     fn try_fold_useless_object_dot_define_properties_call(
         &mut self,
         _call_expr: &mut CallExpression<'a>,
@@ -514,10 +501,10 @@ impl<'a> PeepholeFoldConstants {
         if !operation.operator.is_arithmetic() {
             return None;
         };
-        let left = self.try_get_number_literal_value(&mut operation.left)?;
-        let right = self.try_get_number_literal_value(&mut operation.right)?;
+        let left: f64 = ctx.get_number_value(&operation.left)?.try_into().ok()?;
+        let right: f64 = ctx.get_number_value(&operation.right)?.try_into().ok()?;
         if !left.is_finite() || !right.is_finite() {
-            return None;
+            return self.try_fold_infinity_arithmetic(left, operation.operator, right, ctx);
         }
         let result = match operation.operator {
             BinaryOperator::Addition => left + right,
@@ -560,6 +547,52 @@ impl<'a> PeepholeFoldConstants {
             result.to_string(),
             number_base,
         ))
+    }
+
+    fn try_fold_infinity_arithmetic(
+        &self,
+        left: f64,
+        operator: BinaryOperator,
+        right: f64,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        if left.is_finite() && right.is_finite() || !operator.is_arithmetic() {
+            return None;
+        }
+        let result = match operator {
+            BinaryOperator::Addition => left + right,
+            BinaryOperator::Subtraction => left - right,
+            BinaryOperator::Multiplication => left * right,
+            BinaryOperator::Division => {
+                if right == 0.0 {
+                    return None;
+                }
+                left / right
+            }
+            BinaryOperator::Remainder => {
+                if right == 0.0 {
+                    return None;
+                }
+                left % right
+            }
+            BinaryOperator::Exponential => left.powf(right),
+            _ => unreachable!(),
+        };
+        Some(match result {
+            f64::INFINITY => ctx.ast.expression_identifier_reference(SPAN, "Infinity"),
+            f64::NEG_INFINITY => ctx.ast.expression_unary(
+                SPAN,
+                UnaryOperator::UnaryNegation,
+                ctx.ast.expression_identifier_reference(SPAN, "Infinity"),
+            ),
+            _ if result.is_nan() => ctx.ast.expression_identifier_reference(SPAN, "NaN"),
+            _ => ctx.ast.expression_numeric_literal(
+                SPAN,
+                result,
+                result.to_string(),
+                if is_exact_int64(result) { NumberBase::Decimal } else { NumberBase::Float },
+            ),
+        })
     }
 
     fn try_fold_instanceof<'b>(
@@ -1699,12 +1732,16 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_fold_arithmetic_infinity() {
         test("x=-Infinity-2", "x=-Infinity");
         test("x=Infinity-2", "x=Infinity");
         test("x=Infinity*5", "x=Infinity");
         test("x = Infinity ** 2", "x = Infinity");
         test("x = Infinity ** -2", "x = 0");
+
+        test("x = Infinity / Infinity", "x = NaN");
+        test_same("x = Infinity % 0");
+        test_same("x = Infinity / 0");
+        test("x = Infinity % Infinity", "x = NaN");
     }
 }

@@ -11,7 +11,7 @@ use oxc::{
     parser::{ParseOptions, ParserReturn},
     regular_expression::{Parser, ParserOptions},
     semantic::{Semantic, SemanticBuilderReturn},
-    span::{SourceType, Span},
+    span::{cmp::ContentEq, SourceType, Span},
     transformer::{TransformOptions, TransformerReturn},
     CompilerInterface,
 };
@@ -67,10 +67,13 @@ impl CompilerInterface for Driver {
     }
 
     fn after_parse(&mut self, parser_return: &mut ParserReturn) -> ControlFlow<()> {
-        let ParserReturn { program, trivias, panicked, .. } = parser_return;
+        let ParserReturn { program, trivias, panicked, errors } = parser_return;
         self.panicked = *panicked;
         if self.check_comments(trivias) {
             return ControlFlow::Break(());
+        }
+        if (errors.is_empty() || !*panicked) && program.source_type.is_unambiguous() {
+            self.errors.push(OxcDiagnostic::error("SourceType must not be unambiguous."));
         }
         // Make sure serialization doesn't crash; also for code coverage.
         let _serializer = program.serializer();
@@ -163,27 +166,29 @@ impl Driver {
             };
             let printed1 = pattern.to_string();
             let flags = literal.regex.flags.to_string();
-            let printed2 = match Parser::new(
-                &allocator,
-                &printed1,
-                ParserOptions::default().with_flags(&flags),
-            )
-            .parse()
-            {
-                Ok(pattern) => pattern.to_string(),
+            let options = ParserOptions::default().with_flags(&flags);
+            match Parser::new(&allocator, &printed1, options).parse() {
+                Ok(pattern2) => {
+                    let printed2 = pattern2.to_string();
+                    if !pattern2.content_eq(pattern) {
+                        self.errors.push(OxcDiagnostic::error(format!(
+                        "Regular Expression content mismatch for `{}`: `{pattern}` == `{pattern2}`",
+                        literal.span.source_text(semantic.source_text())
+                        )));
+                    }
+                    if printed1 != printed2 {
+                        self.errors.push(OxcDiagnostic::error(format!(
+                            "Regular Expression mismatch: {printed1} {printed2}"
+                        )));
+                    }
+                }
                 Err(error) => {
                     self.errors.push(OxcDiagnostic::error(format!(
                         "Failed to re-parse `{}`, printed as `/{printed1}/{flags}`, {error}",
                         literal.span.source_text(semantic.source_text()),
                     )));
-                    continue;
                 }
             };
-            if printed1 != printed2 {
-                self.errors.push(OxcDiagnostic::error(format!(
-                    "Regular Expression mismatch: {printed1} {printed2}"
-                )));
-            }
         }
     }
 }

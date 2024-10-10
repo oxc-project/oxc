@@ -230,17 +230,23 @@ impl<'a> ContentEq for CapturingGroup<'a> {
 
 impl<'a> ContentEq for IgnoreGroup<'a> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.enabling_modifiers, &other.enabling_modifiers)
-            && ContentEq::content_eq(&self.disabling_modifiers, &other.disabling_modifiers)
+        ContentEq::content_eq(&self.modifiers, &other.modifiers)
             && ContentEq::content_eq(&self.body, &other.body)
     }
 }
 
-impl ContentEq for ModifierFlags {
+impl ContentEq for Modifiers {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.enabling, &other.enabling)
+            && ContentEq::content_eq(&self.disabling, &other.disabling)
+    }
+}
+
+impl ContentEq for Modifier {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.ignore_case, &other.ignore_case)
-            && ContentEq::content_eq(&self.sticky, &other.sticky)
             && ContentEq::content_eq(&self.multiline, &other.multiline)
+            && ContentEq::content_eq(&self.sticky, &other.sticky)
     }
 }
 

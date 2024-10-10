@@ -6,7 +6,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
-use oxc_span::Span;
+use oxc_span::{CompactStr, Span};
 
 use crate::{
     context::LintContext,
@@ -25,7 +25,7 @@ fn use_hook(span: Span) -> OxcDiagnostic {
 
 #[derive(Debug, Default, Clone)]
 pub struct RequireHookConfig {
-    allowed_function_calls: Vec<String>,
+    allowed_function_calls: Vec<CompactStr>,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -153,9 +153,7 @@ impl Rule for RequireHook {
             .get(0)
             .and_then(|config| config.get("allowedFunctionCalls"))
             .and_then(serde_json::Value::as_array)
-            .map(|v| {
-                v.iter().filter_map(serde_json::Value::as_str).map(ToString::to_string).collect()
-            })
+            .map(|v| v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect())
             .unwrap_or_default();
 
         Self(Box::new(RequireHookConfig { allowed_function_calls }))
@@ -230,7 +228,7 @@ impl RequireHook {
         ctx: &LintContext<'a>,
     ) {
         if let Expression::CallExpression(call_expr) = expr {
-            let name: String = get_node_name(&call_expr.callee);
+            let name = get_node_name(&call_expr.callee);
 
             if !(parse_jest_fn_call(call_expr, &PossibleJestNode { node, original: None }, ctx)
                 .is_some()

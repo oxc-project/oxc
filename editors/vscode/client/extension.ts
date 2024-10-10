@@ -104,7 +104,9 @@ export async function activate(context: ExtensionContext) {
     }
 
     const workspaceFolders = workspace.workspaceFolders;
-    if (workspaceFolders) {
+    const isWindows = process.platform === 'win32';
+
+    if (workspaceFolders?.length && !isWindows) {
       try {
         return await Promise.any(
           workspaceFolders.map(async (folder) => {
@@ -122,7 +124,7 @@ export async function activate(context: ExtensionContext) {
       } catch {}
     }
 
-    const ext = process.platform === 'win32' ? '.exe' : '';
+    const ext = isWindows ? '.exe' : '';
     // NOTE: The `./target/release` path is aligned with the path defined in .github/workflows/release_vscode.yml
     return (
       process.env.SERVER_PATH_DEV ??
