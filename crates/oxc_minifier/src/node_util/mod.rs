@@ -217,7 +217,7 @@ pub trait NodeUtil {
             Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
                 UnaryOperator::UnaryPlus => self.get_number_value(&unary_expr.argument),
                 UnaryOperator::UnaryNegation => {
-                    self.get_number_value(&unary_expr.argument).map(|v| v.not())
+                    self.get_number_value(&unary_expr.argument).map(|v| -v)
                 }
                 UnaryOperator::BitwiseNot => {
                     self.get_number_value(&unary_expr.argument).map(|value| {
