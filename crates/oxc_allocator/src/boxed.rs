@@ -76,6 +76,18 @@ impl<'alloc, T> Box<'alloc, T> {
     }
 }
 
+impl<'alloc, T: ?Sized> Box<'alloc, T> {
+    /// Create a [`Box`] from a raw pointer to a value in the arena.
+    ///
+    /// # SAFETY
+    /// It is only safe to create a `Box` this way with pointers taken out of
+    /// another `Box` in the same arena.
+    #[inline]
+    pub(crate) const unsafe fn from_non_null(ptr: NonNull<T>) -> Self {
+        Self(ptr, PhantomData)
+    }
+}
+
 impl<'alloc, T: ?Sized> ops::Deref for Box<'alloc, T> {
     type Target = T;
 

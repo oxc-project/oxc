@@ -14,7 +14,7 @@ use bumpalo::Bump;
 #[cfg(any(feature = "serialize", test))]
 use serde::{ser::SerializeSeq, Serialize, Serializer};
 
-use crate::Allocator;
+use crate::{Allocator, Box};
 
 /// Bumpalo Vec
 #[derive(Debug, PartialEq, Eq)]
@@ -100,6 +100,33 @@ impl<'alloc, T> Vec<'alloc, T> {
         let mut vec = vec::Vec::with_capacity_in(capacity, &**allocator);
         vec.extend(iter);
         Self(vec)
+    }
+
+    /// Converts the vector into [`Box<[T]>`][owned slice].
+    ///
+    /// If the vector has excess capacity, its items will be moved into a
+    /// newly-allocated buffer with exactly the right capacity. That is, any
+    /// excess capacity will be removed.
+    ///
+    /// [owned slice]: Box
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use oxc_allocator::{Allocator, Vec};
+    ///
+    /// let allocator = Allocator::default();
+    /// let v = Vec::from_iter_in([1, 2, 3], &allocator);
+    /// let b = v.into_boxed_slice();
+    ///
+    /// assert_eq!(&*b, &[1, 2, 3]);
+    /// ```
+    pub fn into_boxed_slice(self) -> Box<'alloc, [T]> {
+        let b = self.0.into_boxed_slice();
+        let (ptr, _) = allocator_api2::boxed::Box::into_non_null(b);
+        // SAFETY: this is effectively a transmute from allocator_api2's box to
+        // our own representation. Ptr is non-null and points to initialized, well-aligned memory.
+        unsafe { Box::from_non_null(ptr) }
     }
 }
 
@@ -210,5 +237,17 @@ mod test {
         fn _assert_vec_variant_lifetime<'a: 'b, 'b, T>(program: Vec<'a, T>) -> Vec<'b, T> {
             program
         }
+    }
+
+    #[test]
+    fn test_vec_to_boxed_slice() {
+        // file: oxc_allocator/src/vec.rs
+        use crate::boxed::Box;
+
+        let allocator = Allocator::default();
+        let v = Vec::from_iter_in([1, 2, 3], &allocator);
+        let b: Box<[i32]> = v.into_boxed_slice(); // <- compiler error
+
+        assert_eq!(&*b, &[1, 2, 3]);
     }
 }
