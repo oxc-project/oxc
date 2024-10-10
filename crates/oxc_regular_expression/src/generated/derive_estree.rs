@@ -430,24 +430,38 @@ impl<'a> Serialize for IgnoreGroup<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "IgnoreGroup")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("enablingModifiers", &self.enabling_modifiers)?;
-        map.serialize_entry("disablingModifiers", &self.disabling_modifiers)?;
+        map.serialize_entry("modifiers", &self.modifiers)?;
         map.serialize_entry("body", &self.body)?;
         map.end()
     }
 }
 
-impl Serialize for ModifierFlags {
+impl Serialize for Modifiers {
     #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ModifierFlags")?;
+        map.serialize_entry("type", "Modifiers")?;
+        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("enabling", &self.enabling)?;
+        map.serialize_entry("disabling", &self.disabling)?;
+        map.end()
+    }
+}
+
+impl Serialize for Modifier {
+    #[allow(clippy::match_same_arms, unused_mut)]
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "Modifier")?;
         map.serialize_entry("ignoreCase", &self.ignore_case)?;
-        map.serialize_entry("sticky", &self.sticky)?;
         map.serialize_entry("multiline", &self.multiline)?;
+        map.serialize_entry("sticky", &self.sticky)?;
         map.end()
     }
 }
