@@ -1672,6 +1672,18 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if let Some(return_type) = &func.return_type {
             self.visit_ts_type_annotation(return_type);
         }
+
+        if func.params.has_parameter() {
+            // `function foo({bar: identifier_reference}) {}`
+            //                     ^^^^^^^^^^^^^^^^^^^^
+            // `function foo<SomeType>(v: SomeType): SomeType { return v; }`
+            //                            ^^^^^^^^   ^^^^^^^^
+            // Parameter initializers must be resolved after all parameters have been declared.
+            // Param types and return type must be resolved after type parameters have been declared.
+            // In both cases, need to avoid binding to variables/types declared inside the function body.
+            self.resolve_references_for_current_scope();
+        }
+
         if let Some(body) = &func.body {
             self.visit_function_body(body);
         }
@@ -1724,6 +1736,17 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         if let Some(return_type) = &expr.return_type {
             self.visit_ts_type_annotation(return_type);
+        }
+
+        if expr.params.has_parameter() {
+            // `let foo = ({bar: identifier_reference}) => {};`
+            //                   ^^^^^^^^^^^^^^^^^^^^
+            // `let foo = <SomeType>(v: SomeType): SomeType => v;`
+            //                          ^^^^^^^^   ^^^^^^^^
+            // Parameter initializers must be resolved after all parameters have been declared.
+            // Param types and return type must be resolved after type parameters have been declared.
+            // In both cases, need to avoid binding to variables/types declared inside the function body.
+            self.resolve_references_for_current_scope();
         }
 
         self.visit_function_body(&expr.body);
@@ -1979,15 +2002,6 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
                 self.function_stack.pop();
-            }
-            AstKind::FormalParameters(parameters) => {
-                if parameters.kind != FormalParameterKind::Signature && parameters.has_parameter() {
-                    // `function foo({bar: identifier_reference}) {}`
-                    //                     ^^^^^^^^^^^^^^^^^^^^ Parameter initializer must be resolved
-                    //                                          after all parameters have been declared
-                    //                                          to avoid binding to variables inside the scope
-                    self.resolve_references_for_current_scope();
-                }
             }
             AstKind::CatchParameter(_) => {
                 self.resolve_references_for_current_scope();
