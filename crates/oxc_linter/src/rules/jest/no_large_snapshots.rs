@@ -6,7 +6,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{CompactStr, GetSpan, Span};
 use regex::Regex;
 use rustc_hash::FxHashMap;
 
@@ -38,7 +38,7 @@ pub struct NoLargeSnapshots(Box<NoLargeSnapshotsConfig>);
 pub struct NoLargeSnapshotsConfig {
     pub max_size: usize,
     pub inline_max_size: usize,
-    pub allowed_snapshots: FxHashMap<String, Vec<String>>,
+    pub allowed_snapshots: FxHashMap<CompactStr, Vec<CompactStr>>,
 }
 
 impl Deref for NoLargeSnapshots {
@@ -281,21 +281,19 @@ impl NoLargeSnapshots {
     #[allow(clippy::unnecessary_wraps)]
     pub fn compile_allowed_snapshots(
         matchers: &serde_json::Map<String, serde_json::Value>,
-    ) -> Option<FxHashMap<String, Vec<String>>> {
+    ) -> Option<FxHashMap<CompactStr, Vec<CompactStr>>> {
         Some(
             matchers
                 .iter()
                 .map(|(key, value)| {
                     let serde_json::Value::Array(configs) = value else {
-                        return (String::from(key), vec![]);
+                        return (CompactStr::from(key.as_str()), vec![]);
                     };
 
-                    let configs = configs
-                        .iter()
-                        .filter_map(|c| c.as_str().map(std::string::ToString::to_string))
-                        .collect();
+                    let configs =
+                        configs.iter().filter_map(|c| c.as_str().map(CompactStr::from)).collect();
 
-                    (String::from(key), configs)
+                    (CompactStr::from(key.as_str()), configs)
                 })
                 .collect(),
         )
