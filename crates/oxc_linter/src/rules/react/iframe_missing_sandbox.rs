@@ -69,6 +69,7 @@ declare_oxc_lint!(
     /// ```jsx
     /// <iframe/>;
     /// <iframe sandbox="invalid-value" />;
+    /// <iframe sandbox="allow-same-origin allow-scripts"/>;
     /// ```
     ///
     /// Examples of **correct** code for this rule:
