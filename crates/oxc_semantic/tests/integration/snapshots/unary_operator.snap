@@ -4,18 +4,21 @@ expression: snapshot
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/unary_operator.js
 ---
 bb0: {
-
+	(BasicBlockFlags(Implicit | Error))
 }
 
 bb1: {
+	(BasicBlockFlags(Start))
 	statement
 	statement
 	statement
 }
 
 digraph {
-    0 [ label = "bb0" shape = box]
+    0 [ label = "bb0
+(BasicBlockFlags(Implicit | Error))" shape = box]
     1 [ label = "bb1
+(BasicBlockFlags(Start))
 ExpressionStatement
 ExpressionStatement
 ExpressionStatement" shape = box]

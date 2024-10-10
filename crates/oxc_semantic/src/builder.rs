@@ -11,7 +11,7 @@ use rustc_hash::FxHashMap;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind, Trivias, Visit};
 use oxc_cfg::{
-    ControlFlowGraphBuilder, CtxCursor, CtxFlags, EdgeType, ErrorEdgeKind,
+    BasicBlockFlags, ControlFlowGraphBuilder, CtxCursor, CtxFlags, EdgeType, ErrorEdgeKind,
     IterationInstructionKind, ReturnInstructionKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -642,7 +642,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
         let error_harness = control_flow!(self, |cfg| {
             let error_harness = cfg.attach_error_harness(ErrorEdgeKind::Implicit);
-            let _program_basic_block = cfg.new_basic_block_normal();
+            let _program_basic_block = cfg.new_basic_block(BasicBlockFlags::Start);
             error_harness
         });
         /* cfg - must be above directives as directives are in cfg */
@@ -800,7 +800,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
         let (before_do_while_stmt_graph_ix, start_body_graph_ix) = control_flow!(self, |cfg| {
             let before_do_while_stmt_graph_ix = cfg.current_node_ix;
-            let start_body_graph_ix = cfg.new_basic_block_normal();
+            let start_body_graph_ix = cfg.new_basic_block(BasicBlockFlags::LoopLabel);
             cfg.ctx(None).default().allow_break().allow_continue();
             (before_do_while_stmt_graph_ix, start_body_graph_ix)
         });
@@ -896,7 +896,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let cfg_ixs = control_flow!(self, |cfg| {
             if expr.operator.is_logical() {
                 let target_end_ix = cfg.current_node_ix;
-                let expr_start_ix = cfg.new_basic_block_normal();
+                let expr_start_ix = cfg.new_basic_block(BasicBlockFlags::Assignment);
                 Some((target_end_ix, expr_start_ix))
             } else {
                 None
@@ -930,7 +930,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let (before_conditional_graph_ix, start_of_condition_graph_ix) =
             control_flow!(self, |cfg| {
                 let before_conditional_graph_ix = cfg.current_node_ix;
-                let start_of_condition_graph_ix = cfg.new_basic_block_normal();
+                let start_of_condition_graph_ix = cfg.new_basic_block(BasicBlockFlags::Condition);
                 (before_conditional_graph_ix, start_of_condition_graph_ix)
             });
         /* cfg */
@@ -1000,7 +1000,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
         let (before_for_graph_ix, test_graph_ix) = control_flow!(self, |cfg| {
             let before_for_graph_ix = cfg.current_node_ix;
-            let test_graph_ix = cfg.new_basic_block_normal();
+            let test_graph_ix = cfg.new_basic_block(BasicBlockFlags::LoopLabel);
             (before_for_graph_ix, test_graph_ix)
         });
         /* cfg */
@@ -1063,8 +1063,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_for_statement_left(&stmt.left);
 
         /* cfg */
-        let (before_for_stmt_graph_ix, start_prepare_cond_graph_ix) =
-            control_flow!(self, |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal(),));
+        let (before_for_stmt_graph_ix, start_prepare_cond_graph_ix) = control_flow!(self, |cfg| (
+            cfg.current_node_ix,
+            cfg.new_basic_block(BasicBlockFlags::LoopLabel),
+        ));
         /* cfg */
 
         self.record_ast_nodes();
@@ -1122,8 +1124,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_for_statement_left(&stmt.left);
 
         /* cfg */
-        let (before_for_stmt_graph_ix, start_prepare_cond_graph_ix) =
-            control_flow!(self, |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal()));
+        let (before_for_stmt_graph_ix, start_prepare_cond_graph_ix) = control_flow!(self, |cfg| (
+            cfg.current_node_ix,
+            cfg.new_basic_block(BasicBlockFlags::LoopLabel)
+        ));
         /* cfg */
 
         self.record_ast_nodes();
@@ -1177,8 +1181,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
 
         /* cfg - condition basic block */
-        let (before_if_stmt_graph_ix, start_of_condition_graph_ix) =
-            control_flow!(self, |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal(),));
+        let (before_if_stmt_graph_ix, start_of_condition_graph_ix) = control_flow!(self, |cfg| (
+            cfg.current_node_ix,
+            cfg.new_basic_block(BasicBlockFlags::Condition)
+        ));
         /* cfg */
 
         self.record_ast_nodes();
@@ -1547,8 +1553,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
 
         /* cfg - condition basic block */
-        let (before_while_stmt_graph_ix, condition_graph_ix) =
-            control_flow!(self, |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal()));
+        let (before_while_stmt_graph_ix, condition_graph_ix) = control_flow!(self, |cfg| (
+            cfg.current_node_ix,
+            cfg.new_basic_block(BasicBlockFlags::LoopLabel)
+        ));
         /* cfg */
 
         self.record_ast_nodes();

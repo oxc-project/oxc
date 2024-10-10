@@ -9,8 +9,8 @@ use rustc_hash::FxHashMap;
 
 use super::IterationInstructionKind;
 use crate::{
-    BasicBlock, ControlFlowGraph, EdgeType, Instruction, InstructionKind, LabeledInstruction,
-    ReturnInstructionKind,
+    BasicBlock, BasicBlockFlags, ControlFlowGraph, EdgeType, Instruction, InstructionKind,
+    LabeledInstruction, ReturnInstructionKind,
 };
 
 pub trait DisplayDot {
@@ -42,7 +42,7 @@ impl DisplayDot for ControlFlowGraph {
                     let block = &self.basic_blocks[*node.1];
                     let mut attrs = Attrs::default().with("label", block.display_dot());
 
-                    if *node.1 == 0 {
+                    if block.flags().contains(BasicBlockFlags::Start) {
                         attrs += ("color", "green");
                     }
                     if block.is_unreachable() {
@@ -58,7 +58,9 @@ impl DisplayDot for ControlFlowGraph {
 
 impl DisplayDot for BasicBlock {
     fn display_dot(&self) -> String {
-        self.instructions().iter().map(DisplayDot::display_dot).join("\n")
+        std::iter::once(format!("({:?})", self.flags()))
+            .chain(self.instructions.iter().map(DisplayDot::display_dot))
+            .join("\n")
     }
 }
 
