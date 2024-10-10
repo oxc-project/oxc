@@ -19,27 +19,27 @@ use crate::{
 
 fn reduce_likely_array_spread_diagnostic(spread_span: Span, reduce_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not spread accumulators in Array.prototype.reduce()")
-        .with_help("It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity.")
+        .with_help("It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n²)` time complexity.")
         .with_labels([
-            spread_span.label("From this spread"),
+            spread_span.primary_label("From this spread"),
             reduce_span.label("For this reduce")
         ])
 }
 
 fn reduce_likely_object_spread_diagnostic(spread_span: Span, reduce_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not spread accumulators in Array.prototype.reduce()")
-        .with_help("It looks like you're spreading an `Object`. Consider using the `Object.assign` or assignment operators to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity.")
+        .with_help("It looks like you're spreading an `Object`. Consider using the `Object.assign` or assignment operators to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n²)` time complexity.")
         .with_labels([
-            spread_span.label("From this spread"),
+            spread_span.primary_label("From this spread"),
             reduce_span.label("For this reduce")
         ])
 }
 
 fn reduce_unknown(spread_span: Span, reduce_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not spread accumulators in Array.prototype.reduce()")
-        .with_help("Consider using `Object.assign()` or `Array.prototype.push()` to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity.")
+        .with_help("Consider using `Object.assign()` or `Array.prototype.push()` to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n²)` time complexity.")
         .with_labels([
-            spread_span.label("From this spread"),
+            spread_span.primary_label("From this spread"),
             reduce_span.label("For this reduce")
         ])
 }
@@ -50,10 +50,10 @@ fn loop_spread_likely_object_diagnostic(
     loop_span: Span,
 ) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not spread accumulators in loops")
-        .with_help("Consider using `Object.assign()` to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity.")
+        .with_help("Consider using `Object.assign()` to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n²)` time complexity.")
         .with_labels([
-            accumulator_decl_span.label("From this accumulator"),
-            spread_span.label("From this spread"),
+            accumulator_decl_span.label("Into this accumulator"),
+            spread_span.primary_label("From this spread"),
             loop_span.label("For this loop")
         ])
 }
@@ -63,10 +63,10 @@ fn loop_spread_likely_array_diagnostic(
     loop_span: Span,
 ) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not spread accumulators in loops")
-        .with_help("Consider using `Array.prototype.push()` to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity.")
+        .with_help("Consider using `Array.prototype.push()` to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n²)` time complexity.")
         .with_labels([
-            accumulator_decl_span.label("From this accumulator"),
-            spread_span.label("From this spread"),
+            accumulator_decl_span.label("Into this accumulator"),
+            spread_span.primary_label("From this spread"),
             loop_span.label("For this loop")
         ])
 }
