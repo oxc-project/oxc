@@ -45,9 +45,10 @@ macro_rules! define_derive {
                 let use_modules = module_paths.into_iter().map(|it|{
                     let local_path = ["crate"]
                         .into_iter()
-                        .chain(it.split("::").skip(1))
+                        .chain(it.strip_suffix("::mod").unwrap_or(it).split("::").skip(1))
                         .chain(["*"])
                         .join("::");
+											println!("{local_path}");
                     let use_module: syn::ItemUse =
                         syn::parse_str(format!("use {local_path};").as_str()).unwrap();
                     quote::quote! {

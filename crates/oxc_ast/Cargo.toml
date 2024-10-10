@@ -21,6 +21,7 @@ doctest = false
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_ast_macros = { workspace = true }
+oxc_estree = { workspace = true }
 oxc_regular_expression = { workspace = true }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
@@ -37,13 +38,13 @@ wasm-bindgen = { workspace = true, optional = true }
 [features]
 default = []
 serialize = [
-  "dep:serde",
-  "dep:serde_json",
-  "dep:tsify",
-  "dep:wasm-bindgen",
-  "oxc_allocator/serialize",
-  "oxc_regular_expression/serialize",
-  "oxc_span/serialize",
-  "oxc_syntax/serialize",
-  "oxc_syntax/to_js_string",
+	"dep:serde",
+	"dep:serde_json",
+	"dep:tsify",
+	"dep:wasm-bindgen",
+	"oxc_allocator/serialize",
+	"oxc_regular_expression/serialize",
+	"oxc_span/serialize",
+	"oxc_syntax/serialize",
+	"oxc_syntax/to_js_string",
 ]

@@ -4,7 +4,7 @@ use quote::quote;
 use super::{define_derive, Derive, DeriveOutput};
 use crate::{
     codegen::LateCtx,
-    schema::{GetGenerics, GetIdent, TypeDef},
+    schema::{EnumDef, GetGenerics, GetIdent, TypeDef},
 };
 
 define_derive! {
@@ -13,23 +13,31 @@ define_derive! {
 
 impl Derive for DeriveESTree {
     fn trait_name() -> &'static str {
-        "Serialize"
+        "ESTree"
     }
 
     fn derive(&mut self, def: &TypeDef, _: &LateCtx) -> TokenStream {
         let ident = def.ident();
         if let TypeDef::Struct(it) = def {
+            println!("{ident:?} {:?}", it.markers.estree);
             for field in &it.fields {
-                println!("{:?}: {:?}", field.name, field.markers.derive_attributes.estree);
+                println!("- {:?}: {:?}", field.name, field.markers.derive_attributes.estree);
             }
         }
+
+        // let body = match def {
+        //     TypeDef::Enum(def) => serialize_enum(def),
+        //     _ => quote! { serializer.serialize_none() },
+        // };
+        let body = quote! { serializer.serialize_none() };
+
         if def.has_lifetime() {
             quote! {
                 impl<'a> Serialize for #ident<'a> {
                     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
                     where S: Serializer,
                     {
-                        serializer.serialize_none()
+                        #body
                     }
                 }
             }
@@ -39,7 +47,7 @@ impl Derive for DeriveESTree {
                   fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
                   where S: Serializer,
                   {
-                      serializer.serialize_none()
+                      #body
                   }
               }
             }
@@ -51,4 +59,19 @@ impl Derive for DeriveESTree {
             use serde::{Serialize, Serializer};
         }
     }
+}
+
+fn serialize_enum(def: &EnumDef) -> TokenStream {
+    let ident = def.ident();
+    // if def.markers.estree.untagged {
+    // 	let match_branches = def.variants.iter().map(|var| {
+    // 		let var_ident= var.ident();
+    // 		var.fields
+    // 		quote! {
+    // 			#ident::#var_ident()
+    // 		}
+    // 	})
+    // }
+    // def.markers.estree.
+    todo!()
 }

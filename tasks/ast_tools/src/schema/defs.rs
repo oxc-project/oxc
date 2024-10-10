@@ -84,6 +84,8 @@ pub struct EnumDef {
     pub generated_derives: Vec<String>,
     #[serde(skip)]
     pub module_path: String,
+    #[serde(skip)]
+    pub markers: OuterMarkers,
 }
 
 impl EnumDef {
@@ -228,7 +230,7 @@ impl TypeRef {
 #[derive(Debug)]
 pub struct OuterMarkers {
     pub scope: Option<ScopeAttribute>,
-    pub estree: Vec<ESTreeOuterAttribute>,
+    pub estree: ESTreeOuterAttribute,
 }
 
 #[derive(Debug, Serialize)]

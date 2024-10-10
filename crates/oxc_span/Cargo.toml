@@ -22,6 +22,7 @@ doctest = false
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_ast_macros = { workspace = true }
+oxc_estree = { workspace = true }
 
 compact_str = { workspace = true }
 miette = { workspace = true }

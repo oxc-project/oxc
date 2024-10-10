@@ -109,7 +109,7 @@ impl<'a> IntoIterator for &'a Schema {
 fn parse_outer_markers(attrs: &Vec<syn::Attribute>) -> Result<OuterMarkers> {
     Ok(OuterMarkers {
         scope: get_scope_attribute(attrs).transpose()?,
-        estree: get_estree_attribute(attrs).transpose()?,
+        estree: get_estree_attribute(attrs).transpose()?.unwrap_or_default(),
     })
 }
 
@@ -173,6 +173,7 @@ fn lower_ast_enum(it @ rust::Enum { item, meta }: &rust::Enum, ctx: &codegen::Ea
         align_32,
         offsets_32,
 
+        markers: parse_outer_markers(&item.attrs).unwrap(),
         generated_derives: parse_generate_derive(&item.attrs),
 
         module_path: meta.module_path.clone(),

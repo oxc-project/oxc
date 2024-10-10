@@ -81,8 +81,8 @@ fn abs_trait(
         (quote!(::oxc_span::cmp::ContentEq), TokenStream::default())
     } else if ident == "ContentHash" {
         (quote!(::oxc_span::hash::ContentHash), TokenStream::default())
-    } else if ident == "Serialize" {
-        (quote!(::serde::Serialize), TokenStream::default())
+    } else if ident == "ESTree" {
+        (quote!(::oxc_estree::ESTree), TokenStream::default())
     } else {
         invalid_derive(ident)
     }

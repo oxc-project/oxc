@@ -12,8 +12,6 @@ use syn::{
 
 use crate::util::NormalizeError;
 
-const ESTREE_ATTR: &str = "serde";
-
 /// A single visit argument passed via `#[visit(args(...))]`
 #[derive(Debug, Clone)]
 pub struct VisitArg {
@@ -76,7 +74,7 @@ pub struct ScopeMarkers {
 #[derive(Debug, Default, Serialize)]
 pub struct DeriveAttributes {
     pub clone_in: CloneInAttribute,
-    pub estree: Vec<ESTreeFieldAttribute>,
+    pub estree: ESTreeFieldAttribute,
 }
 
 /// A enum representing the value passed in `#[clone_in(...)]` derive helper attribute.
@@ -98,54 +96,113 @@ impl From<&Ident> for CloneInAttribute {
 }
 
 /// A struct representing the serde attributes (`$[serde(...)]`) that we implement for structs and enums.
-#[derive(Debug, Serialize)]
-pub enum ESTreeOuterAttribute {
-    Tag(String),
-    Rename(String),
-    RenameAll(String),
-    Untagged,
+#[derive(Debug, Serialize, Default)]
+pub struct ESTreeOuterAttribute {
+    pub tag: Option<String>,
+    pub rename: Option<String>,
+    pub rename_all: Option<String>,
+    pub untagged: bool,
 }
 
 impl Parse for ESTreeOuterAttribute {
     fn parse(input: ParseStream) -> Result<Self, syn::Error> {
-        let ident = input.call(Ident::parse_any).unwrap().to_string();
-        Ok(match ident.as_str() {
-            "tag" => {
-                input.parse::<Token![=]>()?;
-                let tag = input.parse::<LitStr>()?.value();
-                Self::Tag(tag)
+        let mut tag = None;
+        let mut rename = None;
+        let mut rename_all = None;
+        let mut untagged = false;
+
+        loop {
+            let ident = input.call(Ident::parse_any).unwrap().to_string();
+            match ident.as_str() {
+                "tag" => {
+                    input.parse::<Token![=]>()?;
+                    assert!(
+                        tag.replace(input.parse::<LitStr>()?.value()).is_none(),
+                        "Duplicate estree(tag)"
+                    );
+                }
+                "rename" => {
+                    input.parse::<Token![=]>()?;
+                    assert!(
+                        rename.replace(input.parse::<LitStr>()?.value()).is_none(),
+                        "Duplicate estree(rename)"
+                    );
+                }
+                "rename_all" => {
+                    input.parse::<Token![=]>()?;
+                    assert!(
+                        rename_all.replace(input.parse::<LitStr>()?.value()).is_none(),
+                        "Duplicate estree(rename_all)"
+                    );
+                }
+                "untagged" => {
+                    if untagged {
+                        panic!("Duplicate estree(untagged)");
+                    } else {
+                        untagged = true;
+                    }
+                }
+                arg => panic!("Unsupported #[estree(...)] argument: {arg}"),
             }
-            "rename" => {
-                input.parse::<Token![=]>()?;
-                let rename = input.parse::<LitStr>()?.value();
-                Self::Rename(rename)
+            let comma = input.peek(Token![,]);
+            if comma {
+                input.parse::<Token![,]>().unwrap();
+            } else {
+                break;
             }
-            "rename_all" => {
-                input.parse::<Token![=]>()?;
-                let rename = input.parse::<LitStr>()?.value();
-                Self::RenameAll(rename)
-            }
-            "untagged" => Self::Untagged,
-            arg => panic!("Unsupported #[{ESTREE_ATTR}(...)] argument: {arg}"),
-        })
+        }
+        Ok(Self { tag, rename, rename_all, untagged })
     }
 }
 
 /// A struct representing the serde attributes (`$[serde(...)]`) that we implement for fields.
-#[derive(Debug, Serialize)]
-pub enum ESTreeFieldAttribute {
-    Flatten,
-    Skip,
+#[derive(Debug, Serialize, Default)]
+pub struct ESTreeFieldAttribute {
+    pub flatten: bool,
+    pub skip: bool,
+    pub rename: Option<String>,
 }
 
 impl Parse for ESTreeFieldAttribute {
     fn parse(input: ParseStream) -> Result<Self, syn::Error> {
-        let ident = input.call(Ident::parse_any).unwrap().to_string();
-        Ok(match ident.as_str() {
-            "flatten" => Self::Flatten,
-            "skip" => Self::Skip,
-            arg => panic!("Unsupported #[{ESTREE_ATTR}(...)] argument: {arg}"),
-        })
+        let mut flatten = false;
+        let mut skip = false;
+        let mut rename = None;
+
+        loop {
+            let ident = input.call(Ident::parse_any).unwrap().to_string();
+            match ident.as_str() {
+                "rename" => {
+                    input.parse::<Token![=]>()?;
+                    assert!(
+                        rename.replace(input.parse::<LitStr>()?.value()).is_none(),
+                        "Duplicate estree(rename)"
+                    );
+                }
+                "flatten" => {
+                    if flatten {
+                        panic!("Duplicate estree(flatten)");
+                    } else {
+                        flatten = true;
+                    }
+                }
+                "skip" => {
+                    if skip {
+                        panic!("Duplicate estree(skip)");
+                    } else {
+                        skip = true;
+                    }
+                }
+                arg => panic!("Unsupported #[estree(...)] argument: {arg}"),
+            }
+            let comma = input.peek(Token![,]);
+            if comma {
+                input.parse::<Token![,]>().unwrap();
+            } else {
+                break;
+            }
+        }
+        Ok(Self { flatten, skip, rename })
     }
 }
 
@@ -283,14 +340,10 @@ where
             Ok(None)
         }
     }
-    fn try_parse_estree(attr: &Attribute) -> crate::Result<Option<Vec<ESTreeFieldAttribute>>> {
-        if attr.path().is_ident(ESTREE_ATTR) {
-            let args = attr
-                .parse_args_with(Punctuated::<ESTreeFieldAttribute, Token![,]>::parse_terminated)
-                .normalize()?
-                .into_iter()
-                .collect();
-            Ok(Some(args))
+    fn try_parse_estree(attr: &Attribute) -> crate::Result<Option<ESTreeFieldAttribute>> {
+        if attr.path().is_ident("estree") {
+            let arg = attr.parse_args_with(ESTreeFieldAttribute::parse).normalize()?;
+            Ok(Some(arg))
         } else {
             Ok(None)
         }
@@ -302,7 +355,7 @@ where
             assert!(clone_in.replace(attr).is_none(), "Duplicate `#[clone_in(...)]` attribute.");
         }
         if let Some(attr) = try_parse_estree(attr)? {
-            assert!(estree.replace(attr).is_none(), "Duplicate `#[{ESTREE_ATTR}(...)]` attribute.");
+            assert!(estree.replace(attr).is_none(), "Duplicate `#[estree(...)]` attribute.");
         }
     }
     Ok(DeriveAttributes {
@@ -329,20 +382,13 @@ where
     })
 }
 
-pub fn get_estree_attribute<'a, I>(attrs: I) -> Option<crate::Result<Vec<ESTreeOuterAttribute>>>
+pub fn get_estree_attribute<'a, I>(attrs: I) -> Option<crate::Result<ESTreeOuterAttribute>>
 where
     I: IntoIterator<Item = &'a Attribute>,
 {
-    let attr = attrs.into_iter().find(|it| it.path().is_ident(ESTREE_ATTR));
+    let attr = attrs.into_iter().find(|it| it.path().is_ident("estree"));
     attr.map(|attr| {
-        debug_assert!(attr.path().is_ident("scope"));
-        let result = if matches!(attr.meta, Meta::Path(_)) {
-            // empty `#[scope]`.
-            Ok(ScopeAttribute::default())
-        } else {
-            attr.parse_args_with(ScopeAttribute::parse)
-        };
-
-        result.normalize()
+        debug_assert!(attr.path().is_ident("estree"));
+        attr.parse_args_with(ESTreeOuterAttribute::parse).normalize()
     })
 }

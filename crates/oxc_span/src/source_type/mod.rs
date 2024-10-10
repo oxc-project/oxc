@@ -7,17 +7,19 @@ use std::{hash::Hash, path::Path};
 
 use oxc_allocator::{Allocator, CloneIn};
 use oxc_ast_macros::ast;
+use oxc_estree::ESTree;
 #[cfg(feature = "serialize")]
-use {serde::Serialize, tsify::Tsify};
+use tsify::Tsify;
 
 use crate::{cmp::ContentEq, hash::ContentHash};
 pub use error::UnknownExtension;
 
 /// Source Type for JavaScript vs TypeScript / Script vs Module / JSX
 #[ast]
+#[generate_derive(ESTree)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "serialize", derive(Tsify))]
+#[estree(rename_all = "camelCase")]
 pub struct SourceType {
     /// JavaScript or TypeScript, default JavaScript
     pub(super) language: Language,
@@ -31,21 +33,23 @@ pub struct SourceType {
 
 /// JavaScript or TypeScript
 #[ast]
+#[generate_derive(ESTree)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[serde(rename_all = "lowercase")]
+#[cfg_attr(feature = "serialize", derive(Tsify))]
+#[estree(rename_all = "lowercase")]
 pub enum Language {
     JavaScript = 0,
     TypeScript = 1,
-    #[serde(rename = "typescriptDefinition")]
+    #[estree(rename = "typescriptDefinition")]
     TypeScriptDefinition = 2,
 }
 
 /// Script or Module
 #[ast]
+#[generate_derive(ESTree)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "serialize", derive(Tsify))]
+#[estree(rename_all = "camelCase")]
 pub enum ModuleKind {
     /// Regular JS script or CommonJS file
     Script = 0,
@@ -63,9 +67,10 @@ pub enum ModuleKind {
 
 /// JSX for JavaScript and TypeScript
 #[ast]
+#[generate_derive(ESTree)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "serialize", derive(Tsify))]
+#[estree(rename_all = "camelCase")]
 pub enum LanguageVariant {
     Standard = 0,
     Jsx = 1,
