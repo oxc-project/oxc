@@ -159,7 +159,7 @@ a = x!;
 ########## 25
 b = (x as y);
 ----------
-b = ((x) as y);
+b = x as y;
 
 ########## 26
 c = foo<string>;
@@ -210,3 +210,18 @@ export type Component<
 	E extends EmitsOptions | Record<string, any[]> = {},
 	S extends Record<string, any> = any
 > = ConcreteComponent<Props, RawBindings, D, C, M, E, S> | ComponentPublicInstanceConstructor<Props>;
+
+########## 32
+(a || b) as any
+----------
+(a || b) as any;
+
+########## 33
+(a ** b) as any
+----------
+(a ** b) as any;
+
+########## 34
+(function g() {}) as any
+----------
+(function g() {}) as any;
