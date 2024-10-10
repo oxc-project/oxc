@@ -1051,7 +1051,8 @@ impl<'a> GenExpr for Expression<'a> {
 
 impl<'a> GenExpr for ParenthesizedExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
-        self.expression.print_expr(p, precedence, ctx);
+        let wrap = matches!(self.expression, Expression::ChainExpression(_));
+        p.wrap(wrap, |p| self.expression.print_expr(p, precedence, ctx));
     }
 }
 
@@ -2781,6 +2782,10 @@ impl<'a> Gen for Decorator<'a> {
                 Expression::Identifier(_)
                 | Expression::StaticMemberExpression(_)
                 | Expression::PrivateFieldExpression(_) => false,
+                Expression::ParenthesizedExpression(parent_expr) => {
+                    // We will print parenthesis in ParenthesizedExpression
+                    !matches!(parent_expr.expression, Expression::ChainExpression(_))
+                }
                 Expression::CallExpression(call_expr) => need_wrap(&call_expr.callee),
                 // "@(foo + bar)"
                 // "@(() => {})"
