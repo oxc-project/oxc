@@ -1,3 +1,4 @@
+use cow_utils::CowUtils;
 use oxc_ast::ast::*;
 use oxc_traverse::{Traverse, TraverseCtx};
 
@@ -14,17 +15,50 @@ impl<'a> CompressorPass<'a> for PeepholeReplaceKnownMethods {
         self.changed
     }
 
-    fn build(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
+    fn build(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.changed = false;
-        // oxc_traverse::walk_program(self, program, ctx);
+        oxc_traverse::walk_program(self, program, ctx);
     }
 }
 
-impl<'a> Traverse<'a> for PeepholeReplaceKnownMethods {}
+impl<'a> Traverse<'a> for PeepholeReplaceKnownMethods {
+    fn enter_expression(&mut self, node: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.try_fold_known_string_methods(node, ctx);
+    }
+}
 
 impl PeepholeReplaceKnownMethods {
     pub fn new() -> Self {
         Self { changed: false }
+    }
+
+    fn try_fold_known_string_methods<'a>(
+        &mut self,
+        node: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let Expression::CallExpression(call_expr) = node else { return };
+
+        let Expression::StaticMemberExpression(member) = &call_expr.callee else { return };
+        if let Expression::StringLiteral(string_lit) = &member.object {
+            if call_expr.arguments.len() == 0 {
+                let transformed_value = match member.property.name.as_str() {
+                    "toLowerCase" => Some(
+                        ctx.ast.string_literal(call_expr.span, string_lit.value.cow_to_lowercase()),
+                    ),
+                    "toUpperCase" => Some(
+                        ctx.ast.string_literal(call_expr.span, string_lit.value.cow_to_uppercase()),
+                    ),
+                    "trim" => Some(ctx.ast.string_literal(call_expr.span, string_lit.value.trim())),
+                    _ => None,
+                };
+
+                if let Some(transformed_value) = transformed_value {
+                    self.changed = true;
+                    *node = ctx.ast.expression_from_string_literal(transformed_value);
+                }
+            }
+        }
     }
 }
 
@@ -411,7 +445,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_to_upper() {
         fold("'a'.toUpperCase()", "'A'");
         fold("'A'.toUpperCase()", "'A'");
@@ -444,7 +477,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_to_lower() {
         fold("'A'.toLowerCase()", "'a'");
         fold("'a'.toLowerCase()", "'a'");
