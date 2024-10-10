@@ -10,8 +10,8 @@ use oxc_span::SourceType;
 
 use crate::{
     common::{
-        module_imports::ModuleImportsStore, top_level_statements::TopLevelStatementsStore,
-        var_declarations::VarDeclarationsStore,
+        helper_loader::HelperLoaderStore, module_imports::ModuleImportsStore,
+        top_level_statements::TopLevelStatementsStore, var_declarations::VarDeclarationsStore,
     },
     TransformOptions,
 };
@@ -38,6 +38,8 @@ pub struct TransformCtx<'a> {
     pub var_declarations: VarDeclarationsStore<'a>,
     /// Manage inserting statements at top of program globally
     pub top_level_statements: TopLevelStatementsStore<'a>,
+    /// Manage helper loading
+    pub helper_loader: HelperLoaderStore<'a>,
 }
 
 impl<'a> TransformCtx<'a> {
@@ -65,6 +67,7 @@ impl<'a> TransformCtx<'a> {
             module_imports: ModuleImportsStore::new(),
             var_declarations: VarDeclarationsStore::new(),
             top_level_statements: TopLevelStatementsStore::new(),
+            helper_loader: HelperLoaderStore::new(&options.helper_loader),
         }
     }
 
