@@ -2,7 +2,7 @@ use serde::Serialize;
 
 use super::{with_either, TypeName};
 use crate::{
-    markers::{DeriveAttributes, ScopeAttribute, ScopeMarkers, VisitMarkers},
+    markers::{DeriveAttributes, ESTreeOuterAttribute, ScopeAttribute, ScopeMarkers, VisitMarkers},
     util::{ToIdent, TypeAnalysis, TypeWrapper},
     TypeId,
 };
@@ -228,6 +228,7 @@ impl TypeRef {
 #[derive(Debug)]
 pub struct OuterMarkers {
     pub scope: Option<ScopeAttribute>,
+    pub estree: Vec<ESTreeOuterAttribute>,
 }
 
 #[derive(Debug, Serialize)]

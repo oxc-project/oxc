@@ -7,10 +7,12 @@ use syn::{
     parse2,
     punctuated::Punctuated,
     spanned::Spanned,
-    token, Attribute, Expr, Ident, Meta, MetaNameValue, Token,
+    token, Attribute, Expr, Ident, LitStr, Meta, MetaNameValue, Token,
 };
 
 use crate::util::NormalizeError;
+
+const ESTREE_ATTR: &str = "serde";
 
 /// A single visit argument passed via `#[visit(args(...))]`
 #[derive(Debug, Clone)]
@@ -74,6 +76,7 @@ pub struct ScopeMarkers {
 #[derive(Debug, Default, Serialize)]
 pub struct DeriveAttributes {
     pub clone_in: CloneInAttribute,
+    pub estree: Vec<ESTreeFieldAttribute>,
 }
 
 /// A enum representing the value passed in `#[clone_in(...)]` derive helper attribute.
@@ -91,6 +94,58 @@ impl From<&Ident> for CloneInAttribute {
         } else {
             panic!("Invalid argument used in `#[clone_in(...)]` attribute.");
         }
+    }
+}
+
+/// A struct representing the serde attributes (`$[serde(...)]`) that we implement for structs and enums.
+#[derive(Debug, Serialize)]
+pub enum ESTreeOuterAttribute {
+    Tag(String),
+    Rename(String),
+    RenameAll(String),
+    Untagged,
+}
+
+impl Parse for ESTreeOuterAttribute {
+    fn parse(input: ParseStream) -> Result<Self, syn::Error> {
+        let ident = input.call(Ident::parse_any).unwrap().to_string();
+        Ok(match ident.as_str() {
+            "tag" => {
+                input.parse::<Token![=]>()?;
+                let tag = input.parse::<LitStr>()?.value();
+                Self::Tag(tag)
+            }
+            "rename" => {
+                input.parse::<Token![=]>()?;
+                let rename = input.parse::<LitStr>()?.value();
+                Self::Rename(rename)
+            }
+            "rename_all" => {
+                input.parse::<Token![=]>()?;
+                let rename = input.parse::<LitStr>()?.value();
+                Self::RenameAll(rename)
+            }
+            "untagged" => Self::Untagged,
+            arg => panic!("Unsupported #[{ESTREE_ATTR}(...)] argument: {arg}"),
+        })
+    }
+}
+
+/// A struct representing the serde attributes (`$[serde(...)]`) that we implement for fields.
+#[derive(Debug, Serialize)]
+pub enum ESTreeFieldAttribute {
+    Flatten,
+    Skip,
+}
+
+impl Parse for ESTreeFieldAttribute {
+    fn parse(input: ParseStream) -> Result<Self, syn::Error> {
+        let ident = input.call(Ident::parse_any).unwrap().to_string();
+        Ok(match ident.as_str() {
+            "flatten" => Self::Flatten,
+            "skip" => Self::Skip,
+            arg => panic!("Unsupported #[{ESTREE_ATTR}(...)] argument: {arg}"),
+        })
     }
 }
 
@@ -228,13 +283,32 @@ where
             Ok(None)
         }
     }
+    fn try_parse_estree(attr: &Attribute) -> crate::Result<Option<Vec<ESTreeFieldAttribute>>> {
+        if attr.path().is_ident(ESTREE_ATTR) {
+            let args = attr
+                .parse_args_with(Punctuated::<ESTreeFieldAttribute, Token![,]>::parse_terminated)
+                .normalize()?
+                .into_iter()
+                .collect();
+            Ok(Some(args))
+        } else {
+            Ok(None)
+        }
+    }
     let mut clone_in = None;
+    let mut estree = None;
     for attr in attrs {
         if let Some(attr) = try_parse_clone_in(attr)? {
             assert!(clone_in.replace(attr).is_none(), "Duplicate `#[clone_in(...)]` attribute.");
         }
+        if let Some(attr) = try_parse_estree(attr)? {
+            assert!(estree.replace(attr).is_none(), "Duplicate `#[{ESTREE_ATTR}(...)]` attribute.");
+        }
     }
-    Ok(DeriveAttributes { clone_in: clone_in.unwrap_or_default() })
+    Ok(DeriveAttributes {
+        clone_in: clone_in.unwrap_or_default(),
+        estree: estree.unwrap_or_default(),
+    })
 }
 
 pub fn get_scope_attribute<'a, I>(attrs: I) -> Option<crate::Result<ScopeAttribute>>
@@ -242,6 +316,24 @@ where
     I: IntoIterator<Item = &'a Attribute>,
 {
     let attr = attrs.into_iter().find(|it| it.path().is_ident("scope"));
+    attr.map(|attr| {
+        debug_assert!(attr.path().is_ident("scope"));
+        let result = if matches!(attr.meta, Meta::Path(_)) {
+            // empty `#[scope]`.
+            Ok(ScopeAttribute::default())
+        } else {
+            attr.parse_args_with(ScopeAttribute::parse)
+        };
+
+        result.normalize()
+    })
+}
+
+pub fn get_estree_attribute<'a, I>(attrs: I) -> Option<crate::Result<Vec<ESTreeOuterAttribute>>>
+where
+    I: IntoIterator<Item = &'a Attribute>,
+{
+    let attr = attrs.into_iter().find(|it| it.path().is_ident(ESTREE_ATTR));
     attr.map(|attr| {
         debug_assert!(attr.path().is_ident("scope"));
         let result = if matches!(attr.meta, Meta::Path(_)) {

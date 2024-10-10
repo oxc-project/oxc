@@ -5,7 +5,10 @@ use serde::Serialize;
 use crate::{
     codegen,
     layout::KnownLayout,
-    markers::{get_derive_attributes, get_scope_attribute, get_scope_markers, get_visit_markers},
+    markers::{
+        get_derive_attributes, get_estree_attribute, get_scope_attribute, get_scope_markers,
+        get_visit_markers,
+    },
     rust_ast as rust,
     util::{unexpanded_macro_err, TypeExt},
     Result, TypeId,
@@ -104,7 +107,10 @@ impl<'a> IntoIterator for &'a Schema {
 }
 
 fn parse_outer_markers(attrs: &Vec<syn::Attribute>) -> Result<OuterMarkers> {
-    Ok(OuterMarkers { scope: get_scope_attribute(attrs).transpose()? })
+    Ok(OuterMarkers {
+        scope: get_scope_attribute(attrs).transpose()?,
+        estree: get_estree_attribute(attrs).transpose()?,
+    })
 }
 
 fn parse_inner_markers(attrs: &Vec<syn::Attribute>) -> Result<InnerMarkers> {

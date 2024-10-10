@@ -18,6 +18,11 @@ impl Derive for DeriveESTree {
 
     fn derive(&mut self, def: &TypeDef, _: &LateCtx) -> TokenStream {
         let ident = def.ident();
+        if let TypeDef::Struct(it) = def {
+            for field in &it.fields {
+                println!("{:?}: {:?}", field.name, field.markers.derive_attributes.estree);
+            }
+        }
         if def.has_lifetime() {
             quote! {
                 impl<'a> Serialize for #ident<'a> {
