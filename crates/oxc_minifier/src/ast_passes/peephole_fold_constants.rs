@@ -414,7 +414,7 @@ impl<'a> PeepholeFoldConstants {
             | BinaryOperator::Division
             | BinaryOperator::Remainder
             | BinaryOperator::Multiplication
-            | BinaryOperator::Exponential => self.try_fold_arithmetic_op(e, ctx),
+            | BinaryOperator::Exponential => self.try_fold_arithmetic_operation(e, ctx),
             BinaryOperator::BitwiseAnd | BinaryOperator::BitwiseOR | BinaryOperator::BitwiseXOR => {
                 // TODO:
                 // self.try_fold_arithmetic_op(e.span, &e.left, &e.right, ctx)
@@ -471,13 +471,53 @@ impl<'a> PeepholeFoldConstants {
                 // todo: add raw &str
                 Some(ctx.ast.expression_numeric_literal(span, value, "", number_base))
             },
+
+            // BigInt addition
+            (Ty::BigInt, Ty::BigInt) => {
+                let left_number = ctx.get_bigint_value(left)?;
+                let right_number = ctx.get_bigint_value(right)?;
+                let value = left_number + right_number;
+                Some(ctx.ast.expression_big_int_literal(span, value.to_string() + "n", BigintBase::Decimal))
+            }
             _ => None
         }
     }
 
-    fn try_fold_arithmetic_op(
+    fn try_fold_arithmetic_operation(
         &self,
         operation: &mut BinaryExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        if operation.left.may_have_side_effects() || operation.right.may_have_side_effects() {
+            return None;
+        }
+        if (!operation.left.is_literal() || !operation.right.is_literal())
+            && !operation.operator.is_arithmetic()
+        {
+            return None;
+        }
+        let left_side: Option<f64> =
+            ctx.get_side_free_number_value(&operation.left).and_then(|n| n.try_into().ok());
+        let right_side: Option<f64> =
+            ctx.get_side_free_number_value(&operation.right).and_then(|n| n.try_into().ok());
+        if let (Some(left), Some(right)) = (left_side, right_side) {
+            if !left.is_finite() || !right.is_finite() {
+                return self.try_fold_infinity_arithmetic(left, operation.operator, right, ctx);
+            }
+            return self.try_fold_numeric_arithmetic(left, right, operation.operator, ctx);
+        }
+        let left_bigint = ctx.get_side_free_bigint_value(&operation.left);
+        let right_bigint = ctx.get_side_free_bigint_value(&operation.right);
+        if let (Some(left), Some(right)) = (left_bigint, right_bigint) {
+            return self.try_fold_bigint_arithmetic(left, right, operation.operator, ctx);
+        }
+        None
+    }
+    fn try_fold_numeric_arithmetic(
+        &self,
+        left: f64,
+        right: f64,
+        operator: BinaryOperator,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         fn shorter_than_original(
@@ -498,15 +538,7 @@ impl<'a> PeepholeFoldConstants {
                 left.to_string().len() + right.to_string().len() + length_of_operator;
             result_str <= original_str
         }
-        if !operation.operator.is_arithmetic() {
-            return None;
-        };
-        let left: f64 = ctx.get_number_value(&operation.left)?.try_into().ok()?;
-        let right: f64 = ctx.get_number_value(&operation.right)?.try_into().ok()?;
-        if !left.is_finite() || !right.is_finite() {
-            return self.try_fold_infinity_arithmetic(left, operation.operator, right, ctx);
-        }
-        let result = match operation.operator {
+        let result = match operator {
             BinaryOperator::Addition => left + right,
             BinaryOperator::Subtraction => left - right,
             BinaryOperator::Multiplication => {
@@ -518,9 +550,6 @@ impl<'a> PeepholeFoldConstants {
                 }
             }
             BinaryOperator::Division if !right.is_zero() => {
-                if right == 0.0 {
-                    return None;
-                }
                 let result = left / right;
                 if shorter_than_original(result, left, right, 1) {
                     result
@@ -541,12 +570,7 @@ impl<'a> PeepholeFoldConstants {
         };
         let number_base =
             if is_exact_int64(result) { NumberBase::Decimal } else { NumberBase::Float };
-        Some(ctx.ast.expression_numeric_literal(
-            operation.span,
-            result,
-            result.to_string(),
-            number_base,
-        ))
+        Some(ctx.ast.expression_numeric_literal(SPAN, result, result.to_string(), number_base))
     }
 
     fn try_fold_infinity_arithmetic(
@@ -556,27 +580,17 @@ impl<'a> PeepholeFoldConstants {
         right: f64,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        if left.is_finite() && right.is_finite() || !operator.is_arithmetic() {
+        if (left.is_finite() && right.is_finite()) || !operator.is_arithmetic() {
             return None;
         }
         let result = match operator {
             BinaryOperator::Addition => left + right,
             BinaryOperator::Subtraction => left - right,
             BinaryOperator::Multiplication => left * right,
-            BinaryOperator::Division => {
-                if right == 0.0 {
-                    return None;
-                }
-                left / right
-            }
-            BinaryOperator::Remainder => {
-                if right == 0.0 {
-                    return None;
-                }
-                left % right
-            }
+            BinaryOperator::Division if !right.is_zero() => left / right,
+            BinaryOperator::Remainder if !right.is_zero() => left % right,
             BinaryOperator::Exponential => left.powf(right),
-            _ => unreachable!(),
+            _ => return None,
         };
         Some(match result {
             f64::INFINITY => ctx.ast.expression_identifier_reference(SPAN, "Infinity"),
@@ -593,6 +607,35 @@ impl<'a> PeepholeFoldConstants {
                 if is_exact_int64(result) { NumberBase::Decimal } else { NumberBase::Float },
             ),
         })
+    }
+
+    fn try_fold_bigint_arithmetic(
+        &self,
+        left: BigInt,
+        right: BigInt,
+        operator: BinaryOperator,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        if !operator.is_arithmetic() {
+            return None;
+        }
+        let result = match operator {
+            BinaryOperator::Addition => left + right,
+            BinaryOperator::Subtraction => left - right,
+            BinaryOperator::Multiplication => left * right,
+            BinaryOperator::Division if !right.is_zero() => left / right,
+            BinaryOperator::Remainder if !right.is_zero() => left % right,
+            // BinaryOperator::Exponential => left.pow(right.into()),
+            _ => return None,
+        };
+        if result > BigInt::from(i32::MAX) || result < BigInt::from(i32::MIN) {
+            return None;
+        }
+        Some(ctx.ast.expression_big_int_literal(
+            SPAN,
+            result.to_string() + "n",
+            BigintBase::Decimal,
+        ))
     }
 
     fn try_fold_instanceof<'b>(
@@ -1743,5 +1786,22 @@ mod test {
         test_same("x = Infinity % 0");
         test_same("x = Infinity / 0");
         test("x = Infinity % Infinity", "x = NaN");
+    }
+
+    #[test]
+    fn test_fold_bigint_arithmetic() {
+        test("x = 1n + 2n", "x = 3n");
+        test("x = 1n - 2n", "x = -1n");
+        test("x = 2n * 3n", "x = 6n");
+        test("x = 6n / 2n", "x = 3n");
+        test("x = 3n % 2n", "x = 1n");
+        // test("x = 2n ** 3n", "x = 8n");
+
+        // The compiler is not designed to fold expressions with an exponent > 2147483647
+        // test("x = 1n ** 2147483647n", "x = 1n");
+        // test_same("x = 1n ** 2147483648n");
+
+        // test("x = y * 2n * 3n", "x = y * 6n");
+        // test_same("x = y * 2n * z * 3n");
     }
 }
