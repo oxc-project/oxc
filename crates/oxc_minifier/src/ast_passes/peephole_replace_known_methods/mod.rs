@@ -28,7 +28,7 @@ impl PeepholeReplaceKnownMethods {
     }
 }
 
-/// <https://github.com/google/closure-compiler/blob/master/test/com/google/javascript/jscomp/PeepholeReplaceKnownMethodsTest.java>
+/// Port from: <https://github.com/google/closure-compiler/blob/master/test/com/google/javascript/jscomp/PeepholeReplaceKnownMethodsTest.java>
 #[cfg(test)]
 mod test {
     use oxc_allocator::Allocator;
@@ -744,5 +744,166 @@ mod test {
 
         fold("x = parseInt('021', 8)", "x = 17");
         fold("x = parseInt('-021', 8)", "x = -17");
+    }
+
+    #[test]
+    #[ignore]
+    fn test_replace_with_char_at() {
+        // enableTypeCheck();
+        // replaceTypesWithColors();
+        // disableCompareJsDoc();
+
+        fold_string_typed("a.substring(0, 1)", "a.charAt(0)");
+        fold_same_string_typed("a.substring(-4, -3)");
+        fold_same_string_typed("a.substring(i, j + 1)");
+        fold_same_string_typed("a.substring(i, i + 1)");
+        fold_same_string_typed("a.substring(1, 2, 3)");
+        fold_same_string_typed("a.substring()");
+        fold_same_string_typed("a.substring(1)");
+        fold_same_string_typed("a.substring(1, 3, 4)");
+        fold_same_string_typed("a.substring(-1, 3)");
+        fold_same_string_typed("a.substring(2, 1)");
+        fold_same_string_typed("a.substring(3, 1)");
+
+        fold_string_typed("a.slice(4, 5)", "a.charAt(4)");
+        fold_same_string_typed("a.slice(-2, -1)");
+        fold_string_typed("var /** number */ i; a.slice(0, 1)", "var /** number */ i; a.charAt(0)");
+        fold_same_string_typed("a.slice(i, j + 1)");
+        fold_same_string_typed("a.slice(i, i + 1)");
+        fold_same_string_typed("a.slice(1, 2, 3)");
+        fold_same_string_typed("a.slice()");
+        fold_same_string_typed("a.slice(1)");
+        fold_same_string_typed("a.slice(1, 3, 4)");
+        fold_same_string_typed("a.slice(-1, 3)");
+        fold_same_string_typed("a.slice(2, 1)");
+        fold_same_string_typed("a.slice(3, 1)");
+
+        fold_string_typed("a.substr(0, 1)", "a.charAt(0)");
+        fold_string_typed("a.substr(2, 1)", "a.charAt(2)");
+        fold_same_string_typed("a.substr(-2, 1)");
+        fold_same_string_typed("a.substr(bar(), 1)");
+        fold_same_string_typed("''.substr(bar(), 1)");
+        fold_same_string_typed("a.substr(2, 1, 3)");
+        fold_same_string_typed("a.substr(1, 2, 3)");
+        fold_same_string_typed("a.substr()");
+        fold_same_string_typed("a.substr(1)");
+        fold_same_string_typed("a.substr(1, 2)");
+        fold_same_string_typed("a.substr(1, 2, 3)");
+
+        // enableTypeCheck();
+
+        fold_same("function f(/** ? */ a) { a.substring(0, 1); }");
+        fold_same("function f(/** ? */ a) { a.substr(0, 1); }");
+        // fold_same(lines(
+        //     "/** @constructor */ function A() {};",
+        //     "A.prototype.substring = function(begin, end) {};",
+        //     "function f(/** !A */ a) { a.substring(0, 1); }",
+        // ));
+        // fold_same(lines(
+        //     "/** @constructor */ function A() {};",
+        //     "A.prototype.slice = function(begin, end) {};",
+        //     "function f(/** !A */ a) { a.slice(0, 1); }",
+        // ));
+
+        // useTypes = false;
+        fold_same_string_typed("a.substring(0, 1)");
+        fold_same_string_typed("a.substr(0, 1)");
+        fold_same_string_typed("''.substring(i, i + 1)");
+    }
+
+    #[test]
+    #[ignore]
+    fn test_fold_concat_chaining() {
+        // enableTypeCheck();
+
+        fold("[1,2].concat(1).concat(2,['abc']).concat('abc')", "[1,2].concat(1,2,['abc'],'abc')");
+        fold("[].concat(['abc']).concat(1).concat([2,3])", "['abc'].concat(1,[2,3])");
+
+        // cannot fold concat based on type information
+        fold_same("returnArrayType().concat(returnArrayType()).concat(1).concat(2)");
+        fold_same("returnArrayType().concat(returnUnionType()).concat(1).concat(2)");
+        fold(
+            "[1,2,1].concat(1).concat(returnArrayType()).concat(2)",
+            "[1,2,1].concat(1).concat(returnArrayType(),2)",
+        );
+        fold(
+            "[1].concat(1).concat(2).concat(returnArrayType())",
+            "[1].concat(1,2).concat(returnArrayType())",
+        );
+        fold_same("[].concat(1).concat(returnArrayType())");
+        fold_same("obj.concat([1,2]).concat(1)");
+    }
+
+    #[test]
+    #[ignore]
+    fn test_remove_array_literal_from_front_of_concat() {
+        // enableTypeCheck();
+
+        fold("[].concat([1,2,3],1)", "[1,2,3].concat(1)");
+
+        fold_same("[1,2,3].concat(returnArrayType())");
+        // Call method with the same name as Array.prototype.concat
+        fold_same("obj.concat([1,2,3])");
+
+        fold_same("[].concat(1,[1,2,3])");
+        fold_same("[].concat(1)");
+        fold("[].concat([1])", "[1].concat()");
+
+        // Chained folding of empty array lit
+        fold("[].concat([], [1,2,3], [4])", "[1,2,3].concat([4])");
+        fold("[].concat([]).concat([1]).concat([2,3])", "[1].concat([2,3])");
+
+        // Cannot fold based on type information
+        fold_same("[].concat(returnArrayType(),1)");
+        fold_same("[].concat(returnArrayType())");
+        fold_same("[].concat(returnUnionType())");
+    }
+
+    #[test]
+    #[ignore]
+    fn test_array_of_spread() {
+        fold("x = Array.of(...['a', 'b', 'c'])", "x = [...['a', 'b', 'c']]");
+        fold("x = Array.of(...['a', 'b', 'c',])", "x = [...['a', 'b', 'c']]");
+        fold("x = Array.of(...['a'], ...['b', 'c'])", "x = [...['a'], ...['b', 'c']]");
+        fold("x = Array.of('a', ...['b', 'c'])", "x = ['a', ...['b', 'c']]");
+        fold("x = Array.of('a', ...['b', 'c'])", "x = ['a', ...['b', 'c']]");
+    }
+
+    #[test]
+    #[ignore]
+    fn test_array_of_no_spread() {
+        fold("x = Array.of('a', 'b', 'c')", "x = ['a', 'b', 'c']");
+        fold("x = Array.of('a', ['b', 'c'])", "x = ['a', ['b', 'c']]");
+        fold("x = Array.of('a', ['b', 'c'],)", "x = ['a', ['b', 'c']]");
+    }
+
+    #[test]
+    #[ignore]
+    fn test_array_of_no_args() {
+        fold("x = Array.of()", "x = []");
+    }
+
+    #[test]
+    #[ignore]
+    fn test_array_of_no_change() {
+        fold_same("x = Array.of.apply(window, ['a', 'b', 'c'])");
+        fold_same("x = ['a', 'b', 'c']");
+        fold_same("x = [Array.of, 'a', 'b', 'c']");
+    }
+
+    #[test]
+    #[ignore]
+    fn test_fold_array_bug() {
+        fold_same("Array[123]()");
+    }
+
+    fn fold_same_string_typed(js: &str) {
+        fold_string_typed(js, js);
+    }
+
+    fn fold_string_typed(js: &str, expected: &str) {
+        let left = "function f(/** string */ a) {".to_string() + js + "}";
+        let right = "function f(/** string */ a) {".to_string() + expected + "}";
+        test(left.as_str(), right.as_str());
     }
 }
