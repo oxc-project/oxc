@@ -92,6 +92,7 @@ impl<'a> ContentEq for StringLiteral<'a> {
 impl<'a> ContentEq for Program<'a> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.source_type, &other.source_type)
+            && ContentEq::content_eq(&self.source_text, &other.source_text)
             && ContentEq::content_eq(&self.hashbang, &other.hashbang)
             && ContentEq::content_eq(&self.directives, &other.directives)
             && ContentEq::content_eq(&self.body, &other.body)

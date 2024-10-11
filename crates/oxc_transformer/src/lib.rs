@@ -72,11 +72,10 @@ impl<'a> Transformer<'a> {
     pub fn new(
         allocator: &'a Allocator,
         source_path: &Path,
-        source_text: &'a str,
         trivias: Trivias,
         options: TransformOptions,
     ) -> Self {
-        let ctx = TransformCtx::new(source_path, source_text, trivias, &options);
+        let ctx = TransformCtx::new(source_path, trivias, &options);
         Self { ctx, options, allocator }
     }
 
@@ -90,6 +89,7 @@ impl<'a> Transformer<'a> {
         let ast_builder = AstBuilder::new(allocator);
 
         self.ctx.source_type = program.source_type;
+        self.ctx.source_text = program.source_text;
         react::update_options_with_comments(&mut self.options, &self.ctx);
 
         let mut transformer = TransformerImpl {

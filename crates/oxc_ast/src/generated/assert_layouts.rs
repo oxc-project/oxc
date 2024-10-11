@@ -55,14 +55,15 @@ const _: () = {
     assert!(offset_of!(StringLiteral, span) == 0usize);
     assert!(offset_of!(StringLiteral, value) == 8usize);
 
-    assert!(size_of::<Program>() == 112usize);
+    assert!(size_of::<Program>() == 128usize);
     assert!(align_of::<Program>() == 8usize);
     assert!(offset_of!(Program, span) == 0usize);
     assert!(offset_of!(Program, source_type) == 8usize);
-    assert!(offset_of!(Program, hashbang) == 16usize);
-    assert!(offset_of!(Program, directives) == 40usize);
-    assert!(offset_of!(Program, body) == 72usize);
-    assert!(offset_of!(Program, scope_id) == 104usize);
+    assert!(offset_of!(Program, source_text) == 16usize);
+    assert!(offset_of!(Program, hashbang) == 32usize);
+    assert!(offset_of!(Program, directives) == 56usize);
+    assert!(offset_of!(Program, body) == 88usize);
+    assert!(offset_of!(Program, scope_id) == 120usize);
 
     assert!(size_of::<Expression>() == 16usize);
     assert!(align_of::<Expression>() == 8usize);
@@ -1597,14 +1598,15 @@ const _: () = {
     assert!(offset_of!(StringLiteral, span) == 0usize);
     assert!(offset_of!(StringLiteral, value) == 8usize);
 
-    assert!(size_of::<Program>() == 64usize);
+    assert!(size_of::<Program>() == 72usize);
     assert!(align_of::<Program>() == 4usize);
     assert!(offset_of!(Program, span) == 0usize);
     assert!(offset_of!(Program, source_type) == 8usize);
-    assert!(offset_of!(Program, hashbang) == 12usize);
-    assert!(offset_of!(Program, directives) == 28usize);
-    assert!(offset_of!(Program, body) == 44usize);
-    assert!(offset_of!(Program, scope_id) == 60usize);
+    assert!(offset_of!(Program, source_text) == 12usize);
+    assert!(offset_of!(Program, hashbang) == 20usize);
+    assert!(offset_of!(Program, directives) == 36usize);
+    assert!(offset_of!(Program, body) == 52usize);
+    assert!(offset_of!(Program, scope_id) == 68usize);
 
     assert!(size_of::<Expression>() == 8usize);
     assert!(align_of::<Expression>() == 4usize);

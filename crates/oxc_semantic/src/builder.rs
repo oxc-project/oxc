@@ -119,14 +119,20 @@ pub struct SemanticBuilderReturn<'a> {
     pub errors: Vec<OxcDiagnostic>,
 }
 
+impl<'a> Default for SemanticBuilder<'a> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<'a> SemanticBuilder<'a> {
-    pub fn new(source_text: &'a str) -> Self {
+    pub fn new() -> Self {
         let scope = ScopeTree::default();
         let current_scope_id = scope.root_scope_id();
 
         let trivias = Trivias::default();
         Self {
-            source_text,
+            source_text: "",
             source_type: SourceType::default(),
             trivias: trivias.clone(),
             errors: RefCell::new(vec![]),
@@ -145,7 +151,7 @@ impl<'a> SemanticBuilder<'a> {
             module_record: Arc::new(ModuleRecord::default()),
             unused_labels: UnusedLabels::default(),
             build_jsdoc: false,
-            jsdoc: JSDocBuilder::new(source_text, &trivias),
+            jsdoc: JSDocBuilder::default(),
             stats: None,
             excess_capacity: 0.0,
             check_syntax_error: false,
@@ -178,7 +184,6 @@ impl<'a> SemanticBuilder<'a> {
     /// `with_trivias` must be called prior to this call.
     #[must_use]
     pub fn with_build_jsdoc(mut self, yes: bool) -> Self {
-        self.jsdoc = JSDocBuilder::new(self.source_text, &self.trivias);
         self.build_jsdoc = yes;
         self
     }
@@ -252,7 +257,11 @@ impl<'a> SemanticBuilder<'a> {
     ///
     /// # Panics
     pub fn build(mut self, program: &Program<'a>) -> SemanticBuilderReturn<'a> {
+        self.source_text = program.source_text;
         self.source_type = program.source_type;
+        if self.build_jsdoc {
+            self.jsdoc = JSDocBuilder::new(self.source_text, &self.trivias);
+        }
         if self.source_type.is_typescript_definition() {
             let scope_id = self.scope.add_scope(None, NodeId::DUMMY, ScopeFlags::Top);
             program.scope_id.set(Some(scope_id));

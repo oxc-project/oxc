@@ -29,7 +29,7 @@ fn bench_transformer(criterion: &mut Criterion) {
                 let ParserReturn { trivias, program, .. } =
                     Parser::new(&allocator, source_text, source_type).parse();
                 let program = allocator.alloc(program);
-                let (symbols, scopes) = SemanticBuilder::new(source_text)
+                let (symbols, scopes) = SemanticBuilder::new()
                     // Estimate transformer will triple scopes, symbols, references
                     .with_excess_capacity(2.0)
                     .build(program)
@@ -47,14 +47,9 @@ fn bench_transformer(criterion: &mut Criterion) {
                 options.es2015.arrow_function = Some(ArrowFunctionsOptions { spec: true });
 
                 runner.run(|| {
-                    let ret = Transformer::new(
-                        &allocator,
-                        Path::new(&file.file_name),
-                        source_text,
-                        trivias,
-                        options,
-                    )
-                    .build_with_symbols_and_scopes(symbols, scopes, program);
+                    let ret =
+                        Transformer::new(&allocator, Path::new(&file.file_name), trivias, options)
+                            .build_with_symbols_and_scopes(symbols, scopes, program);
 
                     // Return the `TransformerReturn`, so it's dropped outside of the measured section.
                     // `TransformerReturn` contains `ScopeTree` and `SymbolTable` which are costly to drop.

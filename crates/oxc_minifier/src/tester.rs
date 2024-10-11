@@ -28,7 +28,7 @@ fn run<'a, P: CompressorPass<'a>>(
 
     if let Some(pass) = pass {
         let (symbols, scopes) =
-            SemanticBuilder::new("").build(&program).semantic.into_symbol_table_and_scope_tree();
+            SemanticBuilder::new().build(&program).semantic.into_symbol_table_and_scope_tree();
         let mut ctx = TraverseCtx::new(scopes, symbols, allocator);
         RemoveSyntax::new(CompressOptions::all_false()).build(&mut program, &mut ctx);
         pass.build(&mut program, &mut ctx);

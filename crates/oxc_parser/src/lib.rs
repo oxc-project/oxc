@@ -404,6 +404,7 @@ impl<'a> ParserImpl<'a> {
                 let program = self.ast.program(
                     Span::default(),
                     self.source_type,
+                    self.source_text,
                     None,
                     self.ast.vec(),
                     self.ast.vec(),
@@ -450,7 +451,14 @@ impl<'a> ParserImpl<'a> {
         self.set_source_type_to_script_if_unambiguous();
 
         let span = Span::new(0, self.source_text.len() as u32);
-        Ok(self.ast.program(span, self.source_type, hashbang, directives, statements))
+        Ok(self.ast.program(
+            span,
+            self.source_type,
+            self.source_text,
+            hashbang,
+            directives,
+            statements,
+        ))
     }
 
     fn default_context(source_type: SourceType, options: ParseOptions) -> Context {

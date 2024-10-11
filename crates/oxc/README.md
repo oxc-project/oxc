@@ -99,7 +99,7 @@ if panicked {
 let SemanticBuilderReturn {
     semantic,
     errors: semantic_errors,
-} = SemanticBuilder::new(source_text)
+} = SemanticBuilder::new()
     .with_check_syntax_error(true) // Enable extra syntax error checking
     .with_trivias(trivias)         // Pass comments for JSDoc parsing
     .with_build_jsdoc(true)        // Enable JSDoc parsing

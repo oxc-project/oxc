@@ -70,6 +70,7 @@ impl<'a> ContentHash for StringLiteral<'a> {
 impl<'a> ContentHash for Program<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.source_type, state);
+        ContentHash::content_hash(&self.source_text, state);
         ContentHash::content_hash(&self.hashbang, state);
         ContentHash::content_hash(&self.directives, state);
         ContentHash::content_hash(&self.body, state);

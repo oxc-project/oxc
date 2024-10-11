@@ -41,12 +41,7 @@ pub struct TransformCtx<'a> {
 }
 
 impl<'a> TransformCtx<'a> {
-    pub fn new(
-        source_path: &Path,
-        source_text: &'a str,
-        trivias: Trivias,
-        options: &TransformOptions,
-    ) -> Self {
+    pub fn new(source_path: &Path, trivias: Trivias, options: &TransformOptions) -> Self {
         let filename = source_path
             .file_stem() // omit file extension
             .map_or_else(|| String::from("unknown"), |name| name.to_string_lossy().to_string());
@@ -60,7 +55,7 @@ impl<'a> TransformCtx<'a> {
             filename,
             source_path,
             source_type: SourceType::default(),
-            source_text,
+            source_text: "",
             trivias,
             module_imports: ModuleImportsStore::new(),
             var_declarations: VarDeclarationsStore::new(),

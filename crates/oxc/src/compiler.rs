@@ -139,19 +139,12 @@ pub trait CompilerInterface {
 
         /* Isolated Declarations */
         if let Some(options) = self.isolated_declaration_options() {
-            self.isolated_declaration(
-                options,
-                &allocator,
-                &program,
-                source_text,
-                source_path,
-                &trivias,
-            );
+            self.isolated_declaration(options, &allocator, &program, source_path, &trivias);
         }
 
         /* Semantic */
 
-        let mut semantic_return = self.semantic(&program, source_text, source_path);
+        let mut semantic_return = self.semantic(&program, source_path);
         if !semantic_return.errors.is_empty() {
             self.handle_errors(semantic_return.errors);
             return;
@@ -170,7 +163,6 @@ pub trait CompilerInterface {
                 &allocator,
                 &mut program,
                 source_path,
-                source_text,
                 &trivias,
                 symbols,
                 scopes,
@@ -218,7 +210,7 @@ pub trait CompilerInterface {
         /* Codegen */
 
         if let Some(options) = self.codegen_options() {
-            let ret = self.codegen(&program, source_text, source_path, &trivias, mangler, options);
+            let ret = self.codegen(&program, source_path, &trivias, mangler, options);
             self.after_codegen(ret);
         }
     }
@@ -232,13 +224,8 @@ pub trait CompilerInterface {
         Parser::new(allocator, source_text, source_type).with_options(self.parse_options()).parse()
     }
 
-    fn semantic<'a>(
-        &self,
-        program: &Program<'a>,
-        source_text: &'a str,
-        source_path: &Path,
-    ) -> SemanticBuilderReturn<'a> {
-        let mut builder = SemanticBuilder::new(source_text);
+    fn semantic<'a>(&self, program: &Program<'a>, source_path: &Path) -> SemanticBuilderReturn<'a> {
+        let mut builder = SemanticBuilder::new();
 
         if self.transform_options().is_some() {
             // Estimate transformer will triple scopes, symbols, references
@@ -257,16 +244,14 @@ pub trait CompilerInterface {
         options: IsolatedDeclarationsOptions,
         allocator: &'a Allocator,
         program: &Program<'a>,
-        source_text: &'a str,
         source_path: &Path,
         trivias: &Trivias,
     ) {
-        let ret =
-            IsolatedDeclarations::new(allocator, source_text, trivias, options).build(program);
+        let ret = IsolatedDeclarations::new(allocator, program.source_text, trivias, options)
+            .build(program);
         self.handle_errors(ret.errors);
         let ret = self.codegen(
             &ret.program,
-            source_text,
             source_path,
             trivias,
             None,
@@ -282,12 +267,11 @@ pub trait CompilerInterface {
         allocator: &'a Allocator,
         program: &mut Program<'a>,
         source_path: &Path,
-        source_text: &'a str,
         trivias: &Trivias,
         symbols: SymbolTable,
         scopes: ScopeTree,
     ) -> TransformerReturn {
-        Transformer::new(allocator, source_path, source_text, trivias.clone(), options)
+        Transformer::new(allocator, source_path, trivias.clone(), options)
             .build_with_symbols_and_scopes(symbols, scopes, program)
     }
 
@@ -304,10 +288,9 @@ pub trait CompilerInterface {
         Mangler::new().with_options(options).build(program)
     }
 
-    fn codegen<'a>(
+    fn codegen(
         &self,
-        program: &Program<'a>,
-        source_text: &'a str,
+        program: &Program<'_>,
         source_path: &Path,
         trivias: &Trivias,
         mangler: Option<Mangler>,
@@ -317,10 +300,10 @@ pub trait CompilerInterface {
         let mut codegen = CodeGenerator::new()
             .with_options(options)
             .with_mangler(mangler)
-            .enable_comment(source_text, trivias.clone(), comment_options);
+            .enable_comment(program.source_text, trivias.clone(), comment_options);
         if self.enable_sourcemap() {
-            codegen =
-                codegen.enable_source_map(source_path.to_string_lossy().as_ref(), source_text);
+            codegen = codegen
+                .enable_source_map(source_path.to_string_lossy().as_ref(), program.source_text);
         }
         codegen.build(program)
     }

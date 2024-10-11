@@ -57,10 +57,9 @@ impl CompilerInterface for Driver {
     }
 
     // Disable comments
-    fn codegen<'a>(
+    fn codegen(
         &self,
-        program: &Program<'a>,
-        _source_text: &'a str,
+        program: &Program<'_>,
         _source_path: &Path,
         _trivias: &Trivias,
         mangler: Option<Mangler>,

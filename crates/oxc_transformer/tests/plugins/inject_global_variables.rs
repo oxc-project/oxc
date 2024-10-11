@@ -16,10 +16,8 @@ pub(crate) fn test(source_text: &str, expected: &str, config: InjectGlobalVariab
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let program = allocator.alloc(ret.program);
-    let (symbols, scopes) = SemanticBuilder::new(source_text)
-        .build(program)
-        .semantic
-        .into_symbol_table_and_scope_tree();
+    let (symbols, scopes) =
+        SemanticBuilder::new().build(program).semantic.into_symbol_table_and_scope_tree();
     let _ = InjectGlobalVariables::new(&allocator, config).build(symbols, scopes, program);
     let result = CodeGenerator::new()
         .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })

@@ -197,7 +197,7 @@ impl Oxc {
         self.ir = format!("{:#?}", program.body);
         self.ast = program.serialize(&self.serializer)?;
 
-        let mut semantic_builder = SemanticBuilder::new(source_text);
+        let mut semantic_builder = SemanticBuilder::new();
         if run_options.transform.unwrap_or_default() {
             // Estimate transformer will triple scopes, symbols, references
             semantic_builder = semantic_builder.with_excess_capacity(2.0);
@@ -221,7 +221,7 @@ impl Oxc {
             );
         }
 
-        self.run_linter(&run_options, source_text, &path, &trivias, &program);
+        self.run_linter(&run_options, &path, &trivias, &program);
 
         self.run_prettier(&run_options, source_text, source_type);
 
@@ -241,9 +241,8 @@ impl Oxc {
                 targets: Targets::from_query("chrome 51"),
                 ..EnvOptions::default()
             }) {
-                let result =
-                    Transformer::new(&allocator, &path, source_text, trivias.clone(), options)
-                        .build_with_symbols_and_scopes(symbols, scopes, &mut program);
+                let result = Transformer::new(&allocator, &path, trivias.clone(), options)
+                    .build_with_symbols_and_scopes(symbols, scopes, &mut program);
                 if !result.errors.is_empty() {
                     self.save_diagnostics(
                         result.errors.into_iter().map(Error::from).collect::<Vec<_>>(),
@@ -293,14 +292,13 @@ impl Oxc {
     fn run_linter(
         &mut self,
         run_options: &OxcRunOptions,
-        source_text: &str,
         path: &Path,
         trivias: &Trivias,
         program: &Program,
     ) {
         // Only lint if there are no syntax errors
         if run_options.lint.unwrap_or_default() && self.diagnostics.borrow().is_empty() {
-            let semantic_ret = SemanticBuilder::new(source_text)
+            let semantic_ret = SemanticBuilder::new()
                 .with_cfg(true)
                 .with_trivias(trivias.clone())
                 .build_module_record(path, program)

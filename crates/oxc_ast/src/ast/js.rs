@@ -39,6 +39,8 @@ pub struct Program<'a> {
     #[serde(flatten)]
     pub span: Span,
     pub source_type: SourceType,
+    #[serde(skip)]
+    pub source_text: &'a str,
     pub hashbang: Option<Hashbang<'a>>,
     pub directives: Vec<'a, Directive<'a>>,
     pub body: Vec<'a, Statement<'a>>,

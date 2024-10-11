@@ -112,6 +112,7 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for Program<'old_alloc> {
         Program {
             span: CloneIn::clone_in(&self.span, allocator),
             source_type: CloneIn::clone_in(&self.source_type, allocator),
+            source_text: CloneIn::clone_in(&self.source_text, allocator),
             hashbang: CloneIn::clone_in(&self.hashbang, allocator),
             directives: CloneIn::clone_in(&self.directives, allocator),
             body: CloneIn::clone_in(&self.body, allocator),

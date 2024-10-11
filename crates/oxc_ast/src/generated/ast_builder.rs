@@ -221,19 +221,32 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     /// - source_type
+    /// - source_text
     /// - hashbang
     /// - directives
     /// - body
     #[inline]
-    pub fn program(
+    pub fn program<S>(
         self,
         span: Span,
         source_type: SourceType,
+        source_text: S,
         hashbang: Option<Hashbang<'a>>,
         directives: Vec<'a, Directive<'a>>,
         body: Vec<'a, Statement<'a>>,
-    ) -> Program<'a> {
-        Program { span, source_type, hashbang, directives, body, scope_id: Default::default() }
+    ) -> Program<'a>
+    where
+        S: IntoIn<'a, &'a str>,
+    {
+        Program {
+            span,
+            source_type,
+            source_text: source_text.into_in(self.allocator),
+            hashbang,
+            directives,
+            body,
+            scope_id: Default::default(),
+        }
     }
 
     /// Builds a [`Program`] and stores it in the memory arena.
@@ -243,19 +256,27 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     /// - source_type
+    /// - source_text
     /// - hashbang
     /// - directives
     /// - body
     #[inline]
-    pub fn alloc_program(
+    pub fn alloc_program<S>(
         self,
         span: Span,
         source_type: SourceType,
+        source_text: S,
         hashbang: Option<Hashbang<'a>>,
         directives: Vec<'a, Directive<'a>>,
         body: Vec<'a, Statement<'a>>,
-    ) -> Box<'a, Program<'a>> {
-        Box::new_in(self.program(span, source_type, hashbang, directives, body), self.allocator)
+    ) -> Box<'a, Program<'a>>
+    where
+        S: IntoIn<'a, &'a str>,
+    {
+        Box::new_in(
+            self.program(span, source_type, source_text, hashbang, directives, body),
+            self.allocator,
+        )
     }
 
     /// Build a [`Expression::BooleanLiteral`]

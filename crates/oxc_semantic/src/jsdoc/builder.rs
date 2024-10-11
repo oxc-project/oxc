@@ -7,6 +7,7 @@ use crate::jsdoc::JSDocFinder;
 
 use super::parser::JSDoc;
 
+#[derive(Default)]
 pub struct JSDocBuilder<'a> {
     not_attached_docs: FxHashMap<u32, Vec<JSDoc<'a>>>,
     attached_docs: FxHashMap<u32, Vec<JSDoc<'a>>>,
@@ -207,7 +208,7 @@ mod test {
         let source_type = source_type.unwrap_or_default();
         let ret = Parser::new(allocator, source_text, source_type).parse();
         let program = allocator.alloc(ret.program);
-        let semantic = SemanticBuilder::new(source_text)
+        let semantic = SemanticBuilder::new()
             .with_trivias(ret.trivias)
             .with_build_jsdoc(true)
             .build(program)
