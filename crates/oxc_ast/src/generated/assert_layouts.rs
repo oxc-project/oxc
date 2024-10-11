@@ -55,15 +55,16 @@ const _: () = {
     assert!(offset_of!(StringLiteral, span) == 0usize);
     assert!(offset_of!(StringLiteral, value) == 8usize);
 
-    assert!(size_of::<Program>() == 128usize);
+    assert!(size_of::<Program>() == 160usize);
     assert!(align_of::<Program>() == 8usize);
     assert!(offset_of!(Program, span) == 0usize);
     assert!(offset_of!(Program, source_type) == 8usize);
     assert!(offset_of!(Program, source_text) == 16usize);
-    assert!(offset_of!(Program, hashbang) == 32usize);
-    assert!(offset_of!(Program, directives) == 56usize);
-    assert!(offset_of!(Program, body) == 88usize);
-    assert!(offset_of!(Program, scope_id) == 120usize);
+    assert!(offset_of!(Program, comments) == 32usize);
+    assert!(offset_of!(Program, hashbang) == 64usize);
+    assert!(offset_of!(Program, directives) == 88usize);
+    assert!(offset_of!(Program, body) == 120usize);
+    assert!(offset_of!(Program, scope_id) == 152usize);
 
     assert!(size_of::<Expression>() == 16usize);
     assert!(align_of::<Expression>() == 8usize);
@@ -1375,6 +1376,21 @@ const _: () = {
     assert!(offset_of!(JSXText, span) == 0usize);
     assert!(offset_of!(JSXText, value) == 8usize);
 
+    assert!(size_of::<CommentKind>() == 1usize);
+    assert!(align_of::<CommentKind>() == 1usize);
+
+    assert!(size_of::<CommentPosition>() == 1usize);
+    assert!(align_of::<CommentPosition>() == 1usize);
+
+    assert!(size_of::<Comment>() == 20usize);
+    assert!(align_of::<Comment>() == 4usize);
+    assert!(offset_of!(Comment, span) == 0usize);
+    assert!(offset_of!(Comment, kind) == 8usize);
+    assert!(offset_of!(Comment, position) == 9usize);
+    assert!(offset_of!(Comment, attached_to) == 12usize);
+    assert!(offset_of!(Comment, preceded_by_newline) == 16usize);
+    assert!(offset_of!(Comment, followed_by_newline) == 17usize);
+
     assert!(size_of::<NumberBase>() == 1usize);
     assert!(align_of::<NumberBase>() == 1usize);
 
@@ -1598,15 +1614,16 @@ const _: () = {
     assert!(offset_of!(StringLiteral, span) == 0usize);
     assert!(offset_of!(StringLiteral, value) == 8usize);
 
-    assert!(size_of::<Program>() == 72usize);
+    assert!(size_of::<Program>() == 88usize);
     assert!(align_of::<Program>() == 4usize);
     assert!(offset_of!(Program, span) == 0usize);
     assert!(offset_of!(Program, source_type) == 8usize);
     assert!(offset_of!(Program, source_text) == 12usize);
-    assert!(offset_of!(Program, hashbang) == 20usize);
-    assert!(offset_of!(Program, directives) == 36usize);
-    assert!(offset_of!(Program, body) == 52usize);
-    assert!(offset_of!(Program, scope_id) == 68usize);
+    assert!(offset_of!(Program, comments) == 20usize);
+    assert!(offset_of!(Program, hashbang) == 36usize);
+    assert!(offset_of!(Program, directives) == 52usize);
+    assert!(offset_of!(Program, body) == 68usize);
+    assert!(offset_of!(Program, scope_id) == 84usize);
 
     assert!(size_of::<Expression>() == 8usize);
     assert!(align_of::<Expression>() == 4usize);
@@ -2917,6 +2934,21 @@ const _: () = {
     assert!(align_of::<JSXText>() == 4usize);
     assert!(offset_of!(JSXText, span) == 0usize);
     assert!(offset_of!(JSXText, value) == 8usize);
+
+    assert!(size_of::<CommentKind>() == 1usize);
+    assert!(align_of::<CommentKind>() == 1usize);
+
+    assert!(size_of::<CommentPosition>() == 1usize);
+    assert!(align_of::<CommentPosition>() == 1usize);
+
+    assert!(size_of::<Comment>() == 20usize);
+    assert!(align_of::<Comment>() == 4usize);
+    assert!(offset_of!(Comment, span) == 0usize);
+    assert!(offset_of!(Comment, kind) == 8usize);
+    assert!(offset_of!(Comment, position) == 9usize);
+    assert!(offset_of!(Comment, attached_to) == 12usize);
+    assert!(offset_of!(Comment, preceded_by_newline) == 16usize);
+    assert!(offset_of!(Comment, followed_by_newline) == 17usize);
 
     assert!(size_of::<NumberBase>() == 1usize);
     assert!(align_of::<NumberBase>() == 1usize);

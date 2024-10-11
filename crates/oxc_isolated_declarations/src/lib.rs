@@ -92,8 +92,15 @@ impl<'a> IsolatedDeclarations<'a> {
         let source_type = SourceType::d_ts();
         let directives = self.ast.vec();
         let stmts = self.transform_program(program);
-        let program =
-            self.ast.program(SPAN, source_type, program.source_text, None, directives, stmts);
+        let program = self.ast.program(
+            SPAN,
+            source_type,
+            program.source_text,
+            self.ast.vec_from_iter(program.comments.iter().copied()),
+            None,
+            directives,
+            stmts,
+        );
         IsolatedDeclarationsReturn { program, errors: self.take_errors() }
     }
 

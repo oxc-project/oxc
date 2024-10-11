@@ -222,6 +222,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     /// - source_type
     /// - source_text
+    /// - comments: Sorted comments
     /// - hashbang
     /// - directives
     /// - body
@@ -231,6 +232,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         source_type: SourceType,
         source_text: S,
+        comments: Vec<'a, Comment>,
         hashbang: Option<Hashbang<'a>>,
         directives: Vec<'a, Directive<'a>>,
         body: Vec<'a, Statement<'a>>,
@@ -242,6 +244,7 @@ impl<'a> AstBuilder<'a> {
             span,
             source_type,
             source_text: source_text.into_in(self.allocator),
+            comments,
             hashbang,
             directives,
             body,
@@ -257,6 +260,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     /// - source_type
     /// - source_text
+    /// - comments: Sorted comments
     /// - hashbang
     /// - directives
     /// - body
@@ -266,6 +270,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         source_type: SourceType,
         source_text: S,
+        comments: Vec<'a, Comment>,
         hashbang: Option<Hashbang<'a>>,
         directives: Vec<'a, Directive<'a>>,
         body: Vec<'a, Statement<'a>>,
@@ -274,7 +279,7 @@ impl<'a> AstBuilder<'a> {
         S: IntoIn<'a, &'a str>,
     {
         Box::new_in(
-            self.program(span, source_type, source_text, hashbang, directives, body),
+            self.program(span, source_type, source_text, comments, hashbang, directives, body),
             self.allocator,
         )
     }

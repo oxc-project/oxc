@@ -405,6 +405,7 @@ impl<'a> ParserImpl<'a> {
                     Span::default(),
                     self.source_type,
                     self.source_text,
+                    self.ast.vec(),
                     None,
                     self.ast.vec(),
                     self.ast.vec(),
@@ -451,10 +452,12 @@ impl<'a> ParserImpl<'a> {
         self.set_source_type_to_script_if_unambiguous();
 
         let span = Span::new(0, self.source_text.len() as u32);
+        let comments = self.ast.vec_from_iter(self.lexer.trivia_builder.comments.iter().copied());
         Ok(self.ast.program(
             span,
             self.source_type,
             self.source_text,
+            comments,
             hashbang,
             directives,
             statements,
@@ -537,7 +540,7 @@ impl<'a> ParserImpl<'a> {
 mod test {
     use std::path::Path;
 
-    use oxc_ast::{ast::Expression, CommentKind};
+    use oxc_ast::ast::{CommentKind, Expression};
 
     use super::*;
 

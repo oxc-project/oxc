@@ -175,6 +175,7 @@
 //!
 //! If you are seeing compile-time errors in `src/ast/macros.rs`, this will be the cause.
 
+pub(crate) mod comment;
 pub(crate) mod js;
 pub(crate) mod jsx;
 pub(crate) mod literal;
@@ -191,4 +192,4 @@ pub use oxc_syntax::{
     },
 };
 
-pub use self::{js::*, jsx::*, literal::*, ts::*};
+pub use self::{comment::*, js::*, jsx::*, literal::*, ts::*};

@@ -1,4 +1,7 @@
-use oxc_ast::{Comment, CommentKind, CommentPosition, Trivias};
+use oxc_ast::{
+    ast::{Comment, CommentKind, CommentPosition},
+    Trivias,
+};
 use oxc_span::Span;
 
 use super::{Kind, Token};

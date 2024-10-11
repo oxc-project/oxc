@@ -2202,6 +2202,7 @@ impl<'a, 't> Ancestor<'a, 't> {
 pub(crate) const OFFSET_PROGRAM_SPAN: usize = offset_of!(Program, span);
 pub(crate) const OFFSET_PROGRAM_SOURCE_TYPE: usize = offset_of!(Program, source_type);
 pub(crate) const OFFSET_PROGRAM_SOURCE_TEXT: usize = offset_of!(Program, source_text);
+pub(crate) const OFFSET_PROGRAM_COMMENTS: usize = offset_of!(Program, comments);
 pub(crate) const OFFSET_PROGRAM_HASHBANG: usize = offset_of!(Program, hashbang);
 pub(crate) const OFFSET_PROGRAM_DIRECTIVES: usize = offset_of!(Program, directives);
 pub(crate) const OFFSET_PROGRAM_BODY: usize = offset_of!(Program, body);
@@ -2228,6 +2229,11 @@ impl<'a, 't> ProgramWithoutHashbang<'a, 't> {
     #[inline]
     pub fn source_text(self) -> &'t &'a str {
         unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_SOURCE_TEXT) as *const &'a str) }
+    }
+
+    #[inline]
+    pub fn comments(self) -> &'t Vec<'a, Comment> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_COMMENTS) as *const Vec<'a, Comment>) }
     }
 
     #[inline]
@@ -2277,6 +2283,11 @@ impl<'a, 't> ProgramWithoutDirectives<'a, 't> {
     }
 
     #[inline]
+    pub fn comments(self) -> &'t Vec<'a, Comment> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_COMMENTS) as *const Vec<'a, Comment>) }
+    }
+
+    #[inline]
     pub fn hashbang(self) -> &'t Option<Hashbang<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_PROGRAM_HASHBANG) as *const Option<Hashbang<'a>>)
@@ -2319,6 +2330,11 @@ impl<'a, 't> ProgramWithoutBody<'a, 't> {
     #[inline]
     pub fn source_text(self) -> &'t &'a str {
         unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_SOURCE_TEXT) as *const &'a str) }
+    }
+
+    #[inline]
+    pub fn comments(self) -> &'t Vec<'a, Comment> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_COMMENTS) as *const Vec<'a, Comment>) }
     }
 
     #[inline]

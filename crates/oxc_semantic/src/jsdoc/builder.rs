@@ -1,6 +1,6 @@
 use rustc_hash::FxHashMap;
 
-use oxc_ast::{AstKind, Comment, Trivias};
+use oxc_ast::{ast::Comment, AstKind, Trivias};
 use oxc_span::{GetSpan, Span};
 
 use crate::jsdoc::JSDocFinder;
