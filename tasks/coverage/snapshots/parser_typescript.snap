@@ -3,7 +3,7 @@ commit: a709f989
 parser_typescript Summary:
 AST Parsed     : 6470/6479 (99.86%)
 Positive Passed: 6459/6479 (99.69%)
-Negative Passed: 1235/5715 (21.61%)
+Negative Passed: 1236/5715 (21.63%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration10.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration11.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration13.ts
@@ -3130,7 +3130,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressio
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeSatisfaction/typeSatisfactionWithDefaultExport.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeSatisfaction/typeSatisfaction_contextualTyping2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeSatisfaction/typeSatisfaction_errorLocations1.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeSatisfaction/typeSatisfaction_js.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeSatisfaction/typeSatisfaction_optionalMemberConformance.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeSatisfaction/typeSatisfaction_propNameConstraining.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeSatisfaction/typeSatisfaction_propertyNameFulfillment.ts
@@ -8491,11 +8490,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ Foo<number>(1);
    ╰────
 
-  × Expected `<` but found `EOF`
-   ╭─[typescript/tests/cases/compiler/jsFileCompilationTypeAssertions.ts:2:27]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tests/cases/compiler/jsFileCompilationTypeAssertions.ts:1:2]
  1 │ 0 as number;
+   ·  ▲
  2 │ var v = <string>undefined;
    ╰────
+  help: Try insert a semicolon here
 
   × Expected `,` but found `:`
    ╭─[typescript/tests/cases/compiler/jsFileCompilationTypeOfParameter.ts:1:13]
@@ -18678,6 +18679,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╭─[typescript/tests/cases/conformance/expressions/typeGuards/typePredicateOnVariableDeclaration02.ts:1:9]
  1 │ var y: z is number;
    ·         ▲
+   ╰────
+  help: Try insert a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tests/cases/conformance/expressions/typeSatisfaction/typeSatisfaction_js.ts:1:18]
+ 1 │ var v = undefined satisfies 1;
+   ·                  ▲
    ╰────
   help: Try insert a semicolon here
 

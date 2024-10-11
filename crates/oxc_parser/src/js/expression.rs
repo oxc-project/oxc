@@ -951,12 +951,13 @@ impl<'a> ParserImpl<'a> {
         // Pratt Parsing Algorithm
         // <https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html>
         let mut lhs = lhs;
+        let is_ts = self.ts_enabled();
         loop {
             // re-lex for `>=` `>>` `>>>`
             // This is need for jsx `<div>=</div>` case
             let kind = self.re_lex_right_angle();
 
-            let Some(left_precedence) = kind_to_precedence(kind) else { break };
+            let Some(left_precedence) = kind_to_precedence(kind, is_ts) else { break };
 
             let stop = if left_precedence.is_right_associative() {
                 left_precedence < min_precedence
