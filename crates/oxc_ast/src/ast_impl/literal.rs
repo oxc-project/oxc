@@ -3,16 +3,16 @@
 // Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
 #![allow(non_snake_case)]
 
+use oxc_allocator::CloneIn;
+use oxc_regular_expression::ast::Pattern;
+use oxc_span::{cmp::ContentEq, hash::ContentHash, Atom, Span};
+use oxc_syntax::number::NumberBase;
+use std::fmt::Debug;
 use std::{
     borrow::Cow,
     fmt,
     hash::{Hash, Hasher},
 };
-use std::fmt::Debug;
-use oxc_allocator::CloneIn;
-use oxc_regular_expression::ast::Pattern;
-use oxc_span::{cmp::ContentEq, hash::ContentHash, Atom, Span};
-use oxc_syntax::number::NumberBase;
 
 use crate::ast::*;
 
