@@ -46,7 +46,7 @@ impl<'a> Traverse<'a> for PeepholeRemoveDeadCode {
 
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(folded_expr) = match expr {
-            Expression::ConditionalExpression(e) => self.try_fold_conditional_expression(e, ctx),
+            Expression::ConditionalExpression(e) => Self::try_fold_conditional_expression(e, ctx),
             _ => None,
         } {
             *expr = folded_expr;
@@ -164,7 +164,6 @@ impl<'a> PeepholeRemoveDeadCode {
 
     /// Try folding conditional expression (?:) if the condition results of the condition is known.
     fn try_fold_conditional_expression(
-        &self,
         expr: &mut ConditionalExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {

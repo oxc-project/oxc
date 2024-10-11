@@ -45,17 +45,17 @@ impl<'a> Traverse<'a> for PeepholeFoldConstants {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(folded_expr) = match expr {
             Expression::CallExpression(e) => {
-                self.try_fold_useless_object_dot_define_properties_call(e, ctx)
+                Self::try_fold_useless_object_dot_define_properties_call(e, ctx)
             }
-            Expression::NewExpression(e) => self.try_fold_ctor_cal(e, ctx),
+            Expression::NewExpression(e) => Self::try_fold_ctor_cal(e, ctx),
             // TODO
             // return tryFoldSpread(subtree);
-            Expression::ArrayExpression(e) => self.try_flatten_array_expression(e, ctx),
-            Expression::ObjectExpression(e) => self.try_flatten_object_expression(e, ctx),
-            Expression::BinaryExpression(e) => self.try_fold_binary_expression(e, ctx),
+            Expression::ArrayExpression(e) => Self::try_flatten_array_expression(e, ctx),
+            Expression::ObjectExpression(e) => Self::try_flatten_object_expression(e, ctx),
+            Expression::BinaryExpression(e) => Self::try_fold_binary_expression(e, ctx),
             Expression::UnaryExpression(e) => self.try_fold_unary_expression(e, ctx),
             // TODO: return tryFoldGetProp(subtree);
-            Expression::LogicalExpression(e) => self.try_fold_logical_expression(e, ctx),
+            Expression::LogicalExpression(e) => Self::try_fold_logical_expression(e, ctx),
             // TODO: tryFoldGetElem
             // TODO: tryFoldAssign
             _ => None,
@@ -72,7 +72,6 @@ impl<'a> PeepholeFoldConstants {
     }
 
     fn try_fold_useless_object_dot_define_properties_call(
-        &mut self,
         _call_expr: &mut CallExpression<'a>,
         _ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
@@ -80,7 +79,6 @@ impl<'a> PeepholeFoldConstants {
     }
 
     fn try_fold_ctor_cal(
-        &mut self,
         _new_expr: &mut NewExpression<'a>,
         _ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
@@ -91,7 +89,6 @@ impl<'a> PeepholeFoldConstants {
     /// `typeof("bar") --> "string"`
     /// `typeof(6) --> "number"`
     fn try_fold_type_of(
-        &self,
         expr: &mut UnaryExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
@@ -124,7 +121,6 @@ impl<'a> PeepholeFoldConstants {
     // }
 
     fn try_flatten_array_expression(
-        &mut self,
         _new_expr: &mut ArrayExpression<'a>,
         _ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
@@ -132,7 +128,6 @@ impl<'a> PeepholeFoldConstants {
     }
 
     fn try_flatten_object_expression(
-        &mut self,
         _new_expr: &mut ObjectExpression<'a>,
         _ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
@@ -149,7 +144,7 @@ impl<'a> PeepholeFoldConstants {
         }
         match expr.operator {
             UnaryOperator::Void => self.try_reduce_void(expr, ctx),
-            UnaryOperator::Typeof => self.try_fold_type_of(expr, ctx),
+            UnaryOperator::Typeof => Self::try_fold_type_of(expr, ctx),
             // TODO: tryReduceOperandsForOp
             #[allow(clippy::float_cmp)]
             UnaryOperator::LogicalNot => {
@@ -273,13 +268,12 @@ impl<'a> PeepholeFoldConstants {
     }
 
     fn try_fold_logical_expression(
-        &self,
         logical_expr: &mut LogicalExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         match logical_expr.operator {
-            LogicalOperator::And | LogicalOperator::Or => self.try_fold_and_or(logical_expr, ctx),
-            LogicalOperator::Coalesce => self.try_fold_coalesce(logical_expr, ctx),
+            LogicalOperator::And | LogicalOperator::Or => Self::try_fold_and_or(logical_expr, ctx),
+            LogicalOperator::Coalesce => Self::try_fold_coalesce(logical_expr, ctx),
         }
     }
 
@@ -287,7 +281,6 @@ impl<'a> PeepholeFoldConstants {
     ///
     /// port from [closure-compiler](https://github.com/google/closure-compiler/blob/09094b551915a6487a980a783831cba58b5739d1/src/com/google/javascript/jscomp/PeepholeFoldConstants.java#L587)
     pub fn try_fold_and_or(
-        &self,
         logical_expr: &mut LogicalExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
@@ -365,7 +358,6 @@ impl<'a> PeepholeFoldConstants {
 
     /// Try to fold a nullish coalesce `foo ?? bar`.
     pub fn try_fold_coalesce(
-        &self,
         logical_expr: &mut LogicalExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
@@ -399,22 +391,21 @@ impl<'a> PeepholeFoldConstants {
     }
 
     fn try_fold_binary_expression(
-        &self,
         e: &mut BinaryExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         // TODO: tryReduceOperandsForOp
         match e.operator {
             op if op.is_bitshift() => {
-                self.try_fold_shift(e.span, e.operator, &e.left, &e.right, ctx)
+                Self::try_fold_shift(e.span, e.operator, &e.left, &e.right, ctx)
             }
-            BinaryOperator::Instanceof => self.try_fold_instanceof(e.span, &e.left, &e.right, ctx),
-            BinaryOperator::Addition => self.try_fold_addition(e.span, &e.left, &e.right, ctx),
+            BinaryOperator::Instanceof => Self::try_fold_instanceof(e.span, &e.left, &e.right, ctx),
+            BinaryOperator::Addition => Self::try_fold_addition(e.span, &e.left, &e.right, ctx),
             BinaryOperator::Subtraction
             | BinaryOperator::Division
             | BinaryOperator::Remainder
             | BinaryOperator::Multiplication
-            | BinaryOperator::Exponential => self.try_fold_arithmetic_op(e, ctx),
+            | BinaryOperator::Exponential => Self::try_fold_arithmetic_op(e, ctx),
             BinaryOperator::BitwiseAnd | BinaryOperator::BitwiseOR | BinaryOperator::BitwiseXOR => {
                 // TODO:
                 // self.try_fold_arithmetic_op(e.span, &e.left, &e.right, ctx)
@@ -425,14 +416,13 @@ impl<'a> PeepholeFoldConstants {
                 None
             }
             op if op.is_equality() || op.is_compare() => {
-                self.try_fold_comparison(e.span, e.operator, &e.left, &e.right, ctx)
+                Self::try_fold_comparison(e.span, e.operator, &e.left, &e.right, ctx)
             }
             _ => None,
         }
     }
 
     fn try_fold_addition<'b>(
-        &self,
         span: Span,
         left: &'b Expression<'a>,
         right: &'b Expression<'a>,
@@ -476,7 +466,6 @@ impl<'a> PeepholeFoldConstants {
     }
 
     fn try_fold_arithmetic_op(
-        &self,
         operation: &mut BinaryExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
@@ -504,7 +493,7 @@ impl<'a> PeepholeFoldConstants {
         let left: f64 = ctx.get_number_value(&operation.left)?.try_into().ok()?;
         let right: f64 = ctx.get_number_value(&operation.right)?.try_into().ok()?;
         if !left.is_finite() || !right.is_finite() {
-            return self.try_fold_infinity_arithmetic(left, operation.operator, right, ctx);
+            return Self::try_fold_infinity_arithmetic(left, operation.operator, right, ctx);
         }
         let result = match operation.operator {
             BinaryOperator::Addition => left + right,
@@ -550,7 +539,6 @@ impl<'a> PeepholeFoldConstants {
     }
 
     fn try_fold_infinity_arithmetic(
-        &self,
         left: f64,
         operator: BinaryOperator,
         right: f64,
@@ -596,7 +584,6 @@ impl<'a> PeepholeFoldConstants {
     }
 
     fn try_fold_instanceof<'b>(
-        &self,
         _span: Span,
         _left: &'b Expression<'a>,
         _right: &'b Expression<'a>,
@@ -606,14 +593,13 @@ impl<'a> PeepholeFoldConstants {
     }
 
     fn try_fold_comparison<'b>(
-        &self,
         span: Span,
         op: BinaryOperator,
         left: &'b Expression<'a>,
         right: &'b Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        let value = match self.evaluate_comparison(op, left, right, ctx) {
+        let value = match Self::evaluate_comparison(op, left, right, ctx) {
             Tri::True => true,
             Tri::False => false,
             Tri::Unknown => return None,
@@ -622,7 +608,6 @@ impl<'a> PeepholeFoldConstants {
     }
 
     fn evaluate_comparison<'b>(
-        &self,
         op: BinaryOperator,
         left: &'b Expression<'a>,
         right: &'b Expression<'a>,
@@ -924,7 +909,6 @@ impl<'a> PeepholeFoldConstants {
     /// ported from [closure-compiler](https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/PeepholeFoldConstants.java#L1114-L1162)
     #[allow(clippy::cast_possible_truncation)]
     fn try_fold_shift<'b>(
-        &self,
         span: Span,
         op: BinaryOperator,
         left: &'b Expression<'a>,
