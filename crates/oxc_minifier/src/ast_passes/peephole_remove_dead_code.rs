@@ -30,6 +30,7 @@ impl<'a> Traverse<'a> for PeepholeRemoveDeadCode {
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(new_stmt) = match stmt {
             Statement::IfStatement(if_stmt) => self.try_fold_if(if_stmt, ctx),
+            Statement::ForStatement(for_stmt) => self.try_fold_for(for_stmt, ctx),
             _ => None,
         } {
             *stmt = new_stmt;
@@ -162,6 +163,35 @@ impl<'a> PeepholeRemoveDeadCode {
         }
     }
 
+    fn try_fold_for(
+        &mut self,
+        for_stmt: &mut ForStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Statement<'a>> {
+        let test_boolean =
+            for_stmt.test.as_ref().map_or(Tri::Unknown, |test| ctx.get_boolean_value(test));
+        match test_boolean {
+            Tri::False => {
+                // Remove the entire `for` statement.
+                // Check vars in statement
+                let mut keep_var = KeepVar::new(ctx.ast);
+                keep_var.visit_statement(&for_stmt.body);
+                Some(
+                    keep_var
+                        .get_variable_declaration_statement()
+                        .unwrap_or_else(|| ctx.ast.statement_empty(SPAN)),
+                )
+            }
+            Tri::True => {
+                // Remove the test expression.
+                for_stmt.test = None;
+                self.changed = true;
+                None
+            }
+            Tri::Unknown => None,
+        }
+    }
+
     /// Try folding conditional expression (?:) if the condition results of the condition is known.
     fn try_fold_conditional_expression(
         expr: &mut ConditionalExpression<'a>,
@@ -228,5 +258,36 @@ mod test {
 
         fold_same("b: { var x = 1; } x = 2;");
         fold_same("a: b: { var x = 1; } x = 2;");
+    }
+
+    #[test]
+    fn test_fold_useless_for() {
+        fold("for(;false;) { foo() }", "");
+        fold("for(;void 0;) { foo() }", "");
+        fold("for(;undefined;) { foo() }", "");
+        fold("for(;true;) foo() ", "for(;;) foo() ");
+        fold_same("for(;;) foo()");
+        fold("for(;false;) { var a = 0; }", "var a");
+        fold("for(;false;) { const a = 0; }", "");
+        fold("for(;false;) { let a = 0; }", "");
+
+        // Make sure it plays nice with minimizing
+        fold("for(;false;) { foo(); continue }", "");
+
+        // fold("l1:for(;false;) {  }", "");
+
+        // TODO handle single block statement
+        fold_same("for(;a;) { foo(); }");
+    }
+
+    #[test]
+    fn test_minimize_loop_with_constant_condition_vanilla_for() {
+        fold("for(;true;) foo()", "for(;;) foo()");
+        fold("for(;0;) foo()", "");
+        fold("for(;0.0;) foo()", "");
+        fold("for(;NaN;) foo()", "");
+        fold("for(;null;) foo()", "");
+        fold("for(;undefined;) foo()", "");
+        fold("for(;'';) foo()", "");
     }
 }

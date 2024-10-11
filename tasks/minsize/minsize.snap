@@ -22,5 +22,5 @@ Original   | Minified   | esbuild    | Gzip       | esbuild
 
 6.69 MB    | 2.44 MB    | 2.31 MB    | 498.88 kB  | 488.28 kB  | antd.js   
 
-10.95 MB   | 3.59 MB    | 3.49 MB    | 913.92 kB  | 915.50 kB  | typescript.js
+10.95 MB   | 3.59 MB    | 3.49 MB    | 913.91 kB  | 915.50 kB  | typescript.js
 
