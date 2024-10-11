@@ -1,13 +1,13 @@
 use oxc_ast::{
     ast::{
         Argument, Expression, JSXAttribute, JSXAttributeItem, JSXAttributeName, JSXAttributeValue,
-        JSXElementName, ObjectPropertyKind,
+        JSXElementName, ObjectPropertyKind, TSType,
     },
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{CompactStr, GetSpan, Span};
 
 use crate::{
     ast_util::get_declaration_of_variable,
@@ -18,9 +18,7 @@ use crate::{
 };
 
 fn style_prop_object_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Style prop value must be an object")
-        .with_help("Make sure the 'style' prop value is an object")
-        .with_label(span)
+    OxcDiagnostic::warn("Style prop value must be an object").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -28,7 +26,7 @@ pub struct StylePropObject(Box<StylePropObjectConfig>);
 
 #[derive(Debug, Default, Clone)]
 pub struct StylePropObjectConfig {
-    allow: Vec<String>,
+    allow: Vec<CompactStr>,
 }
 
 impl std::ops::Deref for StylePropObject {
@@ -41,7 +39,10 @@ impl std::ops::Deref for StylePropObject {
 
 declare_oxc_lint!(
     /// ### What it does
-    /// Require that the value of the prop style be an object or a variable that is an object.
+    /// Require that the value of the prop `style` be an object or a variable that is an object.
+    ///
+    /// ### Why is this bad?
+    /// The `style` prop expects an object mapping from style properties to values when using JSX.
     ///
     /// ### Examples
     ///
@@ -76,13 +77,27 @@ declare_oxc_lint!(
     suspicious
 );
 
+fn is_invalid_type(ty: &TSType) -> bool {
+    println!("{:?}", ty);
+    match ty {
+        TSType::TSNumberKeyword(_) | TSType::TSStringKeyword(_) | TSType::TSBooleanKeyword(_) => {
+            true
+        }
+        TSType::TSUnionType(union) => union.types.iter().any(is_invalid_type),
+        TSType::TSIntersectionType(intersect) => intersect.types.iter().any(is_invalid_type),
+        _ => false,
+    }
+}
+
 fn is_invalid_expression(expression: Option<&Expression>, ctx: &LintContext<'_>) -> bool {
     let Some(expression) = expression else {
         return false;
     };
 
     match expression {
-        Expression::StringLiteral(_) | Expression::BooleanLiteral(_) => true,
+        Expression::StringLiteral(_)
+        | Expression::BooleanLiteral(_)
+        | Expression::TemplateLiteral(_) => true,
         Expression::Identifier(ident) => {
             let Some(node) = get_declaration_of_variable(ident, ctx) else {
                 return false;
@@ -90,6 +105,10 @@ fn is_invalid_expression(expression: Option<&Expression>, ctx: &LintContext<'_>)
 
             let AstKind::VariableDeclarator(var_decl) = node.kind() else {
                 return false;
+            };
+
+            if let Some(asd) = var_decl.id.type_annotation.as_ref() {
+                return is_invalid_type(&asd.type_annotation);
             };
 
             return is_invalid_expression(var_decl.init.as_ref(), ctx);
@@ -120,19 +139,21 @@ fn is_invalid_style_attribute(attribute: &JSXAttribute, ctx: &LintContext<'_>) -
 
 impl Rule for StylePropObject {
     fn from_configuration(value: serde_json::Value) -> Self {
-        Self(Box::new(StylePropObjectConfig {
-            allow: value
-                .get(0)
-                .and_then(|v| v.get("allow"))
-                .and_then(serde_json::Value::as_array)
-                .map(|v| {
-                    v.iter()
-                        .filter_map(serde_json::Value::as_str)
-                        .map(ToString::to_string)
-                        .collect()
-                })
-                .unwrap_or_default(),
-        }))
+        let mut allow = value
+            .get(0)
+            .and_then(|v| v.get("allow"))
+            .and_then(serde_json::Value::as_array)
+            .map(|v| {
+                v.iter()
+                    .filter_map(serde_json::Value::as_str)
+                    .map(CompactStr::from)
+                    .collect::<Vec<CompactStr>>()
+            })
+            .unwrap_or_default();
+
+        allow.sort();
+
+        Self(Box::new(StylePropObjectConfig { allow }))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -151,7 +172,11 @@ impl Rule for StylePropObject {
                 jsx_elem.opening_element.attributes.iter().for_each(|attribute| {
                     if let JSXAttributeItem::Attribute(attribute) = attribute {
                         if is_invalid_style_attribute(attribute, ctx) {
-                            ctx.diagnostic(style_prop_object_diagnostic(attribute.span));
+                            let Some(value) = &attribute.value else {
+                                return;
+                            };
+
+                            ctx.diagnostic(style_prop_object_diagnostic(value.span()));
                         }
                     }
                 });
@@ -175,7 +200,7 @@ impl Rule for StylePropObject {
                     _ => return,
                 };
 
-                if self.allow.iter().any(|s| s == name) {
+                if self.allow.binary_search(&name.into()).is_ok() {
                     return;
                 }
 
@@ -193,7 +218,7 @@ impl Rule for StylePropObject {
                             if prop_name == "style"
                                 && is_invalid_expression(Some(&obj_prop.value), ctx)
                             {
-                                ctx.diagnostic(style_prop_object_diagnostic(obj_prop.span));
+                                ctx.diagnostic(style_prop_object_diagnostic(obj_prop.value.span()));
                             }
                         }
                     }
@@ -213,7 +238,8 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        (r#"<div style={{ color: "red" }} />"#, None),
+        (r#"<div style={{ color: "blue" }} />"#, None),
+        (r#"<div style={{ color: "ASD" }} />"#, None),
         (r#"<Hello style={{ color: "red" }} />"#, None),
         (
             r#"
@@ -381,12 +407,35 @@ fn test() {
             r#"React.createElement(MyComponent, { style: "mySpecialStyle" })"#,
             Some(serde_json::json!([{ "allow": ["MyComponent"] }])),
         ),
+        (
+            r"
+            let styles: object | undefined
+            return <div style={styles} />
+          ",
+            None,
+        ),
+        (
+            r"
+            let styles: CSSProperties | undefined
+            return <div style={styles} />
+          ",
+            None,
+        ),
     ];
 
     let fail = vec![
         (r#"<div style="color: 'red'" />"#, None),
         (r#"<Hello style="color: 'green'" />"#, None),
         (r"<div style={true} />", None),
+        (
+            r#"
+              const styles = `color: "red"`;
+              function redDiv2() {
+                return <div style={styles} />;
+              }
+            "#,
+            None,
+        ),
         (
             r#"
               const styles = 'color: "red"';
@@ -421,6 +470,27 @@ fn test() {
         (
             r#"React.createElement(MyComponent2, { style: "mySpecialStyle" })"#,
             Some(serde_json::json!([{ "allow": ["MyOtherComponent"] }])),
+        ),
+        (
+            r"
+            let styles: string | undefined
+            return <div style={styles} />
+          ",
+            None,
+        ),
+        (
+            r"
+            let styles: number | undefined
+            return <div style={styles} />
+          ",
+            None,
+        ),
+        (
+            r"
+            let styles: boolean | undefined
+            return <div style={styles} />
+          ",
+            None,
         ),
     ];
 
