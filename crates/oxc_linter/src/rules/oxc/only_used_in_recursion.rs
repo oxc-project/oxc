@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{BindingIdentifier, BindingPatternKind, CallExpression, Expression},
+    ast::{BindingIdentifier, BindingPatternKind, CallExpression, Expression, FormalParameters},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -97,69 +97,85 @@ impl Rule for OnlyUsedInRecursion {
             };
 
             if is_argument_only_used_in_recursion(function_id, arg, arg_index, ctx) {
-                if arg_index == function_parameters.items.len() - 1
-                    && !ctx
-                        .semantic()
-                        .symbols()
-                        .get_flags(function_id.symbol_id.get().expect("`symbol_id` should be set"))
-                        .is_export()
-                {
-                    ctx.diagnostic_with_dangerous_fix(
-                        only_used_in_recursion_diagnostic(arg.span, arg.name.as_str()),
-                        |fixer| {
-                            let mut fix = fixer.new_fix_with_capacity(
-                                ctx.semantic()
-                                    .symbol_references(
-                                        arg.symbol_id.get().expect("`symbol_id` should be set"),
-                                    )
-                                    .count()
-                                    + 1,
-                            );
-                            fix.push(Fix::delete(arg.span()));
-
-                            for reference in ctx.semantic().symbol_references(
-                                arg.symbol_id.get().expect("`symbol_id` should be set"),
-                            ) {
-                                let node = ctx.nodes().get_node(reference.node_id());
-
-                                fix.push(Fix::delete(node.span()));
-                            }
-
-                            // search for references to the function and remove the argument
-                            for reference in ctx.semantic().symbol_references(
-                                function_id.symbol_id.get().expect("`symbol_id` should be set"),
-                            ) {
-                                let node = ctx.nodes().get_node(reference.node_id());
-
-                                if let Some(AstKind::CallExpression(call_expr)) =
-                                    ctx.nodes().parent_kind(node.id())
-                                {
-                                    // check if the number of arguments is the same
-                                    if call_expr.arguments.len() != function_parameters.items.len()
-                                        || function_span.contains_inclusive(call_expr.span)
-                                    {
-                                        continue;
-                                    }
-
-                                    // remove the argument
-                                    let arg_to_delete = call_expr.arguments[arg_index].span();
-
-                                    fix.push(Fix::delete(Span::new(
-                                        arg_to_delete.start,
-                                        skip_to_next_char(ctx.source_text(), arg_to_delete.end),
-                                    )));
-                                }
-                            }
-
-                            fix
-                        },
-                    );
-                } else {
-                    ctx.diagnostic(only_used_in_recursion_diagnostic(arg.span, arg.name.as_str()));
-                }
+                create_diagnostic(
+                    ctx,
+                    function_id,
+                    function_parameters,
+                    arg,
+                    arg_index,
+                    function_span,
+                );
             }
         }
     }
+}
+
+fn create_diagnostic(
+    ctx: &LintContext,
+    function_id: &BindingIdentifier,
+    function_parameters: &FormalParameters,
+    arg: &BindingIdentifier,
+    arg_index: usize,
+    function_span: Span,
+) {
+    let is_last_arg = arg_index == function_parameters.items.len() - 1;
+    let is_exported = ctx
+        .semantic()
+        .symbols()
+        .get_flags(function_id.symbol_id.get().expect("`symbol_id` should be set"))
+        .is_export();
+
+    let is_diagnostic_only = !is_last_arg || is_exported;
+
+    if is_diagnostic_only {
+        return ctx.diagnostic(only_used_in_recursion_diagnostic(arg.span, arg.name.as_str()));
+    }
+
+    ctx.diagnostic_with_dangerous_fix(
+        only_used_in_recursion_diagnostic(arg.span, arg.name.as_str()),
+        |fixer| {
+            let mut fix = fixer.new_fix_with_capacity(
+                ctx.semantic()
+                    .symbol_references(arg.symbol_id.get().expect("`symbol_id` should be set"))
+                    .count()
+                    + 1,
+            );
+            fix.push(Fix::delete(arg.span()));
+
+            for reference in ctx
+                .semantic()
+                .symbol_references(arg.symbol_id.get().expect("`symbol_id` should be set"))
+            {
+                let node = ctx.nodes().get_node(reference.node_id());
+                fix.push(Fix::delete(node.span()));
+            }
+
+            // search for references to the function and remove the argument
+            for reference in ctx
+                .semantic()
+                .symbol_references(function_id.symbol_id.get().expect("`symbol_id` should be set"))
+            {
+                let node = ctx.nodes().get_node(reference.node_id());
+
+                if let Some(AstKind::CallExpression(call_expr)) = ctx.nodes().parent_kind(node.id())
+                {
+                    if call_expr.arguments.len() != function_parameters.items.len()
+                        || function_span.contains_inclusive(call_expr.span)
+                    {
+                        continue;
+                    }
+
+                    let arg_to_delete = call_expr.arguments[arg_index].span();
+                    fix.push(Fix::delete(Span::new(
+                        arg_to_delete.start,
+                        skip_to_next_char(ctx.source_text(), arg_to_delete.end),
+                    )));
+                }
+            }
+
+            fix
+        },
+    );
 }
 
 fn is_argument_only_used_in_recursion<'a>(
