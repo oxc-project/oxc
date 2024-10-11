@@ -1042,10 +1042,10 @@ const _: () = {
     assert!(size_of::<TSCallSignatureDeclaration>() == 64usize);
     assert!(align_of::<TSCallSignatureDeclaration>() == 8usize);
     assert!(offset_of!(TSCallSignatureDeclaration, span) == 0usize);
-    assert!(offset_of!(TSCallSignatureDeclaration, this_param) == 8usize);
-    assert!(offset_of!(TSCallSignatureDeclaration, params) == 40usize);
-    assert!(offset_of!(TSCallSignatureDeclaration, return_type) == 48usize);
-    assert!(offset_of!(TSCallSignatureDeclaration, type_parameters) == 56usize);
+    assert!(offset_of!(TSCallSignatureDeclaration, type_parameters) == 8usize);
+    assert!(offset_of!(TSCallSignatureDeclaration, this_param) == 16usize);
+    assert!(offset_of!(TSCallSignatureDeclaration, params) == 48usize);
+    assert!(offset_of!(TSCallSignatureDeclaration, return_type) == 56usize);
 
     assert!(size_of::<TSMethodSignatureKind>() == 1usize);
     assert!(align_of::<TSMethodSignatureKind>() == 1usize);
@@ -1057,18 +1057,18 @@ const _: () = {
     assert!(offset_of!(TSMethodSignature, computed) == 24usize);
     assert!(offset_of!(TSMethodSignature, optional) == 25usize);
     assert!(offset_of!(TSMethodSignature, kind) == 26usize);
-    assert!(offset_of!(TSMethodSignature, this_param) == 32usize);
-    assert!(offset_of!(TSMethodSignature, params) == 40usize);
-    assert!(offset_of!(TSMethodSignature, return_type) == 48usize);
-    assert!(offset_of!(TSMethodSignature, type_parameters) == 56usize);
+    assert!(offset_of!(TSMethodSignature, type_parameters) == 32usize);
+    assert!(offset_of!(TSMethodSignature, this_param) == 40usize);
+    assert!(offset_of!(TSMethodSignature, params) == 48usize);
+    assert!(offset_of!(TSMethodSignature, return_type) == 56usize);
     assert!(offset_of!(TSMethodSignature, scope_id) == 64usize);
 
     assert!(size_of::<TSConstructSignatureDeclaration>() == 40usize);
     assert!(align_of::<TSConstructSignatureDeclaration>() == 8usize);
     assert!(offset_of!(TSConstructSignatureDeclaration, span) == 0usize);
-    assert!(offset_of!(TSConstructSignatureDeclaration, params) == 8usize);
-    assert!(offset_of!(TSConstructSignatureDeclaration, return_type) == 16usize);
-    assert!(offset_of!(TSConstructSignatureDeclaration, type_parameters) == 24usize);
+    assert!(offset_of!(TSConstructSignatureDeclaration, type_parameters) == 8usize);
+    assert!(offset_of!(TSConstructSignatureDeclaration, params) == 16usize);
+    assert!(offset_of!(TSConstructSignatureDeclaration, return_type) == 24usize);
     assert!(offset_of!(TSConstructSignatureDeclaration, scope_id) == 32usize);
 
     assert!(size_of::<TSIndexSignatureName>() == 32usize);
@@ -1163,18 +1163,18 @@ const _: () = {
     assert!(size_of::<TSFunctionType>() == 40usize);
     assert!(align_of::<TSFunctionType>() == 8usize);
     assert!(offset_of!(TSFunctionType, span) == 0usize);
-    assert!(offset_of!(TSFunctionType, this_param) == 8usize);
-    assert!(offset_of!(TSFunctionType, params) == 16usize);
-    assert!(offset_of!(TSFunctionType, return_type) == 24usize);
-    assert!(offset_of!(TSFunctionType, type_parameters) == 32usize);
+    assert!(offset_of!(TSFunctionType, type_parameters) == 8usize);
+    assert!(offset_of!(TSFunctionType, this_param) == 16usize);
+    assert!(offset_of!(TSFunctionType, params) == 24usize);
+    assert!(offset_of!(TSFunctionType, return_type) == 32usize);
 
     assert!(size_of::<TSConstructorType>() == 40usize);
     assert!(align_of::<TSConstructorType>() == 8usize);
     assert!(offset_of!(TSConstructorType, span) == 0usize);
     assert!(offset_of!(TSConstructorType, r#abstract) == 8usize);
-    assert!(offset_of!(TSConstructorType, params) == 16usize);
-    assert!(offset_of!(TSConstructorType, return_type) == 24usize);
-    assert!(offset_of!(TSConstructorType, type_parameters) == 32usize);
+    assert!(offset_of!(TSConstructorType, type_parameters) == 16usize);
+    assert!(offset_of!(TSConstructorType, params) == 24usize);
+    assert!(offset_of!(TSConstructorType, return_type) == 32usize);
 
     assert!(size_of::<TSMappedType>() == 56usize);
     assert!(align_of::<TSMappedType>() == 8usize);
@@ -2601,10 +2601,10 @@ const _: () = {
     assert!(size_of::<TSCallSignatureDeclaration>() == 44usize);
     assert!(align_of::<TSCallSignatureDeclaration>() == 4usize);
     assert!(offset_of!(TSCallSignatureDeclaration, span) == 0usize);
-    assert!(offset_of!(TSCallSignatureDeclaration, this_param) == 8usize);
-    assert!(offset_of!(TSCallSignatureDeclaration, params) == 32usize);
-    assert!(offset_of!(TSCallSignatureDeclaration, return_type) == 36usize);
-    assert!(offset_of!(TSCallSignatureDeclaration, type_parameters) == 40usize);
+    assert!(offset_of!(TSCallSignatureDeclaration, type_parameters) == 8usize);
+    assert!(offset_of!(TSCallSignatureDeclaration, this_param) == 12usize);
+    assert!(offset_of!(TSCallSignatureDeclaration, params) == 36usize);
+    assert!(offset_of!(TSCallSignatureDeclaration, return_type) == 40usize);
 
     assert!(size_of::<TSMethodSignatureKind>() == 1usize);
     assert!(align_of::<TSMethodSignatureKind>() == 1usize);
@@ -2616,18 +2616,18 @@ const _: () = {
     assert!(offset_of!(TSMethodSignature, computed) == 16usize);
     assert!(offset_of!(TSMethodSignature, optional) == 17usize);
     assert!(offset_of!(TSMethodSignature, kind) == 18usize);
-    assert!(offset_of!(TSMethodSignature, this_param) == 20usize);
-    assert!(offset_of!(TSMethodSignature, params) == 24usize);
-    assert!(offset_of!(TSMethodSignature, return_type) == 28usize);
-    assert!(offset_of!(TSMethodSignature, type_parameters) == 32usize);
+    assert!(offset_of!(TSMethodSignature, type_parameters) == 20usize);
+    assert!(offset_of!(TSMethodSignature, this_param) == 24usize);
+    assert!(offset_of!(TSMethodSignature, params) == 28usize);
+    assert!(offset_of!(TSMethodSignature, return_type) == 32usize);
     assert!(offset_of!(TSMethodSignature, scope_id) == 36usize);
 
     assert!(size_of::<TSConstructSignatureDeclaration>() == 24usize);
     assert!(align_of::<TSConstructSignatureDeclaration>() == 4usize);
     assert!(offset_of!(TSConstructSignatureDeclaration, span) == 0usize);
-    assert!(offset_of!(TSConstructSignatureDeclaration, params) == 8usize);
-    assert!(offset_of!(TSConstructSignatureDeclaration, return_type) == 12usize);
-    assert!(offset_of!(TSConstructSignatureDeclaration, type_parameters) == 16usize);
+    assert!(offset_of!(TSConstructSignatureDeclaration, type_parameters) == 8usize);
+    assert!(offset_of!(TSConstructSignatureDeclaration, params) == 12usize);
+    assert!(offset_of!(TSConstructSignatureDeclaration, return_type) == 16usize);
     assert!(offset_of!(TSConstructSignatureDeclaration, scope_id) == 20usize);
 
     assert!(size_of::<TSIndexSignatureName>() == 20usize);
@@ -2722,18 +2722,18 @@ const _: () = {
     assert!(size_of::<TSFunctionType>() == 24usize);
     assert!(align_of::<TSFunctionType>() == 4usize);
     assert!(offset_of!(TSFunctionType, span) == 0usize);
-    assert!(offset_of!(TSFunctionType, this_param) == 8usize);
-    assert!(offset_of!(TSFunctionType, params) == 12usize);
-    assert!(offset_of!(TSFunctionType, return_type) == 16usize);
-    assert!(offset_of!(TSFunctionType, type_parameters) == 20usize);
+    assert!(offset_of!(TSFunctionType, type_parameters) == 8usize);
+    assert!(offset_of!(TSFunctionType, this_param) == 12usize);
+    assert!(offset_of!(TSFunctionType, params) == 16usize);
+    assert!(offset_of!(TSFunctionType, return_type) == 20usize);
 
     assert!(size_of::<TSConstructorType>() == 24usize);
     assert!(align_of::<TSConstructorType>() == 4usize);
     assert!(offset_of!(TSConstructorType, span) == 0usize);
     assert!(offset_of!(TSConstructorType, r#abstract) == 8usize);
-    assert!(offset_of!(TSConstructorType, params) == 12usize);
-    assert!(offset_of!(TSConstructorType, return_type) == 16usize);
-    assert!(offset_of!(TSConstructorType, type_parameters) == 20usize);
+    assert!(offset_of!(TSConstructorType, type_parameters) == 12usize);
+    assert!(offset_of!(TSConstructorType, params) == 16usize);
+    assert!(offset_of!(TSConstructorType, return_type) == 20usize);
 
     assert!(size_of::<TSMappedType>() == 36usize);
     assert!(align_of::<TSMappedType>() == 4usize);

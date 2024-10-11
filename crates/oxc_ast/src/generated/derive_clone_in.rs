@@ -3383,10 +3383,10 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for TSCallSignatureDeclaration<
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         TSCallSignatureDeclaration {
             span: CloneIn::clone_in(&self.span, allocator),
+            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
             this_param: CloneIn::clone_in(&self.this_param, allocator),
             params: CloneIn::clone_in(&self.params, allocator),
             return_type: CloneIn::clone_in(&self.return_type, allocator),
-            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
         }
     }
 }
@@ -3411,10 +3411,10 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for TSMethodSignature<'old_allo
             computed: CloneIn::clone_in(&self.computed, allocator),
             optional: CloneIn::clone_in(&self.optional, allocator),
             kind: CloneIn::clone_in(&self.kind, allocator),
+            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
             this_param: CloneIn::clone_in(&self.this_param, allocator),
             params: CloneIn::clone_in(&self.params, allocator),
             return_type: CloneIn::clone_in(&self.return_type, allocator),
-            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
             scope_id: Default::default(),
         }
     }
@@ -3425,9 +3425,9 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for TSConstructSignatureDeclara
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         TSConstructSignatureDeclaration {
             span: CloneIn::clone_in(&self.span, allocator),
+            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
             params: CloneIn::clone_in(&self.params, allocator),
             return_type: CloneIn::clone_in(&self.return_type, allocator),
-            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
             scope_id: Default::default(),
         }
     }
@@ -3646,10 +3646,10 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for TSFunctionType<'old_alloc> 
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         TSFunctionType {
             span: CloneIn::clone_in(&self.span, allocator),
+            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
             this_param: CloneIn::clone_in(&self.this_param, allocator),
             params: CloneIn::clone_in(&self.params, allocator),
             return_type: CloneIn::clone_in(&self.return_type, allocator),
-            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
         }
     }
 }
@@ -3660,9 +3660,9 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for TSConstructorType<'old_allo
         TSConstructorType {
             span: CloneIn::clone_in(&self.span, allocator),
             r#abstract: CloneIn::clone_in(&self.r#abstract, allocator),
+            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
             params: CloneIn::clone_in(&self.params, allocator),
             return_type: CloneIn::clone_in(&self.return_type, allocator),
-            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
         }
     }
 }
