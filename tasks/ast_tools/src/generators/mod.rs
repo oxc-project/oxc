@@ -7,11 +7,13 @@ use crate::codegen::LateCtx;
 mod assert_layouts;
 mod ast_builder;
 mod ast_kind;
+mod typescript;
 mod visit;
 
 pub use assert_layouts::AssertLayouts;
 pub use ast_builder::AstBuilderGenerator;
 pub use ast_kind::AstKindGenerator;
+pub use typescript::TypescriptGenerator;
 pub use visit::{VisitGenerator, VisitMutGenerator};
 
 /// Inserts a newline in the `TokenStream`.
@@ -27,7 +29,10 @@ pub trait Generator {
 }
 
 #[derive(Debug, Clone)]
-pub struct GeneratorOutput(/* output path */ pub PathBuf, pub TokenStream);
+pub enum GeneratorOutput {
+    Rust(/* output path */ PathBuf, TokenStream),
+    Raw(/* output path */ PathBuf, String),
+}
 
 macro_rules! define_generator {
     ($vis:vis struct $ident:ident $($lifetime:lifetime)? $($rest:tt)*) => {

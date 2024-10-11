@@ -170,14 +170,4 @@ fn serialize_enum(def: &EnumDef) -> TokenStream {
             }
         }
     }
-    // if def.markers.estree.untagged {
-    // 	let match_branches = def.variants.iter().map(|var| {
-    // 		let var_ident= var.ident();
-    // 		var.fields
-    // 		quote! {
-    // 			#ident::#var_ident()
-    // 		}
-    // 	})
-    // }
-    // def.markers.estree.
 }
