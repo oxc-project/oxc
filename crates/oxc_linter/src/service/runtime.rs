@@ -28,12 +28,12 @@ use super::{
 };
 
 pub struct Runtime {
-    pub(super) cwd: Box<Path>,
+    cwd: Box<Path>,
     /// All paths to lint
-    pub(super) paths: FxHashSet<Box<Path>>,
+    paths: FxHashSet<Box<Path>>,
     pub(super) linter: Linter,
-    pub(super) resolver: Option<Resolver>,
-    pub(super) modules: ModuleCache,
+    resolver: Option<Resolver>,
+    modules: ModuleCache,
 }
 
 impl Runtime {
@@ -300,7 +300,16 @@ impl Runtime {
 
         self.modules.init_cache_state(path)
     }
+
     fn ignore_path(&self, path: &Path) {
         self.resolver.is_some().then(|| self.modules.ignore_path(path));
+    }
+
+    pub(super) fn number_of_dependencies(&self) -> usize {
+        self.modules.len() - self.paths.len()
+    }
+
+    pub(super) fn iter_paths(&self) -> impl Iterator<Item = &Box<Path>> + '_ {
+        self.paths.iter()
     }
 }
