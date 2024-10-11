@@ -3,6 +3,7 @@ use oxc_ast::{ast::*, Visit};
 use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
+use crate::node_util::IsLiteralValue;
 use crate::{keep_var::KeepVar, node_util::NodeUtil, tri::Tri, CompressorPass};
 
 /// Remove Dead Code from the AST.
@@ -31,6 +32,9 @@ impl<'a> Traverse<'a> for PeepholeRemoveDeadCode {
         if let Some(new_stmt) = match stmt {
             Statement::IfStatement(if_stmt) => self.try_fold_if(if_stmt, ctx),
             Statement::ForStatement(for_stmt) => self.try_fold_for(for_stmt, ctx),
+            Statement::ExpressionStatement(expr_stmt) => {
+                Self::try_fold_expression_stmt(expr_stmt, ctx)
+            }
             _ => None,
         } {
             *stmt = new_stmt;
@@ -192,6 +196,27 @@ impl<'a> PeepholeRemoveDeadCode {
         }
     }
 
+    fn try_fold_expression_stmt(
+        stmt: &mut ExpressionStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Statement<'a>> {
+        // We need to check if it is in arrow function with `expression: true`.
+        // This is the only scenario where we can't remove it even if `ExpressionStatement`.
+        // TODO find a better way to handle this.
+
+        stmt.expression
+            .is_literal_value(false)
+            .then(|| {
+                if let Ancestor::ArrowFunctionExpressionBody(body) = ctx.ancestry.ancestor(1) {
+                    if *body.expression() {
+                        return None;
+                    }
+                }
+                Some(ctx.ast.statement_empty(SPAN))
+            })
+            .unwrap_or(None)
+    }
+
     /// Try folding conditional expression (?:) if the condition results of the condition is known.
     fn try_fold_conditional_expression(
         expr: &mut ConditionalExpression<'a>,
@@ -289,5 +314,34 @@ mod test {
         fold("for(;null;) foo()", "");
         fold("for(;undefined;) foo()", "");
         fold("for(;'';) foo()", "");
+    }
+
+    #[test]
+    fn test_object_literal() {
+        fold("({})", "");
+        fold("({a:1})", "");
+        // fold("({a:foo()})", "foo()");
+        // fold("({'a':foo()})", "foo()");
+        // Object-spread may trigger getters.
+        fold_same("({...a})");
+        fold_same("({...foo()})");
+    }
+
+    #[test]
+    fn test_array_literal() {
+        fold("([])", "");
+        fold("([1])", "");
+        // fold("([a])", "a");
+        // fold("([foo()])", "foo()");
+    }
+
+    #[test]
+    #[ignore]
+    fn test_array_literal_containing_spread() {
+        fold_same("([...c])");
+        fold("([4, ...c, a])", "([...c])");
+        fold("([foo(), ...c, bar()])", "(foo(), [...c], bar())");
+        fold("([...a, b, ...c])", "([...a], [...c])");
+        fold_same("([...b, ...c])"); // It would also be fine if the spreads were split apart.
     }
 }

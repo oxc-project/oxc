@@ -66,7 +66,8 @@ impl<'a, 'b> IsLiteralValue<'a, 'b> for ObjectProperty<'a> {
 impl<'a, 'b> IsLiteralValue<'a, 'b> for PropertyKey<'a> {
     fn is_literal_value(&self, include_functions: bool) -> bool {
         match self {
-            Self::StaticIdentifier(_) | Self::PrivateIdentifier(_) => false,
+            Self::StaticIdentifier(_) => true,
+            Self::PrivateIdentifier(_) => false,
             match_expression!(Self) => self.to_expression().is_literal_value(include_functions),
         }
     }

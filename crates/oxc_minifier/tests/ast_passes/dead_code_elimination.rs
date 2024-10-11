@@ -112,7 +112,7 @@ fn dce_conditional_expression() {
 
 #[test]
 fn dce_logical_expression() {
-    test("false && bar()", "false");
+    test("false && bar()", "");
     test("true && bar()", "bar()");
 
     test("const foo = false && bar()", "const foo = false");
