@@ -38,8 +38,6 @@ fn main() -> std::io::Result<()> {
         .build_module_record(path, program)
         // Enable additional syntax checks not performed by the parser
         .with_check_syntax_error(true)
-        // Inform Semantic about comments found while parsing
-        .with_trivias(parser_ret.trivias)
         .build(program);
 
     if !semantic.errors.is_empty() {

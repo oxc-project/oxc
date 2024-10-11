@@ -33,19 +33,14 @@ pub fn isolated_declaration(
 
     let transformed_ret = IsolatedDeclarations::new(
         &allocator,
-        &source_text,
-        &ret.trivias,
         oxc::isolated_declarations::IsolatedDeclarationsOptions {
             strip_internal: options.strip_internal.unwrap_or(false),
         },
     )
     .build(&ret.program);
 
-    let mut codegen = CodeGenerator::new().enable_comment(
-        &source_text,
-        ret.trivias.clone(),
-        CommentOptions { preserve_annotate_comments: false },
-    );
+    let mut codegen = CodeGenerator::new()
+        .enable_comment(&ret.program, CommentOptions { preserve_annotate_comments: false });
     if options.sourcemap == Some(true) {
         codegen = codegen.enable_source_map(&filename, &source_text);
     }

@@ -1,4 +1,4 @@
-use oxc_ast::Trivias;
+use oxc_ast::Comment;
 use oxc_span::Span;
 use rust_lapper::{Interval, Lapper};
 use rustc_hash::FxHashMap;
@@ -48,8 +48,6 @@ impl<'a> DisableDirectives<'a> {
 }
 
 pub struct DisableDirectivesBuilder<'a> {
-    source_text: &'a str,
-    trivias: Trivias,
     /// All the disabled rules with their corresponding covering spans
     intervals: Lapper<u32, DisabledRule<'a>>,
     /// Start of `eslint-disable` or `oxlint-disable`
@@ -63,10 +61,8 @@ pub struct DisableDirectivesBuilder<'a> {
 }
 
 impl<'a> DisableDirectivesBuilder<'a> {
-    pub fn new(source_text: &'a str, trivias: Trivias) -> Self {
+    pub fn new() -> Self {
         Self {
-            source_text,
-            trivias,
             intervals: Lapper::new(vec![]),
             disable_all_start: None,
             disable_start_map: FxHashMap::default(),
@@ -75,8 +71,8 @@ impl<'a> DisableDirectivesBuilder<'a> {
         }
     }
 
-    pub fn build(mut self) -> DisableDirectives<'a> {
-        self.build_impl();
+    pub fn build(mut self, source_text: &'a str, comments: &[Comment]) -> DisableDirectives<'a> {
+        self.build_impl(source_text, comments);
         DisableDirectives {
             intervals: self.intervals,
             disable_all_comments: self.disable_all_comments.into_boxed_slice(),
@@ -89,13 +85,13 @@ impl<'a> DisableDirectivesBuilder<'a> {
     }
 
     #[allow(clippy::cast_possible_truncation)] // for `as u32`
-    fn build_impl(&mut self) {
-        let source_len = self.source_text.len() as u32;
+    fn build_impl(&mut self, source_text: &'a str, comments: &[Comment]) {
+        let source_len = source_text.len() as u32;
         // This algorithm iterates through the comments and builds all intervals
         // for matching disable and enable pairs.
         // Wrongly ordered matching pairs are not taken into consideration.
-        for comment in self.trivias.clone().comments() {
-            let text = comment.span.source_text(self.source_text);
+        for comment in comments {
+            let text = comment.span.source_text(source_text);
             let text = text.trim_start();
 
             if let Some(text) =
@@ -112,7 +108,7 @@ impl<'a> DisableDirectivesBuilder<'a> {
                 // `eslint-disable-next-line`
                 else if let Some(text) = text.strip_prefix("-next-line") {
                     // Get the span up to the next new line
-                    let stop = self.source_text[comment.span.end as usize..]
+                    let stop = source_text[comment.span.end as usize..]
                         .lines()
                         .take(2)
                         .fold(comment.span.end, |acc, line| acc + line.len() as u32);
@@ -138,7 +134,7 @@ impl<'a> DisableDirectivesBuilder<'a> {
                 // `eslint-disable-line`
                 else if let Some(text) = text.strip_prefix("-line") {
                     // Get the span between the preceding newline to this comment
-                    let start = self.source_text[..=comment.span.start as usize]
+                    let start = source_text[..=comment.span.start as usize]
                         .lines()
                         .next_back()
                         .map_or(0, |line| comment.span.start - (line.len() as u32 - 1));
@@ -369,7 +365,7 @@ fn test() {
             debugger;
 
             debugger; /*{prefix}-disable-line*/
-            
+
             debugger; //{prefix}-disable-line no-debugger
 
             //{prefix}-disable-next-line no-debugger
@@ -393,7 +389,7 @@ fn test() {
             debugger;
 
             debugger; /*    {prefix}-disable-line       */
-            
+
             debugger; //            {prefix}-disable-line no-debugger
 
             //          {prefix}-disable-next-line no-debugger
@@ -597,15 +593,15 @@ semi*/
             "
             ),
             format!(
-                "debugger; //   \t\t {prefix}-disable-line   \t\t  no-alert,   \t\t quotes,   \t\t semi   \t\t 
+                "debugger; //   \t\t {prefix}-disable-line   \t\t  no-alert,   \t\t quotes,   \t\t semi   \t\t
             //   \t\t {prefix}-disable-next-line   \t\t  no-alert,   \t\t quotes,   \t\t semi
             debugger;
             debugger; /*   \t\t {prefix}-disable-line    \t\t no-alert,   \t\t quotes,   \t\t semi   \t\t  */
             /*   \t\t {prefix}-disable-next-line   \t\t  no-alert,   \t\t quotes,   \t\t semi */
             debugger;
             /*  \t\t {prefix}-disable-next-line
-  \t\t no-alert,  \t\t 
-  \t\t quotes,  \t\t 
+  \t\t no-alert,  \t\t
+  \t\t quotes,  \t\t
   \t\t semi  \t\t */
             debugger;
         "

@@ -29,7 +29,6 @@ fn bench_linter(criterion: &mut Criterion) {
                 let ret = Parser::new(&allocator, source_text, source_type).parse();
                 let program = allocator.alloc(ret.program);
                 let semantic_ret = SemanticBuilder::new()
-                    .with_trivias(ret.trivias)
                     .with_build_jsdoc(true)
                     .with_cfg(true)
                     .build_module_record(Path::new(""), program)

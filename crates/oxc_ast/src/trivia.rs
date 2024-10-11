@@ -2,63 +2,22 @@
 
 use std::{
     iter::FusedIterator,
-    ops::{Bound, Deref, RangeBounds},
-    sync::Arc,
+    ops::{Bound, RangeBounds},
 };
 
 use oxc_span::Span;
 
 use crate::ast::comment::*;
 
-/// Sorted set of unique trivia comments, in ascending order by starting position.
-pub type SortedComments = Box<[Comment]>;
-
-#[derive(Debug, Clone, Default)]
-pub struct Trivias(Arc<TriviasImpl>);
-
-#[derive(Debug, Default)]
-pub struct TriviasImpl {
-    /// Unique comments, ordered by increasing span-start.
-    comments: SortedComments,
-
-    irregular_whitespaces: Box<[Span]>,
+pub fn comments_range<R>(comments: &[Comment], range: R) -> CommentsRange<'_>
+where
+    R: RangeBounds<u32>,
+{
+    CommentsRange::new(comments, range.start_bound().cloned(), range.end_bound().cloned())
 }
 
-impl Deref for Trivias {
-    type Target = TriviasImpl;
-
-    #[inline]
-    fn deref(&self) -> &Self::Target {
-        self.0.as_ref()
-    }
-}
-
-impl Trivias {
-    pub fn new(comments: SortedComments, irregular_whitespaces: Vec<Span>) -> Trivias {
-        Self(Arc::new(TriviasImpl {
-            comments,
-            irregular_whitespaces: irregular_whitespaces.into_boxed_slice(),
-        }))
-    }
-
-    pub fn comments(&self) -> impl Iterator<Item = &Comment> {
-        self.comments.iter()
-    }
-
-    pub fn comments_range<R>(&self, range: R) -> CommentsRange<'_>
-    where
-        R: RangeBounds<u32>,
-    {
-        CommentsRange::new(&self.comments, range.start_bound().cloned(), range.end_bound().cloned())
-    }
-
-    pub fn has_comments_between(&self, span: Span) -> bool {
-        self.comments_range(span.start..span.end).count() > 0
-    }
-
-    pub fn irregular_whitespaces(&self) -> &[Span] {
-        &self.irregular_whitespaces
-    }
+pub fn has_comments_between(comments: &[Comment], span: Span) -> bool {
+    comments_range(comments, span.start..span.end).count() > 0
 }
 
 /// Double-ended iterator over a range of comments, by starting position.
@@ -141,7 +100,7 @@ mod test {
 
     #[test]
     fn test_comments_range() {
-        let comments: SortedComments = vec![
+        let comments = vec![
             Comment::new(0, 4, CommentKind::Line),
             Comment::new(5, 9, CommentKind::Line),
             Comment::new(10, 13, CommentKind::Line),
@@ -150,10 +109,9 @@ mod test {
         ]
         .into_boxed_slice();
         let full_len = comments.len();
-        let trivias = Trivias::new(comments, vec![]);
-        assert_eq!(trivias.comments_range(..).count(), full_len);
-        assert_eq!(trivias.comments_range(1..).count(), full_len.saturating_sub(1));
-        assert_eq!(trivias.comments_range(..18).count(), full_len.saturating_sub(1));
-        assert_eq!(trivias.comments_range(..=18).count(), full_len);
+        assert_eq!(comments_range(&comments, ..).count(), full_len);
+        assert_eq!(comments_range(&comments, 1..).count(), full_len.saturating_sub(1));
+        assert_eq!(comments_range(&comments, ..18).count(), full_len.saturating_sub(1));
+        assert_eq!(comments_range(&comments, ..=18).count(), full_len);
     }
 }

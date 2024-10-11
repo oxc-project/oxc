@@ -2,7 +2,7 @@ use daachorse::DoubleArrayAhoCorasick;
 use once_cell::sync::Lazy;
 use rustc_hash::FxHashMap;
 
-use oxc_ast::{Comment, CommentKind, Trivias};
+use oxc_ast::{Comment, CommentKind};
 use oxc_syntax::identifier::is_line_terminator;
 
 use crate::Codegen;
@@ -20,9 +20,9 @@ impl<'a> Codegen<'a> {
         self.comment_options.preserve_annotate_comments && !self.options.minify
     }
 
-    pub(crate) fn build_comments(&mut self, trivias: &Trivias) {
-        for comment in trivias.comments().copied() {
-            self.comments.entry(comment.attached_to).or_default().push(comment);
+    pub(crate) fn build_comments(&mut self, comments: &[Comment]) {
+        for comment in comments {
+            self.comments.entry(comment.attached_to).or_default().push(*comment);
         }
     }
 

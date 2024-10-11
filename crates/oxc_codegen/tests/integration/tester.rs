@@ -8,11 +8,7 @@ pub fn test(source_text: &str, expected: &str) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let result = CodeGenerator::new()
-        .enable_comment(
-            source_text,
-            ret.trivias,
-            CommentOptions { preserve_annotate_comments: true },
-        )
+        .enable_comment(&ret.program, CommentOptions { preserve_annotate_comments: true })
         .build(&ret.program)
         .code;
     assert_eq!(result, expected, "\nfor source: {source_text:?}");

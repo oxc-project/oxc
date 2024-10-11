@@ -9,7 +9,7 @@ use std::{
 use rustc_hash::FxHashMap;
 
 #[allow(clippy::wildcard_imports)]
-use oxc_ast::{ast::*, AstKind, Trivias, Visit};
+use oxc_ast::{ast::*, AstKind, Visit};
 use oxc_cfg::{
     ControlFlowGraphBuilder, CtxCursor, CtxFlags, EdgeType, ErrorEdgeKind,
     IterationInstructionKind, ReturnInstructionKind,
@@ -65,8 +65,6 @@ pub struct SemanticBuilder<'a> {
 
     /// source type of the parsed program
     pub(crate) source_type: SourceType,
-
-    trivias: Trivias,
 
     /// Semantic early errors such as redeclaration errors.
     errors: RefCell<Vec<OxcDiagnostic>>,
@@ -130,11 +128,9 @@ impl<'a> SemanticBuilder<'a> {
         let scope = ScopeTree::default();
         let current_scope_id = scope.root_scope_id();
 
-        let trivias = Trivias::default();
         Self {
             source_text: "",
             source_type: SourceType::default(),
-            trivias: trivias.clone(),
             errors: RefCell::new(vec![]),
             current_node_id: NodeId::new(0),
             current_node_flags: NodeFlags::empty(),
@@ -161,12 +157,6 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
-    #[must_use]
-    pub fn with_trivias(mut self, trivias: Trivias) -> Self {
-        self.trivias = trivias;
-        self
-    }
-
     /// Enable/disable additional syntax checks.
     ///
     /// Set this to `true` to enable additional syntax checks. Without these,
@@ -181,7 +171,6 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     /// Enable/disable JSDoc parsing.
-    /// `with_trivias` must be called prior to this call.
     #[must_use]
     pub fn with_build_jsdoc(mut self, yes: bool) -> Self {
         self.build_jsdoc = yes;
@@ -260,7 +249,7 @@ impl<'a> SemanticBuilder<'a> {
         self.source_text = program.source_text;
         self.source_type = program.source_type;
         if self.build_jsdoc {
-            self.jsdoc = JSDocBuilder::new(self.source_text, &self.trivias);
+            self.jsdoc = JSDocBuilder::new(self.source_text, &program.comments);
         }
         if self.source_type.is_typescript_definition() {
             let scope_id = self.scope.add_scope(None, NodeId::DUMMY, ScopeFlags::Top);
@@ -311,6 +300,8 @@ impl<'a> SemanticBuilder<'a> {
             }
         }
 
+        let comments = self.alloc(&program.comments);
+
         debug_assert_eq!(self.unresolved_references.scope_depth(), 1);
         self.scope.root_unresolved_references = self
             .unresolved_references
@@ -324,7 +315,8 @@ impl<'a> SemanticBuilder<'a> {
         let semantic = Semantic {
             source_text: self.source_text,
             source_type: self.source_type,
-            trivias: self.trivias,
+            comments,
+            irregular_whitespaces: [].into(),
             nodes: self.nodes,
             scopes: self.scope,
             symbols: self.symbols,

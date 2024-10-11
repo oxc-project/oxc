@@ -32,19 +32,11 @@ fn main() {
     println!("Original:\n");
     println!("{source_text}\n");
 
-    let id_ret = IsolatedDeclarations::new(
-        &allocator,
-        &source_text,
-        &ret.trivias,
-        IsolatedDeclarationsOptions { strip_internal: true },
-    )
-    .build(&ret.program);
+    let id_ret =
+        IsolatedDeclarations::new(&allocator, IsolatedDeclarationsOptions { strip_internal: true })
+            .build(&ret.program);
     let printed = CodeGenerator::new()
-        .enable_comment(
-            &source_text,
-            ret.trivias,
-            CommentOptions { preserve_annotate_comments: false },
-        )
+        .enable_comment(&ret.program, CommentOptions { preserve_annotate_comments: false })
         .build(&id_ret.program)
         .code;
 

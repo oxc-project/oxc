@@ -13,19 +13,11 @@ fn transform(path: &Path, source_text: &str) -> String {
     let source_type = SourceType::from_path(path).unwrap();
     let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
 
-    let id_ret = IsolatedDeclarations::new(
-        &allocator,
-        source_text,
-        &parser_ret.trivias,
-        IsolatedDeclarationsOptions { strip_internal: true },
-    )
-    .build(&parser_ret.program);
+    let id_ret =
+        IsolatedDeclarations::new(&allocator, IsolatedDeclarationsOptions { strip_internal: true })
+            .build(&parser_ret.program);
     let code = CodeGenerator::new()
-        .enable_comment(
-            source_text,
-            parser_ret.trivias,
-            CommentOptions { preserve_annotate_comments: false },
-        )
+        .enable_comment(&parser_ret.program, CommentOptions { preserve_annotate_comments: false })
         .build(&id_ret.program)
         .code;
 

@@ -28,7 +28,6 @@ fn main() -> std::io::Result<()> {
     let output = Prettier::new(
         &allocator,
         &source_text,
-        ret.trivias,
         PrettierOptions { semi, trailing_comma: TrailingComma::All, ..PrettierOptions::default() },
     )
     .build(&ret.program);

@@ -202,18 +202,13 @@ impl Runtime {
             return ret.errors.into_iter().map(|err| Message::new(err, None)).collect();
         };
 
-        let program = allocator.alloc(ret.program);
-
-        let trivias = ret.trivias;
-
         // Build the module record to unblock other threads from waiting for too long.
         // The semantic model is not built at this stage.
         let semantic_builder = SemanticBuilder::new()
             .with_cfg(true)
-            .with_trivias(trivias)
             .with_build_jsdoc(true)
             .with_check_syntax_error(check_syntax_errors)
-            .build_module_record(path, program);
+            .build_module_record(path, &ret.program);
         let module_record = semantic_builder.module_record();
 
         if self.resolver.is_some() {
@@ -284,13 +279,16 @@ impl Runtime {
             }
         }
 
+        let program = allocator.alloc(ret.program);
         let semantic_ret = semantic_builder.build(program);
 
         if !semantic_ret.errors.is_empty() {
             return semantic_ret.errors.into_iter().map(|err| Message::new(err, None)).collect();
         };
 
-        self.linter.run(path, Rc::new(semantic_ret.semantic))
+        let mut semantic = semantic_ret.semantic;
+        semantic.set_irregular_whitespaces(ret.irregular_whitespaces);
+        self.linter.run(path, Rc::new(semantic))
     }
 
     pub(super) fn init_cache_state(&self, path: &Path) -> bool {

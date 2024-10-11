@@ -1,7 +1,7 @@
 use std::{mem, ops::ControlFlow, path::Path};
 
 use oxc_allocator::Allocator;
-use oxc_ast::{ast::Program, Trivias};
+use oxc_ast::ast::Program;
 use oxc_codegen::{CodeGenerator, CodegenOptions, CodegenReturn, CommentOptions};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions};
@@ -135,11 +135,10 @@ pub trait CompilerInterface {
         }
 
         let mut program = parser_return.program;
-        let trivias = parser_return.trivias;
 
         /* Isolated Declarations */
         if let Some(options) = self.isolated_declaration_options() {
-            self.isolated_declaration(options, &allocator, &program, source_path, &trivias);
+            self.isolated_declaration(options, &allocator, &program, source_path);
         }
 
         /* Semantic */
@@ -158,15 +157,8 @@ pub trait CompilerInterface {
         /* Transform */
 
         if let Some(options) = self.transform_options() {
-            let mut transformer_return = self.transform(
-                options,
-                &allocator,
-                &mut program,
-                source_path,
-                &trivias,
-                symbols,
-                scopes,
-            );
+            let mut transformer_return =
+                self.transform(options, &allocator, &mut program, source_path, symbols, scopes);
 
             if !transformer_return.errors.is_empty() {
                 self.handle_errors(transformer_return.errors);
@@ -210,7 +202,7 @@ pub trait CompilerInterface {
         /* Codegen */
 
         if let Some(options) = self.codegen_options() {
-            let ret = self.codegen(&program, source_path, &trivias, mangler, options);
+            let ret = self.codegen(&program, source_path, mangler, options);
             self.after_codegen(ret);
         }
     }
@@ -245,15 +237,12 @@ pub trait CompilerInterface {
         allocator: &'a Allocator,
         program: &Program<'a>,
         source_path: &Path,
-        trivias: &Trivias,
     ) {
-        let ret = IsolatedDeclarations::new(allocator, program.source_text, trivias, options)
-            .build(program);
+        let ret = IsolatedDeclarations::new(allocator, options).build(program);
         self.handle_errors(ret.errors);
         let ret = self.codegen(
             &ret.program,
             source_path,
-            trivias,
             None,
             self.codegen_options().unwrap_or_default(),
         );
@@ -267,11 +256,10 @@ pub trait CompilerInterface {
         allocator: &'a Allocator,
         program: &mut Program<'a>,
         source_path: &Path,
-        trivias: &Trivias,
         symbols: SymbolTable,
         scopes: ScopeTree,
     ) -> TransformerReturn {
-        Transformer::new(allocator, source_path, trivias.clone(), options)
+        Transformer::new(allocator, source_path, options)
             .build_with_symbols_and_scopes(symbols, scopes, program)
     }
 
@@ -292,7 +280,6 @@ pub trait CompilerInterface {
         &self,
         program: &Program<'_>,
         source_path: &Path,
-        trivias: &Trivias,
         mangler: Option<Mangler>,
         options: CodegenOptions,
     ) -> CodegenReturn {
@@ -300,7 +287,7 @@ pub trait CompilerInterface {
         let mut codegen = CodeGenerator::new()
             .with_options(options)
             .with_mangler(mangler)
-            .enable_comment(program.source_text, trivias.clone(), comment_options);
+            .enable_comment(program, comment_options);
         if self.enable_sourcemap() {
             codegen = codegen
                 .enable_source_map(source_path.to_string_lossy().as_ref(), program.source_text);

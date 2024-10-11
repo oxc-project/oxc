@@ -1,6 +1,6 @@
 use rustc_hash::FxHashMap;
 
-use oxc_ast::{ast::Comment, AstKind, Trivias};
+use oxc_ast::{ast::Comment, AstKind};
 use oxc_span::{GetSpan, Span};
 
 use crate::jsdoc::JSDocFinder;
@@ -14,9 +14,9 @@ pub struct JSDocBuilder<'a> {
 }
 
 impl<'a> JSDocBuilder<'a> {
-    pub fn new(source_text: &'a str, trivias: &Trivias) -> Self {
+    pub fn new(source_text: &'a str, comments: &[Comment]) -> Self {
         let mut not_attached_docs: FxHashMap<u32, Vec<_>> = FxHashMap::default();
-        for comment in trivias.comments().filter(|comment| comment.is_jsdoc(source_text)) {
+        for comment in comments.iter().filter(|comment| comment.is_jsdoc(source_text)) {
             not_attached_docs
                 .entry(comment.attached_to)
                 .or_default()
@@ -208,11 +208,7 @@ mod test {
         let source_type = source_type.unwrap_or_default();
         let ret = Parser::new(allocator, source_text, source_type).parse();
         let program = allocator.alloc(ret.program);
-        let semantic = SemanticBuilder::new()
-            .with_trivias(ret.trivias)
-            .with_build_jsdoc(true)
-            .build(program)
-            .semantic;
+        let semantic = SemanticBuilder::new().with_build_jsdoc(true).build(program).semantic;
         semantic
     }
 

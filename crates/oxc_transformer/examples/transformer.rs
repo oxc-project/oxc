@@ -38,7 +38,6 @@ fn main() {
     println!("{source_text}\n");
 
     let mut program = ret.program;
-    let trivias = ret.trivias;
 
     let ret = SemanticBuilder::new()
         // Estimate transformer will triple scopes, symbols, references
@@ -65,8 +64,11 @@ fn main() {
         TransformOptions::enable_all()
     };
 
-    let ret = Transformer::new(&allocator, path, trivias.clone(), transform_options)
-        .build_with_symbols_and_scopes(symbols, scopes, &mut program);
+    let ret = Transformer::new(&allocator, path, transform_options).build_with_symbols_and_scopes(
+        symbols,
+        scopes,
+        &mut program,
+    );
 
     if !ret.errors.is_empty() {
         println!("Transformer Errors:");

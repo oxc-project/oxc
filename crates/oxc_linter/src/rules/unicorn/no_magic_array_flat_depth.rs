@@ -72,12 +72,8 @@ impl Rule for NoMagicArrayFlatDepth {
             return;
         };
 
-        let has_explaining_comment = ctx
-            .semantic()
-            .trivias()
-            .comments_range(arguments_span.start..arguments_span.end)
-            .count()
-            != 0;
+        let has_explaining_comment =
+            ctx.semantic().comments_range(arguments_span.start..arguments_span.end).count() != 0;
 
         if has_explaining_comment {
             return;

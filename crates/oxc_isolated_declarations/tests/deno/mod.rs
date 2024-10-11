@@ -15,8 +15,6 @@ mod tests {
         let ret = Parser::new(&allocator, source, source_type).parse();
         let ret = IsolatedDeclarations::new(
             &allocator,
-            source,
-            &ret.trivias,
             IsolatedDeclarationsOptions { strip_internal: true },
         )
         .build(&ret.program);

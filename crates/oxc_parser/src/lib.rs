@@ -88,7 +88,7 @@ use context::{Context, StatementContext};
 use oxc_allocator::Allocator;
 use oxc_ast::{
     ast::{Expression, Program},
-    AstBuilder, Trivias,
+    AstBuilder,
 };
 use oxc_diagnostics::{OxcDiagnostic, Result};
 use oxc_span::{ModuleKind, SourceType, Span};
@@ -156,8 +156,8 @@ pub struct ParserReturn<'a> {
     /// [`SemanticBuilder::with_check_syntax_error`](https://docs.rs/oxc_semantic/latest/oxc_semantic/struct.SemanticBuilder.html#method.with_check_syntax_error).
     pub errors: Vec<OxcDiagnostic>,
 
-    /// Comments and whitespace
-    pub trivias: Trivias,
+    /// Irregular whitespaces for `Oxlint`
+    pub irregular_whitespaces: Box<[Span]>,
 
     /// Whether the parser panicked and terminated early.
     ///
@@ -425,8 +425,9 @@ impl<'a> ParserImpl<'a> {
             errors.extend(self.lexer.errors);
             errors.extend(self.errors);
         }
-        let trivias = self.lexer.trivia_builder.build();
-        ParserReturn { program, errors, trivias, panicked }
+        let irregular_whitespaces =
+            self.lexer.trivia_builder.irregular_whitespaces.into_boxed_slice();
+        ParserReturn { program, errors, irregular_whitespaces, panicked }
     }
 
     pub fn parse_expression(mut self) -> std::result::Result<Expression<'a>, Vec<OxcDiagnostic>> {
@@ -623,7 +624,7 @@ mod test {
         ];
         for (source, kind) in sources {
             let ret = Parser::new(&allocator, source, source_type).parse();
-            let comments = ret.trivias.comments().collect::<Vec<_>>();
+            let comments = &ret.program.comments;
             assert_eq!(comments.len(), 1, "{source}");
             assert_eq!(comments.first().unwrap().kind, kind, "{source}");
         }

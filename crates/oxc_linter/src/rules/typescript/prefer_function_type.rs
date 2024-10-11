@@ -159,15 +159,12 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                                         }
                                     }
 
-                                    let has_comments = ctx
-                                        .semantic()
-                                        .trivias()
-                                        .has_comments_between(interface_decl.span);
+                                    let has_comments =
+                                        ctx.semantic().has_comments_between(interface_decl.span);
 
                                     if has_comments {
                                         let comments = ctx
                                             .semantic()
-                                            .trivias()
                                             .comments_range(node_start..node_end)
                                             .map(|comment| (*comment, comment.span));
 

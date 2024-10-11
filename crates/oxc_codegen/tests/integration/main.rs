@@ -17,11 +17,7 @@ pub fn codegen(source_text: &str) -> String {
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     CodeGenerator::new()
         .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
-        .enable_comment(
-            source_text,
-            ret.trivias,
-            CommentOptions { preserve_annotate_comments: true },
-        )
+        .enable_comment(&ret.program, CommentOptions { preserve_annotate_comments: true })
         .build(&ret.program)
         .code
 }

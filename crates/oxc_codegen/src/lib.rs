@@ -12,9 +12,8 @@ mod sourcemap_builder;
 
 use std::borrow::Cow;
 
-use oxc_ast::{
-    ast::{BindingIdentifier, BlockStatement, Expression, IdentifierReference, Program, Statement},
-    Trivias,
+use oxc_ast::ast::{
+    BindingIdentifier, BlockStatement, Expression, IdentifierReference, Program, Statement,
 };
 use oxc_mangler::Mangler;
 use oxc_span::{GetSpan, Span};
@@ -72,7 +71,6 @@ pub struct Codegen<'a> {
     /// Original source code of the AST
     source_text: Option<&'a str>,
 
-    trivias: Trivias,
     comments: CommentsMap,
 
     /// Start of comment that needs to be moved to the before VariableDeclarator
@@ -146,7 +144,6 @@ impl<'a> Codegen<'a> {
             options: CodegenOptions::default(),
             comment_options: CommentOptions::default(),
             source_text: None,
-            trivias: Trivias::default(),
             comments: CommentsMap::default(),
             start_of_annotation_comment: None,
             mangler: None,
@@ -199,16 +196,10 @@ impl<'a> Codegen<'a> {
 
     /// Also sets the [Self::with_source_text]
     #[must_use]
-    pub fn enable_comment(
-        mut self,
-        source_text: &'a str,
-        trivias: Trivias,
-        options: CommentOptions,
-    ) -> Self {
+    pub fn enable_comment(mut self, program: &Program<'a>, options: CommentOptions) -> Self {
         self.comment_options = options;
-        self.build_comments(&trivias);
-        self.trivias = trivias;
-        self.with_source_text(source_text)
+        self.build_comments(&program.comments);
+        self.with_source_text(program.source_text)
     }
 
     #[must_use]
