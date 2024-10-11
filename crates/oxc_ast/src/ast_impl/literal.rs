@@ -8,7 +8,7 @@ use std::{
     fmt,
     hash::{Hash, Hasher},
 };
-
+use std::fmt::Debug;
 use oxc_allocator::CloneIn;
 use oxc_regular_expression::ast::Pattern;
 use oxc_span::{cmp::ContentEq, hash::ContentHash, Atom, Span};
@@ -295,5 +295,20 @@ impl<'a> fmt::Display for StringLiteral<'a> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.value.fmt(f)
+    }
+}
+
+impl<'a> fmt::Display for NumericLiteral<'a> {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // To tell apart from CodeGen, this is the scenario when concat with string.
+        self.value.fmt(f)
+    }
+}
+
+impl<'a> fmt::Display for BigIntLiteral<'a> {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.raw.fmt(f)
     }
 }
