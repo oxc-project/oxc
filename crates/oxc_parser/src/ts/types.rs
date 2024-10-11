@@ -138,7 +138,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_type_parameters(
         &mut self,
     ) -> Result<Option<Box<'a, TSTypeParameterDeclaration<'a>>>> {
-        if !self.ts_enabled() {
+        if !self.is_ts {
             return Ok(None);
         }
         if !self.at(Kind::LAngle) {
@@ -811,7 +811,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_type_arguments_in_expression(
         &mut self,
     ) -> Result<Option<Box<'a, TSTypeParameterInstantiation<'a>>>> {
-        if !self.ts_enabled() {
+        if !self.is_ts {
             return Ok(None);
         }
         let span = self.start_span();
@@ -1049,7 +1049,7 @@ impl<'a> ParserImpl<'a> {
         kind: Kind,
         is_type: bool,
     ) -> Result<Option<Box<'a, TSTypeAnnotation<'a>>>> {
-        if !self.ts_enabled() {
+        if !self.is_ts {
             return Ok(None);
         }
         if !self.at(Kind::Colon) {
@@ -1315,7 +1315,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         is_constructor_parameter: bool,
     ) -> Modifiers<'a> {
-        if !self.ts_enabled() {
+        if !self.is_ts {
             return Modifiers::empty();
         }
 

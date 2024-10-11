@@ -356,8 +356,11 @@ struct ParserImpl<'a> {
     /// Parsing context
     ctx: Context,
 
-    /// Ast builder for creating AST spans
+    /// Ast builder for creating AST nodes
     ast: AstBuilder<'a>,
+
+    /// Precomputed typescript detection
+    is_ts: bool,
 }
 
 impl<'a> ParserImpl<'a> {
@@ -384,6 +387,7 @@ impl<'a> ParserImpl<'a> {
             state: ParserState::default(),
             ctx: Self::default_context(source_type, options),
             ast: AstBuilder::new(allocator),
+            is_ts: source_type.is_typescript(),
         }
     }
 
@@ -506,10 +510,6 @@ impl<'a> ParserImpl<'a> {
 
     fn errors_count(&self) -> usize {
         self.errors.len() + self.lexer.errors.len()
-    }
-
-    fn ts_enabled(&self) -> bool {
-        self.source_type.is_typescript()
     }
 
     fn set_source_type_to_module_if_unambiguous(&mut self) {

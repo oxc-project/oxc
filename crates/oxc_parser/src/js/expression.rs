@@ -644,7 +644,7 @@ impl<'a> ParserImpl<'a> {
                         _ => break,
                     }
                 }
-                Kind::Bang if !self.cur_token().is_on_new_line && self.ts_enabled() => {
+                Kind::Bang if !self.cur_token().is_on_new_line && self.is_ts => {
                     self.bump_any();
                     self.ast.expression_ts_non_null(self.end_span(lhs_span), lhs)
                 }
@@ -905,7 +905,7 @@ impl<'a> ParserImpl<'a> {
                 if self.source_type.is_jsx() {
                     return self.parse_jsx_expression();
                 }
-                if self.ts_enabled() {
+                if self.is_ts {
                     return self.parse_ts_type_assertion();
                 }
                 Err(self.unexpected())
@@ -951,13 +951,12 @@ impl<'a> ParserImpl<'a> {
         // Pratt Parsing Algorithm
         // <https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html>
         let mut lhs = lhs;
-        let is_ts = self.ts_enabled();
         loop {
             // re-lex for `>=` `>>` `>>>`
             // This is need for jsx `<div>=</div>` case
             let kind = self.re_lex_right_angle();
 
-            let Some(left_precedence) = kind_to_precedence(kind, is_ts) else { break };
+            let Some(left_precedence) = kind_to_precedence(kind, self.is_ts) else { break };
 
             let stop = if left_precedence.is_right_associative() {
                 left_precedence < min_precedence
@@ -976,7 +975,7 @@ impl<'a> ParserImpl<'a> {
                 break;
             }
 
-            if self.ts_enabled() && matches!(kind, Kind::As | Kind::Satisfies) {
+            if self.is_ts && matches!(kind, Kind::As | Kind::Satisfies) {
                 if self.cur_token().is_on_new_line {
                     break;
                 }
