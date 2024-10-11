@@ -3,7 +3,7 @@ mod deno;
 use std::{fs, path::Path, sync::Arc};
 
 use oxc_allocator::Allocator;
-use oxc_codegen::{CodeGenerator, CommentOptions};
+use oxc_codegen::CodeGenerator;
 use oxc_isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
@@ -16,10 +16,7 @@ fn transform(path: &Path, source_text: &str) -> String {
     let id_ret =
         IsolatedDeclarations::new(&allocator, IsolatedDeclarationsOptions { strip_internal: true })
             .build(&parser_ret.program);
-    let code = CodeGenerator::new()
-        .enable_comment(&parser_ret.program, CommentOptions { preserve_annotate_comments: false })
-        .build(&id_ret.program)
-        .code;
+    let code = CodeGenerator::new().build(&id_ret.program).code;
 
     let mut snapshot =
         format!("```\n==================== .D.TS ====================\n\n{code}\n\n");

@@ -2,9 +2,8 @@ use std::{mem, ops::ControlFlow, path::Path};
 
 use oxc::{
     ast::ast::Program,
-    codegen::{CodeGenerator, CodegenOptions, CodegenReturn},
+    codegen::{CodegenOptions, CodegenReturn},
     diagnostics::OxcDiagnostic,
-    mangler::Mangler,
     span::SourceType,
     transformer::{TransformOptions, TransformerReturn},
     CompilerInterface,
@@ -21,6 +20,10 @@ pub struct Driver {
 impl CompilerInterface for Driver {
     fn transform_options(&self) -> Option<TransformOptions> {
         Some(self.options.clone())
+    }
+
+    fn codegen_options(&self) -> Option<CodegenOptions> {
+        Some(CodegenOptions { comments: false, ..CodegenOptions::default() })
     }
 
     fn check_semantic_error(&self) -> bool {
@@ -54,17 +57,6 @@ impl CompilerInterface for Driver {
             }
         }
         ControlFlow::Continue(())
-    }
-
-    // Disable comments
-    fn codegen(
-        &self,
-        program: &Program<'_>,
-        _source_path: &Path,
-        mangler: Option<Mangler>,
-        options: CodegenOptions,
-    ) -> CodegenReturn {
-        CodeGenerator::new().with_options(options).with_mangler(mangler).build(program)
     }
 }
 

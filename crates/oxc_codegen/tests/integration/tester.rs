@@ -1,5 +1,5 @@
 use oxc_allocator::Allocator;
-use oxc_codegen::{CodeGenerator, CodegenOptions, CommentOptions};
+use oxc_codegen::{CodeGenerator, CodegenOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
@@ -7,10 +7,7 @@ pub fn test(source_text: &str, expected: &str) {
     let source_type = SourceType::jsx();
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
-    let result = CodeGenerator::new()
-        .enable_comment(&ret.program, CommentOptions { preserve_annotate_comments: true })
-        .build(&ret.program)
-        .code;
+    let result = CodeGenerator::new().build(&ret.program).code;
     assert_eq!(result, expected, "\nfor source: {source_text:?}");
 }
 

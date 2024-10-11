@@ -4,7 +4,7 @@ use napi_derive::napi;
 
 use oxc::{
     allocator::Allocator,
-    codegen::{CodeGenerator, CommentOptions},
+    codegen::CodeGenerator,
     isolated_declarations::IsolatedDeclarations,
     napi::{
         isolated_declarations::{IsolatedDeclarationsOptions, IsolatedDeclarationsResult},
@@ -39,8 +39,7 @@ pub fn isolated_declaration(
     )
     .build(&ret.program);
 
-    let mut codegen = CodeGenerator::new()
-        .enable_comment(&ret.program, CommentOptions { preserve_annotate_comments: false });
+    let mut codegen = CodeGenerator::new();
     if options.sourcemap == Some(true) {
         codegen = codegen.enable_source_map(&filename, &source_text);
     }

@@ -1,4 +1,4 @@
-use std::{borrow::Cow, ops::Not};
+use std::ops::Not;
 
 use cow_utils::CowUtils;
 #[allow(clippy::wildcard_imports)]
@@ -558,7 +558,7 @@ impl<'a> Gen for VariableDeclaration<'a> {
             p.print_str("declare ");
         }
 
-        if p.preserve_annotate_comments()
+        if p.options.print_annotation_comments()
             && p.start_of_annotation_comment.is_none()
             && matches!(self.kind, VariableDeclarationKind::Const)
             && matches!(self.declarations.first(), Some(VariableDeclarator { init: Some(init), .. }) if init.is_function())
@@ -825,7 +825,7 @@ impl<'a> Gen for ExportNamedDeclaration<'a> {
         p.add_source_mapping(self.span.start);
         p.print_indent();
 
-        if p.preserve_annotate_comments() {
+        if p.options.print_annotation_comments() {
             match &self.declaration {
                 Some(Declaration::FunctionDeclaration(_)) => {
                     p.print_annotation_comments(self.span.start);
@@ -1195,10 +1195,7 @@ impl<'a> Gen for RegExpLiteral<'a> {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span.start);
         let last = p.peek_nth(0);
-        let pattern_text = p.source_text.map_or_else(
-            || Cow::Owned(self.regex.pattern.to_string()),
-            |src| self.regex.pattern.source_text(src),
-        );
+        let pattern_text = self.regex.pattern.source_text(p.source_text);
         // Avoid forming a single-line comment or "</script" sequence
         if Some('/') == last
             || (Some('<') == last && pattern_text.cow_to_lowercase().starts_with("script"))
