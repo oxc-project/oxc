@@ -11,7 +11,6 @@ use rayon::{iter::ParallelBridge, prelude::ParallelIterator};
 
 use crate::Linter;
 
-use module_cache::{CacheState, CacheStateEntry, ModuleMap, ModuleState};
 use runtime::Runtime;
 
 pub struct LintServiceOptions {
@@ -86,7 +85,7 @@ impl LintService {
     }
 
     pub fn number_of_dependencies(&self) -> usize {
-        self.runtime.module_map.len() - self.runtime.paths.len()
+        self.runtime.modules.len() - self.runtime.paths.len()
     }
 
     /// # Panics

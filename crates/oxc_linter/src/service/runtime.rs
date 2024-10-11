@@ -4,7 +4,7 @@ use std::{
     fs,
     path::{Path, PathBuf},
     rc::Rc,
-    sync::{Arc, Condvar, Mutex},
+    sync::Arc,
 };
 
 use oxc_allocator::Allocator;
@@ -22,7 +22,10 @@ use crate::{
     Fixer, Linter, Message,
 };
 
-use super::{CacheState, CacheStateEntry, LintServiceOptions, ModuleMap, ModuleState};
+use super::{
+    module_cache::{ModuleCache, ModuleState},
+    LintServiceOptions,
+};
 
 pub struct Runtime {
     pub(super) cwd: Box<Path>,
@@ -30,8 +33,7 @@ pub struct Runtime {
     pub(super) paths: FxHashSet<Box<Path>>,
     pub(super) linter: Linter,
     pub(super) resolver: Option<Resolver>,
-    pub(super) module_map: ModuleMap,
-    pub(super) cache_state: CacheState,
+    pub(super) modules: ModuleCache,
 }
 
 impl Runtime {
@@ -44,8 +46,7 @@ impl Runtime {
             paths: options.paths.iter().cloned().collect(),
             linter,
             resolver,
-            module_map: ModuleMap::default(),
-            cache_state: CacheState::default(),
+            modules: ModuleCache::default(),
         }
     }
 
@@ -216,11 +217,7 @@ impl Runtime {
         let module_record = semantic_builder.module_record();
 
         if self.resolver.is_some() {
-            self.module_map.insert(
-                path.to_path_buf().into_boxed_path(),
-                ModuleState::Resolved(Arc::clone(&module_record)),
-            );
-            self.update_cache_state(path);
+            self.modules.add_resolved_module(path, Arc::clone(&module_record));
 
             // Retrieve all dependency modules from this module.
             let dir = path.parent().unwrap();
@@ -235,7 +232,7 @@ impl Runtime {
                 .for_each_with(tx_error, |tx_error, (specifier, resolution)| {
                     let path = resolution.path();
                     self.process_path(path, tx_error);
-                    let Some(target_module_record_ref) = self.module_map.get(path) else {
+                    let Some(target_module_record_ref) = self.modules.get(path) else {
                         return;
                     };
                     let ModuleState::Resolved(target_module_record) =
@@ -301,60 +298,9 @@ impl Runtime {
             return false;
         }
 
-        let (lock, cvar) = {
-            let mut state_map = self.cache_state.lock().unwrap();
-            &*Arc::clone(state_map.entry(path.to_path_buf().into_boxed_path()).or_insert_with(
-                || Arc::new((Mutex::new(CacheStateEntry::ReadyToConstruct), Condvar::new())),
-            ))
-        };
-        let mut state = cvar
-            .wait_while(lock.lock().unwrap(), |state| {
-                matches!(*state, CacheStateEntry::PendingStore(_))
-            })
-            .unwrap();
-
-        let cache_hit = if self.module_map.contains_key(path) {
-            true
-        } else {
-            let i = if let CacheStateEntry::PendingStore(i) = *state { i } else { 0 };
-            *state = CacheStateEntry::PendingStore(i + 1);
-            false
-        };
-
-        if *state == CacheStateEntry::ReadyToConstruct {
-            cvar.notify_one();
-        }
-
-        drop(state);
-        cache_hit
+        self.modules.init_cache_state(path)
     }
-
-    fn update_cache_state(&self, path: &Path) {
-        let (lock, cvar) = {
-            let mut state_map = self.cache_state.lock().unwrap();
-            &*Arc::clone(
-                state_map
-                    .get_mut(path)
-                    .expect("Entry in http-cache state to have been previously inserted"),
-            )
-        };
-        let mut state = lock.lock().unwrap();
-        if let CacheStateEntry::PendingStore(i) = *state {
-            let new = i - 1;
-            if new == 0 {
-                *state = CacheStateEntry::ReadyToConstruct;
-                // Notify the next thread waiting in line, if there is any.
-                cvar.notify_one();
-            } else {
-                *state = CacheStateEntry::PendingStore(new);
-            }
-        }
-    }
-
     fn ignore_path(&self, path: &Path) {
-        if self.resolver.is_some() {
-            self.module_map.insert(path.to_path_buf().into_boxed_path(), ModuleState::Ignored);
-            self.update_cache_state(path);
-        }
+        self.resolver.is_some().then(|| self.modules.ignore_path(path));
     }
 }
