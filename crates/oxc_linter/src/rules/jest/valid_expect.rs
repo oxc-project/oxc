@@ -159,21 +159,21 @@ impl ValidExpect {
             return;
         };
 
-        if call_expr.arguments.len() < self.min_args {
+        if call_expr.arguments.len() > self.max_args {
             let error = format!(
                 "Expect takes at most {} argument{} ",
-                self.min_args,
-                if self.min_args > 1 { "s" } else { "" }
+                self.max_args,
+                if self.max_args > 1 { "s" } else { "" }
             );
             let help = "Remove the extra arguments.";
             ctx.diagnostic(valid_expect_diagnostic(error, help, call_expr.span));
             return;
         }
-        if call_expr.arguments.len() > self.max_args {
+        if call_expr.arguments.len() < self.min_args {
             let error = format!(
                 "Expect requires at least {} argument{} ",
-                self.max_args,
-                if self.max_args > 1 { "s" } else { "" }
+                self.min_args,
+                if self.min_args > 1 { "s" } else { "" }
             );
             let help = "Add the missing arguments.";
             ctx.diagnostic(valid_expect_diagnostic(error, help, call_expr.span));
