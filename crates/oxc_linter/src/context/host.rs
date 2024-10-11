@@ -79,8 +79,7 @@ impl<'a> ContextHost<'a> {
         );
 
         let disable_directives =
-            DisableDirectivesBuilder::new(semantic.source_text(), semantic.trivias().clone())
-                .build();
+            DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments());
 
         let file_path = file_path.as_ref().to_path_buf().into_boxed_path();
 

@@ -75,12 +75,12 @@ impl<'a> ParserImpl<'a> {
             self.ast.ts_type_constructor_type(
                 span,
                 r#abstract,
+                type_parameters,
                 params,
                 return_type,
-                type_parameters,
             )
         } else {
-            self.ast.ts_type_function_type(span, this_param, params, return_type, type_parameters)
+            self.ast.ts_type_function_type(span, type_parameters, this_param, params, return_type)
         })
     }
 
@@ -138,7 +138,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_type_parameters(
         &mut self,
     ) -> Result<Option<Box<'a, TSTypeParameterDeclaration<'a>>>> {
-        if !self.ts_enabled() {
+        if !self.is_ts {
             return Ok(None);
         }
         if !self.at(Kind::LAngle) {
@@ -811,7 +811,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_type_arguments_in_expression(
         &mut self,
     ) -> Result<Option<Box<'a, TSTypeParameterInstantiation<'a>>>> {
-        if !self.ts_enabled() {
+        if !self.is_ts {
             return Ok(None);
         }
         let span = self.start_span();
@@ -1049,7 +1049,7 @@ impl<'a> ParserImpl<'a> {
         kind: Kind,
         is_type: bool,
     ) -> Result<Option<Box<'a, TSTypeAnnotation<'a>>>> {
-        if !self.ts_enabled() {
+        if !self.is_ts {
             return Ok(None);
         }
         if !self.at(Kind::Colon) {
@@ -1141,10 +1141,10 @@ impl<'a> ParserImpl<'a> {
         self.bump(Kind::Semicolon);
         Ok(self.ast.ts_signature_call_signature_declaration(
             self.end_span(span),
+            type_parameters,
             this_patam,
             params,
             return_type,
-            type_parameters,
         ))
     }
 
@@ -1162,10 +1162,10 @@ impl<'a> ParserImpl<'a> {
             computed,
             /* optional */ false,
             TSMethodSignatureKind::Get,
+            NONE,
             this_param,
             params,
             return_type,
-            NONE,
         ))
     }
 
@@ -1188,10 +1188,10 @@ impl<'a> ParserImpl<'a> {
             computed,
             /* optional */ false,
             TSMethodSignatureKind::Set,
+            NONE,
             this_param,
             params,
             return_type,
-            NONE,
         ))
     }
 
@@ -1223,10 +1223,10 @@ impl<'a> ParserImpl<'a> {
                 computed,
                 optional,
                 TSMethodSignatureKind::Method,
+                call_signature.type_parameters,
                 call_signature.this_param,
                 call_signature.params,
                 call_signature.return_type,
-                call_signature.type_parameters,
             ))
         } else {
             let type_annotation = self.parse_ts_type_annotation()?;
@@ -1261,9 +1261,9 @@ impl<'a> ParserImpl<'a> {
 
         Ok(self.ast.ts_signature_construct_signature_declaration(
             self.end_span(span),
+            type_parameters,
             params,
             return_type,
-            type_parameters,
         ))
     }
 
@@ -1315,7 +1315,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         is_constructor_parameter: bool,
     ) -> Modifiers<'a> {
-        if !self.ts_enabled() {
+        if !self.is_ts {
             return Modifiers::empty();
         }
 

@@ -34,12 +34,10 @@ fn main() -> std::io::Result<()> {
 
     let program = allocator.alloc(parser_ret.program);
 
-    let semantic = SemanticBuilder::new(&source_text)
+    let semantic = SemanticBuilder::new()
         .build_module_record(path, program)
         // Enable additional syntax checks not performed by the parser
         .with_check_syntax_error(true)
-        // Inform Semantic about comments found while parsing
-        .with_trivias(parser_ret.trivias)
         .build(program);
 
     if !semantic.errors.is_empty() {

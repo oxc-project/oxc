@@ -19,9 +19,8 @@ mod module_record_tests {
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
         let program = allocator.alloc(ret.program);
-        let semantic_ret = SemanticBuilder::new(source_text)
-            .build_module_record(Path::new(""), program)
-            .build(program);
+        let semantic_ret =
+            SemanticBuilder::new().build_module_record(Path::new(""), program).build(program);
         Arc::clone(&semantic_ret.semantic.module_record)
     }
 

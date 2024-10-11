@@ -24,9 +24,15 @@ impl<'s, 'a> Symbol<'s, 'a> {
             assert!(kind.is_function_like() || matches!(kind, AstKind::Class(_)));
         }
 
-        for parent in self.iter_parents() {
+        for parent in self.iter_relevant_parents() {
             match parent.kind() {
-                AstKind::MemberExpression(_) | AstKind::ParenthesizedExpression(_) => {
+                AstKind::MemberExpression(_) | AstKind::ParenthesizedExpression(_)
+                // e.g. `const x = [function foo() {}]`
+                // Only considered used if the array containing the symbol is used.
+                | AstKind::ArrayExpressionElement(_)
+                | AstKind::ExpressionArrayElement(_)
+                | AstKind::ArrayExpression(_)
+                => {
                     continue;
                 }
                 // Returned from another function. Definitely won't be the same
@@ -37,6 +43,9 @@ impl<'s, 'a> Symbol<'s, 'a> {
                 // Function declaration is passed as an argument to another function.
                 | AstKind::CallExpression(_) | AstKind::Argument(_)
                 // e.g. `const x = { foo: function foo() {} }`
+                // Allowed off-the-bat since objects being the only child of an
+                // ExpressionStatement is rare, since you would need to wrap the
+                // object in parentheses to avoid creating a block statement.
                 | AstKind::ObjectProperty(_)
                 // e.g. var foo = function bar() { }
                 // we don't want to check for violations on `bar`, just `foo`

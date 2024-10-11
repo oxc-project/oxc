@@ -260,11 +260,8 @@ impl IsolatedLintHandler {
             };
 
             let program = allocator.alloc(ret.program);
-            let semantic_ret = SemanticBuilder::new(javascript_source_text)
-                .with_cfg(true)
-                .with_trivias(ret.trivias)
-                .with_check_syntax_error(true)
-                .build(program);
+            let semantic_ret =
+                SemanticBuilder::new().with_cfg(true).with_check_syntax_error(true).build(program);
 
             if !semantic_ret.errors.is_empty() {
                 let reports = semantic_ret
@@ -278,7 +275,9 @@ impl IsolatedLintHandler {
                 return Some(Self::wrap_diagnostics(path, &source_text, reports, start));
             };
 
-            let result = self.linter.run(path, Rc::new(semantic_ret.semantic));
+            let mut semantic = semantic_ret.semantic;
+            semantic.set_irregular_whitespaces(ret.irregular_whitespaces);
+            let result = self.linter.run(path, Rc::new(semantic));
 
             let reports = result
                 .into_iter()

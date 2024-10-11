@@ -82,12 +82,12 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
 
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Expression::AssignmentExpression(assignment_expr) = expr {
-            if let Some(new_expr) = self.try_compress_assignment_expression(assignment_expr, ctx) {
+            if let Some(new_expr) = Self::try_compress_assignment_expression(assignment_expr, ctx) {
                 *expr = new_expr;
                 self.changed = true;
             }
         }
-        if !self.compress_undefined(expr, ctx) {
+        if !Self::compress_undefined(expr, ctx) {
             self.compress_boolean(expr, ctx);
         }
     }
@@ -95,13 +95,13 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         match expr {
             Expression::NewExpression(new_expr) => {
-                if let Some(new_expr) = self.try_fold_new_expression(new_expr, ctx) {
+                if let Some(new_expr) = Self::try_fold_new_expression(new_expr, ctx) {
                     *expr = new_expr;
                     self.changed = true;
                 }
             }
             Expression::CallExpression(call_expr) => {
-                if let Some(call_expr) = self.try_fold_call_expression(call_expr, ctx) {
+                if let Some(call_expr) = Self::try_fold_call_expression(call_expr, ctx) {
                     *expr = call_expr;
                     self.changed = true;
                 }
@@ -132,7 +132,7 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
     /* Utilities */
 
     /// Transforms `undefined` => `void 0`
-    fn compress_undefined(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
+    fn compress_undefined(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
         if ctx.is_expression_undefined(expr) {
             *expr = ctx.ast.void_0(expr.span());
             return true;
@@ -316,7 +316,6 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
     }
 
     fn try_compress_assignment_expression(
-        &mut self,
         expr: &mut AssignmentExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
@@ -360,7 +359,6 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
     }
 
     fn try_fold_new_expression(
-        &mut self,
         new_expr: &mut NewExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
@@ -373,18 +371,19 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
         } else if new_expr.callee.is_global_reference_name("Array", ctx.symbols()) {
             // `new Array` -> `[]`
             if new_expr.arguments.is_empty() {
-                Some(self.empty_array_literal(ctx))
+                Some(Self::empty_array_literal(ctx))
             } else if new_expr.arguments.len() == 1 {
                 let arg = new_expr.arguments.get_mut(0).and_then(|arg| arg.as_expression_mut())?;
                 // `new Array(0)` -> `[]`
                 if arg.is_number_0() {
-                    Some(self.empty_array_literal(ctx))
+                    Some(Self::empty_array_literal(ctx))
                 }
                 // `new Array(8)` -> `Array(8)`
                 else if arg.is_number_literal() {
-                    Some(
-                        self.array_constructor_call(ctx.ast.move_vec(&mut new_expr.arguments), ctx),
-                    )
+                    Some(Self::array_constructor_call(
+                        ctx.ast.move_vec(&mut new_expr.arguments),
+                        ctx,
+                    ))
                 }
                 // `new Array(literal)` -> `[literal]`
                 else if arg.is_literal() || matches!(arg, Expression::ArrayExpression(_)) {
@@ -392,13 +391,14 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
                     let element =
                         ctx.ast.array_expression_element_expression(ctx.ast.move_expression(arg));
                     elements.push(element);
-                    Some(self.array_literal(elements, ctx))
+                    Some(Self::array_literal(elements, ctx))
                 }
                 // `new Array()` -> `Array()`
                 else {
-                    Some(
-                        self.array_constructor_call(ctx.ast.move_vec(&mut new_expr.arguments), ctx),
-                    )
+                    Some(Self::array_constructor_call(
+                        ctx.ast.move_vec(&mut new_expr.arguments),
+                        ctx,
+                    ))
                 }
             } else {
                 // `new Array(1, 2, 3)` -> `[1, 2, 3]`
@@ -410,7 +410,7 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
                         },
                     ),
                 );
-                Some(self.array_literal(elements, ctx))
+                Some(Self::array_literal(elements, ctx))
             }
         } else {
             None
@@ -418,7 +418,6 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
     }
 
     fn try_fold_call_expression(
-        &mut self,
         call_expr: &mut CallExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
@@ -431,21 +430,19 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
         } else if call_expr.callee.is_global_reference_name("Array", ctx.symbols()) {
             // `Array()` -> `[]`
             if call_expr.arguments.is_empty() {
-                Some(self.empty_array_literal(ctx))
+                Some(Self::empty_array_literal(ctx))
             } else if call_expr.arguments.len() == 1 {
                 let arg = call_expr.arguments.get_mut(0).and_then(|arg| arg.as_expression_mut())?;
                 // `Array(0)` -> `[]`
                 if arg.is_number_0() {
-                    Some(self.empty_array_literal(ctx))
+                    Some(Self::empty_array_literal(ctx))
                 }
                 // `Array(8)` -> `Array(8)`
                 else if arg.is_number_literal() {
-                    Some(
-                        self.array_constructor_call(
-                            ctx.ast.move_vec(&mut call_expr.arguments),
-                            ctx,
-                        ),
-                    )
+                    Some(Self::array_constructor_call(
+                        ctx.ast.move_vec(&mut call_expr.arguments),
+                        ctx,
+                    ))
                 }
                 // `Array(literal)` -> `[literal]`
                 else if arg.is_literal() || matches!(arg, Expression::ArrayExpression(_)) {
@@ -453,7 +450,7 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
                     let element =
                         ctx.ast.array_expression_element_expression(ctx.ast.move_expression(arg));
                     elements.push(element);
-                    Some(self.array_literal(elements, ctx))
+                    Some(Self::array_literal(elements, ctx))
                 } else {
                     None
                 }
@@ -467,7 +464,7 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
                         },
                     ),
                 );
-                Some(self.array_literal(elements, ctx))
+                Some(Self::array_literal(elements, ctx))
             }
         } else {
             None
@@ -489,7 +486,6 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
 
     /// returns an `Array()` constructor call with zero, one, or more arguments, copying from the input
     fn array_constructor_call(
-        &self,
         arguments: Vec<'a, Argument<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
@@ -499,7 +495,6 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
 
     /// returns an array literal `[]` of zero, one, or more elements, copying from the input
     fn array_literal(
-        &self,
         elements: Vec<'a, ArrayExpressionElement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
@@ -507,12 +502,12 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
     }
 
     /// returns a new empty array literal expression: `[]`
-    fn empty_array_literal(&self, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        self.array_literal(ctx.ast.vec(), ctx)
+    fn empty_array_literal(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+        Self::array_literal(ctx.ast.vec(), ctx)
     }
 }
 
-/// <https://github.com/google/closure-compiler/blob/master/test/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntaxTest.java>
+/// Port from <https://github.com/google/closure-compiler/blob/master/test/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntaxTest.java>
 #[cfg(test)]
 mod test {
     use oxc_allocator::Allocator;
@@ -644,5 +639,280 @@ mod test {
             "x = new Array(Object(), Array(\"abc\", Object(), Array(Array())))",
             "x = [{}, [\"abc\", {}, [[]]]]",
         );
+    }
+
+    #[test]
+    #[ignore]
+    fn test_split_comma_expressions() {
+        // late = false;
+        // Don't try to split in expressions.
+        test_same("while (foo(), !0) boo()");
+        test_same("var a = (foo(), !0);");
+        test_same("a = (foo(), !0);");
+
+        // Don't try to split COMMA under LABELs.
+        test_same("a:a(),b()");
+        test("1, 2, 3, 4", "1; 2; 3; 4");
+        test("x = 1, 2, 3", "x = 1; 2; 3");
+        test_same("x = (1, 2, 3)");
+        test("1, (2, 3), 4", "1; 2; 3; 4");
+        test("(x=2), foo()", "x=2; foo()");
+        test("foo(), boo();", "foo(); boo()");
+        test("(a(), b()), (c(), d());", "a(); b(); c(); d()");
+        test("a(); b(); (c(), d());", "a(); b(); c(); d();");
+        test("foo(), true", "foo();true");
+        test_same("foo();true");
+        test("function x(){foo(), !0}", "function x(){foo(); !0}");
+        test_same("function x(){foo(); !0}");
+    }
+
+    #[test]
+    #[ignore]
+    fn test_comma1() {
+        // late = false;
+        test("1, 2", "1; 2");
+        // late = true;
+        // test_same("1, 2");
+    }
+
+    #[test]
+    #[ignore]
+    fn test_comma2() {
+        // late = false;
+        test("1, a()", "1; a()");
+        test("1, a?.()", "1; a?.()");
+
+        // late = true;
+        // test_same("1, a()");
+        // test_same("1, a?.()");
+    }
+
+    #[test]
+    #[ignore]
+    fn test_comma3() {
+        // late = false;
+        test("1, a(), b()", "1; a(); b()");
+        test("1, a?.(), b?.()", "1; a?.(); b?.()");
+
+        // late = true;
+        // test_same("1, a(), b()");
+        // test_same("1, a?.(), b?.()");
+    }
+
+    #[test]
+    #[ignore]
+    fn test_comma4() {
+        // late = false;
+        test("a(), b()", "a();b()");
+        test("a?.(), b?.()", "a?.();b?.()");
+
+        // late = true;
+        // test_same("a(), b()");
+        // test_same("a?.(), b?.()");
+    }
+
+    #[test]
+    #[ignore]
+    fn test_comma5() {
+        // late = false;
+        test("a(), b(), 1", "a(); b(); 1");
+        test("a?.(), b?.(), 1", "a?.(); b?.(); 1");
+
+        // late = true;
+        // test_same("a(), b(), 1");
+        // test_same("a?.(), b?.(), 1");
+    }
+
+    #[test]
+    #[ignore]
+    fn test_string_array_splitting() {
+        test_same("var x=['1','2','3','4']");
+        test_same("var x=['1','2','3','4','5']");
+        test("var x=['1','2','3','4','5','6']", "var x='123456'.split('')");
+        test("var x=['1','2','3','4','5','00']", "var x='1 2 3 4 5 00'.split(' ')");
+        test("var x=['1','2','3','4','5','6','7']", "var x='1234567'.split('')");
+        test("var x=['1','2','3','4','5','6','00']", "var x='1 2 3 4 5 6 00'.split(' ')");
+        test("var x=[' ,',',',',',',',',',',']", "var x=' ,;,;,;,;,;,'.split(';')");
+        test("var x=[',,',' ',',',',',',',',']", "var x=',,; ;,;,;,;,'.split(';')");
+        test("var x=['a,',' ',',',',',',',',']", "var x='a,; ;,;,;,;,'.split(';')");
+
+        // all possible delimiters used, leave it alone
+        test_same("var x=[',', ' ', ';', '{', '}']");
+    }
+
+    #[test]
+    #[ignore]
+    fn test_template_string_to_string() {
+        test("`abcde`", "'abcde'");
+        test("`ab cd ef`", "'ab cd ef'");
+        test_same("`hello ${name}`");
+        test_same("tag `hello ${name}`");
+        test_same("tag `hello`");
+        test("`hello ${'foo'}`", "'hello foo'");
+        test("`${2} bananas`", "'2 bananas'");
+        test("`This is ${true}`", "'This is true'");
+    }
+
+    #[test]
+    #[ignore]
+    fn test_bind_to_call1() {
+        test("(goog.bind(f))()", "f()");
+        test("(goog.bind(f,a))()", "f.call(a)");
+        test("(goog.bind(f,a,b))()", "f.call(a,b)");
+
+        test("(goog.bind(f))(a)", "f(a)");
+        test("(goog.bind(f,a))(b)", "f.call(a,b)");
+        test("(goog.bind(f,a,b))(c)", "f.call(a,b,c)");
+
+        test("(goog.partial(f))()", "f()");
+        test("(goog.partial(f,a))()", "f(a)");
+        test("(goog.partial(f,a,b))()", "f(a,b)");
+
+        test("(goog.partial(f))(a)", "f(a)");
+        test("(goog.partial(f,a))(b)", "f(a,b)");
+        test("(goog.partial(f,a,b))(c)", "f(a,b,c)");
+
+        test("((function(){}).bind())()", "((function(){}))()");
+        test("((function(){}).bind(a))()", "((function(){})).call(a)");
+        test("((function(){}).bind(a,b))()", "((function(){})).call(a,b)");
+
+        test("((function(){}).bind())(a)", "((function(){}))(a)");
+        test("((function(){}).bind(a))(b)", "((function(){})).call(a,b)");
+        test("((function(){}).bind(a,b))(c)", "((function(){})).call(a,b,c)");
+
+        // Without using type information we don't know "f" is a function.
+        test_same("(f.bind())()");
+        test_same("(f.bind(a))()");
+        test_same("(f.bind())(a)");
+        test_same("(f.bind(a))(b)");
+
+        // Don't rewrite if the bind isn't the immediate call target
+        test_same("(goog.bind(f)).call(g)");
+    }
+
+    #[test]
+    #[ignore]
+    fn test_bind_to_call2() {
+        test("(goog$bind(f))()", "f()");
+        test("(goog$bind(f,a))()", "f.call(a)");
+        test("(goog$bind(f,a,b))()", "f.call(a,b)");
+
+        test("(goog$bind(f))(a)", "f(a)");
+        test("(goog$bind(f,a))(b)", "f.call(a,b)");
+        test("(goog$bind(f,a,b))(c)", "f.call(a,b,c)");
+
+        test("(goog$partial(f))()", "f()");
+        test("(goog$partial(f,a))()", "f(a)");
+        test("(goog$partial(f,a,b))()", "f(a,b)");
+
+        test("(goog$partial(f))(a)", "f(a)");
+        test("(goog$partial(f,a))(b)", "f(a,b)");
+        test("(goog$partial(f,a,b))(c)", "f(a,b,c)");
+        // Don't rewrite if the bind isn't the immediate call target
+        test_same("(goog$bind(f)).call(g)");
+    }
+
+    #[test]
+    #[ignore]
+    fn test_bind_to_call3() {
+        // TODO(johnlenz): The code generator wraps free calls with (0,...) to
+        // prevent leaking "this", but the parser doesn't unfold it, making a
+        // AST comparison fail.  For now do a string comparison to validate the
+        // correct code is in fact generated.
+        // The FREE call wrapping should be moved out of the code generator
+        // and into a denormalizing pass.
+        // disableCompareAsTree();
+        // retraverseOnChange = true;
+        // late = false;
+
+        test("(goog.bind(f.m))()", "(0,f.m)()");
+        test("(goog.bind(f.m,a))()", "f.m.call(a)");
+
+        test("(goog.bind(f.m))(a)", "(0,f.m)(a)");
+        test("(goog.bind(f.m,a))(b)", "f.m.call(a,b)");
+
+        test("(goog.partial(f.m))()", "(0,f.m)()");
+        test("(goog.partial(f.m,a))()", "(0,f.m)(a)");
+
+        test("(goog.partial(f.m))(a)", "(0,f.m)(a)");
+        test("(goog.partial(f.m,a))(b)", "(0,f.m)(a,b)");
+
+        // Without using type information we don't know "f" is a function.
+        test_same("f.m.bind()()");
+        test_same("f.m.bind(a)()");
+        test_same("f.m.bind()(a)");
+        test_same("f.m.bind(a)(b)");
+
+        // Don't rewrite if the bind isn't the immediate call target
+        test_same("goog.bind(f.m).call(g)");
+    }
+
+    #[test]
+    #[ignore]
+    fn test_simple_function_call1() {
+        test("var a = String(23)", "var a = '' + 23");
+        // Don't fold the existence check to preserve behavior
+        test_same("var a = String?.(23)");
+
+        test("var a = String('hello')", "var a = '' + 'hello'");
+        // Don't fold the existence check to preserve behavior
+        test_same("var a = String?.('hello')");
+
+        test_same("var a = String('hello', bar());");
+        test_same("var a = String({valueOf: function() { return 1; }});");
+    }
+
+    #[test]
+    #[ignore]
+    fn test_simple_function_call2() {
+        test("var a = Boolean(true)", "var a = !0");
+        // Don't fold the existence check to preserve behavior
+        test("var a = Boolean?.(true)", "var a = Boolean?.(!0)");
+
+        test("var a = Boolean(false)", "var a = !1");
+        // Don't fold the existence check to preserve behavior
+        test("var a = Boolean?.(false)", "var a = Boolean?.(!1)");
+
+        test("var a = Boolean(1)", "var a = !!1");
+        // Don't fold the existence check to preserve behavior
+        test_same("var a = Boolean?.(1)");
+
+        test("var a = Boolean(x)", "var a = !!x");
+        // Don't fold the existence check to preserve behavior
+        test_same("var a = Boolean?.(x)");
+
+        test("var a = Boolean({})", "var a = !!{}");
+        // Don't fold the existence check to preserve behavior
+        test_same("var a = Boolean?.({})");
+
+        test_same("var a = Boolean()");
+        test_same("var a = Boolean(!0, !1);");
+    }
+
+    #[test]
+    #[ignore]
+    fn test_rotate_associative_operators() {
+        test("a || (b || c); a * (b * c); a | (b | c)", "(a || b) || c; (a * b) * c; (a | b) | c");
+        test_same("a % (b % c); a / (b / c); a - (b - c);");
+        test("a * (b % c);", "b % c * a");
+        test("a * b * (c / d)", "c / d * b * a");
+        test("(a + b) * (c % d)", "c % d * (a + b)");
+        test_same("(a / b) * (c % d)");
+        test_same("(c = 5) * (c % d)");
+        test("(a + b) * c * (d % e)", "d % e * c * (a + b)");
+        test("!a * c * (d % e)", "d % e * c * !a");
+    }
+
+    #[test]
+    #[ignore]
+    fn nullish_coalesce() {
+        test("a ?? (b ?? c);", "(a ?? b) ?? c");
+    }
+
+    #[test]
+    #[ignore]
+    fn test_no_rotate_infinite_loop() {
+        test("1/x * (y/1 * (1/z))", "1/x * (y/1) * (1/z)");
+        test_same("1/x * (y/1) * (1/z)");
     }
 }

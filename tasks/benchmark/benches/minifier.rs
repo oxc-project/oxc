@@ -26,7 +26,7 @@ fn bench_minifier(criterion: &mut Criterion) {
                 // Create fresh AST + semantic data for each iteration
                 let program = Parser::new(&allocator, source_text, source_type).parse().program;
                 let program = allocator.alloc(program);
-                let (symbols, scopes) = SemanticBuilder::new(source_text)
+                let (symbols, scopes) = SemanticBuilder::new()
                     .build(program)
                     .semantic
                     .into_symbol_table_and_scope_tree();

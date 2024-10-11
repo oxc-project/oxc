@@ -16,8 +16,12 @@ use crate::{JsxRuntime, TransformCtx, TransformOptions};
 /// otherwise `JSDoc` could be used instead.
 ///
 /// This behavior is aligned with Babel.
-pub(crate) fn update_options_with_comments(options: &mut TransformOptions, ctx: &TransformCtx) {
-    for comment in ctx.trivias.comments() {
+pub(crate) fn update_options_with_comments(
+    comments: &[Comment],
+    options: &mut TransformOptions,
+    ctx: &TransformCtx,
+) {
+    for comment in comments {
         update_options_with_comment(options, comment, ctx.source_text);
     }
 }

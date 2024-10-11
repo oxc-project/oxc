@@ -116,7 +116,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_type_annotation(
         &mut self,
     ) -> Result<Option<Box<'a, TSTypeAnnotation<'a>>>> {
-        if !self.ts_enabled() {
+        if !self.is_ts {
             return Ok(None);
         }
         if !self.at(Kind::Colon) {
@@ -398,7 +398,7 @@ impl<'a> ParserImpl<'a> {
                 if declare {
                     self.parse_ts_declare_function(start_span, modifiers)
                         .map(Declaration::FunctionDeclaration)
-                } else if self.ts_enabled() {
+                } else if self.is_ts {
                     self.parse_ts_function_impl(start_span, FunctionKind::Declaration, modifiers)
                         .map(Declaration::FunctionDeclaration)
                 } else {

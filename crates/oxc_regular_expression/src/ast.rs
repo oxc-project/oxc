@@ -351,21 +351,32 @@ pub struct CapturingGroup<'a> {
 pub struct IgnoreGroup<'a> {
     #[serde(flatten)]
     pub span: Span,
-    pub enabling_modifiers: Option<ModifierFlags>,
-    pub disabling_modifiers: Option<ModifierFlags>,
+    pub modifiers: Option<Modifiers>,
     pub body: Disjunction<'a>,
 }
 
-/// Pattern modifiers in [`IgnoreGroup`].
-/// e.g. `(?i:...)`, `(?-s:...)`
+/// Modifiers in [`IgnoreGroup`].
+/// e.g. `i` in `(?i:...)`, `-s` in `(?-s:...)`
 #[ast]
 #[derive(Debug)]
 #[generate_derive(CloneIn, ContentEq, ContentHash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-pub struct ModifierFlags {
+pub struct Modifiers {
+    #[serde(flatten)]
+    pub span: Span,
+    pub enabling: Option<Modifier>,
+    pub disabling: Option<Modifier>,
+}
+
+/// Each part of modifier in [`Modifiers`].
+#[ast]
+#[derive(Debug)]
+#[generate_derive(CloneIn, ContentEq, ContentHash)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+pub struct Modifier {
     pub ignore_case: bool,
-    pub sticky: bool,
     pub multiline: bool,
+    pub sticky: bool,
 }
 
 /// Backreference by index.

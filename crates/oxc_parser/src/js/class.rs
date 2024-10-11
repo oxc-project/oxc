@@ -75,8 +75,7 @@ impl<'a> ParserImpl<'a> {
             None
         };
 
-        let type_parameters =
-            if self.ts_enabled() { self.parse_ts_type_parameters()? } else { None };
+        let type_parameters = if self.is_ts { self.parse_ts_type_parameters()? } else { None };
         let (extends, implements) = self.parse_heritage_clause()?;
         let mut super_class = None;
         let mut super_type_parameters = None;
@@ -283,7 +282,7 @@ impl<'a> ParserImpl<'a> {
 
         if let PropertyKey::PrivateIdentifier(private_ident) = &key {
             // `private #foo`, etc. is illegal
-            if self.ts_enabled() {
+            if self.is_ts {
                 self.verify_modifiers(
                     &modifiers,
                     ModifierFlags::all() - ModifierFlags::ACCESSIBILITY,
@@ -457,8 +456,7 @@ impl<'a> ParserImpl<'a> {
         optional: bool,
         definite: bool,
     ) -> Result<ClassElement<'a>> {
-        let type_annotation =
-            if self.ts_enabled() { self.parse_ts_type_annotation()? } else { None };
+        let type_annotation = if self.is_ts { self.parse_ts_type_annotation()? } else { None };
         let decorators = self.consume_decorators();
         let value = if self.eat(Kind::Eq) { Some(self.parse_expr()?) } else { None };
         self.asi()?;
@@ -506,8 +504,7 @@ impl<'a> ParserImpl<'a> {
         definite: bool,
         accessibility: Option<TSAccessibility>,
     ) -> Result<ClassElement<'a>> {
-        let type_annotation =
-            if self.ts_enabled() { self.parse_ts_type_annotation()? } else { None };
+        let type_annotation = if self.is_ts { self.parse_ts_type_annotation()? } else { None };
         let value =
             self.eat(Kind::Eq).then(|| self.parse_assignment_expression_or_higher()).transpose()?;
         let r#type = if r#abstract {

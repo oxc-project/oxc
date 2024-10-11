@@ -34,7 +34,7 @@ impl<'a> ParserImpl<'a> {
 
         self.bump_any(); // advance `import`
 
-        if self.ts_enabled()
+        if self.is_ts
             && ((self.cur_kind().is_binding_identifier() && self.peek_at(Kind::Eq))
                 || (self.at(Kind::Type)
                     && self.peek_kind().is_binding_identifier()
@@ -208,10 +208,10 @@ impl<'a> ParserImpl<'a> {
         self.bump_any(); // advance `export`
 
         let decl = match self.cur_kind() {
-            Kind::Eq if self.ts_enabled() => self
+            Kind::Eq if self.is_ts => self
                 .parse_ts_export_assignment_declaration(span)
                 .map(ModuleDeclaration::TSExportAssignment),
-            Kind::As if self.peek_at(Kind::Namespace) && self.ts_enabled() => self
+            Kind::As if self.peek_at(Kind::Namespace) && self.is_ts => self
                 .parse_ts_export_namespace()
                 .map(ModuleDeclaration::TSNamespaceExportDeclaration),
             Kind::Default => self
@@ -223,7 +223,7 @@ impl<'a> ParserImpl<'a> {
             Kind::LCurly => self
                 .parse_export_named_specifiers(span)
                 .map(ModuleDeclaration::ExportNamedDeclaration),
-            Kind::Type if self.peek_at(Kind::LCurly) && self.ts_enabled() => self
+            Kind::Type if self.peek_at(Kind::LCurly) && self.is_ts => self
                 .parse_export_named_specifiers(span)
                 .map(ModuleDeclaration::ExportNamedDeclaration),
             Kind::Type if self.peek_at(Kind::Star) => {
@@ -328,11 +328,8 @@ impl<'a> ParserImpl<'a> {
         // For tc39/proposal-decorators
         // For more information, please refer to <https://babeljs.io/docs/babel-plugin-proposal-decorators#decoratorsbeforeexport>
         self.eat_decorators()?;
-        let modifiers = if self.ts_enabled() {
-            self.eat_modifiers_before_declaration()?
-        } else {
-            Modifiers::empty()
-        };
+        let modifiers =
+            if self.is_ts { self.eat_modifiers_before_declaration()? } else { Modifiers::empty() };
 
         let declaration = self.parse_declaration(decl_span, &modifiers)?;
         let span = self.end_span(span);
@@ -362,16 +359,13 @@ impl<'a> ParserImpl<'a> {
             Kind::Class => self
                 .parse_class_declaration(decl_span, /* modifiers */ &Modifiers::empty())
                 .map(ExportDefaultDeclarationKind::ClassDeclaration)?,
-            _ if self.at(Kind::Abstract) && self.peek_at(Kind::Class) && self.ts_enabled() => {
+            _ if self.at(Kind::Abstract) && self.peek_at(Kind::Class) && self.is_ts => {
                 // eat the abstract modifier
                 let modifiers = self.eat_modifiers_before_declaration()?;
                 self.parse_class_declaration(decl_span, &modifiers)
                     .map(ExportDefaultDeclarationKind::ClassDeclaration)?
             }
-            _ if self.at(Kind::Interface)
-                && !self.peek_token().is_on_new_line
-                && self.ts_enabled() =>
-            {
+            _ if self.at(Kind::Interface) && !self.peek_token().is_on_new_line && self.is_ts => {
                 self.parse_ts_interface_declaration(decl_span, &Modifiers::empty()).map(|decl| {
                     match decl {
                         Declaration::TSInterfaceDeclaration(decl) => {
@@ -424,7 +418,7 @@ impl<'a> ParserImpl<'a> {
         let specifier_span = self.start_span();
         let peek_kind = self.peek_kind();
         let mut import_kind = ImportOrExportKind::Value;
-        if self.ts_enabled() && self.at(Kind::Type) {
+        if self.is_ts && self.at(Kind::Type) {
             if self.peek_at(Kind::As) {
                 if self.nth_at(2, Kind::As) {
                     if self.nth_kind(3).is_identifier_name() {
@@ -477,7 +471,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn parse_import_or_export_kind(&mut self) -> ImportOrExportKind {
-        if !self.ts_enabled() {
+        if !self.is_ts {
             return ImportOrExportKind::Value;
         }
         // OK
@@ -521,7 +515,7 @@ impl<'a> ParserImpl<'a> {
         // export { type as as }       // name: `type`    type-export: `false` (aliased to `as`)
         // export { type as as as }    // name: `as`      type-export: `true`, aliased to `as`
         let mut export_kind = ImportOrExportKind::Value;
-        if self.ts_enabled() && self.at(Kind::Type) {
+        if self.is_ts && self.at(Kind::Type) {
             if self.peek_at(Kind::As) {
                 if self.nth_at(2, Kind::As) {
                     if self.nth_at(3, Kind::Str) || self.nth_kind(3).is_identifier_name() {

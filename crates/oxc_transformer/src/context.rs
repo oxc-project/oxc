@@ -4,7 +4,6 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use oxc_ast::Trivias;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::SourceType;
 
@@ -18,8 +17,6 @@ use crate::{
 
 pub struct TransformCtx<'a> {
     errors: RefCell<Vec<OxcDiagnostic>>,
-
-    pub trivias: Trivias,
 
     /// <https://babeljs.io/docs/options#filename>
     pub filename: String,
@@ -41,12 +38,7 @@ pub struct TransformCtx<'a> {
 }
 
 impl<'a> TransformCtx<'a> {
-    pub fn new(
-        source_path: &Path,
-        source_text: &'a str,
-        trivias: Trivias,
-        options: &TransformOptions,
-    ) -> Self {
+    pub fn new(source_path: &Path, options: &TransformOptions) -> Self {
         let filename = source_path
             .file_stem() // omit file extension
             .map_or_else(|| String::from("unknown"), |name| name.to_string_lossy().to_string());
@@ -60,8 +52,7 @@ impl<'a> TransformCtx<'a> {
             filename,
             source_path,
             source_type: SourceType::default(),
-            source_text,
-            trivias,
+            source_text: "",
             module_imports: ModuleImportsStore::new(),
             var_declarations: VarDeclarationsStore::new(),
             top_level_statements: TopLevelStatementsStore::new(),

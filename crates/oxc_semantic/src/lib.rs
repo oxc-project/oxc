@@ -5,9 +5,12 @@
 #![doc = include_str!("../examples/simple.rs")]
 //! ```
 
+use std::ops::RangeBounds;
 use std::sync::Arc;
 
-use oxc_ast::{ast::IdentifierReference, AstKind, Trivias};
+use oxc_ast::{
+    ast::IdentifierReference, comments_range, has_comments_between, AstKind, Comment, CommentsRange,
+};
 use oxc_cfg::ControlFlowGraph;
 use oxc_span::{GetSpan, SourceType, Span};
 pub use oxc_syntax::{
@@ -76,7 +79,8 @@ pub struct Semantic<'a> {
     classes: ClassTable,
 
     /// Parsed comments.
-    trivias: Trivias,
+    comments: &'a oxc_allocator::Vec<'a, Comment>,
+    irregular_whitespaces: Box<[Span]>,
 
     module_record: Arc<ModuleRecord>,
 
@@ -127,9 +131,28 @@ impl<'a> Semantic<'a> {
         &mut self.scopes
     }
 
+    pub fn set_irregular_whitespaces(&mut self, irregular_whitespaces: Box<[Span]>) {
+        self.irregular_whitespaces = irregular_whitespaces;
+    }
+
     /// Trivias (comments) found while parsing
-    pub fn trivias(&self) -> &Trivias {
-        &self.trivias
+    pub fn comments(&self) -> &[Comment] {
+        self.comments
+    }
+
+    pub fn comments_range<R>(&self, range: R) -> CommentsRange<'_>
+    where
+        R: RangeBounds<u32>,
+    {
+        comments_range(self.comments, range)
+    }
+
+    pub fn has_comments_between(&self, span: Span) -> bool {
+        has_comments_between(self.comments, span)
+    }
+
+    pub fn irregular_whitespaces(&self) -> &[Span] {
+        &self.irregular_whitespaces
     }
 
     /// Parsed [`JSDoc`] comments.
@@ -230,7 +253,7 @@ mod tests {
         let parse = oxc_parser::Parser::new(allocator, source, source_type).parse();
         assert!(parse.errors.is_empty());
         let program = allocator.alloc(parse.program);
-        let semantic = SemanticBuilder::new(source).build(program);
+        let semantic = SemanticBuilder::new().build(program);
         assert!(semantic.errors.is_empty(), "Parse error: {}", semantic.errors[0]);
         semantic.semantic
     }

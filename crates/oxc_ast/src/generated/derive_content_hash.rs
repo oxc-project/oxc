@@ -8,6 +8,9 @@ use std::{hash::Hasher, mem::discriminant};
 use oxc_span::hash::ContentHash;
 
 #[allow(clippy::wildcard_imports)]
+use crate::ast::comment::*;
+
+#[allow(clippy::wildcard_imports)]
 use crate::ast::js::*;
 
 #[allow(clippy::wildcard_imports)]
@@ -70,6 +73,8 @@ impl<'a> ContentHash for StringLiteral<'a> {
 impl<'a> ContentHash for Program<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.source_type, state);
+        ContentHash::content_hash(&self.source_text, state);
+        ContentHash::content_hash(&self.comments, state);
         ContentHash::content_hash(&self.hashbang, state);
         ContentHash::content_hash(&self.directives, state);
         ContentHash::content_hash(&self.body, state);
@@ -1846,10 +1851,10 @@ impl<'a> ContentHash for TSIndexSignature<'a> {
 
 impl<'a> ContentHash for TSCallSignatureDeclaration<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
+        ContentHash::content_hash(&self.type_parameters, state);
         ContentHash::content_hash(&self.this_param, state);
         ContentHash::content_hash(&self.params, state);
         ContentHash::content_hash(&self.return_type, state);
-        ContentHash::content_hash(&self.type_parameters, state);
     }
 }
 
@@ -1865,18 +1870,18 @@ impl<'a> ContentHash for TSMethodSignature<'a> {
         ContentHash::content_hash(&self.computed, state);
         ContentHash::content_hash(&self.optional, state);
         ContentHash::content_hash(&self.kind, state);
+        ContentHash::content_hash(&self.type_parameters, state);
         ContentHash::content_hash(&self.this_param, state);
         ContentHash::content_hash(&self.params, state);
         ContentHash::content_hash(&self.return_type, state);
-        ContentHash::content_hash(&self.type_parameters, state);
     }
 }
 
 impl<'a> ContentHash for TSConstructSignatureDeclaration<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
+        ContentHash::content_hash(&self.type_parameters, state);
         ContentHash::content_hash(&self.params, state);
         ContentHash::content_hash(&self.return_type, state);
-        ContentHash::content_hash(&self.type_parameters, state);
     }
 }
 
@@ -2020,19 +2025,19 @@ impl<'a> ContentHash for TSImportAttributeName<'a> {
 
 impl<'a> ContentHash for TSFunctionType<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
+        ContentHash::content_hash(&self.type_parameters, state);
         ContentHash::content_hash(&self.this_param, state);
         ContentHash::content_hash(&self.params, state);
         ContentHash::content_hash(&self.return_type, state);
-        ContentHash::content_hash(&self.type_parameters, state);
     }
 }
 
 impl<'a> ContentHash for TSConstructorType<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.r#abstract, state);
+        ContentHash::content_hash(&self.type_parameters, state);
         ContentHash::content_hash(&self.params, state);
         ContentHash::content_hash(&self.return_type, state);
-        ContentHash::content_hash(&self.type_parameters, state);
     }
 }
 
@@ -2371,5 +2376,27 @@ impl<'a> ContentHash for JSXSpreadChild<'a> {
 impl<'a> ContentHash for JSXText<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.value, state);
+    }
+}
+
+impl ContentHash for CommentKind {
+    fn content_hash<H: Hasher>(&self, state: &mut H) {
+        ContentHash::content_hash(&discriminant(self), state);
+    }
+}
+
+impl ContentHash for CommentPosition {
+    fn content_hash<H: Hasher>(&self, state: &mut H) {
+        ContentHash::content_hash(&discriminant(self), state);
+    }
+}
+
+impl ContentHash for Comment {
+    fn content_hash<H: Hasher>(&self, state: &mut H) {
+        ContentHash::content_hash(&self.kind, state);
+        ContentHash::content_hash(&self.position, state);
+        ContentHash::content_hash(&self.attached_to, state);
+        ContentHash::content_hash(&self.preceded_by_newline, state);
+        ContentHash::content_hash(&self.followed_by_newline, state);
     }
 }

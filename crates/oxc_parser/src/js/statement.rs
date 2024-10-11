@@ -105,7 +105,7 @@ impl<'a> ParserImpl<'a> {
             // [+Return] ReturnStatement[?Yield, ?Await]
             Kind::Return => self.parse_return_statement(),
             Kind::Var => self.parse_variable_statement(stmt_ctx),
-            Kind::Const if !(self.ts_enabled() && self.is_at_enum_declaration()) => {
+            Kind::Const if !(self.is_ts && self.is_at_enum_declaration()) => {
                 self.parse_variable_statement(stmt_ctx)
             }
             Kind::Let if !self.cur_token().escaped() => self.parse_let(stmt_ctx),
@@ -116,7 +116,7 @@ impl<'a> ParserImpl<'a> {
             }
             Kind::Using if self.peek_kind().is_binding_identifier() => self.parse_using(),
             _ if self.at_function_with_async() => self.parse_function_declaration(stmt_ctx),
-            _ if self.ts_enabled() && self.at_start_of_ts_declaration() => {
+            _ if self.is_ts && self.at_start_of_ts_declaration() => {
                 self.parse_ts_declaration_statement(start_span)
             }
             _ => self.parse_expression_or_labeled_statement(),

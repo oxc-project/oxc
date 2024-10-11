@@ -1,4 +1,4 @@
-#![allow(clippy::wildcard_imports, clippy::new_without_default, clippy::unused_self)]
+#![allow(clippy::wildcard_imports)]
 
 //! ECMAScript Minifier
 

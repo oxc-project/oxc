@@ -65,7 +65,7 @@ impl<'a> ParserImpl<'a> {
             // Report and handle illegal modifiers
             // e.g. const x = { public foo() {} }
             modifier_kind
-                if self.ts_enabled()
+                if self.is_ts
                     && modifier_kind.is_modifier_kind()
                     && peek_kind.is_identifier_or_keyword() =>
             {

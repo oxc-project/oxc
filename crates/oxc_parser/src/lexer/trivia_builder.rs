@@ -1,4 +1,4 @@
-use oxc_ast::{Comment, CommentKind, CommentPosition, Trivias};
+use oxc_ast::ast::{Comment, CommentKind, CommentPosition};
 use oxc_span::Span;
 
 use super::{Kind, Token};
@@ -10,7 +10,7 @@ pub struct TriviaBuilder {
     // filtered out at insertion time.
     pub(crate) comments: Vec<Comment>,
 
-    irregular_whitespaces: Vec<Span>,
+    pub(crate) irregular_whitespaces: Vec<Span>,
 
     // states
     /// index of processed comments
@@ -36,10 +36,6 @@ impl Default for TriviaBuilder {
 }
 
 impl TriviaBuilder {
-    pub fn build(self) -> Trivias {
-        Trivias::new(self.comments.into_boxed_slice(), self.irregular_whitespaces)
-    }
-
     pub fn add_irregular_whitespace(&mut self, start: u32, end: u32) {
         self.irregular_whitespaces.push(Span::new(start, end));
     }
@@ -119,7 +115,7 @@ mod test {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
-        ret.trivias.comments().copied().collect::<Vec<_>>()
+        ret.program.comments.iter().copied().collect::<Vec<_>>()
     }
 
     #[test]

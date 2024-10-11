@@ -1,7 +1,7 @@
 use std::{borrow::Cow, cell::Cell, fmt};
 
 use oxc_allocator::{Box, FromIn, Vec};
-use oxc_span::{Atom, GetSpan, SourceType, Span};
+use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::{
     operator::UnaryOperator,
     reference::ReferenceId,
@@ -27,18 +27,6 @@ export interface FormalParameterRest extends Span {
     optional: boolean,
 }
 "#;
-
-impl<'a> Program<'a> {
-    pub fn new(
-        span: Span,
-        source_type: SourceType,
-        directives: Vec<'a, Directive<'a>>,
-        hashbang: Option<Hashbang<'a>>,
-        body: Vec<'a, Statement<'a>>,
-    ) -> Self {
-        Self { span, source_type, directives, hashbang, body, scope_id: Cell::default() }
-    }
-}
 
 impl<'a> Program<'a> {
     pub fn is_empty(&self) -> bool {

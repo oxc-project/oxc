@@ -26,43 +26,29 @@ fn bench_transformer(criterion: &mut Criterion) {
                 allocator.reset();
 
                 // Create fresh AST + semantic data for each iteration
-                let ParserReturn { trivias, program, .. } =
+                let ParserReturn { program, .. } =
                     Parser::new(&allocator, source_text, source_type).parse();
                 let program = allocator.alloc(program);
-                let (symbols, scopes) = SemanticBuilder::new(source_text)
+                let (symbols, scopes) = SemanticBuilder::new()
                     // Estimate transformer will triple scopes, symbols, references
                     .with_excess_capacity(2.0)
                     .build(program)
                     .semantic
                     .into_symbol_table_and_scope_tree();
 
-                // Clone `trivias` (which is an `Arc`). We keep a 2nd copy, so the value is not dropped
-                // when `Transformer` is dropped inside the measured section.
-                // We clone `trivias` here rather than in `routine` to avoid the cloning being included
-                // in measure.
-                let trivias_copy = trivias.clone();
-
                 // `enable_all` enables all transforms except arrow functions transform
                 let mut options = TransformOptions::enable_all();
                 options.es2015.arrow_function = Some(ArrowFunctionsOptions { spec: true });
 
                 runner.run(|| {
-                    let ret = Transformer::new(
-                        &allocator,
-                        Path::new(&file.file_name),
-                        source_text,
-                        trivias,
-                        options,
-                    )
-                    .build_with_symbols_and_scopes(symbols, scopes, program);
+                    let ret = Transformer::new(&allocator, Path::new(&file.file_name), options)
+                        .build_with_symbols_and_scopes(symbols, scopes, program);
 
                     // Return the `TransformerReturn`, so it's dropped outside of the measured section.
                     // `TransformerReturn` contains `ScopeTree` and `SymbolTable` which are costly to drop.
                     // That's not central to transformer, so we don't want it included in this measure.
                     ret
                 });
-
-                drop(trivias_copy);
             });
         });
     }

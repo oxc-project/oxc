@@ -24,7 +24,7 @@ impl<'a> Compressor<'a> {
 
     pub fn build(self, program: &mut Program<'a>) {
         let (symbols, scopes) =
-            SemanticBuilder::new("").build(program).semantic.into_symbol_table_and_scope_tree();
+            SemanticBuilder::new().build(program).semantic.into_symbol_table_and_scope_tree();
         self.build_with_symbols_and_scopes(symbols, scopes, program);
     }
 
@@ -38,7 +38,7 @@ impl<'a> Compressor<'a> {
         RemoveSyntax::new(self.options).build(program, &mut ctx);
 
         if self.options.dead_code_elimination {
-            self.dead_code_elimination(program, &mut ctx);
+            Self::dead_code_elimination(program, &mut ctx);
             return;
         }
 
@@ -76,7 +76,7 @@ impl<'a> Compressor<'a> {
         }
     }
 
-    fn dead_code_elimination(self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn dead_code_elimination(program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         PeepholeFoldConstants::new().build(program, ctx);
         PeepholeMinimizeConditions::new().build(program, ctx);
         PeepholeRemoveDeadCode::new().build(program, ctx);

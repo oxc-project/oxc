@@ -1,11 +1,14 @@
 commit: d62fa93c
 
 parser_test262 Summary:
-AST Parsed     : 43776/43776 (100.00%)
-Positive Passed: 43776/43776 (100.00%)
-Negative Passed: 4237/4239 (99.95%)
+AST Parsed     : 43914/43914 (100.00%)
+Positive Passed: 43913/43914 (100.00%)
+Negative Passed: 4320/4322 (99.95%)
 Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attributes/json-invalid.js
 Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attributes/json-named-bindings.js
+Expect to Parse: tasks/coverage/test262/test/built-ins/String/prototype/split/separator-regexp.js
+
+  × Regular Expression content mismatch for `/\cY/`: `\c` == `\c`
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
     ╭─[test262/test/annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js:19:4]
@@ -20608,6 +20611,412 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  30 │ /
     ╰────
 
+  × Invalid regular expression: Invalid modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-add-remove-i.js:20:4]
+ 19 │ 
+ 20 │ /(?i-i:a)//*{ global-modifiers }*/;
+    ·    ───
+    ╰────
+
+  × Invalid regular expression: Invalid modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-add-remove-m.js:20:4]
+ 19 │ 
+ 20 │ /(?m-m:a)//*{ global-modifiers }*/;
+    ·    ───
+    ╰────
+
+  × Invalid regular expression: Invalid modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-add-remove-multi-duplicate.js:20:4]
+ 19 │ 
+ 20 │ /(?ims-m:a)//*{ global-modifiers }*/;
+    ·    ─────
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-add-remove-s-escape.js:20:4]
+ 19 │ 
+ 20 │ /(?\u{0073}-s:a)//*{ global-modifiers }*/;
+    ·    ▲
+    ╰────
+
+  × Invalid regular expression: Invalid modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-add-remove-s.js:20:4]
+ 19 │ 
+ 20 │ /(?s-s:a)//*{ global-modifiers }*/;
+    ·    ───
+    ╰────
+
+  × Invalid regular expression: Invalid modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-both-empty.js:20:4]
+ 19 │ 
+ 20 │ /(?-:a)//*{ global-modifiers }*/;
+    ·    ─
+    ╰────
+
+  × Invalid regular expression: Invalid modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-code-point-repeat-i-1.js:20:4]
+ 19 │ 
+ 20 │ /(?-ii:a)//*{ global-modifiers }*/;
+    ·    ───
+    ╰────
+
+  × Invalid regular expression: Invalid modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-code-point-repeat-i-2.js:20:4]
+ 19 │ 
+ 20 │ /(?-imsi:a)//*{ global-modifiers }*/;
+    ·    ─────
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-no-colon-1.js:19:4]
+ 18 │ 
+ 19 │ /(?ms-i)/;
+    ·    ────
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-no-colon-2.js:19:4]
+ 18 │ 
+ 19 │ /(?-s)/;
+    ·    ──
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-no-colon-3.js:19:4]
+ 18 │ 
+ 19 │ /(?i-)/;
+    ·    ──
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-arbitrary.js:20:4]
+ 19 │ 
+ 20 │ /(?-1:a)//*{ global-modifiers }*/;
+    ·    ─
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-combining-i.js:20:4]
+ 19 │ 
+ 20 │ /(?-iͥ:a)//*{ global-modifiers }*/;
+    ·    ──
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-combining-m.js:20:4]
+ 19 │ 
+ 20 │ /(?-mͫ:a)//*{ global-modifiers }*/;
+    ·    ──
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-combining-s.js:20:4]
+ 19 │ 
+ 20 │ /(?-s̀:a)//*{ global-modifiers }*/;
+    ·    ──
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-d.js:20:4]
+ 19 │ 
+ 20 │ /(?-d:a)//*{ global-modifiers }*/;
+    ·    ─
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-g.js:20:4]
+ 19 │ 
+ 20 │ /(?-g:a)//*{ global-modifiers }*/;
+    ·    ─
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-non-display-1.js:20:4]
+ 19 │ 
+ 20 │ /(?-s :a)//*{ global-modifiers }*/;
+    ·    ──
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-non-display-2.js:20:4]
+ 19 │ 
+ 20 │ /(?-s‎:a)//*{ global-modifiers }*/;
+    ·    ──
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-non-flag.js:20:4]
+ 19 │ 
+ 20 │ /(?-Q:a)//*{ global-modifiers }*/;
+    ·    ─
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-u.js:20:4]
+ 19 │ 
+ 20 │ /(?-u:a)//*{ global-modifiers }*/;
+    ·    ─
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-uppercase-I.js:20:4]
+ 19 │ 
+ 20 │ /(?-I:a)//*{ global-modifiers }*/;
+    ·    ─
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-y.js:20:4]
+ 19 │ 
+ 20 │ /(?-y:a)//*{ global-modifiers }*/;
+    ·    ─
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-zwj.js:20:4]
+ 19 │ 
+ 20 │ /(?-s‍:a)//*{ global-modifiers }*/;
+    ·    ──
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-zwnbsp.js:20:4]
+ 19 │ 
+ 20 │ /(?-s﻿:a)//*{ global-modifiers }*/;
+    ·    ──
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-zwnj.js:20:4]
+ 19 │ 
+ 20 │ /(?-s‌:a)//*{ global-modifiers }*/;
+    ·    ──
+    ╰────
+
+  × Invalid regular expression: Invalid modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-add-remove-i.js:20:4]
+ 19 │ 
+ 20 │ /(?i-i:a)//*{ global-modifiers }*/;
+    ·    ───
+    ╰────
+
+  × Invalid regular expression: Invalid modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-add-remove-m.js:20:4]
+ 19 │ 
+ 20 │ /(?m-m:a)//*{ global-modifiers }*/;
+    ·    ───
+    ╰────
+
+  × Invalid regular expression: Invalid modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-add-remove-multi-duplicate.js:20:4]
+ 19 │ 
+ 20 │ /(?m-ims:a)//*{ global-modifiers }*/;
+    ·    ─────
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-add-remove-s-escape.js:20:4]
+ 19 │ 
+ 20 │ /(?s-\u{0073}:a)//*{ global-modifiers }*/;
+    ·    ──
+    ╰────
+
+  × Invalid regular expression: Invalid modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-add-remove-s.js:20:4]
+ 19 │ 
+ 20 │ /(?s-s:a)//*{ global-modifiers }*/;
+    ·    ───
+    ╰────
+
+  × Invalid regular expression: Invalid modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-code-point-repeat-i-1.js:20:4]
+ 19 │ 
+ 20 │ /(?ii-:a)//*{ global-modifiers }*/;
+    ·    ───
+    ╰────
+
+  × Invalid regular expression: Invalid modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-code-point-repeat-i-2.js:20:4]
+ 19 │ 
+ 20 │ /(?imsi-:a)//*{ global-modifiers }*/;
+    ·    ─────
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-arbitrary.js:20:4]
+ 19 │ 
+ 20 │ /(?1-:a)//*{ global-modifiers }*/;
+    ·    ▲
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-combining-i.js:20:4]
+ 19 │ 
+ 20 │ /(?iͥ-:a)//*{ global-modifiers }*/;
+    ·    ─
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-combining-m.js:20:4]
+ 19 │ 
+ 20 │ /(?mͫ-:a)//*{ global-modifiers }*/;
+    ·    ─
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-combining-s.js:20:4]
+ 19 │ 
+ 20 │ /(?s̀-:a)//*{ global-modifiers }*/;
+    ·    ─
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-d.js:20:4]
+ 19 │ 
+ 20 │ /(?d-:a)//*{ global-modifiers }*/;
+    ·    ▲
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-g.js:20:4]
+ 19 │ 
+ 20 │ /(?g-:a)//*{ global-modifiers }*/;
+    ·    ▲
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-non-display-1.js:20:4]
+ 19 │ 
+ 20 │ /(?s -:a)//*{ global-modifiers }*/;
+    ·    ─
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-non-display-2.js:20:4]
+ 19 │ 
+ 20 │ /(?s‎-:a)//*{ global-modifiers }*/;
+    ·    ─
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-non-flag.js:20:4]
+ 19 │ 
+ 20 │ /(?Q-:a)//*{ global-modifiers }*/;
+    ·    ▲
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-u.js:20:4]
+ 19 │ 
+ 20 │ /(?u-:a)//*{ global-modifiers }*/;
+    ·    ▲
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-uppercase-I.js:20:4]
+ 19 │ 
+ 20 │ /(?I-:a)//*{ global-modifiers }*/;
+    ·    ▲
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-y.js:20:4]
+ 19 │ 
+ 20 │ /(?y-:a)//*{ global-modifiers }*/;
+    ·    ▲
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-zwj.js:20:4]
+ 19 │ 
+ 20 │ /(?s‍-:a)//*{ global-modifiers }*/;
+    ·    ─
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-zwnbsp.js:20:4]
+ 19 │ 
+ 20 │ /(?s﻿-:a)//*{ global-modifiers }*/;
+    ·    ─
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-zwnj.js:20:4]
+ 19 │ 
+ 20 │ /(?s‌-:a)//*{ global-modifiers }*/;
+    ·    ─
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-should-not-case-fold-i.js:20:4]
+ 19 │ 
+ 20 │ /(?I-:a)//*{ global-modifiers }*/;
+    ·    ▲
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-should-not-case-fold-m.js:20:4]
+ 19 │ 
+ 20 │ /(?M-:a)//*{ global-modifiers }*/;
+    ·    ▲
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-should-not-case-fold-s.js:20:4]
+ 19 │ 
+ 20 │ /(?S-:a)//*{ global-modifiers }*/;
+    ·    ▲
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-should-not-unicode-case-fold-i.js:20:4]
+ 19 │ 
+ 20 │ /(?İ-:a)//*{ global-modifiers }*/;
+    ·    ▲
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-reverse-should-not-unicode-case-fold-s.js:20:4]
+ 19 │ 
+ 20 │ /(?ſ-:a)//*{ global-modifiers }*/;
+    ·    ▲
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-should-not-case-fold-i.js:20:4]
+ 19 │ 
+ 20 │ /(?-I:a)//*{ global-modifiers }*/;
+    ·    ─
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-should-not-case-fold-m.js:20:4]
+ 19 │ 
+ 20 │ /(?-M:a)//*{ global-modifiers }*/;
+    ·    ─
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-should-not-case-fold-s.js:20:4]
+ 19 │ 
+ 20 │ /(?-S:a)//*{ global-modifiers }*/;
+    ·    ─
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-should-not-unicode-case-fold-i.js:20:4]
+ 19 │ 
+ 20 │ /(?-İ:a)//*{ global-modifiers }*/;
+    ·    ─
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-arithmetic-modifiers-should-not-unicode-case-fold-s.js:20:4]
+ 19 │ 
+ 20 │ /(?-ſ:a)//*{ global-modifiers }*/;
+    ·    ─
+    ╰────
+
   × Unexpected flag G in regular expression literal
     ╭─[test262/test/language/literals/regexp/early-err-bad-flag.js:19:4]
  18 │ 
@@ -20629,6 +21038,181 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
     ·    ▲
     ╰────
   help: Try insert a semicolon here
+
+  × Invalid regular expression: Invalid modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-modifiers-code-point-repeat-i-1.js:20:4]
+ 19 │ 
+ 20 │ /(?ii:a)//*{ global-modifiers }*/;
+    ·    ──
+    ╰────
+
+  × Invalid regular expression: Invalid modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-modifiers-code-point-repeat-i-2.js:20:4]
+ 19 │ 
+ 20 │ /(?imsi:a)//*{ global-modifiers }*/;
+    ·    ────
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-modifiers-other-code-point-arbitrary.js:20:4]
+ 19 │ 
+ 20 │ /(?1:a)//*{ global-modifiers }*/;
+    ·    ▲
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-modifiers-other-code-point-combining-i.js:20:4]
+ 19 │ 
+ 20 │ /(?iͥ:a)//*{ global-modifiers }*/;
+    ·    ─
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-modifiers-other-code-point-combining-m.js:20:4]
+ 19 │ 
+ 20 │ /(?mͫ:a)//*{ global-modifiers }*/;
+    ·    ─
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-modifiers-other-code-point-combining-s.js:20:4]
+ 19 │ 
+ 20 │ /(?s̀:a)//*{ global-modifiers }*/;
+    ·    ─
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-modifiers-other-code-point-d.js:20:4]
+ 19 │ 
+ 20 │ /(?d:a)//*{ global-modifiers }*/;
+    ·    ▲
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-modifiers-other-code-point-g.js:20:4]
+ 19 │ 
+ 20 │ /(?g:a)//*{ global-modifiers }*/;
+    ·    ▲
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-modifiers-other-code-point-non-display-1.js:20:4]
+ 19 │ 
+ 20 │ /(?s :a)//*{ global-modifiers }*/;
+    ·    ─
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-modifiers-other-code-point-non-display-2.js:20:4]
+ 19 │ 
+ 20 │ /(?s‎:a)//*{ global-modifiers }*/;
+    ·    ─
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-modifiers-other-code-point-non-flag.js:20:4]
+ 19 │ 
+ 20 │ /(?Q:a)//*{ global-modifiers }*/;
+    ·    ▲
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-modifiers-other-code-point-u.js:20:4]
+ 19 │ 
+ 20 │ /(?u:a)//*{ global-modifiers }*/;
+    ·    ▲
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-modifiers-other-code-point-uppercase-I.js:20:4]
+ 19 │ 
+ 20 │ /(?I:a)//*{ global-modifiers }*/;
+    ·    ▲
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-modifiers-other-code-point-y.js:20:4]
+ 19 │ 
+ 20 │ /(?y:a)//*{ global-modifiers }*/;
+    ·    ▲
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-modifiers-other-code-point-zwj.js:20:4]
+ 19 │ 
+ 20 │ /(?s‍:a)//*{ global-modifiers }*/;
+    ·    ─
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-modifiers-other-code-point-zwnbsp.js:20:4]
+ 19 │ 
+ 20 │ /(?s﻿:a)//*{ global-modifiers }*/;
+    ·    ─
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-modifiers-other-code-point-zwnj.js:20:4]
+ 19 │ 
+ 20 │ /(?s‌:a)//*{ global-modifiers }*/;
+    ·    ─
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-modifiers-should-not-case-fold-i.js:20:4]
+ 19 │ 
+ 20 │ /(?I:a)//*{ global-modifiers }*/;
+    ·    ▲
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-modifiers-should-not-case-fold-m.js:20:4]
+ 19 │ 
+ 20 │ /(?M:a)//*{ global-modifiers }*/;
+    ·    ▲
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-modifiers-should-not-case-fold-s.js:20:4]
+ 19 │ 
+ 20 │ /(?S:a)//*{ global-modifiers }*/;
+    ·    ▲
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-modifiers-should-not-unicode-case-fold-i.js:20:4]
+ 19 │ 
+ 20 │ /(?İ:a)//*{ global-modifiers }*/;
+    ·    ▲
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-modifiers-should-not-unicode-case-fold-s.js:20:4]
+ 19 │ 
+ 20 │ /(?ſ:a)//*{ global-modifiers }*/;
+    ·    ▲
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-modifiers-should-not-unicode-escape-i.js:20:4]
+ 19 │ 
+ 20 │ /(?\u0069:a)/u /* i */;
+    ·    ▲
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-modifiers-should-not-unicode-escape-m.js:20:4]
+ 19 │ 
+ 20 │ /(?\u006D:a)/u /* m */;
+    ·    ▲
+    ╰────
+
+  × Invalid regular expression: Unknown modifiers
+    ╭─[test262/test/language/literals/regexp/early-err-modifiers-should-not-unicode-escape-s.js:20:4]
+ 19 │ 
+ 20 │ /(?\u0073:a)/u /* s */;
+    ·    ▲
+    ╰────
 
   × Invalid regular expression: Invalid braced quantifier
     ╭─[test262/test/language/literals/regexp/early-err-pattern.js:18:2]

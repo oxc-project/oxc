@@ -258,18 +258,18 @@ pub(crate) enum AncestorType {
     TSPropertySignatureTypeAnnotation = 230,
     TSIndexSignatureParameters = 231,
     TSIndexSignatureTypeAnnotation = 232,
-    TSCallSignatureDeclarationThisParam = 233,
-    TSCallSignatureDeclarationParams = 234,
-    TSCallSignatureDeclarationReturnType = 235,
-    TSCallSignatureDeclarationTypeParameters = 236,
+    TSCallSignatureDeclarationTypeParameters = 233,
+    TSCallSignatureDeclarationThisParam = 234,
+    TSCallSignatureDeclarationParams = 235,
+    TSCallSignatureDeclarationReturnType = 236,
     TSMethodSignatureKey = 237,
-    TSMethodSignatureThisParam = 238,
-    TSMethodSignatureParams = 239,
-    TSMethodSignatureReturnType = 240,
-    TSMethodSignatureTypeParameters = 241,
-    TSConstructSignatureDeclarationParams = 242,
-    TSConstructSignatureDeclarationReturnType = 243,
-    TSConstructSignatureDeclarationTypeParameters = 244,
+    TSMethodSignatureTypeParameters = 238,
+    TSMethodSignatureThisParam = 239,
+    TSMethodSignatureParams = 240,
+    TSMethodSignatureReturnType = 241,
+    TSConstructSignatureDeclarationTypeParameters = 242,
+    TSConstructSignatureDeclarationParams = 243,
+    TSConstructSignatureDeclarationReturnType = 244,
     TSIndexSignatureNameTypeAnnotation = 245,
     TSInterfaceHeritageExpression = 246,
     TSInterfaceHeritageTypeParameters = 247,
@@ -291,13 +291,13 @@ pub(crate) enum AncestorType {
     TSImportAttributesElements = 263,
     TSImportAttributeName = 264,
     TSImportAttributeValue = 265,
-    TSFunctionTypeThisParam = 266,
-    TSFunctionTypeParams = 267,
-    TSFunctionTypeReturnType = 268,
-    TSFunctionTypeTypeParameters = 269,
-    TSConstructorTypeParams = 270,
-    TSConstructorTypeReturnType = 271,
-    TSConstructorTypeTypeParameters = 272,
+    TSFunctionTypeTypeParameters = 266,
+    TSFunctionTypeThisParam = 267,
+    TSFunctionTypeParams = 268,
+    TSFunctionTypeReturnType = 269,
+    TSConstructorTypeTypeParameters = 270,
+    TSConstructorTypeParams = 271,
+    TSConstructorTypeReturnType = 272,
     TSMappedTypeTypeParameter = 273,
     TSMappedTypeNameType = 274,
     TSMappedTypeTypeAnnotation = 275,
@@ -764,33 +764,33 @@ pub enum Ancestor<'a, 't> {
         AncestorType::TSIndexSignatureParameters as u16,
     TSIndexSignatureTypeAnnotation(TSIndexSignatureWithoutTypeAnnotation<'a, 't>) =
         AncestorType::TSIndexSignatureTypeAnnotation as u16,
+    TSCallSignatureDeclarationTypeParameters(
+        TSCallSignatureDeclarationWithoutTypeParameters<'a, 't>,
+    ) = AncestorType::TSCallSignatureDeclarationTypeParameters as u16,
     TSCallSignatureDeclarationThisParam(TSCallSignatureDeclarationWithoutThisParam<'a, 't>) =
         AncestorType::TSCallSignatureDeclarationThisParam as u16,
     TSCallSignatureDeclarationParams(TSCallSignatureDeclarationWithoutParams<'a, 't>) =
         AncestorType::TSCallSignatureDeclarationParams as u16,
     TSCallSignatureDeclarationReturnType(TSCallSignatureDeclarationWithoutReturnType<'a, 't>) =
         AncestorType::TSCallSignatureDeclarationReturnType as u16,
-    TSCallSignatureDeclarationTypeParameters(
-        TSCallSignatureDeclarationWithoutTypeParameters<'a, 't>,
-    ) = AncestorType::TSCallSignatureDeclarationTypeParameters as u16,
     TSMethodSignatureKey(TSMethodSignatureWithoutKey<'a, 't>) =
         AncestorType::TSMethodSignatureKey as u16,
+    TSMethodSignatureTypeParameters(TSMethodSignatureWithoutTypeParameters<'a, 't>) =
+        AncestorType::TSMethodSignatureTypeParameters as u16,
     TSMethodSignatureThisParam(TSMethodSignatureWithoutThisParam<'a, 't>) =
         AncestorType::TSMethodSignatureThisParam as u16,
     TSMethodSignatureParams(TSMethodSignatureWithoutParams<'a, 't>) =
         AncestorType::TSMethodSignatureParams as u16,
     TSMethodSignatureReturnType(TSMethodSignatureWithoutReturnType<'a, 't>) =
         AncestorType::TSMethodSignatureReturnType as u16,
-    TSMethodSignatureTypeParameters(TSMethodSignatureWithoutTypeParameters<'a, 't>) =
-        AncestorType::TSMethodSignatureTypeParameters as u16,
+    TSConstructSignatureDeclarationTypeParameters(
+        TSConstructSignatureDeclarationWithoutTypeParameters<'a, 't>,
+    ) = AncestorType::TSConstructSignatureDeclarationTypeParameters as u16,
     TSConstructSignatureDeclarationParams(TSConstructSignatureDeclarationWithoutParams<'a, 't>) =
         AncestorType::TSConstructSignatureDeclarationParams as u16,
     TSConstructSignatureDeclarationReturnType(
         TSConstructSignatureDeclarationWithoutReturnType<'a, 't>,
     ) = AncestorType::TSConstructSignatureDeclarationReturnType as u16,
-    TSConstructSignatureDeclarationTypeParameters(
-        TSConstructSignatureDeclarationWithoutTypeParameters<'a, 't>,
-    ) = AncestorType::TSConstructSignatureDeclarationTypeParameters as u16,
     TSIndexSignatureNameTypeAnnotation(TSIndexSignatureNameWithoutTypeAnnotation<'a, 't>) =
         AncestorType::TSIndexSignatureNameTypeAnnotation as u16,
     TSInterfaceHeritageExpression(TSInterfaceHeritageWithoutExpression<'a, 't>) =
@@ -832,20 +832,20 @@ pub enum Ancestor<'a, 't> {
         AncestorType::TSImportAttributeName as u16,
     TSImportAttributeValue(TSImportAttributeWithoutValue<'a, 't>) =
         AncestorType::TSImportAttributeValue as u16,
+    TSFunctionTypeTypeParameters(TSFunctionTypeWithoutTypeParameters<'a, 't>) =
+        AncestorType::TSFunctionTypeTypeParameters as u16,
     TSFunctionTypeThisParam(TSFunctionTypeWithoutThisParam<'a, 't>) =
         AncestorType::TSFunctionTypeThisParam as u16,
     TSFunctionTypeParams(TSFunctionTypeWithoutParams<'a, 't>) =
         AncestorType::TSFunctionTypeParams as u16,
     TSFunctionTypeReturnType(TSFunctionTypeWithoutReturnType<'a, 't>) =
         AncestorType::TSFunctionTypeReturnType as u16,
-    TSFunctionTypeTypeParameters(TSFunctionTypeWithoutTypeParameters<'a, 't>) =
-        AncestorType::TSFunctionTypeTypeParameters as u16,
+    TSConstructorTypeTypeParameters(TSConstructorTypeWithoutTypeParameters<'a, 't>) =
+        AncestorType::TSConstructorTypeTypeParameters as u16,
     TSConstructorTypeParams(TSConstructorTypeWithoutParams<'a, 't>) =
         AncestorType::TSConstructorTypeParams as u16,
     TSConstructorTypeReturnType(TSConstructorTypeWithoutReturnType<'a, 't>) =
         AncestorType::TSConstructorTypeReturnType as u16,
-    TSConstructorTypeTypeParameters(TSConstructorTypeWithoutTypeParameters<'a, 't>) =
-        AncestorType::TSConstructorTypeTypeParameters as u16,
     TSMappedTypeTypeParameter(TSMappedTypeWithoutTypeParameter<'a, 't>) =
         AncestorType::TSMappedTypeTypeParameter as u16,
     TSMappedTypeNameType(TSMappedTypeWithoutNameType<'a, 't>) =
@@ -1658,10 +1658,10 @@ impl<'a, 't> Ancestor<'a, 't> {
     pub fn is_ts_call_signature_declaration(self) -> bool {
         matches!(
             self,
-            Self::TSCallSignatureDeclarationThisParam(_)
+            Self::TSCallSignatureDeclarationTypeParameters(_)
+                | Self::TSCallSignatureDeclarationThisParam(_)
                 | Self::TSCallSignatureDeclarationParams(_)
                 | Self::TSCallSignatureDeclarationReturnType(_)
-                | Self::TSCallSignatureDeclarationTypeParameters(_)
         )
     }
 
@@ -1670,10 +1670,10 @@ impl<'a, 't> Ancestor<'a, 't> {
         matches!(
             self,
             Self::TSMethodSignatureKey(_)
+                | Self::TSMethodSignatureTypeParameters(_)
                 | Self::TSMethodSignatureThisParam(_)
                 | Self::TSMethodSignatureParams(_)
                 | Self::TSMethodSignatureReturnType(_)
-                | Self::TSMethodSignatureTypeParameters(_)
         )
     }
 
@@ -1681,9 +1681,9 @@ impl<'a, 't> Ancestor<'a, 't> {
     pub fn is_ts_construct_signature_declaration(self) -> bool {
         matches!(
             self,
-            Self::TSConstructSignatureDeclarationParams(_)
+            Self::TSConstructSignatureDeclarationTypeParameters(_)
+                | Self::TSConstructSignatureDeclarationParams(_)
                 | Self::TSConstructSignatureDeclarationReturnType(_)
-                | Self::TSConstructSignatureDeclarationTypeParameters(_)
         )
     }
 
@@ -1761,10 +1761,10 @@ impl<'a, 't> Ancestor<'a, 't> {
     pub fn is_ts_function_type(self) -> bool {
         matches!(
             self,
-            Self::TSFunctionTypeThisParam(_)
+            Self::TSFunctionTypeTypeParameters(_)
+                | Self::TSFunctionTypeThisParam(_)
                 | Self::TSFunctionTypeParams(_)
                 | Self::TSFunctionTypeReturnType(_)
-                | Self::TSFunctionTypeTypeParameters(_)
         )
     }
 
@@ -1772,9 +1772,9 @@ impl<'a, 't> Ancestor<'a, 't> {
     pub fn is_ts_constructor_type(self) -> bool {
         matches!(
             self,
-            Self::TSConstructorTypeParams(_)
+            Self::TSConstructorTypeTypeParameters(_)
+                | Self::TSConstructorTypeParams(_)
                 | Self::TSConstructorTypeReturnType(_)
-                | Self::TSConstructorTypeTypeParameters(_)
         )
     }
 
@@ -2201,6 +2201,8 @@ impl<'a, 't> Ancestor<'a, 't> {
 
 pub(crate) const OFFSET_PROGRAM_SPAN: usize = offset_of!(Program, span);
 pub(crate) const OFFSET_PROGRAM_SOURCE_TYPE: usize = offset_of!(Program, source_type);
+pub(crate) const OFFSET_PROGRAM_SOURCE_TEXT: usize = offset_of!(Program, source_text);
+pub(crate) const OFFSET_PROGRAM_COMMENTS: usize = offset_of!(Program, comments);
 pub(crate) const OFFSET_PROGRAM_HASHBANG: usize = offset_of!(Program, hashbang);
 pub(crate) const OFFSET_PROGRAM_DIRECTIVES: usize = offset_of!(Program, directives);
 pub(crate) const OFFSET_PROGRAM_BODY: usize = offset_of!(Program, body);
@@ -2222,6 +2224,16 @@ impl<'a, 't> ProgramWithoutHashbang<'a, 't> {
     #[inline]
     pub fn source_type(self) -> &'t SourceType {
         unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_SOURCE_TYPE) as *const SourceType) }
+    }
+
+    #[inline]
+    pub fn source_text(self) -> &'t &'a str {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_SOURCE_TEXT) as *const &'a str) }
+    }
+
+    #[inline]
+    pub fn comments(self) -> &'t Vec<'a, Comment> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_COMMENTS) as *const Vec<'a, Comment>) }
     }
 
     #[inline]
@@ -2266,6 +2278,16 @@ impl<'a, 't> ProgramWithoutDirectives<'a, 't> {
     }
 
     #[inline]
+    pub fn source_text(self) -> &'t &'a str {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_SOURCE_TEXT) as *const &'a str) }
+    }
+
+    #[inline]
+    pub fn comments(self) -> &'t Vec<'a, Comment> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_COMMENTS) as *const Vec<'a, Comment>) }
+    }
+
+    #[inline]
     pub fn hashbang(self) -> &'t Option<Hashbang<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_PROGRAM_HASHBANG) as *const Option<Hashbang<'a>>)
@@ -2303,6 +2325,16 @@ impl<'a, 't> ProgramWithoutBody<'a, 't> {
     #[inline]
     pub fn source_type(self) -> &'t SourceType {
         unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_SOURCE_TYPE) as *const SourceType) }
+    }
+
+    #[inline]
+    pub fn source_text(self) -> &'t &'a str {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_SOURCE_TEXT) as *const &'a str) }
+    }
+
+    #[inline]
+    pub fn comments(self) -> &'t Vec<'a, Comment> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_COMMENTS) as *const Vec<'a, Comment>) }
     }
 
     #[inline]
@@ -10833,134 +10865,14 @@ impl<'a, 't> TSIndexSignatureWithoutTypeAnnotation<'a, 't> {
 
 pub(crate) const OFFSET_TS_CALL_SIGNATURE_DECLARATION_SPAN: usize =
     offset_of!(TSCallSignatureDeclaration, span);
+pub(crate) const OFFSET_TS_CALL_SIGNATURE_DECLARATION_TYPE_PARAMETERS: usize =
+    offset_of!(TSCallSignatureDeclaration, type_parameters);
 pub(crate) const OFFSET_TS_CALL_SIGNATURE_DECLARATION_THIS_PARAM: usize =
     offset_of!(TSCallSignatureDeclaration, this_param);
 pub(crate) const OFFSET_TS_CALL_SIGNATURE_DECLARATION_PARAMS: usize =
     offset_of!(TSCallSignatureDeclaration, params);
 pub(crate) const OFFSET_TS_CALL_SIGNATURE_DECLARATION_RETURN_TYPE: usize =
     offset_of!(TSCallSignatureDeclaration, return_type);
-pub(crate) const OFFSET_TS_CALL_SIGNATURE_DECLARATION_TYPE_PARAMETERS: usize =
-    offset_of!(TSCallSignatureDeclaration, type_parameters);
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct TSCallSignatureDeclarationWithoutThisParam<'a, 't>(
-    pub(crate) *const TSCallSignatureDeclaration<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> TSCallSignatureDeclarationWithoutThisParam<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_SPAN) as *const Span)
-        }
-    }
-
-    #[inline]
-    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_PARAMS)
-                as *const Box<'a, FormalParameters<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn return_type(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_RETURN_TYPE)
-                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
-        }
-    }
-}
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct TSCallSignatureDeclarationWithoutParams<'a, 't>(
-    pub(crate) *const TSCallSignatureDeclaration<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> TSCallSignatureDeclarationWithoutParams<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_SPAN) as *const Span)
-        }
-    }
-
-    #[inline]
-    pub fn this_param(self) -> &'t Option<TSThisParameter<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_THIS_PARAM)
-                as *const Option<TSThisParameter<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn return_type(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_RETURN_TYPE)
-                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
-        }
-    }
-}
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct TSCallSignatureDeclarationWithoutReturnType<'a, 't>(
-    pub(crate) *const TSCallSignatureDeclaration<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> TSCallSignatureDeclarationWithoutReturnType<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_SPAN) as *const Span)
-        }
-    }
-
-    #[inline]
-    pub fn this_param(self) -> &'t Option<TSThisParameter<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_THIS_PARAM)
-                as *const Option<TSThisParameter<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_PARAMS)
-                as *const Box<'a, FormalParameters<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
-        }
-    }
-}
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -11002,6 +10914,126 @@ impl<'a, 't> TSCallSignatureDeclarationWithoutTypeParameters<'a, 't> {
     }
 }
 
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSCallSignatureDeclarationWithoutThisParam<'a, 't>(
+    pub(crate) *const TSCallSignatureDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSCallSignatureDeclarationWithoutThisParam<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_PARAMS)
+                as *const Box<'a, FormalParameters<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn return_type(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_RETURN_TYPE)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSCallSignatureDeclarationWithoutParams<'a, 't>(
+    pub(crate) *const TSCallSignatureDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSCallSignatureDeclarationWithoutParams<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn this_param(self) -> &'t Option<TSThisParameter<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_THIS_PARAM)
+                as *const Option<TSThisParameter<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn return_type(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_RETURN_TYPE)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSCallSignatureDeclarationWithoutReturnType<'a, 't>(
+    pub(crate) *const TSCallSignatureDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSCallSignatureDeclarationWithoutReturnType<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn this_param(self) -> &'t Option<TSThisParameter<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_THIS_PARAM)
+                as *const Option<TSThisParameter<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_PARAMS)
+                as *const Box<'a, FormalParameters<'a>>)
+        }
+    }
+}
+
 pub(crate) const OFFSET_TS_METHOD_SIGNATURE_SPAN: usize = offset_of!(TSMethodSignature, span);
 pub(crate) const OFFSET_TS_METHOD_SIGNATURE_KEY: usize = offset_of!(TSMethodSignature, key);
 pub(crate) const OFFSET_TS_METHOD_SIGNATURE_COMPUTED: usize =
@@ -11009,13 +11041,13 @@ pub(crate) const OFFSET_TS_METHOD_SIGNATURE_COMPUTED: usize =
 pub(crate) const OFFSET_TS_METHOD_SIGNATURE_OPTIONAL: usize =
     offset_of!(TSMethodSignature, optional);
 pub(crate) const OFFSET_TS_METHOD_SIGNATURE_KIND: usize = offset_of!(TSMethodSignature, kind);
+pub(crate) const OFFSET_TS_METHOD_SIGNATURE_TYPE_PARAMETERS: usize =
+    offset_of!(TSMethodSignature, type_parameters);
 pub(crate) const OFFSET_TS_METHOD_SIGNATURE_THIS_PARAM: usize =
     offset_of!(TSMethodSignature, this_param);
 pub(crate) const OFFSET_TS_METHOD_SIGNATURE_PARAMS: usize = offset_of!(TSMethodSignature, params);
 pub(crate) const OFFSET_TS_METHOD_SIGNATURE_RETURN_TYPE: usize =
     offset_of!(TSMethodSignature, return_type);
-pub(crate) const OFFSET_TS_METHOD_SIGNATURE_TYPE_PARAMETERS: usize =
-    offset_of!(TSMethodSignature, type_parameters);
 pub(crate) const OFFSET_TS_METHOD_SIGNATURE_SCOPE_ID: usize =
     offset_of!(TSMethodSignature, scope_id);
 
@@ -11051,6 +11083,14 @@ impl<'a, 't> TSMethodSignatureWithoutKey<'a, 't> {
     }
 
     #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
     pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_THIS_PARAM)
@@ -11071,227 +11111,6 @@ impl<'a, 't> TSMethodSignatureWithoutKey<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_RETURN_TYPE)
                 as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SCOPE_ID)
-                as *const Cell<Option<ScopeId>>)
-        }
-    }
-}
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct TSMethodSignatureWithoutThisParam<'a, 't>(
-    pub(crate) *const TSMethodSignature<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> TSMethodSignatureWithoutThisParam<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn key(self) -> &'t PropertyKey<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_KEY) as *const PropertyKey<'a>)
-        }
-    }
-
-    #[inline]
-    pub fn computed(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_COMPUTED) as *const bool) }
-    }
-
-    #[inline]
-    pub fn optional(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_OPTIONAL) as *const bool) }
-    }
-
-    #[inline]
-    pub fn kind(self) -> &'t TSMethodSignatureKind {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_KIND)
-                as *const TSMethodSignatureKind)
-        }
-    }
-
-    #[inline]
-    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_PARAMS)
-                as *const Box<'a, FormalParameters<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn return_type(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_RETURN_TYPE)
-                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SCOPE_ID)
-                as *const Cell<Option<ScopeId>>)
-        }
-    }
-}
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct TSMethodSignatureWithoutParams<'a, 't>(
-    pub(crate) *const TSMethodSignature<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> TSMethodSignatureWithoutParams<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn key(self) -> &'t PropertyKey<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_KEY) as *const PropertyKey<'a>)
-        }
-    }
-
-    #[inline]
-    pub fn computed(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_COMPUTED) as *const bool) }
-    }
-
-    #[inline]
-    pub fn optional(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_OPTIONAL) as *const bool) }
-    }
-
-    #[inline]
-    pub fn kind(self) -> &'t TSMethodSignatureKind {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_KIND)
-                as *const TSMethodSignatureKind)
-        }
-    }
-
-    #[inline]
-    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_THIS_PARAM)
-                as *const Option<Box<'a, TSThisParameter<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn return_type(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_RETURN_TYPE)
-                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SCOPE_ID)
-                as *const Cell<Option<ScopeId>>)
-        }
-    }
-}
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct TSMethodSignatureWithoutReturnType<'a, 't>(
-    pub(crate) *const TSMethodSignature<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> TSMethodSignatureWithoutReturnType<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn key(self) -> &'t PropertyKey<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_KEY) as *const PropertyKey<'a>)
-        }
-    }
-
-    #[inline]
-    pub fn computed(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_COMPUTED) as *const bool) }
-    }
-
-    #[inline]
-    pub fn optional(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_OPTIONAL) as *const bool) }
-    }
-
-    #[inline]
-    pub fn kind(self) -> &'t TSMethodSignatureKind {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_KIND)
-                as *const TSMethodSignatureKind)
-        }
-    }
-
-    #[inline]
-    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_THIS_PARAM)
-                as *const Option<Box<'a, TSThisParameter<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_PARAMS)
-                as *const Box<'a, FormalParameters<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
         }
     }
 
@@ -11375,98 +11194,229 @@ impl<'a, 't> TSMethodSignatureWithoutTypeParameters<'a, 't> {
     }
 }
 
-pub(crate) const OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SPAN: usize =
-    offset_of!(TSConstructSignatureDeclaration, span);
-pub(crate) const OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_PARAMS: usize =
-    offset_of!(TSConstructSignatureDeclaration, params);
-pub(crate) const OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_RETURN_TYPE: usize =
-    offset_of!(TSConstructSignatureDeclaration, return_type);
-pub(crate) const OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_TYPE_PARAMETERS: usize =
-    offset_of!(TSConstructSignatureDeclaration, type_parameters);
-pub(crate) const OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SCOPE_ID: usize =
-    offset_of!(TSConstructSignatureDeclaration, scope_id);
-
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
-pub struct TSConstructSignatureDeclarationWithoutParams<'a, 't>(
-    pub(crate) *const TSConstructSignatureDeclaration<'a>,
+pub struct TSMethodSignatureWithoutThisParam<'a, 't>(
+    pub(crate) *const TSMethodSignature<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
-impl<'a, 't> TSConstructSignatureDeclarationWithoutParams<'a, 't> {
+impl<'a, 't> TSMethodSignatureWithoutThisParam<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn key(self) -> &'t PropertyKey<'a> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SPAN)
-                as *const Span)
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_KEY) as *const PropertyKey<'a>)
         }
     }
 
     #[inline]
-    pub fn return_type(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+    pub fn computed(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_COMPUTED) as *const bool) }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_OPTIONAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn kind(self) -> &'t TSMethodSignatureKind {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_RETURN_TYPE)
-                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_KIND)
+                as *const TSMethodSignatureKind)
         }
     }
 
     #[inline]
     pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_TYPE_PARAMETERS)
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_TYPE_PARAMETERS)
                 as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SCOPE_ID)
-                as *const Cell<Option<ScopeId>>)
-        }
-    }
-}
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct TSConstructSignatureDeclarationWithoutReturnType<'a, 't>(
-    pub(crate) *const TSConstructSignatureDeclaration<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> TSConstructSignatureDeclarationWithoutReturnType<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SPAN)
-                as *const Span)
         }
     }
 
     #[inline]
     pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_PARAMS)
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_PARAMS)
                 as *const Box<'a, FormalParameters<'a>>)
         }
     }
 
     #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+    pub fn return_type(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_RETURN_TYPE)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
         }
     }
 
     #[inline]
     pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SCOPE_ID)
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SCOPE_ID)
                 as *const Cell<Option<ScopeId>>)
         }
     }
 }
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSMethodSignatureWithoutParams<'a, 't>(
+    pub(crate) *const TSMethodSignature<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSMethodSignatureWithoutParams<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn key(self) -> &'t PropertyKey<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_KEY) as *const PropertyKey<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn computed(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_COMPUTED) as *const bool) }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_OPTIONAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn kind(self) -> &'t TSMethodSignatureKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_KIND)
+                as *const TSMethodSignatureKind)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_THIS_PARAM)
+                as *const Option<Box<'a, TSThisParameter<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn return_type(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_RETURN_TYPE)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSMethodSignatureWithoutReturnType<'a, 't>(
+    pub(crate) *const TSMethodSignature<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSMethodSignatureWithoutReturnType<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn key(self) -> &'t PropertyKey<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_KEY) as *const PropertyKey<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn computed(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_COMPUTED) as *const bool) }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_OPTIONAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn kind(self) -> &'t TSMethodSignatureKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_KIND)
+                as *const TSMethodSignatureKind)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_THIS_PARAM)
+                as *const Option<Box<'a, TSThisParameter<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_PARAMS)
+                as *const Box<'a, FormalParameters<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+pub(crate) const OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SPAN: usize =
+    offset_of!(TSConstructSignatureDeclaration, span);
+pub(crate) const OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_TYPE_PARAMETERS: usize =
+    offset_of!(TSConstructSignatureDeclaration, type_parameters);
+pub(crate) const OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_PARAMS: usize =
+    offset_of!(TSConstructSignatureDeclaration, params);
+pub(crate) const OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_RETURN_TYPE: usize =
+    offset_of!(TSConstructSignatureDeclaration, return_type);
+pub(crate) const OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SCOPE_ID: usize =
+    offset_of!(TSConstructSignatureDeclaration, scope_id);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -11497,6 +11447,88 @@ impl<'a, 't> TSConstructSignatureDeclarationWithoutTypeParameters<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_RETURN_TYPE)
                 as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSConstructSignatureDeclarationWithoutParams<'a, 't>(
+    pub(crate) *const TSConstructSignatureDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSConstructSignatureDeclarationWithoutParams<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SPAN)
+                as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn return_type(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_RETURN_TYPE)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSConstructSignatureDeclarationWithoutReturnType<'a, 't>(
+    pub(crate) *const TSConstructSignatureDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSConstructSignatureDeclarationWithoutReturnType<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SPAN)
+                as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_PARAMS)
+                as *const Box<'a, FormalParameters<'a>>)
         }
     }
 
@@ -12154,126 +12186,12 @@ impl<'a, 't> TSImportAttributeWithoutValue<'a, 't> {
 }
 
 pub(crate) const OFFSET_TS_FUNCTION_TYPE_SPAN: usize = offset_of!(TSFunctionType, span);
+pub(crate) const OFFSET_TS_FUNCTION_TYPE_TYPE_PARAMETERS: usize =
+    offset_of!(TSFunctionType, type_parameters);
 pub(crate) const OFFSET_TS_FUNCTION_TYPE_THIS_PARAM: usize = offset_of!(TSFunctionType, this_param);
 pub(crate) const OFFSET_TS_FUNCTION_TYPE_PARAMS: usize = offset_of!(TSFunctionType, params);
 pub(crate) const OFFSET_TS_FUNCTION_TYPE_RETURN_TYPE: usize =
     offset_of!(TSFunctionType, return_type);
-pub(crate) const OFFSET_TS_FUNCTION_TYPE_TYPE_PARAMETERS: usize =
-    offset_of!(TSFunctionType, type_parameters);
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct TSFunctionTypeWithoutThisParam<'a, 't>(
-    pub(crate) *const TSFunctionType<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> TSFunctionTypeWithoutThisParam<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_PARAMS)
-                as *const Box<'a, FormalParameters<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn return_type(self) -> &'t Box<'a, TSTypeAnnotation<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_RETURN_TYPE)
-                as *const Box<'a, TSTypeAnnotation<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
-        }
-    }
-}
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct TSFunctionTypeWithoutParams<'a, 't>(
-    pub(crate) *const TSFunctionType<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> TSFunctionTypeWithoutParams<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_THIS_PARAM)
-                as *const Option<Box<'a, TSThisParameter<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn return_type(self) -> &'t Box<'a, TSTypeAnnotation<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_RETURN_TYPE)
-                as *const Box<'a, TSTypeAnnotation<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
-        }
-    }
-}
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct TSFunctionTypeWithoutReturnType<'a, 't>(
-    pub(crate) *const TSFunctionType<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> TSFunctionTypeWithoutReturnType<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_THIS_PARAM)
-                as *const Option<Box<'a, TSThisParameter<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_PARAMS)
-                as *const Box<'a, FormalParameters<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
-        }
-    }
-}
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -12313,84 +12231,128 @@ impl<'a, 't> TSFunctionTypeWithoutTypeParameters<'a, 't> {
     }
 }
 
-pub(crate) const OFFSET_TS_CONSTRUCTOR_TYPE_SPAN: usize = offset_of!(TSConstructorType, span);
-pub(crate) const OFFSET_TS_CONSTRUCTOR_TYPE_ABSTRACT: usize =
-    offset_of!(TSConstructorType, r#abstract);
-pub(crate) const OFFSET_TS_CONSTRUCTOR_TYPE_PARAMS: usize = offset_of!(TSConstructorType, params);
-pub(crate) const OFFSET_TS_CONSTRUCTOR_TYPE_RETURN_TYPE: usize =
-    offset_of!(TSConstructorType, return_type);
-pub(crate) const OFFSET_TS_CONSTRUCTOR_TYPE_TYPE_PARAMETERS: usize =
-    offset_of!(TSConstructorType, type_parameters);
-
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
-pub struct TSConstructorTypeWithoutParams<'a, 't>(
-    pub(crate) *const TSConstructorType<'a>,
+pub struct TSFunctionTypeWithoutThisParam<'a, 't>(
+    pub(crate) *const TSFunctionType<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
-impl<'a, 't> TSConstructorTypeWithoutParams<'a, 't> {
+impl<'a, 't> TSFunctionTypeWithoutThisParam<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn r#abstract(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_ABSTRACT) as *const bool) }
-    }
-
-    #[inline]
-    pub fn return_type(self) -> &'t Box<'a, TSTypeAnnotation<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_RETURN_TYPE)
-                as *const Box<'a, TSTypeAnnotation<'a>>)
-        }
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_SPAN) as *const Span) }
     }
 
     #[inline]
     pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_TYPE_PARAMETERS)
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_TYPE_PARAMETERS)
                 as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
         }
-    }
-}
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct TSConstructorTypeWithoutReturnType<'a, 't>(
-    pub(crate) *const TSConstructorType<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> TSConstructorTypeWithoutReturnType<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn r#abstract(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_ABSTRACT) as *const bool) }
     }
 
     #[inline]
     pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_PARAMS)
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_PARAMS)
                 as *const Box<'a, FormalParameters<'a>>)
         }
     }
 
     #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+    pub fn return_type(self) -> &'t Box<'a, TSTypeAnnotation<'a>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_RETURN_TYPE)
+                as *const Box<'a, TSTypeAnnotation<'a>>)
         }
     }
 }
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSFunctionTypeWithoutParams<'a, 't>(
+    pub(crate) *const TSFunctionType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSFunctionTypeWithoutParams<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_THIS_PARAM)
+                as *const Option<Box<'a, TSThisParameter<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn return_type(self) -> &'t Box<'a, TSTypeAnnotation<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_RETURN_TYPE)
+                as *const Box<'a, TSTypeAnnotation<'a>>)
+        }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSFunctionTypeWithoutReturnType<'a, 't>(
+    pub(crate) *const TSFunctionType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSFunctionTypeWithoutReturnType<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_THIS_PARAM)
+                as *const Option<Box<'a, TSThisParameter<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_PARAMS)
+                as *const Box<'a, FormalParameters<'a>>)
+        }
+    }
+}
+
+pub(crate) const OFFSET_TS_CONSTRUCTOR_TYPE_SPAN: usize = offset_of!(TSConstructorType, span);
+pub(crate) const OFFSET_TS_CONSTRUCTOR_TYPE_ABSTRACT: usize =
+    offset_of!(TSConstructorType, r#abstract);
+pub(crate) const OFFSET_TS_CONSTRUCTOR_TYPE_TYPE_PARAMETERS: usize =
+    offset_of!(TSConstructorType, type_parameters);
+pub(crate) const OFFSET_TS_CONSTRUCTOR_TYPE_PARAMS: usize = offset_of!(TSConstructorType, params);
+pub(crate) const OFFSET_TS_CONSTRUCTOR_TYPE_RETURN_TYPE: usize =
+    offset_of!(TSConstructorType, return_type);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -12423,6 +12385,76 @@ impl<'a, 't> TSConstructorTypeWithoutTypeParameters<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_RETURN_TYPE)
                 as *const Box<'a, TSTypeAnnotation<'a>>)
+        }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSConstructorTypeWithoutParams<'a, 't>(
+    pub(crate) *const TSConstructorType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSConstructorTypeWithoutParams<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn r#abstract(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_ABSTRACT) as *const bool) }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn return_type(self) -> &'t Box<'a, TSTypeAnnotation<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_RETURN_TYPE)
+                as *const Box<'a, TSTypeAnnotation<'a>>)
+        }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSConstructorTypeWithoutReturnType<'a, 't>(
+    pub(crate) *const TSConstructorType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSConstructorTypeWithoutReturnType<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn r#abstract(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_ABSTRACT) as *const bool) }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_PARAMS)
+                as *const Box<'a, FormalParameters<'a>>)
         }
     }
 }

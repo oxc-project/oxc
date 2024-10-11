@@ -76,7 +76,6 @@ impl Rule for DefaultCase {
 
             let has_default_comment = ctx
                 .semantic()
-                .trivias()
                 .comments_range(last_case.span.start..switch.span.end)
                 .last()
                 .is_some_and(|comment| {

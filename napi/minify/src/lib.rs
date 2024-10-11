@@ -22,7 +22,6 @@ pub fn minify(filename: String, source_text: String) -> String {
     Codegen::new()
         .with_options(CodegenOptions { minify: true, ..CodegenOptions::default() })
         .with_mangler(mangler)
-        .with_capacity(source_text.len())
         .build(&program)
         .code
 }

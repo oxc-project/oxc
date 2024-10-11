@@ -95,7 +95,7 @@ impl<'a> ParserImpl<'a> {
 
         let mut binding_kind = self.parse_binding_pattern_kind()?;
 
-        let (id, definite) = if self.ts_enabled() {
+        let (id, definite) = if self.is_ts {
             // const x!: number = 1
             //        ^ definite
             let mut definite = false;

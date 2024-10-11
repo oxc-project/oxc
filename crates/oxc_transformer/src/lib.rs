@@ -38,7 +38,7 @@ use es2019::ES2019;
 use es2020::ES2020;
 use es2021::ES2021;
 use oxc_allocator::{Allocator, Vec};
-use oxc_ast::{ast::*, Trivias};
+use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{ScopeTree, SymbolTable};
 use oxc_span::SPAN;
@@ -69,14 +69,8 @@ pub struct Transformer<'a> {
 }
 
 impl<'a> Transformer<'a> {
-    pub fn new(
-        allocator: &'a Allocator,
-        source_path: &Path,
-        source_text: &'a str,
-        trivias: Trivias,
-        options: TransformOptions,
-    ) -> Self {
-        let ctx = TransformCtx::new(source_path, source_text, trivias, &options);
+    pub fn new(allocator: &'a Allocator, source_path: &Path, options: TransformOptions) -> Self {
+        let ctx = TransformCtx::new(source_path, &options);
         Self { ctx, options, allocator }
     }
 
@@ -90,7 +84,8 @@ impl<'a> Transformer<'a> {
         let ast_builder = AstBuilder::new(allocator);
 
         self.ctx.source_type = program.source_type;
-        react::update_options_with_comments(&mut self.options, &self.ctx);
+        self.ctx.source_text = program.source_text;
+        react::update_options_with_comments(&program.comments, &mut self.options, &self.ctx);
 
         let mut transformer = TransformerImpl {
             x0_typescript: TypeScript::new(&self.options.typescript, &self.ctx),

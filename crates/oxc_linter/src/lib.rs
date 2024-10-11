@@ -26,7 +26,6 @@ use std::{io::Write, path::Path, rc::Rc, sync::Arc};
 use config::LintConfig;
 use context::ContextHost;
 use options::LintOptions;
-use oxc_diagnostics::Error;
 use oxc_semantic::{AstNode, Semantic};
 
 pub use crate::{
@@ -35,7 +34,7 @@ pub use crate::{
     context::LintContext,
     fixer::FixKind,
     frameworks::FrameworkFlags,
-    options::{AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind, OxlintOptions},
+    options::{AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind, LintPlugins},
     rule::{RuleCategory, RuleFixMeta, RuleMeta, RuleWithSeverity},
     service::{LintService, LintServiceOptions},
 };
@@ -64,7 +63,7 @@ pub struct Linter {
 
 impl Default for Linter {
     fn default() -> Self {
-        Self::from_options(OxlintOptions::default()).unwrap()
+        LinterBuilder::default().build()
     }
 }
 
@@ -75,14 +74,6 @@ impl Linter {
         config: LintConfig,
     ) -> Self {
         Self { rules, options, config: Arc::new(config) }
-    }
-
-    /// # Errors
-    ///
-    /// Returns `Err` if there are any errors parsing the configuration file.
-    pub fn from_options(options: OxlintOptions) -> Result<Self, Error> {
-        let (rules, config) = options.derive_rules_and_config()?;
-        Ok(Self { rules, options: options.into(), config: Arc::new(config) })
     }
 
     #[cfg(test)]

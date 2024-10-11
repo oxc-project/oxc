@@ -1,7 +1,7 @@
 use oxc_ast::{ast::JSXAttributeValue, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{CompactStr, GetSpan, Span};
 
 use crate::{
     context::LintContext,
@@ -28,15 +28,15 @@ pub struct MouseEventsHaveKeyEvents(Box<MouseEventsHaveKeyEventsConfig>);
 
 #[derive(Debug, Clone)]
 pub struct MouseEventsHaveKeyEventsConfig {
-    hover_in_handlers: Vec<String>,
-    hover_out_handlers: Vec<String>,
+    hover_in_handlers: Vec<CompactStr>,
+    hover_out_handlers: Vec<CompactStr>,
 }
 
 impl Default for MouseEventsHaveKeyEventsConfig {
     fn default() -> Self {
         Self {
-            hover_in_handlers: vec!["onMouseOver".to_string()],
-            hover_out_handlers: vec!["onMouseOut".to_string()],
+            hover_in_handlers: vec!["onMouseOver".into()],
+            hover_out_handlers: vec!["onMouseOut".into()],
         }
     }
 }
@@ -78,7 +78,7 @@ impl Rule for MouseEventsHaveKeyEvents {
             config.hover_in_handlers = hover_in_handlers_config
                 .iter()
                 .filter_map(serde_json::Value::as_str)
-                .map(ToString::to_string)
+                .map(CompactStr::from)
                 .collect();
         }
 
@@ -90,7 +90,7 @@ impl Rule for MouseEventsHaveKeyEvents {
             config.hover_out_handlers = hover_out_handlers_config
                 .iter()
                 .filter_map(serde_json::Value::as_str)
-                .map(ToString::to_string)
+                .map(CompactStr::from)
                 .collect();
         }
 

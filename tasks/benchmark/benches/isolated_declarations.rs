@@ -18,12 +18,10 @@ fn bench_isolated_declarations(criterion: &mut Criterion) {
     group.bench_with_input(id, &file.source_text, |b, source_text| {
         b.iter_with_large_drop(|| {
             let allocator = Allocator::default();
-            let ParserReturn { program, trivias, .. } =
+            let ParserReturn { program, .. } =
                 Parser::new(&allocator, source_text, source_type).parse();
             IsolatedDeclarations::new(
                 &allocator,
-                source_text,
-                &trivias,
                 IsolatedDeclarationsOptions { strip_internal: true },
             )
             .build(&program);

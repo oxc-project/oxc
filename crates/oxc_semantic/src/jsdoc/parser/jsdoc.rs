@@ -46,11 +46,7 @@ mod test {
         let source_type = SourceType::default();
         let ret = Parser::new(allocator, source_text, source_type).parse();
         let program = allocator.alloc(ret.program);
-        let semantic = SemanticBuilder::new(source_text)
-            .with_trivias(ret.trivias)
-            .with_build_jsdoc(true)
-            .build(program)
-            .semantic;
+        let semantic = SemanticBuilder::new().with_build_jsdoc(true).build(program).semantic;
         semantic
     }
 

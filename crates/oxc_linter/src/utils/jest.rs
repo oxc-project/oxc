@@ -8,6 +8,7 @@ use oxc_ast::{
     AstKind,
 };
 use oxc_semantic::{AstNode, ReferenceId};
+use oxc_span::CompactStr;
 use phf::phf_set;
 
 use crate::LintContext;
@@ -254,9 +255,9 @@ fn collect_ids_referenced_to_global<'c>(
 /// join name of the expression. e.g.
 /// `expect(foo).toBe(bar)`  -> "expect.toBe"
 /// `new Foo().bar` -> "Foo.bar"
-pub fn get_node_name<'a>(expr: &'a Expression<'a>) -> String {
+pub fn get_node_name<'a>(expr: &'a Expression<'a>) -> CompactStr {
     let chain = get_node_name_vec(expr);
-    chain.join(".")
+    chain.join(".").into()
 }
 
 pub fn get_node_name_vec<'a>(expr: &'a Expression<'a>) -> Vec<Cow<'a, str>> {
@@ -317,7 +318,7 @@ mod test {
         let source_type = SourceType::default();
         let parser_ret = Parser::new(&allocator, "", source_type).parse();
         let program = allocator.alloc(parser_ret.program);
-        let semantic_ret = SemanticBuilder::new("").with_cfg(true).build(program).semantic;
+        let semantic_ret = SemanticBuilder::new().with_cfg(true).build(program).semantic;
         let semantic_ret = Rc::new(semantic_ret);
 
         let build_ctx = |path: &'static str| {
