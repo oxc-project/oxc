@@ -27,7 +27,6 @@ fn main() -> std::io::Result<()> {
         .parse();
     let output = Prettier::new(
         &allocator,
-        &source_text,
         PrettierOptions { semi, trailing_comma: TrailingComma::All, ..PrettierOptions::default() },
     )
     .build(&ret.program);

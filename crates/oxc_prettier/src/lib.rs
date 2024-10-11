@@ -71,10 +71,10 @@ impl<'a> DocBuilder<'a> for Prettier<'a> {
 
 impl<'a> Prettier<'a> {
     #[allow(clippy::needless_pass_by_value)]
-    pub fn new(allocator: &'a Allocator, source_text: &'a str, options: PrettierOptions) -> Self {
+    pub fn new(allocator: &'a Allocator, options: PrettierOptions) -> Self {
         Self {
             allocator,
-            source_text,
+            source_text: "",
             options,
             stack: vec![],
             group_id_builder: GroupIdBuilder::default(),
@@ -83,8 +83,9 @@ impl<'a> Prettier<'a> {
     }
 
     pub fn build(&mut self, program: &Program<'a>) -> String {
+        self.source_text = program.source_text;
         let doc = program.format(self);
-        Printer::new(doc, self.source_text, self.options, self.allocator).build()
+        Printer::new(doc, program.source_text, self.options, self.allocator).build()
     }
 
     pub fn doc(mut self, program: &Program<'a>) -> Doc<'a> {
