@@ -107,8 +107,7 @@ impl ErrorWithPosition {
                 ret_range
             },
         );
-        let source =
-            self.miette_err.code().map(|code| format!("oxc:{code}")).unwrap_or("oxc".to_string());
+        let source = self.miette_err.code().map_or("oxc".to_string(), |code| format!("oxc:{code}"));
         let message = self.miette_err.help().map_or_else(
             || self.miette_err.to_string(),
             |help| format!("{}\nhelp: {}", self.miette_err, help),
