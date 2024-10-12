@@ -1608,6 +1608,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_eval"
+version = "0.31.0"
+dependencies = [
+ "num-bigint",
+ "oxc_allocator",
+ "oxc_ast",
+ "oxc_diagnostics",
+ "oxc_parser",
+ "oxc_span",
+]
+
+[[package]]
 name = "oxc_index"
 version = "0.31.0"
 dependencies = [
