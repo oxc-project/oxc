@@ -1,9 +1,8 @@
 use cow_utils::CowUtils;
-use oxc_ast::ast::*;
-use oxc_traverse::{Traverse, TraverseCtx};
-use string_methods::StringUtils;
 
-mod string_methods;
+use oxc_ast::ast::*;
+use oxc_ecmascript::{StringIndexOf, StringLastIndexOf};
+use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::CompressorPass;
 
@@ -110,18 +109,12 @@ impl PeepholeReplaceKnownMethods {
             _ => return None,
         };
 
-        let result = if member.property.name.as_str() == "indexOf" {
-            StringUtils::evaluate_string_index_of(
-                &string_lit.value,
-                search_value,
-                search_start_index,
-            )
-        } else {
-            StringUtils::evaluate_string_last_index_of(
-                &string_lit.value,
-                search_value,
-                search_start_index,
-            )
+        let result = match member.property.name.as_str() {
+            "indexOf" => string_lit.value.as_str().index_of(search_value, search_start_index),
+            "lastIndexOf" => {
+                string_lit.value.as_str().last_index_of(search_value, search_start_index)
+            }
+            _ => unreachable!(),
         };
 
         #[expect(clippy::cast_precision_loss)]
