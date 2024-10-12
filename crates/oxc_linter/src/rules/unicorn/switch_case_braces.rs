@@ -75,7 +75,6 @@ impl Rule for SwitchCaseBraces {
                         ctx.diagnostic_with_fix(
                             switch_case_braces_diagnostic(case_body_span),
                             |fixer| {
-                                use oxc_codegen::{Context, Gen};
                                 let modified_code = {
                                     let mut formatter = fixer.codegen();
 
@@ -89,9 +88,12 @@ impl Rule for SwitchCaseBraces {
                                     formatter.print_char(b':');
                                     formatter.print_char(b' ');
                                     formatter.print_char(b'{');
-                                    case.consequent
-                                        .iter()
-                                        .for_each(|x| x.gen(&mut formatter, Context::default()));
+
+                                    let source_text = ctx.source_text();
+                                    for x in &case.consequent {
+                                        formatter.print_str(x.span().source_text(source_text));
+                                    }
+
                                     formatter.print_char(b'}');
 
                                     formatter.into_source_text()
@@ -124,6 +126,7 @@ fn test() {
     ];
 
     let fail = vec![
+        "switch(s){case'':/]/}",
         "switch(something) { case 1: {} case 2: {console.log('something'); break;}}",
         "switch(something) { case 1: case 2: console.log('something'); break;}",
         "switch(foo) { case 1: {} case 2: {} default: { doSomething(); } }",
@@ -142,14 +145,15 @@ fn test() {
         ),
         (
             "switch(something) { case 1: {} case 2: console.log('something'); break;}",
-            "switch(something) { case 1:  case 2: {console.log('something');\nbreak;\n}}",
+            "switch(something) { case 1:  case 2: {console.log('something');break;}}",
             None,
         ),
         (
             "switch(foo) { default: doSomething(); }",
-            "switch(foo) { default: {doSomething();\n} }",
+            "switch(foo) { default: {doSomething();} }",
             None,
         ),
+        ("switch(s){case'':/]/}", "switch(s){case '': {/]/}}", None),
     ];
 
     Tester::new(SwitchCaseBraces::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
