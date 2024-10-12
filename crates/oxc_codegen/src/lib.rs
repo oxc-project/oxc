@@ -10,7 +10,7 @@ mod gen;
 mod operator;
 mod sourcemap_builder;
 
-use std::borrow::Cow;
+use std::{borrow::Cow, path::PathBuf};
 
 use oxc_ast::ast::{
     BindingIdentifier, BlockStatement, Expression, IdentifierReference, Program, Statement,
@@ -35,7 +35,7 @@ pub use crate::{
 /// Code generator without whitespace removal.
 pub type CodeGenerator<'a> = Codegen<'a>;
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct CodegenOptions {
     /// Use single quotes instead of double quotes.
     ///
@@ -58,16 +58,24 @@ pub struct CodegenOptions {
     ///
     /// Default is `false`.
     pub annotation_comments: bool,
+
+    pub source_map_path: Option<PathBuf>,
 }
 
 impl Default for CodegenOptions {
     fn default() -> Self {
-        Self { single_quote: false, minify: false, comments: true, annotation_comments: false }
+        Self {
+            single_quote: false,
+            minify: false,
+            comments: true,
+            annotation_comments: false,
+            source_map_path: None,
+        }
     }
 }
 
 impl CodegenOptions {
-    fn print_annotation_comments(self) -> bool {
+    fn print_annotation_comments(&self) -> bool {
         !self.minify && (self.comments || self.annotation_comments)
     }
 }
@@ -78,6 +86,8 @@ pub struct CodegenReturn {
     pub code: String,
 
     /// The source map from the input source code to the generated source code.
+    ///
+    /// You must set [`CodegenOptions::source_map_path`] for this to be [`Some`].
     pub map: Option<oxc_sourcemap::SourceMap>,
 }
 
@@ -186,14 +196,6 @@ impl<'a> Codegen<'a> {
     }
 
     #[must_use]
-    pub fn enable_source_map(mut self, source_name: &str, source_text: &str) -> Self {
-        let mut sourcemap_builder = SourcemapBuilder::default();
-        sourcemap_builder.with_name_and_source(source_name, source_text);
-        self.sourcemap_builder = Some(sourcemap_builder);
-        self
-    }
-
-    #[must_use]
     pub fn with_mangler(mut self, mangler: Option<Mangler>) -> Self {
         self.mangler = mangler;
         self
@@ -206,6 +208,9 @@ impl<'a> Codegen<'a> {
         self.code.reserve(program.source_text.len());
         if self.options.print_annotation_comments() {
             self.build_comments(&program.comments);
+        }
+        if let Some(path) = &self.options.source_map_path {
+            self.sourcemap_builder = Some(SourcemapBuilder::new(path, program.source_text));
         }
 
         program.print(&mut self, Context::default());
