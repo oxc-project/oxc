@@ -84,6 +84,7 @@ oxc_cfg = { version = "0.31.0", path = "crates/oxc_cfg" }
 oxc_codegen = { version = "0.31.0", path = "crates/oxc_codegen" }
 oxc_data_structures = { version = "0.31.0", path = "crates/oxc_data_structures" }
 oxc_diagnostics = { version = "0.31.0", path = "crates/oxc_diagnostics" }
+oxc_ecmascript = { version = "0.31.0", path = "crates/oxc_ecmascript" }
 oxc_index = { version = "0.31.0", path = "crates/oxc_index" }
 oxc_isolated_declarations = { version = "0.31.0", path = "crates/oxc_isolated_declarations" }
 oxc_mangler = { version = "0.31.0", path = "crates/oxc_mangler" }
@@ -95,7 +96,6 @@ oxc_semantic = { version = "0.31.0", path = "crates/oxc_semantic" }
 oxc_sourcemap = { version = "0.31.0", path = "crates/oxc_sourcemap" }
 oxc_span = { version = "0.31.0", path = "crates/oxc_span" }
 oxc_syntax = { version = "0.31.0", path = "crates/oxc_syntax" }
-oxc_syntax_operations = { version = "0.31.0", path = "crates/oxc_syntax_operations" }
 oxc_transform_napi = { version = "0.31.0", path = "napi/transform" }
 oxc_transformer = { version = "0.31.0", path = "crates/oxc_transformer" }
 oxc_traverse = { version = "0.31.0", path = "crates/oxc_traverse" }

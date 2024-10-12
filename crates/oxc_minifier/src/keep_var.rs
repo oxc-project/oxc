@@ -1,6 +1,6 @@
 use oxc_ast::{ast::*, AstBuilder, Visit, NONE};
+use oxc_ecmascript::BoundNames;
 use oxc_span::{Atom, Span, SPAN};
-use oxc_syntax_operations::BoundNames;
 
 pub struct KeepVar<'a> {
     ast: AstBuilder<'a>,

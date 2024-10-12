@@ -1,8 +1,8 @@
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, NONE};
+use oxc_ecmascript::ToInt32;
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, SPAN};
-use oxc_syntax::number::ToJsInt32;
 use oxc_syntax::{
     number::NumberBase,
     operator::{BinaryOperator, UnaryOperator},
@@ -33,11 +33,6 @@ impl<'a> CompressorPass<'a> for PeepholeSubstituteAlternateSyntax {
 }
 
 impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
-    fn enter_statement(&mut self, stmt: &mut Statement<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.compress_block(stmt);
-        // self.compress_while(stmt);
-    }
-
     fn exit_return_statement(
         &mut self,
         stmt: &mut ReturnStatement<'a>,
@@ -160,20 +155,6 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
     }
 
     /* Statements */
-
-    /// Remove block from single line blocks
-    /// `{ block } -> block`
-    fn compress_block(&mut self, stmt: &mut Statement<'a>) {
-        if let Statement::BlockStatement(block) = stmt {
-            // Avoid compressing `if (x) { var x = 1 }` to `if (x) var x = 1` due to different
-            // semantics according to AnnexB, which lead to different semantics.
-            if block.body.len() == 1 && !block.body[0].is_declaration() {
-                *stmt = block.body.remove(0);
-                self.compress_block(stmt);
-                self.changed = true;
-            }
-        }
-    }
 
     // /// Transforms `while(expr)` to `for(;expr;)`
     // fn compress_while(&mut self, stmt: &mut Statement<'a>) {
@@ -322,7 +303,7 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
         let target = expr.left.as_simple_assignment_target_mut()?;
         if matches!(expr.operator, AssignmentOperator::Subtraction) {
             match &expr.right {
-                Expression::NumericLiteral(num) if num.value.to_js_int_32() == 1 => {
+                Expression::NumericLiteral(num) if num.value.to_int_32() == 1 => {
                     // The `_` will not be placed to the target code.
                     let target = std::mem::replace(
                         target,
@@ -334,7 +315,7 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
                     if matches!(un.operator, UnaryOperator::UnaryNegation) =>
                 {
                     if let Expression::NumericLiteral(num) = &un.argument {
-                        (num.value.to_js_int_32() == 1).then(|| {
+                        (num.value.to_int_32() == 1).then(|| {
                             // The `_` will not be placed to the target code.
                             let target = std::mem::replace(
                                 target,
@@ -531,7 +512,8 @@ mod test {
         test("function f(){return void 0;}", "function f(){return}");
         test("function f(){return void foo();}", "function f(){return void foo()}");
         test("function f(){return undefined;}", "function f(){return}");
-        test("function f(){if(a()){return undefined;}}", "function f(){if(a())return}");
+        // Here we handle the block in dce.
+        test("function f(){if(a()){return undefined;}}", "function f(){if(a()){return}}");
     }
 
     #[test]

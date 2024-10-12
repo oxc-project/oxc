@@ -23,10 +23,10 @@ oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
 oxc_cfg = { workspace = true }
 oxc_diagnostics = { workspace = true }
+oxc_ecmascript = { workspace = true }
 oxc_index = { workspace = true }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
-oxc_syntax_operations = { workspace = true }
 
 assert-unchecked = { workspace = true }
 indexmap = { workspace = true }

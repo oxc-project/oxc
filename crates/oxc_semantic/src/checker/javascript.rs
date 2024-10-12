@@ -4,13 +4,13 @@ use rustc_hash::FxHashMap;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind};
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+use oxc_ecmascript::{IsSimpleParameterList, PropName};
 use oxc_span::{GetSpan, ModuleKind, Span};
 use oxc_syntax::{
     module_record::ExportLocalName,
     number::NumberBase,
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
 };
-use oxc_syntax_operations::{IsSimpleParameterList, PropName};
 
 use crate::{builder::SemanticBuilder, diagnostics::redeclaration, scope::ScopeFlags, AstNode};
 

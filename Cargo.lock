@@ -1600,6 +1600,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_ecmascript"
+version = "0.31.0"
+dependencies = [
+ "oxc_ast",
+ "oxc_span",
+]
+
+[[package]]
 name = "oxc_index"
 version = "0.31.0"
 dependencies = [
@@ -1617,10 +1625,10 @@ dependencies = [
  "oxc_ast",
  "oxc_codegen",
  "oxc_diagnostics",
+ "oxc_ecmascript",
  "oxc_parser",
  "oxc_span",
  "oxc_syntax",
- "oxc_syntax_operations",
  "rustc-hash",
 ]
 
@@ -1726,12 +1734,12 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast",
  "oxc_codegen",
+ "oxc_ecmascript",
  "oxc_mangler",
  "oxc_parser",
  "oxc_semantic",
  "oxc_span",
  "oxc_syntax",
- "oxc_syntax_operations",
  "oxc_traverse",
  "pico-args",
 ]
@@ -1771,9 +1779,9 @@ version = "0.31.0"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
+ "oxc_ecmascript",
  "oxc_parser",
  "oxc_span",
- "oxc_syntax_operations",
 ]
 
 [[package]]
@@ -1789,10 +1797,10 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast",
  "oxc_diagnostics",
+ "oxc_ecmascript",
  "oxc_regular_expression",
  "oxc_span",
  "oxc_syntax",
- "oxc_syntax_operations",
  "pico-args",
  "rustc-hash",
  "seq-macro",
@@ -1900,11 +1908,11 @@ dependencies = [
  "oxc_ast",
  "oxc_cfg",
  "oxc_diagnostics",
+ "oxc_ecmascript",
  "oxc_index",
  "oxc_parser",
  "oxc_span",
  "oxc_syntax",
- "oxc_syntax_operations",
  "phf 0.11.2",
  "rustc-hash",
  "serde",
@@ -1959,14 +1967,6 @@ dependencies = [
  "tsify",
  "unicode-id-start",
  "wasm-bindgen",
-]
-
-[[package]]
-name = "oxc_syntax_operations"
-version = "0.31.0"
-dependencies = [
- "oxc_ast",
- "oxc_span",
 ]
 
 [[package]]
@@ -2031,12 +2031,12 @@ dependencies = [
  "oxc_codegen",
  "oxc_data_structures",
  "oxc_diagnostics",
+ "oxc_ecmascript",
  "oxc_parser",
  "oxc_regular_expression",
  "oxc_semantic",
  "oxc_span",
  "oxc_syntax",
- "oxc_syntax_operations",
  "oxc_traverse",
  "pico-args",
  "ropey",
@@ -2056,10 +2056,10 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast",
  "oxc_data_structures",
+ "oxc_ecmascript",
  "oxc_semantic",
  "oxc_span",
  "oxc_syntax",
- "oxc_syntax_operations",
  "rustc-hash",
 ]
 

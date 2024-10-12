@@ -90,6 +90,7 @@
 
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, AstBuilder, NONE};
+use oxc_ecmascript::PropName;
 use oxc_span::{Atom, GetSpan, Span, SPAN};
 use oxc_syntax::{
     identifier::{is_irregular_whitespace, is_line_terminator},
@@ -97,7 +98,6 @@ use oxc_syntax::{
     symbol::SymbolFlags,
     xml_entities::XML_ENTITIES,
 };
-use oxc_syntax_operations::HasProto;
 use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
 
 use crate::{common::module_imports::NamedImport, TransformCtx};
@@ -545,7 +545,7 @@ impl<'a, 'ctx> ReactJsx<'a, 'ctx> {
                     JSXAttributeItem::SpreadAttribute(spread) => {
                         if is_classic && attributes.len() == 1 {
                             // deopt if spreading an object with `__proto__` key
-                            if !matches!(&spread.argument, Expression::ObjectExpression(o) if o.has_proto())
+                            if !matches!(&spread.argument, Expression::ObjectExpression(o) if has_proto(o))
                             {
                                 arguments.push(Argument::from({
                                     // SAFETY: `ast.copy` is unsound! We need to fix.
@@ -557,7 +557,7 @@ impl<'a, 'ctx> ReactJsx<'a, 'ctx> {
 
                         // Add attribute to prop object
                         match &spread.argument {
-                            Expression::ObjectExpression(expr) if !expr.has_proto() => {
+                            Expression::ObjectExpression(expr) if !has_proto(expr) => {
                                 // SAFETY: `ast.copy` is unsound! We need to fix.
                                 properties.extend(unsafe { ctx.ast.copy(&expr.properties) });
                             }
@@ -1046,4 +1046,8 @@ fn create_static_member_expression<'a>(
     let object = ctx.ast.expression_from_identifier_reference(object_ident);
     let property = ctx.ast.identifier_name(SPAN, property_name);
     ctx.ast.member_expression_static(SPAN, object, property, false).into()
+}
+
+fn has_proto(e: &ObjectExpression<'_>) -> bool {
+    e.properties.iter().any(|p| p.prop_name().is_some_and(|name| name.0 == "__proto__"))
 }

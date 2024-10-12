@@ -23,7 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - cca0034 minifier: Handle positive `NaN` and `Infinity`. (#6207) (7086cmd)
 - dac8f09 minifier: Minify unary plus negation. (#6203) (7086cmd)
 - 3b79e1b minifier: Evaluate bigint in fold constant (#6178) (Boshen)
-- 9e62396 syntax_operations: Add crate `oxc_syntax_operations` (#6202) (Boshen)
+- 9e62396 syntax_operations: Add crate `oxc_ecmascript` (#6202) (Boshen)
 
 ### Bug Fixes
 
