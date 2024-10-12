@@ -107,7 +107,7 @@ impl ErrorWithPosition {
                 ret_range
             },
         );
-
+        let source = self.miette_err.code().map_or("oxc".to_string(), |code| format!("oxc:{code}"));
         let message = self.miette_err.help().map_or_else(
             || self.miette_err.to_string(),
             |help| format!("{}\nhelp: {}", self.miette_err, help),
@@ -118,7 +118,7 @@ impl ErrorWithPosition {
             severity,
             code: None,
             message,
-            source: Some("oxc".into()),
+            source: Some(source),
             code_description: None,
             related_information,
             tags: None,
@@ -176,7 +176,6 @@ impl IsolatedLintHandler {
                     let Some(ref related_info) = d.diagnostic.related_information else {
                         continue;
                     };
-
                     let related_information = Some(vec![DiagnosticRelatedInformation {
                         location: lsp_types::Location {
                             uri: lsp_types::Url::from_file_path(path).unwrap(),
@@ -194,7 +193,7 @@ impl IsolatedLintHandler {
                                 severity: Some(DiagnosticSeverity::HINT),
                                 code: None,
                                 message: r.message.clone(),
-                                source: Some("oxc".into()),
+                                source: d.diagnostic.source.clone(),
                                 code_description: None,
                                 related_information: related_information.clone(),
                                 tags: None,
