@@ -1,8 +1,8 @@
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, NONE};
+use oxc_ecmascript::ToInt32;
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, SPAN};
-use oxc_syntax::number::ToJsInt32;
 use oxc_syntax::{
     number::NumberBase,
     operator::{BinaryOperator, UnaryOperator},
@@ -303,7 +303,7 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
         let target = expr.left.as_simple_assignment_target_mut()?;
         if matches!(expr.operator, AssignmentOperator::Subtraction) {
             match &expr.right {
-                Expression::NumericLiteral(num) if num.value.to_js_int_32() == 1 => {
+                Expression::NumericLiteral(num) if num.value.to_int_32() == 1 => {
                     // The `_` will not be placed to the target code.
                     let target = std::mem::replace(
                         target,
@@ -315,7 +315,7 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
                     if matches!(un.operator, UnaryOperator::UnaryNegation) =>
                 {
                     if let Expression::NumericLiteral(num) = &un.argument {
-                        (num.value.to_js_int_32() == 1).then(|| {
+                        (num.value.to_int_32() == 1).then(|| {
                             // The `_` will not be placed to the target code.
                             let target = std::mem::replace(
                                 target,

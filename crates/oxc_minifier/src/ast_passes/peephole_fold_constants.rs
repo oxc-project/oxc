@@ -3,10 +3,12 @@ use std::ops::Neg;
 
 use num_bigint::BigInt;
 use num_traits::Zero;
+
 use oxc_ast::ast::*;
+use oxc_ecmascript::ToInt32;
 use oxc_span::{GetSpan, Span, SPAN};
 use oxc_syntax::{
-    number::{NumberBase, ToJsInt32},
+    number::NumberBase,
     operator::{BinaryOperator, LogicalOperator, UnaryOperator},
 };
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
@@ -195,7 +197,7 @@ impl<'a> PeepholeFoldConstants {
                     })
                 }
                 Expression::NumericLiteral(n) => is_valid(n.value).then(|| {
-                    let value = !n.value.to_js_int_32();
+                    let value = !n.value.to_int_32();
                     ctx.ast.expression_numeric_literal(
                         SPAN,
                         value.into(),
@@ -231,7 +233,7 @@ impl<'a> PeepholeFoldConstants {
                             // `-~1` -> `2`
                             if let Expression::NumericLiteral(n) = &mut un.argument {
                                 is_valid(n.value).then(|| {
-                                    let value = !n.value.to_js_int_32().wrapping_neg();
+                                    let value = !n.value.to_int_32().wrapping_neg();
                                     ctx.ast.expression_numeric_literal(
                                         SPAN,
                                         value.into(),
@@ -933,7 +935,7 @@ impl<'a> PeepholeFoldConstants {
 
             #[allow(clippy::cast_sign_loss)]
             let right_val_int = right_val as u32;
-            let bits = left_val.to_js_int_32();
+            let bits = left_val.to_int_32();
 
             let result_val: f64 = match op {
                 BinaryOperator::ShiftLeft => f64::from(bits.wrapping_shl(right_val_int)),

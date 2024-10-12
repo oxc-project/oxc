@@ -1,4 +1,4 @@
-use oxc_syntax::number::ToJsInt32;
+use oxc_ecmascript::ToInt32;
 
 pub(super) struct StringUtils;
 
@@ -9,7 +9,7 @@ impl StringUtils {
         search_value: Option<&str>,
         from_index: Option<f64>,
     ) -> isize {
-        let from_index = from_index.map_or(0, |x| x.to_js_int_32().max(0)) as usize;
+        let from_index = from_index.map_or(0, |x| x.to_int_32().max(0)) as usize;
         let Some(search_value) = search_value else {
             return -1;
         };
@@ -25,8 +25,8 @@ impl StringUtils {
     ) -> isize {
         let Some(search_value) = search_value else { return -1 };
 
-        let from_index = from_index
-            .map_or(usize::MAX, |x| x.to_js_int_32().max(0) as usize + search_value.len());
+        let from_index =
+            from_index.map_or(usize::MAX, |x| x.to_int_32().max(0) as usize + search_value.len());
 
         string
             .chars()
