@@ -225,20 +225,14 @@ fn is_function_maybe_reassigned<'a>(
     function_id: &'a BindingIdentifier,
     ctx: &'a LintContext<'_>,
 ) -> bool {
-    let mut is_maybe_reassigned = false;
-
-    for reference in ctx
-        .semantic()
+    ctx.semantic()
         .symbol_references(function_id.symbol_id.get().expect("`symbol_id` should be set"))
-    {
-        if let Some(AstKind::SimpleAssignmentTarget(_)) =
-            ctx.nodes().parent_kind(reference.node_id())
-        {
-            is_maybe_reassigned = true;
-        }
-    }
-
-    is_maybe_reassigned
+        .any(|reference| {
+            matches!(
+                ctx.nodes().parent_kind(reference.node_id()),
+                Some(AstKind::SimpleAssignmentTarget(_))
+            )
+        })
 }
 
 // skipping whitespace, commas, finds the next character (exclusive)
