@@ -42,6 +42,10 @@ impl<'a> Traverse<'a> for PeepholeRemoveDeadCode {
         }
     }
 
+    fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.compress_block(stmt, ctx);
+    }
+
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         if stmts.iter().any(|stmt| matches!(stmt, Statement::EmptyStatement(_))) {
             stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
@@ -125,6 +129,27 @@ impl<'a> PeepholeRemoveDeadCode {
 
         if stmts.len() != len {
             self.changed = true;
+        }
+    }
+
+    /// Remove block from single line blocks
+    /// `{ block } -> block`
+    fn compress_block(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Statement::BlockStatement(block) = stmt {
+            // Avoid compressing `if (x) { var x = 1 }` to `if (x) var x = 1` due to different
+            // semantics according to AnnexB, which lead to different semantics.
+            if block.body.len() == 1 && !block.body[0].is_declaration() {
+                *stmt = block.body.remove(0);
+                self.compress_block(stmt, ctx);
+                self.changed = true;
+                return;
+            }
+            if block.body.len() == 0
+                && (ctx.parent().is_block_statement() || ctx.parent().is_program())
+            {
+                // Remove the block if it is empty and the parent is a block statement.
+                *stmt = ctx.ast.statement_empty(SPAN);
+            }
         }
     }
 
@@ -265,6 +290,34 @@ mod test {
     }
 
     #[test]
+    fn test_fold_block() {
+        fold("{{foo()}}", "foo()");
+        fold("{foo();{}}", "foo()");
+        fold("{{foo()}{}}", "foo()");
+        // fold("{{foo()}{bar()}}", "foo();bar()");
+        fold("{if(false)foo(); {bar()}}", "bar()");
+        fold("{if(false)if(false)if(false)foo(); {bar()}}", "bar()");
+
+        fold("{'hi'}", "");
+        // fold("{x==3}", "");
+        // fold("{`hello ${foo}`}", "");
+        // fold("{ (function(){x++}) }", "");
+        // fold_same("function f(){return;}");
+        // fold("function f(){return 3;}", "function f(){return 3}");
+        // fold_same("function f(){if(x)return; x=3; return; }");
+        // fold("{x=3;;;y=2;;;}", "x=3;y=2");
+
+        // Cases to test for empty block.
+        // fold("while(x()){x}", "while(x());");
+        // fold("while(x()){x()}", "while(x())x()");
+        // fold("for(x=0;x<100;x++){x}", "for(x=0;x<100;x++);");
+        // fold("for(x in y){x}", "for(x in y);");
+        // fold("for (x of y) {x}", "for(x of y);");
+        // fold_same("for (let x = 1; x <10; x++ ) {}");
+        // fold_same("for (var x = 1; x <10; x++ ) {}");
+    }
+
+    #[test]
     #[ignore]
     fn test_remove_no_op_labelled_statement() {
         fold("a: break a;", "");
@@ -300,9 +353,6 @@ mod test {
         fold("for(;false;) { foo(); continue }", "");
 
         // fold("l1:for(;false;) {  }", "");
-
-        // TODO handle single block statement
-        fold_same("for(;a;) { foo(); }");
     }
 
     #[test]

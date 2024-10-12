@@ -18,57 +18,57 @@ fn test_same(source_text: &str) {
 
 #[test]
 fn dce_if_statement() {
-    test("if (true) { foo }", "{ foo }");
-    test("if (true) { foo } else { bar }", "{ foo }");
-    test("if (false) { foo } else { bar }", "{ bar }");
+    test("if (true) { foo }", "foo");
+    test("if (true) { foo } else { bar }", "foo");
+    test("if (false) { foo } else { bar }", "bar");
 
-    test("if (xxx) { foo } else if (false) { bar }", "if (xxx) { foo }");
-    test("if (xxx) { foo } else if (false) { bar } else { baz }", "if (xxx) { foo } else { baz }");
-    test("if (xxx) { foo } else if (false) { bar } else if (false) { baz }", "if (xxx) { foo }");
+    test("if (xxx) { foo } else if (false) { bar }", "if (xxx) foo");
+    test("if (xxx) { foo } else if (false) { bar } else { baz }", "if (xxx) foo; else baz");
+    test("if (xxx) { foo } else if (false) { bar } else if (false) { baz }", "if (xxx) foo");
     test(
         "if (xxx) { foo } else if (false) { bar } else if (false) { baz } else { quaz }",
-        "if (xxx) { foo } else { quaz }",
+        "if (xxx) foo; else quaz",
     );
     test(
         "if (xxx) { foo } else if (true) { bar } else if (false) { baz }",
-        "if (xxx) { foo } else { bar }",
+        "if (xxx) foo; else bar",
     );
     test(
         "if (xxx) { foo } else if (false) { bar } else if (true) { baz }",
-        "if (xxx) { foo } else { baz }",
+        "if (xxx) foo; else baz",
     );
     test(
         "if (xxx) { foo } else if (true) { bar } else if (true) { baz }",
-        "if (xxx) { foo } else { bar }",
+        "if (xxx) foo; else bar",
     );
     test(
         "if (xxx) { foo } else if (false) { var a; var b; } else if (false) { var c; var d; }",
-        "if (xxx) { foo } else var c, d;",
+        "if (xxx) foo; else var c, d;",
     );
 
-    test("if (!false) { foo }", "{ foo }");
-    test("if (!true) { foo } else { bar }", "{ bar }");
+    test("if (!false) { foo }", "foo");
+    test("if (!true) { foo } else { bar }", "bar");
 
-    test("if (!false && xxx) { foo }", "if (xxx) { foo; }");
-    test("if (!true && yyy) { foo } else { bar }", "{ bar }");
+    test("if (!false && xxx) { foo }", "if (xxx) foo");
+    test("if (!true && yyy) { foo } else { bar }", "bar");
 
-    test("if (true || xxx) { foo }", "{ foo }");
-    test("if (false || xxx) { foo }", "if (xxx) { foo }");
+    test("if (true || xxx) { foo }", "foo");
+    test("if (false || xxx) { foo }", "if (xxx) foo");
 
-    test("if ('production' == 'production') { foo } else { bar }", "{ foo }");
-    test("if ('development' == 'production') { foo } else { bar }", "{ bar }");
+    test("if ('production' == 'production') { foo } else { bar }", "foo");
+    test("if ('development' == 'production') { foo } else { bar }", "bar");
 
-    test("if ('production' === 'production') { foo } else { bar }", "{ foo }");
-    test("if ('development' === 'production') { foo } else { bar }", "{ bar }");
+    test("if ('production' === 'production') { foo } else { bar }", "foo");
+    test("if ('development' === 'production') { foo } else { bar }", "bar");
 
     // Shadowed `undefined` as a variable should not be erased.
     // This is a rollup test.
     test_same("function foo(undefined) { if (!undefined) { } }");
 
     test("function foo() { if (undefined) { bar } }", "function foo() { }");
-    test_same("function foo() { { bar } }");
+    test("function foo() { { bar } }", "function foo() { bar }");
 
-    test("if (true) { foo; } if (true) { foo; }", "{ foo; } { foo; }");
+    test("if (true) { foo; } if (true) { foo; }", "foo; foo;");
 
     test(
         "
@@ -83,11 +83,11 @@ fn dce_if_statement() {
     // nested expression
     test(
         "const a = { fn: function() { if (true) { foo; } } }",
-        "const a = { fn: function() { { foo; } } }",
+        "const a = { fn: function() { foo; } }",
     );
 
     // parenthesized
-    test("if (!!(false)) { REMOVE; } else { KEEP; }", "{ KEEP }");
+    test("if (!!(false)) { REMOVE; } else { KEEP; }", "KEEP");
 
     // typeof
     test("if (typeof 1 !== 'number') { REMOVE; }", "");
