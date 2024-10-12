@@ -26,10 +26,10 @@ doctest = true
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
 oxc_data_structures = { workspace = true }
+oxc_ecmascript = { workspace = true }
 oxc_semantic = { workspace = true }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
-oxc_syntax_operations = { workspace = true }
 
 compact_str = { workspace = true }
 itoa = { workspace = true }

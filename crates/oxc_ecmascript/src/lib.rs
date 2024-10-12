@@ -1,12 +1,4 @@
-//! Traits for JavaScript syntax operations
-//!
-//! * BoundNames
-//! * IsSimpleParameterList
-//! * PrivateBoundIdentifiers
-//! * PropName
-//! * Constant Folding
-//!
-//! See [ECMA262 Syntax-Directed Operations](https://tc39.es/ecma262/#sec-syntax-directed-operations)
+//! Methods defined in the [ECMAScript Language Specification](https://tc39.es/ecma262).
 
 mod bound_names;
 mod has_proto;

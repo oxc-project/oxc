@@ -22,7 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - c3c3447 data_structures: Add `oxc_data_structures` crate; add stack (#6206) (Boshen)
 - 51a78d5 napi/transform: Rename all mention of React to Jsx; remove mention of `Binding` (#6198) (Boshen)
-- 9e62396 syntax_operations: Add crate `oxc_syntax_operations` (#6202) (Boshen)
+- 9e62396 syntax_operations: Add crate `oxc_ecmascript` (#6202) (Boshen)
 - cf20f3a transformer: Exponentiation transform: support private fields (#6345) (overlookmotel)
 
 ### Bug Fixes

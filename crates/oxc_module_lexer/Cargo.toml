@@ -22,8 +22,8 @@ doctest = false
 
 [dependencies]
 oxc_ast = { workspace = true }
+oxc_ecmascript = { workspace = true }
 oxc_span = { workspace = true }
-oxc_syntax_operations = { workspace = true }
 
 [dev-dependencies]
 oxc_allocator = { workspace = true }
