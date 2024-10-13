@@ -2,13 +2,10 @@ commit: d62fa93c
 
 parser_test262 Summary:
 AST Parsed     : 43914/43914 (100.00%)
-Positive Passed: 43913/43914 (100.00%)
+Positive Passed: 43914/43914 (100.00%)
 Negative Passed: 4320/4322 (99.95%)
 Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attributes/json-invalid.js
 Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attributes/json-named-bindings.js
-Expect to Parse: tasks/coverage/test262/test/built-ins/String/prototype/split/separator-regexp.js
-
-  × Regular Expression content mismatch for `/\cY/`: `\c` == `\c`
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
     ╭─[test262/test/annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js:19:4]
