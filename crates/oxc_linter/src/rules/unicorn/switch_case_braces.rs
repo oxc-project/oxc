@@ -85,16 +85,16 @@ impl Rule for SwitchCaseBraces {
                                         formatter.print_str("default");
                                     }
 
-                                    formatter.print_char(b':');
-                                    formatter.print_char(b' ');
-                                    formatter.print_char(b'{');
+                                    formatter.print_ascii_byte(b':');
+                                    formatter.print_ascii_byte(b' ');
+                                    formatter.print_ascii_byte(b'{');
 
                                     let source_text = ctx.source_text();
                                     for x in &case.consequent {
                                         formatter.print_str(x.span().source_text(source_text));
                                     }
 
-                                    formatter.print_char(b'}');
+                                    formatter.print_ascii_byte(b'}');
 
                                     formatter.into_source_text()
                                 };

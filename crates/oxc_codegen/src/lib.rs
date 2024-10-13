@@ -225,10 +225,13 @@ impl<'a> Codegen<'a> {
         self.code.take_source_text()
     }
 
-    /// Push a single character into the buffer
+    /// Push a single ASCII byte into the buffer.
+    ///
+    /// # Panics
+    /// Panics if `byte` is not an ASCII byte (`0 - 0x7F`).
     #[inline]
-    pub fn print_char(&mut self, ch: u8) {
-        self.code.print_ascii_byte(ch);
+    pub fn print_ascii_byte(&mut self, byte: u8) {
+        self.code.print_ascii_byte(byte);
     }
 
     /// Push str into the buffer
@@ -256,35 +259,35 @@ impl<'a> Codegen<'a> {
     #[inline]
     fn print_soft_space(&mut self) {
         if !self.options.minify {
-            self.code.print_ascii_byte(b' ');
+            self.print_ascii_byte(b' ');
         }
     }
 
     #[inline]
     fn print_hard_space(&mut self) {
-        self.print_char(b' ');
+        self.print_ascii_byte(b' ');
     }
 
     #[inline]
     fn print_soft_newline(&mut self) {
         if !self.options.minify {
-            self.print_char(b'\n');
+            self.print_ascii_byte(b'\n');
         }
     }
 
     #[inline]
     fn print_hard_newline(&mut self) {
-        self.print_char(b'\n');
+        self.print_ascii_byte(b'\n');
     }
 
     #[inline]
     fn print_semicolon(&mut self) {
-        self.print_char(b';');
+        self.print_ascii_byte(b';');
     }
 
     #[inline]
     fn print_comma(&mut self) {
-        self.print_char(b',');
+        self.print_ascii_byte(b',');
     }
 
     #[inline]
@@ -356,12 +359,12 @@ impl<'a> Codegen<'a> {
 
     #[inline]
     fn print_colon(&mut self) {
-        self.print_char(b':');
+        self.print_ascii_byte(b':');
     }
 
     #[inline]
     fn print_equal(&mut self) {
-        self.print_char(b'=');
+        self.print_ascii_byte(b'=');
     }
 
     fn print_sequence<T: Gen>(&mut self, items: &[T], ctx: Context) {
@@ -373,7 +376,7 @@ impl<'a> Codegen<'a> {
 
     fn print_curly_braces<F: FnOnce(&mut Self)>(&mut self, span: Span, single_line: bool, op: F) {
         self.add_source_mapping(span.start);
-        self.print_char(b'{');
+        self.print_ascii_byte(b'{');
         if !single_line {
             self.print_soft_newline();
             self.indent();
@@ -384,12 +387,12 @@ impl<'a> Codegen<'a> {
             self.print_indent();
         }
         self.add_source_mapping(span.end);
-        self.print_char(b'}');
+        self.print_ascii_byte(b'}');
     }
 
     fn print_block_start(&mut self, position: u32) {
         self.add_source_mapping(position);
-        self.print_char(b'{');
+        self.print_ascii_byte(b'{');
         self.print_soft_newline();
         self.indent();
     }
@@ -398,7 +401,7 @@ impl<'a> Codegen<'a> {
         self.dedent();
         self.print_indent();
         self.add_source_mapping(position);
-        self.print_char(b'}');
+        self.print_ascii_byte(b'}');
     }
 
     fn print_body(&mut self, stmt: &Statement<'_>, need_space: bool, ctx: Context) {
@@ -539,19 +542,19 @@ impl<'a> Codegen<'a> {
     #[inline]
     fn wrap<F: FnMut(&mut Self)>(&mut self, wrap: bool, mut f: F) {
         if wrap {
-            self.print_char(b'(');
+            self.print_ascii_byte(b'(');
         }
         f(self);
         if wrap {
-            self.print_char(b')');
+            self.print_ascii_byte(b')');
         }
     }
 
     #[inline]
     fn wrap_quote<F: FnMut(&mut Self, u8)>(&mut self, mut f: F) {
-        self.print_char(self.quote);
+        self.print_ascii_byte(self.quote);
         f(self, self.quote);
-        self.print_char(self.quote);
+        self.print_ascii_byte(self.quote);
     }
 
     fn add_source_mapping(&mut self, position: u32) {

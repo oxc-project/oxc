@@ -145,21 +145,21 @@ impl PreferSpyOn {
         match left_assign {
             MemberExpression::ComputedMemberExpression(cmp_mem_expr) => {
                 formatter.print_expression(&cmp_mem_expr.object);
-                formatter.print_char(b',');
-                formatter.print_char(b' ');
+                formatter.print_ascii_byte(b',');
+                formatter.print_ascii_byte(b' ');
                 formatter.print_expression(&cmp_mem_expr.expression);
             }
             MemberExpression::StaticMemberExpression(static_mem_expr) => {
                 let name = &static_mem_expr.property.name;
                 formatter.print_expression(&static_mem_expr.object);
-                formatter.print_char(b',');
-                formatter.print_char(b' ');
+                formatter.print_ascii_byte(b',');
+                formatter.print_ascii_byte(b' ');
                 formatter.print_str(format!("\'{name}\'").as_str());
             }
             MemberExpression::PrivateFieldExpression(_) => (),
         }
 
-        formatter.print_char(b')');
+        formatter.print_ascii_byte(b')');
 
         if has_mock_implementation {
             return formatter.into_source_text();
@@ -171,7 +171,7 @@ impl PreferSpyOn {
             formatter.print_expression(expr);
         }
 
-        formatter.print_char(b')');
+        formatter.print_ascii_byte(b')');
         formatter.into_source_text()
     }
 
