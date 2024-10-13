@@ -100,7 +100,7 @@ use oxc_syntax::{
 };
 use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
 
-use crate::{common::module_imports::NamedImport, TransformCtx};
+use crate::{common::module_imports::ImportKind, TransformCtx};
 
 use super::diagnostics;
 pub use super::{
@@ -198,7 +198,7 @@ impl<'a, 'ctx> AutomaticScriptBindings<'a, 'ctx> {
     ) -> BoundIdentifier<'a> {
         let binding =
             ctx.generate_uid_in_root_scope(variable_name, SymbolFlags::FunctionScopedVariable);
-        let import = NamedImport::new(binding.name.clone(), None, binding.symbol_id);
+        let import = ImportKind::new_default(binding.name.clone(), binding.symbol_id);
         self.ctx.module_imports.add_import(source, import, front);
         binding
     }
@@ -298,7 +298,7 @@ impl<'a, 'ctx> AutomaticModuleBindings<'a, 'ctx> {
     ) -> BoundIdentifier<'a> {
         let binding = ctx.generate_uid_in_root_scope(name, SymbolFlags::Import);
         let import =
-            NamedImport::new(Atom::from(name), Some(binding.name.clone()), binding.symbol_id);
+            ImportKind::new_named(Atom::from(name), binding.name.clone(), binding.symbol_id);
         self.ctx.module_imports.add_import(source, import, false);
         binding
     }
