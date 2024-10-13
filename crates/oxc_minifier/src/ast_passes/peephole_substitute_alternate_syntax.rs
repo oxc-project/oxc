@@ -112,6 +112,13 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
                     self.try_fold_chain_call_expression(call_expr, ctx);
                 }
             }
+            Expression::TemplateLiteral(_) => {
+                if let Some(val) = ctx.get_string_value(expr) {
+                    let new_expr = ctx.ast.string_literal(expr.span(), val);
+                    *expr = ctx.ast.expression_from_string_literal(new_expr);
+                    self.changed = true;
+                }
+            }
             _ => {}
         }
     }
@@ -782,7 +789,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_template_string_to_string() {
         test("`abcde`", "'abcde'");
         test("`ab cd ef`", "'ab cd ef'");

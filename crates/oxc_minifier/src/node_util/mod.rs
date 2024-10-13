@@ -322,14 +322,19 @@ pub trait NodeUtil {
                 Some(Cow::Borrowed(string_literal.value.as_str()))
             }
             Expression::TemplateLiteral(template_literal) => {
-                // TODO: I don't know how to iterate children of TemplateLiteral in order,so only checkout string like `hi`.
-                // Closure-compiler do more: [case TEMPLATELIT](https://github.com/google/closure-compiler/blob/e13f5cd0a5d3d35f2db1e6c03fdf67ef02946009/src/com/google/javascript/jscomp/NodeUtil.java#L241-L256).
-                template_literal
-                    .quasis
-                    .first()
-                    .filter(|quasi| quasi.tail)
-                    .and_then(|quasi| quasi.value.cooked.as_ref())
-                    .map(|cooked| Cow::Borrowed(cooked.as_str()))
+                let mut str = String::new();
+
+                for (i, quasi) in template_literal.quasis.iter().enumerate() {
+                    str.push_str(quasi.value.cooked.as_ref()?);
+
+                    if i < template_literal.expressions.len() {
+                        let expr = &template_literal.expressions[i];
+                        let value = self.get_string_value(expr)?;
+                        str.push_str(&value);
+                    }
+                }
+
+                Some(Cow::Owned(str))
             }
             Expression::Identifier(ident) => {
                 let name = ident.name.as_str();
