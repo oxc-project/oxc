@@ -6,7 +6,7 @@ use std::borrow::Cow;
 
 use num_bigint::BigInt;
 use oxc_ast::ast::*;
-use oxc_ecmascript::{NumberValue, StringToBigInt, ToBigInt, ToBoolean, ToJsString, ToNumber};
+use oxc_ecmascript::{StringToBigInt, ToBigInt, ToBoolean, ToJsString, ToNumber};
 use oxc_semantic::{IsGlobalReference, ScopeTree, SymbolTable};
 
 pub use self::{is_literal_value::IsLiteralValue, may_have_side_effects::MayHaveSideEffects};
@@ -54,7 +54,7 @@ pub trait NodeUtil<'a> {
 
     /// port from [closure compiler](https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/AbstractPeepholeOptimization.java#L104-L114)
     /// Returns the number value of the node if it has one and it cannot have side effects.
-    fn get_side_free_number_value(&self, expr: &Expression<'a>) -> Option<NumberValue> {
+    fn get_side_free_number_value(&self, expr: &Expression<'a>) -> Option<f64> {
         let value = self.get_number_value(expr);
         // Calculating the number value, if any, is likely to be faster than calculating side effects,
         // and there are only a very few cases where we can compute a number value, but there could
@@ -108,7 +108,7 @@ pub trait NodeUtil<'a> {
     /// port from [closure compiler](https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/NodeUtil.java#L348)
     /// Gets the value of a node as a Number, or None if it cannot be converted.
     /// This method does not consider whether `expr` may have side effects.
-    fn get_number_value(&self, expr: &Expression<'a>) -> Option<NumberValue> {
+    fn get_number_value(&self, expr: &Expression<'a>) -> Option<f64> {
         expr.to_number()
     }
 

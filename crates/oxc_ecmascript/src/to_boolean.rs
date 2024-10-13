@@ -1,7 +1,8 @@
+use num_traits::Zero;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 
-use crate::{NumberValue, ToNumber};
+use crate::ToNumber;
 
 /// `ToBoolean`
 ///
@@ -93,7 +94,7 @@ impl<'a> ToBoolean<'a> for Expression<'a> {
                     // +1 -> true
                     // +0 -> false
                     // -0 -> false
-                    self.to_number().map(|value| value != NumberValue::Number(0_f64))
+                    self.to_number().map(|value| !value.is_zero())
                 } else if unary_expr.operator == UnaryOperator::LogicalNot {
                     // !true -> false
                     unary_expr.argument.to_boolean().map(|b| !b)

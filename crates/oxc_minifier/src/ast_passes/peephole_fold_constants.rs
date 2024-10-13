@@ -5,7 +5,7 @@ use num_bigint::BigInt;
 use num_traits::Zero;
 
 use oxc_ast::ast::*;
-use oxc_ecmascript::{NumberValue, ToInt32};
+use oxc_ecmascript::ToInt32;
 use oxc_span::{GetSpan, Span, SPAN};
 use oxc_syntax::{
     number::NumberBase,
@@ -492,8 +492,8 @@ impl<'a> PeepholeFoldConstants {
         if !operation.operator.is_arithmetic() {
             return None;
         };
-        let left: f64 = ctx.get_number_value(&operation.left)?.try_into().ok()?;
-        let right: f64 = ctx.get_number_value(&operation.right)?.try_into().ok()?;
+        let left = ctx.get_number_value(&operation.left)?;
+        let right = ctx.get_number_value(&operation.right)?;
         if !left.is_finite() || !right.is_finite() {
             return Self::try_fold_infinity_arithmetic(left, operation.operator, right, ctx);
         }
@@ -664,7 +664,7 @@ impl<'a> PeepholeFoldConstants {
             if matches!((left, right), (Ty::Number, Ty::Str)) || matches!(right, Ty::Boolean) {
                 let right_number = ctx.get_side_free_number_value(right_expr);
 
-                if let Some(NumberValue::Number(num)) = right_number {
+                if let Some(num) = right_number {
                     let number_literal_expr = ctx.ast.expression_numeric_literal(
                         right_expr.span(),
                         num,
@@ -685,7 +685,7 @@ impl<'a> PeepholeFoldConstants {
             if matches!((left, right), (Ty::Str, Ty::Number)) || matches!(left, Ty::Boolean) {
                 let left_number = ctx.get_side_free_number_value(left_expr);
 
-                if let Some(NumberValue::Number(num)) = left_number {
+                if let Some(num) = left_number {
                     let number_literal_expr = ctx.ast.expression_numeric_literal(
                         left_expr.span(),
                         num,
@@ -777,19 +777,19 @@ impl<'a> PeepholeFoldConstants {
                 return Tri::from(l_big < r_big);
             }
             // try comparing as Numbers.
-            (_, _, Some(l_num), Some(r_num)) => match (l_num, r_num) {
-                (NumberValue::NaN, _) | (_, NumberValue::NaN) => {
-                    return Tri::from(will_negative);
+            (_, _, Some(l_num), Some(r_num)) => {
+                return if l_num.is_nan() || r_num.is_nan() {
+                    Tri::from(will_negative)
+                } else {
+                    Tri::from(l_num < r_num)
                 }
-                (NumberValue::Number(l), NumberValue::Number(r)) => return Tri::from(l < r),
-                _ => {}
-            },
+            }
             // Finally, try comparisons between BigInt and Number.
             (Some(l_big), _, _, Some(r_num)) => {
-                return Self::bigint_less_than_number(&l_big, &r_num, Tri::False, will_negative);
+                return Self::bigint_less_than_number(&l_big, r_num, Tri::False, will_negative);
             }
             (_, Some(r_big), Some(l_num), _) => {
-                return Self::bigint_less_than_number(&r_big, &l_num, Tri::True, will_negative);
+                return Self::bigint_less_than_number(&r_big, l_num, Tri::True, will_negative);
             }
             _ => {}
         }
@@ -801,29 +801,29 @@ impl<'a> PeepholeFoldConstants {
     #[allow(clippy::cast_possible_truncation)]
     pub fn bigint_less_than_number(
         bigint_value: &BigInt,
-        number_value: &NumberValue,
+        number_value: f64,
         invert: Tri,
         will_negative: bool,
     ) -> Tri {
         // if invert is false, then the number is on the right in tryAbstractRelationalComparison
         // if it's true, then the number is on the left
         match number_value {
-            NumberValue::NaN => Tri::from(will_negative),
-            NumberValue::PositiveInfinity => Tri::True.xor(invert),
-            NumberValue::NegativeInfinity => Tri::False.xor(invert),
-            NumberValue::Number(num) => {
+            v if v.is_nan() => Tri::from(will_negative),
+            v if v.is_infinite() && v.is_sign_positive() => Tri::True.xor(invert),
+            v if v.is_infinite() && v.is_sign_negative() => Tri::False.xor(invert),
+            num => {
                 if let Some(Ordering::Equal | Ordering::Greater) =
                     num.abs().partial_cmp(&2_f64.powi(53))
                 {
                     Tri::Unknown
                 } else {
-                    let number_as_bigint = BigInt::from(*num as i64);
+                    let number_as_bigint = BigInt::from(num as i64);
 
                     match bigint_value.cmp(&number_as_bigint) {
                         Ordering::Less => Tri::True.xor(invert),
                         Ordering::Greater => Tri::False.xor(invert),
                         Ordering::Equal => {
-                            if is_exact_int64(*num) {
+                            if is_exact_int64(num) {
                                 Tri::False
                             } else {
                                 Tri::from(num.is_sign_positive()).xor(invert)
@@ -836,6 +836,7 @@ impl<'a> PeepholeFoldConstants {
     }
 
     /// <https://tc39.es/ecma262/#sec-strict-equality-comparison>
+    #[expect(clippy::float_cmp)]
     fn try_strict_equality_comparison<'b>(
         left_expr: &'b Expression<'a>,
         right_expr: &'b Expression<'a>,
@@ -920,9 +921,7 @@ impl<'a> PeepholeFoldConstants {
         let left_num = ctx.get_side_free_number_value(left);
         let right_num = ctx.get_side_free_number_value(right);
 
-        if let (Some(NumberValue::Number(left_val)), Some(NumberValue::Number(right_val))) =
-            (left_num, right_num)
-        {
+        if let (Some(left_val), Some(right_val)) = (left_num, right_num) {
             if left_val.fract() != 0.0 || right_val.fract() != 0.0 {
                 return None;
             }
