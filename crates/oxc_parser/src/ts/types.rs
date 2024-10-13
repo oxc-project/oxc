@@ -1269,14 +1269,14 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_ts_index_signature_member(&mut self) -> Result<TSSignature<'a>> {
         let span = self.start_span();
-        let mut readonly = false;
-        while self.is_nth_at_modifier(0, false) {
-            if self.eat(Kind::Readonly) {
-                readonly = true;
-            } else {
-                return Err(self.unexpected());
-            }
-        }
+
+        let modifiers = self.parse_class_element_modifiers(false);
+        self.verify_modifiers(
+            &modifiers,
+            ModifierFlags::READONLY,
+            diagnostics::cannot_appear_on_an_index_signature,
+        );
+        let readonly = modifiers.contains(ModifierKind::Readonly);
 
         self.bump(Kind::LBrack);
         let index_name = self.parse_ts_index_signature_name()?;

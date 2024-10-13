@@ -471,6 +471,12 @@ pub fn cannot_appear_on_a_parameter(modifier: &Modifier) -> OxcDiagnostic {
         .with_label(modifier.span)
 }
 
+/// TS(1071)
+pub fn cannot_appear_on_an_index_signature(modifier: &Modifier) -> OxcDiagnostic {
+    ts_error("1071", format!("'{}' modifier cannot appear on an index signature.", modifier.kind))
+        .with_label(modifier.span)
+}
+
 /// TS(18010)
 #[cold]
 pub fn accessibility_modifier_on_private_property(modifier: &Modifier) -> OxcDiagnostic {

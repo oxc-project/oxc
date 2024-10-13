@@ -6629,7 +6629,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │     }
    ╰────
 
-  × Identifier expected. 'export' is a reserved word that cannot be used here.
+  × TS(1090): 'export' modifier cannot appear on a parameter.
    ╭─[typescript/tests/cases/compiler/constructorArgsErrors5.ts:2:18]
  1 │ class foo {
  2 │     constructor (export a: number) {
@@ -9223,7 +9223,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  6 │ };
    ╰────
 
-  × Unexpected token
+  × TS(1071): 'public' modifier cannot appear on an index signature.
    ╭─[typescript/tests/cases/compiler/modifiersOnInterfaceIndexSignature1.ts:2:3]
  1 │ interface I {
  2 │   public [a: string]: number;
@@ -15079,7 +15079,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  9 │ }
    ╰────
 
-  × Unexpected token
+  × TS(1071): 'static' modifier cannot appear on an index signature.
     ╭─[typescript/tests/cases/conformance/classes/staticIndexSignature/staticIndexSignature4.ts:12:5]
  11 │ interface IB {
  12 │     static [s: string]: number;
@@ -15087,12 +15087,28 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  13 │     static [s: number]: 42 | 233;
     ╰────
 
-  × Unexpected token
+  × TS(1071): 'static' modifier cannot appear on an index signature.
+    ╭─[typescript/tests/cases/conformance/classes/staticIndexSignature/staticIndexSignature4.ts:13:5]
+ 12 │     static [s: string]: number;
+ 13 │     static [s: number]: 42 | 233;
+    ·     ──────
+ 14 │ }
+    ╰────
+
+  × TS(1071): 'static' modifier cannot appear on an index signature.
    ╭─[typescript/tests/cases/conformance/classes/staticIndexSignature/staticIndexSignature5.ts:7:5]
  6 │ interface I {
  7 │     static readonly [s: string]: number;
    ·     ──────
  8 │     static readonly [s: number]: 42 | 233
+   ╰────
+
+  × TS(1071): 'static' modifier cannot appear on an index signature.
+   ╭─[typescript/tests/cases/conformance/classes/staticIndexSignature/staticIndexSignature5.ts:8:5]
+ 7 │     static readonly [s: string]: number;
+ 8 │     static readonly [s: number]: 42 | 233
+   ·     ──────
+ 9 │ }
    ╰────
 
   × Expected `,` but found `is`
@@ -20758,14 +20774,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    · ─
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/IndexMemberDeclarations/parserIndexMemberDeclaration9.ts:2:10]
+  × TS(1071): 'export' modifier cannot appear on an index signature.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/IndexMemberDeclarations/parserIndexMemberDeclaration9.ts:2:4]
  1 │ class C {
  2 │    export [x: string]: string;
-   ·          ▲
+   ·    ──────
  3 │ }
    ╰────
-  help: Try insert a semicolon here
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/IndexSignatures/parserIndexSignature1.ts:2:4]
