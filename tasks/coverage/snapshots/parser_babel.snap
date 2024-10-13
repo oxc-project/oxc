@@ -1316,7 +1316,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·         ──
    ╰────
 
-  × Unexpected token
+  × Identifier expected. 'if' is a reserved word that cannot be used here.
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/382/input.js:1:5]
  1 │ var if = 42
    ·     ──
@@ -1411,25 +1411,25 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·            ───────
    ╰────
 
-  × Unexpected token
+  × Identifier expected. 'if' is a reserved word that cannot be used here.
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/397/input.js:1:12]
  1 │ function t(if) { }
    ·            ──
    ╰────
 
-  × Unexpected token
+  × Identifier expected. 'true' is a reserved word that cannot be used here.
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/398/input.js:1:12]
  1 │ function t(true) { }
    ·            ────
    ╰────
 
-  × Unexpected token
+  × Identifier expected. 'false' is a reserved word that cannot be used here.
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/399/input.js:1:12]
  1 │ function t(false) { }
    ·            ─────
    ╰────
 
-  × Unexpected token
+  × Identifier expected. 'null' is a reserved word that cannot be used here.
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/400/input.js:1:12]
  1 │ function t(null) { }
    ·            ────
@@ -2192,7 +2192,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: for octal literals use the '0o' prefix instead
 
-  × Unexpected token
+  × Identifier expected. 'this' is a reserved word that cannot be used here.
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/523/input.js:1:5]
  1 │ var this = 10;
    ·     ────
@@ -2669,14 +2669,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: In non-strict mode code, functions can only be declared at top level, inside a block, or as the body of an if statement
 
-  × Unexpected token
+  × Identifier expected. 'const' is a reserved word that cannot be used here.
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/identifiers/invalid-escape-seq-const/input.js:1:5]
  1 │ var co\u{6e}st = 123;
    ·     ──────────
  2 │ 
    ╰────
 
-  × Unexpected token
+  × Identifier expected. 'export' is a reserved word that cannot be used here.
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/identifiers/invalid-escape-seq-export/input.js:1:5]
  1 │ var expor\u{74} = 123;
    ·     ───────────
@@ -2689,7 +2689,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    · ────────────
    ╰────
 
-  × Unexpected token
+  × Identifier expected. 'import' is a reserved word that cannot be used here.
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/identifiers/invalid-escape-seq-import/input.js:1:5]
  1 │ var \u{69}\u{6d}\u{70}\u{6f}\u{72}\u{74} = 123;
    ·     ────────────────────────────────────
@@ -3331,13 +3331,13 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │     return `<div class="bar">Hola</div>`;
    ╰────
 
-  × Unexpected token
+  × Identifier expected. 'debugger' is a reserved word that cannot be used here.
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/modules/import-invalid-keyword/input.js:1:10]
  1 │ import { debugger } from "foo";
    ·          ────────
    ╰────
 
-  × Unexpected token
+  × Identifier expected. 'typeof' is a reserved word that cannot be used here.
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/modules/import-invalid-keyword-typeof/input.js:1:10]
  1 │ import { typeof } from "foo";
    ·          ──────
@@ -3734,25 +3734,25 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                                   ╰── `t` has already been declared here
    ╰────
 
-  × Unexpected token
+  × Identifier expected. 'super' is a reserved word that cannot be used here.
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/229/input.js:1:5]
  1 │ var super
    ·     ─────
    ╰────
 
-  × Unexpected token
+  × Identifier expected. 'default' is a reserved word that cannot be used here.
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/230/input.js:1:5]
  1 │ var default
    ·     ───────
    ╰────
 
-  × Unexpected token
+  × Identifier expected. 'default' is a reserved word that cannot be used here.
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/231/input.js:1:5]
  1 │ let default
    ·     ───────
    ╰────
 
-  × Unexpected token
+  × Identifier expected. 'default' is a reserved word that cannot be used here.
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/232/input.js:1:7]
  1 │ const default = 2
    ·       ───────
@@ -4244,13 +4244,13 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try insert a semicolon here
 
-  × Unexpected token
+  × Identifier expected. 'enum' is a reserved word that cannot be used here.
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/370/input.js:1:7]
  1 │ const enum = foo();
    ·       ────
    ╰────
 
-  × Unexpected token
+  × Identifier expected. 'enum' is a reserved word that cannot be used here.
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/371/input.js:1:7]
  1 │ const enum = foo();
    ·       ────
@@ -8378,7 +8378,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·         ──
    ╰────
 
-  × Unexpected token
+  × Identifier expected. 'if' is a reserved word that cannot be used here.
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0064/input.js:1:5]
  1 │ var if = 42
    ·     ──
@@ -9636,7 +9636,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try insert a semicolon here
 
-  × Unexpected token
+  × Identifier expected. 'enum' is a reserved word that cannot be used here.
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0277/input.js:1:12]
  1 │ class A {a(enum){}}
    ·            ────
@@ -10812,7 +10812,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try insert a semicolon here
 
-  × Unexpected token
+  × Identifier expected. 'if' is a reserved word that cannot be used here.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/export-invalid-type-only-keyword/input.ts:1:7]
  1 │ const if = {};
    ·       ──
@@ -10831,19 +10831,19 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·          ─────────
    ╰────
 
-  × Unexpected token
+  × Identifier expected. 'if' is a reserved word that cannot be used here.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/import-invalid-named-type-as-keyword/input.ts:1:18]
  1 │ import { type as if } from "mod";
    ·                  ──
    ╰────
 
-  × Unexpected token
+  × Identifier expected. 'if' is a reserved word that cannot be used here.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/import-invalid-type-named-keywords/input.ts:1:15]
  1 │ import { type if } from "./mod.js";
    ·               ──
    ╰────
 
-  × Unexpected token
+  × Identifier expected. 'if' is a reserved word that cannot be used here.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/import-invalid-type-only-as-as-keyword/input.ts:1:21]
  1 │ import { type as as if } from "mod";
    ·                     ──

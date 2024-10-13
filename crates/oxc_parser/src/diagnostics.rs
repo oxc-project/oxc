@@ -283,6 +283,14 @@ pub fn identifier_generator(x0: &str, span1: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn identifier_reserved_word(span: Span, reserved: &str) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!(
+        "Identifier expected. '{reserved}' is a reserved word that cannot be used here."
+    ))
+    .with_label(span)
+}
+
+#[cold]
 pub fn constructor_generator(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Constructor can't be a generator").with_label(span)
 }

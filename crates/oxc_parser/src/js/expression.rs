@@ -72,8 +72,14 @@ impl<'a> ParserImpl<'a> {
 
     /// `BindingIdentifier` : Identifier
     pub(crate) fn parse_binding_identifier(&mut self) -> Result<BindingIdentifier<'a>> {
-        if !self.cur_kind().is_binding_identifier() {
-            return Err(self.unexpected());
+        let cur = self.cur_kind();
+        if !cur.is_binding_identifier() {
+            let err = if cur.is_reserved_keyword() {
+                diagnostics::identifier_reserved_word(self.cur_token().span(), cur.to_str())
+            } else {
+                self.unexpected()
+            };
+            return Err(err);
         }
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
         self.check_identifier(span, &name);
