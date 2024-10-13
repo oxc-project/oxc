@@ -2047,12 +2047,12 @@ impl<'a> GenExpr for AwaitExpression<'a> {
 
 impl<'a> GenExpr for ChainExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
-        match &self.expression {
+        p.wrap(precedence >= Precedence::Postfix, |p| match &self.expression {
             ChainElement::CallExpression(expr) => expr.print_expr(p, precedence, ctx),
             match_member_expression!(ChainElement) => {
                 self.expression.to_member_expression().print_expr(p, precedence, ctx);
             }
-        }
+        });
     }
 }
 
