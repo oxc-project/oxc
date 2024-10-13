@@ -313,10 +313,10 @@ impl Rule for NoUselessUndefined {
                 let mut start = first_undefined_span.start;
                 let mut end = last_undefined_span.end;
 
-                let remaining_count = arguments.len() - undefined_args_spans.len();
+                let remaining_count = arguments.len() - undefined_args_spans.len() as u32;
 
                 if remaining_count > 0 {
-                    let previous_argument = &arguments[remaining_count as u32 - 1];
+                    let previous_argument = &arguments[remaining_count - 1];
                     start = previous_argument.span().end;
                 }
                 // If all arguments removed, and there is trailing comma, we need remove it.

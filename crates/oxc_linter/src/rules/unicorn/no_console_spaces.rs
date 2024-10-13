@@ -101,7 +101,7 @@ impl Rule for NoConsoleSpaces {
                     );
                 }
 
-                if check_literal_trailing(i, literal_raw, call_expr_arg_len) {
+                if check_literal_trailing(i, literal_raw, call_expr_arg_len as usize) {
                     report_diagnostic(
                         "trailing",
                         // SAFETY: `is_method_call` ensures that `call_expr`'s `callee` is a `MemberExpression` with a `MemberExpression` as its `object`.

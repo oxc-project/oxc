@@ -112,7 +112,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
                             .filter_map(|(idx, el)| el.as_ref().map(|el| (idx, el)))
                             .find_map(|(idx, el)| {
                                 if self == el {
-                                    Some((el.span(), idx == last_position))
+                                    Some((el.span(), idx == last_position as usize))
                                 } else {
                                     None
                                 }
@@ -130,7 +130,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
                     let last_property = obj.properties.len() - 1;
                     let own_span = obj.properties.iter().enumerate().find_map(|(idx, el)| {
                         if self == &el.value {
-                            Some((el.span, idx == last_property))
+                            Some((el.span, idx == last_property as usize))
                         } else {
                             None
                         }
@@ -148,7 +148,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
                 _ => {
                     let last_property = obj.properties.len() - 1;
                     let own_span = obj.properties.iter().enumerate().find_map(|(idx, el)| {
-                        (self == &el.value).then_some((el.span, idx == last_property))
+                        (self == &el.value).then_some((el.span, idx == last_property as usize))
                     });
                     BindingInfo::multi_or_missing(own_span, true)
                 }

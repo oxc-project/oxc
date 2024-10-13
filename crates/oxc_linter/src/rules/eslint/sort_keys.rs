@@ -131,7 +131,7 @@ impl Rule for SortKeys {
     }
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::ObjectExpression(dec) = node.kind() {
-            if dec.properties.len() < self.min_keys {
+            if dec.properties.len() < self.min_keys as u32 {
                 return;
             }
 
@@ -147,7 +147,9 @@ impl Rule for SortKeys {
                     }
                     ObjectPropertyKind::ObjectProperty(obj) => {
                         let Some(key) = obj.key.static_name() else { continue };
-                        if i != dec.properties.len() - 1 && self.allow_line_separated_groups {
+                        if i != dec.properties.len() as usize - 1
+                            && self.allow_line_separated_groups
+                        {
                             let text_between = extract_text_between_spans(
                                 source_text,
                                 prop.span(),

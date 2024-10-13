@@ -42,13 +42,16 @@ pub fn print_call_arguments<'a>(
         let mut len = arguments.len();
         let arguments: Box<dyn Iterator<Item = (usize, &Argument)>> = match skip_index {
             _ if skip_index > 0 => {
-                len -= skip_index as usize;
+                len -= skip_index as u32;
                 Box::new(arguments.iter().skip(skip_index as usize).enumerate())
             }
             _ if skip_index < 0 => {
-                len -= (-skip_index) as usize;
+                len -= (-skip_index) as u32;
                 Box::new(
-                    arguments.iter().take(arguments.len() - (-skip_index) as usize).enumerate(),
+                    arguments
+                        .iter()
+                        .take(arguments.len() as usize - (-skip_index) as usize)
+                        .enumerate(),
                 )
             }
             _ => Box::new(arguments.iter().enumerate()),
@@ -59,7 +62,7 @@ pub fn print_call_arguments<'a>(
             let mut arg = p.vec();
             arg.push(doc);
 
-            if i < len - 1 {
+            if i < len as usize - 1 {
                 arg.push(ss!(","));
                 if p.is_next_line_empty(element.span()) {
                     arg.extend(hardline!());
@@ -237,7 +240,7 @@ fn is_hopefully_short_call_argument(mut node: &Expression) -> bool {
     matches!(node, Expression::RegExpLiteral(_)) || is_simple_call_argument(node, 2)
 }
 
-fn is_simple_call_argument(node: &Expression, depth: usize) -> bool {
+fn is_simple_call_argument(node: &Expression, depth: u32) -> bool {
     if let Expression::RegExpLiteral(literal) = node {
         return literal.regex.pattern.len() <= 5;
     }

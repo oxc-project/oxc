@@ -78,7 +78,7 @@ impl<'a> CoverGrammar<'a, ArrayExpression<'a>> for ArrayAssignmentTarget<'a> {
                     elements.push(Some(target));
                 }
                 ArrayExpressionElement::SpreadElement(elem) => {
-                    if i == len - 1 {
+                    if i == len as usize - 1 {
                         rest = Some(p.ast.assignment_target_rest(
                             elem.span,
                             AssignmentTarget::cover(elem.unbox().argument, p)?,
@@ -132,7 +132,7 @@ impl<'a> CoverGrammar<'a, ObjectExpression<'a>> for ObjectAssignmentTarget<'a> {
                     properties.push(target);
                 }
                 ObjectPropertyKind::SpreadProperty(spread) => {
-                    if i == len - 1 {
+                    if i == len as usize - 1 {
                         rest = Some(p.ast.assignment_target_rest(
                             spread.span,
                             AssignmentTarget::cover(spread.unbox().argument, p)?,

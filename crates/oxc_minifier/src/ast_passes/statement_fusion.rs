@@ -94,7 +94,7 @@ impl<'a> StatementFusion {
         let len = stmts.len();
         let mut expressions = ctx.ast.vec();
 
-        for stmt in stmts.iter_mut().take(len - 1) {
+        for stmt in stmts.iter_mut().take(len as usize - 1) {
             match stmt {
                 Statement::ExpressionStatement(expr_stmt) => {
                     if let Expression::SequenceExpression(sequence_expr) = &mut expr_stmt.expression

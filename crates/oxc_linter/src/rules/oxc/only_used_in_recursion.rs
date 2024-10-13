@@ -96,7 +96,7 @@ impl Rule for OnlyUsedInRecursion {
             };
 
             if is_argument_only_used_in_recursion(function_id, arg, arg_index, ctx) {
-                if arg_index == function_parameters.items.len() - 1
+                if arg_index == function_parameters.items.len() as usize - 1
                     && !ctx
                         .semantic()
                         .symbols()

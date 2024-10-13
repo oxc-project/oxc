@@ -105,7 +105,7 @@ pub(super) fn print_class_body<'a>(p: &mut Prettier<'a>, class_body: &ClassBody<
             parts_inner.push(ss!(";"));
         }
 
-        if i < class_body.body.len() - 1 {
+        if i < class_body.body.len() as usize - 1 {
             parts_inner.extend(hardline!());
 
             if p.is_next_line_empty(node.span()) {

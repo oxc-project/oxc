@@ -219,7 +219,7 @@ fn is_passing_through<'a>(
     constructor_params: &FormalParameters<'a>,
     super_args: &[Argument<'a>],
 ) -> bool {
-    if constructor_params.parameters_count() != super_args.len() {
+    if constructor_params.parameters_count() != super_args.len() as u32 {
         return false;
     }
     if let Some(rest) = &constructor_params.rest {

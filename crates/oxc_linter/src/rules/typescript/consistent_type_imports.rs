@@ -220,7 +220,7 @@ impl Rule for ConsistentTypeImports {
             }
 
             is_only_type_references =
-                type_references_without_type_qualifier.len() == specifiers.len();
+                type_references_without_type_qualifier.len() == specifiers.len() as usize;
         }
 
         if import_decl.import_kind.is_value() && !type_references_without_type_qualifier.is_empty()
@@ -468,7 +468,7 @@ fn fix_to_type_import_declaration<'a>(options: &FixOptions<'a, '_>) -> FixerResu
 
     if let Some(default_specifier) = default_specifier {
         if type_names.iter().contains(&default_specifier.local.name.as_str()) {
-            if type_names.len() == import_decl.specifiers.as_ref().map_or(0, |s| s.len()) {
+            if type_names.len() == import_decl.specifiers.as_ref().map_or(0, |s| s.len()) as usize {
                 // import type Type from 'foo'
                 //        ^^^^^ insert
                 rule_fixes.push(fixer.insert_text_after(

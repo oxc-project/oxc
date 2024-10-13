@@ -150,8 +150,9 @@ impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
             return;
         }
 
-        let mut variable_declarator_items = ctx.ast.vec_with_capacity(self.registrations.len());
-        let mut new_statements = ctx.ast.vec_with_capacity(self.registrations.len() + 1);
+        let mut variable_declarator_items =
+            ctx.ast.vec_with_capacity(self.registrations.len() as u32);
+        let mut new_statements = ctx.ast.vec_with_capacity(self.registrations.len() as u32 + 1);
         for (symbol_id, persistent_id) in self.registrations.drain(..) {
             let name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
             let binding_identifier = BindingIdentifier::new_with_symbol_id(SPAN, name, symbol_id);
@@ -625,7 +626,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
                 .filter_map(|e| e.map(|e| ctx.ast.array_expression_element_expression(e))),
         );
 
-        let force_reset = custom_hooks_in_scope.len() != callee_len;
+        let force_reset = custom_hooks_in_scope.len() != callee_len as u32;
 
         let mut arguments = ctx.ast.vec();
         arguments.push(

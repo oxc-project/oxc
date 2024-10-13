@@ -114,7 +114,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
 
             match arg {
                 Argument::FunctionExpression(func_expr) => {
-                    if func_expr.params.parameters_count() != 1 + callback_arg_index {
+                    if func_expr.params.parameters_count() != 1 + callback_arg_index as u32 {
                         return;
                     }
                     let Some(span) = get_span_of_first_parameter(&func_expr.params) else {
@@ -129,7 +129,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
                     ctx.diagnostic(no_done_callback(span));
                 }
                 Argument::ArrowFunctionExpression(arrow_expr) => {
-                    if arrow_expr.params.parameters_count() != 1 + callback_arg_index {
+                    if arrow_expr.params.parameters_count() != 1 + callback_arg_index as u32 {
                         return;
                     }
 

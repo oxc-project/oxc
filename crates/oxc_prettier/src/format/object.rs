@@ -20,7 +20,7 @@ pub enum ObjectLike<'a, 'b> {
 }
 
 impl<'a, 'b> ObjectLike<'a, 'b> {
-    fn len(&self) -> usize {
+    fn len(&self) -> u32 {
         match self {
             Self::Expression(expr) => expr.properties.len(),
             Self::AssignmentTarget(target) => target.properties.len(),
@@ -118,7 +118,7 @@ pub(super) fn print_object_properties<'a>(
             indent_parts.push(if p.options.bracket_spacing { line!() } else { softline!() });
             for (i, doc) in object.iter(p).enumerate() {
                 indent_parts.push(doc);
-                if i == len - 1 && !has_rest {
+                if i == len as usize - 1 && !has_rest {
                     break;
                 }
 

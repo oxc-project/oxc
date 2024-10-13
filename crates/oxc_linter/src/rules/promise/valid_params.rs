@@ -76,7 +76,7 @@ impl Rule for ValidParams {
             return;
         };
 
-        let args_len = call_expr.arguments.len();
+        let args_len = call_expr.arguments.len() as usize;
 
         match prop_name.as_str() {
             "resolve" | "reject" => {
@@ -103,7 +103,7 @@ impl Rule for ValidParams {
                     ctx.diagnostic(one_argument_required_diagnostic(
                         call_expr.span,
                         &prop_name,
-                        args_len,
+                        args_len as usize,
                     ));
                 }
             }

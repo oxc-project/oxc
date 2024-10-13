@@ -74,7 +74,7 @@ impl Rule for NoDupeKeys {
         if len <= 1 {
             return;
         }
-        let mut map = FxHashMap::with_capacity_and_hasher(len, FxBuildHasher);
+        let mut map = FxHashMap::with_capacity_and_hasher(len as usize, FxBuildHasher);
         for prop in &obj_expr.properties {
             let ObjectPropertyKind::ObjectProperty(prop) = prop else {
                 continue;

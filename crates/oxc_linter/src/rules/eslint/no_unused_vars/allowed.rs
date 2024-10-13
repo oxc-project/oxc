@@ -227,7 +227,7 @@ impl NoUnusedVars {
         };
 
         // This is the last parameter, so need to check for usages on following parameters
-        if position == params.items.len() - 1 {
+        if position == params.items.len() as usize - 1 {
             return false;
         }
 

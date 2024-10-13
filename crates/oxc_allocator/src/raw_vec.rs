@@ -88,8 +88,7 @@
 //! [`IndexMut`]: https://doc.rust-lang.org/std/ops/trait.IndexMut.html
 //! [`vec!`]: ../../macro.vec.html
 
-use crate::collections::CollectionAllocErr;
-use crate::Bump;
+use bumpalo::Bump;
 use core::borrow::{Borrow, BorrowMut};
 use core::cmp::{self, Ordering};
 use core::fmt;
@@ -109,7 +108,7 @@ use std::io;
 use bumpalo::alloc::{handle_alloc_error, Alloc, Layout, UnstableLayoutMethods};
 
 /// RawVec
-use bumpalo::collections::CollectionAllocErr::*;
+use bumpalo::collections::CollectionAllocErr::{self, *};
 
 unsafe fn arith_offset<T>(p: *const T, offset: isize) -> *const T {
     p.offset(offset)
@@ -393,7 +392,7 @@ macro_rules! vec {
 /// ```
 /// use bumpalo::{Bump, collections::Vec};
 ///
-/// fn read_slice(slice: &[usize]) {
+/// fn read_slice(slice: &[u32]) {
 ///     // ...
 /// }
 ///
@@ -404,7 +403,7 @@ macro_rules! vec {
 ///
 /// // ... and that's all!
 /// // you can also do it like this:
-/// let x : &[usize] = &v;
+/// let x : &[u32] = &v;
 /// ```
 ///
 /// In Rust, it's more common to pass slices as arguments rather than vectors
@@ -525,9 +524,9 @@ macro_rules! vec {
 /// [owned slice]: https://doc.rust-lang.org/std/boxed/struct.Box.html
 pub struct Vec<'bump, T: 'bump> {
     ptr: NonNull<T>,
-    cap: usize,
+    cap: u32,
     bump: &'bump Bump,
-    len: usize,
+    len: u32,
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -554,9 +553,9 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
         Vec { ptr: NonNull::dangling(), bump, cap: 0, len: 0 }
     }
 
-    fn allocate_in(cap: usize, zeroed: bool, mut bump: &'bump Bump) -> Self {
+    fn allocate_in(cap: u32, zeroed: bool, mut bump: &'bump Bump) -> Self {
         unsafe {
-            let elem_size = mem::size_of::<T>();
+            let elem_size = mem::size_of::<T>() as u32;
 
             let alloc_size = cap.checked_mul(elem_size).unwrap_or_else(|| capacity_overflow());
             alloc_guard(alloc_size).unwrap_or_else(|_| capacity_overflow());
@@ -566,7 +565,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
                 NonNull::<T>::dangling()
             } else {
                 let align = mem::align_of::<T>();
-                let layout = Layout::from_size_align(alloc_size, align).unwrap();
+                let layout = Layout::from_size_align(alloc_size as usize, align).unwrap();
                 let result = if zeroed {
                     bump.alloc_zeroed(layout)
                 } else {
@@ -615,7 +614,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// vec.push(11);
     /// ```
     #[inline]
-    pub fn with_capacity_in(capacity: usize, bump: &'bump Bump) -> Vec<'bump, T> {
+    pub fn with_capacity_in(capacity: u32, bump: &'bump Bump) -> Vec<'bump, T> {
         Vec::allocate_in(capacity, false, bump)
     }
 
@@ -696,8 +695,8 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// ```
     pub unsafe fn from_raw_parts_in(
         ptr: *mut T,
-        length: usize,
-        capacity: usize,
+        length: u32,
+        capacity: u32,
         bump: &'bump Bump,
     ) -> Vec<'bump, T> {
         Vec { ptr: NonNull::new_unchecked(ptr), cap: capacity, bump, len: length }
@@ -736,7 +735,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// assert_eq!(vec.capacity(), 10);
     /// ```
     #[inline]
-    pub fn capacity(&self) -> usize {
+    pub fn capacity(&self) -> u32 {
         self.cap()
     }
 
@@ -748,7 +747,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     ///
     /// # Panics
     ///
-    /// Panics if the new capacity overflows `usize`.
+    /// Panics if the new capacity overflows `u32`.
     ///
     /// # Examples
     ///
@@ -760,7 +759,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// vec.reserve(10);
     /// assert!(vec.capacity() >= 11);
     /// ```
-    pub fn reserve(&mut self, additional: usize) {
+    pub fn reserve(&mut self, additional: u32) {
         self.reserve_buf(self.len, additional);
     }
 
@@ -775,7 +774,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     ///
     /// # Panics
     ///
-    /// Panics if the new capacity overflows `usize`.
+    /// Panics if the new capacity overflows `u32`.
     ///
     /// # Examples
     ///
@@ -787,7 +786,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// vec.reserve_exact(10);
     /// assert!(vec.capacity() >= 11);
     /// ```
-    pub fn reserve_exact(&mut self, additional: usize) {
+    pub fn reserve_exact(&mut self, additional: u32) {
         self.reserve_exact_buf(self.len, additional);
     }
 
@@ -799,7 +798,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     ///
     /// # Panics
     ///
-    /// Panics if the new capacity overflows `usize`.
+    /// Panics if the new capacity overflows `u32`.
     ///
     /// # Examples
     ///
@@ -811,7 +810,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// vec.try_reserve(10).unwrap();
     /// assert!(vec.capacity() >= 11);
     /// ```
-    pub fn try_reserve(&mut self, additional: usize) -> Result<(), CollectionAllocErr> {
+    pub fn try_reserve(&mut self, additional: u32) -> Result<(), CollectionAllocErr> {
         self.try_reserve_buf(self.len, additional)
     }
 
@@ -826,7 +825,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     ///
     /// # Panics
     ///
-    /// Panics if the new capacity overflows `usize`.
+    /// Panics if the new capacity overflows `u32`.
     ///
     /// # Examples
     ///
@@ -838,7 +837,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// vec.try_reserve_exact(10).unwrap();
     /// assert!(vec.capacity() >= 11);
     /// ```
-    pub fn try_reserve_exact(&mut self, additional: usize) -> Result<(), CollectionAllocErr> {
+    pub fn try_reserve_exact(&mut self, additional: u32) -> Result<(), CollectionAllocErr> {
         self.try_reserve_exact_buf(self.len, additional)
     }
 
@@ -884,7 +883,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
             let ptr = self.as_ptr();
             let len = self.len();
             mem::forget(self);
-            slice::from_raw_parts(ptr, len)
+            slice::from_raw_parts(ptr, len as usize)
         }
     }
 
@@ -910,7 +909,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
         let len = self.len();
         mem::forget(self);
 
-        unsafe { slice::from_raw_parts_mut(ptr, len) }
+        unsafe { slice::from_raw_parts_mut(ptr, len as usize) }
     }
 
     /// Shortens the vector, keeping the first `len` elements and dropping
@@ -967,10 +966,10 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     ///
     /// [`clear`]: #method.clear
     /// [`drain`]: #method.drain
-    pub fn truncate(&mut self, len: usize) {
+    pub fn truncate(&mut self, len: u32) {
         let current_len = self.len;
         unsafe {
-            let mut ptr = self.as_mut_ptr().add(self.len);
+            let mut ptr = self.as_mut_ptr().add(self.len as usize);
             // Set the final length at the end, keeping in mind that
             // dropping an element might panic. Works around a missed
             // optimization, as seen in the following issue:
@@ -1182,7 +1181,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// assert_eq!(b"aaaa", &*vec);
     /// ```
     #[inline]
-    pub unsafe fn set_len(&mut self, new_len: usize) {
+    pub unsafe fn set_len(&mut self, new_len: u32) {
         self.len = new_len;
     }
 
@@ -1212,13 +1211,13 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// assert_eq!(v, ["baz", "qux"]);
     /// ```
     #[inline]
-    pub fn swap_remove(&mut self, index: usize) -> T {
+    pub fn swap_remove(&mut self, index: u32) -> T {
         unsafe {
             // We replace self[index] with the last element. Note that if the
             // bounds check on hole succeeds there must be a last element (which
             // can be self[index] itself).
-            let hole: *mut T = &mut self[index];
-            let last = ptr::read(self.get_unchecked(self.len - 1));
+            let hole: *mut T = &mut self[index as usize];
+            let last = ptr::read(self.get_unchecked((self.len - 1) as usize));
             self.len -= 1;
             ptr::replace(hole, last)
         }
@@ -1244,7 +1243,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// vec.insert(4, 5);
     /// assert_eq!(vec, [1, 4, 2, 3, 5]);
     /// ```
-    pub fn insert(&mut self, index: usize, element: T) {
+    pub fn insert(&mut self, index: u32, element: T) {
         let len = self.len();
         assert!(index <= len);
 
@@ -1257,10 +1256,10 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
             // infallible
             // The spot to put the new value
             {
-                let p = self.as_mut_ptr().add(index);
+                let p = self.as_mut_ptr().add(index as usize);
                 // Shift everything over to make space. (Duplicating the
                 // `index`th element into two consecutive places.)
-                ptr::copy(p, p.offset(1), len - index);
+                ptr::copy(p, p.offset(1), (len - index) as usize);
                 // Write it in, overwriting the first copy of the `index`th
                 // element.
                 ptr::write(p, element);
@@ -1287,7 +1286,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// assert_eq!(v.remove(1), 2);
     /// assert_eq!(v, [1, 3]);
     /// ```
-    pub fn remove(&mut self, index: usize) -> T {
+    pub fn remove(&mut self, index: u32) -> T {
         let len = self.len();
         assert!(index < len);
         unsafe {
@@ -1295,13 +1294,13 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
             let ret;
             {
                 // the place we are taking from.
-                let ptr = self.as_mut_ptr().add(index);
+                let ptr = self.as_mut_ptr().add(index as usize);
                 // copy it out, unsafely having a copy of the value on
                 // the stack and in the vector at the same time.
                 ret = ptr::read(ptr);
 
                 // Shift everything down to fill in that spot.
-                ptr::copy(ptr.offset(1), ptr, len - index - 1);
+                ptr::copy(ptr.offset(1), ptr, (len - index - 1) as usize);
             }
             self.set_len(len - 1);
             ret
@@ -1328,6 +1327,13 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     pub fn retain<F>(&mut self, mut f: F)
     where
         F: FnMut(&T) -> bool,
+    {
+        self.drain_filter(|x| !f(x));
+    }
+
+    pub fn retain_mut<F>(&mut self, mut f: F)
+    where
+        F: FnMut(&mut T) -> bool,
     {
         self.drain_filter(|x| !f(x));
     }
@@ -1421,14 +1427,14 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
             let (dedup, _) = partition_dedup_by(self.as_mut_slice(), same_bucket);
             dedup.len()
         };
-        self.truncate(len);
+        self.truncate(len as u32);
     }
 
     /// Appends an element to the back of a vector.
     ///
     /// # Panics
     ///
-    /// Panics if the number of elements in the vector overflows a `usize`.
+    /// Panics if the number of elements in the vector overflows a `u32`.
     ///
     /// # Examples
     ///
@@ -1449,7 +1455,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
             self.reserve(1);
         }
         unsafe {
-            let end = self.ptr().add(self.len);
+            let end = self.ptr().add(self.len as usize);
             ptr::write(end, value);
             self.len += 1;
         }
@@ -1478,7 +1484,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
         } else {
             unsafe {
                 self.len -= 1;
-                Some(ptr::read(self.as_ptr().add(self.len())))
+                Some(ptr::read(self.as_ptr().add(self.len() as usize)))
             }
         }
     }
@@ -1487,7 +1493,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     ///
     /// # Panics
     ///
-    /// Panics if the number of elements in the vector overflows a `usize`.
+    /// Panics if the number of elements in the vector overflows a `u32`.
     ///
     /// # Examples
     ///
@@ -1514,10 +1520,10 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     #[inline]
     unsafe fn append_elements(&mut self, other: *const [T]) {
         let count = (*other).len();
-        self.reserve(count);
+        self.reserve(count as u32);
         let len = self.len();
-        ptr::copy_nonoverlapping(other as *const T, self.as_mut_ptr().add(len), count);
-        self.len += count;
+        ptr::copy_nonoverlapping(other as *const T, self.as_mut_ptr().add(len as usize), count);
+        self.len += count as u32;
     }
 
     /// Creates a draining iterator that removes the specified range in the vector
@@ -1555,7 +1561,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// ```
     pub fn drain<R>(&mut self, range: R) -> Drain<T>
     where
-        R: RangeBounds<usize>,
+        R: RangeBounds<u32>,
     {
         // Memory safety
         //
@@ -1586,7 +1592,10 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
             self.set_len(start);
             // Use the borrow in the IterMut to indicate borrowing behavior of the
             // whole Drain iterator (like &mut T).
-            let range_slice = slice::from_raw_parts_mut(self.as_mut_ptr().add(start), end - start);
+            let range_slice = slice::from_raw_parts_mut(
+                self.as_mut_ptr().add(start as usize),
+                (end - start) as usize,
+            );
             Drain {
                 tail_start: end,
                 tail_len: len - end,
@@ -1633,7 +1642,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// assert_eq!(a.len(), 3);
     /// ```
     #[inline]
-    pub fn len(&self) -> usize {
+    pub fn len(&self) -> u32 {
         self.len
     }
 
@@ -1680,7 +1689,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// assert_eq!(vec2, [2, 3]);
     /// ```
     #[inline]
-    pub fn split_off(&mut self, at: usize) -> Self {
+    pub fn split_off(&mut self, at: u32) -> Self {
         assert!(at <= self.len(), "`at` out of bounds");
 
         let other_len = self.len - at;
@@ -1691,7 +1700,11 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
             self.set_len(at);
             other.set_len(other_len);
 
-            ptr::copy_nonoverlapping(self.as_ptr().add(at), other.as_mut_ptr(), other.len());
+            ptr::copy_nonoverlapping(
+                self.as_ptr().add(at as usize),
+                other.as_mut_ptr(),
+                other.len() as usize,
+            );
         }
         other
     }
@@ -1759,7 +1772,7 @@ impl<'bump, T: 'bump + Clone> Vec<'bump, T> {
     /// [`Clone`]: https://doc.rust-lang.org/std/clone/trait.Clone.html
     /// [`Default`]: https://doc.rust-lang.org/std/default/trait.Default.html
     /// [`resize_with`]: #method.resize_with
-    pub fn resize(&mut self, new_len: usize, value: T) {
+    pub fn resize(&mut self, new_len: u32, value: T) {
         let len = self.len();
 
         if new_len > len {
@@ -1807,7 +1820,7 @@ impl<'bump, T: 'bump + Copy> Vec<'bump, T> {
     ///       * guaranteeing that `self` and `other` do not overlap.
     unsafe fn extend_from_slice_copy_unchecked(&mut self, other: &[T]) {
         let old_len = self.len();
-        debug_assert!(old_len + other.len() <= self.capacity());
+        debug_assert!(old_len + other.len() as u32 <= self.capacity());
 
         // SAFETY:
         // * `src` is valid for reads of `other.len()` values by virtue of being a `&[T]`.
@@ -1819,9 +1832,9 @@ impl<'bump, T: 'bump + Copy> Vec<'bump, T> {
         // * Caller is required to guarantee that the source and destination ranges cannot overlap
         unsafe {
             let src = other.as_ptr();
-            let dst = self.as_mut_ptr().add(old_len);
+            let dst = self.as_mut_ptr().add(old_len as usize);
             ptr::copy_nonoverlapping(src, dst, other.len());
-            self.set_len(old_len + other.len());
+            self.set_len(old_len + other.len() as u32);
         }
     }
 
@@ -1860,7 +1873,7 @@ impl<'bump, T: 'bump + Copy> Vec<'bump, T> {
     /// [`extend_from_slices`]: #method.extend_from_slices
     pub fn extend_from_slice_copy(&mut self, other: &[T]) {
         // Reserve space in the Vec for the values to be added
-        self.reserve(other.len());
+        self.reserve(other.len() as u32);
 
         // Copy values into the space that was just reserved
         // SAFETY:
@@ -1905,7 +1918,7 @@ impl<'bump, T: 'bump + Copy> Vec<'bump, T> {
     pub fn extend_from_slices_copy(&mut self, slices: &[&[T]]) {
         // Reserve the total amount of capacity we'll need to safely append the aggregated contents
         // of each slice in `slices`.
-        let capacity_to_reserve: usize = slices.iter().map(|slice| slice.len()).sum();
+        let capacity_to_reserve: u32 = slices.iter().map(|slice| slice.len() as u32).sum();
         self.reserve(capacity_to_reserve);
 
         // SAFETY:
@@ -1940,11 +1953,11 @@ impl<T: Clone> ExtendWith<T> for ExtendElement<T> {
 
 impl<'bump, T: 'bump> Vec<'bump, T> {
     /// Extend the vector by `n` values, using the given generator.
-    fn extend_with<E: ExtendWith<T>>(&mut self, n: usize, mut value: E) {
+    fn extend_with<E: ExtendWith<T>>(&mut self, n: u32, mut value: E) {
         self.reserve(n);
 
         unsafe {
-            let mut ptr = self.as_mut_ptr().add(self.len());
+            let mut ptr = self.as_mut_ptr().add(self.len() as usize);
             // Use SetLenOnDrop to work around bug where compiler
             // may not realize the store through `ptr` through self.set_len()
             // don't alias.
@@ -1975,23 +1988,23 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
 // that the optimizer will see does not alias with any stores through the Vec's data
 // pointer. This is a workaround for alias analysis issue #32155
 struct SetLenOnDrop<'a> {
-    len: &'a mut usize,
-    local_len: usize,
+    len: &'a mut u32,
+    local_len: u32,
 }
 
 impl<'a> SetLenOnDrop<'a> {
     #[inline]
-    fn new(len: &'a mut usize) -> Self {
+    fn new(len: &'a mut u32) -> Self {
         SetLenOnDrop { local_len: *len, len }
     }
 
     #[inline]
-    fn increment_len(&mut self, increment: usize) {
+    fn increment_len(&mut self, increment: u32) {
         self.local_len += increment;
     }
 
     #[inline]
-    fn decrement_len(&mut self, decrement: usize) {
+    fn decrement_len(&mut self, decrement: u32) {
         self.local_len -= decrement;
     }
 }
@@ -2088,7 +2101,7 @@ impl<'bump, T: 'bump> ops::Deref for Vec<'bump, T> {
         unsafe {
             let p = self.ptr();
             // assume(!p.is_null());
-            slice::from_raw_parts(p, self.len)
+            slice::from_raw_parts(p, self.len as usize)
         }
     }
 }
@@ -2098,7 +2111,7 @@ impl<'bump, T: 'bump> ops::DerefMut for Vec<'bump, T> {
         unsafe {
             let ptr = self.ptr();
             // assume(!ptr.is_null());
-            slice::from_raw_parts_mut(ptr, self.len)
+            slice::from_raw_parts_mut(ptr, self.len as usize)
         }
     }
 }
@@ -2132,7 +2145,7 @@ impl<'bump, T: 'bump> IntoIterator for Vec<'bump, T> {
             let end = if mem::size_of::<T>() == 0 {
                 arith_offset(begin as *const i8, self.len() as isize) as *const T
             } else {
-                begin.add(self.len()) as *const T
+                begin.add(self.len() as usize) as *const T
             };
             mem::forget(self);
             IntoIter { phantom: PhantomData, ptr: begin, end }
@@ -2162,7 +2175,7 @@ impl<'bump, T: 'bump> Extend<T> for Vec<'bump, T> {
     #[inline]
     fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
         let iter = iter.into_iter();
-        self.reserve(iter.size_hint().0);
+        self.reserve(iter.size_hint().0 as u32);
 
         for t in iter {
             self.push(t);
@@ -2213,7 +2226,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     #[inline]
     pub fn splice<R, I>(&mut self, range: R, replace_with: I) -> Splice<I::IntoIter>
     where
-        R: RangeBounds<usize>,
+        R: RangeBounds<u32>,
         I: IntoIterator<Item = T>,
     {
         Splice { drain: self.drain(range), replace_with: replace_with.into_iter() }
@@ -2347,7 +2360,7 @@ impl<'bump, T> Drop for Vec<'bump, T> {
             // use drop for [T]
             // use a raw slice to refer to the elements of the vector as weakest necessary type;
             // could avoid questions of validity in certain cases
-            ptr::drop_in_place(ptr::slice_from_raw_parts_mut(self.as_mut_ptr(), self.len));
+            ptr::drop_in_place(ptr::slice_from_raw_parts_mut(self.as_mut_ptr(), self.len as usize));
             // RawVec handles deallocation
             self.dealloc_buffer();
         }
@@ -2515,9 +2528,9 @@ impl<'bump, T> Drop for IntoIter<'bump, T> {
 /// This `struct` is created by the [`Vec::drain`] method.
 pub struct Drain<'a, 'bump, T: 'a + 'bump> {
     /// Index of tail to preserve
-    tail_start: usize,
+    tail_start: u32,
     /// Length of tail
-    tail_len: usize,
+    tail_len: u32,
     /// Current remaining range to remove
     iter: slice::Iter<'a, T>,
     vec: NonNull<Vec<'bump, T>>,
@@ -2564,9 +2577,9 @@ impl<'a, 'bump, T> Drop for Drain<'a, 'bump, T> {
                 let start = source_vec.len();
                 let tail = self.tail_start;
                 if tail != start {
-                    let src = source_vec.as_ptr().add(tail);
-                    let dst = source_vec.as_mut_ptr().add(start);
-                    ptr::copy(src, dst, self.tail_len);
+                    let src = source_vec.as_ptr().add(tail as usize);
+                    let dst = source_vec.as_mut_ptr().add(start as usize);
+                    ptr::copy(src, dst, self.tail_len as usize);
                 }
                 source_vec.set_len(start + self.tail_len);
             }
@@ -2627,7 +2640,7 @@ impl<'a, 'bump, I: Iterator> Drop for Splice<'a, 'bump, I> {
             // FIXME: Is the upper bound a better guess? Or something else?
             let (lower_bound, _upper_bound) = self.replace_with.size_hint();
             if lower_bound > 0 {
-                self.drain.move_tail(lower_bound);
+                self.drain.move_tail(lower_bound as u32);
                 if !self.drain.fill(&mut self.replace_with) {
                     return;
                 }
@@ -2640,7 +2653,7 @@ impl<'a, 'bump, I: Iterator> Drop for Splice<'a, 'bump, I> {
             let mut collected = collected.into_iter();
             // Now we have an exact count.
             if collected.len() > 0 {
-                self.drain.move_tail(collected.len());
+                self.drain.move_tail(collected.len() as u32);
                 let filled = self.drain.fill(&mut collected);
                 debug_assert!(filled);
                 debug_assert_eq!(collected.len(), 0);
@@ -2658,8 +2671,8 @@ impl<'a, 'bump, T> Drain<'a, 'bump, T> {
     /// Return whether we filled the entire range. (`replace_with.next()` didn’t return `None`.)
     unsafe fn fill<I: Iterator<Item = T>>(&mut self, replace_with: &mut I) -> bool {
         let vec = self.vec.as_mut();
-        let range_start = vec.len;
-        let range_end = self.tail_start;
+        let range_start = vec.len as usize;
+        let range_end = self.tail_start as usize;
         let range_slice =
             slice::from_raw_parts_mut(vec.as_mut_ptr().add(range_start), range_end - range_start);
 
@@ -2675,15 +2688,15 @@ impl<'a, 'bump, T> Drain<'a, 'bump, T> {
     }
 
     /// Make room for inserting more elements before the tail.
-    unsafe fn move_tail(&mut self, extra_capacity: usize) {
+    unsafe fn move_tail(&mut self, extra_capacity: u32) {
         let vec = self.vec.as_mut();
         let used_capacity = self.tail_start + self.tail_len;
         vec.reserve_buf(used_capacity, extra_capacity);
 
         let new_tail_start = self.tail_start + extra_capacity;
-        let src = vec.as_ptr().add(self.tail_start);
-        let dst = vec.as_mut_ptr().add(new_tail_start);
-        ptr::copy(src, dst, self.tail_len);
+        let src = vec.as_ptr().add(self.tail_start as usize);
+        let dst = vec.as_mut_ptr().add(new_tail_start as usize);
+        ptr::copy(src, dst, self.tail_len as usize);
         self.tail_start = new_tail_start;
     }
 }
@@ -2695,9 +2708,9 @@ where
     F: FnMut(&mut T) -> bool,
 {
     vec: &'a mut Vec<'bump, T>,
-    idx: usize,
-    del: usize,
-    old_len: usize,
+    idx: u32,
+    del: u32,
+    old_len: u32,
     pred: F,
 }
 
@@ -2710,16 +2723,16 @@ where
     fn next(&mut self) -> Option<T> {
         unsafe {
             while self.idx != self.old_len {
-                let i = self.idx;
+                let i = self.idx as usize;
                 self.idx += 1;
-                let v = slice::from_raw_parts_mut(self.vec.as_mut_ptr(), self.old_len);
+                let v = slice::from_raw_parts_mut(self.vec.as_mut_ptr(), self.old_len as usize);
                 if (self.pred)(&mut v[i]) {
                     self.del += 1;
                     return Some(ptr::read(&v[i]));
                 } else if self.del > 0 {
                     let del = self.del;
                     let src: *const T = &v[i];
-                    let dst: *mut T = &mut v[i - del];
+                    let dst: *mut T = &mut v[i - del as usize];
                     // This is safe because self.vec has length 0
                     // thus its elements will not have Drop::drop
                     // called on them in the event of a panic.
@@ -2731,7 +2744,7 @@ where
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        (0, Some(self.old_len - self.idx))
+        (0, Some(self.old_len as usize - self.idx as usize))
     }
 }
 
@@ -2750,7 +2763,7 @@ where
 #[cfg(feature = "std")]
 impl<'bump> io::Write for Vec<'bump, u8> {
     #[inline]
-    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+    fn write(&mut self, buf: &[u8]) -> io::Result<u32> {
         self.extend_from_slice_copy(buf);
         Ok(buf.len())
     }
@@ -2791,8 +2804,8 @@ mod serialize {
 }
 
 #[inline]
-fn alloc_guard(alloc_size: usize) -> Result<(), CollectionAllocErr> {
-    if mem::size_of::<usize>() < 8 && alloc_size > ::core::isize::MAX as usize {
+fn alloc_guard(alloc_size: u32) -> Result<(), CollectionAllocErr> {
+    if mem::size_of::<u32>() < 8 && alloc_size > ::core::isize::MAX as u32 {
         Err(CapacityOverflow)
     } else {
         Ok(())
@@ -2816,9 +2829,9 @@ impl<'bump, T> Vec<'bump, T> {
 
     /// Gets the capacity of the allocation.
     ///
-    /// This will always be `usize::MAX` if `T` is zero-sized.
+    /// This will always be `u32::MAX` if `T` is zero-sized.
     #[inline(always)]
-    pub fn cap(&self) -> usize {
+    pub fn cap(&self) -> u32 {
         if mem::size_of::<T>() == 0 {
             !0
         } else {
@@ -2834,7 +2847,7 @@ impl<'bump, T> Vec<'bump, T> {
             // checks to get our current layout.
             unsafe {
                 let align = mem::align_of::<T>();
-                let size = mem::size_of::<T>() * self.cap;
+                let size = mem::size_of::<T>() * self.cap as usize;
                 Some(Layout::from_size_align_unchecked(size, align))
             }
         }
@@ -2852,7 +2865,7 @@ impl<'bump, T> Vec<'bump, T> {
     /// # Panics
     ///
     /// * Panics if T is zero-sized on the assumption that you managed to exhaust
-    ///   all `usize::MAX` slots in your imaginary buffer.
+    ///   all `u32::MAX` slots in your imaginary buffer.
     /// * Panics on 32-bit platforms if the requested capacity exceeds
     ///   `isize::MAX` bytes.
     ///
@@ -2869,7 +2882,7 @@ impl<'bump, T> Vec<'bump, T> {
     /// # use alloc::raw_vec::RawVec;
     /// struct MyVec<T> {
     ///     buf: RawVec<T>,
-    ///     len: usize,
+    ///     len: u32,
     /// }
     ///
     /// impl<T> MyVec<T> {
@@ -2894,7 +2907,7 @@ impl<'bump, T> Vec<'bump, T> {
         unsafe {
             let elem_size = mem::size_of::<T>();
 
-            // since we set the capacity to usize::MAX when elem_size is
+            // since we set the capacity to u32::MAX when elem_size is
             // 0, getting to here necessarily means the RawVec is overfull.
             assert!(elem_size != 0, "capacity overflow");
 
@@ -2911,13 +2924,13 @@ impl<'bump, T> Vec<'bump, T> {
                     // in this module, allowing us to use
                     // `from_size_align_unchecked`.
                     let new_cap = 2 * self.cap;
-                    let new_size = new_cap * elem_size;
+                    let new_size = new_cap * elem_size as u32;
                     alloc_guard(new_size).unwrap_or_else(|_| capacity_overflow());
-                    let ptr_res = self.bump.realloc(self.ptr.cast(), cur, new_size);
+                    let ptr_res = self.bump.realloc(self.ptr.cast(), cur, new_size as usize);
                     match ptr_res {
                         Ok(ptr) => (new_cap, ptr.cast()),
                         Err(_) => handle_alloc_error(Layout::from_size_align_unchecked(
-                            new_size,
+                            new_size as usize,
                             cur.align(),
                         )),
                     }
@@ -2927,7 +2940,7 @@ impl<'bump, T> Vec<'bump, T> {
                     // would cause overflow
                     let new_cap = if elem_size > (!0) / 8 { 1 } else { 4 };
                     match self.bump.alloc_array::<T>(new_cap) {
-                        Ok(ptr) => (new_cap, ptr),
+                        Ok(ptr) => (new_cap as u32, ptr),
                         Err(_) => handle_alloc_error(Layout::array::<T>(new_cap).unwrap()),
                     }
                 }
@@ -2946,7 +2959,7 @@ impl<'bump, T> Vec<'bump, T> {
     /// # Panics
     ///
     /// * Panics if T is zero-sized on the assumption that you managed to exhaust
-    ///   all `usize::MAX` slots in your imaginary buffer.
+    ///   all `u32::MAX` slots in your imaginary buffer.
     /// * Panics on 32-bit platforms if the requested capacity exceeds
     ///   `isize::MAX` bytes.
     #[inline(never)]
@@ -2959,7 +2972,7 @@ impl<'bump, T> Vec<'bump, T> {
                 None => return false, // nothing to double
             };
 
-            // since we set the capacity to usize::MAX when elem_size is
+            // since we set the capacity to u32::MAX when elem_size is
             // 0, getting to here necessarily means the RawVec is overfull.
             assert!(elem_size != 0, "capacity overflow");
 
@@ -2971,9 +2984,9 @@ impl<'bump, T> Vec<'bump, T> {
             // `Layout::from_size_align_unchecked` as we know this won't
             // overflow and the alignment is sufficiently small.
             let new_cap = 2 * self.cap;
-            let new_size = new_cap * elem_size;
+            let new_size = new_cap * elem_size as u32;
             alloc_guard(new_size).unwrap_or_else(|_| capacity_overflow());
-            match self.bump.grow_in_place(self.ptr.cast(), old_layout, new_size) {
+            match self.bump.grow_in_place(self.ptr.cast(), old_layout, new_size as usize) {
                 Ok(_) => {
                     // We can't directly divide `size`.
                     self.cap = new_cap;
@@ -2987,8 +3000,8 @@ impl<'bump, T> Vec<'bump, T> {
     /// The same as `reserve_exact`, but returns on errors instead of panicking or aborting.
     pub fn try_reserve_exact_buf(
         &mut self,
-        used_cap: usize,
-        needed_extra_cap: usize,
+        used_cap: u32,
+        needed_extra_cap: u32,
     ) -> Result<(), CollectionAllocErr> {
         self.fallible_reserve_internal(used_cap, needed_extra_cap, Exact)
     }
@@ -3006,14 +3019,14 @@ impl<'bump, T> Vec<'bump, T> {
     ///
     /// # Panics
     ///
-    /// * Panics if the requested capacity exceeds `usize::MAX` bytes.
+    /// * Panics if the requested capacity exceeds `u32::MAX` bytes.
     /// * Panics on 32-bit platforms if the requested capacity exceeds
     ///   `isize::MAX` bytes.
     ///
     /// # Aborts
     ///
     /// Aborts on OOM
-    pub fn reserve_exact_buf(&mut self, used_cap: usize, needed_extra_cap: usize) {
+    pub fn reserve_exact_buf(&mut self, used_cap: u32, needed_extra_cap: u32) {
         self.infallible_reserve_internal(used_cap, needed_extra_cap, Exact)
     }
 
@@ -3022,12 +3035,12 @@ impl<'bump, T> Vec<'bump, T> {
     /// Returns `(new_capacity, new_alloc_size)`.
     fn amortized_new_size(
         &self,
-        used_cap: usize,
-        needed_extra_cap: usize,
-    ) -> Result<usize, CollectionAllocErr> {
+        used_cap: u32,
+        needed_extra_cap: u32,
+    ) -> Result<u32, CollectionAllocErr> {
         // Nothing we can really do about these checks :(
         let required_cap = used_cap.checked_add(needed_extra_cap).ok_or(CapacityOverflow)?;
-        // Cannot overflow, because `cap <= isize::MAX`, and type of `cap` is `usize`.
+        // Cannot overflow, because `cap <= isize::MAX`, and type of `cap` is `u32`.
         let double_cap = self.cap * 2;
         // `double_cap` guarantees exponential growth.
         Ok(cmp::max(double_cap, required_cap))
@@ -3036,8 +3049,8 @@ impl<'bump, T> Vec<'bump, T> {
     /// The same as `reserve`, but returns on errors instead of panicking or aborting.
     pub fn try_reserve_buf(
         &mut self,
-        used_cap: usize,
-        needed_extra_cap: usize,
+        used_cap: u32,
+        needed_extra_cap: u32,
     ) -> Result<(), CollectionAllocErr> {
         self.fallible_reserve_internal(used_cap, needed_extra_cap, Amortized)
     }
@@ -3056,7 +3069,7 @@ impl<'bump, T> Vec<'bump, T> {
     ///
     /// # Panics
     ///
-    /// * Panics if the requested capacity exceeds `usize::MAX` bytes.
+    /// * Panics if the requested capacity exceeds `u32::MAX` bytes.
     /// * Panics on 32-bit platforms if the requested capacity exceeds
     ///   `isize::MAX` bytes.
     ///
@@ -3073,7 +3086,7 @@ impl<'bump, T> Vec<'bump, T> {
     /// # use alloc::raw_vec::RawVec;
     /// struct MyVec<T> {
     ///     buf: RawVec<T>,
-    ///     len: usize,
+    ///     len: u32,
     /// }
     ///
     /// impl<T: Clone> MyVec<T> {
@@ -3095,7 +3108,7 @@ impl<'bump, T> Vec<'bump, T> {
     /// # }
     /// ```
     #[inline(always)]
-    pub fn reserve_buf(&mut self, used_cap: usize, needed_extra_cap: usize) {
+    pub fn reserve_buf(&mut self, used_cap: u32, needed_extra_cap: u32) {
         self.infallible_reserve_internal(used_cap, needed_extra_cap, Amortized)
     }
 
@@ -3113,13 +3126,13 @@ impl<'bump, T> Vec<'bump, T> {
     ///
     /// # Panics
     ///
-    /// * Panics if the requested capacity exceeds `usize::MAX` bytes.
+    /// * Panics if the requested capacity exceeds `u32::MAX` bytes.
     /// * Panics on 32-bit platforms if the requested capacity exceeds
     ///   `isize::MAX` bytes.
-    pub fn reserve_in_place(&mut self, used_cap: usize, needed_extra_cap: usize) -> bool {
+    pub fn reserve_in_place(&mut self, used_cap: u32, needed_extra_cap: u32) -> bool {
         unsafe {
             // NOTE: we don't early branch on ZSTs here because we want this
-            // to actually catch "asking for more than usize::MAX" in that case.
+            // to actually catch "asking for more than u32::MAX" in that case.
             // If we make it past the first branch then we are guaranteed to
             // panic.
 
@@ -3142,9 +3155,9 @@ impl<'bump, T> Vec<'bump, T> {
             // (regardless of whether `self.cap - used_cap` wrapped).
             // Therefore we can safely call grow_in_place.
 
-            let new_layout = Layout::new::<T>().repeat(new_cap).unwrap().0;
+            let new_layout = Layout::new::<T>().repeat(new_cap as usize).unwrap().0;
             // FIXME: may crash and burn on over-reserve
-            alloc_guard(new_layout.size()).unwrap_or_else(|_| capacity_overflow());
+            alloc_guard(new_layout.size() as u32).unwrap_or_else(|_| capacity_overflow());
             match self.bump.grow_in_place(self.ptr.cast(), old_layout, new_layout.size()) {
                 Ok(_) => {
                     self.cap = new_cap;
@@ -3165,7 +3178,7 @@ impl<'bump, T> Vec<'bump, T> {
     /// # Aborts
     ///
     /// Aborts on OOM.
-    pub fn shrink_to_fit_buf(&mut self, amount: usize) {
+    pub fn shrink_to_fit_buf(&mut self, amount: u32) {
         let elem_size = mem::size_of::<T>();
 
         // Set the `cap` because they might be about to promote to a `Box<[T]>`
@@ -3199,8 +3212,8 @@ impl<'bump, T> Vec<'bump, T> {
                 // We also know that `self.cap` is greater than `amount`, and
                 // consequently we don't need runtime checks for creating either
                 // layout
-                let old_size = elem_size * self.cap;
-                let new_size = elem_size * amount;
+                let old_size = elem_size * self.cap as usize;
+                let new_size = elem_size * amount as usize;
                 let align = mem::align_of::<T>();
                 let old_layout = Layout::from_size_align_unchecked(old_size, align);
                 match self.bump.realloc(self.ptr.cast(), old_layout, new_size) {
@@ -3233,8 +3246,8 @@ impl<'a, T> Vec<'a, T> {
     #[inline(always)]
     fn fallible_reserve_internal(
         &mut self,
-        used_cap: usize,
-        needed_extra_cap: usize,
+        used_cap: u32,
+        needed_extra_cap: u32,
         strategy: ReserveStrategy,
     ) -> Result<(), CollectionAllocErr> {
         // This portion of the method should always be inlined.
@@ -3249,8 +3262,8 @@ impl<'a, T> Vec<'a, T> {
     #[inline(always)]
     fn infallible_reserve_internal(
         &mut self,
-        used_cap: usize,
-        needed_extra_cap: usize,
+        used_cap: u32,
+        needed_extra_cap: u32,
         strategy: ReserveStrategy,
     ) {
         // This portion of the method should always be inlined.
@@ -3265,8 +3278,8 @@ impl<'a, T> Vec<'a, T> {
     #[inline(never)]
     fn reserve_internal_or_panic(
         &mut self,
-        used_cap: usize,
-        needed_extra_cap: usize,
+        used_cap: u32,
+        needed_extra_cap: u32,
         strategy: ReserveStrategy,
     ) {
         // Delegates the call to `reserve_internal_or_error` and panics in the event of an error.
@@ -3282,8 +3295,8 @@ impl<'a, T> Vec<'a, T> {
     #[inline(never)]
     fn reserve_internal_or_error(
         &mut self,
-        used_cap: usize,
-        needed_extra_cap: usize,
+        used_cap: u32,
+        needed_extra_cap: u32,
         fallibility: Fallibility,
         strategy: ReserveStrategy,
     ) -> Result<(), CollectionAllocErr> {
@@ -3295,16 +3308,16 @@ impl<'a, T> Vec<'a, T> {
     /// The caller is responsible for confirming that there is not already enough space available.
     fn reserve_internal(
         &mut self,
-        used_cap: usize,
-        needed_extra_cap: usize,
+        used_cap: u32,
+        needed_extra_cap: u32,
         fallibility: Fallibility,
         strategy: ReserveStrategy,
     ) -> Result<(), CollectionAllocErr> {
         unsafe {
-            use crate::AllocErr;
+            use bumpalo::alloc::AllocErr;
 
             // NOTE: we don't early branch on ZSTs here because we want this
-            // to actually catch "asking for more than usize::MAX" in that case.
+            // to actually catch "asking for more than u32::MAX" in that case.
             // If we make it past the first branch then we are guaranteed to
             // panic.
 
@@ -3313,9 +3326,9 @@ impl<'a, T> Vec<'a, T> {
                 Exact => used_cap.checked_add(needed_extra_cap).ok_or(CapacityOverflow)?,
                 Amortized => self.amortized_new_size(used_cap, needed_extra_cap)?,
             };
-            let new_layout = Layout::array::<T>(new_cap).map_err(|_| CapacityOverflow)?;
+            let new_layout = Layout::array::<T>(new_cap as usize).map_err(|_| CapacityOverflow)?;
 
-            alloc_guard(new_layout.size())?;
+            alloc_guard(new_layout.size() as u32)?;
 
             let res = match self.current_layout() {
                 Some(layout) => {

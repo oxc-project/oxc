@@ -80,7 +80,7 @@ impl Rule for MaxParams {
                     return;
                 }
 
-                if function.params.items.len() > self.max {
+                if function.params.items.len() > self.max as u32 {
                     if let Some(id) = &function.id {
                         let function_name = id.name.as_str();
                         let error_msg = format!(
@@ -109,7 +109,7 @@ impl Rule for MaxParams {
                 }
             }
             AstKind::ArrowFunctionExpression(function) => {
-                if function.params.items.len() > self.max {
+                if function.params.items.len() > self.max as u32 {
                     let error_msg = format!(
                         "Arrow function has too many parameters ({}). Maximum allowed is {}.",
                         function.params.items.len(),

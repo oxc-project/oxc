@@ -109,7 +109,7 @@ pub(super) fn print_function_parameters<'a>(
         }
 
         printed.push(param.format(p));
-        if i == len - 1 && !has_rest {
+        if i == len as usize - 1 && !has_rest {
             break;
         }
         printed.push(ss!(","));

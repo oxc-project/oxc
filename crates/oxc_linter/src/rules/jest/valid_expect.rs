@@ -159,7 +159,7 @@ impl ValidExpect {
             return;
         };
 
-        if call_expr.arguments.len() > self.max_args {
+        if call_expr.arguments.len() > self.max_args as u32 {
             let error = format!(
                 "Expect takes at most {} argument{} ",
                 self.max_args,
@@ -169,7 +169,7 @@ impl ValidExpect {
             ctx.diagnostic(valid_expect_diagnostic(error, help, call_expr.span));
             return;
         }
-        if call_expr.arguments.len() < self.min_args {
+        if call_expr.arguments.len() < self.min_args as u32 {
             let error = format!(
                 "Expect requires at least {} argument{} ",
                 self.min_args,

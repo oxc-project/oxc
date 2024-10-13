@@ -1452,7 +1452,9 @@ impl<'a> Gen for ArrayExpression<'a> {
                 p.print_soft_space();
             }
             item.print(p, ctx);
-            if i == self.elements.len() - 1 && matches!(item, ArrayExpressionElement::Elision(_)) {
+            if i == self.elements.len() as usize - 1
+                && matches!(item, ArrayExpressionElement::Elision(_))
+            {
                 p.print_comma();
             }
         }
@@ -2745,7 +2747,8 @@ impl<'a> Gen for ArrayPattern<'a> {
             if let Some(item) = item {
                 item.print(p, ctx);
             }
-            if index == self.elements.len() - 1 && (item.is_none() || self.rest.is_some()) {
+            if index == self.elements.len() as usize - 1 && (item.is_none() || self.rest.is_some())
+            {
                 p.print_comma();
             }
         }

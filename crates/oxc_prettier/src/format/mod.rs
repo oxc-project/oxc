@@ -394,7 +394,7 @@ impl<'a> Format<'a> for SwitchStatement<'a> {
                     parts.push(format!(p, case));
                     Doc::Indent(parts)
                 });
-                if i != len - 1 && p.is_next_line_empty(case.span) {
+                if i != len as usize - 1 && p.is_next_line_empty(case.span) {
                     cases_parts.extend(hardline!());
                 }
             }

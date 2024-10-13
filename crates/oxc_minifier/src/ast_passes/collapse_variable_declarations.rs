@@ -70,7 +70,7 @@ impl<'a> CollapseVariableDeclarations {
                     range.end = i + 1;
                 }
             }
-            if (range.end != i || i == stmts.len() - 1) && range.start < range.end {
+            if (range.end != i || i == stmts.len() as usize - 1) && range.start < range.end {
                 capacity += range.end - range.start - 1;
                 ranges.push(range.clone());
                 range = 0..0;
@@ -83,7 +83,7 @@ impl<'a> CollapseVariableDeclarations {
         }
 
         // Reconstruct the stmts array by joining consecutive ranges
-        let mut new_stmts = ctx.ast.vec_with_capacity(stmts.len() - capacity);
+        let mut new_stmts = ctx.ast.vec_with_capacity(stmts.len() - capacity as u32);
         for (i, stmt) in stmts.drain(..).enumerate() {
             if i > 0 && ranges.iter().any(|range| range.contains(&(i - 1)) && range.contains(&i)) {
                 if let Statement::VariableDeclaration(prev_decl) = new_stmts.last_mut().unwrap() {

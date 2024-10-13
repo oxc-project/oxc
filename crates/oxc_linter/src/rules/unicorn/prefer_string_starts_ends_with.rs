@@ -166,7 +166,7 @@ fn check_regex(regexp_lit: &RegExpLiteral, pattern_text: &str) -> Option<ErrorKi
         if boundary_assert.kind == BoundaryAssertionKind::End
             && pattern_terms
                 .iter()
-                .take(pattern_terms.len() - 1)
+                .take(pattern_terms.len() as usize - 1)
                 .all(|term| matches!(term, Term::Character(_)))
         {
             return Some(ErrorKind::EndsWith);

@@ -95,7 +95,7 @@ impl<'a> PeepholeRemoveDeadCode {
         }
 
         let Some(index) = index else { return };
-        if index == stmts.len() - 1 {
+        if index == stmts.len() as usize - 1 {
             return;
         }
 

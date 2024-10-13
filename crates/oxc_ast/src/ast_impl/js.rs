@@ -676,8 +676,8 @@ impl<'a> ObjectAssignmentTarget<'a> {
         self.properties.is_empty() && self.rest.is_none()
     }
 
-    pub fn len(&self) -> usize {
-        self.properties.len() + usize::from(self.rest.is_some())
+    pub fn len(&self) -> u32 {
+        self.properties.len() + u32::from(self.rest.is_some())
     }
 }
 
@@ -953,8 +953,8 @@ impl<'a> ObjectPattern<'a> {
         self.properties.is_empty() && self.rest.is_none()
     }
 
-    pub fn len(&self) -> usize {
-        self.properties.len() + usize::from(self.rest.is_some())
+    pub fn len(&self) -> u32 {
+        self.properties.len() + u32::from(self.rest.is_some())
     }
 }
 
@@ -963,8 +963,8 @@ impl<'a> ArrayPattern<'a> {
         self.elements.is_empty() && self.rest.is_none()
     }
 
-    pub fn len(&self) -> usize {
-        self.elements.len() + usize::from(self.rest.is_some())
+    pub fn len(&self) -> u32 {
+        self.elements.len() + u32::from(self.rest.is_some())
     }
 }
 
@@ -1043,7 +1043,7 @@ impl<'a> Function<'a> {
 }
 
 impl<'a> FormalParameters<'a> {
-    pub fn parameters_count(&self) -> usize {
+    pub fn parameters_count(&self) -> u32 {
         self.items.len() + self.rest.as_ref().map_or(0, |_| 1)
     }
 

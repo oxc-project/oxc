@@ -19,7 +19,7 @@ pub enum Array<'a, 'b> {
 }
 
 impl<'a, 'b> Array<'a, 'b> {
-    fn len(&self) -> usize {
+    fn len(&self) -> u32 {
         match self {
             Self::ArrayExpression(array) => array.elements.len(),
             Self::TSTupleType(tuple) => tuple.element_types.len(),
@@ -139,7 +139,7 @@ fn print_array_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<
         Array::ArrayExpression(array) => {
             for (i, element) in array.elements.iter().enumerate() {
                 parts.push(element.format(p));
-                let is_last = i == array.elements.len() - 1;
+                let is_last = i == array.elements.len() as usize - 1;
                 if !is_last {
                     parts.push(ss!(","));
                     parts.push(line!());
@@ -151,7 +151,7 @@ fn print_array_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<
         }
         Array::TSTupleType(tuple) => {
             for (i, element) in tuple.element_types.iter().enumerate() {
-                if i > 0 && i < tuple.element_types.len() {
+                if i > 0 && i < tuple.element_types.len() as usize {
                     parts.push(ss!(","));
                     parts.push(line!());
                 }
@@ -166,7 +166,7 @@ fn print_array_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<
                 if let Some(binding_pat) = element {
                     parts.push(group!(p, binding_pat.format(p)));
                 }
-                if i == len - 1 && !has_rest {
+                if i == len as usize - 1 && !has_rest {
                     break;
                 }
                 parts.push(ss!(","));
@@ -178,7 +178,7 @@ fn print_array_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<
         }
         Array::ArrayAssignmentTarget(array_pat) => {
             for (i, element) in array_pat.elements.iter().enumerate() {
-                if i > 0 && i < array_pat.elements.len() {
+                if i > 0 && i < array_pat.elements.len() as usize {
                     parts.push(ss!(","));
                     parts.push(line!());
                 }
@@ -211,7 +211,7 @@ where
     match array {
         Array::ArrayExpression(array) => {
             for (i, element) in array.elements.iter().enumerate() {
-                let is_last = i == array.elements.len() - 1;
+                let is_last = i == array.elements.len() as usize - 1;
                 let part = if is_last {
                     array!(p, element.format(p), trailing_comma_fn(p))
                 } else {

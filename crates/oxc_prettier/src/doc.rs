@@ -232,7 +232,7 @@ fn print_doc_to_debug(doc: &Doc<'_>) -> std::string::String {
             string.push_str("[\n");
             for (idx, doc) in docs.iter().enumerate() {
                 string.push_str(&print_doc_to_debug(doc));
-                if idx != docs.len() - 1 {
+                if idx != docs.len() as usize - 1 {
                     string.push_str(", ");
                 }
             }
@@ -242,7 +242,7 @@ fn print_doc_to_debug(doc: &Doc<'_>) -> std::string::String {
             string.push_str("indent([");
             for (idx, doc) in contents.iter().enumerate() {
                 string.push_str(&print_doc_to_debug(doc));
-                if idx != contents.len() - 1 {
+                if idx != contents.len() as usize - 1 {
                     string.push_str(", ");
                 }
             }
@@ -253,7 +253,7 @@ fn print_doc_to_debug(doc: &Doc<'_>) -> std::string::String {
             string.push_str("[\n");
             for (idx, doc) in indent_if_break.contents.iter().enumerate() {
                 string.push_str(&print_doc_to_debug(doc));
-                if idx != indent_if_break.contents.len() - 1 {
+                if idx != indent_if_break.contents.len() as usize - 1 {
                     string.push_str(", ");
                 }
             }
@@ -272,7 +272,7 @@ fn print_doc_to_debug(doc: &Doc<'_>) -> std::string::String {
             string.push_str("group([\n");
             for (idx, doc) in group.contents.iter().enumerate() {
                 string.push_str(&print_doc_to_debug(doc));
-                if idx != group.contents.len() - 1 {
+                if idx != group.contents.len() as usize - 1 {
                     string.push_str(", ");
                 }
             }
@@ -287,7 +287,7 @@ fn print_doc_to_debug(doc: &Doc<'_>) -> std::string::String {
                 string.push_str(",\n");
                 for (idx, doc) in expanded_states.iter().enumerate() {
                     string.push_str(&print_doc_to_debug(doc));
-                    if idx != expanded_states.len() - 1 {
+                    if idx != expanded_states.len() as usize - 1 {
                         string.push_str(", ");
                     }
                 }
@@ -329,7 +329,7 @@ fn print_doc_to_debug(doc: &Doc<'_>) -> std::string::String {
             string.push_str("lineSuffix(");
             for (idx, doc) in docs.iter().enumerate() {
                 string.push_str(&print_doc_to_debug(doc));
-                if idx != docs.len() - 1 {
+                if idx != docs.len() as usize - 1 {
                     string.push_str(", ");
                 }
             }

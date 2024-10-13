@@ -305,13 +305,13 @@ pub fn is_method_call<'a>(
     max_arg_count: Option<usize>,
 ) -> bool {
     if let Some(min_arg_count) = min_arg_count {
-        if call_expr.arguments.len() < min_arg_count {
+        if call_expr.arguments.len() < min_arg_count as u32 {
             return false;
         }
     }
 
     if let Some(max_arg_count) = max_arg_count {
-        if call_expr.arguments.len() > max_arg_count {
+        if call_expr.arguments.len() > max_arg_count as u32 {
             return false;
         }
     }
@@ -348,12 +348,12 @@ pub fn is_new_expression<'a>(
     max_arg_count: Option<usize>,
 ) -> bool {
     if let Some(min_arg_count) = min_arg_count {
-        if new_expr.arguments.len() < min_arg_count {
+        if new_expr.arguments.len() < min_arg_count as u32 {
             return false;
         }
     }
     if let Some(max_arg_count) = max_arg_count {
-        if new_expr.arguments.len() > max_arg_count {
+        if new_expr.arguments.len() > max_arg_count as u32 {
             return false;
         }
     }
