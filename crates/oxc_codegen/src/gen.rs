@@ -1948,9 +1948,9 @@ impl<'a> Gen for AssignmentTargetRest<'a> {
 }
 
 impl<'a> GenExpr for SequenceExpression<'a> {
-    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, _ctx: Context) {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         p.wrap(precedence >= self.precedence(), |p| {
-            p.print_expressions(&self.expressions, Precedence::Lowest, Context::empty());
+            p.print_expressions(&self.expressions, Precedence::Lowest, ctx);
         });
     }
 }
