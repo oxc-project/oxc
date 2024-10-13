@@ -1,3 +1,5 @@
+use std::mem;
+
 /// A string builder for constructing source code.
 ///
 ///
@@ -331,16 +333,11 @@ impl CodeBuffer {
     /// ```
     #[must_use]
     pub fn take_source_text(&mut self) -> String {
-        use std::mem::take;
-
-        #[cfg(debug_assertions)]
-        {
-            String::from_utf8(take(&mut self.buf)).unwrap()
-        }
-        #[cfg(not(debug_assertions))]
-        {
+        if cfg!(debug_assertions) {
+            String::from_utf8(mem::take(&mut self.buf)).unwrap()
+        } else {
             // SAFETY: All methods of `CodeBuffer` ensure `buf` is valid UTF-8
-            unsafe { String::from_utf8_unchecked(take(&mut self.buf)) }
+            unsafe { String::from_utf8_unchecked(mem::take(&mut self.buf)) }
         }
     }
 }
