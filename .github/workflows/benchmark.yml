@@ -152,6 +152,7 @@ jobs:
         fixture:
           - 0
           - 1
+          - 2
 
     steps:
       - name: Checkout Branch
