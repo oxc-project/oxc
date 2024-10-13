@@ -2,12 +2,12 @@ use std::mem;
 
 /// A string builder for constructing source code.
 ///
+/// `CodeBuffer` provides safe abstractions over a byte array.
+/// Essentially same as `String` but with additional methods.
 ///
-/// `CodeBuffer` provides safe abstractions over a byte array, allowing for
-/// a compact byte-array representation without soundness holes.
-///
-/// Use one of the various `print_*` methods to add text into a buffer. When you
-/// are done, call [`take_source_text`] to extract the final [`String`].
+/// Use one of the various `print_*` methods to add text into the buffer.
+/// When you are done, call [`take_source_text`] or `String::from(code_buffer)`
+/// to extract the final [`String`].
 ///
 /// # Example
 /// ```
@@ -53,31 +53,31 @@ impl CodeBuffer {
 
     /// Create a new, empty `CodeBuffer` with the specified capacity.
     ///
-    /// The buffer will be able to hold at least `capacity` bytes without
-    /// reallocating. This method is allowed to allocate for more bytes than
-    /// `capacity`. If `capacity` is 0, the buffer will not allocate.
+    /// The buffer will be able to hold at least `capacity` bytes without reallocating.
+    /// This method is allowed to allocate for more bytes than `capacity`.
+    /// If `capacity` is 0, the buffer will not allocate.
     ///
     /// It is important to note that although the returned buffer has the
     /// minimum *capacity* specified, the buffer will have a zero *length*.
     ///
     /// # Panics
     ///
-    /// Panics if the new capacity exceeds `isize::MAX` _bytes_.
+    /// Panics if the new capacity exceeds `isize::MAX` bytes.
     #[inline]
     pub fn with_capacity(capacity: usize) -> Self {
         Self { buf: Vec::with_capacity(capacity) }
     }
 
-    /// Returns the number of bytes in this buffer.
+    /// Returns the number of bytes in the buffer.
     ///
-    /// This is _not_ the same as the number of characters in the buffer, since
-    /// non-ASCII characters require multiple bytes.
+    /// This is *not* the same as the number of characters in the buffer,
+    /// since non-ASCII characters require multiple bytes.
     #[inline]
     pub fn len(&self) -> usize {
         self.buf.len()
     }
 
-    /// Returns `true` if this buffer contains no characters.
+    /// Returns `true` if the buffer contains no characters.
     ///
     /// # Example
     /// ```
@@ -93,15 +93,15 @@ impl CodeBuffer {
         self.buf.is_empty()
     }
 
-    /// Reserves capacity for at least `additional` more characters in the given
-    /// `CodeBuffer`. The buffer may reserve more space to speculatively avoid
-    /// frequent reallocations. After calling `reserve`, capacity will be
-    /// greater than or equal to `self.len() + additional`. Does nothing if
-    /// capacity is already sufficient.
+    /// Reserves capacity for at least `additional` more bytes in the buffer.
+    ///
+    /// The buffer may reserve more space to speculatively avoid frequent reallocations.
+    /// After calling `reserve`, capacity will be greater than or equal to `self.len() + additional`.
+    /// Does nothing if capacity is already sufficient.
     ///
     /// # Panics
     ///
-    /// Panics if the new capacity exceeds `isize::MAX` _bytes_.
+    /// Panics if the new capacity exceeds `isize::MAX` bytes.
     ///
     /// # Example
     /// ```
@@ -115,8 +115,9 @@ impl CodeBuffer {
     }
 
     /// Peek the `n`th character from the end of the buffer.
-    /// When `n` is zero, the last character is returned. Returns [`None`] if
-    /// `n` exceeds the length of the buffer.
+    ///
+    /// When `n` is zero, the last character is returned.
+    /// Returns [`None`] if `n` exceeds the length of the buffer.
     ///
     /// # Example
     /// ```
@@ -131,14 +132,14 @@ impl CodeBuffer {
     #[inline]
     #[must_use = "Peeking is pointless if the peeked char isn't used"]
     pub fn peek_nth_back(&self, n: usize) -> Option<char> {
-        // SAFETY: `buf` is a valid UTF-8 string because of invariants upheld by CodeBuffer
+        // SAFETY: All methods of `CodeBuffer` ensure `buf` is valid UTF-8
         unsafe { std::str::from_utf8_unchecked(&self.buf) }.chars().nth_back(n)
     }
 
-    /// Push a single ASCII character into the buffer
+    /// Push a single ASCII byte into the buffer.
     ///
     /// # Panics
-    /// If `ch` is not a valid UTF-8 code point in the ASCII range (`0 - 0x7F`).
+    /// If `b` is not an ASCII byte (`0 - 0x7F`).
     ///
     /// # Example
     /// ```
@@ -160,24 +161,21 @@ impl CodeBuffer {
         self.buf.push(b);
     }
 
-    /// Print a byte without checking that this buffer still represents a valid
+    /// Push a byte to the buffer, without checking that the buffer still represents a valid
     /// UTF-8 string.
     ///
-    /// If you are looking to print a byte you know is valid ASCII, prefer
-    /// [`print_ascii_byte`]. If you are not certain, you may use [`print_char`]
-    /// as a safe alternative.
+    /// If you are looking to print a byte you know is valid ASCII, prefer [`print_ascii_byte`].
+    /// If you are not certain, you may use [`print_char`] as a safe alternative.
     ///
-    /// # Safety
-    /// The caller must ensure that, after 1 or more sequential calls, this
-    /// buffer represents a valid UTF-8 string.
+    /// # SAFETY
+    /// The caller must ensure that, after 1 or more sequential calls, the buffer represents
+    /// a valid UTF-8 string.
     ///
-    /// It is safe for a single call to temporarily result in invalid UTF-8, as
-    /// long as UTF-8 integrity is restored before calls to any other `print`
-    /// method or [`take_source_text`]. This lets you, for example, print an
-    /// 8-byte code point using 4 separate calls to this method.
-    ///
-    /// If you find yourself in such a scenario, consider using
-    /// [`print_unchecked`] instead.
+    /// It is safe for a single call to temporarily result in invalid UTF-8, as long as
+    /// UTF-8 integrity is restored before calls to any other `print_*` method or
+    /// [`take_source_text`]. This lets you, for example, print an 4-byte Unicode character
+    /// using 4 separate calls to this method. However, consider using [`print_unchecked`]
+    /// instead for that use case.
     ///
     /// # Example
     /// ```
@@ -207,12 +205,11 @@ impl CodeBuffer {
         self.buf.push(ch);
     }
 
-    /// Print a single Unicode character into the buffer.
+    /// Push a single Unicode character into the buffer.
     ///
-    /// When pushing multiple characters, consider choosing [`print_str`] over
-    /// this method since it's much more efficient. If you really want to insert
-    /// only a single character and you're certain it's ASCII, consider using
-    /// [`print_ascii_byte`].
+    /// When pushing multiple characters, consider choosing [`print_str`] over this method
+    /// since it's much more efficient. If you really want to insert only a single character
+    /// and you're certain it's ASCII, consider using [`print_ascii_byte`].
     ///
     /// # Example
     /// ```
@@ -234,7 +231,7 @@ impl CodeBuffer {
         self.buf.extend(ch.encode_utf8(&mut b).as_bytes());
     }
 
-    /// Push a string into this the buffer.
+    /// Push a string into the buffer.
     ///
     /// # Example
     /// ```
@@ -250,7 +247,7 @@ impl CodeBuffer {
     /// Push a sequence of ASCII characters into the buffer.
     ///
     /// # Panics
-    /// If any byte in the iterator is not valid ASCII.
+    /// Panics if any byte in the iterator is not ASCII.
     ///
     /// # Example
     /// ```
@@ -272,26 +269,25 @@ impl CodeBuffer {
         }
     }
 
-    /// Print a sequence of bytes without checking that this buffer still
+    /// Print a sequence of bytes without checking that the buffer still
     /// represents a valid UTF-8 string.
     ///
     /// # Safety
     ///
-    /// The caller must ensure that, after being called, this buffer represents
+    /// The caller must ensure that, after this method call, the buffer represents
     /// a valid UTF-8 string. In practice, this means only two cases are valid:
     ///
     /// 1. Both the buffer and the byte sequence are valid UTF-8,
-    /// 2. The buffer became invalid after a call to [`print_byte_unchecked`] and `bytes`
-    ///    completes any incomplete code points, returning the buffer to a valid
-    ///    state.
+    /// 2. The buffer became invalid after a call to [`print_byte_unchecked`] and `bytes` completes
+    ///    any incomplete Unicode characters, returning the buffer to a valid state.
     ///
     /// # Example
     /// ```
     /// use oxc_codegen::CodeBuffer;
     /// let mut code = CodeBuffer::new();
     ///
-    /// // Indent to a dynamic level. Sound because all elements in this
-    /// // iterator are valid 1-byte UTF-8 code points (ASCII).
+    /// // Indent to a dynamic level.
+    /// // Sound because all elements in this iterator are ASCII characters.
     /// unsafe {
     ///     code.print_unchecked(std::iter::repeat(b' ').take(4));
     /// }
@@ -306,7 +302,7 @@ impl CodeBuffer {
         self.buf.extend(bytes);
     }
 
-    /// Get contents of `CodeBuffer` as a byte slice.
+    /// Get contents of buffer as a byte slice.
     ///
     /// # Example
     /// ```
@@ -320,14 +316,12 @@ impl CodeBuffer {
         &self.buf
     }
 
-    /// Convert a `CodeBuffer` into a string of source code, leaving its
-    /// internal buffer empty and finalizing the codegen process.
+    /// Convert a buffer into a string of source code, leaving its internal buffer empty.
     ///
-    /// It is safe to re-use a buffer after calling this method. Its contents
-    /// will be emptied out, but all memory resources are retained and in a
-    /// valid state. You may use [`String::from`] if you don't intend on
-    /// re-using the buffer. It simply calls this method and drops the
-    /// `CodeBuffer` afterwards.
+    /// It is safe to re-use a `CodeBuffer` after calling this method, but there is little benefit
+    /// to doing so, as the `CodeBuffer` will be left in an empty state with no backing allocation.
+    ///
+    /// You may alternatively use `String::from(code_buffer)`, which may be slightly more efficient.
     ///
     /// # Example
     /// ```
