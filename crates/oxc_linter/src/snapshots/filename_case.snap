@@ -1,14 +1,114 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-unicorn(filename-case): Filename should not be in kebab case
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in kebab case
    ╭─[filename_case.tsx:1:1]
- 1 │ import foo from 'bar'
-   · ▲
    ╰────
 
-  ⚠ eslint-plugin-unicorn(filename-case): Filename should not be in snake case
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in camel case
    ╭─[filename_case.tsx:1:1]
- 1 │ baz;
-   · ▲
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in camel case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in snake case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in snake case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in snake case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in kebab case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in kebab case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in kebab case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in pascal case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in pascal case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in pascal case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in camel case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in camel case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in snake case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in snake case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in kebab case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in kebab case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in pascal case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in pascal case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in kebab case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in camel case, or pascal case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in camel case, kebab case, or pascal case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in snake case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in kebab case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in kebab case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in kebab case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in camel case, kebab case, or pascal case
+   ╭─[filename_case.tsx:1:1]
    ╰────
