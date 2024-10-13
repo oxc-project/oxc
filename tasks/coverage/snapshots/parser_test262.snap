@@ -2,13 +2,10 @@ commit: d62fa93c
 
 parser_test262 Summary:
 AST Parsed     : 43914/43914 (100.00%)
-Positive Passed: 43913/43914 (100.00%)
+Positive Passed: 43914/43914 (100.00%)
 Negative Passed: 4320/4322 (99.95%)
 Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attributes/json-invalid.js
 Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attributes/json-named-bindings.js
-Expect to Parse: tasks/coverage/test262/test/built-ins/String/prototype/split/separator-regexp.js
-
-  × Regular Expression content mismatch for `/\cY/`: `\c` == `\c`
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
     ╭─[test262/test/annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js:19:4]
@@ -19675,7 +19672,8 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/String/prototype/split/se
     ·          ▲
     ╰────
 
-  × Invalid Character ``
+  × Invalid Character `
+`
     ╭─[test262/test/language/line-terminators/S7.3_A6_T2.js:18:10]
  17 │ 
  18 │ var\u000Dx;
@@ -19698,7 +19696,8 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/String/prototype/split/se
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/line-terminators/invalid-comment-single-cr.js:18:6]
- 17 │ // this text is not included in the single-line comment that precedes it
+ 17 │ //
+ this text is not included in the single-line comment that precedes it
     ·        ▲
     ╰────
   help: Try insert a semicolon here
@@ -19728,7 +19727,8 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/String/prototype/split/se
   × Unterminated regular expression
     ╭─[test262/test/language/line-terminators/invalid-regexp-cr.js:18:1]
  17 │ 
- 18 │ //
+ 18 │ /
+/
     · ─
     ╰────
 
@@ -19757,7 +19757,8 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/String/prototype/split/se
   × Unterminated string
     ╭─[test262/test/language/line-terminators/invalid-string-cr.js:17:1]
  16 │ 
- 17 │ ''
+ 17 │ '
+'
     · ─
     ╰────
 
