@@ -96,7 +96,13 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
                 }
             }
             Expression::CallExpression(call_expr) => {
-                if let Some(call_expr) = Self::try_fold_call_expression(call_expr, ctx) {
+                if let Some(call_expr) =
+                    Self::try_fold_literal_constructor_call_expression(call_expr, ctx)
+                {
+                    *expr = call_expr;
+                    self.changed = true;
+                } else if let Some(call_expr) = Self::try_fold_simple_function_call(call_expr, ctx)
+                {
                     *expr = call_expr;
                     self.changed = true;
                 }
@@ -398,7 +404,7 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
         }
     }
 
-    fn try_fold_call_expression(
+    fn try_fold_literal_constructor_call_expression(
         call_expr: &mut CallExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
@@ -447,6 +453,37 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
                 );
                 Some(Self::array_literal(elements, ctx))
             }
+        } else {
+            None
+        }
+    }
+
+    fn try_fold_simple_function_call(
+        call_expr: &mut CallExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        if call_expr.optional || call_expr.arguments.len() != 1 {
+            return None;
+        }
+        if call_expr.callee.is_global_reference_name("Boolean", ctx.symbols()) {
+            // TODO
+            None
+        } else if call_expr.callee.is_global_reference_name("String", ctx.symbols()) {
+            // `String(a)` -> `'' + (a)`
+            let arg = call_expr.arguments.get_mut(0).and_then(|arg| arg.as_expression_mut())?;
+
+            if !matches!(arg, Expression::Identifier(_) | Expression::CallExpression(_))
+                && !arg.is_literal()
+            {
+                return None;
+            }
+
+            Some(ctx.ast.expression_binary(
+                call_expr.span,
+                ctx.ast.expression_from_string_literal(ctx.ast.string_literal(SPAN, "")),
+                BinaryOperator::Addition,
+                ctx.ast.move_expression(arg),
+            ))
         } else {
             None
         }
@@ -830,7 +867,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_simple_function_call1() {
         test("var a = String(23)", "var a = '' + 23");
         // Don't fold the existence check to preserve behavior
