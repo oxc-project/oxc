@@ -88,24 +88,7 @@ impl Rule for NoControlRegex {
                     if let Argument::StringLiteral(pattern) = &expr.arguments[0] {
                         // get pattern from arguments. Missing or non-string arguments
                         // will be runtime errors, but are not covered by this rule.
-                        let alloc = Allocator::default();
-                        let flags = extract_regex_flags(&expr.arguments);
-                        let flags_text = flags.map_or(String::new(), |f| f.to_string());
-                        let parser = Parser::new(
-                            &alloc,
-                            pattern.value.as_str(),
-                            ParserOptions::default()
-                                .with_span_offset(
-                                    expr.arguments.first().map_or(0, |arg| arg.span().start),
-                                )
-                                .with_flags(&flags_text),
-                        );
-
-                        let Ok(pattern) = parser.parse() else {
-                            return;
-                        };
-
-                        check_pattern(context, &pattern, expr.span);
+                        parse_and_check_regex(context, &pattern.value, &expr.arguments, expr.span);
                     }
                 }
             }
@@ -123,30 +106,35 @@ impl Rule for NoControlRegex {
                     if let Argument::StringLiteral(pattern) = &expr.arguments[0] {
                         // get pattern from arguments. Missing or non-string arguments
                         // will be runtime errors, but are not covered by this rule.
-                        let alloc = Allocator::default();
-                        let flags = extract_regex_flags(&expr.arguments);
-                        let flags_text = flags.map_or(String::new(), |f| f.to_string());
-                        let parser = Parser::new(
-                            &alloc,
-                            pattern.value.as_str(),
-                            ParserOptions::default()
-                                .with_span_offset(
-                                    expr.arguments.first().map_or(0, |arg| arg.span().start),
-                                )
-                                .with_flags(&flags_text),
-                        );
-
-                        let Ok(pattern) = parser.parse() else {
-                            return;
-                        };
-
-                        check_pattern(context, &pattern, expr.span);
+                        parse_and_check_regex(context, &pattern.value, &expr.arguments, expr.span);
                     }
                 }
             }
             _ => {}
         };
     }
+}
+
+fn parse_and_check_regex<'a>(
+    ctx: &LintContext<'a>,
+    source_text: &'a str,
+    arguments: &oxc_allocator::Vec<'a, Argument<'a>>,
+    expr_span: Span,
+) {
+    let allocator = Allocator::default();
+    let flags = extract_regex_flags(arguments);
+    let flags_text = flags.map_or(String::new(), |f| f.to_string());
+    let parser = Parser::new(
+        &allocator,
+        source_text,
+        ParserOptions::default()
+            .with_span_offset(arguments.first().map_or(0, |arg| arg.span().start))
+            .with_flags(&flags_text),
+    );
+    let Ok(pattern) = parser.parse() else {
+        return;
+    };
+    check_pattern(ctx, &pattern, expr_span);
 }
 
 fn check_pattern(context: &LintContext, pattern: &Pattern, span: Span) {
