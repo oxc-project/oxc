@@ -33,6 +33,16 @@ impl PeepholeReplaceKnownMethods {
         Self { changed: false }
     }
 
+    fn get_string_literal<'a>(expr: &Expression<'a>) -> Option<&'a str> {
+        match expr {
+            Expression::StringLiteral(lit) => Some(lit.value.as_str()),
+            Expression::TemplateLiteral(lit) if lit.is_no_substitution_template() => {
+                lit.quasi().map(|s| s.as_str())
+            }
+            _ => None,
+        }
+    }
+
     fn try_fold_known_string_methods<'a>(
         &mut self,
         node: &mut Expression<'a>,
@@ -40,81 +50,75 @@ impl PeepholeReplaceKnownMethods {
     ) {
         let Expression::CallExpression(call_expr) = node else { return };
 
-        let Expression::StaticMemberExpression(member) = &call_expr.callee else { return };
-        if let Expression::StringLiteral(string_lit) = &member.object {
-            #[expect(clippy::match_same_arms)]
-            let replacement = match member.property.name.as_str() {
-                "toLowerCase" | "toUpperCase" | "trim" => {
-                    let transformed_value =
-                        match member.property.name.as_str() {
-                            "toLowerCase" => Some(ctx.ast.string_literal(
-                                call_expr.span,
-                                string_lit.value.cow_to_lowercase(),
-                            )),
-                            "toUpperCase" => Some(ctx.ast.string_literal(
-                                call_expr.span,
-                                string_lit.value.cow_to_uppercase(),
-                            )),
-                            "trim" => Some(
-                                ctx.ast.string_literal(call_expr.span, string_lit.value.trim()),
-                            ),
-                            _ => None,
-                        };
+        let Some(mem_expr) = call_expr.callee.as_member_expression() else { return };
+        let Some(string_lit) = Self::get_string_literal(mem_expr.object()) else { return };
+        let Some(method_name) = mem_expr.static_property_name() else { return };
 
-                    transformed_value.map(|transformed_value| {
-                        ctx.ast.expression_from_string_literal(transformed_value)
-                    })
-                }
-                "indexOf" | "lastIndexOf" => Self::try_fold_string_index_of(
-                    call_expr.span,
-                    call_expr,
-                    member,
-                    string_lit,
-                    ctx,
-                ),
-                // TODO: Implement the rest of the string methods
-                "substr" => None,
-                "substring" | "slice" => None,
-                "charAt" => {
+        #[expect(clippy::match_same_arms)]
+        let replacement = match method_name {
+            "toLowerCase" | "toUpperCase" | "trim" => {
+                let transformed_value = match method_name {
+                    "toLowerCase" => {
+                        Some(ctx.ast.string_literal(call_expr.span, string_lit.cow_to_lowercase()))
+                    }
+                    "toUpperCase" => {
+                        Some(ctx.ast.string_literal(call_expr.span, string_lit.cow_to_uppercase()))
+                    }
+                    "trim" => Some(ctx.ast.string_literal(call_expr.span, string_lit.trim())),
+                    _ => None,
+                };
+
+                transformed_value.map(|transformed_value| {
+                    ctx.ast.expression_from_string_literal(transformed_value)
+                })
+            }
+            "indexOf" | "lastIndexOf" => Self::try_fold_string_index_of(
+                call_expr.span,
+                string_lit,
+                method_name,
+                &call_expr.arguments,
+                ctx,
+            ),
+            // TODO: Implement the rest of the string methods
+            "substr" => None,
+            "substring" | "slice" => None,
+            "charAt" => {
                     Self::try_fold_string_char_at(call_expr.span, call_expr, string_lit, ctx)
                 }
-                "charCodeAt" => None,
-                "replace" => None,
-                "replaceAll" => None,
-                _ => None,
-            };
+            "charCodeAt" => None,
+            "replace" => None,
+            "replaceAll" => None,
+            _ => None,
+        };
 
-            if let Some(replacement) = replacement {
-                self.changed = true;
-                *node = replacement;
-            }
+        if let Some(replacement) = replacement {
+            self.changed = true;
+            *node = replacement;
         }
     }
 
     fn try_fold_string_index_of<'a>(
         span: Span,
-        call_expr: &CallExpression<'a>,
-        member: &StaticMemberExpression<'a>,
-        string_lit: &StringLiteral<'a>,
+        string_lit: &str,
+        method_name: &str,
+        arguments: &oxc_allocator::Vec<Argument<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        let search_value = match call_expr.arguments.first() {
+        let search_value = match arguments.first() {
             Some(Argument::StringLiteral(string_lit)) => Some(string_lit.value.as_str()),
             None => None,
             _ => return None,
         };
 
-        let search_start_index = match call_expr.arguments.get(1) {
+        let search_start_index = match arguments.get(1) {
             Some(Argument::NumericLiteral(numeric_lit)) => Some(numeric_lit.value),
             None => None,
             _ => return None,
         };
 
-        let result = match member.property.name.as_str() {
-            "indexOf" => string_lit.value.as_str().index_of(search_value, search_start_index),
-            "lastIndexOf" => {
-                string_lit.value.as_str().last_index_of(search_value, search_start_index)
-            }
+        let result = match method_name {
+            "indexOf" => string_lit.index_of(search_value, search_start_index),
+            "lastIndexOf" => string_lit.last_index_of(search_value, search_start_index),
             _ => unreachable!(),
         };
 
@@ -217,7 +221,7 @@ mod test {
         fold_same("x = 'abcdef'.indexOf([1,2])");
 
         // Template Strings
-        fold_same("x = `abcdef`.indexOf('b')");
+        fold("x = `abcdef`.indexOf('b')", "x = 1;");
         fold_same("x = `Hello ${name}`.indexOf('a')");
         fold_same("x = tag `Hello ${name}`.indexOf('a')");
     }
@@ -546,7 +550,7 @@ mod test {
         fold("'A'.toUpperCase()", "'A'");
         fold("'aBcDe'.toUpperCase()", "'ABCDE'");
 
-        fold_same("`abc`.toUpperCase()");
+        fold("`abc`.toUpperCase()", "'ABC';");
         fold_same("`a ${bc}`.toUpperCase()");
 
         /*
@@ -578,7 +582,7 @@ mod test {
         fold("'a'.toLowerCase()", "'a'");
         fold("'aBcDe'.toLowerCase()", "'abcde'");
 
-        fold_same("`ABC`.toLowerCase()");
+        fold("`ABC`.toLowerCase()", "'abc'");
         fold_same("`A ${BC}`.toLowerCase()");
 
         /*
