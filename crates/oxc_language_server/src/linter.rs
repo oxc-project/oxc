@@ -3,6 +3,7 @@ use std::{
     fs,
     path::{Path, PathBuf},
     rc::Rc,
+    str::FromStr,
     sync::{Arc, OnceLock},
 };
 
@@ -19,9 +20,11 @@ use oxc_span::VALID_EXTENSIONS;
 use ropey::Rope;
 use rustc_hash::FxHashSet;
 use tower_lsp::lsp_types::{
-    self, DiagnosticRelatedInformation, DiagnosticSeverity, Position, Range, Url,
+    self, CodeDescription, DiagnosticRelatedInformation, DiagnosticSeverity, NumberOrString,
+    Position, Range, Url,
 };
 
+const LINT_DOC_LINK_PREFIX: &str = "https://oxc.rs/docs/guide/usage/linter/rules";
 #[derive(Debug)]
 struct ErrorWithPosition {
     pub start_pos: Position,
@@ -107,7 +110,13 @@ impl ErrorWithPosition {
                 ret_range
             },
         );
-        let source = self.miette_err.code().map_or("oxc".to_string(), |code| format!("oxc:{code}"));
+        let code = self.miette_err.code().map(|item| item.to_string());
+        let code_description = code.as_ref().and_then(|code| {
+            let (scope, number) = parse_diagnostic_code(code)?;
+            Some(CodeDescription {
+                href: Url::from_str(&format!("{LINT_DOC_LINK_PREFIX}/{scope}/{number}")).ok()?,
+            })
+        });
         let message = self.miette_err.help().map_or_else(
             || self.miette_err.to_string(),
             |help| format!("{}\nhelp: {}", self.miette_err, help),
@@ -116,10 +125,10 @@ impl ErrorWithPosition {
         lsp_types::Diagnostic {
             range,
             severity,
-            code: None,
+            code: code.map(NumberOrString::String),
             message,
-            source: Some(source),
-            code_description: None,
+            source: Some("oxc".into()),
+            code_description,
             related_information,
             tags: None,
             data: None,
@@ -377,4 +386,13 @@ fn cmp_range(first: &Range, other: &Range) -> std::cmp::Ordering {
         std::cmp::Ordering::Equal => first.end.cmp(&other.end),
         o => o,
     }
+}
+
+/// parse `OxcCode` to `Option<(scope, number)>`
+fn parse_diagnostic_code(code: &str) -> Option<(&str, &str)> {
+    if !code.ends_with(')') {
+        return None;
+    }
+    let right_parenthesis_pos = code.rfind('(')?;
+    Some((&code[0..right_parenthesis_pos], &code[right_parenthesis_pos + 1..code.len() - 1]))
 }
