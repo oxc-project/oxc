@@ -44,58 +44,68 @@ declare_oxc_lint!(
 
 impl Rule for PreferDomNodeTextContent {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::MemberExpression(member_expr) = node.kind() {
-            if let Some((span, name)) = member_expr.static_property_info() {
-                if name == "innerText" && !member_expr.is_computed() {
-                    ctx.diagnostic_with_fix(
-                        prefer_dom_node_text_content_diagnostic(span),
-                        |fixer| fixer.replace(span, "textContent"),
-                    );
+        match node.kind() {
+            AstKind::MemberExpression(member_expr) => {
+                if let Some((span, name)) = member_expr.static_property_info() {
+                    if name == "innerText" && !member_expr.is_computed() {
+                        ctx.diagnostic_with_fix(
+                            prefer_dom_node_text_content_diagnostic(span),
+                            |fixer| fixer.replace(span, "textContent"),
+                        );
+                    }
                 }
             }
-        }
+            // `const {innerText} = node` or `({innerText: text} = node)`
+            AstKind::IdentifierName(identifier) => {
+                if identifier.name != "innerText" {
+                    return;
+                }
 
-        let Some(parent_node) = ctx.nodes().parent_node(node.id()) else {
-            return;
-        };
+                let mut ancestor_kinds =
+                    ctx.nodes().iter_parents(node.id()).skip(1).map(AstNode::kind);
+                let (Some(parent_node_kind), Some(grand_parent_node_kind)) =
+                    (ancestor_kinds.next(), ancestor_kinds.next())
+                else {
+                    return;
+                };
 
-        let Some(grand_parent_node) = ctx.nodes().parent_node(parent_node.id()) else {
-            return;
-        };
-
-        let parent_node_kind = parent_node.kind();
-        let grand_parent_node_kind = grand_parent_node.kind();
-
-        // `const {innerText} = node` or `({innerText: text} = node)`
-        if let AstKind::IdentifierName(identifier) = node.kind() {
-            if identifier.name == "innerText"
-                && matches!(parent_node_kind, AstKind::PropertyKey(_))
-                && (matches!(grand_parent_node_kind, AstKind::ObjectPattern(_))
-                    || matches!(
-                        grand_parent_node_kind,
-                        AstKind::ObjectAssignmentTarget(_)
-                            | AstKind::SimpleAssignmentTarget(_)
-                            | AstKind::AssignmentTarget(_)
-                    ))
-            {
-                ctx.diagnostic(prefer_dom_node_text_content_diagnostic(identifier.span));
-                return;
+                if matches!(parent_node_kind, AstKind::PropertyKey(_))
+                    && (matches!(grand_parent_node_kind, AstKind::ObjectPattern(_))
+                        || matches!(
+                            grand_parent_node_kind,
+                            AstKind::ObjectAssignmentTarget(_)
+                                | AstKind::SimpleAssignmentTarget(_)
+                                | AstKind::AssignmentTarget(_)
+                        ))
+                {
+                    ctx.diagnostic(prefer_dom_node_text_content_diagnostic(identifier.span));
+                }
             }
-        }
+            // `({innerText} = node)`
+            AstKind::IdentifierReference(identifier_ref) => {
+                if identifier_ref.name != "innerText" {
+                    return;
+                }
 
-        // `({innerText} = node)`
-        if let AstKind::IdentifierReference(identifier_ref) = node.kind() {
-            if identifier_ref.name == "innerText"
-                && matches!(
+                let mut ancestor_kinds =
+                    ctx.nodes().iter_parents(node.id()).skip(1).map(AstNode::kind);
+                let (Some(parent_node_kind), Some(grand_parent_node_kind)) =
+                    (ancestor_kinds.next(), ancestor_kinds.next())
+                else {
+                    return;
+                };
+
+                if matches!(
                     parent_node_kind,
                     AstKind::ObjectAssignmentTarget(_)
                         | AstKind::AssignmentTarget(_)
                         | AstKind::SimpleAssignmentTarget(_)
-                )
-                && matches!(grand_parent_node_kind, AstKind::AssignmentTargetPattern(_))
-            {
-                ctx.diagnostic(prefer_dom_node_text_content_diagnostic(identifier_ref.span));
+                ) && matches!(grand_parent_node_kind, AstKind::AssignmentTargetPattern(_))
+                {
+                    ctx.diagnostic(prefer_dom_node_text_content_diagnostic(identifier_ref.span));
+                }
             }
+            _ => {}
         }
     }
 }
