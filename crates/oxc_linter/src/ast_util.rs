@@ -1,4 +1,5 @@
 use oxc_ast::{ast::BindingIdentifier, AstKind};
+use oxc_ecmascript::ToBoolean;
 use oxc_semantic::{AstNode, IsGlobalReference, NodeId, SymbolId};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};

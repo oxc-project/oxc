@@ -24,7 +24,7 @@ use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::node_util::NodeUtil;
 
-impl<'a> NodeUtil for TraverseCtx<'a> {
+impl<'a> NodeUtil<'a> for TraverseCtx<'a> {
     fn symbols(&self) -> &SymbolTable {
         self.scoping.symbols()
     }

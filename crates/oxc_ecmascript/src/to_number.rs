@@ -1,6 +1,12 @@
 use num_traits::Zero;
 
-#[derive(PartialEq)]
+#[allow(clippy::wildcard_imports)]
+use oxc_ast::ast::*;
+use oxc_syntax::operator::UnaryOperator;
+
+use crate::ToBoolean;
+
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum NumberValue {
     Number(f64),
     PositiveInfinity,
@@ -145,6 +151,65 @@ impl TryFrom<NumberValue> for f64 {
             NumberValue::PositiveInfinity => Ok(Self::INFINITY),
             NumberValue::NegativeInfinity => Ok(Self::NEG_INFINITY),
             NumberValue::NaN => Err(()),
+        }
+    }
+}
+
+/// `ToNumber`
+///
+/// <https://tc39.es/ecma262/#sec-tonumber>
+pub trait ToNumber<'a> {
+    fn to_number(&self) -> Option<NumberValue>;
+}
+
+impl<'a> ToNumber<'a> for Expression<'a> {
+    fn to_number(&self) -> Option<NumberValue> {
+        match self {
+            Expression::NumericLiteral(number_literal) => {
+                Some(NumberValue::Number(number_literal.value))
+            }
+            Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
+                UnaryOperator::UnaryPlus => unary_expr.argument.to_number(),
+                UnaryOperator::UnaryNegation => unary_expr.argument.to_number().map(|v| -v),
+                UnaryOperator::BitwiseNot => {
+                    unary_expr.argument.to_number().map(|value| {
+                        match value {
+                            NumberValue::Number(num) => NumberValue::Number(f64::from(
+                                !NumericLiteral::ecmascript_to_int32(num),
+                            )),
+                            // ~Infinity -> -1
+                            // ~-Infinity -> -1
+                            // ~NaN -> -1
+                            _ => NumberValue::Number(-1_f64),
+                        }
+                    })
+                }
+                UnaryOperator::LogicalNot => self
+                    .to_boolean()
+                    .map(|tri| if tri { 1_f64 } else { 0_f64 })
+                    .map(NumberValue::Number),
+                UnaryOperator::Void => Some(NumberValue::NaN),
+                _ => None,
+            },
+            Expression::BooleanLiteral(bool_literal) => {
+                if bool_literal.value {
+                    Some(NumberValue::Number(1.0))
+                } else {
+                    Some(NumberValue::Number(0.0))
+                }
+            }
+            Expression::NullLiteral(_) => Some(NumberValue::Number(0.0)),
+            Expression::Identifier(ident) => match ident.name.as_str() {
+                "Infinity" => Some(NumberValue::PositiveInfinity),
+                "NaN" | "undefined" => Some(NumberValue::NaN),
+                _ => None,
+            },
+            // TODO: will be implemented in next PR, just for test pass now.
+            Expression::StringLiteral(string_literal) => string_literal
+                .value
+                .parse::<f64>()
+                .map_or(Some(NumberValue::NaN), |num| Some(NumberValue::Number(num))),
+            _ => None,
         }
     }
 }

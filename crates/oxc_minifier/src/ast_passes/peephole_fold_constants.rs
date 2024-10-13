@@ -5,7 +5,7 @@ use num_bigint::BigInt;
 use num_traits::Zero;
 
 use oxc_ast::ast::*;
-use oxc_ecmascript::ToInt32;
+use oxc_ecmascript::{NumberValue, ToInt32};
 use oxc_span::{GetSpan, Span, SPAN};
 use oxc_syntax::{
     number::NumberBase,
@@ -14,9 +14,7 @@ use oxc_syntax::{
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
 use crate::{
-    node_util::{
-        is_exact_int64, IsLiteralValue, MayHaveSideEffects, NodeUtil, NumberValue, ValueType,
-    },
+    node_util::{is_exact_int64, IsLiteralValue, MayHaveSideEffects, NodeUtil, ValueType},
     tri::Tri,
     ty::Ty,
     CompressorPass,
@@ -155,7 +153,9 @@ impl<'a> PeepholeFoldConstants {
                         return None;
                     }
                 }
-                expr.argument.to_boolean().map(|b| ctx.ast.expression_boolean_literal(SPAN, !b))
+                ctx.get_boolean_value(&expr.argument)
+                    .to_option()
+                    .map(|b| ctx.ast.expression_boolean_literal(SPAN, !b))
             }
             // `-NaN` -> `NaN`
             UnaryOperator::UnaryNegation if expr.argument.is_nan() => {
