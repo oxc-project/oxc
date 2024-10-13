@@ -1737,7 +1737,7 @@ impl<'a> GenExpr for LogicalExpression<'a> {
             precedence,
             ctx,
             left_precedence: Precedence::Lowest,
-            left_ctx: Context::empty(),
+            left_ctx: ctx,
             operator: BinaryishOperator::Logical(self.operator),
             wrap: false,
             right_precedence: Precedence::Lowest,

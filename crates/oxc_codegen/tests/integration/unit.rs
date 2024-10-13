@@ -279,4 +279,9 @@ fn in_expr_in_sequence_in_for_loop_init() {
         "for (l = ('foo' in bar), i; i < 10; i += 1) {}",
         "for (l = (\"foo\" in bar), i; i < 10; i += 1) {}\n",
     );
+
+    test(
+        "for (('hidden' in a) && (m = a.hidden), r = 0; s > r; r++) {}",
+        "for ((\"hidden\" in a) && (m = a.hidden), r = 0; s > r; r++) {}\n",
+    );
 }
