@@ -1135,14 +1135,14 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_call_signature_member(&mut self) -> Result<TSSignature<'a>> {
         let span = self.start_span();
         let type_parameters = self.parse_ts_type_parameters()?;
-        let (this_patam, params) = self.parse_formal_parameters(FormalParameterKind::Signature)?;
+        let (this_param, params) = self.parse_formal_parameters(FormalParameterKind::Signature)?;
         let return_type = self.parse_ts_return_type_annotation(Kind::Colon, false)?;
         self.bump(Kind::Comma);
         self.bump(Kind::Semicolon);
         Ok(self.ast.ts_signature_call_signature_declaration(
             self.end_span(span),
             type_parameters,
-            this_patam,
+            this_param,
             params,
             return_type,
         ))
