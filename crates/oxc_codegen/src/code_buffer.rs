@@ -264,8 +264,8 @@ impl CodeBuffer {
         let iter = bytes.into_iter();
         let hint = iter.size_hint();
         self.buf.reserve(hint.1.unwrap_or(hint.0));
-        for c in iter {
-            self.print_ascii_byte(c);
+        for byte in iter {
+            self.print_ascii_byte(byte);
         }
     }
 
