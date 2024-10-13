@@ -108,8 +108,8 @@ impl NoSelfAssign {
                         std::cmp::min(array_pattern.elements.len(), array_expr.elements.len());
                     let mut i = 0;
                     while i < end {
-                        let left = array_pattern.elements[i].as_ref();
-                        let right = &array_expr.elements[i];
+                        let left = array_pattern.elements[i as u32].as_ref();
+                        let right = &array_expr.elements[i as u32];
 
                         if let Some(left) = left {
                             if let Some(left_target) = left.as_assignment_target() {
@@ -136,7 +136,7 @@ impl NoSelfAssign {
                         let mut i = object_expr.properties.len();
                         while i >= 1 {
                             if let ObjectPropertyKind::SpreadProperty(_) =
-                                object_expr.properties[i - 1]
+                                object_expr.properties[i as u32 - 1]
                             {
                                 start_j = i;
                                 break;
@@ -148,8 +148,8 @@ impl NoSelfAssign {
                         while i < object_pattern.properties.len() {
                             let mut j = start_j;
                             while j < object_expr.properties.len() {
-                                let left = &object_pattern.properties[i];
-                                let right = &object_expr.properties[j];
+                                let left = &object_pattern.properties[i as u32];
+                                let right = &object_expr.properties[j as u32];
 
                                 self.each_property_self_assignment(left, right, ctx);
 

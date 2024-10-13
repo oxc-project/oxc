@@ -141,7 +141,8 @@ impl Rule for OnlyUsedInRecursion {
                                     }
 
                                     // remove the argument
-                                    let arg_to_delete = call_expr.arguments[arg_index].span();
+                                    let arg_to_delete =
+                                        call_expr.arguments[arg_index as u32].span();
 
                                     fix.push(Fix::delete(Span::new(
                                         arg_to_delete.start,

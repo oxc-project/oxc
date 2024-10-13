@@ -296,7 +296,7 @@ impl Rule for NoUselessUndefined {
                 }
                 let mut undefined_args_spans = Vec::new();
                 for i in (0..arguments.len()).rev() {
-                    let arg = &arguments[i];
+                    let arg = &arguments[i as u32];
                     if is_undefined(arg) {
                         let span = arg.span();
                         undefined_args_spans.insert(0, span);
@@ -316,7 +316,7 @@ impl Rule for NoUselessUndefined {
                 let remaining_count = arguments.len() - undefined_args_spans.len();
 
                 if remaining_count > 0 {
-                    let previous_argument = &arguments[remaining_count - 1];
+                    let previous_argument = &arguments[remaining_count as u32 - 1];
                     start = previous_argument.span().end;
                 }
                 // If all arguments removed, and there is trailing comma, we need remove it.

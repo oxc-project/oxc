@@ -47,7 +47,7 @@ where
     }
 }
 
-impl<'old_alloc, 'new_alloc, T, C> CloneIn<'new_alloc> for Vec<'old_alloc, T>
+impl<'old_alloc, 'new_alloc, T, C: 'new_alloc> CloneIn<'new_alloc> for Vec<'old_alloc, T>
 where
     T: CloneIn<'new_alloc, Cloned = C>,
 {

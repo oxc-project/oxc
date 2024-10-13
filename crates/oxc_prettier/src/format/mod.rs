@@ -430,10 +430,10 @@ impl<'a> Format<'a> for SwitchCase<'a> {
 
         let mut consequent_parts = p.vec();
         for i in 0..len {
-            let stmt = &consequent[i];
+            let stmt = &consequent[i as u32];
 
             if i != 0 && matches!(stmt, Statement::BreakStatement(_)) {
-                let last_stmt = &consequent[i - 1];
+                let last_stmt = &consequent[i as u32 - 1];
                 if p.is_next_line_empty(last_stmt.span()) {
                     consequent_parts.extend(hardline!());
                 }

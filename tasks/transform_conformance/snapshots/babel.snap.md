@@ -1,6 +1,6 @@
 commit: 3bcfee23
 
-Passed: 338/1022
+Passed: 336/1022
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -11,7 +11,7 @@ Passed: 338/1022
 * babel-plugin-transform-react-jsx-source
 
 
-# babel-preset-env (109/585)
+# babel-preset-env (111/585)
 * .plugins-overlapping/chrome-49/input.js
 x Output mismatch
 
@@ -370,9 +370,6 @@ x Output mismatch
 x Output mismatch
 
 * corejs3/entry-require-es-proposals/input.js
-x Output mismatch
-
-* corejs3/entry-specified-imports/input.mjs
 x Output mismatch
 
 * corejs3/entry-stable/input.mjs
@@ -1221,9 +1218,6 @@ x Output mismatch
 * modules/modules-commonjs/input.mjs
 x Output mismatch
 
-* modules/modules-false/input.mjs
-x Output mismatch
-
 * modules/modules-systemjs/input.mjs
 x Output mismatch
 
@@ -1677,7 +1671,7 @@ rebuilt        : ScopeId(1): []
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (39/152)
+# babel-plugin-transform-typescript (35/152)
 * cast/as-expression/input.ts
 Unresolved references mismatch:
 after transform: ["T", "x"]
@@ -1739,28 +1733,13 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 * declarations/erased/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["E", "I", "M", "N", "T", "m", "x"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8)]
-rebuilt        : ScopeId(0): []
+x Output mismatch
 
 * declarations/export-declare-enum/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
+x Output mismatch
 
 * declarations/nested-namespace/input.mjs
-Bindings mismatch:
-after transform: ScopeId(0): ["P"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
+x Output mismatch
 
 * enum/boolean-value/input.ts
 Bindings mismatch:
@@ -1994,18 +1973,7 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 x Output mismatch
 
 * exports/declare-namespace/input.ts
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
-Symbol flags mismatch for "N":
-after transform: SymbolId(0): SymbolFlags(Export | Class | NameSpaceModule | Ambient)
-rebuilt        : SymbolId(0): SymbolFlags(Export | Class)
-Symbol reference IDs mismatch for "N":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2)]
-rebuilt        : SymbolId(0): [ReferenceId(1)]
-Symbol redeclarations mismatch for "N":
-after transform: SymbolId(0): [Span { start: 83, end: 84 }]
-rebuilt        : SymbolId(0): []
+x Output mismatch
 
 * exports/declare-shadowed/input.ts
 Scope children mismatch:
@@ -2019,20 +1987,10 @@ rebuilt        : []
 x Output mismatch
 
 * exports/default-function/input.ts
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
+x Output mismatch
 
 * exports/export-const-enums/input.ts
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "None":
-after transform: SymbolId(0): SymbolFlags(Export | ConstEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol reference IDs mismatch for "None":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2)]
-rebuilt        : SymbolId(0): [ReferenceId(1)]
+x Output mismatch
 
 * exports/export-import=/input.ts
 Missing SymbolId: "JGraph"
@@ -2041,12 +1999,10 @@ after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
 rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
 
 * exports/export-type/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
+x Output mismatch
+
+* exports/export-type-from/input.ts
+x Output mismatch
 
 * exports/export=/input.ts
   ! `export = <value>;` is only supported when compiling modules to CommonJS.
@@ -2059,55 +2015,31 @@ rebuilt        : ScopeId(0): []
 
 
 * exports/imported-types/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "B", "C"]
-rebuilt        : ScopeId(0): ["C"]
+x Output mismatch
 
 * exports/imported-types-only-remove-type-imports/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "B", "C"]
-rebuilt        : ScopeId(0): ["C"]
+x Output mismatch
 
 * exports/interface/input.ts
 x Output mismatch
 
 * exports/issue-9916-1/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["PromiseRejectCb", "PromiseResolveCb", "a"]
-rebuilt        : ScopeId(0): ["a"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["PromiseLike"]
-rebuilt        : []
+x Output mismatch
 
 * exports/issue-9916-2/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["PromiseRejectCb", "PromiseResolveCb"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["PromiseLike"]
-rebuilt        : []
+x Output mismatch
 
 * exports/issue-9916-3/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["PromiseRejectCb", "PromiseResolveCb", "a"]
-rebuilt        : ScopeId(0): ["a"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["PromiseLike"]
-rebuilt        : []
+x Output mismatch
 
 * exports/type-only-export-specifier-1/input.ts
-Symbol reference IDs mismatch for "Foo":
-after transform: SymbolId(0): [ReferenceId(0)]
-rebuilt        : SymbolId(0): []
+x Output mismatch
+
+* exports/type-only-export-specifier-2/input.ts
+x Output mismatch
+
+* exports/type-only-export-specifier-3/input.ts
+x Output mismatch
 
 * function/overloads/input.ts
 Scope children mismatch:
@@ -2124,25 +2056,20 @@ Bindings mismatch:
 after transform: ScopeId(1): ["T", "x", "y"]
 rebuilt        : ScopeId(1): ["x", "y"]
 
+* imports/elide-no-import-specifiers/input.ts
+x Output mismatch
+
 * imports/elide-preact/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["FooBar", "Fragment", "h", "x"]
-rebuilt        : ScopeId(0): ["x"]
+x Output mismatch
 
 * imports/elide-preact-no-1/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Fragment", "h", "render"]
-rebuilt        : ScopeId(0): ["Fragment", "h"]
+x Output mismatch
 
 * imports/elide-preact-no-2/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Fragment", "render"]
-rebuilt        : ScopeId(0): ["Fragment"]
+x Output mismatch
 
 * imports/elide-react/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["React", "x"]
-rebuilt        : ScopeId(0): ["x"]
+x Output mismatch
 
 * imports/elide-type-referenced-in-imports-equal-no/input.ts
 Missing SymbolId: "foo"
@@ -2152,51 +2079,25 @@ after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)
 rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
 
 * imports/elide-typeof/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "x"]
-rebuilt        : ScopeId(0): ["x"]
+x Output mismatch
 
 * imports/elision/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "B", "C", "D", "Used", "Used2", "Used3", "x", "y", "z"]
-rebuilt        : ScopeId(0): ["Used", "Used2", "Used3", "x", "y", "z"]
+x Output mismatch
 
 * imports/elision-export-type/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "B", "T", "T1"]
-rebuilt        : ScopeId(0): ["A", "B"]
+x Output mismatch
 
 * imports/elision-locations/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "B", "C", "Class", "D", "E", "F", "G", "H", "Iface", "x", "y"]
-rebuilt        : ScopeId(0): ["A", "Class", "x", "y"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
+x Output mismatch
 
 * imports/elision-qualifiedname/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "x"]
-rebuilt        : ScopeId(0): ["x"]
+x Output mismatch
 
 * imports/elision-rename/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["B", "x"]
-rebuilt        : ScopeId(0): ["x"]
+x Output mismatch
 
 * imports/enum-id/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "Enum"]
-rebuilt        : ScopeId(0): ["Enum"]
-Bindings mismatch:
-after transform: ScopeId(1): ["A", "Enum"]
-rebuilt        : ScopeId(1): ["Enum"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Symbol flags mismatch for "Enum":
-after transform: SymbolId(1): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+x Output mismatch
 
 * imports/enum-value/input.ts
 Bindings mismatch:
@@ -2210,39 +2111,16 @@ after transform: SymbolId(1): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 
 * imports/import-removed-exceptions/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["H", "I", "I2", "J", "a", "b", "c2", "d", "d2", "e", "e4"]
-rebuilt        : ScopeId(0): []
+x Output mismatch
 
 * imports/import-type/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "B", "T", "Types"]
-rebuilt        : ScopeId(0): []
+x Output mismatch
 
 * imports/import-type-func-with-duplicate-name/input.ts
-Symbol flags mismatch for "Foo":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Function | TypeImport)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Function)
-Symbol span mismatch for "Foo":
-after transform: SymbolId(0): Span { start: 13, end: 16 }
-rebuilt        : SymbolId(0): Span { start: 70, end: 73 }
-Symbol redeclarations mismatch for "Foo":
-after transform: SymbolId(0): [Span { start: 70, end: 73 }]
-rebuilt        : SymbolId(0): []
-Symbol flags mismatch for "Foo2":
-after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | Function | TypeImport)
-rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable | Function)
-Symbol span mismatch for "Foo2":
-after transform: SymbolId(1): Span { start: 43, end: 47 }
-rebuilt        : SymbolId(1): Span { start: 87, end: 91 }
-Symbol redeclarations mismatch for "Foo2":
-after transform: SymbolId(1): [Span { start: 87, end: 91 }]
-rebuilt        : SymbolId(1): []
+x Output mismatch
 
 * imports/import-type-not-removed/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "B"]
-rebuilt        : ScopeId(0): []
+x Output mismatch
 
 * imports/import=-module/input.ts
   ! `import lib = require(...);` is only supported when compiling modules
@@ -2261,32 +2139,22 @@ rebuilt        : ScopeId(0): []
 x Output mismatch
 
 * imports/property-signature/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "obj"]
-rebuilt        : ScopeId(0): ["obj"]
+x Output mismatch
 
 * imports/type-only-export-specifier-1/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["bar", "baz", "foo"]
-rebuilt        : ScopeId(0): []
+x Output mismatch
 
 * imports/type-only-export-specifier-2/input.ts
 x Output mismatch
 
 * imports/type-only-import-specifier-1/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Foo1", "Foo2"]
-rebuilt        : ScopeId(0): ["Foo1"]
+x Output mismatch
 
 * imports/type-only-import-specifier-2/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Foo1", "Foo2"]
-rebuilt        : ScopeId(0): []
+x Output mismatch
 
 * imports/type-only-import-specifier-3/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Foo1", "Foo2"]
-rebuilt        : ScopeId(0): []
+x Output mismatch
 
 * imports/type-only-import-specifier-4/input.ts
 x Output mismatch
@@ -2778,15 +2646,7 @@ after transform: ScopeId(1): [SymbolId(1), SymbolId(2)]
 rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2)]
 
 * namespace/export-type-only/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Platform"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["Platform"]
-rebuilt        : []
+x Output mismatch
 
 * namespace/module-nested/input.ts
 Missing SymbolId: "src"

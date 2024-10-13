@@ -78,6 +78,6 @@ impl<'a> TopLevelStatementsStore<'a> {
             .rposition(|stmt| matches!(stmt, Statement::ImportDeclaration(_)))
             .map_or(0, |i| i + 1);
 
-        program.body.splice(index..index, stmts.drain(..));
+        program.body.splice(index as u32..index as u32, stmts.drain(..));
     }
 }

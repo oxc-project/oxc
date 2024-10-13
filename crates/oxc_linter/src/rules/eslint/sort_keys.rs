@@ -151,7 +151,7 @@ impl Rule for SortKeys {
                             let text_between = extract_text_between_spans(
                                 source_text,
                                 prop.span(),
-                                dec.properties[i + 1].span(),
+                                dec.properties[i as u32 + 1].span(),
                             );
                             if text_between.contains("\n\n") {
                                 property_groups.last_mut().unwrap().push(key.into());

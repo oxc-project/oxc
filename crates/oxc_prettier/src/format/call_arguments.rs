@@ -206,7 +206,8 @@ fn should_expand_last_arg(args: &Vec<'_, Argument<'_>>) -> bool {
     let Some(last_arg) = args.last() else { return false };
     let Some(last_arg) = last_arg.as_expression() else { return false };
 
-    let penultimate_arg = if args.len() >= 2 { Some(&args[args.len() - 2]) } else { None };
+    let penultimate_arg =
+        if args.len() >= 2 { Some(&args[((args.len() - 2) as u32)]) } else { None };
 
     could_expand_arg(last_arg, false)
         && (penultimate_arg.is_none() || matches!(last_arg, arg))

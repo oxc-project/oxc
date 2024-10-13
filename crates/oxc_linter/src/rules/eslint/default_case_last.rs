@@ -60,7 +60,7 @@ impl Rule for DefaultCaseLast {
 
         if let Some(index) = index_of_default {
             if index != cases.len() - 1 {
-                let default_clause = &cases[index];
+                let default_clause = &cases[index as u32];
                 ctx.diagnostic(default_case_last_diagnostic(Span::new(
                     default_clause.span.start,
                     default_clause.span.start + 7,

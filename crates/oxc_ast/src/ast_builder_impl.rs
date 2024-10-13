@@ -44,7 +44,7 @@ impl<'a> AstBuilder<'a> {
 
     #[inline]
     pub fn vec_with_capacity<T>(self, capacity: usize) -> Vec<'a, T> {
-        Vec::with_capacity_in(capacity, self.allocator)
+        Vec::with_capacity_in(capacity as u32, self.allocator)
     }
 
     #[inline]
