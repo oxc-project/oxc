@@ -1,5 +1,7 @@
 use assert_unchecked::assert_unchecked;
 
+use oxc_data_structures::AsciiChar;
+
 /// A string builder for constructing source code.
 ///
 /// `CodeBuffer` provides safe abstractions over a byte array.
@@ -173,6 +175,9 @@ impl CodeBuffer {
 
     /// Push a single ASCII byte into the buffer.
     ///
+    /// If `byte` is not statically knowable, consider [`print_ascii_char`]
+    /// as a more efficient alternative.
+    ///
     /// # Panics
     /// Panics if `byte` is not an ASCII byte (`0 - 0x7F`).
     ///
@@ -187,6 +192,8 @@ impl CodeBuffer {
     /// let source = code.into_string();
     /// assert_eq!(source, "foo");
     /// ```
+    ///
+    /// [`print_ascii_char`]: CodeBuffer::print_ascii_char
     #[inline]
     pub fn print_ascii_byte(&mut self, byte: u8) {
         // When this method is inlined, and the value of `byte` is known, this assertion should
@@ -195,6 +202,37 @@ impl CodeBuffer {
 
         // SAFETY: `byte` is an ASCII character
         unsafe { self.print_byte_unchecked(byte) }
+    }
+
+    /// Push a single `AsciiChar` into the buffer.
+    ///
+    /// [`print_ascii_byte`] is usually more ergonomic, and will produce equally efficient code,
+    /// as long as `ch` is statically knowable. However, if `ch` is dynamic and compiler cannot
+    /// statically prove it is an ASCII character, compiler will be unable to elide an assertion
+    /// in [`print_ascii_byte`].
+    ///
+    /// `print_ascii_char` is slightly more efficient in such cases, because it is always true that
+    /// `AsciiChar` is an ASCII character, by definition.
+    ///
+    /// # Example
+    /// ```
+    /// use oxc_codegen::CodeBuffer;
+    /// use oxc_data_structures::AsciiChar;
+    ///
+    /// let mut code = CodeBuffer::new();
+    /// code.print_ascii_char(AsciiChar::SmallF);
+    /// code.print_ascii_char(AsciiChar::SmallO);
+    /// code.print_ascii_char(AsciiChar::SmallO);
+    ///
+    /// let source = code.take_source_text();
+    /// assert_eq!(source, "foo");
+    /// ```
+    ///
+    /// [`print_ascii_byte`]: CodeBuffer::print_ascii_byte
+    #[inline]
+    pub fn print_ascii_char(&mut self, ch: AsciiChar) {
+        // SAFETY: `AsciiChar` is guaranteed to be an ASCII character
+        unsafe { self.print_byte_unchecked(ch.to_u8()) }
     }
 
     /// Push a byte to the buffer, without checking that the buffer still represents a valid
@@ -332,6 +370,26 @@ impl CodeBuffer {
         }
     }
 
+    /// Push a sequence of `AsciiChar`s into the buffer.
+    ///
+    /// # Example
+    /// ```
+    /// use oxc_codegen::CodeBuffer;
+    /// use oxc_data_structures::AsciiChar;
+    ///
+    /// let mut code = CodeBuffer::new();
+    /// code.print_ascii_chars(
+    ///   [AsciiChar::SmallF, AsciiChar::SmallO, AsciiChar::SmallO]
+    /// );
+    /// assert_eq!(String::from(code), "foo");
+    /// ```
+    pub fn print_ascii_chars<I>(&mut self, chars: I)
+    where
+        I: IntoIterator<Item = AsciiChar>,
+    {
+        self.buf.extend(chars.into_iter().map(AsciiChar::to_u8));
+    }
+
     /// Print a sequence of bytes without checking that the buffer still
     /// represents a valid UTF-8 string.
     ///
@@ -418,7 +476,7 @@ impl From<CodeBuffer> for String {
 
 #[cfg(test)]
 mod test {
-    use super::CodeBuffer;
+    use super::{AsciiChar, CodeBuffer};
 
     #[test]
     fn empty() {
@@ -462,6 +520,19 @@ mod test {
 
     #[test]
     #[allow(clippy::byte_char_slices)]
+    fn print_ascii_char() {
+        let mut code = CodeBuffer::new();
+        code.print_ascii_char(AsciiChar::SmallF);
+        code.print_ascii_char(AsciiChar::SmallO);
+        code.print_ascii_char(AsciiChar::SmallO);
+
+        assert_eq!(code.len(), 3);
+        assert_eq!(code.as_bytes(), &[b'f', b'o', b'o']);
+        assert_eq!(String::from(code), "foo");
+    }
+
+    #[test]
+    #[allow(clippy::byte_char_slices)]
     fn print_byte_unchecked() {
         let mut code = CodeBuffer::new();
         // SAFETY: These bytes are all ASCII
@@ -481,6 +552,17 @@ mod test {
     fn print_ascii_bytes() {
         let mut code = CodeBuffer::new();
         code.print_ascii_bytes([b'f', b'o', b'o']);
+
+        assert_eq!(code.len(), 3);
+        assert_eq!(code.as_bytes(), &[b'f', b'o', b'o']);
+        assert_eq!(String::from(code), "foo");
+    }
+
+    #[test]
+    #[allow(clippy::byte_char_slices)]
+    fn print_ascii_chars() {
+        let mut code = CodeBuffer::new();
+        code.print_ascii_chars([AsciiChar::SmallF, AsciiChar::SmallO, AsciiChar::SmallO]);
 
         assert_eq!(code.len(), 3);
         assert_eq!(code.as_bytes(), &[b'f', b'o', b'o']);

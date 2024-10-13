@@ -1546,6 +1546,7 @@ dependencies = [
  "once_cell",
  "oxc_allocator",
  "oxc_ast",
+ "oxc_data_structures",
  "oxc_index",
  "oxc_mangler",
  "oxc_parser",

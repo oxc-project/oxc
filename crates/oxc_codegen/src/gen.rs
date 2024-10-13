@@ -3,6 +3,7 @@ use std::ops::Not;
 use cow_utils::CowUtils;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
+use oxc_data_structures::AsciiChar;
 use oxc_span::GetSpan;
 use oxc_syntax::{
     identifier::{LS, PS},
@@ -1210,7 +1211,7 @@ impl<'a> Gen for RegExpLiteral<'a> {
     }
 }
 
-fn print_unquoted_str(s: &str, quote: u8, p: &mut Codegen) {
+fn print_unquoted_str(s: &str, quote: AsciiChar, p: &mut Codegen) {
     let mut chars = s.chars().peekable();
 
     while let Some(c) = chars.next() {
@@ -1250,21 +1251,21 @@ fn print_unquoted_str(s: &str, quote: u8, p: &mut Codegen) {
                 p.print_str("\\\\");
             }
             '\'' => {
-                if quote == b'\'' {
+                if quote == AsciiChar::SingleQuote {
                     p.print_str("\\'");
                 } else {
                     p.print_str("'");
                 }
             }
             '\"' => {
-                if quote == b'"' {
+                if quote == AsciiChar::DoubleQuote {
                     p.print_str("\\\"");
                 } else {
                     p.print_str("\"");
                 }
             }
             '`' => {
-                if quote == b'`' {
+                if quote == AsciiChar::GraveAccent {
                     p.print_str("\\`");
                 } else {
                     p.print_str("`");
@@ -2335,10 +2336,14 @@ impl<'a> Gen for JSXAttributeValue<'a> {
             Self::Fragment(fragment) => fragment.print(p, ctx),
             Self::Element(el) => el.print(p, ctx),
             Self::StringLiteral(lit) => {
-                let quote = if lit.value.contains('"') { b'\'' } else { b'"' };
-                p.print_ascii_byte(quote);
+                let quote = if lit.value.contains('"') {
+                    AsciiChar::SingleQuote
+                } else {
+                    AsciiChar::DoubleQuote
+                };
+                p.print_ascii_char(quote);
                 p.print_str(&lit.value);
-                p.print_ascii_byte(quote);
+                p.print_ascii_char(quote);
             }
             Self::ExpressionContainer(expr_container) => expr_container.print(p, ctx),
         }

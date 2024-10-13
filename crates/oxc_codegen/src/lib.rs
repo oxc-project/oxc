@@ -16,6 +16,7 @@ use std::{borrow::Cow, path::PathBuf};
 use oxc_ast::ast::{
     BindingIdentifier, BlockStatement, Expression, IdentifierReference, Program, Statement,
 };
+use oxc_data_structures::AsciiChar;
 use oxc_mangler::Mangler;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::{
@@ -138,7 +139,7 @@ pub struct Codegen<'a> {
     indent: u32,
 
     /// Fast path for [CodegenOptions::single_quote]
-    quote: u8,
+    quote: AsciiChar,
 
     // Builders
     sourcemap_builder: Option<SourcemapBuilder>,
@@ -184,14 +185,15 @@ impl<'a> Codegen<'a> {
             start_of_arrow_expr: 0,
             start_of_default_export: 0,
             indent: 0,
-            quote: b'"',
+            quote: AsciiChar::DoubleQuote,
             sourcemap_builder: None,
         }
     }
 
     #[must_use]
     pub fn with_options(mut self, options: CodegenOptions) -> Self {
-        self.quote = if options.single_quote { b'\'' } else { b'"' };
+        self.quote =
+            if options.single_quote { AsciiChar::SingleQuote } else { AsciiChar::DoubleQuote };
         self.options = options;
         self
     }
@@ -204,7 +206,8 @@ impl<'a> Codegen<'a> {
 
     #[must_use]
     pub fn build(mut self, program: &Program<'a>) -> CodegenReturn {
-        self.quote = if self.options.single_quote { b'\'' } else { b'"' };
+        self.quote =
+            if self.options.single_quote { AsciiChar::SingleQuote } else { AsciiChar::DoubleQuote };
         self.source_text = program.source_text;
         self.code.reserve(program.source_text.len());
         if self.options.print_annotation_comments() {
@@ -232,6 +235,12 @@ impl<'a> Codegen<'a> {
     #[inline]
     pub fn print_ascii_byte(&mut self, byte: u8) {
         self.code.print_ascii_byte(byte);
+    }
+
+    /// Push a single `AsciiChar` into the buffer.
+    #[inline]
+    pub fn print_ascii_char(&mut self, ch: AsciiChar) {
+        self.code.print_ascii_char(ch);
     }
 
     /// Push str into the buffer
@@ -343,10 +352,7 @@ impl<'a> Codegen<'a> {
             self.print_next_indent_as_space = false;
             return;
         }
-        // SAFETY: this iterator only yields tabs, which are always valid ASCII characters.
-        unsafe {
-            self.code.print_bytes_unchecked(std::iter::repeat(b'\t').take(self.indent as usize));
-        }
+        self.code.print_ascii_chars(std::iter::repeat(AsciiChar::Tab).take(self.indent as usize));
     }
 
     #[inline]
@@ -569,10 +575,10 @@ impl<'a> Codegen<'a> {
     }
 
     #[inline]
-    fn wrap_quote<F: FnMut(&mut Self, u8)>(&mut self, mut f: F) {
-        self.print_ascii_byte(self.quote);
+    fn wrap_quote<F: FnMut(&mut Self, AsciiChar)>(&mut self, mut f: F) {
+        self.print_ascii_char(self.quote);
         f(self, self.quote);
-        self.print_ascii_byte(self.quote);
+        self.print_ascii_char(self.quote);
     }
 
     fn add_source_mapping(&mut self, position: u32) {
