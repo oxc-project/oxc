@@ -466,8 +466,30 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
             return None;
         }
         if call_expr.callee.is_global_reference_name("Boolean", ctx.symbols()) {
-            // TODO
-            None
+            // `Boolean(a)` -> `!!(a)`
+            // http://www.ecma-international.org/ecma-262/6.0/index.html#sec-boolean-constructor-boolean-value
+            // and
+            // http://www.ecma-international.org/ecma-262/6.0/index.html#sec-logical-not-operator-runtime-semantics-evaluation
+
+            let arg = call_expr.arguments.get_mut(0).and_then(|arg| arg.as_expression_mut())?;
+
+            if let Expression::UnaryExpression(unary_expr) = arg {
+                if unary_expr.operator == UnaryOperator::LogicalNot {
+                    return Some(ctx.ast.move_expression(arg));
+                }
+            }
+
+            Some(ctx.ast.expression_from_unary(ctx.ast.unary_expression(
+                call_expr.span,
+                UnaryOperator::LogicalNot,
+                ctx.ast.expression_from_unary(ctx.ast.unary_expression(
+                    call_expr.span,
+                    UnaryOperator::LogicalNot,
+                    ctx.ast.move_expression(
+                        call_expr.arguments.get_mut(0).and_then(|arg| arg.as_expression_mut())?,
+                    ),
+                )),
+            )))
         } else if call_expr.callee.is_global_reference_name("String", ctx.symbols()) {
             // `String(a)` -> `'' + (a)`
             let arg = call_expr.arguments.get_mut(0).and_then(|arg| arg.as_expression_mut())?;
@@ -881,7 +903,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_simple_function_call2() {
         test("var a = Boolean(true)", "var a = !0");
         // Don't fold the existence check to preserve behavior
