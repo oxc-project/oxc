@@ -339,9 +339,7 @@ impl CodeBuffer {
         }
         #[cfg(not(debug_assertions))]
         {
-            // SAFETY: `buf` is valid UTF-8 because of invariants upheld by
-            // CodeBuffer. If, for some reason, it is not, this is caused by
-            // improper use of `unsafe` printing methods.
+            // SAFETY: All methods of `CodeBuffer` ensure `buf` is valid UTF-8
             unsafe { String::from_utf8_unchecked(take(&mut self.buf)) }
         }
     }
@@ -359,7 +357,7 @@ impl From<CodeBuffer> for String {
         if cfg!(debug_assertions) {
             String::from_utf8(buffer.buf).unwrap()
         } else {
-            // SAFETY: `buf` is valid UTF-8 because of invariants upheld by `CodeBuffer`
+            // SAFETY: All methods of `CodeBuffer` ensure `buf` is valid UTF-8
             unsafe { String::from_utf8_unchecked(buffer.buf) }
         }
     }
