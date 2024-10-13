@@ -20,10 +20,27 @@ fn join_strings_disjunction(strings: &[String]) -> String {
     list
 }
 
-fn filename_case_diagnostic(valid_cases: &[&str]) -> OxcDiagnostic {
-    let case_names = valid_cases.iter().map(|s| format!("{s} case")).collect::<Vec<_>>();
+fn filename_case_diagnostic(filename: &str, valid_cases: &[(&str, Case)]) -> OxcDiagnostic {
+    let case_names = valid_cases.iter().map(|(name, _)| format!("{name} case")).collect::<Vec<_>>();
     let message = format!("Filename should be in {}", join_strings_disjunction(&case_names));
-    OxcDiagnostic::warn(message).with_label(Span::default())
+
+    let trimmed_filename = filename.trim_matches('_');
+    let converted_filenames = valid_cases
+        .iter()
+        .map(|(_, case)| {
+            let converter =
+                Converter::new().remove_boundaries(&[Boundary::LowerDigit, Boundary::DigitLower]);
+            // get the leading characters that were trimmed, if any, else empty string
+            let leading = filename.chars().take_while(|c| c == &'_').collect::<String>();
+            let trailing = filename.chars().rev().take_while(|c| c == &'_').collect::<String>();
+            format!("'{leading}{}{trailing}'", converter.to_case(*case).convert(trimmed_filename))
+        })
+        .collect::<Vec<_>>();
+
+    let help_message =
+        format!("Rename the file to {}", join_strings_disjunction(&converted_filenames));
+
+    OxcDiagnostic::warn(message).with_label(Span::default()).with_help(help_message)
 }
 
 #[derive(Debug, Clone)]
@@ -122,7 +139,8 @@ impl Rule for FilenameCase {
     }
 
     fn run_once<'a>(&self, ctx: &LintContext<'_>) {
-        let Some(filename) = ctx.file_path().file_stem().and_then(|s| s.to_str()) else {
+        let file_path = ctx.file_path();
+        let Some(filename) = file_path.file_stem().and_then(|s| s.to_str()) else {
             return;
         };
 
@@ -144,11 +162,14 @@ impl Rule for FilenameCase {
                 Converter::new().remove_boundaries(&[Boundary::LowerDigit, Boundary::DigitLower]);
             converter.to_case(*case).convert(filename) == filename
         }) {
-            let case_names = cases
+            let valid_cases = cases
                 .iter()
-                .filter_map(|(enabled, _, name)| if *enabled { Some(*name) } else { None })
+                .filter_map(
+                    |(enabled, case, name)| if *enabled { Some((*name, *case)) } else { None },
+                )
                 .collect::<Vec<_>>();
-            ctx.diagnostic(filename_case_diagnostic(&case_names));
+            let filename = file_path.file_name().unwrap().to_string_lossy();
+            ctx.diagnostic(filename_case_diagnostic(&filename, &valid_cases));
         }
     }
 }
