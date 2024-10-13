@@ -61,7 +61,6 @@ impl CodeBuffer {
     /// minimum *capacity* specified, the buffer will have a zero *length*.
     ///
     /// # Panics
-    ///
     /// Panics if the new capacity exceeds `isize::MAX` bytes.
     #[inline]
     pub fn with_capacity(capacity: usize) -> Self {
@@ -100,7 +99,6 @@ impl CodeBuffer {
     /// Does nothing if capacity is already sufficient.
     ///
     /// # Panics
-    ///
     /// Panics if the new capacity exceeds `isize::MAX` bytes.
     ///
     /// # Example
@@ -139,7 +137,7 @@ impl CodeBuffer {
     /// Push a single ASCII byte into the buffer.
     ///
     /// # Panics
-    /// If `byte` is not an ASCII byte (`0 - 0x7F`).
+    /// Panics if `byte` is not an ASCII byte (`0 - 0x7F`).
     ///
     /// # Example
     /// ```
