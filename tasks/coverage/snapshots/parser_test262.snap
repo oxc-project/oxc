@@ -19672,7 +19672,8 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
     ·          ▲
     ╰────
 
-  × Invalid Character ``
+  × Invalid Character `
+`
     ╭─[test262/test/language/line-terminators/S7.3_A6_T2.js:18:10]
  17 │ 
  18 │ var\u000Dx;
@@ -19695,7 +19696,8 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/line-terminators/invalid-comment-single-cr.js:18:6]
- 17 │ // this text is not included in the single-line comment that precedes it
+ 17 │ //
+ this text is not included in the single-line comment that precedes it
     ·        ▲
     ╰────
   help: Try insert a semicolon here
@@ -19725,7 +19727,8 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
   × Unterminated regular expression
     ╭─[test262/test/language/line-terminators/invalid-regexp-cr.js:18:1]
  17 │ 
- 18 │ //
+ 18 │ /
+/
     · ─
     ╰────
 
@@ -19754,7 +19757,8 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
   × Unterminated string
     ╭─[test262/test/language/line-terminators/invalid-string-cr.js:17:1]
  16 │ 
- 17 │ ''
+ 17 │ '
+'
     · ─
     ╰────
 
