@@ -1,10 +1,11 @@
+use itertools::Itertools as _;
 use oxc_allocator::Allocator;
 use oxc_ast::{ast::Argument, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_regular_expression::{
-    ast::{Character, Pattern},
-    visit::Visit,
+    ast::{CapturingGroup, Character, Pattern},
+    visit::{walk, Visit},
     Parser, ParserOptions,
 };
 use oxc_span::{GetSpan, Span};
@@ -138,20 +139,45 @@ fn parse_and_check_regex<'a>(
 }
 
 fn check_pattern(context: &LintContext, pattern: &Pattern, span: Span) {
-    let mut finder = ControlCharacterFinder { control_chars: Vec::new() };
+    let mut finder = ControlCharacterFinder::default();
     finder.visit_pattern(pattern);
 
     if !finder.control_chars.is_empty() {
-        let violations = finder.control_chars.join(", ");
+        let violations = finder.control_chars.into_iter().map(|c| c.to_string()).join(", ");
         context.diagnostic(no_control_regex_diagnostic(&violations, span));
     }
 }
 
+#[derive(Default)]
 struct ControlCharacterFinder {
-    control_chars: Vec<String>,
+    control_chars: Vec<Character>,
+    num_capture_groups: u32,
 }
 
 impl<'a> Visit<'a> for ControlCharacterFinder {
+    fn visit_pattern(&mut self, it: &Pattern<'a>) {
+        walk::walk_pattern(self, it);
+        // \1, \2, etc. are sometimes valid "control" characters as they can be
+        // used to reference values from capturing groups. Note in this case
+        // they're not actually control characters. However, if there's no
+        // corresponding capturing group, they _are_ invalid control characters.
+        //
+        // Some important notes:
+        // 1. Capture groups are 1-indexed.
+        // 2. Capture groups can be nested.
+        // 3. Capture groups may be referenced before they are defined. This is
+        //    why we need to do this check here, instead of filtering inside of
+        //    visit_character.
+        if self.num_capture_groups > 0 && !self.control_chars.is_empty() {
+            let control_chars = std::mem::take(&mut self.control_chars);
+            let control_chars = control_chars
+                .into_iter()
+                .filter(|c| !(c.value > 0x01 && c.value <= self.num_capture_groups))
+                .collect::<Vec<_>>();
+            self.control_chars = control_chars;
+        }
+    }
+
     fn visit_character(&mut self, ch: &Character) {
         // Control characters are in the range 0x00 to 0x1F
         if ch.value <= 0x1F &&
@@ -163,8 +189,13 @@ impl<'a> Visit<'a> for ControlCharacterFinder {
             ch.value != 0x0D
         {
             // TODO: check if starts with \x or \u when char spans work correctly
-            self.control_chars.push(ch.to_string());
+            self.control_chars.push(*ch);
         }
+    }
+
+    fn visit_capturing_group(&mut self, group: &CapturingGroup<'a>) {
+        self.num_capture_groups += 1;
+        walk::walk_capturing_group(self, group);
     }
 }
 
@@ -237,6 +268,25 @@ mod tests {
             ],
         )
         .test();
+    }
+
+    #[test]
+    fn test_capture_group_indexing() {
+        // https://github.com/oxc-project/oxc/issues/6525
+        let pass = vec![
+            r#"const filename = /filename[^;=\n]=((['"]).?\2|[^;\n]*)/;"#,
+            r"const r = /([a-z])\1/;",
+            r"const r = /\1([a-z])/;",
+        ];
+        let fail = vec![
+            r"const r = /\0/;",
+            r"const r = /[a-z]\1/;",
+            r"const r = /([a-z])\2/;",
+            r"const r = /([a-z])\0/;",
+        ];
+        Tester::new(NoControlRegex::NAME, pass, fail)
+            .with_snapshot_suffix("capture-group-indexing")
+            .test_and_snapshot();
     }
 
     #[test]
