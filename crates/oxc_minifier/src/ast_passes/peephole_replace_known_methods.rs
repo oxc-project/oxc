@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use cow_utils::CowUtils;
 use oxc_ast::ast::*;
 use oxc_ecmascript::{StringCharAt, StringIndexOf, StringLastIndexOf};
@@ -35,17 +33,6 @@ impl PeepholeReplaceKnownMethods {
         Self { changed: false }
     }
 
-    fn get_string_literal<'a>(
-        expr: &Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Option<Cow<'a, str>> {
-        match expr {
-            Expression::StringLiteral(lit) => Some(lit.value.as_str().into()),
-            Expression::TemplateLiteral(_) => Some(ctx.get_string_value(expr)?),
-            _ => None,
-        }
-    }
-
     fn try_fold_known_string_methods<'a>(
         &mut self,
         node: &mut Expression<'a>,
@@ -54,10 +41,8 @@ impl PeepholeReplaceKnownMethods {
         let Expression::CallExpression(call_expr) = node else { return };
 
         let Some(mem_expr) = call_expr.callee.as_member_expression() else { return };
-        let Some(string_lit) = Self::get_string_literal(mem_expr.object(), ctx) else { return };
+        let Some(string_lit) = ctx.get_string_literal(mem_expr.object()) else { return };
         let Some(method_name) = mem_expr.static_property_name() else { return };
-
-        let arguments = &call_expr.arguments;
 
         #[expect(clippy::match_same_arms)]
         let replacement = match method_name {
@@ -81,13 +66,13 @@ impl PeepholeReplaceKnownMethods {
                 call_expr.span,
                 &string_lit,
                 method_name,
-                arguments,
+                call_expr,
                 ctx,
             ),
             // TODO: Implement the rest of the string methods
             "substr" => None,
             "substring" | "slice" => None,
-            "charAt" => Self::try_fold_string_char_at(call_expr.span, &string_lit, arguments, ctx),
+            "charAt" => Self::try_fold_string_char_at(call_expr.span, &string_lit, call_expr, ctx),
             "charCodeAt" => None,
             "replace" => None,
             "replaceAll" => None,
@@ -104,16 +89,16 @@ impl PeepholeReplaceKnownMethods {
         span: Span,
         string_lit: &str,
         method_name: &str,
-        arguments: &oxc_allocator::Vec<Argument<'a>>,
+        call_expr: &CallExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        let search_value = match arguments.first() {
+        let search_value = match call_expr.arguments.first() {
             Some(Argument::StringLiteral(string_lit)) => Some(string_lit.value.as_str()),
             None => None,
             _ => return None,
         };
 
-        let search_start_index = match arguments.get(1) {
+        let search_start_index = match call_expr.arguments.get(1) {
             Some(Argument::NumericLiteral(numeric_lit)) => Some(numeric_lit.value),
             None => None,
             _ => return None,
@@ -137,10 +122,10 @@ impl PeepholeReplaceKnownMethods {
     fn try_fold_string_char_at<'a>(
         span: Span,
         string_lit: &str,
-        arguments: &oxc_allocator::Vec<Argument<'a>>,
+        call_expr: &CallExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        let char_at_index: Option<f64> = match arguments.first() {
+        let char_at_index: Option<f64> = match call_expr.arguments.first() {
             Some(Argument::NumericLiteral(numeric_lit)) => Some(numeric_lit.value),
             Some(Argument::UnaryExpression(unary_expr))
                 if unary_expr.operator == UnaryOperator::UnaryNegation =>

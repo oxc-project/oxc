@@ -116,6 +116,15 @@ pub trait NodeUtil<'a> {
         expr.to_big_int()
     }
 
+    /// Retrieve the literal value of a string, such as `abc` or "abc".
+    fn get_string_literal<'a>(&self, expr: &'a Expression) -> Option<Cow<'a, str>> {
+        match expr {
+            Expression::StringLiteral(lit) => Some(Cow::Borrowed(lit.value.as_str())),
+            Expression::TemplateLiteral(_) => Some(self.get_string_value(expr)?),
+            _ => None,
+        }
+    }
+
     /// Port from [closure-compiler](https://github.com/google/closure-compiler/blob/e13f5cd0a5d3d35f2db1e6c03fdf67ef02946009/src/com/google/javascript/jscomp/NodeUtil.java#L234)
     /// Gets the value of a node as a String, or `None` if it cannot be converted. When it returns a
     /// String, this method effectively emulates the `String()` JavaScript cast function.
