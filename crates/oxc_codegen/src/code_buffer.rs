@@ -9,7 +9,7 @@ use std::mem;
 /// Use one of the various `print_*` methods to add text into a buffer. When you
 /// are done, call [`take_source_text`] to extract the final [`String`].
 ///
-/// # Examples
+/// # Example
 /// ```
 /// use oxc_codegen::CodeBuffer;
 /// let mut code = CodeBuffer::new();
@@ -37,8 +37,7 @@ pub struct CodeBuffer {
 impl CodeBuffer {
     /// Create a new empty `CodeBuffer`.
     ///
-    /// ## Examples
-    ///
+    /// # Example
     /// ```
     /// use oxc_codegen::CodeBuffer;
     /// let mut code = CodeBuffer::new();
@@ -77,14 +76,13 @@ impl CodeBuffer {
 
     /// Returns `true` if this buffer contains no characters.
     ///
-    /// # Examples
-    ///
+    /// # Example
     /// ```
-    /// # use oxc_codegen::CodeBuffer;
+    /// use oxc_codegen::CodeBuffer;
     /// let mut code = CodeBuffer::new();
     /// assert!(code.is_empty());
     ///
-    /// code.push_char('c');
+    /// code.print_char('c');
     /// assert!(!code.is_empty());
     /// ```
     pub fn is_empty(&self) -> bool {
@@ -101,9 +99,9 @@ impl CodeBuffer {
     ///
     /// Panics if the new capacity exceeds `isize::MAX` _bytes_.
     ///
-    /// # Examples
-    ///
+    /// # Example
     /// ```
+    /// use oxc_codegen::CodeBuffer;
     /// let mut code = CodeBuffer::default();
     /// code.reserve(10);
     /// ```
@@ -116,9 +114,9 @@ impl CodeBuffer {
     /// When `n` is zero, the last character is returned. Returns [`None`] if
     /// `n` exceeds the length of the buffer.
     ///
-    /// ## Examples
+    /// # Example
     /// ```
-    /// # use oxc_codegen::CodeBuffer;
+    /// use oxc_codegen::CodeBuffer;
     /// let mut code = CodeBuffer::new();
     /// code.print_str("foo");
     ///
@@ -138,14 +136,13 @@ impl CodeBuffer {
     /// # Panics
     /// If `ch` is not a valid UTF-8 code point in the ASCII range (`0 - 0x7F`).
     ///
-    /// # Examples
-    ///
+    /// # Example
     /// ```
     /// use oxc_codegen::CodeBuffer;
     /// let mut code = CodeBuffer::new();
-    /// code.print_ascii_byte('f');
-    /// code.print_ascii_byte('o');
-    /// code.print_ascii_byte('o');
+    /// code.print_ascii_byte(b'f');
+    /// code.print_ascii_byte(b'o');
+    /// code.print_ascii_byte(b'o');
     ///
     /// let source = code.take_source_text();
     /// assert_eq!(source, "foo");
@@ -178,8 +175,7 @@ impl CodeBuffer {
     /// If you find yourself in such a scenario, consider using
     /// [`print_unchecked`] instead.
     ///
-    /// # Examples
-    ///
+    /// # Example
     /// ```
     /// use oxc_codegen::CodeBuffer;
     /// let mut code = CodeBuffer::new();
@@ -188,15 +184,14 @@ impl CodeBuffer {
     /// unsafe { code.print_byte_unchecked(b'a') };
     ///
     /// let not_ascii = '⚓';
-    /// let as_bytes = not_ascii.to_string().into_bytes();
+    /// let bytes = not_ascii.to_string().into_bytes();
     /// // Safe: after this loop completes, `code` returns to a valid state.
-    /// for byte in as_bytes {
+    /// for byte in bytes {
     ///     unsafe { code.print_byte_unchecked(byte) };
     /// }
     ///
-    /// // NOT SAFE: `ch` exceeds the ASCII segment range. `code` is no longer
-    /// valid UTF-8
-    /// unsafe { code.print_byte_unchecked(0xFF) };
+    /// // NOT SAFE: `ch` exceeds the ASCII segment range. `code` is no longer valid UTF-8
+    /// // unsafe { code.print_byte_unchecked(0xFF) };
     /// ```
     ///
     /// [`print_ascii_byte`]: CodeBuffer::print_ascii_byte
@@ -215,8 +210,7 @@ impl CodeBuffer {
     /// only a single character and you're certain it's ASCII, consider using
     /// [`print_ascii_byte`].
     ///
-    /// ## Examples
-    ///
+    /// # Example
     /// ```
     /// use oxc_codegen::CodeBuffer;
     /// let mut code = CodeBuffer::new();
@@ -238,8 +232,7 @@ impl CodeBuffer {
 
     /// Push a string into this the buffer.
     ///
-    /// # Examples
-    ///
+    /// # Example
     /// ```
     /// use oxc_codegen::CodeBuffer;
     /// let mut code = CodeBuffer::new();
@@ -255,8 +248,7 @@ impl CodeBuffer {
     /// # Panics
     /// If any byte in the iterator is not valid ASCII.
     ///
-    /// # Examples
-    ///
+    /// # Example
     /// ```
     /// use oxc_codegen::CodeBuffer;
     /// let mut code = CodeBuffer::new();
@@ -289,8 +281,7 @@ impl CodeBuffer {
     ///    completes any incomplete code points, returning the buffer to a valid
     ///    state.
     ///
-    /// # Examples
-    ///
+    /// # Example
     /// ```
     /// use oxc_codegen::CodeBuffer;
     /// let mut code = CodeBuffer::new();
@@ -304,7 +295,7 @@ impl CodeBuffer {
     ///
     /// [`print_byte_unchecked`]: CodeBuffer::print_byte_unchecked
     #[inline]
-    pub(crate) unsafe fn print_unchecked<I>(&mut self, bytes: I)
+    pub unsafe fn print_unchecked<I>(&mut self, bytes: I)
     where
         I: IntoIterator<Item = u8>,
     {
@@ -313,7 +304,7 @@ impl CodeBuffer {
 
     /// Get contents of `CodeBuffer` as a byte slice.
     ///
-    /// # Examples
+    /// # Example
     /// ```
     /// use oxc_codegen::CodeBuffer;
     /// let mut code = CodeBuffer::new();
@@ -334,8 +325,7 @@ impl CodeBuffer {
     /// re-using the buffer. It simply calls this method and drops the
     /// `CodeBuffer` afterwards.
     ///
-    /// # Examples
-    ///
+    /// # Example
     /// ```
     /// use oxc_codegen::CodeBuffer;
     /// let mut code = CodeBuffer::new();
