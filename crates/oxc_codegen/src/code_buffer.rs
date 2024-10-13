@@ -311,6 +311,20 @@ impl CodeBuffer {
         self.buf.extend(bytes);
     }
 
+    /// Get contents of `CodeBuffer` as a byte slice.
+    ///
+    /// # Examples
+    /// ```
+    /// use oxc_codegen::CodeBuffer;
+    /// let mut code = CodeBuffer::new();
+    /// code.print_str("foo");
+    /// assert_eq!(code.as_bytes(), &[b'f', b'o', b'o']);
+    /// ```
+    #[inline]
+    pub fn as_bytes(&self) -> &[u8] {
+        &self.buf
+    }
+
     /// Convert a `CodeBuffer` into a string of source code, leaving its
     /// internal buffer empty and finalizing the codegen process.
     ///
@@ -344,7 +358,7 @@ impl CodeBuffer {
 
 impl AsRef<[u8]> for CodeBuffer {
     fn as_ref(&self) -> &[u8] {
-        &self.buf
+        self.as_bytes()
     }
 }
 
@@ -394,7 +408,7 @@ mod test {
         assert!(code.is_empty());
         assert_eq!(code.len(), 0);
         let empty_slice: &[u8] = &[];
-        assert_eq!(code.as_ref(), empty_slice);
+        assert_eq!(code.as_bytes(), empty_slice);
         assert_eq!(String::from(code), "");
     }
 
@@ -407,7 +421,7 @@ mod test {
         code.print_ascii_byte(b'o');
 
         assert_eq!(code.len(), 3);
-        assert_eq!(code.as_ref(), &[b'f', b'o', b'o']);
+        assert_eq!(code.as_bytes(), &[b'f', b'o', b'o']);
         assert_eq!(String::from(code), "foo");
     }
 
@@ -423,7 +437,7 @@ mod test {
         }
 
         assert_eq!(code.len(), 3);
-        assert_eq!(code.as_ref(), &[b'f', b'o', b'o']);
+        assert_eq!(code.as_bytes(), &[b'f', b'o', b'o']);
         assert_eq!(String::from(code), "foo");
     }
 

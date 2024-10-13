@@ -556,13 +556,13 @@ impl<'a> Codegen<'a> {
 
     fn add_source_mapping(&mut self, position: u32) {
         if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut() {
-            sourcemap_builder.add_source_mapping(self.code.as_ref(), position, None);
+            sourcemap_builder.add_source_mapping(self.code.as_bytes(), position, None);
         }
     }
 
     fn add_source_mapping_for_name(&mut self, span: Span, name: &str) {
         if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut() {
-            sourcemap_builder.add_source_mapping_for_name(self.code.as_ref(), span, name);
+            sourcemap_builder.add_source_mapping_for_name(self.code.as_bytes(), span, name);
         }
     }
 }
