@@ -1,9 +1,11 @@
+use std::borrow::Cow;
+
 use cow_utils::CowUtils;
 use oxc_ast::ast::*;
 use oxc_ecmascript::{StringCharAt, StringIndexOf, StringLastIndexOf};
 use oxc_traverse::{Traverse, TraverseCtx};
 
-use crate::CompressorPass;
+use crate::{node_util::NodeUtil, CompressorPass};
 
 /// Minimize With Known Methods
 /// <https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeReplaceKnownMethods.java>
@@ -33,12 +35,13 @@ impl PeepholeReplaceKnownMethods {
         Self { changed: false }
     }
 
-    fn get_string_literal<'a>(expr: &Expression<'a>) -> Option<&'a str> {
+    fn get_string_literal<'a>(
+        expr: &Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Cow<'a, str>> {
         match expr {
-            Expression::StringLiteral(lit) => Some(lit.value.as_str()),
-            Expression::TemplateLiteral(lit) if lit.is_no_substitution_template() => {
-                lit.quasi().map(|s| s.as_str())
-            }
+            Expression::StringLiteral(lit) => Some(lit.value.as_str().into()),
+            Expression::TemplateLiteral(_) => Some(ctx.get_string_value(expr)?),
             _ => None,
         }
     }
@@ -51,7 +54,7 @@ impl PeepholeReplaceKnownMethods {
         let Expression::CallExpression(call_expr) = node else { return };
 
         let Some(mem_expr) = call_expr.callee.as_member_expression() else { return };
-        let Some(string_lit) = Self::get_string_literal(mem_expr.object()) else { return };
+        let Some(string_lit) = Self::get_string_literal(mem_expr.object(), ctx) else { return };
         let Some(method_name) = mem_expr.static_property_name() else { return };
 
         let arguments = &call_expr.arguments;
@@ -76,7 +79,7 @@ impl PeepholeReplaceKnownMethods {
             }
             "indexOf" | "lastIndexOf" => Self::try_fold_string_index_of(
                 call_expr.span,
-                string_lit,
+                &string_lit,
                 method_name,
                 arguments,
                 ctx,
@@ -84,7 +87,7 @@ impl PeepholeReplaceKnownMethods {
             // TODO: Implement the rest of the string methods
             "substr" => None,
             "substring" | "slice" => None,
-            "charAt" => Self::try_fold_string_char_at(call_expr.span, string_lit, arguments, ctx),
+            "charAt" => Self::try_fold_string_char_at(call_expr.span, &string_lit, arguments, ctx),
             "charCodeAt" => None,
             "replace" => None,
             "replaceAll" => None,
