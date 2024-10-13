@@ -262,11 +262,11 @@ impl CodeBuffer {
     /// code.print_ascii([b'f', b'o', b'o'].into_iter());
     /// assert_eq!(String::from(code), "foo");
     /// ```
-    pub fn print_ascii<I>(&mut self, chars: I)
+    pub fn print_ascii<I>(&mut self, bytes: I)
     where
         I: IntoIterator<Item = u8>,
     {
-        let iter = chars.into_iter();
+        let iter = bytes.into_iter();
         let hint = iter.size_hint();
         self.buf.reserve(hint.1.unwrap_or(hint.0));
         for c in iter {
@@ -355,12 +355,12 @@ impl AsRef<[u8]> for CodeBuffer {
 
 impl From<CodeBuffer> for String {
     #[inline]
-    fn from(printer: CodeBuffer) -> Self {
+    fn from(buffer: CodeBuffer) -> Self {
         if cfg!(debug_assertions) {
-            String::from_utf8(printer.buf).unwrap()
+            String::from_utf8(buffer.buf).unwrap()
         } else {
             // SAFETY: `buf` is valid UTF-8 because of invariants upheld by `CodeBuffer`
-            unsafe { String::from_utf8_unchecked(printer.buf) }
+            unsafe { String::from_utf8_unchecked(buffer.buf) }
         }
     }
 }
