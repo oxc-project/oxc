@@ -139,7 +139,7 @@ impl CodeBuffer {
     /// Push a single ASCII byte into the buffer.
     ///
     /// # Panics
-    /// If `b` is not an ASCII byte (`0 - 0x7F`).
+    /// If `byte` is not an ASCII byte (`0 - 0x7F`).
     ///
     /// # Example
     /// ```
@@ -153,12 +153,12 @@ impl CodeBuffer {
     /// assert_eq!(source, "foo");
     /// ```
     #[inline]
-    pub fn print_ascii_byte(&mut self, b: u8) {
+    pub fn print_ascii_byte(&mut self, byte: u8) {
         // NOTE: since this method is inlined, this assertion should get
-        // optimized away by the compiler when the value of `b` is known,
+        // optimized away by the compiler when the value of `byte` is known,
         // e.g. when printing a constant.
-        assert!(b.is_ascii(), "byte {b} is not ASCII");
-        self.buf.push(b);
+        assert!(byte.is_ascii(), "byte {byte} is not ASCII");
+        self.buf.push(byte);
     }
 
     /// Push a byte to the buffer, without checking that the buffer still represents a valid
@@ -201,8 +201,8 @@ impl CodeBuffer {
     /// [`take_source_text`]: CodeBuffer::take_source_text
     /// [`print_unchecked`]: CodeBuffer::print_unchecked
     #[inline]
-    pub unsafe fn print_byte_unchecked(&mut self, ch: u8) {
-        self.buf.push(ch);
+    pub unsafe fn print_byte_unchecked(&mut self, byte: u8) {
+        self.buf.push(byte);
     }
 
     /// Push a single Unicode character into the buffer.
