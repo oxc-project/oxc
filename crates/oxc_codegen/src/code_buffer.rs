@@ -352,6 +352,7 @@ impl AsRef<[u8]> for CodeBuffer {
         &self.buf
     }
 }
+
 impl From<CodeBuffer> for String {
     #[inline]
     fn from(printer: CodeBuffer) -> Self {
