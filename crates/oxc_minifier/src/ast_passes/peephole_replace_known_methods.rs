@@ -54,6 +54,8 @@ impl PeepholeReplaceKnownMethods {
         let Some(string_lit) = Self::get_string_literal(mem_expr.object()) else { return };
         let Some(method_name) = mem_expr.static_property_name() else { return };
 
+        let arguments = &call_expr.arguments;
+
         #[expect(clippy::match_same_arms)]
         let replacement = match method_name {
             "toLowerCase" | "toUpperCase" | "trim" => {
@@ -76,15 +78,13 @@ impl PeepholeReplaceKnownMethods {
                 call_expr.span,
                 string_lit,
                 method_name,
-                &call_expr.arguments,
+                arguments,
                 ctx,
             ),
             // TODO: Implement the rest of the string methods
             "substr" => None,
             "substring" | "slice" => None,
-            "charAt" => {
-                    Self::try_fold_string_char_at(call_expr.span, call_expr, string_lit, ctx)
-                }
+            "charAt" => Self::try_fold_string_char_at(call_expr.span, string_lit, arguments, ctx),
             "charCodeAt" => None,
             "replace" => None,
             "replaceAll" => None,
@@ -133,11 +133,11 @@ impl PeepholeReplaceKnownMethods {
 
     fn try_fold_string_char_at<'a>(
         span: Span,
-        call_expr: &CallExpression<'a>,
-        string_lit: &StringLiteral<'a>,
+        string_lit: &str,
+        arguments: &oxc_allocator::Vec<Argument<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        let char_at_index: Option<f64> = match call_expr.arguments.first() {
+        let char_at_index: Option<f64> = match arguments.first() {
             Some(Argument::NumericLiteral(numeric_lit)) => Some(numeric_lit.value),
             Some(Argument::UnaryExpression(unary_expr))
                 if unary_expr.operator == UnaryOperator::UnaryNegation =>
@@ -151,11 +151,7 @@ impl PeepholeReplaceKnownMethods {
             _ => return None,
         };
 
-        let result = &string_lit
-            .value
-            .as_str()
-            .char_at(char_at_index)
-            .map_or(String::new(), |v| v.to_string());
+        let result = string_lit.char_at(char_at_index).map_or(String::new(), |v| v.to_string());
 
         return Some(ctx.ast.expression_from_string_literal(ctx.ast.string_literal(span, result)));
     }
@@ -435,7 +431,7 @@ mod test {
                                                // fold("x = '\\ud834\udd1e'.charAt(1)", "x = '\\udd1e'");
 
         // Template strings
-        fold_same("x = `abcdef`.charAt(0)");
+        fold("x = `abcdef`.charAt(0)", "x = 'a'");
         fold_same("x = `abcdef ${abc}`.charAt(0)");
     }
 
