@@ -1,7 +1,6 @@
 use cow_utils::CowUtils;
-
 use oxc_ast::ast::*;
-use oxc_ecmascript::{StringIndexOf, StringLastIndexOf};
+use oxc_ecmascript::{StringCharAt, StringIndexOf, StringLastIndexOf};
 use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::CompressorPass;
@@ -76,7 +75,9 @@ impl PeepholeReplaceKnownMethods {
                 // TODO: Implement the rest of the string methods
                 "substr" => None,
                 "substring" | "slice" => None,
-                "charAt" => None,
+                "charAt" => {
+                    Self::try_fold_string_char_at(call_expr.span, call_expr, string_lit, ctx)
+                }
                 "charCodeAt" => None,
                 "replace" => None,
                 "replaceAll" => None,
@@ -124,6 +125,35 @@ impl PeepholeReplaceKnownMethods {
             result.to_string(),
             NumberBase::Decimal,
         )));
+    }
+
+    fn try_fold_string_char_at<'a>(
+        span: Span,
+        call_expr: &CallExpression<'a>,
+        string_lit: &StringLiteral<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        let char_at_index: Option<f64> = match call_expr.arguments.first() {
+            Some(Argument::NumericLiteral(numeric_lit)) => Some(numeric_lit.value),
+            Some(Argument::UnaryExpression(unary_expr))
+                if unary_expr.operator == UnaryOperator::UnaryNegation =>
+            {
+                let Expression::NumericLiteral(numeric_lit) = &unary_expr.argument else {
+                    return None;
+                };
+                Some(-(numeric_lit.value))
+            }
+            None => None,
+            _ => return None,
+        };
+
+        let result = &string_lit
+            .value
+            .as_str()
+            .char_at(char_at_index)
+            .map_or(String::new(), |v| v.to_string());
+
+        return Some(ctx.ast.expression_from_string_literal(ctx.ast.string_literal(span, result)));
     }
 }
 
@@ -382,18 +412,19 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_fold_string_char_at() {
         fold("x = 'abcde'.charAt(0)", "x = 'a'");
         fold("x = 'abcde'.charAt(1)", "x = 'b'");
         fold("x = 'abcde'.charAt(2)", "x = 'c'");
         fold("x = 'abcde'.charAt(3)", "x = 'd'");
         fold("x = 'abcde'.charAt(4)", "x = 'e'");
-        fold_same("x = 'abcde'.charAt(5)"); // or x = ''
-        fold_same("x = 'abcde'.charAt(-1)"); // or x = ''
+        // START: note, the following test cases outputs differ from Google's
+        fold("x = 'abcde'.charAt(5)", "x = ''");
+        fold("x = 'abcde'.charAt(-1)", "x = ''");
+        fold("x = 'abcde'.charAt()", "x = 'a'");
+        fold("x = 'abcde'.charAt(0, ++z)", "x = 'a'");
+        // END
         fold_same("x = 'abcde'.charAt(y)");
-        fold_same("x = 'abcde'.charAt()"); // or x = 'a'
-        fold_same("x = 'abcde'.charAt(0, ++z)"); // or (++z, 'a')
         fold_same("x = 'abcde'.charAt(null)"); // or x = 'a'
         fold_same("x = 'abcde'.charAt(true)"); // or x = 'b'
                                                // fold("x = '\\ud834\udd1e'.charAt(0)", "x = '\\ud834'");
