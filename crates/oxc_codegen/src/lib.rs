@@ -4,6 +4,7 @@
 //! * [esbuild](https://github.com/evanw/esbuild/blob/main/internal/js_printer/js_printer.go)
 
 mod binary_expr_visitor;
+mod code_buffer;
 mod comment;
 mod context;
 mod gen;
@@ -24,8 +25,8 @@ use oxc_syntax::{
 };
 
 use crate::{
-    binary_expr_visitor::BinaryExpressionVisitor, comment::CommentsMap, operator::Operator,
-    sourcemap_builder::SourcemapBuilder,
+    binary_expr_visitor::BinaryExpressionVisitor, code_buffer::CodeBuffer, comment::CommentsMap,
+    operator::Operator, sourcemap_builder::SourcemapBuilder,
 };
 pub use crate::{
     context::Context,
@@ -102,7 +103,7 @@ pub struct Codegen<'a> {
     mangler: Option<Mangler>,
 
     /// Output Code
-    code: Vec<u8>,
+    code: CodeBuffer,
 
     // states
     prev_op_end: usize,
@@ -171,7 +172,7 @@ impl<'a> Codegen<'a> {
             comments: CommentsMap::default(),
             start_of_annotation_comment: None,
             mangler: None,
-            code: vec![],
+            code: CodeBuffer::default(),
             needs_semicolon: false,
             need_space_before_dot: 0,
             print_next_indent_as_space: false,
@@ -221,20 +222,19 @@ impl<'a> Codegen<'a> {
 
     #[must_use]
     pub fn into_source_text(&mut self) -> String {
-        // SAFETY: criteria of `from_utf8_unchecked` are met.
-        unsafe { String::from_utf8_unchecked(std::mem::take(&mut self.code)) }
+        self.code.take_source_text()
     }
 
     /// Push a single character into the buffer
     #[inline]
     pub fn print_char(&mut self, ch: u8) {
-        self.code.push(ch);
+        self.code.print_ascii_byte(ch);
     }
 
     /// Push str into the buffer
     #[inline]
     pub fn print_str(&mut self, s: &str) {
-        self.code.extend(s.as_bytes());
+        self.code.print_str(s);
     }
 
     #[inline]
@@ -245,7 +245,7 @@ impl<'a> Codegen<'a> {
 
 // Private APIs
 impl<'a> Codegen<'a> {
-    fn code(&self) -> &Vec<u8> {
+    fn code(&self) -> &CodeBuffer {
         &self.code
     }
 
@@ -256,7 +256,7 @@ impl<'a> Codegen<'a> {
     #[inline]
     fn print_soft_space(&mut self) {
         if !self.options.minify {
-            self.print_char(b' ');
+            self.code.print_ascii_byte(b' ');
         }
     }
 
@@ -290,7 +290,7 @@ impl<'a> Codegen<'a> {
     #[inline]
     fn print_space_before_identifier(&mut self) {
         if self
-            .peek_nth(0)
+            .peek_nth_back(0)
             .is_some_and(|ch| is_identifier_part(ch) || self.prev_reg_exp_end == self.code.len())
         {
             self.print_hard_space();
@@ -298,9 +298,8 @@ impl<'a> Codegen<'a> {
     }
 
     #[inline]
-    fn peek_nth(&self, n: usize) -> Option<char> {
-        // SAFETY: criteria of `from_utf8_unchecked` are met.
-        unsafe { std::str::from_utf8_unchecked(self.code()) }.chars().nth_back(n)
+    fn peek_nth_back(&self, n: usize) -> Option<char> {
+        self.code.peek_nth_back(n)
     }
 
     #[inline]
@@ -327,7 +326,10 @@ impl<'a> Codegen<'a> {
             self.print_next_indent_as_space = false;
             return;
         }
-        self.code.extend(std::iter::repeat(b'\t').take(self.indent as usize));
+        // SAFETY: this iterator only yields tabs, which are always valid ASCII characters.
+        unsafe {
+            self.code.print_unchecked(std::iter::repeat(b'\t').take(self.indent as usize));
+        }
     }
 
     #[inline]
@@ -528,7 +530,7 @@ impl<'a> Codegen<'a> {
             || ((prev == bin_op_sub || prev == un_op_neg)
                 && (next == bin_op_sub || next == un_op_neg || next == un_op_pre_dec))
             || (prev == un_op_post_dec && next == bin_op_gt)
-            || (prev == un_op_not && next == un_op_pre_dec && self.peek_nth(1) == Some('<'))
+            || (prev == un_op_not && next == un_op_pre_dec && self.peek_nth_back(1) == Some('<'))
         {
             self.print_hard_space();
         }
@@ -554,13 +556,13 @@ impl<'a> Codegen<'a> {
 
     fn add_source_mapping(&mut self, position: u32) {
         if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut() {
-            sourcemap_builder.add_source_mapping(&self.code, position, None);
+            sourcemap_builder.add_source_mapping(self.code.as_ref(), position, None);
         }
     }
 
     fn add_source_mapping_for_name(&mut self, span: Span, name: &str) {
         if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut() {
-            sourcemap_builder.add_source_mapping_for_name(&self.code, span, name);
+            sourcemap_builder.add_source_mapping_for_name(self.code.as_ref(), span, name);
         }
     }
 }
