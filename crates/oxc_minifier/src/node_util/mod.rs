@@ -5,11 +5,9 @@ mod may_have_side_effects;
 use std::borrow::Cow;
 
 use num_bigint::BigInt;
-use num_traits::{One, Zero};
 use oxc_ast::ast::*;
-use oxc_ecmascript::{NumberValue, ToBoolean, ToJsString, ToNumber};
+use oxc_ecmascript::{NumberValue, StringToBigInt, ToBigInt, ToBoolean, ToJsString, ToNumber};
 use oxc_semantic::{IsGlobalReference, ScopeTree, SymbolTable};
-use oxc_syntax::operator::UnaryOperator;
 
 pub use self::{is_literal_value::IsLiteralValue, may_have_side_effects::MayHaveSideEffects};
 
@@ -114,55 +112,8 @@ pub trait NodeUtil<'a> {
         expr.to_number()
     }
 
-    #[allow(clippy::cast_possible_truncation)]
     fn get_bigint_value(&self, expr: &Expression<'a>) -> Option<BigInt> {
-        match expr {
-            Expression::NumericLiteral(number_literal) => {
-                let value = number_literal.value;
-                if value.abs() < 2_f64.powi(53) && is_exact_int64(value) {
-                    Some(BigInt::from(value as i64))
-                } else {
-                    None
-                }
-            }
-            Expression::BigIntLiteral(bigint_literal) => {
-                let value =
-                    self.get_string_bigint_value(bigint_literal.raw.as_str().trim_end_matches('n'));
-                debug_assert!(value.is_some(), "Failed to parse {}", bigint_literal.raw);
-                value
-            }
-            Expression::BooleanLiteral(bool_literal) => {
-                if bool_literal.value {
-                    Some(BigInt::one())
-                } else {
-                    Some(BigInt::zero())
-                }
-            }
-            Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
-                UnaryOperator::LogicalNot => self.get_boolean_value(expr).map(|boolean| {
-                    if boolean.is_true() {
-                        BigInt::one()
-                    } else {
-                        BigInt::zero()
-                    }
-                }),
-                UnaryOperator::UnaryNegation => {
-                    self.get_bigint_value(&unary_expr.argument).map(std::ops::Neg::neg)
-                }
-                UnaryOperator::BitwiseNot => {
-                    self.get_bigint_value(&unary_expr.argument).map(std::ops::Not::not)
-                }
-                UnaryOperator::UnaryPlus => self.get_bigint_value(&unary_expr.argument),
-                _ => None,
-            },
-            Expression::StringLiteral(string_literal) => {
-                self.get_string_bigint_value(&string_literal.value)
-            }
-            Expression::TemplateLiteral(_) => {
-                self.get_string_value(expr).and_then(|value| self.get_string_bigint_value(&value))
-            }
-            _ => None,
-        }
+        expr.to_big_int()
     }
 
     /// Port from [closure-compiler](https://github.com/google/closure-compiler/blob/e13f5cd0a5d3d35f2db1e6c03fdf67ef02946009/src/com/google/javascript/jscomp/NodeUtil.java#L234)
@@ -175,33 +126,7 @@ pub trait NodeUtil<'a> {
 
     /// port from [closure compiler](https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/NodeUtil.java#L540)
     fn get_string_bigint_value(&self, raw_string: &str) -> Option<BigInt> {
-        if raw_string.contains('\u{000b}') {
-            // vertical tab is not always whitespace
-            return None;
-        }
-
-        let s = raw_string.trim();
-
-        if s.is_empty() {
-            return Some(BigInt::zero());
-        }
-
-        if s.len() > 2 && s.starts_with('0') {
-            let radix: u32 = match s.chars().nth(1) {
-                Some('x' | 'X') => 16,
-                Some('o' | 'O') => 8,
-                Some('b' | 'B') => 2,
-                _ => 0,
-            };
-
-            if radix == 0 {
-                return None;
-            }
-
-            return BigInt::parse_bytes(s[2..].as_bytes(), radix);
-        }
-
-        return BigInt::parse_bytes(s.as_bytes(), 10);
+        raw_string.string_to_big_int()
     }
 
     /// Evaluate  and attempt to determine which primitive value type it could resolve to.

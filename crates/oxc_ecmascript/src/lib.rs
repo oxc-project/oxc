@@ -10,6 +10,8 @@ mod prop_name;
 mod string_char_at;
 mod string_index_of;
 mod string_last_index_of;
+mod string_to_big_int;
+mod to_big_int;
 mod to_boolean;
 mod to_int_32;
 mod to_number;
@@ -23,6 +25,8 @@ pub use self::{
     string_char_at::StringCharAt,
     string_index_of::StringIndexOf,
     string_last_index_of::StringLastIndexOf,
+    string_to_big_int::StringToBigInt,
+    to_big_int::ToBigInt,
     to_boolean::ToBoolean,
     to_int_32::ToInt32,
     to_number::{NumberValue, ToNumber},

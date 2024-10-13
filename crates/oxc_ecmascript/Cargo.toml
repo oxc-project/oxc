@@ -21,7 +21,9 @@ test = true
 doctest = false
 
 [dependencies]
-num-traits = { workspace = true }
 oxc_ast = { workspace = true }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
+
+num-bigint = { workspace = true }
+num-traits = { workspace = true }

@@ -1603,6 +1603,7 @@ dependencies = [
 name = "oxc_ecmascript"
 version = "0.31.0"
 dependencies = [
+ "num-bigint",
  "num-traits",
  "oxc_ast",
  "oxc_span",
