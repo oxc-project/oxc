@@ -46,6 +46,7 @@ impl CodeBuffer {
     /// code.print_str("fn main() { println!(\"Hello, world!\"); }");
     /// let source_text = code.take_source_text();
     /// ```
+    #[inline]
     pub fn new() -> Self {
         Self::default()
     }
@@ -62,6 +63,7 @@ impl CodeBuffer {
     /// # Panics
     ///
     /// Panics if the new capacity exceeds `isize::MAX` _bytes_.
+    #[inline]
     pub fn with_capacity(capacity: usize) -> Self {
         Self { buf: Vec::with_capacity(capacity) }
     }
@@ -70,6 +72,7 @@ impl CodeBuffer {
     ///
     /// This is _not_ the same as the number of characters in the buffer, since
     /// non-ASCII characters require multiple bytes.
+    #[inline]
     pub fn len(&self) -> usize {
         self.buf.len()
     }
@@ -85,6 +88,7 @@ impl CodeBuffer {
     /// code.print_char('c');
     /// assert!(!code.is_empty());
     /// ```
+    #[inline]
     pub fn is_empty(&self) -> bool {
         self.buf.is_empty()
     }
@@ -336,6 +340,7 @@ impl CodeBuffer {
     /// assert!(code.is_empty());
     /// ```
     #[must_use]
+    #[inline]
     pub fn take_source_text(&mut self) -> String {
         if cfg!(debug_assertions) {
             String::from_utf8(mem::take(&mut self.buf)).unwrap()
@@ -347,6 +352,7 @@ impl CodeBuffer {
 }
 
 impl AsRef<[u8]> for CodeBuffer {
+    #[inline]
     fn as_ref(&self) -> &[u8] {
         self.as_bytes()
     }
