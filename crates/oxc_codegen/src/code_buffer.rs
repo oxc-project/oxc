@@ -172,7 +172,7 @@ impl CodeBuffer {
     /// It is safe for a single call to temporarily result in invalid UTF-8, as long as
     /// UTF-8 integrity is restored before calls to any other `print_*` method or
     /// [`take_source_text`]. This lets you, for example, print an 4-byte Unicode character
-    /// using 4 separate calls to this method. However, consider using [`print_unchecked`]
+    /// using 4 separate calls to this method. However, consider using [`print_bytes_unchecked`]
     /// instead for that use case.
     ///
     /// # Example
@@ -197,7 +197,7 @@ impl CodeBuffer {
     /// [`print_ascii_byte`]: CodeBuffer::print_ascii_byte
     /// [`print_char`]: CodeBuffer::print_char
     /// [`take_source_text`]: CodeBuffer::take_source_text
-    /// [`print_unchecked`]: CodeBuffer::print_unchecked
+    /// [`print_bytes_unchecked`]: CodeBuffer::print_bytes_unchecked
     #[inline]
     pub unsafe fn print_byte_unchecked(&mut self, byte: u8) {
         self.buf.push(byte);
@@ -287,13 +287,13 @@ impl CodeBuffer {
     /// // Indent to a dynamic level.
     /// // Sound because all elements in this iterator are ASCII characters.
     /// unsafe {
-    ///     code.print_unchecked(std::iter::repeat(b' ').take(4));
+    ///     code.print_bytes_unchecked(std::iter::repeat(b' ').take(4));
     /// }
     /// ```
     ///
     /// [`print_byte_unchecked`]: CodeBuffer::print_byte_unchecked
     #[inline]
-    pub unsafe fn print_unchecked<I>(&mut self, bytes: I)
+    pub unsafe fn print_bytes_unchecked<I>(&mut self, bytes: I)
     where
         I: IntoIterator<Item = u8>,
     {
