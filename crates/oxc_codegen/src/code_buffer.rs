@@ -185,18 +185,18 @@ impl CodeBuffer {
     /// let mut code = CodeBuffer::new();
     /// // Safe: 'a' is a valid ASCII character. Its UTF-8 representation only
     /// // requires a single byte.
-    /// unsafe { code.print_byte_unsafe(b'a') };
+    /// unsafe { code.print_byte_unchecked(b'a') };
     ///
     /// let not_ascii = '⚓';
     /// let as_bytes = not_ascii.to_string().into_bytes();
     /// // Safe: after this loop completes, `code` returns to a valid state.
     /// for byte in as_bytes {
-    ///     unsafe { code.print_byte_unsafe(byte) };
+    ///     unsafe { code.print_byte_unchecked(byte) };
     /// }
     ///
     /// // NOT SAFE: `ch` exceeds the ASCII segment range. `code` is no longer
     /// valid UTF-8
-    /// unsafe { code.print_byte_unsafe(0xFF) };
+    /// unsafe { code.print_byte_unchecked(0xFF) };
     /// ```
     ///
     /// [`print_ascii_byte`]: CodeBuffer::print_ascii_byte
@@ -204,7 +204,7 @@ impl CodeBuffer {
     /// [`take_source_text`]: CodeBuffer::take_source_text
     /// [`print_unchecked`]: CodeBuffer::print_unchecked
     #[inline]
-    pub unsafe fn print_byte_unsafe(&mut self, ch: u8) {
+    pub unsafe fn print_byte_unchecked(&mut self, ch: u8) {
         self.buf.push(ch);
     }
 
@@ -285,7 +285,7 @@ impl CodeBuffer {
     /// a valid UTF-8 string. In practice, this means only two cases are valid:
     ///
     /// 1. Both the buffer and the byte sequence are valid UTF-8,
-    /// 2. The buffer became invalid after a call to [`print_byte_unsafe`] and `bytes`
+    /// 2. The buffer became invalid after a call to [`print_byte_unchecked`] and `bytes`
     ///    completes any incomplete code points, returning the buffer to a valid
     ///    state.
     ///
@@ -302,7 +302,7 @@ impl CodeBuffer {
     /// }
     /// ```
     ///
-    /// [`print_byte_unsafe`]: CodeBuffer::print_byte_unsafe
+    /// [`print_byte_unchecked`]: CodeBuffer::print_byte_unchecked
     #[inline]
     pub(crate) unsafe fn print_unchecked<I>(&mut self, bytes: I)
     where
@@ -400,7 +400,7 @@ mod test {
 
     #[test]
     #[allow(clippy::byte_char_slices)]
-    fn test_print_byte_unsafe() {
+    fn test_print_byte_unchecked() {
         let mut code = CodeBuffer::new();
         code.print_ascii_byte(b'f');
         code.print_ascii_byte(b'o');
