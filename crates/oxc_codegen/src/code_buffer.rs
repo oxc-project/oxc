@@ -365,7 +365,7 @@ mod test {
     use super::CodeBuffer;
 
     #[test]
-    fn test_empty() {
+    fn empty() {
         let code = CodeBuffer::default();
         assert!(code.is_empty());
         assert_eq!(code.len(), 0);
@@ -373,7 +373,7 @@ mod test {
     }
 
     #[test]
-    fn test_string_isomorphism() {
+    fn string_isomorphism() {
         let s = "Hello, world!";
         let mut code = CodeBuffer::with_capacity(s.len());
         code.print_str(s);
@@ -382,7 +382,7 @@ mod test {
     }
 
     #[test]
-    fn test_into_source_string() {
+    fn into_source_string() {
         let s = "Hello, world!";
         let mut code = CodeBuffer::with_capacity(s.len());
         code.print_str(s);
@@ -400,7 +400,7 @@ mod test {
 
     #[test]
     #[allow(clippy::byte_char_slices)]
-    fn test_print_byte_unchecked() {
+    fn print_ascii_byte() {
         let mut code = CodeBuffer::new();
         code.print_ascii_byte(b'f');
         code.print_ascii_byte(b'o');
@@ -412,7 +412,23 @@ mod test {
     }
 
     #[test]
-    fn test_peek() {
+    #[allow(clippy::byte_char_slices)]
+    fn print_byte_unchecked() {
+        let mut code = CodeBuffer::new();
+        // SAFETY: These bytes are all ASCII
+        unsafe {
+            code.print_byte_unchecked(b'f');
+            code.print_byte_unchecked(b'o');
+            code.print_byte_unchecked(b'o');
+        }
+
+        assert_eq!(code.len(), 3);
+        assert_eq!(code.as_ref(), &[b'f', b'o', b'o']);
+        assert_eq!(String::from(code), "foo");
+    }
+
+    #[test]
+    fn peek_nth_back() {
         let mut code = CodeBuffer::new();
         code.print_str("foo");
 
