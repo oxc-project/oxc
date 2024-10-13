@@ -48,9 +48,6 @@ importers:
       ovsx:
         specifier: ^0.9.1
         version: 0.9.5
-      prettier:
-        specifier: ^3.3.1
-        version: 3.3.3
       typescript:
         specifier: ^5.4.5
         version: 5.6.2
@@ -1788,11 +1785,6 @@ packages:
   prebuild-install@7.1.2:
     resolution: {integrity: sha512-UnNke3IQb6sgarcZIDU3gbMeTp/9SSU1DAIkil7PrqG1vZlBtY5msYccSKSHDqa3hNg436IXK+SNImReuA1wEQ==}
     engines: {node: '>=10'}
-    hasBin: true
-
-  prettier@3.3.3:
-    resolution: {integrity: sha512-i2tDNA0O5IrMO757lfrdQZCc2jPNDVntV0m/+4whiDfWaTKfMNgR7Qz0NAeGz/nRqF4m5/6CLzbP4/liHt12Ew==}
-    engines: {node: '>=14'}
     hasBin: true
 
   proxy-addr@2.0.7:
@@ -3885,8 +3877,6 @@ snapshots:
       tar-fs: 2.1.1
       tunnel-agent: 0.6.0
     optional: true
-
-  prettier@3.3.3: {}
 
   proxy-addr@2.0.7:
     dependencies:
