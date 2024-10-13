@@ -257,7 +257,7 @@ impl CodeBuffer {
     /// code.print_ascii([b'f', b'o', b'o'].into_iter());
     /// assert_eq!(String::from(code), "foo");
     /// ```
-    pub fn print_ascii<I>(&mut self, bytes: I)
+    pub fn print_ascii_bytes<I>(&mut self, bytes: I)
     where
         I: IntoIterator<Item = u8>,
     {
