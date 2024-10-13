@@ -12,10 +12,15 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{ast_util::extract_regex_flags, context::LintContext, rule::Rule, AstNode};
 
-fn no_control_regex_diagnostic(regex: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected control character(s)")
-        .with_help(format!("Unexpected control character(s) in regular expression: \"{regex}\""))
-        .with_label(span)
+fn no_control_regex_diagnostic(count: usize, regex: &str, span: Span) -> OxcDiagnostic {
+    debug_assert!(count > 0);
+    let (message, help) = if count == 1 {
+        ("Unexpected control character", format!("'{regex}' is not a valid control character."))
+    } else {
+        ("Unexpected control characters", format!("'{regex}' are not valid control characters."))
+    };
+
+    OxcDiagnostic::warn(message).with_help(help).with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -89,7 +94,12 @@ impl Rule for NoControlRegex {
                     if let Argument::StringLiteral(pattern) = &expr.arguments[0] {
                         // get pattern from arguments. Missing or non-string arguments
                         // will be runtime errors, but are not covered by this rule.
-                        parse_and_check_regex(context, &pattern.value, &expr.arguments, expr.span);
+                        parse_and_check_regex(
+                            context,
+                            &pattern.value,
+                            &expr.arguments,
+                            pattern.span,
+                        );
                     }
                 }
             }
@@ -107,7 +117,12 @@ impl Rule for NoControlRegex {
                     if let Argument::StringLiteral(pattern) = &expr.arguments[0] {
                         // get pattern from arguments. Missing or non-string arguments
                         // will be runtime errors, but are not covered by this rule.
-                        parse_and_check_regex(context, &pattern.value, &expr.arguments, expr.span);
+                        parse_and_check_regex(
+                            context,
+                            &pattern.value,
+                            &expr.arguments,
+                            pattern.span,
+                        );
                     }
                 }
             }
@@ -143,8 +158,9 @@ fn check_pattern(context: &LintContext, pattern: &Pattern, span: Span) {
     finder.visit_pattern(pattern);
 
     if !finder.control_chars.is_empty() {
+        let num_control_chars = finder.control_chars.len();
         let violations = finder.control_chars.into_iter().map(|c| c.to_string()).join(", ");
-        context.diagnostic(no_control_regex_diagnostic(&violations, span));
+        context.diagnostic(no_control_regex_diagnostic(num_control_chars, &violations, span));
     }
 }
 
