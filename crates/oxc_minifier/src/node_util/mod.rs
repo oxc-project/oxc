@@ -17,18 +17,6 @@ pub fn is_exact_int64(num: f64) -> bool {
     num.fract() == 0.0
 }
 
-#[derive(Debug, Eq, PartialEq)]
-pub enum ValueType {
-    Undetermined,
-    Null,
-    Void,
-    Number,
-    Bigint,
-    String,
-    Boolean,
-    Object,
-}
-
 pub trait NodeUtil<'a> {
     fn symbols(&self) -> &SymbolTable;
 
@@ -127,28 +115,5 @@ pub trait NodeUtil<'a> {
     /// port from [closure compiler](https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/NodeUtil.java#L540)
     fn get_string_bigint_value(&self, raw_string: &str) -> Option<BigInt> {
         raw_string.string_to_big_int()
-    }
-
-    /// Evaluate  and attempt to determine which primitive value type it could resolve to.
-    /// Without proper type information some assumptions had to be made for operations that could
-    /// result in a BigInt or a Number. If there is not enough information available to determine one
-    /// or the other then we assume Number in order to maintain historical behavior of the compiler and
-    /// avoid breaking projects that relied on this behavior.
-    fn get_known_value_type(&self, e: &Expression<'_>) -> ValueType {
-        match e {
-            Expression::NumericLiteral(_) => ValueType::Number,
-            Expression::NullLiteral(_) => ValueType::Null,
-            Expression::ArrayExpression(_) | Expression::ObjectExpression(_) => ValueType::Object,
-            Expression::BooleanLiteral(_) => ValueType::Boolean,
-            Expression::Identifier(ident) if self.is_identifier_undefined(ident) => ValueType::Void,
-            Expression::SequenceExpression(e) => e
-                .expressions
-                .last()
-                .map_or(ValueType::Undetermined, |e| self.get_known_value_type(e)),
-            Expression::BigIntLiteral(_) => ValueType::Bigint,
-            Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => ValueType::String,
-            // TODO: complete this
-            _ => ValueType::Undetermined,
-        }
     }
 }

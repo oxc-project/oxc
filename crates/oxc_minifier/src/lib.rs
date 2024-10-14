@@ -8,7 +8,7 @@ mod keep_var;
 mod node_util;
 mod options;
 mod tri;
-mod ty;
+mod value_type;
 
 #[cfg(test)]
 mod tester;

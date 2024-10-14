@@ -14,9 +14,9 @@ use oxc_syntax::{
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
 use crate::{
-    node_util::{is_exact_int64, IsLiteralValue, MayHaveSideEffects, NodeUtil, ValueType},
+    node_util::{is_exact_int64, IsLiteralValue, MayHaveSideEffects, NodeUtil},
     tri::Tri,
-    ty::Ty,
+    value_type::ValueType,
     CompressorPass,
 };
 
@@ -365,9 +365,9 @@ impl<'a> PeepholeFoldConstants {
     ) -> Option<Expression<'a>> {
         debug_assert_eq!(logical_expr.operator, LogicalOperator::Coalesce);
         let left = &logical_expr.left;
-        let left_val = ctx.get_known_value_type(left);
+        let left_val = ValueType::from(left);
         match left_val {
-            ValueType::Null | ValueType::Void => {
+            ValueType::Null | ValueType::Undefined => {
                 Some(if left.may_have_side_effects() {
                     // e.g. `(a(), null) ?? 1` => `(a(), null, 1)`
                     let expressions = ctx.ast.vec_from_iter([
@@ -381,7 +381,7 @@ impl<'a> PeepholeFoldConstants {
                 })
             }
             ValueType::Number
-            | ValueType::Bigint
+            | ValueType::BigInt
             | ValueType::String
             | ValueType::Boolean
             | ValueType::Object => {
@@ -435,13 +435,13 @@ impl<'a> PeepholeFoldConstants {
             return None;
         }
 
-        let left_type = Ty::from(left);
-        let right_type = Ty::from(right);
+        let left_type = ValueType::from(left);
+        let right_type = ValueType::from(right);
         match (left_type, right_type) {
-            (Ty::Undetermined, _) | (_, Ty::Undetermined) => None,
+            (ValueType::Undetermined, _) | (_, ValueType::Undetermined) => None,
 
             // string concatenation
-            (Ty::Str, _) | (_, Ty::Str) => {
+            (ValueType::String, _) | (_, ValueType::String) => {
                 // no need to use get_side_effect_free_string_value b/c we checked for side effects
                 // at the beginning
                 let left_string = ctx.get_string_value(left)?;
@@ -452,9 +452,9 @@ impl<'a> PeepholeFoldConstants {
             },
 
             // number addition
-            (Ty::Number, _) | (_, Ty::Number)
+            (ValueType::Number, _) | (_, ValueType::Number)
                 // when added, booleans get treated as numbers where `true` is 1 and `false` is 0
-                | (Ty::Boolean, Ty::Boolean) => {
+                | (ValueType::Boolean, ValueType::Boolean) => {
                 let left_number = ctx.get_number_value(left)?;
                 let right_number = ctx.get_number_value(right)?;
                 let Ok(value) = TryInto::<f64>::try_into(left_number + right_number) else { return None };
@@ -651,17 +651,22 @@ impl<'a> PeepholeFoldConstants {
         right_expr: &'b Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Tri {
-        let left = Ty::from(left_expr);
-        let right = Ty::from(right_expr);
-        if left != Ty::Undetermined && right != Ty::Undetermined {
+        let left = ValueType::from(left_expr);
+        let right = ValueType::from(right_expr);
+        if left != ValueType::Undetermined && right != ValueType::Undetermined {
             if left == right {
                 return Self::try_strict_equality_comparison(left_expr, right_expr, ctx);
             }
-            if matches!((left, right), (Ty::Null, Ty::Void) | (Ty::Void, Ty::Null)) {
+            if matches!(
+                (left, right),
+                (ValueType::Null, ValueType::Undefined) | (ValueType::Undefined, ValueType::Null)
+            ) {
                 return Tri::True;
             }
 
-            if matches!((left, right), (Ty::Number, Ty::Str)) || matches!(right, Ty::Boolean) {
+            if matches!((left, right), (ValueType::Number, ValueType::String))
+                || matches!(right, ValueType::Boolean)
+            {
                 let right_number = ctx.get_side_free_number_value(right_expr);
 
                 if let Some(num) = right_number {
@@ -682,7 +687,9 @@ impl<'a> PeepholeFoldConstants {
                 return Tri::Unknown;
             }
 
-            if matches!((left, right), (Ty::Str, Ty::Number)) || matches!(left, Ty::Boolean) {
+            if matches!((left, right), (ValueType::String, ValueType::Number))
+                || matches!(left, ValueType::Boolean)
+            {
                 let left_number = ctx.get_side_free_number_value(left_expr);
 
                 if let Some(num) = left_number {
@@ -703,7 +710,7 @@ impl<'a> PeepholeFoldConstants {
                 return Tri::Unknown;
             }
 
-            if matches!(left, Ty::BigInt) || matches!(right, Ty::BigInt) {
+            if matches!(left, ValueType::BigInt) || matches!(right, ValueType::BigInt) {
                 let left_bigint = ctx.get_side_free_bigint_value(left_expr);
                 let right_bigint = ctx.get_side_free_bigint_value(right_expr);
 
@@ -712,11 +719,15 @@ impl<'a> PeepholeFoldConstants {
                 }
             }
 
-            if matches!(left, Ty::Str | Ty::Number) && matches!(right, Ty::Object) {
+            if matches!(left, ValueType::String | ValueType::Number)
+                && matches!(right, ValueType::Object)
+            {
                 return Tri::Unknown;
             }
 
-            if matches!(left, Ty::Object) && matches!(right, Ty::Str | Ty::Number) {
+            if matches!(left, ValueType::Object)
+                && matches!(right, ValueType::String | ValueType::Number)
+            {
                 return Tri::Unknown;
             }
 
@@ -732,11 +743,11 @@ impl<'a> PeepholeFoldConstants {
         will_negative: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> Tri {
-        let left = Ty::from(left_expr);
-        let right = Ty::from(right_expr);
+        let left = ValueType::from(left_expr);
+        let right = ValueType::from(right_expr);
 
         // First, check for a string comparison.
-        if left == Ty::Str && right == Ty::Str {
+        if left == ValueType::String && right == ValueType::String {
             let left_string = ctx.get_side_free_string_value(left_expr);
             let right_string = ctx.get_side_free_string_value(right_expr);
             if let (Some(left_string), Some(right_string)) = (left_string, right_string) {
@@ -842,15 +853,15 @@ impl<'a> PeepholeFoldConstants {
         right_expr: &'b Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Tri {
-        let left = Ty::from(left_expr);
-        let right = Ty::from(right_expr);
-        if left != Ty::Undetermined && right != Ty::Undetermined {
+        let left = ValueType::from(left_expr);
+        let right = ValueType::from(right_expr);
+        if left != ValueType::Undetermined && right != ValueType::Undetermined {
             // Strict equality can only be true for values of the same type.
             if left != right {
                 return Tri::False;
             }
             return match left {
-                Ty::Number => {
+                ValueType::Number => {
                     let left_number = ctx.get_side_free_number_value(left_expr);
                     let right_number = ctx.get_side_free_number_value(right_expr);
 
@@ -864,7 +875,7 @@ impl<'a> PeepholeFoldConstants {
 
                     Tri::Unknown
                 }
-                Ty::Str => {
+                ValueType::String => {
                     let left_string = ctx.get_side_free_string_value(left_expr);
                     let right_string = ctx.get_side_free_string_value(right_expr);
                     if let (Some(left_string), Some(right_string)) = (left_string, right_string) {
@@ -895,7 +906,7 @@ impl<'a> PeepholeFoldConstants {
 
                     Tri::Unknown
                 }
-                Ty::Void | Ty::Null => Tri::True,
+                ValueType::Undefined | ValueType::Null => Tri::True,
                 _ => Tri::Unknown,
             };
         }
