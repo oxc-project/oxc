@@ -270,19 +270,17 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-unused-vars): Parameter 'y' is declared but never used.
    ╭─[no_unused_vars.tsx:1:26]
- 1 │ export function fn2({ x, y }) {
+ 1 │ export function fn2({ x, y }) { console.log(x); };
    ·                          ┬
    ·                          ╰── 'y' is declared here
- 2 │              console.log(x); 
    ╰────
   help: Consider removing this parameter.
 
   ⚠ eslint(no-unused-vars): Parameter 'y' is declared but never used.
    ╭─[no_unused_vars.tsx:1:25]
- 1 │ export function fn2( x, y ) {
+ 1 │ export function fn2( x, y ) { console.log(x); };
    ·                         ┬
    ·                         ╰── 'y' is declared here
- 2 │              console.log(x); 
    ╰────
   help: Consider removing this parameter.
 
@@ -367,117 +365,117 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing this declaration.
 
   ⚠ eslint(no-unused-vars): Variable 'newArray' is declared but never used.
-   ╭─[no_unused_vars.tsx:4:22]
- 3 │                         const [a, _b, c] = array;
- 4 │                         const newArray = [a, c];
-   ·                               ────┬───
-   ·                                   ╰── 'newArray' is declared here
- 5 │                         
+   ╭─[no_unused_vars.tsx:4:19]
+ 3 │             const [a, _b, c] = array;
+ 4 │             const newArray = [a, c];
+   ·                   ────┬───
+   ·                       ╰── 'newArray' is declared here
+ 5 │             
    ╰────
   help: Consider removing this declaration.
 
   ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used.
-   ╭─[no_unused_vars.tsx:3:23]
- 2 │                         const array = ['a', 'b', 'c', 'd', 'e'];
- 3 │                         const [a, _b, c] = array;
-   ·                                ┬
-   ·                                ╰── 'a' is declared here
- 4 │                         
+   ╭─[no_unused_vars.tsx:3:20]
+ 2 │             const array = ['a', 'b', 'c', 'd', 'e'];
+ 3 │             const [a, _b, c] = array;
+   ·                    ┬
+   ·                    ╰── 'a' is declared here
+ 4 │             
    ╰────
   help: Consider removing this declaration.
 
   ⚠ eslint(no-unused-vars): Variable 'c' is declared but never used.
-   ╭─[no_unused_vars.tsx:3:30]
- 2 │                         const array = ['a', 'b', 'c', 'd', 'e'];
- 3 │                         const [a, _b, c] = array;
-   ·                                       ┬
-   ·                                       ╰── 'c' is declared here
- 4 │                         
+   ╭─[no_unused_vars.tsx:3:27]
+ 2 │             const array = ['a', 'b', 'c', 'd', 'e'];
+ 3 │             const [a, _b, c] = array;
+   ·                           ┬
+   ·                           ╰── 'c' is declared here
+ 4 │             
    ╰────
   help: Consider removing this declaration.
 
   ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used.
-   ╭─[no_unused_vars.tsx:3:23]
- 2 │                         const array = ['a', 'b', 'c'];
- 3 │                         const [a, _b, c] = array;
-   ·                                ┬
-   ·                                ╰── 'a' is declared here
- 4 │                         const fooArray = ['foo'];
+   ╭─[no_unused_vars.tsx:3:20]
+ 2 │             const array = ['a', 'b', 'c'];
+ 3 │             const [a, _b, c] = array;
+   ·                    ┬
+   ·                    ╰── 'a' is declared here
+ 4 │             const fooArray = ['foo'];
    ╰────
   help: Consider removing this declaration.
 
   ⚠ eslint(no-unused-vars): Variable 'c' is declared but never used.
-   ╭─[no_unused_vars.tsx:3:30]
- 2 │                         const array = ['a', 'b', 'c'];
- 3 │                         const [a, _b, c] = array;
-   ·                                       ┬
-   ·                                       ╰── 'c' is declared here
- 4 │                         const fooArray = ['foo'];
+   ╭─[no_unused_vars.tsx:3:27]
+ 2 │             const array = ['a', 'b', 'c'];
+ 3 │             const [a, _b, c] = array;
+   ·                           ┬
+   ·                           ╰── 'c' is declared here
+ 4 │             const fooArray = ['foo'];
    ╰────
   help: Consider removing this declaration.
 
   ⚠ eslint(no-unused-vars): Variable 'fooArray' is declared but never used.
-   ╭─[no_unused_vars.tsx:4:22]
- 3 │                         const [a, _b, c] = array;
- 4 │                         const fooArray = ['foo'];
-   ·                               ────┬───
-   ·                                   ╰── 'fooArray' is declared here
- 5 │                         const barArray = ['bar'];
+   ╭─[no_unused_vars.tsx:4:19]
+ 3 │             const [a, _b, c] = array;
+ 4 │             const fooArray = ['foo'];
+   ·                   ────┬───
+   ·                       ╰── 'fooArray' is declared here
+ 5 │             const barArray = ['bar'];
    ╰────
   help: Consider removing this declaration.
 
   ⚠ eslint(no-unused-vars): Variable 'barArray' is declared but never used.
-   ╭─[no_unused_vars.tsx:5:22]
- 4 │                         const fooArray = ['foo'];
- 5 │                         const barArray = ['bar'];
-   ·                               ────┬───
-   ·                                   ╰── 'barArray' is declared here
- 6 │                         const ignoreArray = ['ignore'];
+   ╭─[no_unused_vars.tsx:5:19]
+ 4 │             const fooArray = ['foo'];
+ 5 │             const barArray = ['bar'];
+   ·                   ────┬───
+   ·                       ╰── 'barArray' is declared here
+ 6 │             const ignoreArray = ['ignore'];
    ╰────
   help: Consider removing this declaration.
 
   ⚠ eslint(no-unused-vars): Variable '_a' is declared but never used.
-   ╭─[no_unused_vars.tsx:3:24]
- 2 │                         const array = [obj];
- 3 │                         const [{_a, foo}] = array;
-   ·                                 ─┬
-   ·                                  ╰── '_a' is declared here
- 4 │                         console.log(foo);
+   ╭─[no_unused_vars.tsx:3:21]
+ 2 │             const array = [obj];
+ 3 │             const [{_a, foo}] = array;
+   ·                     ─┬
+   ·                      ╰── '_a' is declared here
+ 4 │             console.log(foo);
    ╰────
   help: Consider removing this declaration.
 
   ⚠ eslint(no-unused-vars): Parameter '_a' is declared but never used.
-   ╭─[no_unused_vars.tsx:2:31]
+   ╭─[no_unused_vars.tsx:2:28]
  1 │ 
- 2 │                         function foo([{_a, bar}]) {
-   ·                                        ─┬
-   ·                                         ╰── '_a' is declared here
- 3 │                             bar;
+ 2 │             function foo([{_a, bar}]) {
+   ·                            ─┬
+   ·                             ╰── '_a' is declared here
+ 3 │                 bar;
    ╰────
   help: Consider removing this parameter.
 
   ⚠ eslint(no-unused-vars): Variable '_a' is declared but never used.
-   ╭─[no_unused_vars.tsx:2:20]
+   ╭─[no_unused_vars.tsx:2:17]
  1 │ 
- 2 │                         let _a, b;
-   ·                             ─┬
-   ·                              ╰── '_a' is declared here
- 3 │             
+ 2 │             let _a, b;
+   ·                 ─┬
+   ·                  ╰── '_a' is declared here
+ 3 │ 
    ╰────
   help: Consider removing this declaration.
 
   ⚠ eslint(no-unused-vars): Variable 'b' is assigned a value but never used.
-   ╭─[no_unused_vars.tsx:2:24]
+   ╭─[no_unused_vars.tsx:2:21]
  1 │ 
- 2 │                         let _a, b;
-   ·                                 ┬
-   ·                                 ╰── 'b' is declared here
- 3 │             
- 4 │                         foo.forEach(item => {
- 5 │                             [a, b] = item;
-   ·                                 ┬
-   ·                                 ╰── it was last assigned here
- 6 │                         });
+ 2 │             let _a, b;
+   ·                     ┬
+   ·                     ╰── 'b' is declared here
+ 3 │ 
+ 4 │             foo.forEach(item => {
+ 5 │                 [a, b] = item;
+   ·                     ┬
+   ·                     ╰── it was last assigned here
+ 6 │             });
    ╰────
   help: Did you mean to use this variable?
 
@@ -1109,6 +1107,24 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-unused-vars): Variable 'x' is assigned a value but never used.
    ╭─[no_unused_vars.tsx:1:5]
+ 1 │ let x = 0; foo = ((0, x = x + 1), 0);
+   ·     ┬                 ┬
+   ·     │                 ╰── it was last assigned here
+   ·     ╰── 'x' is declared here
+   ╰────
+  help: Did you mean to use this variable?
+
+  ⚠ eslint(no-unused-vars): Variable 'x' is assigned a value but never used.
+   ╭─[no_unused_vars.tsx:1:5]
+ 1 │ let x = 0; foo = (x = x+1, 0);
+   ·     ┬             ┬
+   ·     │             ╰── it was last assigned here
+   ·     ╰── 'x' is declared here
+   ╰────
+  help: Did you mean to use this variable?
+
+  ⚠ eslint(no-unused-vars): Variable 'x' is assigned a value but never used.
+   ╭─[no_unused_vars.tsx:1:5]
  1 │ let x = 0; 0, (1, x=x+1);
    ·     ┬             ┬
    ·     │             ╰── it was last assigned here
@@ -1245,24 +1261,24 @@ source: crates/oxc_linter/src/tester.rs
  1 │ let a = 'a';
    ·     ┬
    ·     ╰── 'a' is declared here
- 2 │                         a = 10;
+ 2 │             a = 10;
    ╰────
-   ╭─[no_unused_vars.tsx:6:24]
- 5 │                             a = () => {
- 6 │                                 a = 13
-   ·                                 ┬
-   ·                                 ╰── it was last assigned here
- 7 │                             }
+   ╭─[no_unused_vars.tsx:6:21]
+ 5 │                 a = () => {
+ 6 │                     a = 13
+   ·                     ┬
+   ·                     ╰── it was last assigned here
+ 7 │                 }
    ╰────
   help: Did you mean to use this variable?
 
   ⚠ eslint(no-unused-vars): Function 'foo' is declared but never used.
-   ╭─[no_unused_vars.tsx:3:25]
- 2 │                         a = 10;
- 3 │                         function foo(){
-   ·                                  ─┬─
-   ·                                   ╰── 'foo' is declared here
- 4 │                             a = 11;
+   ╭─[no_unused_vars.tsx:3:22]
+ 2 │             a = 10;
+ 3 │             function foo(){
+   ·                      ─┬─
+   ·                       ╰── 'foo' is declared here
+ 4 │                 a = 11;
    ╰────
   help: Consider removing this declaration.
 
@@ -1271,14 +1287,14 @@ source: crates/oxc_linter/src/tester.rs
  1 │ let foo;
    ·     ─┬─
    ·      ╰── 'foo' is declared here
- 2 │                         init();
+ 2 │             init();
    ╰────
-   ╭─[no_unused_vars.tsx:5:20]
- 4 │                         function init() {
- 5 │                             foo = 1;
-   ·                             ─┬─
-   ·                              ╰── it was last assigned here
- 6 │                         }
+   ╭─[no_unused_vars.tsx:5:17]
+ 4 │             function init() {
+ 5 │                 foo = 1;
+   ·                 ─┬─
+   ·                  ╰── it was last assigned here
+ 6 │             }
    ╰────
   help: Did you mean to use this variable?
 
@@ -1287,7 +1303,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function foo(n) {
    ·          ─┬─
    ·           ╰── 'foo' is declared here
- 2 │                             if (n < 2) return 1;
+ 2 │                 if (n < 2) return 1;
    ╰────
   help: Consider removing this declaration.
 
@@ -1298,12 +1314,12 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'c' is declared here
  2 │             c = 10
    ╰────
-    ╭─[no_unused_vars.tsx:10:4]
-  9 │             
- 10 │             c = foo1
-    ·             ┬
-    ·             ╰── it was last assigned here
-    ╰────
+   ╭─[no_unused_vars.tsx:7:4]
+ 6 │             }
+ 7 │             c = foo1
+   ·             ┬
+   ·             ╰── it was last assigned here
+   ╰────
   help: Did you mean to use this variable?
 
   ⚠ eslint(no-unused-vars): Class 'Foo' is declared but never used.
