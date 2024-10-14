@@ -46,11 +46,11 @@ importers:
         specifier: ^0.24.0
         version: 0.24.0
       ovsx:
-        specifier: ^0.9.1
-        version: 0.9.5
+        specifier: ^0.10.0
+        version: 0.10.0
       typescript:
         specifier: ^5.4.5
-        version: 5.6.2
+        version: 5.6.3
 
   napi/minify: {}
 
@@ -1726,8 +1726,8 @@ packages:
     resolution: {integrity: sha512-D2FR03Vir7FIu45XBY20mTb+/ZSWB00sjU9jdQXt83gDrI4Ztz5Fs7/yy74g2N5SVQY4xY1qDr4rNddwYRVX0g==}
     engines: {node: '>=0.10.0'}
 
-  ovsx@0.9.5:
-    resolution: {integrity: sha512-x8jaFQAA+KLxZ9HAQ8ZBbBxNsrrjjpEnVihfOhb/iuXWCso1n2oKaDJuLbA9O5FtBgtGCy0n23PKf728kOmX8g==}
+  ovsx@0.10.0:
+    resolution: {integrity: sha512-DSgNXGQ444nGKag+LZh92R/hM2PfRSu+6VKfVawoZ+JzFDiGX8yhMkAuyVlHrlxLCpfQOsqs80GcHje/h2SpmA==}
     engines: {node: '>= 20'}
     hasBin: true
 
@@ -2012,8 +2012,8 @@ packages:
   typed-rest-client@1.8.11:
     resolution: {integrity: sha512-5UvfMpd1oelmUPRbbaVnq+rHP7ng2cE4qoQkQeAqxRL6PklkxsM0g32/HL0yfvruK6ojQ5x8EE+HF4YV6DtuCA==}
 
-  typescript@5.6.2:
-    resolution: {integrity: sha512-NW8ByodCSNCwZeghjN3o+JX5OFH0Ojg6sadjEKY4huZ52TqbJTJnDo5+Tw98lSy63NZvi4n+ez5m2u5d4PkZyw==}
+  typescript@5.6.3:
+    resolution: {integrity: sha512-hjcS1mhfuyi4WW8IWtjP7brDrG2cuDZukyrYrSauoXGNgx0S7zceP07adYkJycEr56BOUTNPzbInooiN3fn1qw==}
     engines: {node: '>=14.17'}
     hasBin: true
 
@@ -2183,6 +2183,10 @@ packages:
 
   yauzl@2.10.0:
     resolution: {integrity: sha512-p4a9I6X6nu6IhoGmBqAcbJy1mlC4j27vEPZX9F4L4/vZT3Lyq1VkFHw/V/PUcB9Buo+DG3iHkT0x3Qya58zc3g==}
+
+  yauzl@3.1.3:
+    resolution: {integrity: sha512-JCCdmlJJWv7L0q/KylOekyRaUrdEoUxWkWVcgorosTROCFWiS9p2NNPE9Yb91ak7b1N5SxAZEliWpspbZccivw==}
+    engines: {node: '>=12'}
 
   yazl@2.5.1:
     resolution: {integrity: sha512-phENi2PLiHnHb6QBVot+dJnaAZ0xosj7p3fWl+znIjBDlnMI2PsZCJZ306BPTFOaHf5qdDEI8x5qFrSOBN5vrw==}
@@ -3800,7 +3804,7 @@ snapshots:
 
   os-tmpdir@1.0.2: {}
 
-  ovsx@0.9.5:
+  ovsx@0.10.0:
     dependencies:
       '@vscode/vsce': 3.1.1
       commander: 6.2.1
@@ -3809,6 +3813,7 @@ snapshots:
       leven: 3.1.0
       semver: 7.6.3
       tmp: 0.2.3
+      yauzl: 3.1.3
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -4144,7 +4149,7 @@ snapshots:
       tunnel: 0.0.6
       underscore: 1.13.7
 
-  typescript@5.6.2: {}
+  typescript@5.6.3: {}
 
   uc.micro@2.1.0: {}
 
@@ -4297,6 +4302,11 @@ snapshots:
     dependencies:
       buffer-crc32: 0.2.13
       fd-slicer: 1.1.0
+
+  yauzl@3.1.3:
+    dependencies:
+      buffer-crc32: 0.2.13
+      pend: 1.2.0
 
   yazl@2.5.1:
     dependencies:
