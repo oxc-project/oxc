@@ -262,7 +262,6 @@ impl<'a> HelperLoaderStore<'a> {
     }
 
     /// Load a helper function and return the callee expression.
-    #[allow(dead_code)]
     pub fn load(&self, helper_name: Atom<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         match self.mode {
             HelperLoaderMode::Runtime => self.transform_for_runtime_helper(&helper_name, ctx),
