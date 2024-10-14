@@ -367,6 +367,7 @@ mod test {
 
         fold("for (var { c, x: [d] } = {}; 0;);", "var { c, x: [d] } = {};");
         fold("for (var se = [1, 2]; false;);", "var se = [1, 2];");
+        fold("for (var se = [1, 2]; false;) { var a = 0; }", "var se = [1, 2], a;");
 
         // fold("l1:for(;false;) {  }", "");
     }
