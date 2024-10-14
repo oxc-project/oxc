@@ -566,7 +566,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
                 NonNull::<T>::dangling()
             } else {
                 let align = mem::align_of::<T>();
-                let layout = Layout::from_size_align(alloc_size as usize, align).unwrap();
+                let layout = Layout::from_size_align(alloc_size, align).unwrap();
                 let result = if zeroed {
                     bump.alloc_zeroed(layout)
                 } else {
@@ -910,7 +910,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
         let len = self.len();
         mem::forget(self);
 
-        unsafe { slice::from_raw_parts_mut(ptr, len as usize) }
+        unsafe { slice::from_raw_parts_mut(ptr, len) }
     }
 
     /// Shortens the vector, keeping the first `len` elements and dropping
@@ -970,7 +970,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     pub fn truncate(&mut self, len: usize) {
         let current_len = self.len();
         unsafe {
-            let mut ptr = self.as_mut_ptr().add(self.len as usize);
+            let mut ptr = self.as_mut_ptr().add(self.len());
             // Set the final length at the end, keeping in mind that
             // dropping an element might panic. Works around a missed
             // optimization, as seen in the following issue:
@@ -1257,10 +1257,10 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
             // infallible
             // The spot to put the new value
             {
-                let p = self.as_mut_ptr().add(index as usize);
+                let p = self.as_mut_ptr().add(index);
                 // Shift everything over to make space. (Duplicating the
                 // `index`th element into two consecutive places.)
-                ptr::copy(p, p.offset(1), (len - index) as usize);
+                ptr::copy(p, p.offset(1), (len - index));
                 // Write it in, overwriting the first copy of the `index`th
                 // element.
                 ptr::write(p, element);
@@ -1295,13 +1295,13 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
             let ret;
             {
                 // the place we are taking from.
-                let ptr = self.as_mut_ptr().add(index as usize);
+                let ptr = self.as_mut_ptr().add(index);
                 // copy it out, unsafely having a copy of the value on
                 // the stack and in the vector at the same time.
                 ret = ptr::read(ptr);
 
                 // Shift everything down to fill in that spot.
-                ptr::copy(ptr.offset(1), ptr, (len - index - 1) as usize);
+                ptr::copy(ptr.offset(1), ptr, (len - index - 1));
             }
             self.set_len(len - 1);
             ret
@@ -1456,7 +1456,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
             self.reserve(1);
         }
         unsafe {
-            let end = self.ptr().add(self.len as usize);
+            let end = self.ptr().add(self.len());
             ptr::write(end, value);
             self.len += 1;
         }
@@ -1485,7 +1485,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
         } else {
             unsafe {
                 self.len -= 1;
-                Some(ptr::read(self.as_ptr().add(self.len() as usize)))
+                Some(ptr::read(self.as_ptr().add(self.len())))
             }
         }
     }
@@ -1593,10 +1593,8 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
             self.set_len(start);
             // Use the borrow in the IterMut to indicate borrowing behavior of the
             // whole Drain iterator (like &mut T).
-            let range_slice = slice::from_raw_parts_mut(
-                self.as_mut_ptr().add(start as usize),
-                (end - start) as usize,
-            );
+            let range_slice =
+                slice::from_raw_parts_mut(self.as_mut_ptr().add(start), (end - start));
             Drain {
                 tail_start: end,
                 tail_len: len - end,
@@ -1644,7 +1642,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// ```
     #[inline]
     pub fn len(&self) -> usize {
-        self.len as usize
+        self.len()
     }
 
     /// Returns `true` if the vector contains no elements.
@@ -1701,11 +1699,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
             self.set_len(at);
             other.set_len(other_len);
 
-            ptr::copy_nonoverlapping(
-                self.as_ptr().add(at as usize),
-                other.as_mut_ptr(),
-                other.len() as usize,
-            );
+            ptr::copy_nonoverlapping(self.as_ptr().add(at), other.as_mut_ptr(), other.len());
         }
         other
     }
@@ -1833,7 +1827,7 @@ impl<'bump, T: 'bump + Copy> Vec<'bump, T> {
         // * Caller is required to guarantee that the source and destination ranges cannot overlap
         unsafe {
             let src = other.as_ptr();
-            let dst = self.as_mut_ptr().add(old_len as usize);
+            let dst = self.as_mut_ptr().add(old_len);
             ptr::copy_nonoverlapping(src, dst, other.len());
             self.set_len(old_len + other.len());
         }
@@ -2102,7 +2096,7 @@ impl<'bump, T: 'bump> ops::Deref for Vec<'bump, T> {
         unsafe {
             let p = self.ptr();
             // assume(!p.is_null());
-            slice::from_raw_parts(p, self.len as usize)
+            slice::from_raw_parts(p, self.len())
         }
     }
 }
@@ -2112,7 +2106,7 @@ impl<'bump, T: 'bump> ops::DerefMut for Vec<'bump, T> {
         unsafe {
             let ptr = self.ptr();
             // assume(!ptr.is_null());
-            slice::from_raw_parts_mut(ptr, self.len as usize)
+            slice::from_raw_parts_mut(ptr, self.len())
         }
     }
 }
@@ -2146,7 +2140,7 @@ impl<'bump, T: 'bump> IntoIterator for Vec<'bump, T> {
             let end = if mem::size_of::<T>() == 0 {
                 arith_offset(begin as *const i8, self.len() as isize) as *const T
             } else {
-                begin.add(self.len() as usize) as *const T
+                begin.add(self.len()) as *const T
             };
             mem::forget(self);
             IntoIter { phantom: PhantomData, ptr: begin, end }
@@ -2361,7 +2355,7 @@ impl<'bump, T> Drop for Vec<'bump, T> {
             // use drop for [T]
             // use a raw slice to refer to the elements of the vector as weakest necessary type;
             // could avoid questions of validity in certain cases
-            ptr::drop_in_place(ptr::slice_from_raw_parts_mut(self.as_mut_ptr(), self.len as usize));
+            ptr::drop_in_place(ptr::slice_from_raw_parts_mut(self.as_mut_ptr(), self.len()));
             // RawVec handles deallocation
             self.dealloc_buffer();
         }
@@ -2578,9 +2572,9 @@ impl<'a, 'bump, T> Drop for Drain<'a, 'bump, T> {
                 let start = source_vec.len();
                 let tail = self.tail_start;
                 if tail != start {
-                    let src = source_vec.as_ptr().add(tail as usize);
-                    let dst = source_vec.as_mut_ptr().add(start as usize);
-                    ptr::copy(src, dst, self.tail_len as usize);
+                    let src = source_vec.as_ptr().add(tail);
+                    let dst = source_vec.as_mut_ptr().add(start);
+                    ptr::copy(src, dst, self.tail_len);
                 }
                 source_vec.set_len(start + self.tail_len);
             }
@@ -2672,8 +2666,8 @@ impl<'a, 'bump, T> Drain<'a, 'bump, T> {
     /// Return whether we filled the entire range. (`replace_with.next()` didn’t return `None`.)
     unsafe fn fill<I: Iterator<Item = T>>(&mut self, replace_with: &mut I) -> bool {
         let vec = self.vec.as_mut();
-        let range_start = vec.len as usize;
-        let range_end = self.tail_start as usize;
+        let range_start = vec.len();
+        let range_end = self.tail_start;
         let range_slice =
             slice::from_raw_parts_mut(vec.as_mut_ptr().add(range_start), range_end - range_start);
 
@@ -2695,9 +2689,9 @@ impl<'a, 'bump, T> Drain<'a, 'bump, T> {
         vec.reserve_buf(used_capacity, extra_capacity);
 
         let new_tail_start = self.tail_start + extra_capacity;
-        let src = vec.as_ptr().add(self.tail_start as usize);
-        let dst = vec.as_mut_ptr().add(new_tail_start as usize);
-        ptr::copy(src, dst, self.tail_len as usize);
+        let src = vec.as_ptr().add(self.tail_start);
+        let dst = vec.as_mut_ptr().add(new_tail_start);
+        ptr::copy(src, dst, self.tail_len);
         self.tail_start = new_tail_start;
     }
 }
@@ -2724,16 +2718,16 @@ where
     fn next(&mut self) -> Option<T> {
         unsafe {
             while self.idx != self.old_len {
-                let i = self.idx as usize;
+                let i = self.idx;
                 self.idx += 1;
-                let v = slice::from_raw_parts_mut(self.vec.as_mut_ptr(), self.old_len as usize);
+                let v = slice::from_raw_parts_mut(self.vec.as_mut_ptr(), self.old_len);
                 if (self.pred)(&mut v[i]) {
                     self.del += 1;
                     return Some(ptr::read(&v[i]));
                 } else if self.del > 0 {
                     let del = self.del;
                     let src: *const T = &v[i];
-                    let dst: *mut T = &mut v[i - del as usize];
+                    let dst: *mut T = &mut v[i - del];
                     // This is safe because self.vec has length 0
                     // thus its elements will not have Drop::drop
                     // called on them in the event of a panic.
@@ -2745,7 +2739,7 @@ where
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        (0, Some(self.old_len as usize - self.idx as usize))
+        (0, Some(self.old_len - self.idx))
     }
 }
 
@@ -2836,7 +2830,7 @@ impl<'bump, T> Vec<'bump, T> {
         if mem::size_of::<T>() == 0 {
             !0
         } else {
-            self.cap as usize
+            self.cap()
         }
     }
 
@@ -2848,7 +2842,7 @@ impl<'bump, T> Vec<'bump, T> {
             // checks to get our current layout.
             unsafe {
                 let align = mem::align_of::<T>();
-                let size = mem::size_of::<T>() * self.cap as usize;
+                let size = mem::size_of::<T>() * self.cap();
                 Some(Layout::from_size_align_unchecked(size, align))
             }
         }
@@ -2927,11 +2921,11 @@ impl<'bump, T> Vec<'bump, T> {
                     let new_cap = 2 * self.cap();
                     let new_size = new_cap * elem_size;
                     alloc_guard(new_size).unwrap_or_else(|_| capacity_overflow());
-                    let ptr_res = self.bump.realloc(self.ptr.cast(), cur, new_size as usize);
+                    let ptr_res = self.bump.realloc(self.ptr.cast(), cur, new_size);
                     match ptr_res {
                         Ok(ptr) => (new_cap, ptr.cast()),
                         Err(_) => handle_alloc_error(Layout::from_size_align_unchecked(
-                            new_size as usize,
+                            new_size,
                             cur.align(),
                         )),
                     }
@@ -2987,7 +2981,7 @@ impl<'bump, T> Vec<'bump, T> {
             let new_cap = 2 * self.cap();
             let new_size = new_cap * elem_size;
             alloc_guard(new_size).unwrap_or_else(|_| capacity_overflow());
-            match self.bump.grow_in_place(self.ptr.cast(), old_layout, new_size as usize) {
+            match self.bump.grow_in_place(self.ptr.cast(), old_layout, new_size) {
                 Ok(_) => {
                     // We can't directly divide `size`.
                     self.cap = new_cap as u32;
@@ -3327,7 +3321,7 @@ impl<'a, T> Vec<'a, T> {
                 Exact => used_cap.checked_add(needed_extra_cap).ok_or(CapacityOverflow)?,
                 Amortized => self.amortized_new_size(used_cap, needed_extra_cap)?,
             };
-            let new_layout = Layout::array::<T>(new_cap as usize).map_err(|_| CapacityOverflow)?;
+            let new_layout = Layout::array::<T>(new_cap).map_err(|_| CapacityOverflow)?;
 
             alloc_guard(new_layout.size())?;
 

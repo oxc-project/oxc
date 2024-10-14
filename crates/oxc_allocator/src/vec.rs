@@ -49,7 +49,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// minimum *capacity* specified, the vector will have a zero *length*.
     ///
     /// For `Vec<T>` where `T` is a zero-sized type, there will be no allocation
-    /// and the capacity will always be `u32::MAX`.
+    /// and the capacity will always be `usize::MAX`.
     ///
     /// # Panics
     ///
@@ -83,7 +83,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// // A vector of a zero-sized type will always over-allocate, since no
     /// // allocation is necessary
     /// let vec_units = Vec::<()>::with_capacity_in(10, &arena);
-    /// assert_eq!(vec_units.capacity(), u32::MAX);
+    /// assert_eq!(vec_units.capacity(), usize::MAX);
     /// ```
     #[inline]
     pub fn with_capacity_in(capacity: usize, allocator: &'alloc Allocator) -> Self {
@@ -166,17 +166,17 @@ impl<'alloc, T> IntoIterator for &'alloc Vec<'alloc, T> {
     }
 }
 
-impl<'alloc, T> ops::Index<u32> for Vec<'alloc, T> {
+impl<'alloc, T> ops::Index<usize> for Vec<'alloc, T> {
     type Output = T;
 
-    fn index(&self, index: u32) -> &Self::Output {
-        self.0.index(index as usize)
+    fn index(&self, index: usize) -> &Self::Output {
+        self.0.index(index)
     }
 }
 
 // Unused right now.
-// impl<'alloc, T> ops::IndexMut<u32> for Vec<'alloc, T> {
-// fn index_mut(&mut self, index: u32) -> &mut Self::Output {
+// impl<'alloc, T> ops::IndexMut<usize> for Vec<'alloc, T> {
+// fn index_mut(&mut self, index: usize) -> &mut Self::Output {
 // self.0.index_mut(index)
 // }
 // }
