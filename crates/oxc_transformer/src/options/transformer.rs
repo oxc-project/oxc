@@ -9,6 +9,7 @@ use crate::{
     env::{can_enable_plugin, EnvOptions, Versions},
     es2015::{ArrowFunctionsOptions, ES2015Options},
     es2016::ES2016Options,
+    es2017::options::ES2017Options,
     es2018::{ES2018Options, ObjectRestSpreadOptions},
     es2019::ES2019Options,
     es2020::ES2020Options,
@@ -46,6 +47,8 @@ pub struct TransformOptions {
     pub es2015: ES2015Options,
 
     pub es2016: ES2016Options,
+
+    pub es2017: ES2017Options,
 
     pub es2018: ES2018Options,
 
@@ -86,6 +89,7 @@ impl TransformOptions {
             },
             es2016: ES2016Options { exponentiation_operator: true },
             es2018: ES2018Options { object_rest_spread: Some(ObjectRestSpreadOptions::default()) },
+            es2017: ES2017Options { async_to_generator: true },
             es2019: ES2019Options { optional_catch_binding: true },
             es2020: ES2020Options { nullish_coalescing_operator: true },
             es2021: ES2021Options { logical_assignment_operators: true },
@@ -100,6 +104,7 @@ impl TransformOptions {
         Self {
             es2015: ES2015Options::from_targets_and_bugfixes(targets, bugfixes),
             es2016: ES2016Options::from_targets_and_bugfixes(targets, bugfixes),
+            es2017: ES2017Options::from_targets_and_bugfixes(targets, bugfixes),
             es2018: ES2018Options::from_targets_and_bugfixes(targets, bugfixes),
             es2019: ES2019Options::from_targets_and_bugfixes(targets, bugfixes),
             es2020: ES2020Options::from_targets_and_bugfixes(targets, bugfixes),
@@ -210,6 +215,11 @@ impl TransformOptions {
 
         transformer_options.es2016.with_exponentiation_operator({
             let plugin_name = "transform-exponentiation-operator";
+            get_enabled_plugin_options(plugin_name, options, targets.as_ref(), bugfixes).is_some()
+        });
+
+        transformer_options.es2017.with_async_to_generator({
+            let plugin_name = "transform-async-to-generator";
             get_enabled_plugin_options(plugin_name, options, targets.as_ref(), bugfixes).is_some()
         });
 
