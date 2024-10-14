@@ -400,14 +400,31 @@ fn test_vars_destructure() {
 #[test]
 fn test_vars_catch() {
     let pass = vec![
-        // lb
         ("try {} catch (e) { throw e }", None),
         ("try {} catch (e) { }", Some(json!([{ "caughtErrors": "none" }]))),
         ("try {} catch { }", None),
+        ("try {} catch(_) { }", Some(json!([{ "caughtErrorsIgnorePattern": "^_" }]))),
+        (
+            "try {} catch(_) { }",
+            Some(json!([{ "caughtErrors": "all", "caughtErrorsIgnorePattern": "^_" }])),
+        ),
+        (
+            "try {} catch(_e) { }",
+            Some(json!([{ "caughtErrors": "all", "caughtErrorsIgnorePattern": "^_" }])),
+        ),
     ];
+
     let fail = vec![
-        // lb
         ("try {} catch (e) { }", Some(json!([{ "caughtErrors": "all" }]))),
+        ("try {} catch(_) { }", None),
+        (
+            "try {} catch(_) { }",
+            Some(json!([{ "caughtErrors": "all", "varsIgnorePattern": "^_" }])),
+        ),
+        (
+            "try {} catch(foo) { }",
+            Some(json!([{ "caughtErrors": "all", "caughtErrorsIgnorePattern": "^ignored" }])),
+        ),
     ];
 
     Tester::new(NoUnusedVars::NAME, pass, fail)
