@@ -151,13 +151,13 @@ impl<'a> Default for Codegen<'a> {
 }
 
 impl<'a> From<Codegen<'a>> for String {
-    fn from(mut val: Codegen<'a>) -> Self {
+    fn from(val: Codegen<'a>) -> Self {
         val.into_source_text()
     }
 }
 
 impl<'a> From<Codegen<'a>> for Cow<'a, str> {
-    fn from(mut val: Codegen<'a>) -> Self {
+    fn from(val: Codegen<'a>) -> Self {
         Cow::Owned(val.into_source_text())
     }
 }
@@ -215,14 +215,14 @@ impl<'a> Codegen<'a> {
         }
 
         program.print(&mut self, Context::default());
-        let code = self.into_source_text();
+        let code = self.code.into_string();
         let map = self.sourcemap_builder.map(SourcemapBuilder::into_sourcemap);
         CodegenReturn { code, map }
     }
 
     #[must_use]
-    pub fn into_source_text(&mut self) -> String {
-        self.code.take_source_text()
+    pub fn into_source_text(self) -> String {
+        self.code.into_string()
     }
 
     /// Push a single ASCII byte into the buffer.
