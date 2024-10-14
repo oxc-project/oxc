@@ -19,7 +19,7 @@ use oxc_ast::ast::{
 use oxc_mangler::Mangler;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::{
-    identifier::is_identifier_part,
+    identifier::{is_identifier_part, is_identifier_part_ascii},
     operator::{BinaryOperator, UnaryOperator, UpdateOperator},
     precedence::Precedence,
 };
@@ -292,17 +292,31 @@ impl<'a> Codegen<'a> {
 
     #[inline]
     fn print_space_before_identifier(&mut self) {
-        if self
-            .peek_nth_back(0)
-            .is_some_and(|ch| is_identifier_part(ch) || self.prev_reg_exp_end == self.code.len())
-        {
-            self.print_hard_space();
+        let Some(byte) = self.last_byte() else { return };
+
+        if self.prev_reg_exp_end != self.code.len() {
+            let is_identifier = if byte.is_ascii() {
+                // Fast path for ASCII (very common case)
+                is_identifier_part_ascii(byte as char)
+            } else {
+                is_identifier_part(self.last_char().unwrap())
+            };
+            if !is_identifier {
+                return;
+            }
         }
+
+        self.print_hard_space();
     }
 
     #[inline]
-    fn peek_nth_back(&self, n: usize) -> Option<char> {
-        self.code.peek_nth_back(n)
+    fn last_byte(&self) -> Option<u8> {
+        self.code.last_byte()
+    }
+
+    #[inline]
+    fn last_char(&self) -> Option<char> {
+        self.code.last_char()
     }
 
     #[inline]
@@ -533,7 +547,11 @@ impl<'a> Codegen<'a> {
             || ((prev == bin_op_sub || prev == un_op_neg)
                 && (next == bin_op_sub || next == un_op_neg || next == un_op_pre_dec))
             || (prev == un_op_post_dec && next == bin_op_gt)
-            || (prev == un_op_not && next == un_op_pre_dec && self.peek_nth_back(1) == Some('<'))
+            || (prev == un_op_not
+                && next == un_op_pre_dec
+                // `prev == UnaryOperator::LogicalNot` which means last byte is ASCII,
+                // and therefore previous character is 1 byte from end of buffer
+                && self.code.peek_nth_byte_back(1) == Some(b'<'))
         {
             self.print_hard_space();
         }

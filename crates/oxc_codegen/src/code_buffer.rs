@@ -125,15 +125,53 @@ impl CodeBuffer {
     /// let mut code = CodeBuffer::new();
     /// code.print_str("foo");
     ///
-    /// assert_eq!(code.peek_nth_back(0), Some('o'));
-    /// assert_eq!(code.peek_nth_back(2), Some('f'));
-    /// assert_eq!(code.peek_nth_back(3), None);
+    /// assert_eq!(code.peek_nth_char_back(0), Some('o'));
+    /// assert_eq!(code.peek_nth_char_back(2), Some('f'));
+    /// assert_eq!(code.peek_nth_char_back(3), None);
     /// ```
     #[inline]
     #[must_use = "Peeking is pointless if the peeked char isn't used"]
-    pub fn peek_nth_back(&self, n: usize) -> Option<char> {
+    pub fn peek_nth_char_back(&self, n: usize) -> Option<char> {
         // SAFETY: All methods of `CodeBuffer` ensure `buf` is valid UTF-8
         unsafe { std::str::from_utf8_unchecked(&self.buf) }.chars().nth_back(n)
+    }
+
+    /// Peek the `n`th byte from the end of the buffer.
+    ///
+    /// When `n` is zero, the last byte is returned.
+    /// Returns [`None`] if `n` exceeds the length of the buffer.
+    ///
+    /// # Example
+    /// ```
+    /// use oxc_codegen::CodeBuffer;
+    /// let mut code = CodeBuffer::new();
+    /// code.print_str("foo");
+    ///
+    /// assert_eq!(code.peek_nth_byte_back(0), Some(b'o'));
+    /// assert_eq!(code.peek_nth_byte_back(2), Some(b'f'));
+    /// assert_eq!(code.peek_nth_byte_back(3), None);
+    /// ```
+    #[inline]
+    #[must_use = "Peeking is pointless if the peeked char isn't used"]
+    pub fn peek_nth_byte_back(&self, n: usize) -> Option<u8> {
+        let len = self.len();
+        if n < len {
+            Some(self.buf[len - 1 - n])
+        } else {
+            None
+        }
+    }
+
+    /// Peek the last byte from the end of the buffer.
+    #[inline]
+    pub fn last_byte(&self) -> Option<u8> {
+        self.buf.last().copied()
+    }
+
+    /// Peek the last char from the end of the buffer.
+    #[inline]
+    pub fn last_char(&self) -> Option<char> {
+        self.peek_nth_char_back(0)
     }
 
     /// Push a single ASCII byte into the buffer.
@@ -460,12 +498,40 @@ mod test {
     }
 
     #[test]
-    fn peek_nth_back() {
+    fn peek_nth_char_back() {
         let mut code = CodeBuffer::new();
-        code.print_str("foo");
+        code.print_str("bar");
 
-        assert_eq!(code.peek_nth_back(0), Some('o'));
-        assert_eq!(code.peek_nth_back(2), Some('f'));
-        assert_eq!(code.peek_nth_back(3), None);
+        assert_eq!(code.peek_nth_char_back(0), Some('r'));
+        assert_eq!(code.peek_nth_char_back(1), Some('a'));
+        assert_eq!(code.peek_nth_char_back(2), Some('b'));
+        assert_eq!(code.peek_nth_char_back(3), None);
+    }
+
+    #[test]
+    fn peek_nth_byte_back() {
+        let mut code = CodeBuffer::new();
+        code.print_str("bar");
+
+        assert_eq!(code.peek_nth_byte_back(0), Some(b'r'));
+        assert_eq!(code.peek_nth_byte_back(1), Some(b'a'));
+        assert_eq!(code.peek_nth_byte_back(2), Some(b'b'));
+        assert_eq!(code.peek_nth_byte_back(3), None);
+    }
+
+    #[test]
+    fn last_byte() {
+        let mut code = CodeBuffer::new();
+        assert_eq!(code.last_byte(), None);
+        code.print_str("bar");
+        assert_eq!(code.last_byte(), Some(b'r'));
+    }
+
+    #[test]
+    fn last_char() {
+        let mut code = CodeBuffer::new();
+        assert_eq!(code.last_char(), None);
+        code.print_str("bar");
+        assert_eq!(code.last_char(), Some('r'));
     }
 }
