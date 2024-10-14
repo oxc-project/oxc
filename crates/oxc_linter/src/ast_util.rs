@@ -287,11 +287,15 @@ pub fn extract_regex_flags<'a>(
     if args.len() <= 1 {
         return None;
     }
-    let Argument::StringLiteral(flag_arg) = &args[1] else {
-        return None;
+    let flag_arg = match &args[1] {
+        Argument::StringLiteral(flag_arg) => flag_arg.value.clone(),
+        Argument::TemplateLiteral(template) if template.is_no_substitution_template() => {
+            template.quasi().expect("no-substitution templates always have a quasi")
+        }
+        _ => return None,
     };
     let mut flags = RegExpFlags::empty();
-    for ch in flag_arg.value.chars() {
+    for ch in flag_arg.chars() {
         let flag = RegExpFlags::try_from(ch).ok()?;
         flags |= flag;
     }

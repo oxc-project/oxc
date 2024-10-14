@@ -1,4 +1,4 @@
-use std::mem;
+use assert_unchecked::assert_unchecked;
 
 /// A string builder for constructing source code.
 ///
@@ -6,8 +6,7 @@ use std::mem;
 /// Essentially same as `String` but with additional methods.
 ///
 /// Use one of the various `print_*` methods to add text into the buffer.
-/// When you are done, call [`take_source_text`] or `String::from(code_buffer)`
-/// to extract the final [`String`].
+/// When you are done, call [`into_string`] to extract the final [`String`].
 ///
 /// # Example
 /// ```
@@ -24,10 +23,10 @@ use std::mem;
 /// code.print_str("    console.log('Hello, world!');\n");
 /// code.print_str("}\n");
 ///
-/// let source = code.take_source_text();
+/// let source = code.into_string();
 /// ```
 ///
-/// [`take_source_text`]: CodeBuffer::take_source_text
+/// [`into_string`]: CodeBuffer::into_string
 #[derive(Debug, Default, Clone)]
 pub struct CodeBuffer {
     /// INVARIANT: `buf` is a valid UTF-8 string.
@@ -44,7 +43,7 @@ impl CodeBuffer {
     ///
     /// // use `code` to build new source text
     /// code.print_str("fn main() { println!(\"Hello, world!\"); }");
-    /// let source_text = code.take_source_text();
+    /// let source_text = code.into_string();
     /// ```
     #[inline]
     pub fn new() -> Self {
@@ -123,15 +122,53 @@ impl CodeBuffer {
     /// let mut code = CodeBuffer::new();
     /// code.print_str("foo");
     ///
-    /// assert_eq!(code.peek_nth_back(0), Some('o'));
-    /// assert_eq!(code.peek_nth_back(2), Some('f'));
-    /// assert_eq!(code.peek_nth_back(3), None);
+    /// assert_eq!(code.peek_nth_char_back(0), Some('o'));
+    /// assert_eq!(code.peek_nth_char_back(2), Some('f'));
+    /// assert_eq!(code.peek_nth_char_back(3), None);
     /// ```
     #[inline]
     #[must_use = "Peeking is pointless if the peeked char isn't used"]
-    pub fn peek_nth_back(&self, n: usize) -> Option<char> {
+    pub fn peek_nth_char_back(&self, n: usize) -> Option<char> {
         // SAFETY: All methods of `CodeBuffer` ensure `buf` is valid UTF-8
         unsafe { std::str::from_utf8_unchecked(&self.buf) }.chars().nth_back(n)
+    }
+
+    /// Peek the `n`th byte from the end of the buffer.
+    ///
+    /// When `n` is zero, the last byte is returned.
+    /// Returns [`None`] if `n` exceeds the length of the buffer.
+    ///
+    /// # Example
+    /// ```
+    /// use oxc_codegen::CodeBuffer;
+    /// let mut code = CodeBuffer::new();
+    /// code.print_str("foo");
+    ///
+    /// assert_eq!(code.peek_nth_byte_back(0), Some(b'o'));
+    /// assert_eq!(code.peek_nth_byte_back(2), Some(b'f'));
+    /// assert_eq!(code.peek_nth_byte_back(3), None);
+    /// ```
+    #[inline]
+    #[must_use = "Peeking is pointless if the peeked char isn't used"]
+    pub fn peek_nth_byte_back(&self, n: usize) -> Option<u8> {
+        let len = self.len();
+        if n < len {
+            Some(self.buf[len - 1 - n])
+        } else {
+            None
+        }
+    }
+
+    /// Peek the last byte from the end of the buffer.
+    #[inline]
+    pub fn last_byte(&self) -> Option<u8> {
+        self.buf.last().copied()
+    }
+
+    /// Peek the last char from the end of the buffer.
+    #[inline]
+    pub fn last_char(&self) -> Option<char> {
+        self.peek_nth_char_back(0)
     }
 
     /// Push a single ASCII byte into the buffer.
@@ -147,16 +184,17 @@ impl CodeBuffer {
     /// code.print_ascii_byte(b'o');
     /// code.print_ascii_byte(b'o');
     ///
-    /// let source = code.take_source_text();
+    /// let source = code.into_string();
     /// assert_eq!(source, "foo");
     /// ```
     #[inline]
     pub fn print_ascii_byte(&mut self, byte: u8) {
-        // NOTE: since this method is inlined, this assertion should get
-        // optimized away by the compiler when the value of `byte` is known,
-        // e.g. when printing a constant.
+        // When this method is inlined, and the value of `byte` is known, this assertion should
+        // get optimized away by the compiler. e.g. `code_buffer.print_ascii_byte(b' ')`.
         assert!(byte.is_ascii(), "byte {byte} is not ASCII");
-        self.buf.push(byte);
+
+        // SAFETY: `byte` is an ASCII character
+        unsafe { self.print_byte_unchecked(byte) }
     }
 
     /// Push a byte to the buffer, without checking that the buffer still represents a valid
@@ -171,7 +209,7 @@ impl CodeBuffer {
     ///
     /// It is safe for a single call to temporarily result in invalid UTF-8, as long as
     /// UTF-8 integrity is restored before calls to any other `print_*` method or
-    /// [`take_source_text`]. This lets you, for example, print an 4-byte Unicode character
+    /// [`into_string`]. This lets you, for example, print an 4-byte Unicode character
     /// using 4 separate calls to this method. However, consider using [`print_bytes_unchecked`]
     /// instead for that use case.
     ///
@@ -196,11 +234,38 @@ impl CodeBuffer {
     ///
     /// [`print_ascii_byte`]: CodeBuffer::print_ascii_byte
     /// [`print_char`]: CodeBuffer::print_char
-    /// [`take_source_text`]: CodeBuffer::take_source_text
+    /// [`into_string`]: CodeBuffer::into_string
     /// [`print_bytes_unchecked`]: CodeBuffer::print_bytes_unchecked
     #[inline]
     pub unsafe fn print_byte_unchecked(&mut self, byte: u8) {
-        self.buf.push(byte);
+        // By default, `self.buf.push(byte)` results in quite verbose assembly, because the default
+        // branch is for the "buf is full to capacity" case.
+        //
+        // That's not ideal because growth strategy is doubling, so e.g. when the `Vec` has just grown
+        // from 1024 bytes to 2048 bytes, it won't need to grow again until another 1024 bytes have
+        // been pushed. "Needs to grow" is a very rare occurrence.
+        //
+        // So we use `push_slow` to move the complicated logic for the "needs to grow" path out of
+        // `print_byte_unchecked`, leaving a fast path for the common "there is sufficient capacity" case.
+        // https://godbolt.org/z/Kv8sEoEed
+        // https://github.com/oxc-project/oxc/pull/6148#issuecomment-2381635390
+        #[cold]
+        #[inline(never)]
+        fn push_slow(code_buffer: &mut CodeBuffer, byte: u8) {
+            let buf = &mut code_buffer.buf;
+            // SAFETY: We only call this function below if `buf.len() == buf.capacity()`.
+            // This function is not inlined, so we need this assertion to assist compiler to
+            // understand this fact.
+            unsafe { assert_unchecked!(buf.len() == buf.capacity()) }
+            buf.push(byte);
+        }
+
+        #[expect(clippy::if_not_else)]
+        if self.buf.len() != self.buf.capacity() {
+            self.buf.push(byte);
+        } else {
+            push_slow(self, byte);
+        }
     }
 
     /// Push a single Unicode character into the buffer.
@@ -252,7 +317,7 @@ impl CodeBuffer {
     /// use oxc_codegen::CodeBuffer;
     /// let mut code = CodeBuffer::new();
     ///
-    /// code.print_ascii([b'f', b'o', b'o'].into_iter());
+    /// code.print_ascii_bytes([b'f', b'o', b'o']);
     /// assert_eq!(String::from(code), "foo");
     /// ```
     pub fn print_ascii_bytes<I>(&mut self, bytes: I)
@@ -314,12 +379,7 @@ impl CodeBuffer {
         &self.buf
     }
 
-    /// Convert a buffer into a string of source code, leaving its internal buffer empty.
-    ///
-    /// It is safe to re-use a `CodeBuffer` after calling this method, but there is little benefit
-    /// to doing so, as the `CodeBuffer` will be left in an empty state with no backing allocation.
-    ///
-    /// You may alternatively use `String::from(code_buffer)`, which may be slightly more efficient.
+    /// Consume buffer and return source code as a `String`.
     ///
     /// # Example
     /// ```
@@ -327,18 +387,17 @@ impl CodeBuffer {
     /// let mut code = CodeBuffer::new();
     /// code.print_str("console.log('foo');");
     ///
-    /// let source = code.take_source_text();
+    /// let source = code.into_string();
     /// assert_eq!(source, "console.log('foo');");
-    /// assert!(code.is_empty());
     /// ```
     #[must_use]
     #[inline]
-    pub fn take_source_text(&mut self) -> String {
+    pub fn into_string(self) -> String {
         if cfg!(debug_assertions) {
-            String::from_utf8(mem::take(&mut self.buf)).unwrap()
+            String::from_utf8(self.buf).unwrap()
         } else {
             // SAFETY: All methods of `CodeBuffer` ensure `buf` is valid UTF-8
-            unsafe { String::from_utf8_unchecked(mem::take(&mut self.buf)) }
+            unsafe { String::from_utf8_unchecked(self.buf) }
         }
     }
 }
@@ -352,13 +411,8 @@ impl AsRef<[u8]> for CodeBuffer {
 
 impl From<CodeBuffer> for String {
     #[inline]
-    fn from(buffer: CodeBuffer) -> Self {
-        if cfg!(debug_assertions) {
-            String::from_utf8(buffer.buf).unwrap()
-        } else {
-            // SAFETY: All methods of `CodeBuffer` ensure `buf` is valid UTF-8
-            unsafe { String::from_utf8_unchecked(buffer.buf) }
-        }
+    fn from(code: CodeBuffer) -> Self {
+        code.into_string()
     }
 }
 
@@ -384,20 +438,13 @@ mod test {
     }
 
     #[test]
-    fn into_source_string() {
+    fn into_string() {
         let s = "Hello, world!";
         let mut code = CodeBuffer::with_capacity(s.len());
         code.print_str(s);
 
-        let source = code.take_source_text();
+        let source = code.into_string();
         assert_eq!(source, s);
-
-        // buffer has been emptied
-        assert!(code.is_empty());
-        assert_eq!(code.len(), 0);
-        let empty_slice: &[u8] = &[];
-        assert_eq!(code.as_bytes(), empty_slice);
-        assert_eq!(String::from(code), "");
     }
 
     #[test]
@@ -430,12 +477,51 @@ mod test {
     }
 
     #[test]
-    fn peek_nth_back() {
+    #[allow(clippy::byte_char_slices)]
+    fn print_ascii_bytes() {
         let mut code = CodeBuffer::new();
-        code.print_str("foo");
+        code.print_ascii_bytes([b'f', b'o', b'o']);
 
-        assert_eq!(code.peek_nth_back(0), Some('o'));
-        assert_eq!(code.peek_nth_back(2), Some('f'));
-        assert_eq!(code.peek_nth_back(3), None);
+        assert_eq!(code.len(), 3);
+        assert_eq!(code.as_bytes(), &[b'f', b'o', b'o']);
+        assert_eq!(String::from(code), "foo");
+    }
+
+    #[test]
+    fn peek_nth_char_back() {
+        let mut code = CodeBuffer::new();
+        code.print_str("bar");
+
+        assert_eq!(code.peek_nth_char_back(0), Some('r'));
+        assert_eq!(code.peek_nth_char_back(1), Some('a'));
+        assert_eq!(code.peek_nth_char_back(2), Some('b'));
+        assert_eq!(code.peek_nth_char_back(3), None);
+    }
+
+    #[test]
+    fn peek_nth_byte_back() {
+        let mut code = CodeBuffer::new();
+        code.print_str("bar");
+
+        assert_eq!(code.peek_nth_byte_back(0), Some(b'r'));
+        assert_eq!(code.peek_nth_byte_back(1), Some(b'a'));
+        assert_eq!(code.peek_nth_byte_back(2), Some(b'b'));
+        assert_eq!(code.peek_nth_byte_back(3), None);
+    }
+
+    #[test]
+    fn last_byte() {
+        let mut code = CodeBuffer::new();
+        assert_eq!(code.last_byte(), None);
+        code.print_str("bar");
+        assert_eq!(code.last_byte(), Some(b'r'));
+    }
+
+    #[test]
+    fn last_char() {
+        let mut code = CodeBuffer::new();
+        assert_eq!(code.last_char(), None);
+        code.print_str("bar");
+        assert_eq!(code.last_char(), Some('r'));
     }
 }

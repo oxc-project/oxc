@@ -1194,11 +1194,11 @@ impl<'a> Gen for BigIntLiteral<'a> {
 impl<'a> Gen for RegExpLiteral<'a> {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span.start);
-        let last = p.peek_nth_back(0);
+        let last = p.last_byte();
         let pattern_text = self.regex.pattern.source_text(p.source_text);
         // Avoid forming a single-line comment or "</script" sequence
-        if Some('/') == last
-            || (Some('<') == last && pattern_text.cow_to_lowercase().starts_with("script"))
+        if last == Some(b'/')
+            || (last == Some(b'<') && pattern_text.cow_to_lowercase().starts_with("script"))
         {
             p.print_hard_space();
         }
