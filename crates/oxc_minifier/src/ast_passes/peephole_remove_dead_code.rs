@@ -202,6 +202,9 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
                 // Remove the entire `for` statement.
                 // Check vars in statement
                 let mut keep_var = KeepVar::new(ctx.ast);
+                if let Some(ForStatementInit::VariableDeclaration(var_init)) = &for_stmt.init {
+                    keep_var.visit_variable_declaration(var_init);
+                }
                 keep_var.visit_statement(&for_stmt.body);
                 Some(
                     keep_var
