@@ -117,7 +117,7 @@ pub trait NodeUtil<'a> {
     }
 
     /// Retrieve the literal value of a string, such as `abc` or "abc".
-    fn get_string_literal<'a>(&self, expr: &'a Expression) -> Option<Cow<'a, str>> {
+    fn get_string_literal(&self, expr: &Expression<'a>) -> Option<Cow<'a, str>> {
         match expr {
             Expression::StringLiteral(lit) => Some(Cow::Borrowed(lit.value.as_str())),
             Expression::TemplateLiteral(_) => Some(self.get_string_value(expr)?),
