@@ -113,7 +113,10 @@ impl<'a> AstBuilder<'a> {
     }
 
     #[inline]
-    pub fn move_variable_declaration(self, decl: &mut VariableDeclaration<'a>) -> VariableDeclaration<'a> {
+    pub fn move_variable_declaration(
+        self,
+        decl: &mut VariableDeclaration<'a>,
+    ) -> VariableDeclaration<'a> {
         let empty_decl = self.variable_declaration(
             Span::default(),
             VariableDeclarationKind::Var,
