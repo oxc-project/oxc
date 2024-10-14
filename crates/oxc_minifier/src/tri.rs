@@ -45,14 +45,6 @@ impl Tri {
         Self::from(-self.value() * other.value())
     }
 
-    pub fn to_option(self) -> Option<bool> {
-        match self {
-            Self::True => Some(true),
-            Self::False => Some(false),
-            Self::Unknown => None,
-        }
-    }
-
     pub fn value(self) -> i8 {
         match self {
             Self::True => 1,

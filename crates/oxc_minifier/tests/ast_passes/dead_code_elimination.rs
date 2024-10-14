@@ -12,9 +12,9 @@ fn test(source_text: &str, expected: &str) {
     crate::test(&source_text, expected, options);
 }
 
-// fn test_same(source_text: &str) {
-// test(source_text, source_text);
-// }
+fn test_same(source_text: &str) {
+    test(source_text, source_text);
+}
 
 #[test]
 fn dce_if_statement() {
@@ -63,8 +63,7 @@ fn dce_if_statement() {
 
     // Shadowed `undefined` as a variable should not be erased.
     // This is a rollup test.
-    // FIXME:
-    // test_same("function foo(undefined) { if (!undefined) { } }");
+    test_same("function foo(undefined) { if (!undefined) { } }");
 
     test("function foo() { if (undefined) { bar } }", "function foo() { }");
     test("function foo() { { bar } }", "function foo() { bar }");

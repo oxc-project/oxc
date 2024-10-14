@@ -1,8 +1,4 @@
-use num_traits::Zero;
-#[allow(clippy::wildcard_imports)]
-use oxc_ast::ast::*;
-
-use crate::ToNumber;
+use oxc_ast::ast::Expression;
 
 /// `ToBoolean`
 ///
@@ -13,7 +9,16 @@ pub trait ToBoolean<'a> {
 
 impl<'a> ToBoolean<'a> for Expression<'a> {
     fn to_boolean(&self) -> Option<bool> {
+        // 1. If argument is a Boolean, return argument.
+        // 2. If argument is one of undefined, null, +0𝔽, -0𝔽, NaN, 0ℤ, or the empty String, return false.
+        // 3. NOTE: This step is replaced in section B.3.6.1.
+        // 4. Return true.
         match self {
+            Expression::Identifier(ident) => match ident.name.as_str() {
+                "NaN" | "undefined" => Some(false),
+                "Infinity" => Some(true),
+                _ => None,
+            },
             Expression::RegExpLiteral(_)
             | Expression::ArrayExpression(_)
             | Expression::ArrowFunctionExpression(_)
@@ -34,73 +39,6 @@ impl<'a> ToBoolean<'a> for Expression<'a> {
                     .filter(|quasi| quasi.tail)
                     .and_then(|quasi| quasi.value.cooked.as_ref())
                     .map(|cooked| !cooked.is_empty())
-            }
-            Expression::Identifier(ident) => match ident.name.as_str() {
-                "NaN" | "undefined" => Some(false),
-                "Infinity" => Some(true),
-                _ => None,
-            },
-            Expression::AssignmentExpression(assign_expr) => {
-                match assign_expr.operator {
-                    AssignmentOperator::LogicalAnd | AssignmentOperator::LogicalOr => None,
-                    // For ASSIGN, the value is the value of the RHS.
-                    _ => assign_expr.right.to_boolean(),
-                }
-            }
-            Expression::LogicalExpression(logical_expr) => {
-                match logical_expr.operator {
-                    // true && true -> true
-                    // true && false -> false
-                    // a && true -> None
-                    LogicalOperator::And => {
-                        let left = logical_expr.left.to_boolean();
-                        let right = logical_expr.right.to_boolean();
-                        match (left, right) {
-                            (Some(true), Some(true)) => Some(true),
-                            (Some(false), _) | (_, Some(false)) => Some(false),
-                            (None, _) | (_, None) => None,
-                        }
-                    }
-                    // true || false -> true
-                    // false || false -> false
-                    // a || b -> None
-                    LogicalOperator::Or => {
-                        let left = logical_expr.left.to_boolean();
-                        let right = logical_expr.right.to_boolean();
-
-                        match (left, right) {
-                            (Some(true), _) | (_, Some(true)) => Some(true),
-                            (Some(false), Some(false)) => Some(false),
-                            (None, _) | (_, None) => None,
-                        }
-                    }
-                    LogicalOperator::Coalesce => None,
-                }
-            }
-            Expression::SequenceExpression(sequence_expr) => {
-                // For sequence expression, the value is the value of the RHS.
-                sequence_expr.expressions.last().and_then(ToBoolean::to_boolean)
-            }
-            Expression::UnaryExpression(unary_expr) => {
-                if unary_expr.operator == UnaryOperator::Void {
-                    Some(false)
-                } else if matches!(
-                    unary_expr.operator,
-                    UnaryOperator::BitwiseNot
-                        | UnaryOperator::UnaryPlus
-                        | UnaryOperator::UnaryNegation
-                ) {
-                    // ~0 -> true
-                    // +1 -> true
-                    // +0 -> false
-                    // -0 -> false
-                    self.to_number().map(|value| !value.is_zero())
-                } else if unary_expr.operator == UnaryOperator::LogicalNot {
-                    // !true -> false
-                    unary_expr.argument.to_boolean().map(|b| !b)
-                } else {
-                    None
-                }
             }
             _ => None,
         }

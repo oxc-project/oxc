@@ -14,7 +14,7 @@ use oxc_syntax::{
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
 use crate::{
-    node_util::{is_exact_int64, IsLiteralValue, MayHaveSideEffects, NodeUtil},
+    node_util::{is_exact_int64, Ctx, IsLiteralValue, MayHaveSideEffects},
     tri::Tri,
     value_type::ValueType,
     CompressorPass,
@@ -43,6 +43,7 @@ impl<'a> CompressorPass<'a> for PeepholeFoldConstants {
 
 impl<'a> Traverse<'a> for PeepholeFoldConstants {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        let ctx = Ctx(ctx);
         if let Some(folded_expr) = match expr {
             Expression::CallExpression(e) => {
                 Self::try_fold_useless_object_dot_define_properties_call(e, ctx)
@@ -66,21 +67,21 @@ impl<'a> Traverse<'a> for PeepholeFoldConstants {
     }
 }
 
-impl<'a> PeepholeFoldConstants {
+impl<'a, 'b> PeepholeFoldConstants {
     pub fn new() -> Self {
         Self { changed: false }
     }
 
     fn try_fold_useless_object_dot_define_properties_call(
         _call_expr: &mut CallExpression<'a>,
-        _ctx: &mut TraverseCtx<'a>,
+        _ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         None
     }
 
     fn try_fold_ctor_cal(
         _new_expr: &mut NewExpression<'a>,
-        _ctx: &mut TraverseCtx<'a>,
+        _ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         None
     }
@@ -90,7 +91,7 @@ impl<'a> PeepholeFoldConstants {
     /// `typeof(6) --> "number"`
     fn try_fold_type_of(
         expr: &mut UnaryExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         if !expr.argument.is_literal_value(/* include_function */ true) {
             return None;
@@ -115,21 +116,21 @@ impl<'a> PeepholeFoldConstants {
     // fn try_fold_spread(
     // &mut self,
     // _new_expr: &mut NewExpression<'a>,
-    // _ctx: &mut TraverseCtx<'a>,
+    // _ctx: Ctx<'a,'b>,
     // ) -> Option<Expression<'a>> {
     // None
     // }
 
     fn try_flatten_array_expression(
         _new_expr: &mut ArrayExpression<'a>,
-        _ctx: &mut TraverseCtx<'a>,
+        _ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         None
     }
 
     fn try_flatten_object_expression(
         _new_expr: &mut ObjectExpression<'a>,
-        _ctx: &mut TraverseCtx<'a>,
+        _ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         None
     }
@@ -137,7 +138,7 @@ impl<'a> PeepholeFoldConstants {
     fn try_fold_unary_expression(
         &mut self,
         expr: &mut UnaryExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         fn is_valid(x: f64) -> bool {
             x.is_finite() && x.fract() == 0.0
@@ -154,7 +155,6 @@ impl<'a> PeepholeFoldConstants {
                     }
                 }
                 ctx.get_boolean_value(&expr.argument)
-                    .to_option()
                     .map(|b| ctx.ast.expression_boolean_literal(SPAN, !b))
             }
             // `-NaN` -> `NaN`
@@ -258,7 +258,7 @@ impl<'a> PeepholeFoldConstants {
     fn try_reduce_void(
         &mut self,
         expr: &mut UnaryExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         if (!expr.argument.is_number() || !expr.argument.is_number_0())
             && !expr.may_have_side_effects()
@@ -271,7 +271,7 @@ impl<'a> PeepholeFoldConstants {
 
     fn try_fold_logical_expression(
         logical_expr: &mut LogicalExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         match logical_expr.operator {
             LogicalOperator::And | LogicalOperator::Or => Self::try_fold_and_or(logical_expr, ctx),
@@ -284,13 +284,13 @@ impl<'a> PeepholeFoldConstants {
     /// port from [closure-compiler](https://github.com/google/closure-compiler/blob/09094b551915a6487a980a783831cba58b5739d1/src/com/google/javascript/jscomp/PeepholeFoldConstants.java#L587)
     pub fn try_fold_and_or(
         logical_expr: &mut LogicalExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         let op = logical_expr.operator;
         debug_assert!(matches!(op, LogicalOperator::And | LogicalOperator::Or));
 
         let left = &logical_expr.left;
-        let left_val = ctx.get_boolean_value(left).to_option();
+        let left_val = ctx.get_boolean_value(left);
 
         if let Some(lval) = left_val {
             // Bail `0 && (module.exports = {})` for `cjs-module-lexer`.
@@ -332,7 +332,7 @@ impl<'a> PeepholeFoldConstants {
             return Some(sequence_expr);
         } else if let Expression::LogicalExpression(left_child) = &mut logical_expr.left {
             if left_child.operator == logical_expr.operator {
-                let left_child_right_boolean = ctx.get_boolean_value(&left_child.right).to_option();
+                let left_child_right_boolean = ctx.get_boolean_value(&left_child.right);
                 let left_child_op = left_child.operator;
                 if let Some(right_boolean) = left_child_right_boolean {
                     if !left_child.right.may_have_side_effects() {
@@ -361,7 +361,7 @@ impl<'a> PeepholeFoldConstants {
     /// Try to fold a nullish coalesce `foo ?? bar`.
     pub fn try_fold_coalesce(
         logical_expr: &mut LogicalExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         debug_assert_eq!(logical_expr.operator, LogicalOperator::Coalesce);
         let left = &logical_expr.left;
@@ -394,7 +394,7 @@ impl<'a> PeepholeFoldConstants {
 
     fn try_fold_binary_expression(
         e: &mut BinaryExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         // TODO: tryReduceOperandsForOp
         match e.operator {
@@ -424,11 +424,11 @@ impl<'a> PeepholeFoldConstants {
         }
     }
 
-    fn try_fold_addition<'b>(
+    fn try_fold_addition(
         span: Span,
         left: &'b Expression<'a>,
         right: &'b Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         // skip any potentially dangerous compressions
         if left.may_have_side_effects() || right.may_have_side_effects() {
@@ -469,7 +469,7 @@ impl<'a> PeepholeFoldConstants {
 
     fn try_fold_arithmetic_op(
         operation: &mut BinaryExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         fn shorter_than_original(
             result: f64,
@@ -544,7 +544,7 @@ impl<'a> PeepholeFoldConstants {
         left: f64,
         operator: BinaryOperator,
         right: f64,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         if left.is_finite() && right.is_finite() || !operator.is_arithmetic() {
             return None;
@@ -585,21 +585,21 @@ impl<'a> PeepholeFoldConstants {
         })
     }
 
-    fn try_fold_instanceof<'b>(
+    fn try_fold_instanceof(
         _span: Span,
         _left: &'b Expression<'a>,
         _right: &'b Expression<'a>,
-        _ctx: &mut TraverseCtx<'a>,
+        _ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         None
     }
 
-    fn try_fold_comparison<'b>(
+    fn try_fold_comparison(
         span: Span,
         op: BinaryOperator,
         left: &'b Expression<'a>,
         right: &'b Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         let value = match Self::evaluate_comparison(op, left, right, ctx) {
             Tri::True => true,
@@ -609,11 +609,11 @@ impl<'a> PeepholeFoldConstants {
         Some(ctx.ast.expression_boolean_literal(span, value))
     }
 
-    fn evaluate_comparison<'b>(
+    fn evaluate_comparison(
         op: BinaryOperator,
         left: &'b Expression<'a>,
         right: &'b Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Tri {
         if left.may_have_side_effects() || right.may_have_side_effects() {
             return Tri::Unknown;
@@ -646,10 +646,10 @@ impl<'a> PeepholeFoldConstants {
     }
 
     /// <https://tc39.es/ecma262/#sec-abstract-equality-comparison>
-    fn try_abstract_equality_comparison<'b>(
+    fn try_abstract_equality_comparison(
         left_expr: &'b Expression<'a>,
         right_expr: &'b Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Tri {
         let left = ValueType::from(left_expr);
         let right = ValueType::from(right_expr);
@@ -737,11 +737,11 @@ impl<'a> PeepholeFoldConstants {
     }
 
     /// <https://tc39.es/ecma262/#sec-abstract-relational-comparison>
-    fn try_abstract_relational_comparison<'b>(
+    fn try_abstract_relational_comparison(
         left_expr: &'b Expression<'a>,
         right_expr: &'b Expression<'a>,
         will_negative: bool,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Tri {
         let left = ValueType::from(left_expr);
         let right = ValueType::from(right_expr);
@@ -848,10 +848,10 @@ impl<'a> PeepholeFoldConstants {
 
     /// <https://tc39.es/ecma262/#sec-strict-equality-comparison>
     #[expect(clippy::float_cmp)]
-    fn try_strict_equality_comparison<'b>(
+    fn try_strict_equality_comparison(
         left_expr: &'b Expression<'a>,
         right_expr: &'b Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Tri {
         let left = ValueType::from(left_expr);
         let right = ValueType::from(right_expr);
@@ -922,12 +922,12 @@ impl<'a> PeepholeFoldConstants {
 
     /// ported from [closure-compiler](https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/PeepholeFoldConstants.java#L1114-L1162)
     #[allow(clippy::cast_possible_truncation)]
-    fn try_fold_shift<'b>(
+    fn try_fold_shift(
         span: Span,
         op: BinaryOperator,
         left: &'b Expression<'a>,
         right: &'b Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         let left_num = ctx.get_side_free_number_value(left);
         let right_num = ctx.get_side_free_number_value(right);
