@@ -78,7 +78,6 @@ declare_oxc_lint!(
 );
 
 fn is_invalid_type(ty: &TSType) -> bool {
-    println!("{:?}", ty);
     match ty {
         TSType::TSNumberKeyword(_) | TSType::TSStringKeyword(_) | TSType::TSBooleanKeyword(_) => {
             true
