@@ -30,9 +30,9 @@ digraph {
     3 [ label = "bb3
 ExpressionStatement" shape = box]
     4 [ label = "bb4" shape = box]
-    1 -> 0 [ label = "Error(Implicit)" ]
-    3 -> 2 [ label = "Error(Implicit)" ]
-    1 -> 3 [ label = "NewFunction" ]
-    4 -> 0 [ label = "Error(Implicit)" ]
-    1 -> 4 [ label = "Normal" ]
+    1 -> 0 [ label="Error(Implicit)", style=dashed, color=red]
+    3 -> 2 [ label="Error(Implicit)", style=dashed, color=red]
+    1 -> 3 [ label="NewFunction"]
+    4 -> 0 [ label="Error(Implicit)", style=dashed, color=red]
+    1 -> 4 [ label="Normal"]
 }

@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.31.0] - 2024-10-08
+
+### Performance
+
+- 5db9b30 allocator: Use lower bound of size hint when creating Vecs from an iterator (#6194) (DonIsaac)
+
+### Refactor
+
+- f7d1136 allocator: Remove unnecessary `Vec` impl (#6213) (overlookmotel)
+
 ## [0.30.2] - 2024-09-27
 
 ### Documentation

@@ -72,8 +72,14 @@ impl<'a> ParserImpl<'a> {
 
     /// `BindingIdentifier` : Identifier
     pub(crate) fn parse_binding_identifier(&mut self) -> Result<BindingIdentifier<'a>> {
-        if !self.cur_kind().is_binding_identifier() {
-            return Err(self.unexpected());
+        let cur = self.cur_kind();
+        if !cur.is_binding_identifier() {
+            let err = if cur.is_reserved_keyword() {
+                diagnostics::identifier_reserved_word(self.cur_token().span(), cur.to_str())
+            } else {
+                self.unexpected()
+            };
+            return Err(err);
         }
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
         self.check_identifier(span, &name);
@@ -340,14 +346,16 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         // split out pattern
         let (pattern_end, flags) = self.read_regex()?;
-        let pattern_start = self.cur_token().start + 1; // +1 to exclude `/`
+        let pattern_start = self.cur_token().start + 1; // +1 to exclude left `/`
         let pattern_text = &self.source_text[pattern_start as usize..pattern_end as usize];
+        let flags_start = pattern_end + 1; // +1 to include right `/`
+        let flags_text = &self.source_text[flags_start as usize..self.cur_token().end as usize];
         self.bump_any();
         let pattern = self
             .options
             .parse_regular_expression
             .then_some(())
-            .map(|()| self.parse_regex_pattern(pattern_start, pattern_text, flags))
+            .map(|()| self.parse_regex_pattern(pattern_start, pattern_text, flags_text))
             .map_or_else(
                 || RegExpPattern::Raw(pattern_text),
                 |pat| {
@@ -361,15 +369,11 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         span_offset: u32,
         pattern: &'a str,
-        flags: RegExpFlags,
+        flags: &'a str,
     ) -> Option<Box<'a, Pattern<'a>>> {
-        use oxc_regular_expression::{ParserOptions, PatternParser};
-        let options = ParserOptions {
-            span_offset,
-            unicode_mode: flags.contains(RegExpFlags::U) || flags.contains(RegExpFlags::V),
-            unicode_sets_mode: flags.contains(RegExpFlags::V),
-        };
-        match PatternParser::new(self.ast.allocator, pattern, options).parse() {
+        use oxc_regular_expression::{Parser, ParserOptions};
+        let options = ParserOptions::default().with_span_offset(span_offset).with_flags(flags);
+        match Parser::new(self.ast.allocator, pattern, options).parse() {
             Ok(regular_expression) => Some(self.ast.alloc(regular_expression)),
             Err(diagnostic) => {
                 self.error(diagnostic);
@@ -646,7 +650,7 @@ impl<'a> ParserImpl<'a> {
                         _ => break,
                     }
                 }
-                Kind::Bang if !self.cur_token().is_on_new_line && self.ts_enabled() => {
+                Kind::Bang if !self.cur_token().is_on_new_line && self.is_ts => {
                     self.bump_any();
                     self.ast.expression_ts_non_null(self.end_span(lhs_span), lhs)
                 }
@@ -907,7 +911,7 @@ impl<'a> ParserImpl<'a> {
                 if self.source_type.is_jsx() {
                     return self.parse_jsx_expression();
                 }
-                if self.ts_enabled() {
+                if self.is_ts {
                     return self.parse_ts_type_assertion();
                 }
                 Err(self.unexpected())
@@ -958,7 +962,7 @@ impl<'a> ParserImpl<'a> {
             // This is need for jsx `<div>=</div>` case
             let kind = self.re_lex_right_angle();
 
-            let Some(left_precedence) = kind_to_precedence(kind) else { break };
+            let Some(left_precedence) = kind_to_precedence(kind, self.is_ts) else { break };
 
             let stop = if left_precedence.is_right_associative() {
                 left_precedence < min_precedence
@@ -977,7 +981,7 @@ impl<'a> ParserImpl<'a> {
                 break;
             }
 
-            if self.ts_enabled() && matches!(kind, Kind::As | Kind::Satisfies) {
+            if self.is_ts && matches!(kind, Kind::As | Kind::Satisfies) {
                 if self.cur_token().is_on_new_line {
                     break;
                 }

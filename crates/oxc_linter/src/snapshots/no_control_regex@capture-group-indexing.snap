@@ -1,0 +1,30 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-control-regex): Unexpected control character
+   ╭─[no_control_regex.tsx:1:11]
+ 1 │ const r = /\0/;
+   ·           ────
+   ╰────
+  help: '\0' is not a valid control character.
+
+  ⚠ eslint(no-control-regex): Unexpected control character
+   ╭─[no_control_regex.tsx:1:11]
+ 1 │ const r = /[a-z]\1/;
+   ·           ─────────
+   ╰────
+  help: '\1' is not a valid control character.
+
+  ⚠ eslint(no-control-regex): Unexpected control character
+   ╭─[no_control_regex.tsx:1:11]
+ 1 │ const r = /([a-z])\2/;
+   ·           ───────────
+   ╰────
+  help: '\2' is not a valid control character.
+
+  ⚠ eslint(no-control-regex): Unexpected control character
+   ╭─[no_control_regex.tsx:1:11]
+ 1 │ const r = /([a-z])\0/;
+   ·           ───────────
+   ╰────
+  help: '\0' is not a valid control character.

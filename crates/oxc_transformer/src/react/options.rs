@@ -11,14 +11,14 @@ fn default_as_true() -> bool {
 /// classic does not automatic import anything.
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub enum ReactJsxRuntime {
+pub enum JsxRuntime {
     Classic,
     /// The default runtime is switched to automatic in Babel 8.
     #[default]
     Automatic,
 }
 
-impl ReactJsxRuntime {
+impl JsxRuntime {
     pub fn is_classic(self) -> bool {
         self == Self::Classic
     }
@@ -30,7 +30,7 @@ impl ReactJsxRuntime {
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(default, rename_all = "camelCase", deny_unknown_fields)]
-pub struct ReactOptions {
+pub struct JsxOptions {
     #[serde(skip)]
     pub jsx_plugin: bool,
 
@@ -46,7 +46,7 @@ pub struct ReactOptions {
     // Both Runtimes
     //
     /// Decides which runtime to use.
-    pub runtime: ReactJsxRuntime,
+    pub runtime: JsxRuntime,
 
     /// This toggles behavior specific to development, such as adding __source and __self.
     ///
@@ -107,14 +107,14 @@ pub struct ReactOptions {
     pub refresh: Option<ReactRefreshOptions>,
 }
 
-impl Default for ReactOptions {
+impl Default for JsxOptions {
     fn default() -> Self {
         Self {
             jsx_plugin: true,
             display_name_plugin: true,
             jsx_self_plugin: false,
             jsx_source_plugin: false,
-            runtime: ReactJsxRuntime::default(),
+            runtime: JsxRuntime::default(),
             development: false,
             throw_if_namespace: default_as_true(),
             pure: default_as_true(),
@@ -128,7 +128,7 @@ impl Default for ReactOptions {
     }
 }
 
-impl ReactOptions {
+impl JsxOptions {
     pub fn conform(&mut self) {
         if self.development {
             self.jsx_plugin = true;

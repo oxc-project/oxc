@@ -116,7 +116,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_type_annotation(
         &mut self,
     ) -> Result<Option<Box<'a, TSTypeAnnotation<'a>>>> {
-        if !self.ts_enabled() {
+        if !self.is_ts {
             return Ok(None);
         }
         if !self.at(Kind::Colon) {
@@ -255,6 +255,7 @@ impl<'a> ParserImpl<'a> {
                 | Kind::Readonly
                 | Kind::Declare
                 | Kind::Override
+                | Kind::Export
         )) {
             return false;
         }
@@ -300,7 +301,7 @@ impl<'a> ParserImpl<'a> {
         );
         let id = match self.cur_kind() {
             Kind::Str => self.parse_literal_string().map(TSModuleDeclarationName::StringLiteral),
-            _ => self.parse_identifier_name().map(TSModuleDeclarationName::Identifier),
+            _ => self.parse_binding_identifier().map(TSModuleDeclarationName::Identifier),
         }?;
 
         let body = if self.eat(Kind::Dot) {
@@ -398,7 +399,7 @@ impl<'a> ParserImpl<'a> {
                 if declare {
                     self.parse_ts_declare_function(start_span, modifiers)
                         .map(Declaration::FunctionDeclaration)
-                } else if self.ts_enabled() {
+                } else if self.is_ts {
                     self.parse_ts_function_impl(start_span, FunctionKind::Declaration, modifiers)
                         .map(Declaration::FunctionDeclaration)
                 } else {

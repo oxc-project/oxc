@@ -8,6 +8,14 @@ expression: json
   "description": "Oxlint Configuration File\n\nThis configuration is aligned with ESLint v8's configuration schema (`eslintrc.json`).\n\nUsage: `oxlint -c oxlintrc.json --import-plugin`\n\n::: danger NOTE\n\nOnly the `.json` format is supported. You can use comments in configuration files.\n\n:::\n\nExample\n\n`.oxlintrc.json`\n\n```json { \"env\": { \"browser\": true }, \"globals\": { \"foo\": \"readonly\" }, \"settings\": { }, \"rules\": { \"eqeqeq\": \"warn\", \"import/no-cycle\": \"error\" } } ```",
   "type": "object",
   "properties": {
+    "categories": {
+      "default": {},
+      "allOf": [
+        {
+          "$ref": "#/definitions/OxlintCategories"
+        }
+      ]
+    },
     "env": {
       "description": "Environments enable and disable collections of global variables.",
       "default": {
@@ -266,6 +274,39 @@ expression: json
           }
         }
       ]
+    },
+    "OxlintCategories": {
+      "title": "Rule Categories",
+      "description": "Configure an entire category of rules all at once.\n\nRules enabled or disabled this way will be overwritten by individual rules in the `rules` field.\n\n# Example\n```json\n{\n    \"categories\": {\n        \"correctness\": \"warn\"\n    },\n    \"rules\": {\n        \"eslint/no-unused-vars\": \"error\"\n    }\n}\n```",
+      "examples": [
+        {
+          "correctness": "warn"
+        }
+      ],
+      "type": "object",
+      "properties": {
+        "correctness": {
+          "$ref": "#/definitions/AllowWarnDeny"
+        },
+        "nursery": {
+          "$ref": "#/definitions/AllowWarnDeny"
+        },
+        "pedantic": {
+          "$ref": "#/definitions/AllowWarnDeny"
+        },
+        "perf": {
+          "$ref": "#/definitions/AllowWarnDeny"
+        },
+        "restriction": {
+          "$ref": "#/definitions/AllowWarnDeny"
+        },
+        "style": {
+          "$ref": "#/definitions/AllowWarnDeny"
+        },
+        "suspicious": {
+          "$ref": "#/definitions/AllowWarnDeny"
+        }
+      }
     },
     "OxlintEnv": {
       "description": "Predefine global variables.\n\nEnvironments specify what global variables are predefined. See [ESLint's list of environments](https://eslint.org/docs/v8.x/use/configure/language-options#specifying-environments) for what environments are available and what each one provides.",

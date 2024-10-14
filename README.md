@@ -24,6 +24,12 @@ Oxc is building a parser, linter, formatter, transformer, minifier, resolver ...
 
 See more at [oxc.rs](https://oxc.rs)!
 
+## VoidZero Inc.
+
+Oxc is a project of [VoidZero](https://voidzero.dev/), see our announcement [Announcing VoidZero - Next Generation Toolchain for JavaScript](https://voidzero.dev/blog).
+
+If you have requirements for JavaScript tools at scale, please [get in touch](https://forms.gle/WQgjyzYJpwurpxWKA)!
+
 ## 🙋Who's using Oxc?
 
 - [Rolldown] uses the [oxc][docs-oxc-url] crate for parsing and transformation.
@@ -34,7 +40,7 @@ See more at [oxc.rs](https://oxc.rs)!
 
 ## ⚡️ Linter Quick Start
 
-The linter is ready to catch mistakes for you. It comes with 93 rules turned on by default (out of 400+ in total) and no configuration is required.
+The linter is ready to catch mistakes for you. It comes with 93 rules turned on by default (out of 430+ in total) and no configuration is required.
 
 To get started, run [oxlint][npm-oxlint] or via `npx`:
 
@@ -79,7 +85,7 @@ where warm runs complete in 3 minutes.
 
 ### Node.js
 
-- via napi: [oxc-parser][npm-napi], [oxc-transform][npm-napi-transform]
+- via napi: [oxc-parser][npm-napi-parser], [oxc-transform][npm-napi-transform]
 
 ### Wasm
 

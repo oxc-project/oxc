@@ -1,7 +1,7 @@
 use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{CompactStr, GetSpan, Span};
 
 use crate::{
     context::LintContext,
@@ -21,7 +21,7 @@ pub struct NoHooks(Box<NoHooksConfig>);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoHooksConfig {
-    allow: Vec<String>,
+    allow: Vec<CompactStr>,
 }
 
 impl std::ops::Deref for NoHooks {
@@ -90,9 +90,7 @@ impl Rule for NoHooks {
             .get(0)
             .and_then(|config| config.get("allow"))
             .and_then(serde_json::Value::as_array)
-            .map(|v| {
-                v.iter().filter_map(serde_json::Value::as_str).map(ToString::to_string).collect()
-            })
+            .map(|v| v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect())
             .unwrap_or_default();
 
         Self(Box::new(NoHooksConfig { allow }))
@@ -121,7 +119,8 @@ impl NoHooks {
         }
 
         if let Expression::Identifier(ident) = &call_expr.callee {
-            if !self.allow.contains(&ident.name.to_string()) {
+            let name = CompactStr::from(ident.name.as_str());
+            if !self.allow.contains(&name) {
                 ctx.diagnostic(unexpected_hook_diagonsitc(call_expr.callee.span()));
             }
         }

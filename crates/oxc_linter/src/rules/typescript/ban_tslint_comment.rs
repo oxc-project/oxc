@@ -33,7 +33,7 @@ declare_oxc_lint!(
 
 impl Rule for BanTslintComment {
     fn run_once(&self, ctx: &LintContext) {
-        let comments = ctx.semantic().trivias().comments();
+        let comments = ctx.semantic().comments();
         let source_text_len = ctx.semantic().source_text().len();
 
         for comment in comments {

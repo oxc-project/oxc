@@ -1,10 +1,8 @@
 use oxc_macros::declare_oxc_lint;
 
-use crate::{
-    context::LintContext,
-    rule::Rule,
-    utils::{collect_possible_jest_call_node, prefer_to_be_simply_bool},
-};
+use crate::{context::LintContext, rule::Rule, utils::collect_possible_jest_call_node};
+
+use super::prefer_to_be_truthy::prefer_to_be_simply_bool;
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferToBeFalsy;

@@ -1,4 +1,5 @@
 use oxc_ast::ast::{BlockStatement, FunctionBody, Statement, SwitchCase};
+use oxc_ecmascript::ToBoolean;
 
 /// `StatementReturnStatus` describes whether the CFG corresponding to
 /// the statement is termitated by return statement in all/some/nome of

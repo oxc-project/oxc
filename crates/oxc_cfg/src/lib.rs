@@ -1,13 +1,16 @@
+mod block;
 mod builder;
-mod dot;
+pub mod dot;
 pub mod visit;
 
+use std::fmt;
+
 use itertools::Itertools;
-use oxc_syntax::node::NodeId;
+use nonmax::NonMaxU32;
+use oxc_index::{Idx, IndexVec};
 use petgraph::{
-    stable_graph::NodeIndex,
     visit::{Control, DfsEvent, EdgeRef},
-    Direction, Graph,
+    Direction,
 };
 
 pub mod graph {
@@ -19,68 +22,42 @@ pub mod graph {
     }
 }
 
+pub use block::*;
 pub use builder::{ControlFlowGraphBuilder, CtxCursor, CtxFlags};
 pub use dot::DisplayDot;
 use visit::set_depth_first_search;
 
-pub type BasicBlockId = NodeIndex;
+pub type BlockNodeId = petgraph::stable_graph::NodeIndex;
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct BasicBlockId(NonMaxU32);
 
-#[derive(Debug)]
-pub struct BasicBlock {
-    pub instructions: Vec<Instruction>,
-    pub unreachable: bool,
-}
-
-impl BasicBlock {
-    fn new() -> Self {
-        BasicBlock { instructions: Vec::new(), unreachable: false }
+impl Idx for BasicBlockId {
+    #[allow(clippy::cast_possible_truncation)]
+    fn from_usize(idx: usize) -> Self {
+        assert!(idx < u32::MAX as usize);
+        // SAFETY: We just checked `idx` is valid for `NonMaxU32`
+        Self(unsafe { NonMaxU32::new_unchecked(idx as u32) })
     }
 
-    pub fn instructions(&self) -> &Vec<Instruction> {
-        &self.instructions
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct Instruction {
-    pub kind: InstructionKind,
-    pub node_id: Option<NodeId>,
-}
-
-impl Instruction {
-    pub fn new(kind: InstructionKind, node_id: Option<NodeId>) -> Self {
-        Self { kind, node_id }
+    fn index(self) -> usize {
+        self.0.get() as usize
     }
 }
 
-#[derive(Debug, Clone)]
-pub enum InstructionKind {
-    Unreachable,
-    Statement,
-    Return(ReturnInstructionKind),
-    Break(LabeledInstruction),
-    Continue(LabeledInstruction),
-    Throw,
-    Condition,
-    Iteration(IterationInstructionKind),
-}
-#[derive(Debug, Clone)]
-pub enum ReturnInstructionKind {
-    ImplicitUndefined,
-    NotImplicitUndefined,
+impl PartialEq<u32> for BasicBlockId {
+    #[inline]
+    fn eq(&self, other: &u32) -> bool {
+        self.0.get() == *other
+    }
 }
 
-#[derive(Debug, Clone)]
-pub enum LabeledInstruction {
-    Labeled,
-    Unlabeled,
+impl fmt::Display for BasicBlockId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.0.fmt(f)
+    }
 }
 
-#[derive(Debug, Clone)]
-pub enum IterationInstructionKind {
-    Of,
-    In,
-}
+pub type Graph = petgraph::graph::DiGraph<BasicBlockId, EdgeType>;
 
 #[derive(Debug, Clone)]
 pub enum EdgeType {
@@ -121,35 +98,35 @@ pub enum EvalConstConditionResult {
 
 #[derive(Debug)]
 pub struct ControlFlowGraph {
-    pub graph: Graph<usize, EdgeType>,
-    pub basic_blocks: Vec<BasicBlock>,
+    pub graph: Graph,
+    pub basic_blocks: IndexVec<BasicBlockId, BasicBlock>,
 }
 
 impl ControlFlowGraph {
-    pub fn graph(&self) -> &Graph<usize, EdgeType> {
+    pub fn graph(&self) -> &Graph {
         &self.graph
     }
 
     /// # Panics
-    pub fn basic_block(&self, id: BasicBlockId) -> &BasicBlock {
+    pub fn basic_block(&self, id: BlockNodeId) -> &BasicBlock {
         let ix = *self.graph.node_weight(id).expect("expected a valid node id in self.graph");
         self.basic_blocks.get(ix).expect("expected a valid node id in self.basic_blocks")
     }
 
     /// # Panics
-    pub fn basic_block_mut(&mut self, id: BasicBlockId) -> &mut BasicBlock {
+    pub fn basic_block_mut(&mut self, id: BlockNodeId) -> &mut BasicBlock {
         let ix = *self.graph.node_weight(id).expect("expected a valid node id in self.graph");
         self.basic_blocks.get_mut(ix).expect("expected a valid node id in self.basic_blocks")
     }
 
-    pub fn is_reachable(&self, from: BasicBlockId, to: BasicBlockId) -> bool {
+    pub fn is_reachable(&self, from: BlockNodeId, to: BlockNodeId) -> bool {
         self.is_reachable_filtered(from, to, |_| Control::Continue)
     }
 
-    pub fn is_reachable_filtered<F: Fn(BasicBlockId) -> Control<bool>>(
+    pub fn is_reachable_filtered<F: Fn(BlockNodeId) -> Control<bool>>(
         &self,
-        from: BasicBlockId,
-        to: BasicBlockId,
+        from: BlockNodeId,
+        to: BlockNodeId,
         filter: F,
     ) -> bool {
         if from == to {
@@ -184,16 +161,13 @@ impl ControlFlowGraph {
     /// Otherwise returns `Some(loop_start, loop_end)`.
     pub fn is_infinite_loop_start<F>(
         &self,
-        node: BasicBlockId,
+        node: BlockNodeId,
         try_eval_const_condition: F,
-    ) -> Option<(BasicBlockId, BasicBlockId)>
+    ) -> Option<(BlockNodeId, BlockNodeId)>
     where
         F: Fn(&Instruction) -> EvalConstConditionResult,
     {
-        fn get_jump_target(
-            graph: &Graph<usize, EdgeType>,
-            node: BasicBlockId,
-        ) -> Option<BasicBlockId> {
+        fn get_jump_target(graph: &Graph, node: BlockNodeId) -> Option<BlockNodeId> {
             graph
                 .edges_directed(node, Direction::Outgoing)
                 .find_or_first(|e| matches!(e.weight(), EdgeType::Jump))
@@ -246,7 +220,7 @@ impl ControlFlowGraph {
         }
     }
 
-    pub fn is_cyclic(&self, node: BasicBlockId) -> bool {
+    pub fn is_cyclic(&self, node: BlockNodeId) -> bool {
         set_depth_first_search(&self.graph, Some(node), |event| match event {
             DfsEvent::BackEdge(_, id) if id == node => Err(()),
             _ => Ok(()),

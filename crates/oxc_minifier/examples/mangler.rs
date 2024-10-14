@@ -40,5 +40,5 @@ fn mangler(source_text: &str, source_type: SourceType, debug: bool) -> String {
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let program = allocator.alloc(ret.program);
     let mangler = Mangler::new().with_options(MangleOptions { debug }).build(program);
-    CodeGenerator::new().with_mangler(Some(mangler)).build(program).source_text
+    CodeGenerator::new().with_mangler(Some(mangler)).build(program).code
 }

@@ -68,20 +68,20 @@ impl<'a> StatementFusion {
             | Statement::ThrowStatement(_)
             | Statement::SwitchStatement(_) => true,
             Statement::ReturnStatement(return_stmt) => return_stmt.argument.is_some(),
-            // Statement::ForStatement(for_stmt) => {
-            // // Avoid cases where we have for(var x;_;_) { ....
-            // for_stmt.init.is_none()
-            // || for_stmt.init.as_ref().is_some_and(ForStatementInit::is_expression)
-            // }
-            // Statement::ForInStatement(for_in_stmt) => {
-            // TODO
-            // }
+            Statement::ForStatement(for_stmt) => {
+                // Avoid cases where we have for(var x;_;_) { ....
+                for_stmt.init.is_none()
+                    || for_stmt.init.as_ref().is_some_and(ForStatementInit::is_expression)
+            }
+            // TODO: support for-in, we need to check the init for side effects
+            Statement::ForInStatement(_for_in_stmt) => false,
             Statement::LabeledStatement(labeled_stmt) => {
                 Self::is_fusable_control_statement(&labeled_stmt.body)
             }
-            // Statement::BlockStatement(_) => {
-            // TODO
-            // }
+            Statement::BlockStatement(block) => {
+                can_merge_block_stmt(block)
+                    && block.body.first().map_or(false, Self::is_fusable_control_statement)
+            }
             _ => false,
         }
     }
@@ -133,20 +133,28 @@ impl<'a> StatementFusion {
             Statement::ThrowStatement(throw_stmt) => &mut throw_stmt.argument,
             Statement::SwitchStatement(switch_stmt) => &mut switch_stmt.discriminant,
             Statement::ReturnStatement(return_stmt) => return_stmt.argument.as_mut().unwrap(),
-            // Statement::ForStatement(for_stmt) => {
-            // if let Some(init) = for_stmt.init.as_mut() {
-            // init.as_expression_mut().unwrap()
-            // } else {
-            // for_stmt.init =
-            // Some(ctx.ast.for_statement_init_expression(
-            // ctx.ast.expression_sequence(SPAN, exprs),
-            // ));
-            // return;
-            // }
-            // }
+            Statement::ForStatement(for_stmt) => {
+                if let Some(init) = for_stmt.init.as_mut() {
+                    init.as_expression_mut().unwrap()
+                } else {
+                    for_stmt.init =
+                        Some(ctx.ast.for_statement_init_expression(
+                            ctx.ast.expression_sequence(SPAN, exprs),
+                        ));
+                    return;
+                }
+            }
             Statement::LabeledStatement(labeled_stmt) => {
                 Self::fuse_expression_into_control_flow_statement(
                     &mut labeled_stmt.body,
+                    exprs,
+                    ctx,
+                );
+                return;
+            }
+            Statement::BlockStatement(block) => {
+                Self::fuse_expression_into_control_flow_statement(
+                    block.body.first_mut().unwrap(),
                     exprs,
                     ctx,
                 );
@@ -158,6 +166,21 @@ impl<'a> StatementFusion {
         };
         exprs.push(ctx.ast.move_expression(expr));
         *expr = ctx.ast.expression_sequence(SPAN, exprs);
+    }
+}
+
+fn can_merge_block_stmt(node: &BlockStatement) -> bool {
+    return node.body.iter().all(can_merge_block_stmt_member);
+}
+
+fn can_merge_block_stmt_member(node: &Statement) -> bool {
+    match node {
+        Statement::LabeledStatement(label) => can_merge_block_stmt_member(&label.body),
+        Statement::VariableDeclaration(var_decl) => {
+            !matches!(var_decl.kind, VariableDeclarationKind::Const | VariableDeclarationKind::Let)
+        }
+        Statement::ClassDeclaration(_) | Statement::FunctionDeclaration(_) => false,
+        _ => true,
     }
 }
 
@@ -252,7 +275,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn fuse_into_vanilla_for1() {
         fuse("a;b;c;for(;g;){}", "for(a,b,c;g;){}");
         fuse("a;b;c;for(d;g;){}", "for(a,b,c,d;g;){}");
@@ -261,7 +283,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn fuse_into_vanilla_for2() {
         fuse_same("a;b;c;for(var d;g;){}");
         fuse_same("a;b;c;for(let d;g;){}");
@@ -277,7 +298,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn fuse_into_block() {
         fuse("a;b;c;{d;e;f}", "{a,b,c,d,e,f}");
         fuse(
@@ -299,7 +319,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn no_fuse_into_block() {
         // Never fuse a statement into a block that contains let/const/class declarations, or you risk
         // colliding variable names. (unless the AST is normalized).
@@ -312,14 +331,14 @@ mod test {
         fuse_same("a; { b; const otherVariable = 1; }");
 
         // enable_normalize();
-        test(
-            "function f(a) { if (COND) { a; { b; let a = 1; } } }",
-            "function f(a) { if (COND) { { a,b; let a$jscomp$1 = 1; } } }",
-        );
-        test(
-            "function f(a) { if (COND) { a; { b; let otherVariable = 1; } } }",
-            "function f(a) { if (COND) {  { a,b; let otherVariable = 1; } } }",
-        );
+        // test(
+        //     "function f(a) { if (COND) { a; { b; let a = 1; } } }",
+        //     "function f(a) { if (COND) { { a,b; let a$jscomp$1 = 1; } } }",
+        // );
+        // test(
+        //     "function f(a) { if (COND) { a; { b; let otherVariable = 1; } } }",
+        //     "function f(a) { if (COND) {  { a,b; let otherVariable = 1; } } }",
+        // );
     }
 
     #[test]

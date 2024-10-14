@@ -244,7 +244,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
     /// type Foo = Array<Bar>
     /// ```
     fn is_type_self_usage(&self, reference: &Reference) -> bool {
-        for parent in self.iter_relevant_parents(reference.node_id()).map(AstNode::kind) {
+        for parent in self.iter_relevant_parents_of(reference.node_id()).map(AstNode::kind) {
             match parent {
                 AstKind::TSTypeAliasDeclaration(decl) => {
                     return self == &decl.id;
@@ -425,7 +425,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
 
     /// Check if a [`AstNode`] is within a return statement or implicit return.
     fn is_in_return_statement(&self, node_id: NodeId) -> bool {
-        for parent in self.iter_relevant_parents(node_id).map(AstNode::kind) {
+        for parent in self.iter_relevant_parents_of(node_id).map(AstNode::kind) {
             match parent {
                 AstKind::ReturnStatement(_) => return true,
                 AstKind::ExpressionStatement(_) => continue,
@@ -652,7 +652,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
     /// 2. "relevant" nodes are non "transparent". For example, parenthesis are "transparent".
     #[inline]
     fn get_ref_relevant_node(&self, reference: &Reference) -> Option<&AstNode<'a>> {
-        self.iter_relevant_parents(reference.node_id()).next()
+        self.iter_relevant_parents_of(reference.node_id()).next()
     }
 
     /// Find the [`SymbolId`] for the nearest function declaration or expression
@@ -662,7 +662,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
         // name from the variable its assigned to.
         let mut needs_variable_identifier = false;
 
-        for parent in self.iter_relevant_parents(node_id) {
+        for parent in self.iter_relevant_parents_of(node_id) {
             match parent.kind() {
                 AstKind::Function(f) => {
                     return f.id.as_ref().and_then(|id| id.symbol_id.get());

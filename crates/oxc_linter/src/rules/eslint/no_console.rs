@@ -1,7 +1,7 @@
 use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{CompactStr, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -21,7 +21,7 @@ pub struct NoConsoleConfig {
     /// console.log('foo'); // will error
     /// console.info('bar'); // will not error
     /// ```
-    pub allow: Vec<String>,
+    pub allow: Vec<CompactStr>,
 }
 
 impl std::ops::Deref for NoConsole {
@@ -58,10 +58,7 @@ impl Rule for NoConsole {
                 .and_then(|v| v.get("allow"))
                 .and_then(serde_json::Value::as_array)
                 .map(|v| {
-                    v.iter()
-                        .filter_map(serde_json::Value::as_str)
-                        .map(ToString::to_string)
-                        .collect()
+                    v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect()
                 })
                 .unwrap_or_default(),
         }))

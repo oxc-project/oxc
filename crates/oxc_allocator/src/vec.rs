@@ -7,6 +7,7 @@ use std::{
     fmt::Debug,
     hash::{Hash, Hasher},
     ops,
+    ptr::NonNull,
 };
 
 use allocator_api2::vec;
@@ -14,7 +15,7 @@ use bumpalo::Bump;
 #[cfg(any(feature = "serialize", test))]
 use serde::{ser::SerializeSeq, Serialize, Serializer};
 
-use crate::Allocator;
+use crate::{Allocator, Box};
 
 /// Bumpalo Vec
 #[derive(Debug, PartialEq, Eq)]
@@ -95,10 +96,44 @@ impl<'alloc, T> Vec<'alloc, T> {
     #[inline]
     pub fn from_iter_in<I: IntoIterator<Item = T>>(iter: I, allocator: &'alloc Allocator) -> Self {
         let iter = iter.into_iter();
-        let capacity = iter.size_hint().1.unwrap_or(0);
+        let hint = iter.size_hint();
+        let capacity = hint.1.unwrap_or(hint.0);
         let mut vec = vec::Vec::with_capacity_in(capacity, &**allocator);
         vec.extend(iter);
         Self(vec)
+    }
+
+    /// Converts the vector into [`Box<[T]>`][owned slice].
+    ///
+    /// Any excess capacity the vector has will not be included in the slice.
+    /// The excess memory will be leaked in the arena (i.e. not reused by another allocation).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use oxc_allocator::{Allocator, Vec};
+    ///
+    /// let allocator = Allocator::default();
+    /// let mut v = Vec::with_capacity_in(10, &allocator);
+    /// v.extend([1, 2, 3]);
+    /// let b = v.into_boxed_slice();
+    ///
+    /// assert_eq!(&*b, &[1, 2, 3]);
+    /// assert_eq!(b.len(), 3);
+    /// ```
+    ///
+    /// [owned slice]: Box
+    pub fn into_boxed_slice(self) -> Box<'alloc, [T]> {
+        let slice = self.0.leak();
+        let ptr = NonNull::from(slice);
+        // SAFETY: `ptr` points to a valid slice `[T]`.
+        // `allocator_api2::vec::Vec::leak` consumes the inner `Vec` without dropping it.
+        // Lifetime of returned `Box<'alloc, [T]>` is same as lifetime of consumed `Vec<'alloc, T>`,
+        // so data in the `Box` must be valid for its lifetime.
+        // `Vec` uniquely owned the data, and we have consumed the `Vec`, so the new `Box` has
+        // unique ownership of the data (no aliasing).
+        // `ptr` was created from a `&mut [T]`.
+        unsafe { Box::from_non_null(ptr) }
     }
 }
 
@@ -142,14 +177,6 @@ impl<'alloc, T> ops::Index<usize> for Vec<'alloc, T> {
     }
 }
 
-impl<'alloc, T> ops::Index<usize> for &'alloc Vec<'alloc, T> {
-    type Output = T;
-
-    fn index(&self, index: usize) -> &Self::Output {
-        self.0.index(index)
-    }
-}
-
 // Unused right now.
 // impl<'alloc, T> ops::IndexMut<usize> for Vec<'alloc, T> {
 // fn index_mut(&mut self, index: usize) -> &mut Self::Output {
@@ -185,7 +212,7 @@ impl<'alloc, T: Hash> Hash for Vec<'alloc, T> {
 #[cfg(test)]
 mod test {
     use super::Vec;
-    use crate::Allocator;
+    use crate::{Allocator, Box};
 
     #[test]
     fn vec_with_capacity() {
@@ -217,5 +244,20 @@ mod test {
         fn _assert_vec_variant_lifetime<'a: 'b, 'b, T>(program: Vec<'a, T>) -> Vec<'b, T> {
             program
         }
+    }
+
+    #[test]
+    fn vec_to_boxed_slice() {
+        let allocator = Allocator::default();
+        let mut v = Vec::with_capacity_in(10, &allocator);
+        v.extend([1, 2, 3]);
+
+        let b = v.into_boxed_slice();
+        // Check return value is an `oxc_allocator::Box`, not an `allocator_api2::boxed::Box`
+        let b: Box<[u8]> = b;
+
+        assert_eq!(&*b, &[1, 2, 3]);
+        // Check length of slice is equal to what `v.len()` was, not `v.capacity()`
+        assert_eq!(b.len(), 3);
     }
 }

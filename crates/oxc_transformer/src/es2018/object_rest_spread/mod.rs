@@ -32,6 +32,8 @@ use oxc_ast::ast::*;
 use oxc_traverse::{Traverse, TraverseCtx};
 use serde::Deserialize;
 
+use crate::context::TransformCtx;
+
 mod object_rest;
 mod object_spread;
 
@@ -43,27 +45,27 @@ pub struct ObjectRestSpreadOptions {
     pub(crate) use_built_ins: bool,
 }
 
-pub struct ObjectRestSpread {
+pub struct ObjectRestSpread<'a, 'ctx> {
     #[allow(dead_code)]
     options: ObjectRestSpreadOptions,
 
     // Plugins
-    object_spread: ObjectSpread,
+    object_spread: ObjectSpread<'a, 'ctx>,
     #[allow(dead_code)]
     object_rest: ObjectRest,
 }
 
-impl ObjectRestSpread {
-    pub fn new(options: ObjectRestSpreadOptions) -> Self {
+impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
+    pub fn new(options: ObjectRestSpreadOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
         Self {
-            object_spread: ObjectSpread::new(options),
+            object_spread: ObjectSpread::new(options, ctx),
             object_rest: ObjectRest::new(options),
             options,
         }
     }
 }
 
-impl<'a> Traverse<'a> for ObjectRestSpread {
+impl<'a, 'ctx> Traverse<'a> for ObjectRestSpread<'a, 'ctx> {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         self.object_spread.enter_expression(expr, ctx);
     }

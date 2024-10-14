@@ -2,7 +2,7 @@
 use std::{env, path::Path};
 
 use oxc_allocator::Allocator;
-use oxc_codegen::{CodeGenerator, CodegenOptions, CommentOptions};
+use oxc_codegen::{CodeGenerator, CodegenOptions};
 use oxc_parser::{Parser, ParserReturn};
 use oxc_span::SourceType;
 use pico_args::Arguments;
@@ -24,7 +24,7 @@ fn main() -> std::io::Result<()> {
 
     let printed = {
         let Some(ret) = parse(&allocator, &source_text, source_type) else { return Ok(()) };
-        codegen(&source_text, &ret, minify)
+        codegen(&ret, minify)
     };
     println!("First time:");
     println!("{printed}");
@@ -35,7 +35,7 @@ fn main() -> std::io::Result<()> {
 
         let Some(ret) = parse(&allocator, &printed, source_type) else { return Ok(()) };
         println!("Second time:");
-        let printed = codegen(&printed, &ret, minify);
+        let printed = codegen(&ret, minify);
         println!("{printed}");
         // Check syntax error
         parse(&allocator, &printed, source_type);
@@ -59,14 +59,9 @@ fn parse<'a>(
     Some(ret)
 }
 
-fn codegen(source_text: &str, ret: &ParserReturn<'_>, minify: bool) -> String {
+fn codegen(ret: &ParserReturn<'_>, minify: bool) -> String {
     CodeGenerator::new()
-        .enable_comment(
-            source_text,
-            ret.trivias.clone(),
-            CommentOptions { preserve_annotate_comments: true },
-        )
         .with_options(CodegenOptions { minify, ..CodegenOptions::default() })
         .build(&ret.program)
-        .source_text
+        .code
 }

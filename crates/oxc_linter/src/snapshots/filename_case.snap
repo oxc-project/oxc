@@ -1,14 +1,142 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-unicorn(filename-case): Filename should not be in kebab case
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in kebab case
    ╭─[filename_case.tsx:1:1]
- 1 │ import foo from 'bar'
-   · ▲
    ╰────
+  help: Rename the file to 'foo-bar.js'
 
-  ⚠ eslint-plugin-unicorn(filename-case): Filename should not be in snake case
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in camel case
    ╭─[filename_case.tsx:1:1]
- 1 │ baz;
-   · ▲
    ╰────
+  help: Rename the file to 'fooBar.test.js'
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in camel case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to 'fooBar.testUtils.js'
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in snake case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to 'foo_bar.js'
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in snake case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to 'foo_bar.test.js'
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in snake case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to 'foo_bar.test_utils.js'
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in kebab case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to 'foo-bar.js'
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in kebab case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to 'foo-bar.test.js'
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in kebab case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to 'foo-bar.test-utils.js'
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in pascal case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to 'FooBar.js'
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in pascal case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to 'FooBar.test.js'
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in pascal case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to 'FooBar.testUtils.js'
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in camel case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to '_fooBar.js'
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in camel case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to '___fooBar.js'
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in snake case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to '_foo_bar.js'
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in snake case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to '___foo_bar.js'
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in kebab case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to '_foo-bar.js'
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in kebab case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to '___foo-bar.js'
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in pascal case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to '_FooBar.js'
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in pascal case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to '___FooBar.js'
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in kebab case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to 'foo-bar.js'
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in camel case, or pascal case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to 'fooBar.js', or 'FooBar.js'
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in camel case, kebab case, or pascal case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to '_fooBar.js', '_foo-bar.js', or '_FooBar.js'
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in snake case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to '_foo_bar.js'
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in kebab case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to '[foo-bar].js'
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in kebab case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to '$foo-bar.js'
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in kebab case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to '$foo-bar.js'
+
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in camel case, kebab case, or pascal case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to '{fooBar}.js', '{foo-bar}.js', or '{fooBar}.js'

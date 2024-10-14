@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{path::Path, sync::Arc};
 
 use nonmax::NonMaxU32;
 use oxc_index::{Idx, IndexVec};
@@ -73,26 +73,22 @@ pub struct SourcemapBuilder {
     generated_column: u32,
 }
 
-impl Default for SourcemapBuilder {
-    fn default() -> Self {
+impl SourcemapBuilder {
+    pub fn new(path: &Path, source_text: &str) -> Self {
+        let mut sourcemap_builder = oxc_sourcemap::SourceMapBuilder::default();
+        let line_offset_tables = Self::generate_line_offset_tables(source_text);
+        let source_id =
+            sourcemap_builder.set_source_and_content(path.to_string_lossy().as_ref(), source_text);
         Self {
-            source_id: 0,
-            original_source: "".into(),
+            source_id,
+            original_source: Arc::from(source_text),
             last_generated_update: 0,
             last_position: None,
-            line_offset_tables: LineOffsetTables::default(),
-            sourcemap_builder: oxc_sourcemap::SourceMapBuilder::default(),
+            line_offset_tables,
+            sourcemap_builder,
             generated_line: 0,
             generated_column: 0,
         }
-    }
-}
-
-impl SourcemapBuilder {
-    pub fn with_name_and_source(&mut self, name: &str, source: &str) {
-        self.line_offset_tables = Self::generate_line_offset_tables(source);
-        self.source_id = self.sourcemap_builder.set_source_and_content(name, source);
-        self.original_source = source.into();
     }
 
     pub fn into_sourcemap(self) -> oxc_sourcemap::SourceMap {
@@ -392,8 +388,7 @@ mod test {
     }
 
     fn assert_mapping(source: &str, mappings: &[(u32, u32, u32)]) {
-        let mut builder = SourcemapBuilder::default();
-        builder.with_name_and_source("x.js", source);
+        let mut builder = SourcemapBuilder::new(Path::new("x.js"), source);
         for (position, expected_line, expected_col) in mappings.iter().copied() {
             let (line, col) = builder.search_original_line_and_column(position);
             assert_eq!(
@@ -407,8 +402,7 @@ mod test {
     #[test]
     fn add_source_mapping() {
         fn create_mappings(source: &str, line: u32, column: u32) {
-            let mut builder = SourcemapBuilder::default();
-            builder.with_name_and_source("x.js", source);
+            let mut builder = SourcemapBuilder::new(Path::new("x.js"), source);
             let output: Vec<u8> = source.as_bytes().into();
             for (i, _ch) in source.char_indices() {
                 #[allow(clippy::cast_possible_truncation)]
@@ -444,8 +438,7 @@ mod test {
     #[test]
     fn add_source_mapping_for_name() {
         let output = "ac".as_bytes();
-        let mut builder = SourcemapBuilder::default();
-        builder.with_name_and_source("x.js", "ab");
+        let mut builder = SourcemapBuilder::new(Path::new("x.js"), "ab");
         builder.add_source_mapping_for_name(output, Span::new(0, 1), "a");
         builder.add_source_mapping_for_name(output, Span::new(1, 2), "c");
         let sm = builder.into_sourcemap();
@@ -464,8 +457,7 @@ mod test {
     #[test]
     fn add_source_mapping_for_unordered_position() {
         let output = "".as_bytes();
-        let mut builder = SourcemapBuilder::default();
-        builder.with_name_and_source("x.js", "ab");
+        let mut builder = SourcemapBuilder::new(Path::new("x.js"), "ab");
         builder.add_source_mapping(output, 1, None);
         builder.add_source_mapping(output, 0, None);
         let sm = builder.into_sourcemap();

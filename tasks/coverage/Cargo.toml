@@ -25,6 +25,7 @@ doctest = false
 oxc = { workspace = true, features = ["full", "isolated_declarations", "serialize", "sourcemap"] }
 oxc_prettier = { workspace = true }
 oxc_tasks_common = { workspace = true }
+oxc_tasks_transform_checker = { workspace = true }
 
 console = { workspace = true }
 encoding_rs = { workspace = true }

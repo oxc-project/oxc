@@ -100,6 +100,18 @@ impl RuleCategory {
             Self::Nursery => "New lints that are still under development.",
         }
     }
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Correctness => "correctness",
+            Self::Suspicious => "suspicious",
+            Self::Pedantic => "pedantic",
+            Self::Perf => "perf",
+            Self::Style => "style",
+            Self::Restriction => "restriction",
+            Self::Nursery => "nursery",
+        }
+    }
 }
 
 impl TryFrom<&str> for RuleCategory {

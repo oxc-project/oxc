@@ -1,4 +1,5 @@
-use oxc_ast::{ast::*, syntax_directed_operations::BoundNames, AstBuilder, Visit, NONE};
+use oxc_ast::{ast::*, AstBuilder, Visit, NONE};
+use oxc_ecmascript::BoundNames;
 use oxc_span::{Atom, Span, SPAN};
 
 pub struct KeepVar<'a> {

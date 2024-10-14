@@ -1,5 +1,5 @@
 use super::ControlFlowGraphBuilder;
-use crate::{BasicBlockId, EdgeType};
+use crate::{BlockNodeId, EdgeType};
 
 bitflags::bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -15,9 +15,9 @@ bitflags::bitflags! {
 pub(super) struct Ctx<'a> {
     flags: CtxFlags,
     label: Option<&'a str>,
-    entries: Vec<(CtxFlags, BasicBlockId)>,
-    break_jmp: Option<BasicBlockId>,
-    continue_jmp: Option<BasicBlockId>,
+    entries: Vec<(CtxFlags, BlockNodeId)>,
+    break_jmp: Option<BlockNodeId>,
+    continue_jmp: Option<BlockNodeId>,
 }
 
 impl<'a> Ctx<'a> {
@@ -29,11 +29,11 @@ impl<'a> Ctx<'a> {
         self.label.as_ref().is_some_and(|it| *it == label)
     }
 
-    fn r#break(&mut self, entry: BasicBlockId) {
+    fn r#break(&mut self, entry: BlockNodeId) {
         self.entries.push((CtxFlags::BREAK, entry));
     }
 
-    fn r#continue(&mut self, entry: BasicBlockId) {
+    fn r#continue(&mut self, entry: BlockNodeId) {
         self.entries.push((CtxFlags::CONTINUE, entry));
     }
 }
@@ -41,19 +41,19 @@ impl<'a> Ctx<'a> {
 pub trait CtxCursor {
     #![allow(clippy::return_self_not_must_use)]
     /// Marks the break jump position in the current context.
-    fn mark_break(self, jmp_pos: BasicBlockId) -> Self;
+    fn mark_break(self, jmp_pos: BlockNodeId) -> Self;
     /// Marks the continue jump position in the current context.
-    fn mark_continue(self, jmp_pos: BasicBlockId) -> Self;
+    fn mark_continue(self, jmp_pos: BlockNodeId) -> Self;
     /// Creates a break entry in the current context.
-    fn r#break(self, bb: BasicBlockId) -> Self;
+    fn r#break(self, bb: BlockNodeId) -> Self;
     /// Creates a continue entry in the current context.
-    fn r#continue(self, bb: BasicBlockId) -> Self;
+    fn r#continue(self, bb: BlockNodeId) -> Self;
 }
 
 pub struct QueryCtx<'a, 'c>(&'c mut ControlFlowGraphBuilder<'a>, /* label */ Option<&'a str>);
 
 impl<'a, 'c> CtxCursor for QueryCtx<'a, 'c> {
-    fn mark_break(self, jmp_pos: BasicBlockId) -> Self {
+    fn mark_break(self, jmp_pos: BlockNodeId) -> Self {
         self.0.in_break_context(self.1, |ctx| {
             debug_assert!(ctx.break_jmp.is_none());
             ctx.break_jmp = Some(jmp_pos);
@@ -61,7 +61,7 @@ impl<'a, 'c> CtxCursor for QueryCtx<'a, 'c> {
         self
     }
 
-    fn mark_continue(self, jmp_pos: BasicBlockId) -> Self {
+    fn mark_continue(self, jmp_pos: BlockNodeId) -> Self {
         self.0.in_continue_context(self.1, |ctx| {
             debug_assert!(ctx.continue_jmp.is_none());
             ctx.continue_jmp = Some(jmp_pos);
@@ -69,14 +69,14 @@ impl<'a, 'c> CtxCursor for QueryCtx<'a, 'c> {
         self
     }
 
-    fn r#break(self, bb: BasicBlockId) -> Self {
+    fn r#break(self, bb: BlockNodeId) -> Self {
         self.0.in_break_context(self.1, |ctx| {
             ctx.r#break(bb);
         });
         self
     }
 
-    fn r#continue(self, bb: BasicBlockId) -> Self {
+    fn r#continue(self, bb: BlockNodeId) -> Self {
         self.0.in_continue_context(self.1, |ctx| {
             ctx.r#continue(bb);
         });
@@ -192,24 +192,24 @@ impl<'a, 'c> RefCtxCursor<'a, 'c> {
 }
 
 impl<'a, 'c> CtxCursor for RefCtxCursor<'a, 'c> {
-    fn mark_break(self, jmp_pos: BasicBlockId) -> Self {
+    fn mark_break(self, jmp_pos: BlockNodeId) -> Self {
         debug_assert!(self.0.break_jmp.is_none());
         self.0.break_jmp = Some(jmp_pos);
         self
     }
 
-    fn mark_continue(self, jmp_pos: BasicBlockId) -> Self {
+    fn mark_continue(self, jmp_pos: BlockNodeId) -> Self {
         debug_assert!(self.0.continue_jmp.is_none());
         self.0.continue_jmp = Some(jmp_pos);
         self
     }
 
-    fn r#break(self, bb: BasicBlockId) -> Self {
+    fn r#break(self, bb: BlockNodeId) -> Self {
         self.0.r#break(bb);
         self
     }
 
-    fn r#continue(self, bb: BasicBlockId) -> Self {
+    fn r#continue(self, bb: BlockNodeId) -> Self {
         self.0.r#continue(bb);
         self
     }

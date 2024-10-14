@@ -23,8 +23,7 @@ fn bench_semantic(criterion: &mut Criterion) {
                     // We return `error`s to be dropped outside of the measured section, as usually
                     // code would have no errors. One of our benchmarks `cal.com.tsx` has a lot of errors,
                     // but that's atypical, so don't want to include it in benchmark time.
-                    let ret = SemanticBuilder::new(source_text)
-                        .with_trivias(ret.trivias.clone())
+                    let ret = SemanticBuilder::new()
                         .with_build_jsdoc(true)
                         .build_module_record(Path::new(""), program)
                         .build(program);

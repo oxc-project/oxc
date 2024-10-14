@@ -1,0 +1,750 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:31]
+ 1 │ function foo1() { if (true) { return x; } else { return y; } }
+   ·                               ────┬────  ───┬──
+   ·                                   │         ╰── Making this `else` block unnecessary.
+   ·                                   ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:44]
+ 1 │ function foo2() { if (true) { var x = bar; return x; } else { var y = baz; return y; } }
+   ·                                            ────┬────  ───┬──
+   ·                                                │         ╰── Making this `else` block unnecessary.
+   ·                                                ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:29]
+ 1 │ function foo3() { if (true) return x; else return y; }
+   ·                             ────┬───────┬──
+   ·                                 │       ╰── Making this `else` block unnecessary.
+   ·                                 ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:42]
+ 1 │ function foo4() { if (true) { if (false) return x; else return y; } else { return z; } }
+   ·                                          ────┬────                 ───┬──
+   ·                                              │                        ╰── Making this `else` block unnecessary.
+   ·                                              ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:42]
+ 1 │ function foo4() { if (true) { if (false) return x; else return y; } else { return z; } }
+   ·                                          ────┬───────┬──
+   ·                                              │       ╰── Making this `else` block unnecessary.
+   ·                                              ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:54]
+ 1 │ function foo5() { if (true) { if (false) { if (true) return x; else { w = y; } } else { w = x; } } else { return z; } }
+   ·                                                      ────┬───────┬──
+   ·                                                          │       ╰── Making this `else` block unnecessary.
+   ·                                                          ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:54]
+ 1 │ function foo6() { if (true) { if (false) { if (true) return x; else return y; } } else { return z; } }
+   ·                                                      ────┬───────┬──
+   ·                                                          │       ╰── Making this `else` block unnecessary.
+   ·                                                          ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:81]
+ 1 │ function foo7() { if (true) { if (false) { if (true) return x; else return y; } return w; } else { return z; } }
+   ·                                                                                 ────┬────  ───┬──
+   ·                                                                                     │         ╰── Making this `else` block unnecessary.
+   ·                                                                                     ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:54]
+ 1 │ function foo7() { if (true) { if (false) { if (true) return x; else return y; } return w; } else { return z; } }
+   ·                                                      ────┬───────┬──
+   ·                                                          │       ╰── Making this `else` block unnecessary.
+   ·                                                          ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:54]
+ 1 │ function foo8() { if (true) { if (false) { if (true) return x; else return y; } else { w = x; } } else { return z; } }
+   ·                                                      ────┬────                 ───┬──
+   ·                                                          │                        ╰── Making this `else` block unnecessary.
+   ·                                                          ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:54]
+ 1 │ function foo8() { if (true) { if (false) { if (true) return x; else return y; } else { w = x; } } else { return z; } }
+   ·                                                      ────┬───────┬──
+   ·                                                          │       ╰── Making this `else` block unnecessary.
+   ·                                                          ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:56]
+ 1 │ function foo9() {if (x) { return true; } else if (y) { return true; } else { notAReturn(); } }
+   ·                                                        ──────┬─────  ───┬──
+   ·                                                              │          ╰── Making this `else` block unnecessary.
+   ·                                                              ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:28]
+ 1 │ function foo9a() {if (x) { return true; } else if (y) { return true; } else { notAReturn(); } }
+   ·                            ──────┬─────  ───┬──
+   ·                                  │          ╰── Making this `else` block unnecessary.
+   ·                                  ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:52]
+ 1 │ function foo9b() {if (x) { return true; } if (y) { return true; } else { notAReturn(); } }
+   ·                                                    ──────┬─────  ───┬──
+   ·                                                          │          ╰── Making this `else` block unnecessary.
+   ·                                                          ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:29]
+ 1 │ function foo10() { if (foo) return bar; else (foo).bar(); }
+   ·                             ─────┬────────┬──
+   ·                                  │        ╰── Making this `else` block unnecessary.
+   ·                                  ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:29]
+ 1 │ ╭─▶ function foo11() { if (foo) return bar 
+   · │                               ─────┬────
+   · │                                    ╰── This consequent block always returns,
+ 2 │ ├─▶             else { [1, 2, 3].map(foo) } }
+   · ╰──── Making this `else` block unnecessary.
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:29]
+ 1 │ ╭─▶ function foo12() { if (foo) return bar 
+   · │                               ─────┬────
+   · │                                    ╰── This consequent block always returns,
+ 2 │ ├─▶             else { baz() } 
+   · ╰──── Making this `else` block unnecessary.
+ 3 │                 [1, 2, 3].map(foo) }
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:29]
+ 1 │ ╭─▶ function foo13() { if (foo) return bar; 
+   · │                               ─────┬─────
+   · │                                    ╰── This consequent block always returns,
+ 2 │ ├─▶             else { [1, 2, 3].map(foo) } }
+   · ╰──── Making this `else` block unnecessary.
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:29]
+ 1 │ ╭─▶ function foo14() { if (foo) return bar 
+   · │                               ─────┬────
+   · │                                    ╰── This consequent block always returns,
+ 2 │ ├─▶             else { baz(); } 
+   · ╰──── Making this `else` block unnecessary.
+ 3 │                 [1, 2, 3].map(foo) }
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:29]
+ 1 │ function foo15() { if (foo) return bar; else { baz() } qaz() }
+   ·                             ─────┬────────┬──
+   ·                                  │        ╰── Making this `else` block unnecessary.
+   ·                                  ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:29]
+ 1 │ ╭─▶ function foo16() { if (foo) return bar 
+   · │                               ─────┬────
+   · │                                    ╰── This consequent block always returns,
+ 2 │ ├─▶             else { baz() } qaz() }
+   · ╰──── Making this `else` block unnecessary.
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:29]
+ 1 │ ╭─▶ function foo17() { if (foo) return bar 
+   · │                               ─────┬────
+   · │                                    ╰── This consequent block always returns,
+ 2 │ ├─▶             else { baz() } 
+   · ╰──── Making this `else` block unnecessary.
+ 3 │                 qaz() }
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:29]
+ 1 │ ╭─▶ function foo18() { if (foo) return function() {} 
+   · │                               ──────────┬─────────
+   · │                                         ╰── This consequent block always returns,
+ 2 │ ├─▶             else [1, 2, 3].map(bar) }
+   · ╰──── Making this `else` block unnecessary.
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:32]
+ 1 │ function foo19() { if (true) { return x; } else if (false) { return y; } }
+   ·                                ────┬────  ───┬──
+   ·                                    │         ╰── Making this `else` block unnecessary.
+   ·                                    ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:28]
+ 1 │ function foo20() {if (x) { return true; } else if (y) { notAReturn() } else { notAReturn(); } }
+   ·                            ──────┬─────  ───┬──
+   ·                                  │          ╰── Making this `else` block unnecessary.
+   ·                                  ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:43]
+ 1 │ function foo21() { var x = true; if (x) { return x; } else if (x === false) { return false; } }
+   ·                                           ────┬────  ───┬──
+   ·                                               │         ╰── Making this `else` block unnecessary.
+   ·                                               ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:36]
+ 1 │ function foo() { var a; if (bar) { return true; } else { var a; } }
+   ·                                    ──────┬─────  ───┬──
+   ·                                          │          ╰── Making this `else` block unnecessary.
+   ·                                          ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:47]
+ 1 │ function foo() { if (bar) { var a; if (baz) { return true; } else { var a; } } }
+   ·                                               ──────┬─────  ───┬──
+   ·                                                     │          ╰── Making this `else` block unnecessary.
+   ·                                                     ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:36]
+ 1 │ function foo() { var a; if (bar) { return true; } else { var a; } }
+   ·                                    ──────┬─────  ───┬──
+   ·                                          │          ╰── Making this `else` block unnecessary.
+   ·                                          ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:47]
+ 1 │ function foo() { if (bar) { var a; if (baz) { return true; } else { var a; } } }
+   ·                                               ──────┬─────  ───┬──
+   ·                                                     │          ╰── Making this `else` block unnecessary.
+   ·                                                     ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:36]
+ 1 │ function foo() { let a; if (bar) { return true; } else { let a; } }
+   ·                                    ──────┬─────  ───┬──
+   ·                                          │          ╰── Making this `else` block unnecessary.
+   ·                                          ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:39]
+ 1 │ class foo { bar() { let a; if (baz) { return true; } else { let a; } } }
+   ·                                       ──────┬─────  ───┬──
+   ·                                             │          ╰── Making this `else` block unnecessary.
+   ·                                             ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:47]
+ 1 │ function foo() { if (bar) { let a; if (baz) { return true; } else { let a; } } }
+   ·                                               ──────┬─────  ───┬──
+   ·                                                     │          ╰── Making this `else` block unnecessary.
+   ·                                                     ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:46]
+ 1 │ function foo() {let a; if (bar) { if (baz) { return true; } else { let a; } } }
+   ·                                              ──────┬─────  ───┬──
+   ·                                                    │          ╰── Making this `else` block unnecessary.
+   ·                                                    ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:42]
+ 1 │ function foo() { const a = 1; if (bar) { return true; } else { let a; } }
+   ·                                          ──────┬─────  ───┬──
+   ·                                                │          ╰── Making this `else` block unnecessary.
+   ·                                                ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:53]
+ 1 │ function foo() { if (bar) { const a = 1; if (baz) { return true; } else { let a; } } }
+   ·                                                     ──────┬─────  ───┬──
+   ·                                                           │          ╰── Making this `else` block unnecessary.
+   ·                                                           ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:36]
+ 1 │ function foo() { let a; if (bar) { return true; } else { const a = 1 } }
+   ·                                    ──────┬─────  ───┬──
+   ·                                          │          ╰── Making this `else` block unnecessary.
+   ·                                          ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:47]
+ 1 │ function foo() { if (bar) { let a; if (baz) { return true; } else { const a = 1; } } }
+   ·                                               ──────┬─────  ───┬──
+   ·                                                     │          ╰── Making this `else` block unnecessary.
+   ·                                                     ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:41]
+ 1 │ function foo() { class a {}; if (bar) { return true; } else { const a = 1; } }
+   ·                                         ──────┬─────  ───┬──
+   ·                                               │          ╰── Making this `else` block unnecessary.
+   ·                                               ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:52]
+ 1 │ function foo() { if (bar) { class a {}; if (baz) { return true; } else { const a = 1; } } }
+   ·                                                    ──────┬─────  ───┬──
+   ·                                                          │          ╰── Making this `else` block unnecessary.
+   ·                                                          ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:42]
+ 1 │ function foo() { const a = 1; if (bar) { return true; } else { class a {} } }
+   ·                                          ──────┬─────  ───┬──
+   ·                                                │          ╰── Making this `else` block unnecessary.
+   ·                                                ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:53]
+ 1 │ function foo() { if (bar) { const a = 1; if (baz) { return true; } else { class a {} } } }
+   ·                                                     ──────┬─────  ───┬──
+   ·                                                           │          ╰── Making this `else` block unnecessary.
+   ·                                                           ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:36]
+ 1 │ function foo() { var a; if (bar) { return true; } else { let a; } }
+   ·                                    ──────┬─────  ───┬──
+   ·                                          │          ╰── Making this `else` block unnecessary.
+   ·                                          ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:36]
+ 1 │ function foo() { if (bar) { var a; return true; } else { let a; } }
+   ·                                    ──────┬─────  ───┬──
+   ·                                          │          ╰── Making this `else` block unnecessary.
+   ·                                          ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:29]
+ 1 │ function foo() { if (bar) { return true; } else { let a; }  while (baz) { var a; } }
+   ·                             ──────┬─────  ───┬──
+   ·                                   │          ╰── Making this `else` block unnecessary.
+   ·                                   ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:30]
+ 1 │ function foo(a) { if (bar) { return true; } else { let a; } }
+   ·                              ──────┬─────  ───┬──
+   ·                                    │          ╰── Making this `else` block unnecessary.
+   ·                                    ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:34]
+ 1 │ function foo(a = 1) { if (bar) { return true; } else { let a; } }
+   ·                                  ──────┬─────  ───┬──
+   ·                                        │          ╰── Making this `else` block unnecessary.
+   ·                                        ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:37]
+ 1 │ function foo(a, b = a) { if (bar) { return true; } else { let a; }  if (bar) { return true; } else { let b; }}
+   ·                                     ──────┬─────  ───┬──
+   ·                                           │          ╰── Making this `else` block unnecessary.
+   ·                                           ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:80]
+ 1 │ function foo(a, b = a) { if (bar) { return true; } else { let a; }  if (bar) { return true; } else { let b; }}
+   ·                                                                                ──────┬─────  ───┬──
+   ·                                                                                      │          ╰── Making this `else` block unnecessary.
+   ·                                                                                      ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:36]
+ 1 │ function foo(...args) { if (bar) { return true; } else { let args; } }
+   ·                                    ──────┬─────  ───┬──
+   ·                                          │          ╰── Making this `else` block unnecessary.
+   ·                                          ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:48]
+ 1 │ function foo() { try {} catch (a) { if (bar) { return true; } else { let a; } } }
+   ·                                                ──────┬─────  ───┬──
+   ·                                                      │          ╰── Making this `else` block unnecessary.
+   ·                                                      ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:59]
+ 1 │ function foo() { try {} catch (a) { if (bar) { if (baz) { return true; } else { let a; } } } }
+   ·                                                           ──────┬─────  ───┬──
+   ·                                                                 │          ╰── Making this `else` block unnecessary.
+   ·                                                                 ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:59]
+ 1 │ function foo() { try {} catch ({bar, a = 1}) { if (baz) { return true; } else { let a; } } }
+   ·                                                           ──────┬─────  ───┬──
+   ·                                                                 │          ╰── Making this `else` block unnecessary.
+   ·                                                                 ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:29]
+ 1 │ function foo() { if (bar) { return true; } else { let arguments; } }
+   ·                             ──────┬─────  ───┬──
+   ·                                   │          ╰── Making this `else` block unnecessary.
+   ·                                   ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:29]
+ 1 │ function foo() { if (bar) { return true; } else { let arguments; } return arguments[0]; }
+   ·                             ──────┬─────  ───┬──
+   ·                                   │          ╰── Making this `else` block unnecessary.
+   ·                                   ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:29]
+ 1 │ function foo() { if (bar) { return true; } else { let arguments; } if (baz) { return arguments[0]; } }
+   ·                             ──────┬─────  ───┬──
+   ·                                   │          ╰── Making this `else` block unnecessary.
+   ·                                   ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:40]
+ 1 │ function foo() { if (bar) { if (baz) { return true; } else { let arguments; } } }
+   ·                                        ──────┬─────  ───┬──
+   ·                                              │          ╰── Making this `else` block unnecessary.
+   ·                                              ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:29]
+ 1 │ function foo() { if (bar) { return true; } else { let a; } a; }
+   ·                             ──────┬─────  ───┬──
+   ·                                   │          ╰── Making this `else` block unnecessary.
+   ·                                   ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:29]
+ 1 │ function foo() { if (bar) { return true; } else { let a; } if (baz) { a; } }
+   ·                             ──────┬─────  ───┬──
+   ·                                   │          ╰── Making this `else` block unnecessary.
+   ·                                   ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:40]
+ 1 │ function foo() { if (bar) { if (baz) { return true; } else { let a; } } a; }
+   ·                                        ──────┬─────  ───┬──
+   ·                                              │          ╰── Making this `else` block unnecessary.
+   ·                                              ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:40]
+ 1 │ function foo() { if (bar) { if (baz) { return true; } else { let a; } a; } }
+   ·                                        ──────┬─────  ───┬──
+   ·                                              │          ╰── Making this `else` block unnecessary.
+   ·                                              ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:40]
+ 1 │ function foo() { if (bar) { if (baz) { return true; } else { let a; } if (quux) { a; } } }
+   ·                                        ──────┬─────  ───┬──
+   ·                                              │          ╰── Making this `else` block unnecessary.
+   ·                                              ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:27]
+ 1 │ function a() { if (foo) { return true; } else { let a; } a(); }
+   ·                           ──────┬─────  ───┬──
+   ·                                 │          ╰── Making this `else` block unnecessary.
+   ·                                 ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:25]
+ 1 │ function a() { if (a) { return true; } else { let a; } }
+   ·                         ──────┬─────  ───┬──
+   ·                               │          ╰── Making this `else` block unnecessary.
+   ·                               ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:27]
+ 1 │ function a() { if (foo) { return a; } else { let a; } }
+   ·                           ────┬────  ───┬──
+   ·                               │         ╰── Making this `else` block unnecessary.
+   ·                               ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:29]
+ 1 │ function foo() { if (bar) { return true; } else { let a; } function baz() { a; } }
+   ·                             ──────┬─────  ───┬──
+   ·                                   │          ╰── Making this `else` block unnecessary.
+   ·                                   ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:40]
+ 1 │ function foo() { if (bar) { if (baz) { return true; } else { let a; } (() => a) } }
+   ·                                        ──────┬─────  ───┬──
+   ·                                              │          ╰── Making this `else` block unnecessary.
+   ·                                              ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:29]
+ 1 │ function foo() { if (bar) { return true; } else { let a; } var a; }
+   ·                             ──────┬─────  ───┬──
+   ·                                   │          ╰── Making this `else` block unnecessary.
+   ·                                   ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:40]
+ 1 │ function foo() { if (bar) { if (baz) { return true; } else { let a; } var a; } }
+   ·                                        ──────┬─────  ───┬──
+   ·                                              │          ╰── Making this `else` block unnecessary.
+   ·                                              ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:40]
+ 1 │ function foo() { if (bar) { if (baz) { return true; } else { let a; } var { a } = {}; } }
+   ·                                        ──────┬─────  ───┬──
+   ·                                              │          ╰── Making this `else` block unnecessary.
+   ·                                              ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:40]
+ 1 │ function foo() { if (bar) { if (baz) { return true; } else { let a; } if (quux) { var a; } } }
+   ·                                        ──────┬─────  ───┬──
+   ·                                              │          ╰── Making this `else` block unnecessary.
+   ·                                              ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:40]
+ 1 │ function foo() { if (bar) { if (baz) { return true; } else { let a; } } if (quux) { var a; } }
+   ·                                        ──────┬─────  ───┬──
+   ·                                              │          ╰── Making this `else` block unnecessary.
+   ·                                              ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:61]
+ 1 │ function foo() { if (quux) { var a; } if (bar) { if (baz) { return true; } else { let a; } } }
+   ·                                                             ──────┬─────  ───┬──
+   ·                                                                   │          ╰── Making this `else` block unnecessary.
+   ·                                                                   ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:29]
+ 1 │ function foo() { if (bar) { return true; } else { let a; } function a(){} }
+   ·                             ──────┬─────  ───┬──
+   ·                                   │          ╰── Making this `else` block unnecessary.
+   ·                                   ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:40]
+ 1 │ function foo() { if (baz) { if (bar) { return true; } else { let a; } function a(){} } }
+   ·                                        ──────┬─────  ───┬──
+   ·                                              │          ╰── Making this `else` block unnecessary.
+   ·                                              ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:40]
+ 1 │ function foo() { if (bar) { if (baz) { return true; } else { let a; } } if (quux) { function a(){}  } }
+   ·                                        ──────┬─────  ───┬──
+   ·                                              │          ╰── Making this `else` block unnecessary.
+   ·                                              ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:40]
+ 1 │ function foo() { if (bar) { if (baz) { return true; } else { let a; } } function a(){} }
+   ·                                        ──────┬─────  ───┬──
+   ·                                              │          ╰── Making this `else` block unnecessary.
+   ·                                              ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:36]
+ 1 │ function foo() { let a; if (bar) { return true; } else { function a(){} } }
+   ·                                    ──────┬─────  ───┬──
+   ·                                          │          ╰── Making this `else` block unnecessary.
+   ·                                          ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:36]
+ 1 │ function foo() { var a; if (bar) { return true; } else { function a(){} } }
+   ·                                    ──────┬─────  ───┬──
+   ·                                          │          ╰── Making this `else` block unnecessary.
+   ·                                          ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:29]
+ 1 │ function foo() { if (bar) { return true; } else function baz() {} };
+   ·                             ──────┬─────  ───┬──
+   ·                                   │          ╰── Making this `else` block unnecessary.
+   ·                                   ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:12]
+ 1 │ if (foo) { return true; } else { let a; }
+   ·            ──────┬─────  ───┬──
+   ·                  │          ╰── Making this `else` block unnecessary.
+   ·                  ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.
+
+  ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
+   ╭─[no_else_return.tsx:1:19]
+ 1 │ let a; if (foo) { return true; } else { let a; }
+   ·                   ──────┬─────  ───┬──
+   ·                         │          ╰── Making this `else` block unnecessary.
+   ·                         ╰── This consequent block always returns,
+   ╰────
+  help: Remove the `else` block, moving its contents outside of the `if` statement.

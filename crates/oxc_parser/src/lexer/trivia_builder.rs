@@ -1,5 +1,7 @@
-use oxc_ast::{Comment, CommentKind, CommentPosition, Trivias};
+use oxc_ast::ast::{Comment, CommentKind, CommentPosition};
 use oxc_span::Span;
+
+use super::{Kind, Token};
 
 #[derive(Debug)]
 pub struct TriviaBuilder {
@@ -8,7 +10,7 @@ pub struct TriviaBuilder {
     // filtered out at insertion time.
     pub(crate) comments: Vec<Comment>,
 
-    irregular_whitespaces: Vec<Span>,
+    pub(crate) irregular_whitespaces: Vec<Span>,
 
     // states
     /// index of processed comments
@@ -16,19 +18,24 @@ pub struct TriviaBuilder {
 
     /// Saw a newline before this position
     saw_newline: bool,
+
+    /// Previous token kind, used to indicates comments are trailing from what kind
+    previous_kind: Kind,
 }
 
 impl Default for TriviaBuilder {
     fn default() -> Self {
-        Self { comments: vec![], irregular_whitespaces: vec![], processed: 0, saw_newline: true }
+        Self {
+            comments: vec![],
+            irregular_whitespaces: vec![],
+            processed: 0,
+            saw_newline: true,
+            previous_kind: Kind::Undetermined,
+        }
     }
 }
 
 impl TriviaBuilder {
-    pub fn build(self) -> Trivias {
-        Trivias::new(self.comments.into_boxed_slice(), self.irregular_whitespaces)
-    }
-
     pub fn add_irregular_whitespace(&mut self, start: u32, end: u32) {
         self.irregular_whitespaces.push(Span::new(start, end));
     }
@@ -57,13 +64,14 @@ impl TriviaBuilder {
         self.saw_newline = true;
     }
 
-    pub fn handle_token(&mut self, token_start: u32) {
+    pub fn handle_token(&mut self, token: Token) {
         let len = self.comments.len();
+        self.previous_kind = token.kind;
         if self.processed < len {
             // All unprocessed preceding comments are leading comments attached to this token start.
             for comment in &mut self.comments[self.processed..] {
                 comment.position = CommentPosition::Leading;
-                comment.attached_to = token_start;
+                comment.attached_to = token.start;
             }
             self.processed = len;
         }
@@ -85,8 +93,8 @@ impl TriviaBuilder {
         if comment.is_line() {
             // A line comment is always followed by a newline. This is never set in `handle_newline`.
             comment.followed_by_newline = true;
-            // A line comment is trailing when it is no preceded by a newline.
-            if !self.saw_newline {
+            // A line comment is trailing when it is no preceded by a newline and it is not after `=`
+            if !self.saw_newline && self.previous_kind != Kind::Eq {
                 self.processed = self.comments.len() + 1; // +1 to include this comment.
             }
             self.saw_newline = true;
@@ -107,7 +115,7 @@ mod test {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
-        ret.trivias.comments().copied().collect::<Vec<_>>()
+        ret.program.comments.iter().copied().collect::<Vec<_>>()
     }
 
     #[test]
@@ -231,6 +239,37 @@ token /* Trailing 1 */
                 position: CommentPosition::Leading,
                 attached_to: 30,
                 preceded_by_newline: true,
+                followed_by_newline: true,
+            },
+        ];
+        assert_eq!(comments, expected);
+    }
+
+    #[test]
+    fn leading_comments_after_eq() {
+        let source_text = "
+            const v1 = // Leading comment 1
+            foo();
+            function foo(param =// Leading comment 2
+            new Foo()
+            ) {}
+        ";
+        let comments = get_comments(source_text);
+        let expected = vec![
+            Comment {
+                span: Span::new(26, 44),
+                kind: CommentKind::Line,
+                position: CommentPosition::Leading,
+                attached_to: 57,
+                preceded_by_newline: false,
+                followed_by_newline: true,
+            },
+            Comment {
+                span: Span::new(98, 116),
+                kind: CommentKind::Line,
+                position: CommentPosition::Leading,
+                attached_to: 129,
+                preceded_by_newline: false,
                 followed_by_newline: true,
             },
         ];

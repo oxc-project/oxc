@@ -33,21 +33,6 @@ impl From<i8> for Tri {
 }
 
 impl Tri {
-    pub fn is_true(self) -> bool {
-        self == Tri::True
-    }
-
-    pub fn map<U, F>(self, f: F) -> Option<U>
-    where
-        F: FnOnce(Tri) -> U,
-    {
-        match self {
-            Self::True => Some(f(Tri::True)),
-            Self::False => Some(f(Tri::False)),
-            Self::Unknown => None,
-        }
-    }
-
     pub fn not(self) -> Self {
         match self {
             Self::True => Self::False,

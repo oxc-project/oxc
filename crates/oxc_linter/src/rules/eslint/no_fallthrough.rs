@@ -11,7 +11,7 @@ use oxc_cfg::{
         visit::{neighbors_filtered_by_edge_weight, EdgeRef},
         Direction,
     },
-    BasicBlockId, EdgeType, ErrorEdgeKind, InstructionKind,
+    BlockNodeId, EdgeType, ErrorEdgeKind, InstructionKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -274,7 +274,7 @@ impl Rule for NoFallthrough {
             return;
         };
 
-        let fallthroughs: FxHashSet<BasicBlockId> = neighbors_filtered_by_edge_weight(
+        let fallthroughs: FxHashSet<BlockNodeId> = neighbors_filtered_by_edge_weight(
             graph,
             switch_id,
             &|e| match e {
@@ -283,7 +283,7 @@ impl Rule for NoFallthrough {
                 }
                 _ => Some(None),
             },
-            &mut |node, last_cond: Option<BasicBlockId>| {
+            &mut |node, last_cond: Option<BlockNodeId>| {
                 let node = *node;
 
                 if node == switch_id {
@@ -295,7 +295,7 @@ impl Rule for NoFallthrough {
                 if tests.contains_key(&node) {
                     return (last_cond, true);
                 }
-                if cfg.basic_block(node).unreachable {
+                if cfg.basic_block(node).is_unreachable() {
                     return (None, false);
                 }
 
@@ -381,7 +381,6 @@ impl NoFallthrough {
         let semantic = ctx.semantic();
         let is_fallthrough_comment_in_range = |range: Range<u32>| {
             let comment = semantic
-                .trivias()
                 .comments_range(range)
                 .map(|comment| {
                     &semantic.source_text()[comment.span.start as usize..comment.span.end as usize]
@@ -448,10 +447,10 @@ fn get_switch_semantic_cases(
     node: &AstNode,
     switch: &SwitchStatement,
 ) -> (
-    Vec<BasicBlockId>,
-    FxHashMap<BasicBlockId, /* is_empty */ bool>,
-    /* default */ Option<BasicBlockId>,
-    /* exit */ Option<BasicBlockId>,
+    Vec<BlockNodeId>,
+    FxHashMap<BlockNodeId, /* is_empty */ bool>,
+    /* default */ Option<BlockNodeId>,
+    /* exit */ Option<BlockNodeId>,
 ) {
     let cfg = ctx.cfg();
     let graph = cfg.graph();

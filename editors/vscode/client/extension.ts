@@ -1,3 +1,5 @@
+import { promises as fsPromises } from 'node:fs';
+
 import {
   commands,
   ConfigurationTarget,
@@ -90,10 +92,47 @@ export async function activate(context: ExtensionContext) {
   const outputChannel = window.createOutputChannel(outputChannelName);
   const traceOutputChannel = window.createOutputChannel(traceOutputChannelName);
 
-  const ext = process.platform === 'win32' ? '.exe' : '';
-  // NOTE: The `./target/release` path is aligned with the path defined in .github/workflows/release_vscode.yml
-  const command = process.env.SERVER_PATH_DEV ??
-    join(context.extensionPath, `./target/release/oxc_language_server${ext}`);
+  async function findBinary(): Promise<string> {
+    const cfg = workspace.getConfiguration('oxc');
+
+    let bin = cfg.get<string>('binPath', '');
+    if (bin) {
+      try {
+        await fsPromises.access(bin);
+        return bin;
+      } catch {}
+    }
+
+    const workspaceFolders = workspace.workspaceFolders;
+    const isWindows = process.platform === 'win32';
+
+    if (workspaceFolders?.length && !isWindows) {
+      try {
+        return await Promise.any(
+          workspaceFolders.map(async (folder) => {
+            const binPath = join(
+              folder.uri.fsPath,
+              'node_modules',
+              '.bin',
+              'oxc_language_server',
+            );
+
+            await fsPromises.access(binPath);
+            return binPath;
+          }),
+        );
+      } catch {}
+    }
+
+    const ext = isWindows ? '.exe' : '';
+    // NOTE: The `./target/release` path is aligned with the path defined in .github/workflows/release_vscode.yml
+    return (
+      process.env.SERVER_PATH_DEV ??
+        join(context.extensionPath, `./target/release/oxc_language_server${ext}`)
+    );
+  }
+
+  const command = await findBinary();
   const run: Executable = {
     command: command!,
     options: {
@@ -144,6 +183,13 @@ export async function activate(context: ExtensionContext) {
     serverOptions,
     clientOptions,
   );
+
+  workspace.onDidDeleteFiles((event) => {
+    event.files.forEach((fileUri) => {
+      client.diagnostics?.delete(fileUri);
+    });
+  });
+
   workspace.onDidChangeConfiguration((e) => {
     let isAffected = e.affectsConfiguration('oxc_language_server');
     if (!isAffected) {

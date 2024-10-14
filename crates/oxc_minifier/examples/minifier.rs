@@ -47,5 +47,5 @@ fn minify(
     let mut program = ret.program;
     let options = MinifierOptions { mangle, compress: CompressOptions::default() };
     let ret = Minifier::new(options).build(allocator, &mut program);
-    CodeGenerator::new().with_mangler(ret.mangler).build(&program).source_text
+    CodeGenerator::new().with_mangler(ret.mangler).build(&program).code
 }

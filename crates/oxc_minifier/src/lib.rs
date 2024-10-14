@@ -1,4 +1,4 @@
-#![allow(clippy::wildcard_imports, clippy::new_without_default, clippy::unused_self)]
+#![allow(clippy::wildcard_imports)]
 
 //! ECMAScript Minifier
 
@@ -7,9 +7,8 @@ mod compressor;
 mod keep_var;
 mod node_util;
 mod options;
-mod plugins;
 mod tri;
-mod ty;
+mod value_type;
 
 #[cfg(test)]
 mod tester;
@@ -18,9 +17,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 use oxc_mangler::Mangler;
 
-pub use crate::{
-    ast_passes::CompressorPass, compressor::Compressor, options::CompressOptions, plugins::*,
-};
+pub use crate::{ast_passes::CompressorPass, compressor::Compressor, options::CompressOptions};
 
 #[derive(Debug, Clone, Copy)]
 pub struct MinifierOptions {

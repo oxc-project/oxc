@@ -1,6 +1,5 @@
 mod ast_passes;
 mod mangler;
-mod plugins;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{CodeGenerator, CodegenOptions};
@@ -25,5 +24,5 @@ fn run(source_text: &str, source_type: SourceType, options: Option<CompressOptio
     CodeGenerator::new()
         .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
         .build(program)
-        .source_text
+        .code
 }

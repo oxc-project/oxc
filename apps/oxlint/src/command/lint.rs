@@ -1,7 +1,7 @@
 use std::{path::PathBuf, str::FromStr};
 
 use bpaf::Bpaf;
-use oxc_linter::{AllowWarnDeny, FixKind};
+use oxc_linter::{AllowWarnDeny, FixKind, LintPlugins};
 
 use super::{
     expand_glob,
@@ -211,64 +211,203 @@ impl FromStr for OutputFormat {
 
 /// Enable Plugins
 #[allow(clippy::struct_field_names)]
-#[derive(Debug, Clone, Bpaf)]
+#[derive(Debug, Default, Clone, Bpaf)]
 pub struct EnablePlugins {
     /// Disable react plugin, which is turned on by default
-    #[bpaf(long("disable-react-plugin"), flag(false, true), hide_usage)]
-    pub react_plugin: bool,
+    #[bpaf(
+        long("disable-react-plugin"),
+        flag(OverrideToggle::Disable, OverrideToggle::NotSet),
+        hide_usage
+    )]
+    pub react_plugin: OverrideToggle,
 
     /// Disable unicorn plugin, which is turned on by default
-    #[bpaf(long("disable-unicorn-plugin"), flag(false, true), hide_usage)]
-    pub unicorn_plugin: bool,
+    #[bpaf(
+        long("disable-unicorn-plugin"),
+        flag(OverrideToggle::Disable, OverrideToggle::NotSet),
+        hide_usage
+    )]
+    pub unicorn_plugin: OverrideToggle,
 
     /// Disable oxc unique rules, which is turned on by default
-    #[bpaf(long("disable-oxc-plugin"), flag(false, true), hide_usage)]
-    pub oxc_plugin: bool,
+    #[bpaf(
+        long("disable-oxc-plugin"),
+        flag(OverrideToggle::Disable, OverrideToggle::NotSet),
+        hide_usage
+    )]
+    pub oxc_plugin: OverrideToggle,
 
     /// Disable TypeScript plugin, which is turned on by default
-    #[bpaf(long("disable-typescript-plugin"), flag(false, true), hide_usage)]
-    pub typescript_plugin: bool,
+    #[bpaf(
+        long("disable-typescript-plugin"),
+        flag(OverrideToggle::Disable, OverrideToggle::NotSet),
+        hide_usage
+    )]
+    pub typescript_plugin: OverrideToggle,
 
     /// Enable the experimental import plugin and detect ESM problems.
     /// It is recommended to use along side with the `--tsconfig` option.
-    #[bpaf(switch, hide_usage)]
-    pub import_plugin: bool,
+    #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
+    pub import_plugin: OverrideToggle,
 
     /// Enable the experimental jsdoc plugin and detect JSDoc problems
-    #[bpaf(switch, hide_usage)]
-    pub jsdoc_plugin: bool,
+    #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
+    pub jsdoc_plugin: OverrideToggle,
 
     /// Enable the Jest plugin and detect test problems
-    #[bpaf(switch, hide_usage)]
-    pub jest_plugin: bool,
+    #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
+    pub jest_plugin: OverrideToggle,
 
     /// Enable the Vitest plugin and detect test problems
-    #[bpaf(switch, hide_usage)]
-    pub vitest_plugin: bool,
+    #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
+    pub vitest_plugin: OverrideToggle,
 
     /// Enable the JSX-a11y plugin and detect accessibility problems
-    #[bpaf(switch, hide_usage)]
-    pub jsx_a11y_plugin: bool,
+    #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
+    pub jsx_a11y_plugin: OverrideToggle,
 
     /// Enable the Next.js plugin and detect Next.js problems
-    #[bpaf(switch, hide_usage)]
-    pub nextjs_plugin: bool,
+    #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
+    pub nextjs_plugin: OverrideToggle,
 
     /// Enable the React performance plugin and detect rendering performance problems
-    #[bpaf(switch, hide_usage)]
-    pub react_perf_plugin: bool,
+    #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
+    pub react_perf_plugin: OverrideToggle,
 
     /// Enable the promise plugin and detect promise usage problems
-    #[bpaf(switch, hide_usage)]
-    pub promise_plugin: bool,
+    #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
+    pub promise_plugin: OverrideToggle,
 
     /// Enable the node plugin and detect node usage problems
-    #[bpaf(switch, hide_usage)]
-    pub node_plugin: bool,
+    #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
+    pub node_plugin: OverrideToggle,
 
     /// Enable the security plugin and detect security problems
-    #[bpaf(switch, hide_usage)]
-    pub security_plugin: bool,
+    #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
+    pub security_plugin: OverrideToggle,
+}
+
+/// Enables or disables a boolean option, or leaves it unset.
+///
+/// We want CLI flags to modify whatever's set in the user's config file, but we don't want them
+/// changing default behavior if they're not explicitly passed by the user. This scheme is a bit
+/// convoluted, but needed due to architectural constraints imposed by `bpaf`.
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(clippy::enum_variant_names)]
+pub enum OverrideToggle {
+    /// Override the option to enabled
+    Enable,
+    /// Override the option to disabled
+    Disable,
+    /// Do not override.
+    #[default]
+    NotSet,
+}
+
+impl From<Option<bool>> for OverrideToggle {
+    fn from(value: Option<bool>) -> Self {
+        match value {
+            Some(true) => Self::Enable,
+            Some(false) => Self::Disable,
+            None => Self::NotSet,
+        }
+    }
+}
+
+impl From<OverrideToggle> for Option<bool> {
+    fn from(value: OverrideToggle) -> Self {
+        match value {
+            OverrideToggle::Enable => Some(true),
+            OverrideToggle::Disable => Some(false),
+            OverrideToggle::NotSet => None,
+        }
+    }
+}
+
+impl OverrideToggle {
+    #[inline]
+    pub fn is_enabled(self) -> bool {
+        matches!(self, Self::Enable)
+    }
+
+    #[inline]
+    pub fn is_not_set(self) -> bool {
+        matches!(self, Self::NotSet)
+    }
+
+    pub fn inspect<F>(self, f: F)
+    where
+        F: FnOnce(bool),
+    {
+        if let Some(v) = self.into() {
+            f(v);
+        }
+    }
+}
+
+impl EnablePlugins {
+    pub fn apply_overrides(&self, plugins: &mut LintPlugins) {
+        self.react_plugin.inspect(|yes| plugins.set(LintPlugins::REACT, yes));
+        self.unicorn_plugin.inspect(|yes| plugins.set(LintPlugins::UNICORN, yes));
+        self.oxc_plugin.inspect(|yes| plugins.set(LintPlugins::OXC, yes));
+        self.typescript_plugin.inspect(|yes| plugins.set(LintPlugins::TYPESCRIPT, yes));
+        self.import_plugin.inspect(|yes| plugins.set(LintPlugins::IMPORT, yes));
+        self.jsdoc_plugin.inspect(|yes| plugins.set(LintPlugins::JSDOC, yes));
+        self.jest_plugin.inspect(|yes| plugins.set(LintPlugins::JEST, yes));
+        self.vitest_plugin.inspect(|yes| plugins.set(LintPlugins::VITEST, yes));
+        self.jsx_a11y_plugin.inspect(|yes| plugins.set(LintPlugins::JSX_A11Y, yes));
+        self.nextjs_plugin.inspect(|yes| plugins.set(LintPlugins::NEXTJS, yes));
+        self.react_perf_plugin.inspect(|yes| plugins.set(LintPlugins::REACT_PERF, yes));
+        self.promise_plugin.inspect(|yes| plugins.set(LintPlugins::PROMISE, yes));
+        self.node_plugin.inspect(|yes| plugins.set(LintPlugins::NODE, yes));
+        self.security_plugin.inspect(|yes| plugins.set(LintPlugins::SECURITY, yes));
+
+        // Without this, jest plugins adapted to vitest will not be enabled.
+        if self.vitest_plugin.is_enabled() && self.jest_plugin.is_not_set() {
+            plugins.set(LintPlugins::JEST, true);
+        }
+    }
+}
+
+#[cfg(test)]
+mod plugins {
+    use super::{EnablePlugins, OverrideToggle};
+    use oxc_linter::LintPlugins;
+
+    #[test]
+    fn test_override_default() {
+        let mut plugins = LintPlugins::default();
+        let enable = EnablePlugins::default();
+
+        enable.apply_overrides(&mut plugins);
+        assert_eq!(plugins, LintPlugins::default());
+    }
+
+    #[test]
+    fn test_overrides() {
+        let mut plugins = LintPlugins::default();
+        let enable = EnablePlugins {
+            react_plugin: OverrideToggle::Enable,
+            unicorn_plugin: OverrideToggle::Disable,
+            ..EnablePlugins::default()
+        };
+        let expected =
+            LintPlugins::default().union(LintPlugins::REACT).difference(LintPlugins::UNICORN);
+
+        enable.apply_overrides(&mut plugins);
+        assert_eq!(plugins, expected);
+    }
+
+    #[test]
+    fn test_override_vitest() {
+        let mut plugins = LintPlugins::default();
+        let enable =
+            EnablePlugins { vitest_plugin: OverrideToggle::Enable, ..EnablePlugins::default() };
+        let expected = LintPlugins::default() | LintPlugins::VITEST | LintPlugins::JEST;
+
+        enable.apply_overrides(&mut plugins);
+        assert_eq!(plugins, expected);
+    }
 }
 
 #[cfg(test)]

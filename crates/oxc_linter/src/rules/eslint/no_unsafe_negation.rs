@@ -83,15 +83,15 @@ impl NoUnsafeNegation {
             // modify `!a instance of B` to `!(a instanceof B)`
             let modified_code = {
                 let mut codegen = fixer.codegen();
-                codegen.print_char(b'!');
+                codegen.print_ascii_byte(b'!');
                 let Expression::UnaryExpression(left) = &expr.left else { unreachable!() };
-                codegen.print_char(b'(');
+                codegen.print_ascii_byte(b'(');
                 codegen.print_expression(&left.argument);
-                codegen.print_char(b' ');
+                codegen.print_ascii_byte(b' ');
                 codegen.print_str(expr.operator.as_str());
-                codegen.print_char(b' ');
+                codegen.print_ascii_byte(b' ');
                 codegen.print_expression(&expr.right);
-                codegen.print_char(b')');
+                codegen.print_ascii_byte(b')');
                 codegen.into_source_text()
             };
             fixer.replace(expr.span, modified_code)
@@ -140,5 +140,22 @@ fn test() {
         ("! a <= b", Some(serde_json::json!([{ "enforceForOrderingRelations": true }]))),
     ];
 
-    Tester::new(NoUnsafeNegation::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("!a in b", "!(a in b)"),
+        ("(!a in b)", "(!(a in b))"),
+        ("!(a) in b", "!(a in b)"),
+        ("!a instanceof b", "!(a instanceof b)"),
+        ("(!a instanceof b)", "(!(a instanceof b))"),
+        ("!(a) instanceof b", "!(a instanceof b)"),
+        // FIXME: I think these should be failing. I encountered these while
+        // making sure all fix-reporting rules have fix test cases. Debugging +
+        // fixing this is out of scope for this PR.
+        // ("if (! a < b) {}", "if (!(a < b)) {}"),
+        // ("while (! a > b) {}", "while (!(a > b)) {}"),
+        // ("foo = ! a <= b;", "foo = !(a <= b);"),
+        // ("foo = ! a >= b;", "foo = !(a >= b);"),
+        // ("!a <= b", "!(a <= b)"),
+    ];
+
+    Tester::new(NoUnsafeNegation::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

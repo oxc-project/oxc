@@ -3,6 +3,7 @@ use oxc_ast::{
     AstKind,
 };
 use oxc_cfg::{
+    dot::{Attr, Attrs},
     graph::{
         dot::{Config, Dot},
         visit::EdgeRef,
@@ -69,14 +70,30 @@ impl DebugDot for ControlFlowGraph {
                     if !ctx.verbose && matches!(weight, EdgeType::Error(ErrorEdgeKind::Implicit)) {
                         return String::new();
                     }
-                    let label = format!("label = \"{weight:?}\" ");
+                    let mut attrs = Attrs::from_iter([("label", format!("{weight:?}"))]);
                     if matches!(weight, EdgeType::Unreachable)
-                        || self.basic_block(edge.source()).unreachable
+                        || self.basic_block(edge.source()).is_unreachable()
                     {
-                        format!("{label}, style = \"dotted\" ")
-                    } else {
-                        label
+                        attrs += ("style", "dotted");
                     }
+
+                    match weight {
+                        EdgeType::Error(kind) => {
+                            attrs += ("color", Attr::ident("red"));
+                            if matches!(kind, ErrorEdgeKind::Implicit) {
+                                attrs += ("style", Attr::ident("dashed"));
+                            }
+                        }
+                        EdgeType::Backedge => {
+                            attrs += ("color", Attr::ident("grey"));
+                        }
+                        EdgeType::Jump => {
+                            attrs += ("color", Attr::ident("green"));
+                        }
+                        _ => {}
+                    }
+
+                    format!("{attrs:?}")
                 },
                 &|_graph, node| {
                     let basic_block_index = *node.1;

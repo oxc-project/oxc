@@ -33,7 +33,6 @@ mod ast_builder_impl;
 mod ast_impl;
 mod ast_kind_impl;
 pub mod precedence;
-pub mod syntax_directed_operations;
 mod trivia;
 
 mod generated {
@@ -58,10 +57,11 @@ pub use generated::{ast_builder, ast_kind};
 pub use num_bigint::BigUint;
 
 pub use crate::{
+    ast::comment::{Comment, CommentKind, CommentPosition},
     ast_builder::AstBuilder,
     ast_builder_impl::NONE,
     ast_kind::{AstKind, AstType},
-    trivia::{Comment, CommentKind, CommentPosition, SortedComments, Trivias},
+    trivia::{comments_range, has_comments_between, CommentsRange},
     visit::{Visit, VisitMut},
 };
 

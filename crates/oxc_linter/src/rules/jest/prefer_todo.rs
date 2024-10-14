@@ -163,17 +163,17 @@ fn build_code<'a>(fixer: RuleFixer<'_, 'a>, expr: &CallExpression<'a>) -> RuleFi
 
     if let Argument::StringLiteral(ident) = &expr.arguments[0] {
         // Todo: this punctuation should read from the config
-        formatter.print_char(b'\'');
+        formatter.print_ascii_byte(b'\'');
         formatter.print_str(ident.value.as_str());
-        formatter.print_char(b'\'');
-        formatter.print_char(b')');
+        formatter.print_ascii_byte(b'\'');
+        formatter.print_ascii_byte(b')');
     } else if let Argument::TemplateLiteral(temp) = &expr.arguments[0] {
-        formatter.print_char(b'`');
+        formatter.print_ascii_byte(b'`');
         for q in &temp.quasis {
             formatter.print_str(q.value.raw.as_str());
         }
-        formatter.print_char(b'`');
-        formatter.print_char(b')');
+        formatter.print_ascii_byte(b'`');
+        formatter.print_ascii_byte(b')');
     }
 
     fixer.replace(expr.span, formatter)

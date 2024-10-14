@@ -7,7 +7,7 @@ pub mod ts;
 pub mod unit;
 
 use oxc_allocator::Allocator;
-use oxc_codegen::{CodeGenerator, CodegenOptions, CommentOptions};
+use oxc_codegen::{CodeGenerator, CodegenOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
@@ -17,13 +17,8 @@ pub fn codegen(source_text: &str) -> String {
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     CodeGenerator::new()
         .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
-        .enable_comment(
-            source_text,
-            ret.trivias,
-            CommentOptions { preserve_annotate_comments: true },
-        )
         .build(&ret.program)
-        .source_text
+        .code
 }
 
 pub fn snapshot(name: &str, cases: &[&str]) {

@@ -389,7 +389,7 @@ impl TestRunner {
         let ret = Parser::new(&allocator, source_text, source_type)
             .with_options(ParseOptions { preserve_parens: false, ..ParseOptions::default() })
             .parse();
-        Prettier::new(&allocator, source_text, ret.trivias, prettier_options).build(&ret.program)
+        Prettier::new(&allocator, prettier_options).build(&ret.program)
     }
 }
 

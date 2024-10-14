@@ -1,9 +1,9 @@
 {
   "name": "oxc-vscode",
   "description": "oxc vscode extension",
-  "packageManager": "pnpm@9.10.0",
+  "packageManager": "pnpm@9.12.1",
   "license": "MIT",
-  "version": "0.9.9",
+  "version": "0.9.10",
   "icon": "icon.png",
   "publisher": "oxc",
   "displayName": "Oxc",
@@ -136,17 +136,15 @@
     "package": "vsce package --no-dependencies -o oxc_language_server.vsix",
     "install-extension": "code --install-extension oxc_language_server.vsix --force",
     "server:build:debug": "cargo build -p oxc_language_server",
-    "server:build:release": "cross-env CARGO_TARGET_DIR=./target cargo build -p oxc_language_server --release",
-    "fmt:js": "prettier --write ./**/*.{js,ts,json}"
+    "server:build:release": "cross-env CARGO_TARGET_DIR=./target cargo build -p oxc_language_server --release"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "@types/vscode": "1.80.0",
     "@vscode/vsce": "^3.0.0",
     "cross-env": "^7.0.3",
-    "esbuild": "^0.23.0",
-    "ovsx": "^0.9.1",
-    "prettier": "^3.3.1",
+    "esbuild": "^0.24.0",
+    "ovsx": "^0.10.0",
     "typescript": "^5.4.5"
   },
   "dependencies": {

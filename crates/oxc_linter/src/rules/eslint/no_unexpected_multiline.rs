@@ -387,5 +387,8 @@ fn test() {
         "class C { field1 = function() {}\n[field2]; }", // { "ecmaVersion": 2022 }
     ];
 
-    Tester::new(NoUnexpectedMultiline::NAME, pass, fail).test_and_snapshot();
+    // TODO: add more fixer tests
+    let fix = vec![("var a = b\n(x || y).doSomething()", "var a = b\n;(x || y).doSomething()")];
+
+    Tester::new(NoUnexpectedMultiline::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

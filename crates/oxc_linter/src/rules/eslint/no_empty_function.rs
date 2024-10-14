@@ -65,7 +65,7 @@ impl Rule for NoEmptyFunction {
         let AstKind::FunctionBody(fb) = node.kind() else {
             return;
         };
-        if fb.is_empty() && !ctx.semantic().trivias().has_comments_between(fb.span) {
+        if fb.is_empty() && !ctx.semantic().has_comments_between(fb.span) {
             let (kind, fn_name) = get_function_name_and_kind(node, ctx);
             ctx.diagnostic(no_empty_function_diagnostic(fb.span, kind, fn_name));
         }

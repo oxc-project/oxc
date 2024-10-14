@@ -5,12 +5,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var _hooks = require("./hooks");
 var _s = $RefreshSig$();
 function App() {
-	_s();
-	const bar = (0, _hooks.useFancyState)();
-	return _jsx("h1", { children: bar });
+  _s();
+  const bar = (0, _hooks.useFancyState)();
+  return _jsx("h1", { children: bar });
 }
 _s(App, "useFancyState{bar}", false, function() {
-	return [_hooks.useFancyState];
+  return [_hooks.useFancyState];
 });
 _c = App;
 var _c;

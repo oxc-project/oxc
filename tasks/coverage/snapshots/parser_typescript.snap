@@ -1,9 +1,9 @@
 commit: a709f989
 
 parser_typescript Summary:
-AST Parsed     : 6469/6479 (99.85%)
-Positive Passed: 6458/6479 (99.68%)
-Negative Passed: 1234/5715 (21.59%)
+AST Parsed     : 6470/6479 (99.86%)
+Positive Passed: 6459/6479 (99.69%)
+Negative Passed: 1236/5715 (21.63%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration10.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration11.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration13.ts
@@ -1906,7 +1906,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/statics.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/staticsNotInScopeInClodule.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/strictFunctionTypesErrors.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/strictModeInConstructor.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/strictModeReservedWordInModuleDeclaration.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/strictNullEmptyDestructuring.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/strictNullNotNullIndexTypeNoLib.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/strictOptionalProperties3.ts
@@ -3131,7 +3130,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressio
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeSatisfaction/typeSatisfactionWithDefaultExport.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeSatisfaction/typeSatisfaction_contextualTyping2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeSatisfaction/typeSatisfaction_errorLocations1.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeSatisfaction/typeSatisfaction_js.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeSatisfaction/typeSatisfaction_optionalMemberConformance.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeSatisfaction/typeSatisfaction_propNameConstraining.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeSatisfaction/typeSatisfaction_propertyNameFulfillment.ts
@@ -4666,16 +4664,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es2019/import
  3 │ export let z = import.import.import.malkovich;
    ·                ─────────────
    ╰────
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es2022/arbitraryModuleNamespaceIdentifiers/arbitraryModuleNamespaceIdentifiers_module.ts
-
-  × Expected `,` but found `string`
-    ╭─[typescript/tests/cases/conformance/es2022/arbitraryModuleNamespaceIdentifiers/arbitraryModuleNamespaceIdentifiers_module.ts:19:15]
- 18 │ export { type someType as "<A>" };
- 19 │ import { type "<A>" as typeA } from "./arbitraryModuleNamespaceIdentifiers_module";
-    ·               ──┬──
-    ·                 ╰── `,` expected
- 20 │ const importTest: typeA = "expect error about someType";
-    ╰────
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/moduleExportsSystem/topLevelVarHoistingCommonJS.ts
 
   × 'with' statements are not allowed
@@ -4740,23 +4728,32 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·          ────────────────
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/compiler/ClassDeclaration26.ts:2:17]
+  × TS(1248): A class member cannot have the 'const' keyword.
+   ╭─[typescript/tests/cases/compiler/ClassDeclaration26.ts:2:18]
  1 │ class C {
  2 │     public const var export foo = 10;
-   ·                 ▲
+   ·                  ───
+ 3 │ 
+   ╰────
+  help: Did you mean `readonly`?
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tests/cases/compiler/ClassDeclaration26.ts:2:21]
+ 1 │ class C {
+ 2 │     public const var export foo = 10;
+   ·                     ▲
  3 │ 
    ╰────
   help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/compiler/ClassDeclarationWithInvalidConstOnPropertyDeclaration.ts:2:15]
+  × TS(1248): A class member cannot have the 'const' keyword.
+   ╭─[typescript/tests/cases/compiler/ClassDeclarationWithInvalidConstOnPropertyDeclaration.ts:2:16]
  1 │ class AtomicNumbers {
  2 │   static const H = 1;
-   ·               ▲
+   ·                ─
  3 │ }
    ╰────
-  help: Try insert a semicolon here
+  help: Did you mean `readonly`?
 
   × A parameter property is only allowed in a constructor implementation.
    ╭─[typescript/tests/cases/compiler/MemberAccessorDeclaration15.ts:2:12]
@@ -6607,14 +6604,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  19 │     const c5 = 0;
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/compiler/constInClassExpression.ts:2:10]
+  × TS(1248): A class member cannot have the 'const' keyword.
+   ╭─[typescript/tests/cases/compiler/constInClassExpression.ts:2:11]
  1 │ let C = class {
  2 │     const a = 4;
-   ·          ▲
+   ·           ─
  3 │ };
    ╰────
-  help: Try insert a semicolon here
+  help: Did you mean `readonly`?
 
   × TS(1090): 'static' modifier cannot appear on a parameter.
    ╭─[typescript/tests/cases/compiler/constructorArgsErrors1.ts:2:18]
@@ -6632,7 +6629,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │     }
    ╰────
 
-  × Unexpected token
+  × TS(1090): 'export' modifier cannot appear on a parameter.
    ╭─[typescript/tests/cases/compiler/constructorArgsErrors5.ts:2:18]
  1 │ class foo {
  2 │     constructor (export a: number) {
@@ -7568,7 +7565,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ function foo() {}
    ╰────
 
-  × Unexpected token
+  × Identifier expected. 'default' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/compiler/es6ImportNamedImportIdentifiersParsing.ts:2:10]
  1 │ import { yield } from "somemodule"; // Allowed
  2 │ import { default } from "somemodule"; // Error - as this is keyword that is not allowed as identifier
@@ -8493,11 +8490,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ Foo<number>(1);
    ╰────
 
-  × Expected `<` but found `EOF`
-   ╭─[typescript/tests/cases/compiler/jsFileCompilationTypeAssertions.ts:2:27]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tests/cases/compiler/jsFileCompilationTypeAssertions.ts:1:2]
  1 │ 0 as number;
+   ·  ▲
  2 │ var v = <string>undefined;
    ╰────
+  help: Try insert a semicolon here
 
   × Expected `,` but found `:`
    ╭─[typescript/tests/cases/compiler/jsFileCompilationTypeOfParameter.ts:1:13]
@@ -9224,7 +9223,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  6 │ };
    ╰────
 
-  × Unexpected token
+  × TS(1071): 'public' modifier cannot appear on an index signature.
    ╭─[typescript/tests/cases/compiler/modifiersOnInterfaceIndexSignature1.ts:2:3]
  1 │ interface I {
  2 │   public [a: string]: number;
@@ -10938,11 +10937,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  4 │     // Pattern modifiers
    ╰────
 
-  × Invalid regular expression: Missing capturing group name
-   ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:5:3]
+  × Invalid regular expression: Unknown modifiers
+   ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:5:5]
  4 │     // Pattern modifiers
  5 │     /(?med-ium:bar)/,
-   ·      ──
+   ·        ─
  6 │     // Capturing groups
    ╰────
 
@@ -11169,11 +11168,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·                   ─────
    ╰────
 
-  × Invalid regular expression: Missing capturing group name
-   ╭─[typescript/tests/cases/compiler/regularExpressionWithNonBMPFlags.ts:7:31]
+  × Invalid regular expression: Unknown modifiers
+   ╭─[typescript/tests/cases/compiler/regularExpressionWithNonBMPFlags.ts:7:33]
  6 │ // See https://en.wikipedia.org/wiki/Mathematical_Alphanumeric_Symbols
  7 │ const 𝘳𝘦𝘨𝘦𝘹 = /(?𝘴𝘪-𝘮:^𝘧𝘰𝘰.)/𝘨𝘮𝘶;
-   ·                ──
+   ·                  ▲
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -11192,7 +11191,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ import * as  while from "foo"
    ╰────
 
-  × Unexpected token
+  × Identifier expected. 'enum' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/compiler/reservedWords3.ts:1:13]
  1 │ function f1(enum) {}
    ·             ────
@@ -12020,6 +12019,37 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  1 │ "use strict"
  2 │ import public = require("1");
    ·        ──────
+   ╰────
+
+  × The keyword 'public' is reserved
+   ╭─[typescript/tests/cases/compiler/strictModeReservedWordInModuleDeclaration.ts:2:8]
+ 1 │ "use strict"
+ 2 │ module public { }
+   ·        ──────
+ 3 │ module private { }
+   ╰────
+
+  × The keyword 'private' is reserved
+   ╭─[typescript/tests/cases/compiler/strictModeReservedWordInModuleDeclaration.ts:3:8]
+ 2 │ module public { }
+ 3 │ module private { }
+   ·        ───────
+ 4 │ module public.whatever {
+   ╰────
+
+  × The keyword 'public' is reserved
+   ╭─[typescript/tests/cases/compiler/strictModeReservedWordInModuleDeclaration.ts:4:8]
+ 3 │ module private { }
+ 4 │ module public.whatever {
+   ·        ──────
+ 5 │ }
+   ╰────
+
+  × The keyword 'private' is reserved
+   ╭─[typescript/tests/cases/compiler/strictModeReservedWordInModuleDeclaration.ts:6:8]
+ 5 │ }
+ 6 │ module private.public.foo { }
+   ·        ───────
    ╰────
 
   × The keyword 'package' is reserved
@@ -13042,21 +13072,20 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ 
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[typescript/tests/cases/conformance/ambient/ambientModuleDeclarationWithReservedIdentifierInDottedPath.ts:11:8]
- 10 │ 
- 11 │ declare module debugger {} // still an error
-    ·        ▲
-    ╰────
-  help: Try insert a semicolon here
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/ambient/ambientModuleDeclarationWithReservedIdentifierInDottedPath2.ts:9:8]
- 8 │ 
- 9 │ declare namespace debugger {} // still an error
-   ·        ▲
+  × Identifier expected. 'debugger' is a reserved word that cannot be used here.
+   ╭─[typescript/tests/cases/conformance/ambient/ambientModuleDeclarationWithReservedIdentifierInDottedPath.ts:3:23]
+ 2 │ 
+ 3 │ declare module chrome.debugger {
+   ·                       ────────
+ 4 │     declare var tabId: number;
    ╰────
-  help: Try insert a semicolon here
+
+  × Identifier expected. 'debugger' is a reserved word that cannot be used here.
+   ╭─[typescript/tests/cases/conformance/ambient/ambientModuleDeclarationWithReservedIdentifierInDottedPath2.ts:1:26]
+ 1 │ declare namespace chrome.debugger {
+   ·                          ────────
+ 2 │     declare var tabId: number;
+   ╰────
 
   × Cannot use `await` as an identifier in an async context
    ╭─[typescript/tests/cases/conformance/async/es2017/asyncArrowFunction/asyncArrowFunction5_es2017.ts:1:18]
@@ -15050,7 +15079,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  9 │ }
    ╰────
 
-  × Unexpected token
+  × TS(1071): 'static' modifier cannot appear on an index signature.
     ╭─[typescript/tests/cases/conformance/classes/staticIndexSignature/staticIndexSignature4.ts:12:5]
  11 │ interface IB {
  12 │     static [s: string]: number;
@@ -15058,12 +15087,28 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  13 │     static [s: number]: 42 | 233;
     ╰────
 
-  × Unexpected token
+  × TS(1071): 'static' modifier cannot appear on an index signature.
+    ╭─[typescript/tests/cases/conformance/classes/staticIndexSignature/staticIndexSignature4.ts:13:5]
+ 12 │     static [s: string]: number;
+ 13 │     static [s: number]: 42 | 233;
+    ·     ──────
+ 14 │ }
+    ╰────
+
+  × TS(1071): 'static' modifier cannot appear on an index signature.
    ╭─[typescript/tests/cases/conformance/classes/staticIndexSignature/staticIndexSignature5.ts:7:5]
  6 │ interface I {
  7 │     static readonly [s: string]: number;
    ·     ──────
  8 │     static readonly [s: number]: 42 | 233
+   ╰────
+
+  × TS(1071): 'static' modifier cannot appear on an index signature.
+   ╭─[typescript/tests/cases/conformance/classes/staticIndexSignature/staticIndexSignature5.ts:8:5]
+ 7 │     static readonly [s: string]: number;
+ 8 │     static readonly [s: number]: 42 | 233
+   ·     ──────
+ 9 │ }
    ╰────
 
   × Expected `,` but found `is`
@@ -15162,7 +15207,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  6 │   }
    ╰────
 
-  × Unexpected token
+  × Identifier expected. 'this' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/conformance/decorators/class/method/parameter/decoratorOnClassMethodThisParameter.ts:4:17]
  3 │ class C {
  4 │     method(@dec this: C) {}
@@ -15203,7 +15248,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  5 │ }
    ╰────
 
-  × Unexpected token
+  × Identifier expected. 'this' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/conformance/decorators/invalid/decoratorOnFunctionParameter.ts:5:22]
  4 │ 
  5 │ function direct(@dec this: C) { return this.n; }
@@ -15876,7 +15921,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·             ╰── `:` expected
    ╰────
 
-  × Unexpected token
+  × Identifier expected. 'while' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/conformance/es6/destructuring/objectBindingPatternKeywordIdentifiers02.ts:1:14]
  1 │ var { while: while } = { while: 1 }
    ·              ─────
@@ -15889,7 +15934,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·               ╰── `:` expected
    ╰────
 
-  × Unexpected token
+  × Identifier expected. 'while' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/conformance/es6/destructuring/objectBindingPatternKeywordIdentifiers04.ts:1:16]
  1 │ var { "while": while } = { while: 1 }
    ·                ─────
@@ -18654,6 +18699,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
   help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tests/cases/conformance/expressions/typeSatisfaction/typeSatisfaction_js.ts:1:18]
+ 1 │ var v = undefined satisfies 1;
+   ·                  ▲
+   ╰────
+  help: Try insert a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/conformance/expressions/unaryOperators/bitwiseNotOperator/bitwiseNotOperatorInvalidOperations.ts:5:10]
  4 │ // operand before ~
  5 │ var a = q~;  //expect error
@@ -19991,7 +20043,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ }
    ╰────
 
-  × Unexpected token
+  × Identifier expected. 'void' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserEnumDeclaration4.ts:1:6]
  1 │ enum void {
    ·      ────
@@ -20390,14 +20442,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·          ─
    ╰────
 
-  × Unexpected token
+  × Identifier expected. 'return' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/VariableLists/parserErrorRecovery_VariableList1.ts:2:1]
  1 │ var a,
  2 │ return;
    · ──────
    ╰────
 
-  × Unexpected token
+  × Identifier expected. 'export' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/VariableLists/parserInvalidIdentifiersInVariableStatements1.ts:1:5]
  1 │ var export;
    ·     ──────
@@ -20722,14 +20774,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    · ─
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/IndexMemberDeclarations/parserIndexMemberDeclaration9.ts:2:10]
+  × TS(1071): 'export' modifier cannot appear on an index signature.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/IndexMemberDeclarations/parserIndexMemberDeclaration9.ts:2:4]
  1 │ class C {
  2 │    export [x: string]: string;
-   ·          ▲
+   ·    ──────
  3 │ }
    ╰────
-  help: Try insert a semicolon here
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/IndexSignatures/parserIndexSignature1.ts:2:4]
@@ -21694,7 +21745,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
 
-  × Unexpected token
+  × Identifier expected. 'in' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForInStatement2.ts:1:10]
  1 │ for (var in X) {
    ·          ──
@@ -24509,7 +24560,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  165 │ function notFirst(a: number, this: C): number { return this.n; }
      ╰────
 
-  × Unexpected token
+  × Identifier expected. 'this' is a reserved word that cannot be used here.
      ╭─[typescript/tests/cases/conformance/types/thisType/thisTypeInFunctionsNegative.ts:165:30]
  164 │ var thisConstructorType: new (this: number) => number;
  165 │ function notFirst(a: number, this: C): number { return this.n; }
@@ -24582,7 +24633,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╰────
   help: Remove the duplicate modifier.
 
-  × Unexpected token
+  × Identifier expected. 'in' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/varianceAnnotationsWithCircularlyReferencesError.ts:1:12]
  1 │ type T1<in in> = T1 // Error: circularly references 
    ·            ──

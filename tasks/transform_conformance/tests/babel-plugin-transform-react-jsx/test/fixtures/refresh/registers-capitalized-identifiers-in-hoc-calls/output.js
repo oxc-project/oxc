@@ -1,6 +1,6 @@
 import { jsx as _jsx } from "react/jsx-runtime";
 function Foo() {
-	return _jsx("h1", { children: "Hi" });
+  return _jsx("h1", { children: "Hi" });
 }
 _c = Foo;
 export default _c2 = hoc(Foo);

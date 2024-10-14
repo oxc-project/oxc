@@ -4,6 +4,7 @@ use oxc_diagnostics::{Error, OxcDiagnostic};
 use serde_json::{from_value, json, Value};
 
 use crate::{
+    common::helper_loader::{HelperLoaderMode, HelperLoaderOptions},
     compiler_assumptions::CompilerAssumptions,
     env::{can_enable_plugin, EnvOptions, Versions},
     es2015::{ArrowFunctionsOptions, ES2015Options},
@@ -14,7 +15,7 @@ use crate::{
     es2020::ES2020Options,
     es2021::ES2021Options,
     options::babel::BabelOptions,
-    react::ReactOptions,
+    react::JsxOptions,
     regexp::RegExpOptions,
     typescript::TypeScriptOptions,
     ReactRefreshOptions,
@@ -39,7 +40,7 @@ pub struct TransformOptions {
     pub typescript: TypeScriptOptions,
 
     /// [preset-react](https://babeljs.io/docs/babel-preset-react)
-    pub react: ReactOptions,
+    pub react: JsxOptions,
 
     pub regexp: RegExpOptions,
 
@@ -56,6 +57,8 @@ pub struct TransformOptions {
     pub es2020: ES2020Options,
 
     pub es2021: ES2021Options,
+
+    pub helper_loader: HelperLoaderOptions,
 }
 
 impl TransformOptions {
@@ -65,10 +68,10 @@ impl TransformOptions {
             cwd: PathBuf::new(),
             assumptions: CompilerAssumptions::default(),
             typescript: TypeScriptOptions::default(),
-            react: ReactOptions {
+            react: JsxOptions {
                 development: true,
                 refresh: Some(ReactRefreshOptions::default()),
-                ..ReactOptions::default()
+                ..JsxOptions::default()
             },
             regexp: RegExpOptions {
                 sticky_flag: true,
@@ -90,6 +93,10 @@ impl TransformOptions {
             es2019: ES2019Options { optional_catch_binding: true },
             es2020: ES2020Options { nullish_coalescing_operator: true },
             es2021: ES2021Options { logical_assignment_operators: true },
+            helper_loader: HelperLoaderOptions {
+                mode: HelperLoaderMode::Runtime,
+                ..Default::default()
+            },
         }
     }
 
@@ -160,11 +167,11 @@ impl TransformOptions {
 
         let preset_name = "react";
         transformer_options.react = if let Some(value) = get_preset_options(preset_name, options) {
-            match from_value::<ReactOptions>(value) {
+            match from_value::<JsxOptions>(value) {
                 Ok(res) => res,
                 Err(err) => {
                     report_error(preset_name, &err, true, &mut errors);
-                    ReactOptions::default()
+                    JsxOptions::default()
                 }
             }
         } else {
@@ -173,17 +180,17 @@ impl TransformOptions {
             let mut react_options =
                 if has_jsx_plugin {
                     let plugin_name = "transform-react-jsx";
-                    from_value::<ReactOptions>(get_plugin_options(plugin_name, options))
+                    from_value::<JsxOptions>(get_plugin_options(plugin_name, options))
                         .unwrap_or_else(|err| {
                             report_error(plugin_name, &err, false, &mut errors);
-                            ReactOptions::default()
+                            JsxOptions::default()
                         })
                 } else {
                     let plugin_name = "transform-react-jsx-development";
-                    from_value::<ReactOptions>(get_plugin_options(plugin_name, options))
+                    from_value::<JsxOptions>(get_plugin_options(plugin_name, options))
                         .unwrap_or_else(|err| {
                             report_error(plugin_name, &err, false, &mut errors);
-                            ReactOptions::default()
+                            JsxOptions::default()
                         })
                 };
             react_options.development = has_jsx_development_plugin;
@@ -297,6 +304,10 @@ impl TransformOptions {
                 }
             }
         };
+
+        if options.external_helpers {
+            transformer_options.helper_loader.mode = HelperLoaderMode::External;
+        }
 
         transformer_options.cwd = options.cwd.clone().unwrap_or_default();
 
