@@ -1,9 +1,10 @@
 use oxc_ast::{
-    ast::{BindingIdentifier, BindingPatternKind, Expression},
+    ast::{BindingIdentifier, BindingPatternKind, CallExpression, Expression, FormalParameters},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -96,69 +97,85 @@ impl Rule for OnlyUsedInRecursion {
             };
 
             if is_argument_only_used_in_recursion(function_id, arg, arg_index, ctx) {
-                if arg_index == function_parameters.items.len() - 1
-                    && !ctx
-                        .semantic()
-                        .symbols()
-                        .get_flags(function_id.symbol_id.get().expect("`symbol_id` should be set"))
-                        .is_export()
-                {
-                    ctx.diagnostic_with_dangerous_fix(
-                        only_used_in_recursion_diagnostic(arg.span, arg.name.as_str()),
-                        |fixer| {
-                            let mut fix = fixer.new_fix_with_capacity(
-                                ctx.semantic()
-                                    .symbol_references(
-                                        arg.symbol_id.get().expect("`symbol_id` should be set"),
-                                    )
-                                    .count()
-                                    + 1,
-                            );
-                            fix.push(Fix::delete(arg.span()));
-
-                            for reference in ctx.semantic().symbol_references(
-                                arg.symbol_id.get().expect("`symbol_id` should be set"),
-                            ) {
-                                let node = ctx.nodes().get_node(reference.node_id());
-
-                                fix.push(Fix::delete(node.span()));
-                            }
-
-                            // search for references to the function and remove the argument
-                            for reference in ctx.semantic().symbol_references(
-                                function_id.symbol_id.get().expect("`symbol_id` should be set"),
-                            ) {
-                                let node = ctx.nodes().get_node(reference.node_id());
-
-                                if let Some(AstKind::CallExpression(call_expr)) =
-                                    ctx.nodes().parent_kind(node.id())
-                                {
-                                    // check if the number of arguments is the same
-                                    if call_expr.arguments.len() != function_parameters.items.len()
-                                        || function_span.contains_inclusive(call_expr.span)
-                                    {
-                                        continue;
-                                    }
-
-                                    // remove the argument
-                                    let arg_to_delete = call_expr.arguments[arg_index].span();
-
-                                    fix.push(Fix::delete(Span::new(
-                                        arg_to_delete.start,
-                                        skip_to_next_char(ctx.source_text(), arg_to_delete.end),
-                                    )));
-                                }
-                            }
-
-                            fix
-                        },
-                    );
-                } else {
-                    ctx.diagnostic(only_used_in_recursion_diagnostic(arg.span, arg.name.as_str()));
-                }
+                create_diagnostic(
+                    ctx,
+                    function_id,
+                    function_parameters,
+                    arg,
+                    arg_index,
+                    function_span,
+                );
             }
         }
     }
+}
+
+fn create_diagnostic(
+    ctx: &LintContext,
+    function_id: &BindingIdentifier,
+    function_parameters: &FormalParameters,
+    arg: &BindingIdentifier,
+    arg_index: usize,
+    function_span: Span,
+) {
+    let is_last_arg = arg_index == function_parameters.items.len() - 1;
+    let is_exported = ctx
+        .semantic()
+        .symbols()
+        .get_flags(function_id.symbol_id.get().expect("`symbol_id` should be set"))
+        .is_export();
+
+    let is_diagnostic_only = !is_last_arg || is_exported;
+
+    if is_diagnostic_only {
+        return ctx.diagnostic(only_used_in_recursion_diagnostic(arg.span, arg.name.as_str()));
+    }
+
+    ctx.diagnostic_with_dangerous_fix(
+        only_used_in_recursion_diagnostic(arg.span, arg.name.as_str()),
+        |fixer| {
+            let mut fix = fixer.new_fix_with_capacity(
+                ctx.semantic()
+                    .symbol_references(arg.symbol_id.get().expect("`symbol_id` should be set"))
+                    .count()
+                    + 1,
+            );
+            fix.push(Fix::delete(arg.span()));
+
+            for reference in ctx
+                .semantic()
+                .symbol_references(arg.symbol_id.get().expect("`symbol_id` should be set"))
+            {
+                let node = ctx.nodes().get_node(reference.node_id());
+                fix.push(Fix::delete(node.span()));
+            }
+
+            // search for references to the function and remove the argument
+            for reference in ctx
+                .semantic()
+                .symbol_references(function_id.symbol_id.get().expect("`symbol_id` should be set"))
+            {
+                let node = ctx.nodes().get_node(reference.node_id());
+
+                if let Some(AstKind::CallExpression(call_expr)) = ctx.nodes().parent_kind(node.id())
+                {
+                    if call_expr.arguments.len() != function_parameters.items.len()
+                        || function_span.contains_inclusive(call_expr.span)
+                    {
+                        continue;
+                    }
+
+                    let arg_to_delete = call_expr.arguments[arg_index].span();
+                    fix.push(Fix::delete(Span::new(
+                        arg_to_delete.start,
+                        skip_to_next_char(ctx.source_text(), arg_to_delete.end),
+                    )));
+                }
+            }
+
+            fix
+        },
+    );
 }
 
 fn is_argument_only_used_in_recursion<'a>(
@@ -167,68 +184,71 @@ fn is_argument_only_used_in_recursion<'a>(
     arg_index: usize,
     ctx: &'a LintContext<'_>,
 ) -> bool {
-    let mut is_used_only_in_recursion = true;
-    let mut has_references = false;
+    let mut references = ctx
+        .semantic()
+        .symbol_references(arg.symbol_id.get().expect("`symbol_id` should be set"))
+        .peekable();
 
-    for reference in
-        ctx.semantic().symbol_references(arg.symbol_id.get().expect("`symbol_id` should be set"))
-    {
-        has_references = true;
-        if let Some(AstKind::Argument(argument)) = ctx.nodes().parent_kind(reference.node_id()) {
-            if let Some(AstKind::CallExpression(call_expr)) =
-                ctx.nodes().parent_kind(ctx.nodes().parent_node(reference.node_id()).unwrap().id())
-            {
-                if !call_expr.arguments.iter().enumerate().any(|(index, arg)| {
-                    index == arg_index
-                        && arg.span() == argument.span()
-                        && if let Expression::Identifier(identifier) = &call_expr.callee {
-                            identifier
-                                .reference_id()
-                                .and_then(|id| ctx.symbols().get_reference(id).symbol_id())
-                                .is_some_and(|v| {
-                                    let function_symbol_id = function_id.symbol_id.get();
-                                    debug_assert!(function_symbol_id.is_some());
-                                    function_symbol_id
-                                        .is_some_and(|function_symbol_id| function_symbol_id == v)
-                                })
-                        } else {
-                            false
-                        }
-                }) {
-                    is_used_only_in_recursion = false;
-                    break;
-                }
-            } else {
-                is_used_only_in_recursion = false;
-                break;
-            }
-        } else {
-            is_used_only_in_recursion = false;
-            break;
+    // Avoid returning true for an empty iterator
+    if references.peek().is_none() {
+        return false;
+    }
+
+    let function_symbol_id = function_id.symbol_id.get().unwrap();
+
+    for reference in references {
+        let Some(AstKind::Argument(argument)) = ctx.nodes().parent_kind(reference.node_id()) else {
+            return false;
+        };
+        let Some(AstKind::CallExpression(call_expr)) =
+            ctx.nodes().parent_kind(ctx.nodes().parent_node(reference.node_id()).unwrap().id())
+        else {
+            return false;
+        };
+
+        let Some(call_arg) = call_expr.arguments.get(arg_index) else {
+            return false;
+        };
+
+        if argument.span() != call_arg.span() {
+            return false;
+        }
+
+        if !is_recursive_call(call_expr, function_symbol_id, ctx) {
+            return false;
         }
     }
 
-    has_references && is_used_only_in_recursion
+    true
+}
+
+fn is_recursive_call(
+    call_expr: &CallExpression,
+    function_symbol_id: SymbolId,
+    ctx: &LintContext,
+) -> bool {
+    if let Expression::Identifier(identifier) = &call_expr.callee {
+        if let Some(symbol_id) =
+            identifier.reference_id().and_then(|id| ctx.symbols().get_reference(id).symbol_id())
+        {
+            return symbol_id == function_symbol_id;
+        }
+    }
+    false
 }
 
 fn is_function_maybe_reassigned<'a>(
     function_id: &'a BindingIdentifier,
     ctx: &'a LintContext<'_>,
 ) -> bool {
-    let mut is_maybe_reassigned = false;
-
-    for reference in ctx
-        .semantic()
+    ctx.semantic()
         .symbol_references(function_id.symbol_id.get().expect("`symbol_id` should be set"))
-    {
-        if let Some(AstKind::SimpleAssignmentTarget(_)) =
-            ctx.nodes().parent_kind(reference.node_id())
-        {
-            is_maybe_reassigned = true;
-        }
-    }
-
-    is_maybe_reassigned
+        .any(|reference| {
+            matches!(
+                ctx.nodes().parent_kind(reference.node_id()),
+                Some(AstKind::SimpleAssignmentTarget(_))
+            )
+        })
 }
 
 // skipping whitespace, commas, finds the next character (exclusive)
