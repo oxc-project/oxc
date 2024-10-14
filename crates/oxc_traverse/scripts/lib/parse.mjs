@@ -1,3 +1,4 @@
+import assert from 'assert';
 import { readFile } from 'fs/promises';
 import { join as pathJoin } from 'path';
 import { fileURLToPath } from 'url';
@@ -56,6 +57,7 @@ const FILENAMES = ['js.rs', 'jsx.rs', 'literal.rs', 'ts.rs'];
  *
  * @property {string} flags
  * @property {string | null} strictIf
+ * @property {[string, string][]} flagsIf
  * @property {string | null} enterScopeBefore
  * @property {string | null} exitScopeBefore
  */
@@ -274,6 +276,9 @@ function parseEnum(name, rawName, lines) {
   return { kind: 'enum', name, rawName, variants, inherits };
 }
 
+/**
+ * @param {Lines} lines
+ */
 function parseScopeArgs(lines, scopeArgs) {
   const position = lines.position();
 
@@ -294,7 +299,7 @@ function parseScopeArgs(lines, scopeArgs) {
   return parseScopeArgsStr(scopeArgsStr, scopeArgs, position);
 }
 
-const SCOPE_ARGS_KEYS = { flags: 'flags', strict_if: 'strictIf' };
+const SCOPE_ARGS_KEYS = { flags: 'flags', flags_if: 'flagsIf' };
 
 /**
  * @param {string} argsStr
@@ -307,7 +312,7 @@ function parseScopeArgsStr(argsStr, args, position) {
   if (!args) {
     args = {
       flags: 'ScopeFlags::empty()',
-      strictIf: null,
+      flagsIf: [],
       enterScopeBefore: null,
       exitScopeBefore: null,
     };
@@ -342,7 +347,14 @@ function parseScopeArgsStr(argsStr, args, position) {
       }
       position.assert(bracketCount === 0);
 
-      args[key] = argsStr.slice(0, index).trim();
+      const value = argsStr.slice(0, index).trim();
+      if (key === 'flagsIf') {
+        const [flags, condition] = value.split(',').map(str => str.trim());
+        assert(typeof flags === 'string' && typeof condition === 'string');
+        args[key].push([flags, condition]);
+      } else {
+        args[key] = value;
+      }
       argsStr = argsStr.slice(index + 1);
       if (argsStr === '') break;
 

@@ -428,18 +428,33 @@ impl<'a> VisitBuilder<'a> {
                     .flags
                     .as_ref()
                     .map_or_else(|| quote!(ScopeFlags::empty()), ToTokens::to_token_stream);
-                let flags = if let Some(strict_if) = &markers.strict_if {
-                    let strict_if =
-                        strict_if.to_token_stream().replace_ident("self", &format_ident!("it"));
+                let flags = if markers.flags_if.is_empty() {
+                    flags
+                } else {
+                    let flag_conditions = markers
+                        .flags_if
+                        .iter()
+                        .map(|(flag_expr, condition_expr)| {
+                            let condition_expr = condition_expr
+                                .to_token_stream()
+                                .replace_ident("self", &format_ident!("it"));
+                            quote! {
+                                if #condition_expr {
+                                    flags |= #flag_expr;
+                                }
+                            }
+                        })
+                        .fold(quote!(), |acc, condition| {
+                            quote! {
+                                #acc
+                                #condition
+                            }
+                        });
                     quote! {{
                         let mut flags = #flags;
-                        if #strict_if {
-                            flags |= ScopeFlags::StrictMode;
-                        }
+                        #flag_conditions
                         flags
                     }}
-                } else {
-                    flags
                 };
                 let enter = quote!(visitor.enter_scope(#flags, &it.scope_id););
                 let leave = quote!(visitor.leave_scope(););
