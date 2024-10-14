@@ -1438,7 +1438,6 @@ dependencies = [
 name = "oxc_allocator"
 version = "0.31.0"
 dependencies = [
- "allocator-api2",
  "bumpalo 3.16.0 (git+https://github.com/Dunqing/bumpalo?branch=reduce-vec)",
  "serde",
  "serde_json",
