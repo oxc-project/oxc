@@ -339,6 +339,7 @@ fn character_to_string(
             '\n' => Cow::Borrowed(r"\cJ"),
             '\r' => Cow::Borrowed(r"\cM"),
             '\t' => Cow::Borrowed(r"\cI"),
+            '\u{0019}' => Cow::Borrowed(r"\cY"),
             _ => Cow::Owned(format!(r"\c{ch}")),
         },
         CharacterKind::Identifier => Cow::Owned(format!(r"\{ch}")),
@@ -479,6 +480,7 @@ mod test {
         (r"/\d/g", None),
         ("/abcd/igv", Some("/abcd/igv")),
         (r"/\d/ug", Some(r"/\d/ug")),
+        (r"/\cY/", None),
         // we capitalize hex unicodes.
         (r"/\n\cM\0\x41\u{1f600}\./u", Some(r"/\n\cM\0\x41\u{1F600}\./u")),
         (r"/\u02c1/u", Some(r"/\u02C1/u")),
