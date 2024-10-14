@@ -50,6 +50,7 @@ use bumpalo::Bump;
 mod boxed;
 mod clone_in;
 mod convert;
+mod raw_vec;
 mod vec;
 
 pub use boxed::{Address, Box};
