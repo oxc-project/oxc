@@ -1260,7 +1260,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
                 let p = self.as_mut_ptr().add(index);
                 // Shift everything over to make space. (Duplicating the
                 // `index`th element into two consecutive places.)
-                ptr::copy(p, p.offset(1), (len - index));
+                ptr::copy(p, p.offset(1), len - index);
                 // Write it in, overwriting the first copy of the `index`th
                 // element.
                 ptr::write(p, element);
@@ -1301,7 +1301,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
                 ret = ptr::read(ptr);
 
                 // Shift everything down to fill in that spot.
-                ptr::copy(ptr.offset(1), ptr, (len - index - 1));
+                ptr::copy(ptr.offset(1), ptr, len - index - 1);
             }
             self.set_len(len - 1);
             ret
@@ -1593,8 +1593,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
             self.set_len(start);
             // Use the borrow in the IterMut to indicate borrowing behavior of the
             // whole Drain iterator (like &mut T).
-            let range_slice =
-                slice::from_raw_parts_mut(self.as_mut_ptr().add(start), (end - start));
+            let range_slice = slice::from_raw_parts_mut(self.as_mut_ptr().add(start), end - start);
             Drain {
                 tail_start: end,
                 tail_len: len - end,
@@ -1642,7 +1641,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// ```
     #[inline]
     pub fn len(&self) -> usize {
-        self.len()
+        self.len as usize
     }
 
     /// Returns `true` if the vector contains no elements.
