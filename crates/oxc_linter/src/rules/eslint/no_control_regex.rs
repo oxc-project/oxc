@@ -278,6 +278,8 @@ mod tests {
             ],
             vec![
                 r"let r = /\u{0}/u",
+                r"let r = new RegExp('\\u{0}', 'u');",
+                r"let r = new RegExp('\\u{0}', `u`);",
                 r"let r = /\u{c}/u",
                 r"let r = /\u{1F}/u",
                 r"let r = new RegExp('\\u{1F}', 'u');", // flags are known & contain u
