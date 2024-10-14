@@ -364,6 +364,9 @@ fn test() {
             None,
         ),
         ("function* foo(cb) { cb = yield function(a) { cb(1 + a); }; } foo();", None), // { "ecmaVersion": 6 },
+        ("console.log(function a() {} ? b : c)", None), // { "ecmaVersion": 6 }
+        ("console.log(a ? function b() {} : c)", None), // { "ecmaVersion": 6 }
+        ("console.log(a ? b : function c() {})", None), // { "ecmaVersion": 6 }
         ("function foo(cb) { cb = tag`hello${function(a) { cb(1 + a); }}`; } foo();", None), // { "ecmaVersion": 6 },
         ("function foo(cb) { var b; cb = b = function(a) { cb(1 + a); }; b(); } foo();", None),
         (
