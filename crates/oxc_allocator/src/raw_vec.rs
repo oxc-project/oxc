@@ -2829,7 +2829,7 @@ impl<'bump, T> Vec<'bump, T> {
         if mem::size_of::<T>() == 0 {
             !0
         } else {
-            self.cap()
+            self.cap as usize
         }
     }
 
