@@ -215,6 +215,10 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
                         } else {
                             var_decl = Some(ctx.ast.move_variable_declaration(var_init));
                         }
+                    } else {
+                        // block scope
+                        // for(const/let x = 1; false; ) { ... }
+                        var_decl = None;
                     }
                 }
 
@@ -368,6 +372,8 @@ mod test {
         fold("for (var { c, x: [d] } = {}; 0;);", "var { c, x: [d] } = {};");
         fold("for (var se = [1, 2]; false;);", "var se = [1, 2];");
         fold("for (var se = [1, 2]; false;) { var a = 0; }", "var se = [1, 2], a;");
+        
+        fold("for (let se = [1, 2]; false;) { var a = 0; }", "");
 
         // fold("l1:for(;false;) {  }", "");
     }
