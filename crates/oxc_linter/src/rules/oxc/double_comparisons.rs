@@ -94,9 +94,9 @@ impl Rule for DoubleComparisons {
                 let modified_code = {
                     let mut codegen = fixer.codegen();
                     codegen.print_expression(llhs);
-                    codegen.print_char(b' ');
+                    codegen.print_ascii_byte(b' ');
                     codegen.print_str(new_op);
-                    codegen.print_char(b' ');
+                    codegen.print_ascii_byte(b' ');
                     codegen.print_expression(lrhs);
                     codegen.into_source_text()
                 };

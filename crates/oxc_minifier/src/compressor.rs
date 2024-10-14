@@ -42,9 +42,6 @@ impl<'a> Compressor<'a> {
             return;
         }
 
-        ExploitAssigns::new().build(program, &mut ctx);
-        CollapseVariableDeclarations::new(self.options).build(program, &mut ctx);
-
         // See `latePeepholeOptimizations`
         let mut passes: [&mut dyn CompressorPass; 6] = [
             &mut StatementFusion::new(),
@@ -74,6 +71,10 @@ impl<'a> Compressor<'a> {
             }
             i += 1;
         }
+
+        // Passes listed in `getFinalization` in `DefaultPassConfig`
+        ExploitAssigns::new().build(program, &mut ctx);
+        CollapseVariableDeclarations::new(self.options).build(program, &mut ctx);
     }
 
     fn dead_code_elimination(program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {

@@ -19,20 +19,7 @@ pub use remove_syntax::RemoveSyntax;
 pub use statement_fusion::StatementFusion;
 
 use oxc_ast::ast::Program;
-use oxc_semantic::{ScopeTree, SymbolTable};
 use oxc_traverse::{Traverse, TraverseCtx};
-
-use crate::node_util::NodeUtil;
-
-impl<'a> NodeUtil for TraverseCtx<'a> {
-    fn symbols(&self) -> &SymbolTable {
-        self.scoping.symbols()
-    }
-
-    fn scopes(&self) -> &ScopeTree {
-        self.scoping.scopes()
-    }
-}
 
 pub trait CompressorPass<'a>: Traverse<'a> {
     fn changed(&self) -> bool;

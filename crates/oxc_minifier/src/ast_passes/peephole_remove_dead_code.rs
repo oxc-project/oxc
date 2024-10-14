@@ -1,10 +1,11 @@
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, Visit};
+use oxc_ecmascript::ConstantEvaluation;
 use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
-use crate::node_util::IsLiteralValue;
-use crate::{keep_var::KeepVar, node_util::NodeUtil, tri::Tri, CompressorPass};
+use crate::node_util::{Ctx, IsLiteralValue};
+use crate::{keep_var::KeepVar, CompressorPass};
 
 /// Remove Dead Code from the AST.
 ///
@@ -29,6 +30,7 @@ impl<'a> CompressorPass<'a> for PeepholeRemoveDeadCode {
 
 impl<'a> Traverse<'a> for PeepholeRemoveDeadCode {
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        let ctx = Ctx(ctx);
         if let Some(new_stmt) = match stmt {
             Statement::IfStatement(if_stmt) => self.try_fold_if(if_stmt, ctx),
             Statement::ForStatement(for_stmt) => self.try_fold_for(for_stmt, ctx),
@@ -43,17 +45,18 @@ impl<'a> Traverse<'a> for PeepholeRemoveDeadCode {
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.compress_block(stmt, ctx);
+        self.compress_block(stmt, Ctx(ctx));
     }
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         if stmts.iter().any(|stmt| matches!(stmt, Statement::EmptyStatement(_))) {
             stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
         }
-        self.dead_code_elimination(stmts, ctx);
+        self.dead_code_elimination(stmts, Ctx(ctx));
     }
 
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        let ctx = Ctx(ctx);
         if let Some(folded_expr) = match expr {
             Expression::ConditionalExpression(e) => Self::try_fold_conditional_expression(e, ctx),
             _ => None,
@@ -64,17 +67,13 @@ impl<'a> Traverse<'a> for PeepholeRemoveDeadCode {
     }
 }
 
-impl<'a> PeepholeRemoveDeadCode {
+impl<'a, 'b> PeepholeRemoveDeadCode {
     pub fn new() -> Self {
         Self { changed: false }
     }
 
     /// Removes dead code thats comes after `return` statements after inlining `if` statements
-    fn dead_code_elimination(
-        &mut self,
-        stmts: &mut Vec<'a, Statement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
+    fn dead_code_elimination(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: Ctx<'a, 'b>) {
         // Remove code after `return` and `throw` statements
         let mut index = None;
         'outer: for (i, stmt) in stmts.iter().enumerate() {
@@ -134,7 +133,7 @@ impl<'a> PeepholeRemoveDeadCode {
 
     /// Remove block from single line blocks
     /// `{ block } -> block`
-    fn compress_block(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn compress_block(&mut self, stmt: &mut Statement<'a>, ctx: Ctx<'a, 'b>) {
         if let Statement::BlockStatement(block) = stmt {
             // Avoid compressing `if (x) { var x = 1 }` to `if (x) var x = 1` due to different
             // semantics according to AnnexB, which lead to different semantics.
@@ -156,7 +155,7 @@ impl<'a> PeepholeRemoveDeadCode {
     fn try_fold_if(
         &mut self,
         if_stmt: &mut IfStatement<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Option<Statement<'a>> {
         // Descend and remove `else` blocks first.
         if let Some(Statement::IfStatement(alternate)) = &mut if_stmt.alternate {
@@ -171,11 +170,11 @@ impl<'a> PeepholeRemoveDeadCode {
         }
 
         match ctx.get_boolean_value(&if_stmt.test) {
-            Tri::True => {
+            Some(true) => {
                 // self.changed = true;
                 Some(ctx.ast.move_statement(&mut if_stmt.consequent))
             }
-            Tri::False => {
+            Some(false) => {
                 Some(if let Some(alternate) = &mut if_stmt.alternate {
                     ctx.ast.move_statement(alternate)
                 } else {
@@ -188,19 +187,18 @@ impl<'a> PeepholeRemoveDeadCode {
                 })
                 // self.changed = true;
             }
-            Tri::Unknown => None,
+            None => None,
         }
     }
 
     fn try_fold_for(
         &mut self,
         for_stmt: &mut ForStatement<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Option<Statement<'a>> {
-        let test_boolean =
-            for_stmt.test.as_ref().map_or(Tri::Unknown, |test| ctx.get_boolean_value(test));
+        let test_boolean = for_stmt.test.as_ref().and_then(|test| ctx.get_boolean_value(test));
         match test_boolean {
-            Tri::False => {
+            Some(false) => {
                 // Remove the entire `for` statement.
                 // Check vars in statement
                 let mut keep_var = KeepVar::new(ctx.ast);
@@ -211,19 +209,19 @@ impl<'a> PeepholeRemoveDeadCode {
                         .unwrap_or_else(|| ctx.ast.statement_empty(SPAN)),
                 )
             }
-            Tri::True => {
+            Some(true) => {
                 // Remove the test expression.
                 for_stmt.test = None;
                 self.changed = true;
                 None
             }
-            Tri::Unknown => None,
+            None => None,
         }
     }
 
     fn try_fold_expression_stmt(
         stmt: &mut ExpressionStatement<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Option<Statement<'a>> {
         // We need to check if it is in arrow function with `expression: true`.
         // This is the only scenario where we can't remove it even if `ExpressionStatement`.
@@ -245,10 +243,10 @@ impl<'a> PeepholeRemoveDeadCode {
     /// Try folding conditional expression (?:) if the condition results of the condition is known.
     fn try_fold_conditional_expression(
         expr: &mut ConditionalExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
-        match ctx.get_boolean_value(&expr.test) {
-            Tri::True => {
+        match ctx.eval_to_boolean(&expr.test) {
+            Some(true) => {
                 // Bail `let o = { f() { assert.ok(this !== o); } }; (true ? o.f : false)(); (true ? o.f : false)``;`
                 let parent = ctx.ancestry.parent();
                 if parent.is_tagged_template_expression()
@@ -258,8 +256,8 @@ impl<'a> PeepholeRemoveDeadCode {
                 }
                 Some(ctx.ast.move_expression(&mut expr.consequent))
             }
-            Tri::False => Some(ctx.ast.move_expression(&mut expr.alternate)),
-            Tri::Unknown => None,
+            Some(false) => Some(ctx.ast.move_expression(&mut expr.alternate)),
+            None => None,
         }
     }
 }

@@ -6629,7 +6629,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │     }
    ╰────
 
-  × Unexpected token
+  × TS(1090): 'export' modifier cannot appear on a parameter.
    ╭─[typescript/tests/cases/compiler/constructorArgsErrors5.ts:2:18]
  1 │ class foo {
  2 │     constructor (export a: number) {
@@ -7565,7 +7565,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ function foo() {}
    ╰────
 
-  × Unexpected token
+  × Identifier expected. 'default' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/compiler/es6ImportNamedImportIdentifiersParsing.ts:2:10]
  1 │ import { yield } from "somemodule"; // Allowed
  2 │ import { default } from "somemodule"; // Error - as this is keyword that is not allowed as identifier
@@ -9223,7 +9223,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  6 │ };
    ╰────
 
-  × Unexpected token
+  × TS(1071): 'public' modifier cannot appear on an index signature.
    ╭─[typescript/tests/cases/compiler/modifiersOnInterfaceIndexSignature1.ts:2:3]
  1 │ interface I {
  2 │   public [a: string]: number;
@@ -11191,7 +11191,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ import * as  while from "foo"
    ╰────
 
-  × Unexpected token
+  × Identifier expected. 'enum' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/compiler/reservedWords3.ts:1:13]
  1 │ function f1(enum) {}
    ·             ────
@@ -13072,7 +13072,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ 
    ╰────
 
-  × Unexpected token
+  × Identifier expected. 'debugger' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/conformance/ambient/ambientModuleDeclarationWithReservedIdentifierInDottedPath.ts:3:23]
  2 │ 
  3 │ declare module chrome.debugger {
@@ -13080,7 +13080,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  4 │     declare var tabId: number;
    ╰────
 
-  × Unexpected token
+  × Identifier expected. 'debugger' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/conformance/ambient/ambientModuleDeclarationWithReservedIdentifierInDottedPath2.ts:1:26]
  1 │ declare namespace chrome.debugger {
    ·                          ────────
@@ -15079,7 +15079,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  9 │ }
    ╰────
 
-  × Unexpected token
+  × TS(1071): 'static' modifier cannot appear on an index signature.
     ╭─[typescript/tests/cases/conformance/classes/staticIndexSignature/staticIndexSignature4.ts:12:5]
  11 │ interface IB {
  12 │     static [s: string]: number;
@@ -15087,12 +15087,28 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  13 │     static [s: number]: 42 | 233;
     ╰────
 
-  × Unexpected token
+  × TS(1071): 'static' modifier cannot appear on an index signature.
+    ╭─[typescript/tests/cases/conformance/classes/staticIndexSignature/staticIndexSignature4.ts:13:5]
+ 12 │     static [s: string]: number;
+ 13 │     static [s: number]: 42 | 233;
+    ·     ──────
+ 14 │ }
+    ╰────
+
+  × TS(1071): 'static' modifier cannot appear on an index signature.
    ╭─[typescript/tests/cases/conformance/classes/staticIndexSignature/staticIndexSignature5.ts:7:5]
  6 │ interface I {
  7 │     static readonly [s: string]: number;
    ·     ──────
  8 │     static readonly [s: number]: 42 | 233
+   ╰────
+
+  × TS(1071): 'static' modifier cannot appear on an index signature.
+   ╭─[typescript/tests/cases/conformance/classes/staticIndexSignature/staticIndexSignature5.ts:8:5]
+ 7 │     static readonly [s: string]: number;
+ 8 │     static readonly [s: number]: 42 | 233
+   ·     ──────
+ 9 │ }
    ╰────
 
   × Expected `,` but found `is`
@@ -15191,7 +15207,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  6 │   }
    ╰────
 
-  × Unexpected token
+  × Identifier expected. 'this' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/conformance/decorators/class/method/parameter/decoratorOnClassMethodThisParameter.ts:4:17]
  3 │ class C {
  4 │     method(@dec this: C) {}
@@ -15232,7 +15248,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  5 │ }
    ╰────
 
-  × Unexpected token
+  × Identifier expected. 'this' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/conformance/decorators/invalid/decoratorOnFunctionParameter.ts:5:22]
  4 │ 
  5 │ function direct(@dec this: C) { return this.n; }
@@ -15905,7 +15921,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·             ╰── `:` expected
    ╰────
 
-  × Unexpected token
+  × Identifier expected. 'while' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/conformance/es6/destructuring/objectBindingPatternKeywordIdentifiers02.ts:1:14]
  1 │ var { while: while } = { while: 1 }
    ·              ─────
@@ -15918,7 +15934,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·               ╰── `:` expected
    ╰────
 
-  × Unexpected token
+  × Identifier expected. 'while' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/conformance/es6/destructuring/objectBindingPatternKeywordIdentifiers04.ts:1:16]
  1 │ var { "while": while } = { while: 1 }
    ·                ─────
@@ -20027,7 +20043,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ }
    ╰────
 
-  × Unexpected token
+  × Identifier expected. 'void' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserEnumDeclaration4.ts:1:6]
  1 │ enum void {
    ·      ────
@@ -20426,14 +20442,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·          ─
    ╰────
 
-  × Unexpected token
+  × Identifier expected. 'return' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/VariableLists/parserErrorRecovery_VariableList1.ts:2:1]
  1 │ var a,
  2 │ return;
    · ──────
    ╰────
 
-  × Unexpected token
+  × Identifier expected. 'export' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/VariableLists/parserInvalidIdentifiersInVariableStatements1.ts:1:5]
  1 │ var export;
    ·     ──────
@@ -20758,14 +20774,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    · ─
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/IndexMemberDeclarations/parserIndexMemberDeclaration9.ts:2:10]
+  × TS(1071): 'export' modifier cannot appear on an index signature.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/IndexMemberDeclarations/parserIndexMemberDeclaration9.ts:2:4]
  1 │ class C {
  2 │    export [x: string]: string;
-   ·          ▲
+   ·    ──────
  3 │ }
    ╰────
-  help: Try insert a semicolon here
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/IndexSignatures/parserIndexSignature1.ts:2:4]
@@ -21730,7 +21745,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
 
-  × Unexpected token
+  × Identifier expected. 'in' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForInStatement2.ts:1:10]
  1 │ for (var in X) {
    ·          ──
@@ -24545,7 +24560,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  165 │ function notFirst(a: number, this: C): number { return this.n; }
      ╰────
 
-  × Unexpected token
+  × Identifier expected. 'this' is a reserved word that cannot be used here.
      ╭─[typescript/tests/cases/conformance/types/thisType/thisTypeInFunctionsNegative.ts:165:30]
  164 │ var thisConstructorType: new (this: number) => number;
  165 │ function notFirst(a: number, this: C): number { return this.n; }
@@ -24618,7 +24633,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╰────
   help: Remove the duplicate modifier.
 
-  × Unexpected token
+  × Identifier expected. 'in' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/varianceAnnotationsWithCircularlyReferencesError.ts:1:12]
  1 │ type T1<in in> = T1 // Error: circularly references 
    ·            ──

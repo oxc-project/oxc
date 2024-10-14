@@ -271,3 +271,17 @@ fn vite_special_comments() {
         "import(\n\t/* @vite-ignore */\n\tmodule1Url\n).then((module1) => {\n\tself.postMessage(module.default + module1.msg1 + import.meta.env.BASE_URL);\n});\n",
     );
 }
+
+// followup from https://github.com/oxc-project/oxc/pull/6422
+#[test]
+fn in_expr_in_sequence_in_for_loop_init() {
+    test(
+        "for (l = ('foo' in bar), i; i < 10; i += 1) {}",
+        "for (l = (\"foo\" in bar), i; i < 10; i += 1) {}\n",
+    );
+
+    test(
+        "for (('hidden' in a) && (m = a.hidden), r = 0; s > r; r++) {}",
+        "for ((\"hidden\" in a) && (m = a.hidden), r = 0; s > r; r++) {}\n",
+    );
+}

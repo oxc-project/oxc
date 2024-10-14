@@ -255,6 +255,7 @@ impl<'a> ParserImpl<'a> {
                 | Kind::Readonly
                 | Kind::Declare
                 | Kind::Override
+                | Kind::Export
         )) {
             return false;
         }

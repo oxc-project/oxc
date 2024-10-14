@@ -9,7 +9,7 @@ use oxc_syntax::{
 };
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
-use crate::{node_util::NodeUtil, CompressOptions, CompressorPass};
+use crate::{node_util::Ctx, CompressOptions, CompressorPass};
 
 /// A peephole optimization that minimizes code by simplifying conditional
 /// expressions, replacing IFs with HOOKs, replacing object constructors
@@ -48,7 +48,7 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
         ctx: &mut TraverseCtx<'a>,
     ) {
         for declarator in decl.declarations.iter_mut() {
-            self.compress_variable_declarator(declarator, ctx);
+            self.compress_variable_declarator(declarator, Ctx(ctx));
         }
     }
 
@@ -76,6 +76,7 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
     }
 
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        let ctx = Ctx(ctx);
         if let Expression::AssignmentExpression(assignment_expr) = expr {
             if let Some(new_expr) = Self::try_compress_assignment_expression(assignment_expr, ctx) {
                 *expr = new_expr;
@@ -88,6 +89,7 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        let ctx = Ctx(ctx);
         match expr {
             Expression::NewExpression(new_expr) => {
                 if let Some(new_expr) = Self::try_fold_new_expression(new_expr, ctx) {
@@ -96,7 +98,13 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
                 }
             }
             Expression::CallExpression(call_expr) => {
-                if let Some(call_expr) = Self::try_fold_call_expression(call_expr, ctx) {
+                if let Some(call_expr) =
+                    Self::try_fold_literal_constructor_call_expression(call_expr, ctx)
+                {
+                    *expr = call_expr;
+                    self.changed = true;
+                } else if let Some(call_expr) = Self::try_fold_simple_function_call(call_expr, ctx)
+                {
                     *expr = call_expr;
                     self.changed = true;
                 }
@@ -104,6 +112,13 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
             Expression::ChainExpression(chain_expr) => {
                 if let ChainElement::CallExpression(call_expr) = &mut chain_expr.expression {
                     self.try_fold_chain_call_expression(call_expr, ctx);
+                }
+            }
+            Expression::TemplateLiteral(_) => {
+                if let Some(val) = ctx.get_string_value(expr) {
+                    let new_expr = ctx.ast.string_literal(expr.span(), val);
+                    *expr = ctx.ast.expression_from_string_literal(new_expr);
+                    self.changed = true;
                 }
             }
             _ => {}
@@ -115,11 +130,11 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
         expr: &mut BinaryExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        self.compress_typeof_undefined(expr, ctx);
+        self.compress_typeof_undefined(expr, Ctx(ctx));
     }
 }
 
-impl<'a> PeepholeSubstituteAlternateSyntax {
+impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
     pub fn new(options: CompressOptions) -> Self {
         Self { options, in_define_export: false, changed: false }
     }
@@ -127,7 +142,7 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
     /* Utilities */
 
     /// Transforms `undefined` => `void 0`
-    fn compress_undefined(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
+    fn compress_undefined(expr: &mut Expression<'a>, ctx: Ctx<'a, 'b>) -> bool {
         if ctx.is_expression_undefined(expr) {
             *expr = ctx.ast.void_0(expr.span());
             return true;
@@ -172,7 +187,7 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
     /// Transforms boolean expression `true` => `!0` `false` => `!1`.
     /// Enabled by `compress.booleans`.
     /// Do not compress `true` in `Object.defineProperty(exports, 'Foo', {enumerable: true, ...})`.
-    fn compress_boolean(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
+    fn compress_boolean(&mut self, expr: &mut Expression<'a>, ctx: Ctx<'a, 'b>) -> bool {
         let Expression::BooleanLiteral(lit) = expr else { return false };
         if self.options.booleans && !self.in_define_export {
             let parent = ctx.ancestry.parent();
@@ -210,11 +225,7 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
 
     /// Compress `typeof foo == "undefined"` into `typeof foo > "u"`
     /// Enabled by `compress.typeofs`
-    fn compress_typeof_undefined(
-        &self,
-        expr: &mut BinaryExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
+    fn compress_typeof_undefined(&self, expr: &mut BinaryExpression<'a>, ctx: Ctx<'a, 'b>) {
         if !self.options.typeofs {
             return;
         }
@@ -285,7 +296,7 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
     fn compress_variable_declarator(
         &mut self,
         decl: &mut VariableDeclarator<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) {
         if decl.kind.is_const() {
             return;
@@ -298,7 +309,7 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
 
     fn try_compress_assignment_expression(
         expr: &mut AssignmentExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         let target = expr.left.as_simple_assignment_target_mut()?;
         if matches!(expr.operator, AssignmentOperator::Subtraction) {
@@ -341,7 +352,7 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
 
     fn try_fold_new_expression(
         new_expr: &mut NewExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         // `new Object` -> `{}`
         if new_expr.arguments.is_empty()
@@ -398,9 +409,9 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
         }
     }
 
-    fn try_fold_call_expression(
+    fn try_fold_literal_constructor_call_expression(
         call_expr: &mut CallExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         // `Object()` -> `{}`
         if call_expr.arguments.is_empty()
@@ -452,10 +463,63 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
         }
     }
 
+    fn try_fold_simple_function_call(
+        call_expr: &mut CallExpression<'a>,
+        ctx: Ctx<'a, 'b>,
+    ) -> Option<Expression<'a>> {
+        if call_expr.optional || call_expr.arguments.len() != 1 {
+            return None;
+        }
+        if call_expr.callee.is_global_reference_name("Boolean", ctx.symbols()) {
+            // `Boolean(a)` -> `!!(a)`
+            // http://www.ecma-international.org/ecma-262/6.0/index.html#sec-boolean-constructor-boolean-value
+            // and
+            // http://www.ecma-international.org/ecma-262/6.0/index.html#sec-logical-not-operator-runtime-semantics-evaluation
+
+            let arg = call_expr.arguments.get_mut(0).and_then(|arg| arg.as_expression_mut())?;
+
+            if let Expression::UnaryExpression(unary_expr) = arg {
+                if unary_expr.operator == UnaryOperator::LogicalNot {
+                    return Some(ctx.ast.move_expression(arg));
+                }
+            }
+
+            Some(ctx.ast.expression_from_unary(ctx.ast.unary_expression(
+                call_expr.span,
+                UnaryOperator::LogicalNot,
+                ctx.ast.expression_from_unary(ctx.ast.unary_expression(
+                    call_expr.span,
+                    UnaryOperator::LogicalNot,
+                    ctx.ast.move_expression(
+                        call_expr.arguments.get_mut(0).and_then(|arg| arg.as_expression_mut())?,
+                    ),
+                )),
+            )))
+        } else if call_expr.callee.is_global_reference_name("String", ctx.symbols()) {
+            // `String(a)` -> `'' + (a)`
+            let arg = call_expr.arguments.get_mut(0).and_then(|arg| arg.as_expression_mut())?;
+
+            if !matches!(arg, Expression::Identifier(_) | Expression::CallExpression(_))
+                && !arg.is_literal()
+            {
+                return None;
+            }
+
+            Some(ctx.ast.expression_binary(
+                call_expr.span,
+                ctx.ast.expression_from_string_literal(ctx.ast.string_literal(SPAN, "")),
+                BinaryOperator::Addition,
+                ctx.ast.move_expression(arg),
+            ))
+        } else {
+            None
+        }
+    }
+
     fn try_fold_chain_call_expression(
         &mut self,
         call_expr: &mut CallExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) {
         // `window.Object?.()` -> `Object?.()`
         if call_expr.arguments.is_empty() && Self::is_window_object(&call_expr.callee) {
@@ -468,7 +532,7 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
     /// returns an `Array()` constructor call with zero, one, or more arguments, copying from the input
     fn array_constructor_call(
         arguments: Vec<'a, Argument<'a>>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Expression<'a> {
         let callee = ctx.ast.expression_identifier_reference(SPAN, "Array");
         ctx.ast.expression_call(SPAN, callee, NONE, arguments, false)
@@ -477,13 +541,13 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
     /// returns an array literal `[]` of zero, one, or more elements, copying from the input
     fn array_literal(
         elements: Vec<'a, ArrayExpressionElement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Expression<'a> {
         ctx.ast.expression_array(SPAN, elements, None)
     }
 
     /// returns a new empty array literal expression: `[]`
-    fn empty_array_literal(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+    fn empty_array_literal(ctx: Ctx<'a, 'b>) -> Expression<'a> {
         Self::array_literal(ctx.ast.vec(), ctx)
     }
 }
@@ -723,7 +787,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_template_string_to_string() {
         test("`abcde`", "'abcde'");
         test("`ab cd ef`", "'ab cd ef'");
@@ -830,7 +893,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_simple_function_call1() {
         test("var a = String(23)", "var a = '' + 23");
         // Don't fold the existence check to preserve behavior
@@ -845,7 +907,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_simple_function_call2() {
         test("var a = Boolean(true)", "var a = !0");
         // Don't fold the existence check to preserve behavior

@@ -257,23 +257,6 @@ impl<'a> Expression<'a> {
         matches!(self, Expression::BinaryExpression(_) | Expression::LogicalExpression(_))
     }
 
-    /// Returns literal's value converted to the Boolean type
-    /// returns `true` when node is truthy, `false` when node is falsy, `None` when it cannot be determined.
-    /// <https://tc39.es/ecma262/#sec-toboolean>
-    /// 1. If argument is a Boolean, return argument.
-    /// 2. If argument is one of undefined, null, +0𝔽, -0𝔽, NaN, 0ℤ, or the empty String, return false.
-    pub fn to_boolean(&self) -> Option<bool> {
-        match self {
-            Self::BooleanLiteral(lit) => Some(lit.value),
-            Self::NullLiteral(_) => Some(false),
-            Self::NumericLiteral(lit) => Some(lit.value != 0.0),
-            Self::BigIntLiteral(lit) => Some(!lit.is_zero()),
-            Self::RegExpLiteral(_) => Some(true),
-            Self::StringLiteral(lit) => Some(!lit.value.is_empty()),
-            _ => None,
-        }
-    }
-
     pub fn get_member_expr(&self) -> Option<&MemberExpression<'a>> {
         match self.get_inner_expression() {
             Expression::ChainExpression(chain_expr) => chain_expr.expression.as_member_expression(),

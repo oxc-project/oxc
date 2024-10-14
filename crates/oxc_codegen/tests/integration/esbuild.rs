@@ -1,4 +1,6 @@
-//! Tests ported from [esbuild](https://github.com/evanw/esbuild/blob/main/internal/js_printer/js_printer_test.go#L164)
+//! Tests ported from `esbuild`
+//! * <https://github.com/evanw/esbuild/blob/main/internal/js_printer/js_printer_test.go>
+//! * <https://github.com/evanw/esbuild/blob/main/internal/js_parser/js_parser_test.go>
 
 use crate::tester::{test, test_minify};
 
@@ -1154,4 +1156,34 @@ fn test_using() {
     test("await using x = y, z = _", "await using x = y, z = _;\n");
     test_minify("await using x = y", "await using x=y;");
     test_minify("await using x = y, z = _", "await using x=y,z=_;");
+}
+
+#[test]
+fn test_preserve_optional_chain_parentheses() {
+    test("a?.b.c", "a?.b.c;\n");
+    test("(a?.b).c", "(a?.b).c;\n");
+    test("a?.b.c.d", "a?.b.c.d;\n");
+    test("(a?.b.c).d", "(a?.b.c).d;\n");
+    test("a?.b[c]", "a?.b[c];\n");
+    test("(a?.b)[c]", "(a?.b)[c];\n");
+    test("a?.b(c)", "a?.b(c);\n");
+    test("(a?.b)(c)", "(a?.b)(c);\n");
+
+    test("a?.[b][c]", "a?.[b][c];\n");
+    test("(a?.[b])[c]", "(a?.[b])[c];\n");
+    test("a?.[b][c][d]", "a?.[b][c][d];\n");
+    test("(a?.[b][c])[d]", "(a?.[b][c])[d];\n");
+    test("a?.[b].c", "a?.[b].c;\n");
+    test("(a?.[b]).c", "(a?.[b]).c;\n");
+    test("a?.[b](c)", "a?.[b](c);\n");
+    test("(a?.[b])(c)", "(a?.[b])(c);\n");
+
+    test("a?.(b)(c)", "a?.(b)(c);\n");
+    test("(a?.(b))(c)", "(a?.(b))(c);\n");
+    test("a?.(b)(c)(d)", "a?.(b)(c)(d);\n");
+    test("(a?.(b)(c))(d)", "(a?.(b)(c))(d);\n");
+    test("a?.(b).c", "a?.(b).c;\n");
+    test("(a?.(b)).c", "(a?.(b)).c;\n");
+    test("a?.(b)[c]", "a?.(b)[c];\n");
+    test("(a?.(b))[c]", "(a?.(b))[c];\n");
 }

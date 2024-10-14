@@ -144,8 +144,7 @@
     "@vscode/vsce": "^3.0.0",
     "cross-env": "^7.0.3",
     "esbuild": "^0.24.0",
-    "ovsx": "^0.9.1",
-    "prettier": "^3.3.1",
+    "ovsx": "^0.10.0",
     "typescript": "^5.4.5"
   },
   "dependencies": {

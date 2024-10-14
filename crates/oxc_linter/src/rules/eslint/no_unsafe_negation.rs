@@ -83,15 +83,15 @@ impl NoUnsafeNegation {
             // modify `!a instance of B` to `!(a instanceof B)`
             let modified_code = {
                 let mut codegen = fixer.codegen();
-                codegen.print_char(b'!');
+                codegen.print_ascii_byte(b'!');
                 let Expression::UnaryExpression(left) = &expr.left else { unreachable!() };
-                codegen.print_char(b'(');
+                codegen.print_ascii_byte(b'(');
                 codegen.print_expression(&left.argument);
-                codegen.print_char(b' ');
+                codegen.print_ascii_byte(b' ');
                 codegen.print_str(expr.operator.as_str());
-                codegen.print_char(b' ');
+                codegen.print_ascii_byte(b' ');
                 codegen.print_expression(&expr.right);
-                codegen.print_char(b')');
+                codegen.print_ascii_byte(b')');
                 codegen.into_source_text()
             };
             fixer.replace(expr.span, modified_code)

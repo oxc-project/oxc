@@ -4,6 +4,7 @@
 //! * [esbuild](https://github.com/evanw/esbuild/blob/main/internal/js_printer/js_printer.go)
 
 mod binary_expr_visitor;
+mod code_buffer;
 mod comment;
 mod context;
 mod gen;
@@ -18,14 +19,14 @@ use oxc_ast::ast::{
 use oxc_mangler::Mangler;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::{
-    identifier::is_identifier_part,
+    identifier::{is_identifier_part, is_identifier_part_ascii},
     operator::{BinaryOperator, UnaryOperator, UpdateOperator},
     precedence::Precedence,
 };
 
 use crate::{
-    binary_expr_visitor::BinaryExpressionVisitor, comment::CommentsMap, operator::Operator,
-    sourcemap_builder::SourcemapBuilder,
+    binary_expr_visitor::BinaryExpressionVisitor, code_buffer::CodeBuffer, comment::CommentsMap,
+    operator::Operator, sourcemap_builder::SourcemapBuilder,
 };
 pub use crate::{
     context::Context,
@@ -102,7 +103,7 @@ pub struct Codegen<'a> {
     mangler: Option<Mangler>,
 
     /// Output Code
-    code: Vec<u8>,
+    code: CodeBuffer,
 
     // states
     prev_op_end: usize,
@@ -150,13 +151,13 @@ impl<'a> Default for Codegen<'a> {
 }
 
 impl<'a> From<Codegen<'a>> for String {
-    fn from(mut val: Codegen<'a>) -> Self {
+    fn from(val: Codegen<'a>) -> Self {
         val.into_source_text()
     }
 }
 
 impl<'a> From<Codegen<'a>> for Cow<'a, str> {
-    fn from(mut val: Codegen<'a>) -> Self {
+    fn from(val: Codegen<'a>) -> Self {
         Cow::Owned(val.into_source_text())
     }
 }
@@ -171,7 +172,7 @@ impl<'a> Codegen<'a> {
             comments: CommentsMap::default(),
             start_of_annotation_comment: None,
             mangler: None,
-            code: vec![],
+            code: CodeBuffer::default(),
             needs_semicolon: false,
             need_space_before_dot: 0,
             print_next_indent_as_space: false,
@@ -214,27 +215,29 @@ impl<'a> Codegen<'a> {
         }
 
         program.print(&mut self, Context::default());
-        let code = self.into_source_text();
+        let code = self.code.into_string();
         let map = self.sourcemap_builder.map(SourcemapBuilder::into_sourcemap);
         CodegenReturn { code, map }
     }
 
     #[must_use]
-    pub fn into_source_text(&mut self) -> String {
-        // SAFETY: criteria of `from_utf8_unchecked` are met.
-        unsafe { String::from_utf8_unchecked(std::mem::take(&mut self.code)) }
+    pub fn into_source_text(self) -> String {
+        self.code.into_string()
     }
 
-    /// Push a single character into the buffer
+    /// Push a single ASCII byte into the buffer.
+    ///
+    /// # Panics
+    /// Panics if `byte` is not an ASCII byte (`0 - 0x7F`).
     #[inline]
-    pub fn print_char(&mut self, ch: u8) {
-        self.code.push(ch);
+    pub fn print_ascii_byte(&mut self, byte: u8) {
+        self.code.print_ascii_byte(byte);
     }
 
     /// Push str into the buffer
     #[inline]
     pub fn print_str(&mut self, s: &str) {
-        self.code.extend(s.as_bytes());
+        self.code.print_str(s);
     }
 
     #[inline]
@@ -245,7 +248,7 @@ impl<'a> Codegen<'a> {
 
 // Private APIs
 impl<'a> Codegen<'a> {
-    fn code(&self) -> &Vec<u8> {
+    fn code(&self) -> &CodeBuffer {
         &self.code
     }
 
@@ -256,51 +259,64 @@ impl<'a> Codegen<'a> {
     #[inline]
     fn print_soft_space(&mut self) {
         if !self.options.minify {
-            self.print_char(b' ');
+            self.print_ascii_byte(b' ');
         }
     }
 
     #[inline]
     fn print_hard_space(&mut self) {
-        self.print_char(b' ');
+        self.print_ascii_byte(b' ');
     }
 
     #[inline]
     fn print_soft_newline(&mut self) {
         if !self.options.minify {
-            self.print_char(b'\n');
+            self.print_ascii_byte(b'\n');
         }
     }
 
     #[inline]
     fn print_hard_newline(&mut self) {
-        self.print_char(b'\n');
+        self.print_ascii_byte(b'\n');
     }
 
     #[inline]
     fn print_semicolon(&mut self) {
-        self.print_char(b';');
+        self.print_ascii_byte(b';');
     }
 
     #[inline]
     fn print_comma(&mut self) {
-        self.print_char(b',');
+        self.print_ascii_byte(b',');
     }
 
     #[inline]
     fn print_space_before_identifier(&mut self) {
-        if self
-            .peek_nth(0)
-            .is_some_and(|ch| is_identifier_part(ch) || self.prev_reg_exp_end == self.code.len())
-        {
-            self.print_hard_space();
+        let Some(byte) = self.last_byte() else { return };
+
+        if self.prev_reg_exp_end != self.code.len() {
+            let is_identifier = if byte.is_ascii() {
+                // Fast path for ASCII (very common case)
+                is_identifier_part_ascii(byte as char)
+            } else {
+                is_identifier_part(self.last_char().unwrap())
+            };
+            if !is_identifier {
+                return;
+            }
         }
+
+        self.print_hard_space();
     }
 
     #[inline]
-    fn peek_nth(&self, n: usize) -> Option<char> {
-        // SAFETY: criteria of `from_utf8_unchecked` are met.
-        unsafe { std::str::from_utf8_unchecked(self.code()) }.chars().nth_back(n)
+    fn last_byte(&self) -> Option<u8> {
+        self.code.last_byte()
+    }
+
+    #[inline]
+    fn last_char(&self) -> Option<char> {
+        self.code.last_char()
     }
 
     #[inline]
@@ -327,7 +343,10 @@ impl<'a> Codegen<'a> {
             self.print_next_indent_as_space = false;
             return;
         }
-        self.code.extend(std::iter::repeat(b'\t').take(self.indent as usize));
+        // SAFETY: this iterator only yields tabs, which are always valid ASCII characters.
+        unsafe {
+            self.code.print_bytes_unchecked(std::iter::repeat(b'\t').take(self.indent as usize));
+        }
     }
 
     #[inline]
@@ -354,12 +373,12 @@ impl<'a> Codegen<'a> {
 
     #[inline]
     fn print_colon(&mut self) {
-        self.print_char(b':');
+        self.print_ascii_byte(b':');
     }
 
     #[inline]
     fn print_equal(&mut self) {
-        self.print_char(b'=');
+        self.print_ascii_byte(b'=');
     }
 
     fn print_sequence<T: Gen>(&mut self, items: &[T], ctx: Context) {
@@ -371,7 +390,7 @@ impl<'a> Codegen<'a> {
 
     fn print_curly_braces<F: FnOnce(&mut Self)>(&mut self, span: Span, single_line: bool, op: F) {
         self.add_source_mapping(span.start);
-        self.print_char(b'{');
+        self.print_ascii_byte(b'{');
         if !single_line {
             self.print_soft_newline();
             self.indent();
@@ -382,12 +401,12 @@ impl<'a> Codegen<'a> {
             self.print_indent();
         }
         self.add_source_mapping(span.end);
-        self.print_char(b'}');
+        self.print_ascii_byte(b'}');
     }
 
     fn print_block_start(&mut self, position: u32) {
         self.add_source_mapping(position);
-        self.print_char(b'{');
+        self.print_ascii_byte(b'{');
         self.print_soft_newline();
         self.indent();
     }
@@ -396,7 +415,7 @@ impl<'a> Codegen<'a> {
         self.dedent();
         self.print_indent();
         self.add_source_mapping(position);
-        self.print_char(b'}');
+        self.print_ascii_byte(b'}');
     }
 
     fn print_body(&mut self, stmt: &Statement<'_>, need_space: bool, ctx: Context) {
@@ -528,7 +547,11 @@ impl<'a> Codegen<'a> {
             || ((prev == bin_op_sub || prev == un_op_neg)
                 && (next == bin_op_sub || next == un_op_neg || next == un_op_pre_dec))
             || (prev == un_op_post_dec && next == bin_op_gt)
-            || (prev == un_op_not && next == un_op_pre_dec && self.peek_nth(1) == Some('<'))
+            || (prev == un_op_not
+                && next == un_op_pre_dec
+                // `prev == UnaryOperator::LogicalNot` which means last byte is ASCII,
+                // and therefore previous character is 1 byte from end of buffer
+                && self.code.peek_nth_byte_back(1) == Some(b'<'))
         {
             self.print_hard_space();
         }
@@ -537,30 +560,30 @@ impl<'a> Codegen<'a> {
     #[inline]
     fn wrap<F: FnMut(&mut Self)>(&mut self, wrap: bool, mut f: F) {
         if wrap {
-            self.print_char(b'(');
+            self.print_ascii_byte(b'(');
         }
         f(self);
         if wrap {
-            self.print_char(b')');
+            self.print_ascii_byte(b')');
         }
     }
 
     #[inline]
     fn wrap_quote<F: FnMut(&mut Self, u8)>(&mut self, mut f: F) {
-        self.print_char(self.quote);
+        self.print_ascii_byte(self.quote);
         f(self, self.quote);
-        self.print_char(self.quote);
+        self.print_ascii_byte(self.quote);
     }
 
     fn add_source_mapping(&mut self, position: u32) {
         if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut() {
-            sourcemap_builder.add_source_mapping(&self.code, position, None);
+            sourcemap_builder.add_source_mapping(self.code.as_bytes(), position, None);
         }
     }
 
     fn add_source_mapping_for_name(&mut self, span: Span, name: &str) {
         if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut() {
-            sourcemap_builder.add_source_mapping_for_name(&self.code, span, name);
+            sourcemap_builder.add_source_mapping_for_name(self.code.as_bytes(), span, name);
         }
     }
 }

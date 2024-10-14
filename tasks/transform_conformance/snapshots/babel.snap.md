@@ -1,6 +1,6 @@
 commit: 3bcfee23
 
-Passed: 338/1022
+Passed: 339/1039
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1625,6 +1625,56 @@ x Output mismatch
 x Output mismatch
 
 * regression/gh-8323/input.js
+x Output mismatch
+
+
+# babel-plugin-transform-async-to-generator (1/17)
+* assumption-ignoreFunctionLength-true/basic/input.mjs
+x Output mismatch
+
+* assumption-ignoreFunctionLength-true/export-default-function/input.mjs
+x Output mismatch
+
+* assumption-noNewArrows-false/basic/input.js
+x Output mismatch
+
+* bluebird-coroutines/arrow-function/input.js
+x Output mismatch
+
+* bluebird-coroutines/class/input.js
+x Output mismatch
+
+* bluebird-coroutines/expression/input.js
+x Output mismatch
+
+* bluebird-coroutines/named-expression/input.js
+x Output mismatch
+
+* bluebird-coroutines/statement/input.js
+x Output mismatch
+
+* regression/15978/input.js
+x Output mismatch
+
+* regression/4599/input.js
+x Output mismatch
+
+* regression/8783/input.js
+x Output mismatch
+
+* regression/T7108/input.js
+x Output mismatch
+
+* regression/T7194/input.js
+x Output mismatch
+
+* regression/gh-6923/input.js
+x Output mismatch
+
+* regression/in-uncompiled-class-fields/input.js
+x Output mismatch
+
+* regression/regression-2765/input.js
 x Output mismatch
 
 

@@ -20,7 +20,6 @@ workspace = true
 doctest = false
 
 [dependencies]
-cow-utils = { workspace = true }
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
 oxc_index = { workspace = true }
@@ -29,7 +28,9 @@ oxc_sourcemap = { workspace = true }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true, features = ["to_js_string"] }
 
+assert-unchecked = { workspace = true }
 bitflags = { workspace = true }
+cow-utils = { workspace = true }
 daachorse = { workspace = true }
 nonmax = { workspace = true }
 once_cell = { workspace = true }
