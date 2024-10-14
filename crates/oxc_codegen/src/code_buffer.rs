@@ -1,5 +1,7 @@
 use std::mem;
 
+use assert_unchecked::assert_unchecked;
+
 /// A string builder for constructing source code.
 ///
 /// `CodeBuffer` provides safe abstractions over a byte array.
@@ -152,11 +154,12 @@ impl CodeBuffer {
     /// ```
     #[inline]
     pub fn print_ascii_byte(&mut self, byte: u8) {
-        // NOTE: since this method is inlined, this assertion should get
-        // optimized away by the compiler when the value of `byte` is known,
-        // e.g. when printing a constant.
+        // When this method is inlined, and the value of `byte` is known, this assertion should
+        // get optimized away by the compiler. e.g. `code_buffer.print_ascii_byte(b' ')`.
         assert!(byte.is_ascii(), "byte {byte} is not ASCII");
-        self.buf.push(byte);
+
+        // SAFETY: `byte` is an ASCII character
+        unsafe { self.print_byte_unchecked(byte) }
     }
 
     /// Push a byte to the buffer, without checking that the buffer still represents a valid
@@ -200,7 +203,34 @@ impl CodeBuffer {
     /// [`print_bytes_unchecked`]: CodeBuffer::print_bytes_unchecked
     #[inline]
     pub unsafe fn print_byte_unchecked(&mut self, byte: u8) {
-        self.buf.push(byte);
+        // By default, `self.buf.push(byte)` results in quite verbose assembly, because the default
+        // branch is for the "buf is full to capacity" case.
+        //
+        // That's not ideal because growth strategy is doubling, so e.g. when the `Vec` has just grown
+        // from 1024 bytes to 2048 bytes, it won't need to grow again until another 1024 bytes have
+        // been pushed. "Needs to grow" is a very rare occurrence.
+        //
+        // So we use `push_slow` to move the complicated logic for the "needs to grow" path out of
+        // `print_byte_unchecked`, leaving a fast path for the common "there is sufficient capacity" case.
+        // https://godbolt.org/z/Kv8sEoEed
+        // https://github.com/oxc-project/oxc/pull/6148#issuecomment-2381635390
+        #[cold]
+        #[inline(never)]
+        fn push_slow(code_buffer: &mut CodeBuffer, byte: u8) {
+            let buf = &mut code_buffer.buf;
+            // SAFETY: We only call this function below if `buf.len() == buf.capacity()`.
+            // This function is not inlined, so we need this assertion to assist compiler to
+            // understand this fact.
+            unsafe { assert_unchecked!(buf.len() == buf.capacity()) }
+            buf.push(byte);
+        }
+
+        #[expect(clippy::if_not_else)]
+        if self.buf.len() != self.buf.capacity() {
+            self.buf.push(byte);
+        } else {
+            push_slow(self, byte);
+        }
     }
 
     /// Push a single Unicode character into the buffer.

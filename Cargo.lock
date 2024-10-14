@@ -1536,6 +1536,7 @@ dependencies = [
 name = "oxc_codegen"
 version = "0.31.0"
 dependencies = [
+ "assert-unchecked",
  "base64",
  "bitflags 2.6.0",
  "cow-utils",
