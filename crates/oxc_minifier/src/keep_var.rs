@@ -60,7 +60,7 @@ impl<'a> KeepVar<'a> {
         self.all_hoisted
     }
 
-    pub fn get_variable_declaration_statement(self) -> Option<Statement<'a>> {
+    pub fn get_variable_declaration(self) -> Option<VariableDeclaration<'a>> {
         if self.vars.is_empty() {
             return None;
         }
@@ -73,7 +73,13 @@ impl<'a> KeepVar<'a> {
         }));
 
         let decl = self.ast.variable_declaration(SPAN, kind, decls, false);
-        let stmt = self.ast.statement_declaration(self.ast.declaration_from_variable(decl));
+        Some(decl)
+    }
+
+    pub fn get_variable_declaration_statement(self) -> Option<Statement<'a>> {
+        let stmt = self.ast.statement_declaration(
+            self.ast.declaration_from_variable(self.get_variable_declaration()?),
+        );
         Some(stmt)
     }
 }
