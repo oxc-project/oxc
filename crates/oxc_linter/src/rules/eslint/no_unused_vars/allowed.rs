@@ -32,6 +32,10 @@ impl<'s, 'a> Symbol<'s, 'a> {
                 | AstKind::ArrayExpressionElement(_)
                 | AstKind::ExpressionArrayElement(_)
                 | AstKind::ArrayExpression(_)
+                // a ? b : function foo() {}
+                // Only considered used if the function is the test or the selected branch,
+                // but we can't determine that here.
+                | AstKind::ConditionalExpression(_)
                 => {
                     continue;
                 }
@@ -69,12 +73,6 @@ impl<'s, 'a> Symbol<'s, 'a> {
                         return false;
                     };
                     return body.span.contains_inclusive(self.span()) && body.statements.len() == 1 && !self.get_snippet(body.span).starts_with('{')
-                }
-                // a ? b : function foo() {}
-                // Only considered used if the function is the test or the selected branch,
-                // but we can't determine that here.
-                AstKind::ConditionalExpression(_) => {
-                    continue;
                 }
                 _ => {
                     parent.kind().debug_name();
