@@ -61,5 +61,5 @@ url = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }
-markdown = { version = "1.0.0-alpha.19" }
+markdown = { workspace = true }
 project-root = { workspace = true }
