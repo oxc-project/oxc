@@ -67,7 +67,7 @@ struct NamedImport<'a> {
     local: BoundIdentifier<'a>,
 }
 
-enum ImportKind<'a> {
+enum Import<'a> {
     Named(NamedImport<'a>),
     Default(BoundIdentifier<'a>),
 }
@@ -78,7 +78,7 @@ enum ImportKind<'a> {
 /// to produce output that's the same as Babel's.
 /// Substitute `FxHashMap` once we don't need to match Babel's output exactly.
 pub struct ModuleImportsStore<'a> {
-    imports: RefCell<IndexMap<Atom<'a>, Vec<ImportKind<'a>>>>,
+    imports: RefCell<IndexMap<Atom<'a>, Vec<Import<'a>>>>,
 }
 
 // Public methods
@@ -97,7 +97,7 @@ impl<'a> ModuleImportsStore<'a> {
     ///
     /// If `front` is `true`, `import`/`require` is added to front of the `import`s/`require`s.
     pub fn add_default_import(&self, source: Atom<'a>, local: BoundIdentifier<'a>, front: bool) {
-        self.add_import(source, ImportKind::Default(local), front);
+        self.add_import(source, Import::Default(local), front);
     }
 
     /// Add named `import` to top of program.
@@ -114,7 +114,7 @@ impl<'a> ModuleImportsStore<'a> {
         local: BoundIdentifier<'a>,
         front: bool,
     ) {
-        self.add_import(source, ImportKind::Named(NamedImport { imported, local }), front);
+        self.add_import(source, Import::Named(NamedImport { imported, local }), front);
     }
 
     /// Returns `true` if no imports have been scheduled for insertion.
@@ -137,7 +137,7 @@ impl<'a> ModuleImportsStore<'a> {
     /// If `front` is `true`, `import`/`require` is added to front of the `import`s/`require`s.
     /// TODO(improve-on-babel): `front` option is only required to pass one of Babel's tests. Output
     /// without it is still valid. Remove this once our output doesn't need to match Babel exactly.
-    fn add_import(&self, source: Atom<'a>, import: ImportKind<'a>, front: bool) {
+    fn add_import(&self, source: Atom<'a>, import: Import<'a>, front: bool) {
         match self.imports.borrow_mut().entry(source) {
             IndexMapEntry::Occupied(mut entry) => {
                 entry.get_mut().push(import);
@@ -194,11 +194,11 @@ impl<'a> ModuleImportsStore<'a> {
 
     fn get_import(
         source: Atom<'a>,
-        names: Vec<ImportKind<'a>>,
+        names: Vec<Import<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
         let specifiers = ctx.ast.vec_from_iter(names.into_iter().map(|import| match import {
-            ImportKind::Named(import) => {
+            Import::Named(import) => {
                 ImportDeclarationSpecifier::ImportSpecifier(ctx.ast.alloc_import_specifier(
                     SPAN,
                     ModuleExportName::IdentifierName(IdentifierName::new(SPAN, import.imported)),
@@ -206,7 +206,7 @@ impl<'a> ModuleImportsStore<'a> {
                     ImportOrExportKind::Value,
                 ))
             }
-            ImportKind::Default(local) => ImportDeclarationSpecifier::ImportDefaultSpecifier(
+            Import::Default(local) => ImportDeclarationSpecifier::ImportDefaultSpecifier(
                 ctx.ast.alloc_import_default_specifier(SPAN, local.create_binding_identifier()),
             ),
         }));
@@ -223,7 +223,7 @@ impl<'a> ModuleImportsStore<'a> {
 
     fn get_require(
         source: Atom<'a>,
-        names: std::vec::Vec<ImportKind<'a>>,
+        names: std::vec::Vec<Import<'a>>,
         require_symbol_id: Option<SymbolId>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
@@ -240,7 +240,7 @@ impl<'a> ModuleImportsStore<'a> {
             let arg = Argument::from(ctx.ast.expression_string_literal(SPAN, source));
             ctx.ast.vec1(arg)
         };
-        let Some(ImportKind::Default(local)) = names.into_iter().next() else { unreachable!() };
+        let Some(Import::Default(local)) = names.into_iter().next() else { unreachable!() };
         let id = local.create_binding_pattern(ctx);
         let decl = {
             let init = ctx.ast.expression_call(SPAN, callee, NONE, args, false);
