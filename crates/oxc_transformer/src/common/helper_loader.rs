@@ -145,8 +145,10 @@ impl<'a, 'ctx> Traverse<'a> for HelperLoader<'a, 'ctx> {
     }
 }
 
-// (helper_name, (path, bound_ident))
-type LoadedHelper<'a> = FxHashMap<Atom<'a>, (Atom<'a>, BoundIdentifier<'a>)>;
+struct Helper<'a> {
+    source: Atom<'a>,
+    local: BoundIdentifier<'a>,
+}
 
 /// Stores the state of the helper loader in [`TransformCtx`].
 pub struct HelperLoaderStore<'a> {
@@ -155,7 +157,7 @@ pub struct HelperLoaderStore<'a> {
     /// Symbol ID for the `babelHelpers`.
     babel_helpers_symbol_id: Cell<Option<SymbolId>>,
     /// Loaded helpers, determined what helpers are loaded and what imports should be added.
-    loaded_helpers: RefCell<LoadedHelper<'a>>,
+    loaded_helpers: RefCell<FxHashMap<Atom<'a>, Helper<'a>>>,
 }
 
 // Public methods
@@ -225,12 +227,12 @@ impl<'a> HelperLoaderStore<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let mut loaded_helpers = self.loaded_helpers.borrow_mut();
-        let (_, binding) = loaded_helpers.entry(helper_name).or_insert_with_key(|helper_name| {
+        let helper = loaded_helpers.entry(helper_name).or_insert_with_key(|helper_name| {
             let source = ctx.ast.atom(&format!("{}/helpers/{helper_name}", self.module_name));
-            let binding = ctx.generate_uid_in_root_scope(helper_name, SymbolFlags::Import);
-            (source, binding)
+            let local = ctx.generate_uid_in_root_scope(helper_name, SymbolFlags::Import);
+            Helper { source, local }
         });
-        binding.create_read_expression(ctx)
+        helper.local.create_read_expression(ctx)
     }
 
     fn transform_for_external_helper(
@@ -258,8 +260,8 @@ impl<'a> HelperLoaderStore<'a> {
 
     fn add_imports(&self, transform_ctx: &TransformCtx<'a>) {
         let mut loaded_helpers = self.loaded_helpers.borrow_mut();
-        loaded_helpers.drain().for_each(|(_, (source, import))| {
-            transform_ctx.module_imports.add_default_import(source, import, false);
-        });
+        for (_, helper) in loaded_helpers.drain() {
+            transform_ctx.module_imports.add_default_import(helper.source, helper.local, false);
+        }
     }
 }
