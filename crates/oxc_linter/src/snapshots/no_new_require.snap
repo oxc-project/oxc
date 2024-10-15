@@ -1,0 +1,16 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-node(no-new-require): `const myInstance = new require('some-module')` is likely unintended as it does not invoke the constructor exported from `'some-module'`.
+   ╭─[no_new_require.tsx:1:21]
+ 1 │ var appHeader = new require('app-header')
+   ·                     ───────
+   ╰────
+  help: Replace with one of the correct alternatives instead. `const myInstance = new (require('some-module'))`, `const myInstance = new (require('some-module'))`, or `const MyConstructor = require('some-module'); const myInstance = new MyConstructor();`
+
+  ⚠ eslint-plugin-node(no-new-require): `const myInstance = new require('some-module')` is likely unintended as it does not invoke the constructor exported from `'some-module'`.
+   ╭─[no_new_require.tsx:1:21]
+ 1 │ var appHeader = new require('headers').appHeader
+   ·                     ───────
+   ╰────
+  help: Replace with one of the correct alternatives instead. `const myInstance = new (require('some-module'))`, `const myInstance = new (require('some-module'))`, or `const MyConstructor = require('some-module'); const myInstance = new MyConstructor();`

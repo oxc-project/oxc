@@ -492,6 +492,7 @@ mod vitest {
 
 mod node {
     pub mod no_exports_assign;
+    pub mod no_new_require;
 }
 
 oxc_macros::declare_all_lint_rules! {
@@ -738,6 +739,7 @@ oxc_macros::declare_all_lint_rules! {
     nextjs::no_typos,
     nextjs::no_unwanted_polyfillio,
     node::no_exports_assign,
+    node::no_new_require,
     oxc::approx_constant,
     oxc::bad_array_method_on_arguments,
     oxc::bad_bitwise_operator,
