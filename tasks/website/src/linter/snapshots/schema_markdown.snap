@@ -108,7 +108,7 @@ Rules enabled or disabled this way will be overwritten by individual rules in th
 
 ## env
 
-type: `object`
+type: `Record<string, boolean>`
 
 
 Predefine global variables.
@@ -118,7 +118,7 @@ Environments specify what global variables are predefined. See [ESLint's list of
 
 ## globals
 
-type: `object`
+type: `Record<string, string>`
 
 
 Add or remove global variables.
@@ -256,7 +256,7 @@ type: `object`
 
 #### settings.jsx-a11y.components
 
-type: `object`
+type: `Record<string, string>`
 
 default: `{}`
 

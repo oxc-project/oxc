@@ -206,7 +206,20 @@ impl Renderer {
                 .unwrap()
                 .replace('"', "")
                 + "[]";
+
             // Do not render subsections for primitive arrays
+            (Some(instance_type), vec![])
+        } else if let Some(values) = as_mapped_type(schema) {
+            // Mapped types have empty `properties` and instead use
+            // `additionalProperties`. Try to render a better type than `object`
+            let values = self.get_referenced_schema(values);
+            let value_type = values
+                .instance_type
+                .as_ref()
+                .map(|t| serde_json::to_string(t).unwrap().replace('"', ""));
+            let instance_type =
+                value_type.map_or_else(|| "object".into(), |v| format!("Record<string, {v}>"));
+
             (Some(instance_type), vec![])
         } else {
             let instance_type = schema
@@ -214,6 +227,7 @@ impl Renderer {
                 .as_ref()
                 .map(|t| serde_json::to_string_pretty(t).unwrap().replace('"', ""));
             let sections = self.render_properties(depth, Some(key), schema);
+
             (instance_type, sections)
         };
 
@@ -266,6 +280,14 @@ fn sanitize(s: &mut String) {
     s.replace_range(start..start + end, &json);
 }
 
+fn as_mapped_type(schema: &SchemaObject) -> Option<&SchemaObject> {
+    let obj = schema.object.as_ref()?;
+    obj.properties
+        .is_empty()
+        .then_some(obj.additional_properties.as_ref())
+        .flatten()
+        .map(|ap| Renderer::get_schema_object(ap))
+}
 /// If `schema` is an array of primitive data types, returns [`Some`] with the
 /// primitive schema (i.e. the array item schema).
 fn as_primitive_array(schema: &SchemaObject) -> Option<&SchemaObject> {
