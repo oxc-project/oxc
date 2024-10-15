@@ -27,15 +27,15 @@ fn bench_linter(criterion: &mut Criterion) {
             |b, source_text| {
                 let allocator = Allocator::default();
                 let ret = Parser::new(&allocator, source_text, source_type).parse();
-                let program = allocator.alloc(ret.program);
+                let path = Path::new("");
                 let semantic_ret = SemanticBuilder::new()
                     .with_build_jsdoc(true)
                     .with_cfg(true)
-                    .build_module_record(Path::new(""), program)
-                    .build(program);
+                    .build_module_record(path, &ret.program)
+                    .build(&ret.program);
                 let linter = LinterBuilder::all().with_fix(FixKind::All).build();
                 let semantic = Rc::new(semantic_ret.semantic);
-                b.iter(|| linter.run(Path::new(std::ffi::OsStr::new("")), Rc::clone(&semantic)));
+                b.iter(|| linter.run(path, Rc::clone(&semantic)));
             },
         );
     }

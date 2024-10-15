@@ -51,12 +51,12 @@ fn main() -> std::io::Result<()> {
         return Ok(());
     }
 
-    let program = allocator.alloc(parser_ret.program);
+    let program = parser_ret.program;
     std::fs::write(ast_file_path, format!("{:#?}", &program))?;
     println!("Wrote AST to: {}", &ast_file_name);
 
     let semantic =
-        SemanticBuilder::new().with_check_syntax_error(true).with_cfg(true).build(program);
+        SemanticBuilder::new().with_check_syntax_error(true).with_cfg(true).build(&program);
 
     if !semantic.errors.is_empty() {
         let error_message: String = semantic

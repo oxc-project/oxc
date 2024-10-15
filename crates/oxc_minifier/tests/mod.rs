@@ -17,12 +17,12 @@ pub(crate) fn test(source_text: &str, expected: &str, options: CompressOptions) 
 fn run(source_text: &str, source_type: SourceType, options: Option<CompressOptions>) -> String {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
-    let program = allocator.alloc(ret.program);
+    let mut program = ret.program;
     if let Some(options) = options {
-        Compressor::new(&allocator, options).build(program);
+        Compressor::new(&allocator, options).build(&mut program);
     }
     CodeGenerator::new()
         .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
-        .build(program)
+        .build(&program)
         .code
 }
