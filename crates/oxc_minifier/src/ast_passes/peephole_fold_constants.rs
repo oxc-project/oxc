@@ -12,7 +12,7 @@ use oxc_ecmascript::{
 };
 use oxc_span::{GetSpan, Span, SPAN};
 use oxc_syntax::{
-    number::NumberBase,
+    number::{NumberBase, ToJsString},
     operator::{BinaryOperator, LogicalOperator, UnaryOperator},
 };
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
@@ -487,9 +487,9 @@ impl<'a, 'b> PeepholeFoldConstants {
             {
                 return false;
             }
-            let result_str = result.to_string().len();
+            let result_str = result.to_js_string().len();
             let original_str =
-                left.to_string().len() + right.to_string().len() + length_of_operator;
+                left.to_js_string().len() + right.to_js_string().len() + length_of_operator;
             result_str <= original_str
         }
         if !operation.operator.is_arithmetic() {
@@ -538,7 +538,7 @@ impl<'a, 'b> PeepholeFoldConstants {
         Some(ctx.ast.expression_numeric_literal(
             operation.span,
             result,
-            result.to_string(),
+            result.to_js_string(),
             number_base,
         ))
     }
@@ -582,7 +582,7 @@ impl<'a, 'b> PeepholeFoldConstants {
             _ => ctx.ast.expression_numeric_literal(
                 SPAN,
                 result,
-                result.to_string(),
+                result.to_js_string(),
                 if is_exact_int64(result) { NumberBase::Decimal } else { NumberBase::Float },
             ),
         })
@@ -676,7 +676,7 @@ impl<'a, 'b> PeepholeFoldConstants {
                     let number_literal_expr = ctx.ast.expression_numeric_literal(
                         right_expr.span(),
                         num,
-                        num.to_string(),
+                        num.to_js_string(),
                         if num.fract() == 0.0 { NumberBase::Decimal } else { NumberBase::Float },
                     );
 
@@ -699,7 +699,7 @@ impl<'a, 'b> PeepholeFoldConstants {
                     let number_literal_expr = ctx.ast.expression_numeric_literal(
                         left_expr.span(),
                         num,
-                        num.to_string(),
+                        num.to_js_string(),
                         if num.fract() == 0.0 { NumberBase::Decimal } else { NumberBase::Float },
                     );
 
@@ -967,7 +967,7 @@ impl<'a, 'b> PeepholeFoldConstants {
             return Some(ctx.ast.expression_numeric_literal(
                 span,
                 result_val,
-                result_val.to_string(),
+                result_val.to_js_string(),
                 NumberBase::Decimal,
             ));
         }
