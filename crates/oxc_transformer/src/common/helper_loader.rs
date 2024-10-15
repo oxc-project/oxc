@@ -62,7 +62,6 @@
 use std::{
     borrow::Cow,
     cell::{Cell, RefCell},
-    rc::Rc,
 };
 
 use oxc_allocator::Vec;
@@ -154,9 +153,9 @@ pub struct HelperLoaderStore<'a> {
     mode: HelperLoaderMode,
     module_name: Cow<'static, str>,
     /// Symbol ID for the `babelHelpers`.
-    babel_helpers_symbol_id: Rc<Cell<Option<SymbolId>>>,
+    babel_helpers_symbol_id: Cell<Option<SymbolId>>,
     /// Loaded helpers, determined what helpers are loaded and what imports should be added.
-    loaded_helpers: Rc<RefCell<LoadedHelper<'a>>>,
+    loaded_helpers: RefCell<LoadedHelper<'a>>,
 }
 
 // Public methods
@@ -165,8 +164,8 @@ impl<'a> HelperLoaderStore<'a> {
         Self {
             mode: options.mode,
             module_name: options.module_name.clone(),
-            loaded_helpers: Rc::new(RefCell::new(FxHashMap::default())),
-            babel_helpers_symbol_id: Rc::new(Cell::new(None)),
+            loaded_helpers: RefCell::new(FxHashMap::default()),
+            babel_helpers_symbol_id: Cell::new(None),
         }
     }
 
