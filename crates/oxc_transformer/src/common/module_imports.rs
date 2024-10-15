@@ -11,21 +11,19 @@
 //!
 //! ```rs
 //! // import { jsx as _jsx } from 'react';
-//! self.ctx.module_imports.add_import(
+//! self.ctx.module_imports.add_named_import(
 //!     Atom::from("react"),
-//!     ImportKind::new_named(Atom::from("jsx"), Atom::from("_jsx"), symbol_id)
+//!     Atom::from("jsx"),
+//!     Atom::from("_jsx"),
+//!     symbol_id
 //! );
 //!
-//! // import React from 'react';
-//! self.ctx.module_imports.add_import(
+//! // ESM: import React from 'react';
+//! // CJS: var _React = require('react');
+//! self.ctx.module_imports.add_default_import(
 //!     Atom::from("react"),
-//!     ImportKind::new_default(Atom::from("React")), symbol_id)
-//! );
-//!
-//! // var _react = require('react');
-//! self.ctx.module_imports.add_require(
-//!     Atom::from("react"),
-//!     ImportKind::new_default(Atom::from("_react"), symbol_id)
+//!     Atom::from("React"),
+//!     symbol_id
 //! );
 //! ```
 //!
