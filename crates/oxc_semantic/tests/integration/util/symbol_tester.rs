@@ -75,7 +75,7 @@ impl<'a> SymbolTester<'a> {
             0 => Err(OxcDiagnostic::error(format!("Could not find declaration for {target}"))),
             1 => Ok(symbols_with_target_name
                 .iter()
-                .map(|(_, symbol_id, _)| *symbol_id)
+                .map(|&(_, symbol_id, _)| symbol_id)
                 .next()
                 .unwrap()),
             n if n > 1 => Err(OxcDiagnostic::error(format!(
@@ -183,11 +183,9 @@ impl<'a> SymbolTester<'a> {
         self.test_result = match self.test_result {
             Ok(symbol_id) => {
                 let refs = {
-                    self.semantic
-                        .symbols()
-                        .get_resolved_reference_ids(symbol_id)
-                        .iter()
-                        .map(|r_id| self.semantic.symbols().get_reference(*r_id).clone())
+                    self.semantic.symbols().get_resolved_reference_ids(symbol_id).iter().map(
+                        |&reference_id| self.semantic.symbols().get_reference(reference_id).clone(),
+                    )
                 };
                 let num_accepted = refs.filter(filter).count();
                 if num_accepted == ref_count {

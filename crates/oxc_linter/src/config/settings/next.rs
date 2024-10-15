@@ -4,6 +4,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, Serializer};
 
 #[derive(Debug, Deserialize, Default, Serialize, JsonSchema)]
+#[cfg_attr(test, derive(PartialEq))]
 pub struct NextPluginSettings {
     #[serde(default)]
     #[serde(rename = "rootDir")]

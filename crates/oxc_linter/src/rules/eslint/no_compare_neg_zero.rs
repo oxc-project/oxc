@@ -30,7 +30,7 @@ declare_oxc_lint!(
     /// ```
     NoCompareNegZero,
     correctness,
-    conditional_suggestion_fix
+    conditional_fix_suggestion
 );
 
 impl Rule for NoCompareNegZero {

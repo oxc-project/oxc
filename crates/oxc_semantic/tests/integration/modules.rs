@@ -250,3 +250,11 @@ fn test_import_assignment() {
         .contains_flags(SymbolFlags::Import)
         .test();
 }
+
+#[test]
+fn test_import_type() {
+    SemanticTester::ts(r#"import { type "<A>" as someA } from './a'; "#)
+        .has_root_symbol("someA")
+        .contains_flags(SymbolFlags::TypeImport)
+        .test();
+}

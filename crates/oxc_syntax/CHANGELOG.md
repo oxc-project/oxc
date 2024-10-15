@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.31.0] - 2024-10-08
+
+### Refactor
+
+- 03bc041 syntax: Remove some unsafe code creating IDs (#6324) (overlookmotel)
+
 ## [0.30.3] - 2024-09-27
 
 ### Bug Fixes
@@ -187,7 +193,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Features
 
-- f1ccbd4 syntax: Add `ToJsInt32` trait for f64 (#3132) (Boshen)
+- f1ccbd4 syntax: Add `ToInt32` trait for f64 (#3132) (Boshen)
 - 870d11f syntax: Add `ToJsString` trait for f64 (#3131) (Boshen)
 - 46c02ae traverse: Add scope flags to `TraverseCtx` (#3229) (overlookmotel)
 

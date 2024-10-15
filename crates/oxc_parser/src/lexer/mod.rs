@@ -218,7 +218,7 @@ impl<'a> Lexer<'a> {
         self.token.end = self.offset();
         debug_assert!(self.token.start <= self.token.end);
         let token = self.token;
-        self.trivia_builder.handle_token(token.start);
+        self.trivia_builder.handle_token(token);
         self.token = Token::default();
         token
     }

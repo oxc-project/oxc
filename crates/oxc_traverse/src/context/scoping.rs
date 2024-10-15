@@ -7,14 +7,13 @@ use rustc_hash::FxHashSet;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, visit::Visit};
 use oxc_semantic::{NodeId, Reference, ScopeTree, SymbolTable};
-use oxc_span::{Atom, CompactStr, Span, SPAN};
+use oxc_span::{Atom, CompactStr, Span};
 use oxc_syntax::{
     reference::{ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
-    symbol::{SymbolFlags, SymbolId},
+    symbol::SymbolId,
 };
 
-use super::{ast_operations::GatherNodeParts, identifier::to_identifier};
 use crate::scopes_collector::ChildScopeCollector;
 
 /// Traverse scope context.
@@ -227,81 +226,6 @@ impl TraverseScoping {
         let uid = get_unique_name(base, uid_names);
         uid_names.insert(uid.clone());
         uid
-    }
-
-    /// Generate UID in provided scope.
-    ///
-    /// See also comments on [`TraverseScoping::generate_uid_name`] for important information
-    /// on how UIDs are generated. There are some potential "gotchas".
-    pub fn generate_uid(&mut self, name: &str, scope_id: ScopeId, flags: SymbolFlags) -> SymbolId {
-        // Get name for UID
-        let name = self.generate_uid_name(name);
-
-        // Add binding to scope
-        let symbol_id =
-            self.symbols.create_symbol(SPAN, name.clone(), flags, scope_id, NodeId::DUMMY);
-        self.scopes.add_binding(scope_id, name, symbol_id);
-        symbol_id
-    }
-
-    /// Generate UID in current scope.
-    ///
-    /// See also comments on [`TraverseScoping::generate_uid_name`] for important information
-    /// on how UIDs are generated. There are some potential "gotchas".
-    pub fn generate_uid_in_current_scope(&mut self, name: &str, flags: SymbolFlags) -> SymbolId {
-        self.generate_uid(name, self.current_scope_id, flags)
-    }
-
-    /// Generate UID in root scope.
-    ///
-    /// See also comments on [`TraverseScoping::generate_uid_name`] for important information
-    /// on how UIDs are generated. There are some potential "gotchas".
-    pub fn generate_uid_in_root_scope(&mut self, name: &str, flags: SymbolFlags) -> SymbolId {
-        self.generate_uid(name, self.scopes.root_scope_id(), flags)
-    }
-
-    /// Generate UID based on node.
-    ///
-    /// Recursively gathers the identifying names of a node, and joins them with `$`.
-    ///
-    /// Based on Babel's `scope.generateUidBasedOnNode` logic.
-    /// <https://github.com/babel/babel/blob/419644f27c5c59deb19e71aaabd417a3bc5483ca/packages/babel-traverse/src/scope/index.ts#L543>
-    ///
-    /// See also comments on [`TraverseScoping::generate_uid_name`] for important information
-    /// on how UIDs are generated. There are some potential "gotchas".
-    pub fn generate_uid_based_on_node<'a, T>(
-        &mut self,
-        node: &T,
-        scope_id: ScopeId,
-        flags: SymbolFlags,
-    ) -> SymbolId
-    where
-        T: GatherNodeParts<'a>,
-    {
-        let mut parts = String::new();
-        node.gather(&mut |part| {
-            if !parts.is_empty() {
-                parts.push('$');
-            }
-            parts.push_str(part);
-        });
-        let name = if parts.is_empty() { "ref" } else { parts.trim_start_matches('_') };
-        self.generate_uid(&to_identifier(name.get(..20).unwrap_or(name)), scope_id, flags)
-    }
-
-    /// Generate UID in current scope based on node.
-    ///
-    /// See also comments on [`TraverseScoping::generate_uid_name`] for important information
-    /// on how UIDs are generated. There are some potential "gotchas".
-    pub fn generate_uid_in_current_scope_based_on_node<'a, T>(
-        &mut self,
-        node: &T,
-        flags: SymbolFlags,
-    ) -> SymbolId
-    where
-        T: GatherNodeParts<'a>,
-    {
-        self.generate_uid_based_on_node(node, self.current_scope_id, flags)
     }
 
     /// Create a reference bound to a `SymbolId`

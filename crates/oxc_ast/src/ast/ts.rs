@@ -347,10 +347,12 @@ pub struct TSConditionalType<'a> {
     /// The type before `extends` in the test expression.
     pub check_type: TSType<'a>,
     /// The type `check_type` is being tested against.
+    #[scope(enter_before)]
     pub extends_type: TSType<'a>,
     /// The type evaluated to if the test is true.
     pub true_type: TSType<'a>,
     /// The type evaluated to if the test is false.
+    #[scope(exit_before)]
     pub false_type: TSType<'a>,
     #[serde(skip)]
     #[clone_in(default)]
@@ -1145,10 +1147,10 @@ pub struct TSIndexSignature<'a> {
 pub struct TSCallSignatureDeclaration<'a> {
     #[serde(flatten)]
     pub span: Span,
+    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub this_param: Option<TSThisParameter<'a>>,
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
-    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
 }
 
 #[ast]
@@ -1186,10 +1188,10 @@ pub struct TSMethodSignature<'a> {
     pub computed: bool,
     pub optional: bool,
     pub kind: TSMethodSignatureKind,
+    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub this_param: Option<Box<'a, TSThisParameter<'a>>>,
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
-    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     #[serde(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
@@ -1205,9 +1207,9 @@ pub struct TSMethodSignature<'a> {
 pub struct TSConstructSignatureDeclaration<'a> {
     #[serde(flatten)]
     pub span: Span,
+    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
-    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     #[serde(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
@@ -1391,7 +1393,7 @@ pub enum TSModuleDeclarationKind {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum TSModuleDeclarationName<'a> {
-    Identifier(IdentifierName<'a>) = 0,
+    Identifier(BindingIdentifier<'a>) = 0,
     StringLiteral(StringLiteral<'a>) = 1,
 }
 
@@ -1560,10 +1562,17 @@ pub enum TSImportAttributeName<'a> {
 pub struct TSFunctionType<'a> {
     #[serde(flatten)]
     pub span: Span,
+    /// Generic type parameters
+    ///
+    /// ```ts
+    /// type T = <U>(x: U) => U;
+    /// //        ^
+    /// ```
+    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     /// `this` parameter
     ///
     /// ```ts
-    /// type T = (this: string, a: number) => void
+    /// type T = (this: string, a: number) => void;
     /// //        ^^^^^^^^^^^^
     /// ```
     pub this_param: Option<Box<'a, TSThisParameter<'a>>>,
@@ -1571,17 +1580,10 @@ pub struct TSFunctionType<'a> {
     pub params: Box<'a, FormalParameters<'a>>,
     /// Return type of the function.
     /// ```ts
-    /// type T = () => void
+    /// type T = () => void;
     /// //             ^^^^
     /// ```
     pub return_type: Box<'a, TSTypeAnnotation<'a>>,
-    /// Generic type parameters
-    ///
-    /// ```ts
-    /// type T = <T>(x: T) => T
-    /// //        ^
-    /// ```
-    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
 }
 
 #[ast(visit)]
@@ -1593,9 +1595,9 @@ pub struct TSConstructorType<'a> {
     #[serde(flatten)]
     pub span: Span,
     pub r#abstract: bool,
+    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Box<'a, TSTypeAnnotation<'a>>,
-    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
 }
 
 /// TypeScript Mapped Type

@@ -30,11 +30,11 @@ impl<'a> IsolatedDeclarations<'a> {
             self.ast.ts_type_function_type(
                 func.span,
                 // SAFETY: `ast.copy` is unsound! We need to fix.
+                unsafe { self.ast.copy(&func.type_parameters) },
+                // SAFETY: `ast.copy` is unsound! We need to fix.
                 unsafe { self.ast.copy(&func.this_param) },
                 params,
                 return_type,
-                // SAFETY: `ast.copy` is unsound! We need to fix.
-                unsafe { self.ast.copy(&func.type_parameters) },
             )
         })
     }
@@ -57,11 +57,11 @@ impl<'a> IsolatedDeclarations<'a> {
         return_type.map(|return_type| {
             self.ast.ts_type_function_type(
                 func.span,
+                // SAFETY: `ast.copy` is unsound! We need to fix.
+                unsafe { self.ast.copy(&func.type_parameters) },
                 NONE,
                 params,
                 return_type,
-                // SAFETY: `ast.copy` is unsound! We need to fix.
-                unsafe { self.ast.copy(&func.type_parameters) },
             )
         })
     }
@@ -107,11 +107,11 @@ impl<'a> IsolatedDeclarations<'a> {
                                 false,
                                 TSMethodSignatureKind::Method,
                                 // SAFETY: `ast.copy` is unsound! We need to fix.
+                                unsafe { self.ast.copy(&function.type_parameters) },
+                                // SAFETY: `ast.copy` is unsound! We need to fix.
                                 unsafe { self.ast.copy(&function.this_param) },
                                 params,
                                 return_type,
-                                // SAFETY: `ast.copy` is unsound! We need to fix.
-                                unsafe { self.ast.copy(&function.type_parameters) },
                             ));
                         }
                     }

@@ -155,7 +155,7 @@ impl<'a> BinaryExpressionVisitor<'a> {
                 && self.ctx.intersects(Context::FORBID_IN));
 
         if self.wrap {
-            p.print_char(b'(');
+            p.print_ascii_byte(b'(');
             self.ctx &= Context::FORBID_IN.not();
         }
 
@@ -200,7 +200,7 @@ impl<'a> BinaryExpressionVisitor<'a> {
         p.print_soft_space();
         self.e.right().gen_expr(p, self.right_precedence, self.ctx & Context::FORBID_IN);
         if self.wrap {
-            p.print_char(b')');
+            p.print_ascii_byte(b')');
         }
     }
 }

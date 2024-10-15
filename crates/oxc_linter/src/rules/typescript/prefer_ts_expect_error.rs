@@ -48,7 +48,7 @@ declare_oxc_lint!(
 
 impl Rule for PreferTsExpectError {
     fn run_once(&self, ctx: &LintContext) {
-        let comments = ctx.semantic().trivias().comments();
+        let comments = ctx.semantic().comments();
 
         for comment in comments {
             let raw = comment.span.source_text(ctx.semantic().source_text());

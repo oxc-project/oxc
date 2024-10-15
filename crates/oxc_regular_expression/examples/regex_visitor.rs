@@ -20,10 +20,12 @@ impl Visit<'_> for TestVisitor {
 }
 
 fn main() {
-    let source_text = r"/(https?:\/\/github\.com\/(([^\s]+)\/([^\s]+))\/([^\s]+\/)?(issues|pull)\/([0-9]+))|(([^\s]+)\/([^\s]+))?#([1-9][0-9]*)($|[\s\:\;\-\(\=])/";
+    let source_text = r"(https?:\/\/github\.com\/(([^\s]+)\/([^\s]+))\/([^\s]+\/)?(issues|pull)\/([0-9]+))|(([^\s]+)\/([^\s]+))?#([1-9][0-9]*)($|[\s\:\;\-\(\=])";
+
     let allocator = Allocator::default();
     let parser = Parser::new(&allocator, source_text, ParserOptions::default());
-    let pattern = parser.parse().unwrap().pattern;
+    let pattern = parser.parse().unwrap();
+
     let mut visitor = TestVisitor;
     visitor.visit_pattern(&pattern);
 }

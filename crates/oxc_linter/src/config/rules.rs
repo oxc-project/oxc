@@ -23,9 +23,11 @@ type RuleSet = FxHashSet<RuleWithSeverity>;
 // <https://github.com/eslint/eslint/blob/ce838adc3b673e52a151f36da0eedf5876977514/lib/shared/types.js#L12>
 // Note: when update document comment, also update `DummyRuleMap`'s description in this file.
 #[derive(Debug, Clone, Default)]
+#[cfg_attr(test, derive(PartialEq))]
 pub struct OxlintRules(Vec<ESLintRule>);
 
 #[derive(Debug, Clone)]
+#[cfg_attr(test, derive(PartialEq))]
 pub struct ESLintRule {
     pub plugin_name: String,
     pub rule_name: String,

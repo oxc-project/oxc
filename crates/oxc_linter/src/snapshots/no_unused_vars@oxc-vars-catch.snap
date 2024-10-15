@@ -8,3 +8,27 @@ source: crates/oxc_linter/src/tester.rs
    ·               ╰── 'e' is declared here
    ╰────
   help: Consider handling this error.
+
+  ⚠ eslint(no-unused-vars): Variable '_' is caught but never used.
+   ╭─[no_unused_vars.tsx:1:14]
+ 1 │ try {} catch(_) { }
+   ·              ┬
+   ·              ╰── '_' is declared here
+   ╰────
+  help: Consider handling this error.
+
+  ⚠ eslint(no-unused-vars): Variable '_' is caught but never used.
+   ╭─[no_unused_vars.tsx:1:14]
+ 1 │ try {} catch(_) { }
+   ·              ┬
+   ·              ╰── '_' is declared here
+   ╰────
+  help: Consider handling this error.
+
+  ⚠ eslint(no-unused-vars): Variable 'foo' is caught but never used.
+   ╭─[no_unused_vars.tsx:1:14]
+ 1 │ try {} catch(foo) { }
+   ·              ─┬─
+   ·               ╰── 'foo' is declared here
+   ╰────
+  help: Consider handling this error.

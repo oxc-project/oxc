@@ -17,6 +17,7 @@ export declare function fooBad(): number;
 export declare const fooBad2: () => number;
 export declare function withAny(a: any, b: string): void;
 export declare function withUnknown(a: unknown, b: string): void;
+export declare function withTypeAssertion(a?: any): void;
 
 
 ==================== Errors ====================

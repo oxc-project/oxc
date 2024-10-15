@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "build": "napi build --platform --release",
-    "test": "node test.mjs"
+    "test": "vitest run ./test"
   },
   "engines": {
     "node": ">=14.*"

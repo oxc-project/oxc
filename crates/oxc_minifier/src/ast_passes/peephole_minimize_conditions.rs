@@ -28,7 +28,7 @@ impl<'a> CompressorPass<'a> for PeepholeMinimizeConditions {
 impl<'a> Traverse<'a> for PeepholeMinimizeConditions {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(folded_expr) = match expr {
-            Expression::UnaryExpression(e) if e.operator.is_not() => self.try_minimize_not(e, ctx),
+            Expression::UnaryExpression(e) if e.operator.is_not() => Self::try_minimize_not(e, ctx),
             _ => None,
         } {
             *expr = folded_expr;
@@ -44,7 +44,6 @@ impl<'a> PeepholeMinimizeConditions {
 
     /// Try to minimize NOT nodes such as `!(x==y)`.
     fn try_minimize_not(
-        &self,
         expr: &mut UnaryExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {

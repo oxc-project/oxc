@@ -1,6 +1,10 @@
 use bitflags::bitflags;
 use schemars::{gen::SchemaGenerator, schema::Schema, JsonSchema};
-use serde::{de::Deserializer, ser::Serializer, Deserialize, Serialize};
+use serde::{
+    de::{self, Deserializer},
+    ser::Serializer,
+    Deserialize, Serialize,
+};
 
 bitflags! {
     // NOTE: may be increased to a u32 if needed
@@ -151,7 +155,38 @@ impl<S: AsRef<str>> FromIterator<S> for LintPlugins {
 
 impl<'de> Deserialize<'de> for LintPlugins {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        Vec::<&str>::deserialize(deserializer).map(|vec| vec.into_iter().collect())
+        struct LintPluginsVisitor;
+        impl<'de> de::Visitor<'de> for LintPluginsVisitor {
+            type Value = LintPlugins;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                write!(formatter, "a list of plugin names")
+            }
+
+            fn visit_str<E: de::Error>(self, value: &str) -> Result<Self::Value, E> {
+                Ok(LintPlugins::from(value))
+            }
+
+            fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+            where
+                E: de::Error,
+            {
+                Ok(LintPlugins::from(v.as_str()))
+            }
+
+            fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+            where
+                A: de::SeqAccess<'de>,
+            {
+                let mut plugins = LintPlugins::default();
+                while let Some(plugin) = seq.next_element::<&str>()? {
+                    plugins |= plugin.into();
+                }
+                Ok(plugins)
+            }
+        }
+
+        deserializer.deserialize_any(LintPluginsVisitor)
     }
 }
 

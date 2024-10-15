@@ -24,21 +24,27 @@ use std::{cell::RefCell, mem};
 use diagnostics::function_with_assigning_properties;
 use oxc_allocator::{Allocator, CloneIn};
 #[allow(clippy::wildcard_imports)]
-use oxc_ast::{ast::*, AstBuilder, Trivias, Visit, NONE};
+use oxc_ast::{ast::*, AstBuilder, Visit, NONE};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Atom, GetSpan, SourceType, SPAN};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::scope::ScopeTree;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy)]
 pub struct IsolatedDeclarationsOptions {
-    /// Do not emit declarations for code that has an @internal annotation in its JSDoc comment.
-    /// This is an internal compiler option; use at your own risk, because the compiler does not check that the result is valid.
-    /// <https://www.typescriptlang.org/tsconfig/#stripInternal>
+    /// Do not emit declarations for code that has an `@internal` annotation in its JSDoc comment.
+    /// This is an internal compiler option; use at your own risk, because the compiler does not
+    /// check that the result is valid.
+    ///
+    /// Default: `false`
+    ///
+    /// ## References
+    /// [TSConfig - `stripInternal`](https://www.typescriptlang.org/tsconfig/#stripInternal)
     pub strip_internal: bool,
 }
 
+#[non_exhaustive]
 pub struct IsolatedDeclarationsReturn<'a> {
     pub program: Program<'a>,
     pub errors: Vec<OxcDiagnostic>,
@@ -59,21 +65,12 @@ pub struct IsolatedDeclarations<'a> {
 }
 
 impl<'a> IsolatedDeclarations<'a> {
-    pub fn new(
-        allocator: &'a Allocator,
-        source_text: &str,
-        trivias: &Trivias,
-        options: IsolatedDeclarationsOptions,
-    ) -> Self {
+    pub fn new(allocator: &'a Allocator, options: IsolatedDeclarationsOptions) -> Self {
         let strip_internal = options.strip_internal;
-        let is_internal_set = strip_internal
-            .then(|| Self::build_internal_annotations(source_text, trivias))
-            .unwrap_or_default();
-
         Self {
             ast: AstBuilder::new(allocator),
             strip_internal,
-            internal_annotations: is_internal_set,
+            internal_annotations: FxHashSet::default(),
             scope: ScopeTree::new(allocator),
             errors: RefCell::new(vec![]),
         }
@@ -83,10 +80,22 @@ impl<'a> IsolatedDeclarations<'a> {
     ///
     /// Returns `Vec<Error>` if any errors were collected during the transformation.
     pub fn build(mut self, program: &Program<'a>) -> IsolatedDeclarationsReturn<'a> {
+        self.internal_annotations = self
+            .strip_internal
+            .then(|| Self::build_internal_annotations(program))
+            .unwrap_or_default();
         let source_type = SourceType::d_ts();
         let directives = self.ast.vec();
         let stmts = self.transform_program(program);
-        let program = self.ast.program(SPAN, source_type, None, directives, stmts);
+        let program = self.ast.program(
+            SPAN,
+            source_type,
+            program.source_text,
+            self.ast.vec_from_iter(program.comments.iter().copied()),
+            None,
+            directives,
+            stmts,
+        );
         IsolatedDeclarationsReturn { program, errors: self.take_errors() }
     }
 
@@ -100,10 +109,10 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     /// Build the lookup table for jsdoc `@internal`.
-    fn build_internal_annotations(source_text: &str, trivias: &Trivias) -> FxHashSet<u32> {
+    fn build_internal_annotations(program: &Program<'a>) -> FxHashSet<u32> {
         let mut set = FxHashSet::default();
-        for comment in trivias.comments() {
-            let has_internal = comment.span.source_text(source_text).contains("@internal");
+        for comment in &program.comments {
+            let has_internal = comment.span.source_text(program.source_text).contains("@internal");
             // Use the first jsdoc comment if there are multiple jsdoc comments for the same node.
             if has_internal && !set.contains(&comment.attached_to) {
                 set.insert(comment.attached_to);

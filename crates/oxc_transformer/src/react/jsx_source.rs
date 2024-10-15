@@ -33,15 +33,17 @@
 //!
 //! * Babel plugin implementation: <https://github.com/babel/babel/blob/main/packages/babel-plugin-transform-react-jsx-source/src/index.ts>
 
+use ropey::Rope;
+
 use oxc_ast::{ast::*, NONE};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Span, SPAN};
 use oxc_syntax::{number::NumberBase, symbol::SymbolFlags};
-use oxc_traverse::{Traverse, TraverseCtx};
-use ropey::Rope;
+use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
+
+use crate::TransformCtx;
 
 use super::utils::get_line_column;
-use crate::{helpers::bindings::BoundIdentifier, TransformCtx};
 
 const SOURCE: &str = "__source";
 const FILE_NAME_VAR: &str = "jsxFileName";
@@ -59,9 +61,9 @@ impl<'a, 'ctx> ReactJsxSource<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> Traverse<'a> for ReactJsxSource<'a, 'ctx> {
-    fn exit_program(&mut self, program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
-        if let Some(stmt) = self.get_var_file_name_statement() {
-            program.body.insert(0, stmt);
+    fn exit_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Some(stmt) = self.get_filename_var_statement(ctx) {
+            self.ctx.top_level_statements.insert_statement(stmt);
         }
     }
 
@@ -76,10 +78,9 @@ impl<'a, 'ctx> Traverse<'a> for ReactJsxSource<'a, 'ctx> {
 
 impl<'a, 'ctx> ReactJsxSource<'a, 'ctx> {
     pub fn get_line_column(&mut self, offset: u32) -> (usize, usize) {
-        if self.source_rope.is_none() {
-            self.source_rope = Some(Rope::from_str(self.ctx.source_text));
-        }
-        get_line_column(self.source_rope.as_ref().unwrap(), offset, self.ctx.source_text)
+        let source_rope =
+            self.source_rope.get_or_insert_with(|| Rope::from_str(self.ctx.source_text));
+        get_line_column(source_rope, offset, self.ctx.source_text)
     }
 
     pub fn get_object_property_kind_for_jsx_plugin(
@@ -89,10 +90,9 @@ impl<'a, 'ctx> ReactJsxSource<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) -> ObjectPropertyKind<'a> {
         let kind = PropertyKind::Init;
-        let key = self.ctx.ast.property_key_identifier_name(SPAN, SOURCE);
+        let key = ctx.ast.property_key_identifier_name(SPAN, SOURCE);
         let value = self.get_source_object(line, column, ctx);
-        self.ctx
-            .ast
+        ctx.ast
             .object_property_kind_object_property(SPAN, kind, key, value, None, false, false, false)
     }
 
@@ -125,17 +125,15 @@ impl<'a, 'ctx> ReactJsxSource<'a, 'ctx> {
             }
         }
 
-        let key = self.ctx.ast.jsx_attribute_name_jsx_identifier(SPAN, SOURCE);
+        let key = ctx.ast.jsx_attribute_name_jsx_identifier(SPAN, SOURCE);
         // TODO: We shouldn't calculate line + column from scratch each time as it's expensive.
         // Build a table of byte indexes of each line's start on first usage, and save it.
         // Then calculate line and column from that.
         let (line, column) = self.get_line_column(elem.span.start);
         let object = self.get_source_object(line, column, ctx);
-        let value = self
-            .ctx
-            .ast
-            .jsx_attribute_value_jsx_expression_container(SPAN, JSXExpression::from(object));
-        let attribute_item = self.ctx.ast.jsx_attribute_item_jsx_attribute(SPAN, key, Some(value));
+        let value =
+            ctx.ast.jsx_attribute_value_jsx_expression_container(SPAN, JSXExpression::from(object));
+        let attribute_item = ctx.ast.jsx_attribute_item_jsx_attribute(SPAN, key, Some(value));
         elem.attributes.push(attribute_item);
     }
 
@@ -149,76 +147,81 @@ impl<'a, 'ctx> ReactJsxSource<'a, 'ctx> {
         let kind = PropertyKind::Init;
 
         let filename = {
-            let key = self.ctx.ast.property_key_identifier_name(SPAN, "fileName");
-            let ident = self.get_filename_var(ctx).create_read_reference(ctx);
-            let value = self.ctx.ast.expression_from_identifier_reference(ident);
-            self.ctx.ast.object_property_kind_object_property(
+            let key = ctx.ast.property_key_identifier_name(SPAN, "fileName");
+            let value = self.get_filename_var(ctx).create_read_expression(ctx);
+            ctx.ast.object_property_kind_object_property(
                 SPAN, kind, key, value, None, false, false, false,
             )
         };
 
         let line_number = {
-            let key = self.ctx.ast.property_key_identifier_name(SPAN, "lineNumber");
-            let value = self.ctx.ast.expression_numeric_literal(
+            let key = ctx.ast.property_key_identifier_name(SPAN, "lineNumber");
+            let value = ctx.ast.expression_numeric_literal(
                 SPAN,
                 line as f64,
                 line.to_string(),
                 NumberBase::Decimal,
             );
-            self.ctx.ast.object_property_kind_object_property(
+            ctx.ast.object_property_kind_object_property(
                 SPAN, kind, key, value, None, false, false, false,
             )
         };
 
         let column_number = {
-            let key = self.ctx.ast.property_key_identifier_name(SPAN, "columnNumber");
-            let value = self.ctx.ast.expression_numeric_literal(
+            let key = ctx.ast.property_key_identifier_name(SPAN, "columnNumber");
+            let value = ctx.ast.expression_numeric_literal(
                 SPAN,
                 column as f64,
                 column.to_string(),
                 NumberBase::Decimal,
             );
-            self.ctx.ast.object_property_kind_object_property(
+            ctx.ast.object_property_kind_object_property(
                 SPAN, kind, key, value, None, false, false, false,
             )
         };
 
-        let mut properties = self.ctx.ast.vec_with_capacity(3);
+        let mut properties = ctx.ast.vec_with_capacity(3);
         properties.push(filename);
         properties.push(line_number);
         properties.push(column_number);
-        self.ctx.ast.expression_object(SPAN, properties, None)
+        ctx.ast.expression_object(SPAN, properties, None)
     }
 
-    pub fn get_var_file_name_statement(&mut self) -> Option<Statement<'a>> {
+    pub fn get_filename_var_statement(&self, ctx: &mut TraverseCtx<'a>) -> Option<Statement<'a>> {
+        let decl = self.get_filename_var_declarator(ctx)?;
+
+        let var_decl = Statement::VariableDeclaration(ctx.ast.alloc_variable_declaration(
+            SPAN,
+            VariableDeclarationKind::Var,
+            ctx.ast.vec1(decl),
+            false,
+        ));
+        Some(var_decl)
+    }
+
+    pub fn get_filename_var_declarator(
+        &self,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<VariableDeclarator<'a>> {
         let filename_var = self.filename_var.as_ref()?;
 
         let var_kind = VariableDeclarationKind::Var;
         let id = {
             let ident = filename_var.create_binding_identifier();
-            let ident = self.ctx.ast.binding_pattern_kind_from_binding_identifier(ident);
-            self.ctx.ast.binding_pattern(ident, NONE, false)
+            let ident = ctx.ast.binding_pattern_kind_from_binding_identifier(ident);
+            ctx.ast.binding_pattern(ident, NONE, false)
         };
         let decl = {
-            let init = self
-                .ctx
-                .ast
-                .expression_string_literal(SPAN, self.ctx.source_path.to_string_lossy());
-            let decl = self.ctx.ast.variable_declarator(SPAN, var_kind, id, Some(init), false);
-            self.ctx.ast.vec1(decl)
+            let init =
+                ctx.ast.expression_string_literal(SPAN, self.ctx.source_path.to_string_lossy());
+            ctx.ast.variable_declarator(SPAN, var_kind, id, Some(init), false)
         };
-        let var_decl = self.ctx.ast.alloc_variable_declaration(SPAN, var_kind, decl, false);
-        Some(Statement::VariableDeclaration(var_decl))
+        Some(decl)
     }
 
-    fn get_filename_var(&mut self, ctx: &mut TraverseCtx<'a>) -> BoundIdentifier<'a> {
-        if self.filename_var.is_none() {
-            self.filename_var = Some(BoundIdentifier::new_uid_in_root_scope(
-                FILE_NAME_VAR,
-                SymbolFlags::FunctionScopedVariable,
-                ctx,
-            ));
-        }
-        self.filename_var.as_ref().unwrap().clone()
+    fn get_filename_var(&mut self, ctx: &mut TraverseCtx<'a>) -> &BoundIdentifier<'a> {
+        self.filename_var.get_or_insert_with(|| {
+            ctx.generate_uid_in_root_scope(FILE_NAME_VAR, SymbolFlags::FunctionScopedVariable)
+        })
     }
 }

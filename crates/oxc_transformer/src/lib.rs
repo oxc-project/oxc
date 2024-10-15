@@ -1,4 +1,3 @@
-#![warn(clippy::print_stdout)]
 #![allow(clippy::wildcard_imports)]
 
 //! Transformer / Transpiler
@@ -7,6 +6,15 @@
 //! * <https://www.typescriptlang.org/tsconfig#target>
 //! * <https://babel.dev/docs/presets>
 //! * <https://github.com/microsoft/TypeScript/blob/main/src/compiler/transformer.ts>
+
+use std::path::Path;
+
+use oxc_allocator::{Allocator, Vec};
+use oxc_ast::{ast::*, AstBuilder};
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_semantic::{ScopeTree, SymbolTable};
+use oxc_span::SPAN;
+use oxc_traverse::{traverse_mut, Traverse, TraverseCtx};
 
 // Core
 mod common;
@@ -17,6 +25,7 @@ mod options;
 mod env;
 mod es2015;
 mod es2016;
+mod es2017;
 mod es2018;
 mod es2019;
 mod es2020;
@@ -25,37 +34,30 @@ mod react;
 mod regexp;
 mod typescript;
 
-mod helpers {
-    pub mod bindings;
-    pub mod module_imports;
-    pub mod stack;
-}
-
-use std::path::Path;
+mod plugins;
 
 use common::Common;
+use context::TransformCtx;
+use es2015::ES2015;
 use es2016::ES2016;
+use es2017::ES2017;
 use es2018::ES2018;
 use es2019::ES2019;
 use es2020::ES2020;
 use es2021::ES2021;
-use oxc_allocator::{Allocator, Vec};
-use oxc_ast::{ast::*, Trivias};
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_semantic::{ScopeTree, SymbolTable};
-use oxc_span::{SourceType, SPAN};
-use oxc_traverse::{traverse_mut, Traverse, TraverseCtx};
+use react::React;
 use regexp::RegExp;
+use typescript::TypeScript;
 
 pub use crate::{
     compiler_assumptions::CompilerAssumptions,
     env::{EnvOptions, Targets},
     es2015::{ArrowFunctionsOptions, ES2015Options},
     options::{BabelOptions, TransformOptions},
-    react::{ReactJsxRuntime, ReactOptions, ReactRefreshOptions},
+    plugins::*,
+    react::{JsxOptions, JsxRuntime, ReactRefreshOptions},
     typescript::{RewriteExtensionsMode, TypeScriptOptions},
 };
-use crate::{context::TransformCtx, es2015::ES2015, react::React, typescript::TypeScript};
 
 pub struct TransformerReturn {
     pub errors: std::vec::Vec<OxcDiagnostic>,
@@ -66,38 +68,37 @@ pub struct TransformerReturn {
 pub struct Transformer<'a> {
     ctx: TransformCtx<'a>,
     options: TransformOptions,
+    allocator: &'a Allocator,
 }
 
 impl<'a> Transformer<'a> {
-    pub fn new(
-        allocator: &'a Allocator,
-        source_path: &Path,
-        source_type: SourceType,
-        source_text: &'a str,
-        trivias: Trivias,
-        options: TransformOptions,
-    ) -> Self {
-        let ctx =
-            TransformCtx::new(allocator, source_path, source_type, source_text, trivias, &options);
-        Self { ctx, options }
+    pub fn new(allocator: &'a Allocator, source_path: &Path, options: TransformOptions) -> Self {
+        let ctx = TransformCtx::new(source_path, &options);
+        Self { ctx, options, allocator }
     }
 
     pub fn build_with_symbols_and_scopes(
-        self,
+        mut self,
         symbols: SymbolTable,
         scopes: ScopeTree,
         program: &mut Program<'a>,
     ) -> TransformerReturn {
-        let allocator = self.ctx.ast.allocator;
+        let allocator = self.allocator;
+        let ast_builder = AstBuilder::new(allocator);
+
+        self.ctx.source_type = program.source_type;
+        self.ctx.source_text = program.source_text;
+        react::update_options_with_comments(&program.comments, &mut self.options, &self.ctx);
 
         let mut transformer = TransformerImpl {
-            x0_typescript: TypeScript::new(self.options.typescript, &self.ctx),
-            x1_react: React::new(self.options.react, &self.ctx),
+            x0_typescript: TypeScript::new(&self.options.typescript, &self.ctx),
+            x1_react: React::new(self.options.react, ast_builder, &self.ctx),
             x2_es2021: ES2021::new(self.options.es2021, &self.ctx),
             x2_es2020: ES2020::new(self.options.es2020, &self.ctx),
             x2_es2019: ES2019::new(self.options.es2019),
-            x2_es2018: ES2018::new(self.options.es2018),
+            x2_es2018: ES2018::new(self.options.es2018, &self.ctx),
             x2_es2016: ES2016::new(self.options.es2016, &self.ctx),
+            x2_es2017: ES2017::new(self.options.es2017),
             x3_es2015: ES2015::new(self.options.es2015),
             x4_regexp: RegExp::new(self.options.regexp, &self.ctx),
             common: Common::new(&self.ctx),
@@ -115,7 +116,8 @@ struct TransformerImpl<'a, 'ctx> {
     x2_es2021: ES2021<'a, 'ctx>,
     x2_es2020: ES2020<'a, 'ctx>,
     x2_es2019: ES2019,
-    x2_es2018: ES2018,
+    x2_es2018: ES2018<'a, 'ctx>,
+    x2_es2017: ES2017,
     x2_es2016: ES2016<'a, 'ctx>,
     x3_es2015: ES2015<'a>,
     x4_regexp: RegExp<'a, 'ctx>,
@@ -199,6 +201,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x1_react.exit_expression(expr, ctx);
+        self.x2_es2017.exit_expression(expr, ctx);
         self.x3_es2015.exit_expression(expr, ctx);
     }
 
@@ -233,6 +236,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
     fn exit_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.exit_function(func, ctx);
         self.x1_react.exit_function(func, ctx);
+        self.x2_es2017.exit_function(func, ctx);
         self.x3_es2015.exit_function(func, ctx);
     }
 
@@ -329,12 +333,17 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
                 .push(ctx.ast.statement_return(SPAN, Some(statement.unbox().expression)));
             arrow.expression = false;
         }
+        self.x2_es2017.exit_arrow_function_expression(arrow, ctx);
     }
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.exit_statements(stmts, ctx);
         self.x1_react.exit_statements(stmts, ctx);
         self.common.exit_statements(stmts, ctx);
+    }
+
+    fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x2_es2017.exit_statement(stmt, ctx);
     }
 
     fn enter_tagged_template_expression(

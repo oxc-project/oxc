@@ -35,6 +35,10 @@ await writeToFile('ancestor.rs', generateAncestorsCode(types));
 await writeToFile('walk.rs', generateWalkFunctionsCode(types));
 await writeToFile('scopes_collector.rs', generateScopesCollectorCode(types));
 
+/**
+ * @param {string} filename
+ * @param {string} code
+ */
 async function writeToFile(filename, code) {
   code = `${PREAMBLE}${code}`;
   const path = pathJoin(outputDirPath, filename);

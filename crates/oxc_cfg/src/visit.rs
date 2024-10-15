@@ -6,18 +6,18 @@ use petgraph::{
 };
 use rustc_hash::FxHashSet;
 
-use crate::BasicBlockId;
+use crate::BlockNodeId;
 
 /// # Panics
 pub fn neighbors_filtered_by_edge_weight<State: Default + Clone, NodeWeight, EdgeWeight, F, G>(
     graph: &Graph<NodeWeight, EdgeWeight>,
-    node: BasicBlockId,
+    node: BlockNodeId,
     edge_filter: &F,
     visitor: &mut G,
 ) -> Vec<State>
 where
     F: Fn(&EdgeWeight) -> Option<State>,
-    G: FnMut(&BasicBlockId, State) -> (State, bool),
+    G: FnMut(&BlockNodeId, State) -> (State, bool),
 {
     let mut q = vec![];
     let mut final_states = vec![];

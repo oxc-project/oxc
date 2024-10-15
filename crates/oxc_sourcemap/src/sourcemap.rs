@@ -21,6 +21,7 @@ pub struct SourceMap {
     /// The `x_google_ignoreList` field refers to the `sources` array, and lists the indices of all the known third-party sources in that source map.
     /// When parsing the source map, developer tools can use this to determine sections of the code that the browser loads and runs that could be automatically ignore-listed.
     pub(crate) x_google_ignore_list: Option<Vec<u32>>,
+    pub(crate) debug_id: Option<String>,
 }
 
 #[allow(clippy::cast_possible_truncation)]
@@ -43,6 +44,7 @@ impl SourceMap {
             tokens,
             token_chunks,
             x_google_ignore_list: None,
+            debug_id: None,
         }
     }
 
@@ -93,6 +95,14 @@ impl SourceMap {
     /// Set `x_google_ignoreList`.
     pub fn set_x_google_ignore_list(&mut self, x_google_ignore_list: Vec<u32>) {
         self.x_google_ignore_list = Some(x_google_ignore_list);
+    }
+
+    pub fn set_debug_id(&mut self, debug_id: &str) {
+        self.debug_id = Some(debug_id.into());
+    }
+
+    pub fn get_debug_id(&self) -> Option<&str> {
+        self.debug_id.as_deref()
     }
 
     pub fn get_names(&self) -> impl Iterator<Item = &str> {

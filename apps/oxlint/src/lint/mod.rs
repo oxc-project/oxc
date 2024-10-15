@@ -4,7 +4,7 @@ use ignore::gitignore::Gitignore;
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
 use oxc_linter::{
     loader::LINT_PARTIAL_LOADER_EXT, AllowWarnDeny, InvalidFilterKind, LintFilter, LintService,
-    LintServiceOptions, Linter, OxlintOptions,
+    LintServiceOptions, Linter, LinterBuilder, Oxlintrc,
 };
 use oxc_span::VALID_EXTENSIONS;
 
@@ -98,38 +98,31 @@ impl Runner for LintRunner {
         let number_of_files = paths.len();
 
         let cwd = std::env::current_dir().unwrap();
-        let mut options =
-            LintServiceOptions::new(cwd, paths).with_cross_module(enable_plugins.import_plugin);
-        let lint_options = OxlintOptions::default()
-            .with_filter(filter)
-            .with_config_path(basic_options.config)
-            .with_fix(fix_options.fix_kind())
-            .with_react_plugin(enable_plugins.react_plugin)
-            .with_unicorn_plugin(enable_plugins.unicorn_plugin)
-            .with_typescript_plugin(enable_plugins.typescript_plugin)
-            .with_oxc_plugin(enable_plugins.oxc_plugin)
-            .with_import_plugin(enable_plugins.import_plugin)
-            .with_jsdoc_plugin(enable_plugins.jsdoc_plugin)
-            .with_jest_plugin(enable_plugins.jest_plugin)
-            .with_vitest_plugin(enable_plugins.vitest_plugin)
-            .with_jsx_a11y_plugin(enable_plugins.jsx_a11y_plugin)
-            .with_nextjs_plugin(enable_plugins.nextjs_plugin)
-            .with_react_perf_plugin(enable_plugins.react_perf_plugin)
-            .with_promise_plugin(enable_plugins.promise_plugin)
-            .with_node_plugin(enable_plugins.node_plugin)
-            .with_security_plugin(enable_plugins.security_plugin);
 
-        let linter = match Linter::from_options(lint_options) {
-            Ok(lint_service) => lint_service,
-            Err(diagnostic) => {
-                let handler = GraphicalReportHandler::new();
-                let mut err = String::new();
-                handler.render_report(&mut err, diagnostic.as_ref()).unwrap();
-                return CliRunResult::InvalidOptions {
-                    message: format!("Failed to parse configuration file.\n{err}"),
-                };
+        let mut oxlintrc = if let Some(config_path) = basic_options.config.as_ref() {
+            match Oxlintrc::from_file(config_path) {
+                Ok(config) => config,
+                Err(diagnostic) => {
+                    let handler = GraphicalReportHandler::new();
+                    let mut err = String::new();
+                    handler.render_report(&mut err, &diagnostic).unwrap();
+                    return CliRunResult::InvalidOptions {
+                        message: format!("Failed to parse configuration file.\n{err}"),
+                    };
+                }
             }
+        } else {
+            Oxlintrc::default()
         };
+
+        enable_plugins.apply_overrides(&mut oxlintrc.plugins);
+        let builder = LinterBuilder::from_oxlintrc(false, oxlintrc)
+            .with_filters(filter)
+            .with_fix(fix_options.fix_kind());
+
+        let mut options =
+            LintServiceOptions::new(cwd, paths).with_cross_module(builder.plugins().has_import());
+        let linter = builder.build();
 
         let tsconfig = basic_options.tsconfig;
         if let Some(path) = tsconfig.as_ref() {
@@ -560,6 +553,15 @@ mod test {
         ];
         let result = test(args);
         assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_errors, 1);
+    }
+
+    #[test]
+    fn test_import_plugin_enabled_in_config() {
+        let args = &["-c", "fixtures/import/.oxlintrc.json", "fixtures/import/test.js"];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 0);
         assert_eq!(result.number_of_errors, 1);
     }
 }

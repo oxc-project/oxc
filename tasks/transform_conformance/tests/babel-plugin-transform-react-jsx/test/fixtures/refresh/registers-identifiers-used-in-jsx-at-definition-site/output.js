@@ -15,7 +15,7 @@ let Alias1 = A;
 let Alias2 = A.Foo;
 const Dict = {};
 function Foo() {
-	return _jsxs("div", { children: [_jsx(A, {}), _jsx(B, {}), _jsx(StyledFactory1, {}), _jsx(StyledFactory2, {}), _jsx(StyledFactory3, {}), _jsx(Alias1, {}), _jsx(Alias2, {}), _jsx(Header, {}), _jsx(Dict.X, {})] });
+  return _jsxs("div", { children: [_jsx(A, {}), _jsx(B, {}), _jsx(StyledFactory1, {}), _jsx(StyledFactory2, {}), _jsx(StyledFactory3, {}), _jsx(Alias1, {}), _jsx(Alias2, {}), _jsx(Header, {}), _jsx(Dict.X, {})] });
 }
 _c5 = Foo;
 const B = hoc(A);

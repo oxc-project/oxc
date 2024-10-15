@@ -30,11 +30,11 @@ export const Counter: React.FC = () => {
         program,  // AST
         errors,   // Syntax errors
         panicked, // Parser encountered an error it couldn't recover from
-        trivias,  // Comments, whitespace, etc.
+        ..
     } = Parser::new(&allocator, source_text, source_type).parse();
 
     assert!(!panicked);
     assert!(errors.is_empty());
     assert!(!program.body.is_empty());
-    assert_eq!(trivias.comments().count(), 1);
+    assert_eq!(program.comments.len(), 1);
 }

@@ -3,12 +3,10 @@ use oxc_ast::ast::{
     ArrowFunctionExpression, BindingPatternKind, Expression, FormalParameter, Function, Statement,
     TSType, TSTypeAnnotation, UnaryExpression,
 };
-use oxc_span::{GetSpan, SPAN};
+use oxc_span::SPAN;
 
 use crate::{
-    diagnostics::{
-        array_inferred, inferred_type_of_class_expression, parameter_must_have_explicit_type,
-    },
+    diagnostics::{array_inferred, inferred_type_of_class_expression},
     return_type::FunctionReturnType,
     IsolatedDeclarations,
 };
@@ -101,12 +99,6 @@ impl<'a> IsolatedDeclarations<'a> {
                 // SAFETY: `ast.copy` is unsound! We need to fix.
                 Some(unsafe { self.ast.copy(&annotation.type_annotation) })
             } else {
-                if let Expression::TSAsExpression(expr) = &pattern.right {
-                    if !expr.type_annotation.is_keyword_or_literal() {
-                        self.error(parameter_must_have_explicit_type(expr.type_annotation.span()));
-                    }
-                }
-
                 self.infer_type_from_expression(&pattern.right)
             }
         } else {

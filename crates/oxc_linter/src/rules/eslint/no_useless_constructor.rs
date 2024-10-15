@@ -7,18 +7,34 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
+/// ```js
+/// class A { constructor(){} }
+/// ```
 fn no_empty_constructor(constructor_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Empty constructors are unnecessary")
         .with_label(constructor_span)
         .with_help("Remove the constructor or add code to it.")
 }
-fn no_redundant_super_call(constructor_span: Span) -> OxcDiagnostic {
+
+/// ```js
+/// class A { }
+/// class B extends A {
+///     constructor() {
+///         super();
+///     }
+/// }
+/// ```
+fn no_redundant_super_call(constructor_span: Span, super_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Redundant super call in constructor")
-        .with_label(constructor_span).with_help("Constructors of subclasses invoke super() automatically if they are empty. Remove this constructor or add code to it.")
+        .with_labels([
+            constructor_span.primary_label("This constructor is unnecessary,"),
+            super_span.label("because it only passes arguments through to the superclass"),
+        ])
+        .with_help("Subclasses automatically use the constructor of their superclass, making this redundant.\nRemove this constructor or add code to it.")
 }
 
 #[derive(Debug, Default, Clone)]
@@ -165,9 +181,10 @@ fn lint_redundant_super_call<'a>(
         && !is_overriding(params)
         && (is_spread_arguments(super_args) || is_passing_through(params, super_args))
     {
-        ctx.diagnostic_with_fix(no_redundant_super_call(constructor.span), |fixer| {
-            fixer.delete_range(constructor.span)
-        });
+        ctx.diagnostic_with_fix(
+            no_redundant_super_call(constructor.key.span(), super_call.span()),
+            |fixer| fixer.delete_range(constructor.span),
+        );
     }
 }
 
@@ -270,12 +287,58 @@ fn test() {
         "class A { constructor(readonly x: number) {} }",
         "class A { constructor(private readonly x: number) {} }",
         "class A extends B { constructor(override x: number) { super(x); } }",
+        "
+        class A {
+            protected foo: number | undefined;
+            constructor(foo?: number) {
+                this.foo = foo;
+            }
+        }
+        class B extends A {
+            protected foo: number;
+            constructor(foo: number = 0) {
+                super(foo);
+            }
+        }
+        ",
+        "
+        class A {
+            protected foo: number | undefined;
+            constructor(foo?: number) {
+                this.foo = foo;
+            }
+        }
+        class B extends A {
+            constructor(foo?: number) {
+                super(foo ?? 0);
+            }
+        }
+        ",
+        // TODO: type aware linting :(
+        // "
+        // class A {
+        //     protected foo: string;
+        //     constructor(foo: string) {
+        //         this.foo = foo;
+        //     }
+        // }
+        // class B extends A {
+        //     constructor(foo: 'a' | 'b') {
+        //         super(foo);
+        //     }
+        // }
+        // ",
     ];
 
     let fail = vec![
         "class A { constructor(){} }",
         "class A { 'constructor'(){} }",
         "class A extends B { constructor() { super(); } }",
+        "class A extends B {
+    constructor() {
+        super();
+    }
+}",
         "class A extends B { constructor(foo){ super(foo); } }",
         "class A extends B { constructor(foo, bar){ super(foo, bar); } }",
         "class A extends B { constructor(...args){ super(...args); } }",

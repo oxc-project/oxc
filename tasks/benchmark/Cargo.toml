@@ -118,7 +118,14 @@ transformer = [
   "dep:oxc_transformer",
 ]
 semantic = ["dep:oxc_allocator", "dep:oxc_parser", "dep:oxc_semantic", "dep:oxc_span", "dep:oxc_tasks_common"]
-minifier = ["dep:oxc_allocator", "dep:oxc_minifier", "dep:oxc_parser", "dep:oxc_span", "dep:oxc_tasks_common"]
+minifier = [
+  "dep:oxc_allocator",
+  "dep:oxc_minifier",
+  "dep:oxc_parser",
+  "dep:oxc_semantic",
+  "dep:oxc_span",
+  "dep:oxc_tasks_common",
+]
 codegen = ["dep:oxc_allocator", "dep:oxc_codegen", "dep:oxc_parser", "dep:oxc_span", "dep:oxc_tasks_common"]
 sourcemap = [
   "dep:oxc_allocator",

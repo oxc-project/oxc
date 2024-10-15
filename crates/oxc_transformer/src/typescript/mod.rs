@@ -1,3 +1,9 @@
+use oxc_allocator::Vec;
+use oxc_ast::ast::*;
+use oxc_traverse::{Traverse, TraverseCtx};
+
+use crate::TransformCtx;
+
 mod annotations;
 mod diagnostics;
 mod r#enum;
@@ -6,16 +12,13 @@ mod namespace;
 mod options;
 mod rewrite_extensions;
 
+use annotations::TypeScriptAnnotations;
 use module::TypeScriptModule;
 use namespace::TypeScriptNamespace;
-use oxc_allocator::Vec;
-use oxc_ast::ast::*;
-use oxc_traverse::{Traverse, TraverseCtx};
+use r#enum::TypeScriptEnum;
 use rewrite_extensions::TypeScriptRewriteExtensions;
 
-pub use self::options::{RewriteExtensionsMode, TypeScriptOptions};
-use self::{annotations::TypeScriptAnnotations, r#enum::TypeScriptEnum};
-use crate::TransformCtx;
+pub use options::{RewriteExtensionsMode, TypeScriptOptions};
 
 /// [Preset TypeScript](https://babeljs.io/docs/babel-preset-typescript)
 ///
@@ -42,22 +45,21 @@ pub struct TypeScript<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,
 
     annotations: TypeScriptAnnotations<'a, 'ctx>,
-    r#enum: TypeScriptEnum<'a, 'ctx>,
+    r#enum: TypeScriptEnum<'a>,
     namespace: TypeScriptNamespace<'a, 'ctx>,
     module: TypeScriptModule<'a, 'ctx>,
     rewrite_extensions: Option<TypeScriptRewriteExtensions>,
 }
 
 impl<'a, 'ctx> TypeScript<'a, 'ctx> {
-    pub fn new(mut options: TypeScriptOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
-        options.update_with_comments(ctx);
+    pub fn new(options: &TypeScriptOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
         Self {
             ctx,
-            annotations: TypeScriptAnnotations::new(&options, ctx),
-            r#enum: TypeScriptEnum::new(ctx),
-            namespace: TypeScriptNamespace::new(&options, ctx),
+            annotations: TypeScriptAnnotations::new(options, ctx),
+            r#enum: TypeScriptEnum::new(),
+            namespace: TypeScriptNamespace::new(options, ctx),
             module: TypeScriptModule::new(ctx),
-            rewrite_extensions: TypeScriptRewriteExtensions::new(&options),
+            rewrite_extensions: TypeScriptRewriteExtensions::new(options),
         }
     }
 }

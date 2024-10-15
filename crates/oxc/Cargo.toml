@@ -1,6 +1,6 @@
 [package]
 name = "oxc"
-version = "0.30.5"
+version = "0.31.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -44,6 +44,11 @@ oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 oxc_transformer = { workspace = true, optional = true }
 
+napi = { workspace = true, optional = true, features = ["async"] }
+napi-derive = { workspace = true, optional = true }
+
+rustc-hash = { workspace = true, optional = true }
+
 [features]
 full = [
   "codegen",
@@ -56,12 +61,14 @@ full = [
   "cfg",
 ]
 
+parser = [] # for napi
 semantic = ["oxc_semantic"]
 transformer = ["oxc_transformer"]
 minifier = ["oxc_mangler", "oxc_minifier"]
 codegen = ["oxc_codegen"]
 mangler = ["oxc_mangler"]
 cfg = ["oxc_cfg"]
+isolated_declarations = ["oxc_isolated_declarations"]
 
 serialize = [
   "oxc_ast/serialize",
@@ -73,9 +80,8 @@ serialize = [
 sourcemap = ["oxc_sourcemap"]
 sourcemap_concurrent = ["oxc_sourcemap/concurrent", "sourcemap"]
 
-isolated_declarations = ["oxc_isolated_declarations"]
-
 wasm = ["oxc_transformer/wasm"]
+napi = ["dep:napi", "dep:napi-derive", "dep:rustc-hash"]
 
 [package.metadata.docs.rs]
 all-features = true

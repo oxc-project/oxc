@@ -1,9 +1,7 @@
-use lazy_static::lazy_static;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use regex::Regex;
 
 use crate::{
     context::{ContextHost, LintContext},
@@ -60,7 +58,7 @@ impl Rule for JsxNoCommentTextnodes {
             return;
         };
 
-        if control_patterns(&jsx_text.value) {
+        if has_comment_pattern(&jsx_text.value) {
             ctx.diagnostic(jsx_no_comment_textnodes_diagnostic(jsx_text.span));
         }
     }
@@ -70,11 +68,12 @@ impl Rule for JsxNoCommentTextnodes {
     }
 }
 
-fn control_patterns(pattern: &str) -> bool {
-    lazy_static! {
-        static ref CTL_PAT: Regex = Regex::new(r"(?m)^\s*/(/|\*)",).unwrap();
-    }
-    CTL_PAT.is_match(pattern)
+/// Returns true if the given text contains a comment pattern such as `//` or `/*`.
+fn has_comment_pattern(text: &str) -> bool {
+    text.lines().any(|line| {
+        let line = line.trim();
+        line.starts_with("//") || line.starts_with("/*")
+    })
 }
 
 #[test]

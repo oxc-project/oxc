@@ -1,12 +1,13 @@
+use oxc_ast::ast::*;
+use oxc_traverse::{Traverse, TraverseCtx};
+
+use crate::TransformCtx;
+
 mod logical_assignment_operators;
 mod options;
 
 pub use logical_assignment_operators::LogicalAssignmentOperators;
 pub use options::ES2021Options;
-use oxc_ast::ast::*;
-use oxc_traverse::{Traverse, TraverseCtx};
-
-use crate::TransformCtx;
 
 pub struct ES2021<'a, 'ctx> {
     options: ES2021Options,

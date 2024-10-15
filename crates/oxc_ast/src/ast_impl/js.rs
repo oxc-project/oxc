@@ -1,7 +1,7 @@
 use std::{borrow::Cow, cell::Cell, fmt};
 
 use oxc_allocator::{Box, FromIn, Vec};
-use oxc_span::{Atom, GetSpan, SourceType, Span};
+use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::{
     operator::UnaryOperator,
     reference::ReferenceId,
@@ -27,18 +27,6 @@ export interface FormalParameterRest extends Span {
     optional: boolean,
 }
 "#;
-
-impl<'a> Program<'a> {
-    pub fn new(
-        span: Span,
-        source_type: SourceType,
-        directives: Vec<'a, Directive<'a>>,
-        hashbang: Option<Hashbang<'a>>,
-        body: Vec<'a, Statement<'a>>,
-    ) -> Self {
-        Self { span, source_type, directives, hashbang, body, scope_id: Cell::default() }
-    }
-}
 
 impl<'a> Program<'a> {
     pub fn is_empty(&self) -> bool {
@@ -269,23 +257,6 @@ impl<'a> Expression<'a> {
         matches!(self, Expression::BinaryExpression(_) | Expression::LogicalExpression(_))
     }
 
-    /// Returns literal's value converted to the Boolean type
-    /// returns `true` when node is truthy, `false` when node is falsy, `None` when it cannot be determined.
-    /// <https://tc39.es/ecma262/#sec-toboolean>
-    /// 1. If argument is a Boolean, return argument.
-    /// 2. If argument is one of undefined, null, +0𝔽, -0𝔽, NaN, 0ℤ, or the empty String, return false.
-    pub fn to_boolean(&self) -> Option<bool> {
-        match self {
-            Self::BooleanLiteral(lit) => Some(lit.value),
-            Self::NullLiteral(_) => Some(false),
-            Self::NumericLiteral(lit) => Some(lit.value != 0.0),
-            Self::BigIntLiteral(lit) => Some(!lit.is_zero()),
-            Self::RegExpLiteral(_) => Some(true),
-            Self::StringLiteral(lit) => Some(!lit.value.is_empty()),
-            _ => None,
-        }
-    }
-
     pub fn get_member_expr(&self) -> Option<&MemberExpression<'a>> {
         match self.get_inner_expression() {
             Expression::ChainExpression(chain_expr) => chain_expr.expression.as_member_expression(),
@@ -379,14 +350,6 @@ impl<'a> fmt::Display for BindingIdentifier<'a> {
 impl<'a> ArrayExpressionElement<'a> {
     pub fn is_elision(&self) -> bool {
         matches!(self, Self::Elision(_))
-    }
-}
-
-impl<'a> ObjectExpression<'a> {
-    /// Returns `true` if this object has a property named `__proto__`
-    pub fn has_proto(&self) -> bool {
-        use crate::syntax_directed_operations::PropName;
-        self.properties.iter().any(|p| p.prop_name().is_some_and(|name| name.0 == "__proto__"))
     }
 }
 

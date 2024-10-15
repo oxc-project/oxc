@@ -1,4 +1,6 @@
 {
+  // NOTE: enabled by default
+  "plugins": ["@typescript-eslint"],
   "rules": {
     "no-loss-of-precision": "off",
     "@typescript-eslint/no-loss-of-precision": "error",

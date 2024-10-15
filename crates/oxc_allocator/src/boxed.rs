@@ -76,6 +76,25 @@ impl<'alloc, T> Box<'alloc, T> {
     }
 }
 
+impl<'alloc, T: ?Sized> Box<'alloc, T> {
+    /// Create a [`Box`] from a raw pointer to a value.
+    ///
+    /// The [`Box`] takes ownership of the data pointed to by `ptr`.
+    ///
+    /// # SAFETY
+    /// Data pointed to by `ptr` must live as long as `'alloc`.
+    /// This requirement is met if the pointer was obtained from other data in the arena.
+    ///
+    /// Data pointed to by `ptr` must *only* be used for this `Box`. i.e. it must be unique,
+    /// with no other aliases. You must not, for example, create 2 `Box`es from the same pointer.
+    ///
+    /// `ptr` must have been created from a `*mut T` or `&mut T` (not a `*const T` / `&T`).
+    #[inline]
+    pub(crate) const unsafe fn from_non_null(ptr: NonNull<T>) -> Self {
+        Self(ptr, PhantomData)
+    }
+}
+
 impl<'alloc, T: ?Sized> ops::Deref for Box<'alloc, T> {
     type Target = T;
 
@@ -148,6 +167,7 @@ impl<'alloc, T: Hash> Hash for Box<'alloc, T> {
 pub struct Address(usize);
 
 impl<'a, T> Box<'a, T> {
+    /// Get the memory address of a value allocated in the arena.
     #[inline]
     pub fn address(&self) -> Address {
         Address(ptr::addr_of!(**self) as usize)

@@ -169,6 +169,14 @@ pub fn class_declaration(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
+/// A class member cannot have the 'const' keyword. ts(1248)
+#[cold]
+pub fn const_class_member(span: Span) -> OxcDiagnostic {
+    ts_error("1248", "A class member cannot have the 'const' keyword.")
+        .with_help("Did you mean `readonly`?")
+        .with_label(span)
+}
+
 #[cold]
 pub fn binding_rest_element_last(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("A rest element must be last in a destructuring pattern").with_label(span)
@@ -272,6 +280,14 @@ pub fn identifier_async(x0: &str, span1: Span) -> OxcDiagnostic {
 pub fn identifier_generator(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Cannot use `{x0}` as an identifier in a generator context"))
         .with_label(span1)
+}
+
+#[cold]
+pub fn identifier_reserved_word(span: Span, reserved: &str) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!(
+        "Identifier expected. '{reserved}' is a reserved word that cannot be used here."
+    ))
+    .with_label(span)
 }
 
 #[cold]
@@ -452,6 +468,12 @@ pub fn cannot_appear_on_a_type_parameter(modifier: &Modifier) -> OxcDiagnostic {
 /// TS(1090)
 pub fn cannot_appear_on_a_parameter(modifier: &Modifier) -> OxcDiagnostic {
     ts_error("1090", format!("'{}' modifier cannot appear on a parameter.", modifier.kind))
+        .with_label(modifier.span)
+}
+
+/// TS(1071)
+pub fn cannot_appear_on_an_index_signature(modifier: &Modifier) -> OxcDiagnostic {
+    ts_error("1071", format!("'{}' modifier cannot appear on an index signature.", modifier.kind))
         .with_label(modifier.span)
 }
 

@@ -1,3 +1,5 @@
+//! Specialized comparison traits
+
 /// This trait works similarly to [PartialEq] but it gives the liberty of checking the equality of the
 /// content loosely. This would mean the implementor can skip some parts of the content while doing
 /// equality checks.

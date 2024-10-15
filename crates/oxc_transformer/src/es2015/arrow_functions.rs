@@ -15,6 +15,9 @@
 //!   Babel gets this wrong: <https://babeljs.io/repl#?code_lz=GYVwdgxgLglg9mABMOcAUAPRBeRaCUOAfIlABYwDOhA3gL5A&presets=&externalPlugins=%40babel%2Fplugin-transform-arrow-functions%407.24.7>
 //! * Error on arrow functions in class properties.
 //!   <https://babeljs.io/repl#?code_lz=MYGwhgzhAEDC0G8BQ1oDMD2HoF5oAoBKXAPmgBcALASwgG4kBfJIA&presets=&externalPlugins=%40babel%2Fplugin-transform-arrow-functions%407.24.7>
+//!   or we can support it:
+//!     `class C { x = () => this; }`
+//!     -> `class C { x = (function(_this) { return () => _this; })(this); }`
 //! * Error on `super` in arrow functions.
 //!   <https://babeljs.io/repl#?code_lz=MYGwhgzhAEBiD29oG8C-AoUkYCEwCdoBTADwBciA7AExgSWXWmgFsiyALeagCgEoUTZtHzsArvkrR-0ALwA-aBDEAHIvgB0AM0QBuIRgxA&presets=&externalPlugins=%40babel%2Fplugin-transform-arrow-functions%407.24.7>
 //!
@@ -121,17 +124,17 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/blob/main/packages/babel-plugin-transform-arrow-functions>
 //! * Arrow function specification: <https://tc39.es/ecma262/#sec-arrow-function-definitions>
 
+use serde::Deserialize;
+
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, NONE};
+use oxc_data_structures::stack::SparseStack;
 use oxc_span::SPAN;
 use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolFlags,
 };
-use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
-use serde::Deserialize;
-
-use crate::helpers::{bindings::BoundIdentifier, stack::SparseStack};
+use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
 
 #[derive(Debug, Default, Clone, Deserialize)]
 pub struct ArrowFunctionsOptions {
@@ -284,13 +287,7 @@ impl<'a> ArrowFunctions<'a> {
                     ) && !scope_flags.contains(ScopeFlags::Arrow)
                 })
                 .unwrap();
-
-            BoundIdentifier::new_uid(
-                "this",
-                target_scope_id,
-                SymbolFlags::FunctionScopedVariable,
-                ctx,
-            )
+            ctx.generate_uid("this", target_scope_id, SymbolFlags::FunctionScopedVariable)
         });
         Some(this_var.create_spanned_read_reference(span, ctx))
     }
@@ -302,6 +299,7 @@ impl<'a> ArrowFunctions<'a> {
         // * `extends` clause
         // * Computed method key
         // * Computed property key
+        // * Computed accessor property key (but `this` in this position is not legal TS)
         //
         // ```js
         // // All these `this` refer to global `this`
@@ -310,6 +308,8 @@ impl<'a> ArrowFunctions<'a> {
         //     static [this] = 123;
         //     [this]() {}
         //     static [this]() {}
+        //     accessor [this] = 123;
+        //     static accessor [this] = 123;
         // }
         // ```
         //
@@ -329,6 +329,8 @@ impl<'a> ArrowFunctions<'a> {
         //     static e() { this }
         //     #f() { this }
         //     g(x = this) {}
+        //     accessor h = this;
+        //     static accessor i = this;
         //     static { this }
         // }
         // ```
@@ -343,8 +345,11 @@ impl<'a> ArrowFunctions<'a> {
                 | Ancestor::FunctionBody(_)
                 // Class property body
                 | Ancestor::PropertyDefinitionValue(_)
+                // Class accessor property body
+                | Ancestor::AccessorPropertyValue(_)
                 // Class static block
                 | Ancestor::StaticBlockBody(_) => return None,
+                // Arrow function
                 Ancestor::ArrowFunctionExpressionParams(func) => {
                     return Some(func.scope_id().get().unwrap())
                 }

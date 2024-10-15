@@ -1,25 +1,21 @@
 use std::{ops::ControlFlow, path::PathBuf};
 
+use rustc_hash::FxHashSet;
+
 use oxc::{
     allocator::Allocator,
-    ast::{
-        ast::{Program, RegExpFlags},
-        Trivias,
-    },
-    codegen::CodegenOptions,
+    ast::{ast::Program, Comment},
+    codegen::{CodegenOptions, CodegenReturn},
     diagnostics::OxcDiagnostic,
     minifier::CompressOptions,
     parser::{ParseOptions, ParserReturn},
-    regular_expression::{ParserOptions, PatternParser},
-    semantic::{
-        post_transform_checker::{check_semantic_after_transform, check_semantic_ids},
-        Semantic, SemanticBuilderReturn,
-    },
-    span::{SourceType, Span},
+    regular_expression::{Parser, ParserOptions},
+    semantic::{Semantic, SemanticBuilderReturn},
+    span::{cmp::ContentEq, SourceType, Span},
     transformer::{TransformOptions, TransformerReturn},
     CompilerInterface,
 };
-use rustc_hash::FxHashSet;
+use oxc_tasks_transform_checker::{check_semantic_after_transform, check_semantic_ids};
 
 use crate::suite::TestResult;
 
@@ -71,10 +67,13 @@ impl CompilerInterface for Driver {
     }
 
     fn after_parse(&mut self, parser_return: &mut ParserReturn) -> ControlFlow<()> {
-        let ParserReturn { program, trivias, panicked, .. } = parser_return;
+        let ParserReturn { program, panicked, errors, .. } = parser_return;
         self.panicked = *panicked;
-        if self.check_comments(trivias) {
+        if self.check_comments(&program.comments) {
             return ControlFlow::Break(());
+        }
+        if (errors.is_empty() || !*panicked) && program.source_type.is_unambiguous() {
+            self.errors.push(OxcDiagnostic::error("SourceType must not be unambiguous."));
         }
         // Make sure serialization doesn't crash; also for code coverage.
         let _serializer = program.serializer();
@@ -114,8 +113,8 @@ impl CompilerInterface for Driver {
         ControlFlow::Continue(())
     }
 
-    fn after_codegen(&mut self, printed: String) {
-        self.printed = printed;
+    fn after_codegen(&mut self, ret: CodegenReturn) {
+        self.printed = ret.code;
     }
 }
 
@@ -146,9 +145,9 @@ impl Driver {
         self.compile(source_text, source_type, &path);
     }
 
-    fn check_comments(&mut self, trivias: &Trivias) -> bool {
+    fn check_comments(&mut self, comments: &[Comment]) -> bool {
         let mut uniq: FxHashSet<Span> = FxHashSet::default();
-        for comment in trivias.comments() {
+        for comment in comments {
             if !uniq.insert(comment.span) {
                 self.errors
                     .push(OxcDiagnostic::error("Duplicate Comment").with_label(comment.span));
@@ -166,32 +165,30 @@ impl Driver {
                 continue;
             };
             let printed1 = pattern.to_string();
-            let flags = literal.regex.flags;
-            let printed2 = match PatternParser::new(
-                &allocator,
-                &printed1,
-                ParserOptions {
-                    span_offset: 0,
-                    unicode_mode: flags.contains(RegExpFlags::U) || flags.contains(RegExpFlags::V),
-                    unicode_sets_mode: flags.contains(RegExpFlags::V),
-                },
-            )
-            .parse()
-            {
-                Ok(pattern) => pattern.to_string(),
+            let flags = literal.regex.flags.to_string();
+            let options = ParserOptions::default().with_flags(&flags);
+            match Parser::new(&allocator, &printed1, options).parse() {
+                Ok(pattern2) => {
+                    let printed2 = pattern2.to_string();
+                    if !pattern2.content_eq(pattern) {
+                        self.errors.push(OxcDiagnostic::error(format!(
+                        "Regular Expression content mismatch for `{}`: `{pattern}` == `{pattern2}`",
+                        literal.span.source_text(semantic.source_text())
+                        )));
+                    }
+                    if printed1 != printed2 {
+                        self.errors.push(OxcDiagnostic::error(format!(
+                            "Regular Expression mismatch: {printed1} {printed2}"
+                        )));
+                    }
+                }
                 Err(error) => {
                     self.errors.push(OxcDiagnostic::error(format!(
                         "Failed to re-parse `{}`, printed as `/{printed1}/{flags}`, {error}",
                         literal.span.source_text(semantic.source_text()),
                     )));
-                    continue;
                 }
             };
-            if printed1 != printed2 {
-                self.errors.push(OxcDiagnostic::error(format!(
-                    "Regular Expression mismatch: {printed1} {printed2}"
-                )));
-            }
         }
     }
 }

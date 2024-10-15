@@ -170,7 +170,6 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
     #[allow(clippy::unused_self)]
     pub fn codegen(self) -> CodeGenerator<'a> {
         CodeGenerator::new()
-            .with_source_text(self.source_text())
             .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
     }
 

@@ -31,18 +31,21 @@ use oxc_semantic::{ReferenceFlags, SymbolId};
 use oxc_span::SPAN;
 use oxc_traverse::{Traverse, TraverseCtx};
 
+use crate::context::TransformCtx;
+
 use super::ObjectRestSpreadOptions;
 
-pub struct ObjectSpread {
+pub struct ObjectSpread<'a, 'ctx> {
     options: ObjectRestSpreadOptions,
+    ctx: &'ctx TransformCtx<'a>,
 }
 
-impl ObjectSpread {
-    pub fn new(options: ObjectRestSpreadOptions) -> Self {
-        Self { options }
+impl<'a, 'ctx> ObjectSpread<'a, 'ctx> {
+    pub fn new(options: ObjectRestSpreadOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
+        Self { options, ctx }
     }
 }
-impl<'a> Traverse<'a> for ObjectSpread {
+impl<'a, 'ctx> Traverse<'a> for ObjectSpread<'a, 'ctx> {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::ObjectExpression(obj_expr) = expr else {
             return;
@@ -76,10 +79,8 @@ impl<'a> Traverse<'a> for ObjectSpread {
         arguments.push(Argument::from(ctx.ast.move_expression(expr)));
         arguments.push(Argument::from(ctx.ast.move_expression(&mut spread_prop.argument)));
 
-        let object_id = ctx.scopes().find_binding(ctx.current_scope_id(), "Object");
-        let babel_helpers_id = ctx.scopes().find_binding(ctx.current_scope_id(), "babelHelpers");
-
-        let callee = self.get_extend_object_callee(object_id, babel_helpers_id, ctx);
+        let object_id = self.get_object_symbol_id(ctx);
+        let callee = self.get_extend_object_callee(object_id, ctx);
 
         // ({ ...x }) => _objectSpread({}, x)
         *expr = ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);
@@ -91,14 +92,36 @@ impl<'a> Traverse<'a> for ObjectSpread {
             arguments.push(Argument::from(ctx.ast.move_expression(expr)));
             arguments.push(Argument::from(ctx.ast.expression_object(SPAN, obj_prop_list, None)));
 
-            let callee = self.get_extend_object_callee(object_id, babel_helpers_id, ctx);
+            let callee = self.get_extend_object_callee(object_id, ctx);
 
             *expr = ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);
         }
     }
 }
 
-impl<'a> ObjectSpread {
+impl<'a, 'ctx> ObjectSpread<'a, 'ctx> {
+    #[expect(clippy::option_option)]
+    fn get_object_symbol_id(&self, ctx: &mut TraverseCtx<'a>) -> Option<Option<SymbolId>> {
+        if self.options.set_spread_properties {
+            Some(ctx.scopes().find_binding(ctx.current_scope_id(), "Object"))
+        } else {
+            None
+        }
+    }
+
+    #[expect(clippy::option_option)]
+    fn get_extend_object_callee(
+        &mut self,
+        object_id: Option<Option<SymbolId>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        if let Some(object_id) = object_id {
+            Self::object_assign(object_id, ctx)
+        } else {
+            self.babel_external_helper(ctx)
+        }
+    }
+
     fn object_assign(symbol_id: Option<SymbolId>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         let ident =
             ctx.create_reference_id(SPAN, Atom::from("Object"), symbol_id, ReferenceFlags::Read);
@@ -108,32 +131,7 @@ impl<'a> ObjectSpread {
         Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false))
     }
 
-    fn babel_external_helper(
-        symbol_id: Option<SymbolId>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Expression<'a> {
-        let ident = ctx.create_reference_id(
-            SPAN,
-            Atom::from("babelHelpers"),
-            symbol_id,
-            ReferenceFlags::Read,
-        );
-        let object = ctx.ast.expression_from_identifier_reference(ident);
-        let property = ctx.ast.identifier_name(SPAN, Atom::from("objectSpread2"));
-
-        Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false))
-    }
-
-    fn get_extend_object_callee(
-        &mut self,
-        object_id: Option<SymbolId>,
-        babel_helpers_id: Option<SymbolId>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Expression<'a> {
-        if self.options.set_spread_properties {
-            Self::object_assign(object_id, ctx)
-        } else {
-            Self::babel_external_helper(babel_helpers_id, ctx)
-        }
+    fn babel_external_helper(&self, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+        self.ctx.helper_loader.load(Atom::from("objectSpread2"), ctx)
     }
 }

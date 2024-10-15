@@ -63,6 +63,7 @@ mod eslint {
     pub mod no_dupe_else_if;
     pub mod no_dupe_keys;
     pub mod no_duplicate_case;
+    pub mod no_else_return;
     pub mod no_empty;
     pub mod no_empty_character_class;
     pub mod no_empty_function;
@@ -107,6 +108,7 @@ mod eslint {
     pub mod no_template_curly_in_string;
     pub mod no_ternary;
     pub mod no_this_before_super;
+    pub mod no_throw_literal;
     pub mod no_undef;
     pub mod no_undefined;
     pub mod no_unexpected_multiline;
@@ -232,6 +234,7 @@ mod jest {
 mod react {
     pub mod button_has_type;
     pub mod checked_requires_onchange_or_readonly;
+    pub mod iframe_missing_sandbox;
     pub mod jsx_boolean_value;
     pub mod jsx_curly_brace_presence;
     pub mod jsx_key;
@@ -537,6 +540,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_empty_function,
     eslint::no_empty_pattern,
     eslint::no_empty_static_block,
+    eslint::no_else_return,
     eslint::no_eq_null,
     eslint::no_eval,
     eslint::no_ex_assign,
@@ -576,6 +580,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_template_curly_in_string,
     eslint::no_ternary,
     eslint::no_this_before_super,
+    eslint::no_throw_literal,
     eslint::no_undef,
     eslint::no_undefined,
     eslint::no_unexpected_multiline,
@@ -769,6 +774,7 @@ oxc_macros::declare_all_lint_rules! {
     promise::valid_params,
     react::button_has_type,
     react::checked_requires_onchange_or_readonly,
+    react::iframe_missing_sandbox,
     react::jsx_boolean_value,
     react::jsx_curly_brace_presence,
     react::jsx_key,

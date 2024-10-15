@@ -1,3 +1,4 @@
+#![allow(missing_docs)] // fixme
 use bitflags::bitflags;
 use nonmax::NonMaxU32;
 use oxc_index::Idx;
@@ -11,7 +12,7 @@ impl Idx for SymbolId {
     #[allow(clippy::cast_possible_truncation)]
     fn from_usize(idx: usize) -> Self {
         assert!(idx < u32::MAX as usize);
-        // SAFETY: We just checked `idx` is valid for `NonMaxU32`
+        // SAFETY: We just checked `idx` is a legal value for `NonMaxU32`
         Self(unsafe { NonMaxU32::new_unchecked(idx as u32) })
     }
 
