@@ -59,14 +59,11 @@
 //! ```
 //!
 //! Based on [@babel/helper](https://github.com/babel/babel/tree/main/packages/babel-helpers).
-use std::{
-    borrow::Cow,
-    cell::{Cell, RefCell},
-};
+use std::{borrow::Cow, cell::RefCell};
 
 use oxc_allocator::Vec;
 use oxc_ast::ast::{Argument, CallExpression, Expression, Program, TSTypeParameterInstantiation};
-use oxc_semantic::{ReferenceFlags, SymbolFlags, SymbolId};
+use oxc_semantic::{ReferenceFlags, SymbolFlags};
 use oxc_span::{Atom, SPAN};
 use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
 use rustc_hash::FxHashMap;
@@ -154,8 +151,6 @@ struct Helper<'a> {
 pub struct HelperLoaderStore<'a> {
     module_name: Cow<'static, str>,
     mode: HelperLoaderMode,
-    /// Symbol ID for the `babelHelpers`.
-    babel_helpers_symbol_id: Cell<Option<SymbolId>>,
     /// Loaded helpers, determined what helpers are loaded and what imports should be added.
     loaded_helpers: RefCell<FxHashMap<Atom<'a>, Helper<'a>>>,
 }
@@ -166,7 +161,6 @@ impl<'a> HelperLoaderStore<'a> {
         Self {
             module_name: options.module_name.clone(),
             mode: options.mode,
-            babel_helpers_symbol_id: Cell::new(None),
             loaded_helpers: RefCell::new(FxHashMap::default()),
         }
     }
@@ -211,7 +205,7 @@ impl<'a> HelperLoaderStore<'a> {
     pub fn load(&self, helper_name: Atom<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         match self.mode {
             HelperLoaderMode::Runtime => self.transform_for_runtime_helper(helper_name, ctx),
-            HelperLoaderMode::External => self.transform_for_external_helper(helper_name, ctx),
+            HelperLoaderMode::External => Self::transform_for_external_helper(helper_name, ctx),
             HelperLoaderMode::Inline => {
                 unreachable!("Inline helpers are not supported yet");
             }
@@ -236,23 +230,14 @@ impl<'a> HelperLoaderStore<'a> {
     }
 
     fn transform_for_external_helper(
-        &self,
         helper_name: Atom<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let symbol_id = self.babel_helpers_symbol_id.get().or_else(|| {
-            let symbol_id = ctx.scopes().get_root_binding("babelHelpers");
-            self.babel_helpers_symbol_id.set(symbol_id);
-            symbol_id
-        });
+        static HELPER_VAR: &str = "babelHelpers";
 
-        let ident = ctx.create_reference_id(
-            SPAN,
-            Atom::from("babelHelpers"),
-            symbol_id,
-            ReferenceFlags::Read,
-        );
-
+        let symbol_id = ctx.scopes().find_binding(ctx.current_scope_id(), HELPER_VAR);
+        let ident =
+            ctx.create_reference_id(SPAN, Atom::from(HELPER_VAR), symbol_id, ReferenceFlags::Read);
         let object = ctx.ast.expression_from_identifier_reference(ident);
         let property = ctx.ast.identifier_name(SPAN, helper_name);
         Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false))
