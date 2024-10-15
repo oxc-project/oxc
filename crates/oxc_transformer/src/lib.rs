@@ -1,4 +1,3 @@
-#![warn(clippy::print_stdout)]
 #![allow(clippy::wildcard_imports)]
 
 //! Transformer / Transpiler
