@@ -25,6 +25,31 @@ pub struct MiscOptions {
     /// Number of threads to use. Set to 1 for using only 1 CPU core
     #[bpaf(argument("INT"), hide_usage)]
     pub threads: Option<usize>,
+
+    /// This option outputs the configuration to be used. To print current configuration in your project, use `--print-config all`, print configuration for a specific file is not supported for now.
+    /// When present, no linting is performed and only config-related options are valid.
+    #[bpaf(hide_usage)]
+    pub print_config: Option<PrintConfig>,
+}
+
+#[derive(Debug, Clone, Default)]
+pub enum PrintConfig {
+    /// Print the configuration for all files
+    #[default]
+    All,
+    Path(PathBuf),
+}
+
+impl std::str::FromStr for PrintConfig {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s == "all" {
+            Ok(PrintConfig::All)
+        } else {
+            Ok(PrintConfig::Path(PathBuf::from(s)))
+        }
+    }
 }
 
 #[allow(clippy::ptr_arg)]

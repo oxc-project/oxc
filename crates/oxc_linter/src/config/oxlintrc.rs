@@ -43,7 +43,7 @@ use crate::{options::LintPlugins, utils::read_to_string};
 ///   }
 ///  }
 /// ```
-#[derive(Debug, Default, Deserialize, Serialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(default)]
 #[non_exhaustive]
 pub struct Oxlintrc {

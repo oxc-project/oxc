@@ -5,7 +5,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 // <https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc->
-#[derive(Debug, Deserialize, Default, Serialize, JsonSchema)]
+#[derive(Debug, Clone, Deserialize, Default, Serialize, JsonSchema)]
 #[cfg_attr(test, derive(PartialEq))]
 pub struct ReactPluginSettings {
     #[serde(default)]
