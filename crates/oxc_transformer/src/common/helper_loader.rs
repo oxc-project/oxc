@@ -73,7 +73,6 @@ use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
-use super::module_imports::ImportKind;
 use crate::TransformCtx;
 
 /// Defines the mode for loading helper functions.
@@ -150,7 +149,7 @@ impl<'a, 'ctx> HelperLoader<'a, 'ctx> {
     fn add_imports(&self) {
         self.ctx.helper_loader.loaded_helpers.borrow_mut().drain().for_each(
             |(_, (source, import))| {
-                self.ctx.module_imports.add_import(source, ImportKind::new_default(import), false);
+                self.ctx.module_imports.add_default_import(source, import, false);
             },
         );
     }

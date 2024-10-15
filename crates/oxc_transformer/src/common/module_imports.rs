@@ -62,25 +62,14 @@ impl<'a, 'ctx> Traverse<'a> for ModuleImports<'a, 'ctx> {
     }
 }
 
-#[derive(Clone)]
-pub struct NamedImport<'a> {
+struct NamedImport<'a> {
     imported: Atom<'a>,
     local: BoundIdentifier<'a>,
 }
 
-pub enum ImportKind<'a> {
+enum ImportKind<'a> {
     Named(NamedImport<'a>),
     Default(BoundIdentifier<'a>),
-}
-
-impl<'a> ImportKind<'a> {
-    pub fn new_named(imported: Atom<'a>, local: BoundIdentifier<'a>) -> Self {
-        Self::Named(NamedImport { imported, local })
-    }
-
-    pub fn new_default(local: BoundIdentifier<'a>) -> Self {
-        Self::Default(local)
-    }
 }
 
 /// Store for `import` / `require` statements to be added at top of program.
@@ -99,6 +88,43 @@ impl<'a> ModuleImportsStore<'a> {
         Self { imports: RefCell::new(IndexMap::default()) }
     }
 
+    /// Add default `import` or `require` to top of program.
+    ///
+    /// Which it will be depends on the source type.
+    ///
+    /// * `import named_import from 'source';` or
+    /// * `var named_import = require('source');`
+    ///
+    /// If `front` is `true`, `import`/`require` is added to front of the `import`s/`require`s.
+    pub fn add_default_import(&self, source: Atom<'a>, local: BoundIdentifier<'a>, front: bool) {
+        self.add_import(source, ImportKind::Default(local), front);
+    }
+
+    /// Add named `import` to top of program.
+    ///
+    /// `import { named_import } from 'source';`
+    ///
+    /// If `front` is `true`, `import` is added to front of the `import`s.
+    ///
+    /// Adding named `require`s is not supported, and will cause a panic later on.
+    pub fn add_named_import(
+        &self,
+        source: Atom<'a>,
+        imported: Atom<'a>,
+        local: BoundIdentifier<'a>,
+        front: bool,
+    ) {
+        self.add_import(source, ImportKind::Named(NamedImport { imported, local }), front);
+    }
+
+    /// Returns `true` if no imports have been scheduled for insertion.
+    pub fn is_empty(&self) -> bool {
+        self.imports.borrow().is_empty()
+    }
+}
+
+// Internal methods
+impl<'a> ModuleImportsStore<'a> {
     /// Add `import` or `require` to top of program.
     ///
     /// Which it will be depends on the source type.
@@ -106,10 +132,12 @@ impl<'a> ModuleImportsStore<'a> {
     /// * `import { named_import } from 'source';` or
     /// * `var named_import = require('source');`
     ///
+    /// Adding a named `require` is not supported, and will cause a panic later on.
+    ///
     /// If `front` is `true`, `import`/`require` is added to front of the `import`s/`require`s.
     /// TODO(improve-on-babel): `front` option is only required to pass one of Babel's tests. Output
     /// without it is still valid. Remove this once our output doesn't need to match Babel exactly.
-    pub fn add_import(&self, source: Atom<'a>, import: ImportKind<'a>, front: bool) {
+    fn add_import(&self, source: Atom<'a>, import: ImportKind<'a>, front: bool) {
         match self.imports.borrow_mut().entry(source) {
             IndexMapEntry::Occupied(mut entry) => {
                 entry.get_mut().push(import);
@@ -128,14 +156,6 @@ impl<'a> ModuleImportsStore<'a> {
         }
     }
 
-    /// Returns `true` if no imports have been scheduled for insertion.
-    pub fn is_empty(&self) -> bool {
-        self.imports.borrow().is_empty()
-    }
-}
-
-// Internal methods
-impl<'a> ModuleImportsStore<'a> {
     /// Insert `import` / `require` statements at top of program.
     fn insert_into_program(&self, transform_ctx: &TransformCtx<'a>, ctx: &mut TraverseCtx<'a>) {
         if transform_ctx.source_type.is_script() {
