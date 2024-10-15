@@ -7,6 +7,23 @@ use serde::{ser::SerializeMap, Serialize, Serializer};
 #[allow(clippy::wildcard_imports)]
 use crate::source_type::*;
 
+#[allow(clippy::wildcard_imports)]
+use crate::span::types::*;
+
+impl Serialize for Span {
+    #[allow(clippy::match_same_arms, unused_mut)]
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "Span")?;
+        map.serialize_entry("start", &self.start)?;
+        map.serialize_entry("end", &self.end)?;
+        map.end()
+    }
+}
+
 impl Serialize for SourceType {
     #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>

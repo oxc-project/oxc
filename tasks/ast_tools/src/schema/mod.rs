@@ -17,6 +17,7 @@ use crate::{
 mod defs;
 mod get_generics;
 mod get_ident;
+pub mod serialize;
 mod to_type;
 pub use defs::*;
 pub use get_generics::GetGenerics;

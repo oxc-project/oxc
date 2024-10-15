@@ -5,8 +5,10 @@ use quote::quote;
 use super::{define_derive, Derive, DeriveOutput};
 use crate::{
     codegen::LateCtx,
-    markers::ESTreeStructAttribute,
-    schema::{EnumDef, GetGenerics, GetIdent, TypeDef},
+    schema::{
+        serialize::{enum_variant_name, get_type_tag},
+        EnumDef, GetGenerics, GetIdent, StructDef, TypeDef,
+    },
 };
 
 define_derive! {
@@ -59,23 +61,11 @@ impl Derive for DeriveESTree {
     }
 }
 
-fn serialize_struct(def: &crate::schema::StructDef) -> TokenStream {
+fn serialize_struct(def: &StructDef) -> TokenStream {
     let ident = def.ident();
     // If type_tag is Some, we serialize it manually. If None, either one of
     // the fields is named r#type, or the struct does not need a "type" field.
-    let type_tag = match def.markers.estree {
-        Some(ESTreeStructAttribute::NoType) => None,
-        Some(ESTreeStructAttribute::Type(ref type_name)) => Some(type_name.clone()),
-        None => {
-            let has_type_field =
-                def.fields.iter().any(|f| matches!(f.name.as_deref(), Some("type")));
-            if has_type_field {
-                None
-            } else {
-                Some(ident.to_string())
-            }
-        }
-    };
+    let type_tag = get_type_tag(def);
 
     let mut fields = vec![];
     if let Some(ref ty) = type_tag {
@@ -144,16 +134,7 @@ fn serialize_enum(def: &EnumDef) -> TokenStream {
             let var_ident = var.ident();
             let enum_name = ident.to_string();
             let discriminant = u32::from(var.discriminant);
-            let serialized_to = match var.markers.derive_attributes.estree.rename.as_ref() {
-                Some(rename) => rename.to_string(),
-                None => match def.markers.estree.rename_all.as_deref() {
-                    Some("camelCase") => var_ident.to_string().to_case(Case::Camel),
-                    Some(case) => {
-                        panic!("Unsupported rename_all: {case} (on {ident})")
-                    }
-                    None => var_ident.to_string(),
-                },
-            };
+            let serialized_to = enum_variant_name(var, def);
             assert!(
                 var.fields.is_empty(),
                 "Tagged enums must not have inner fields (on {ident}::{var_ident})"
