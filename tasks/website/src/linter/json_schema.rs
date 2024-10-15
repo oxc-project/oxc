@@ -1,7 +1,7 @@
 use handlebars::Handlebars;
 use oxc_linter::Oxlintrc;
 use schemars::{
-    schema::{RootSchema, Schema, SchemaObject, SingleOrVec, SubschemaValidation},
+    schema::{InstanceType, RootSchema, Schema, SchemaObject, SingleOrVec, SubschemaValidation},
     schema_for,
 };
 use serde::Serialize;
@@ -49,16 +49,17 @@ type: `{{instance_type}}`
 {{description}}
 
 {{> section}}
-
 {{/each}}
 ";
 
+/// Data passed to [`ROOT`] hbs template
 #[derive(Serialize)]
 struct Root {
     title: String,
     sections: Vec<Section>,
 }
 
+/// Data passed to [`SECTION`] hbs template
 #[derive(Serialize)]
 struct Section {
     level: String,
@@ -77,13 +78,17 @@ impl Renderer {
     fn new(root_schema: RootSchema) -> Self {
         let mut handlebars = Handlebars::new();
         handlebars.register_escape_fn(handlebars::no_escape);
-        assert!(handlebars.register_template_string("root", ROOT).is_ok());
-        assert!(handlebars.register_template_string("section", SECTION).is_ok());
+        handlebars
+            .register_template_string("root", ROOT)
+            .expect("Failed to register root template.");
+        handlebars
+            .register_template_string("section", SECTION)
+            .expect("Failed to register section template.");
         Self { handlebars, root_schema }
     }
 
     fn render(self) -> String {
-        let mut root = self.render_root_schema(&self.root_schema);
+        let mut root = self.render_root_schema();
         root.sanitize();
         self.handlebars.render("root", &root).unwrap()
     }
@@ -105,17 +110,19 @@ impl Renderer {
         }
     }
 
-    fn render_root_schema(&self, root_schema: &RootSchema) -> Root {
-        let title = root_schema
+    fn render_root_schema(&self) -> Root {
+        let title = self
+            .root_schema
             .schema
             .metadata
             .as_ref()
             .and_then(|m| m.description.clone())
             .unwrap_or_default();
-        let sections = self.render_properties(1, None, &root_schema.schema);
+        let sections = self.render_properties(1, None, &self.root_schema.schema);
         Root { title, sections }
     }
 
+    /// Recursively render a subschema's properties into sections.
     fn render_properties(
         &self,
         depth: usize,
@@ -182,19 +189,34 @@ impl Renderer {
 
     fn render_schema(&self, depth: usize, key: &str, schema: &SchemaObject) -> Section {
         let schema = self.get_referenced_schema(schema);
+
+        let (instance_type, sections) = if let Some(item) = as_primitive_array(schema) {
+            // e.g. "string[]" instead of "array"
+            let instance_type = serde_json::to_string_pretty(item.instance_type.as_ref().unwrap())
+                .unwrap()
+                .replace('"', "")
+                + "[]";
+            // Do not render subsections for primitive arrays
+            (Some(instance_type), vec![])
+        } else {
+            let instance_type = schema
+                .instance_type
+                .as_ref()
+                .map(|t| serde_json::to_string_pretty(t).unwrap().replace('"', ""));
+            let sections = self.render_properties(depth, Some(key), schema);
+            (instance_type, sections)
+        };
+
         Section {
             level: "#".repeat(depth),
             title: key.into(),
-            instance_type: schema
-                .instance_type
-                .as_ref()
-                .map(|t| serde_json::to_string_pretty(t).unwrap().replace('"', "")),
+            instance_type,
             description: schema
                 .metadata
                 .as_ref()
                 .and_then(|m| m.description.clone())
                 .unwrap_or_default(),
-            sections: self.render_properties(depth, Some(key), schema),
+            sections,
         }
     }
 }
@@ -219,4 +241,37 @@ fn sanitize(s: &mut String) {
     let json = serde_json::to_string_pretty(&json).unwrap();
     let json = format!("\n{json}\n");
     s.replace_range(start..start + end, &json);
+}
+
+/// If `schema` is an array of primitive data types, returns [`Some`] with the
+/// primitive schema (i.e. the array item schema).
+fn as_primitive_array(schema: &SchemaObject) -> Option<&SchemaObject> {
+    let arr = schema.array.as_ref()?;
+    let SingleOrVec::Single(item) = arr.items.as_ref()? else {
+        return None;
+    };
+    let Schema::Object(item) = &**item else {
+        return None;
+    };
+
+    as_primitive(item)
+}
+
+/// If `schema` has a primitive data type (e.g. `string`, `integer`), returns
+/// `Some(schema)`.
+fn as_primitive(schema: &SchemaObject) -> Option<&SchemaObject> {
+    // null intentionally omitted
+    const PRIMITIVE_TYPES: [InstanceType; 4] =
+        [InstanceType::Boolean, InstanceType::Integer, InstanceType::Number, InstanceType::String];
+
+    let is_primitive = !schema.is_ref()
+        && PRIMITIVE_TYPES.iter().any(|t| {
+            // schema.has_type(*t)
+            schema.instance_type.as_ref().is_some_and(|ty| {
+                let SingleOrVec::Single(single) = ty else { return false };
+                single.as_ref() == t
+            })
+        });
+
+    is_primitive.then_some(schema)
 }
