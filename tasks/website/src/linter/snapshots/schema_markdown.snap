@@ -39,6 +39,7 @@ Example
 
 type: `object`
 
+
 Configure an entire category of rules all at once.
 
 Rules enabled or disabled this way will be overwritten by individual rules in the `rules` field.
@@ -62,7 +63,9 @@ Rules enabled or disabled this way will be overwritten by individual rules in th
 
 
 
+
 ### categories.nursery
+
 
 
 
@@ -74,7 +77,9 @@ Rules enabled or disabled this way will be overwritten by individual rules in th
 
 
 
+
 ### categories.perf
+
 
 
 
@@ -86,7 +91,9 @@ Rules enabled or disabled this way will be overwritten by individual rules in th
 
 
 
+
 ### categories.style
+
 
 
 
@@ -98,9 +105,11 @@ Rules enabled or disabled this way will be overwritten by individual rules in th
 
 
 
+
 ## env
 
 type: `object`
+
 
 Predefine global variables.
 
@@ -110,6 +119,7 @@ Environments specify what global variables are predefined. See [ESLint's list of
 ## globals
 
 type: `object`
+
 
 Add or remove global variables.
 
@@ -135,6 +145,8 @@ You may also use `"readable"` or `false` to represent `"readonly"`, and `"writea
 
 type: `string[]`
 
+default: `["react", "unicorn", "typescript", "oxc"]`
+
 
 
 
@@ -142,12 +154,14 @@ type: `string[]`
 
 type: `object`
 
+
 See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)
 
 
 ## settings
 
 type: `object`
+
 
 Shared settings for plugins
 
@@ -159,9 +173,12 @@ type: `object`
 
 
 
+
 #### settings.jsdoc.augmentsExtendsReplacesDocs
 
 type: `boolean`
+
+default: `false`
 
 Only for `require-(yields|returns|description|example|param|throws)` rule
 
@@ -170,12 +187,16 @@ Only for `require-(yields|returns|description|example|param|throws)` rule
 
 type: `boolean`
 
+default: `false`
+
 Only for `require-param-type` and `require-param-description` rule
 
 
 #### settings.jsdoc.ignoreInternal
 
 type: `boolean`
+
+default: `false`
 
 For all rules but NOT apply to `empty-tags` rule
 
@@ -184,12 +205,16 @@ For all rules but NOT apply to `empty-tags` rule
 
 type: `boolean`
 
+default: `false`
+
 For all rules but NOT apply to `check-access` and `empty-tags` rule
 
 
 #### settings.jsdoc.ignoreReplacesDocs
 
 type: `boolean`
+
+default: `true`
 
 Only for `require-(yields|returns|description|example|param|throws)` rule
 
@@ -198,6 +223,8 @@ Only for `require-(yields|returns|description|example|param|throws)` rule
 
 type: `boolean`
 
+default: `false`
+
 Only for `require-(yields|returns|description|example|param|throws)` rule
 
 
@@ -205,12 +232,16 @@ Only for `require-(yields|returns|description|example|param|throws)` rule
 
 type: `boolean`
 
+default: `true`
+
 Only for `require-(yields|returns|description|example|param|throws)` rule
 
 
 #### settings.jsdoc.tagNamePreference
 
 type: `object`
+
+default: `{}`
 
 
 
@@ -222,9 +253,12 @@ type: `object`
 
 
 
+
 #### settings.jsx-a11y.components
 
 type: `object`
+
+default: `{}`
 
 
 
@@ -239,6 +273,7 @@ type: `[
 
 
 
+
 ### settings.next
 
 type: `object`
@@ -246,7 +281,9 @@ type: `object`
 
 
 
+
 #### settings.next.rootDir
+
 
 
 
@@ -259,9 +296,12 @@ type: `object`
 
 
 
+
 #### settings.react.formComponents
 
 type: `array`
+
+default: `[]`
 
 
 
@@ -272,9 +312,12 @@ type: `array`
 
 
 
+
 #### settings.react.linkComponents
 
 type: `array`
+
+default: `[]`
 
 
 
