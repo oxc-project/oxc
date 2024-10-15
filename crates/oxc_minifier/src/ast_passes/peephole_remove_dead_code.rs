@@ -242,17 +242,90 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
         // This is the only scenario where we can't remove it even if `ExpressionStatement`.
         // TODO find a better way to handle this.
 
+        if let Ancestor::ArrowFunctionExpressionBody(body) = ctx.ancestry.ancestor(1) {
+            if *body.expression() {
+                return None;
+            }
+        }
+
         stmt.expression
             .is_literal_value(false)
-            .then(|| {
-                if let Ancestor::ArrowFunctionExpressionBody(body) = ctx.ancestry.ancestor(1) {
-                    if *body.expression() {
-                        return None;
+            .then(|| Some(ctx.ast.statement_empty(SPAN)))
+            .unwrap_or_else(|| match &mut stmt.expression {
+                Expression::ArrayExpression(expr) => Self::try_fold_array_expression(expr, ctx),
+                // TODO: handle object expression
+                Expression::ObjectExpression(_object_expr) => None,
+                _ => None,
+            })
+    }
+
+    // `([1,2,3, foo()])` -> `foo()`
+    fn try_fold_array_expression(
+        array_expr: &mut ArrayExpression<'a>,
+        ctx: Ctx<'a, 'b>,
+    ) -> Option<Statement<'a>> {
+        let mut transformed_elements = ctx.ast.vec();
+        let mut pending_spread_elements = ctx.ast.vec();
+
+        if array_expr.elements.len() == 0
+            || array_expr
+                .elements
+                .iter()
+                .all(|el| matches!(el, ArrayExpressionElement::SpreadElement(_)))
+        {
+            return None;
+        }
+
+        for el in array_expr.elements.iter_mut() {
+            match el {
+                ArrayExpressionElement::SpreadElement(_) => {
+                    let spread_element = ctx.ast.move_array_expression_element(el);
+                    pending_spread_elements.push(spread_element);
+                }
+                ArrayExpressionElement::Elision(_) => {}
+                match_expression!(ArrayExpressionElement) => {
+                    let el = el.to_expression_mut();
+                    let el_expr = ctx.ast.move_expression(el);
+                    if !el_expr.is_literal_value(false)
+                        && !matches!(el_expr, Expression::Identifier(_))
+                    {
+                        if pending_spread_elements.len() > 0 {
+                            // flush pending spread elements
+                            transformed_elements.push(ctx.ast.expression_array(
+                                SPAN,
+                                pending_spread_elements,
+                                None,
+                            ));
+                            pending_spread_elements = ctx.ast.vec();
+                        }
+                        transformed_elements.push(el_expr);
                     }
                 }
-                Some(ctx.ast.statement_empty(SPAN))
-            })
-            .unwrap_or(None)
+            }
+        }
+
+        if pending_spread_elements.len() > 0 {
+            transformed_elements.push(ctx.ast.expression_array(
+                SPAN,
+                pending_spread_elements,
+                None,
+            ));
+        }
+
+        if transformed_elements.is_empty() {
+            return Some(ctx.ast.statement_empty(SPAN));
+        } else if transformed_elements.len() == 1 {
+            return Some(
+                ctx.ast.statement_expression(array_expr.span, transformed_elements.pop().unwrap()),
+            );
+        }
+
+        return Some(ctx.ast.statement_expression(
+            array_expr.span,
+            ctx.ast.expression_from_sequence(
+                ctx.ast.sequence_expression(array_expr.span, transformed_elements),
+            ),
+        ));
     }
 
     /// Try folding conditional expression (?:) if the condition results of the condition is known.
@@ -398,17 +471,17 @@ mod test {
     fn test_array_literal() {
         fold("([])", "");
         fold("([1])", "");
-        // fold("([a])", "a");
-        // fold("([foo()])", "foo()");
+        fold("([a])", "");
+        fold("([foo()])", "foo()");
+        fold_same("baz.map((v) => [v])");
     }
 
     #[test]
-    #[ignore]
     fn test_array_literal_containing_spread() {
         fold_same("([...c])");
         fold("([4, ...c, a])", "([...c])");
         fold("([foo(), ...c, bar()])", "(foo(), [...c], bar())");
-        fold("([...a, b, ...c])", "([...a], [...c])");
+        fold("([...a, b, ...c])", "([...a, ...c])");
         fold_same("([...b, ...c])"); // It would also be fine if the spreads were split apart.
     }
 }
