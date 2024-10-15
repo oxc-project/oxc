@@ -1,3 +1,4 @@
+//! AST Node ID and flags.
 use bitflags::bitflags;
 use nonmax::NonMaxU32;
 use oxc_index::Idx;
@@ -9,6 +10,9 @@ use serde::{Serialize, Serializer};
 pub struct NodeId(NonMaxU32);
 
 impl NodeId {
+    /// Mock node id.
+    ///
+    /// This is used for synthetically-created AST nodes, among other things.
     pub const DUMMY: Self = NodeId::new(0);
 
     /// Create `NodeId` from `u32`.
@@ -69,11 +73,15 @@ export type NodeFlags = {
 "#;
 
 bitflags! {
+    /// Contains additional information about an AST node.
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     pub struct NodeFlags: u8 {
-        const JSDoc     = 1 << 0; // If the Node has a JSDoc comment attached
-        const Class     = 1 << 1; // If Node is inside a class
-        const HasYield  = 1 << 2; // If function has yield statement
+        /// Set if the Node has a JSDoc comment attached
+        const JSDoc     = 1 << 0;
+        /// Set on Nodes inside classes
+        const Class     = 1 << 1;
+        /// Set functions containing yield statements
+        const HasYield  = 1 << 2;
     }
 }
 

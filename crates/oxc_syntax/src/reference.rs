@@ -1,3 +1,4 @@
+#![allow(missing_docs)] // fixme
 use bitflags::bitflags;
 use nonmax::NonMaxU32;
 use oxc_allocator::CloneIn;
