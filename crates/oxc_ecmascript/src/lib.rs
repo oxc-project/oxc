@@ -18,10 +18,10 @@ mod to_int_32;
 mod to_number;
 mod to_string;
 
-// Constant Evaluation
+#[cfg(feature = "constant_evaluation")]
 pub mod constant_evaluation;
 
-// Side Effects
+#[cfg(feature = "side_effects")]
 pub mod side_effects;
 
 pub use self::{
