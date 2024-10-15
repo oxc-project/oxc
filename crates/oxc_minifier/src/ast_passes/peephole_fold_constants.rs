@@ -210,7 +210,7 @@ impl<'a, 'b> PeepholeFoldConstants {
                 }),
                 Expression::UnaryExpression(un) => {
                     match un.operator {
-                        UnaryOperator::BitwiseNot => {
+                        UnaryOperator::BitwiseNot if un.argument.is_number() => {
                             // Return the un-bitten value
                             Some(ctx.ast.move_expression(&mut un.argument))
                         }
@@ -1466,6 +1466,7 @@ mod test {
         test("a=~~0", "a=0");
         test("a=~~10", "a=10");
         test("a=~-7", "a=6");
+        test_same("a=~~foo()");
 
         // test("a=+true", "a=1");
         test("a=+10", "a=10");
