@@ -1,4 +1,4 @@
-use oxc_ast::ast::{Expression, ForStatementLeft, UnaryExpression};
+use oxc_ast::ast::{Expression, ForStatementLeft, PropertyKey, UnaryExpression};
 
 use super::check_for_state_change::CheckForStateChange;
 
@@ -19,3 +19,4 @@ where
 impl<'a, 'b> MayHaveSideEffects<'a, 'b> for Expression<'a> {}
 impl<'a, 'b> MayHaveSideEffects<'a, 'b> for UnaryExpression<'a> {}
 impl<'a, 'b> MayHaveSideEffects<'a, 'b> for ForStatementLeft<'a> {}
+impl<'a, 'b> MayHaveSideEffects<'a, 'b> for PropertyKey<'a> {}
