@@ -35,8 +35,11 @@ pub struct SourceType {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(rename_all = "lowercase")]
 pub enum Language {
+    /// Indicates a JavaScript or JSX file
     JavaScript = 0,
+    /// Indicates a TypeScript file
     TypeScript = 1,
+    /// Indicates a TypeScript definition file (`*.d.ts`)
     #[serde(rename = "typescriptDefinition")]
     TypeScriptDefinition = 2,
 }
@@ -68,7 +71,10 @@ pub enum ModuleKind {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(rename_all = "camelCase")]
 pub enum LanguageVariant {
+    /// Standard JavaScript or TypeScript without any language extensions. Stage
+    /// 3 proposals do not count as language extensions.
     Standard = 0,
+    /// For sources using JSX or TSX
     Jsx = 1,
 }
 
@@ -108,6 +114,9 @@ pub const VALID_EXTENSIONS: [&str; 8] = ["js", "mjs", "cjs", "jsx", "ts", "mts",
 impl SourceType {
     /// Creates a [`SourceType`] representing a regular [`JavaScript`] file.
     ///
+    /// This file could be a vanilla script (no module system of any kind) or a
+    /// CommonJS file.
+    ///
     /// The resulting source type is not a [`module`], nor does it support [`JSX`].
     /// Use [`SourceType::jsx`] for [`JSX`] sources.
     ///
@@ -132,6 +141,16 @@ impl SourceType {
         }
     }
 
+    /// Creates a [`SourceType`] representing a [`JavaScript`] file using ES6
+    /// modules. This is akin to a file with an `.mjs` extension.
+    ///
+    /// ## Example
+    /// ```
+    /// # use oxc_span::SourceType;
+    ///
+    /// let mjs = SourceType::mjs();
+    /// ```
+    /// [`JavaScript`]: Language::JavaScript
     pub const fn mjs() -> Self {
         Self {
             language: Language::JavaScript,
@@ -140,6 +159,13 @@ impl SourceType {
         }
     }
 
+    /// A [`SourceType`] that will be treated as a module if it contains ESM syntax.
+    ///
+    /// After a file is parsed with an `unambiguous` source type, it will have a final
+    /// [`ModuleKind`] of either [`Module`] or [`Script`].
+    ///
+    /// [`Module`]: ModuleKind::Module
+    /// [`Script`]: ModuleKind::Script
     pub const fn unambiguous() -> Self {
         Self {
             language: Language::JavaScript,
@@ -230,22 +256,34 @@ impl SourceType {
         }
     }
 
+    /// Mark this source type as a [script].
+    ///
+    /// [script]: ModuleKind::Script
     pub fn is_script(self) -> bool {
         self.module_kind == ModuleKind::Script
     }
 
+    /// Mark this source type as a [module].
+    ///
+    /// [module]: ModuleKind::Module
     pub fn is_module(self) -> bool {
         self.module_kind == ModuleKind::Module
     }
 
+    /// `true` if this [`SourceType`] is [unambiguous].
+    ///
+    /// [unambiguous]: ModuleKind::Unambiguous
     pub fn is_unambiguous(self) -> bool {
         self.module_kind == ModuleKind::Unambiguous
     }
 
+    /// What module system is this source type using?
     pub fn module_kind(self) -> ModuleKind {
         self.module_kind
     }
 
+    /// Returns `true` if this is a JavaScript file with or without syntax
+    /// extensions (like JSX).
     pub fn is_javascript(self) -> bool {
         self.language == Language::JavaScript
     }
@@ -257,18 +295,29 @@ impl SourceType {
         matches!(self.language, Language::TypeScript | Language::TypeScriptDefinition)
     }
 
+    /// Returns `true` if this is a TypeScript definition file (e.g. `.d.ts`).
     pub fn is_typescript_definition(self) -> bool {
         self.language == Language::TypeScriptDefinition
     }
 
+    /// Returns `true` if this source type is using JSX.
+    ///
+    /// Note that TSX is considered JSX in this context.
     pub fn is_jsx(self) -> bool {
         self.variant == LanguageVariant::Jsx
     }
 
+    /// Does this source type implicitly use strict mode semantics?
+    ///
+    /// Does not consider `"use strict";` directives.
     pub fn is_strict(self) -> bool {
         self.is_module()
     }
 
+    /// Mark this [`SourceType`] as a [script] if `yes` is `true`. No change
+    /// will occur if `yes` is `false`.
+    ///
+    /// [script]: ModuleKind::Script
     #[must_use]
     pub const fn with_script(mut self, yes: bool) -> Self {
         if yes {
@@ -277,6 +326,10 @@ impl SourceType {
         self
     }
 
+    /// Mark this [`SourceType`] as a [module] if `yes` is `true`. No change
+    /// will occur if `yes` is `false`.
+    ///
+    /// [module]: ModuleKind::Module
     #[must_use]
     pub const fn with_module(mut self, yes: bool) -> Self {
         if yes {
@@ -287,6 +340,10 @@ impl SourceType {
         self
     }
 
+    /// Mark this [`SourceType`] as [unambiguous] if `yes` is `true`. No change
+    /// will occur if `yes` is `false`.
+    ///
+    /// [unambiguous]: ModuleKind::Unambiguous
     #[must_use]
     pub const fn with_unambiguous(mut self, yes: bool) -> Self {
         if yes {
@@ -295,6 +352,10 @@ impl SourceType {
         self
     }
 
+    /// Mark this [`SourceType`] as using [JavaScript] if `yes` is `true`. No change
+    /// will occur if `yes` is `false`.
+    ///
+    /// [JavaScript]: Language::JavaScript
     #[must_use]
     pub const fn with_javascript(mut self, yes: bool) -> Self {
         if yes {
@@ -303,6 +364,10 @@ impl SourceType {
         self
     }
 
+    /// Mark this [`SourceType`] as using [TypeScript] if `yes` is `true`. No change
+    /// will occur if `yes` is `false`.
+    ///
+    /// [TypeScript]: Language::TypeScript
     #[must_use]
     pub const fn with_typescript(mut self, yes: bool) -> Self {
         if yes {
@@ -311,6 +376,7 @@ impl SourceType {
         self
     }
 
+    /// Mark this [`SourceType`] as a [TypeScript definition] file if `yes` is `true`.
     #[must_use]
     pub const fn with_typescript_definition(mut self, yes: bool) -> Self {
         if yes {
@@ -319,6 +385,13 @@ impl SourceType {
         self
     }
 
+    /// Mark this [`SourceType`] as using [JSX] if `yes` is `true`. No change
+    /// will occur if `yes` is `false`.
+    ///
+    /// When using [TypeScript], this source type now represents a TSX file.
+    ///
+    /// [JSX]: LanguageVariant::Jsx
+    /// [TypeScript]: Language::TypeScript
     #[must_use]
     pub const fn with_jsx(mut self, yes: bool) -> Self {
         if yes {
@@ -327,6 +400,10 @@ impl SourceType {
         self
     }
 
+    /// Disable language extensions (e.g. [JSX]) if `yes` is `true`. No change
+    /// will occur if `yes` is `false`.
+    ///
+    /// [JSX]: LanguageVariant::Jsx
     #[must_use]
     pub const fn with_standard(mut self, yes: bool) -> Self {
         if yes {

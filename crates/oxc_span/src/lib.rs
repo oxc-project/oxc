@@ -1,6 +1,7 @@
 //! Source positions and related helper functions.
 //!
 //! <https://doc.rust-lang.org/beta/nightly-rustc/rustc_span>
+#![warn(missing_docs)]
 
 mod atom;
 mod compact_str;

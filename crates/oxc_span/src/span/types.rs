@@ -12,26 +12,17 @@ use ::{serde::Serialize, tsify::Tsify};
 /// NOTE: `u32` is sufficient for "all" reasonable programs. Larger than u32 is a 4GB JS file.
 ///
 /// ## Hashing
-/// [`Span`]'s implementation of [`Hash`] is a no-op so that AST nodes can be
-/// compared by hash. This makes them unsuitable for use as keys in a hash map.
-///
-/// ```
-/// use std::hash::{Hash, Hasher, DefaultHasher};
-/// use oxc_span::Span;
-///
-/// let mut first = DefaultHasher::new();
-/// let mut second = DefaultHasher::new();
-///
-/// Span::new(0, 5).hash(&mut first);
-/// Span::new(10, 20).hash(&mut second);
-///
-/// assert_eq!(first.finish(), second.finish());
-/// ```
+/// [`Span`] has a normal implementation of [`Hash`]. If you want to compare two
+/// AST nodes without considering their locations (e.g. to see if they have the
+/// same content), use [`ContentHash`](crate::hash::ContentHash) instead.
 #[ast]
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[non_exhaustive] // Disallow struct expression constructor `Span {}`
 pub struct Span {
+    /// The zero-based start offset of the span
     pub start: u32,
+    /// The zero-based end offset of the span. This may be equal to [`start`](Span::start) if
+    /// the span is empty, but should not be less than it.
     pub end: u32,
 }

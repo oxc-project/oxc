@@ -1,3 +1,4 @@
+//! Specialized hashing traits
 use std::{
     hash::{Hash, Hasher},
     mem::{discriminant, Discriminant},
@@ -9,6 +10,9 @@ use std::{
 ///
 /// As an example, In AST types we ignore fields such as [crate::Span].
 pub trait ContentHash {
+    /// Hash an AST node based on its content alone.
+    ///
+    /// This hash ignores node location, but respects precedence and ordering.
     fn content_hash<H: Hasher>(&self, state: &mut H);
 }
 

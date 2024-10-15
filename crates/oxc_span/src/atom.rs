@@ -26,6 +26,7 @@ export type Atom = string;
 pub struct Atom<'a>(&'a str);
 
 impl Atom<'static> {
+    /// Get an [`Atom`] containing the empty string (`""`).
     #[inline]
     pub const fn empty() -> Self {
         Atom("")
@@ -33,21 +34,29 @@ impl Atom<'static> {
 }
 
 impl<'a> Atom<'a> {
+    /// Borrow a string slice.
     #[inline]
     pub fn as_str(&self) -> &'a str {
         self.0
     }
 
+    /// Convert this [`Atom`] into a [`String`].
+    ///
+    /// This is the explicit form of [`Into<String>`], which [`Atom`] also implements.
     #[inline]
     pub fn into_string(self) -> String {
         String::from(self.as_str())
     }
 
+    /// Convert this [`Atom`] into a [`CompactStr`].
+    ///
+    /// This is the explicit form of [`Into<CompactStr>`], which [`Atom`] also implements.
     #[inline]
     pub fn into_compact_str(self) -> CompactStr {
         CompactStr::new(self.as_str())
     }
 
+    /// Convert this [`Atom`] into a [`CompactStr`] without consuming `self`.
     #[inline]
     pub fn to_compact_str(&self) -> CompactStr {
         CompactStr::new(self.as_str())
