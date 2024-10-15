@@ -11,7 +11,7 @@ SCOPES
     "children": [
       {
         "children": [],
-        "flags": "ScopeFlags(StrictMode | Function)",
+        "flags": "ScopeFlags(StrictMode | Function | Ambient)",
         "id": 1,
         "node": "Function(deco)",
         "symbols": [

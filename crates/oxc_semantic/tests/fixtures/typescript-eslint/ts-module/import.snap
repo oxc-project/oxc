@@ -11,7 +11,7 @@ SCOPES
     "children": [
       {
         "children": [],
-        "flags": "ScopeFlags(StrictMode | TsModuleBlock)",
+        "flags": "ScopeFlags(StrictMode | TsModuleBlock | Ambient)",
         "id": 1,
         "node": "TSModuleDeclaration(foo)",
         "symbols": [

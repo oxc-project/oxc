@@ -148,7 +148,7 @@ impl ScopeTree {
     ) -> ScopeFlags {
         // https://tc39.es/ecma262/#sec-strict-mode-code
         let parent_scope_flags = self.get_flags(parent_scope_id);
-        flags |= parent_scope_flags & ScopeFlags::StrictMode;
+        flags |= parent_scope_flags & (ScopeFlags::StrictMode | ScopeFlags::Ambient);
 
         // inherit flags for non-function scopes
         if !flags.contains(ScopeFlags::Function) {

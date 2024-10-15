@@ -25,7 +25,7 @@ SCOPES
       },
       {
         "children": [],
-        "flags": "ScopeFlags(StrictMode | Function)",
+        "flags": "ScopeFlags(StrictMode | Function | Ambient)",
         "id": 3,
         "node": "Function(setAlignment)",
         "symbols": [
