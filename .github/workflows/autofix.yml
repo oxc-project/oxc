@@ -21,7 +21,19 @@ jobs:
           restore-cache: false
           tools: just,cargo-shear@1,dprint
           components: rustfmt
+      - name: Restore dprint plugin cache
+        id: cache-restore
+        uses: actions/cache/restore@v4
+        with:
+          key: dprint-autofix-ci-${{ runner.os }}-${{ hashFiles('dprint.json') }}
+          path: ~/.cache/dprint
       - run: just fmt
       - uses: autofix-ci/action@v1.3.1
         with:
           fail-fast: false
+      - name: Save dprint plugin cache
+        id: cache-save
+        uses: actions/cache/save@v4
+        with:
+          key: ${{ steps.cache-restore.outputs.cache-primary-key }}
+          path: ~/.cache/dprint
