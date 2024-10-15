@@ -134,24 +134,15 @@ pub struct HelperLoader<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,
 }
 
-impl<'a, 'ctx> Traverse<'a> for HelperLoader<'a, 'ctx> {
-    fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.add_imports();
-    }
-}
-
 impl<'a, 'ctx> HelperLoader<'a, 'ctx> {
     pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
         Self { ctx }
     }
+}
 
-    /// By [`TransformCtx::module_imports`] to indirectly insert imports into the program.
-    fn add_imports(&self) {
-        self.ctx.helper_loader.loaded_helpers.borrow_mut().drain().for_each(
-            |(_, (source, import))| {
-                self.ctx.module_imports.add_default_import(source, import, false);
-            },
-        );
+impl<'a, 'ctx> Traverse<'a> for HelperLoader<'a, 'ctx> {
+    fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
+        self.ctx.helper_loader.add_imports(self.ctx);
     }
 }
 
@@ -168,6 +159,7 @@ pub struct HelperLoaderStore<'a> {
     loaded_helpers: Rc<RefCell<LoadedHelper<'a>>>,
 }
 
+// Public methods
 impl<'a> HelperLoaderStore<'a> {
     pub fn new(options: &HelperLoaderOptions) -> Self {
         Self {
@@ -178,12 +170,56 @@ impl<'a> HelperLoaderStore<'a> {
         }
     }
 
-    fn add_default_import(&self, helper_name: Atom<'a>, ctx: &mut TraverseCtx<'a>) {
-        let source = ctx.ast.atom(&format!("{}/helpers/{helper_name}", self.module_name));
-        let bound_ident = ctx.generate_uid_in_root_scope(&helper_name, SymbolFlags::Import);
-        self.loaded_helpers.borrow_mut().insert(helper_name, (source, bound_ident));
+    /// Load and call a helper function and return the `CallExpression`.
+    #[expect(dead_code)]
+    pub fn call(
+        &mut self,
+        helper_name: Atom<'a>,
+        arguments: Vec<'a, Argument<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> CallExpression<'a> {
+        let callee = self.load(helper_name, ctx);
+        ctx.ast.call_expression(
+            SPAN,
+            callee,
+            None::<TSTypeParameterInstantiation<'a>>,
+            arguments,
+            false,
+        )
     }
 
+    /// Same as [`HelperLoaderStore::call`], but returns a `CallExpression` wrapped in an `Expression`.
+    #[expect(dead_code)]
+    pub fn call_expr(
+        &mut self,
+        helper_name: Atom<'a>,
+        arguments: Vec<'a, Argument<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        let callee = self.load(helper_name, ctx);
+        ctx.ast.expression_call(
+            SPAN,
+            callee,
+            None::<TSTypeParameterInstantiation<'a>>,
+            arguments,
+            false,
+        )
+    }
+
+    /// Load a helper function and return the callee expression.
+    pub fn load(&self, helper_name: Atom<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+        match self.mode {
+            HelperLoaderMode::Runtime => self.transform_for_runtime_helper(&helper_name, ctx),
+            HelperLoaderMode::External => self.transform_for_external_helper(helper_name, ctx),
+            HelperLoaderMode::Inline => {
+                unreachable!("Inline helpers are not supported yet");
+            }
+        }
+    }
+}
+
+// Internal methods
+impl<'a> HelperLoaderStore<'a> {
     fn transform_for_runtime_helper(
         &self,
         helper_name: &Atom<'a>,
@@ -220,50 +256,16 @@ impl<'a> HelperLoaderStore<'a> {
         Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false))
     }
 
-    /// Load and call a helper function and return the CallExpression.
-    #[allow(dead_code)]
-    pub fn call(
-        &mut self,
-        helper_name: Atom<'a>,
-        arguments: Vec<'a, Argument<'a>>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> CallExpression<'a> {
-        let callee = self.load(helper_name, ctx);
-        ctx.ast.call_expression(
-            SPAN,
-            callee,
-            None::<TSTypeParameterInstantiation<'a>>,
-            arguments,
-            false,
-        )
+    fn add_default_import(&self, helper_name: Atom<'a>, ctx: &mut TraverseCtx<'a>) {
+        let source = ctx.ast.atom(&format!("{}/helpers/{helper_name}", self.module_name));
+        let bound_ident = ctx.generate_uid_in_root_scope(&helper_name, SymbolFlags::Import);
+        self.loaded_helpers.borrow_mut().insert(helper_name, (source, bound_ident));
     }
 
-    /// Same as [`HelperLoaderStore::call`], but returns a CallExpression that is wrapped by Expression.
-    #[allow(dead_code)]
-    pub fn call_expr(
-        &mut self,
-        helper_name: Atom<'a>,
-        arguments: Vec<'a, Argument<'a>>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Expression<'a> {
-        let callee = self.load(helper_name, ctx);
-        ctx.ast.expression_call(
-            SPAN,
-            callee,
-            None::<TSTypeParameterInstantiation<'a>>,
-            arguments,
-            false,
-        )
-    }
-
-    /// Load a helper function and return the callee expression.
-    pub fn load(&self, helper_name: Atom<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        match self.mode {
-            HelperLoaderMode::Runtime => self.transform_for_runtime_helper(&helper_name, ctx),
-            HelperLoaderMode::External => self.transform_for_external_helper(helper_name, ctx),
-            HelperLoaderMode::Inline => {
-                unreachable!("Inline helpers are not supported yet");
-            }
-        }
+    fn add_imports(&self, transform_ctx: &TransformCtx<'a>) {
+        let mut loaded_helpers = self.loaded_helpers.borrow_mut();
+        loaded_helpers.drain().for_each(|(_, (source, import))| {
+            transform_ctx.module_imports.add_default_import(source, import, false);
+        });
     }
 }
