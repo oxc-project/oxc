@@ -59,15 +59,17 @@
 //! ```
 //!
 //! Based on [@babel/helper](https://github.com/babel/babel/tree/main/packages/babel-helpers).
+
 use std::{borrow::Cow, cell::RefCell};
+
+use rustc_hash::FxHashMap;
+use serde::Deserialize;
 
 use oxc_allocator::Vec;
 use oxc_ast::ast::{Argument, CallExpression, Expression, Program, TSTypeParameterInstantiation};
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
 use oxc_span::{Atom, SPAN};
 use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
-use rustc_hash::FxHashMap;
-use serde::Deserialize;
 
 use crate::TransformCtx;
 

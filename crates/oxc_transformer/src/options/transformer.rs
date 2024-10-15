@@ -1,7 +1,8 @@
 use std::path::PathBuf;
 
-use oxc_diagnostics::{Error, OxcDiagnostic};
 use serde_json::{from_value, json, Value};
+
+use oxc_diagnostics::{Error, OxcDiagnostic};
 
 use crate::{
     common::helper_loader::{HelperLoaderMode, HelperLoaderOptions},

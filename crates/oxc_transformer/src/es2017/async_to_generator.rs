@@ -42,13 +42,15 @@
 //! * Async / Await TC39 proposal: <https://github.com/tc39/proposal-async-await>
 //!
 
-use oxc_ast::ast::{
-    ArrowFunctionExpression, Expression, Function, FunctionType, Statement, VariableDeclarationKind,
+use oxc_ast::{
+    ast::{
+        ArrowFunctionExpression, Expression, Function, FunctionType, Statement,
+        VariableDeclarationKind,
+    },
+    NONE,
 };
-use oxc_ast::NONE;
 use oxc_span::{Atom, SPAN};
-use oxc_syntax::reference::ReferenceFlags;
-use oxc_syntax::symbol::SymbolId;
+use oxc_syntax::{reference::ReferenceFlags, symbol::SymbolId};
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
 pub struct AsyncToGenerator;

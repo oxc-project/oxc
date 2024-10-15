@@ -8,7 +8,14 @@
 //! * <https://babel.dev/docs/presets>
 //! * <https://github.com/microsoft/TypeScript/blob/main/src/compiler/transformer.ts>
 
-use oxc_ast::AstBuilder;
+use std::path::Path;
+
+use oxc_allocator::{Allocator, Vec};
+use oxc_ast::{ast::*, AstBuilder};
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_semantic::{ScopeTree, SymbolTable};
+use oxc_span::SPAN;
+use oxc_traverse::{traverse_mut, Traverse, TraverseCtx};
 
 // Core
 mod common;
@@ -30,22 +37,18 @@ mod typescript;
 
 mod plugins;
 
-use std::path::Path;
-
 use common::Common;
+use context::TransformCtx;
+use es2015::ES2015;
 use es2016::ES2016;
 use es2017::ES2017;
 use es2018::ES2018;
 use es2019::ES2019;
 use es2020::ES2020;
 use es2021::ES2021;
-use oxc_allocator::{Allocator, Vec};
-use oxc_ast::ast::*;
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_semantic::{ScopeTree, SymbolTable};
-use oxc_span::SPAN;
-use oxc_traverse::{traverse_mut, Traverse, TraverseCtx};
+use react::React;
 use regexp::RegExp;
+use typescript::TypeScript;
 
 pub use crate::{
     compiler_assumptions::CompilerAssumptions,
@@ -56,7 +59,6 @@ pub use crate::{
     react::{JsxOptions, JsxRuntime, ReactRefreshOptions},
     typescript::{RewriteExtensionsMode, TypeScriptOptions},
 };
-use crate::{context::TransformCtx, es2015::ES2015, react::React, typescript::TypeScript};
 
 pub struct TransformerReturn {
     pub errors: std::vec::Vec<OxcDiagnostic>,

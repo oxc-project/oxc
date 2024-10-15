@@ -33,12 +33,13 @@
 //!
 //! * Babel plugin implementation: <https://github.com/babel/babel/blob/main/packages/babel-plugin-transform-react-jsx-source/src/index.ts>
 
+use ropey::Rope;
+
 use oxc_ast::{ast::*, NONE};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Span, SPAN};
 use oxc_syntax::{number::NumberBase, symbol::SymbolFlags};
 use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
-use ropey::Rope;
 
 use crate::TransformCtx;
 

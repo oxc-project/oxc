@@ -2,6 +2,8 @@
 
 use std::cell::Cell;
 
+use rustc_hash::FxHashSet;
+
 use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
@@ -14,7 +16,6 @@ use oxc_syntax::{
     symbol::SymbolId,
 };
 use oxc_traverse::{Traverse, TraverseCtx};
-use rustc_hash::FxHashSet;
 
 use crate::{TransformCtx, TypeScriptOptions};
 

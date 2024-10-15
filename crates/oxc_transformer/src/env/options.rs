@@ -1,6 +1,7 @@
-use oxc_diagnostics::Error;
 use serde::Deserialize;
 use serde_json::Value;
+
+use oxc_diagnostics::Error;
 
 use super::targets::{query::Targets, Versions};
 

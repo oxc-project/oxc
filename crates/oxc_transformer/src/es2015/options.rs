@@ -1,7 +1,8 @@
 use serde::Deserialize;
 
-use super::ArrowFunctionsOptions;
 use crate::env::{can_enable_plugin, Versions};
+
+use super::ArrowFunctionsOptions;
 
 #[derive(Debug, Default, Clone, Deserialize)]
 #[serde(default, rename_all = "camelCase", deny_unknown_fields)]

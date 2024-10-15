@@ -5,9 +5,10 @@
 use std::sync::OnceLock;
 
 use dashmap::DashMap;
-use oxc_diagnostics::{Error, OxcDiagnostic};
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
+
+use oxc_diagnostics::{Error, OxcDiagnostic};
 
 use super::{version::Version, Versions};
 
