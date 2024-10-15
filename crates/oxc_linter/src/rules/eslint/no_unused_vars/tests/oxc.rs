@@ -54,6 +54,9 @@ fn test_vars_simple() {
             ",
             None,
         ),
+        ("console.log(function a() {} ? b : c)", None),
+        ("console.log(a ? function b() {} : c)", None),
+        ("console.log(a ? b : function c() {})", None),
     ];
     let fail = vec![
         ("let a = 1", None),
