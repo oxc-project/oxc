@@ -150,11 +150,7 @@ impl<'a, 'ctx> HelperLoader<'a, 'ctx> {
     fn add_imports(&self) {
         self.ctx.helper_loader.loaded_helpers.borrow_mut().drain().for_each(
             |(_, (source, import))| {
-                self.ctx.module_imports.add_import(
-                    source,
-                    ImportKind::new_default(import.name, import.symbol_id),
-                    false,
-                );
+                self.ctx.module_imports.add_import(source, ImportKind::new_default(import), false);
             },
         );
     }

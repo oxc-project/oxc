@@ -42,7 +42,7 @@ use oxc_ast::{ast::*, NONE};
 use oxc_semantic::ReferenceFlags;
 use oxc_span::{Atom, SPAN};
 use oxc_syntax::symbol::SymbolId;
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
 
 use crate::TransformCtx;
 
@@ -65,27 +65,21 @@ impl<'a, 'ctx> Traverse<'a> for ModuleImports<'a, 'ctx> {
 #[derive(Clone)]
 pub struct NamedImport<'a> {
     imported: Atom<'a>,
-    local: Atom<'a>,
-    symbol_id: SymbolId,
-}
-
-pub struct DefaultImport<'a> {
-    local: Atom<'a>,
-    symbol_id: SymbolId,
+    local: BoundIdentifier<'a>,
 }
 
 pub enum ImportKind<'a> {
     Named(NamedImport<'a>),
-    Default(DefaultImport<'a>),
+    Default(BoundIdentifier<'a>),
 }
 
 impl<'a> ImportKind<'a> {
-    pub fn new_named(imported: Atom<'a>, local: Atom<'a>, symbol_id: SymbolId) -> Self {
-        Self::Named(NamedImport { imported, local, symbol_id })
+    pub fn new_named(imported: Atom<'a>, local: BoundIdentifier<'a>) -> Self {
+        Self::Named(NamedImport { imported, local })
     }
 
-    pub fn new_default(local: Atom<'a>, symbol_id: SymbolId) -> Self {
-        Self::Default(DefaultImport { local, symbol_id })
+    pub fn new_default(local: BoundIdentifier<'a>) -> Self {
+        Self::Default(local)
     }
 }
 
@@ -183,21 +177,17 @@ impl<'a> ModuleImportsStore<'a> {
         names: Vec<ImportKind<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
-        let specifiers = ctx.ast.vec_from_iter(names.into_iter().map(|kind| match kind {
-            ImportKind::Named(name) => {
-                let local = name.local;
+        let specifiers = ctx.ast.vec_from_iter(names.into_iter().map(|import| match import {
+            ImportKind::Named(import) => {
                 ImportDeclarationSpecifier::ImportSpecifier(ctx.ast.alloc_import_specifier(
                     SPAN,
-                    ModuleExportName::IdentifierName(IdentifierName::new(SPAN, name.imported)),
-                    BindingIdentifier::new_with_symbol_id(SPAN, local, name.symbol_id),
+                    ModuleExportName::IdentifierName(IdentifierName::new(SPAN, import.imported)),
+                    import.local.create_binding_identifier(),
                     ImportOrExportKind::Value,
                 ))
             }
-            ImportKind::Default(name) => ImportDeclarationSpecifier::ImportDefaultSpecifier(
-                ctx.ast.alloc_import_default_specifier(
-                    SPAN,
-                    BindingIdentifier::new_with_symbol_id(SPAN, name.local, name.symbol_id),
-                ),
+            ImportKind::Default(local) => ImportDeclarationSpecifier::ImportDefaultSpecifier(
+                ctx.ast.alloc_import_default_specifier(SPAN, local.create_binding_identifier()),
             ),
         }));
 
@@ -230,15 +220,8 @@ impl<'a> ModuleImportsStore<'a> {
             let arg = Argument::from(ctx.ast.expression_string_literal(SPAN, source));
             ctx.ast.vec1(arg)
         };
-        let ImportKind::Default(name) = names.into_iter().next().unwrap() else { unreachable!() };
-        let id = {
-            let ident = BindingIdentifier::new_with_symbol_id(SPAN, name.local, name.symbol_id);
-            ctx.ast.binding_pattern(
-                ctx.ast.binding_pattern_kind_from_binding_identifier(ident),
-                NONE,
-                false,
-            )
-        };
+        let Some(ImportKind::Default(local)) = names.into_iter().next() else { unreachable!() };
+        let id = local.create_binding_pattern(ctx);
         let decl = {
             let init = ctx.ast.expression_call(SPAN, callee, NONE, args, false);
             let decl = ctx.ast.variable_declarator(SPAN, var_kind, id, Some(init), false);

@@ -198,7 +198,7 @@ impl<'a, 'ctx> AutomaticScriptBindings<'a, 'ctx> {
     ) -> BoundIdentifier<'a> {
         let binding =
             ctx.generate_uid_in_root_scope(variable_name, SymbolFlags::FunctionScopedVariable);
-        let import = ImportKind::new_default(binding.name.clone(), binding.symbol_id);
+        let import = ImportKind::new_default(binding.clone());
         self.ctx.module_imports.add_import(source, import, front);
         binding
     }
@@ -297,8 +297,7 @@ impl<'a, 'ctx> AutomaticModuleBindings<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) -> BoundIdentifier<'a> {
         let binding = ctx.generate_uid_in_root_scope(name, SymbolFlags::Import);
-        let import =
-            ImportKind::new_named(Atom::from(name), binding.name.clone(), binding.symbol_id);
+        let import = ImportKind::new_named(Atom::from(name), binding.clone());
         self.ctx.module_imports.add_import(source, import, false);
         binding
     }
