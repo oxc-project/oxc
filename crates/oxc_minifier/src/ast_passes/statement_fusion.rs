@@ -1,9 +1,10 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
+use oxc_ecmascript::side_effects::MayHaveSideEffects;
 use oxc_span::SPAN;
 use oxc_traverse::{Traverse, TraverseCtx};
 
-use crate::{node_util::MayHaveSideEffects, CompressorPass};
+use crate::CompressorPass;
 
 /// Statement Fusion
 ///

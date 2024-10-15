@@ -1,18 +1,12 @@
-mod check_for_state_change;
-mod is_literal_value;
-mod may_have_side_effects;
-
 use std::borrow::Cow;
 use std::ops::Deref;
 
 use num_bigint::BigInt;
 use oxc_ast::ast::*;
-use oxc_ecmascript::ConstantEvaluation;
+use oxc_ecmascript::{constant_evaluation::ConstantEvaluation, side_effects::MayHaveSideEffects};
 use oxc_ecmascript::{StringToBigInt, ToBigInt, ToJsString};
 use oxc_semantic::{IsGlobalReference, SymbolTable};
 use oxc_traverse::TraverseCtx;
-
-pub use self::{is_literal_value::IsLiteralValue, may_have_side_effects::MayHaveSideEffects};
 
 #[derive(Clone, Copy)]
 pub struct Ctx<'a, 'b>(pub &'b TraverseCtx<'a>);

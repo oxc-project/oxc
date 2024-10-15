@@ -1,10 +1,10 @@
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, Visit};
-use oxc_ecmascript::ConstantEvaluation;
+use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, IsLiteralValue};
 use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
-use crate::node_util::{Ctx, IsLiteralValue};
+use crate::node_util::Ctx;
 use crate::{keep_var::KeepVar, CompressorPass};
 
 /// Remove Dead Code from the AST.

@@ -1,4 +1,4 @@
-use oxc_ast::ast::*;
+use oxc_ast::ast::Expression;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
 /// JavaScript Language Type
@@ -14,6 +14,16 @@ pub enum ValueType {
     Boolean,
     Object,
     Undetermined,
+}
+
+impl ValueType {
+    pub fn is_string(self) -> bool {
+        matches!(self, Self::String)
+    }
+
+    pub fn is_number(self) -> bool {
+        matches!(self, Self::Number)
+    }
 }
 
 /// `get_known_value_type`

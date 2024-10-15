@@ -6,6 +6,10 @@ use num_traits::Zero;
 
 use oxc_ast::ast::*;
 use oxc_ecmascript::ToInt32;
+use oxc_ecmascript::{
+    constant_evaluation::{IsLiteralValue, ValueType},
+    side_effects::MayHaveSideEffects,
+};
 use oxc_span::{GetSpan, Span, SPAN};
 use oxc_syntax::{
     number::NumberBase,
@@ -14,9 +18,8 @@ use oxc_syntax::{
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
 use crate::{
-    node_util::{is_exact_int64, Ctx, IsLiteralValue, MayHaveSideEffects},
+    node_util::{is_exact_int64, Ctx},
     tri::Tri,
-    value_type::ValueType,
     CompressorPass,
 };
 

@@ -1,4 +1,4 @@
-use oxc_ast::ast::*;
+use oxc_ast::ast::{Expression, ForStatementLeft, UnaryExpression};
 
 use super::check_for_state_change::CheckForStateChange;
 
