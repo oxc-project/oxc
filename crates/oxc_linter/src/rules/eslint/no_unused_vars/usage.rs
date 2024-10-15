@@ -60,8 +60,10 @@ impl<'s, 'a> Symbol<'s, 'a> {
     }
 
     #[inline]
-    const fn is_type_alias(&self) -> bool {
-        self.flags().contains(SymbolFlags::TypeAlias)
+    const fn could_have_type_reference_within_own_decl(&self) -> bool {
+        const TYPE_DECLS: SymbolFlags =
+            SymbolFlags::TypeAlias.union(SymbolFlags::Interface).union(SymbolFlags::Class);
+        self.flags().intersects(TYPE_DECLS)
     }
 
     /// Check if this [`Symbol`] has an [`Reference`]s that are considered a usage.
@@ -69,7 +71,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
         // Use symbol flags to skip the usage checks we are certain don't need
         // to be run.
         let do_reassignment_checks = self.is_possibly_reassignable();
-        let do_type_self_usage_checks = self.is_type_alias();
+        let do_type_self_usage_checks = self.could_have_type_reference_within_own_decl();
         let do_self_call_check = self.is_maybe_callable();
         let do_discarded_read_checks = self.is_definitely_reassignable_variable();
 
@@ -251,12 +253,12 @@ impl<'s, 'a> Symbol<'s, 'a> {
                 }
                 // definitely not within a type alias, we can be sure this isn't
                 // a self-usage. Safe CPU cycles by breaking early.
-                AstKind::CallExpression(_)
-                | AstKind::BinaryExpression(_)
-                | AstKind::Function(_)
-                | AstKind::Class(_)
-                | AstKind::TSInterfaceDeclaration(_)
-                | AstKind::TSModuleDeclaration(_)
+                // NOTE: we cannot short-circuit on functions since they could
+                // be methods with annotations referencing the type they're in.
+                // e.g.:
+                // - `type Foo = { bar(): Foo }`
+                // - `class Foo { static factory(): Foo { return new Foo() } }`
+                AstKind::TSModuleDeclaration(_)
                 | AstKind::VariableDeclaration(_)
                 | AstKind::VariableDeclarator(_)
                 | AstKind::ExportNamedDeclaration(_)
@@ -264,6 +266,27 @@ impl<'s, 'a> Symbol<'s, 'a> {
                 | AstKind::ExportAllDeclaration(_)
                 | AstKind::Program(_) => {
                     return false;
+                }
+
+                AstKind::CallExpression(_) | AstKind::BinaryExpression(_) => {
+                    // interfaces/type aliases cannot have value expressions
+                    // within their declarations, so we know we're not in one.
+                    // However, classes can.
+                    if self.flags().is_class() {
+                        continue;
+                    }
+                    return false;
+                }
+
+                // `interface LinkedList<T> { next?: LinkedList<T> }`
+                AstKind::TSInterfaceDeclaration(iface) => {
+                    return self.flags().is_interface() && self == &iface.id;
+                }
+
+                // `class Foo { bar(): Foo }`
+                AstKind::Class(class) => {
+                    return self.flags().is_class()
+                        && class.id.as_ref().is_some_and(|id| self == id);
                 }
 
                 _ => continue,

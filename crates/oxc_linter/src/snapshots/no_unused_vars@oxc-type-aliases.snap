@@ -24,3 +24,11 @@ source: crates/oxc_linter/src/tester.rs
    ·        ╰── 'Unbox' is declared here
    ╰────
   help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'R' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:36]
+ 1 │ export type F<T> = T extends infer R ? /* R not used */ string : never
+   ·                                    ┬
+   ·                                    ╰── 'R' is declared here
+   ╰────
+  help: Consider removing this declaration.
