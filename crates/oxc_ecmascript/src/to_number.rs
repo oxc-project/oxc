@@ -25,9 +25,9 @@ impl<'a> ToNumber<'a> for Expression<'a> {
                 "NaN" | "undefined" => Some(f64::NAN),
                 _ => None,
             },
-            // TODO: StringToNumber
-            Expression::StringLiteral(string_literal) => {
-                string_literal.value.parse::<f64>().map_or(Some(f64::NAN), Some)
+            Expression::StringLiteral(lit) => {
+                use crate::StringToNumber;
+                Some(lit.value.as_str().string_to_number())
             }
             _ => None,
         }
