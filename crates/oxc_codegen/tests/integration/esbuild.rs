@@ -182,11 +182,10 @@ fn test_new() {
     // test_minify("new x() ** 2", "new x**2;");
 
     // Test preservation of Webpack-specific comments
-    // TODO: Not support trailing comments yet
-    // test(
-    // "new Worker(// webpackFoo: 1\n // webpackBar: 2\n 'path');",
-    // "new Worker(\n  // webpackFoo: 1\n  // webpackBar: 2\n  \"path\"\n);\n",
-    // );
+    test(
+        "new Worker(// webpackFoo: 1\n // webpackBar: 2\n 'path');",
+        "new Worker(\n\t// webpackFoo: 1\n\t// webpackBar: 2\n\t\"path\"\n);\n",
+    );
     test(
         "new Worker(/* webpackFoo: 1 */ /* webpackBar: 2 */ 'path');",
         "new Worker(\n\t/* webpackFoo: 1 */\n\t/* webpackBar: 2 */\n\t\"path\"\n);\n",
@@ -245,12 +244,12 @@ fn test_call() {
     // testMangleMinify(t, "(1 ? eval : 2)?.(x)", "eval?.(x);");
 
     // Webpack-specific comments
-    // TODO: Not support trailing comments yet
-    // test(
-    //     "import(// webpackFoo: 1\n // webpackBar: 2\n 'path');",
-    //     "import(\n  // webpackFoo: 1\n  // webpackBar: 2\n  \"path\"\n);\n",
-    // );
-    // test( "import(// webpackFoo: 1\n // webpackBar: 2\n 'path', {type: 'module'});", "import(\n  // webpackFoo: 1\n  // webpackBar: 2\n  \"path\",\n  { type: \"module\" }\n);\n");
+    test(
+        "require(// webpackFoo: 1\n // webpackBar: 2\n 'path');",
+        "require(\n\t// webpackFoo: 1\n\t// webpackBar: 2\n\t\"path\"\n);\n",
+    );
+    test( "require(// webpackFoo: 1\n // webpackBar: 2\n 'path', {type: 'module'});",
+    "require(\n\t// webpackFoo: 1\n\t// webpackBar: 2\n\t\"path\",\n\t{ type: \"module\" }\n);\n");
     test(
         "require(/* webpackFoo: 1 */ /* webpackBar: 2 */ 'path');",
         "require(\n\t/* webpackFoo: 1 */\n\t/* webpackBar: 2 */\n\t\"path\"\n);\n",
@@ -659,12 +658,11 @@ fn test_decorators() {
 fn test_import() {
     test("import('path');", "import(\"path\");\n"); // The semicolon must not be a separate statement
 
-    // TODO: Not support trailing comments yet
-    // test(
-    //     "import(// webpackFoo: 1\n // webpackBar: 2\n 'path');",
-    //     "import(\n  // webpackFoo: 1\n  // webpackBar: 2\n  \"path\"\n);\n",
-    // );
-    // test( "import(// webpackFoo: 1\n // webpackBar: 2\n 'path', {type: 'module'});", "import(\n  // webpackFoo: 1\n  // webpackBar: 2\n  \"path\",\n  { type: \"module\" }\n);\n");
+    test(
+        "import(// webpackFoo: 1\n // webpackBar: 2\n 'path');",
+        "import(\n\t// webpackFoo: 1\n\t// webpackBar: 2\n\t\"path\"\n);\n",
+    );
+    test( "import(// webpackFoo: 1\n // webpackBar: 2\n 'path', {type: 'module'});", "import(\n\t// webpackFoo: 1\n\t// webpackBar: 2\n\t\"path\",\n\t{ type: \"module\" }\n);\n");
     test(
         "import(/* webpackFoo: 1 */ /* webpackBar: 2 */ 'path');",
         "import(\n\t/* webpackFoo: 1 */\n\t/* webpackBar: 2 */\n\t\"path\"\n);\n",
