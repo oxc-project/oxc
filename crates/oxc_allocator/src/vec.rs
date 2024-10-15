@@ -93,6 +93,10 @@ impl<'alloc, T> Vec<'alloc, T> {
         Self(vec::Vec::with_capacity_in(capacity, allocator))
     }
 
+    /// Create a new [`Vec`] whose elements are taken from an iterator and
+    /// allocated in the given `allocator`.
+    ///
+    /// This is behaviorially identical to [`FromIterator::from_iter`].
     #[inline]
     pub fn from_iter_in<I: IntoIterator<Item = T>>(iter: I, allocator: &'alloc Allocator) -> Self {
         let iter = iter.into_iter();

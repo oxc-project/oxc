@@ -167,6 +167,7 @@ impl<'alloc, T: Hash> Hash for Box<'alloc, T> {
 pub struct Address(usize);
 
 impl<'a, T> Box<'a, T> {
+    /// Get the memory address of a value allocated in the arena.
     #[inline]
     pub fn address(&self) -> Address {
         Address(ptr::addr_of!(**self) as usize)
