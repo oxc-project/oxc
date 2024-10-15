@@ -37,8 +37,10 @@ fn bench_transformer(criterion: &mut Criterion) {
                     .into_symbol_table_and_scope_tree();
 
                 // `enable_all` enables all transforms except arrow functions transform
+                // and async-to-generator
                 let mut options = TransformOptions::enable_all();
                 options.es2015.arrow_function = Some(ArrowFunctionsOptions { spec: true });
+                options.es2017.async_to_generator = true;
 
                 runner.run(|| {
                     let ret = Transformer::new(&allocator, Path::new(&file.file_name), options)
