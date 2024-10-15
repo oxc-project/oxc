@@ -145,3 +145,177 @@ impl<'a, 'b> CheckForStateChange<'a, 'b> for PropertyKey<'a> {
         }
     }
 }
+
+impl<'a, 'b> CheckForStateChange<'a, 'b> for ForStatementLeft<'a> {
+    fn check_for_state_change(&self, check_for_new_objects: bool) -> bool {
+        match self {
+            match_assignment_target!(Self) => {
+                self.to_assignment_target().check_for_state_change(check_for_new_objects)
+            }
+            ForStatementLeft::VariableDeclaration(variable_declaration) => {
+                variable_declaration.check_for_state_change(check_for_new_objects)
+            }
+        }
+    }
+}
+
+impl<'a, 'b> CheckForStateChange<'a, 'b> for VariableDeclaration<'a> {
+    fn check_for_state_change(&self, check_for_new_objects: bool) -> bool {
+        self.declarations.iter().any(|decl| decl.check_for_state_change(check_for_new_objects))
+    }
+}
+
+impl<'a, 'b> CheckForStateChange<'a, 'b> for VariableDeclarator<'a> {
+    fn check_for_state_change(&self, check_for_new_objects: bool) -> bool {
+        self.id.check_for_state_change(check_for_new_objects)
+            || self
+                .init
+                .as_ref()
+                .map_or(false, |init| init.check_for_state_change(check_for_new_objects))
+    }
+}
+
+impl CheckForStateChange<'_, '_> for BindingPattern<'_> {
+    fn check_for_state_change(&self, check_for_new_objects: bool) -> bool {
+        match &self.kind {
+            BindingPatternKind::BindingIdentifier(_) => false,
+            BindingPatternKind::ObjectPattern(object_pattern) => {
+                object_pattern
+                    .properties
+                    .iter()
+                    .any(|element| element.check_for_state_change(check_for_new_objects))
+                    || object_pattern
+                        .rest
+                        .as_ref()
+                        .is_some_and(|rest| rest.check_for_state_change(check_for_new_objects))
+            }
+            BindingPatternKind::ArrayPattern(array_pattern) => {
+                array_pattern.elements.iter().any(|element| {
+                    element.as_ref().is_some_and(|element| {
+                        element.check_for_state_change(check_for_new_objects)
+                    })
+                }) || array_pattern
+                    .rest
+                    .as_ref()
+                    .is_some_and(|rest| rest.check_for_state_change(check_for_new_objects))
+            }
+            BindingPatternKind::AssignmentPattern(assignment_pattern) => {
+                assignment_pattern.left.check_for_state_change(check_for_new_objects)
+                    && assignment_pattern.right.check_for_state_change(check_for_new_objects)
+            }
+        }
+    }
+}
+
+impl CheckForStateChange<'_, '_> for BindingRestElement<'_> {
+    fn check_for_state_change(&self, check_for_new_objects: bool) -> bool {
+        self.argument.check_for_state_change(check_for_new_objects)
+    }
+}
+
+impl CheckForStateChange<'_, '_> for BindingProperty<'_> {
+    fn check_for_state_change(&self, check_for_new_objects: bool) -> bool {
+        self.key.check_for_state_change(check_for_new_objects)
+            || self.value.check_for_state_change(check_for_new_objects)
+    }
+}
+
+impl CheckForStateChange<'_, '_> for AssignmentTarget<'_> {
+    fn check_for_state_change(&self, check_for_new_objects: bool) -> bool {
+        match self {
+            AssignmentTarget::AssignmentTargetIdentifier(_) => false,
+            AssignmentTarget::TSAsExpression(ts_as_expression) => {
+                ts_as_expression.expression.check_for_state_change(check_for_new_objects)
+            }
+            AssignmentTarget::TSSatisfiesExpression(ts_satisfies_expression) => {
+                ts_satisfies_expression.expression.check_for_state_change(check_for_new_objects)
+            }
+            AssignmentTarget::TSNonNullExpression(ts_non_null_expression) => {
+                ts_non_null_expression.expression.check_for_state_change(check_for_new_objects)
+            }
+            AssignmentTarget::TSTypeAssertion(ts_type_assertion) => {
+                ts_type_assertion.expression.check_for_state_change(check_for_new_objects)
+            }
+            AssignmentTarget::TSInstantiationExpression(ts_instantiation_expression) => {
+                ts_instantiation_expression.expression.check_for_state_change(check_for_new_objects)
+            }
+            AssignmentTarget::ComputedMemberExpression(computed_member_expression) => {
+                computed_member_expression.object.check_for_state_change(check_for_new_objects)
+                    || computed_member_expression
+                        .expression
+                        .check_for_state_change(check_for_new_objects)
+            }
+            AssignmentTarget::StaticMemberExpression(static_member_expression) => {
+                static_member_expression.object.check_for_state_change(check_for_new_objects)
+            }
+            AssignmentTarget::PrivateFieldExpression(private_field_expression) => {
+                private_field_expression.object.check_for_state_change(check_for_new_objects)
+            }
+            AssignmentTarget::ArrayAssignmentTarget(array_assignment_target) => {
+                array_assignment_target.elements.iter().any(|element| {
+                    element.as_ref().is_some_and(|element| {
+                        element.check_for_state_change(check_for_new_objects)
+                    })
+                }) || array_assignment_target
+                    .rest
+                    .as_ref()
+                    .is_some_and(|rest| rest.check_for_state_change(check_for_new_objects))
+            }
+            AssignmentTarget::ObjectAssignmentTarget(object_assignment_target) => {
+                object_assignment_target
+                    .properties
+                    .iter()
+                    .any(|property| property.check_for_state_change(check_for_new_objects))
+                    || object_assignment_target
+                        .rest
+                        .as_ref()
+                        .is_some_and(|rest| rest.check_for_state_change(check_for_new_objects))
+            }
+        }
+    }
+}
+
+impl CheckForStateChange<'_, '_> for AssignmentTargetProperty<'_> {
+    fn check_for_state_change(&self, check_for_new_objects: bool) -> bool {
+        match self {
+            AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(
+                assignment_target_property_identifier,
+            ) => assignment_target_property_identifier
+                .init
+                .as_ref()
+                .map_or(false, |init| init.check_for_state_change(check_for_new_objects)),
+            AssignmentTargetProperty::AssignmentTargetPropertyProperty(
+                assignment_target_property_property,
+            ) => {
+                assignment_target_property_property
+                    .name
+                    .check_for_state_change(check_for_new_objects)
+                    || assignment_target_property_property
+                        .binding
+                        .check_for_state_change(check_for_new_objects)
+            }
+        }
+    }
+}
+
+impl CheckForStateChange<'_, '_> for AssignmentTargetRest<'_> {
+    fn check_for_state_change(&self, check_for_new_objects: bool) -> bool {
+        self.target.check_for_state_change(check_for_new_objects)
+    }
+}
+
+impl CheckForStateChange<'_, '_> for AssignmentTargetMaybeDefault<'_> {
+    fn check_for_state_change(&self, check_for_new_objects: bool) -> bool {
+        match self {
+            match_assignment_target!(Self) => {
+                self.to_assignment_target().check_for_state_change(check_for_new_objects)
+            }
+            Self::AssignmentTargetWithDefault(assignment_target_with_default) => {
+                assignment_target_with_default.binding.check_for_state_change(check_for_new_objects)
+                    && assignment_target_with_default
+                        .init
+                        .check_for_state_change(check_for_new_objects)
+            }
+        }
+    }
+}

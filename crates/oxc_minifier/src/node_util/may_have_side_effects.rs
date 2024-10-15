@@ -18,3 +18,4 @@ where
 
 impl<'a, 'b> MayHaveSideEffects<'a, 'b> for Expression<'a> {}
 impl<'a, 'b> MayHaveSideEffects<'a, 'b> for UnaryExpression<'a> {}
+impl<'a, 'b> MayHaveSideEffects<'a, 'b> for ForStatementLeft<'a> {}
