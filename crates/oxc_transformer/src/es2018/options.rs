@@ -8,6 +8,8 @@ use crate::env::{can_enable_plugin, Versions};
 pub struct ES2018Options {
     #[serde(skip)]
     pub object_rest_spread: Option<ObjectRestSpreadOptions>,
+    #[serde(skip)]
+    pub async_generator_functions: bool,
 }
 
 impl ES2018Options {
@@ -28,6 +30,11 @@ impl ES2018Options {
                 bugfixes,
             )
             .then(Default::default),
+            async_generator_functions: can_enable_plugin(
+                "transform-async-generator-functions",
+                targets,
+                bugfixes,
+            ),
         }
     }
 }

@@ -88,7 +88,11 @@ impl TransformOptions {
                 arrow_function: None,
             },
             es2016: ES2016Options { exponentiation_operator: true },
-            es2018: ES2018Options { object_rest_spread: Some(ObjectRestSpreadOptions::default()) },
+            es2018: ES2018Options {
+                object_rest_spread: Some(ObjectRestSpreadOptions::default()),
+                // Turned off because it is not ready.
+                async_generator_functions: false,
+            },
             es2017: ES2017Options {
                 // Turned off because it is not ready.
                 async_to_generator: false,
@@ -237,6 +241,14 @@ impl TransformOptions {
                 },
             )
         });
+
+        let has_enabled_async_generator_functions = {
+            let plugin_name = "transform-async-generator-functions";
+            get_enabled_plugin_options(plugin_name, options, targets.as_ref(), bugfixes).is_some()
+        };
+        if has_enabled_async_generator_functions {
+            transformer_options.es2018.async_generator_functions = true;
+        }
 
         transformer_options.es2019.with_optional_catch_binding({
             let plugin_name = "transform-optional-catch-binding";

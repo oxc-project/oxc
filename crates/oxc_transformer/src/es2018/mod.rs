@@ -1,6 +1,8 @@
+mod async_generator_functions;
 mod object_rest_spread;
 mod options;
 
+use async_generator_functions::AsyncGeneratorFunctions;
 pub use object_rest_spread::{ObjectRestSpread, ObjectRestSpreadOptions};
 pub use options::ES2018Options;
 use oxc_ast::ast::*;
@@ -13,6 +15,7 @@ pub struct ES2018<'a, 'ctx> {
 
     // Plugins
     object_rest_spread: ObjectRestSpread<'a, 'ctx>,
+    async_generator_functions: AsyncGeneratorFunctions<'a, 'ctx>,
 }
 
 impl<'a, 'ctx> ES2018<'a, 'ctx> {
@@ -22,6 +25,7 @@ impl<'a, 'ctx> ES2018<'a, 'ctx> {
                 options.object_rest_spread.unwrap_or_default(),
                 ctx,
             ),
+            async_generator_functions: AsyncGeneratorFunctions::new(ctx),
             options,
         }
     }

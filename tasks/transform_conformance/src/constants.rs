@@ -23,7 +23,7 @@ pub(crate) const PLUGINS: &[&str] = &[
     "babel-plugin-transform-optional-catch-binding",
     // "babel-plugin-transform-json-strings",
     // // ES2018
-    // "babel-plugin-transform-async-generator-functions",
+    "babel-plugin-transform-async-generator-functions",
     "babel-plugin-transform-object-rest-spread",
     // // [Regex] "babel-plugin-transform-unicode-property-regex",
     // "babel-plugin-transform-dotall-regex",

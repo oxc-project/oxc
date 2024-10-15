@@ -1,6 +1,6 @@
 commit: 3bcfee23
 
-Passed: 34/60
+Passed: 38/86
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -21,6 +21,74 @@ exec failed
 exec failed
 
 * sanity/check-es2015-constants/exec.js
+exec failed
+
+
+# babel-plugin-transform-async-generator-functions (4/26)
+* async-generators/declaration-exec/exec.js
+exec failed
+
+* async-generators/yield-exec/exec.js
+exec failed
+
+* for-await/lhs-member-expression/exec.js
+exec failed
+
+* for-await/re-declare-var-in-init-body/exec.js
+exec failed
+
+* for-await/step-single-tick/exec.js
+exec failed
+
+* for-await/step-value-is-promise/exec.js
+exec failed
+
+* for-await/step-value-not-accessed-when-done/exec.js
+exec failed
+
+* yield-star/ecma262-pr-2819/exec.js
+exec failed
+
+* yield-star/issue-9905/exec.js
+exec failed
+
+* yield-star/return-method/exec.js
+exec failed
+
+* yield-star/return-method-with-finally/exec.js
+exec failed
+
+* yield-star/return-method-with-finally-multiple-parallel/exec.js
+exec failed
+
+* yield-star/return-method-with-finally-multiple-serial/exec.js
+exec failed
+
+* yield-star/throw-method-with-catch/exec.js
+exec failed
+
+* yield-star/throw-method-with-finally/exec.js
+exec failed
+
+* yield-star-polyfill-corejs3/issue-9905/exec.js
+exec failed
+
+* yield-star-polyfill-corejs3/return-method/exec.js
+exec failed
+
+* yield-star-polyfill-corejs3/return-method-with-finally/exec.js
+exec failed
+
+* yield-star-polyfill-corejs3/return-method-with-finally-multiple-parallel/exec.js
+exec failed
+
+* yield-star-polyfill-corejs3/return-method-with-finally-multiple-serial/exec.js
+exec failed
+
+* yield-star-polyfill-corejs3/throw-method-with-catch/exec.js
+exec failed
+
+* yield-star-polyfill-corejs3/throw-method-with-finally/exec.js
 exec failed
 
 

@@ -1,6 +1,6 @@
 commit: 3bcfee23
 
-Passed: 339/1039
+Passed: 339/1058
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1461,6 +1461,65 @@ x Output mismatch
 x Output mismatch
 
 * nullish-coalescing/transform-loose/input.js
+x Output mismatch
+
+
+# babel-plugin-transform-async-generator-functions (0/19)
+* async-generators/class-method/input.js
+x Output mismatch
+
+* async-generators/declaration/input.js
+x Output mismatch
+
+* async-generators/expression/input.js
+x Output mismatch
+
+* async-generators/object-method/input.js
+x Output mismatch
+
+* async-generators/static-method/input.js
+x Output mismatch
+
+* async-generators/transform-class-keys/input.js
+x Output mismatch
+
+* async-generators/yield-star/input.js
+x Output mismatch
+
+* for-await/async-arrow/input.js
+x Output mismatch
+
+* for-await/async-function/input.js
+x Output mismatch
+
+* for-await/async-function-no-transform/input.js
+x Output mismatch
+
+* for-await/async-generator/input.js
+x Output mismatch
+
+* for-await/create-async-from-sync-iterator/input.js
+x Output mismatch
+
+* for-await/destructuring/input.js
+x Output mismatch
+
+* for-await/lhs-member-expression/input.js
+x Output mismatch
+
+* for-await/re-declare-var-in-init-body/input.js
+x Output mismatch
+
+* nested/arrows-in-declaration/input.js
+x Output mismatch
+
+* nested/async-in-params/input.js
+x Output mismatch
+
+* nested/generator-in-async/input.js
+x Output mismatch
+
+* yield-star/create-async-from-sync-iterator/input.js
 x Output mismatch
 
 
