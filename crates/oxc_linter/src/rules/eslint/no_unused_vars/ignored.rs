@@ -377,4 +377,26 @@ mod test {
         assert!(rule.is_ignored_array_destructured(&Atom::from("_x")));
         assert!(!rule.is_ignored_array_destructured("notIgnored"));
     }
+
+    #[test]
+    fn test_ignored_catch_errors() {
+        let rule = NoUnusedVars::from_configuration(serde_json::json!([
+            {
+                "caughtErrorsIgnorePattern": "^_",
+                "caughtErrors": "all",
+            }
+        ]));
+        assert!(rule.is_ignored_catch_err("_"));
+        assert!(rule.is_ignored_catch_err("_err"));
+        assert!(!rule.is_ignored_catch_err("err"));
+
+        let rule = NoUnusedVars::from_configuration(serde_json::json!([
+            {
+                "caughtErrors": "none",
+            }
+        ]));
+        assert!(rule.is_ignored_catch_err("_"));
+        assert!(rule.is_ignored_catch_err("_err"));
+        assert!(rule.is_ignored_catch_err("err"));
+    }
 }

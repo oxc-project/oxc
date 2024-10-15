@@ -29,14 +29,14 @@ pub struct TransformCtx<'a> {
     pub source_text: &'a str,
 
     // Helpers
+    /// Manage helper loading
+    pub helper_loader: HelperLoaderStore<'a>,
     /// Manage import statement globally
     pub module_imports: ModuleImportsStore<'a>,
     /// Manage inserting `var` statements globally
     pub var_declarations: VarDeclarationsStore<'a>,
     /// Manage inserting statements at top of program globally
     pub top_level_statements: TopLevelStatementsStore<'a>,
-    /// Manage helper loading
-    pub helper_loader: HelperLoaderStore<'a>,
 }
 
 impl<'a> TransformCtx<'a> {
@@ -55,10 +55,10 @@ impl<'a> TransformCtx<'a> {
             source_path,
             source_type: SourceType::default(),
             source_text: "",
+            helper_loader: HelperLoaderStore::new(&options.helper_loader),
             module_imports: ModuleImportsStore::new(),
             var_declarations: VarDeclarationsStore::new(),
             top_level_statements: TopLevelStatementsStore::new(),
-            helper_loader: HelperLoaderStore::new(&options.helper_loader),
         }
     }
 

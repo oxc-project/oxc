@@ -24,18 +24,20 @@ fn bench_minifier(criterion: &mut Criterion) {
                 allocator.reset();
 
                 // Create fresh AST + semantic data for each iteration
-                let program = Parser::new(&allocator, source_text, source_type).parse().program;
-                let program = allocator.alloc(program);
+                let mut program = Parser::new(&allocator, source_text, source_type).parse().program;
                 let (symbols, scopes) = SemanticBuilder::new()
-                    .build(program)
+                    .build(&program)
                     .semantic
                     .into_symbol_table_and_scope_tree();
 
                 let options = CompressOptions::all_true();
 
                 runner.run(|| {
-                    Compressor::new(&allocator, options)
-                        .build_with_symbols_and_scopes(symbols, scopes, program);
+                    Compressor::new(&allocator, options).build_with_symbols_and_scopes(
+                        symbols,
+                        scopes,
+                        &mut program,
+                    );
                 });
             });
         });

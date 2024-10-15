@@ -21,6 +21,7 @@ jobs:
       - uses: actions/labeler@v5
 
       - name: Validate PR title
+        id: pr-title
         uses: amannn/action-semantic-pull-request@v5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -45,3 +46,39 @@ jobs:
             revert
             style
             test
+
+      - name: Get category label from PR title
+        id: get-category
+        env:
+          PR_TYPE: ${{ steps.pr-title.outputs.type }}
+        run: |
+          case "$PR_TYPE" in
+            "feat")
+              CATEGORY="C-enhancement"
+              ;;
+            "fix")
+              CATEGORY="C-bug"
+              ;;
+            "test")
+              CATEGORY="C-test"
+              ;;
+            "refactor" | "chore" | "style")
+              CATEGORY="C-cleanup"
+              ;;
+            "docs")
+              CATEGORY="C-docs"
+              ;;
+            "perf")
+              CATEGORY="C-performance"
+              ;;
+            *)
+              CATEGORY=""
+              ;;
+          esac
+          echo "CATEGORY=$CATEGORY" >> $GITHUB_OUTPUT
+
+      - name: Add category label
+        uses: actions-ecosystem/action-add-labels@v1
+        if: ${{ steps.get-category.outputs.CATEGORY != '' }}
+        with:
+          labels: ${{ steps.get-category.outputs.CATEGORY }}

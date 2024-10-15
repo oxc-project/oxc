@@ -15,13 +15,13 @@ pub(crate) fn test(source_text: &str, expected: &str, config: InjectGlobalVariab
     let source_type = SourceType::default();
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
-    let program = allocator.alloc(ret.program);
+    let mut program = ret.program;
     let (symbols, scopes) =
-        SemanticBuilder::new().build(program).semantic.into_symbol_table_and_scope_tree();
-    let _ = InjectGlobalVariables::new(&allocator, config).build(symbols, scopes, program);
+        SemanticBuilder::new().build(&program).semantic.into_symbol_table_and_scope_tree();
+    let _ = InjectGlobalVariables::new(&allocator, config).build(symbols, scopes, &mut program);
     let result = CodeGenerator::new()
         .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
-        .build(program)
+        .build(&program)
         .code;
     let expected = run(expected, source_type);
     assert_eq!(result, expected, "for source {source_text}");

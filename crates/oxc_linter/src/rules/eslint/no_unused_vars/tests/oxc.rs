@@ -122,6 +122,12 @@ fn test_vars_simple() {
         // vars with references get renamed
         ("let x = 1; x = 2;", "let _x = 1; _x = 2;", None, FixKind::DangerousFix),
         (
+            "let a = 1; a = 2; a = 3;",
+            "let _a = 1; _a = 2; _a = 3;",
+            Some(json!([{ "varsIgnorePattern": "^_" }])),
+            FixKind::DangerousFix,
+        ),
+        (
             "let x = 1; x = 2;",
             "let x = 1; x = 2;",
             Some(json!( [{ "varsIgnorePattern": "^tooCompli[cated]" }] )),
@@ -129,8 +135,6 @@ fn test_vars_simple() {
         ),
         // type annotations do not get clobbered
         ("let x: number = 1; x = 2;", "let _x: number = 1; _x = 2;", None, FixKind::DangerousFix),
-        ("const { a } = obj;", "", None, FixKind::DangerousSuggestion),
-        ("let [f,\u{a0}a]=p", "let [,a]=p", None, FixKind::DangerousSuggestion),
     ];
 
     Tester::new(NoUnusedVars::NAME, pass, fail)
@@ -358,6 +362,7 @@ fn test_vars_destructure() {
             None,
             FixKind::DangerousSuggestion,
         ),
+        ("let [f,\u{a0}a]=p", "let [,a]=p", None, FixKind::DangerousSuggestion),
         (
             "const [a, b, c, d, e] = arr; f(a, e)",
             "const [a, ,,,e] = arr; f(a, e)",
@@ -385,13 +390,6 @@ fn test_vars_destructure() {
         ),
         // TODO: destructures in VariableDeclarations with more than one declarator
         (r#"const l="",{e}=r"#, r"const {e}=r", None, FixKind::All),
-        // renaming
-        // (
-        //     "let a = 1; a = 2;",
-        //     "let _a = 1; _a = 2;",
-        //     Some(json!([{ "varsIgnorePattern": "^_" }])),
-        //     FixKind::DangerousSuggestion,
-        // ),
     ];
 
     Tester::new(NoUnusedVars::NAME, pass, fail)
@@ -403,14 +401,31 @@ fn test_vars_destructure() {
 #[test]
 fn test_vars_catch() {
     let pass = vec![
-        // lb
         ("try {} catch (e) { throw e }", None),
         ("try {} catch (e) { }", Some(json!([{ "caughtErrors": "none" }]))),
         ("try {} catch { }", None),
+        ("try {} catch(_) { }", Some(json!([{ "caughtErrorsIgnorePattern": "^_" }]))),
+        (
+            "try {} catch(_) { }",
+            Some(json!([{ "caughtErrors": "all", "caughtErrorsIgnorePattern": "^_" }])),
+        ),
+        (
+            "try {} catch(_e) { }",
+            Some(json!([{ "caughtErrors": "all", "caughtErrorsIgnorePattern": "^_" }])),
+        ),
     ];
+
     let fail = vec![
-        // lb
         ("try {} catch (e) { }", Some(json!([{ "caughtErrors": "all" }]))),
+        ("try {} catch(_) { }", None),
+        (
+            "try {} catch(_) { }",
+            Some(json!([{ "caughtErrors": "all", "varsIgnorePattern": "^_" }])),
+        ),
+        (
+            "try {} catch(foo) { }",
+            Some(json!([{ "caughtErrors": "all", "caughtErrorsIgnorePattern": "^ignored" }])),
+        ),
     ];
 
     Tester::new(NoUnusedVars::NAME, pass, fail)

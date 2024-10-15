@@ -695,10 +695,8 @@ fn main() {
             let source_type = SourceType::from_path(rule_test_path).expect("incorrect {path:?}");
             let ret = Parser::new(&allocator, &body, source_type).parse();
 
-            let program = allocator.alloc(ret.program);
-
             let mut state = State::new(&body);
-            state.visit_program(program);
+            state.visit_program(&ret.program);
 
             let pass_cases = state.pass_cases();
             let fail_cases = state.fail_cases();

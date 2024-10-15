@@ -194,9 +194,7 @@ mod test {
     fn build_semantic<'a>(allocator: &'a Allocator, source_text: &'a str) -> Semantic<'a> {
         let source_type = SourceType::default();
         let ret = Parser::new(allocator, source_text, source_type).parse();
-        let program = allocator.alloc(ret.program);
-        let semantic = SemanticBuilder::new().with_build_jsdoc(true).build(program).semantic;
-        semantic
+        SemanticBuilder::new().with_build_jsdoc(true).build(&ret.program).semantic
     }
 
     #[test]

@@ -1,5 +1,4 @@
 use cow_utils::CowUtils;
-use lazy_static::lazy_static;
 use oxc_ast::{
     ast::{BigIntLiteral, NumericLiteral},
     AstKind,
@@ -7,7 +6,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use regex::Regex;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -213,48 +211,51 @@ impl NumericSeparatorsStyle {
     }
 
     fn format_decimal(&self, number_raw: &str) -> String {
-        lazy_static! {
-            static ref NUMBER_REGEX: Regex =
-                Regex::new(r"^([\d._]*?)(?:([Ee])([+-])?([\d_]+))?$").unwrap();
+        let parsed = parse_number_literal(number_raw);
+
+        // Temporary string used for formatting the number
+        let mut tmp = String::with_capacity(number_raw.len());
+        // Final formatted output string
+        let mut out = String::with_capacity(number_raw.len());
+
+        let mut push_formatted_part = |part: &str, dir: &SeparatorDir, out: &mut String| {
+            tmp.push_str(part);
+            add_separators(&mut tmp, dir, &self.number);
+            out.push_str(&tmp);
+            tmp.clear();
+        };
+
+        if let Some(integer_part) = parsed.integer_part {
+            push_formatted_part(
+                integer_part.cow_replace('_', "").as_ref(),
+                &SeparatorDir::Right,
+                &mut out,
+            );
         }
 
-        let caps = NUMBER_REGEX.captures(number_raw).unwrap();
+        if let Some(decimal_part) = parsed.decimal_part {
+            out.push('.');
+            push_formatted_part(
+                decimal_part.cow_replace('_', "").as_ref(),
+                &SeparatorDir::Left,
+                &mut out,
+            );
+        }
 
-        let mut out = String::new();
+        if let Some(exponent_mark) = parsed.exponent_mark {
+            out.push(exponent_mark);
 
-        {
-            let number = caps.get(1).unwrap().as_str().cow_replace('_', "").into_owned();
-
-            if let Some((whole, decimal)) = number.split_once('.') {
-                if !whole.is_empty() {
-                    let mut s = whole.to_string();
-                    add_separators(&mut s, &SeparatorDir::Right, &self.number);
-                    out.push_str(&s);
-                };
-
-                out.push('.');
-
-                if !decimal.is_empty() {
-                    let mut s = decimal.to_string();
-                    add_separators(&mut s, &SeparatorDir::Left, &self.number);
-                    out.push_str(&s);
-                }
-            } else {
-                out.push_str(number.as_str());
-                add_separators(&mut out, &SeparatorDir::Right, &self.number);
+            if let Some(exponent_sign) = parsed.exponent_sign {
+                out.push_str(exponent_sign);
             }
-        }
 
-        if let Some(mark) = caps.get(2) {
-            out.push_str(mark.as_str());
-        }
-        if let Some(sign) = caps.get(3) {
-            out.push_str(sign.as_str());
-        }
-        if let Some(power) = caps.get(4) {
-            let mut s = power.as_str().cow_replace('_', "").into_owned();
-            add_separators(&mut s, &SeparatorDir::Right, &self.number);
-            out.push_str(&s);
+            if let Some(exponent_part) = parsed.exponent_part {
+                push_formatted_part(
+                    exponent_part.cow_replace('_', "").as_ref(),
+                    &SeparatorDir::Right,
+                    &mut out,
+                );
+            }
         }
 
         out
@@ -303,6 +304,75 @@ fn add_separators(s: &mut String, dir: &SeparatorDir, config: &NumericBaseConfig
             }
         }
     }
+}
+
+/// Represents a number literal, broken down into its integer, fractional, and exponent parts.
+#[derive(Debug)]
+struct ParsedNumberLiteral<'n> {
+    integer_part: Option<&'n str>,
+    decimal_part: Option<&'n str>,
+    exponent_mark: Option<char>,
+    exponent_sign: Option<&'n str>,
+    exponent_part: Option<&'n str>,
+}
+
+fn parse_number_literal(num: &str) -> ParsedNumberLiteral {
+    let mut parsed = ParsedNumberLiteral {
+        integer_part: None,
+        decimal_part: None,
+        exponent_mark: None,
+        exponent_sign: None,
+        exponent_part: None,
+    };
+
+    let mut offset = 0;
+
+    // Integer part is everything until the decimal separator or the exponent (exclusive).
+    let integer_part = num.split_once(['.', 'e', 'E']).map_or(num, |(integer, _)| integer);
+    offset += integer_part.len();
+
+    if !integer_part.is_empty() {
+        parsed.integer_part = Some(integer_part);
+    }
+
+    // Decimal separator is just a dot '.'.
+    if let Some(ch) = num[offset..].chars().next() {
+        if ch == '.' {
+            offset += 1;
+
+            // Decimal part is everything after the decimal separator until the exponent.
+            let decimal_part =
+                num[offset..].split_once(['e', 'E']).map_or(&num[offset..], |(decimal, _)| decimal);
+            offset += decimal_part.len();
+            if !decimal_part.is_empty() {
+                parsed.decimal_part = Some(decimal_part);
+            }
+        }
+    }
+
+    // Exponent marker is either 'e' or 'E", following the integer part.
+    if let Some(ch) = num[offset..].chars().next() {
+        if ch == 'e' || ch == 'E' {
+            parsed.exponent_mark = Some(ch);
+            offset += 1; // note: assuming that 'e' or 'E' is always one byte long
+
+            // Exponent sign is either '+' or '-', following the exponent marker.
+            if let Some(ch) = num[offset..].chars().next() {
+                if ch == '+' || ch == '-' {
+                    parsed.exponent_sign = Some(&num[offset..=offset]);
+                    offset += 1; // note: assuming that '+' or '-' is always one byte long
+                }
+            }
+
+            // Exponent part is everything after the exponent sign.
+            let exponent_part = &num[offset..];
+            if !exponent_part.is_empty() {
+                parsed.exponent_part = Some(exponent_part);
+            }
+        }
+    }
+
+    parsed
 }
 
 #[test]

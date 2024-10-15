@@ -207,9 +207,7 @@ mod test {
     ) -> Semantic<'a> {
         let source_type = source_type.unwrap_or_default();
         let ret = Parser::new(allocator, source_text, source_type).parse();
-        let program = allocator.alloc(ret.program);
-        let semantic = SemanticBuilder::new().with_build_jsdoc(true).build(program).semantic;
-        semantic
+        SemanticBuilder::new().with_build_jsdoc(true).build(&ret.program).semantic
     }
 
     fn get_jsdocs<'a>(

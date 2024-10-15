@@ -32,13 +32,13 @@ fn main() -> std::io::Result<()> {
         return Ok(());
     }
 
-    let program = allocator.alloc(parser_ret.program);
+    let program = parser_ret.program;
 
     let semantic = SemanticBuilder::new()
-        .build_module_record(path, program)
+        .build_module_record(path, &program)
         // Enable additional syntax checks not performed by the parser
         .with_check_syntax_error(true)
-        .build(program);
+        .build(&program);
 
     if !semantic.errors.is_empty() {
         let error_message: String = semantic

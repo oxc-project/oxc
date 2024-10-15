@@ -1,10 +1,10 @@
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, Visit};
-use oxc_ecmascript::ConstantEvaluation;
+use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, IsLiteralValue};
 use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
-use crate::node_util::{Ctx, IsLiteralValue};
+use crate::node_util::Ctx;
 use crate::{keep_var::KeepVar, CompressorPass};
 
 /// Remove Dead Code from the AST.
@@ -203,11 +203,26 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
                 // Check vars in statement
                 let mut keep_var = KeepVar::new(ctx.ast);
                 keep_var.visit_statement(&for_stmt.body);
-                Some(
-                    keep_var
-                        .get_variable_declaration_statement()
-                        .unwrap_or_else(|| ctx.ast.statement_empty(SPAN)),
-                )
+
+                let mut var_decl = keep_var.get_variable_declaration();
+
+                if let Some(ForStatementInit::VariableDeclaration(var_init)) = &mut for_stmt.init {
+                    if var_init.kind.is_var() {
+                        if let Some(var_decl) = &mut var_decl {
+                            var_decl
+                                .declarations
+                                .splice(0..0, ctx.ast.move_vec(&mut var_init.declarations));
+                        } else {
+                            var_decl = Some(ctx.ast.move_variable_declaration(var_init));
+                        }
+                    }
+                }
+
+                var_decl
+                    .map(|var_decl| {
+                        ctx.ast.statement_declaration(ctx.ast.declaration_from_variable(var_decl))
+                    })
+                    .or_else(|| Some(ctx.ast.statement_empty(SPAN)))
             }
             Some(true) => {
                 // Remove the test expression.
@@ -349,6 +364,10 @@ mod test {
 
         // Make sure it plays nice with minimizing
         fold("for(;false;) { foo(); continue }", "");
+
+        fold("for (var { c, x: [d] } = {}; 0;);", "var { c, x: [d] } = {};");
+        fold("for (var se = [1, 2]; false;);", "var se = [1, 2];");
+        fold("for (var se = [1, 2]; false;) { var a = 0; }", "var se = [1, 2], a;");
 
         // fold("l1:for(;false;) {  }", "");
     }

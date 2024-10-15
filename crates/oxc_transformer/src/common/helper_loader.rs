@@ -59,21 +59,16 @@
 //! ```
 //!
 //! Based on [@babel/helper](https://github.com/babel/babel/tree/main/packages/babel-helpers).
-use std::{
-    borrow::Cow,
-    cell::{Cell, RefCell},
-    rc::Rc,
-};
+use std::{borrow::Cow, cell::RefCell};
 
 use oxc_allocator::Vec;
 use oxc_ast::ast::{Argument, CallExpression, Expression, Program, TSTypeParameterInstantiation};
-use oxc_semantic::{ReferenceFlags, SymbolFlags, SymbolId};
+use oxc_semantic::{ReferenceFlags, SymbolFlags};
 use oxc_span::{Atom, SPAN};
 use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
-use super::module_imports::ImportKind;
 use crate::TransformCtx;
 
 /// Defines the mode for loading helper functions.
@@ -135,98 +130,43 @@ pub struct HelperLoader<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,
 }
 
-impl<'a, 'ctx> Traverse<'a> for HelperLoader<'a, 'ctx> {
-    fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.add_imports();
-    }
-}
-
 impl<'a, 'ctx> HelperLoader<'a, 'ctx> {
     pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
         Self { ctx }
     }
+}
 
-    /// By [`TransformCtx::module_imports`] to indirectly insert imports into the program.
-    fn add_imports(&self) {
-        self.ctx.helper_loader.loaded_helpers.borrow_mut().drain().for_each(
-            |(_, (source, import))| {
-                self.ctx.module_imports.add_import(
-                    source,
-                    ImportKind::new_default(import.name, import.symbol_id),
-                    false,
-                );
-            },
-        );
+impl<'a, 'ctx> Traverse<'a> for HelperLoader<'a, 'ctx> {
+    fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
+        self.ctx.helper_loader.add_imports(self.ctx);
     }
 }
 
-// (helper_name, (path, bound_ident))
-type LoadedHelper<'a> = FxHashMap<Atom<'a>, (Atom<'a>, BoundIdentifier<'a>)>;
+struct Helper<'a> {
+    source: Atom<'a>,
+    local: BoundIdentifier<'a>,
+}
 
 /// Stores the state of the helper loader in [`TransformCtx`].
 pub struct HelperLoaderStore<'a> {
-    mode: HelperLoaderMode,
     module_name: Cow<'static, str>,
-    /// Symbol ID for the `babelHelpers`.
-    babel_helpers_symbol_id: Rc<Cell<Option<SymbolId>>>,
+    mode: HelperLoaderMode,
     /// Loaded helpers, determined what helpers are loaded and what imports should be added.
-    loaded_helpers: Rc<RefCell<LoadedHelper<'a>>>,
+    loaded_helpers: RefCell<FxHashMap<Atom<'a>, Helper<'a>>>,
 }
 
+// Public methods
 impl<'a> HelperLoaderStore<'a> {
     pub fn new(options: &HelperLoaderOptions) -> Self {
         Self {
-            mode: options.mode,
             module_name: options.module_name.clone(),
-            loaded_helpers: Rc::new(RefCell::new(FxHashMap::default())),
-            babel_helpers_symbol_id: Rc::new(Cell::new(None)),
+            mode: options.mode,
+            loaded_helpers: RefCell::new(FxHashMap::default()),
         }
     }
 
-    fn add_default_import(&self, helper_name: Atom<'a>, ctx: &mut TraverseCtx<'a>) {
-        let source = ctx.ast.atom(&format!("{}/helpers/{helper_name}", self.module_name));
-        let bound_ident = ctx.generate_uid_in_root_scope(&helper_name, SymbolFlags::Import);
-        self.loaded_helpers.borrow_mut().insert(helper_name, (source, bound_ident));
-    }
-
-    fn transform_for_runtime_helper(
-        &self,
-        helper_name: &Atom<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Expression<'a> {
-        if !self.loaded_helpers.borrow().contains_key(helper_name) {
-            self.add_default_import(helper_name.clone(), ctx);
-        }
-        let bound_ident = self.loaded_helpers.borrow_mut()[helper_name].1.clone();
-        let ident = bound_ident.create_read_reference(ctx);
-        ctx.ast.expression_from_identifier_reference(ident)
-    }
-
-    fn transform_for_external_helper(
-        &self,
-        helper_name: Atom<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Expression<'a> {
-        let symbol_id = self.babel_helpers_symbol_id.get().or_else(|| {
-            let symbol_id = ctx.scopes().get_root_binding("babelHelpers");
-            self.babel_helpers_symbol_id.set(symbol_id);
-            symbol_id
-        });
-
-        let ident = ctx.create_reference_id(
-            SPAN,
-            Atom::from("babelHelpers"),
-            symbol_id,
-            ReferenceFlags::Read,
-        );
-
-        let object = ctx.ast.expression_from_identifier_reference(ident);
-        let property = ctx.ast.identifier_name(SPAN, helper_name);
-        Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false))
-    }
-
-    /// Load and call a helper function and return the CallExpression.
-    #[allow(dead_code)]
+    /// Load and call a helper function and return the `CallExpression`.
+    #[expect(dead_code)]
     pub fn call(
         &mut self,
         helper_name: Atom<'a>,
@@ -243,8 +183,8 @@ impl<'a> HelperLoaderStore<'a> {
         )
     }
 
-    /// Same as [`HelperLoaderStore::call`], but returns a CallExpression that is wrapped by Expression.
-    #[allow(dead_code)]
+    /// Same as [`HelperLoaderStore::call`], but returns a `CallExpression` wrapped in an `Expression`.
+    #[expect(dead_code)]
     pub fn call_expr(
         &mut self,
         helper_name: Atom<'a>,
@@ -264,11 +204,49 @@ impl<'a> HelperLoaderStore<'a> {
     /// Load a helper function and return the callee expression.
     pub fn load(&self, helper_name: Atom<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         match self.mode {
-            HelperLoaderMode::Runtime => self.transform_for_runtime_helper(&helper_name, ctx),
-            HelperLoaderMode::External => self.transform_for_external_helper(helper_name, ctx),
+            HelperLoaderMode::Runtime => self.transform_for_runtime_helper(helper_name, ctx),
+            HelperLoaderMode::External => Self::transform_for_external_helper(helper_name, ctx),
             HelperLoaderMode::Inline => {
                 unreachable!("Inline helpers are not supported yet");
             }
+        }
+    }
+}
+
+// Internal methods
+impl<'a> HelperLoaderStore<'a> {
+    fn transform_for_runtime_helper(
+        &self,
+        helper_name: Atom<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        let mut loaded_helpers = self.loaded_helpers.borrow_mut();
+        let helper = loaded_helpers.entry(helper_name).or_insert_with_key(|helper_name| {
+            let source = ctx.ast.atom(&format!("{}/helpers/{helper_name}", self.module_name));
+            let local = ctx.generate_uid_in_root_scope(helper_name, SymbolFlags::Import);
+            Helper { source, local }
+        });
+        helper.local.create_read_expression(ctx)
+    }
+
+    fn transform_for_external_helper(
+        helper_name: Atom<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        static HELPER_VAR: &str = "babelHelpers";
+
+        let symbol_id = ctx.scopes().find_binding(ctx.current_scope_id(), HELPER_VAR);
+        let ident =
+            ctx.create_reference_id(SPAN, Atom::from(HELPER_VAR), symbol_id, ReferenceFlags::Read);
+        let object = ctx.ast.expression_from_identifier_reference(ident);
+        let property = ctx.ast.identifier_name(SPAN, helper_name);
+        Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false))
+    }
+
+    fn add_imports(&self, transform_ctx: &TransformCtx<'a>) {
+        let mut loaded_helpers = self.loaded_helpers.borrow_mut();
+        for (_, helper) in loaded_helpers.drain() {
+            transform_ctx.module_imports.add_default_import(helper.source, helper.local, false);
         }
     }
 }

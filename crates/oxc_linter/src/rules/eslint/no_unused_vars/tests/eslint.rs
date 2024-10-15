@@ -13,8 +13,6 @@ use crate::{tester::Tester, RuleMeta as _};
 #[test]
 fn fixme() {
     let pass = vec![
-        // ESLint says this one should pass, but I disagree. foox could be
-        // safely removed here.
         ("function foo(cb) { cb = function(a) { return cb(1 + a); }(); } foo();", None),
         ("function foo(cb) { cb = (0, function(a) { cb(1 + a); }); } foo();", None),
         (
@@ -34,8 +32,8 @@ fn test() {
             "var foo = 5;
 			
 			label: while (true) {
-			  console.log(foo);
-			  break label;
+			    console.log(foo);
+			    break label;
 			}",
             None,
         ),
@@ -43,21 +41,19 @@ fn test() {
             "var foo = 5;
 			
 			while (true) {
-			  console.log(foo);
-			  break;
+			    console.log(foo);
+			    break;
 			}",
             None,
         ),
         (
-            "for (let prop in box) {
-			        box[prop] = parseInt(box[prop]);
-			}",
+            "for (let prop in box) { box[prop] = parseInt(box[prop]); }",
             None,
         ), // { "ecmaVersion": 6 },
         (
             "var box = {a: 2};
-			    for (var prop in box) {
-			        box[prop] = parseInt(box[prop]);
+            for (var prop in box) {
+                box[prop] = parseInt(box[prop]);
 			}",
             None,
         ),
@@ -223,44 +219,44 @@ fn test() {
         ), // { "ecmaVersion": 6 },
         (
             "
-			            let _a, b;
-			            foo.forEach(item => {
-			                [_a, b] = item;
-			                doSomething(b);
-			            });
-			            ",
+            let _a, b;
+            foo.forEach(item => {
+                [_a, b] = item;
+                doSomething(b);
+            });
+            ",
             Some(serde_json::json!([{ "destructuredArrayIgnorePattern": "^_" }])),
         ), // { "ecmaVersion": 6 },
         (
             "
-			            // doesn't report _x
-			            let _x, y;
-			            _x = 1;
-			            [_x, y] = foo;
-			            y;
+            // doesn't report _x
+            let _x, y;
+            _x = 1;
+            [_x, y] = foo;
+            y;
 
-			            // doesn't report _a
-			            let _a, b;
-			            [_a, b] = foo;
-			            _a = 1;
-			            b;
-			            ",
+            // doesn't report _a
+            let _a, b;
+            [_a, b] = foo;
+            _a = 1;
+            b;
+            ",
             Some(serde_json::json!([{ "destructuredArrayIgnorePattern": "^_" }])),
         ), // { "ecmaVersion": 2018 },
         (
             "
-			            // doesn't report _x
-			            let _x, y;
-			            _x = 1;
-			            [_x, y] = foo;
-			            y;
-	
-			            // doesn't report _a
-			            let _a, b;
-			            _a = 1;
-			            ({_a, ...b } = foo);
-			            b;
-			            ",
+            // doesn't report _x
+            let _x, y;
+            _x = 1;
+            [_x, y] = foo;
+            y;
+
+            // doesn't report _a
+            let _a, b;
+            _a = 1;
+            ({_a, ...b } = foo);
+            b;
+            ",
             Some(
                 serde_json::json!([{ "destructuredArrayIgnorePattern": "^_", "ignoreRestSiblings": true }]),
             ),
@@ -508,18 +504,8 @@ fn test() {
             Some(serde_json::json!([{}])),
         ),
         (r#"import x from "y";"#, None), // { "ecmaVersion": 6, "sourceType": "module" },
-        (
-            "export function fn2({ x, y }) {
-			 console.log(x); 
-			};",
-            None,
-        ), // { "ecmaVersion": 6, "sourceType": "module" },
-        (
-            "export function fn2( x, y ) {
-			 console.log(x); 
-			};",
-            None,
-        ), // { "ecmaVersion": 6, "sourceType": "module" },
+        ("export function fn2({ x, y }) { console.log(x); };", None), // { "ecmaVersion": 6, "sourceType": "module" },
+        ("export function fn2( x, y ) { console.log(x); };", None), // { "ecmaVersion": 6, "sourceType": "module" },
         ("/*exported max*/ var max = 1, min = {min: 1}", None),
         ("/*exported x*/ var { x, y } = z", None), // { "ecmaVersion": 6 },
         ("var _a; var b;", Some(serde_json::json!([{ "vars": "all", "varsIgnorePattern": "^_" }]))),
@@ -545,56 +531,56 @@ fn test() {
         ), // { "ecmaVersion": 6 },
         (
             "
-			            const array = ['a', 'b', 'c'];
-			            const [a, _b, c] = array;
-			            const newArray = [a, c];
-			            ",
+            const array = ['a', 'b', 'c'];
+            const [a, _b, c] = array;
+            const newArray = [a, c];
+            ",
             Some(serde_json::json!([{ "destructuredArrayIgnorePattern": "^_" }])),
         ), // { "ecmaVersion": 2020 },
         (
             "
-			            const array = ['a', 'b', 'c', 'd', 'e'];
-			            const [a, _b, c] = array;
-			            ",
+            const array = ['a', 'b', 'c', 'd', 'e'];
+            const [a, _b, c] = array;
+            ",
             Some(serde_json::json!([{ "destructuredArrayIgnorePattern": "^_" }])),
         ), // { "ecmaVersion": 2020 },
         (
             "
-			            const array = ['a', 'b', 'c'];
-			            const [a, _b, c] = array;
-			            const fooArray = ['foo'];
-			            const barArray = ['bar'];
-			            const ignoreArray = ['ignore'];
-			            ",
+            const array = ['a', 'b', 'c'];
+            const [a, _b, c] = array;
+            const fooArray = ['foo'];
+            const barArray = ['bar'];
+            const ignoreArray = ['ignore'];
+            ",
             Some(
                 serde_json::json!([{ "destructuredArrayIgnorePattern": "^_", "varsIgnorePattern": "ignore" }]),
             ),
         ), // { "ecmaVersion": 2020 },
         (
             "
-			            const array = [obj];
-			            const [{_a, foo}] = array;
-			            console.log(foo);
-			            ",
+            const array = [obj];
+            const [{_a, foo}] = array;
+            console.log(foo);
+            ",
             Some(serde_json::json!([{ "destructuredArrayIgnorePattern": "^_" }])),
         ), // { "ecmaVersion": 2020 },
         (
             "
-			            function foo([{_a, bar}]) {
-			                bar;
-			            }
-			            foo();
-			            ",
+            function foo([{_a, bar}]) {
+                bar;
+            }
+            foo();
+            ",
             Some(serde_json::json!([{ "destructuredArrayIgnorePattern": "^_" }])),
         ), // { "ecmaVersion": 2020 },
         (
             "
-			            let _a, b;
-			
-			            foo.forEach(item => {
-			                [a, b] = item;
-			            });
-			            ",
+            let _a, b;
+
+            foo.forEach(item => {
+                [a, b] = item;
+            });
+            ",
             Some(serde_json::json!([{ "destructuredArrayIgnorePattern": "^_" }])),
         ), // { "ecmaVersion": 2020 },
         ("(function(obj) { var name; for ( name in obj ) { i(); return; } })({});", None),
@@ -722,7 +708,7 @@ fn test() {
         (
             "try{}catch(err){};",
             Some(
-                serde_json::json!([                {                    "vars": "all",                    "args": "all",                    "caughtErrors": "all",                    "argsIgnorePattern": "^er"                }            ]),
+                serde_json::json!([{ "vars": "all", "args": "all", "caughtErrors": "all","argsIgnorePattern": "^er" }]),
             ),
         ),
         ("var a = 0; a = a + 1;", None),
@@ -801,9 +787,9 @@ fn test() {
         ("let x = 0; 0, x = x+1;", None),                  // { "ecmaVersion": 2020 },
         ("let x = 0; x = x+1, 0;", None),                  // { "ecmaVersion": 2020 },
         // https://github.com/oxc-project/oxc/issues/4437
-        // ("let x = 0; foo = ((0, x = x + 1), 0);", None),   // { "ecmaVersion": 2020 },
-        // ("let x = 0; foo = (x = x+1, 0);", None),          // { "ecmaVersion": 2020 },
-        ("let x = 0; 0, (1, x=x+1);", None), // { "ecmaVersion": 2020 },
+        ("let x = 0; foo = ((0, x = x + 1), 0);", None), // { "ecmaVersion": 2020 },
+        ("let x = 0; foo = (x = x+1, 0);", None),        // { "ecmaVersion": 2020 },
+        ("let x = 0; 0, (1, x=x+1);", None),             // { "ecmaVersion": 2020 },
         ("(function ({ a, b }, { c } ) { return b; })();", None), // { "ecmaVersion": 2015 },
         ("(function ([ a ], b ) { return b; })();", None), // { "ecmaVersion": 2015 },
         ("(function ([ a ], [ b, c ] ) { return b; })();", None), // { "ecmaVersion": 2015 },
@@ -834,41 +820,38 @@ fn test() {
         // ), // { "ecmaVersion": 2015 },
         (
             "let a = 'a';
-			            a = 10;
-			            function foo(){
-			                a = 11;
-			                a = () => {
-			                    a = 13
-			                }
-			            }",
+            a = 10;
+            function foo(){
+                a = 11;
+                a = () => {
+                    a = 13
+                }
+            }",
             None,
         ), // { "ecmaVersion": 2020 },
         (
             "let foo;
-			            init();
-			            foo = foo + 2;
-			            function init() {
-			                foo = 1;
-			            }",
+            init();
+            foo = foo + 2;
+            function init() {
+                foo = 1;
+            }",
             None,
         ), // { "ecmaVersion": 2020 },
         (
             "function foo(n) {
-			                if (n < 2) return 1;
-			                return n * foo(n - 1);
-			            }",
+                if (n < 2) return 1;
+                return n * foo(n - 1);
+            }",
             None,
         ), // { "ecmaVersion": 2020 },
         (
             "let c = 'c'
 			c = 10
 			function foo1() {
-			  c = 11
-			  c = () => {
-			    c = 13
-			  }
+			    c = 11
+			    c = () => { c = 13 }
 			}
-			
 			c = foo1",
             None,
         ), // { "ecmaVersion": 2020 },
@@ -972,7 +955,7 @@ fn test() {
 			}
 			            ",
             Some(
-                serde_json::json!([{                "caughtErrorsIgnorePattern": "ignored",                "varsIgnorePattern": "_"            }]),
+                serde_json::json!([{ "caughtErrorsIgnorePattern": "ignored", "varsIgnorePattern": "_" }]),
             ),
         ),
         (
@@ -987,9 +970,7 @@ fn test() {
             "
 			_ => { _ = _ + 1 };
 			            ",
-            Some(
-                serde_json::json!([{                "argsIgnorePattern": "ignored",                "varsIgnorePattern": "_"            }]),
-            ),
+            Some(serde_json::json!([{ "argsIgnorePattern": "ignored", "varsIgnorePattern": "_" }])),
         ), // { "ecmaVersion": 2015 }
     ];
 

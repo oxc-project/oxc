@@ -1,5 +1,6 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
+use oxc_ecmascript::side_effects::MayHaveSideEffects;
 use oxc_span::SPAN;
 use oxc_traverse::{Traverse, TraverseCtx};
 
@@ -73,8 +74,7 @@ impl<'a> StatementFusion {
                 for_stmt.init.is_none()
                     || for_stmt.init.as_ref().is_some_and(ForStatementInit::is_expression)
             }
-            // TODO: support for-in, we need to check the init for side effects
-            Statement::ForInStatement(_for_in_stmt) => false,
+            Statement::ForInStatement(for_in_stmt) => !for_in_stmt.left.may_have_side_effects(),
             Statement::LabeledStatement(labeled_stmt) => {
                 Self::is_fusable_control_statement(&labeled_stmt.body)
             }
@@ -144,6 +144,7 @@ impl<'a> StatementFusion {
                     return;
                 }
             }
+            Statement::ForInStatement(for_stmt) => &mut for_stmt.right,
             Statement::LabeledStatement(labeled_stmt) => {
                 Self::fuse_expression_into_control_flow_statement(
                     &mut labeled_stmt.body,
@@ -261,7 +262,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn fuse_into_for_in1() {
         fuse("a;b;c;for(x in y){}", "for(x in a,b,c,y){}");
     }

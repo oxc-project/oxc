@@ -17,19 +17,19 @@ use top_level_statements::TopLevelStatements;
 use var_declarations::VarDeclarations;
 
 pub struct Common<'a, 'ctx> {
+    helper_loader: HelperLoader<'a, 'ctx>,
     module_imports: ModuleImports<'a, 'ctx>,
     var_declarations: VarDeclarations<'a, 'ctx>,
     top_level_statements: TopLevelStatements<'a, 'ctx>,
-    helper_loader: HelperLoader<'a, 'ctx>,
 }
 
 impl<'a, 'ctx> Common<'a, 'ctx> {
     pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
         Self {
+            helper_loader: HelperLoader::new(ctx),
             module_imports: ModuleImports::new(ctx),
             var_declarations: VarDeclarations::new(ctx),
             top_level_statements: TopLevelStatements::new(ctx),
-            helper_loader: HelperLoader::new(ctx),
         }
     }
 }
