@@ -150,8 +150,8 @@ type LoadedHelper<'a> = FxHashMap<Atom<'a>, (Atom<'a>, BoundIdentifier<'a>)>;
 
 /// Stores the state of the helper loader in [`TransformCtx`].
 pub struct HelperLoaderStore<'a> {
-    mode: HelperLoaderMode,
     module_name: Cow<'static, str>,
+    mode: HelperLoaderMode,
     /// Symbol ID for the `babelHelpers`.
     babel_helpers_symbol_id: Cell<Option<SymbolId>>,
     /// Loaded helpers, determined what helpers are loaded and what imports should be added.
@@ -162,10 +162,10 @@ pub struct HelperLoaderStore<'a> {
 impl<'a> HelperLoaderStore<'a> {
     pub fn new(options: &HelperLoaderOptions) -> Self {
         Self {
-            mode: options.mode,
             module_name: options.module_name.clone(),
-            loaded_helpers: RefCell::new(FxHashMap::default()),
+            mode: options.mode,
             babel_helpers_symbol_id: Cell::new(None),
+            loaded_helpers: RefCell::new(FxHashMap::default()),
         }
     }
 
