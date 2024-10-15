@@ -124,27 +124,66 @@ impl Linter {
             .map(|rule| (rule, Rc::clone(&ctx_host).spawn(rule)))
             .collect::<Vec<_>>();
 
-        for (rule, ctx) in &rules {
-            rule.run_once(ctx);
-        }
-
         let semantic = ctx_host.semantic();
-        for symbol in semantic.symbols().symbol_ids() {
-            for (rule, ctx) in &rules {
-                rule.run_on_symbol(symbol, ctx);
-            }
-        }
+        let nodes = semantic.nodes().iter().collect::<Vec<&AstNode>>();
 
-        for node in semantic.nodes() {
-            for (rule, ctx) in &rules {
-                rule.run(node, ctx);
-            }
-        }
+        let should_run_on_jest_node =
+            self.options.plugins.has_test() && ctx_host.frameworks().is_test();
 
-        if ctx_host.frameworks().is_test() && self.options.plugins.has_test() {
-            for jest_node in iter_possible_jest_call_node(semantic) {
+        // IMPORTANT: We have two branches here for performance reasons:
+        // 1) Branch where we iterate over each node, then over each rule
+        // 2) Branch where we iterate over each rule, then each node
+        //
+        // This is done because when the number of nodes is relatively small,
+        // we can fit most of them in the cache and save iterating over the rules
+        // Vec multiple times. But for large files, we get penalized because there
+        // is too much data to fit into the cache and actually end up using the
+        // cache less often.
+        //
+        // The threshold here is chosen to balance between performance improvement
+        // from not iterating over rules multiple times, but also ensuring that we
+        // don't thrash the cache too much. Feel free to tweak based on benchmarking.
+        if nodes.len() > 200_000 {
+            for (rule, ctx) in &rules {
+                rule.run_once(ctx);
+            }
+
+            let semantic = ctx_host.semantic();
+            for symbol in semantic.symbols().symbol_ids() {
                 for (rule, ctx) in &rules {
-                    rule.run_on_jest_node(&jest_node, ctx);
+                    rule.run_on_symbol(symbol, ctx);
+                }
+            }
+
+            for node in nodes {
+                for (rule, ctx) in &rules {
+                    rule.run(node, ctx);
+                }
+            }
+
+            if should_run_on_jest_node {
+                for jest_node in iter_possible_jest_call_node(semantic) {
+                    for (rule, ctx) in &rules {
+                        rule.run_on_jest_node(&jest_node, ctx);
+                    }
+                }
+            }
+        } else {
+            for (rule, ref ctx) in &rules {
+                rule.run_once(ctx);
+
+                for symbol in semantic.symbols().symbol_ids() {
+                    rule.run_on_symbol(symbol, ctx);
+                }
+
+                for node in &nodes {
+                    rule.run(node, ctx);
+                }
+
+                if should_run_on_jest_node {
+                    for jest_node in iter_possible_jest_call_node(semantic) {
+                        rule.run_on_jest_node(&jest_node, ctx);
+                    }
                 }
             }
         }
