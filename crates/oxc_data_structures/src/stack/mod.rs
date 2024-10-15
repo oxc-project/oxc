@@ -1,3 +1,8 @@
+//! Contains the following FILO data structures:
+//! - [`Stack`]: A growable stack
+//! - [`SparseStack`]: A stack that can have empty entries
+//! - [`NonEmptyStack`]: A growable stack that can never be empty, allowing for more efficient
+//!  operations
 mod capacity;
 mod common;
 mod non_empty;
