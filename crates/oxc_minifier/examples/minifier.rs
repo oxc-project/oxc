@@ -2,7 +2,7 @@
 use std::path::Path;
 
 use oxc_allocator::Allocator;
-use oxc_codegen::CodeGenerator;
+use oxc_codegen::{CodeGenerator, CodegenOptions};
 use oxc_minifier::{CompressOptions, Minifier, MinifierOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
@@ -17,6 +17,7 @@ fn main() -> std::io::Result<()> {
 
     let name = args.subcommand().ok().flatten().unwrap_or_else(|| String::from("test.js"));
     let mangle = args.contains("--mangle");
+    let nospace = args.contains("--nospace");
     let twice = args.contains("--twice");
 
     let path = Path::new(&name);
@@ -24,12 +25,12 @@ fn main() -> std::io::Result<()> {
     let source_type = SourceType::from_path(path).unwrap();
 
     let mut allocator = Allocator::default();
-    let printed = minify(&allocator, &source_text, source_type, mangle);
+    let printed = minify(&allocator, &source_text, source_type, mangle, nospace);
     println!("{printed}");
 
     if twice {
         allocator.reset();
-        let printed2 = minify(&allocator, &printed, source_type, mangle);
+        let printed2 = minify(&allocator, &printed, source_type, mangle, nospace);
         println!("{printed2}");
         println!("same = {}", printed == printed2);
     }
@@ -42,10 +43,15 @@ fn minify(
     source_text: &str,
     source_type: SourceType,
     mangle: bool,
+    nospace: bool,
 ) -> String {
     let ret = Parser::new(allocator, source_text, source_type).parse();
     let mut program = ret.program;
     let options = MinifierOptions { mangle, compress: CompressOptions::default() };
     let ret = Minifier::new(options).build(allocator, &mut program);
-    CodeGenerator::new().with_mangler(ret.mangler).build(&program).code
+    CodeGenerator::new()
+        .with_options(CodegenOptions { minify: nospace, ..CodegenOptions::default() })
+        .with_mangler(ret.mangler)
+        .build(&program)
+        .code
 }
