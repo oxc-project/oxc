@@ -1354,6 +1354,9 @@ pub mod walk_mut {
                 {
                     flags |= ScopeFlags::StrictMode;
                 }
+                if it.source_type.is_typescript_definition() {
+                    flags |= ScopeFlags::Ambient;
+                }
                 flags
             },
             &it.scope_id,
@@ -3194,6 +3197,9 @@ pub mod walk_mut {
                 if it.is_strict() {
                     flags |= ScopeFlags::StrictMode;
                 }
+                if it.declare {
+                    flags |= ScopeFlags::Ambient;
+                }
                 flags
             },
             &it.scope_id,
@@ -4091,6 +4097,9 @@ pub mod walk_mut {
                 let mut flags = ScopeFlags::TsModuleBlock;
                 if it.body.as_ref().is_some_and(TSModuleDeclarationBody::is_strict) {
                     flags |= ScopeFlags::StrictMode;
+                }
+                if it.declare {
+                    flags |= ScopeFlags::Ambient;
                 }
                 flags
             },

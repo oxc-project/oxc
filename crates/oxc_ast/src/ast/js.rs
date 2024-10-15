@@ -30,6 +30,7 @@ use super::{macros::inherit_variants, *};
 #[scope(
     flags(ScopeFlags::Top),
     flags_if(ScopeFlags::StrictMode, self.source_type.is_strict() || self.directives.iter().any(Directive::is_use_strict)),
+    flags_if(ScopeFlags::Ambient, self.source_type.is_typescript_definition()),
 )]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
@@ -1798,6 +1799,7 @@ pub struct BindingRestElement<'a> {
     // `flags` passed in to visitor via parameter defined by `#[visit(args(flags = ...))]` on parents
     flags(flags),
     flags_if(ScopeFlags::StrictMode, self.is_strict()),
+    flags_if(ScopeFlags::Ambient, self.declare),
 )]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]

@@ -664,9 +664,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // Inline the specific logic for `Program` here instead.
         // This simplifies logic in `enter_scope`, as it doesn't have to handle the special case.
         let mut flags = ScopeFlags::Top;
-        if program.is_strict() {
-            flags |= ScopeFlags::StrictMode;
-        }
+        flags.set(ScopeFlags::StrictMode, program.is_strict());
+        flags.set(ScopeFlags::Ambient, program.source_type.is_typescript_definition());
         self.current_scope_id = self.scope.add_scope(None, self.current_node_id, flags);
         program.scope_id.set(Some(self.current_scope_id));
         // NB: Don't call `self.unresolved_references.increment_scope_depth()`
@@ -724,7 +723,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             self.visit_binding_identifier(id);
         }
 
-        self.enter_scope(ScopeFlags::StrictMode, &class.scope_id);
+        let mut scope_flags = ScopeFlags::StrictMode;
+        scope_flags.set(ScopeFlags::Ambient, class.declare);
+
+        self.enter_scope(scope_flags, &class.scope_id);
         if class.is_expression() {
             // We need to bind class expression in the class scope
             class.bind(self);
@@ -1618,7 +1620,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
     }
 
-    fn visit_function(&mut self, func: &Function<'a>, flags: ScopeFlags) {
+    fn visit_function(&mut self, func: &Function<'a>, mut flags: ScopeFlags) {
         /* cfg */
         let (before_function_graph_ix, error_harness, function_graph_ix) =
             control_flow!(self, |cfg| {
@@ -1635,16 +1637,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // so that the correct cfg_ix is associated with the ast node.
         let kind = AstKind::Function(self.alloc(func));
         self.enter_node(kind);
-        self.enter_scope(
-            {
-                let mut flags = flags;
-                if func.is_strict() {
-                    flags |= ScopeFlags::StrictMode;
-                }
-                flags
-            },
-            &func.scope_id,
-        );
+        flags.set(ScopeFlags::StrictMode, func.is_strict());
+        flags.set(ScopeFlags::Ambient, func.declare);
+        self.enter_scope(flags, &func.scope_id);
 
         if func.is_expression() {
             // We need to bind function expression in the function scope
