@@ -19,13 +19,14 @@ const languageClientId = 'oxc-vscode';
 const languageClientName = 'oxc';
 const outputChannelName = 'oxc_language_server';
 const traceOutputChannelName = 'oxc_language_server.trace';
+const commandPrefix = 'oxc';
 
 const enum OxcCommands {
-  RestartServer = 'oxc.restartServer',
-  ApplyAllFixes = 'oxc.applyAllFixes',
-  ShowOutputChannel = 'oxc.showOutputChannel',
-  ShowTraceOutputChannel = 'oxc.showTraceOutputChannel',
-  ToggleEnable = 'oxc.toggleEnable',
+  RestartServer = `${commandPrefix}.restartServer`,
+  ApplyAllFixes = `${commandPrefix}.applyAllFixes`,
+  ShowOutputChannel = `${commandPrefix}.showOutputChannel`,
+  ShowTraceOutputChannel = `${commandPrefix}.showTraceOutputChannel`,
+  ToggleEnable = `${commandPrefix}.toggleEnable`,
 }
 
 let client: LanguageClient;
