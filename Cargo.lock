@@ -1873,7 +1873,6 @@ dependencies = [
  "phf 0.11.2",
  "rustc-hash",
  "serde",
- "tsify",
  "unicode-id-start",
  "wasm-bindgen",
 ]
@@ -1947,7 +1946,6 @@ dependencies = [
  "oxc_estree",
  "schemars",
  "serde",
- "tsify",
  "wasm-bindgen",
 ]
 

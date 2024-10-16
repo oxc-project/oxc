@@ -1,6 +1,3 @@
-// Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
-#![allow(non_snake_case)]
-
 mod error;
 
 use std::{hash::Hash, path::Path};
@@ -8,8 +5,6 @@ use std::{hash::Hash, path::Path};
 use oxc_allocator::{Allocator, CloneIn};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
-#[cfg(feature = "serialize")]
-use tsify::Tsify;
 
 use crate::{cmp::ContentEq, hash::ContentHash};
 pub use error::UnknownExtension;
@@ -18,7 +13,6 @@ pub use error::UnknownExtension;
 #[ast]
 #[generate_derive(ESTree)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[estree(no_type)]
 pub struct SourceType {
     /// JavaScript or TypeScript, default JavaScript
@@ -35,7 +29,6 @@ pub struct SourceType {
 #[ast]
 #[generate_derive(ESTree)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub enum Language {
     #[estree(rename = "javascript")]
     JavaScript = 0,
@@ -49,7 +42,6 @@ pub enum Language {
 #[ast]
 #[generate_derive(ESTree)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[estree(rename_all = "camelCase")]
 pub enum ModuleKind {
     /// Regular JS script or CommonJS file
@@ -71,7 +63,6 @@ pub enum ModuleKind {
 #[ast]
 #[generate_derive(ESTree)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[estree(rename_all = "camelCase")]
 pub enum LanguageVariant {
     Standard = 0,

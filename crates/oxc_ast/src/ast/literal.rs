@@ -4,9 +4,6 @@
 // They are purely markers for codegen used in `tasks/ast_tools` and `crates/oxc_traverse/scripts`. See docs in those crates.
 // Read [`macro@oxc_ast_macros::ast`] for more information.
 
-// Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
-#![allow(non_snake_case)]
-
 use std::hash::Hash;
 
 use bitflags::bitflags;
@@ -16,8 +13,6 @@ use oxc_estree::ESTree;
 use oxc_regular_expression::ast::Pattern;
 use oxc_span::{cmp::ContentEq, hash::ContentHash, Atom, GetSpan, GetSpanMut, Span};
 use oxc_syntax::number::{BigintBase, NumberBase};
-#[cfg(feature = "serialize")]
-use tsify::Tsify;
 
 /// Boolean literal
 ///
@@ -25,7 +20,6 @@ use tsify::Tsify;
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct BooleanLiteral {
     #[estree(flatten)]
     pub span: Span,
@@ -38,7 +32,6 @@ pub struct BooleanLiteral {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct NullLiteral {
     #[estree(flatten)]
     pub span: Span,
@@ -50,7 +43,6 @@ pub struct NullLiteral {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct NumericLiteral<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -67,7 +59,6 @@ pub struct NumericLiteral<'a> {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct BigIntLiteral<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -84,7 +75,6 @@ pub struct BigIntLiteral<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct RegExpLiteral<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -100,7 +90,6 @@ pub struct RegExpLiteral<'a> {
 #[ast]
 #[derive(Debug)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[estree(no_type)]
 pub struct RegExp<'a> {
     /// The regex pattern between the slashes
@@ -115,7 +104,6 @@ pub struct RegExp<'a> {
 #[ast]
 #[derive(Debug)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[estree(untagged)]
 pub enum RegExpPattern<'a> {
     /// Unparsed pattern. Contains string slice of the pattern.
@@ -132,7 +120,6 @@ pub enum RegExpPattern<'a> {
 #[ast]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[estree(no_type)]
 pub struct EmptyObject;
 
@@ -142,7 +129,6 @@ pub struct EmptyObject;
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct StringLiteral<'a> {
     #[estree(flatten)]
     pub span: Span,

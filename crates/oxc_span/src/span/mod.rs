@@ -2,7 +2,7 @@ use std::ops::{Index, IndexMut, Range};
 
 use miette::{LabeledSpan, SourceOffset, SourceSpan};
 
-mod types;
+pub mod types;
 use oxc_allocator::{Allocator, CloneIn};
 pub use types::Span;
 

@@ -2,9 +2,6 @@
 // They are purely markers for codegen used in `tasks/ast_tools` and `crates/oxc_traverse/scripts`. See docs in those crates.
 // Read [`macro@oxc_ast_macros::ast`] for more information.
 
-// Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
-#![allow(non_snake_case)]
-
 use std::cell::Cell;
 
 use oxc_allocator::{Box, CloneIn, Vec};
@@ -19,8 +16,6 @@ use oxc_syntax::{
     scope::ScopeId,
     symbol::SymbolId,
 };
-#[cfg(feature = "serialize")]
-use tsify::Tsify;
 
 use super::{macros::inherit_variants, *};
 
@@ -32,7 +27,6 @@ use super::{macros::inherit_variants, *};
 )]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct Program<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -54,7 +48,6 @@ inherit_variants! {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[estree(untagged)]
 pub enum Expression<'a> {
     /// See [`BooleanLiteral`] for AST node details.
@@ -281,7 +274,6 @@ pub struct LabelIdentifier<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct ThisExpression {
     #[estree(flatten)]
     pub span: Span,
@@ -293,7 +285,6 @@ pub struct ThisExpression {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct ArrayExpression<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -345,7 +336,6 @@ pub struct Elision {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct ObjectExpression<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -359,7 +349,6 @@ pub struct ObjectExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[estree(untagged)]
 pub enum ObjectPropertyKind<'a> {
     /// `a: 1` in `const obj = { a: 1 };`
@@ -374,7 +363,6 @@ pub enum ObjectPropertyKind<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct ObjectProperty<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -396,7 +384,6 @@ inherit_variants! {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[estree(untagged)]
 pub enum PropertyKey<'a> {
     /// `a` in `const obj = { a: 1 }; obj.a;`
@@ -412,7 +399,6 @@ pub enum PropertyKey<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[estree(rename_all = "camelCase")]
 pub enum PropertyKind {
     /// `a: 1` in `const obj = { a: 1 };`
@@ -429,7 +415,6 @@ pub enum PropertyKind {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct TemplateLiteral<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -443,7 +428,6 @@ pub struct TemplateLiteral<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct TaggedTemplateExpression<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -458,7 +442,6 @@ pub struct TaggedTemplateExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct TemplateElement<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -470,7 +453,6 @@ pub struct TemplateElement<'a> {
 #[ast]
 #[derive(Debug)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[estree(no_type)]
 pub struct TemplateElementValue<'a> {
     /// A raw interpretation where backslashes do not have special meaning.
@@ -490,7 +472,6 @@ pub struct TemplateElementValue<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[estree(untagged)]
 pub enum MemberExpression<'a> {
     /// `ar[0]` in `const ar = [1, 2]; ar[0];`
@@ -518,7 +499,6 @@ pub use match_member_expression;
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct ComputedMemberExpression<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -533,7 +513,6 @@ pub struct ComputedMemberExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct StaticMemberExpression<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -548,7 +527,6 @@ pub struct StaticMemberExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct PrivateFieldExpression<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -576,7 +554,6 @@ pub struct PrivateFieldExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct CallExpression<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -601,7 +578,6 @@ pub struct CallExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct NewExpression<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -616,7 +592,6 @@ pub struct NewExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct MetaProperty<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -630,7 +605,6 @@ pub struct MetaProperty<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct SpreadElement<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -647,7 +621,6 @@ inherit_variants! {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[estree(untagged)]
 pub enum Argument<'a> {
     /// `...[1, 2]` in `const arr = [...[1, 2]];`
@@ -663,7 +636,6 @@ pub enum Argument<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct UpdateExpression<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -678,7 +650,6 @@ pub struct UpdateExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct UnaryExpression<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -692,7 +663,6 @@ pub struct UnaryExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct BinaryExpression<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -707,7 +677,6 @@ pub struct BinaryExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct PrivateInExpression<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -722,7 +691,6 @@ pub struct PrivateInExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct LogicalExpression<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -737,7 +705,6 @@ pub struct LogicalExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct ConditionalExpression<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -752,7 +719,6 @@ pub struct ConditionalExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct AssignmentExpression<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -771,7 +737,6 @@ inherit_variants! {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[estree(untagged)]
 pub enum AssignmentTarget<'a> {
     // `SimpleAssignmentTarget` variants added here by `inherit_variants!` macro
@@ -790,7 +755,6 @@ inherit_variants! {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[estree(untagged)]
 pub enum SimpleAssignmentTarget<'a> {
     AssignmentTargetIdentifier(Box<'a, IdentifierReference<'a>>) = 0,
@@ -845,7 +809,6 @@ pub use match_simple_assignment_target;
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[estree(untagged)]
 pub enum AssignmentTargetPattern<'a> {
     ArrayAssignmentTarget(Box<'a, ArrayAssignmentTarget<'a>>) = 8,
@@ -866,8 +829,8 @@ pub use match_assignment_target_pattern;
 /// Represents an array assignment target, which can include elements and a rest element.
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
+#[estree(custom_serialize)]
 pub struct ArrayAssignmentTarget<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -884,8 +847,8 @@ pub struct ArrayAssignmentTarget<'a> {
 /// Represents an object assignment target, which can include properties and a rest element.
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
+#[estree(custom_serialize)]
 pub struct ObjectAssignmentTarget<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -918,7 +881,6 @@ inherit_variants! {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[estree(untagged)]
 pub enum AssignmentTargetMaybeDefault<'a> {
     AssignmentTargetWithDefault(Box<'a, AssignmentTargetWithDefault<'a>>) = 16,
@@ -930,7 +892,6 @@ pub enum AssignmentTargetMaybeDefault<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct AssignmentTargetWithDefault<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -941,7 +902,6 @@ pub struct AssignmentTargetWithDefault<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[estree(untagged)]
 pub enum AssignmentTargetProperty<'a> {
     AssignmentTargetPropertyIdentifier(Box<'a, AssignmentTargetPropertyIdentifier<'a>>) = 0,
@@ -954,7 +914,6 @@ pub enum AssignmentTargetProperty<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct AssignmentTargetPropertyIdentifier<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -968,7 +927,6 @@ pub struct AssignmentTargetPropertyIdentifier<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct AssignmentTargetPropertyProperty<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -982,7 +940,6 @@ pub struct AssignmentTargetPropertyProperty<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct SequenceExpression<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -995,7 +952,6 @@ pub struct SequenceExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct Super {
     #[estree(flatten)]
     pub span: Span,
@@ -1007,7 +963,6 @@ pub struct Super {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct AwaitExpression<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -1020,7 +975,6 @@ pub struct AwaitExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct ChainExpression<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -1036,7 +990,6 @@ inherit_variants! {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[estree(untagged)]
 pub enum ChainElement<'a> {
     CallExpression(Box<'a, CallExpression<'a>>) = 0,
@@ -1051,7 +1004,6 @@ pub enum ChainElement<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct ParenthesizedExpression<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -1068,7 +1020,6 @@ inherit_variants! {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[estree(untagged)]
 pub enum Statement<'a> {
     // Statements
@@ -1103,7 +1054,6 @@ pub enum Statement<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct Directive<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -1119,7 +1069,6 @@ pub struct Directive<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct Hashbang<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -1133,7 +1082,6 @@ pub struct Hashbang<'a> {
 #[scope]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct BlockStatement<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -1147,7 +1095,6 @@ pub struct BlockStatement<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[estree(untagged)]
 pub enum Declaration<'a> {
     VariableDeclaration(Box<'a, VariableDeclaration<'a>>) = 32,
@@ -1184,7 +1131,6 @@ pub use match_declaration;
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct VariableDeclaration<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -1196,7 +1142,6 @@ pub struct VariableDeclaration<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[estree(rename_all = "camelCase")]
 pub enum VariableDeclarationKind {
     Var = 0,
@@ -1218,7 +1163,6 @@ pub enum VariableDeclarationKind {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct VariableDeclarator<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -1233,7 +1177,6 @@ pub struct VariableDeclarator<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct EmptyStatement {
     #[estree(flatten)]
     pub span: Span,
@@ -1243,7 +1186,6 @@ pub struct EmptyStatement {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct ExpressionStatement<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -1254,7 +1196,6 @@ pub struct ExpressionStatement<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct IfStatement<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -1267,7 +1208,6 @@ pub struct IfStatement<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct DoWhileStatement<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -1279,7 +1219,6 @@ pub struct DoWhileStatement<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct WhileStatement<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -1292,7 +1231,6 @@ pub struct WhileStatement<'a> {
 #[scope]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct ForStatement<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -1314,7 +1252,6 @@ inherit_variants! {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[estree(untagged)]
 pub enum ForStatementInit<'a> {
     VariableDeclaration(Box<'a, VariableDeclaration<'a>>) = 64,
@@ -1328,7 +1265,6 @@ pub enum ForStatementInit<'a> {
 #[scope]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct ForInStatement<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -1349,7 +1285,6 @@ inherit_variants! {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[estree(untagged)]
 pub enum ForStatementLeft<'a> {
     VariableDeclaration(Box<'a, VariableDeclaration<'a>>) = 16,
@@ -1362,7 +1297,6 @@ pub enum ForStatementLeft<'a> {
 #[scope]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct ForOfStatement<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -1379,7 +1313,6 @@ pub struct ForOfStatement<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct ContinueStatement<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -1390,7 +1323,6 @@ pub struct ContinueStatement<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct BreakStatement<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -1401,7 +1333,6 @@ pub struct BreakStatement<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct ReturnStatement<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -1412,7 +1343,6 @@ pub struct ReturnStatement<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct WithStatement<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -1425,7 +1355,6 @@ pub struct WithStatement<'a> {
 #[scope]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct SwitchStatement<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -1440,7 +1369,6 @@ pub struct SwitchStatement<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct SwitchCase<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -1452,7 +1380,6 @@ pub struct SwitchCase<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct LabeledStatement<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -1470,7 +1397,6 @@ pub struct LabeledStatement<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct ThrowStatement<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -1496,7 +1422,6 @@ pub struct ThrowStatement<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct TryStatement<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -1525,7 +1450,6 @@ pub struct TryStatement<'a> {
 #[scope(flags(ScopeFlags::CatchClause))]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct CatchClause<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -1554,7 +1478,6 @@ pub struct CatchClause<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct CatchParameter<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -1572,7 +1495,6 @@ pub struct CatchParameter<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct DebuggerStatement {
     #[estree(flatten)]
     pub span: Span,
@@ -1583,7 +1505,6 @@ pub struct DebuggerStatement {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[estree(no_type)]
 pub struct BindingPattern<'a> {
     // serde(flatten) the attributes because estree has no `BindingPattern`
@@ -1598,7 +1519,6 @@ pub struct BindingPattern<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[estree(untagged)]
 pub enum BindingPatternKind<'a> {
     /// `const a = 1`
@@ -1617,7 +1537,6 @@ pub enum BindingPatternKind<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct AssignmentPattern<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -1628,8 +1547,8 @@ pub struct AssignmentPattern<'a> {
 // See serializer in serialize.rs
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
+#[estree(custom_serialize)]
 pub struct ObjectPattern<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -1642,7 +1561,6 @@ pub struct ObjectPattern<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct BindingProperty<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -1655,8 +1573,8 @@ pub struct BindingProperty<'a> {
 // See serializer in serialize.rs
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
+#[estree(custom_serialize)]
 pub struct ArrayPattern<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -1728,7 +1646,6 @@ pub struct BindingRestElement<'a> {
 )]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct Function<'a> {
     pub r#type: FunctionType,
     #[estree(flatten)]
@@ -1789,7 +1706,6 @@ pub struct Function<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub enum FunctionType {
     FunctionDeclaration = 0,
     FunctionExpression = 1,
@@ -1802,8 +1718,8 @@ pub enum FunctionType {
 // See serializer in serialize.rs
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
+#[estree(custom_serialize)]
 pub struct FormalParameters<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -1817,7 +1733,6 @@ pub struct FormalParameters<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct FormalParameter<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -1831,7 +1746,6 @@ pub struct FormalParameter<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub enum FormalParameterKind {
     /// <https://tc39.es/ecma262/#prod-FormalParameters>
     FormalParameter = 0,
@@ -1847,7 +1761,6 @@ pub enum FormalParameterKind {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct FunctionBody<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -1863,7 +1776,6 @@ pub struct FunctionBody<'a> {
 )]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct ArrowFunctionExpression<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -1884,7 +1796,6 @@ pub struct ArrowFunctionExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct YieldExpression<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -1897,7 +1808,6 @@ pub struct YieldExpression<'a> {
 #[scope(flags(ScopeFlags::StrictMode))]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct Class<'a> {
     pub r#type: ClassType,
     #[estree(flatten)]
@@ -1969,7 +1879,6 @@ pub struct Class<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub enum ClassType {
     /// Class declaration statement
     /// ```ts
@@ -1987,7 +1896,6 @@ pub enum ClassType {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct ClassBody<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -2015,7 +1923,6 @@ pub struct ClassBody<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[estree(untagged)]
 pub enum ClassElement<'a> {
     StaticBlock(Box<'a, StaticBlock<'a>>) = 0,
@@ -2039,7 +1946,6 @@ pub enum ClassElement<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct MethodDefinition<'a> {
     /// Method definition type
     ///
@@ -2067,7 +1973,6 @@ pub struct MethodDefinition<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub enum MethodDefinitionType {
     MethodDefinition = 0,
     TSAbstractMethodDefinition = 1,
@@ -2076,7 +1981,6 @@ pub enum MethodDefinitionType {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct PropertyDefinition<'a> {
     pub r#type: PropertyDefinitionType,
     #[estree(flatten)]
@@ -2157,7 +2061,6 @@ pub struct PropertyDefinition<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub enum PropertyDefinitionType {
     PropertyDefinition = 0,
     TSAbstractPropertyDefinition = 1,
@@ -2166,7 +2069,6 @@ pub enum PropertyDefinitionType {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[estree(rename_all = "camelCase")]
 pub enum MethodDefinitionKind {
     /// Class constructor
@@ -2185,7 +2087,6 @@ pub enum MethodDefinitionKind {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct PrivateIdentifier<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -2209,7 +2110,6 @@ pub struct PrivateIdentifier<'a> {
 #[scope(flags(ScopeFlags::ClassStaticBlock))]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct StaticBlock<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -2245,7 +2145,6 @@ pub struct StaticBlock<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[estree(untagged)]
 pub enum ModuleDeclaration<'a> {
     /// `import hello from './world.js';`
@@ -2282,7 +2181,6 @@ pub use match_module_declaration;
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub enum AccessorPropertyType {
     AccessorProperty = 0,
     TSAbstractAccessorProperty = 1,
@@ -2299,7 +2197,6 @@ pub enum AccessorPropertyType {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct AccessorProperty<'a> {
     pub r#type: AccessorPropertyType,
     #[estree(flatten)]
@@ -2342,7 +2239,6 @@ pub struct AccessorProperty<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct ImportExpression<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -2353,7 +2249,6 @@ pub struct ImportExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct ImportDeclaration<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -2369,7 +2264,6 @@ pub struct ImportDeclaration<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[estree(untagged)]
 pub enum ImportDeclarationSpecifier<'a> {
     /// import {imported} from "source"
@@ -2386,7 +2280,6 @@ pub enum ImportDeclarationSpecifier<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct ImportSpecifier<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -2416,7 +2309,6 @@ pub struct ImportSpecifier<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct ImportDefaultSpecifier<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -2433,7 +2325,6 @@ pub struct ImportDefaultSpecifier<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct ImportNamespaceSpecifier<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -2443,7 +2334,6 @@ pub struct ImportNamespaceSpecifier<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct WithClause<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -2454,7 +2344,6 @@ pub struct WithClause<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct ImportAttribute<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -2465,7 +2354,6 @@ pub struct ImportAttribute<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[estree(untagged)]
 pub enum ImportAttributeKey<'a> {
     Identifier(IdentifierName<'a>) = 0,
@@ -2486,7 +2374,6 @@ pub enum ImportAttributeKey<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct ExportNamedDeclaration<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -2511,7 +2398,6 @@ pub struct ExportNamedDeclaration<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct ExportDefaultDeclaration<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -2531,7 +2417,6 @@ pub struct ExportDefaultDeclaration<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct ExportAllDeclaration<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -2557,7 +2442,6 @@ pub struct ExportAllDeclaration<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 pub struct ExportSpecifier<'a> {
     #[estree(flatten)]
     pub span: Span,
@@ -2575,7 +2459,6 @@ inherit_variants! {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[estree(untagged)]
 pub enum ExportDefaultDeclarationKind<'a> {
     #[visit(args(flags = ScopeFlags::Function))]
@@ -2599,7 +2482,6 @@ pub enum ExportDefaultDeclarationKind<'a> {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[estree(untagged)]
 pub enum ModuleExportName<'a> {
     IdentifierName(IdentifierName<'a>) = 0,

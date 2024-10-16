@@ -1,19 +1,13 @@
-// Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
-#![allow(non_snake_case)]
-
 use oxc_allocator::CloneIn;
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
 use oxc_span::{cmp::ContentEq, hash::ContentHash};
-#[cfg(feature = "serialize")]
-use tsify::Tsify;
 
 use crate::precedence::{GetPrecedence, Precedence};
 
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[estree(rename_all = "camelCase")]
 pub enum AssignmentOperator {
     #[estree(rename = "=")]
@@ -94,7 +88,6 @@ impl AssignmentOperator {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[estree(rename_all = "camelCase")]
 pub enum BinaryOperator {
     #[estree(rename = "==")]
@@ -284,7 +277,6 @@ impl GetPrecedence for BinaryOperator {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[estree(rename_all = "camelCase")]
 pub enum LogicalOperator {
     #[estree(rename = "||")]
@@ -326,7 +318,6 @@ impl GetPrecedence for LogicalOperator {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[estree(rename_all = "camelCase")]
 pub enum UnaryOperator {
     #[estree(rename = "-")]
@@ -385,7 +376,6 @@ impl UnaryOperator {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[estree(rename_all = "camelCase")]
 pub enum UpdateOperator {
     #[estree(rename = "++")]

@@ -96,9 +96,10 @@ impl From<&Ident> for CloneInAttribute {
     }
 }
 
-/// An enum representing the serde attributes (`$[serde(...)]`) that we implement for structs.
-#[derive(Debug, Serialize)]
+/// An enum representing the serde attributes (`#[estree(...)]`) that we implement for structs.
+#[derive(Debug, Serialize, PartialEq, Eq)]
 pub enum ESTreeStructAttribute {
+    CustomSerialize,
     NoType,
     Type(String),
 }
@@ -112,16 +113,16 @@ impl Parse for ESTreeStructAttribute {
             Ok(Self::Type(input.parse::<LitStr>()?.value()))
         } else {
             let ident = input.call(Ident::parse_any).unwrap().to_string();
-            if ident == "no_type" {
-                Ok(Self::NoType)
-            } else {
-                panic!("Unsupported #[estree(...)] argument: {ident}");
+            match ident.as_str() {
+                "no_type" => Ok(Self::NoType),
+                "custom_serialize" => Ok(Self::CustomSerialize),
+                _ => panic!("Unsupported #[estree(...)] argument: {ident}"),
             }
         }
     }
 }
 
-/// A struct representing the serde attributes (`$[serde(...)]`) that we implement for enums.
+/// A struct representing the serde attributes (`#[estree(...)]`) that we implement for enums.
 #[derive(Debug, Serialize, Default)]
 pub struct ESTreeEnumAttribute {
     pub rename_all: Option<String>,

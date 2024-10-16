@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use convert_case::{Case, Casing};
 use itertools::Itertools;
 use oxc_allocator::Allocator;
@@ -18,6 +16,8 @@ use crate::{
     Generator, GeneratorOutput,
 };
 
+// TODO: Generate directly to types.d.ts instead of relying on wasm-bindgen
+
 define_generator! {
     pub struct TypescriptGenerator;
 }
@@ -27,8 +27,8 @@ impl Generator for TypescriptGenerator {
         let file = file!().replace('\\', "/");
         let mut contents = format!(
             "\
-						// To edit this generated file you have to edit `{file}`\n\
-						// Auto-generated code, DO NOT EDIT DIRECTLY!\n\n"
+        		// To edit this generated file you have to edit `{file}`\n\
+        		// Auto-generated code, DO NOT EDIT DIRECTLY!\n\n"
         );
 
         for def in ctx.schema() {

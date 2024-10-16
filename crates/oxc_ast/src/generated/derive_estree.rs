@@ -29,6 +29,9 @@ impl Serialize for BooleanLiteral {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type BooleanLiteral = ({\n\ttype: 'BooleanLiteral';\n\tvalue: boolean;\n}) & Span;";
 
 impl Serialize for NullLiteral {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -42,6 +45,9 @@ impl Serialize for NullLiteral {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type NullLiteral = ({\n\ttype: 'NullLiteral';\n}) & Span;";
 
 impl<'a> Serialize for NumericLiteral<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -57,6 +63,8 @@ impl<'a> Serialize for NumericLiteral<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type NumericLiteral = ({\n\ttype: 'NumericLiteral';\n\tvalue: number;\n\traw: string;\n}) & Span;";
 
 impl<'a> Serialize for BigIntLiteral<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -71,6 +79,9 @@ impl<'a> Serialize for BigIntLiteral<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type BigIntLiteral = ({\n\ttype: 'BigIntLiteral';\n\traw: string;\n}) & Span;";
 
 impl<'a> Serialize for RegExpLiteral<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -86,6 +97,8 @@ impl<'a> Serialize for RegExpLiteral<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type RegExpLiteral = ({\n\ttype: 'RegExpLiteral';\n\tvalue: EmptyObject;\n\tregex: RegExp;\n}) & Span;";
 
 impl<'a> Serialize for RegExp<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -99,6 +112,9 @@ impl<'a> Serialize for RegExp<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type RegExp = ({\n\tpattern: RegExpPattern;\n\tflags: RegExpFlags;\n});";
 
 impl<'a> Serialize for RegExpPattern<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -113,6 +129,8 @@ impl<'a> Serialize for RegExpPattern<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type RegExpPattern = string | string | Pattern;";
 
 impl Serialize for EmptyObject {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -124,6 +142,8 @@ impl Serialize for EmptyObject {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type EmptyObject = ({\n});";
 
 impl<'a> Serialize for StringLiteral<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -138,6 +158,9 @@ impl<'a> Serialize for StringLiteral<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type StringLiteral = ({\n\ttype: 'StringLiteral';\n\tvalue: string;\n}) & Span;";
 
 impl<'a> Serialize for Program<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -155,6 +178,8 @@ impl<'a> Serialize for Program<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type Program = ({\n\ttype: 'Program';\n\tsourceType: SourceType;\n\thashbang: (Hashbang) | null;\n\tdirectives: Array<Directive>;\n\tbody: Array<Statement>;\n}) & Span;";
 
 impl<'a> Serialize for Expression<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -208,6 +233,8 @@ impl<'a> Serialize for Expression<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type Expression = BooleanLiteral | NullLiteral | NumericLiteral | BigIntLiteral | RegExpLiteral | StringLiteral | TemplateLiteral | IdentifierReference | MetaProperty | Super | ArrayExpression | ArrowFunctionExpression | AssignmentExpression | AwaitExpression | BinaryExpression | CallExpression | ChainExpression | Class | ConditionalExpression | Function | ImportExpression | LogicalExpression | NewExpression | ObjectExpression | ParenthesizedExpression | SequenceExpression | TaggedTemplateExpression | ThisExpression | UnaryExpression | UpdateExpression | YieldExpression | PrivateInExpression | JSXElement | JSXFragment | TSAsExpression | TSSatisfiesExpression | TSTypeAssertion | TSNonNullExpression | TSInstantiationExpression | ComputedMemberExpression | StaticMemberExpression | PrivateFieldExpression;";
 
 impl<'a> Serialize for IdentifierName<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -222,6 +249,9 @@ impl<'a> Serialize for IdentifierName<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type IdentifierName = ({\n\ttype: 'Identifier';\n\tname: string;\n}) & Span;";
 
 impl<'a> Serialize for IdentifierReference<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -236,6 +266,9 @@ impl<'a> Serialize for IdentifierReference<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type IdentifierReference = ({\n\ttype: 'Identifier';\n\tname: string;\n}) & Span;";
 
 impl<'a> Serialize for BindingIdentifier<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -250,6 +283,9 @@ impl<'a> Serialize for BindingIdentifier<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type BindingIdentifier = ({\n\ttype: 'Identifier';\n\tname: string;\n}) & Span;";
 
 impl<'a> Serialize for LabelIdentifier<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -264,6 +300,9 @@ impl<'a> Serialize for LabelIdentifier<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type LabelIdentifier = ({\n\ttype: 'Identifier';\n\tname: string;\n}) & Span;";
 
 impl Serialize for ThisExpression {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -277,6 +316,9 @@ impl Serialize for ThisExpression {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type ThisExpression = ({\n\ttype: 'ThisExpression';\n}) & Span;";
 
 impl<'a> Serialize for ArrayExpression<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -291,6 +333,8 @@ impl<'a> Serialize for ArrayExpression<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type ArrayExpression = ({\n\ttype: 'ArrayExpression';\n\telements: Array<SpreadElement | Expression | null>;\n}) & Span;";
 
 impl<'a> Serialize for ArrayExpressionElement<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -374,6 +418,8 @@ impl<'a> Serialize for ArrayExpressionElement<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type ArrayExpressionElement = SpreadElement | Elision | BooleanLiteral | NullLiteral | NumericLiteral | BigIntLiteral | RegExpLiteral | StringLiteral | TemplateLiteral | IdentifierReference | MetaProperty | Super | ArrayExpression | ArrowFunctionExpression | AssignmentExpression | AwaitExpression | BinaryExpression | CallExpression | ChainExpression | Class | ConditionalExpression | Function | ImportExpression | LogicalExpression | NewExpression | ObjectExpression | ParenthesizedExpression | SequenceExpression | TaggedTemplateExpression | ThisExpression | UnaryExpression | UpdateExpression | YieldExpression | PrivateInExpression | JSXElement | JSXFragment | TSAsExpression | TSSatisfiesExpression | TSTypeAssertion | TSNonNullExpression | TSInstantiationExpression | ComputedMemberExpression | StaticMemberExpression | PrivateFieldExpression;";
 
 impl<'a> Serialize for ObjectExpression<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -388,6 +434,8 @@ impl<'a> Serialize for ObjectExpression<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type ObjectExpression = ({\n\ttype: 'ObjectExpression';\n\tproperties: Array<ObjectPropertyKind>;\n}) & Span;";
 
 impl<'a> Serialize for ObjectPropertyKind<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -401,6 +449,9 @@ impl<'a> Serialize for ObjectPropertyKind<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type ObjectPropertyKind = ObjectProperty | SpreadElement;";
 
 impl<'a> Serialize for ObjectProperty<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -421,6 +472,8 @@ impl<'a> Serialize for ObjectProperty<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type ObjectProperty = ({\n\ttype: 'ObjectProperty';\n\tkind: PropertyKind;\n\tkey: PropertyKey;\n\tvalue: Expression;\n\tinit: (Expression) | null;\n\tmethod: boolean;\n\tshorthand: boolean;\n\tcomputed: boolean;\n}) & Span;";
 
 impl<'a> Serialize for PropertyKey<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -476,6 +529,8 @@ impl<'a> Serialize for PropertyKey<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type PropertyKey = IdentifierName | PrivateIdentifier | BooleanLiteral | NullLiteral | NumericLiteral | BigIntLiteral | RegExpLiteral | StringLiteral | TemplateLiteral | IdentifierReference | MetaProperty | Super | ArrayExpression | ArrowFunctionExpression | AssignmentExpression | AwaitExpression | BinaryExpression | CallExpression | ChainExpression | Class | ConditionalExpression | Function | ImportExpression | LogicalExpression | NewExpression | ObjectExpression | ParenthesizedExpression | SequenceExpression | TaggedTemplateExpression | ThisExpression | UnaryExpression | UpdateExpression | YieldExpression | PrivateInExpression | JSXElement | JSXFragment | TSAsExpression | TSSatisfiesExpression | TSTypeAssertion | TSNonNullExpression | TSInstantiationExpression | ComputedMemberExpression | StaticMemberExpression | PrivateFieldExpression;";
 
 impl Serialize for PropertyKind {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -490,6 +545,8 @@ impl Serialize for PropertyKind {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type PropertyKind = 'init' | 'get' | 'set';";
 
 impl<'a> Serialize for TemplateLiteral<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -505,6 +562,8 @@ impl<'a> Serialize for TemplateLiteral<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TemplateLiteral = ({\n\ttype: 'TemplateLiteral';\n\tquasis: Array<TemplateElement>;\n\texpressions: Array<Expression>;\n}) & Span;";
 
 impl<'a> Serialize for TaggedTemplateExpression<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -521,6 +580,8 @@ impl<'a> Serialize for TaggedTemplateExpression<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TaggedTemplateExpression = ({\n\ttype: 'TaggedTemplateExpression';\n\ttag: Expression;\n\tquasi: TemplateLiteral;\n\ttypeParameters: (TSTypeParameterInstantiation) | null;\n}) & Span;";
 
 impl<'a> Serialize for TemplateElement<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -536,6 +597,8 @@ impl<'a> Serialize for TemplateElement<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TemplateElement = ({\n\ttype: 'TemplateElement';\n\ttail: boolean;\n\tvalue: TemplateElementValue;\n}) & Span;";
 
 impl<'a> Serialize for TemplateElementValue<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -549,6 +612,9 @@ impl<'a> Serialize for TemplateElementValue<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type TemplateElementValue = ({\n\traw: string;\n\tcooked: (string) | null;\n});";
 
 impl<'a> Serialize for MemberExpression<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -565,6 +631,8 @@ impl<'a> Serialize for MemberExpression<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type MemberExpression = ComputedMemberExpression | StaticMemberExpression | PrivateFieldExpression;";
 
 impl<'a> Serialize for ComputedMemberExpression<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -581,6 +649,8 @@ impl<'a> Serialize for ComputedMemberExpression<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type ComputedMemberExpression = ({\n\ttype: 'ComputedMemberExpression';\n\tobject: Expression;\n\texpression: Expression;\n\toptional: boolean;\n}) & Span;";
 
 impl<'a> Serialize for StaticMemberExpression<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -597,6 +667,8 @@ impl<'a> Serialize for StaticMemberExpression<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type StaticMemberExpression = ({\n\ttype: 'StaticMemberExpression';\n\tobject: Expression;\n\tproperty: IdentifierName;\n\toptional: boolean;\n}) & Span;";
 
 impl<'a> Serialize for PrivateFieldExpression<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -613,6 +685,8 @@ impl<'a> Serialize for PrivateFieldExpression<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type PrivateFieldExpression = ({\n\ttype: 'PrivateFieldExpression';\n\tobject: Expression;\n\tfield: PrivateIdentifier;\n\toptional: boolean;\n}) & Span;";
 
 impl<'a> Serialize for CallExpression<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -630,6 +704,8 @@ impl<'a> Serialize for CallExpression<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type CallExpression = ({\n\ttype: 'CallExpression';\n\tcallee: Expression;\n\ttypeParameters: (TSTypeParameterInstantiation) | null;\n\targuments: Array<Argument>;\n\toptional: boolean;\n}) & Span;";
 
 impl<'a> Serialize for NewExpression<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -646,6 +722,8 @@ impl<'a> Serialize for NewExpression<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type NewExpression = ({\n\ttype: 'NewExpression';\n\tcallee: Expression;\n\targuments: Array<Argument>;\n\ttypeParameters: (TSTypeParameterInstantiation) | null;\n}) & Span;";
 
 impl<'a> Serialize for MetaProperty<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -661,6 +739,8 @@ impl<'a> Serialize for MetaProperty<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type MetaProperty = ({\n\ttype: 'MetaProperty';\n\tmeta: IdentifierName;\n\tproperty: IdentifierName;\n}) & Span;";
 
 impl<'a> Serialize for SpreadElement<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -675,6 +755,9 @@ impl<'a> Serialize for SpreadElement<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type SpreadElement = ({\n\ttype: 'SpreadElement';\n\targument: Expression;\n}) & Span;";
 
 impl<'a> Serialize for Argument<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -729,6 +812,8 @@ impl<'a> Serialize for Argument<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type Argument = SpreadElement | BooleanLiteral | NullLiteral | NumericLiteral | BigIntLiteral | RegExpLiteral | StringLiteral | TemplateLiteral | IdentifierReference | MetaProperty | Super | ArrayExpression | ArrowFunctionExpression | AssignmentExpression | AwaitExpression | BinaryExpression | CallExpression | ChainExpression | Class | ConditionalExpression | Function | ImportExpression | LogicalExpression | NewExpression | ObjectExpression | ParenthesizedExpression | SequenceExpression | TaggedTemplateExpression | ThisExpression | UnaryExpression | UpdateExpression | YieldExpression | PrivateInExpression | JSXElement | JSXFragment | TSAsExpression | TSSatisfiesExpression | TSTypeAssertion | TSNonNullExpression | TSInstantiationExpression | ComputedMemberExpression | StaticMemberExpression | PrivateFieldExpression;";
 
 impl<'a> Serialize for UpdateExpression<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -745,6 +830,8 @@ impl<'a> Serialize for UpdateExpression<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type UpdateExpression = ({\n\ttype: 'UpdateExpression';\n\toperator: UpdateOperator;\n\tprefix: boolean;\n\targument: SimpleAssignmentTarget;\n}) & Span;";
 
 impl<'a> Serialize for UnaryExpression<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -760,6 +847,8 @@ impl<'a> Serialize for UnaryExpression<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type UnaryExpression = ({\n\ttype: 'UnaryExpression';\n\toperator: UnaryOperator;\n\targument: Expression;\n}) & Span;";
 
 impl<'a> Serialize for BinaryExpression<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -776,6 +865,8 @@ impl<'a> Serialize for BinaryExpression<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type BinaryExpression = ({\n\ttype: 'BinaryExpression';\n\tleft: Expression;\n\toperator: BinaryOperator;\n\tright: Expression;\n}) & Span;";
 
 impl<'a> Serialize for PrivateInExpression<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -792,6 +883,8 @@ impl<'a> Serialize for PrivateInExpression<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type PrivateInExpression = ({\n\ttype: 'PrivateInExpression';\n\tleft: PrivateIdentifier;\n\toperator: BinaryOperator;\n\tright: Expression;\n}) & Span;";
 
 impl<'a> Serialize for LogicalExpression<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -808,6 +901,8 @@ impl<'a> Serialize for LogicalExpression<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type LogicalExpression = ({\n\ttype: 'LogicalExpression';\n\tleft: Expression;\n\toperator: LogicalOperator;\n\tright: Expression;\n}) & Span;";
 
 impl<'a> Serialize for ConditionalExpression<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -824,6 +919,8 @@ impl<'a> Serialize for ConditionalExpression<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type ConditionalExpression = ({\n\ttype: 'ConditionalExpression';\n\ttest: Expression;\n\tconsequent: Expression;\n\talternate: Expression;\n}) & Span;";
 
 impl<'a> Serialize for AssignmentExpression<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -840,6 +937,8 @@ impl<'a> Serialize for AssignmentExpression<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type AssignmentExpression = ({\n\ttype: 'AssignmentExpression';\n\toperator: AssignmentOperator;\n\tleft: AssignmentTarget;\n\tright: Expression;\n}) & Span;";
 
 impl<'a> Serialize for AssignmentTarget<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -868,6 +967,8 @@ impl<'a> Serialize for AssignmentTarget<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type AssignmentTarget = IdentifierReference | TSAsExpression | TSSatisfiesExpression | TSNonNullExpression | TSTypeAssertion | TSInstantiationExpression | ComputedMemberExpression | StaticMemberExpression | PrivateFieldExpression | ArrayAssignmentTarget | ObjectAssignmentTarget;";
 
 impl<'a> Serialize for SimpleAssignmentTarget<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -902,6 +1003,8 @@ impl<'a> Serialize for SimpleAssignmentTarget<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type SimpleAssignmentTarget = IdentifierReference | TSAsExpression | TSSatisfiesExpression | TSNonNullExpression | TSTypeAssertion | TSInstantiationExpression | ComputedMemberExpression | StaticMemberExpression | PrivateFieldExpression;";
 
 impl<'a> Serialize for AssignmentTargetPattern<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -919,6 +1022,15 @@ impl<'a> Serialize for AssignmentTargetPattern<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type AssignmentTargetPattern = ArrayAssignmentTarget | ObjectAssignmentTarget;";
+
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type ArrayAssignmentTarget = ({\n\telements: Array<AssignmentTargetMaybeDefault | AssignmentTargetRest | null>;\n}) & Span;";
+
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type ObjectAssignmentTarget = ({\n\tproperties: Array<AssignmentTargetProperty | AssignmentTargetRest>;\n}) & Span;";
 
 impl<'a> Serialize for AssignmentTargetRest<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -933,6 +1045,8 @@ impl<'a> Serialize for AssignmentTargetRest<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type AssignmentTargetRest = ({\n\ttype: 'RestElement';\n\targument: AssignmentTarget;\n}) & Span;";
 
 impl<'a> Serialize for AssignmentTargetMaybeDefault<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -980,6 +1094,8 @@ impl<'a> Serialize for AssignmentTargetMaybeDefault<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type AssignmentTargetMaybeDefault = AssignmentTargetWithDefault | IdentifierReference | TSAsExpression | TSSatisfiesExpression | TSNonNullExpression | TSTypeAssertion | TSInstantiationExpression | ComputedMemberExpression | StaticMemberExpression | PrivateFieldExpression | ArrayAssignmentTarget | ObjectAssignmentTarget;";
 
 impl<'a> Serialize for AssignmentTargetWithDefault<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -995,6 +1111,8 @@ impl<'a> Serialize for AssignmentTargetWithDefault<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type AssignmentTargetWithDefault = ({\n\ttype: 'AssignmentTargetWithDefault';\n\tbinding: AssignmentTarget;\n\tinit: Expression;\n}) & Span;";
 
 impl<'a> Serialize for AssignmentTargetProperty<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1012,6 +1130,8 @@ impl<'a> Serialize for AssignmentTargetProperty<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type AssignmentTargetProperty = AssignmentTargetPropertyIdentifier | AssignmentTargetPropertyProperty;";
 
 impl<'a> Serialize for AssignmentTargetPropertyIdentifier<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1027,6 +1147,8 @@ impl<'a> Serialize for AssignmentTargetPropertyIdentifier<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type AssignmentTargetPropertyIdentifier = ({\n\ttype: 'AssignmentTargetPropertyIdentifier';\n\tbinding: IdentifierReference;\n\tinit: (Expression) | null;\n}) & Span;";
 
 impl<'a> Serialize for AssignmentTargetPropertyProperty<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1042,6 +1164,8 @@ impl<'a> Serialize for AssignmentTargetPropertyProperty<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type AssignmentTargetPropertyProperty = ({\n\ttype: 'AssignmentTargetPropertyProperty';\n\tname: PropertyKey;\n\tbinding: AssignmentTargetMaybeDefault;\n}) & Span;";
 
 impl<'a> Serialize for SequenceExpression<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1056,6 +1180,8 @@ impl<'a> Serialize for SequenceExpression<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type SequenceExpression = ({\n\ttype: 'SequenceExpression';\n\texpressions: Array<Expression>;\n}) & Span;";
 
 impl Serialize for Super {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1069,6 +1195,8 @@ impl Serialize for Super {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type Super = ({\n\ttype: 'Super';\n}) & Span;";
 
 impl<'a> Serialize for AwaitExpression<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1083,6 +1211,8 @@ impl<'a> Serialize for AwaitExpression<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type AwaitExpression = ({\n\ttype: 'AwaitExpression';\n\targument: Expression;\n}) & Span;";
 
 impl<'a> Serialize for ChainExpression<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1097,6 +1227,8 @@ impl<'a> Serialize for ChainExpression<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type ChainExpression = ({\n\ttype: 'ChainExpression';\n\texpression: ChainElement;\n}) & Span;";
 
 impl<'a> Serialize for ChainElement<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1112,6 +1244,8 @@ impl<'a> Serialize for ChainElement<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type ChainElement = CallExpression | ComputedMemberExpression | StaticMemberExpression | PrivateFieldExpression;";
 
 impl<'a> Serialize for ParenthesizedExpression<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1126,6 +1260,8 @@ impl<'a> Serialize for ParenthesizedExpression<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type ParenthesizedExpression = ({\n\ttype: 'ParenthesizedExpression';\n\texpression: Expression;\n}) & Span;";
 
 impl<'a> Serialize for Statement<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1169,6 +1305,8 @@ impl<'a> Serialize for Statement<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type Statement = BlockStatement | BreakStatement | ContinueStatement | DebuggerStatement | DoWhileStatement | EmptyStatement | ExpressionStatement | ForInStatement | ForOfStatement | ForStatement | IfStatement | LabeledStatement | ReturnStatement | SwitchStatement | ThrowStatement | TryStatement | WhileStatement | WithStatement | VariableDeclaration | Function | Class | TSTypeAliasDeclaration | TSInterfaceDeclaration | TSEnumDeclaration | TSModuleDeclaration | TSImportEqualsDeclaration | ImportDeclaration | ExportAllDeclaration | ExportDefaultDeclaration | ExportNamedDeclaration | TSExportAssignment | TSNamespaceExportDeclaration;";
 
 impl<'a> Serialize for Directive<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1184,6 +1322,8 @@ impl<'a> Serialize for Directive<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type Directive = ({\n\ttype: 'Directive';\n\texpression: StringLiteral;\n\tdirective: string;\n}) & Span;";
 
 impl<'a> Serialize for Hashbang<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1198,6 +1338,9 @@ impl<'a> Serialize for Hashbang<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type Hashbang = ({\n\ttype: 'Hashbang';\n\tvalue: string;\n}) & Span;";
 
 impl<'a> Serialize for BlockStatement<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1212,6 +1355,8 @@ impl<'a> Serialize for BlockStatement<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type BlockStatement = ({\n\ttype: 'BlockStatement';\n\tbody: Array<Statement>;\n}) & Span;";
 
 impl<'a> Serialize for Declaration<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1231,6 +1376,8 @@ impl<'a> Serialize for Declaration<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type Declaration = VariableDeclaration | Function | Class | TSTypeAliasDeclaration | TSInterfaceDeclaration | TSEnumDeclaration | TSModuleDeclaration | TSImportEqualsDeclaration;";
 
 impl<'a> Serialize for VariableDeclaration<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1247,6 +1394,8 @@ impl<'a> Serialize for VariableDeclaration<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type VariableDeclaration = ({\n\ttype: 'VariableDeclaration';\n\tkind: VariableDeclarationKind;\n\tdeclarations: Array<VariableDeclarator>;\n\tdeclare: boolean;\n}) & Span;";
 
 impl Serialize for VariableDeclarationKind {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1273,6 +1422,9 @@ impl Serialize for VariableDeclarationKind {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type VariableDeclarationKind = 'var' | 'const' | 'let' | 'using' | 'await using';";
 
 impl<'a> Serialize for VariableDeclarator<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1289,6 +1441,8 @@ impl<'a> Serialize for VariableDeclarator<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type VariableDeclarator = ({\n\ttype: 'VariableDeclarator';\n\tid: BindingPattern;\n\tinit: (Expression) | null;\n\tdefinite: boolean;\n}) & Span;";
 
 impl Serialize for EmptyStatement {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1302,6 +1456,9 @@ impl Serialize for EmptyStatement {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type EmptyStatement = ({\n\ttype: 'EmptyStatement';\n}) & Span;";
 
 impl<'a> Serialize for ExpressionStatement<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1316,6 +1473,8 @@ impl<'a> Serialize for ExpressionStatement<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type ExpressionStatement = ({\n\ttype: 'ExpressionStatement';\n\texpression: Expression;\n}) & Span;";
 
 impl<'a> Serialize for IfStatement<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1332,6 +1491,8 @@ impl<'a> Serialize for IfStatement<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type IfStatement = ({\n\ttype: 'IfStatement';\n\ttest: Expression;\n\tconsequent: Statement;\n\talternate: (Statement) | null;\n}) & Span;";
 
 impl<'a> Serialize for DoWhileStatement<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1347,6 +1508,8 @@ impl<'a> Serialize for DoWhileStatement<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type DoWhileStatement = ({\n\ttype: 'DoWhileStatement';\n\tbody: Statement;\n\ttest: Expression;\n}) & Span;";
 
 impl<'a> Serialize for WhileStatement<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1362,6 +1525,8 @@ impl<'a> Serialize for WhileStatement<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type WhileStatement = ({\n\ttype: 'WhileStatement';\n\ttest: Expression;\n\tbody: Statement;\n}) & Span;";
 
 impl<'a> Serialize for ForStatement<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1379,6 +1544,8 @@ impl<'a> Serialize for ForStatement<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type ForStatement = ({\n\ttype: 'ForStatement';\n\tinit: (ForStatementInit) | null;\n\ttest: (Expression) | null;\n\tupdate: (Expression) | null;\n\tbody: Statement;\n}) & Span;";
 
 impl<'a> Serialize for ForStatementInit<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1439,6 +1606,8 @@ impl<'a> Serialize for ForStatementInit<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type ForStatementInit = VariableDeclaration | BooleanLiteral | NullLiteral | NumericLiteral | BigIntLiteral | RegExpLiteral | StringLiteral | TemplateLiteral | IdentifierReference | MetaProperty | Super | ArrayExpression | ArrowFunctionExpression | AssignmentExpression | AwaitExpression | BinaryExpression | CallExpression | ChainExpression | Class | ConditionalExpression | Function | ImportExpression | LogicalExpression | NewExpression | ObjectExpression | ParenthesizedExpression | SequenceExpression | TaggedTemplateExpression | ThisExpression | UnaryExpression | UpdateExpression | YieldExpression | PrivateInExpression | JSXElement | JSXFragment | TSAsExpression | TSSatisfiesExpression | TSTypeAssertion | TSNonNullExpression | TSInstantiationExpression | ComputedMemberExpression | StaticMemberExpression | PrivateFieldExpression;";
 
 impl<'a> Serialize for ForInStatement<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1455,6 +1624,8 @@ impl<'a> Serialize for ForInStatement<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type ForInStatement = ({\n\ttype: 'ForInStatement';\n\tleft: ForStatementLeft;\n\tright: Expression;\n\tbody: Statement;\n}) & Span;";
 
 impl<'a> Serialize for ForStatementLeft<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1484,6 +1655,8 @@ impl<'a> Serialize for ForStatementLeft<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type ForStatementLeft = VariableDeclaration | IdentifierReference | TSAsExpression | TSSatisfiesExpression | TSNonNullExpression | TSTypeAssertion | TSInstantiationExpression | ComputedMemberExpression | StaticMemberExpression | PrivateFieldExpression | ArrayAssignmentTarget | ObjectAssignmentTarget;";
 
 impl<'a> Serialize for ForOfStatement<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1501,6 +1674,8 @@ impl<'a> Serialize for ForOfStatement<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type ForOfStatement = ({\n\ttype: 'ForOfStatement';\n\tawait: boolean;\n\tleft: ForStatementLeft;\n\tright: Expression;\n\tbody: Statement;\n}) & Span;";
 
 impl<'a> Serialize for ContinueStatement<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1515,6 +1690,8 @@ impl<'a> Serialize for ContinueStatement<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type ContinueStatement = ({\n\ttype: 'ContinueStatement';\n\tlabel: (LabelIdentifier) | null;\n}) & Span;";
 
 impl<'a> Serialize for BreakStatement<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1529,6 +1706,8 @@ impl<'a> Serialize for BreakStatement<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type BreakStatement = ({\n\ttype: 'BreakStatement';\n\tlabel: (LabelIdentifier) | null;\n}) & Span;";
 
 impl<'a> Serialize for ReturnStatement<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1543,6 +1722,8 @@ impl<'a> Serialize for ReturnStatement<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type ReturnStatement = ({\n\ttype: 'ReturnStatement';\n\targument: (Expression) | null;\n}) & Span;";
 
 impl<'a> Serialize for WithStatement<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1558,6 +1739,8 @@ impl<'a> Serialize for WithStatement<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type WithStatement = ({\n\ttype: 'WithStatement';\n\tobject: Expression;\n\tbody: Statement;\n}) & Span;";
 
 impl<'a> Serialize for SwitchStatement<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1573,6 +1756,8 @@ impl<'a> Serialize for SwitchStatement<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type SwitchStatement = ({\n\ttype: 'SwitchStatement';\n\tdiscriminant: Expression;\n\tcases: Array<SwitchCase>;\n}) & Span;";
 
 impl<'a> Serialize for SwitchCase<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1588,6 +1773,8 @@ impl<'a> Serialize for SwitchCase<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type SwitchCase = ({\n\ttype: 'SwitchCase';\n\ttest: (Expression) | null;\n\tconsequent: Array<Statement>;\n}) & Span;";
 
 impl<'a> Serialize for LabeledStatement<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1603,6 +1790,8 @@ impl<'a> Serialize for LabeledStatement<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type LabeledStatement = ({\n\ttype: 'LabeledStatement';\n\tlabel: LabelIdentifier;\n\tbody: Statement;\n}) & Span;";
 
 impl<'a> Serialize for ThrowStatement<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1617,6 +1806,8 @@ impl<'a> Serialize for ThrowStatement<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type ThrowStatement = ({\n\ttype: 'ThrowStatement';\n\targument: Expression;\n}) & Span;";
 
 impl<'a> Serialize for TryStatement<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1633,6 +1824,8 @@ impl<'a> Serialize for TryStatement<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TryStatement = ({\n\ttype: 'TryStatement';\n\tblock: BlockStatement;\n\thandler: (CatchClause) | null;\n\tfinalizer: (BlockStatement) | null;\n}) & Span;";
 
 impl<'a> Serialize for CatchClause<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1648,6 +1841,8 @@ impl<'a> Serialize for CatchClause<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type CatchClause = ({\n\ttype: 'CatchClause';\n\tparam: (CatchParameter) | null;\n\tbody: BlockStatement;\n}) & Span;";
 
 impl<'a> Serialize for CatchParameter<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1662,6 +1857,8 @@ impl<'a> Serialize for CatchParameter<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type CatchParameter = ({\n\ttype: 'CatchParameter';\n\tpattern: BindingPattern;\n}) & Span;";
 
 impl Serialize for DebuggerStatement {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1675,6 +1872,9 @@ impl Serialize for DebuggerStatement {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type DebuggerStatement = ({\n\ttype: 'DebuggerStatement';\n}) & Span;";
 
 impl<'a> Serialize for BindingPattern<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1689,6 +1889,8 @@ impl<'a> Serialize for BindingPattern<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type BindingPattern = ({\n\ttypeAnnotation: (TSTypeAnnotation) | null;\n\toptional: boolean;\n}) & (BindingIdentifier | ObjectPattern | ArrayPattern | AssignmentPattern);";
 
 impl<'a> Serialize for BindingPatternKind<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1704,6 +1906,8 @@ impl<'a> Serialize for BindingPatternKind<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type BindingPatternKind = BindingIdentifier | ObjectPattern | ArrayPattern | AssignmentPattern;";
 
 impl<'a> Serialize for AssignmentPattern<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1719,6 +1923,11 @@ impl<'a> Serialize for AssignmentPattern<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type AssignmentPattern = ({\n\ttype: 'AssignmentPattern';\n\tleft: BindingPattern;\n\tright: Expression;\n}) & Span;";
+
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type ObjectPattern = ({\n\tproperties: Array<BindingProperty | BindingRestElement>;\n}) & Span;";
 
 impl<'a> Serialize for BindingProperty<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1736,6 +1945,11 @@ impl<'a> Serialize for BindingProperty<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type BindingProperty = ({\n\ttype: 'BindingProperty';\n\tkey: PropertyKey;\n\tvalue: BindingPattern;\n\tshorthand: boolean;\n\tcomputed: boolean;\n}) & Span;";
+
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type ArrayPattern = ({\n\telements: Array<BindingPattern | BindingRestElement | null>;\n}) & Span;";
 
 impl<'a> Serialize for BindingRestElement<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1750,6 +1964,8 @@ impl<'a> Serialize for BindingRestElement<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type BindingRestElement = ({\n\ttype: 'RestElement';\n\targument: BindingPattern;\n}) & Span;";
 
 impl<'a> Serialize for Function<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1772,6 +1988,8 @@ impl<'a> Serialize for Function<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type Function = ({\n\ttype: FunctionType;\n\tid: (BindingIdentifier) | null;\n\tgenerator: boolean;\n\tasync: boolean;\n\tdeclare: boolean;\n\ttypeParameters: (TSTypeParameterDeclaration) | null;\n\tthisParam: (TSThisParameter) | null;\n\tparams: FormalParameters;\n\treturnType: (TSTypeAnnotation) | null;\n\tbody: (FunctionBody) | null;\n}) & Span;";
 
 impl Serialize for FunctionType {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1797,6 +2015,11 @@ impl Serialize for FunctionType {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type FunctionType = 'FunctionDeclaration' | 'FunctionExpression' | 'TSDeclareFunction' | 'TSEmptyBodyFunctionExpression';";
+
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type FormalParameters = ({\n\tkind: FormalParameterKind;\n\titems: Array<FormalParameter | FormalParameterRest>;\n}) & Span;";
 
 impl<'a> Serialize for FormalParameter<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1815,6 +2038,8 @@ impl<'a> Serialize for FormalParameter<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type FormalParameter = ({\n\ttype: 'FormalParameter';\n\tdecorators: Array<Decorator>;\n\tpattern: BindingPattern;\n\taccessibility: (TSAccessibility) | null;\n\treadonly: boolean;\n\toverride: boolean;\n}) & Span;";
 
 impl Serialize for FormalParameterKind {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1842,6 +2067,8 @@ impl Serialize for FormalParameterKind {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type FormalParameterKind = 'FormalParameter' | 'UniqueFormalParameters' | 'ArrowFormalParameters' | 'Signature';";
 
 impl<'a> Serialize for FunctionBody<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1857,6 +2084,8 @@ impl<'a> Serialize for FunctionBody<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type FunctionBody = ({\n\ttype: 'FunctionBody';\n\tdirectives: Array<Directive>;\n\tstatements: Array<Statement>;\n}) & Span;";
 
 impl<'a> Serialize for ArrowFunctionExpression<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1876,6 +2105,8 @@ impl<'a> Serialize for ArrowFunctionExpression<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type ArrowFunctionExpression = ({\n\ttype: 'ArrowFunctionExpression';\n\texpression: boolean;\n\tasync: boolean;\n\ttypeParameters: (TSTypeParameterDeclaration) | null;\n\tparams: FormalParameters;\n\treturnType: (TSTypeAnnotation) | null;\n\tbody: FunctionBody;\n}) & Span;";
 
 impl<'a> Serialize for YieldExpression<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1891,6 +2122,8 @@ impl<'a> Serialize for YieldExpression<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type YieldExpression = ({\n\ttype: 'YieldExpression';\n\tdelegate: boolean;\n\targument: (Expression) | null;\n}) & Span;";
 
 impl<'a> Serialize for Class<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1913,6 +2146,8 @@ impl<'a> Serialize for Class<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type Class = ({\n\ttype: ClassType;\n\tdecorators: Array<Decorator>;\n\tid: (BindingIdentifier) | null;\n\ttypeParameters: (TSTypeParameterDeclaration) | null;\n\tsuperClass: (Expression) | null;\n\tsuperTypeParameters: (TSTypeParameterInstantiation) | null;\n\timplements: (Array<TSClassImplements>) | null;\n\tbody: ClassBody;\n\tabstract: boolean;\n\tdeclare: boolean;\n}) & Span;";
 
 impl Serialize for ClassType {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1930,6 +2165,9 @@ impl Serialize for ClassType {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type ClassType = 'ClassDeclaration' | 'ClassExpression';";
 
 impl<'a> Serialize for ClassBody<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1944,6 +2182,9 @@ impl<'a> Serialize for ClassBody<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type ClassBody = ({\n\ttype: 'ClassBody';\n\tbody: Array<ClassElement>;\n}) & Span;";
 
 impl<'a> Serialize for ClassElement<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1960,6 +2201,8 @@ impl<'a> Serialize for ClassElement<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type ClassElement = StaticBlock | MethodDefinition | PropertyDefinition | AccessorProperty | TSIndexSignature;";
 
 impl<'a> Serialize for MethodDefinition<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1982,6 +2225,8 @@ impl<'a> Serialize for MethodDefinition<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type MethodDefinition = ({\n\ttype: MethodDefinitionType;\n\tdecorators: Array<Decorator>;\n\tkey: PropertyKey;\n\tvalue: Function;\n\tkind: MethodDefinitionKind;\n\tcomputed: boolean;\n\tstatic: boolean;\n\toverride: boolean;\n\toptional: boolean;\n\taccessibility: (TSAccessibility) | null;\n}) & Span;";
 
 impl Serialize for MethodDefinitionType {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2001,6 +2246,9 @@ impl Serialize for MethodDefinitionType {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type MethodDefinitionType = 'MethodDefinition' | 'TSAbstractMethodDefinition';";
 
 impl<'a> Serialize for PropertyDefinition<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2026,6 +2274,8 @@ impl<'a> Serialize for PropertyDefinition<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type PropertyDefinition = ({\n\ttype: PropertyDefinitionType;\n\tdecorators: Array<Decorator>;\n\tkey: PropertyKey;\n\tvalue: (Expression) | null;\n\tcomputed: boolean;\n\tstatic: boolean;\n\tdeclare: boolean;\n\toverride: boolean;\n\toptional: boolean;\n\tdefinite: boolean;\n\treadonly: boolean;\n\ttypeAnnotation: (TSTypeAnnotation) | null;\n\taccessibility: (TSAccessibility) | null;\n}) & Span;";
 
 impl Serialize for PropertyDefinitionType {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2048,6 +2298,9 @@ impl Serialize for PropertyDefinitionType {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type PropertyDefinitionType = 'PropertyDefinition' | 'TSAbstractPropertyDefinition';";
 
 impl Serialize for MethodDefinitionKind {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2071,6 +2324,9 @@ impl Serialize for MethodDefinitionKind {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type MethodDefinitionKind = 'constructor' | 'method' | 'get' | 'set';";
 
 impl<'a> Serialize for PrivateIdentifier<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2085,6 +2341,9 @@ impl<'a> Serialize for PrivateIdentifier<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type PrivateIdentifier = ({\n\ttype: 'PrivateIdentifier';\n\tname: string;\n}) & Span;";
 
 impl<'a> Serialize for StaticBlock<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2099,6 +2358,9 @@ impl<'a> Serialize for StaticBlock<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type StaticBlock = ({\n\ttype: 'StaticBlock';\n\tbody: Array<Statement>;\n}) & Span;";
 
 impl<'a> Serialize for ModuleDeclaration<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2120,6 +2382,8 @@ impl<'a> Serialize for ModuleDeclaration<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type ModuleDeclaration = ImportDeclaration | ExportAllDeclaration | ExportDefaultDeclaration | ExportNamedDeclaration | TSExportAssignment | TSNamespaceExportDeclaration;";
 
 impl Serialize for AccessorPropertyType {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2139,6 +2403,9 @@ impl Serialize for AccessorPropertyType {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type AccessorPropertyType = 'AccessorProperty' | 'TSAbstractAccessorProperty';";
 
 impl<'a> Serialize for AccessorProperty<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2160,6 +2427,8 @@ impl<'a> Serialize for AccessorProperty<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type AccessorProperty = ({\n\ttype: AccessorPropertyType;\n\tdecorators: Array<Decorator>;\n\tkey: PropertyKey;\n\tvalue: (Expression) | null;\n\tcomputed: boolean;\n\tstatic: boolean;\n\tdefinite: boolean;\n\ttypeAnnotation: (TSTypeAnnotation) | null;\n\taccessibility: (TSAccessibility) | null;\n}) & Span;";
 
 impl<'a> Serialize for ImportExpression<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2175,6 +2444,8 @@ impl<'a> Serialize for ImportExpression<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type ImportExpression = ({\n\ttype: 'ImportExpression';\n\tsource: Expression;\n\targuments: Array<Expression>;\n}) & Span;";
 
 impl<'a> Serialize for ImportDeclaration<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2192,6 +2463,8 @@ impl<'a> Serialize for ImportDeclaration<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type ImportDeclaration = ({\n\ttype: 'ImportDeclaration';\n\tspecifiers: (Array<ImportDeclarationSpecifier>) | null;\n\tsource: StringLiteral;\n\twithClause: (WithClause) | null;\n\timportKind: ImportOrExportKind;\n}) & Span;";
 
 impl<'a> Serialize for ImportDeclarationSpecifier<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2212,6 +2485,8 @@ impl<'a> Serialize for ImportDeclarationSpecifier<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type ImportDeclarationSpecifier = ImportSpecifier | ImportDefaultSpecifier | ImportNamespaceSpecifier;";
 
 impl<'a> Serialize for ImportSpecifier<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2228,6 +2503,8 @@ impl<'a> Serialize for ImportSpecifier<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type ImportSpecifier = ({\n\ttype: 'ImportSpecifier';\n\timported: ModuleExportName;\n\tlocal: BindingIdentifier;\n\timportKind: ImportOrExportKind;\n}) & Span;";
 
 impl<'a> Serialize for ImportDefaultSpecifier<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2242,6 +2519,8 @@ impl<'a> Serialize for ImportDefaultSpecifier<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type ImportDefaultSpecifier = ({\n\ttype: 'ImportDefaultSpecifier';\n\tlocal: BindingIdentifier;\n}) & Span;";
 
 impl<'a> Serialize for ImportNamespaceSpecifier<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2256,6 +2535,8 @@ impl<'a> Serialize for ImportNamespaceSpecifier<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type ImportNamespaceSpecifier = ({\n\ttype: 'ImportNamespaceSpecifier';\n\tlocal: BindingIdentifier;\n}) & Span;";
 
 impl<'a> Serialize for WithClause<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2271,6 +2552,8 @@ impl<'a> Serialize for WithClause<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type WithClause = ({\n\ttype: 'WithClause';\n\tattributesKeyword: IdentifierName;\n\twithEntries: Array<ImportAttribute>;\n}) & Span;";
 
 impl<'a> Serialize for ImportAttribute<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2286,6 +2569,8 @@ impl<'a> Serialize for ImportAttribute<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type ImportAttribute = ({\n\ttype: 'ImportAttribute';\n\tkey: ImportAttributeKey;\n\tvalue: StringLiteral;\n}) & Span;";
 
 impl<'a> Serialize for ImportAttributeKey<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2299,6 +2584,9 @@ impl<'a> Serialize for ImportAttributeKey<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type ImportAttributeKey = IdentifierName | StringLiteral;";
 
 impl<'a> Serialize for ExportNamedDeclaration<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2317,6 +2605,8 @@ impl<'a> Serialize for ExportNamedDeclaration<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type ExportNamedDeclaration = ({\n\ttype: 'ExportNamedDeclaration';\n\tdeclaration: (Declaration) | null;\n\tspecifiers: Array<ExportSpecifier>;\n\tsource: (StringLiteral) | null;\n\texportKind: ImportOrExportKind;\n\twithClause: (WithClause) | null;\n}) & Span;";
 
 impl<'a> Serialize for ExportDefaultDeclaration<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2332,6 +2622,8 @@ impl<'a> Serialize for ExportDefaultDeclaration<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type ExportDefaultDeclaration = ({\n\ttype: 'ExportDefaultDeclaration';\n\tdeclaration: ExportDefaultDeclarationKind;\n\texported: ModuleExportName;\n}) & Span;";
 
 impl<'a> Serialize for ExportAllDeclaration<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2349,6 +2641,8 @@ impl<'a> Serialize for ExportAllDeclaration<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type ExportAllDeclaration = ({\n\ttype: 'ExportAllDeclaration';\n\texported: (ModuleExportName) | null;\n\tsource: StringLiteral;\n\twithClause: (WithClause) | null;\n\texportKind: ImportOrExportKind;\n}) & Span;";
 
 impl<'a> Serialize for ExportSpecifier<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2365,6 +2659,8 @@ impl<'a> Serialize for ExportSpecifier<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type ExportSpecifier = ({\n\ttype: 'ExportSpecifier';\n\tlocal: ModuleExportName;\n\texported: ModuleExportName;\n\texportKind: ImportOrExportKind;\n}) & Span;";
 
 impl<'a> Serialize for ExportDefaultDeclarationKind<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2501,6 +2797,8 @@ impl<'a> Serialize for ExportDefaultDeclarationKind<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type ExportDefaultDeclarationKind = Function | Class | TSInterfaceDeclaration | BooleanLiteral | NullLiteral | NumericLiteral | BigIntLiteral | RegExpLiteral | StringLiteral | TemplateLiteral | IdentifierReference | MetaProperty | Super | ArrayExpression | ArrowFunctionExpression | AssignmentExpression | AwaitExpression | BinaryExpression | CallExpression | ChainExpression | Class | ConditionalExpression | Function | ImportExpression | LogicalExpression | NewExpression | ObjectExpression | ParenthesizedExpression | SequenceExpression | TaggedTemplateExpression | ThisExpression | UnaryExpression | UpdateExpression | YieldExpression | PrivateInExpression | JSXElement | JSXFragment | TSAsExpression | TSSatisfiesExpression | TSTypeAssertion | TSNonNullExpression | TSInstantiationExpression | ComputedMemberExpression | StaticMemberExpression | PrivateFieldExpression;";
 
 impl<'a> Serialize for ModuleExportName<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2515,6 +2813,9 @@ impl<'a> Serialize for ModuleExportName<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type ModuleExportName = IdentifierName | IdentifierReference | StringLiteral;";
 
 impl<'a> Serialize for TSThisParameter<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2530,6 +2831,8 @@ impl<'a> Serialize for TSThisParameter<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSThisParameter = ({\n\ttype: 'TSThisParameter';\n\tthisSpan: Span;\n\ttypeAnnotation: (TSTypeAnnotation) | null;\n}) & Span;";
 
 impl<'a> Serialize for TSEnumDeclaration<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2547,6 +2850,8 @@ impl<'a> Serialize for TSEnumDeclaration<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSEnumDeclaration = ({\n\ttype: 'TSEnumDeclaration';\n\tid: BindingIdentifier;\n\tmembers: Array<TSEnumMember>;\n\tconst: boolean;\n\tdeclare: boolean;\n}) & Span;";
 
 impl<'a> Serialize for TSEnumMember<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2562,6 +2867,8 @@ impl<'a> Serialize for TSEnumMember<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSEnumMember = ({\n\ttype: 'TSEnumMember';\n\tid: TSEnumMemberName;\n\tinitializer: (Expression) | null;\n}) & Span;";
 
 impl<'a> Serialize for TSEnumMemberName<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2625,6 +2932,8 @@ impl<'a> Serialize for TSEnumMemberName<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSEnumMemberName = IdentifierName | StringLiteral | TemplateLiteral | NumericLiteral | BooleanLiteral | NullLiteral | NumericLiteral | BigIntLiteral | RegExpLiteral | StringLiteral | TemplateLiteral | IdentifierReference | MetaProperty | Super | ArrayExpression | ArrowFunctionExpression | AssignmentExpression | AwaitExpression | BinaryExpression | CallExpression | ChainExpression | Class | ConditionalExpression | Function | ImportExpression | LogicalExpression | NewExpression | ObjectExpression | ParenthesizedExpression | SequenceExpression | TaggedTemplateExpression | ThisExpression | UnaryExpression | UpdateExpression | YieldExpression | PrivateInExpression | JSXElement | JSXFragment | TSAsExpression | TSSatisfiesExpression | TSTypeAssertion | TSNonNullExpression | TSInstantiationExpression | ComputedMemberExpression | StaticMemberExpression | PrivateFieldExpression;";
 
 impl<'a> Serialize for TSTypeAnnotation<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2639,6 +2948,8 @@ impl<'a> Serialize for TSTypeAnnotation<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSTypeAnnotation = ({\n\ttype: 'TSTypeAnnotation';\n\ttypeAnnotation: TSType;\n}) & Span;";
 
 impl<'a> Serialize for TSLiteralType<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2653,6 +2964,9 @@ impl<'a> Serialize for TSLiteralType<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type TSLiteralType = ({\n\ttype: 'TSLiteralType';\n\tliteral: TSLiteral;\n}) & Span;";
 
 impl<'a> Serialize for TSLiteral<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2672,6 +2986,8 @@ impl<'a> Serialize for TSLiteral<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSLiteral = BooleanLiteral | NullLiteral | NumericLiteral | BigIntLiteral | RegExpLiteral | StringLiteral | TemplateLiteral | UnaryExpression;";
 
 impl<'a> Serialize for TSType<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2721,6 +3037,8 @@ impl<'a> Serialize for TSType<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSType = TSAnyKeyword | TSBigIntKeyword | TSBooleanKeyword | TSIntrinsicKeyword | TSNeverKeyword | TSNullKeyword | TSNumberKeyword | TSObjectKeyword | TSStringKeyword | TSSymbolKeyword | TSUndefinedKeyword | TSUnknownKeyword | TSVoidKeyword | TSArrayType | TSConditionalType | TSConstructorType | TSFunctionType | TSImportType | TSIndexedAccessType | TSInferType | TSIntersectionType | TSLiteralType | TSMappedType | TSNamedTupleMember | TSQualifiedName | TSTemplateLiteralType | TSThisType | TSTupleType | TSTypeLiteral | TSTypeOperator | TSTypePredicate | TSTypeQuery | TSTypeReference | TSUnionType | TSParenthesizedType | JSDocNullableType | JSDocNonNullableType | JSDocUnknownType;";
 
 impl<'a> Serialize for TSConditionalType<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2738,6 +3056,8 @@ impl<'a> Serialize for TSConditionalType<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSConditionalType = ({\n\ttype: 'TSConditionalType';\n\tcheckType: TSType;\n\textendsType: TSType;\n\ttrueType: TSType;\n\tfalseType: TSType;\n}) & Span;";
 
 impl<'a> Serialize for TSUnionType<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2752,6 +3072,9 @@ impl<'a> Serialize for TSUnionType<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type TSUnionType = ({\n\ttype: 'TSUnionType';\n\ttypes: Array<TSType>;\n}) & Span;";
 
 impl<'a> Serialize for TSIntersectionType<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2766,6 +3089,8 @@ impl<'a> Serialize for TSIntersectionType<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSIntersectionType = ({\n\ttype: 'TSIntersectionType';\n\ttypes: Array<TSType>;\n}) & Span;";
 
 impl<'a> Serialize for TSParenthesizedType<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2780,6 +3105,8 @@ impl<'a> Serialize for TSParenthesizedType<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSParenthesizedType = ({\n\ttype: 'TSParenthesizedType';\n\ttypeAnnotation: TSType;\n}) & Span;";
 
 impl<'a> Serialize for TSTypeOperator<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2795,6 +3122,8 @@ impl<'a> Serialize for TSTypeOperator<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSTypeOperator = ({\n\ttype: 'TSTypeOperator';\n\toperator: TSTypeOperatorOperator;\n\ttypeAnnotation: TSType;\n}) & Span;";
 
 impl Serialize for TSTypeOperatorOperator {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2815,6 +3144,9 @@ impl Serialize for TSTypeOperatorOperator {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type TSTypeOperatorOperator = 'keyof' | 'unique' | 'readonly';";
 
 impl<'a> Serialize for TSArrayType<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2829,6 +3161,9 @@ impl<'a> Serialize for TSArrayType<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type TSArrayType = ({\n\ttype: 'TSArrayType';\n\telementType: TSType;\n}) & Span;";
 
 impl<'a> Serialize for TSIndexedAccessType<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2844,6 +3179,8 @@ impl<'a> Serialize for TSIndexedAccessType<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSIndexedAccessType = ({\n\ttype: 'TSIndexedAccessType';\n\tobjectType: TSType;\n\tindexType: TSType;\n}) & Span;";
 
 impl<'a> Serialize for TSTupleType<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2858,6 +3195,8 @@ impl<'a> Serialize for TSTupleType<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSTupleType = ({\n\ttype: 'TSTupleType';\n\telementTypes: Array<TSTupleElement>;\n}) & Span;";
 
 impl<'a> Serialize for TSNamedTupleMember<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2874,6 +3213,8 @@ impl<'a> Serialize for TSNamedTupleMember<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSNamedTupleMember = ({\n\ttype: 'TSNamedTupleMember';\n\telementType: TSTupleElement;\n\tlabel: IdentifierName;\n\toptional: boolean;\n}) & Span;";
 
 impl<'a> Serialize for TSOptionalType<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2888,6 +3229,8 @@ impl<'a> Serialize for TSOptionalType<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSOptionalType = ({\n\ttype: 'TSOptionalType';\n\ttypeAnnotation: TSType;\n}) & Span;";
 
 impl<'a> Serialize for TSRestType<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2902,6 +3245,9 @@ impl<'a> Serialize for TSRestType<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type TSRestType = ({\n\ttype: 'TSRestType';\n\ttypeAnnotation: TSType;\n}) & Span;";
 
 impl<'a> Serialize for TSTupleElement<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2953,6 +3299,8 @@ impl<'a> Serialize for TSTupleElement<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSTupleElement = TSOptionalType | TSRestType | TSAnyKeyword | TSBigIntKeyword | TSBooleanKeyword | TSIntrinsicKeyword | TSNeverKeyword | TSNullKeyword | TSNumberKeyword | TSObjectKeyword | TSStringKeyword | TSSymbolKeyword | TSUndefinedKeyword | TSUnknownKeyword | TSVoidKeyword | TSArrayType | TSConditionalType | TSConstructorType | TSFunctionType | TSImportType | TSIndexedAccessType | TSInferType | TSIntersectionType | TSLiteralType | TSMappedType | TSNamedTupleMember | TSQualifiedName | TSTemplateLiteralType | TSThisType | TSTupleType | TSTypeLiteral | TSTypeOperator | TSTypePredicate | TSTypeQuery | TSTypeReference | TSUnionType | TSParenthesizedType | JSDocNullableType | JSDocNonNullableType | JSDocUnknownType;";
 
 impl Serialize for TSAnyKeyword {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2966,6 +3314,9 @@ impl Serialize for TSAnyKeyword {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type TSAnyKeyword = ({\n\ttype: 'TSAnyKeyword';\n}) & Span;";
 
 impl Serialize for TSStringKeyword {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2979,6 +3330,9 @@ impl Serialize for TSStringKeyword {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type TSStringKeyword = ({\n\ttype: 'TSStringKeyword';\n}) & Span;";
 
 impl Serialize for TSBooleanKeyword {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2992,6 +3346,9 @@ impl Serialize for TSBooleanKeyword {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type TSBooleanKeyword = ({\n\ttype: 'TSBooleanKeyword';\n}) & Span;";
 
 impl Serialize for TSNumberKeyword {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3005,6 +3362,9 @@ impl Serialize for TSNumberKeyword {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type TSNumberKeyword = ({\n\ttype: 'TSNumberKeyword';\n}) & Span;";
 
 impl Serialize for TSNeverKeyword {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3018,6 +3378,9 @@ impl Serialize for TSNeverKeyword {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type TSNeverKeyword = ({\n\ttype: 'TSNeverKeyword';\n}) & Span;";
 
 impl Serialize for TSIntrinsicKeyword {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3031,6 +3394,9 @@ impl Serialize for TSIntrinsicKeyword {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type TSIntrinsicKeyword = ({\n\ttype: 'TSIntrinsicKeyword';\n}) & Span;";
 
 impl Serialize for TSUnknownKeyword {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3044,6 +3410,9 @@ impl Serialize for TSUnknownKeyword {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type TSUnknownKeyword = ({\n\ttype: 'TSUnknownKeyword';\n}) & Span;";
 
 impl Serialize for TSNullKeyword {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3057,6 +3426,9 @@ impl Serialize for TSNullKeyword {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type TSNullKeyword = ({\n\ttype: 'TSNullKeyword';\n}) & Span;";
 
 impl Serialize for TSUndefinedKeyword {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3070,6 +3442,9 @@ impl Serialize for TSUndefinedKeyword {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type TSUndefinedKeyword = ({\n\ttype: 'TSUndefinedKeyword';\n}) & Span;";
 
 impl Serialize for TSVoidKeyword {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3083,6 +3458,9 @@ impl Serialize for TSVoidKeyword {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type TSVoidKeyword = ({\n\ttype: 'TSVoidKeyword';\n}) & Span;";
 
 impl Serialize for TSSymbolKeyword {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3096,6 +3474,9 @@ impl Serialize for TSSymbolKeyword {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type TSSymbolKeyword = ({\n\ttype: 'TSSymbolKeyword';\n}) & Span;";
 
 impl Serialize for TSThisType {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3109,6 +3490,9 @@ impl Serialize for TSThisType {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type TSThisType = ({\n\ttype: 'TSThisType';\n}) & Span;";
 
 impl Serialize for TSObjectKeyword {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3122,6 +3506,9 @@ impl Serialize for TSObjectKeyword {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type TSObjectKeyword = ({\n\ttype: 'TSObjectKeyword';\n}) & Span;";
 
 impl Serialize for TSBigIntKeyword {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3135,6 +3522,9 @@ impl Serialize for TSBigIntKeyword {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type TSBigIntKeyword = ({\n\ttype: 'TSBigIntKeyword';\n}) & Span;";
 
 impl<'a> Serialize for TSTypeReference<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3150,6 +3540,8 @@ impl<'a> Serialize for TSTypeReference<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSTypeReference = ({\n\ttype: 'TSTypeReference';\n\ttypeName: TSTypeName;\n\ttypeParameters: (TSTypeParameterInstantiation) | null;\n}) & Span;";
 
 impl<'a> Serialize for TSTypeName<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3163,6 +3555,9 @@ impl<'a> Serialize for TSTypeName<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type TSTypeName = IdentifierReference | TSQualifiedName;";
 
 impl<'a> Serialize for TSQualifiedName<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3178,6 +3573,8 @@ impl<'a> Serialize for TSQualifiedName<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSQualifiedName = ({\n\ttype: 'TSQualifiedName';\n\tleft: TSTypeName;\n\tright: IdentifierName;\n}) & Span;";
 
 impl<'a> Serialize for TSTypeParameterInstantiation<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3192,6 +3589,8 @@ impl<'a> Serialize for TSTypeParameterInstantiation<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSTypeParameterInstantiation = ({\n\ttype: 'TSTypeParameterInstantiation';\n\tparams: Array<TSType>;\n}) & Span;";
 
 impl<'a> Serialize for TSTypeParameter<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3211,6 +3610,8 @@ impl<'a> Serialize for TSTypeParameter<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSTypeParameter = ({\n\ttype: 'TSTypeParameter';\n\tname: BindingIdentifier;\n\tconstraint: (TSType) | null;\n\tdefault: (TSType) | null;\n\tin: boolean;\n\tout: boolean;\n\tconst: boolean;\n}) & Span;";
 
 impl<'a> Serialize for TSTypeParameterDeclaration<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3225,6 +3626,8 @@ impl<'a> Serialize for TSTypeParameterDeclaration<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSTypeParameterDeclaration = ({\n\ttype: 'TSTypeParameterDeclaration';\n\tparams: Array<TSTypeParameter>;\n}) & Span;";
 
 impl<'a> Serialize for TSTypeAliasDeclaration<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3242,6 +3645,8 @@ impl<'a> Serialize for TSTypeAliasDeclaration<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSTypeAliasDeclaration = ({\n\ttype: 'TSTypeAliasDeclaration';\n\tid: BindingIdentifier;\n\ttypeParameters: (TSTypeParameterDeclaration) | null;\n\ttypeAnnotation: TSType;\n\tdeclare: boolean;\n}) & Span;";
 
 impl Serialize for TSAccessibility {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3262,6 +3667,9 @@ impl Serialize for TSAccessibility {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type TSAccessibility = 'private' | 'protected' | 'public';";
 
 impl<'a> Serialize for TSClassImplements<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3277,6 +3685,8 @@ impl<'a> Serialize for TSClassImplements<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSClassImplements = ({\n\ttype: 'TSClassImplements';\n\texpression: TSTypeName;\n\ttypeParameters: (TSTypeParameterInstantiation) | null;\n}) & Span;";
 
 impl<'a> Serialize for TSInterfaceDeclaration<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3295,6 +3705,8 @@ impl<'a> Serialize for TSInterfaceDeclaration<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSInterfaceDeclaration = ({\n\ttype: 'TSInterfaceDeclaration';\n\tid: BindingIdentifier;\n\textends: (Array<TSInterfaceHeritage>) | null;\n\ttypeParameters: (TSTypeParameterDeclaration) | null;\n\tbody: TSInterfaceBody;\n\tdeclare: boolean;\n}) & Span;";
 
 impl<'a> Serialize for TSInterfaceBody<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3309,6 +3721,8 @@ impl<'a> Serialize for TSInterfaceBody<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSInterfaceBody = ({\n\ttype: 'TSInterfaceBody';\n\tbody: Array<TSSignature>;\n}) & Span;";
 
 impl<'a> Serialize for TSPropertySignature<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3327,6 +3741,8 @@ impl<'a> Serialize for TSPropertySignature<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSPropertySignature = ({\n\ttype: 'TSPropertySignature';\n\tcomputed: boolean;\n\toptional: boolean;\n\treadonly: boolean;\n\tkey: PropertyKey;\n\ttypeAnnotation: (TSTypeAnnotation) | null;\n}) & Span;";
 
 impl<'a> Serialize for TSSignature<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3345,6 +3761,8 @@ impl<'a> Serialize for TSSignature<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSSignature = TSIndexSignature | TSPropertySignature | TSCallSignatureDeclaration | TSConstructSignatureDeclaration | TSMethodSignature;";
 
 impl<'a> Serialize for TSIndexSignature<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3361,6 +3779,8 @@ impl<'a> Serialize for TSIndexSignature<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSIndexSignature = ({\n\ttype: 'TSIndexSignature';\n\tparameters: Array<TSIndexSignatureName>;\n\ttypeAnnotation: TSTypeAnnotation;\n\treadonly: boolean;\n}) & Span;";
 
 impl<'a> Serialize for TSCallSignatureDeclaration<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3378,6 +3798,8 @@ impl<'a> Serialize for TSCallSignatureDeclaration<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSCallSignatureDeclaration = ({\n\ttype: 'TSCallSignatureDeclaration';\n\tthisParam: (TSThisParameter) | null;\n\tparams: FormalParameters;\n\treturnType: (TSTypeAnnotation) | null;\n\ttypeParameters: (TSTypeParameterDeclaration) | null;\n}) & Span;";
 
 impl Serialize for TSMethodSignatureKind {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3398,6 +3820,9 @@ impl Serialize for TSMethodSignatureKind {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type TSMethodSignatureKind = 'method' | 'get' | 'set';";
 
 impl<'a> Serialize for TSMethodSignature<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3419,6 +3844,8 @@ impl<'a> Serialize for TSMethodSignature<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSMethodSignature = ({\n\ttype: 'TSMethodSignature';\n\tkey: PropertyKey;\n\tcomputed: boolean;\n\toptional: boolean;\n\tkind: TSMethodSignatureKind;\n\tthisParam: (TSThisParameter) | null;\n\tparams: FormalParameters;\n\treturnType: (TSTypeAnnotation) | null;\n\ttypeParameters: (TSTypeParameterDeclaration) | null;\n}) & Span;";
 
 impl<'a> Serialize for TSConstructSignatureDeclaration<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3435,6 +3862,8 @@ impl<'a> Serialize for TSConstructSignatureDeclaration<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSConstructSignatureDeclaration = ({\n\ttype: 'TSConstructSignatureDeclaration';\n\tparams: FormalParameters;\n\treturnType: (TSTypeAnnotation) | null;\n\ttypeParameters: (TSTypeParameterDeclaration) | null;\n}) & Span;";
 
 impl<'a> Serialize for TSIndexSignatureName<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3450,6 +3879,8 @@ impl<'a> Serialize for TSIndexSignatureName<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSIndexSignatureName = ({\n\ttype: 'Identifier';\n\tname: string;\n\ttypeAnnotation: TSTypeAnnotation;\n}) & Span;";
 
 impl<'a> Serialize for TSInterfaceHeritage<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3465,6 +3896,8 @@ impl<'a> Serialize for TSInterfaceHeritage<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSInterfaceHeritage = ({\n\ttype: 'TSInterfaceHeritage';\n\texpression: Expression;\n\ttypeParameters: (TSTypeParameterInstantiation) | null;\n}) & Span;";
 
 impl<'a> Serialize for TSTypePredicate<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3481,6 +3914,8 @@ impl<'a> Serialize for TSTypePredicate<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSTypePredicate = ({\n\ttype: 'TSTypePredicate';\n\tparameterName: TSTypePredicateName;\n\tasserts: boolean;\n\ttypeAnnotation: (TSTypeAnnotation) | null;\n}) & Span;";
 
 impl<'a> Serialize for TSTypePredicateName<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3494,6 +3929,9 @@ impl<'a> Serialize for TSTypePredicateName<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type TSTypePredicateName = IdentifierName | TSThisType;";
 
 impl<'a> Serialize for TSModuleDeclaration<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3511,6 +3949,8 @@ impl<'a> Serialize for TSModuleDeclaration<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSModuleDeclaration = ({\n\ttype: 'TSModuleDeclaration';\n\tid: TSModuleDeclarationName;\n\tbody: (TSModuleDeclarationBody) | null;\n\tkind: TSModuleDeclarationKind;\n\tdeclare: boolean;\n}) & Span;";
 
 impl Serialize for TSModuleDeclarationKind {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3531,6 +3971,9 @@ impl Serialize for TSModuleDeclarationKind {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type TSModuleDeclarationKind = 'global' | 'module' | 'namespace';";
 
 impl<'a> Serialize for TSModuleDeclarationName<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3544,6 +3987,9 @@ impl<'a> Serialize for TSModuleDeclarationName<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type TSModuleDeclarationName = BindingIdentifier | StringLiteral;";
 
 impl<'a> Serialize for TSModuleDeclarationBody<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3559,6 +4005,13 @@ impl<'a> Serialize for TSModuleDeclarationBody<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type TSModuleDeclarationBody = TSModuleDeclaration | TSModuleBlock;";
+
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type TSModuleBlock = ({\n\tbody: Array<Statement>;\n}) & Span;";
 
 impl<'a> Serialize for TSTypeLiteral<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3573,6 +4026,8 @@ impl<'a> Serialize for TSTypeLiteral<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSTypeLiteral = ({\n\ttype: 'TSTypeLiteral';\n\tmembers: Array<TSSignature>;\n}) & Span;";
 
 impl<'a> Serialize for TSInferType<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3587,6 +4042,8 @@ impl<'a> Serialize for TSInferType<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSInferType = ({\n\ttype: 'TSInferType';\n\ttypeParameter: TSTypeParameter;\n}) & Span;";
 
 impl<'a> Serialize for TSTypeQuery<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3602,6 +4059,8 @@ impl<'a> Serialize for TSTypeQuery<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSTypeQuery = ({\n\ttype: 'TSTypeQuery';\n\texprName: TSTypeQueryExprName;\n\ttypeParameters: (TSTypeParameterInstantiation) | null;\n}) & Span;";
 
 impl<'a> Serialize for TSTypeQueryExprName<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3616,6 +4075,9 @@ impl<'a> Serialize for TSTypeQueryExprName<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type TSTypeQueryExprName = TSImportType | IdentifierReference | TSQualifiedName;";
 
 impl<'a> Serialize for TSImportType<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3634,6 +4096,8 @@ impl<'a> Serialize for TSImportType<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSImportType = ({\n\ttype: 'TSImportType';\n\tisTypeOf: boolean;\n\tparameter: TSType;\n\tqualifier: (TSTypeName) | null;\n\tattributes: (TSImportAttributes) | null;\n\ttypeParameters: (TSTypeParameterInstantiation) | null;\n}) & Span;";
 
 impl<'a> Serialize for TSImportAttributes<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3649,6 +4113,8 @@ impl<'a> Serialize for TSImportAttributes<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSImportAttributes = ({\n\ttype: 'TSImportAttributes';\n\tattributesKeyword: IdentifierName;\n\telements: Array<TSImportAttribute>;\n}) & Span;";
 
 impl<'a> Serialize for TSImportAttribute<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3664,6 +4130,8 @@ impl<'a> Serialize for TSImportAttribute<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSImportAttribute = ({\n\ttype: 'TSImportAttribute';\n\tname: TSImportAttributeName;\n\tvalue: Expression;\n}) & Span;";
 
 impl<'a> Serialize for TSImportAttributeName<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3677,6 +4145,9 @@ impl<'a> Serialize for TSImportAttributeName<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type TSImportAttributeName = IdentifierName | StringLiteral;";
 
 impl<'a> Serialize for TSFunctionType<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3694,6 +4165,8 @@ impl<'a> Serialize for TSFunctionType<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSFunctionType = ({\n\ttype: 'TSFunctionType';\n\tthisParam: (TSThisParameter) | null;\n\tparams: FormalParameters;\n\treturnType: TSTypeAnnotation;\n\ttypeParameters: (TSTypeParameterDeclaration) | null;\n}) & Span;";
 
 impl<'a> Serialize for TSConstructorType<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3711,6 +4184,8 @@ impl<'a> Serialize for TSConstructorType<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSConstructorType = ({\n\ttype: 'TSConstructorType';\n\tabstract: boolean;\n\tparams: FormalParameters;\n\treturnType: TSTypeAnnotation;\n\ttypeParameters: (TSTypeParameterDeclaration) | null;\n}) & Span;";
 
 impl<'a> Serialize for TSMappedType<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3729,6 +4204,8 @@ impl<'a> Serialize for TSMappedType<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSMappedType = ({\n\ttype: 'TSMappedType';\n\ttypeParameter: TSTypeParameter;\n\tnameType: (TSType) | null;\n\ttypeAnnotation: (TSType) | null;\n\toptional: TSMappedTypeModifierOperator;\n\treadonly: TSMappedTypeModifierOperator;\n}) & Span;";
 
 impl Serialize for TSMappedTypeModifierOperator {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3752,6 +4229,9 @@ impl Serialize for TSMappedTypeModifierOperator {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type TSMappedTypeModifierOperator = 'true' | '+' | '-' | 'none';";
 
 impl<'a> Serialize for TSTemplateLiteralType<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3767,6 +4247,8 @@ impl<'a> Serialize for TSTemplateLiteralType<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSTemplateLiteralType = ({\n\ttype: 'TSTemplateLiteralType';\n\tquasis: Array<TemplateElement>;\n\ttypes: Array<TSType>;\n}) & Span;";
 
 impl<'a> Serialize for TSAsExpression<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3782,6 +4264,8 @@ impl<'a> Serialize for TSAsExpression<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSAsExpression = ({\n\ttype: 'TSAsExpression';\n\texpression: Expression;\n\ttypeAnnotation: TSType;\n}) & Span;";
 
 impl<'a> Serialize for TSSatisfiesExpression<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3797,6 +4281,8 @@ impl<'a> Serialize for TSSatisfiesExpression<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSSatisfiesExpression = ({\n\ttype: 'TSSatisfiesExpression';\n\texpression: Expression;\n\ttypeAnnotation: TSType;\n}) & Span;";
 
 impl<'a> Serialize for TSTypeAssertion<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3812,6 +4298,8 @@ impl<'a> Serialize for TSTypeAssertion<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSTypeAssertion = ({\n\ttype: 'TSTypeAssertion';\n\texpression: Expression;\n\ttypeAnnotation: TSType;\n}) & Span;";
 
 impl<'a> Serialize for TSImportEqualsDeclaration<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3828,6 +4316,8 @@ impl<'a> Serialize for TSImportEqualsDeclaration<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSImportEqualsDeclaration = ({\n\ttype: 'TSImportEqualsDeclaration';\n\tid: BindingIdentifier;\n\tmoduleReference: TSModuleReference;\n\timportKind: ImportOrExportKind;\n}) & Span;";
 
 impl<'a> Serialize for TSModuleReference<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3844,6 +4334,8 @@ impl<'a> Serialize for TSModuleReference<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSModuleReference = TSExternalModuleReference | IdentifierReference | TSQualifiedName;";
 
 impl<'a> Serialize for TSExternalModuleReference<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3858,6 +4350,8 @@ impl<'a> Serialize for TSExternalModuleReference<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSExternalModuleReference = ({\n\ttype: 'TSExternalModuleReference';\n\texpression: StringLiteral;\n}) & Span;";
 
 impl<'a> Serialize for TSNonNullExpression<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3872,6 +4366,8 @@ impl<'a> Serialize for TSNonNullExpression<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSNonNullExpression = ({\n\ttype: 'TSNonNullExpression';\n\texpression: Expression;\n}) & Span;";
 
 impl<'a> Serialize for Decorator<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3886,6 +4382,9 @@ impl<'a> Serialize for Decorator<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type Decorator = ({\n\ttype: 'Decorator';\n\texpression: Expression;\n}) & Span;";
 
 impl<'a> Serialize for TSExportAssignment<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3900,6 +4399,8 @@ impl<'a> Serialize for TSExportAssignment<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSExportAssignment = ({\n\ttype: 'TSExportAssignment';\n\texpression: Expression;\n}) & Span;";
 
 impl<'a> Serialize for TSNamespaceExportDeclaration<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3914,6 +4415,8 @@ impl<'a> Serialize for TSNamespaceExportDeclaration<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSNamespaceExportDeclaration = ({\n\ttype: 'TSNamespaceExportDeclaration';\n\tid: IdentifierName;\n}) & Span;";
 
 impl<'a> Serialize for TSInstantiationExpression<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3929,6 +4432,8 @@ impl<'a> Serialize for TSInstantiationExpression<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type TSInstantiationExpression = ({\n\ttype: 'TSInstantiationExpression';\n\texpression: Expression;\n\ttypeParameters: TSTypeParameterInstantiation;\n}) & Span;";
 
 impl Serialize for ImportOrExportKind {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3946,6 +4451,8 @@ impl Serialize for ImportOrExportKind {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type ImportOrExportKind = 'value' | 'type';";
 
 impl<'a> Serialize for JSDocNullableType<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3961,6 +4468,8 @@ impl<'a> Serialize for JSDocNullableType<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type JSDocNullableType = ({\n\ttype: 'JSDocNullableType';\n\ttypeAnnotation: TSType;\n\tpostfix: boolean;\n}) & Span;";
 
 impl<'a> Serialize for JSDocNonNullableType<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3976,6 +4485,8 @@ impl<'a> Serialize for JSDocNonNullableType<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type JSDocNonNullableType = ({\n\ttype: 'JSDocNonNullableType';\n\ttypeAnnotation: TSType;\n\tpostfix: boolean;\n}) & Span;";
 
 impl Serialize for JSDocUnknownType {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3989,6 +4500,9 @@ impl Serialize for JSDocUnknownType {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type JSDocUnknownType = ({\n\ttype: 'JSDocUnknownType';\n}) & Span;";
 
 impl<'a> Serialize for JSXElement<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -4005,6 +4519,8 @@ impl<'a> Serialize for JSXElement<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type JSXElement = ({\n\ttype: 'JSXElement';\n\topeningElement: JSXOpeningElement;\n\tclosingElement: (JSXClosingElement) | null;\n\tchildren: Array<JSXChild>;\n}) & Span;";
 
 impl<'a> Serialize for JSXOpeningElement<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -4022,6 +4538,8 @@ impl<'a> Serialize for JSXOpeningElement<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type JSXOpeningElement = ({\n\ttype: 'JSXOpeningElement';\n\tselfClosing: boolean;\n\tname: JSXElementName;\n\tattributes: Array<JSXAttributeItem>;\n\ttypeParameters: (TSTypeParameterInstantiation) | null;\n}) & Span;";
 
 impl<'a> Serialize for JSXClosingElement<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -4036,6 +4554,8 @@ impl<'a> Serialize for JSXClosingElement<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type JSXClosingElement = ({\n\ttype: 'JSXClosingElement';\n\tname: JSXElementName;\n}) & Span;";
 
 impl<'a> Serialize for JSXFragment<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -4052,6 +4572,8 @@ impl<'a> Serialize for JSXFragment<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type JSXFragment = ({\n\ttype: 'JSXFragment';\n\topeningFragment: JSXOpeningFragment;\n\tclosingFragment: JSXClosingFragment;\n\tchildren: Array<JSXChild>;\n}) & Span;";
 
 impl Serialize for JSXOpeningFragment {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -4065,6 +4587,9 @@ impl Serialize for JSXOpeningFragment {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type JSXOpeningFragment = ({\n\ttype: 'JSXOpeningFragment';\n}) & Span;";
 
 impl Serialize for JSXClosingFragment {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -4078,6 +4603,9 @@ impl Serialize for JSXClosingFragment {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type JSXClosingFragment = ({\n\ttype: 'JSXClosingFragment';\n}) & Span;";
 
 impl<'a> Serialize for JSXNamespacedName<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -4093,6 +4621,8 @@ impl<'a> Serialize for JSXNamespacedName<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type JSXNamespacedName = ({\n\ttype: 'JSXNamespacedName';\n\tnamespace: JSXIdentifier;\n\tproperty: JSXIdentifier;\n}) & Span;";
 
 impl<'a> Serialize for JSXMemberExpression<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -4108,6 +4638,8 @@ impl<'a> Serialize for JSXMemberExpression<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type JSXMemberExpression = ({\n\ttype: 'JSXMemberExpression';\n\tobject: JSXMemberExpressionObject;\n\tproperty: JSXIdentifier;\n}) & Span;";
 
 impl<'a> Serialize for JSXExpressionContainer<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -4122,6 +4654,8 @@ impl<'a> Serialize for JSXExpressionContainer<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type JSXExpressionContainer = ({\n\ttype: 'JSXExpressionContainer';\n\texpression: JSXExpression;\n}) & Span;";
 
 impl<'a> Serialize for JSXExpression<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -4176,6 +4710,8 @@ impl<'a> Serialize for JSXExpression<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type JSXExpression = JSXEmptyExpression | BooleanLiteral | NullLiteral | NumericLiteral | BigIntLiteral | RegExpLiteral | StringLiteral | TemplateLiteral | IdentifierReference | MetaProperty | Super | ArrayExpression | ArrowFunctionExpression | AssignmentExpression | AwaitExpression | BinaryExpression | CallExpression | ChainExpression | Class | ConditionalExpression | Function | ImportExpression | LogicalExpression | NewExpression | ObjectExpression | ParenthesizedExpression | SequenceExpression | TaggedTemplateExpression | ThisExpression | UnaryExpression | UpdateExpression | YieldExpression | PrivateInExpression | JSXElement | JSXFragment | TSAsExpression | TSSatisfiesExpression | TSTypeAssertion | TSNonNullExpression | TSInstantiationExpression | ComputedMemberExpression | StaticMemberExpression | PrivateFieldExpression;";
 
 impl Serialize for JSXEmptyExpression {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -4189,6 +4725,9 @@ impl Serialize for JSXEmptyExpression {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type JSXEmptyExpression = ({\n\ttype: 'JSXEmptyExpression';\n}) & Span;";
 
 impl<'a> Serialize for JSXAttributeItem<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -4202,6 +4741,9 @@ impl<'a> Serialize for JSXAttributeItem<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type JSXAttributeItem = JSXAttribute | JSXSpreadAttribute;";
 
 impl<'a> Serialize for JSXAttribute<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -4217,6 +4759,8 @@ impl<'a> Serialize for JSXAttribute<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type JSXAttribute = ({\n\ttype: 'JSXAttribute';\n\tname: JSXAttributeName;\n\tvalue: (JSXAttributeValue) | null;\n}) & Span;";
 
 impl<'a> Serialize for JSXSpreadAttribute<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -4231,6 +4775,8 @@ impl<'a> Serialize for JSXSpreadAttribute<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type JSXSpreadAttribute = ({\n\ttype: 'JSXSpreadAttribute';\n\targument: Expression;\n}) & Span;";
 
 impl<'a> Serialize for JSXAttributeName<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -4244,6 +4790,9 @@ impl<'a> Serialize for JSXAttributeName<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type JSXAttributeName = JSXIdentifier | JSXNamespacedName;";
 
 impl<'a> Serialize for JSXAttributeValue<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -4259,6 +4808,8 @@ impl<'a> Serialize for JSXAttributeValue<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type JSXAttributeValue = StringLiteral | JSXExpressionContainer | JSXElement | JSXFragment;";
 
 impl<'a> Serialize for JSXIdentifier<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -4273,6 +4824,9 @@ impl<'a> Serialize for JSXIdentifier<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type JSXIdentifier = ({\n\ttype: 'JSXIdentifier';\n\tname: string;\n}) & Span;";
 
 impl<'a> Serialize for JSXChild<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -4289,6 +4843,8 @@ impl<'a> Serialize for JSXChild<'a> {
         }
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type JSXChild = JSXText | JSXElement | JSXFragment | JSXExpressionContainer | JSXSpreadChild;";
 
 impl<'a> Serialize for JSXSpreadChild<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -4303,6 +4859,8 @@ impl<'a> Serialize for JSXSpreadChild<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type JSXSpreadChild = ({\n\ttype: 'JSXSpreadChild';\n\texpression: Expression;\n}) & Span;";
 
 impl<'a> Serialize for JSXText<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -4317,3 +4875,6 @@ impl<'a> Serialize for JSXText<'a> {
         map.end()
     }
 }
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str =
+    "export type JSXText = ({\n\ttype: 'JSXText';\n\tvalue: string;\n}) & Span;";
