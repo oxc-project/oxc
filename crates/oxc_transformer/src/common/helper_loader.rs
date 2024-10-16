@@ -65,7 +65,7 @@ use std::{borrow::Cow, cell::RefCell};
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
-use oxc_allocator::Vec;
+use oxc_allocator::{String as AString, Vec};
 use oxc_ast::ast::{Argument, CallExpression, Expression, Program, TSTypeParameterInstantiation};
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
 use oxc_span::{Atom, SPAN};
@@ -238,13 +238,25 @@ impl<'a> HelperLoaderStore<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let mut loaded_helpers = self.loaded_helpers.borrow_mut();
-        let loaded_helper = loaded_helpers.entry(helper).or_insert_with(|| {
-            let helper_name = helper.name();
-            let source = ctx.ast.atom(&format!("{}/helpers/{helper_name}", self.module_name));
-            let local = ctx.generate_uid_in_root_scope(helper_name, SymbolFlags::Import);
-            LoadedHelper { source, local }
-        });
+        let loaded_helper =
+            loaded_helpers.entry(helper).or_insert_with(|| self.get_runtime_helper(helper, ctx));
         loaded_helper.local.create_read_expression(ctx)
+    }
+
+    fn get_runtime_helper(&self, helper: Helper, ctx: &mut TraverseCtx<'a>) -> LoadedHelper<'a> {
+        let helper_name = helper.name();
+
+        // Construct string directly in arena without an intermediate temp allocation
+        let len = self.module_name.len() + "/helpers/".len() + helper_name.len();
+        let mut source = AString::with_capacity_in(len, ctx.ast.allocator);
+        source.push_str(&self.module_name);
+        source.push_str("/helpers/");
+        source.push_str(helper_name);
+        let source = Atom::from(source.into_bump_str());
+
+        let local = ctx.generate_uid_in_root_scope(helper_name, SymbolFlags::Import);
+
+        LoadedHelper { source, local }
     }
 
     fn transform_for_external_helper(helper: Helper, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
