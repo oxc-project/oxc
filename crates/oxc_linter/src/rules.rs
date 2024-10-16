@@ -471,6 +471,7 @@ mod tree_shaking {
 mod promise {
     pub mod avoid_new;
     pub mod catch_or_return;
+    pub mod no_callback_in_promise;
     pub mod no_new_statics;
     pub mod no_return_in_finally;
     pub mod param_names;
@@ -765,6 +766,7 @@ oxc_macros::declare_all_lint_rules! {
     oxc::uninvoked_array_callback,
     promise::avoid_new,
     promise::catch_or_return,
+    promise::no_callback_in_promise,
     promise::no_new_statics,
     promise::no_return_in_finally,
     promise::param_names,
