@@ -19,6 +19,11 @@ on:
     types: [opened, synchronize]
     paths:
       - "**/*.rs"
+      - "!apps/**"
+      - "!tasks/website/**"
+      - "!tasks/ast_tools/**"
+      - "!tasks/coverage/**"
+      - "!crates/oxc_language_server/**"
       - "napi/parser/**/*.js"
       - "napi/parser/**/*.mjs"
       - "Cargo.lock"
@@ -30,6 +35,11 @@ on:
       - main
     paths:
       - "**/*.rs"
+      - "!apps/**"
+      - "!tasks/website/**"
+      - "!tasks/ast_tools/**"
+      - "!tasks/coverage/**"
+      - "!crates/oxc_language_server/**"
       - "napi/parser/**/*.js"
       - "napi/parser/**/*.mjs"
       - "Cargo.lock"

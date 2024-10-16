@@ -211,9 +211,18 @@ jobs:
         with:
           filters: |
             src:
+              - '!.github/**'
+              - '!.vscode/**'
+              - '!apps/**'
+              - '!editors/**'
+              - '!napi/**'
+              - '!npm/**'
+              - '!wasm/**'
               - '!crates/oxc_linter/**'
               - '!crates/oxc_wasm/**'
               - '!crates/oxc_language_server/**'
+              - '!tasks/**'
+              - 'tasks/conformance/**'
 
       - uses: ./.github/actions/clone-submodules
         if: steps.filter.outputs.src == 'true'
