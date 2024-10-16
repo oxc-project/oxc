@@ -126,7 +126,7 @@ fn is_min_max(
     ctx: &LintContext,
 ) -> TypeOptions {
     let is_matched = matches!(
-        (&condition.left, &condition.right),
+        (condition.left.get_inner_expression(), condition.right.get_inner_expression()),
         (Expression::NumericLiteral(_) | Expression::UnaryExpression(_), Expression::Identifier(_))
             | (
                 Expression::Identifier(_),
