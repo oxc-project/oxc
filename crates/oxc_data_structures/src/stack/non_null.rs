@@ -14,8 +14,9 @@ use std::{cmp::Ordering, ptr::NonNull as NativeNonNull};
 #[derive(Debug)]
 pub struct NonNull<T>(NativeNonNull<T>);
 
-#[expect(dead_code, clippy::incompatible_msrv)]
-unsafe fn non_null_add_is_not_stable(ptr: NativeNonNull<u8>) -> NativeNonNull<u8> {
+#[cfg(clippy)]
+#[expect(clippy::incompatible_msrv)]
+unsafe fn _non_null_add_is_not_stable(ptr: NativeNonNull<u8>) -> NativeNonNull<u8> {
     ptr.add(1)
 }
 

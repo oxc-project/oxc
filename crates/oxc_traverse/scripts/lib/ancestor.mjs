@@ -1,5 +1,8 @@
 import { camelToSnake, snakeToCamel } from './utils.mjs';
 
+/**
+ * @param {import('./parse.mjs').Types} types
+ */
 export default function generateAncestorsCode(types) {
   const variantNamesForEnums = Object.create(null);
   let ancestorTypeEnumVariants = '',

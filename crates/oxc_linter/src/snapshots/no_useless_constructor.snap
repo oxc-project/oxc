@@ -18,51 +18,86 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint(no-useless-constructor): Redundant super call in constructor
    ╭─[no_useless_constructor.tsx:1:21]
  1 │ class A extends B { constructor() { super(); } }
-   ·                     ──────────────────────────
+   ·                     ─────┬─────     ───┬───
+   ·                          │             ╰── because it only passes arguments through to the superclass
+   ·                          ╰── This constructor is unnecessary,
    ╰────
-  help: Constructors of subclasses invoke super() automatically if they are empty. Remove this constructor or add code to it.
+  help: Subclasses automatically use the constructor of their superclass, making this redundant.
+        Remove this constructor or add code to it.
+
+  ⚠ eslint(no-useless-constructor): Redundant super call in constructor
+   ╭─[no_useless_constructor.tsx:2:5]
+ 1 │ class A extends B {
+ 2 │     constructor() {
+   ·     ─────┬─────
+   ·          ╰── This constructor is unnecessary,
+ 3 │         super();
+   ·         ───┬───
+   ·            ╰── because it only passes arguments through to the superclass
+ 4 │     }
+   ╰────
+  help: Subclasses automatically use the constructor of their superclass, making this redundant.
+        Remove this constructor or add code to it.
 
   ⚠ eslint(no-useless-constructor): Redundant super call in constructor
    ╭─[no_useless_constructor.tsx:1:21]
  1 │ class A extends B { constructor(foo){ super(foo); } }
-   ·                     ───────────────────────────────
+   ·                     ─────┬─────       ─────┬────
+   ·                          │                 ╰── because it only passes arguments through to the superclass
+   ·                          ╰── This constructor is unnecessary,
    ╰────
-  help: Constructors of subclasses invoke super() automatically if they are empty. Remove this constructor or add code to it.
+  help: Subclasses automatically use the constructor of their superclass, making this redundant.
+        Remove this constructor or add code to it.
 
   ⚠ eslint(no-useless-constructor): Redundant super call in constructor
    ╭─[no_useless_constructor.tsx:1:21]
  1 │ class A extends B { constructor(foo, bar){ super(foo, bar); } }
-   ·                     ─────────────────────────────────────────
+   ·                     ─────┬─────            ───────┬───────
+   ·                          │                        ╰── because it only passes arguments through to the superclass
+   ·                          ╰── This constructor is unnecessary,
    ╰────
-  help: Constructors of subclasses invoke super() automatically if they are empty. Remove this constructor or add code to it.
+  help: Subclasses automatically use the constructor of their superclass, making this redundant.
+        Remove this constructor or add code to it.
 
   ⚠ eslint(no-useless-constructor): Redundant super call in constructor
    ╭─[no_useless_constructor.tsx:1:21]
  1 │ class A extends B { constructor(...args){ super(...args); } }
-   ·                     ───────────────────────────────────────
+   ·                     ─────┬─────           ───────┬──────
+   ·                          │                       ╰── because it only passes arguments through to the superclass
+   ·                          ╰── This constructor is unnecessary,
    ╰────
-  help: Constructors of subclasses invoke super() automatically if they are empty. Remove this constructor or add code to it.
+  help: Subclasses automatically use the constructor of their superclass, making this redundant.
+        Remove this constructor or add code to it.
 
   ⚠ eslint(no-useless-constructor): Redundant super call in constructor
    ╭─[no_useless_constructor.tsx:1:23]
  1 │ class A extends B.C { constructor() { super(...arguments); } }
-   ·                       ──────────────────────────────────────
+   ·                       ─────┬─────     ─────────┬─────────
+   ·                            │                   ╰── because it only passes arguments through to the superclass
+   ·                            ╰── This constructor is unnecessary,
    ╰────
-  help: Constructors of subclasses invoke super() automatically if they are empty. Remove this constructor or add code to it.
+  help: Subclasses automatically use the constructor of their superclass, making this redundant.
+        Remove this constructor or add code to it.
 
   ⚠ eslint(no-useless-constructor): Redundant super call in constructor
    ╭─[no_useless_constructor.tsx:1:21]
  1 │ class A extends B { constructor(a, b, ...c) { super(...arguments); } }
-   ·                     ────────────────────────────────────────────────
+   ·                     ─────┬─────               ─────────┬─────────
+   ·                          │                             ╰── because it only passes arguments through to the superclass
+   ·                          ╰── This constructor is unnecessary,
    ╰────
-  help: Constructors of subclasses invoke super() automatically if they are empty. Remove this constructor or add code to it.
+  help: Subclasses automatically use the constructor of their superclass, making this redundant.
+        Remove this constructor or add code to it.
 
   ⚠ eslint(no-useless-constructor): Redundant super call in constructor
    ╭─[no_useless_constructor.tsx:1:21]
  1 │ class A extends B { constructor(a, b, ...c) { super(a, b, ...c); } }
-   ·                     ──────────────────────────────────────────────
+   ·                     ─────┬─────               ────────┬────────
+   ·                          │                            ╰── because it only passes arguments through to the superclass
+   ·                          ╰── This constructor is unnecessary,
    ╰────
-  help: Constructors of subclasses invoke super() automatically if they are empty. Remove this constructor or add code to it.
+  help: Subclasses automatically use the constructor of their superclass, making this redundant.
+        Remove this constructor or add code to it.
 
   ⚠ eslint(no-useless-constructor): Empty constructors are unnecessary
    ╭─[no_useless_constructor.tsx:1:11]

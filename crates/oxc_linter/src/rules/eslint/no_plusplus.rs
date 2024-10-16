@@ -78,7 +78,10 @@ declare_oxc_lint!(
     /// ```
     NoPlusplus,
     restriction,
-    pending
+    // This is not guaranteed to rewrite the code in a way that is equivalent.
+    // For example, `++i` and `i++` will be rewritten as `i += 1` even though they are not the same.
+    // If the code depends on the order of evaluation, then this might break it.
+    conditional_suggestion,
 );
 
 impl Rule for NoPlusplus {
@@ -102,7 +105,20 @@ impl Rule for NoPlusplus {
             return;
         }
 
-        ctx.diagnostic(no_plusplus_diagnostic(expr.span, expr.operator));
+        let ident = expr.argument.get_identifier();
+
+        if let Some(ident) = ident {
+            let operator = match expr.operator {
+                UpdateOperator::Increment => "+=",
+                UpdateOperator::Decrement => "-=",
+            };
+            ctx.diagnostic_with_suggestion(
+                no_plusplus_diagnostic(expr.span, expr.operator),
+                |fixer| fixer.replace(expr.span, format!("{ident} {operator} 1")),
+            );
+        } else {
+            ctx.diagnostic(no_plusplus_diagnostic(expr.span, expr.operator));
+        }
     }
 }
 
@@ -186,5 +202,69 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoPlusplus::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("var foo = 0; foo++;", "var foo = 0; foo += 1;", None),
+        ("var foo = 0; foo--;", "var foo = 0; foo -= 1;", None),
+        ("var foo = 0; --foo;", "var foo = 0; foo -= 1;", None),
+        ("var foo = 0; ++foo;", "var foo = 0; foo += 1;", None),
+        (
+            "for (i = 0; i < l; i++) { console.log(i); }",
+            "for (i = 0; i < l; i += 1) { console.log(i); }",
+            None,
+        ),
+        (
+            "for (i = 0; i < l; foo, i++) { console.log(i); }",
+            "for (i = 0; i < l; foo, i += 1) { console.log(i); }",
+            None,
+        ),
+        (
+            "var foo = 0; foo++;",
+            "var foo = 0; foo += 1;",
+            Some(serde_json::json!([{ "allowForLoopAfterthoughts": true }])),
+        ),
+        (
+            "for (i = 0; i < l; i++) { v++; }",
+            "for (i = 0; i < l; i++) { v += 1; }",
+            Some(serde_json::json!([{ "allowForLoopAfterthoughts": true }])),
+        ),
+        (
+            "for (i++;;);",
+            "for (i += 1;;);",
+            Some(serde_json::json!([{ "allowForLoopAfterthoughts": true }])),
+        ),
+        (
+            "for (;--i;);",
+            "for (;i -= 1;);",
+            Some(serde_json::json!([{ "allowForLoopAfterthoughts": true }])),
+        ),
+        (
+            "for (;;) ++i;",
+            "for (;;) i += 1;",
+            Some(serde_json::json!([{ "allowForLoopAfterthoughts": true }])),
+        ),
+        (
+            "for (;; i = j++);",
+            "for (;; i = j += 1);",
+            Some(serde_json::json!([{ "allowForLoopAfterthoughts": true }])),
+        ),
+        (
+            // Do not fix if part of a function call like f(--j)
+            "for (;; i++, f(--j));",
+            "for (;; i++, f(j -= 1));",
+            Some(serde_json::json!([{ "allowForLoopAfterthoughts": true }])),
+        ),
+        (
+            "for (;; foo + (i++, bar));",
+            "for (;; foo + (i += 1, bar));",
+            Some(serde_json::json!([{ "allowForLoopAfterthoughts": true }])),
+        ),
+        (
+            // Do not fix if part of property definition
+            "let x = 0; let y = { foo: x++ };",
+            "let x = 0; let y = { foo: x += 1 };",
+            None,
+        ),
+    ];
+
+    Tester::new(NoPlusplus::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

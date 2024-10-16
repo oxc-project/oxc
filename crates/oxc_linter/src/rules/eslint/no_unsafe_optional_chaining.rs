@@ -49,7 +49,7 @@ declare_oxc_lint!(
     /// const { bar } = obj?.foo;  // TypeError
     /// ```
     NoUnsafeOptionalChaining,
-    restriction // TypeScript checks optional chaining
+    correctness
 );
 
 impl Rule for NoUnsafeOptionalChaining {

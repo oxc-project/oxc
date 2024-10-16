@@ -1,6 +1,6 @@
 use oxc_ast::{ast::*, AstBuilder, Visit, NONE};
+use oxc_ecmascript::BoundNames;
 use oxc_span::{Atom, Span, SPAN};
-use oxc_syntax_operations::BoundNames;
 
 pub struct KeepVar<'a> {
     ast: AstBuilder<'a>,
@@ -34,17 +34,19 @@ impl<'a> Visit<'a> for KeepVar<'a> {
             // match_module_declaration!(Statement) => {
             // visitor.visit_module_declaration(it.to_module_declaration())
             // }
-            Statement::VariableDeclaration(decl) => {
-                if decl.kind.is_var() {
-                    decl.bound_names(&mut |ident| {
-                        self.vars.push((ident.name.clone(), ident.span));
-                    });
-                    if decl.has_init() {
-                        self.all_hoisted = false;
-                    }
-                }
-            }
+            Statement::VariableDeclaration(decl) => self.visit_variable_declaration(decl),
             _ => {}
+        }
+    }
+
+    fn visit_variable_declaration(&mut self, it: &VariableDeclaration<'a>) {
+        if it.kind.is_var() {
+            it.bound_names(&mut |ident| {
+                self.vars.push((ident.name.clone(), ident.span));
+            });
+            if it.has_init() {
+                self.all_hoisted = false;
+            }
         }
     }
 }
@@ -58,7 +60,7 @@ impl<'a> KeepVar<'a> {
         self.all_hoisted
     }
 
-    pub fn get_variable_declaration_statement(self) -> Option<Statement<'a>> {
+    pub fn get_variable_declaration(self) -> Option<VariableDeclaration<'a>> {
         if self.vars.is_empty() {
             return None;
         }
@@ -71,7 +73,13 @@ impl<'a> KeepVar<'a> {
         }));
 
         let decl = self.ast.variable_declaration(SPAN, kind, decls, false);
-        let stmt = self.ast.statement_declaration(self.ast.declaration_from_variable(decl));
+        Some(decl)
+    }
+
+    pub fn get_variable_declaration_statement(self) -> Option<Statement<'a>> {
+        let stmt = self.ast.statement_declaration(
+            self.ast.declaration_from_variable(self.get_variable_declaration()?),
+        );
         Some(stmt)
     }
 }

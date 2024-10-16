@@ -1,9 +1,9 @@
 const throttledAlert = throttle(function() {
-	alert("Hi");
+  alert("Hi");
 });
 const TooComplex = function() {
-	return hello;
+  return hello;
 }(() => {});
 if (cond) {
-	const Foo = thing(() => {});
+  const Foo = thing(() => {});
 }

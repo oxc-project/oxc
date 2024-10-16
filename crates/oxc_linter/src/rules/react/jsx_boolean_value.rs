@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{CompactStr, Span};
 use rustc_hash::FxHashSet;
 
 use crate::{
@@ -42,7 +42,7 @@ pub enum EnforceBooleanAttribute {
 #[derive(Debug, Default, Clone)]
 pub struct JsxBooleanValueConfig {
     pub enforce_boolean_attribute: EnforceBooleanAttribute,
-    pub exceptions: FxHashSet<String>,
+    pub exceptions: FxHashSet<CompactStr>,
     pub assume_undefined_is_false: bool,
 }
 
@@ -94,9 +94,7 @@ impl Rule for JsxBooleanValue {
         let exceptions = config
             .and_then(|c| c.get(attribute_name))
             .and_then(serde_json::Value::as_array)
-            .map(|v| {
-                v.iter().filter_map(serde_json::Value::as_str).map(ToString::to_string).collect()
-            })
+            .map(|v| v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect())
             .unwrap_or_default();
 
         Self(Box::new(JsxBooleanValueConfig {

@@ -58,6 +58,7 @@ use oxc_traverse::{Traverse, TraverseCtx};
 use crate::TransformCtx;
 
 mod options;
+
 pub use options::RegExpOptions;
 
 pub struct RegExp<'a, 'ctx> {

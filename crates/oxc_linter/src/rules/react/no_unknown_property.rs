@@ -11,7 +11,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use phf::{phf_map, phf_set, Map, Set};
-use regex::Regex;
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde::Deserialize;
 
@@ -433,16 +432,30 @@ static DOM_PROPERTIES_LOWER_MAP: Lazy<FxHashMap<String, &'static str>> = Lazy::n
         .collect::<FxHashMap<_, _>>()
 });
 
-///
 /// Checks if an attribute name is a valid `data-*` attribute:
-/// if the name starts with "data-" and has alphanumeric words (browsers require lowercase, but React and TS lowercase them),
-/// not start with any casing of "xml", and separated by hyphens (-) (which is also called "kebab case" or "dash case"),
-/// then the attribute is a valid data attribute.
-///
+/// - Name starts with "data-" and has alphanumeric words (browsers require lowercase, but React and TS lowercase them),
+/// - Does not start with any casing of "xml"
+/// - Words are separated by hyphens (-) (which is also called "kebab case" or "dash case")
 fn is_valid_data_attr(name: &str) -> bool {
-    static DATA_ATTR_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"^data(-?[^:]*)$").unwrap());
+    if !name.starts_with("data-") {
+        return false;
+    }
 
-    !name.cow_to_lowercase().starts_with("data-xml") && DATA_ATTR_REGEX.is_match(name)
+    if name.cow_to_lowercase().starts_with("data-xml") {
+        return false;
+    }
+
+    let data_name = &name["data-".len()..];
+    if data_name.is_empty() {
+        return false;
+    }
+
+    data_name.chars().all(|c| c != ':')
+}
+
+/// Checks if a tag name matches the HTML tag conventions.
+fn matches_html_tag_conventions(tag: &str) -> bool {
+    tag.char_indices().all(|(i, c)| if i == 0 { c.is_ascii_lowercase() } else { c != '-' })
 }
 
 fn normalize_attribute_case(name: &str) -> &str {
@@ -465,8 +478,6 @@ impl Rule for NoUnknownProperty {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        static HTML_TAG_CONVENTION: Lazy<Regex> = Lazy::new(|| Regex::new("^[a-z][^-]*$").unwrap());
-
         let AstKind::JSXOpeningElement(el) = &node.kind() else {
             return;
         };
@@ -480,7 +491,7 @@ impl Rule for NoUnknownProperty {
             return;
         }
 
-        let is_valid_html_tag = HTML_TAG_CONVENTION.is_match(el_type)
+        let is_valid_html_tag = matches_html_tag_conventions(el_type)
             && el.attributes.iter().all(|attr| {
                 let JSXAttributeItem::Attribute(jsx_attr) = attr else {
                     return true;

@@ -5,7 +5,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{CompactStr, GetSpan, Span};
 use regex::Regex;
 use rustc_hash::FxHashSet;
 
@@ -30,8 +30,8 @@ pub struct ExpectExpect(Box<ExpectExpectConfig>);
 
 #[derive(Debug, Clone)]
 pub struct ExpectExpectConfig {
-    assert_function_names: Vec<String>,
-    additional_test_block_functions: Vec<String>,
+    assert_function_names: Vec<CompactStr>,
+    additional_test_block_functions: Vec<CompactStr>,
 }
 
 impl std::ops::Deref for ExpectExpect {
@@ -45,7 +45,7 @@ impl std::ops::Deref for ExpectExpect {
 impl Default for ExpectExpectConfig {
     fn default() -> Self {
         Self {
-            assert_function_names: vec![String::from("expect")],
+            assert_function_names: vec!["expect".into()],
             additional_test_block_functions: vec![],
         }
     }
@@ -85,7 +85,7 @@ declare_oxc_lint!(
 
 impl Rule for ExpectExpect {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let default_assert_function_names = vec![String::from("expect")];
+        let default_assert_function_names = vec!["expect".into()];
         let config = value.get(0);
 
         let assert_function_names = config
@@ -98,9 +98,7 @@ impl Rule for ExpectExpect {
         let additional_test_block_functions = config
             .and_then(|config| config.get("additionalTestBlockFunctions"))
             .and_then(serde_json::Value::as_array)
-            .map(|v| {
-                v.iter().filter_map(serde_json::Value::as_str).map(ToString::to_string).collect()
-            })
+            .map(|v| v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect())
             .unwrap_or_default();
 
         Self(Box::new(ExpectExpectConfig {
@@ -158,7 +156,7 @@ fn run<'a>(
 
 fn check_arguments<'a>(
     call_expr: &'a CallExpression<'a>,
-    assert_function_names: &[String],
+    assert_function_names: &[CompactStr],
     visited: &mut FxHashSet<Span>,
     ctx: &LintContext<'a>,
 ) -> bool {
@@ -174,7 +172,7 @@ fn check_arguments<'a>(
 
 fn check_assert_function_used<'a>(
     expr: &'a Expression<'a>,
-    assert_function_names: &[String],
+    assert_function_names: &[CompactStr],
     visited: &mut FxHashSet<Span>,
     ctx: &LintContext<'a>,
 ) -> bool {
@@ -245,7 +243,7 @@ fn check_assert_function_used<'a>(
 
 fn check_statements<'a>(
     statements: &'a oxc_allocator::Vec<Statement<'a>>,
-    assert_function_names: &[String],
+    assert_function_names: &[CompactStr],
     visited: &mut FxHashSet<Span>,
     ctx: &LintContext<'a>,
 ) -> bool {
@@ -263,11 +261,11 @@ fn check_statements<'a>(
 }
 
 /// Checks if node names returned by getNodeName matches any of the given star patterns
-fn matches_assert_function_name(name: &str, patterns: &[String]) -> bool {
+fn matches_assert_function_name(name: &str, patterns: &[CompactStr]) -> bool {
     patterns.iter().any(|pattern| Regex::new(pattern).unwrap().is_match(name))
 }
 
-fn convert_pattern(pattern: &str) -> String {
+fn convert_pattern(pattern: &str) -> CompactStr {
     // Pre-process pattern, e.g.
     // request.*.expect -> request.[a-z\\d]*.expect
     // request.**.expect -> request.[a-z\\d\\.]*.expect
@@ -276,16 +274,16 @@ fn convert_pattern(pattern: &str) -> String {
         .split('.')
         .map(|p| {
             if p == "**" {
-                String::from("[a-z\\d\\.]*")
+                CompactStr::from("[a-z\\d\\.]*")
             } else {
-                p.cow_replace('*', "[a-z\\d]*").into_owned()
+                p.cow_replace('*', "[a-z\\d]*").into()
             }
         })
         .collect::<Vec<_>>()
         .join("\\.");
 
     // 'a.b.c' -> /^a\.b\.c(\.|$)/iu
-    format!("(?ui)^{pattern}(\\.|$)")
+    format!("(?ui)^{pattern}(\\.|$)").into()
 }
 
 #[test]

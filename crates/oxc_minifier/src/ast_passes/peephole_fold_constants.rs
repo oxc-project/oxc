@@ -3,20 +3,23 @@ use std::ops::Neg;
 
 use num_bigint::BigInt;
 use num_traits::Zero;
+
 use oxc_ast::ast::*;
+use oxc_ecmascript::ToInt32;
+use oxc_ecmascript::{
+    constant_evaluation::{IsLiteralValue, ValueType},
+    side_effects::MayHaveSideEffects,
+};
 use oxc_span::{GetSpan, Span, SPAN};
 use oxc_syntax::{
-    number::{NumberBase, ToJsInt32},
+    number::{NumberBase, ToJsString},
     operator::{BinaryOperator, LogicalOperator, UnaryOperator},
 };
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
 use crate::{
-    node_util::{
-        is_exact_int64, IsLiteralValue, MayHaveSideEffects, NodeUtil, NumberValue, ValueType,
-    },
+    node_util::{is_exact_int64, Ctx},
     tri::Tri,
-    ty::Ty,
     CompressorPass,
 };
 
@@ -43,19 +46,20 @@ impl<'a> CompressorPass<'a> for PeepholeFoldConstants {
 
 impl<'a> Traverse<'a> for PeepholeFoldConstants {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        let ctx = Ctx(ctx);
         if let Some(folded_expr) = match expr {
             Expression::CallExpression(e) => {
-                self.try_fold_useless_object_dot_define_properties_call(e, ctx)
+                Self::try_fold_useless_object_dot_define_properties_call(e, ctx)
             }
-            Expression::NewExpression(e) => self.try_fold_ctor_cal(e, ctx),
+            Expression::NewExpression(e) => Self::try_fold_ctor_cal(e, ctx),
             // TODO
             // return tryFoldSpread(subtree);
-            Expression::ArrayExpression(e) => self.try_flatten_array_expression(e, ctx),
-            Expression::ObjectExpression(e) => self.try_flatten_object_expression(e, ctx),
-            Expression::BinaryExpression(e) => self.try_fold_binary_expression(e, ctx),
+            Expression::ArrayExpression(e) => Self::try_flatten_array_expression(e, ctx),
+            Expression::ObjectExpression(e) => Self::try_flatten_object_expression(e, ctx),
+            Expression::BinaryExpression(e) => Self::try_fold_binary_expression(e, ctx),
             Expression::UnaryExpression(e) => self.try_fold_unary_expression(e, ctx),
             // TODO: return tryFoldGetProp(subtree);
-            Expression::LogicalExpression(e) => self.try_fold_logical_expression(e, ctx),
+            Expression::LogicalExpression(e) => Self::try_fold_logical_expression(e, ctx),
             // TODO: tryFoldGetElem
             // TODO: tryFoldAssign
             _ => None,
@@ -66,36 +70,21 @@ impl<'a> Traverse<'a> for PeepholeFoldConstants {
     }
 }
 
-impl<'a> PeepholeFoldConstants {
+impl<'a, 'b> PeepholeFoldConstants {
     pub fn new() -> Self {
         Self { changed: false }
     }
 
-    fn try_get_number_literal_value(&self, expr: &mut Expression<'a>) -> Option<f64> {
-        match expr {
-            Expression::NumericLiteral(n) => Some(n.value),
-            Expression::UnaryExpression(unary)
-                if unary.operator == UnaryOperator::UnaryNegation =>
-            {
-                let Expression::NumericLiteral(arg) = &mut unary.argument else { return None };
-                Some(-arg.value)
-            }
-            _ => None,
-        }
-    }
-
     fn try_fold_useless_object_dot_define_properties_call(
-        &mut self,
         _call_expr: &mut CallExpression<'a>,
-        _ctx: &mut TraverseCtx<'a>,
+        _ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         None
     }
 
     fn try_fold_ctor_cal(
-        &mut self,
         _new_expr: &mut NewExpression<'a>,
-        _ctx: &mut TraverseCtx<'a>,
+        _ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         None
     }
@@ -104,9 +93,8 @@ impl<'a> PeepholeFoldConstants {
     /// `typeof("bar") --> "string"`
     /// `typeof(6) --> "number"`
     fn try_fold_type_of(
-        &self,
         expr: &mut UnaryExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         if !expr.argument.is_literal_value(/* include_function */ true) {
             return None;
@@ -131,23 +119,21 @@ impl<'a> PeepholeFoldConstants {
     // fn try_fold_spread(
     // &mut self,
     // _new_expr: &mut NewExpression<'a>,
-    // _ctx: &mut TraverseCtx<'a>,
+    // _ctx: Ctx<'a,'b>,
     // ) -> Option<Expression<'a>> {
     // None
     // }
 
     fn try_flatten_array_expression(
-        &mut self,
         _new_expr: &mut ArrayExpression<'a>,
-        _ctx: &mut TraverseCtx<'a>,
+        _ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         None
     }
 
     fn try_flatten_object_expression(
-        &mut self,
         _new_expr: &mut ObjectExpression<'a>,
-        _ctx: &mut TraverseCtx<'a>,
+        _ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         None
     }
@@ -155,14 +141,14 @@ impl<'a> PeepholeFoldConstants {
     fn try_fold_unary_expression(
         &mut self,
         expr: &mut UnaryExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         fn is_valid(x: f64) -> bool {
             x.is_finite() && x.fract() == 0.0
         }
         match expr.operator {
             UnaryOperator::Void => self.try_reduce_void(expr, ctx),
-            UnaryOperator::Typeof => self.try_fold_type_of(expr, ctx),
+            UnaryOperator::Typeof => Self::try_fold_type_of(expr, ctx),
             // TODO: tryReduceOperandsForOp
             #[allow(clippy::float_cmp)]
             UnaryOperator::LogicalNot => {
@@ -171,7 +157,8 @@ impl<'a> PeepholeFoldConstants {
                         return None;
                     }
                 }
-                expr.argument.to_boolean().map(|b| ctx.ast.expression_boolean_literal(SPAN, !b))
+                ctx.get_boolean_value(&expr.argument)
+                    .map(|b| ctx.ast.expression_boolean_literal(SPAN, !b))
             }
             // `-NaN` -> `NaN`
             UnaryOperator::UnaryNegation if expr.argument.is_nan() => {
@@ -213,7 +200,7 @@ impl<'a> PeepholeFoldConstants {
                     })
                 }
                 Expression::NumericLiteral(n) => is_valid(n.value).then(|| {
-                    let value = !n.value.to_js_int_32();
+                    let value = !n.value.to_int_32();
                     ctx.ast.expression_numeric_literal(
                         SPAN,
                         value.into(),
@@ -223,7 +210,7 @@ impl<'a> PeepholeFoldConstants {
                 }),
                 Expression::UnaryExpression(un) => {
                     match un.operator {
-                        UnaryOperator::BitwiseNot => {
+                        UnaryOperator::BitwiseNot if un.argument.is_number() => {
                             // Return the un-bitten value
                             Some(ctx.ast.move_expression(&mut un.argument))
                         }
@@ -249,7 +236,7 @@ impl<'a> PeepholeFoldConstants {
                             // `-~1` -> `2`
                             if let Expression::NumericLiteral(n) = &mut un.argument {
                                 is_valid(n.value).then(|| {
-                                    let value = !n.value.to_js_int_32().wrapping_neg();
+                                    let value = !n.value.to_int_32().wrapping_neg();
                                     ctx.ast.expression_numeric_literal(
                                         SPAN,
                                         value.into(),
@@ -274,7 +261,7 @@ impl<'a> PeepholeFoldConstants {
     fn try_reduce_void(
         &mut self,
         expr: &mut UnaryExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         if (!expr.argument.is_number() || !expr.argument.is_number_0())
             && !expr.may_have_side_effects()
@@ -286,13 +273,12 @@ impl<'a> PeepholeFoldConstants {
     }
 
     fn try_fold_logical_expression(
-        &self,
         logical_expr: &mut LogicalExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         match logical_expr.operator {
-            LogicalOperator::And | LogicalOperator::Or => self.try_fold_and_or(logical_expr, ctx),
-            LogicalOperator::Coalesce => self.try_fold_coalesce(logical_expr, ctx),
+            LogicalOperator::And | LogicalOperator::Or => Self::try_fold_and_or(logical_expr, ctx),
+            LogicalOperator::Coalesce => Self::try_fold_coalesce(logical_expr, ctx),
         }
     }
 
@@ -300,15 +286,14 @@ impl<'a> PeepholeFoldConstants {
     ///
     /// port from [closure-compiler](https://github.com/google/closure-compiler/blob/09094b551915a6487a980a783831cba58b5739d1/src/com/google/javascript/jscomp/PeepholeFoldConstants.java#L587)
     pub fn try_fold_and_or(
-        &self,
         logical_expr: &mut LogicalExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         let op = logical_expr.operator;
         debug_assert!(matches!(op, LogicalOperator::And | LogicalOperator::Or));
 
         let left = &logical_expr.left;
-        let left_val = ctx.get_boolean_value(left).to_option();
+        let left_val = ctx.get_boolean_value(left);
 
         if let Some(lval) = left_val {
             // Bail `0 && (module.exports = {})` for `cjs-module-lexer`.
@@ -350,7 +335,7 @@ impl<'a> PeepholeFoldConstants {
             return Some(sequence_expr);
         } else if let Expression::LogicalExpression(left_child) = &mut logical_expr.left {
             if left_child.operator == logical_expr.operator {
-                let left_child_right_boolean = ctx.get_boolean_value(&left_child.right).to_option();
+                let left_child_right_boolean = ctx.get_boolean_value(&left_child.right);
                 let left_child_op = left_child.operator;
                 if let Some(right_boolean) = left_child_right_boolean {
                     if !left_child.right.may_have_side_effects() {
@@ -378,15 +363,14 @@ impl<'a> PeepholeFoldConstants {
 
     /// Try to fold a nullish coalesce `foo ?? bar`.
     pub fn try_fold_coalesce(
-        &self,
         logical_expr: &mut LogicalExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         debug_assert_eq!(logical_expr.operator, LogicalOperator::Coalesce);
         let left = &logical_expr.left;
-        let left_val = ctx.get_known_value_type(left);
+        let left_val = ValueType::from(left);
         match left_val {
-            ValueType::Null | ValueType::Void => {
+            ValueType::Null | ValueType::Undefined => {
                 Some(if left.may_have_side_effects() {
                     // e.g. `(a(), null) ?? 1` => `(a(), null, 1)`
                     let expressions = ctx.ast.vec_from_iter([
@@ -400,7 +384,7 @@ impl<'a> PeepholeFoldConstants {
                 })
             }
             ValueType::Number
-            | ValueType::Bigint
+            | ValueType::BigInt
             | ValueType::String
             | ValueType::Boolean
             | ValueType::Object => {
@@ -412,22 +396,21 @@ impl<'a> PeepholeFoldConstants {
     }
 
     fn try_fold_binary_expression(
-        &self,
         e: &mut BinaryExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         // TODO: tryReduceOperandsForOp
         match e.operator {
             op if op.is_bitshift() => {
-                self.try_fold_shift(e.span, e.operator, &e.left, &e.right, ctx)
+                Self::try_fold_shift(e.span, e.operator, &e.left, &e.right, ctx)
             }
-            BinaryOperator::Instanceof => self.try_fold_instanceof(e.span, &e.left, &e.right, ctx),
-            BinaryOperator::Addition => self.try_fold_addition(e.span, &e.left, &e.right, ctx),
+            BinaryOperator::Instanceof => Self::try_fold_instanceof(e.span, &e.left, &e.right, ctx),
+            BinaryOperator::Addition => Self::try_fold_addition(e.span, &e.left, &e.right, ctx),
             BinaryOperator::Subtraction
             | BinaryOperator::Division
             | BinaryOperator::Remainder
             | BinaryOperator::Multiplication
-            | BinaryOperator::Exponential => self.try_fold_arithmetic_op(e, ctx),
+            | BinaryOperator::Exponential => Self::try_fold_arithmetic_op(e, ctx),
             BinaryOperator::BitwiseAnd | BinaryOperator::BitwiseOR | BinaryOperator::BitwiseXOR => {
                 // TODO:
                 // self.try_fold_arithmetic_op(e.span, &e.left, &e.right, ctx)
@@ -438,31 +421,30 @@ impl<'a> PeepholeFoldConstants {
                 None
             }
             op if op.is_equality() || op.is_compare() => {
-                self.try_fold_comparison(e.span, e.operator, &e.left, &e.right, ctx)
+                Self::try_fold_comparison(e.span, e.operator, &e.left, &e.right, ctx)
             }
             _ => None,
         }
     }
 
-    fn try_fold_addition<'b>(
-        &self,
+    fn try_fold_addition(
         span: Span,
         left: &'b Expression<'a>,
         right: &'b Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         // skip any potentially dangerous compressions
         if left.may_have_side_effects() || right.may_have_side_effects() {
             return None;
         }
 
-        let left_type = Ty::from(left);
-        let right_type = Ty::from(right);
+        let left_type = ValueType::from(left);
+        let right_type = ValueType::from(right);
         match (left_type, right_type) {
-            (Ty::Undetermined, _) | (_, Ty::Undetermined) => None,
+            (ValueType::Undetermined, _) | (_, ValueType::Undetermined) => None,
 
             // string concatenation
-            (Ty::Str, _) | (_, Ty::Str) => {
+            (ValueType::String, _) | (_, ValueType::String) => {
                 // no need to use get_side_effect_free_string_value b/c we checked for side effects
                 // at the beginning
                 let left_string = ctx.get_string_value(left)?;
@@ -473,9 +455,9 @@ impl<'a> PeepholeFoldConstants {
             },
 
             // number addition
-            (Ty::Number, _) | (_, Ty::Number)
+            (ValueType::Number, _) | (_, ValueType::Number)
                 // when added, booleans get treated as numbers where `true` is 1 and `false` is 0
-                | (Ty::Boolean, Ty::Boolean) => {
+                | (ValueType::Boolean, ValueType::Boolean) => {
                 let left_number = ctx.get_number_value(left)?;
                 let right_number = ctx.get_number_value(right)?;
                 let Ok(value) = TryInto::<f64>::try_into(left_number + right_number) else { return None };
@@ -489,11 +471,15 @@ impl<'a> PeepholeFoldConstants {
     }
 
     fn try_fold_arithmetic_op(
-        &self,
         operation: &mut BinaryExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
-        fn shorter_than_original(result: f64, left: f64, right: f64) -> bool {
+        fn shorter_than_original(
+            result: f64,
+            left: f64,
+            right: f64,
+            length_of_operator: usize,
+        ) -> bool {
             if result > MAX_SAFE_FLOAT
                 || result < NEG_MAX_SAFE_FLOAT
                 || result.is_nan()
@@ -501,24 +487,25 @@ impl<'a> PeepholeFoldConstants {
             {
                 return false;
             }
-            let result_str = result.to_string().len();
-            let original_str = left.to_string().len() + right.to_string().len() + 1;
+            let result_str = result.to_js_string().len();
+            let original_str =
+                left.to_js_string().len() + right.to_js_string().len() + length_of_operator;
             result_str <= original_str
         }
         if !operation.operator.is_arithmetic() {
             return None;
         };
-        let left = self.try_get_number_literal_value(&mut operation.left)?;
-        let right = self.try_get_number_literal_value(&mut operation.right)?;
+        let left = ctx.get_number_value(&operation.left)?;
+        let right = ctx.get_number_value(&operation.right)?;
         if !left.is_finite() || !right.is_finite() {
-            return None;
+            return Self::try_fold_infinity_arithmetic(left, operation.operator, right, ctx);
         }
         let result = match operation.operator {
             BinaryOperator::Addition => left + right,
             BinaryOperator::Subtraction => left - right,
             BinaryOperator::Multiplication => {
                 let result = left * right;
-                if shorter_than_original(result, left, right) {
+                if shorter_than_original(result, left, right, 1) {
                     result
                 } else {
                     return None;
@@ -529,14 +516,21 @@ impl<'a> PeepholeFoldConstants {
                     return None;
                 }
                 let result = left / right;
-                if shorter_than_original(result, left, right) {
+                if shorter_than_original(result, left, right, 1) {
                     result
                 } else {
                     return None;
                 }
             }
             BinaryOperator::Remainder if !right.is_zero() && right.is_finite() => left % right,
-            // TODO BinaryOperator::Exponential if
+            BinaryOperator::Exponential => {
+                let result = left.powf(right);
+                if shorter_than_original(result, left, right, 2) {
+                    result
+                } else {
+                    return None;
+                }
+            }
             _ => return None,
         };
         let number_base =
@@ -544,30 +538,73 @@ impl<'a> PeepholeFoldConstants {
         Some(ctx.ast.expression_numeric_literal(
             operation.span,
             result,
-            result.to_string(),
+            result.to_js_string(),
             number_base,
         ))
     }
 
-    fn try_fold_instanceof<'b>(
-        &self,
+    fn try_fold_infinity_arithmetic(
+        left: f64,
+        operator: BinaryOperator,
+        right: f64,
+        ctx: Ctx<'a, 'b>,
+    ) -> Option<Expression<'a>> {
+        if left.is_finite() && right.is_finite() || !operator.is_arithmetic() {
+            return None;
+        }
+        let result = match operator {
+            BinaryOperator::Addition => left + right,
+            BinaryOperator::Subtraction => left - right,
+            BinaryOperator::Multiplication => left * right,
+            BinaryOperator::Division => {
+                if right == 0.0 {
+                    return None;
+                }
+                left / right
+            }
+            BinaryOperator::Remainder => {
+                if right == 0.0 {
+                    return None;
+                }
+                left % right
+            }
+            BinaryOperator::Exponential => left.powf(right),
+            _ => unreachable!(),
+        };
+        Some(match result {
+            f64::INFINITY => ctx.ast.expression_identifier_reference(SPAN, "Infinity"),
+            f64::NEG_INFINITY => ctx.ast.expression_unary(
+                SPAN,
+                UnaryOperator::UnaryNegation,
+                ctx.ast.expression_identifier_reference(SPAN, "Infinity"),
+            ),
+            _ if result.is_nan() => ctx.ast.expression_identifier_reference(SPAN, "NaN"),
+            _ => ctx.ast.expression_numeric_literal(
+                SPAN,
+                result,
+                result.to_js_string(),
+                if is_exact_int64(result) { NumberBase::Decimal } else { NumberBase::Float },
+            ),
+        })
+    }
+
+    fn try_fold_instanceof(
         _span: Span,
         _left: &'b Expression<'a>,
         _right: &'b Expression<'a>,
-        _ctx: &mut TraverseCtx<'a>,
+        _ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         None
     }
 
-    fn try_fold_comparison<'b>(
-        &self,
+    fn try_fold_comparison(
         span: Span,
         op: BinaryOperator,
         left: &'b Expression<'a>,
         right: &'b Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
-        let value = match self.evaluate_comparison(op, left, right, ctx) {
+        let value = match Self::evaluate_comparison(op, left, right, ctx) {
             Tri::True => true,
             Tri::False => false,
             Tri::Unknown => return None,
@@ -575,12 +612,11 @@ impl<'a> PeepholeFoldConstants {
         Some(ctx.ast.expression_boolean_literal(span, value))
     }
 
-    fn evaluate_comparison<'b>(
-        &self,
+    fn evaluate_comparison(
         op: BinaryOperator,
         left: &'b Expression<'a>,
         right: &'b Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Tri {
         if left.may_have_side_effects() || right.may_have_side_effects() {
             return Tri::Unknown;
@@ -613,29 +649,34 @@ impl<'a> PeepholeFoldConstants {
     }
 
     /// <https://tc39.es/ecma262/#sec-abstract-equality-comparison>
-    fn try_abstract_equality_comparison<'b>(
+    fn try_abstract_equality_comparison(
         left_expr: &'b Expression<'a>,
         right_expr: &'b Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Tri {
-        let left = Ty::from(left_expr);
-        let right = Ty::from(right_expr);
-        if left != Ty::Undetermined && right != Ty::Undetermined {
+        let left = ValueType::from(left_expr);
+        let right = ValueType::from(right_expr);
+        if left != ValueType::Undetermined && right != ValueType::Undetermined {
             if left == right {
                 return Self::try_strict_equality_comparison(left_expr, right_expr, ctx);
             }
-            if matches!((left, right), (Ty::Null, Ty::Void) | (Ty::Void, Ty::Null)) {
+            if matches!(
+                (left, right),
+                (ValueType::Null, ValueType::Undefined) | (ValueType::Undefined, ValueType::Null)
+            ) {
                 return Tri::True;
             }
 
-            if matches!((left, right), (Ty::Number, Ty::Str)) || matches!(right, Ty::Boolean) {
+            if matches!((left, right), (ValueType::Number, ValueType::String))
+                || matches!(right, ValueType::Boolean)
+            {
                 let right_number = ctx.get_side_free_number_value(right_expr);
 
-                if let Some(NumberValue::Number(num)) = right_number {
+                if let Some(num) = right_number {
                     let number_literal_expr = ctx.ast.expression_numeric_literal(
                         right_expr.span(),
                         num,
-                        num.to_string(),
+                        num.to_js_string(),
                         if num.fract() == 0.0 { NumberBase::Decimal } else { NumberBase::Float },
                     );
 
@@ -649,14 +690,16 @@ impl<'a> PeepholeFoldConstants {
                 return Tri::Unknown;
             }
 
-            if matches!((left, right), (Ty::Str, Ty::Number)) || matches!(left, Ty::Boolean) {
+            if matches!((left, right), (ValueType::String, ValueType::Number))
+                || matches!(left, ValueType::Boolean)
+            {
                 let left_number = ctx.get_side_free_number_value(left_expr);
 
-                if let Some(NumberValue::Number(num)) = left_number {
+                if let Some(num) = left_number {
                     let number_literal_expr = ctx.ast.expression_numeric_literal(
                         left_expr.span(),
                         num,
-                        num.to_string(),
+                        num.to_js_string(),
                         if num.fract() == 0.0 { NumberBase::Decimal } else { NumberBase::Float },
                     );
 
@@ -670,7 +713,7 @@ impl<'a> PeepholeFoldConstants {
                 return Tri::Unknown;
             }
 
-            if matches!(left, Ty::BigInt) || matches!(right, Ty::BigInt) {
+            if matches!(left, ValueType::BigInt) || matches!(right, ValueType::BigInt) {
                 let left_bigint = ctx.get_side_free_bigint_value(left_expr);
                 let right_bigint = ctx.get_side_free_bigint_value(right_expr);
 
@@ -679,11 +722,15 @@ impl<'a> PeepholeFoldConstants {
                 }
             }
 
-            if matches!(left, Ty::Str | Ty::Number) && matches!(right, Ty::Object) {
+            if matches!(left, ValueType::String | ValueType::Number)
+                && matches!(right, ValueType::Object)
+            {
                 return Tri::Unknown;
             }
 
-            if matches!(left, Ty::Object) && matches!(right, Ty::Str | Ty::Number) {
+            if matches!(left, ValueType::Object)
+                && matches!(right, ValueType::String | ValueType::Number)
+            {
                 return Tri::Unknown;
             }
 
@@ -693,17 +740,17 @@ impl<'a> PeepholeFoldConstants {
     }
 
     /// <https://tc39.es/ecma262/#sec-abstract-relational-comparison>
-    fn try_abstract_relational_comparison<'b>(
+    fn try_abstract_relational_comparison(
         left_expr: &'b Expression<'a>,
         right_expr: &'b Expression<'a>,
         will_negative: bool,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Tri {
-        let left = Ty::from(left_expr);
-        let right = Ty::from(right_expr);
+        let left = ValueType::from(left_expr);
+        let right = ValueType::from(right_expr);
 
         // First, check for a string comparison.
-        if left == Ty::Str && right == Ty::Str {
+        if left == ValueType::String && right == ValueType::String {
             let left_string = ctx.get_side_free_string_value(left_expr);
             let right_string = ctx.get_side_free_string_value(right_expr);
             if let (Some(left_string), Some(right_string)) = (left_string, right_string) {
@@ -744,19 +791,19 @@ impl<'a> PeepholeFoldConstants {
                 return Tri::from(l_big < r_big);
             }
             // try comparing as Numbers.
-            (_, _, Some(l_num), Some(r_num)) => match (l_num, r_num) {
-                (NumberValue::NaN, _) | (_, NumberValue::NaN) => {
-                    return Tri::from(will_negative);
+            (_, _, Some(l_num), Some(r_num)) => {
+                return if l_num.is_nan() || r_num.is_nan() {
+                    Tri::from(will_negative)
+                } else {
+                    Tri::from(l_num < r_num)
                 }
-                (NumberValue::Number(l), NumberValue::Number(r)) => return Tri::from(l < r),
-                _ => {}
-            },
+            }
             // Finally, try comparisons between BigInt and Number.
             (Some(l_big), _, _, Some(r_num)) => {
-                return Self::bigint_less_than_number(&l_big, &r_num, Tri::False, will_negative);
+                return Self::bigint_less_than_number(&l_big, r_num, Tri::False, will_negative);
             }
             (_, Some(r_big), Some(l_num), _) => {
-                return Self::bigint_less_than_number(&r_big, &l_num, Tri::True, will_negative);
+                return Self::bigint_less_than_number(&r_big, l_num, Tri::True, will_negative);
             }
             _ => {}
         }
@@ -768,29 +815,29 @@ impl<'a> PeepholeFoldConstants {
     #[allow(clippy::cast_possible_truncation)]
     pub fn bigint_less_than_number(
         bigint_value: &BigInt,
-        number_value: &NumberValue,
+        number_value: f64,
         invert: Tri,
         will_negative: bool,
     ) -> Tri {
         // if invert is false, then the number is on the right in tryAbstractRelationalComparison
         // if it's true, then the number is on the left
         match number_value {
-            NumberValue::NaN => Tri::from(will_negative),
-            NumberValue::PositiveInfinity => Tri::True.xor(invert),
-            NumberValue::NegativeInfinity => Tri::False.xor(invert),
-            NumberValue::Number(num) => {
+            v if v.is_nan() => Tri::from(will_negative),
+            v if v.is_infinite() && v.is_sign_positive() => Tri::True.xor(invert),
+            v if v.is_infinite() && v.is_sign_negative() => Tri::False.xor(invert),
+            num => {
                 if let Some(Ordering::Equal | Ordering::Greater) =
                     num.abs().partial_cmp(&2_f64.powi(53))
                 {
                     Tri::Unknown
                 } else {
-                    let number_as_bigint = BigInt::from(*num as i64);
+                    let number_as_bigint = BigInt::from(num as i64);
 
                     match bigint_value.cmp(&number_as_bigint) {
                         Ordering::Less => Tri::True.xor(invert),
                         Ordering::Greater => Tri::False.xor(invert),
                         Ordering::Equal => {
-                            if is_exact_int64(*num) {
+                            if is_exact_int64(num) {
                                 Tri::False
                             } else {
                                 Tri::from(num.is_sign_positive()).xor(invert)
@@ -803,20 +850,21 @@ impl<'a> PeepholeFoldConstants {
     }
 
     /// <https://tc39.es/ecma262/#sec-strict-equality-comparison>
-    fn try_strict_equality_comparison<'b>(
+    #[expect(clippy::float_cmp)]
+    fn try_strict_equality_comparison(
         left_expr: &'b Expression<'a>,
         right_expr: &'b Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Tri {
-        let left = Ty::from(left_expr);
-        let right = Ty::from(right_expr);
-        if left != Ty::Undetermined && right != Ty::Undetermined {
+        let left = ValueType::from(left_expr);
+        let right = ValueType::from(right_expr);
+        if left != ValueType::Undetermined && right != ValueType::Undetermined {
             // Strict equality can only be true for values of the same type.
             if left != right {
                 return Tri::False;
             }
             return match left {
-                Ty::Number => {
+                ValueType::Number => {
                     let left_number = ctx.get_side_free_number_value(left_expr);
                     let right_number = ctx.get_side_free_number_value(right_expr);
 
@@ -830,7 +878,7 @@ impl<'a> PeepholeFoldConstants {
 
                     Tri::Unknown
                 }
-                Ty::Str => {
+                ValueType::String => {
                     let left_string = ctx.get_side_free_string_value(left_expr);
                     let right_string = ctx.get_side_free_string_value(right_expr);
                     if let (Some(left_string), Some(right_string)) = (left_string, right_string) {
@@ -861,7 +909,7 @@ impl<'a> PeepholeFoldConstants {
 
                     Tri::Unknown
                 }
-                Ty::Void | Ty::Null => Tri::True,
+                ValueType::Undefined | ValueType::Null => Tri::True,
                 _ => Tri::Unknown,
             };
         }
@@ -877,20 +925,17 @@ impl<'a> PeepholeFoldConstants {
 
     /// ported from [closure-compiler](https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/PeepholeFoldConstants.java#L1114-L1162)
     #[allow(clippy::cast_possible_truncation)]
-    fn try_fold_shift<'b>(
-        &self,
+    fn try_fold_shift(
         span: Span,
         op: BinaryOperator,
         left: &'b Expression<'a>,
         right: &'b Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         let left_num = ctx.get_side_free_number_value(left);
         let right_num = ctx.get_side_free_number_value(right);
 
-        if let (Some(NumberValue::Number(left_val)), Some(NumberValue::Number(right_val))) =
-            (left_num, right_num)
-        {
+        if let (Some(left_val), Some(right_val)) = (left_num, right_num) {
             if left_val.fract() != 0.0 || right_val.fract() != 0.0 {
                 return None;
             }
@@ -903,7 +948,7 @@ impl<'a> PeepholeFoldConstants {
 
             #[allow(clippy::cast_sign_loss)]
             let right_val_int = right_val as u32;
-            let bits = left_val.to_js_int_32();
+            let bits = left_val.to_int_32();
 
             let result_val: f64 = match op {
                 BinaryOperator::ShiftLeft => f64::from(bits.wrapping_shl(right_val_int)),
@@ -922,7 +967,7 @@ impl<'a> PeepholeFoldConstants {
             return Some(ctx.ast.expression_numeric_literal(
                 span,
                 result_val,
-                result_val.to_string(),
+                result_val.to_js_string(),
                 NumberBase::Decimal,
             ));
         }
@@ -1421,6 +1466,7 @@ mod test {
         test("a=~~0", "a=0");
         test("a=~~10", "a=10");
         test("a=~-7", "a=6");
+        test_same("a=~~foo()");
 
         // test("a=+true", "a=1");
         test("a=+10", "a=10");
@@ -1651,10 +1697,15 @@ mod test {
         test_same("x = 1 % 0");
         // We should not fold this because it's not safe to fold.
         test_same(format!("x = {} * {}", MAX_SAFE_INT / 2, MAX_SAFE_INT / 2).as_str());
-        // test("x = 2 ** 3", "x = 8");
-        // test("x = 2 ** -3", "x = 0.125");
-        // test_same("x = 2 ** 55"); // backs off folding because 2 ** 55 is too large
-        // test_same("x = 3 ** -1"); // backs off because 3**-1 is shorter than 0.3333333333333333
+
+        test("x = 2 ** 3", "x = 8");
+        test("x = 2 ** -3", "x = 0.125");
+        test_same("x = 2 ** 55"); // backs off folding because 2 ** 55 is too large
+        test_same("x = 3 ** -1"); // backs off because 3**-1 is shorter than 0.3333333333333333
+
+        test_same("x = 0 / 0");
+        test_same("x = 0 % 0");
+        test_same("x = -1 ** 0.5");
     }
 
     #[test]
@@ -1681,12 +1732,16 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_fold_arithmetic_infinity() {
         test("x=-Infinity-2", "x=-Infinity");
         test("x=Infinity-2", "x=Infinity");
         test("x=Infinity*5", "x=Infinity");
         test("x = Infinity ** 2", "x = Infinity");
         test("x = Infinity ** -2", "x = 0");
+
+        test("x = Infinity / Infinity", "x = NaN");
+        test_same("x = Infinity % 0");
+        test_same("x = Infinity / 0");
+        test("x = Infinity % Infinity", "x = NaN");
     }
 }

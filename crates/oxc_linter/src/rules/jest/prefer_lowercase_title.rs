@@ -1,7 +1,7 @@
 use oxc_ast::{ast::Argument, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{CompactStr, Span};
 
 use crate::{
     context::LintContext,
@@ -20,8 +20,8 @@ fn unexpected_lowercase(x0: &str, span1: Span) -> OxcDiagnostic {
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferLowercaseTitleConfig {
-    allowed_prefixes: Vec<String>,
-    ignore: Vec<String>,
+    allowed_prefixes: Vec<CompactStr>,
+    ignore: Vec<CompactStr>,
     ignore_top_level_describe: bool,
 }
 
@@ -142,16 +142,12 @@ impl Rule for PreferLowercaseTitle {
         let ignore = obj
             .and_then(|config| config.get("ignore"))
             .and_then(serde_json::Value::as_array)
-            .map(|v| {
-                v.iter().filter_map(serde_json::Value::as_str).map(ToString::to_string).collect()
-            })
+            .map(|v| v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect())
             .unwrap_or_default();
         let allowed_prefixes = obj
             .and_then(|config| config.get("allowedPrefixes"))
             .and_then(serde_json::Value::as_array)
-            .map(|v| {
-                v.iter().filter_map(serde_json::Value::as_str).map(ToString::to_string).collect()
-            })
+            .map(|v| v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect())
             .unwrap_or_default();
 
         Self(Box::new(PreferLowercaseTitleConfig {
@@ -209,7 +205,7 @@ impl PreferLowercaseTitle {
         }
     }
 
-    fn populate_ignores(ignore: &[String]) -> Vec<&str> {
+    fn populate_ignores(ignore: &[CompactStr]) -> Vec<&str> {
         let mut ignores: Vec<&str> = vec![];
         let test_case_name = ["fit", "it", "xit", "test", "xtest"];
         let describe_alias = ["describe", "fdescribe", "xdescribe"];
@@ -232,7 +228,8 @@ impl PreferLowercaseTitle {
     }
 
     fn lint_string<'a>(&self, ctx: &LintContext<'a>, literal: &'a str, span: Span) {
-        if literal.is_empty() || self.allowed_prefixes.iter().any(|name| literal.starts_with(name))
+        if literal.is_empty()
+            || self.allowed_prefixes.iter().any(|name| literal.starts_with(name.as_str()))
         {
             return;
         }

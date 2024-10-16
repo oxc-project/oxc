@@ -99,11 +99,11 @@ function outer() {
   var _this4, _this$foo$bar2, _this5, _this6, _fn4$foo$bar$qux2;
   (_this4 = this), (_this4["prop"] = Math.pow(_this4["prop"], 28));
   (_this$foo$bar2 = this.foo.bar),
-    (_this$foo$bar2["qux"] = Math.pow(_this$foo$bar2["qux"], 29));
+  (_this$foo$bar2["qux"] = Math.pow(_this$foo$bar2["qux"], 29));
   (_this5 = this), (_this5["prop blah"] = Math.pow(_this5["prop blah"], 30));
   (_this6 = this),
-    (_fn4$foo$bar$qux2 = fn4().foo.bar.qux()),
-    (_this6[_fn4$foo$bar$qux2] = Math.pow(_this6[_fn4$foo$bar$qux2], 31));
+  (_fn4$foo$bar$qux2 = fn4().foo.bar.qux()),
+  (_this6[_fn4$foo$bar$qux2] = Math.pow(_this6[_fn4$foo$bar$qux2], 31));
 }
 
 // Underscore var names

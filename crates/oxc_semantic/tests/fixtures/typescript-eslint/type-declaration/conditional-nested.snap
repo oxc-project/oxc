@@ -12,30 +12,7 @@ SCOPES
       {
         "children": [
           {
-            "children": [
-              {
-                "children": [],
-                "flags": "ScopeFlags(StrictMode)",
-                "id": 3,
-                "node": "TSConditionalType",
-                "symbols": [
-                  {
-                    "flags": "SymbolFlags(TypeParameter)",
-                    "id": 3,
-                    "name": "U",
-                    "node": "TSTypeParameter(U)",
-                    "references": [
-                      {
-                        "flags": "ReferenceFlags(Type)",
-                        "id": 5,
-                        "name": "U",
-                        "node_id": 33
-                      }
-                    ]
-                  }
-                ]
-              }
-            ],
+            "children": [],
             "flags": "ScopeFlags(StrictMode)",
             "id": 2,
             "node": "TSConditionalType",
@@ -51,6 +28,28 @@ SCOPES
                     "id": 2,
                     "name": "U",
                     "node_id": 19
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "children": [],
+            "flags": "ScopeFlags(StrictMode)",
+            "id": 3,
+            "node": "TSConditionalType",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(TypeParameter)",
+                "id": 3,
+                "name": "U",
+                "node": "TSTypeParameter(U)",
+                "references": [
+                  {
+                    "flags": "ReferenceFlags(Type)",
+                    "id": 5,
+                    "name": "U",
+                    "node_id": 33
                   }
                 ]
               }

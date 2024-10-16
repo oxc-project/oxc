@@ -143,7 +143,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@v1
-      - uses: crate-ci/typos@v1.25.0
+      - uses: crate-ci/typos@v1.26.0
         with:
           files: .
 
@@ -178,7 +178,16 @@ jobs:
         with:
           cache-key: warm
           components: clippy
+          tools: ast-grep
       - run: cargo lint -- -D warnings
+      - name: Check Char and Byte Offset
+        run: |
+          output=$(sg -p '$A.chars().enumerate()' -r '$A.char_indices()' -l rs)
+          echo "Output: $output"
+          if [ -n "$output" ]; then
+            echo "Error: Unexpected output detected"
+            exit 1
+          fi
 
   doc:
     name: Doc
@@ -202,9 +211,18 @@ jobs:
         with:
           filters: |
             src:
+              - '!.github/**'
+              - '!.vscode/**'
+              - '!apps/**'
+              - '!editors/**'
+              - '!napi/**'
+              - '!npm/**'
+              - '!wasm/**'
               - '!crates/oxc_linter/**'
               - '!crates/oxc_wasm/**'
               - '!crates/oxc_language_server/**'
+              - '!tasks/**'
+              - 'tasks/conformance/**'
 
       - uses: ./.github/actions/clone-submodules
         if: steps.filter.outputs.src == 'true'

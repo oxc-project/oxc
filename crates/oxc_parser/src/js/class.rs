@@ -1,8 +1,8 @@
 use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
+use oxc_ecmascript::PropName;
 use oxc_span::{GetSpan, Span};
-use oxc_syntax_operations::PropName;
 
 use crate::{
     diagnostics,
@@ -75,8 +75,7 @@ impl<'a> ParserImpl<'a> {
             None
         };
 
-        let type_parameters =
-            if self.ts_enabled() { self.parse_ts_type_parameters()? } else { None };
+        let type_parameters = if self.is_ts { self.parse_ts_type_parameters()? } else { None };
         let (extends, implements) = self.parse_heritage_clause()?;
         let mut super_class = None;
         let mut super_type_parameters = None;
@@ -185,7 +184,7 @@ impl<'a> ParserImpl<'a> {
 
         let span = self.start_span();
 
-        let modifiers = self.parse_modifiers(true, false, true);
+        let modifiers = self.parse_modifiers(true, true, true);
 
         let mut kind = MethodDefinitionKind::Method;
         let mut generator = false;
@@ -277,9 +276,13 @@ impl<'a> ParserImpl<'a> {
             self.error(diagnostics::optional_definite_property(optional_span.expand_right(1)));
         }
 
+        if modifiers.contains(ModifierKind::Const) {
+            self.error(diagnostics::const_class_member(key.span()));
+        }
+
         if let PropertyKey::PrivateIdentifier(private_ident) = &key {
             // `private #foo`, etc. is illegal
-            if self.ts_enabled() {
+            if self.is_ts {
                 self.verify_modifiers(
                     &modifiers,
                     ModifierFlags::all() - ModifierFlags::ACCESSIBILITY,
@@ -453,8 +456,7 @@ impl<'a> ParserImpl<'a> {
         optional: bool,
         definite: bool,
     ) -> Result<ClassElement<'a>> {
-        let type_annotation =
-            if self.ts_enabled() { self.parse_ts_type_annotation()? } else { None };
+        let type_annotation = if self.is_ts { self.parse_ts_type_annotation()? } else { None };
         let decorators = self.consume_decorators();
         let value = if self.eat(Kind::Eq) { Some(self.parse_expr()?) } else { None };
         self.asi()?;
@@ -502,8 +504,7 @@ impl<'a> ParserImpl<'a> {
         definite: bool,
         accessibility: Option<TSAccessibility>,
     ) -> Result<ClassElement<'a>> {
-        let type_annotation =
-            if self.ts_enabled() { self.parse_ts_type_annotation()? } else { None };
+        let type_annotation = if self.is_ts { self.parse_ts_type_annotation()? } else { None };
         let value =
             self.eat(Kind::Eq).then(|| self.parse_assignment_expression_or_higher()).transpose()?;
         let r#type = if r#abstract {

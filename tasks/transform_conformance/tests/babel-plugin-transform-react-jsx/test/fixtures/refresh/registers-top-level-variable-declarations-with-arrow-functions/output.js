@@ -1,14 +1,14 @@
 import { jsx as _jsx } from "react/jsx-runtime";
 let Hello = () => {
-	const handleClick = () => {};
-	return _jsx("h1", {
-		onClick: handleClick,
-		children: "Hi"
-	});
+  const handleClick = () => {};
+  return _jsx("h1", {
+    onClick: handleClick,
+    children: "Hi"
+  });
 };
 _c = Hello;
 const Bar = () => {
-	return _jsx(Hello, {});
+  return _jsx(Hello, {});
 };
 _c2 = Bar;
 var Baz = () => _jsx("div", {});

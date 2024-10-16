@@ -4,9 +4,10 @@ use std::{
 };
 
 use cow_utils::CowUtils;
+use oxc::parser::ParseOptions;
 use oxc::{
     allocator::Allocator,
-    codegen::CodeGenerator,
+    codegen::{CodeGenerator, CodegenOptions},
     diagnostics::{Error, NamedSource, OxcDiagnostic},
     parser::Parser,
     span::{SourceType, VALID_EXTENSIONS},
@@ -298,13 +299,19 @@ impl TestCase for ConformanceTestCase {
                 String::default,
                 |output| {
                     // Get expected code by parsing the source text, so we can get the same code generated result.
-                    let ret = Parser::new(&allocator, &output, source_type).parse();
+                    let ret = Parser::new(&allocator, &output, source_type)
+                        .with_options(ParseOptions {
+                            // Related: async to generator, regression
+                            allow_return_outside_function: true,
+                            ..Default::default()
+                        })
+                        .parse();
+
                     CodeGenerator::new()
-                        // .enable_comment(
-                        // &output,
-                        // ret.trivias,
-                        // CommentOptions { preserve_annotate_comments: true },
-                        // )
+                        .with_options(CodegenOptions {
+                            comments: false,
+                            ..CodegenOptions::default()
+                        })
                         .build(&ret.program)
                         .code
                 },
@@ -396,7 +403,10 @@ impl ExecTestCase {
         let source_text = fs::read_to_string(&target_path).unwrap();
         let source_type = SourceType::from_path(&target_path).unwrap();
         let transformed_ret = Parser::new(&allocator, &source_text, source_type).parse();
-        let result = CodeGenerator::new().build(&transformed_ret.program).code;
+        let result = CodeGenerator::new()
+            .with_options(CodegenOptions { comments: false, ..CodegenOptions::default() })
+            .build(&transformed_ret.program)
+            .code;
         fs::write(&target_path, result).unwrap();
         target_path
     }

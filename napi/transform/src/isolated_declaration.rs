@@ -4,7 +4,7 @@ use napi_derive::napi;
 
 use oxc::{
     allocator::Allocator,
-    codegen::{CodeGenerator, CommentOptions},
+    codegen::{CodeGenerator, CodegenOptions},
     isolated_declarations::IsolatedDeclarations,
     napi::{
         isolated_declarations::{IsolatedDeclarationsOptions, IsolatedDeclarationsResult},
@@ -33,23 +33,18 @@ pub fn isolated_declaration(
 
     let transformed_ret = IsolatedDeclarations::new(
         &allocator,
-        &source_text,
-        &ret.trivias,
         oxc::isolated_declarations::IsolatedDeclarationsOptions {
             strip_internal: options.strip_internal.unwrap_or(false),
         },
     )
     .build(&ret.program);
 
-    let mut codegen = CodeGenerator::new().enable_comment(
-        &source_text,
-        ret.trivias.clone(),
-        CommentOptions { preserve_annotate_comments: false },
-    );
-    if options.sourcemap == Some(true) {
-        codegen = codegen.enable_source_map(&filename, &source_text);
-    }
-    let codegen_ret = codegen.build(&transformed_ret.program);
+    let codegen_ret = CodeGenerator::new()
+        .with_options(CodegenOptions {
+            source_map_path: Some(source_path.to_path_buf()),
+            ..CodegenOptions::default()
+        })
+        .build(&transformed_ret.program);
 
     let errors = ret.errors.into_iter().chain(transformed_ret.errors).collect();
     let errors = wrap_diagnostics(source_path, source_type, &source_text, errors);

@@ -6,6 +6,7 @@ use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::TransformCtx;
 
+pub mod helper_loader;
 pub mod module_imports;
 pub mod top_level_statements;
 pub mod var_declarations;

@@ -1,3 +1,9 @@
+use oxc_allocator::Vec;
+use oxc_ast::{ast::*, AstBuilder};
+use oxc_traverse::{Traverse, TraverseCtx};
+
+use crate::TransformCtx;
+
 mod comments;
 mod diagnostics;
 mod display_name;
@@ -7,18 +13,11 @@ mod jsx_source;
 mod options;
 mod refresh;
 mod utils;
-
-use oxc_allocator::Vec;
-use oxc_ast::{ast::*, AstBuilder};
-use oxc_traverse::{Traverse, TraverseCtx};
 use refresh::ReactRefresh;
 
-pub use self::{
-    display_name::ReactDisplayName,
-    jsx::ReactJsx,
-    options::{JsxOptions, JsxRuntime, ReactRefreshOptions},
-};
-use crate::TransformCtx;
+pub use display_name::ReactDisplayName;
+pub use jsx::ReactJsx;
+pub use options::{JsxOptions, JsxRuntime, ReactRefreshOptions};
 
 pub(crate) use comments::update_options_with_comments;
 

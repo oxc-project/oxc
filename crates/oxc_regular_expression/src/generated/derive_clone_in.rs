@@ -296,20 +296,30 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for IgnoreGroup<'old_alloc> {
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         IgnoreGroup {
             span: CloneIn::clone_in(&self.span, allocator),
-            enabling_modifiers: CloneIn::clone_in(&self.enabling_modifiers, allocator),
-            disabling_modifiers: CloneIn::clone_in(&self.disabling_modifiers, allocator),
+            modifiers: CloneIn::clone_in(&self.modifiers, allocator),
             body: CloneIn::clone_in(&self.body, allocator),
         }
     }
 }
 
-impl<'alloc> CloneIn<'alloc> for ModifierFlags {
-    type Cloned = ModifierFlags;
+impl<'alloc> CloneIn<'alloc> for Modifiers {
+    type Cloned = Modifiers;
     fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
-        ModifierFlags {
+        Modifiers {
+            span: CloneIn::clone_in(&self.span, allocator),
+            enabling: CloneIn::clone_in(&self.enabling, allocator),
+            disabling: CloneIn::clone_in(&self.disabling, allocator),
+        }
+    }
+}
+
+impl<'alloc> CloneIn<'alloc> for Modifier {
+    type Cloned = Modifier;
+    fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
+        Modifier {
             ignore_case: CloneIn::clone_in(&self.ignore_case, allocator),
-            sticky: CloneIn::clone_in(&self.sticky, allocator),
             multiline: CloneIn::clone_in(&self.multiline, allocator),
+            sticky: CloneIn::clone_in(&self.sticky, allocator),
         }
     }
 }

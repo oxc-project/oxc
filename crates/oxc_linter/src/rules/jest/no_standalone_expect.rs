@@ -2,7 +2,7 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
-use oxc_span::Span;
+use oxc_span::{CompactStr, Span};
 use rustc_hash::FxHashMap;
 
 use crate::{
@@ -28,7 +28,7 @@ pub struct NoStandaloneExpect(Box<NoStandaloneExpectConfig>);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoStandaloneExpectConfig {
-    additional_test_block_functions: Vec<String>,
+    additional_test_block_functions: Vec<CompactStr>,
 }
 
 impl std::ops::Deref for NoStandaloneExpect {
@@ -65,9 +65,7 @@ impl Rule for NoStandaloneExpect {
             .get(0)
             .and_then(|v| v.get("additionalTestBlockFunctions"))
             .and_then(serde_json::Value::as_array)
-            .map(|v| {
-                v.iter().filter_map(serde_json::Value::as_str).map(ToString::to_string).collect()
-            })
+            .map(|v| v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect())
             .unwrap_or_default();
 
         Self(Box::new(NoStandaloneExpectConfig { additional_test_block_functions }))
@@ -128,7 +126,7 @@ impl NoStandaloneExpect {
 
 fn is_correct_place_to_call_expect<'a>(
     node: &AstNode<'a>,
-    additional_test_block_functions: &[String],
+    additional_test_block_functions: &[CompactStr],
     id_nodes_mapping: &FxHashMap<NodeId, &PossibleJestNode<'a, '_>>,
     ctx: &LintContext<'a>,
 ) -> Option<()> {
@@ -196,7 +194,7 @@ fn is_correct_place_to_call_expect<'a>(
 
 fn is_var_declarator_or_test_block<'a>(
     node: &AstNode<'a>,
-    additional_test_block_functions: &[String],
+    additional_test_block_functions: &[CompactStr],
     id_nodes_mapping: &FxHashMap<NodeId, &PossibleJestNode<'a, '_>>,
     ctx: &LintContext<'a>,
 ) -> bool {
@@ -213,7 +211,7 @@ fn is_var_declarator_or_test_block<'a>(
             }
 
             let node_name = get_node_name(&call_expr.callee);
-            if additional_test_block_functions.iter().any(|fn_name| &node_name == fn_name) {
+            if additional_test_block_functions.iter().any(|fn_name| node_name == fn_name) {
                 return true;
             }
         }

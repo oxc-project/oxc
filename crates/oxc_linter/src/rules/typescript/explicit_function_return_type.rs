@@ -7,7 +7,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{CompactStr, Span};
 use oxc_syntax::operator::UnaryOperator;
 use rustc_hash::FxHashSet;
 
@@ -31,7 +31,7 @@ pub struct ExplicitFunctionReturnTypeConfig {
     allow_direct_const_assertion_in_arrow_functions: bool,
     allow_concise_arrow_function_expressions_starting_with_void: bool,
     allow_functions_without_type_parameters: bool,
-    allowed_names: FxHashSet<String>,
+    allowed_names: FxHashSet<CompactStr>,
     allow_higher_order_functions: bool,
     allow_iifes: bool,
 }
@@ -143,10 +143,7 @@ impl Rule for ExplicitFunctionReturnType {
                 .and_then(|x| x.get("allowedNames"))
                 .and_then(serde_json::Value::as_array)
                 .map(|v| {
-                    v.iter()
-                        .filter_map(serde_json::Value::as_str)
-                        .map(ToString::to_string)
-                        .collect()
+                    v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect()
                 })
                 .unwrap_or_default(),
             allow_higher_order_functions: options

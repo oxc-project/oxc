@@ -1,12 +1,9 @@
 use oxc_syntax::node::NodeId;
-use petgraph::stable_graph::NodeIndex;
-
-pub type BasicBlockId = NodeIndex;
 
 #[derive(Debug, Clone)]
 pub struct BasicBlock {
     pub instructions: Vec<Instruction>,
-    pub unreachable: bool,
+    unreachable: bool,
 }
 
 impl BasicBlock {
@@ -16,6 +13,21 @@ impl BasicBlock {
 
     pub fn instructions(&self) -> &Vec<Instruction> {
         &self.instructions
+    }
+
+    #[inline]
+    pub fn is_unreachable(&self) -> bool {
+        self.unreachable
+    }
+
+    #[inline]
+    pub fn mark_as_unreachable(&mut self) {
+        self.unreachable = true;
+    }
+
+    #[inline]
+    pub fn mark_as_reachable(&mut self) {
+        self.unreachable = false;
     }
 }
 

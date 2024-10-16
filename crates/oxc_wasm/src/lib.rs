@@ -11,7 +11,7 @@ use std::{
 
 use oxc::{
     allocator::Allocator,
-    ast::{ast::Program, CommentKind, Trivias, Visit},
+    ast::{ast::Program, Comment as OxcComment, CommentKind, Visit},
     codegen::{CodeGenerator, CodegenOptions},
     diagnostics::Error,
     minifier::{CompressOptions, Minifier, MinifierOptions},
@@ -188,22 +188,21 @@ impl Oxc {
                 .preserve_parens
                 .unwrap_or(default_parser_options.preserve_parens),
         };
-        let ParserReturn { mut program, errors, trivias, .. } =
+        let ParserReturn { mut program, errors, .. } =
             Parser::new(&allocator, source_text, source_type)
                 .with_options(oxc_parser_options)
                 .parse();
 
-        self.comments = Self::map_comments(source_text, &trivias);
+        self.comments = Self::map_comments(source_text, &program.comments);
         self.ir = format!("{:#?}", program.body);
         self.ast = program.serialize(&self.serializer)?;
 
-        let mut semantic_builder = SemanticBuilder::new(source_text);
+        let mut semantic_builder = SemanticBuilder::new();
         if run_options.transform.unwrap_or_default() {
             // Estimate transformer will triple scopes, symbols, references
             semantic_builder = semantic_builder.with_excess_capacity(2.0);
         }
         let semantic_ret = semantic_builder
-            .with_trivias(trivias.clone())
             .with_check_syntax_error(true)
             .with_cfg(true)
             .build_module_record(&path, &program)
@@ -221,7 +220,7 @@ impl Oxc {
             );
         }
 
-        self.run_linter(&run_options, source_text, &path, &trivias, &program);
+        self.run_linter(&run_options, &path, &program);
 
         self.run_prettier(&run_options, source_text, source_type);
 
@@ -241,9 +240,8 @@ impl Oxc {
                 targets: Targets::from_query("chrome 51"),
                 ..EnvOptions::default()
             }) {
-                let result =
-                    Transformer::new(&allocator, &path, source_text, trivias.clone(), options)
-                        .build_with_symbols_and_scopes(symbols, scopes, &mut program);
+                let result = Transformer::new(&allocator, &path, options)
+                    .build_with_symbols_and_scopes(symbols, scopes, &mut program);
                 if !result.errors.is_empty() {
                     self.save_diagnostics(
                         result.errors.into_iter().map(Error::from).collect::<Vec<_>>(),
@@ -290,19 +288,11 @@ impl Oxc {
         Ok(())
     }
 
-    fn run_linter(
-        &mut self,
-        run_options: &OxcRunOptions,
-        source_text: &str,
-        path: &Path,
-        trivias: &Trivias,
-        program: &Program,
-    ) {
+    fn run_linter(&mut self, run_options: &OxcRunOptions, path: &Path, program: &Program) {
         // Only lint if there are no syntax errors
         if run_options.lint.unwrap_or_default() && self.diagnostics.borrow().is_empty() {
-            let semantic_ret = SemanticBuilder::new(source_text)
+            let semantic_ret = SemanticBuilder::new()
                 .with_cfg(true)
-                .with_trivias(trivias.clone())
                 .build_module_record(path, program)
                 .build(program);
             let semantic = Rc::new(semantic_ret.semantic);
@@ -326,12 +316,7 @@ impl Oxc {
                 .with_options(ParseOptions { preserve_parens: false, ..ParseOptions::default() })
                 .parse();
 
-            let mut prettier = Prettier::new(
-                &allocator,
-                source_text,
-                ret.trivias.clone(),
-                PrettierOptions::default(),
-            );
+            let mut prettier = Prettier::new(&allocator, PrettierOptions::default());
 
             if run_options.prettier_format.unwrap_or_default() {
                 self.prettier_formatted_text = prettier.build(&ret.program);
@@ -341,13 +326,7 @@ impl Oxc {
                 let prettier_doc = prettier.doc(&ret.program).to_string();
                 self.prettier_ir_text = {
                     let ret = Parser::new(&allocator, &prettier_doc, SourceType::default()).parse();
-                    Prettier::new(
-                        &allocator,
-                        &prettier_doc,
-                        ret.trivias,
-                        PrettierOptions::default(),
-                    )
-                    .build(&ret.program)
+                    Prettier::new(&allocator, PrettierOptions::default()).build(&ret.program)
                 };
             }
         }
@@ -417,9 +396,9 @@ impl Oxc {
         self.diagnostics.borrow_mut().extend(diagnostics);
     }
 
-    fn map_comments(source_text: &str, trivias: &Trivias) -> Vec<Comment> {
-        trivias
-            .comments()
+    fn map_comments(source_text: &str, comments: &[OxcComment]) -> Vec<Comment> {
+        comments
+            .iter()
             .map(|comment| Comment {
                 r#type: match comment.kind {
                     CommentKind::Line => CommentType::Line,

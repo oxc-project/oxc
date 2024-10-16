@@ -26,7 +26,7 @@ oxc_linter = { workspace = true }
 oxc_prettier = { workspace = true }
 serde = { workspace = true }
 
-console_error_panic_hook = "0.1.7"
+console_error_panic_hook = { workspace = true }
 serde-wasm-bindgen = { workspace = true }
 tsify = { workspace = true }
 wasm-bindgen = { workspace = true }

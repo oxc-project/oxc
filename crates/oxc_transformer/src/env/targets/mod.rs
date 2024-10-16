@@ -10,10 +10,10 @@ use std::ops::{Deref, DerefMut};
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
-pub use self::query::Targets;
-use self::version::Version;
 pub mod query;
 pub mod version;
+pub use query::Targets;
+use version::Version;
 
 /// A map of browser names to data for feature support in browser.
 ///

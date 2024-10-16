@@ -21,14 +21,14 @@ fn get_result(source_text: &str, source_type: SourceType) -> TestResult {
 
     let allocator = Allocator::default();
     let parse_options = ParseOptions { preserve_parens: false, ..ParseOptions::default() };
-    let ParserReturn { program, trivias, .. } =
+    let ParserReturn { program, .. } =
         Parser::new(&allocator, source_text, source_type).with_options(parse_options).parse();
-    let source_text1 = Prettier::new(&allocator, source_text, trivias, options).build(&program);
+    let source_text1 = Prettier::new(&allocator, options).build(&program);
 
     let allocator = Allocator::default();
-    let ParserReturn { program, trivias, .. } =
+    let ParserReturn { program, .. } =
         Parser::new(&allocator, &source_text1, source_type).with_options(parse_options).parse();
-    let source_text2 = Prettier::new(&allocator, &source_text1, trivias, options).build(&program);
+    let source_text2 = Prettier::new(&allocator, options).build(&program);
 
     if source_text1 == source_text2 {
         TestResult::Passed

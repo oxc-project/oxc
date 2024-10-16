@@ -4,8 +4,8 @@ use std::{borrow::Cow, ptr};
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind};
+use oxc_ecmascript::{BoundNames, IsSimpleParameterList};
 use oxc_span::{GetSpan, SourceType};
-use oxc_syntax_operations::{BoundNames, IsSimpleParameterList};
 
 use crate::{
     scope::{ScopeFlags, ScopeId},
@@ -416,13 +416,19 @@ impl<'a> Binder<'a> for TSModuleDeclaration<'a> {
         // At declaration time a module has no value declaration it is only when a value declaration
         // is made inside a the scope of a module that the symbol is modified
         let ambient = if self.declare { SymbolFlags::Ambient } else { SymbolFlags::None };
-        // FIXME: insert symbol_id into TSModuleDeclarationName AST node
-        let _symbol_id = builder.declare_symbol(
+        let symbol_id = builder.declare_symbol(
             self.id.span(),
             self.id.name().as_str(),
             SymbolFlags::NameSpaceModule | ambient,
             SymbolFlags::None,
         );
+
+        // do not bind `global` for `declare global { ... }`
+        if !self.kind.is_global() {
+            if let TSModuleDeclarationName::Identifier(id) = &self.id {
+                id.symbol_id.set(Some(symbol_id));
+            }
+        }
     }
 }
 

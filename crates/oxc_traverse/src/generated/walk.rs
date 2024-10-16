@@ -3964,13 +3964,6 @@ pub(crate) unsafe fn walk_ts_conditional_type<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_conditional_type(&mut *node, ctx);
-    let previous_scope_id = ctx.current_scope_id();
-    ctx.set_current_scope_id(
-        (*((node as *mut u8).add(ancestor::OFFSET_TS_CONDITIONAL_TYPE_SCOPE_ID)
-            as *mut Cell<Option<ScopeId>>))
-            .get()
-            .unwrap(),
-    );
     let pop_token = ctx.push_stack(Ancestor::TSConditionalTypeCheckType(
         ancestor::TSConditionalTypeWithoutCheckType(node, PhantomData),
     ));
@@ -3978,6 +3971,13 @@ pub(crate) unsafe fn walk_ts_conditional_type<'a, Tr: Traverse<'a>>(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_CONDITIONAL_TYPE_CHECK_TYPE) as *mut TSType,
         ctx,
+    );
+    let previous_scope_id = ctx.current_scope_id();
+    ctx.set_current_scope_id(
+        (*((node as *mut u8).add(ancestor::OFFSET_TS_CONDITIONAL_TYPE_SCOPE_ID)
+            as *mut Cell<Option<ScopeId>>))
+            .get()
+            .unwrap(),
     );
     ctx.retag_stack(AncestorType::TSConditionalTypeExtendsType);
     walk_ts_type(
@@ -3991,6 +3991,7 @@ pub(crate) unsafe fn walk_ts_conditional_type<'a, Tr: Traverse<'a>>(
         (node as *mut u8).add(ancestor::OFFSET_TS_CONDITIONAL_TYPE_TRUE_TYPE) as *mut TSType,
         ctx,
     );
+    ctx.set_current_scope_id(previous_scope_id);
     ctx.retag_stack(AncestorType::TSConditionalTypeFalseType);
     walk_ts_type(
         traverser,
@@ -3998,7 +3999,6 @@ pub(crate) unsafe fn walk_ts_conditional_type<'a, Tr: Traverse<'a>>(
         ctx,
     );
     ctx.pop_stack(pop_token);
-    ctx.set_current_scope_id(previous_scope_id);
     traverser.exit_ts_conditional_type(&mut *node, ctx);
 }
 
@@ -4732,13 +4732,20 @@ pub(crate) unsafe fn walk_ts_call_signature_declaration<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_call_signature_declaration(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSCallSignatureDeclarationThisParam(
-        ancestor::TSCallSignatureDeclarationWithoutThisParam(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::TSCallSignatureDeclarationTypeParameters(
+        ancestor::TSCallSignatureDeclarationWithoutTypeParameters(node, PhantomData),
     ));
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_TS_CALL_SIGNATURE_DECLARATION_TYPE_PARAMETERS)
+        as *mut Option<Box<TSTypeParameterDeclaration>>)
+    {
+        walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
+    }
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TS_CALL_SIGNATURE_DECLARATION_THIS_PARAM)
         as *mut Option<TSThisParameter>)
     {
+        ctx.retag_stack(AncestorType::TSCallSignatureDeclarationThisParam);
         walk_ts_this_parameter(traverser, field as *mut _, ctx);
     }
     ctx.retag_stack(AncestorType::TSCallSignatureDeclarationParams);
@@ -4754,13 +4761,6 @@ pub(crate) unsafe fn walk_ts_call_signature_declaration<'a, Tr: Traverse<'a>>(
     {
         ctx.retag_stack(AncestorType::TSCallSignatureDeclarationReturnType);
         walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
-    }
-    if let Some(field) = &mut *((node as *mut u8)
-        .add(ancestor::OFFSET_TS_CALL_SIGNATURE_DECLARATION_TYPE_PARAMETERS)
-        as *mut Option<Box<TSTypeParameterDeclaration>>)
-    {
-        ctx.retag_stack(AncestorType::TSCallSignatureDeclarationTypeParameters);
-        walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
     traverser.exit_ts_call_signature_declaration(&mut *node, ctx);
@@ -4788,6 +4788,13 @@ pub(crate) unsafe fn walk_ts_method_signature<'a, Tr: Traverse<'a>>(
         ctx,
     );
     if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_TS_METHOD_SIGNATURE_TYPE_PARAMETERS)
+        as *mut Option<Box<TSTypeParameterDeclaration>>)
+    {
+        ctx.retag_stack(AncestorType::TSMethodSignatureTypeParameters);
+        walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TS_METHOD_SIGNATURE_THIS_PARAM)
         as *mut Option<Box<TSThisParameter>>)
     {
@@ -4808,13 +4815,6 @@ pub(crate) unsafe fn walk_ts_method_signature<'a, Tr: Traverse<'a>>(
         ctx.retag_stack(AncestorType::TSMethodSignatureReturnType);
         walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
     }
-    if let Some(field) = &mut *((node as *mut u8)
-        .add(ancestor::OFFSET_TS_METHOD_SIGNATURE_TYPE_PARAMETERS)
-        as *mut Option<Box<TSTypeParameterDeclaration>>)
-    {
-        ctx.retag_stack(AncestorType::TSMethodSignatureTypeParameters);
-        walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
-    }
     ctx.pop_stack(pop_token);
     ctx.set_current_scope_id(previous_scope_id);
     traverser.exit_ts_method_signature(&mut *node, ctx);
@@ -4833,9 +4833,16 @@ pub(crate) unsafe fn walk_ts_construct_signature_declaration<'a, Tr: Traverse<'a
             .get()
             .unwrap(),
     );
-    let pop_token = ctx.push_stack(Ancestor::TSConstructSignatureDeclarationParams(
-        ancestor::TSConstructSignatureDeclarationWithoutParams(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::TSConstructSignatureDeclarationTypeParameters(
+        ancestor::TSConstructSignatureDeclarationWithoutTypeParameters(node, PhantomData),
     ));
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_TYPE_PARAMETERS)
+        as *mut Option<Box<TSTypeParameterDeclaration>>)
+    {
+        walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::TSConstructSignatureDeclarationParams);
     walk_formal_parameters(
         traverser,
         (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_PARAMS)
@@ -4848,13 +4855,6 @@ pub(crate) unsafe fn walk_ts_construct_signature_declaration<'a, Tr: Traverse<'a
     {
         ctx.retag_stack(AncestorType::TSConstructSignatureDeclarationReturnType);
         walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
-    }
-    if let Some(field) = &mut *((node as *mut u8)
-        .add(ancestor::OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_TYPE_PARAMETERS)
-        as *mut Option<Box<TSTypeParameterDeclaration>>)
-    {
-        ctx.retag_stack(AncestorType::TSConstructSignatureDeclarationTypeParameters);
-        walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
     ctx.set_current_scope_id(previous_scope_id);
@@ -4987,7 +4987,7 @@ pub(crate) unsafe fn walk_ts_module_declaration_name<'a, Tr: Traverse<'a>>(
     traverser.enter_ts_module_declaration_name(&mut *node, ctx);
     match &mut *node {
         TSModuleDeclarationName::Identifier(node) => {
-            walk_identifier_name(traverser, node as *mut _, ctx)
+            walk_binding_identifier(traverser, node as *mut _, ctx)
         }
         TSModuleDeclarationName::StringLiteral(node) => {
             walk_string_literal(traverser, node as *mut _, ctx)
@@ -5229,12 +5229,19 @@ pub(crate) unsafe fn walk_ts_function_type<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_function_type(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSFunctionTypeThisParam(
-        ancestor::TSFunctionTypeWithoutThisParam(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::TSFunctionTypeTypeParameters(
+        ancestor::TSFunctionTypeWithoutTypeParameters(node, PhantomData),
     ));
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_TS_FUNCTION_TYPE_TYPE_PARAMETERS)
+        as *mut Option<Box<TSTypeParameterDeclaration>>)
+    {
+        walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
+    }
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_FUNCTION_TYPE_THIS_PARAM)
         as *mut Option<Box<TSThisParameter>>)
     {
+        ctx.retag_stack(AncestorType::TSFunctionTypeThisParam);
         walk_ts_this_parameter(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.retag_stack(AncestorType::TSFunctionTypeParams);
@@ -5251,13 +5258,6 @@ pub(crate) unsafe fn walk_ts_function_type<'a, Tr: Traverse<'a>>(
             as *mut Box<TSTypeAnnotation>)) as *mut _,
         ctx,
     );
-    if let Some(field) = &mut *((node as *mut u8)
-        .add(ancestor::OFFSET_TS_FUNCTION_TYPE_TYPE_PARAMETERS)
-        as *mut Option<Box<TSTypeParameterDeclaration>>)
-    {
-        ctx.retag_stack(AncestorType::TSFunctionTypeTypeParameters);
-        walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
-    }
     ctx.pop_stack(pop_token);
     traverser.exit_ts_function_type(&mut *node, ctx);
 }
@@ -5268,9 +5268,16 @@ pub(crate) unsafe fn walk_ts_constructor_type<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_constructor_type(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSConstructorTypeParams(
-        ancestor::TSConstructorTypeWithoutParams(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::TSConstructorTypeTypeParameters(
+        ancestor::TSConstructorTypeWithoutTypeParameters(node, PhantomData),
     ));
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_TS_CONSTRUCTOR_TYPE_TYPE_PARAMETERS)
+        as *mut Option<Box<TSTypeParameterDeclaration>>)
+    {
+        walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::TSConstructorTypeParams);
     walk_formal_parameters(
         traverser,
         (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_CONSTRUCTOR_TYPE_PARAMS)
@@ -5284,13 +5291,6 @@ pub(crate) unsafe fn walk_ts_constructor_type<'a, Tr: Traverse<'a>>(
             as *mut Box<TSTypeAnnotation>)) as *mut _,
         ctx,
     );
-    if let Some(field) = &mut *((node as *mut u8)
-        .add(ancestor::OFFSET_TS_CONSTRUCTOR_TYPE_TYPE_PARAMETERS)
-        as *mut Option<Box<TSTypeParameterDeclaration>>)
-    {
-        ctx.retag_stack(AncestorType::TSConstructorTypeTypeParameters);
-        walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
-    }
     ctx.pop_stack(pop_token);
     traverser.exit_ts_constructor_type(&mut *node, ctx);
 }

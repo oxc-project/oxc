@@ -70,7 +70,8 @@ impl LinterBuilder {
     /// ```
     pub fn from_oxlintrc(start_empty: bool, oxlintrc: Oxlintrc) -> Self {
         // TODO: monorepo config merging, plugin-based extends, etc.
-        let Oxlintrc { plugins, settings, env, globals, rules: oxlintrc_rules } = oxlintrc;
+        let Oxlintrc { plugins, settings, env, globals, categories, rules: oxlintrc_rules } =
+            oxlintrc;
 
         let config = LintConfig { settings, env, globals };
         let options = LintOptions { plugins, ..Default::default() };
@@ -78,6 +79,10 @@ impl LinterBuilder {
             if start_empty { FxHashSet::default() } else { Self::warn_correctness(plugins) };
         let cache = RulesCache::new(options.plugins);
         let mut builder = Self { rules, options, config, cache };
+
+        if !categories.is_empty() {
+            builder = builder.with_filters(categories.filters());
+        }
 
         {
             let all_rules = builder.cache.borrow();
@@ -535,5 +540,56 @@ mod test {
             LintPlugins::ESLINT.union(LintPlugins::TYPESCRIPT).union(LintPlugins::NEXTJS);
         let builder = builder.with_plugins(expected_plugins);
         assert_eq!(expected_plugins, builder.plugins());
+    }
+
+    #[test]
+    fn test_categories() {
+        let oxlintrc: Oxlintrc = serde_json::from_str(
+            r#"
+        {
+            "categories": {
+                "correctness": "warn",
+                "suspicious": "deny"
+            },
+            "rules": {
+                "no-const-assign": "error"
+            }
+        }
+        "#,
+        )
+        .unwrap();
+        let builder = LinterBuilder::from_oxlintrc(false, oxlintrc);
+        for rule in &builder.rules {
+            let name = rule.name();
+            let plugin = rule.plugin_name();
+            let category = rule.category();
+            match category {
+                RuleCategory::Correctness => {
+                    if name == "no-const-assign" {
+                        assert_eq!(
+                            rule.severity,
+                            AllowWarnDeny::Deny,
+                            "no-const-assign should be denied",
+                        );
+                    } else {
+                        assert_eq!(
+                            rule.severity,
+                            AllowWarnDeny::Warn,
+                            "{plugin}/{name} should be a warning"
+                        );
+                    }
+                }
+                RuleCategory::Suspicious => {
+                    assert_eq!(
+                        rule.severity,
+                        AllowWarnDeny::Deny,
+                        "{plugin}/{name} should be denied"
+                    );
+                }
+                invalid => {
+                    panic!("Found rule {plugin}/{name} with an unexpected category {invalid:?}");
+                }
+            }
+        }
     }
 }

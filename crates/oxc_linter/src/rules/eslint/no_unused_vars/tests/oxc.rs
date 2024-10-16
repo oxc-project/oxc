@@ -5,6 +5,14 @@ use serde_json::json;
 use super::NoUnusedVars;
 use crate::{tester::Tester, FixKind, RuleMeta as _};
 
+// uncomment to only run a single test. useful for step-through debugging.
+// #[test]
+// fn test_debug() {
+//     let pass: Vec<&str> = vec![];
+//     let fail = vec![];
+//     Tester::new(NoUnusedVars::NAME, pass, fail).intentionally_allow_no_fix_tests().test();
+// }
+
 #[test]
 fn test_vars_simple() {
     let pass = vec![
@@ -54,6 +62,9 @@ fn test_vars_simple() {
             ",
             None,
         ),
+        ("console.log(function a() {} ? b : c)", None),
+        ("console.log(a ? function b() {} : c)", None),
+        ("console.log(a ? b : function c() {})", None),
     ];
     let fail = vec![
         ("let a = 1", None),
@@ -119,6 +130,12 @@ fn test_vars_simple() {
         // vars with references get renamed
         ("let x = 1; x = 2;", "let _x = 1; _x = 2;", None, FixKind::DangerousFix),
         (
+            "let a = 1; a = 2; a = 3;",
+            "let _a = 1; _a = 2; _a = 3;",
+            Some(json!([{ "varsIgnorePattern": "^_" }])),
+            FixKind::DangerousFix,
+        ),
+        (
             "let x = 1; x = 2;",
             "let x = 1; x = 2;",
             Some(json!( [{ "varsIgnorePattern": "^tooCompli[cated]" }] )),
@@ -126,8 +143,6 @@ fn test_vars_simple() {
         ),
         // type annotations do not get clobbered
         ("let x: number = 1; x = 2;", "let _x: number = 1; _x = 2;", None, FixKind::DangerousFix),
-        ("const { a } = obj;", "", None, FixKind::DangerousSuggestion),
-        ("let [f,\u{a0}a]=p", "let [,a]=p", None, FixKind::DangerousSuggestion),
     ];
 
     Tester::new(NoUnusedVars::NAME, pass, fail)
@@ -161,6 +176,7 @@ fn test_vars_self_use() {
     ];
 
     Tester::new(NoUnusedVars::NAME, pass, fail)
+        .intentionally_allow_no_fix_tests()
         .with_snapshot_suffix("oxc-vars-self-use")
         .test_and_snapshot();
 }
@@ -201,6 +217,7 @@ fn test_vars_discarded_reads() {
     ];
 
     Tester::new(NoUnusedVars::NAME, pass, fail)
+        .intentionally_allow_no_fix_tests()
         .with_snapshot_suffix("oxc-vars-discarded-read")
         .test_and_snapshot();
 }
@@ -288,6 +305,7 @@ fn test_vars_reassignment() {
     ];
 
     Tester::new(NoUnusedVars::NAME, pass, fail)
+        .intentionally_allow_no_fix_tests()
         .with_snapshot_suffix("oxc-vars-reassignment")
         .test_and_snapshot();
 }
@@ -352,6 +370,7 @@ fn test_vars_destructure() {
             None,
             FixKind::DangerousSuggestion,
         ),
+        ("let [f,\u{a0}a]=p", "let [,a]=p", None, FixKind::DangerousSuggestion),
         (
             "const [a, b, c, d, e] = arr; f(a, e)",
             "const [a, ,,,e] = arr; f(a, e)",
@@ -379,13 +398,6 @@ fn test_vars_destructure() {
         ),
         // TODO: destructures in VariableDeclarations with more than one declarator
         (r#"const l="",{e}=r"#, r"const {e}=r", None, FixKind::All),
-        // renaming
-        // (
-        //     "let a = 1; a = 2;",
-        //     "let _a = 1; _a = 2;",
-        //     Some(json!([{ "varsIgnorePattern": "^_" }])),
-        //     FixKind::DangerousSuggestion,
-        // ),
     ];
 
     Tester::new(NoUnusedVars::NAME, pass, fail)
@@ -397,17 +409,35 @@ fn test_vars_destructure() {
 #[test]
 fn test_vars_catch() {
     let pass = vec![
-        // lb
         ("try {} catch (e) { throw e }", None),
         ("try {} catch (e) { }", Some(json!([{ "caughtErrors": "none" }]))),
         ("try {} catch { }", None),
+        ("try {} catch(_) { }", Some(json!([{ "caughtErrorsIgnorePattern": "^_" }]))),
+        (
+            "try {} catch(_) { }",
+            Some(json!([{ "caughtErrors": "all", "caughtErrorsIgnorePattern": "^_" }])),
+        ),
+        (
+            "try {} catch(_e) { }",
+            Some(json!([{ "caughtErrors": "all", "caughtErrorsIgnorePattern": "^_" }])),
+        ),
     ];
+
     let fail = vec![
-        // lb
         ("try {} catch (e) { }", Some(json!([{ "caughtErrors": "all" }]))),
+        ("try {} catch(_) { }", None),
+        (
+            "try {} catch(_) { }",
+            Some(json!([{ "caughtErrors": "all", "varsIgnorePattern": "^_" }])),
+        ),
+        (
+            "try {} catch(foo) { }",
+            Some(json!([{ "caughtErrors": "all", "caughtErrorsIgnorePattern": "^ignored" }])),
+        ),
     ];
 
     Tester::new(NoUnusedVars::NAME, pass, fail)
+        .intentionally_allow_no_fix_tests()
         .with_snapshot_suffix("oxc-vars-catch")
         .test_and_snapshot();
 }
@@ -419,6 +449,7 @@ fn test_vars_using() {
     let fail = vec![("using a = 1;", None)];
 
     Tester::new(NoUnusedVars::NAME, pass, fail)
+        .intentionally_allow_no_fix_tests()
         .with_snapshot_suffix("oxc-vars-using")
         .test_and_snapshot();
 }
@@ -599,6 +630,60 @@ fn test_functions() {
 }
 
 #[test]
+fn test_self_call() {
+    let pass = vec![
+        "const _thunk = (function createThunk(count) {
+            if (count === 0) return () => count
+            return () => createThunk(count - 1)()
+        })()",
+    ];
+
+    let fail = vec![
+        // Functions that call themselves are considered unused, even if that
+        // call happens within an inner function.
+        "function foo() { return function bar() { return foo() } }",
+        // Classes that construct themselves are considered unused
+        "class Foo {
+            static createFoo() {
+                return new Foo();
+            }
+        }",
+        "class Foo {
+            static createFoo(): Foo {
+                return new Foo();
+            }
+        }",
+        "class Point {
+            public x: number;
+            public y: number;
+            public add(other): Point {
+                const p = new Point();
+                p.x = this.x + (other as Point).x;
+                p.y = this.y + (other as Point).y;
+                return p;
+            }
+        }
+        ",
+        // FIXME
+        // "class Foo {
+        //     inner: any
+        //     public foo(): Foo {
+        //         if(this.inner?.constructor.name === Foo.name) {
+        //             return this.inner;
+        //         } else {
+        //             return new Foo();
+        //         }
+        //     }
+        // }",
+    ];
+
+    Tester::new(NoUnusedVars::NAME, pass, fail)
+        .intentionally_allow_no_fix_tests()
+        .with_snapshot_suffix("oxc-self-call")
+        .test_and_snapshot();
+}
+
+#[test]
 fn test_imports() {
     let pass = vec![
         ("import { a } from 'b'; console.log(a)", None),
@@ -685,6 +770,38 @@ fn test_imports() {
 }
 
 #[test]
+fn test_used_declarations() {
+    let pass = vec![
+        // function declarations passed as arguments, used in assignments, etc. are used, even if they are
+        // first put into an intermediate (e.g. an object or array)
+        "arr.reduce(function reducer (acc, el) { return acc + el }, 0)",
+        "console.log({ foo: function foo() {} })",
+        "console.log({ foo: function foo() {} as unknown as Function })",
+        "test.each([ function foo() {} ])('test some function', (fn) => { expect(fn(1)).toBe(1) })",
+        "export default { foo() {}  }",
+        "const arr = [function foo() {}, function bar() {}]; console.log(arr[0]())",
+        "const foo = function foo() {}; console.log(foo())",
+        "const foo = function bar() {}; console.log(foo())",
+        // Class expressions behave similarly
+        "console.log([class Foo {}])",
+        "export default { foo: class Foo {} }",
+        "export const Foo = class Foo {}",
+        "export const Foo = class Bar {}",
+        "export const Foo = @SomeDecorator() class Foo {}",
+    ];
+    let fail = vec![
+        // array is not used, so the function is not used
+        ";[function foo() {}]",
+        ";[class Foo {}]",
+    ];
+
+    Tester::new(NoUnusedVars::NAME, pass, fail)
+        .intentionally_allow_no_fix_tests()
+        .with_snapshot_suffix("oxc-used-declarations")
+        .test_and_snapshot();
+}
+
+#[test]
 fn test_exports() {
     let pass = vec![
         "export const a = 1; console.log(a)",
@@ -694,6 +811,15 @@ fn test_exports() {
         "export interface A {}",
         "export type A = string",
         "export enum E { }",
+        // default exports
+        "export default class Foo {}",
+        "export default [ class Foo {} ];",
+        "export default function foo() {}",
+        "export default { foo() {} };",
+        "export default { foo: function foo() {} };",
+        "export default { get foo() {} };",
+        "export default [ function foo() {} ];",
+        "export default (function foo() { return 1 })();",
         // "export enum E { A, B }",
         "const a = 1; export { a }",
         "const a = 1; export default a",
@@ -706,7 +832,7 @@ fn test_exports() {
     let fail = vec!["import { a as b } from 'a'; export { a }"];
 
     // these are mostly pass[] cases, so do not snapshot
-    Tester::new(NoUnusedVars::NAME, pass, fail).test();
+    Tester::new(NoUnusedVars::NAME, pass, fail).intentionally_allow_no_fix_tests().test();
 }
 
 #[test]
@@ -752,7 +878,7 @@ fn test_react() {
         ",
     ];
 
-    Tester::new(NoUnusedVars::NAME, pass, fail).test();
+    Tester::new(NoUnusedVars::NAME, pass, fail).intentionally_allow_no_fix_tests().test();
 }
 
 #[test]
@@ -783,6 +909,7 @@ fn test_arguments() {
     ];
 
     Tester::new(NoUnusedVars::NAME, pass, fail)
+        .intentionally_allow_no_fix_tests()
         .with_snapshot_suffix("oxc-arguments")
         .test_and_snapshot();
 }
@@ -798,6 +925,7 @@ fn test_enums() {
     let fail = vec!["enum Foo { A }"];
 
     Tester::new(NoUnusedVars::NAME, pass, fail)
+        .intentionally_allow_no_fix_tests()
         .with_snapshot_suffix("oxc-enums")
         .test_and_snapshot();
 }
@@ -863,6 +991,7 @@ fn test_classes() {
     ];
 
     Tester::new(NoUnusedVars::NAME, pass, fail)
+        .intentionally_allow_no_fix_tests()
         .with_snapshot_suffix("oxc-classes")
         .test_and_snapshot();
 }
@@ -915,6 +1044,7 @@ fn test_namespaces() {
     ];
 
     Tester::new(NoUnusedVars::NAME, pass, fail)
+        .intentionally_allow_no_fix_tests()
         .with_snapshot_suffix("oxc-namespaces")
         .test_and_snapshot();
 }
@@ -928,9 +1058,11 @@ fn test_type_aliases() {
         "type Foo = Foo",
         "type Foo = Array<Foo>",
         "type Unbox<B> = B extends Box<infer R> ? Unbox<R> : B",
+        "export type F<T> = T extends infer R ? /* R not used */ string : never",
     ];
 
     Tester::new(NoUnusedVars::NAME, pass, fail)
+        .intentionally_allow_no_fix_tests()
         .with_snapshot_suffix("oxc-type-aliases")
         .test_and_snapshot();
 }
@@ -985,12 +1117,52 @@ fn test_type_references() {
     ];
 
     let fail = vec![
+        // Type aliases
         "type T = number; function foo<T>(a: T): T { return a as T }; foo(1)",
         "type A = number; type B<A> = A; console.log(3 as B<3>)",
+        "type T = { foo: T }",
+        "type T = { foo?: T | undefined }",
+        "type A<T> = { foo: T extends Array<infer R> ? A<R> : T }",
+        "type T = { foo(): T }",
+        // Type references on class symbols within that classes' definition is
+        // not considered used
+        "class Foo {
+            private _inner: Foo | undefined;
+        }",
+        "class Foo {
+            _inner: any;
+            constructor(other: Foo);
+            constructor(somethingElse: any) {
+                this._inner = somethingElse;
+            }
+        }",
+        "class LinkedList<T> {
+            #next?: LinkedList<T>;
+            public append(other: LinkedList<T>) {
+                this.#next = other;
+            }
+        }",
+        "class LinkedList<T> {
+            #next?: LinkedList<T>;
+            public nextUnchecked(): LinkedList<T> {
+                return <LinkedList<T>>this.#next!;
+            }
+        }",
+        // FIXME: ambient classes declared using `declare` are not bound by
+        // semantic's binder.
+        // https://github.com/oxc-project/oxc/blob/a9260cf6d1b83917c7a61b25cabd2d40858b0fff/crates/oxc_semantic/src/binder.rs#L105
+        // "declare class LinkedList<T> {
+        //     next(): LinkedList<T> | undefined;
+        // }"
+
+        // Same is true for interfaces
+        "interface LinkedList<T> { next: LinkedList<T> | undefined }",
     ];
 
     Tester::new(NoUnusedVars::NAME, pass, fail)
+        .intentionally_allow_no_fix_tests()
         .with_snapshot_suffix("oxc-type-references")
+        .change_rule_path_extension("ts")
         .test_and_snapshot();
 }
 

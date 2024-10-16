@@ -38,7 +38,6 @@ fn main() -> std::io::Result<()> {
 fn mangler(source_text: &str, source_type: SourceType, debug: bool) -> String {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
-    let program = allocator.alloc(ret.program);
-    let mangler = Mangler::new().with_options(MangleOptions { debug }).build(program);
-    CodeGenerator::new().with_mangler(Some(mangler)).build(program).code
+    let mangler = Mangler::new().with_options(MangleOptions { debug }).build(&ret.program);
+    CodeGenerator::new().with_mangler(Some(mangler)).build(&ret.program).code
 }
