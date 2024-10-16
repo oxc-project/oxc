@@ -11,23 +11,6 @@ use oxc_syntax::{
 
 use crate::ast::*;
 
-#[cfg(feature = "serialize")]
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = r#"
-export interface BindingIdentifier extends Span { type: "Identifier", name: Atom }
-export interface IdentifierReference extends Span { type: "Identifier", name: Atom }
-export interface IdentifierName extends Span { type: "Identifier", name: Atom }
-export interface LabelIdentifier extends Span { type: "Identifier", name: Atom }
-export interface AssignmentTargetRest extends Span { type: "RestElement", argument: AssignmentTarget }
-export interface BindingRestElement extends Span { type: "RestElement", argument: BindingPattern }
-export interface FormalParameterRest extends Span {
-    type: "RestElement",
-    argument: BindingPatternKind,
-    typeAnnotation?: TSTypeAnnotation,
-    optional: boolean,
-}
-"#;
-
 impl<'a> Program<'a> {
     pub fn new(
         span: Span,

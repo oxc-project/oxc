@@ -10,12 +10,6 @@ use serde::{Serialize, Serializer};
 
 use crate::Span;
 
-#[cfg(feature = "serialize")]
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = r#"
-export type CompactStr = string;
-"#;
-
 /// Maximum length for inline string, which can be created with [`CompactStr::new_const`].
 pub const MAX_INLINE_LEN: usize = 16;
 

@@ -156,6 +156,17 @@ impl<'a> Serialize for FormalParameters<'a> {
     }
 }
 
+#[cfg(feature = "serialize")]
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = r#"
+export interface FormalParameterRest extends Span {
+    type: "RestElement",
+    argument: BindingPatternKind,
+    typeAnnotation?: TSTypeAnnotation,
+    optional: boolean,
+}
+"#;
+
 #[derive(Serialize)]
 #[serde(tag = "type", rename = "FormalParameters")]
 struct SerFormalParameters<'a, 'b> {

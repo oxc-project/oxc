@@ -22,16 +22,6 @@ use tsify::Tsify;
 
 use super::{inherit_variants, js::*, jsx::*, literal::*};
 
-#[cfg(feature = "serialize")]
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = r#"
-export interface TSIndexSignatureName extends Span {
-    type: "Identifier",
-    name: Atom,
-    typeAnnotation: TSTypeAnnotation,
-}
-"#;
-
 /// TypeScript `this` parameter
 ///
 /// ## Example
