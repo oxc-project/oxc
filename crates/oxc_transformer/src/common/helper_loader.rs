@@ -128,6 +128,21 @@ fn default_as_module_name() -> Cow<'static, str> {
     Cow::Borrowed("@babel/runtime")
 }
 
+/// Available helpers.
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+pub enum Helper {
+    ObjectSpread2,
+}
+
+impl Helper {
+    const fn name(self) -> &'static str {
+        match self {
+            Self::ObjectSpread2 => "objectSpread2",
+        }
+    }
+}
+
+/// Helper loader transform.
 pub struct HelperLoader<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,
 }
@@ -144,7 +159,7 @@ impl<'a, 'ctx> Traverse<'a> for HelperLoader<'a, 'ctx> {
     }
 }
 
-struct Helper<'a> {
+struct LoadedHelper<'a> {
     source: Atom<'a>,
     local: BoundIdentifier<'a>,
 }
@@ -154,7 +169,7 @@ pub struct HelperLoaderStore<'a> {
     module_name: Cow<'static, str>,
     mode: HelperLoaderMode,
     /// Loaded helpers, determined what helpers are loaded and what imports should be added.
-    loaded_helpers: RefCell<FxHashMap<Atom<'a>, Helper<'a>>>,
+    loaded_helpers: RefCell<FxHashMap<Helper, LoadedHelper<'a>>>,
 }
 
 // Public methods
@@ -171,11 +186,11 @@ impl<'a> HelperLoaderStore<'a> {
     #[expect(dead_code)]
     pub fn call(
         &mut self,
-        helper_name: Atom<'a>,
+        helper: Helper,
         arguments: Vec<'a, Argument<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> CallExpression<'a> {
-        let callee = self.load(helper_name, ctx);
+        let callee = self.load(helper, ctx);
         ctx.ast.call_expression(
             SPAN,
             callee,
@@ -189,11 +204,11 @@ impl<'a> HelperLoaderStore<'a> {
     #[expect(dead_code)]
     pub fn call_expr(
         &mut self,
-        helper_name: Atom<'a>,
+        helper: Helper,
         arguments: Vec<'a, Argument<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let callee = self.load(helper_name, ctx);
+        let callee = self.load(helper, ctx);
         ctx.ast.expression_call(
             SPAN,
             callee,
@@ -204,10 +219,10 @@ impl<'a> HelperLoaderStore<'a> {
     }
 
     /// Load a helper function and return the callee expression.
-    pub fn load(&self, helper_name: Atom<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+    pub fn load(&self, helper: Helper, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         match self.mode {
-            HelperLoaderMode::Runtime => self.transform_for_runtime_helper(helper_name, ctx),
-            HelperLoaderMode::External => Self::transform_for_external_helper(helper_name, ctx),
+            HelperLoaderMode::Runtime => self.transform_for_runtime_helper(helper, ctx),
+            HelperLoaderMode::External => Self::transform_for_external_helper(helper, ctx),
             HelperLoaderMode::Inline => {
                 unreachable!("Inline helpers are not supported yet");
             }
@@ -219,29 +234,27 @@ impl<'a> HelperLoaderStore<'a> {
 impl<'a> HelperLoaderStore<'a> {
     fn transform_for_runtime_helper(
         &self,
-        helper_name: Atom<'a>,
+        helper: Helper,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let mut loaded_helpers = self.loaded_helpers.borrow_mut();
-        let helper = loaded_helpers.entry(helper_name).or_insert_with_key(|helper_name| {
+        let loaded_helper = loaded_helpers.entry(helper).or_insert_with(|| {
+            let helper_name = helper.name();
             let source = ctx.ast.atom(&format!("{}/helpers/{helper_name}", self.module_name));
             let local = ctx.generate_uid_in_root_scope(helper_name, SymbolFlags::Import);
-            Helper { source, local }
+            LoadedHelper { source, local }
         });
-        helper.local.create_read_expression(ctx)
+        loaded_helper.local.create_read_expression(ctx)
     }
 
-    fn transform_for_external_helper(
-        helper_name: Atom<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Expression<'a> {
+    fn transform_for_external_helper(helper: Helper, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         static HELPER_VAR: &str = "babelHelpers";
 
         let symbol_id = ctx.scopes().find_binding(ctx.current_scope_id(), HELPER_VAR);
         let ident =
             ctx.create_reference_id(SPAN, Atom::from(HELPER_VAR), symbol_id, ReferenceFlags::Read);
         let object = ctx.ast.expression_from_identifier_reference(ident);
-        let property = ctx.ast.identifier_name(SPAN, helper_name);
+        let property = ctx.ast.identifier_name(SPAN, Atom::from(helper.name()));
         Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false))
     }
 

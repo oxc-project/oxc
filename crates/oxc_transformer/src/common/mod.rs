@@ -1,6 +1,5 @@
 //! Utility transforms which are in common between other transforms.
 
-use helper_loader::HelperLoader;
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_traverse::{Traverse, TraverseCtx};
@@ -12,6 +11,7 @@ pub mod module_imports;
 pub mod top_level_statements;
 pub mod var_declarations;
 
+use helper_loader::HelperLoader;
 use module_imports::ModuleImports;
 use top_level_statements::TopLevelStatements;
 use var_declarations::VarDeclarations;
