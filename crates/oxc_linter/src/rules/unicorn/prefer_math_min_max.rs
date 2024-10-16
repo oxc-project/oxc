@@ -61,7 +61,7 @@ impl Rule for PreferMathMinMax {
         };
 
         let condition_type =
-            is_min_max(&test_expr, &conditional_expr.consequent, &conditional_expr.alternate, &ctx);
+            is_min_max(test_expr, &conditional_expr.consequent, &conditional_expr.alternate, ctx);
 
         if matches!(condition_type, TypeOptions::Unknown) {
             return;
@@ -80,14 +80,14 @@ impl Rule for PreferMathMinMax {
                     .replace(conditional_expr.span, format!("Math.max({consequent}, {alternate})")),
                 TypeOptions::Min => fixer
                     .replace(conditional_expr.span, format!("Math.min({consequent}, {alternate})")),
-                _ => fixer.noop(),
+                TypeOptions::Unknown => fixer.noop(),
             };
         });
     }
 }
 
 fn get_expr_value(expr: &Expression) -> Option<String> {
-    return match expr {
+    match expr {
         Expression::NumericLiteral(lit) => Some(lit.to_string()),
         Expression::UnaryExpression(lit) => {
             let mut unary_str: String = String::from(lit.operator.as_str());
@@ -97,11 +97,11 @@ fn get_expr_value(expr: &Expression) -> Option<String> {
 
             unary_str.push_str(unary_lit.as_str());
 
-            return Some(unary_str.to_string());
+            Some(unary_str.to_string())
         }
         Expression::Identifier(identifier) => Some(identifier.name.to_string()),
         _ => None,
-    };
+    }
 }
 
 fn is_same_expression(left: &Expression, right: &Expression, ctx: &LintContext) -> bool {
@@ -109,14 +109,14 @@ fn is_same_expression(left: &Expression, right: &Expression, ctx: &LintContext) 
         return true;
     }
 
-    return match (left, right) {
+    match (left, right) {
         (Expression::UnaryExpression(left_expr), Expression::UnaryExpression(right_expr)) => {
             left_expr.operator == UnaryOperator::UnaryNegation
                 && right_expr.operator == UnaryOperator::UnaryNegation
                 && is_same_reference(&left_expr.argument, &right_expr.argument, ctx)
         }
         _ => false,
-    };
+    }
 }
 
 fn is_min_max(
@@ -125,37 +125,36 @@ fn is_min_max(
     alternate: &Expression,
     ctx: &LintContext,
 ) -> TypeOptions {
-    let is_matched = match (&condition.left, &condition.right) {
-        (Expression::NumericLiteral(_), Expression::Identifier(_)) => true,
-        (Expression::UnaryExpression(_), Expression::Identifier(_)) => true,
-        (Expression::Identifier(_), Expression::NumericLiteral(_)) => true,
-        (Expression::Identifier(_), Expression::UnaryExpression(_)) => true,
-        _ => false,
-    };
+    let is_matched = matches!(
+        (&condition.left, &condition.right),
+        (Expression::NumericLiteral(_) | Expression::UnaryExpression(_), Expression::Identifier(_))
+            | (
+                Expression::Identifier(_),
+                Expression::NumericLiteral(_) | Expression::UnaryExpression(_)
+            )
+    );
 
     if !condition.operator.is_compare() || !is_matched {
         return TypeOptions::Unknown;
     }
 
-    if is_same_expression(&condition.left, &consequent, ctx)
-        && is_same_expression(&condition.right, &alternate, ctx)
+    if is_same_expression(&condition.left, consequent, ctx)
+        && is_same_expression(&condition.right, alternate, ctx)
     {
         if matches!(condition.operator, BinaryOperator::LessThan | BinaryOperator::LessEqualThan) {
             return TypeOptions::Min;
-        } else {
-            return TypeOptions::Max;
         }
-    } else if is_same_expression(&condition.left, &alternate, ctx)
-        && is_same_expression(&condition.right, &consequent, ctx)
+        return TypeOptions::Max;
+    } else if is_same_expression(&condition.left, alternate, ctx)
+        && is_same_expression(&condition.right, consequent, ctx)
     {
         if matches!(condition.operator, BinaryOperator::LessThan | BinaryOperator::LessEqualThan) {
             return TypeOptions::Max;
-        } else {
-            return TypeOptions::Min;
         }
+        return TypeOptions::Min;
     }
 
-    return TypeOptions::Unknown;
+    TypeOptions::Unknown
 }
 
 #[test]
