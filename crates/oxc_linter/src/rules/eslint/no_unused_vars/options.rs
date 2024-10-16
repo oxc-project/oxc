@@ -34,7 +34,7 @@ pub struct NoUnusedVarsOptions {
     /// var b = 10;
     /// console.log(b);
     /// ```
-    pub vars_ignore_pattern: Option<Regex>,
+    pub vars_ignore_pattern: IgnorePattern<Regex>,
 
     /// Controls how unused arguments are checked.
     ///
@@ -65,7 +65,7 @@ pub struct NoUnusedVarsOptions {
     /// }
     /// foo(1, 2);
     /// ```
-    pub args_ignore_pattern: Option<Regex>,
+    pub args_ignore_pattern: IgnorePattern<Regex>,
 
     /// Using a Rest property it is possible to "omit" properties from an
     /// object, but by default the sibling properties are marked as "unused".
@@ -108,7 +108,7 @@ pub struct NoUnusedVarsOptions {
     ///   console.error("Error caught in catch block");
     /// }
     /// ```
-    pub caught_errors_ignore_pattern: Option<Regex>,
+    pub caught_errors_ignore_pattern: IgnorePattern<Regex>,
 
     /// This option specifies exceptions within destructuring patterns that will
     /// not be checked for usage. Variables declared within array destructuring
@@ -132,7 +132,7 @@ pub struct NoUnusedVarsOptions {
     ///     console.log(n);
     /// });
     /// ```
-    pub destructured_array_ignore_pattern: Option<Regex>,
+    pub destructured_array_ignore_pattern: IgnorePattern<Regex>,
 
     /// The `ignoreClassWithStaticInitBlock` option is a boolean (default:
     /// `false`). Static initialization blocks allow you to initialize static
@@ -207,18 +207,92 @@ pub struct NoUnusedVarsOptions {
     pub report_used_ignore_pattern: bool,
 }
 
+/// Represents an `Option<Regex>` with an additional `Default` variant,
+/// which represents the default ignore pattern for when no pattern is
+/// explicitly provided.
+#[derive(Debug, Clone, Copy)]
+pub enum IgnorePattern<R> {
+    /// No ignore pattern was provided, use the default pattern. This
+    /// means that the pattern is `^_`.
+    Default,
+    /// The ignore pattern is explicitly none.
+    None,
+    /// The ignore pattern is a regex.
+    Some(R),
+}
+
+impl<R> IgnorePattern<R> {
+    /// Returns `true` if the pattern is [`IgnorePattern::Default`].
+    #[inline]
+    pub fn is_default(&self) -> bool {
+        matches!(self, Self::Default)
+    }
+
+    /// Returns `true` if the pattern is [`IgnorePattern::None`].
+    #[inline]
+    pub fn is_none(&self) -> bool {
+        matches!(self, Self::None)
+    }
+
+    /// Returns `true` if the pattern is [`IgnorePattern::Some`].
+    #[inline]
+    pub fn is_some(&self) -> bool {
+        matches!(self, Self::Some(_))
+    }
+
+    /// Returns the inner value if it is [`IgnorePattern::Some`], otherwise
+    /// panics with a default message.
+    ///
+    /// See also [`Option::unwrap`].
+    #[inline]
+    pub fn unwrap(self) -> R {
+        self.expect("called `IgnorePattern::unwrap()` on a non-`Some` value")
+    }
+
+    /// Returns the inner value if it is [`IgnorePattern::Some`], otherwise
+    /// panics with a custom message provided by `msg`.
+    ///
+    /// See also [`Option::expect`].
+    #[inline]
+    pub fn expect(self, msg: &str) -> R {
+        if let Self::Some(r) = self {
+            r
+        } else {
+            panic!("{}", msg)
+        }
+    }
+
+    #[inline]
+    pub fn as_ref(&self) -> IgnorePattern<&R> {
+        match self {
+            Self::Default => IgnorePattern::Default,
+            Self::None => IgnorePattern::None,
+            Self::Some(ref r) => IgnorePattern::Some(r),
+        }
+    }
+}
+
+impl From<Option<Regex>> for IgnorePattern<Regex> {
+    #[inline]
+    fn from(value: Option<Regex>) -> Self {
+        match value {
+            None => Self::None,
+            Some(regex) => Self::Some(regex),
+        }
+    }
+}
+
 impl Default for NoUnusedVarsOptions {
     fn default() -> Self {
-        let underscore = Some(Regex::new("^_").unwrap());
         Self {
             vars: VarsOption::default(),
-            vars_ignore_pattern: underscore.clone(),
+            vars_ignore_pattern: IgnorePattern::Default,
             args: ArgsOption::default(),
-            args_ignore_pattern: underscore,
+            args_ignore_pattern: IgnorePattern::Default,
             ignore_rest_siblings: false,
             caught_errors: CaughtErrors::default(),
-            caught_errors_ignore_pattern: None,
-            destructured_array_ignore_pattern: None,
+            caught_errors_ignore_pattern: IgnorePattern::None,
+            destructured_array_ignore_pattern: IgnorePattern::None,
             ignore_class_with_static_init_block: false,
             report_used_ignore_pattern: false,
         }
@@ -397,13 +471,15 @@ impl TryFrom<&Value> for CaughtErrors {
 }
 
 /// Parses a potential pattern into a [`Regex`] that accepts unicode characters.
-fn parse_unicode_rule(value: Option<&Value>, name: &str) -> Option<Regex> {
-    value
-        .and_then(Value::as_str)
-        .map(|pattern| regex::RegexBuilder::new(pattern).unicode(true).build())
-        .transpose()
-        .map_err(|err| panic!("Invalid '{name}' option for no-unused-vars: {err}"))
-        .unwrap()
+fn parse_unicode_rule(value: Option<&Value>, name: &str) -> IgnorePattern<Regex> {
+    IgnorePattern::from(
+        value
+            .and_then(Value::as_str)
+            .map(|pattern| regex::RegexBuilder::new(pattern).unicode(true).build())
+            .transpose()
+            .map_err(|err| panic!("Invalid '{name}' option for no-unused-vars: {err}"))
+            .unwrap(),
+    )
 }
 impl TryFrom<Value> for NoUnusedVarsOptions {
     type Error = OxcDiagnostic;
@@ -426,7 +502,7 @@ impl TryFrom<Value> for NoUnusedVarsOptions {
                 // NOTE: when a configuration object is provided, do not provide
                 // a default ignore pattern here. They've opted into configuring
                 // this rule, and we'll give them full control over it.
-                let vars_ignore_pattern: Option<Regex> =
+                let vars_ignore_pattern=
                     parse_unicode_rule(config.get("varsIgnorePattern"), "varsIgnorePattern");
 
                 let args: ArgsOption = config
@@ -437,7 +513,7 @@ impl TryFrom<Value> for NoUnusedVarsOptions {
                     .transpose()?
                     .unwrap_or_default();
 
-                let args_ignore_pattern: Option<Regex> =
+                let args_ignore_pattern  =
                     parse_unicode_rule(config.get("argsIgnorePattern"), "argsIgnorePattern");
 
                 let caught_errors: CaughtErrors = config
@@ -453,7 +529,7 @@ impl TryFrom<Value> for NoUnusedVarsOptions {
                     "caughtErrorsIgnorePattern",
                 );
 
-                let destructured_array_ignore_pattern: Option<Regex> = parse_unicode_rule(
+                let destructured_array_ignore_pattern = parse_unicode_rule(
                     config.get("destructuredArrayIgnorePattern"),
                     "destructuredArrayIgnorePattern",
                 );
@@ -504,9 +580,9 @@ mod tests {
     fn test_options_default() {
         let rule = NoUnusedVarsOptions::default();
         assert_eq!(rule.vars, VarsOption::All);
-        assert!(rule.vars_ignore_pattern.is_some_and(|v| v.as_str() == "^_"));
+        assert!(rule.vars_ignore_pattern.is_default());
         assert_eq!(rule.args, ArgsOption::AfterUsed);
-        assert!(rule.args_ignore_pattern.is_some_and(|v| v.as_str() == "^_"));
+        assert!(rule.args_ignore_pattern.is_default());
         assert_eq!(rule.caught_errors, CaughtErrors::all());
         assert!(rule.caught_errors_ignore_pattern.is_none());
         assert!(rule.destructured_array_ignore_pattern.is_none());
@@ -601,10 +677,10 @@ mod tests {
             let opts = NoUnusedVarsOptions::try_from(json).unwrap();
             let default = NoUnusedVarsOptions::default();
             assert_eq!(opts.vars, default.vars);
-            assert!(default.vars_ignore_pattern.unwrap().as_str() == "^_");
+            assert!(default.vars_ignore_pattern.is_default());
 
             assert_eq!(opts.args, default.args);
-            assert!(default.args_ignore_pattern.unwrap().as_str() == "^_");
+            assert!(default.args_ignore_pattern.is_default());
 
             assert_eq!(opts.caught_errors, default.caught_errors);
             assert!(opts.caught_errors_ignore_pattern.is_none());
