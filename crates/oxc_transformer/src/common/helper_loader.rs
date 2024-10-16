@@ -1,4 +1,4 @@
-//! Utility transform to load helper functions
+//! Utility transform to load helper functions.
 //!
 //! This module provides functionality to load helper functions in different modes.
 //! It supports runtime, external, and inline (not yet implemented) modes for loading helper functions.
@@ -109,6 +109,7 @@ pub enum HelperLoaderMode {
     Runtime,
 }
 
+/// Helper loader options.
 #[derive(Clone, Debug, Deserialize)]
 pub struct HelperLoaderOptions {
     #[serde(default = "default_as_module_name")]
@@ -182,7 +183,7 @@ impl<'a> HelperLoaderStore<'a> {
         }
     }
 
-    /// Load and call a helper function and return the `CallExpression`.
+    /// Load and call a helper function and return a `CallExpression`.
     #[expect(dead_code)]
     pub fn call(
         &mut self,
@@ -218,7 +219,7 @@ impl<'a> HelperLoaderStore<'a> {
         )
     }
 
-    /// Load a helper function and return the callee expression.
+    /// Load a helper function and return a callee expression.
     pub fn load(&self, helper: Helper, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         match self.mode {
             HelperLoaderMode::Runtime => self.transform_for_runtime_helper(helper, ctx),
