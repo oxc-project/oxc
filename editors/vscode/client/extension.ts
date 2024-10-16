@@ -17,8 +17,8 @@ import { join } from 'node:path';
 
 const languageClientId = 'oxc-vscode';
 const languageClientName = 'oxc';
-const outputChannelName = 'oxc_language_server';
-const traceOutputChannelName = 'oxc_language_server.trace';
+const outputChannelName = 'Oxc';
+const traceOutputChannelName = 'Oxc (Trace)';
 const commandPrefix = 'oxc';
 
 const enum OxcCommands {
