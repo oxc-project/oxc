@@ -6,7 +6,7 @@ use std::{
     self,
     fmt::{self, Debug},
     hash::{Hash, Hasher},
-    mem::ManuallyDrop,
+    mem::{needs_drop, ManuallyDrop},
     ops,
     ptr::NonNull,
 };
@@ -48,6 +48,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// ```
     #[inline]
     pub fn new_in(allocator: &'alloc Allocator) -> Self {
+        const { assert!(!needs_drop::<T>()) };
         Self(ManuallyDrop::new(vec::Vec::new_in(allocator)))
     }
 
@@ -100,6 +101,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// ```
     #[inline]
     pub fn with_capacity_in(capacity: usize, allocator: &'alloc Allocator) -> Self {
+        const { assert!(!needs_drop::<T>()) };
         Self(ManuallyDrop::new(vec::Vec::with_capacity_in(capacity, allocator)))
     }
 
@@ -109,6 +111,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// This is behaviorially identical to [`FromIterator::from_iter`].
     #[inline]
     pub fn from_iter_in<I: IntoIterator<Item = T>>(iter: I, allocator: &'alloc Allocator) -> Self {
+        const { assert!(!needs_drop::<T>()) };
         let iter = iter.into_iter();
         let hint = iter.size_hint();
         let capacity = hint.1.unwrap_or(hint.0);

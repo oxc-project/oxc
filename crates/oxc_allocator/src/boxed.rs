@@ -7,6 +7,7 @@ use std::{
     fmt::{self, Debug, Formatter},
     hash::{Hash, Hasher},
     marker::PhantomData,
+    mem::needs_drop,
     ops::{self, Deref},
     ptr::{self, NonNull},
 };
@@ -62,6 +63,7 @@ impl<'alloc, T> Box<'alloc, T> {
     /// let in_arena: Box<i32> = Box::new_in(5, &arena);
     /// ```
     pub fn new_in(value: T, allocator: &Allocator) -> Self {
+        const { assert!(!needs_drop::<T>()) };
         Self(NonNull::from(allocator.alloc(value)), PhantomData)
     }
 
@@ -91,6 +93,7 @@ impl<'alloc, T: ?Sized> Box<'alloc, T> {
     /// `ptr` must have been created from a `*mut T` or `&mut T` (not a `*const T` / `&T`).
     #[inline]
     pub(crate) const unsafe fn from_non_null(ptr: NonNull<T>) -> Self {
+        const { assert!(!needs_drop::<T>()) };
         Self(ptr, PhantomData)
     }
 }
