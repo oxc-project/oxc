@@ -1,6 +1,8 @@
 use proc_macro::TokenStream;
 use syn::parse_macro_input;
 
+#[macro_use]
+mod util;
 mod declare_all_lint_rules;
 mod declare_oxc_lint;
 mod declare_oxc_secret;
