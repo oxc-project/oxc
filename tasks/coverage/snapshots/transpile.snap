@@ -23,7 +23,7 @@ export type A = {
 	[1]: number;
 	["2"]: number;
 	[missing2]: number;
-	[Math.random() > 0.5 ? "f1" : "f2"]: number;
+	[Math.random() > .5 ? "f1" : "f2"]: number;
 };
 export interface B {
 	[missing]: number;
@@ -36,7 +36,7 @@ export interface B {
 	[1]: number;
 	["2"]: number;
 	[missing2]: number;
-	[Math.random() > 0.5 ? "f1" : "f2"]: number;
+	[Math.random() > .5 ? "f1" : "f2"]: number;
 }
 export class C {
 	[missing]: number = 1;
@@ -49,7 +49,7 @@ export class C {
 	[1]: number = 1;
 	["2"]: number = 1;
 	[missing2]: number = 1;
-	[Math.random() > 0.5 ? "f1" : "f2"]: number = 1;
+	[Math.random() > .5 ? "f1" : "f2"]: number = 1;
 }
 export const D = {
 	[missing]: 1,
@@ -62,7 +62,7 @@ export const D = {
 	[1]: 1,
 	["2"]: 1,
 	[missing2]: 1,
-	[Math.random() > 0.5 ? "f1" : "f2"]: 1
+	[Math.random() > .5 ? "f1" : "f2"]: 1
 };
 
 //// [declarationComputedPropertyNames.d.ts] ////
@@ -81,7 +81,7 @@ export type A = {
 	[1]: number;
 	["2"]: number;
 	[missing2]: number;
-	[Math.random() > 0.5 ? "f1" : "f2"]: number;
+	[Math.random() > .5 ? "f1" : "f2"]: number;
 };
 export interface B {
 	[missing]: number;
@@ -94,7 +94,7 @@ export interface B {
 	[1]: number;
 	["2"]: number;
 	[missing2]: number;
-	[Math.random() > 0.5 ? "f1" : "f2"]: number;
+	[Math.random() > .5 ? "f1" : "f2"]: number;
 }
 export declare class C {
 	[1]: number;

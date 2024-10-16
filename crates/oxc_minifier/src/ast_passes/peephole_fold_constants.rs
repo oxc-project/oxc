@@ -158,7 +158,7 @@ impl<'a, 'b> PeepholeFoldConstants {
                     }
                 }
                 ctx.get_boolean_value(&expr.argument)
-                    .map(|b| ctx.ast.expression_boolean_literal(SPAN, !b))
+                    .map(|b| ctx.ast.expression_boolean_literal(expr.span, !b))
             }
             // `-NaN` -> `NaN`
             UnaryOperator::UnaryNegation if expr.argument.is_nan() => {
@@ -171,6 +171,12 @@ impl<'a, 'b> PeepholeFoldConstants {
                 {
                     Some(ctx.ast.move_expression(&mut unary.argument))
                 }
+                Expression::NumericLiteral(n) => Some(ctx.ast.expression_numeric_literal(
+                    expr.span,
+                    -n.value,
+                    "",
+                    NumberBase::Decimal,
+                )),
                 _ => None,
             },
             // `+1` -> `1`
@@ -193,7 +199,7 @@ impl<'a, 'b> PeepholeFoldConstants {
                     value.map(|value| {
                         let value = !value;
                         ctx.ast.expression_big_int_literal(
-                            SPAN,
+                            expr.span,
                             value.to_string() + "n",
                             BigintBase::Decimal,
                         )
@@ -202,7 +208,7 @@ impl<'a, 'b> PeepholeFoldConstants {
                 Expression::NumericLiteral(n) => is_valid(n.value).then(|| {
                     let value = !n.value.to_int_32();
                     ctx.ast.expression_numeric_literal(
-                        SPAN,
+                        expr.span,
                         value.into(),
                         value.to_string(),
                         NumberBase::Decimal,
@@ -222,7 +228,7 @@ impl<'a, 'b> PeepholeFoldConstants {
                                 value.and_then(|value| value.checked_sub(&BigInt::from(1))).map(
                                     |value| {
                                         ctx.ast.expression_big_int_literal(
-                                            SPAN,
+                                            expr.span,
                                             value.neg().to_string() + "n",
                                             BigintBase::Decimal,
                                         )
@@ -238,7 +244,7 @@ impl<'a, 'b> PeepholeFoldConstants {
                                 is_valid(n.value).then(|| {
                                     let value = !n.value.to_int_32().wrapping_neg();
                                     ctx.ast.expression_numeric_literal(
-                                        SPAN,
+                                        expr.span,
                                         value.into(),
                                         value.to_string(),
                                         NumberBase::Decimal,

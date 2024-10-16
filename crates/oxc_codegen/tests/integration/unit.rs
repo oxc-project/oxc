@@ -19,7 +19,7 @@ fn expr() {
     );
     test_minify("x in new Error()", "x in new Error();");
 
-    test("1000000000000000128.0.toFixed(0)", "1000000000000000128.0.toFixed(0);\n");
+    test("1000000000000000128.0.toFixed(0)", "0xde0b6b3a7640080.toFixed(0);\n");
     test_minify("1000000000000000128.0.toFixed(0)", "0xde0b6b3a7640080.toFixed(0);");
 }
 
