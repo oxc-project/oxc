@@ -9,12 +9,25 @@ use oxc_span::{GetSpan, Span};
 use super::{ignored::FoundStatus, NoUnusedVars, Symbol};
 
 impl<'s, 'a> Symbol<'s, 'a> {
+    // =========================================================================
+    // ==================== ENABLE/DISABLE USAGE SUB-CHECKS ====================
+    // =========================================================================
+
+    // NOTE(@don): all of these should be `#[inline]` and `const`. by inlining
+    // it, rustc should be able to detect redundant flag checks and optimize
+    // them away. Note that I haven't actually checked the assembly output to
+    // confirm this; if you are reading this and decide to do so, please let me
+    // know the results.
+
     /// 1. Imported functions will never have calls to themselves within their
     ///    own declaration since they are declared outside the current module
     /// 2. Catch variables are always parameter-like and will therefore never have
     ///    a function declaration.
     #[inline]
     const fn is_maybe_callable(&self) -> bool {
+        // NOTE: imports are technically callable, but that call will never
+        // occur within its own declaration since it's declared in another
+        // module.
         const IMPORT: SymbolFlags = SymbolFlags::Import.union(SymbolFlags::TypeImport);
         // note: intetionally do not use `SymbolFlags::is_type` here, since that
         // can return `true` for values
@@ -59,14 +72,26 @@ impl<'s, 'a> Symbol<'s, 'a> {
             && !f.contains(SymbolFlags::ConstVariable.union(SymbolFlags::Function))
     }
 
+    /// Checks if this [`Symbol`] could be used as a type reference within its
+    /// own declaration.
+    ///
+    /// This does _not_ imply this symbol is a type (negative cases include type
+    /// imports, type parameters, etc).
     #[inline]
     const fn could_have_type_reference_within_own_decl(&self) -> bool {
-        const TYPE_DECLS: SymbolFlags =
-            SymbolFlags::TypeAlias.union(SymbolFlags::Interface).union(SymbolFlags::Class);
+        #[rustfmt::skip]
+        const TYPE_DECLS: SymbolFlags = SymbolFlags::TypeAlias
+            .union(SymbolFlags::Interface)
+            .union(SymbolFlags::Class);
+
         self.flags().intersects(TYPE_DECLS)
     }
 
-    /// Check if this [`Symbol`] has an [`Reference`]s that are considered a usage.
+    // =========================================================================
+    // ============================= USAGE CHECKS ==============================
+    // =========================================================================
+
+    /// Check if this [`Symbol`] has any [`Reference`]s that are considered a usage.
     pub fn has_usages(&self, options: &NoUnusedVars) -> bool {
         // Use symbol flags to skip the usage checks we are certain don't need
         // to be run.
@@ -87,7 +112,8 @@ impl<'s, 'a> Symbol<'s, 'a> {
             );
             assert!(reference.symbol_id().is_some_and(|id| id == self.id()));
 
-            // Write usage checks
+            // ====================== Write usage checks =======================
+
             if reference.is_write() {
                 if do_reassignment_checks
                     && (self.is_assigned_to_ignored_destructure(reference, options)
@@ -103,7 +129,8 @@ impl<'s, 'a> Symbol<'s, 'a> {
                 }
             }
 
-            // Type usage checks
+            // ======================= Type usage checks =======================
+
             if reference.is_type() {
                 // e.g. `type Foo = Array<Foo>`
                 if do_type_self_usage_checks && self.is_type_self_usage(reference) {
@@ -112,7 +139,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
                 return true;
             }
 
-            // Read usage checks
+            // ======================= Read usage checks =======================
 
             // e.g. `let a = 0; a = a + 1`
             if do_reassignment_checks && self.is_self_reassignment(reference) {
