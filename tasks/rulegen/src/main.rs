@@ -35,6 +35,9 @@ const TYPESCRIPT_ESLINT_TEST_PATH: &str = "https://raw.githubusercontent.com/typ
 const UNICORN_TEST_PATH: &str =
     "https://raw.githubusercontent.com/sindresorhus/eslint-plugin-unicorn/main/test";
 
+const IMPORT_TEST_PATH: &str =
+    "https://raw.githubusercontent.com/import-js/eslint-plugin-import/main/tests/src/rules";
+
 const REACT_TEST_PATH: &str =
     "https://raw.githubusercontent.com/jsx-eslint/eslint-plugin-react/master/tests/lib/rules";
 
@@ -596,6 +599,7 @@ pub enum RuleKind {
     Jest,
     Typescript,
     Unicorn,
+    Import,
     React,
     ReactPerf,
     JSXA11y,
@@ -615,6 +619,7 @@ impl RuleKind {
             "jest" => Self::Jest,
             "typescript" => Self::Typescript,
             "unicorn" => Self::Unicorn,
+            "import" => Self::Import,
             "react" => Self::React,
             "react-perf" => Self::ReactPerf,
             "jsx-a11y" => Self::JSXA11y,
@@ -638,6 +643,7 @@ impl Display for RuleKind {
             Self::Typescript => write!(f, "typescript-eslint"),
             Self::Jest => write!(f, "eslint-plugin-jest"),
             Self::Unicorn => write!(f, "eslint-plugin-unicorn"),
+            Self::Import => write!(f, "eslint-plugin-import"),
             Self::React => write!(f, "eslint-plugin-react"),
             Self::ReactPerf => write!(f, "eslint-plugin-react-perf"),
             Self::JSXA11y => write!(f, "eslint-plugin-jsx-a11y"),
@@ -668,6 +674,7 @@ fn main() {
         RuleKind::Jest => format!("{JEST_TEST_PATH}/{kebab_rule_name}.test.ts"),
         RuleKind::Typescript => format!("{TYPESCRIPT_ESLINT_TEST_PATH}/{kebab_rule_name}.test.ts"),
         RuleKind::Unicorn => format!("{UNICORN_TEST_PATH}/{kebab_rule_name}.mjs"),
+        RuleKind::Import => format!("{IMPORT_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::React => format!("{REACT_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::ReactPerf => format!("{REACT_PERF_TEST_PATH}/{kebab_rule_name}.test.ts"),
         RuleKind::JSXA11y => format!("{JSX_A11Y_TEST_PATH}/{kebab_rule_name}-test.js"),
