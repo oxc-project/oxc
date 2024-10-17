@@ -89,14 +89,13 @@ mod test {
     fn span_position() {
         let allocator = Allocator::default();
 
-        let source_text1 = "^ Catch😎 @ symbols🇺🇳 $";
-        let unicode_reader = Reader::new(&allocator, source_text1, true, false);
-        let legacy_reader = Reader::new(&allocator, source_text1, false, false);
+        let source_text1 = r"^ Catch😎 @@ symbols🇺🇳 $";
+        let reader1 = Reader::new(&allocator, source_text1, true, false);
 
         let source_text2 = format!("\"{source_text1}\"");
-        let string_reader = Reader::new(&allocator, &source_text2, false, true);
+        let reader2 = Reader::new(&allocator, &source_text2, true, true);
 
-        for mut reader in [unicode_reader, legacy_reader, string_reader] {
+        for mut reader in [reader1, reader2] {
             reader.collect_units().unwrap();
 
             while reader.peek() != Some('^' as u32) {
@@ -105,13 +104,16 @@ mod test {
             let s1 = reader.start_span();
             assert!(reader.eat('^'));
             let s1 = reader.end_span(s1);
+            assert_eq!(&reader.atom(s1), "^");
 
             while reader.peek() != Some('@' as u32) {
                 reader.advance();
             }
             let s2 = reader.start_span();
             assert!(reader.eat('@'));
+            assert!(reader.eat('@'));
             let s2 = reader.end_span(s2);
+            assert_eq!(&reader.atom(s2), "@@");
 
             while reader.peek() != Some('$' as u32) {
                 reader.advance();
@@ -120,8 +122,6 @@ mod test {
             assert!(reader.eat('$'));
             let s3 = reader.end_span(s3);
 
-            assert_eq!(&reader.atom(s1), "^");
-            assert_eq!(&reader.atom(s2), "@");
             assert_eq!(&reader.atom(s3), "$");
         }
     }

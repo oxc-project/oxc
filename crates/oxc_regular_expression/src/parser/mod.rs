@@ -170,6 +170,8 @@ mod test {
             (r"\1", with_unicode_mode()),
             (r"\k<a>", with_unicode_mode()),
             ("a(?:", default()),
+            ("(", default()),
+            (")", with_unicode_sets_mode()),
             ("(a", default()),
             ("(?<a>", default()),
             ("(?<", default()),

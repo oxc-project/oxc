@@ -45,6 +45,8 @@ pub struct Reader<'a> {
     collector: Collector<'a>,
     units: Vec<'a, StringLiteralAst::CodePoint>,
     index: usize,
+    // TODO: Span > u32
+    last_span: Span,
 }
 
 impl<'a> Reader<'a> {
@@ -59,6 +61,8 @@ impl<'a> Reader<'a> {
             collector: Collector::new(allocator, unicode_mode, parse_string_literal),
             units: Vec::new_in(allocator),
             index: 0,
+            // Skip 1 for quote character
+            last_span: Span::new(0, if parse_string_literal { 1 } else { 0 }),
         }
     }
 
@@ -71,46 +75,31 @@ impl<'a> Reader<'a> {
     }
 
     pub fn start_span(&self) -> Span {
-        let unit = self.units.get(self.index);
-        // TODO: Why this fails??
-        // debug_assert!(
-        //     unit.is_some(),
-        //     "🦄 INDEX was None: {}/{} in {}",
-        //     self.index,
-        //     self.units.len(),
-        //     self.source_text,
-        // );
-
-        let start = unit.map_or(0, |unit| unit.span.start);
-        Span::new(start, 0)
+        self.last_span
     }
 
-    pub fn end_span(&self, mut span: Span) -> Span {
-        let unit = self.units.get(self.index - 1);
-        debug_assert!(unit.is_some());
-
-        let end = unit.map_or(span.end, |unit| unit.span.end);
-        span.end = end;
-        debug_assert!(span.end >= span.start);
-
-        span
+    pub fn end_span(&self, span_start: Span) -> Span {
+        Span::new(span_start.end, self.last_span.end)
     }
 
     pub fn atom(&self, span: Span) -> Atom<'a> {
         Atom::from(span.source_text(self.source_text))
     }
 
-    // NOTE: For now, `usize` is enough for the checkpoint.
-    pub fn checkpoint(&self) -> usize {
-        self.index
+    pub fn checkpoint(&self) -> (usize, Span) {
+        (self.index, self.last_span)
     }
 
-    pub fn rewind(&mut self, checkpoint: usize) {
-        self.index = checkpoint;
+    pub fn rewind(&mut self, checkpoint: (usize, Span)) {
+        self.index = checkpoint.0;
+        self.last_span = checkpoint.1;
     }
 
     pub fn advance(&mut self) {
-        self.index += 1;
+        if let Some(unit) = self.units.get(self.index) {
+            self.last_span = unit.span;
+            self.index += 1;
+        }
     }
 
     fn peek_nth(&self, n: usize) -> Option<u32> {

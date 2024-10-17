@@ -78,7 +78,7 @@ impl<'a> Parser<'a> {
             return Err(diagnostics::duplicated_capturing_group_names(
                 duplicated_named_capturing_groups
                     .iter()
-                    .map(|span| self.span_factory.create(self.reader.end_span(*span)))
+                    .map(|span| self.span_factory.create(*span))
                     .collect(),
             ));
         }
