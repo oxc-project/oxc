@@ -263,8 +263,14 @@ fn left_offset_for_whitespace(ctx: &LintContext, position: u32) -> u32 {
         return position;
     }
 
-    let chars = ctx.source_text()[..(position as usize)].chars().rev();
-    let offset = chars.take_while(|c| c.is_whitespace()).count();
+    let mut offset = 0;
+    for c in ctx.source_text()[..(position as usize)].chars().rev() {
+        if !c.is_whitespace() {
+            break;
+        }
+        offset += c.len_utf8();
+    }
+
     debug_assert!(offset < u32::MAX as usize);
     offset as u32
 }
@@ -423,6 +429,7 @@ fn test() {
     ];
 
     let fail = vec![
+        ("if(0)return;else r", None),
         ("function foo1() { if (true) { return x; } else { return y; } }", None),
 ("function foo2() { if (true) { var x = bar; return x; } else { var y = baz; return y; } }", None),
 ("function foo3() { if (true) return x; else return y; }", None),
