@@ -1124,7 +1124,7 @@ impl<'a> GenExpr for NumericLiteral<'a> {
                 if p.options.minify {
                     p.print_str("1/0");
                 } else {
-                    p.print_str("1 / 0");
+                    p.print_str("Infinity");
                 }
             });
         } else if value.is_sign_positive() {
