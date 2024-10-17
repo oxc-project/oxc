@@ -93,7 +93,7 @@ use oxc_ast::{ast::*, AstBuilder, NONE};
 use oxc_ecmascript::PropName;
 use oxc_span::{Atom, GetSpan, Span, SPAN};
 use oxc_syntax::{
-    identifier::{is_irregular_whitespace, is_line_terminator},
+    identifier::{is_line_terminator, is_white_space_single_line},
     reference::ReferenceFlags,
     symbol::SymbolFlags,
     xml_entities::XML_ENTITIES,
@@ -909,7 +909,7 @@ impl<'a, 'ctx> ReactJsx<'a, 'ctx> {
                     acc = Some(Self::add_line_of_jsx_text(acc, &text[first..last]));
                 }
                 first_non_whitespace = None;
-            } else if c != ' ' && !is_irregular_whitespace(c) {
+            } else if !is_white_space_single_line(c) {
                 last_non_whitespace = Some(index + c.len_utf8());
                 if first_non_whitespace.is_none() {
                     first_non_whitespace.replace(index);

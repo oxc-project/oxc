@@ -1,6 +1,6 @@
 commit: 3bcfee23
 
-Passed: 35/62
+Passed: 34/62
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -73,7 +73,7 @@ exec failed
 exec failed
 
 
-# babel-plugin-transform-async-to-generator (2/6)
+# babel-plugin-transform-async-to-generator (1/6)
 * regression/15978/exec.js
 exec failed
 
@@ -81,6 +81,9 @@ exec failed
 exec failed
 
 * regression/T6882/exec.js
+exec failed
+
+* regression/fn-name/exec.js
 exec failed
 
 * regression/test262-fn-length/exec.js

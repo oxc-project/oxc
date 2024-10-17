@@ -1,5 +1,4 @@
 use std::cmp::Ordering;
-use std::ops::Neg;
 
 use num_bigint::BigInt;
 use num_traits::Zero;
@@ -7,7 +6,7 @@ use num_traits::Zero;
 use oxc_ast::ast::*;
 use oxc_ecmascript::ToInt32;
 use oxc_ecmascript::{
-    constant_evaluation::{IsLiteralValue, ValueType},
+    constant_evaluation::{ConstantEvaluation, ValueType},
     side_effects::MayHaveSideEffects,
 };
 use oxc_span::{GetSpan, Span, SPAN};
@@ -57,7 +56,9 @@ impl<'a> Traverse<'a> for PeepholeFoldConstants {
             Expression::ArrayExpression(e) => Self::try_flatten_array_expression(e, ctx),
             Expression::ObjectExpression(e) => Self::try_flatten_object_expression(e, ctx),
             Expression::BinaryExpression(e) => Self::try_fold_binary_expression(e, ctx),
-            Expression::UnaryExpression(e) => self.try_fold_unary_expression(e, ctx),
+            Expression::UnaryExpression(e) => {
+                ctx.eval_unary_expression(e).map(|v| ctx.value_to_expr(e.span, v))
+            }
             // TODO: return tryFoldGetProp(subtree);
             Expression::LogicalExpression(e) => Self::try_fold_logical_expression(e, ctx),
             // TODO: tryFoldGetElem
@@ -89,32 +90,6 @@ impl<'a, 'b> PeepholeFoldConstants {
         None
     }
 
-    /// Folds 'typeof(foo)' if foo is a literal, e.g.
-    /// `typeof("bar") --> "string"`
-    /// `typeof(6) --> "number"`
-    fn try_fold_type_of(
-        expr: &mut UnaryExpression<'a>,
-        ctx: Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        if !expr.argument.is_literal_value(/* include_function */ true) {
-            return None;
-        }
-        let s = match &mut expr.argument {
-            Expression::FunctionExpression(_) => "function",
-            Expression::StringLiteral(_) => "string",
-            Expression::NumericLiteral(_) => "number",
-            Expression::BooleanLiteral(_) => "boolean",
-            Expression::NullLiteral(_)
-            | Expression::ObjectExpression(_)
-            | Expression::ArrayExpression(_) => "object",
-            Expression::UnaryExpression(e) if e.operator == UnaryOperator::Void => "undefined",
-            Expression::BigIntLiteral(_) => "bigint",
-            Expression::Identifier(ident) if ctx.is_identifier_undefined(ident) => "undefined",
-            _ => return None,
-        };
-        Some(ctx.ast.expression_string_literal(SPAN, s))
-    }
-
     // TODO
     // fn try_fold_spread(
     // &mut self,
@@ -135,146 +110,6 @@ impl<'a, 'b> PeepholeFoldConstants {
         _new_expr: &mut ObjectExpression<'a>,
         _ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
-        None
-    }
-
-    fn try_fold_unary_expression(
-        &mut self,
-        expr: &mut UnaryExpression<'a>,
-        ctx: Ctx<'a, 'b>,
-    ) -> Option<Expression<'a>> {
-        fn is_valid(x: f64) -> bool {
-            x.is_finite() && x.fract() == 0.0
-        }
-        match expr.operator {
-            UnaryOperator::Void => self.try_reduce_void(expr, ctx),
-            UnaryOperator::Typeof => Self::try_fold_type_of(expr, ctx),
-            // TODO: tryReduceOperandsForOp
-            #[allow(clippy::float_cmp)]
-            UnaryOperator::LogicalNot => {
-                if let Expression::NumericLiteral(n) = &expr.argument {
-                    if n.value == 0.0 || n.value == 1.0 {
-                        return None;
-                    }
-                }
-                ctx.get_boolean_value(&expr.argument)
-                    .map(|b| ctx.ast.expression_boolean_literal(expr.span, !b))
-            }
-            // `-NaN` -> `NaN`
-            UnaryOperator::UnaryNegation if expr.argument.is_nan() => {
-                Some(ctx.ast.move_expression(&mut expr.argument))
-            }
-            // `--1` -> `1`
-            UnaryOperator::UnaryNegation => match &mut expr.argument {
-                Expression::UnaryExpression(unary)
-                    if matches!(unary.operator, UnaryOperator::UnaryNegation) =>
-                {
-                    Some(ctx.ast.move_expression(&mut unary.argument))
-                }
-                Expression::NumericLiteral(n) => Some(ctx.ast.expression_numeric_literal(
-                    expr.span,
-                    -n.value,
-                    "",
-                    NumberBase::Decimal,
-                )),
-                _ => None,
-            },
-            // `+1` -> `1`
-            UnaryOperator::UnaryPlus => match &expr.argument {
-                Expression::UnaryExpression(unary) => {
-                    matches!(unary.operator, UnaryOperator::UnaryNegation)
-                        .then(|| ctx.ast.move_expression(&mut expr.argument))
-                }
-                Expression::Identifier(id) if id.name == "Infinity" => {
-                    Some(ctx.ast.move_expression(&mut expr.argument))
-                }
-                // `+NaN` -> `NaN`
-                _ if expr.argument.is_nan() => Some(ctx.ast.move_expression(&mut expr.argument)),
-                _ if expr.argument.is_number() => Some(ctx.ast.move_expression(&mut expr.argument)),
-                _ => None,
-            },
-            UnaryOperator::BitwiseNot => match &mut expr.argument {
-                Expression::BigIntLiteral(n) => {
-                    let value = ctx.get_string_bigint_value(n.raw.as_str().trim_end_matches('n'));
-                    value.map(|value| {
-                        let value = !value;
-                        ctx.ast.expression_big_int_literal(
-                            expr.span,
-                            value.to_string() + "n",
-                            BigintBase::Decimal,
-                        )
-                    })
-                }
-                Expression::NumericLiteral(n) => is_valid(n.value).then(|| {
-                    let value = !n.value.to_int_32();
-                    ctx.ast.expression_numeric_literal(
-                        expr.span,
-                        value.into(),
-                        value.to_string(),
-                        NumberBase::Decimal,
-                    )
-                }),
-                Expression::UnaryExpression(un) => {
-                    match un.operator {
-                        UnaryOperator::BitwiseNot if un.argument.is_number() => {
-                            // Return the un-bitten value
-                            Some(ctx.ast.move_expression(&mut un.argument))
-                        }
-                        UnaryOperator::UnaryNegation if un.argument.is_big_int_literal() => {
-                            // `~-1n` -> `0n`
-                            if let Expression::BigIntLiteral(n) = &mut un.argument {
-                                let value = ctx
-                                    .get_string_bigint_value(n.raw.as_str().trim_end_matches('n'));
-                                value.and_then(|value| value.checked_sub(&BigInt::from(1))).map(
-                                    |value| {
-                                        ctx.ast.expression_big_int_literal(
-                                            expr.span,
-                                            value.neg().to_string() + "n",
-                                            BigintBase::Decimal,
-                                        )
-                                    },
-                                )
-                            } else {
-                                None
-                            }
-                        }
-                        UnaryOperator::UnaryNegation if un.argument.is_number() => {
-                            // `-~1` -> `2`
-                            if let Expression::NumericLiteral(n) = &mut un.argument {
-                                is_valid(n.value).then(|| {
-                                    let value = !n.value.to_int_32().wrapping_neg();
-                                    ctx.ast.expression_numeric_literal(
-                                        expr.span,
-                                        value.into(),
-                                        value.to_string(),
-                                        NumberBase::Decimal,
-                                    )
-                                })
-                            } else {
-                                None
-                            }
-                        }
-                        _ => None,
-                    }
-                }
-                _ => None,
-            },
-            UnaryOperator::Delete => None,
-        }
-    }
-
-    /// `void 1` -> `void 0`
-    fn try_reduce_void(
-        &mut self,
-        expr: &mut UnaryExpression<'a>,
-        ctx: Ctx<'a, 'b>,
-    ) -> Option<Expression<'a>> {
-        if (!expr.argument.is_number() || !expr.argument.is_number_0())
-            && !expr.may_have_side_effects()
-        {
-            expr.argument = ctx.ast.number_0();
-            self.changed = true;
-        }
         None
     }
 
@@ -455,7 +290,6 @@ impl<'a, 'b> PeepholeFoldConstants {
                 // at the beginning
                 let left_string = ctx.get_string_value(left)?;
                 let right_string = ctx.get_string_value(right)?;
-                // let value = left_string.to_owned().
                 let value = left_string + right_string;
                 Some(ctx.ast.expression_string_literal(span, value))
             },
@@ -577,21 +411,12 @@ impl<'a, 'b> PeepholeFoldConstants {
             BinaryOperator::Exponential => left.powf(right),
             _ => unreachable!(),
         };
-        Some(match result {
-            f64::INFINITY => ctx.ast.expression_identifier_reference(SPAN, "Infinity"),
-            f64::NEG_INFINITY => ctx.ast.expression_unary(
-                SPAN,
-                UnaryOperator::UnaryNegation,
-                ctx.ast.expression_identifier_reference(SPAN, "Infinity"),
-            ),
-            _ if result.is_nan() => ctx.ast.expression_identifier_reference(SPAN, "NaN"),
-            _ => ctx.ast.expression_numeric_literal(
-                SPAN,
-                result,
-                result.to_js_string(),
-                if is_exact_int64(result) { NumberBase::Decimal } else { NumberBase::Float },
-            ),
-        })
+        Some(ctx.ast.expression_numeric_literal(
+            SPAN,
+            result,
+            result.to_js_string(),
+            if is_exact_int64(result) { NumberBase::Decimal } else { NumberBase::Float },
+        ))
     }
 
     fn try_fold_instanceof(
@@ -1512,13 +1337,12 @@ mod test {
         test("a = ~1", "a = -2");
         test("a = ~101", "a = -102");
 
-        // More tests added by Ethan, which aligns with Google Closure Compiler's behavior
-        test_same("a = ~1.1"); // By default, we don't fold floating-point numbers.
+        test("a = ~1.1", "a = -2");
         test("a = ~0x3", "a = -4"); // Hexadecimal number
         test("a = ~9", "a = -10"); // Despite `-10` is longer than `~9`, the compiler still folds it.
         test_same("a = ~b");
-        test_same("a = ~NaN");
-        test_same("a = ~-Infinity");
+        test("a = ~NaN", "a = -1");
+        test("a = ~-Infinity", "a = -1");
         test("x = ~2147483658.0", "x = 2147483637");
         test("x = ~-2147483658", "x = -2147483639");
     }

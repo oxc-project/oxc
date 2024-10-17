@@ -3,8 +3,11 @@ use std::ops::Deref;
 
 use num_bigint::BigInt;
 use oxc_ast::ast::*;
-use oxc_ecmascript::{constant_evaluation::ConstantEvaluation, side_effects::MayHaveSideEffects};
-use oxc_ecmascript::{StringToBigInt, ToBigInt, ToJsString};
+use oxc_ecmascript::{
+    constant_evaluation::{ConstantEvaluation, ConstantValue},
+    side_effects::MayHaveSideEffects,
+};
+use oxc_ecmascript::{ToBigInt, ToJsString};
 use oxc_semantic::{IsGlobalReference, SymbolTable};
 use oxc_traverse::TraverseCtx;
 
@@ -31,6 +34,22 @@ pub fn is_exact_int64(num: f64) -> bool {
 impl<'a, 'b> Ctx<'a, 'b> {
     fn symbols(&self) -> &SymbolTable {
         self.0.symbols()
+    }
+
+    pub fn value_to_expr(self, span: Span, value: ConstantValue<'a>) -> Expression<'a> {
+        match value {
+            ConstantValue::Number(n) => {
+                let number_base =
+                    if is_exact_int64(n) { NumberBase::Decimal } else { NumberBase::Float };
+                self.ast.expression_numeric_literal(span, n, "", number_base)
+            }
+            ConstantValue::BigInt(n) => {
+                self.ast.expression_big_int_literal(span, n.to_string() + "n", BigintBase::Decimal)
+            }
+            ConstantValue::String(s) => self.ast.expression_string_literal(span, s),
+            ConstantValue::Boolean(b) => self.ast.expression_boolean_literal(span, b),
+            ConstantValue::Undefined => self.ast.void_0(span),
+        }
     }
 
     /// Gets the boolean value of a node that represents an expression, or `None` if no
@@ -122,11 +141,5 @@ impl<'a, 'b> Ctx<'a, 'b> {
     #[expect(clippy::unused_self)]
     pub fn get_string_value(self, expr: &Expression<'a>) -> Option<Cow<'a, str>> {
         expr.to_js_string()
-    }
-
-    /// port from [closure compiler](https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/NodeUtil.java#L540)
-    #[expect(clippy::unused_self)]
-    pub fn get_string_bigint_value(self, raw_string: &str) -> Option<BigInt> {
-        raw_string.string_to_big_int()
     }
 }

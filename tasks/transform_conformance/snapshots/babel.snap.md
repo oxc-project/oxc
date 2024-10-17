@@ -1,6 +1,6 @@
 commit: 3bcfee23
 
-Passed: 341/1051
+Passed: 342/1051
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1628,7 +1628,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-async-to-generator (1/24)
+# babel-plugin-transform-async-to-generator (2/24)
 * assumption-ignoreFunctionLength-true/basic/input.mjs
 x Output mismatch
 
@@ -1675,9 +1675,6 @@ x Output mismatch
 x Output mismatch
 
 * regression/15978/input.js
-x Output mismatch
-
-* regression/4599/input.js
 x Output mismatch
 
 * regression/8783/input.js

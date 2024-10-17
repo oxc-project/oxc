@@ -31,7 +31,7 @@ use serde::Deserialize;
 use oxc_ast::ast::*;
 use oxc_traverse::{Traverse, TraverseCtx};
 
-use crate::context::TransformCtx;
+use crate::TransformCtx;
 
 mod object_rest;
 mod object_spread;

@@ -98,7 +98,7 @@ impl<'a> Transformer<'a> {
             x2_es2019: ES2019::new(self.options.es2019),
             x2_es2018: ES2018::new(self.options.es2018, &self.ctx),
             x2_es2016: ES2016::new(self.options.es2016, &self.ctx),
-            x2_es2017: ES2017::new(self.options.es2017),
+            x2_es2017: ES2017::new(self.options.es2017, &self.ctx),
             x3_es2015: ES2015::new(self.options.es2015),
             x4_regexp: RegExp::new(self.options.regexp, &self.ctx),
             common: Common::new(&self.ctx),
@@ -117,7 +117,7 @@ struct TransformerImpl<'a, 'ctx> {
     x2_es2020: ES2020<'a, 'ctx>,
     x2_es2019: ES2019,
     x2_es2018: ES2018<'a, 'ctx>,
-    x2_es2017: ES2017,
+    x2_es2017: ES2017<'a, 'ctx>,
     x2_es2016: ES2016<'a, 'ctx>,
     x3_es2015: ES2015<'a>,
     x4_regexp: RegExp<'a, 'ctx>,
@@ -333,7 +333,6 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
                 .push(ctx.ast.statement_return(SPAN, Some(statement.unbox().expression)));
             arrow.expression = false;
         }
-        self.x2_es2017.exit_arrow_function_expression(arrow, ctx);
     }
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {

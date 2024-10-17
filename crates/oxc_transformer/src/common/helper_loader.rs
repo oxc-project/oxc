@@ -137,12 +137,14 @@ fn default_as_module_name() -> Cow<'static, str> {
 /// Available helpers.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum Helper {
+    AsyncToGenerator,
     ObjectSpread2,
 }
 
 impl Helper {
     const fn name(self) -> &'static str {
         match self {
+            Self::AsyncToGenerator => "asyncToGenerator",
             Self::ObjectSpread2 => "objectSpread2",
         }
     }
@@ -187,9 +189,8 @@ impl<'a> TransformCtx<'a> {
     }
 
     /// Same as [`TransformCtx::helper_call`], but returns a `CallExpression` wrapped in an `Expression`.
-    #[expect(dead_code)]
     pub fn helper_call_expr(
-        &mut self,
+        &self,
         helper: Helper,
         arguments: Vec<'a, Argument<'a>>,
         ctx: &mut TraverseCtx<'a>,
