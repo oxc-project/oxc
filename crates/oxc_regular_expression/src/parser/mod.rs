@@ -332,14 +332,15 @@ mod test {
     fn string_literal() {
         let allocator = Allocator::default();
 
-        let source_text = r"'Invalid! -> \u{1234568} <-";
+        let source_text = r"RegExp('Invalid! -> \u{1234568} <-')";
         let err = Parser::new(
             &allocator,
             source_text,
-            ParserOptions { parse_string_literal: true, ..ParserOptions::default() },
+            ParserOptions { parse_string_literal: true, span_offset: 7, ..ParserOptions::default() },
         )
         .parse();
         assert!(err.is_err());
+        // println!("{:?}", err.unwrap_err().with_source_code(source_text));
 
         let ret1 = Parser::new(
             &allocator,

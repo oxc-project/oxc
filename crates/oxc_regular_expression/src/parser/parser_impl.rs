@@ -44,11 +44,10 @@ impl<'a> Parser<'a> {
 
     pub fn parse(mut self) -> Result<ast::Pattern<'a>> {
         // When `options.parse_string_literal` is `true`, `StringLiteral` parser may throw for invalid input.
-        self.reader.collect_units().map_err(|mut err| {
-            // Reuse span(labels) with updated message
-            err.message.clone_from(&diagnostics::invalid_input().message);
-            err
-        })?;
+        self.reader
+            .collect_units()
+            // Reuse propagated labels(span) may be better?
+            .map_err(|_| diagnostics::invalid_input(self.span_factory.create(0, 0)))?;
 
         let checkpoint = self.reader.checkpoint();
         let span_start = self.reader.offset();
