@@ -33,14 +33,12 @@
 //!
 //! Implementation based on [@babel/plugin-transform-async-to-generator](https://babel.dev/docs/babel-plugin-transform-async-to-generator).
 //!
-//!
 //! Reference:
 //! * Babel docs: <https://babeljs.io/docs/en/babel-plugin-transform-async-to-generator>
 //! * Esbuild implementation: <https://github.com/evanw/esbuild/blob/main/internal/js_parser/js_parser_lower.go#L392>
 //! * Babel implementation: <https://github.com/babel/babel/blob/main/packages/babel-plugin-transform-async-to-generator>
 //! * Babel helper implementation: <https://github.com/babel/babel/blob/main/packages/babel-helper-remap-async-to-generator>
 //! * Async / Await TC39 proposal: <https://github.com/tc39/proposal-async-await>
-//!
 
 use oxc_ast::{
     ast::{
