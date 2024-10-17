@@ -1,9 +1,10 @@
 use oxc_ast::ast::{Expression, Statement};
 use oxc_traverse::{Traverse, TraverseCtx};
 
-use crate::context::TransformCtx;
-use crate::es2017::async_to_generator::AsyncToGenerator;
-use crate::es2017::options::ES2017Options;
+use crate::{
+    es2017::{async_to_generator::AsyncToGenerator, options::ES2017Options},
+    TransformCtx,
+};
 
 mod async_to_generator;
 pub mod options;

@@ -51,7 +51,7 @@ use oxc_semantic::ScopeFlags;
 use oxc_span::{GetSpan, SPAN};
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
-use crate::{common::helper_loader::Helper, context::TransformCtx};
+use crate::{common::helper_loader::Helper, TransformCtx};
 
 pub struct AsyncToGenerator<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,
