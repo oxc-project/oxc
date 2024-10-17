@@ -336,7 +336,11 @@ mod test {
         let err = Parser::new(
             &allocator,
             source_text,
-            ParserOptions { parse_string_literal: true, span_offset: 7, ..ParserOptions::default() },
+            ParserOptions {
+                parse_string_literal: true,
+                span_offset: 7,
+                ..ParserOptions::default()
+            },
         )
         .parse();
         assert!(err.is_err());

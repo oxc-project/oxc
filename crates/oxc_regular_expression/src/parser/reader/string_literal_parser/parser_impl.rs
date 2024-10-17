@@ -515,6 +515,8 @@ impl<'a> StringLiteralParser<'a> {
     }
 }
 
+/// Helper API for `RegExp` literal parsing.
+/// This time, we don't need to handle escape sequences.
 pub fn parse_regexp_literal<'a>(
     allocator: &'a Allocator,
     source_text: &str,
