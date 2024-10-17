@@ -28,6 +28,7 @@ pub trait Generator {
     fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput;
 }
 
+#[expect(dead_code)]
 #[derive(Debug, Clone)]
 pub enum GeneratorOutput {
     Rust(/* output path */ PathBuf, TokenStream),
