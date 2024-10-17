@@ -1,6 +1,6 @@
 use oxc_allocator::{Allocator, Vec};
 use oxc_diagnostics::Result;
-use oxc_span::{Atom, Span};
+use oxc_span::Atom;
 
 use crate::parser::reader::string_literal_parser::{
     ast as StringLiteralAst, parse_regexp_literal, ParserOptions, StringLiteralParser,
@@ -45,7 +45,7 @@ pub struct Reader<'a> {
     collector: Collector<'a>,
     units: Vec<'a, StringLiteralAst::CodePoint>,
     index: usize,
-    last_span_end: u32,
+    offset: u32,
 }
 
 impl<'a> Reader<'a> {
@@ -61,7 +61,7 @@ impl<'a> Reader<'a> {
             units: Vec::new_in(allocator),
             index: 0,
             // +1 to skip quote character
-            last_span_end: u32::from(parse_string_literal),
+            offset: u32::from(parse_string_literal),
         }
     }
 
@@ -73,30 +73,26 @@ impl<'a> Reader<'a> {
         Ok(())
     }
 
-    pub fn span_start(&self) -> u32 {
-        self.last_span_end
+    pub fn offset(&self) -> u32 {
+        self.offset
     }
 
-    pub fn span(&self, span_start: u32) -> Span {
-        Span::new(span_start, self.last_span_end)
-    }
-
-    pub fn atom(&self, span: Span) -> Atom<'a> {
-        Atom::from(span.source_text(self.source_text))
+    pub fn atom(&self, start: u32, end: u32) -> Atom<'a> {
+        Atom::from(&self.source_text[start as usize..end as usize])
     }
 
     pub fn checkpoint(&self) -> (usize, u32) {
-        (self.index, self.last_span_end)
+        (self.index, self.offset)
     }
 
     pub fn rewind(&mut self, checkpoint: (usize, u32)) {
         self.index = checkpoint.0;
-        self.last_span_end = checkpoint.1;
+        self.offset = checkpoint.1;
     }
 
     pub fn advance(&mut self) {
         if let Some(unit) = self.units.get(self.index) {
-            self.last_span_end = unit.span.end;
+            self.offset = unit.span.end;
             self.index += 1;
         }
     }

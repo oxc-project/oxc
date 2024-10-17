@@ -1,4 +1,4 @@
-use oxc_span::{Atom, Span};
+use oxc_span::Atom;
 use rustc_hash::FxHashSet;
 
 use crate::parser::reader::Reader;
@@ -27,7 +27,7 @@ impl<'a> State<'a> {
         }
     }
 
-    pub fn initialize_with_parsing(&mut self, reader: &mut Reader<'a>) -> Vec<Span> {
+    pub fn initialize_with_parsing(&mut self, reader: &mut Reader<'a>) -> Vec<(u32, u32)> {
         let (
             num_of_left_capturing_parens,
             capturing_group_names,
@@ -49,7 +49,9 @@ impl<'a> State<'a> {
 }
 
 /// Returns: (num_of_left_parens, capturing_group_names, duplicated_named_capturing_groups)
-fn parse_capturing_groups<'a>(reader: &mut Reader<'a>) -> (u32, FxHashSet<Atom<'a>>, Vec<Span>) {
+fn parse_capturing_groups<'a>(
+    reader: &mut Reader<'a>,
+) -> (u32, FxHashSet<Atom<'a>>, Vec<(u32, u32)>) {
     let mut num_of_left_capturing_parens = 0;
     let mut capturing_group_names = FxHashSet::default();
     let mut duplicated_named_capturing_groups = vec![];
@@ -90,20 +92,20 @@ fn parse_capturing_groups<'a>(reader: &mut Reader<'a>) -> (u32, FxHashSet<Atom<'
 
             // Collect capturing group names
             if reader.eat2('?', '<') {
-                let span_start = reader.span_start();
+                let span_start = reader.offset();
                 while let Some(ch) = reader.peek() {
                     if ch == '>' as u32 {
                         break;
                     }
                     reader.advance();
                 }
-                let group_name_span = reader.span(span_start);
+                let span_end = reader.offset();
 
                 if reader.eat('>') {
                     // May be duplicated
-                    if !capturing_group_names.insert(reader.atom(group_name_span)) {
+                    if !capturing_group_names.insert(reader.atom(span_start, span_end)) {
                         // Report them with `Span`
-                        duplicated_named_capturing_groups.push(group_name_span);
+                        duplicated_named_capturing_groups.push((span_start, span_end));
                     }
                     continue;
                 }

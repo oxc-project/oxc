@@ -101,28 +101,28 @@ mod test {
             while reader.peek() != Some('^' as u32) {
                 reader.advance();
             }
-            let s1 = reader.span_start();
+            let s1 = reader.offset();
             assert!(reader.eat('^'));
-            let s1 = reader.span(s1);
-            assert_eq!(&reader.atom(s1), "^");
+            let e1 = reader.offset();
+            assert_eq!(&reader.atom(s1, e1), "^");
 
             while reader.peek() != Some('@' as u32) {
                 reader.advance();
             }
-            let s2 = reader.span_start();
+            let s2 = reader.offset();
             assert!(reader.eat('@'));
             assert!(reader.eat('@'));
-            let s2 = reader.span(s2);
-            assert_eq!(&reader.atom(s2), "@@");
+            let e2 = reader.offset();
+            assert_eq!(&reader.atom(s2, e2), "@@");
 
             while reader.peek() != Some('$' as u32) {
                 reader.advance();
             }
-            let s3 = reader.span_start();
+            let s3 = reader.offset();
             assert!(reader.eat('$'));
-            let s3 = reader.span(s3);
+            let e3 = reader.offset();
 
-            assert_eq!(&reader.atom(s3), "$");
+            assert_eq!(&reader.atom(s3, e3), "$");
         }
     }
 }
