@@ -1,20 +1,22 @@
 commit: 3bcfee23
 
-Passed: 33/54
+Passed: 34/62
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
 * babel-plugin-transform-nullish-coalescing-operator
 * babel-plugin-transform-optional-catch-binding
 * babel-plugin-transform-exponentiation-operator
-* babel-plugin-transform-arrow-functions
 
 
-# babel-preset-env (8/11)
+# babel-preset-env (7/11)
 * plugins-integration/class-arrow-super-tagged-expr/exec.js
 exec failed
 
 * plugins-integration/issue-15170/exec.js
+exec failed
+
+* plugins-integration/regression-7064/exec.js
 exec failed
 
 * sanity/check-es2015-constants/exec.js
@@ -68,6 +70,28 @@ exec failed
 exec failed
 
 * object-spread-loose-builtins/side-effect/exec.js
+exec failed
+
+
+# babel-plugin-transform-async-to-generator (1/6)
+* regression/15978/exec.js
+exec failed
+
+* regression/8783/exec.js
+exec failed
+
+* regression/T6882/exec.js
+exec failed
+
+* regression/fn-name/exec.js
+exec failed
+
+* regression/test262-fn-length/exec.js
+exec failed
+
+
+# babel-plugin-transform-arrow-functions (2/3)
+* arrow-functions/implicit-var-arguments/exec.js
 exec failed
 
 

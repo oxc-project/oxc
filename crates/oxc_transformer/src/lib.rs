@@ -1,4 +1,3 @@
-#![warn(clippy::print_stdout)]
 #![allow(clippy::wildcard_imports)]
 
 //! Transformer / Transpiler
@@ -8,7 +7,14 @@
 //! * <https://babel.dev/docs/presets>
 //! * <https://github.com/microsoft/TypeScript/blob/main/src/compiler/transformer.ts>
 
-use oxc_ast::AstBuilder;
+use std::path::Path;
+
+use oxc_allocator::{Allocator, Vec};
+use oxc_ast::{ast::*, AstBuilder};
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_semantic::{ScopeTree, SymbolTable};
+use oxc_span::SPAN;
+use oxc_traverse::{traverse_mut, Traverse, TraverseCtx};
 
 // Core
 mod common;
@@ -19,6 +25,7 @@ mod options;
 mod env;
 mod es2015;
 mod es2016;
+mod es2017;
 mod es2018;
 mod es2019;
 mod es2020;
@@ -29,21 +36,18 @@ mod typescript;
 
 mod plugins;
 
-use std::path::Path;
-
 use common::Common;
+use context::TransformCtx;
+use es2015::ES2015;
 use es2016::ES2016;
+use es2017::ES2017;
 use es2018::ES2018;
 use es2019::ES2019;
 use es2020::ES2020;
 use es2021::ES2021;
-use oxc_allocator::{Allocator, Vec};
-use oxc_ast::ast::*;
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_semantic::{ScopeTree, SymbolTable};
-use oxc_span::SPAN;
-use oxc_traverse::{traverse_mut, Traverse, TraverseCtx};
+use react::React;
 use regexp::RegExp;
+use typescript::TypeScript;
 
 pub use crate::{
     compiler_assumptions::CompilerAssumptions,
@@ -54,7 +58,6 @@ pub use crate::{
     react::{JsxOptions, JsxRuntime, ReactRefreshOptions},
     typescript::{RewriteExtensionsMode, TypeScriptOptions},
 };
-use crate::{context::TransformCtx, es2015::ES2015, react::React, typescript::TypeScript};
 
 pub struct TransformerReturn {
     pub errors: std::vec::Vec<OxcDiagnostic>,
@@ -93,8 +96,9 @@ impl<'a> Transformer<'a> {
             x2_es2021: ES2021::new(self.options.es2021, &self.ctx),
             x2_es2020: ES2020::new(self.options.es2020, &self.ctx),
             x2_es2019: ES2019::new(self.options.es2019),
-            x2_es2018: ES2018::new(self.options.es2018),
+            x2_es2018: ES2018::new(self.options.es2018, &self.ctx),
             x2_es2016: ES2016::new(self.options.es2016, &self.ctx),
+            x2_es2017: ES2017::new(self.options.es2017, &self.ctx),
             x3_es2015: ES2015::new(self.options.es2015),
             x4_regexp: RegExp::new(self.options.regexp, &self.ctx),
             common: Common::new(&self.ctx),
@@ -112,7 +116,8 @@ struct TransformerImpl<'a, 'ctx> {
     x2_es2021: ES2021<'a, 'ctx>,
     x2_es2020: ES2020<'a, 'ctx>,
     x2_es2019: ES2019,
-    x2_es2018: ES2018,
+    x2_es2018: ES2018<'a, 'ctx>,
+    x2_es2017: ES2017<'a, 'ctx>,
     x2_es2016: ES2016<'a, 'ctx>,
     x3_es2015: ES2015<'a>,
     x4_regexp: RegExp<'a, 'ctx>,
@@ -196,6 +201,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x1_react.exit_expression(expr, ctx);
+        self.x2_es2017.exit_expression(expr, ctx);
         self.x3_es2015.exit_expression(expr, ctx);
     }
 
@@ -230,6 +236,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
     fn exit_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.exit_function(func, ctx);
         self.x1_react.exit_function(func, ctx);
+        self.x2_es2017.exit_function(func, ctx);
         self.x3_es2015.exit_function(func, ctx);
     }
 
@@ -332,6 +339,10 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         self.x0_typescript.exit_statements(stmts, ctx);
         self.x1_react.exit_statements(stmts, ctx);
         self.common.exit_statements(stmts, ctx);
+    }
+
+    fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x2_es2017.exit_statement(stmt, ctx);
     }
 
     fn enter_tagged_template_expression(

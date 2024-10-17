@@ -1,17 +1,19 @@
 use std::iter::once;
 
 use base64::prelude::{Engine, BASE64_STANDARD};
+use rustc_hash::FxHashMap;
+use sha1::{Digest, Sha1};
+
 use oxc_allocator::CloneIn;
 use oxc_ast::{ast::*, match_expression, AstBuilder, NONE};
 use oxc_semantic::{Reference, ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags, SymbolId};
 use oxc_span::{Atom, GetSpan, SPAN};
 use oxc_syntax::operator::AssignmentOperator;
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
-use rustc_hash::FxHashMap;
-use sha1::{Digest, Sha1};
+
+use crate::TransformCtx;
 
 use super::options::ReactRefreshOptions;
-use crate::TransformCtx;
 
 /// Parse a string into a `RefreshIdentifierResolver` and convert it into an `Expression`
 #[derive(Debug)]

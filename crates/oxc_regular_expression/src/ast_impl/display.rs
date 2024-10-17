@@ -1,4 +1,5 @@
 use std::{
+    borrow::Cow,
     fmt::{self, Display},
     iter::Peekable,
 };
@@ -31,7 +32,7 @@ impl<'a> Display for Alternative<'a> {
 
         write_join_with(f, "", &self.body, |iter| {
             let next = iter.next()?;
-            let Some(next) = as_character(next) else { return Some(next.to_string()) };
+            let Some(next) = as_character(next) else { return Some(Cow::Owned(next.to_string())) };
 
             let peek = iter.peek().and_then(|it| as_character(it));
             let (result, eat) = character_to_string(next, peek);
@@ -106,9 +107,11 @@ impl<'a> Display for Quantifier<'a> {
             (1, None) => write!(f, "+")?,
             (0, Some(1)) => write!(f, "?")?,
             (min, Some(max)) if min == max => write!(f, "{{{min}}}",)?,
-            (min, max) => {
-                let max = max.map_or_else(String::default, |it| it.to_string());
+            (min, Some(max)) => {
                 write!(f, "{{{min},{max}}}",)?;
+            }
+            (min, None) => {
+                write!(f, "{{{min},}}",)?;
             }
         }
 
@@ -194,7 +197,9 @@ impl<'a> Display for CharacterClass<'a> {
 
             write_join_with(f, sep, &self.body, |iter| {
                 let next = iter.next()?;
-                let Some(next) = as_character(next) else { return Some(next.to_string()) };
+                let Some(next) = as_character(next) else {
+                    return Some(Cow::Owned(next.to_string()));
+                };
 
                 let peek = iter.peek().and_then(|it| as_character(it));
                 let (result, eat) = character_to_string(next, peek);
@@ -304,13 +309,13 @@ impl<'a> Display for NamedReference<'a> {
 fn character_to_string(
     this: &Character,
     peek: Option<&Character>,
-) -> (/* result */ String, /* true of peek should be consumed */ bool) {
+) -> (/* result */ Cow<'static, str>, /* true of peek should be consumed */ bool) {
     let cp = this.value;
 
     if matches!(this.kind, CharacterKind::Symbol | CharacterKind::UnicodeEscape) {
         // Trail only
         if is_trail_surrogate(cp) {
-            return (format!(r"\u{cp:X}"), false);
+            return (Cow::Owned(format!(r"\u{cp:X}")), false);
         }
 
         if is_lead_surrogate(cp) {
@@ -318,62 +323,49 @@ fn character_to_string(
                 // Lead+Trail
                 let cp = combine_surrogate_pair(cp, peek.value);
                 let ch = char::from_u32(cp).expect("Invalid surrogate pair `Character`!");
-                return (format!("{ch}"), true);
+                return (Cow::Owned(format!("{ch}")), true);
             }
 
             // Lead only
-            return (format!(r"\u{cp:X}"), false);
+            return (Cow::Owned(format!(r"\u{cp:X}")), false);
         }
     }
 
     let ch = char::from_u32(cp).expect("Invalid `Character`!");
     let result = match this.kind {
         // Not a surrogate, like BMP, or all units in unicode mode
-        CharacterKind::Symbol => format!("{ch}"),
+        CharacterKind::Symbol => Cow::Owned(ch.to_string()),
         CharacterKind::ControlLetter => match ch {
-            '\n' => r"\cJ".to_string(),
-            '\r' => r"\cM".to_string(),
-            '\t' => r"\cI".to_string(),
-            _ => format!(r"\c{ch}"),
+            '\n' => Cow::Borrowed(r"\cJ"),
+            '\r' => Cow::Borrowed(r"\cM"),
+            '\t' => Cow::Borrowed(r"\cI"),
+            '\u{0019}' => Cow::Borrowed(r"\cY"),
+            _ => Cow::Owned(format!(r"\c{ch}")),
         },
-        CharacterKind::Identifier => {
-            format!(r"\{ch}")
-        }
+        CharacterKind::Identifier => Cow::Owned(format!(r"\{ch}")),
         CharacterKind::SingleEscape => match ch {
-            '\n' => String::from(r"\n"),
-            '\r' => String::from(r"\r"),
-            '\t' => String::from(r"\t"),
-            '\u{b}' => String::from(r"\v"),
-            '\u{c}' => String::from(r"\f"),
-            '\u{8}' => String::from(r"\b"),
-            '\u{2D}' => String::from(r"\-"),
-            _ => format!(r"\{ch}"),
+            '\n' => Cow::Borrowed(r"\n"),
+            '\r' => Cow::Borrowed(r"\r"),
+            '\t' => Cow::Borrowed(r"\t"),
+            '\u{b}' => Cow::Borrowed(r"\v"),
+            '\u{c}' => Cow::Borrowed(r"\f"),
+            '\u{8}' => Cow::Borrowed(r"\b"),
+            '\u{2D}' => Cow::Borrowed(r"\-"),
+            _ => Cow::Owned(format!(r"\{ch}")),
         },
-        CharacterKind::Null => String::from(r"\0"),
+        CharacterKind::Null => Cow::Borrowed(r"\0"),
         CharacterKind::UnicodeEscape => {
             let hex = &format!("{cp:04X}");
             if hex.len() <= 4 {
-                format!(r"\u{hex}")
+                Cow::Owned(format!(r"\u{hex}"))
             } else {
-                format!(r"\u{{{hex}}}")
+                Cow::Owned(format!(r"\u{{{hex}}}"))
             }
         }
-        CharacterKind::HexadecimalEscape => {
-            let hex = &format!("{cp:02X}");
-            format!(r"\x{hex}")
-        }
-        CharacterKind::Octal1 => {
-            let octal = format!("{cp:o}");
-            format!(r"\{octal}")
-        }
-        CharacterKind::Octal2 => {
-            let octal = format!("{cp:02o}");
-            format!(r"\{octal}")
-        }
-        CharacterKind::Octal3 => {
-            let octal = format!("{cp:03o}");
-            format!(r"\{octal}")
-        }
+        CharacterKind::HexadecimalEscape => Cow::Owned(format!(r"\x{cp:02X}")),
+        CharacterKind::Octal1 => Cow::Owned(format!(r"\{cp:o}")),
+        CharacterKind::Octal2 => Cow::Owned(format!(r"\{cp:02o}")),
+        CharacterKind::Octal3 => Cow::Owned(format!(r"\{cp:03o}")),
     };
 
     (result, false)
@@ -390,12 +382,18 @@ where
     write_join_with(f, sep, items, |iter| iter.next().map(|it| it.to_string()))
 }
 
-fn write_join_with<S, I, E, F>(f: &mut fmt::Formatter<'_>, sep: S, items: I, next: F) -> fmt::Result
+fn write_join_with<S, I, E, F, D>(
+    f: &mut fmt::Formatter<'_>,
+    sep: S,
+    items: I,
+    next: F,
+) -> fmt::Result
 where
     S: AsRef<str>,
     E: Display,
     I: IntoIterator<Item = E>,
-    F: Fn(&mut Peekable<I::IntoIter>) -> Option<String>,
+    F: Fn(&mut Peekable<I::IntoIter>) -> Option<D>,
+    D: fmt::Display,
 {
     let sep = sep.as_ref();
     let iter = &mut items.into_iter().peekable();
@@ -482,6 +480,7 @@ mod test {
         (r"/\d/g", None),
         ("/abcd/igv", Some("/abcd/igv")),
         (r"/\d/ug", Some(r"/\d/ug")),
+        (r"/\cY/", None),
         // we capitalize hex unicodes.
         (r"/\n\cM\0\x41\u{1f600}\./u", Some(r"/\n\cM\0\x41\u{1F600}\./u")),
         (r"/\u02c1/u", Some(r"/\u02C1/u")),

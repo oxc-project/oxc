@@ -2,13 +2,10 @@ commit: d62fa93c
 
 parser_test262 Summary:
 AST Parsed     : 43914/43914 (100.00%)
-Positive Passed: 43913/43914 (100.00%)
+Positive Passed: 43914/43914 (100.00%)
 Negative Passed: 4320/4322 (99.95%)
 Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attributes/json-invalid.js
 Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attributes/json-named-bindings.js
-Expect to Parse: tasks/coverage/test262/test/built-ins/String/prototype/split/separator-regexp.js
-
-  × Regular Expression content mismatch for `/\cY/`: `\c` == `\c`
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
     ╭─[test262/test/annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js:19:4]
@@ -18310,42 +18307,42 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/String/prototype/split/se
  24 │ }
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'class' is a reserved word that cannot be used here.
     ╭─[test262/test/language/future-reserved-words/class.js:21:5]
  20 │ 
  21 │ var class = 1;
     ·     ─────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'const' is a reserved word that cannot be used here.
     ╭─[test262/test/language/future-reserved-words/const.js:21:5]
  20 │ 
  21 │ var const = 1;
     ·     ─────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'debugger' is a reserved word that cannot be used here.
     ╭─[test262/test/language/future-reserved-words/debugger.js:21:5]
  20 │ 
  21 │ var debugger = 1;
     ·     ────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'enum' is a reserved word that cannot be used here.
     ╭─[test262/test/language/future-reserved-words/enum.js:21:5]
  20 │ 
  21 │ var enum = 1;
     ·     ────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'export' is a reserved word that cannot be used here.
     ╭─[test262/test/language/future-reserved-words/export.js:21:5]
  20 │ 
  21 │ var export = 1;
     ·     ──────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'extends' is a reserved word that cannot be used here.
     ╭─[test262/test/language/future-reserved-words/extends.js:21:5]
  20 │ 
  21 │ var extends = 1;
@@ -18366,7 +18363,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/String/prototype/split/se
     ·     ──────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'import' is a reserved word that cannot be used here.
     ╭─[test262/test/language/future-reserved-words/import.js:21:5]
  20 │ 
  21 │ var import = 1;
@@ -18471,7 +18468,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/String/prototype/split/se
     ·     ──────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'super' is a reserved word that cannot be used here.
     ╭─[test262/test/language/future-reserved-words/super.js:21:5]
  20 │ 
  21 │ var super = 1;
@@ -18631,756 +18628,756 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/String/prototype/split/se
     ·             ─
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'break' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-break-via-escape-hex.js:17:5]
  16 │ 
  17 │ var \u{62}\u{72}\u{65}\u{61}\u{6b} = 123;;
     ·     ──────────────────────────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'break' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-break-via-escape-hex4.js:17:5]
  16 │ 
  17 │ var \u0062\u0072\u0065\u0061\u006b = 123;;
     ·     ──────────────────────────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'break' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-break.js:16:5]
  15 │ 
  16 │ var break = 123;;
     ·     ─────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'case' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-case-via-escape-hex.js:17:5]
  16 │ 
  17 │ var \u{63}ase = 123;
     ·     ─────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'case' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-case-via-escape-hex4.js:17:5]
  16 │ 
  17 │ var \u0063ase = 123;
     ·     ─────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'case' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-case.js:16:5]
  15 │ 
  16 │ var case = 123;
     ·     ────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'catch' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-catch-via-escape-hex.js:17:5]
  16 │ 
  17 │ var \u{63}atch = 123;
     ·     ──────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'catch' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-catch-via-escape-hex4.js:17:5]
  16 │ 
  17 │ var \u0063atch = 123;
     ·     ──────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'catch' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-catch.js:16:5]
  15 │ 
  16 │ var catch = 123;
     ·     ─────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'class' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-class-via-escape-hex.js:17:5]
  16 │ 
  17 │ var cla\u{73}s = 123;
     ·     ──────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'class' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-class-via-escape-hex4.js:17:5]
  16 │ 
  17 │ var cla\u0073s = 123;
     ·     ──────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'class' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-class.js:16:5]
  15 │ 
  16 │ var class = 123;
     ·     ─────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'const' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-const-via-escape-hex.js:17:5]
  16 │ 
  17 │ var co\u{6e}st = 123;
     ·     ──────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'const' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-const-via-escape-hex4.js:17:5]
  16 │ 
  17 │ var co\u006est = 123;
     ·     ──────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'const' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-const.js:16:5]
  15 │ 
  16 │ var const = 123;
     ·     ─────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'continue' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-continue-via-escape-hex.js:17:5]
  16 │ 
  17 │ var \u{63}ontinue = 123;
     ·     ─────────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'continue' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-continue-via-escape-hex4.js:17:5]
  16 │ 
  17 │ var \u0063ontinue = 123;
     ·     ─────────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'continue' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-continue.js:16:5]
  15 │ 
  16 │ var continue = 123;
     ·     ────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'debugger' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-debugger-via-escape-hex.js:17:5]
  16 │ 
  17 │ var \u{64}ebugger = 123;
     ·     ─────────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'debugger' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-debugger-via-escape-hex4.js:17:5]
  16 │ 
  17 │ var \u0064ebugger = 123;
     ·     ─────────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'debugger' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-debugger.js:16:5]
  15 │ 
  16 │ var debugger = 123;
     ·     ────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'default' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-default-via-escape-hex.js:17:5]
  16 │ 
  17 │ var def\u{61}ult = 123;
     ·     ────────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'default' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-default-via-escape-hex4.js:17:5]
  16 │ 
  17 │ var def\u0061ult = 123;
     ·     ────────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'default' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-default.js:16:5]
  15 │ 
  16 │ var default = 123;
     ·     ───────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'delete' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-delete-via-escape-hex.js:17:5]
  16 │ 
  17 │ var \u{64}elete = 123;
     ·     ───────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'delete' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-delete-via-escape-hex4.js:17:5]
  16 │ 
  17 │ var \u0064elete = 123;
     ·     ───────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'delete' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-delete.js:16:5]
  15 │ 
  16 │ var delete = 123;
     ·     ──────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'do' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-do-via-escape-hex.js:17:5]
  16 │ 
  17 │ var \u{64}\u{6f} = 123;
     ·     ────────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'do' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-do-via-escape-hex4.js:17:5]
  16 │ 
  17 │ var \u0064\u006f = 123;
     ·     ────────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'do' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-do.js:16:5]
  15 │ 
  16 │ var do = 123;
     ·     ──
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'else' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-else-via-escape-hex.js:17:5]
  16 │ 
  17 │ var \u{65}lse = 123;
     ·     ─────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'else' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-else-via-escape-hex4.js:17:5]
  16 │ 
  17 │ var \u0065lse = 123;
     ·     ─────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'else' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-else.js:16:5]
  15 │ 
  16 │ var else = 123;
     ·     ────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'enum' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-enum-via-escape-hex.js:17:5]
  16 │ 
  17 │ var \u{65}\u{6e}\u{75}\u{6d} = 123;
     ·     ────────────────────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'enum' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-enum-via-escape-hex4.js:17:5]
  16 │ 
  17 │ var \u0065\u006e\u0075\u006d = 123;
     ·     ────────────────────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'enum' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-enum.js:16:5]
  15 │ 
  16 │ var enum = 123;
     ·     ────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'export' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-export-via-escape-hex.js:17:5]
  16 │ 
  17 │ var expor\u{74} = 123;
     ·     ───────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'export' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-export-via-escape-hex4.js:17:5]
  16 │ 
  17 │ var expor\u0074 = 123;
     ·     ───────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'export' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-export.js:16:5]
  15 │ 
  16 │ var export = 123;
     ·     ──────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'extends' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-extends-via-escape-hex.js:17:5]
  16 │ 
  17 │ var extend\u{73} = 123;
     ·     ────────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'extends' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-extends-via-escape-hex4.js:17:5]
  16 │ 
  17 │ var extend\u0073 = 123;
     ·     ────────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'extends' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-extends.js:16:5]
  15 │ 
  16 │ var extends = 123;
     ·     ───────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'false' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-false-via-escape-hex.js:17:5]
  16 │ 
  17 │ var fals\u{65} = 123;
     ·     ──────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'false' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-false-via-escape-hex4.js:17:5]
  16 │ 
  17 │ var fals\u0065 = 123;
     ·     ──────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'false' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-false.js:16:5]
  15 │ 
  16 │ var false = 123;
     ·     ─────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'finally' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-finally-via-escape-hex.js:17:5]
  16 │ 
  17 │ var fina\u{6c}ly = 123;
     ·     ────────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'finally' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-finally-via-escape-hex4.js:17:5]
  16 │ 
  17 │ var fina\u006cly = 123;
     ·     ────────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'finally' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-finally.js:16:5]
  15 │ 
  16 │ var finally = 123;
     ·     ───────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'for' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-for-via-escape-hex.js:17:5]
  16 │ 
  17 │ var f\u{6f}r = 123;
     ·     ────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'for' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-for-via-escape-hex4.js:17:5]
  16 │ 
  17 │ var f\u006fr = 123;
     ·     ────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'for' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-for.js:16:5]
  15 │ 
  16 │ var for = 123;
     ·     ───
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'function' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-function-via-escape-hex.js:17:5]
  16 │ 
  17 │ var func\u{74}ion = 123;
     ·     ─────────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'function' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-function-via-escape-hex4.js:17:5]
  16 │ 
  17 │ var func\u0074ion = 123;
     ·     ─────────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'function' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-function.js:16:5]
  15 │ 
  16 │ var function = 123;
     ·     ────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'if' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-if-via-escape-hex.js:17:5]
  16 │ 
  17 │ var \u{69}\u{66} = 123;
     ·     ────────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'if' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-if-via-escape-hex4.js:17:5]
  16 │ 
  17 │ var \u0069\u0066 = 123;
     ·     ────────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'if' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-if.js:16:5]
  15 │ 
  16 │ var if = 123;
     ·     ──
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'import' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-import-via-escape-hex.js:17:5]
  16 │ 
  17 │ var \u{69}\u{6d}\u{70}\u{6f}\u{72}\u{74} = 123;
     ·     ────────────────────────────────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'import' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-import-via-escape-hex4.js:17:5]
  16 │ 
  17 │ var \u0069\u006d\u0070\u006f\u0072\u0074 = 123;
     ·     ────────────────────────────────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'import' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-import.js:16:5]
  15 │ 
  16 │ var import = 123;
     ·     ──────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'in' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-in-via-escape-hex.js:17:5]
  16 │ 
  17 │ var \u{69}\u{6e} = 123;
     ·     ────────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'in' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-in-via-escape-hex4.js:17:5]
  16 │ 
  17 │ var \u0069\u006e = 123;
     ·     ────────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'in' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-in.js:16:5]
  15 │ 
  16 │ var in = 123;
     ·     ──
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'instanceof' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-instanceof-via-escape-hex.js:17:5]
  16 │ 
  17 │ var insta\u{6e}ceof = 123;
     ·     ───────────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'instanceof' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-instanceof-via-escape-hex4.js:17:5]
  16 │ 
  17 │ var insta\u006eceof = 123;
     ·     ───────────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'instanceof' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-instanceof.js:16:5]
  15 │ 
  16 │ var instanceof = 123;
     ·     ──────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'new' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-new-via-escape-hex.js:17:5]
  16 │ 
  17 │ var n\u{65}w = 123;
     ·     ────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'new' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-new-via-escape-hex4.js:17:5]
  16 │ 
  17 │ var n\u0065w = 123;
     ·     ────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'new' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-new.js:16:5]
  15 │ 
  16 │ var new = 123;
     ·     ───
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'null' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-null-via-escape-hex.js:17:5]
  16 │ 
  17 │ var \u{6e}ull = 123;
     ·     ─────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'null' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-null-via-escape-hex4.js:17:5]
  16 │ 
  17 │ var \u006eull = 123;
     ·     ─────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'null' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-null.js:16:5]
  15 │ 
  16 │ var null = 123;
     ·     ────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'return' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-return-via-escape-hex.js:17:5]
  16 │ 
  17 │ var retur\u{6e} = 123;
     ·     ───────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'return' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-return-via-escape-hex4.js:17:5]
  16 │ 
  17 │ var retur\u006e = 123;
     ·     ───────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'return' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-return.js:16:5]
  15 │ 
  16 │ var return = 123;
     ·     ──────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'super' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-super-via-escape-hex.js:17:5]
  16 │ 
  17 │ var \u{73}uper = 123;
     ·     ──────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'super' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-super-via-escape-hex4.js:17:5]
  16 │ 
  17 │ var \u0073uper = 123;
     ·     ──────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'super' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-super.js:16:5]
  15 │ 
  16 │ var super = 123;
     ·     ─────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'switch' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-switch-via-escape-hex.js:17:5]
  16 │ 
  17 │ var switc\u{68} = 123;
     ·     ───────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'switch' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-switch-via-escape-hex4.js:17:5]
  16 │ 
  17 │ var switc\u0068 = 123;
     ·     ───────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'switch' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-switch.js:16:5]
  15 │ 
  16 │ var switch = 123;
     ·     ──────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'this' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-this-via-escape-hex.js:17:5]
  16 │ 
  17 │ var thi\u{73} = 123;
     ·     ─────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'this' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-this-via-escape-hex4.js:17:5]
  16 │ 
  17 │ var thi\u0073 = 123;
     ·     ─────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'this' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-this.js:16:5]
  15 │ 
  16 │ var this = 123;
     ·     ────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'throw' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-throw-via-escape-hex.js:17:5]
  16 │ 
  17 │ var thro\u{77} = 123;
     ·     ──────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'throw' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-throw-via-escape-hex4.js:17:5]
  16 │ 
  17 │ var thro\u0077 = 123;
     ·     ──────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'throw' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-throw.js:16:5]
  15 │ 
  16 │ var throw = 123;
     ·     ─────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'true' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-true-via-escape-hex.js:17:5]
  16 │ 
  17 │ var tr\u{75}e = 123;
     ·     ─────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'true' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-true-via-escape-hex4.js:17:5]
  16 │ 
  17 │ var tr\u0075e = 123;
     ·     ─────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'true' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-true.js:16:5]
  15 │ 
  16 │ var true = 123;
     ·     ────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'try' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-try-via-escape-hex.js:17:5]
  16 │ 
  17 │ var \u{74}\u{72}\u{79} = 123;
     ·     ──────────────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'try' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-try-via-escape-hex4.js:17:5]
  16 │ 
  17 │ var \u0074\u0072\u0079 = 123;
     ·     ──────────────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'try' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-try.js:16:5]
  15 │ 
  16 │ var try = 123;
     ·     ───
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'typeof' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-typeof-via-escape-hex.js:17:5]
  16 │ 
  17 │ var typeo\u{66} = 123;
     ·     ───────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'typeof' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-typeof-via-escape-hex4.js:17:5]
  16 │ 
  17 │ var typeo\u0066 = 123;
     ·     ───────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'typeof' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-typeof.js:16:5]
  15 │ 
  16 │ var typeof = 123;
     ·     ──────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'var' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-var-via-escape-hex.js:17:5]
  16 │ 
  17 │ var va\u{72} = 123;
     ·     ────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'var' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-var-via-escape-hex4.js:17:5]
  16 │ 
  17 │ var va\u0072 = 123;
     ·     ────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'var' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-var.js:16:5]
  15 │ 
  16 │ var var = 123;
     ·     ───
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'void' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-void-via-escape-hex.js:17:5]
  16 │ 
  17 │ var \u{76}\u{6f}\u{69}\u{64} = 123;
     ·     ────────────────────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'void' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-void-via-escape-hex4.js:17:5]
  16 │ 
  17 │ var \u0076\u006f\u0069\u0064 = 123;
     ·     ────────────────────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'void' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-void.js:16:5]
  15 │ 
  16 │ var void = 123;
     ·     ────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'while' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-while-via-escape-hex.js:17:5]
  16 │ 
  17 │ var \u{77}\u{68}\u{69}\u{6c}\u{65} = 123;
     ·     ──────────────────────────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'while' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-while-via-escape-hex4.js:17:5]
  16 │ 
  17 │ var \u0077\u0068\u0069\u006c\u0065 = 123;
     ·     ──────────────────────────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'while' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-while.js:16:5]
  15 │ 
  16 │ var while = 123;
     ·     ─────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'with' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-with-via-escape-hex.js:17:5]
  16 │ 
  17 │ var \u{77}ith = 123;
     ·     ─────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'with' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-with-via-escape-hex4.js:17:5]
  16 │ 
  17 │ var \u0077ith = 123;
     ·     ─────────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'with' is a reserved word that cannot be used here.
     ╭─[test262/test/language/identifiers/val-with.js:16:5]
  15 │ 
  16 │ var with = 123;
@@ -37268,7 +37265,7 @@ Expect to Parse: tasks/coverage/test262/test/built-ins/String/prototype/split/se
     · ─────
     ╰────
 
-  × Unexpected token
+  × Identifier expected. 'null' is a reserved word that cannot be used here.
     ╭─[test262/test/language/types/null/S8.2_A2.js:16:5]
  15 │ 
  16 │ var null;

@@ -84,6 +84,7 @@ oxc_cfg = { version = "0.31.0", path = "crates/oxc_cfg" }
 oxc_codegen = { version = "0.31.0", path = "crates/oxc_codegen" }
 oxc_data_structures = { version = "0.31.0", path = "crates/oxc_data_structures" }
 oxc_diagnostics = { version = "0.31.0", path = "crates/oxc_diagnostics" }
+oxc_ecmascript = { version = "0.31.0", path = "crates/oxc_ecmascript" }
 oxc_index = { version = "0.31.0", path = "crates/oxc_index" }
 oxc_isolated_declarations = { version = "0.31.0", path = "crates/oxc_isolated_declarations" }
 oxc_mangler = { version = "0.31.0", path = "crates/oxc_mangler" }
@@ -95,7 +96,6 @@ oxc_semantic = { version = "0.31.0", path = "crates/oxc_semantic" }
 oxc_sourcemap = { version = "0.31.0", path = "crates/oxc_sourcemap" }
 oxc_span = { version = "0.31.0", path = "crates/oxc_span" }
 oxc_syntax = { version = "0.31.0", path = "crates/oxc_syntax" }
-oxc_syntax_operations = { version = "0.31.0", path = "crates/oxc_syntax_operations" }
 oxc_transform_napi = { version = "0.31.0", path = "napi/transform" }
 oxc_transformer = { version = "0.31.0", path = "crates/oxc_transformer" }
 oxc_traverse = { version = "0.31.0", path = "crates/oxc_traverse" }
@@ -107,9 +107,16 @@ oxc_prettier = { path = "crates/oxc_prettier" }
 oxc_tasks_common = { path = "tasks/common" }
 oxc_tasks_transform_checker = { path = "tasks/transform_checker" }
 
+# Relaxed version so the user can decide which version to use.
 napi = "3.0.0-alpha"
 napi-build = "2.1.3"
 napi-derive = "3.0.0-alpha"
+
+# Relaxed version so the user can decide which version to use.
+proc-macro2 = "1"
+quote = "1"
+syn = { version = "2", default-features = false }
+unicode-id-start = "1"
 
 aho-corasick = "1.1.3"
 allocator-api2 = "0.2.18"
@@ -117,28 +124,29 @@ assert-unchecked = "0.1.2"
 base64 = "0.22.1"
 base64-simd = "0.8"
 bitflags = "2.6.0"
-bpaf = "0.9.12"
+bpaf = "0.9.15"
 bumpalo = "3.16.0"
 cfg-if = "1.0.0"
 compact_str = "0.8.0"
 console = "0.15.8"
+console_error_panic_hook = "0.1.7"
 convert_case = "0.6.0"
 cow-utils = "0.1.3"
-criterion2 = { version = "1.1.0", default-features = false }
+criterion2 = { version = "1.1.1", default-features = false }
 daachorse = { version = "1.0.0" }
-dashmap = "6.0.1"
+dashmap = "6.1.0"
 encoding_rs = "0.8.34"
 encoding_rs_io = "0.1.7"
 env_logger = { version = "0.11.5", default-features = false }
-flate2 = "1.0.31"
-futures = "0.3.30"
+flate2 = "1.0.34"
+futures = "0.3.31"
 glob = "0.3.1"
-globset = "0.4.14"
-handlebars = "6.0.0"
+globset = "0.4.15"
+handlebars = "6.1.0"
 humansize = "2.1.3"
-ignore = "0.4.22"
-indexmap = "2.3.0"
-insta = "1.39.0"
+ignore = "0.4.23"
+indexmap = "2.6.0"
+insta = "1.40.0"
 itertools = "0.13.0"
 itoa = "1.0.11"
 jemallocator = "0.5.4"
@@ -146,6 +154,7 @@ json-strip-comments = "1.0.4"
 language-tags = "0.3.2"
 lazy_static = "1.5.0"
 log = "0.4.22"
+markdown = "1.0.0-alpha.21"
 memchr = "2.7.4"
 memoffset = "0.9.1"
 miette = { version = "7.2.0", features = ["fancy-no-syscall"] }
@@ -154,44 +163,42 @@ mime_guess = "2.0.5"
 nonmax = "0.5.5"
 num-bigint = "0.4.6"
 num-traits = "0.2.19"
-once_cell = "1.19.0"
-owo-colors = "4.0.0"
+once_cell = "1.20.2"
+owo-colors = "4.1.0"
 oxc-browserslist = "1.0.3"
-oxc_resolver = "1.10.2"
+oxc_resolver = "1.12.0"
 petgraph = "0.6.5"
 phf = "0.11.2"
 pico-args = "0.5.0"
-prettyplease = "0.2.20"
-proc-macro2 = "1.0.86"
+prettyplease = "0.2.22"
 project-root = "0.2.2"
-quote = "1.0.36"
 rayon = "1.10.0"
-regex = "1.10.6"
+regex = "1.11.0"
 ropey = "1.6.1"
 rust-lapper = "1.1.0"
 rustc-hash = "2.*"
 ryu-js = "1.0.1"
 saphyr = "0.0.1"
 schemars = "0.8.21"
+scraper = "0.20.0"
 seq-macro = "0.3.5"
-serde = "1.0.206"
+serde = "1.0.210"
 serde-wasm-bindgen = "0.6.5"
-serde_json = "1.0.124"
-simdutf8 = { version = "0.1.4", features = ["aarch64_neon"] }
+serde_json = "1.0.128"
+sha1 = "0.10.6"
+simdutf8 = { version = "0.1.5", features = ["aarch64_neon"] }
 similar = "2.6.0"
-syn = { version = "2.0.74", default-features = false }
-tempfile = "3.12.0"
+tempfile = "3.13.0"
 textwrap = "0.16.1"
-tokio = "1.39.2"
+tokio = "1.40.0"
 tower-lsp = "0.20.0"
 tracing-subscriber = "0.3.18"
 tsify = "0.4.5"
-unicode-id-start = "1" # Relaxed version so the user can decide which unicode version to use.
-unicode-width = "0.1.13"
+unicode-width = "0.2.0"
 ureq = { version = "2.10.1", default-features = false }
 url = "2.5.2"
 walkdir = "2.5.0"
-wasm-bindgen = "0.2.92"
+wasm-bindgen = "0.2.95"
 
 [workspace.metadata.cargo-shear]
 ignored = ["napi", "oxc_transform_napi", "prettyplease"]

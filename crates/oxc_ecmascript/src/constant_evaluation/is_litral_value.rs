@@ -1,3 +1,4 @@
+#[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 
 /// Returns true if this is a literal value. We define a literal value as any node that evaluates

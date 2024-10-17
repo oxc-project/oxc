@@ -32,6 +32,10 @@ impl<'s, 'a> Symbol<'s, 'a> {
                 | AstKind::ArrayExpressionElement(_)
                 | AstKind::ExpressionArrayElement(_)
                 | AstKind::ArrayExpression(_)
+                // a ? b : function foo() {}
+                // Only considered used if the function is the test or the selected branch,
+                // but we can't determine that here.
+                | AstKind::ConditionalExpression(_)
                 => {
                     continue;
                 }

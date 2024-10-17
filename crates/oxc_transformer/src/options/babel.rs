@@ -28,6 +28,8 @@ pub struct BabelOptions {
     pub allow_await_outside_function: bool,
     #[serde(default)]
     pub allow_undeclared_exports: bool,
+    #[serde(default = "default_as_true")]
+    pub external_helpers: bool,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -43,6 +45,10 @@ impl TestOs {
     pub fn is_windows(&self) -> bool {
         matches!(self, Self::Win32 | Self::Windows)
     }
+}
+
+fn default_as_true() -> bool {
+    true
 }
 
 impl BabelOptions {
@@ -68,7 +74,9 @@ impl BabelOptions {
                         existing_json.throws = Some(throws);
                     }
                 }
-                existing_json.plugins.extend(new_json.plugins);
+                if existing_json.plugins.is_empty() {
+                    existing_json.plugins = new_json.plugins;
+                }
             } else {
                 options_json = Some(new_json);
             }

@@ -283,11 +283,10 @@ pub trait CompilerInterface {
         mangler: Option<Mangler>,
         options: CodegenOptions,
     ) -> CodegenReturn {
-        let mut codegen = CodeGenerator::new().with_options(options).with_mangler(mangler);
+        let mut options = options;
         if self.enable_sourcemap() {
-            codegen = codegen
-                .enable_source_map(source_path.to_string_lossy().as_ref(), program.source_text);
+            options.source_map_path = Some(source_path.to_path_buf());
         }
-        codegen.build(program)
+        CodeGenerator::new().with_options(options).with_mangler(mangler).build(program)
     }
 }

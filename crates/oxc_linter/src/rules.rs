@@ -471,6 +471,7 @@ mod tree_shaking {
 mod promise {
     pub mod avoid_new;
     pub mod catch_or_return;
+    pub mod no_callback_in_promise;
     pub mod no_new_statics;
     pub mod no_return_in_finally;
     pub mod param_names;
@@ -492,6 +493,7 @@ mod vitest {
 
 mod node {
     pub mod no_exports_assign;
+    pub mod no_new_require;
 }
 
 oxc_macros::declare_all_lint_rules! {
@@ -738,6 +740,7 @@ oxc_macros::declare_all_lint_rules! {
     nextjs::no_typos,
     nextjs::no_unwanted_polyfillio,
     node::no_exports_assign,
+    node::no_new_require,
     oxc::approx_constant,
     oxc::bad_array_method_on_arguments,
     oxc::bad_bitwise_operator,
@@ -763,6 +766,7 @@ oxc_macros::declare_all_lint_rules! {
     oxc::uninvoked_array_callback,
     promise::avoid_new,
     promise::catch_or_return,
+    promise::no_callback_in_promise,
     promise::no_new_statics,
     promise::no_return_in_finally,
     promise::param_names,

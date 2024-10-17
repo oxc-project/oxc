@@ -30,18 +30,18 @@ oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
 oxc_data_structures = { workspace = true }
 oxc_diagnostics = { workspace = true }
+oxc_ecmascript = { workspace = true }
 oxc_parser = { workspace = true }
 oxc_regular_expression = { workspace = true }
 oxc_semantic = { workspace = true }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true, features = ["to_js_string"] }
-oxc_syntax_operations = { workspace = true }
 oxc_traverse = { workspace = true }
 ropey = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
-sha1 = { version = "0.10.6" }
+sha1 = { workspace = true }
 
 [dev-dependencies]
 oxc_codegen = { workspace = true }

@@ -283,6 +283,14 @@ pub fn identifier_generator(x0: &str, span1: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn identifier_reserved_word(span: Span, reserved: &str) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!(
+        "Identifier expected. '{reserved}' is a reserved word that cannot be used here."
+    ))
+    .with_label(span)
+}
+
+#[cold]
 pub fn constructor_generator(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Constructor can't be a generator").with_label(span)
 }
@@ -460,6 +468,12 @@ pub fn cannot_appear_on_a_type_parameter(modifier: &Modifier) -> OxcDiagnostic {
 /// TS(1090)
 pub fn cannot_appear_on_a_parameter(modifier: &Modifier) -> OxcDiagnostic {
     ts_error("1090", format!("'{}' modifier cannot appear on a parameter.", modifier.kind))
+        .with_label(modifier.span)
+}
+
+/// TS(1071)
+pub fn cannot_appear_on_an_index_signature(modifier: &Modifier) -> OxcDiagnostic {
+    ts_error("1071", format!("'{}' modifier cannot appear on an index signature.", modifier.kind))
         .with_label(modifier.span)
 }
 

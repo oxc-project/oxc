@@ -1,10 +1,11 @@
+use oxc_ast::ast::*;
+use oxc_traverse::{Traverse, TraverseCtx};
+
 mod arrow_functions;
 mod options;
 
 pub use arrow_functions::{ArrowFunctions, ArrowFunctionsOptions};
 pub use options::ES2015Options;
-use oxc_ast::ast::*;
-use oxc_traverse::{Traverse, TraverseCtx};
 
 pub struct ES2015<'a> {
     options: ES2015Options,

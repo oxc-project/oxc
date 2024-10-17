@@ -22,7 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - c3c3447 data_structures: Add `oxc_data_structures` crate; add stack (#6206) (Boshen)
 - 51a78d5 napi/transform: Rename all mention of React to Jsx; remove mention of `Binding` (#6198) (Boshen)
-- 9e62396 syntax_operations: Add crate `oxc_syntax_operations` (#6202) (Boshen)
+- 9e62396 syntax_operations: Add crate `oxc_ecmascript` (#6202) (Boshen)
 - cf20f3a transformer: Exponentiation transform: support private fields (#6345) (overlookmotel)
 
 ### Bug Fixes
@@ -753,7 +753,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Features
 
-- f1ccbd4 syntax: Add `ToJsInt32` trait for f64 (#3132) (Boshen)
+- f1ccbd4 syntax: Add `ToInt32` trait for f64 (#3132) (Boshen)
 - 870d11f syntax: Add `ToJsString` trait for f64 (#3131) (Boshen)
 - 34dd53c transformer: Report ambient module cannot be nested error (#3253) (Dunqing)
 - 1b29e63 transformer: Do not elide jsx imports if a jsx element appears somewhere (#3237) (Dunqing)

@@ -4,10 +4,12 @@ use oxc_ast::{
 };
 use oxc_semantic::{AstNode, NodeId};
 use oxc_span::CompactStr;
-use regex::Regex;
 
 use super::{count_whitespace_or_commas, BindingInfo, NoUnusedVars, Symbol};
-use crate::fixer::{RuleFix, RuleFixer};
+use crate::{
+    fixer::{RuleFix, RuleFixer},
+    rules::eslint::no_unused_vars::options::IgnorePattern,
+};
 
 impl NoUnusedVars {
     /// Delete a variable declaration or rename it to match `varsIgnorePattern`.
@@ -115,11 +117,14 @@ impl NoUnusedVars {
     }
 
     fn get_unused_var_name(&self, symbol: &Symbol<'_, '_>) -> Option<CompactStr> {
-        let pat = self.vars_ignore_pattern.as_ref().map(Regex::as_str)?;
-
-        let ignored_name: String = match pat {
+        let ignored_name: String = match self.vars_ignore_pattern.as_ref() {
             // TODO: support more patterns
-            "^_" => format!("_{}", symbol.name()),
+            IgnorePattern::Default => {
+                format!("_{}", symbol.name())
+            }
+            IgnorePattern::Some(re) if re.as_str() == "^_" => {
+                format!("_{}", symbol.name())
+            }
             _ => return None,
         };
 

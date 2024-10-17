@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Features
 
 - 14275b1 cfg: Color-code edges in CFG dot diagrams (#6314) (DonIsaac)
-- 9e62396 syntax_operations: Add crate `oxc_syntax_operations` (#6202) (Boshen)
+- 9e62396 syntax_operations: Add crate `oxc_ecmascript` (#6202) (Boshen)
 
 ### Bug Fixes
 

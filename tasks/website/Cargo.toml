@@ -34,8 +34,8 @@ oxc_parser = { workspace = true }
 oxc_span = { workspace = true }
 
 insta = { workspace = true }
-markdown = { version = "1.0.0-alpha.19" }
-scraper = { version = "0.20.0" }
+markdown = { workspace = true }
+scraper = { workspace = true }
 
 [package.metadata.cargo-shear]
 ignored = ["bpaf"]

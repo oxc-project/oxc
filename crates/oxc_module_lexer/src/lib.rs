@@ -8,8 +8,8 @@ use oxc_ast::visit::walk::{
 };
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, Visit};
+use oxc_ecmascript::BoundNames;
 use oxc_span::{Atom, GetSpan};
-use oxc_syntax_operations::BoundNames;
 
 #[derive(Debug, Clone)]
 pub struct ImportSpecifier<'a> {

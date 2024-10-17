@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
   ⚠ eslint(no-unused-vars): Type alias 'T' is declared but never used.
-   ╭─[no_unused_vars.tsx:1:6]
+   ╭─[no_unused_vars.ts:1:6]
  1 │ type T = number; function foo<T>(a: T): T { return a as T }; foo(1)
    ·      ┬
    ·      ╰── 'T' is declared here
@@ -10,9 +10,85 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing this declaration.
 
   ⚠ eslint(no-unused-vars): Type alias 'A' is declared but never used.
-   ╭─[no_unused_vars.tsx:1:6]
+   ╭─[no_unused_vars.ts:1:6]
  1 │ type A = number; type B<A> = A; console.log(3 as B<3>)
    ·      ┬
    ·      ╰── 'A' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Type alias 'T' is declared but never used.
+   ╭─[no_unused_vars.ts:1:6]
+ 1 │ type T = { foo: T }
+   ·      ┬
+   ·      ╰── 'T' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Type alias 'T' is declared but never used.
+   ╭─[no_unused_vars.ts:1:6]
+ 1 │ type T = { foo?: T | undefined }
+   ·      ┬
+   ·      ╰── 'T' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Type alias 'A' is declared but never used.
+   ╭─[no_unused_vars.ts:1:6]
+ 1 │ type A<T> = { foo: T extends Array<infer R> ? A<R> : T }
+   ·      ┬
+   ·      ╰── 'A' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Type alias 'T' is declared but never used.
+   ╭─[no_unused_vars.ts:1:6]
+ 1 │ type T = { foo(): T }
+   ·      ┬
+   ·      ╰── 'T' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Class 'Foo' is declared but never used.
+   ╭─[no_unused_vars.ts:1:7]
+ 1 │ class Foo {
+   ·       ─┬─
+   ·        ╰── 'Foo' is declared here
+ 2 │             private _inner: Foo | undefined;
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Class 'Foo' is declared but never used.
+   ╭─[no_unused_vars.ts:1:7]
+ 1 │ class Foo {
+   ·       ─┬─
+   ·        ╰── 'Foo' is declared here
+ 2 │             _inner: any;
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Class 'LinkedList' is declared but never used.
+   ╭─[no_unused_vars.ts:1:7]
+ 1 │ class LinkedList<T> {
+   ·       ─────┬────
+   ·            ╰── 'LinkedList' is declared here
+ 2 │             #next?: LinkedList<T>;
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Class 'LinkedList' is declared but never used.
+   ╭─[no_unused_vars.ts:1:7]
+ 1 │ class LinkedList<T> {
+   ·       ─────┬────
+   ·            ╰── 'LinkedList' is declared here
+ 2 │             #next?: LinkedList<T>;
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Interface 'LinkedList' is declared but never used.
+   ╭─[no_unused_vars.ts:1:11]
+ 1 │ interface LinkedList<T> { next: LinkedList<T> | undefined }
+   ·           ─────┬────
+   ·                ╰── 'LinkedList' is declared here
    ╰────
   help: Consider removing this declaration.

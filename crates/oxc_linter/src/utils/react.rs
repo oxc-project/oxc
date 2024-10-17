@@ -7,6 +7,7 @@ use oxc_ast::{
     },
     match_member_expression, AstKind,
 };
+use oxc_ecmascript::ToBoolean;
 use oxc_semantic::AstNode;
 
 use crate::{LintContext, OxlintSettings};

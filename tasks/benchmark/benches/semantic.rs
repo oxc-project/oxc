@@ -17,7 +17,6 @@ fn bench_semantic(criterion: &mut Criterion) {
             |b, source_text| {
                 let allocator = Allocator::default();
                 let ret = Parser::new(&allocator, source_text, source_type).parse();
-                let program = allocator.alloc(black_box(ret.program));
                 b.iter_with_large_drop(|| {
                     // We drop `Semantic` inside this closure as drop time is part of cost of using this API.
                     // We return `error`s to be dropped outside of the measured section, as usually
@@ -25,8 +24,8 @@ fn bench_semantic(criterion: &mut Criterion) {
                     // but that's atypical, so don't want to include it in benchmark time.
                     let ret = SemanticBuilder::new()
                         .with_build_jsdoc(true)
-                        .build_module_record(Path::new(""), program)
-                        .build(program);
+                        .build_module_record(Path::new(""), &ret.program)
+                        .build(&ret.program);
                     let ret = black_box(ret);
                     ret.errors
                 });
