@@ -45,8 +45,7 @@ pub struct Reader<'a> {
     collector: Collector<'a>,
     units: Vec<'a, StringLiteralAst::CodePoint>,
     index: usize,
-    // TODO: Span > u32
-    last_span: Span,
+    last_span_end: u32
 }
 
 impl<'a> Reader<'a> {
@@ -61,8 +60,8 @@ impl<'a> Reader<'a> {
             collector: Collector::new(allocator, unicode_mode, parse_string_literal),
             units: Vec::new_in(allocator),
             index: 0,
-            // Skip 1 for quote character
-            last_span: Span::new(0, if parse_string_literal { 1 } else { 0 }),
+            // +1 to skip quote character
+            last_span_end: if parse_string_literal { 1 } else { 0 },
         }
     }
 
@@ -74,30 +73,30 @@ impl<'a> Reader<'a> {
         Ok(())
     }
 
-    pub fn start_span(&self) -> Span {
-        self.last_span
+    pub fn span_start(&self) -> u32 {
+        self.last_span_end
     }
 
-    pub fn end_span(&self, span_start: Span) -> Span {
-        Span::new(span_start.end, self.last_span.end)
+    pub fn span(&self, span_start: u32) -> Span {
+        Span::new(span_start, self.last_span_end)
     }
 
     pub fn atom(&self, span: Span) -> Atom<'a> {
         Atom::from(span.source_text(self.source_text))
     }
 
-    pub fn checkpoint(&self) -> (usize, Span) {
-        (self.index, self.last_span)
+    pub fn checkpoint(&self) -> (usize, u32) {
+        (self.index, self.last_span_end)
     }
 
-    pub fn rewind(&mut self, checkpoint: (usize, Span)) {
+    pub fn rewind(&mut self, checkpoint: (usize, u32)) {
         self.index = checkpoint.0;
-        self.last_span = checkpoint.1;
+        self.last_span_end = checkpoint.1;
     }
 
     pub fn advance(&mut self) {
         if let Some(unit) = self.units.get(self.index) {
-            self.last_span = unit.span;
+            self.last_span_end = unit.span.end;
             self.index += 1;
         }
     }

@@ -90,19 +90,18 @@ fn parse_capturing_groups<'a>(reader: &mut Reader<'a>) -> (u32, FxHashSet<Atom<'
 
             // Collect capturing group names
             if reader.eat2('?', '<') {
-                let span = reader.start_span();
+                let span_start = reader.span_start();
                 while let Some(ch) = reader.peek() {
                     if ch == '>' as u32 {
                         break;
                     }
                     reader.advance();
                 }
-                let group_name_span = reader.end_span(span);
+                let group_name_span = reader.span(span_start);
 
                 if reader.eat('>') {
-                    let group_name = reader.atom(group_name_span);
                     // May be duplicated
-                    if !capturing_group_names.insert(group_name) {
+                    if !capturing_group_names.insert(reader.atom(group_name_span)) {
                         // Report them with `Span`
                         duplicated_named_capturing_groups.push(group_name_span);
                     }
