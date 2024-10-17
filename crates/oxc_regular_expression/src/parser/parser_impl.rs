@@ -524,7 +524,9 @@ impl<'a> Parser<'a> {
                 self.allocator,
             ))));
         }
-        if let Some(unicode_property_escape) = self.parse_character_class_escape_unicode(span_start)? {
+        if let Some(unicode_property_escape) =
+            self.parse_character_class_escape_unicode(span_start)?
+        {
             return Ok(Some(ast::Term::UnicodePropertyEscape(Box::new_in(
                 unicode_property_escape,
                 self.allocator,
@@ -573,7 +575,10 @@ impl<'a> Parser<'a> {
     //   w
     //   W
     // ```
-    fn parse_character_class_escape(&mut self, span_start: u32) -> Option<ast::CharacterClassEscape> {
+    fn parse_character_class_escape(
+        &mut self,
+        span_start: u32,
+    ) -> Option<ast::CharacterClassEscape> {
         let kind = if self.reader.eat('d') {
             ast::CharacterClassEscapeKind::D
         } else if self.reader.eat('D') {
@@ -1068,7 +1073,9 @@ impl<'a> Parser<'a> {
                 self.allocator,
             ))));
         }
-        if let Some(unicode_property_escape) = self.parse_character_class_escape_unicode(span_start)? {
+        if let Some(unicode_property_escape) =
+            self.parse_character_class_escape_unicode(span_start)?
+        {
             return Ok(Some(ast::CharacterClassContents::UnicodePropertyEscape(Box::new_in(
                 unicode_property_escape,
                 self.allocator,

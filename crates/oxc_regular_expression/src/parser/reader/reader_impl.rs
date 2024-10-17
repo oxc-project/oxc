@@ -45,7 +45,7 @@ pub struct Reader<'a> {
     collector: Collector<'a>,
     units: Vec<'a, StringLiteralAst::CodePoint>,
     index: usize,
-    last_span_end: u32
+    last_span_end: u32,
 }
 
 impl<'a> Reader<'a> {
@@ -61,7 +61,7 @@ impl<'a> Reader<'a> {
             units: Vec::new_in(allocator),
             index: 0,
             // +1 to skip quote character
-            last_span_end: if parse_string_literal { 1 } else { 0 },
+            last_span_end: u32::from(parse_string_literal),
         }
     }
 
