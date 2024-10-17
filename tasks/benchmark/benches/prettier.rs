@@ -17,13 +17,8 @@ fn bench_prettier(criterion: &mut Criterion) {
                     let allocator1 = Allocator::default();
                     let allocator2 = Allocator::default();
                     let ret = Parser::new(&allocator1, source_text, source_type).parse();
-                    let _ = Prettier::new(
-                        &allocator2,
-                        source_text,
-                        ret.trivias,
-                        PrettierOptions::default(),
-                    )
-                    .build(&ret.program);
+                    let _ =
+                        Prettier::new(&allocator2, PrettierOptions::default()).build(&ret.program);
                 });
             },
         );

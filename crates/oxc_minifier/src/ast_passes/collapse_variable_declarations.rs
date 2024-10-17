@@ -36,65 +36,75 @@ impl<'a> CollapseVariableDeclarations {
         Self { options, changed: false }
     }
 
-    /// Join consecutive var statements
+    fn is_require_call(var_decl: &VariableDeclaration) -> bool {
+        var_decl
+            .declarations
+            .first()
+            .and_then(|d| d.init.as_ref())
+            .is_some_and(Expression::is_require_call)
+    }
+
+    fn is_valid_var_decl(
+        stmt: &Statement,
+        kind: Option<VariableDeclarationKind>,
+    ) -> Option<VariableDeclarationKind> {
+        if let Statement::VariableDeclaration(cur_decl) = stmt {
+            let is_not_require_call = !Self::is_require_call(cur_decl);
+            if kind.map_or(true, |k| cur_decl.kind == k) && is_not_require_call {
+                return Some(cur_decl.kind);
+            }
+        }
+        None
+    }
+
     fn join_vars(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
-        if self.options.join_vars {
+        if !self.options.join_vars || stmts.len() < 2 {
             return;
         }
-        // Collect all the consecutive ranges that contain joinable vars.
-        // This is required because Rust prevents in-place vec mutation.
-        let mut ranges = vec![];
-        let mut range = 0..0;
-        let mut i = 1usize;
-        let mut capacity = 0usize;
-        for window in stmts.windows(2) {
-            let [prev, cur] = window else { unreachable!() };
-            if let (
-                Statement::VariableDeclaration(cur_decl),
-                Statement::VariableDeclaration(prev_decl),
-            ) = (cur, prev)
+
+        let mut prev: usize = stmts.len() - 1;
+        let mut items = std::vec::Vec::<usize>::new();
+
+        while prev > 0 {
+            prev -= 1;
+
+            let cur: usize = prev + 1;
+
+            if !Self::is_valid_var_decl(&stmts[cur], None)
+                .is_some_and(|kind| Self::is_valid_var_decl(&stmts[prev], Some(kind)).is_some())
             {
-                // Do not join `require` calls for cjs-module-lexer.
-                if cur_decl
-                    .declarations
-                    .first()
-                    .and_then(|d| d.init.as_ref())
-                    .is_some_and(Expression::is_require_call)
-                {
-                    break;
-                }
-                if cur_decl.kind == prev_decl.kind {
-                    if i - 1 != range.end {
-                        range.start = i - 1;
-                    }
-                    range.end = i + 1;
-                }
+                continue;
             }
-            if (range.end != i || i == stmts.len() - 1) && range.start < range.end {
-                capacity += range.end - range.start - 1;
-                ranges.push(range.clone());
-                range = 0..0;
+            let Some(Statement::VariableDeclaration(cur_decl)) = stmts.get_mut(cur) else {
+                continue;
+            };
+
+            let mut decls = ctx.ast.move_vec(&mut cur_decl.declarations);
+            if let Some(Statement::VariableDeclaration(prev_decl)) = stmts.get_mut(prev) {
+                items.push(cur);
+                prev_decl.declarations.append(&mut decls);
             }
-            i += 1;
         }
 
-        if ranges.is_empty() {
+        if items.is_empty() {
             return;
         }
 
-        // Reconstruct the stmts array by joining consecutive ranges
-        let mut new_stmts = ctx.ast.vec_with_capacity(stmts.len() - capacity);
-        for (i, stmt) in stmts.drain(..).enumerate() {
-            if i > 0 && ranges.iter().any(|range| range.contains(&(i - 1)) && range.contains(&i)) {
-                if let Statement::VariableDeclaration(prev_decl) = new_stmts.last_mut().unwrap() {
-                    if let Statement::VariableDeclaration(mut cur_decl) = stmt {
-                        prev_decl.declarations.append(&mut cur_decl.declarations);
-                    }
+        let mut item_iter = items.iter().rev();
+        let mut next_item = item_iter.next();
+
+        let mut new_stmts = ctx.ast.vec_with_capacity(stmts.len() - items.len());
+
+        for (index, stmt) in stmts.drain(..).enumerate() {
+            if let Some(item) = next_item {
+                if *item == index {
+                    next_item = item_iter.next();
+                    continue;
                 }
-            } else {
-                new_stmts.push(stmt);
             }
+            new_stmts.push(stmt);
         }
+
         *stmts = new_stmts;
         self.changed = true;
     }
@@ -131,7 +141,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_collapsing() {
         // Basic collapsing
         test("var a;var b;", "var a,b;");
@@ -177,7 +186,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_issue397() {
         test_same("var x; x = 5; var z = 7;");
         test("var x; var y = 3; x = 5;", "var x, y = 3; x = 5;");
@@ -192,7 +200,6 @@ mod test {
 
     // ES6 Tests
     #[test]
-    #[ignore]
     fn test_collapsing_let_const() {
         // Basic collapsing
         test("let a;let b;", "let a,b;");
@@ -229,7 +236,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_redeclaration_let_in_function() {
         test(
             "function f() { let x = 1; let y = 2; let z = 3; x + y + z; }",
@@ -248,7 +254,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_arrow_function() {
         test("() => {let x = 1; let y = 2; x + y; }", "() => {let x = 1, y = 2; x + y; }");
 
@@ -264,7 +269,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_mixed_declaration_types() {
         // lets, vars, const declarations consecutive
         test("let x = 1; let z = 3; var y = 2;", "let x = 1, z = 3; var y = 2;");

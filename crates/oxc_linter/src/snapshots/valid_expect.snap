@@ -1,63 +1,63 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-vitest(valid-expect): Expect takes at most 1 argument
+  ⚠ eslint-plugin-vitest(valid-expect): Expect requires at least 1 argument
    ╭─[valid_expect.tsx:1:1]
  1 │ expect().toBe(2);
    · ────────
    ╰────
-  help: Remove the extra arguments.
+  help: Add the missing arguments.
 
-  ⚠ eslint-plugin-vitest(valid-expect): Expect takes at most 1 argument
+  ⚠ eslint-plugin-vitest(valid-expect): Expect requires at least 1 argument
    ╭─[valid_expect.tsx:1:1]
  1 │ expect().toBe(true);
    · ────────
    ╰────
-  help: Remove the extra arguments.
+  help: Add the missing arguments.
 
-  ⚠ eslint-plugin-vitest(valid-expect): Expect takes at most 1 argument
+  ⚠ eslint-plugin-vitest(valid-expect): Expect requires at least 1 argument
    ╭─[valid_expect.tsx:1:1]
  1 │ expect().toEqual('something');
    · ────────
    ╰────
-  help: Remove the extra arguments.
+  help: Add the missing arguments.
 
-  ⚠ eslint-plugin-vitest(valid-expect): Expect requires at least 1 argument
+  ⚠ eslint-plugin-vitest(valid-expect): Expect takes at most 1 argument
    ╭─[valid_expect.tsx:1:1]
  1 │ expect('something', 'else').toEqual('something');
    · ───────────────────────────
    ╰────
-  help: Add the missing arguments.
-
-  ⚠ eslint-plugin-vitest(valid-expect): Expect requires at least 2 arguments
-   ╭─[valid_expect.tsx:1:1]
- 1 │ expect('something', 'else', 'entirely').toEqual('something');
-   · ───────────────────────────────────────
-   ╰────
-  help: Add the missing arguments.
-
-  ⚠ eslint-plugin-vitest(valid-expect): Expect requires at least 2 arguments
-   ╭─[valid_expect.tsx:1:1]
- 1 │ expect('something', 'else', 'entirely').toEqual('something');
-   · ───────────────────────────────────────
-   ╰────
-  help: Add the missing arguments.
-
-  ⚠ eslint-plugin-vitest(valid-expect): Expect requires at least 2 arguments
-   ╭─[valid_expect.tsx:1:1]
- 1 │ expect('something', 'else', 'entirely').toEqual('something');
-   · ───────────────────────────────────────
-   ╰────
-  help: Add the missing arguments.
+  help: Remove the extra arguments.
 
   ⚠ eslint-plugin-vitest(valid-expect): Expect takes at most 2 arguments
+   ╭─[valid_expect.tsx:1:1]
+ 1 │ expect('something', 'else', 'entirely').toEqual('something');
+   · ───────────────────────────────────────
+   ╰────
+  help: Remove the extra arguments.
+
+  ⚠ eslint-plugin-vitest(valid-expect): Expect takes at most 2 arguments
+   ╭─[valid_expect.tsx:1:1]
+ 1 │ expect('something', 'else', 'entirely').toEqual('something');
+   · ───────────────────────────────────────
+   ╰────
+  help: Remove the extra arguments.
+
+  ⚠ eslint-plugin-vitest(valid-expect): Expect takes at most 2 arguments
+   ╭─[valid_expect.tsx:1:1]
+ 1 │ expect('something', 'else', 'entirely').toEqual('something');
+   · ───────────────────────────────────────
+   ╰────
+  help: Remove the extra arguments.
+
+  ⚠ eslint-plugin-vitest(valid-expect): Expect requires at least 2 arguments
    ╭─[valid_expect.tsx:1:1]
  1 │ expect('something').toEqual('something');
    · ───────────────────
    ╰────
-  help: Remove the extra arguments.
+  help: Add the missing arguments.
 
-  ⚠ eslint-plugin-vitest(valid-expect): Expect takes at most 3 arguments
+  ⚠ eslint-plugin-vitest(valid-expect): Expect takes at most 1 argument
    ╭─[valid_expect.tsx:1:1]
  1 │ expect('something', 'else').toEqual('something');
    · ───────────────────────────
@@ -498,63 +498,63 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Did you forget add a matcher(e.g. `toBe`, `toBeDefined`)
 
-  ⚠ eslint-plugin-vitest(valid-expect): Expect takes at most 1 argument
+  ⚠ eslint-plugin-vitest(valid-expect): Expect requires at least 1 argument
    ╭─[valid_expect.tsx:1:1]
  1 │ expect().toBe(2);
    · ────────
    ╰────
-  help: Remove the extra arguments.
+  help: Add the missing arguments.
 
-  ⚠ eslint-plugin-vitest(valid-expect): Expect takes at most 1 argument
+  ⚠ eslint-plugin-vitest(valid-expect): Expect requires at least 1 argument
    ╭─[valid_expect.tsx:1:1]
  1 │ expect().toBe(true);
    · ────────
    ╰────
-  help: Remove the extra arguments.
+  help: Add the missing arguments.
 
-  ⚠ eslint-plugin-vitest(valid-expect): Expect takes at most 1 argument
+  ⚠ eslint-plugin-vitest(valid-expect): Expect requires at least 1 argument
    ╭─[valid_expect.tsx:1:1]
  1 │ expect().toEqual("something");
    · ────────
    ╰────
-  help: Remove the extra arguments.
+  help: Add the missing arguments.
 
-  ⚠ eslint-plugin-vitest(valid-expect): Expect requires at least 1 argument
+  ⚠ eslint-plugin-vitest(valid-expect): Expect takes at most 1 argument
    ╭─[valid_expect.tsx:1:1]
  1 │ expect("something", "else").toEqual("something");
    · ───────────────────────────
    ╰────
-  help: Add the missing arguments.
-
-  ⚠ eslint-plugin-vitest(valid-expect): Expect requires at least 2 arguments
-   ╭─[valid_expect.tsx:1:1]
- 1 │ expect("something", "else", "entirely").toEqual("something");
-   · ───────────────────────────────────────
-   ╰────
-  help: Add the missing arguments.
-
-  ⚠ eslint-plugin-vitest(valid-expect): Expect requires at least 2 arguments
-   ╭─[valid_expect.tsx:1:1]
- 1 │ expect("something", "else", "entirely").toEqual("something");
-   · ───────────────────────────────────────
-   ╰────
-  help: Add the missing arguments.
-
-  ⚠ eslint-plugin-vitest(valid-expect): Expect requires at least 2 arguments
-   ╭─[valid_expect.tsx:1:1]
- 1 │ expect("something", "else", "entirely").toEqual("something");
-   · ───────────────────────────────────────
-   ╰────
-  help: Add the missing arguments.
+  help: Remove the extra arguments.
 
   ⚠ eslint-plugin-vitest(valid-expect): Expect takes at most 2 arguments
+   ╭─[valid_expect.tsx:1:1]
+ 1 │ expect("something", "else", "entirely").toEqual("something");
+   · ───────────────────────────────────────
+   ╰────
+  help: Remove the extra arguments.
+
+  ⚠ eslint-plugin-vitest(valid-expect): Expect takes at most 2 arguments
+   ╭─[valid_expect.tsx:1:1]
+ 1 │ expect("something", "else", "entirely").toEqual("something");
+   · ───────────────────────────────────────
+   ╰────
+  help: Remove the extra arguments.
+
+  ⚠ eslint-plugin-vitest(valid-expect): Expect takes at most 2 arguments
+   ╭─[valid_expect.tsx:1:1]
+ 1 │ expect("something", "else", "entirely").toEqual("something");
+   · ───────────────────────────────────────
+   ╰────
+  help: Remove the extra arguments.
+
+  ⚠ eslint-plugin-vitest(valid-expect): Expect requires at least 2 arguments
    ╭─[valid_expect.tsx:1:1]
  1 │ expect("something").toEqual("something");
    · ───────────────────
    ╰────
-  help: Remove the extra arguments.
+  help: Add the missing arguments.
 
-  ⚠ eslint-plugin-vitest(valid-expect): Expect takes at most 3 arguments
+  ⚠ eslint-plugin-vitest(valid-expect): Expect takes at most 1 argument
    ╭─[valid_expect.tsx:1:1]
  1 │ expect("something", "else").toEqual("something");
    · ───────────────────────────

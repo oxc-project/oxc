@@ -113,6 +113,28 @@ impl<'a> AstBuilder<'a> {
     }
 
     #[inline]
+    pub fn move_variable_declaration(
+        self,
+        decl: &mut VariableDeclaration<'a>,
+    ) -> VariableDeclaration<'a> {
+        let empty_decl = self.variable_declaration(
+            Span::default(),
+            VariableDeclarationKind::Var,
+            self.vec(),
+            false,
+        );
+        mem::replace(decl, empty_decl)
+    }
+
+    pub fn move_array_expression_element(
+        self,
+        element: &mut ArrayExpressionElement<'a>,
+    ) -> ArrayExpressionElement<'a> {
+        let empty_element = self.array_expression_element_elision(Span::default());
+        mem::replace(element, empty_element)
+    }
+
+    #[inline]
     pub fn move_vec<T>(self, vec: &mut Vec<'a, T>) -> Vec<'a, T> {
         mem::replace(vec, self.vec())
     }

@@ -364,11 +364,13 @@ impl From<Span> for LabeledSpan {
 
 /// Get the span for an AST node
 pub trait GetSpan {
+    /// Get the [`Span`] for an AST node
     fn span(&self) -> Span;
 }
 
 /// Get mutable ref to span for an AST node
 pub trait GetSpanMut {
+    /// Get a mutable reference to an AST node's [`Span`].
     fn span_mut(&mut self) -> &mut Span;
 }
 

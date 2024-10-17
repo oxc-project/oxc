@@ -73,8 +73,9 @@ fn parse_with_return<'a>(source_text: &'a str, options: &ParserOptions) -> Parse
     };
 
     let comments = ret
-        .trivias
-        .comments()
+        .program
+        .comments
+        .iter()
         .map(|comment| Comment {
             r#type: match comment.kind {
                 CommentKind::Line => "Line",

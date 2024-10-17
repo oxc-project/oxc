@@ -75,12 +75,12 @@ impl<'a> ParserImpl<'a> {
             self.ast.ts_type_constructor_type(
                 span,
                 r#abstract,
+                type_parameters,
                 params,
                 return_type,
-                type_parameters,
             )
         } else {
-            self.ast.ts_type_function_type(span, this_param, params, return_type, type_parameters)
+            self.ast.ts_type_function_type(span, type_parameters, this_param, params, return_type)
         })
     }
 
@@ -138,7 +138,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_type_parameters(
         &mut self,
     ) -> Result<Option<Box<'a, TSTypeParameterDeclaration<'a>>>> {
-        if !self.ts_enabled() {
+        if !self.is_ts {
             return Ok(None);
         }
         if !self.at(Kind::LAngle) {
@@ -811,7 +811,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_type_arguments_in_expression(
         &mut self,
     ) -> Result<Option<Box<'a, TSTypeParameterInstantiation<'a>>>> {
-        if !self.ts_enabled() {
+        if !self.is_ts {
             return Ok(None);
         }
         let span = self.start_span();
@@ -1049,7 +1049,7 @@ impl<'a> ParserImpl<'a> {
         kind: Kind,
         is_type: bool,
     ) -> Result<Option<Box<'a, TSTypeAnnotation<'a>>>> {
-        if !self.ts_enabled() {
+        if !self.is_ts {
             return Ok(None);
         }
         if !self.at(Kind::Colon) {
@@ -1135,16 +1135,16 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_call_signature_member(&mut self) -> Result<TSSignature<'a>> {
         let span = self.start_span();
         let type_parameters = self.parse_ts_type_parameters()?;
-        let (this_patam, params) = self.parse_formal_parameters(FormalParameterKind::Signature)?;
+        let (this_param, params) = self.parse_formal_parameters(FormalParameterKind::Signature)?;
         let return_type = self.parse_ts_return_type_annotation(Kind::Colon, false)?;
         self.bump(Kind::Comma);
         self.bump(Kind::Semicolon);
         Ok(self.ast.ts_signature_call_signature_declaration(
             self.end_span(span),
-            this_patam,
+            type_parameters,
+            this_param,
             params,
             return_type,
-            type_parameters,
         ))
     }
 
@@ -1162,10 +1162,10 @@ impl<'a> ParserImpl<'a> {
             computed,
             /* optional */ false,
             TSMethodSignatureKind::Get,
+            NONE,
             this_param,
             params,
             return_type,
-            NONE,
         ))
     }
 
@@ -1188,10 +1188,10 @@ impl<'a> ParserImpl<'a> {
             computed,
             /* optional */ false,
             TSMethodSignatureKind::Set,
+            NONE,
             this_param,
             params,
             return_type,
-            NONE,
         ))
     }
 
@@ -1223,10 +1223,10 @@ impl<'a> ParserImpl<'a> {
                 computed,
                 optional,
                 TSMethodSignatureKind::Method,
+                call_signature.type_parameters,
                 call_signature.this_param,
                 call_signature.params,
                 call_signature.return_type,
-                call_signature.type_parameters,
             ))
         } else {
             let type_annotation = self.parse_ts_type_annotation()?;
@@ -1261,22 +1261,22 @@ impl<'a> ParserImpl<'a> {
 
         Ok(self.ast.ts_signature_construct_signature_declaration(
             self.end_span(span),
+            type_parameters,
             params,
             return_type,
-            type_parameters,
         ))
     }
 
     pub(crate) fn parse_ts_index_signature_member(&mut self) -> Result<TSSignature<'a>> {
         let span = self.start_span();
-        let mut readonly = false;
-        while self.is_nth_at_modifier(0, false) {
-            if self.eat(Kind::Readonly) {
-                readonly = true;
-            } else {
-                return Err(self.unexpected());
-            }
-        }
+
+        let modifiers = self.parse_class_element_modifiers(false);
+        self.verify_modifiers(
+            &modifiers,
+            ModifierFlags::READONLY,
+            diagnostics::cannot_appear_on_an_index_signature,
+        );
+        let readonly = modifiers.contains(ModifierKind::Readonly);
 
         self.bump(Kind::LBrack);
         let index_name = self.parse_ts_index_signature_name()?;
@@ -1315,7 +1315,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         is_constructor_parameter: bool,
     ) -> Modifiers<'a> {
-        if !self.ts_enabled() {
+        if !self.is_ts {
             return Modifiers::empty();
         }
 

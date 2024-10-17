@@ -54,7 +54,7 @@ impl Rule for NoEmpty {
                     return;
                 }
 
-                if ctx.semantic().trivias().has_comments_between(block.span) {
+                if ctx.semantic().has_comments_between(block.span) {
                     return;
                 }
                 ctx.diagnostic_with_suggestion(no_empty_diagnostic("block", block.span), |fixer| {
@@ -72,7 +72,7 @@ impl Rule for NoEmpty {
             // The visitor does not visit the `BlockStatement` inside the `FinallyClause`.
             // See `Visit::visit_finally_clause`.
             AstKind::FinallyClause(finally_clause) if finally_clause.body.is_empty() => {
-                if ctx.semantic().trivias().has_comments_between(finally_clause.span) {
+                if ctx.semantic().has_comments_between(finally_clause.span) {
                     return;
                 }
                 ctx.diagnostic_with_suggestion(

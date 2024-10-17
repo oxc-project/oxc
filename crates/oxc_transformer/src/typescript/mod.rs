@@ -1,3 +1,9 @@
+use oxc_allocator::Vec;
+use oxc_ast::ast::*;
+use oxc_traverse::{Traverse, TraverseCtx};
+
+use crate::TransformCtx;
+
 mod annotations;
 mod diagnostics;
 mod r#enum;
@@ -6,16 +12,13 @@ mod namespace;
 mod options;
 mod rewrite_extensions;
 
+use annotations::TypeScriptAnnotations;
 use module::TypeScriptModule;
 use namespace::TypeScriptNamespace;
-use oxc_allocator::Vec;
-use oxc_ast::ast::*;
-use oxc_traverse::{Traverse, TraverseCtx};
+use r#enum::TypeScriptEnum;
 use rewrite_extensions::TypeScriptRewriteExtensions;
 
-pub use self::options::{RewriteExtensionsMode, TypeScriptOptions};
-use self::{annotations::TypeScriptAnnotations, r#enum::TypeScriptEnum};
-use crate::TransformCtx;
+pub use options::{RewriteExtensionsMode, TypeScriptOptions};
 
 /// [Preset TypeScript](https://babeljs.io/docs/babel-preset-typescript)
 ///

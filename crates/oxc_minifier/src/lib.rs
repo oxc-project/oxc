@@ -1,4 +1,4 @@
-#![allow(clippy::wildcard_imports, clippy::new_without_default, clippy::unused_self)]
+#![allow(clippy::wildcard_imports)]
 
 //! ECMAScript Minifier
 
@@ -8,7 +8,6 @@ mod keep_var;
 mod node_util;
 mod options;
 mod tri;
-mod ty;
 
 #[cfg(test)]
 mod tester;

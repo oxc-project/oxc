@@ -1,5 +1,5 @@
 //! Common code for JavaScript Syntax
-
+#![warn(missing_docs)]
 pub mod class;
 pub mod identifier;
 pub mod keyword;

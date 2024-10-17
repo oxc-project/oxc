@@ -5131,7 +5131,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol reference IDs mismatch for "DEFAULT_TABS_TAG":
-after transform: SymbolId(2): [ReferenceId(11), ReferenceId(17)]
+after transform: SymbolId(2): [ReferenceId(11), ReferenceId(15)]
 rebuilt        : SymbolId(0): []
 Reference symbol mismatch for "TabGroup":
 after transform: SymbolId(10) "TabGroup"
@@ -5148,7 +5148,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol reference IDs mismatch for "DEFAULT_TABS_TAG":
-after transform: SymbolId(6): [ReferenceId(17), ReferenceId(23)]
+after transform: SymbolId(6): [ReferenceId(17), ReferenceId(21)]
 rebuilt        : SymbolId(0): []
 Reference symbol mismatch for "TabGroup":
 after transform: SymbolId(14) "TabGroup"
@@ -9023,13 +9023,13 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 Symbol reference IDs mismatch for "Base":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(7), ReferenceId(13)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(5), ReferenceId(11)]
 rebuilt        : SymbolId(0): [ReferenceId(0)]
 Symbol reference IDs mismatch for "Derived":
-after transform: SymbolId(1): [ReferenceId(1), ReferenceId(4)]
+after transform: SymbolId(1): [ReferenceId(1), ReferenceId(2)]
 rebuilt        : SymbolId(1): [ReferenceId(1)]
 Symbol reference IDs mismatch for "Derived2":
-after transform: SymbolId(2): [ReferenceId(10)]
+after transform: SymbolId(2): [ReferenceId(8)]
 rebuilt        : SymbolId(2): []
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitTypeParameterNameShadowedInternally.ts
@@ -21454,7 +21454,7 @@ Bindings mismatch:
 after transform: ScopeId(7): ["S"]
 rebuilt        : ScopeId(3): []
 Symbol reference IDs mismatch for "Table":
-after transform: SymbolId(4): [ReferenceId(14), ReferenceId(16), ReferenceId(21), ReferenceId(25)]
+after transform: SymbolId(4): [ReferenceId(14), ReferenceId(17), ReferenceId(22), ReferenceId(25)]
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2)]
 Unresolved references mismatch:
 after transform: ["Array", "Pick", "Record"]
@@ -24652,7 +24652,7 @@ Bindings mismatch:
 after transform: ScopeId(7): ["T"]
 rebuilt        : ScopeId(5): []
 Symbol reference IDs mismatch for "FeatureRunner":
-after transform: SymbolId(3): [ReferenceId(0)]
+after transform: SymbolId(3): [ReferenceId(1)]
 rebuilt        : SymbolId(0): []
 Unresolved references mismatch:
 after transform: ["Promise", "const"]
@@ -55502,7 +55502,7 @@ Bindings mismatch:
 after transform: ScopeId(4): ["T", "a", "x"]
 rebuilt        : ScopeId(3): ["a", "x"]
 Unresolved reference IDs mismatch for "Date":
-after transform: [ReferenceId(0), ReferenceId(6), ReferenceId(7), ReferenceId(10), ReferenceId(14), ReferenceId(16), ReferenceId(18), ReferenceId(24)]
+after transform: [ReferenceId(0), ReferenceId(6), ReferenceId(7), ReferenceId(10), ReferenceId(13), ReferenceId(16), ReferenceId(18), ReferenceId(24)]
 rebuilt        : [ReferenceId(12)]
 
 tasks/coverage/typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/propertyAccessOnTypeParameterWithConstraints2.ts
@@ -55519,7 +55519,7 @@ Bindings mismatch:
 after transform: ScopeId(9): ["T", "U", "a", "x", "y"]
 rebuilt        : ScopeId(8): ["a", "x", "y"]
 Symbol reference IDs mismatch for "A":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(13), ReferenceId(16), ReferenceId(18), ReferenceId(19), ReferenceId(23), ReferenceId(27), ReferenceId(28), ReferenceId(31), ReferenceId(32), ReferenceId(36), ReferenceId(37), ReferenceId(39), ReferenceId(40), ReferenceId(49), ReferenceId(50)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(13), ReferenceId(16), ReferenceId(18), ReferenceId(19), ReferenceId(23), ReferenceId(26), ReferenceId(27), ReferenceId(29), ReferenceId(30), ReferenceId(33), ReferenceId(34), ReferenceId(39), ReferenceId(40), ReferenceId(49), ReferenceId(50)]
 rebuilt        : SymbolId(0): [ReferenceId(0)]
 Symbol reference IDs mismatch for "B":
 after transform: SymbolId(1): [ReferenceId(12), ReferenceId(15), ReferenceId(17), ReferenceId(22), ReferenceId(42)]
@@ -55539,7 +55539,7 @@ Bindings mismatch:
 after transform: ScopeId(9): ["T", "U", "a", "x"]
 rebuilt        : ScopeId(8): ["a", "x"]
 Symbol reference IDs mismatch for "A":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(12), ReferenceId(15), ReferenceId(18), ReferenceId(22), ReferenceId(27), ReferenceId(32), ReferenceId(39)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(12), ReferenceId(15), ReferenceId(18), ReferenceId(22), ReferenceId(26), ReferenceId(30), ReferenceId(39)]
 rebuilt        : SymbolId(0): [ReferenceId(0)]
 Symbol reference IDs mismatch for "B":
 after transform: SymbolId(1): [ReferenceId(13), ReferenceId(16), ReferenceId(17), ReferenceId(23), ReferenceId(36), ReferenceId(38), ReferenceId(46)]
@@ -55822,10 +55822,10 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 Symbol reference IDs mismatch for "Base":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(10), ReferenceId(12), ReferenceId(14), ReferenceId(16), ReferenceId(18), ReferenceId(20), ReferenceId(24), ReferenceId(26), ReferenceId(32), ReferenceId(41), ReferenceId(59), ReferenceId(65), ReferenceId(73), ReferenceId(80), ReferenceId(88), ReferenceId(90), ReferenceId(95), ReferenceId(97), ReferenceId(108)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(10), ReferenceId(12), ReferenceId(14), ReferenceId(16), ReferenceId(18), ReferenceId(20), ReferenceId(24), ReferenceId(26), ReferenceId(32), ReferenceId(40), ReferenceId(56), ReferenceId(61), ReferenceId(67), ReferenceId(75), ReferenceId(85), ReferenceId(90), ReferenceId(92), ReferenceId(99), ReferenceId(107)]
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2)]
 Symbol reference IDs mismatch for "Derived":
-after transform: SymbolId(1): [ReferenceId(1), ReferenceId(4), ReferenceId(7), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(15), ReferenceId(17), ReferenceId(19), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(30), ReferenceId(34), ReferenceId(36), ReferenceId(39), ReferenceId(60), ReferenceId(66), ReferenceId(74), ReferenceId(81), ReferenceId(84), ReferenceId(93), ReferenceId(101)]
+after transform: SymbolId(1): [ReferenceId(1), ReferenceId(4), ReferenceId(7), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(15), ReferenceId(17), ReferenceId(19), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(30), ReferenceId(34), ReferenceId(36), ReferenceId(38), ReferenceId(57), ReferenceId(62), ReferenceId(68), ReferenceId(76), ReferenceId(82), ReferenceId(95), ReferenceId(97)]
 rebuilt        : SymbolId(1): [ReferenceId(1)]
 Symbol reference IDs mismatch for "Derived2":
 after transform: SymbolId(2): [ReferenceId(28)]
@@ -55842,13 +55842,13 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 Symbol reference IDs mismatch for "Base":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(15), ReferenceId(19), ReferenceId(26), ReferenceId(34), ReferenceId(40), ReferenceId(46), ReferenceId(61), ReferenceId(66)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(12), ReferenceId(19), ReferenceId(23), ReferenceId(31), ReferenceId(38), ReferenceId(44), ReferenceId(58), ReferenceId(66)]
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2)]
 Symbol reference IDs mismatch for "Derived":
-after transform: SymbolId(1): [ReferenceId(1), ReferenceId(13), ReferenceId(30), ReferenceId(37), ReferenceId(62)]
+after transform: SymbolId(1): [ReferenceId(1), ReferenceId(14), ReferenceId(27), ReferenceId(35), ReferenceId(59)]
 rebuilt        : SymbolId(1): [ReferenceId(1)]
 Symbol reference IDs mismatch for "Derived2":
-after transform: SymbolId(2): [ReferenceId(43)]
+after transform: SymbolId(2): [ReferenceId(41)]
 rebuilt        : SymbolId(2): []
 
 tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/callSignatureAssignabilityInInheritance5.ts
@@ -55859,10 +55859,10 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 Symbol reference IDs mismatch for "Base":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(10), ReferenceId(12), ReferenceId(14), ReferenceId(16), ReferenceId(18), ReferenceId(20), ReferenceId(24), ReferenceId(26), ReferenceId(32), ReferenceId(56), ReferenceId(62), ReferenceId(70), ReferenceId(77), ReferenceId(85), ReferenceId(87), ReferenceId(92), ReferenceId(94)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(10), ReferenceId(12), ReferenceId(14), ReferenceId(16), ReferenceId(18), ReferenceId(20), ReferenceId(24), ReferenceId(26), ReferenceId(32), ReferenceId(53), ReferenceId(58), ReferenceId(64), ReferenceId(72), ReferenceId(82), ReferenceId(87), ReferenceId(89), ReferenceId(96)]
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2)]
 Symbol reference IDs mismatch for "Derived":
-after transform: SymbolId(1): [ReferenceId(1), ReferenceId(4), ReferenceId(7), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(15), ReferenceId(17), ReferenceId(19), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(30), ReferenceId(34), ReferenceId(36), ReferenceId(57), ReferenceId(63), ReferenceId(71), ReferenceId(78), ReferenceId(81), ReferenceId(90), ReferenceId(98)]
+after transform: SymbolId(1): [ReferenceId(1), ReferenceId(4), ReferenceId(7), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(15), ReferenceId(17), ReferenceId(19), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(30), ReferenceId(34), ReferenceId(36), ReferenceId(54), ReferenceId(59), ReferenceId(65), ReferenceId(73), ReferenceId(79), ReferenceId(92), ReferenceId(94)]
 rebuilt        : SymbolId(1): [ReferenceId(1)]
 Symbol reference IDs mismatch for "Derived2":
 after transform: SymbolId(2): [ReferenceId(28)]
@@ -55879,10 +55879,10 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(18)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 Symbol reference IDs mismatch for "Base":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(10), ReferenceId(12), ReferenceId(14), ReferenceId(16), ReferenceId(18), ReferenceId(20), ReferenceId(24), ReferenceId(26), ReferenceId(32), ReferenceId(41), ReferenceId(59), ReferenceId(65), ReferenceId(73), ReferenceId(80), ReferenceId(88), ReferenceId(90), ReferenceId(95), ReferenceId(97), ReferenceId(108)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(10), ReferenceId(12), ReferenceId(14), ReferenceId(16), ReferenceId(18), ReferenceId(20), ReferenceId(24), ReferenceId(26), ReferenceId(32), ReferenceId(40), ReferenceId(56), ReferenceId(61), ReferenceId(67), ReferenceId(75), ReferenceId(85), ReferenceId(90), ReferenceId(92), ReferenceId(99), ReferenceId(107)]
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2)]
 Symbol reference IDs mismatch for "Derived":
-after transform: SymbolId(1): [ReferenceId(1), ReferenceId(4), ReferenceId(7), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(15), ReferenceId(17), ReferenceId(19), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(30), ReferenceId(34), ReferenceId(36), ReferenceId(39), ReferenceId(60), ReferenceId(66), ReferenceId(74), ReferenceId(81), ReferenceId(84), ReferenceId(93), ReferenceId(101)]
+after transform: SymbolId(1): [ReferenceId(1), ReferenceId(4), ReferenceId(7), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(15), ReferenceId(17), ReferenceId(19), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(30), ReferenceId(34), ReferenceId(36), ReferenceId(38), ReferenceId(57), ReferenceId(62), ReferenceId(68), ReferenceId(76), ReferenceId(82), ReferenceId(95), ReferenceId(97)]
 rebuilt        : SymbolId(1): [ReferenceId(1)]
 Symbol reference IDs mismatch for "Derived2":
 after transform: SymbolId(2): [ReferenceId(28)]
@@ -55899,13 +55899,13 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(18)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 Symbol reference IDs mismatch for "Base":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(15), ReferenceId(19), ReferenceId(26), ReferenceId(29), ReferenceId(36), ReferenceId(44), ReferenceId(50), ReferenceId(53), ReferenceId(71), ReferenceId(76), ReferenceId(85), ReferenceId(87), ReferenceId(91), ReferenceId(94)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(12), ReferenceId(19), ReferenceId(23), ReferenceId(27), ReferenceId(35), ReferenceId(41), ReferenceId(48), ReferenceId(51), ReferenceId(68), ReferenceId(76), ReferenceId(83), ReferenceId(86), ReferenceId(88), ReferenceId(92)]
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2)]
 Symbol reference IDs mismatch for "Derived":
-after transform: SymbolId(1): [ReferenceId(1), ReferenceId(13), ReferenceId(32), ReferenceId(34), ReferenceId(40), ReferenceId(47), ReferenceId(72)]
+after transform: SymbolId(1): [ReferenceId(1), ReferenceId(14), ReferenceId(30), ReferenceId(33), ReferenceId(37), ReferenceId(45), ReferenceId(69)]
 rebuilt        : SymbolId(1): [ReferenceId(1)]
 Symbol reference IDs mismatch for "Derived2":
-after transform: SymbolId(2): [ReferenceId(56)]
+after transform: SymbolId(2): [ReferenceId(54)]
 rebuilt        : SymbolId(2): []
 
 tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/constructSignatureAssignabilityInInheritance5.ts
@@ -55916,10 +55916,10 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 Symbol reference IDs mismatch for "Base":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(10), ReferenceId(12), ReferenceId(14), ReferenceId(16), ReferenceId(18), ReferenceId(20), ReferenceId(24), ReferenceId(26), ReferenceId(32), ReferenceId(56), ReferenceId(62), ReferenceId(70), ReferenceId(77), ReferenceId(85), ReferenceId(87), ReferenceId(92), ReferenceId(94)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(10), ReferenceId(12), ReferenceId(14), ReferenceId(16), ReferenceId(18), ReferenceId(20), ReferenceId(24), ReferenceId(26), ReferenceId(32), ReferenceId(53), ReferenceId(58), ReferenceId(64), ReferenceId(72), ReferenceId(82), ReferenceId(87), ReferenceId(89), ReferenceId(96)]
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2)]
 Symbol reference IDs mismatch for "Derived":
-after transform: SymbolId(1): [ReferenceId(1), ReferenceId(4), ReferenceId(7), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(15), ReferenceId(17), ReferenceId(19), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(30), ReferenceId(34), ReferenceId(36), ReferenceId(57), ReferenceId(63), ReferenceId(71), ReferenceId(78), ReferenceId(81), ReferenceId(90), ReferenceId(98)]
+after transform: SymbolId(1): [ReferenceId(1), ReferenceId(4), ReferenceId(7), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(15), ReferenceId(17), ReferenceId(19), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(30), ReferenceId(34), ReferenceId(36), ReferenceId(54), ReferenceId(59), ReferenceId(65), ReferenceId(73), ReferenceId(79), ReferenceId(92), ReferenceId(94)]
 rebuilt        : SymbolId(1): [ReferenceId(1)]
 Symbol reference IDs mismatch for "Derived2":
 after transform: SymbolId(2): [ReferenceId(28)]
@@ -56475,10 +56475,10 @@ Bindings mismatch:
 after transform: ScopeId(78): ["T", "x"]
 rebuilt        : ScopeId(42): ["x"]
 Symbol reference IDs mismatch for "Base":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(8), ReferenceId(10), ReferenceId(12), ReferenceId(14), ReferenceId(17), ReferenceId(19), ReferenceId(21), ReferenceId(24), ReferenceId(26), ReferenceId(28), ReferenceId(34), ReferenceId(37), ReferenceId(44), ReferenceId(56), ReferenceId(103), ReferenceId(108), ReferenceId(110), ReferenceId(117), ReferenceId(123), ReferenceId(125), ReferenceId(133), ReferenceId(141), ReferenceId(143), ReferenceId(145), ReferenceId(153), ReferenceId(160), ReferenceId(162), ReferenceId(164), ReferenceId(183), ReferenceId(187), ReferenceId(195), ReferenceId(197), ReferenceId(202), ReferenceId(216), ReferenceId(220), ReferenceId(245)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(8), ReferenceId(10), ReferenceId(12), ReferenceId(14), ReferenceId(17), ReferenceId(19), ReferenceId(21), ReferenceId(24), ReferenceId(26), ReferenceId(28), ReferenceId(34), ReferenceId(37), ReferenceId(44), ReferenceId(55), ReferenceId(103), ReferenceId(108), ReferenceId(110), ReferenceId(117), ReferenceId(123), ReferenceId(125), ReferenceId(133), ReferenceId(141), ReferenceId(143), ReferenceId(145), ReferenceId(153), ReferenceId(160), ReferenceId(162), ReferenceId(164), ReferenceId(183), ReferenceId(187), ReferenceId(195), ReferenceId(197), ReferenceId(202), ReferenceId(216), ReferenceId(220), ReferenceId(245)]
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2)]
 Symbol reference IDs mismatch for "Derived":
-after transform: SymbolId(1): [ReferenceId(1), ReferenceId(9), ReferenceId(13), ReferenceId(15), ReferenceId(18), ReferenceId(20), ReferenceId(22), ReferenceId(25), ReferenceId(27), ReferenceId(29), ReferenceId(31), ReferenceId(32), ReferenceId(41), ReferenceId(46), ReferenceId(48), ReferenceId(54), ReferenceId(104), ReferenceId(109), ReferenceId(118), ReferenceId(124), ReferenceId(126), ReferenceId(134), ReferenceId(142), ReferenceId(144), ReferenceId(146), ReferenceId(154), ReferenceId(161), ReferenceId(163), ReferenceId(165), ReferenceId(172), ReferenceId(175), ReferenceId(176), ReferenceId(200), ReferenceId(206), ReferenceId(214), ReferenceId(222), ReferenceId(224)]
+after transform: SymbolId(1): [ReferenceId(1), ReferenceId(9), ReferenceId(13), ReferenceId(15), ReferenceId(18), ReferenceId(20), ReferenceId(22), ReferenceId(25), ReferenceId(27), ReferenceId(29), ReferenceId(31), ReferenceId(32), ReferenceId(41), ReferenceId(46), ReferenceId(48), ReferenceId(53), ReferenceId(104), ReferenceId(109), ReferenceId(118), ReferenceId(124), ReferenceId(126), ReferenceId(134), ReferenceId(142), ReferenceId(144), ReferenceId(146), ReferenceId(154), ReferenceId(161), ReferenceId(163), ReferenceId(165), ReferenceId(172), ReferenceId(175), ReferenceId(176), ReferenceId(200), ReferenceId(206), ReferenceId(214), ReferenceId(222), ReferenceId(224)]
 rebuilt        : SymbolId(1): [ReferenceId(1)]
 Symbol reference IDs mismatch for "Derived2":
 after transform: SymbolId(2): [ReferenceId(39), ReferenceId(204)]
@@ -56560,13 +56560,13 @@ Bindings mismatch:
 after transform: ScopeId(54): ["T", "x"]
 rebuilt        : ScopeId(32): ["x"]
 Symbol reference IDs mismatch for "Base":
-after transform: SymbolId(1): [ReferenceId(0), ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(16), ReferenceId(17), ReferenceId(19), ReferenceId(22), ReferenceId(35), ReferenceId(41), ReferenceId(50), ReferenceId(57), ReferenceId(59), ReferenceId(67), ReferenceId(74), ReferenceId(76), ReferenceId(78), ReferenceId(89), ReferenceId(90), ReferenceId(101), ReferenceId(109), ReferenceId(117), ReferenceId(119), ReferenceId(136)]
+after transform: SymbolId(1): [ReferenceId(0), ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(16), ReferenceId(17), ReferenceId(19), ReferenceId(22), ReferenceId(33), ReferenceId(39), ReferenceId(50), ReferenceId(57), ReferenceId(59), ReferenceId(67), ReferenceId(74), ReferenceId(76), ReferenceId(78), ReferenceId(89), ReferenceId(90), ReferenceId(101), ReferenceId(109), ReferenceId(117), ReferenceId(119), ReferenceId(136)]
 rebuilt        : SymbolId(2): [ReferenceId(0), ReferenceId(2)]
 Symbol reference IDs mismatch for "Derived":
-after transform: SymbolId(2): [ReferenceId(1), ReferenceId(5), ReferenceId(10), ReferenceId(12), ReferenceId(14), ReferenceId(26), ReferenceId(32), ReferenceId(51), ReferenceId(58), ReferenceId(68), ReferenceId(75), ReferenceId(77), ReferenceId(79), ReferenceId(86), ReferenceId(97), ReferenceId(113)]
+after transform: SymbolId(2): [ReferenceId(1), ReferenceId(5), ReferenceId(10), ReferenceId(12), ReferenceId(14), ReferenceId(26), ReferenceId(30), ReferenceId(51), ReferenceId(58), ReferenceId(68), ReferenceId(75), ReferenceId(77), ReferenceId(79), ReferenceId(86), ReferenceId(97), ReferenceId(113)]
 rebuilt        : SymbolId(3): [ReferenceId(1)]
 Symbol reference IDs mismatch for "Derived2":
-after transform: SymbolId(3): [ReferenceId(7), ReferenceId(24), ReferenceId(38), ReferenceId(52), ReferenceId(60), ReferenceId(111), ReferenceId(115)]
+after transform: SymbolId(3): [ReferenceId(7), ReferenceId(24), ReferenceId(36), ReferenceId(52), ReferenceId(60), ReferenceId(111), ReferenceId(115)]
 rebuilt        : SymbolId(4): []
 Unresolved references mismatch:
 after transform: ["Array", "foo10", "foo11", "foo12", "foo15", "foo16", "foo17", "foo2", "foo3", "foo7", "foo8"]
@@ -56637,13 +56637,13 @@ Bindings mismatch:
 after transform: ScopeId(46): ["T", "x"]
 rebuilt        : ScopeId(24): ["x"]
 Symbol reference IDs mismatch for "Base":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(15), ReferenceId(19), ReferenceId(26), ReferenceId(34), ReferenceId(40), ReferenceId(46), ReferenceId(96), ReferenceId(101), ReferenceId(114), ReferenceId(118), ReferenceId(137), ReferenceId(141)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(12), ReferenceId(19), ReferenceId(23), ReferenceId(31), ReferenceId(38), ReferenceId(44), ReferenceId(96), ReferenceId(101), ReferenceId(114), ReferenceId(118), ReferenceId(137), ReferenceId(141)]
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2)]
 Symbol reference IDs mismatch for "Derived":
-after transform: SymbolId(1): [ReferenceId(1), ReferenceId(13), ReferenceId(30), ReferenceId(37), ReferenceId(97), ReferenceId(103)]
+after transform: SymbolId(1): [ReferenceId(1), ReferenceId(14), ReferenceId(27), ReferenceId(35), ReferenceId(97), ReferenceId(103)]
 rebuilt        : SymbolId(1): [ReferenceId(1)]
 Symbol reference IDs mismatch for "Derived2":
-after transform: SymbolId(2): [ReferenceId(43)]
+after transform: SymbolId(2): [ReferenceId(41)]
 rebuilt        : SymbolId(2): []
 
 tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/subtypingWithConstructSignatures.ts
@@ -56672,10 +56672,10 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(23), ScopeId(24), ScopeId(25), ScopeId(26), ScopeId(27), ScopeId(28), ScopeId(29), ScopeId(30), ScopeId(31), ScopeId(32), ScopeId(33), ScopeId(36), ScopeId(37), ScopeId(40), ScopeId(41), ScopeId(44), ScopeId(45), ScopeId(52)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 Symbol reference IDs mismatch for "Base":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(8), ReferenceId(10), ReferenceId(12), ReferenceId(14), ReferenceId(17), ReferenceId(19), ReferenceId(21), ReferenceId(24), ReferenceId(26), ReferenceId(28), ReferenceId(34), ReferenceId(37), ReferenceId(44), ReferenceId(56), ReferenceId(106), ReferenceId(108), ReferenceId(110), ReferenceId(121), ReferenceId(123), ReferenceId(125), ReferenceId(139), ReferenceId(141), ReferenceId(143), ReferenceId(145), ReferenceId(158), ReferenceId(160), ReferenceId(162), ReferenceId(164), ReferenceId(186), ReferenceId(187), ReferenceId(195), ReferenceId(200), ReferenceId(202), ReferenceId(214), ReferenceId(220), ReferenceId(246)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(8), ReferenceId(10), ReferenceId(12), ReferenceId(14), ReferenceId(17), ReferenceId(19), ReferenceId(21), ReferenceId(24), ReferenceId(26), ReferenceId(28), ReferenceId(34), ReferenceId(37), ReferenceId(44), ReferenceId(55), ReferenceId(103), ReferenceId(108), ReferenceId(110), ReferenceId(117), ReferenceId(123), ReferenceId(125), ReferenceId(133), ReferenceId(141), ReferenceId(143), ReferenceId(145), ReferenceId(153), ReferenceId(160), ReferenceId(162), ReferenceId(164), ReferenceId(183), ReferenceId(187), ReferenceId(195), ReferenceId(197), ReferenceId(202), ReferenceId(216), ReferenceId(220), ReferenceId(245)]
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2)]
 Symbol reference IDs mismatch for "Derived":
-after transform: SymbolId(1): [ReferenceId(1), ReferenceId(9), ReferenceId(13), ReferenceId(15), ReferenceId(18), ReferenceId(20), ReferenceId(22), ReferenceId(25), ReferenceId(27), ReferenceId(29), ReferenceId(31), ReferenceId(32), ReferenceId(41), ReferenceId(46), ReferenceId(48), ReferenceId(54), ReferenceId(107), ReferenceId(109), ReferenceId(122), ReferenceId(124), ReferenceId(126), ReferenceId(140), ReferenceId(142), ReferenceId(144), ReferenceId(146), ReferenceId(159), ReferenceId(161), ReferenceId(163), ReferenceId(165), ReferenceId(174), ReferenceId(175), ReferenceId(176), ReferenceId(198), ReferenceId(206), ReferenceId(218), ReferenceId(222), ReferenceId(224)]
+after transform: SymbolId(1): [ReferenceId(1), ReferenceId(9), ReferenceId(13), ReferenceId(15), ReferenceId(18), ReferenceId(20), ReferenceId(22), ReferenceId(25), ReferenceId(27), ReferenceId(29), ReferenceId(31), ReferenceId(32), ReferenceId(41), ReferenceId(46), ReferenceId(48), ReferenceId(53), ReferenceId(104), ReferenceId(109), ReferenceId(118), ReferenceId(124), ReferenceId(126), ReferenceId(134), ReferenceId(142), ReferenceId(144), ReferenceId(146), ReferenceId(154), ReferenceId(161), ReferenceId(163), ReferenceId(165), ReferenceId(172), ReferenceId(175), ReferenceId(176), ReferenceId(200), ReferenceId(206), ReferenceId(214), ReferenceId(222), ReferenceId(224)]
 rebuilt        : SymbolId(1): [ReferenceId(1)]
 Symbol reference IDs mismatch for "Derived2":
 after transform: SymbolId(2): [ReferenceId(39), ReferenceId(204)]
@@ -56715,13 +56715,13 @@ Scope children mismatch:
 after transform: ScopeId(36): [ScopeId(37), ScopeId(38), ScopeId(39), ScopeId(40)]
 rebuilt        : ScopeId(6): []
 Symbol reference IDs mismatch for "Base":
-after transform: SymbolId(1): [ReferenceId(0), ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(16), ReferenceId(17), ReferenceId(19), ReferenceId(22), ReferenceId(35), ReferenceId(41), ReferenceId(55), ReferenceId(58), ReferenceId(60), ReferenceId(73), ReferenceId(75), ReferenceId(77), ReferenceId(79), ReferenceId(90), ReferenceId(91), ReferenceId(102), ReferenceId(110), ReferenceId(116), ReferenceId(118), ReferenceId(139)]
+after transform: SymbolId(1): [ReferenceId(0), ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(16), ReferenceId(17), ReferenceId(19), ReferenceId(22), ReferenceId(33), ReferenceId(39), ReferenceId(51), ReferenceId(58), ReferenceId(60), ReferenceId(68), ReferenceId(75), ReferenceId(77), ReferenceId(79), ReferenceId(90), ReferenceId(91), ReferenceId(102), ReferenceId(110), ReferenceId(118), ReferenceId(120), ReferenceId(137)]
 rebuilt        : SymbolId(2): [ReferenceId(0), ReferenceId(2)]
 Symbol reference IDs mismatch for "Derived":
-after transform: SymbolId(2): [ReferenceId(1), ReferenceId(5), ReferenceId(10), ReferenceId(12), ReferenceId(14), ReferenceId(26), ReferenceId(32), ReferenceId(56), ReferenceId(59), ReferenceId(74), ReferenceId(76), ReferenceId(78), ReferenceId(80), ReferenceId(89), ReferenceId(101), ReferenceId(114)]
+after transform: SymbolId(2): [ReferenceId(1), ReferenceId(5), ReferenceId(10), ReferenceId(12), ReferenceId(14), ReferenceId(26), ReferenceId(30), ReferenceId(52), ReferenceId(59), ReferenceId(69), ReferenceId(76), ReferenceId(78), ReferenceId(80), ReferenceId(87), ReferenceId(98), ReferenceId(114)]
 rebuilt        : SymbolId(3): [ReferenceId(1)]
 Symbol reference IDs mismatch for "Derived2":
-after transform: SymbolId(3): [ReferenceId(7), ReferenceId(24), ReferenceId(38), ReferenceId(57), ReferenceId(61), ReferenceId(112), ReferenceId(121)]
+after transform: SymbolId(3): [ReferenceId(7), ReferenceId(24), ReferenceId(36), ReferenceId(53), ReferenceId(61), ReferenceId(112), ReferenceId(116)]
 rebuilt        : SymbolId(4): []
 Unresolved references mismatch:
 after transform: ["Array", "foo10", "foo11", "foo12", "foo15", "foo16", "foo17", "foo2", "foo3", "foo7", "foo8"]
@@ -56735,13 +56735,13 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(23), ScopeId(26), ScopeId(27), ScopeId(34)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 Symbol reference IDs mismatch for "Base":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(15), ReferenceId(19), ReferenceId(26), ReferenceId(34), ReferenceId(40), ReferenceId(46), ReferenceId(99), ReferenceId(104), ReferenceId(114), ReferenceId(118), ReferenceId(140), ReferenceId(144)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(12), ReferenceId(19), ReferenceId(23), ReferenceId(31), ReferenceId(38), ReferenceId(44), ReferenceId(96), ReferenceId(101), ReferenceId(114), ReferenceId(118), ReferenceId(137), ReferenceId(141)]
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2)]
 Symbol reference IDs mismatch for "Derived":
-after transform: SymbolId(1): [ReferenceId(1), ReferenceId(13), ReferenceId(30), ReferenceId(37), ReferenceId(100), ReferenceId(102)]
+after transform: SymbolId(1): [ReferenceId(1), ReferenceId(14), ReferenceId(27), ReferenceId(35), ReferenceId(97), ReferenceId(103)]
 rebuilt        : SymbolId(1): [ReferenceId(1)]
 Symbol reference IDs mismatch for "Derived2":
-after transform: SymbolId(2): [ReferenceId(43)]
+after transform: SymbolId(2): [ReferenceId(41)]
 rebuilt        : SymbolId(2): []
 
 tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/subtypingWithConstructSignatures5.ts
@@ -56752,10 +56752,10 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 Symbol reference IDs mismatch for "Base":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(10), ReferenceId(12), ReferenceId(14), ReferenceId(16), ReferenceId(18), ReferenceId(20), ReferenceId(24), ReferenceId(26), ReferenceId(32), ReferenceId(56), ReferenceId(62), ReferenceId(70), ReferenceId(77), ReferenceId(85), ReferenceId(87), ReferenceId(92), ReferenceId(94)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(10), ReferenceId(12), ReferenceId(14), ReferenceId(16), ReferenceId(18), ReferenceId(20), ReferenceId(24), ReferenceId(26), ReferenceId(32), ReferenceId(53), ReferenceId(58), ReferenceId(64), ReferenceId(72), ReferenceId(82), ReferenceId(87), ReferenceId(89), ReferenceId(96)]
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2)]
 Symbol reference IDs mismatch for "Derived":
-after transform: SymbolId(1): [ReferenceId(1), ReferenceId(4), ReferenceId(7), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(15), ReferenceId(17), ReferenceId(19), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(30), ReferenceId(34), ReferenceId(36), ReferenceId(57), ReferenceId(63), ReferenceId(71), ReferenceId(78), ReferenceId(81), ReferenceId(90), ReferenceId(98)]
+after transform: SymbolId(1): [ReferenceId(1), ReferenceId(4), ReferenceId(7), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(15), ReferenceId(17), ReferenceId(19), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(30), ReferenceId(34), ReferenceId(36), ReferenceId(54), ReferenceId(59), ReferenceId(65), ReferenceId(73), ReferenceId(79), ReferenceId(92), ReferenceId(94)]
 rebuilt        : SymbolId(1): [ReferenceId(1)]
 Symbol reference IDs mismatch for "Derived2":
 after transform: SymbolId(2): [ReferenceId(28)]
@@ -57264,7 +57264,7 @@ Bindings mismatch:
 after transform: ScopeId(20): ["T", "U", "x", "y"]
 rebuilt        : ScopeId(11): ["x", "y"]
 Symbol reference IDs mismatch for "One":
-after transform: SymbolId(0): [ReferenceId(5), ReferenceId(31)]
+after transform: SymbolId(0): [ReferenceId(5), ReferenceId(29)]
 rebuilt        : SymbolId(0): []
 Symbol reference IDs mismatch for "Two":
 after transform: SymbolId(1): [ReferenceId(9), ReferenceId(33), ReferenceId(39), ReferenceId(40), ReferenceId(42), ReferenceId(43), ReferenceId(62), ReferenceId(63), ReferenceId(87), ReferenceId(88), ReferenceId(93), ReferenceId(94), ReferenceId(99), ReferenceId(100), ReferenceId(103), ReferenceId(104)]
@@ -57646,7 +57646,7 @@ Bindings mismatch:
 after transform: ScopeId(18): ["T", "U", "x", "y"]
 rebuilt        : ScopeId(9): ["x", "y"]
 Symbol reference IDs mismatch for "One":
-after transform: SymbolId(0): [ReferenceId(27)]
+after transform: SymbolId(0): [ReferenceId(25)]
 rebuilt        : SymbolId(0): []
 Symbol reference IDs mismatch for "Two":
 after transform: SymbolId(1): [ReferenceId(5), ReferenceId(29), ReferenceId(33), ReferenceId(34), ReferenceId(36), ReferenceId(37), ReferenceId(67), ReferenceId(68), ReferenceId(73), ReferenceId(74), ReferenceId(79), ReferenceId(80), ReferenceId(83), ReferenceId(84)]
@@ -58331,13 +58331,13 @@ Bindings mismatch:
 after transform: ScopeId(17): ["T", "U", "x"]
 rebuilt        : ScopeId(17): ["x"]
 Symbol reference IDs mismatch for "Base":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(5), ReferenceId(12), ReferenceId(17), ReferenceId(22), ReferenceId(29), ReferenceId(56), ReferenceId(61), ReferenceId(90), ReferenceId(118), ReferenceId(121), ReferenceId(124)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(5), ReferenceId(12), ReferenceId(17), ReferenceId(22), ReferenceId(29), ReferenceId(56), ReferenceId(61), ReferenceId(90), ReferenceId(116), ReferenceId(120), ReferenceId(124)]
 rebuilt        : SymbolId(0): [ReferenceId(0)]
 Symbol reference IDs mismatch for "Derived":
-after transform: SymbolId(1): [ReferenceId(1), ReferenceId(3), ReferenceId(13), ReferenceId(18), ReferenceId(23), ReferenceId(30), ReferenceId(39), ReferenceId(47), ReferenceId(52), ReferenceId(57), ReferenceId(62), ReferenceId(91), ReferenceId(103), ReferenceId(111), ReferenceId(114), ReferenceId(119), ReferenceId(122), ReferenceId(125)]
+after transform: SymbolId(1): [ReferenceId(1), ReferenceId(3), ReferenceId(13), ReferenceId(18), ReferenceId(23), ReferenceId(30), ReferenceId(39), ReferenceId(47), ReferenceId(52), ReferenceId(57), ReferenceId(62), ReferenceId(91), ReferenceId(100), ReferenceId(108), ReferenceId(113), ReferenceId(117), ReferenceId(121), ReferenceId(125)]
 rebuilt        : SymbolId(1): [ReferenceId(1)]
 Symbol reference IDs mismatch for "Derived2":
-after transform: SymbolId(2): [ReferenceId(4), ReferenceId(43), ReferenceId(48), ReferenceId(53), ReferenceId(107), ReferenceId(112), ReferenceId(115)]
+after transform: SymbolId(2): [ReferenceId(4), ReferenceId(43), ReferenceId(48), ReferenceId(53), ReferenceId(104), ReferenceId(109), ReferenceId(114)]
 rebuilt        : SymbolId(2): []
 
 tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/genericCallWithFunctionTypedArguments3.ts
@@ -58662,13 +58662,13 @@ Scope children mismatch:
 after transform: ScopeId(9): [ScopeId(10), ScopeId(12)]
 rebuilt        : ScopeId(9): []
 Symbol reference IDs mismatch for "C":
-after transform: SymbolId(0): [ReferenceId(8), ReferenceId(18), ReferenceId(19), ReferenceId(40), ReferenceId(50), ReferenceId(56)]
+after transform: SymbolId(0): [ReferenceId(8), ReferenceId(18), ReferenceId(19), ReferenceId(40), ReferenceId(50), ReferenceId(51)]
 rebuilt        : SymbolId(0): []
 Symbol reference IDs mismatch for "D":
 after transform: SymbolId(1): [ReferenceId(10), ReferenceId(27), ReferenceId(42), ReferenceId(58)]
 rebuilt        : SymbolId(1): []
 Symbol reference IDs mismatch for "X":
-after transform: SymbolId(2): [ReferenceId(1), ReferenceId(3), ReferenceId(7), ReferenceId(9), ReferenceId(20), ReferenceId(22), ReferenceId(34), ReferenceId(36), ReferenceId(39), ReferenceId(41), ReferenceId(51), ReferenceId(53)]
+after transform: SymbolId(2): [ReferenceId(1), ReferenceId(3), ReferenceId(7), ReferenceId(9), ReferenceId(20), ReferenceId(22), ReferenceId(34), ReferenceId(36), ReferenceId(39), ReferenceId(41), ReferenceId(52), ReferenceId(54)]
 rebuilt        : SymbolId(2): [ReferenceId(1), ReferenceId(2), ReferenceId(18), ReferenceId(19)]
 Symbol reference IDs mismatch for "G":
 after transform: SymbolId(5): [ReferenceId(11)]

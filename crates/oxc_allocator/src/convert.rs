@@ -2,17 +2,19 @@
 
 use crate::{Allocator, Box};
 
-/// This trait works similarly to the standard library `From` trait, It comes with a similar
-/// implementation containing blanket implementation for `IntoIn`, reflective implementation and a
+/// This trait works similarly to the standard library [`From`] trait, It comes with a similar
+/// implementation containing blanket implementation for [`IntoIn`], reflective implementation and a
 /// bunch of primitive conversions from Rust types to their arena equivalent.
 pub trait FromIn<'a, T>: Sized {
+    /// Converts to this type from the input type within the given `allocator`.
     fn from_in(value: T, allocator: &'a Allocator) -> Self;
 }
 
-/// This trait works similarly to the standard library `Into` trait.
-/// It is similar to `FromIn` is reflective, A `FromIn` implementation also implicitly implements
-/// `IntoIn` for the opposite type.
+/// This trait works similarly to the standard library [`Into`] trait.
+/// It is similar to [`FromIn`] is reflective, A [`FromIn`] implementation also implicitly implements
+/// [`IntoIn`] for the opposite type.
 pub trait IntoIn<'a, T>: Sized {
+    /// Converts this type into the (usually inferred) input type within the given `allocator`.
     fn into_in(self, allocator: &'a Allocator) -> T;
 }
 

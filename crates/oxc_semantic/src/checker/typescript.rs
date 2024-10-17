@@ -5,8 +5,8 @@ use rustc_hash::FxHashMap;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_ecmascript::{BoundNames, PropName};
 use oxc_span::{Atom, GetSpan, Span};
-use oxc_syntax_operations::{BoundNames, PropName};
 
 use crate::{builder::SemanticBuilder, diagnostics::redeclaration};
 

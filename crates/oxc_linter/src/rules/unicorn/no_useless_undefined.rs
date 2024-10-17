@@ -184,7 +184,6 @@ impl Rule for NoUselessUndefined {
                             |fixer| {
                                 let delete_span = if let Some(comment) = ctx
                                     .semantic()
-                                    .trivias()
                                     .comments_range(ret_stmt.span.start..ret_stmt.span.end)
                                     .last()
                                 {

@@ -6,6 +6,9 @@
 use oxc_allocator::{Allocator, CloneIn};
 
 #[allow(clippy::wildcard_imports)]
+use crate::ast::comment::*;
+
+#[allow(clippy::wildcard_imports)]
 use crate::ast::js::*;
 
 #[allow(clippy::wildcard_imports)]
@@ -112,6 +115,8 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for Program<'old_alloc> {
         Program {
             span: CloneIn::clone_in(&self.span, allocator),
             source_type: CloneIn::clone_in(&self.source_type, allocator),
+            source_text: CloneIn::clone_in(&self.source_text, allocator),
+            comments: CloneIn::clone_in(&self.comments, allocator),
             hashbang: CloneIn::clone_in(&self.hashbang, allocator),
             directives: CloneIn::clone_in(&self.directives, allocator),
             body: CloneIn::clone_in(&self.body, allocator),
@@ -3378,10 +3383,10 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for TSCallSignatureDeclaration<
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         TSCallSignatureDeclaration {
             span: CloneIn::clone_in(&self.span, allocator),
+            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
             this_param: CloneIn::clone_in(&self.this_param, allocator),
             params: CloneIn::clone_in(&self.params, allocator),
             return_type: CloneIn::clone_in(&self.return_type, allocator),
-            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
         }
     }
 }
@@ -3406,10 +3411,10 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for TSMethodSignature<'old_allo
             computed: CloneIn::clone_in(&self.computed, allocator),
             optional: CloneIn::clone_in(&self.optional, allocator),
             kind: CloneIn::clone_in(&self.kind, allocator),
+            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
             this_param: CloneIn::clone_in(&self.this_param, allocator),
             params: CloneIn::clone_in(&self.params, allocator),
             return_type: CloneIn::clone_in(&self.return_type, allocator),
-            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
             scope_id: Default::default(),
         }
     }
@@ -3420,9 +3425,9 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for TSConstructSignatureDeclara
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         TSConstructSignatureDeclaration {
             span: CloneIn::clone_in(&self.span, allocator),
+            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
             params: CloneIn::clone_in(&self.params, allocator),
             return_type: CloneIn::clone_in(&self.return_type, allocator),
-            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
             scope_id: Default::default(),
         }
     }
@@ -3641,10 +3646,10 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for TSFunctionType<'old_alloc> 
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         TSFunctionType {
             span: CloneIn::clone_in(&self.span, allocator),
+            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
             this_param: CloneIn::clone_in(&self.this_param, allocator),
             params: CloneIn::clone_in(&self.params, allocator),
             return_type: CloneIn::clone_in(&self.return_type, allocator),
-            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
         }
     }
 }
@@ -3655,9 +3660,9 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for TSConstructorType<'old_allo
         TSConstructorType {
             span: CloneIn::clone_in(&self.span, allocator),
             r#abstract: CloneIn::clone_in(&self.r#abstract, allocator),
+            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
             params: CloneIn::clone_in(&self.params, allocator),
             return_type: CloneIn::clone_in(&self.return_type, allocator),
-            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
         }
     }
 }
@@ -4227,6 +4232,40 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for JSXText<'old_alloc> {
         JSXText {
             span: CloneIn::clone_in(&self.span, allocator),
             value: CloneIn::clone_in(&self.value, allocator),
+        }
+    }
+}
+
+impl<'alloc> CloneIn<'alloc> for CommentKind {
+    type Cloned = CommentKind;
+    fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
+        match self {
+            Self::Line => CommentKind::Line,
+            Self::Block => CommentKind::Block,
+        }
+    }
+}
+
+impl<'alloc> CloneIn<'alloc> for CommentPosition {
+    type Cloned = CommentPosition;
+    fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
+        match self {
+            Self::Leading => CommentPosition::Leading,
+            Self::Trailing => CommentPosition::Trailing,
+        }
+    }
+}
+
+impl<'alloc> CloneIn<'alloc> for Comment {
+    type Cloned = Comment;
+    fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
+        Comment {
+            span: CloneIn::clone_in(&self.span, allocator),
+            kind: CloneIn::clone_in(&self.kind, allocator),
+            position: CloneIn::clone_in(&self.position, allocator),
+            attached_to: CloneIn::clone_in(&self.attached_to, allocator),
+            preceded_by_newline: CloneIn::clone_in(&self.preceded_by_newline, allocator),
+            followed_by_newline: CloneIn::clone_in(&self.followed_by_newline, allocator),
         }
     }
 }

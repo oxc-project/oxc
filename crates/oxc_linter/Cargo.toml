@@ -25,6 +25,7 @@ oxc_ast = { workspace = true }
 oxc_cfg = { workspace = true }
 oxc_codegen = { workspace = true }
 oxc_diagnostics = { workspace = true }
+oxc_ecmascript = { workspace = true }
 oxc_index = { workspace = true }
 oxc_macros = { workspace = true }
 oxc_parser = { workspace = true }
@@ -60,5 +61,5 @@ url = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }
-markdown = { version = "1.0.0-alpha.19" }
+markdown = { workspace = true }
 project-root = { workspace = true }

@@ -3791,15 +3791,15 @@ impl<'a> Serialize for TSCallSignatureDeclaration<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSCallSignatureDeclaration")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.serialize_entry("thisParam", &self.this_param)?;
         map.serialize_entry("params", &self.params)?;
         map.serialize_entry("returnType", &self.return_type)?;
-        map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.end()
     }
 }
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = "export type TSCallSignatureDeclaration = ({\n\ttype: 'TSCallSignatureDeclaration';\n\tthisParam: (TSThisParameter) | null;\n\tparams: FormalParameters;\n\treturnType: (TSTypeAnnotation) | null;\n\ttypeParameters: (TSTypeParameterDeclaration) | null;\n}) & Span;";
+const TS_APPEND_CONTENT: &'static str = "export type TSCallSignatureDeclaration = ({\n\ttype: 'TSCallSignatureDeclaration';\n\ttypeParameters: (TSTypeParameterDeclaration) | null;\n\tthisParam: (TSThisParameter) | null;\n\tparams: FormalParameters;\n\treturnType: (TSTypeAnnotation) | null;\n}) & Span;";
 
 impl Serialize for TSMethodSignatureKind {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3837,15 +3837,15 @@ impl<'a> Serialize for TSMethodSignature<'a> {
         map.serialize_entry("computed", &self.computed)?;
         map.serialize_entry("optional", &self.optional)?;
         map.serialize_entry("kind", &self.kind)?;
+        map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.serialize_entry("thisParam", &self.this_param)?;
         map.serialize_entry("params", &self.params)?;
         map.serialize_entry("returnType", &self.return_type)?;
-        map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.end()
     }
 }
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = "export type TSMethodSignature = ({\n\ttype: 'TSMethodSignature';\n\tkey: PropertyKey;\n\tcomputed: boolean;\n\toptional: boolean;\n\tkind: TSMethodSignatureKind;\n\tthisParam: (TSThisParameter) | null;\n\tparams: FormalParameters;\n\treturnType: (TSTypeAnnotation) | null;\n\ttypeParameters: (TSTypeParameterDeclaration) | null;\n}) & Span;";
+const TS_APPEND_CONTENT: &'static str = "export type TSMethodSignature = ({\n\ttype: 'TSMethodSignature';\n\tkey: PropertyKey;\n\tcomputed: boolean;\n\toptional: boolean;\n\tkind: TSMethodSignatureKind;\n\ttypeParameters: (TSTypeParameterDeclaration) | null;\n\tthisParam: (TSThisParameter) | null;\n\tparams: FormalParameters;\n\treturnType: (TSTypeAnnotation) | null;\n}) & Span;";
 
 impl<'a> Serialize for TSConstructSignatureDeclaration<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -3856,14 +3856,14 @@ impl<'a> Serialize for TSConstructSignatureDeclaration<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSConstructSignatureDeclaration")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.serialize_entry("params", &self.params)?;
         map.serialize_entry("returnType", &self.return_type)?;
-        map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.end()
     }
 }
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = "export type TSConstructSignatureDeclaration = ({\n\ttype: 'TSConstructSignatureDeclaration';\n\tparams: FormalParameters;\n\treturnType: (TSTypeAnnotation) | null;\n\ttypeParameters: (TSTypeParameterDeclaration) | null;\n}) & Span;";
+const TS_APPEND_CONTENT: &'static str = "export type TSConstructSignatureDeclaration = ({\n\ttype: 'TSConstructSignatureDeclaration';\n\ttypeParameters: (TSTypeParameterDeclaration) | null;\n\tparams: FormalParameters;\n\treturnType: (TSTypeAnnotation) | null;\n}) & Span;";
 
 impl<'a> Serialize for TSIndexSignatureName<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -4158,15 +4158,15 @@ impl<'a> Serialize for TSFunctionType<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSFunctionType")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.serialize_entry("thisParam", &self.this_param)?;
         map.serialize_entry("params", &self.params)?;
         map.serialize_entry("returnType", &self.return_type)?;
-        map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.end()
     }
 }
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = "export type TSFunctionType = ({\n\ttype: 'TSFunctionType';\n\tthisParam: (TSThisParameter) | null;\n\tparams: FormalParameters;\n\treturnType: TSTypeAnnotation;\n\ttypeParameters: (TSTypeParameterDeclaration) | null;\n}) & Span;";
+const TS_APPEND_CONTENT: &'static str = "export type TSFunctionType = ({\n\ttype: 'TSFunctionType';\n\ttypeParameters: (TSTypeParameterDeclaration) | null;\n\tthisParam: (TSThisParameter) | null;\n\tparams: FormalParameters;\n\treturnType: TSTypeAnnotation;\n}) & Span;";
 
 impl<'a> Serialize for TSConstructorType<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -4178,14 +4178,14 @@ impl<'a> Serialize for TSConstructorType<'a> {
         map.serialize_entry("type", "TSConstructorType")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
         map.serialize_entry("abstract", &self.r#abstract)?;
+        map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.serialize_entry("params", &self.params)?;
         map.serialize_entry("returnType", &self.return_type)?;
-        map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.end()
     }
 }
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = "export type TSConstructorType = ({\n\ttype: 'TSConstructorType';\n\tabstract: boolean;\n\tparams: FormalParameters;\n\treturnType: TSTypeAnnotation;\n\ttypeParameters: (TSTypeParameterDeclaration) | null;\n}) & Span;";
+const TS_APPEND_CONTENT: &'static str = "export type TSConstructorType = ({\n\ttype: 'TSConstructorType';\n\tabstract: boolean;\n\ttypeParameters: (TSTypeParameterDeclaration) | null;\n\tparams: FormalParameters;\n\treturnType: TSTypeAnnotation;\n}) & Span;";
 
 impl<'a> Serialize for TSMappedType<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]

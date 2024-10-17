@@ -2,7 +2,7 @@ use daachorse::DoubleArrayAhoCorasick;
 use once_cell::sync::Lazy;
 use rustc_hash::FxHashMap;
 
-use oxc_ast::{Comment, CommentKind, Trivias};
+use oxc_ast::{Comment, CommentKind};
 use oxc_syntax::identifier::is_line_terminator;
 
 use crate::Codegen;
@@ -16,13 +16,9 @@ static ANNOTATION_MATCHER: Lazy<DoubleArrayAhoCorasick<usize>> = Lazy::new(|| {
 pub(crate) type CommentsMap = FxHashMap</* attached_to */ u32, Vec<Comment>>;
 
 impl<'a> Codegen<'a> {
-    pub(crate) fn preserve_annotate_comments(&self) -> bool {
-        self.comment_options.preserve_annotate_comments && !self.options.minify
-    }
-
-    pub(crate) fn build_comments(&mut self, trivias: &Trivias) {
-        for comment in trivias.comments().copied() {
-            self.comments.entry(comment.attached_to).or_default().push(comment);
+    pub(crate) fn build_comments(&mut self, comments: &[Comment]) {
+        for comment in comments {
+            self.comments.entry(comment.attached_to).or_default().push(*comment);
         }
     }
 
@@ -31,35 +27,33 @@ impl<'a> Codegen<'a> {
     }
 
     pub(crate) fn has_annotation_comment(&self, start: u32) -> bool {
-        if !self.preserve_annotate_comments() {
+        if !self.options.print_annotation_comments() {
             return false;
         }
-        let Some(source_text) = self.source_text else { return false };
         self.comments.get(&start).is_some_and(|comments| {
-            comments.iter().any(|comment| Self::is_annotation_comment(comment, source_text))
+            comments.iter().any(|comment| self.is_annotation_comment(comment))
         })
     }
 
     pub(crate) fn has_non_annotation_comment(&self, start: u32) -> bool {
-        if !self.preserve_annotate_comments() {
+        if !self.options.print_annotation_comments() {
             return self.has_comment(start);
         }
-        let Some(source_text) = self.source_text else { return false };
         self.comments.get(&start).is_some_and(|comments| {
-            comments.iter().any(|comment| !Self::is_annotation_comment(comment, source_text))
+            comments.iter().any(|comment| !self.is_annotation_comment(comment))
         })
     }
 
     /// Weather to keep leading comments.
-    fn is_leading_comments(comment: &Comment, source_text: &str) -> bool {
-        (comment.is_jsdoc(source_text) || (comment.is_line() && Self::is_annotation_comment(comment, source_text)))
+    fn is_leading_comments(&self, comment: &Comment) -> bool {
+        (comment.is_jsdoc(self.source_text) || (comment.is_line() && self.is_annotation_comment(comment)))
             && comment.preceded_by_newline
             // webpack comment `/*****/`
-            && !comment.span.source_text(source_text).chars().all(|c| c == '*')
+            && !comment.span.source_text(self.source_text).chars().all(|c| c == '*')
     }
 
-    fn print_comment(&mut self, comment: &Comment, source_text: &str) {
-        let comment_source = comment.real_span().source_text(source_text);
+    fn print_comment(&mut self, comment: &Comment) {
+        let comment_source = comment.real_span().source_text(self.source_text);
         match comment.kind {
             CommentKind::Line => {
                 self.print_str(comment_source);
@@ -84,18 +78,16 @@ impl<'a> Codegen<'a> {
         if self.options.minify {
             return;
         }
-        let Some(source_text) = self.source_text else { return };
         let Some(comments) = self.comments.remove(&start) else {
             return;
         };
 
-        let (comments, unused_comments): (Vec<_>, Vec<_>) = comments
-            .into_iter()
-            .partition(|comment| Self::is_leading_comments(comment, source_text));
+        let (comments, unused_comments): (Vec<_>, Vec<_>) =
+            comments.into_iter().partition(|comment| self.is_leading_comments(comment));
 
         if comments.first().is_some_and(|c| c.preceded_by_newline) {
             // Skip printing newline if this comment is already on a newline.
-            if self.peek_nth(0).is_some_and(|c| c != '\n' && c != '\t') {
+            if self.last_byte().is_some_and(|b| b != b'\n' && b != b'\t') {
                 self.print_hard_newline();
                 self.print_indent();
             }
@@ -107,7 +99,7 @@ impl<'a> Codegen<'a> {
                 self.print_indent();
             }
 
-            self.print_comment(comment, source_text);
+            self.print_comment(comment);
         }
 
         if comments.last().is_some_and(|c| c.is_line() || c.followed_by_newline) {
@@ -120,32 +112,31 @@ impl<'a> Codegen<'a> {
         }
     }
 
-    fn is_annotation_comment(comment: &Comment, source_text: &str) -> bool {
-        let comment_content = comment.span.source_text(source_text);
+    fn is_annotation_comment(&self, comment: &Comment) -> bool {
+        let comment_content = comment.span.source_text(self.source_text);
         ANNOTATION_MATCHER.find_iter(comment_content).count() != 0
     }
 
     pub(crate) fn print_annotation_comments(&mut self, node_start: u32) {
-        if !self.preserve_annotate_comments() {
+        if !self.options.print_annotation_comments() {
             return;
         }
 
         // If there is has annotation comments awaiting move to here, print them.
         let start = self.start_of_annotation_comment.take().unwrap_or(node_start);
 
-        let Some(source_text) = self.source_text else { return };
         let Some(comments) = self.comments.remove(&start) else { return };
 
         for comment in comments {
-            if !Self::is_annotation_comment(&comment, source_text) {
+            if !self.is_annotation_comment(&comment) {
                 continue;
             }
             if comment.is_line() {
                 self.print_str("/*");
-                self.print_str(comment.span.source_text(source_text));
+                self.print_str(comment.span.source_text(self.source_text));
                 self.print_str("*/");
             } else {
-                self.print_str(comment.real_span().source_text(source_text));
+                self.print_str(comment.real_span().source_text(self.source_text));
             }
             self.print_hard_space();
         }
@@ -155,12 +146,10 @@ impl<'a> Codegen<'a> {
         if self.options.minify {
             return false;
         }
-        let Some(source_text) = self.source_text else { return false };
         let Some(comments) = self.comments.remove(&start) else { return false };
 
-        let (annotation_comments, comments): (Vec<_>, Vec<_>) = comments
-            .into_iter()
-            .partition(|comment| Self::is_annotation_comment(comment, source_text));
+        let (annotation_comments, comments): (Vec<_>, Vec<_>) =
+            comments.into_iter().partition(|comment| self.is_annotation_comment(comment));
 
         if !annotation_comments.is_empty() {
             self.comments.insert(start, annotation_comments);
@@ -169,7 +158,7 @@ impl<'a> Codegen<'a> {
         for comment in &comments {
             self.print_hard_newline();
             self.print_indent();
-            self.print_comment(comment, source_text);
+            self.print_comment(comment);
         }
 
         if comments.is_empty() {

@@ -1,3 +1,4 @@
+//! XML Entities
 use phf::{phf_map, Map};
 
 /// XML Entities

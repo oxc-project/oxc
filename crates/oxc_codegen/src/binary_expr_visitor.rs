@@ -155,7 +155,7 @@ impl<'a> BinaryExpressionVisitor<'a> {
                 && self.ctx.intersects(Context::FORBID_IN));
 
         if self.wrap {
-            p.print_char(b'(');
+            p.print_ascii_byte(b'(');
             self.ctx &= Context::FORBID_IN.not();
         }
 
@@ -184,10 +184,15 @@ impl<'a> BinaryExpressionVisitor<'a> {
                 }
             }
             BinaryishOperator::Binary(BinaryOperator::Exponential) => {
-                if matches!(e.left(), Expression::UnaryExpression(_)) {
+                // Negative numbers are printed using a unary operator
+                if matches!(
+                    e.left(),
+                    Expression::UnaryExpression(_) | Expression::NumericLiteral(_)
+                ) {
                     self.left_precedence = Precedence::Call;
                 }
             }
+
             _ => {}
         }
 
@@ -200,7 +205,7 @@ impl<'a> BinaryExpressionVisitor<'a> {
         p.print_soft_space();
         self.e.right().gen_expr(p, self.right_precedence, self.ctx & Context::FORBID_IN);
         if self.wrap {
-            p.print_char(b')');
+            p.print_ascii_byte(b')');
         }
     }
 }

@@ -223,7 +223,7 @@ fn flatten_member_expr_if_possible(function_name: &FunctionName) -> CompactStr {
 ///
 /// <https://rollupjs.org/configuration-options/#pure>
 pub fn has_pure_notation(span: Span, ctx: &LintContext) -> bool {
-    let Some(comment) = ctx.semantic().trivias().comments_range(..span.start).next_back() else {
+    let Some(comment) = ctx.semantic().comments_range(..span.start).next_back() else {
         return false;
     };
     let raw = comment.span.source_text(ctx.semantic().source_text());
@@ -263,7 +263,7 @@ pub fn has_comment_about_side_effect_check(span: Span, ctx: &LintContext) -> boo
 /// let e = 2
 /// ```
 pub fn get_leading_tree_shaking_comment<'a>(span: Span, ctx: &LintContext<'a>) -> Option<&'a str> {
-    let comment = ctx.semantic().trivias().comments_range(..span.start).next_back()?;
+    let comment = ctx.semantic().comments_range(..span.start).next_back()?;
 
     let comment_text = comment.span.source_text(ctx.source_text());
 

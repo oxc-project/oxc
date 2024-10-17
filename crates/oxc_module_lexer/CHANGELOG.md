@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Features
 
-- 9e62396 syntax_operations: Add crate `oxc_syntax_operations` (#6202) (Boshen)
+- 9e62396 syntax_operations: Add crate `oxc_ecmascript` (#6202) (Boshen)
 
 ## [0.28.0] - 2024-09-11
 

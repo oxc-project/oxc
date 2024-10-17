@@ -19,8 +19,7 @@ impl<'a> ParserImpl<'a> {
         allow_question: bool,
     ) -> Result<BindingPattern<'a>> {
         let mut kind = self.parse_binding_pattern_kind()?;
-        let optional =
-            if allow_question && self.ts_enabled() { self.eat(Kind::Question) } else { false };
+        let optional = if allow_question && self.is_ts { self.eat(Kind::Question) } else { false };
         let type_annotation = self.parse_ts_type_annotation()?;
         if let Some(type_annotation) = &type_annotation {
             Self::extend_binding_pattern_span_end(type_annotation.span, &mut kind);
@@ -111,7 +110,7 @@ impl<'a> ParserImpl<'a> {
 
         let kind = self.parse_binding_pattern_kind()?;
         // Rest element does not allow `?`, checked in checker/typescript.rs
-        if self.at(Kind::Question) && self.ts_enabled() {
+        if self.at(Kind::Question) && self.is_ts {
             let span = self.cur_token().span();
             self.bump_any();
             self.error(diagnostics::a_rest_parameter_cannot_be_optional(span));

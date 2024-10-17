@@ -79,7 +79,7 @@ impl<'a> ParserImpl<'a> {
                     Kind::RParen => {
                         let third = self.nth_kind(offset + 2);
                         return match third {
-                            Kind::Colon if self.ts_enabled() => Tristate::Maybe,
+                            Kind::Colon if self.is_ts => Tristate::Maybe,
                             Kind::Arrow | Kind::LCurly => Tristate::True,
                             _ => Tristate::False,
                         };

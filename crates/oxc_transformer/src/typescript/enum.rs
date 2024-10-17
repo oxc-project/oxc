@@ -1,15 +1,17 @@
+use rustc_hash::FxHashMap;
+
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, visit::walk_mut, VisitMut, NONE};
+use oxc_ecmascript::ToInt32;
 use oxc_span::{Atom, Span, SPAN};
 use oxc_syntax::{
     node::NodeId,
-    number::{NumberBase, ToJsInt32, ToJsString},
+    number::{NumberBase, ToJsString},
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
     reference::ReferenceFlags,
     symbol::SymbolFlags,
 };
 use oxc_traverse::{Traverse, TraverseCtx};
-use rustc_hash::FxHashMap;
 
 pub struct TypeScriptEnum<'a> {
     enums: FxHashMap<Atom<'a>, FxHashMap<Atom<'a>, ConstantValue>>,
@@ -475,22 +477,22 @@ impl<'a> TypeScriptEnum<'a> {
 
         match expr.operator {
             BinaryOperator::ShiftRight => Some(ConstantValue::Number(f64::from(
-                left.to_js_int_32().wrapping_shr(right.to_js_int_32() as u32),
+                left.to_int_32().wrapping_shr(right.to_int_32() as u32),
             ))),
             BinaryOperator::ShiftRightZeroFill => Some(ConstantValue::Number(f64::from(
-                (left.to_js_int_32() as u32).wrapping_shr(right.to_js_int_32() as u32),
+                (left.to_int_32() as u32).wrapping_shr(right.to_int_32() as u32),
             ))),
             BinaryOperator::ShiftLeft => Some(ConstantValue::Number(f64::from(
-                left.to_js_int_32().wrapping_shl(right.to_js_int_32() as u32),
+                left.to_int_32().wrapping_shl(right.to_int_32() as u32),
             ))),
             BinaryOperator::BitwiseXOR => {
-                Some(ConstantValue::Number(f64::from(left.to_js_int_32() ^ right.to_js_int_32())))
+                Some(ConstantValue::Number(f64::from(left.to_int_32() ^ right.to_int_32())))
             }
             BinaryOperator::BitwiseOR => {
-                Some(ConstantValue::Number(f64::from(left.to_js_int_32() | right.to_js_int_32())))
+                Some(ConstantValue::Number(f64::from(left.to_int_32() | right.to_int_32())))
             }
             BinaryOperator::BitwiseAnd => {
-                Some(ConstantValue::Number(f64::from(left.to_js_int_32() & right.to_js_int_32())))
+                Some(ConstantValue::Number(f64::from(left.to_int_32() & right.to_int_32())))
             }
             BinaryOperator::Multiplication => Some(ConstantValue::Number(left * right)),
             BinaryOperator::Division => Some(ConstantValue::Number(left / right)),
@@ -527,9 +529,7 @@ impl<'a> TypeScriptEnum<'a> {
         match expr.operator {
             UnaryOperator::UnaryPlus => Some(ConstantValue::Number(value)),
             UnaryOperator::UnaryNegation => Some(ConstantValue::Number(-value)),
-            UnaryOperator::BitwiseNot => {
-                Some(ConstantValue::Number(f64::from(!value.to_js_int_32())))
-            }
+            UnaryOperator::BitwiseNot => Some(ConstantValue::Number(f64::from(!value.to_int_32()))),
             _ => None,
         }
     }

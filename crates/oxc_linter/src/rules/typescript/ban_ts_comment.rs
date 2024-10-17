@@ -155,7 +155,7 @@ impl Rule for BanTsComment {
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        let comments = ctx.semantic().trivias().comments();
+        let comments = ctx.semantic().comments();
         for comm in comments {
             let raw = ctx.source_range(comm.span);
             if let Some(captures) = find_ts_comment_directive(raw, comm.is_line()) {

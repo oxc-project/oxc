@@ -1,4 +1,4 @@
-use oxc_ast::{Comment, CommentKind, CommentPosition, Trivias};
+use oxc_ast::ast::{Comment, CommentKind, CommentPosition};
 use oxc_span::Span;
 
 use super::{Kind, Token};
@@ -10,7 +10,7 @@ pub struct TriviaBuilder {
     // filtered out at insertion time.
     pub(crate) comments: Vec<Comment>,
 
-    irregular_whitespaces: Vec<Span>,
+    pub(crate) irregular_whitespaces: Vec<Span>,
 
     // states
     /// index of processed comments
@@ -36,10 +36,6 @@ impl Default for TriviaBuilder {
 }
 
 impl TriviaBuilder {
-    pub fn build(self) -> Trivias {
-        Trivias::new(self.comments.into_boxed_slice(), self.irregular_whitespaces)
-    }
-
     pub fn add_irregular_whitespace(&mut self, start: u32, end: u32) {
         self.irregular_whitespaces.push(Span::new(start, end));
     }
@@ -82,6 +78,35 @@ impl TriviaBuilder {
         self.saw_newline = false;
     }
 
+    /// Determines if the current line comment should be treated as a trailing comment.
+    ///
+    /// A line comment should be treated as trailing when both of the following conditions are met:
+    ///
+    /// 1. It is not preceded by a newline.
+    ///
+    /// ```javascript
+    /// let x = 5; // This should be treated as a trailing comment
+    /// foo(); // This should also be treated as a trailing comment
+    ///
+    /// // This should not be treated as trailing (preceded by newline)
+    /// let x = 5;
+    /// ```
+    ///
+    /// 2. It does not immediately follow an `=` [`Kind::Eq`] or `(` [`Kind::LParen`]
+    ///    token.
+    ///
+    /// ```javascript
+    /// let y = // This should not be treated as trailing (follows `=`)
+    ///     10;
+    ///
+    /// function foo( // This should not be treated as trailing (follows `(`)
+    ///     param
+    /// ) {}
+    /// ```
+    fn should_be_treated_as_trailing_comment(&self) -> bool {
+        !self.saw_newline && !matches!(self.previous_kind, Kind::Eq | Kind::LParen)
+    }
+
     fn add_comment(&mut self, comment: Comment) {
         // The comments array is an ordered vec, only add the comment if its not added before,
         // to avoid situations where the parser needs to rewind and tries to reinsert the comment.
@@ -97,8 +122,7 @@ impl TriviaBuilder {
         if comment.is_line() {
             // A line comment is always followed by a newline. This is never set in `handle_newline`.
             comment.followed_by_newline = true;
-            // A line comment is trailing when it is no preceded by a newline and it is not after `=`
-            if !self.saw_newline && self.previous_kind != Kind::Eq {
+            if self.should_be_treated_as_trailing_comment() {
                 self.processed = self.comments.len() + 1; // +1 to include this comment.
             }
             self.saw_newline = true;
@@ -119,7 +143,7 @@ mod test {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
-        ret.trivias.comments().copied().collect::<Vec<_>>()
+        ret.program.comments.iter().copied().collect::<Vec<_>>()
     }
 
     #[test]
@@ -273,6 +297,36 @@ token /* Trailing 1 */
                 kind: CommentKind::Line,
                 position: CommentPosition::Leading,
                 attached_to: 129,
+                preceded_by_newline: false,
+                followed_by_newline: true,
+            },
+        ];
+        assert_eq!(comments, expected);
+    }
+
+    #[test]
+    fn leading_comments_after_left_parenthesis() {
+        let source_text = "
+            call(// Leading comment 1
+                arguments)
+            (// Leading comment 2
+                arguments)
+        ";
+        let comments = get_comments(source_text);
+        let expected = vec![
+            Comment {
+                span: Span::new(20, 38),
+                kind: CommentKind::Line,
+                position: CommentPosition::Leading,
+                attached_to: 55,
+                preceded_by_newline: false,
+                followed_by_newline: true,
+            },
+            Comment {
+                span: Span::new(81, 99),
+                kind: CommentKind::Line,
+                position: CommentPosition::Leading,
+                attached_to: 116,
                 preceded_by_newline: false,
                 followed_by_newline: true,
             },

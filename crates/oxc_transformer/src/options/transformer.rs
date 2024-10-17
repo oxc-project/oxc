@@ -1,13 +1,16 @@
 use std::path::PathBuf;
 
-use oxc_diagnostics::{Error, OxcDiagnostic};
 use serde_json::{from_value, json, Value};
 
+use oxc_diagnostics::{Error, OxcDiagnostic};
+
 use crate::{
+    common::helper_loader::{HelperLoaderMode, HelperLoaderOptions},
     compiler_assumptions::CompilerAssumptions,
     env::{can_enable_plugin, EnvOptions, Versions},
     es2015::{ArrowFunctionsOptions, ES2015Options},
     es2016::ES2016Options,
+    es2017::options::ES2017Options,
     es2018::{ES2018Options, ObjectRestSpreadOptions},
     es2019::ES2019Options,
     es2020::ES2020Options,
@@ -46,6 +49,8 @@ pub struct TransformOptions {
 
     pub es2016: ES2016Options,
 
+    pub es2017: ES2017Options,
+
     pub es2018: ES2018Options,
 
     pub es2019: ES2019Options,
@@ -53,6 +58,8 @@ pub struct TransformOptions {
     pub es2020: ES2020Options,
 
     pub es2021: ES2021Options,
+
+    pub helper_loader: HelperLoaderOptions,
 }
 
 impl TransformOptions {
@@ -83,9 +90,17 @@ impl TransformOptions {
             },
             es2016: ES2016Options { exponentiation_operator: true },
             es2018: ES2018Options { object_rest_spread: Some(ObjectRestSpreadOptions::default()) },
+            es2017: ES2017Options {
+                // Turned off because it is not ready.
+                async_to_generator: false,
+            },
             es2019: ES2019Options { optional_catch_binding: true },
             es2020: ES2020Options { nullish_coalescing_operator: true },
             es2021: ES2021Options { logical_assignment_operators: true },
+            helper_loader: HelperLoaderOptions {
+                mode: HelperLoaderMode::Runtime,
+                ..Default::default()
+            },
         }
     }
 
@@ -93,6 +108,7 @@ impl TransformOptions {
         Self {
             es2015: ES2015Options::from_targets_and_bugfixes(targets, bugfixes),
             es2016: ES2016Options::from_targets_and_bugfixes(targets, bugfixes),
+            es2017: ES2017Options::from_targets_and_bugfixes(targets, bugfixes),
             es2018: ES2018Options::from_targets_and_bugfixes(targets, bugfixes),
             es2019: ES2019Options::from_targets_and_bugfixes(targets, bugfixes),
             es2020: ES2020Options::from_targets_and_bugfixes(targets, bugfixes),
@@ -206,6 +222,11 @@ impl TransformOptions {
             get_enabled_plugin_options(plugin_name, options, targets.as_ref(), bugfixes).is_some()
         });
 
+        transformer_options.es2017.with_async_to_generator({
+            let plugin_name = "transform-async-to-generator";
+            get_enabled_plugin_options(plugin_name, options, targets.as_ref(), bugfixes).is_some()
+        });
+
         transformer_options.es2018.with_object_rest_spread({
             let plugin_name = "transform-object-rest-spread";
             get_enabled_plugin_options(plugin_name, options, targets.as_ref(), bugfixes).map(
@@ -287,6 +308,10 @@ impl TransformOptions {
                 }
             }
         };
+
+        if options.external_helpers {
+            transformer_options.helper_loader.mode = HelperLoaderMode::External;
+        }
 
         transformer_options.cwd = options.cwd.clone().unwrap_or_default();
 

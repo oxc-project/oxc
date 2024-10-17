@@ -1,25 +1,33 @@
 //! Utility transform to add `import` / `require` statements to top of program.
 //!
-//! `ModuleImportsStore` contains an `IndexMap<ImportType<'a>, Vec<NamedImport<'a>>>`.
+//! `ModuleImportsStore` contains an `IndexMap<Atom<'a>, Vec<ImportKind<'a>>>`.
 //! It is stored on `TransformCtx`.
 //!
 //! `ModuleImports` transform
 //!
 //! Other transforms can add `import`s / `require`s to the store by calling methods of `ModuleImportsStore`:
 //!
+//! ### Usage
+//!
 //! ```rs
 //! // import { jsx as _jsx } from 'react';
-//! self.ctx.module_imports.add_import(
+//! self.ctx.module_imports.add_named_import(
 //!     Atom::from("react"),
-//!     NamedImport::new(Atom::from("jsx"), Some(Atom::from("_jsx")), symbol_id)
+//!     Atom::from("jsx"),
+//!     Atom::from("_jsx"),
+//!     symbol_id
 //! );
 //!
-//! // var _react = require('react');
-//! self.ctx.module_imports.add_require(
+//! // ESM: import React from 'react';
+//! // CJS: var _React = require('react');
+//! self.ctx.module_imports.add_default_import(
 //!     Atom::from("react"),
-//!     NamedImport::new(Atom::from("_react"), None, symbol_id)
+//!     Atom::from("React"),
+//!     symbol_id
 //! );
 //! ```
+//!
+//! > NOTE: Using `import` or `require` is determined by [`TransformCtx::source_type`].
 //!
 //! Based on `@babel/helper-module-imports`
 //! <https://github.com/nicolo-ribaudo/babel/tree/main/packages/babel-helper-module-imports>
@@ -32,7 +40,7 @@ use oxc_ast::{ast::*, NONE};
 use oxc_semantic::ReferenceFlags;
 use oxc_span::{Atom, SPAN};
 use oxc_syntax::symbol::SymbolId;
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
 
 use crate::TransformCtx;
 
@@ -52,16 +60,14 @@ impl<'a, 'ctx> Traverse<'a> for ModuleImports<'a, 'ctx> {
     }
 }
 
-pub struct NamedImport<'a> {
+struct NamedImport<'a> {
     imported: Atom<'a>,
-    local: Option<Atom<'a>>, // Not used in `require`
-    symbol_id: SymbolId,
+    local: BoundIdentifier<'a>,
 }
 
-impl<'a> NamedImport<'a> {
-    pub fn new(imported: Atom<'a>, local: Option<Atom<'a>>, symbol_id: SymbolId) -> Self {
-        Self { imported, local, symbol_id }
-    }
+enum Import<'a> {
+    Named(NamedImport<'a>),
+    Default(BoundIdentifier<'a>),
 }
 
 /// Store for `import` / `require` statements to be added at top of program.
@@ -70,7 +76,7 @@ impl<'a> NamedImport<'a> {
 /// to produce output that's the same as Babel's.
 /// Substitute `FxHashMap` once we don't need to match Babel's output exactly.
 pub struct ModuleImportsStore<'a> {
-    imports: RefCell<IndexMap<Atom<'a>, Vec<NamedImport<'a>>>>,
+    imports: RefCell<IndexMap<Atom<'a>, Vec<Import<'a>>>>,
 }
 
 // Public methods
@@ -80,6 +86,43 @@ impl<'a> ModuleImportsStore<'a> {
         Self { imports: RefCell::new(IndexMap::default()) }
     }
 
+    /// Add default `import` or `require` to top of program.
+    ///
+    /// Which it will be depends on the source type.
+    ///
+    /// * `import named_import from 'source';` or
+    /// * `var named_import = require('source');`
+    ///
+    /// If `front` is `true`, `import`/`require` is added to front of the `import`s/`require`s.
+    pub fn add_default_import(&self, source: Atom<'a>, local: BoundIdentifier<'a>, front: bool) {
+        self.add_import(source, Import::Default(local), front);
+    }
+
+    /// Add named `import` to top of program.
+    ///
+    /// `import { named_import } from 'source';`
+    ///
+    /// If `front` is `true`, `import` is added to front of the `import`s.
+    ///
+    /// Adding named `require`s is not supported, and will cause a panic later on.
+    pub fn add_named_import(
+        &self,
+        source: Atom<'a>,
+        imported: Atom<'a>,
+        local: BoundIdentifier<'a>,
+        front: bool,
+    ) {
+        self.add_import(source, Import::Named(NamedImport { imported, local }), front);
+    }
+
+    /// Returns `true` if no imports have been scheduled for insertion.
+    pub fn is_empty(&self) -> bool {
+        self.imports.borrow().is_empty()
+    }
+}
+
+// Internal methods
+impl<'a> ModuleImportsStore<'a> {
     /// Add `import` or `require` to top of program.
     ///
     /// Which it will be depends on the source type.
@@ -87,10 +130,12 @@ impl<'a> ModuleImportsStore<'a> {
     /// * `import { named_import } from 'source';` or
     /// * `var named_import = require('source');`
     ///
+    /// Adding a named `require` is not supported, and will cause a panic later on.
+    ///
     /// If `front` is `true`, `import`/`require` is added to front of the `import`s/`require`s.
     /// TODO(improve-on-babel): `front` option is only required to pass one of Babel's tests. Output
     /// without it is still valid. Remove this once our output doesn't need to match Babel exactly.
-    pub fn add_import(&self, source: Atom<'a>, import: NamedImport<'a>, front: bool) {
+    fn add_import(&self, source: Atom<'a>, import: Import<'a>, front: bool) {
         match self.imports.borrow_mut().entry(source) {
             IndexMapEntry::Occupied(mut entry) => {
                 entry.get_mut().push(import);
@@ -109,14 +154,6 @@ impl<'a> ModuleImportsStore<'a> {
         }
     }
 
-    /// Returns `true` if no imports have been scheduled for insertion.
-    pub fn is_empty(&self) -> bool {
-        self.imports.borrow().is_empty()
-    }
-}
-
-// Internal methods
-impl<'a> ModuleImportsStore<'a> {
     /// Insert `import` / `require` statements at top of program.
     fn insert_into_program(&self, transform_ctx: &TransformCtx<'a>, ctx: &mut TraverseCtx<'a>) {
         if transform_ctx.source_type.is_script() {
@@ -132,8 +169,7 @@ impl<'a> ModuleImportsStore<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let mut imports = self.imports.borrow_mut();
-        let stmts =
-            imports.drain(..).map(|(source, names)| Self::get_named_import(source, names, ctx));
+        let stmts = imports.drain(..).map(|(source, names)| Self::get_import(source, names, ctx));
         transform_ctx.top_level_statements.insert_statements(stmts);
     }
 
@@ -154,20 +190,25 @@ impl<'a> ModuleImportsStore<'a> {
         transform_ctx.top_level_statements.insert_statements(stmts);
     }
 
-    fn get_named_import(
+    fn get_import(
         source: Atom<'a>,
-        names: Vec<NamedImport<'a>>,
+        names: Vec<Import<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
-        let specifiers = ctx.ast.vec_from_iter(names.into_iter().map(|name| {
-            let local = name.local.unwrap_or_else(|| name.imported.clone());
-            ImportDeclarationSpecifier::ImportSpecifier(ctx.ast.alloc_import_specifier(
-                SPAN,
-                ModuleExportName::IdentifierName(IdentifierName::new(SPAN, name.imported)),
-                BindingIdentifier::new_with_symbol_id(SPAN, local, name.symbol_id),
-                ImportOrExportKind::Value,
-            ))
+        let specifiers = ctx.ast.vec_from_iter(names.into_iter().map(|import| match import {
+            Import::Named(import) => {
+                ImportDeclarationSpecifier::ImportSpecifier(ctx.ast.alloc_import_specifier(
+                    SPAN,
+                    ModuleExportName::IdentifierName(IdentifierName::new(SPAN, import.imported)),
+                    import.local.create_binding_identifier(),
+                    ImportOrExportKind::Value,
+                ))
+            }
+            Import::Default(local) => ImportDeclarationSpecifier::ImportDefaultSpecifier(
+                ctx.ast.alloc_import_default_specifier(SPAN, local.create_binding_identifier()),
+            ),
         }));
+
         let import_stmt = ctx.ast.module_declaration_import_declaration(
             SPAN,
             Some(specifiers),
@@ -180,7 +221,7 @@ impl<'a> ModuleImportsStore<'a> {
 
     fn get_require(
         source: Atom<'a>,
-        names: std::vec::Vec<NamedImport<'a>>,
+        names: std::vec::Vec<Import<'a>>,
         require_symbol_id: Option<SymbolId>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
@@ -197,15 +238,8 @@ impl<'a> ModuleImportsStore<'a> {
             let arg = Argument::from(ctx.ast.expression_string_literal(SPAN, source));
             ctx.ast.vec1(arg)
         };
-        let name = names.into_iter().next().unwrap();
-        let id = {
-            let ident = BindingIdentifier::new_with_symbol_id(SPAN, name.imported, name.symbol_id);
-            ctx.ast.binding_pattern(
-                ctx.ast.binding_pattern_kind_from_binding_identifier(ident),
-                NONE,
-                false,
-            )
-        };
+        let Some(Import::Default(local)) = names.into_iter().next() else { unreachable!() };
+        let id = local.create_binding_pattern(ctx);
         let decl = {
             let init = ctx.ast.expression_call(SPAN, callee, NONE, args, false);
             let decl = ctx.ast.variable_declarator(SPAN, var_kind, id, Some(init), false);

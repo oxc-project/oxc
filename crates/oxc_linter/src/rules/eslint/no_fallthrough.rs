@@ -381,7 +381,6 @@ impl NoFallthrough {
         let semantic = ctx.semantic();
         let is_fallthrough_comment_in_range = |range: Range<u32>| {
             let comment = semantic
-                .trivias()
                 .comments_range(range)
                 .map(|comment| {
                     &semantic.source_text()[comment.span.start as usize..comment.span.end as usize]

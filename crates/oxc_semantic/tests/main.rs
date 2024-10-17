@@ -123,10 +123,8 @@ fn analyze(path: &Path, source_text: &str, conformance_suite: &SemanticConforman
     let source_type = SourceType::from_path(path).unwrap();
 
     let ret = Parser::new(&allocator, source_text, source_type).parse();
-    let semantic = SemanticBuilder::new(source_text)
-        .with_check_syntax_error(true)
-        .build(&ret.program)
-        .semantic;
+    let semantic =
+        SemanticBuilder::new().with_check_syntax_error(true).build(&ret.program).semantic;
 
     let ctx = TestContext { path, semantic };
 

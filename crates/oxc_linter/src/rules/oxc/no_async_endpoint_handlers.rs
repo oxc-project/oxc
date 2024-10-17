@@ -231,6 +231,15 @@ impl NoAsyncEndpointHandlers {
                     AstKind::Function(f) => self.check_function(ctx, registered_at, id_name, f),
                     AstKind::VariableDeclarator(decl) => {
                         if let Some(init) = &decl.init {
+                            if let Expression::Identifier(id) = &init {
+                                if decl
+                                    .id
+                                    .get_identifier()
+                                    .is_some_and(|declared| declared == id.name)
+                                {
+                                    return;
+                                }
+                            }
                             self.check_endpoint_expr(ctx, id_name, registered_at, init);
                         }
                     }
@@ -333,6 +342,14 @@ fn test() {
             app.use(middleware)
             ",
             Some(json!([ { "allowedNames": ["middleware"] } ])),
+        ),
+        // https://github.com/oxc-project/oxc/issues/6583
+        (
+            "
+            class B{o(a={}){const attribute=attribute
+            c.get(attribute)}}
+            ",
+            None,
         ),
     ];
 

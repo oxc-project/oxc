@@ -43,7 +43,7 @@ impl Rule for EmptyBraceSpaces {
 
                 if static_block.body.is_empty()
                     && end - start > static_leading_count + 2
-                    && !ctx.semantic().trivias().has_comments_between(static_block.span)
+                    && !ctx.semantic().has_comments_between(static_block.span)
                 {
                     ctx.diagnostic_with_fix(
                         empty_brace_spaces_diagnostic(static_block.span),
@@ -79,7 +79,7 @@ fn remove_empty_braces_spaces(ctx: &LintContext, is_empty_body: bool, span: Span
     let start = span.start;
     let end = span.end;
 
-    if is_empty_body && end - start > 2 && !ctx.semantic().trivias().has_comments_between(span) {
+    if is_empty_body && end - start > 2 && !ctx.semantic().has_comments_between(span) {
         // length of "{}"
         ctx.diagnostic_with_fix(empty_brace_spaces_diagnostic(span), |fixer| {
             fixer.replace(span, "{}")

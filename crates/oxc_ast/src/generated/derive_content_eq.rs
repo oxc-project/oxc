@@ -6,6 +6,9 @@
 use oxc_span::cmp::ContentEq;
 
 #[allow(clippy::wildcard_imports)]
+use crate::ast::comment::*;
+
+#[allow(clippy::wildcard_imports)]
 use crate::ast::js::*;
 
 #[allow(clippy::wildcard_imports)]
@@ -92,6 +95,8 @@ impl<'a> ContentEq for StringLiteral<'a> {
 impl<'a> ContentEq for Program<'a> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.source_type, &other.source_type)
+            && ContentEq::content_eq(&self.source_text, &other.source_text)
+            && ContentEq::content_eq(&self.comments, &other.comments)
             && ContentEq::content_eq(&self.hashbang, &other.hashbang)
             && ContentEq::content_eq(&self.directives, &other.directives)
             && ContentEq::content_eq(&self.body, &other.body)
@@ -3455,10 +3460,10 @@ impl<'a> ContentEq for TSIndexSignature<'a> {
 
 impl<'a> ContentEq for TSCallSignatureDeclaration<'a> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.this_param, &other.this_param)
+        ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
+            && ContentEq::content_eq(&self.this_param, &other.this_param)
             && ContentEq::content_eq(&self.params, &other.params)
             && ContentEq::content_eq(&self.return_type, &other.return_type)
-            && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
     }
 }
 
@@ -3474,18 +3479,18 @@ impl<'a> ContentEq for TSMethodSignature<'a> {
             && ContentEq::content_eq(&self.computed, &other.computed)
             && ContentEq::content_eq(&self.optional, &other.optional)
             && ContentEq::content_eq(&self.kind, &other.kind)
+            && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
             && ContentEq::content_eq(&self.this_param, &other.this_param)
             && ContentEq::content_eq(&self.params, &other.params)
             && ContentEq::content_eq(&self.return_type, &other.return_type)
-            && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
     }
 }
 
 impl<'a> ContentEq for TSConstructSignatureDeclaration<'a> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.params, &other.params)
+        ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
+            && ContentEq::content_eq(&self.params, &other.params)
             && ContentEq::content_eq(&self.return_type, &other.return_type)
-            && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
     }
 }
 
@@ -3657,19 +3662,19 @@ impl<'a> ContentEq for TSImportAttributeName<'a> {
 
 impl<'a> ContentEq for TSFunctionType<'a> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.this_param, &other.this_param)
+        ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
+            && ContentEq::content_eq(&self.this_param, &other.this_param)
             && ContentEq::content_eq(&self.params, &other.params)
             && ContentEq::content_eq(&self.return_type, &other.return_type)
-            && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
     }
 }
 
 impl<'a> ContentEq for TSConstructorType<'a> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.r#abstract, &other.r#abstract)
+            && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
             && ContentEq::content_eq(&self.params, &other.params)
             && ContentEq::content_eq(&self.return_type, &other.return_type)
-            && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
     }
 }
 
@@ -4209,5 +4214,27 @@ impl<'a> ContentEq for JSXSpreadChild<'a> {
 impl<'a> ContentEq for JSXText<'a> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.value, &other.value)
+    }
+}
+
+impl ContentEq for CommentKind {
+    fn content_eq(&self, other: &Self) -> bool {
+        self == other
+    }
+}
+
+impl ContentEq for CommentPosition {
+    fn content_eq(&self, other: &Self) -> bool {
+        self == other
+    }
+}
+
+impl ContentEq for Comment {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.kind, &other.kind)
+            && ContentEq::content_eq(&self.position, &other.position)
+            && ContentEq::content_eq(&self.attached_to, &other.attached_to)
+            && ContentEq::content_eq(&self.preceded_by_newline, &other.preceded_by_newline)
+            && ContentEq::content_eq(&self.followed_by_newline, &other.followed_by_newline)
     }
 }

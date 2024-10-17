@@ -159,9 +159,9 @@ Negative Passed: 20/20 (100.00%)
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[misc/fail/oxc-4111-1.js:1:35]
+   ╭─[misc/fail/oxc-4111-1.js:1:18]
  1 │ funtransientction as longciiConÞr>ol(cde) {
-   ·                                  ▲
+   ·                  ▲
    ╰────
   help: Try insert a semicolon here
 
