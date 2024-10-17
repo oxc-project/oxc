@@ -6,11 +6,11 @@
 )]
 #![warn(missing_docs)]
 
-use std::mem;
+use std::{cell::Cell, mem};
 
-use oxc_allocator::{Allocator, Box, FromIn, String, Vec};
+use oxc_allocator::{Allocator, Box, FromIn, IntoIn, String, Vec};
 use oxc_span::{Atom, GetSpan, Span};
-use oxc_syntax::{number::NumberBase, operator::UnaryOperator};
+use oxc_syntax::{number::NumberBase, operator::UnaryOperator, scope::ScopeId};
 
 #[allow(clippy::wildcard_imports)]
 use crate::ast::*;
@@ -289,5 +289,141 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn jsx_closing_fragment(self, span: Span) -> JSXClosingFragment {
         JSXClosingFragment { span }
+    }
+
+    /* ---------- Constructors with `ScopeId`s ---------- */
+
+    /// Build an [`ArrowFunctionExpression`] with specified `ScopeId`.
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`AstBuilder::alloc_arrow_function_expression_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - expression: Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
+    /// - r#async
+    /// - type_parameters
+    /// - params
+    /// - return_type
+    /// - body: See `expression` for whether this arrow expression returns an expression.
+    /// - scope_id
+    #[inline]
+    pub fn arrow_function_expression_with_scope_id<T1, T2, T3, T4>(
+        self,
+        span: Span,
+        expression: bool,
+        r#async: bool,
+        type_parameters: T1,
+        params: T2,
+        return_type: T3,
+        body: T4,
+        scope_id: ScopeId,
+    ) -> ArrowFunctionExpression<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T4: IntoIn<'a, Box<'a, FunctionBody<'a>>>,
+    {
+        ArrowFunctionExpression {
+            span,
+            expression,
+            r#async,
+            type_parameters: type_parameters.into_in(self.allocator),
+            params: params.into_in(self.allocator),
+            return_type: return_type.into_in(self.allocator),
+            body: body.into_in(self.allocator),
+            scope_id: Cell::new(Some(scope_id)),
+        }
+    }
+
+    /// Build an [`ArrowFunctionExpression`] with specified `ScopeId`, and stores it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`AstBuilder::arrow_function_expression_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - expression: Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
+    /// - r#async
+    /// - type_parameters
+    /// - params
+    /// - return_type
+    /// - body: See `expression` for whether this arrow expression returns an expression.
+    /// - scope_id
+    #[inline]
+    pub fn alloc_arrow_function_expression_with_scope_id<T1, T2, T3, T4>(
+        self,
+        span: Span,
+        expression: bool,
+        r#async: bool,
+        type_parameters: T1,
+        params: T2,
+        return_type: T3,
+        body: T4,
+        scope_id: ScopeId,
+    ) -> Box<'a, ArrowFunctionExpression<'a>>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T4: IntoIn<'a, Box<'a, FunctionBody<'a>>>,
+    {
+        Box::new_in(
+            self.arrow_function_expression_with_scope_id(
+                span,
+                expression,
+                r#async,
+                type_parameters,
+                params,
+                return_type,
+                body,
+                scope_id,
+            ),
+            self.allocator,
+        )
+    }
+
+    /// Build an [`Expression::ArrowFunctionExpression`] with specified `ScopeId`.
+    ///
+    /// This node contains a [`ArrowFunctionExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - expression: Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
+    /// - r#async
+    /// - type_parameters
+    /// - params
+    /// - return_type
+    /// - body: See `expression` for whether this arrow expression returns an expression.
+    /// - scope_id
+    #[inline]
+    pub fn expression_arrow_function_with_scope_id<T1, T2, T3, T4>(
+        self,
+        span: Span,
+        expression: bool,
+        r#async: bool,
+        type_parameters: T1,
+        params: T2,
+        return_type: T3,
+        body: T4,
+        scope_id: ScopeId,
+    ) -> Expression<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T4: IntoIn<'a, Box<'a, FunctionBody<'a>>>,
+    {
+        Expression::ArrowFunctionExpression(self.alloc_arrow_function_expression_with_scope_id(
+            span,
+            expression,
+            r#async,
+            type_parameters,
+            params,
+            return_type,
+            body,
+            scope_id,
+        ))
     }
 }

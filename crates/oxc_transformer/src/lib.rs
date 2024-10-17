@@ -30,6 +30,7 @@ mod es2018;
 mod es2019;
 mod es2020;
 mod es2021;
+mod es2022;
 mod react;
 mod regexp;
 mod typescript;
@@ -45,6 +46,7 @@ use es2018::ES2018;
 use es2019::ES2019;
 use es2020::ES2020;
 use es2021::ES2021;
+use es2022::ES2022;
 use react::React;
 use regexp::RegExp;
 use typescript::TypeScript;
@@ -93,6 +95,7 @@ impl<'a> Transformer<'a> {
         let mut transformer = TransformerImpl {
             x0_typescript: TypeScript::new(&self.options.typescript, &self.ctx),
             x1_react: React::new(self.options.react, ast_builder, &self.ctx),
+            x2_es2022: ES2022::new(self.options.es2022),
             x2_es2021: ES2021::new(self.options.es2021, &self.ctx),
             x2_es2020: ES2020::new(self.options.es2020, &self.ctx),
             x2_es2019: ES2019::new(self.options.es2019),
@@ -113,6 +116,7 @@ struct TransformerImpl<'a, 'ctx> {
     // NOTE: all callbacks must run in order.
     x0_typescript: TypeScript<'a, 'ctx>,
     x1_react: React<'a, 'ctx>,
+    x2_es2022: ES2022,
     x2_es2021: ES2021<'a, 'ctx>,
     x2_es2020: ES2020<'a, 'ctx>,
     x2_es2019: ES2019,
@@ -170,6 +174,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
 
     fn enter_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.enter_class_body(body, ctx);
+        self.x2_es2022.enter_class_body(body, ctx);
     }
 
     fn enter_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
