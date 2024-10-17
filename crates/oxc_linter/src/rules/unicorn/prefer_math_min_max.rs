@@ -173,7 +173,7 @@ fn test() {
         r"Math.max(height, 50);",
         r"Math.min(50, height);",
         r"Math.max(-50, height);",
-    ];
+        r"const foo = height < 50n ? height : 50n;",
 
     let fail: Vec<&str> = vec![
         r"const foo = height < 50 ? height : 50;",
