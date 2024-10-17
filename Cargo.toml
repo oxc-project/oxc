@@ -11,7 +11,7 @@ homepage = "https://oxc.rs"
 keywords = ["JavaScript", "TypeScript", "linter", "minifier", "parser"]
 license = "MIT"
 repository = "https://github.com/oxc-project/oxc"
-rust-version = "1.76"                                                   # Support last 6 minor versions.
+rust-version = "1.76" # Support last 6 minor versions.
 description = "A collection of JavaScript tools written in Rust."
 
 # <https://doc.rust-lang.org/rustc/lints/listing/allowed-by-default.html>
@@ -19,10 +19,7 @@ description = "A collection of JavaScript tools written in Rust."
 absolute_paths_not_starting_with_crate = "warn"
 non_ascii_idents = "warn"
 unit-bindings = "warn"
-unexpected_cfgs = { level = "warn", check-cfg = [
-	'cfg(coverage)',
-	'cfg(coverage_nightly)',
-] }
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage)', 'cfg(coverage_nightly)'] }
 
 [workspace.lints.clippy]
 all = { level = "warn", priority = -1 }
@@ -31,14 +28,14 @@ empty_docs = { level = "allow", priority = 1 } # From `Tsify`
 dbg_macro = "warn"
 todo = "warn"
 unimplemented = "warn"
-print_stdout = "warn"     # Must be opt-in
-print_stderr = "warn"     # Must be opt-in
+print_stdout = "warn" # Must be opt-in
+print_stderr = "warn" # Must be opt-in
 allow_attributes = "warn"
 # I like the explicitness of this rule as it removes confusion around `clone`.
 # This increases readability, avoids `clone` mindlessly and heap allocating by accident.
 clone_on_ref_ptr = "warn"
 # These two are mutually exclusive, I like `mod.rs` files for better fuzzy searches on module entries.
-self_named_module_files = "warn"         # "-Wclippy::mod_module_files"
+self_named_module_files = "warn" # "-Wclippy::mod_module_files"
 empty_drop = "warn"
 empty_structs_with_brackets = "warn"
 exit = "warn"
@@ -74,8 +71,8 @@ missing_const_for_fn = "allow"
 # cargo
 cargo = { level = "warn", priority = -1 }
 multiple_crate_versions = "allow"
-cargo_common_metadata = "allow"           # FIXME
-doc_lazy_continuation = "allow"           # FIXME
+cargo_common_metadata = "allow" # FIXME
+doc_lazy_continuation = "allow" # FIXME
 
 [workspace.dependencies]
 # publish = true
@@ -231,22 +228,22 @@ opt-level = 3
 lto = "fat"
 codegen-units = 1
 strip = "symbols" # Set to `false` for debug information
-debug = false     # Set to `true` for debug information
-panic = "abort"   # Let it crash and force ourselves to write safe Rust
+debug = false # Set to `true` for debug information
+panic = "abort" # Let it crash and force ourselves to write safe Rust
 
 # Profile used for release mode, but with debugging information for profiling
 # and debugging. Use `cargo build --profile=release-with-debug` to build with this profile.
 [profile.release-with-debug]
 inherits = "release"
-strip = false        # Keep debug information in binary
-debug = true         # Include maximum amount of debug information
+strip = false # Keep debug information in binary
+debug = true # Include maximum amount of debug information
 
 # Profile for `cargo coverage`
 [profile.coverage]
 inherits = "release"
-opt-level = 2           # Compile faster
-codegen-units = 256     # Compile faster
-lto = "thin"            # Faster compile time with thin LTO
+opt-level = 2 # Compile faster
+codegen-units = 256 # Compile faster
+lto = "thin" # Faster compile time with thin LTO
 debug-assertions = true # Make sure `debug_assert!`s pass
-overflow-checks = true  # Catch arithmetic overflow errors
+overflow-checks = true # Catch arithmetic overflow errors
 incremental = true

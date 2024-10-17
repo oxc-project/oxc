@@ -42,10 +42,10 @@ wasm-bindgen = { workspace = true, optional = true }
 default = []
 to_js_string = ["dep:ryu-js"]
 serialize = [
-	"bitflags/serde",
-	"dep:serde",
-	"dep:wasm-bindgen",
-	"oxc_index/serialize",
+  "bitflags/serde",
+  "dep:serde",
+  "dep:wasm-bindgen",
+  "oxc_index/serialize",
 ]
 
 [package.metadata.cargo-shear]

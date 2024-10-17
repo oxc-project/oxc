@@ -36,12 +36,12 @@ wasm-bindgen = { workspace = true, optional = true }
 [features]
 default = []
 serialize = [
-	"dep:serde",
-	"dep:serde_json",
-	"dep:wasm-bindgen",
-	"oxc_allocator/serialize",
-	"oxc_regular_expression/serialize",
-	"oxc_span/serialize",
-	"oxc_syntax/serialize",
-	"oxc_syntax/to_js_string",
+  "dep:serde",
+  "dep:serde_json",
+  "dep:wasm-bindgen",
+  "oxc_allocator/serialize",
+  "oxc_regular_expression/serialize",
+  "oxc_span/serialize",
+  "oxc_syntax/serialize",
+  "oxc_syntax/to_js_string",
 ]
