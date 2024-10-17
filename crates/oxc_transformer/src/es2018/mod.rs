@@ -1,7 +1,7 @@
 use oxc_ast::ast::*;
 use oxc_traverse::{Traverse, TraverseCtx};
 
-use crate::context::TransformCtx;
+use crate::TransformCtx;
 
 mod object_rest_spread;
 mod options;
