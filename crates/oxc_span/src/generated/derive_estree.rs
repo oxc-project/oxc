@@ -17,7 +17,6 @@ impl Serialize for Span {
         S: Serializer,
     {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "Span")?;
         map.serialize_entry("start", &self.start)?;
         map.serialize_entry("end", &self.end)?;
         map.end()
@@ -25,7 +24,7 @@ impl Serialize for Span {
 }
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str =
-    "export type Span = ({\n\ttype: 'Span';\n\tstart: number;\n\tend: number;\n});";
+    "export type Span = ({\n\tstart: number;\n\tend: number;\n});";
 
 impl Serialize for SourceType {
     #[allow(clippy::match_same_arms, unused_mut)]

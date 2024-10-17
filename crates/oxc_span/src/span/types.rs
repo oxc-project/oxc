@@ -27,6 +27,7 @@ use oxc_estree::ESTree;
 #[generate_derive(ESTree)]
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[non_exhaustive] // Disallow struct expression constructor `Span {}`
+#[estree(no_type)]
 pub struct Span {
     pub start: u32,
     pub end: u32,
