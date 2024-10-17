@@ -560,7 +560,7 @@ mod test {
             let actual = Parser::new(
                 allocator,
                 pattern,
-                ParserOptions::default().with_span_offset(1).with_flags(flags),
+                ParserOptions::default().with_flags(flags),
             )
             .parse()
             .unwrap();

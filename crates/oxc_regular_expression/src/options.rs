@@ -6,7 +6,8 @@ pub struct ParserOptions {
     pub unicode_mode: bool,
     /// Extended Unicode mode(`v` flag) enabled or not.
     pub unicode_sets_mode: bool,
-    // TODO: Add `handle_escape_with_quote_type` like option to support `new RegExp("with \"escape\"")`
+    /// Escape aware mode for `RegExp("StringLiteral")` enabled or not.
+    pub parse_string_literal: bool,
 }
 
 impl ParserOptions {
@@ -29,5 +30,10 @@ impl ParserOptions {
         }
 
         ParserOptions { unicode_mode, unicode_sets_mode, ..self }
+    }
+
+    #[must_use]
+    pub fn with_parse_string_literal(self) -> Self {
+        ParserOptions { parse_string_literal: true, ..self }
     }
 }

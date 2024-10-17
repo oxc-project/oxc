@@ -1,7 +1,7 @@
 mod parser_impl;
 mod reader;
-mod span_factory;
 mod state;
+mod span_factory;
 mod unicode;
 mod unicode_property;
 
@@ -276,9 +276,17 @@ mod test {
     #[test]
     fn should_handle_empty() {
         let allocator = Allocator::default();
-        let pattern = Parser::new(&allocator, "", default()).parse().unwrap();
+        let pattern1 = Parser::new(&allocator, "", default()).parse().unwrap();
+        let pattern2 = Parser::new(
+            &allocator,
+            "''",
+            ParserOptions { parse_string_literal: true, ..default() },
+        )
+        .parse()
+        .unwrap();
 
-        assert_eq!(pattern.body.body[0].body.len(), 1);
+        assert_eq!(pattern1.body.body[0].body.len(), 1);
+        assert_eq!(pattern2.body.body[0].body.len(), 1);
     }
 
     #[test]
