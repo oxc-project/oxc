@@ -1884,8 +1884,7 @@ impl<'a> Parser<'a> {
             return None;
         }
 
-        let name_span = self.span_factory.create(self.reader.end_span(span));
-        Some(self.reader.atom(name_span))
+        Some(self.reader.atom(self.reader.end_span(span)))
     }
 
     fn consume_unicode_property_value(&mut self) -> Option<SpanAtom<'a>> {
@@ -1900,8 +1899,7 @@ impl<'a> Parser<'a> {
             return None;
         }
 
-        let value_span = self.span_factory.create(self.reader.end_span(span));
-        Some(self.reader.atom(value_span))
+        Some(self.reader.atom(self.reader.end_span(span)))
     }
 
     // ```
@@ -1937,8 +1935,7 @@ impl<'a> Parser<'a> {
 
         if self.consume_reg_exp_idenfigier_start()?.is_some() {
             while self.consume_reg_exp_idenfigier_part()?.is_some() {}
-            let name_span = self.span_factory.create(self.reader.end_span(span));
-            return Ok(Some(self.reader.atom(name_span)));
+            return Ok(Some(self.reader.atom(self.reader.end_span(span))));
         }
 
         Ok(None)

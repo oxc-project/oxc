@@ -301,4 +301,28 @@ mod test {
             assert_eq!(pattern.body.body[0].body.len(), *expected);
         }
     }
+
+    #[test]
+    fn span_offset() {
+        let allocator = Allocator::default();
+
+        let source_text = "Adjust span but should have no side effect for parsing";
+        let ret1 = Parser::new(
+            &allocator,
+            source_text,
+            ParserOptions { span_offset: 0, ..ParserOptions::default() },
+        )
+        .parse()
+        .unwrap();
+        let ret2 = Parser::new(
+            &allocator,
+            source_text,
+            ParserOptions { span_offset: 10, ..ParserOptions::default() },
+        )
+        .parse()
+        .unwrap();
+
+        assert_ne!(ret1.span, ret2.span);
+        assert_eq!(ret1.to_string(), ret2.to_string());
+    }
 }
