@@ -83,8 +83,8 @@ impl Rule for NoDuplicates {
 
         for (_path, group) in &groups {
             let has_type_import = module_record.import_entries.iter().any(|entry| entry.is_type);
-            // When prefer_inline is false, 0 is value, 1 is type named, 2 is type namespace and 3 is type default 
-            // When prefer_inline is true, 0 is value and type named, 2 is type namespace and 3 is type default 
+            // When prefer_inline is false, 0 is value, 1 is type named, 2 is type namespace and 3 is type default
+            // When prefer_inline is true, 0 is value and type named, 2 is type namespace and 3 is type default
             let import_entries_maps = group
                 .into_iter()
                 .flat_map(|(_path, requested_modules)| requested_modules)
