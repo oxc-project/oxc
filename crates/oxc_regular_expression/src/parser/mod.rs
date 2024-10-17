@@ -1,7 +1,7 @@
 mod parser_impl;
 mod reader;
-mod state;
 mod span_factory;
+mod state;
 mod unicode;
 mod unicode_property;
 

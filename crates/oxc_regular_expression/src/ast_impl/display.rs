@@ -557,13 +557,10 @@ mod test {
             let pattern = &input[left_slash + 1..right_slash];
             let flags = &input[right_slash + 1..];
 
-            let actual = Parser::new(
-                allocator,
-                pattern,
-                ParserOptions::default().with_flags(flags),
-            )
-            .parse()
-            .unwrap();
+            let actual =
+                Parser::new(allocator, pattern, ParserOptions::default().with_flags(flags))
+                    .parse()
+                    .unwrap();
 
             let expect = output.unwrap_or(input);
             assert_eq!(expect, format!("/{actual}/{flags}")); // This uses `Display` impls
