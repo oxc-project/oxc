@@ -49,14 +49,12 @@ use oxc_ast::{
     },
     NONE,
 };
-use oxc_span::{Atom, SPAN};
-use oxc_syntax::{reference::ReferenceFlags, symbol::SymbolId};
+use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
-use crate::context::TransformCtx;
+use crate::{common::helper_loader::Helper, context::TransformCtx};
 
 pub struct AsyncToGenerator<'a, 'ctx> {
-    #[allow(dead_code)]
     ctx: &'ctx TransformCtx<'a>,
 }
 
@@ -102,7 +100,7 @@ impl<'a, 'ctx> Traverse<'a> for AsyncToGenerator<'a, 'ctx> {
             if !func.r#async || func.generator {
                 return;
             }
-            let new_function = Self::transform_function(func, ctx);
+            let new_function = self.transform_function(func, ctx);
             *expr = ctx.ast.expression_from_function(new_function);
         }
     }
@@ -112,7 +110,7 @@ impl<'a, 'ctx> Traverse<'a> for AsyncToGenerator<'a, 'ctx> {
             if !func.r#async || func.generator {
                 return;
             }
-            let new_function = Self::transform_function(func, ctx);
+            let new_function = self.transform_function(func, ctx);
             if let Some(id) = func.id.take() {
                 *stmt = ctx.ast.statement_declaration(ctx.ast.declaration_variable(
                     SPAN,
@@ -145,8 +143,6 @@ impl<'a, 'ctx> Traverse<'a> for AsyncToGenerator<'a, 'ctx> {
         if !arrow.r#async {
             return;
         }
-        let babel_helpers_id = ctx.scopes().find_binding(ctx.current_scope_id(), "babelHelpers");
-        let callee = Self::get_helper_callee(babel_helpers_id, ctx);
         let body = ctx.ast.function_body(
             SPAN,
             ctx.ast.move_vec(&mut arrow.body.directives),
@@ -172,7 +168,7 @@ impl<'a, 'ctx> Traverse<'a> for AsyncToGenerator<'a, 'ctx> {
         );
         let parameters =
             ctx.ast.vec1(ctx.ast.argument_expression(ctx.ast.expression_from_function(target)));
-        let call = ctx.ast.expression_call(SPAN, callee, NONE, parameters, false);
+        let call = self.ctx.helper_call_expr(Helper::AsyncToGenerator, parameters, ctx);
         let body = ctx.ast.function_body(
             SPAN,
             ctx.ast.vec(),
@@ -185,21 +181,11 @@ impl<'a, 'ctx> Traverse<'a> for AsyncToGenerator<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
-    fn get_helper_callee(symbol_id: Option<SymbolId>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        let ident = ctx.create_reference_id(
-            SPAN,
-            Atom::from("babelHelpers"),
-            symbol_id,
-            ReferenceFlags::Read,
-        );
-        let object = ctx.ast.expression_from_identifier_reference(ident);
-        let property = ctx.ast.identifier_name(SPAN, Atom::from("asyncToGenerator"));
-        Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false))
-    }
-
-    fn transform_function(func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) -> Function<'a> {
-        let babel_helpers_id = ctx.scopes().find_binding(ctx.current_scope_id(), "babelHelpers");
-        let callee = Self::get_helper_callee(babel_helpers_id, ctx);
+    fn transform_function(
+        &self,
+        func: &mut Function<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Function<'a> {
         let target = ctx.ast.function(
             func.r#type,
             SPAN,
@@ -220,7 +206,7 @@ impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
         );
         let parameters =
             ctx.ast.vec1(ctx.ast.argument_expression(ctx.ast.expression_from_function(target)));
-        let call = ctx.ast.expression_call(SPAN, callee, NONE, parameters, false);
+        let call = self.ctx.helper_call_expr(Helper::AsyncToGenerator, parameters, ctx);
         let returns = ctx.ast.return_statement(SPAN, Some(call));
         let body = Statement::ReturnStatement(ctx.ast.alloc(returns));
         let body = ctx.ast.function_body(SPAN, ctx.ast.vec(), ctx.ast.vec1(body));
