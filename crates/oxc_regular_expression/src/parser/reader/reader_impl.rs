@@ -45,7 +45,7 @@ pub struct Reader<'a> {
     collector: Collector<'a>,
     units: Vec<'a, StringLiteralAst::CodePoint>,
     index: usize,
-    last_span_end: u32
+    last_span_end: u32,
 }
 
 impl<'a> Reader<'a> {
