@@ -82,7 +82,7 @@ impl Rule for PreferMathMinMax {
                     .replace(conditional_expr.span, format!("Math.max({consequent}, {alternate})")),
                 TypeOptions::Min => fixer
                     .replace(conditional_expr.span, format!("Math.min({consequent}, {alternate})")),
-                TypeOptions::Unknown => fixer.noop(),
+                TypeOptions::Unknown => unreachable()
             };
         });
     }
