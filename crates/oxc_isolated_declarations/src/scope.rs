@@ -1,15 +1,14 @@
 use std::cell::Cell;
 
 use bitflags::bitflags;
-use oxc_allocator::{Allocator, Vec};
+use rustc_hash::FxHashMap;
+
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
-use oxc_ast::AstBuilder;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{visit::walk::*, Visit};
 use oxc_span::Atom;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
-use rustc_hash::FxHashMap;
 
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -37,13 +36,12 @@ impl<'a> Scope<'a> {
 /// Linear tree of declaration scopes.
 #[derive(Debug)]
 pub struct ScopeTree<'a> {
-    levels: Vec<'a, Scope<'a>>,
+    levels: Vec<Scope<'a>>,
 }
 
 impl<'a> ScopeTree<'a> {
-    pub fn new(allocator: &'a Allocator) -> Self {
-        let ast = AstBuilder::new(allocator);
-        let levels = ast.vec1(Scope::new(ScopeFlags::Top));
+    pub fn new() -> Self {
+        let levels = vec![Scope::new(ScopeFlags::Top)];
         Self { levels }
     }
 

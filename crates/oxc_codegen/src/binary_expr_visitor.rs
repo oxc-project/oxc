@@ -184,10 +184,15 @@ impl<'a> BinaryExpressionVisitor<'a> {
                 }
             }
             BinaryishOperator::Binary(BinaryOperator::Exponential) => {
-                if matches!(e.left(), Expression::UnaryExpression(_)) {
+                // Negative numbers are printed using a unary operator
+                if matches!(
+                    e.left(),
+                    Expression::UnaryExpression(_) | Expression::NumericLiteral(_)
+                ) {
                     self.left_precedence = Precedence::Call;
                 }
             }
+
             _ => {}
         }
 

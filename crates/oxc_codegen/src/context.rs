@@ -6,6 +6,7 @@ bitflags! {
         /// [In]
         const FORBID_IN   = 1 << 0;
         const FORBID_CALL = 1 << 1;
+        const TYPESCRIPT  = 1 << 2;
     }
 }
 
@@ -18,6 +19,13 @@ impl Context {
     #[inline]
     pub fn forbid_call(self) -> bool {
         self.contains(Self::FORBID_CALL)
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn with_typescript(mut self) -> Self {
+        self |= Self::TYPESCRIPT;
+        self
     }
 
     #[inline]

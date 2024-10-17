@@ -1,6 +1,6 @@
 commit: 3bcfee23
 
-Passed: 339/1039
+Passed: 341/1051
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1628,7 +1628,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-async-to-generator (1/17)
+# babel-plugin-transform-async-to-generator (1/24)
 * assumption-ignoreFunctionLength-true/basic/input.mjs
 x Output mismatch
 
@@ -1636,6 +1636,27 @@ x Output mismatch
 x Output mismatch
 
 * assumption-noNewArrows-false/basic/input.js
+x Output mismatch
+
+* async-to-generator/async-iife-with-regenerator/input.js
+x Output mismatch
+
+* async-to-generator/async-iife-with-regenerator-spec/input.js
+x Output mismatch
+
+* async-to-generator/function-arity/input.js
+x Output mismatch
+
+* async-to-generator/object-method-with-super/input.js
+x Output mismatch
+
+* async-to-generator/shadowed-promise/input.js
+x Output mismatch
+
+* async-to-generator/shadowed-promise-import/input.mjs
+x Output mismatch
+
+* async-to-generator/shadowed-promise-nested/input.js
 x Output mismatch
 
 * bluebird-coroutines/arrow-function/input.js
@@ -1683,7 +1704,16 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-arrow-functions (1/6)
+# babel-plugin-transform-arrow-functions (3/11)
+* arrow-functions/implicit-var-arguments/input.js
+x Output mismatch
+
+* arrow-functions/self-referential/input.js
+x Output mismatch
+
+* arrow-functions/spec/input.js
+x Output mismatch
+
 * assumption-newableArrowFunctions-false/basic/input.js
 x Output mismatch
 

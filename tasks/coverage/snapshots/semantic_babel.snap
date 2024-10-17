@@ -1,8 +1,8 @@
 commit: 3bcfee23
 
 semantic_babel Summary:
-AST Parsed     : 2101/2101 (100.00%)
-Positive Passed: 1739/2101 (82.77%)
+AST Parsed     : 2129/2129 (100.00%)
+Positive Passed: 1756/2129 (82.48%)
 tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body/input.js
 semantic error: Symbol scope ID mismatch for "f":
 after transform: SymbolId(0): ScopeId(4294967294)
@@ -140,6 +140,74 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/statement-if/mi
 semantic error: Symbol scope ID mismatch for "a":
 after transform: SymbolId(0): ScopeId(4294967294)
 rebuilt        : SymbolId(0): ScopeId(4294967294)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-method/typescript/input.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): []
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-property/typescript/input.js
+semantic error: Unresolved references mismatch:
+after transform: ["Array", "foo"]
+rebuilt        : ["foo"]
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/enum/input.js
+semantic error: Bindings mismatch:
+after transform: ScopeId(1): ["A", "a", "r"]
+rebuilt        : ScopeId(1): ["A"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Symbol flags mismatch for "A":
+after transform: SymbolId(0): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/import/input.js
+semantic error: Unresolved references mismatch:
+after transform: ["Y", "foo"]
+rebuilt        : []
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/import-require/input.js
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/literals/input.js
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["Foo", "Foo2", "Foo3", "Foo4", "Foo5", "Foo6", "Foo7"]
+rebuilt        : ScopeId(0): []
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
+rebuilt        : ScopeId(0): []
+Unresolved references mismatch:
+after transform: ["true"]
+rebuilt        : []
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/loc-index-property/input.js
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["AssertsFoo", "Foo"]
+rebuilt        : ScopeId(0): ["AssertsFoo"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/loc-index-property-babel-7/input.js
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["AssertsFoo", "Foo"]
+rebuilt        : ScopeId(0): ["AssertsFoo"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/optional-chaining/input.js
+semantic error: Unresolved references mismatch:
+after transform: ["T", "foo"]
+rebuilt        : ["foo"]
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-ts-type-param-no-flow/input.js
+semantic error: Expected `<` but found `EOF`
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-ts-type-param-no-flow-babel-7/input.js
+semantic error: Expected `<` but found `EOF`
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/arrow-function-with-newline/input.ts
 semantic error: Unresolved references mismatch:

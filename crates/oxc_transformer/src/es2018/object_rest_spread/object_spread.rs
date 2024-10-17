@@ -132,6 +132,6 @@ impl<'a, 'ctx> ObjectSpread<'a, 'ctx> {
     }
 
     fn babel_external_helper(&self, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        self.ctx.helper_loader.load(Helper::ObjectSpread2, ctx)
+        self.ctx.helper_load(Helper::ObjectSpread2, ctx)
     }
 }

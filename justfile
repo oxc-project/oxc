@@ -154,6 +154,9 @@ new-ts-rule name:
 new-unicorn-rule name:
   cargo run -p rulegen {{name}} unicorn
 
+new-import-rule name:
+  cargo run -p rulegen {{name}} import
+
 new-react-rule name:
   cargo run -p rulegen {{name}} react
 

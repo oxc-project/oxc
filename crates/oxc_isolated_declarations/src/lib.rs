@@ -71,7 +71,7 @@ impl<'a> IsolatedDeclarations<'a> {
             ast: AstBuilder::new(allocator),
             strip_internal,
             internal_annotations: FxHashSet::default(),
-            scope: ScopeTree::new(allocator),
+            scope: ScopeTree::new(),
             errors: RefCell::new(vec![]),
         }
     }

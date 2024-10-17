@@ -1,13 +1,12 @@
 commit: 3bcfee23
 
-Passed: 34/60
+Passed: 35/62
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
 * babel-plugin-transform-nullish-coalescing-operator
 * babel-plugin-transform-optional-catch-binding
 * babel-plugin-transform-exponentiation-operator
-* babel-plugin-transform-arrow-functions
 
 
 # babel-preset-env (7/11)
@@ -85,6 +84,11 @@ exec failed
 exec failed
 
 * regression/test262-fn-length/exec.js
+exec failed
+
+
+# babel-plugin-transform-arrow-functions (2/3)
+* arrow-functions/implicit-var-arguments/exec.js
 exec failed
 
 

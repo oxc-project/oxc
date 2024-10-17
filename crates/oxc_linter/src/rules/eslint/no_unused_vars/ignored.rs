@@ -8,7 +8,7 @@ use oxc_ast::{
 };
 use regex::Regex;
 
-use super::{NoUnusedVars, Symbol};
+use super::{options::IgnorePattern, NoUnusedVars, Symbol};
 
 #[derive(Debug, Default, Clone, Copy)]
 pub(super) enum FoundStatus {
@@ -336,8 +336,12 @@ impl NoUnusedVars {
     }
 
     #[inline]
-    fn is_none_or_match(re: Option<&Regex>, haystack: &str) -> bool {
-        re.map_or(false, |pat| pat.is_match(haystack))
+    fn is_none_or_match(re: IgnorePattern<&Regex>, haystack: &str) -> bool {
+        match re {
+            IgnorePattern::None => false,
+            IgnorePattern::Some(re) => re.is_match(haystack),
+            IgnorePattern::Default => haystack.starts_with('_'),
+        }
     }
 }
 
