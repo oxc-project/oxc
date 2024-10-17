@@ -1,4 +1,4 @@
-use oxc_ast::ast::{ArrowFunctionExpression, Expression, Statement};
+use oxc_ast::ast::{Expression, Statement};
 use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::context::TransformCtx;
@@ -32,16 +32,6 @@ impl<'a, 'ctx> Traverse<'a> for ES2017<'a, 'ctx> {
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.async_to_generator {
             self.async_to_generator.exit_statement(stmt, ctx);
-        }
-    }
-
-    fn exit_arrow_function_expression(
-        &mut self,
-        node: &mut ArrowFunctionExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if self.options.async_to_generator {
-            self.async_to_generator.exit_arrow_function_expression(node, ctx);
         }
     }
 }

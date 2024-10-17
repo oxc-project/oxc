@@ -49,7 +49,8 @@ use oxc_ast::{
     },
     NONE,
 };
-use oxc_span::SPAN;
+use oxc_semantic::ScopeFlags;
+use oxc_span::{GetSpan, SPAN};
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
 use crate::{common::helper_loader::Helper, context::TransformCtx};
@@ -102,6 +103,11 @@ impl<'a, 'ctx> Traverse<'a> for AsyncToGenerator<'a, 'ctx> {
             }
             let new_function = self.transform_function(func, ctx);
             *expr = ctx.ast.expression_from_function(new_function);
+        } else if let Expression::ArrowFunctionExpression(arrow) = expr {
+            if !arrow.r#async {
+                return;
+            }
+            *expr = self.transform_arrow_function(arrow, ctx);
         }
     }
 
@@ -133,50 +139,6 @@ impl<'a, 'ctx> Traverse<'a> for AsyncToGenerator<'a, 'ctx> {
                     ctx.ast.statement_declaration(ctx.ast.declaration_from_function(new_function));
             }
         }
-    }
-
-    fn exit_arrow_function_expression(
-        &mut self,
-        arrow: &mut ArrowFunctionExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if !arrow.r#async {
-            return;
-        }
-        let body = ctx.ast.function_body(
-            SPAN,
-            ctx.ast.move_vec(&mut arrow.body.directives),
-            ctx.ast.move_vec(&mut arrow.body.statements),
-        );
-        let target = ctx.ast.function(
-            FunctionType::FunctionExpression,
-            SPAN,
-            None,
-            true,
-            false,
-            false,
-            arrow.type_parameters.take(),
-            NONE,
-            ctx.ast.alloc(ctx.ast.formal_parameters(
-                SPAN,
-                arrow.params.kind,
-                ctx.ast.move_vec(&mut arrow.params.items),
-                arrow.params.rest.take(),
-            )),
-            arrow.return_type.take(),
-            Some(body),
-        );
-        let parameters =
-            ctx.ast.vec1(ctx.ast.argument_expression(ctx.ast.expression_from_function(target)));
-        let call = self.ctx.helper_call_expr(Helper::AsyncToGenerator, parameters, ctx);
-        let body = ctx.ast.function_body(
-            SPAN,
-            ctx.ast.vec(),
-            ctx.ast.vec1(ctx.ast.statement_expression(SPAN, call)),
-        );
-        arrow.body = ctx.ast.alloc(body);
-        arrow.r#async = false;
-        arrow.expression = true;
     }
 }
 
@@ -225,5 +187,47 @@ impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
             func.return_type.take(),
             Some(body),
         )
+    }
+
+    fn transform_arrow_function(
+        &self,
+        arrow: &mut ArrowFunctionExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        let mut body = ctx.ast.function_body(
+            SPAN,
+            ctx.ast.move_vec(&mut arrow.body.directives),
+            ctx.ast.move_vec(&mut arrow.body.statements),
+        );
+
+        // If the arrow's expression is true, we need to wrap the only one expression with return statement.
+        if arrow.expression {
+            let statement = body.statements.first_mut().unwrap();
+            let expression = match statement {
+                Statement::ExpressionStatement(es) => ctx.ast.move_expression(&mut es.expression),
+                _ => unreachable!(),
+            };
+            *statement = ctx.ast.statement_return(expression.span(), Some(expression));
+        }
+
+        let r#type = FunctionType::FunctionExpression;
+        let parameters = ctx.ast.alloc(ctx.ast.formal_parameters(
+            SPAN,
+            arrow.params.kind,
+            ctx.ast.move_vec(&mut arrow.params.items),
+            arrow.params.rest.take(),
+        ));
+        let body = Some(body);
+        let mut function = ctx
+            .ast
+            .function(r#type, SPAN, None, true, false, false, NONE, NONE, parameters, NONE, body);
+        function.scope_id = arrow.scope_id.clone();
+        if let Some(scope_id) = function.scope_id.get() {
+            ctx.scopes_mut().get_flags_mut(scope_id).remove(ScopeFlags::Arrow);
+        }
+
+        let arguments =
+            ctx.ast.vec1(ctx.ast.argument_expression(ctx.ast.expression_from_function(function)));
+        self.ctx.helper_call_expr(Helper::AsyncToGenerator, arguments, ctx)
     }
 }
