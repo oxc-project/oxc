@@ -521,6 +521,7 @@ fn test() {
     ];
 
     let fix = vec![
+        ("if(0)return;else r", "if(0)return; r", None),
         ("function foo1() { if (true) { return x; } else { return y; } }", "function foo1() { if (true) { return x; } return y; }", None),
         ("function foo1() { if(true){ return x; }else{ return y; } }", "function foo1() { if(true){ return x; } return y; }", None),
 ("function foo2() { if (true) { var x = bar; return x; } else { var y = baz; return y; } }", "function foo2() { if (true) { var x = bar; return x; } var y = baz; return y; }", None),
