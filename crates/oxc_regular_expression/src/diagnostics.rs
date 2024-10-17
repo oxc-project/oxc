@@ -4,8 +4,8 @@ use oxc_span::Span;
 const PREFIX: &str = "Invalid regular expression:";
 
 #[cold]
-pub fn invalid_input(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("{PREFIX} Invalid input string")).with_label(span)
+pub fn invalid_input() -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("{PREFIX} Invalid input string"))
 }
 
 #[cold]

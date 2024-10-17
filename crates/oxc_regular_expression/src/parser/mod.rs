@@ -1,8 +1,8 @@
+mod character;
 mod parser_impl;
 mod reader;
 mod span_factory;
 mod state;
-mod unicode;
 mod unicode_property;
 
 pub use parser_impl::Parser;
@@ -325,6 +325,36 @@ mod test {
         .unwrap();
 
         assert_ne!(ret1.span, ret2.span);
+        assert_eq!(ret1.to_string(), ret2.to_string());
+    }
+
+    #[test]
+    fn string_literal() {
+        let allocator = Allocator::default();
+
+        let source_text = r"'Invalid! -> \u{1234568} <-";
+        let err = Parser::new(
+            &allocator,
+            source_text,
+            ParserOptions { parse_string_literal: true, ..ParserOptions::default() },
+        )
+        .parse();
+        assert!(err.is_err());
+
+        let ret1 = Parser::new(
+            &allocator,
+            r"\d{4}-\d{2}-\d{2}",
+            ParserOptions { parse_string_literal: false, ..ParserOptions::default() },
+        )
+        .parse()
+        .unwrap();
+        let ret2 = Parser::new(
+            &allocator,
+            r"'\\d{4}-\\d{2}-\\d{2}'",
+            ParserOptions { parse_string_literal: true, ..ParserOptions::default() },
+        )
+        .parse()
+        .unwrap();
         assert_eq!(ret1.to_string(), ret2.to_string());
     }
 }

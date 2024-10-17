@@ -5,7 +5,9 @@ use oxc_span::Atom as SpanAtom;
 use crate::{
     ast, diagnostics,
     options::ParserOptions,
-    parser::{reader::Reader, span_factory::SpanFactory, state::State, unicode, unicode_property},
+    parser::{
+        character, reader::Reader, span_factory::SpanFactory, state::State, unicode_property,
+    },
     surrogate_pair,
 };
 
@@ -41,10 +43,12 @@ impl<'a> Parser<'a> {
     }
 
     pub fn parse(mut self) -> Result<ast::Pattern<'a>> {
-        // If `options.parse_string_literal` is `true`, `StringLiteral` parser may throw for invalid input.
-        self.reader
-            .collect_units()
-            .map_err(|_| diagnostics::invalid_input(self.span_factory.create(0, 0)))?;
+        // When `options.parse_string_literal` is `true`, `StringLiteral` parser may throw for invalid input.
+        self.reader.collect_units().map_err(|mut err| {
+            // Reuse span(labels) with updated message
+            err.message.clone_from(&diagnostics::invalid_input().message);
+            err
+        })?;
 
         let checkpoint = self.reader.checkpoint();
         let span_start = self.reader.offset();
@@ -329,7 +333,7 @@ impl<'a> Parser<'a> {
         let span_start = self.reader.offset();
 
         // PatternCharacter
-        if let Some(cp) = self.reader.peek().filter(|&cp| !unicode::is_syntax_character(cp)) {
+        if let Some(cp) = self.reader.peek().filter(|&cp| !character::is_syntax_character(cp)) {
             self.reader.advance();
 
             return Ok(Some(ast::Term::Character(Box::new_in(
@@ -675,7 +679,7 @@ impl<'a> Parser<'a> {
     // (Annex B)
     fn parse_character_escape(&mut self, span_start: u32) -> Result<Option<ast::Character>> {
         // e.g. \n
-        if let Some(cp) = self.reader.peek().and_then(unicode::map_control_escape) {
+        if let Some(cp) = self.reader.peek().and_then(character::map_control_escape) {
             self.reader.advance();
 
             return Ok(Some(ast::Character {
@@ -688,7 +692,7 @@ impl<'a> Parser<'a> {
         // e.g. \cM
         let checkpoint = self.reader.checkpoint();
         if self.reader.eat('c') {
-            if let Some(cp) = self.reader.peek().and_then(unicode::map_c_ascii_letter) {
+            if let Some(cp) = self.reader.peek().and_then(character::map_c_ascii_letter) {
                 self.reader.advance();
 
                 return Ok(Some(ast::Character {
@@ -702,7 +706,7 @@ impl<'a> Parser<'a> {
 
         // e.g. \0
         if self.reader.peek().filter(|&cp| cp == '0' as u32).is_some()
-            && self.reader.peek2().filter(|&cp| unicode::is_decimal_digit(cp)).is_none()
+            && self.reader.peek2().filter(|&cp| character::is_decimal_digit(cp)).is_none()
         {
             self.reader.advance();
 
@@ -1054,7 +1058,7 @@ impl<'a> Parser<'a> {
                 if let Some(cp) = self
                     .reader
                     .peek()
-                    .filter(|&cp| unicode::is_decimal_digit(cp) || cp == '-' as u32)
+                    .filter(|&cp| character::is_decimal_digit(cp) || cp == '-' as u32)
                 {
                     self.reader.advance();
 
@@ -1463,8 +1467,8 @@ impl<'a> Parser<'a> {
         let span_start = self.reader.offset();
 
         if let (Some(cp1), Some(cp2)) = (self.reader.peek(), self.reader.peek2()) {
-            if !unicode::is_class_set_reserved_double_punctuator(cp1, cp2)
-                && !unicode::is_class_set_syntax_character(cp1)
+            if !character::is_class_set_reserved_double_punctuator(cp1, cp2)
+                && !character::is_class_set_syntax_character(cp1)
             {
                 self.reader.advance();
 
@@ -1483,7 +1487,7 @@ impl<'a> Parser<'a> {
             }
 
             if let Some(cp) =
-                self.reader.peek().filter(|&cp| unicode::is_class_set_reserved_punctuator(cp))
+                self.reader.peek().filter(|&cp| character::is_class_set_reserved_punctuator(cp))
             {
                 self.reader.advance();
                 return Ok(Some(ast::Character {
@@ -1794,7 +1798,7 @@ impl<'a> Parser<'a> {
         let checkpoint = self.reader.checkpoint();
 
         let mut value: u64 = 0;
-        while let Some(cp) = self.reader.peek().filter(|&cp| unicode::is_decimal_digit(cp)) {
+        while let Some(cp) = self.reader.peek().filter(|&cp| character::is_decimal_digit(cp)) {
             // `- '0' as u32`: convert code point to digit
             #[allow(clippy::cast_lossless)]
             let d = (cp - '0' as u32) as u64;
@@ -1889,7 +1893,7 @@ impl<'a> Parser<'a> {
         let span_start = self.reader.offset();
 
         let checkpoint = self.reader.checkpoint();
-        while unicode::is_unicode_property_name_character(self.reader.peek()?) {
+        while character::is_unicode_property_name_character(self.reader.peek()?) {
             self.reader.advance();
         }
 
@@ -1904,7 +1908,7 @@ impl<'a> Parser<'a> {
         let span_start = self.reader.offset();
 
         let checkpoint = self.reader.checkpoint();
-        while unicode::is_unicode_property_value_character(self.reader.peek()?) {
+        while character::is_unicode_property_value_character(self.reader.peek()?) {
             self.reader.advance();
         }
 
@@ -1961,7 +1965,7 @@ impl<'a> Parser<'a> {
     //   [~UnicodeMode] UnicodeLeadSurrogate UnicodeTrailSurrogate
     // ```
     fn consume_reg_exp_idenfigier_start(&mut self) -> Result<Option<u32>> {
-        if let Some(cp) = self.reader.peek().filter(|&cp| unicode::is_identifier_start_char(cp)) {
+        if let Some(cp) = self.reader.peek().filter(|&cp| character::is_identifier_start_char(cp)) {
             self.reader.advance();
             return Ok(Some(cp));
         }
@@ -1971,7 +1975,7 @@ impl<'a> Parser<'a> {
             if let Some(cp) = self.consume_reg_exp_unicode_escape_sequence(true)? {
                 // [SS:EE] RegExpIdentifierStart :: \ RegExpUnicodeEscapeSequence
                 // It is a Syntax Error if the CharacterValue of RegExpUnicodeEscapeSequence is not the numeric value of some code point matched by the IdentifierStartChar lexical grammar production.
-                if !unicode::is_identifier_start_char(cp) {
+                if !character::is_identifier_start_char(cp) {
                     return Err(diagnostics::invalid_unicode_escape_sequence(
                         self.span_factory.create(span_start, self.reader.offset()),
                     ));
@@ -2001,7 +2005,7 @@ impl<'a> Parser<'a> {
 
                     // [SS:EE] RegExpIdentifierStart :: UnicodeLeadSurrogate UnicodeTrailSurrogate
                     // It is a Syntax Error if the RegExpIdentifierCodePoint of RegExpIdentifierStart is not matched by the UnicodeIDStart lexical grammar production.
-                    if !unicode::is_unicode_id_start(cp) {
+                    if !character::is_unicode_id_start(cp) {
                         return Err(diagnostics::invalid_surrogate_pair(
                             self.span_factory.create(span_start, self.reader.offset()),
                         ));
@@ -2022,7 +2026,7 @@ impl<'a> Parser<'a> {
     //   [~UnicodeMode] UnicodeLeadSurrogate UnicodeTrailSurrogate
     // ```
     fn consume_reg_exp_idenfigier_part(&mut self) -> Result<Option<u32>> {
-        if let Some(cp) = self.reader.peek().filter(|&cp| unicode::is_identifier_part_char(cp)) {
+        if let Some(cp) = self.reader.peek().filter(|&cp| character::is_identifier_part_char(cp)) {
             self.reader.advance();
             return Ok(Some(cp));
         }
@@ -2032,7 +2036,7 @@ impl<'a> Parser<'a> {
             if let Some(cp) = self.consume_reg_exp_unicode_escape_sequence(true)? {
                 // [SS:EE] RegExpIdentifierPart :: \ RegExpUnicodeEscapeSequence
                 // It is a Syntax Error if the CharacterValue of RegExpUnicodeEscapeSequence is not the numeric value of some code point matched by the IdentifierPartChar lexical grammar production.
-                if !unicode::is_identifier_part_char(cp) {
+                if !character::is_identifier_part_char(cp) {
                     return Err(diagnostics::invalid_unicode_escape_sequence(
                         self.span_factory.create(span_start, self.reader.offset()),
                     ));
@@ -2062,7 +2066,7 @@ impl<'a> Parser<'a> {
                         surrogate_pair::combine_surrogate_pair(lead_surrogate, trail_surrogate);
                     // [SS:EE] RegExpIdentifierPart :: UnicodeLeadSurrogate UnicodeTrailSurrogate
                     // It is a Syntax Error if the RegExpIdentifierCodePoint of RegExpIdentifierPart is not matched by the UnicodeIDContinue lexical grammar production.
-                    if !unicode::is_unicode_id_continue(cp) {
+                    if !character::is_unicode_id_continue(cp) {
                         return Err(diagnostics::invalid_surrogate_pair(
                             self.span_factory.create(span_start, self.reader.offset()),
                         ));
@@ -2145,7 +2149,7 @@ impl<'a> Parser<'a> {
 
                 if self.reader.eat('{') {
                     if let Some(hex_digits) =
-                        self.consume_hex_digits()?.filter(|&cp| unicode::is_valid_unicode(cp))
+                        self.consume_hex_digits()?.filter(|&cp| character::is_valid_unicode(cp))
                     {
                         if self.reader.eat('}') {
                             return Ok(Some(hex_digits));
@@ -2207,7 +2211,7 @@ impl<'a> Parser<'a> {
     fn consume_octal_digit(&mut self) -> Option<u32> {
         let cp = self.reader.peek()?;
 
-        if unicode::is_octal_digit(cp) {
+        if character::is_octal_digit(cp) {
             self.reader.advance();
             // `- '0' as u32`: convert code point to digit
             return Some(cp - '0' as u32);
@@ -2231,7 +2235,7 @@ impl<'a> Parser<'a> {
         let cp = self.reader.peek()?;
 
         if self.state.unicode_mode {
-            if unicode::is_syntax_character(cp) || cp == '/' as u32 {
+            if character::is_syntax_character(cp) || cp == '/' as u32 {
                 self.reader.advance();
                 return Some(cp);
             }
@@ -2285,7 +2289,7 @@ impl<'a> Parser<'a> {
         let checkpoint = self.reader.checkpoint();
 
         let mut value: u32 = 0;
-        while let Some(hex) = self.reader.peek().and_then(unicode::map_hex_digit) {
+        while let Some(hex) = self.reader.peek().and_then(character::map_hex_digit) {
             // To prevent panic on overflow cases like `\u{FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF}`
             if let Some(v) = value.checked_mul(16).and_then(|v| v.checked_add(hex)) {
                 value = v;
@@ -2310,7 +2314,7 @@ impl<'a> Parser<'a> {
 
         let mut value = 0;
         for _ in 0..len {
-            let Some(hex) = self.reader.peek().and_then(unicode::map_hex_digit) else {
+            let Some(hex) = self.reader.peek().and_then(character::map_hex_digit) else {
                 self.reader.rewind(checkpoint);
                 return None;
             };
