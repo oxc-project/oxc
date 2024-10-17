@@ -1453,7 +1453,6 @@ dependencies = [
  "oxc_syntax",
  "serde",
  "serde_json",
- "tsify",
  "wasm-bindgen",
 ]
 
@@ -1964,7 +1963,6 @@ dependencies = [
  "rustc-hash",
  "ryu-js",
  "serde",
- "tsify",
  "unicode-id-start",
  "wasm-bindgen",
 ]
