@@ -387,7 +387,7 @@ impl<'a> StringLiteralParser<'a> {
             }
             // NOTE: CR+LF can not represent as a single code point.
             // I don't know the best way to handle this.
-            // To distinguish this from CR and LF, structual change is needed...
+            // To distinguish this from CR and LF, structural change is needed...
             if self.peek() == Some(CR) && self.peek2() == Some(LF) {
                 self.advance();
                 self.advance();
