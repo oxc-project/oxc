@@ -4,8 +4,9 @@
 
 use std::{
     self,
-    fmt::Debug,
+    fmt::{self, Debug},
     hash::{Hash, Hasher},
+    mem::ManuallyDrop,
     ops,
     ptr::NonNull,
 };
@@ -17,9 +18,18 @@ use serde::{ser::SerializeSeq, Serialize, Serializer};
 
 use crate::{Allocator, Box};
 
-/// Bumpalo Vec
-#[derive(Debug, PartialEq, Eq)]
-pub struct Vec<'alloc, T>(vec::Vec<T, &'alloc Bump>);
+/// A `Vec` without [`Drop`], which stores its data in the arena allocator.
+///
+/// Should only be used for storing AST types.
+///
+/// Must NOT be used to store types which have a [`Drop`] implementation.
+/// `T::drop` will NOT be called on the `Vec`'s contents when the `Vec` is dropped.
+/// If `T` owns memory outside of the arena, this will be a memory leak.
+///
+/// Note: This is not a soundness issue, as Rust does not support relying on `drop`
+/// being called to guarantee soundness.
+#[derive(PartialEq, Eq)]
+pub struct Vec<'alloc, T>(ManuallyDrop<vec::Vec<T, &'alloc Bump>>);
 
 impl<'alloc, T> Vec<'alloc, T> {
     /// Constructs a new, empty `Vec<T>`.
@@ -38,7 +48,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// ```
     #[inline]
     pub fn new_in(allocator: &'alloc Allocator) -> Self {
-        Self(vec::Vec::new_in(allocator))
+        Self(ManuallyDrop::new(vec::Vec::new_in(allocator)))
     }
 
     /// Constructs a new, empty `Vec<T>` with at least the specified capacity
@@ -90,7 +100,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// ```
     #[inline]
     pub fn with_capacity_in(capacity: usize, allocator: &'alloc Allocator) -> Self {
-        Self(vec::Vec::with_capacity_in(capacity, allocator))
+        Self(ManuallyDrop::new(vec::Vec::with_capacity_in(capacity, allocator)))
     }
 
     /// Create a new [`Vec`] whose elements are taken from an iterator and
@@ -102,7 +112,7 @@ impl<'alloc, T> Vec<'alloc, T> {
         let iter = iter.into_iter();
         let hint = iter.size_hint();
         let capacity = hint.1.unwrap_or(hint.0);
-        let mut vec = vec::Vec::with_capacity_in(capacity, &**allocator);
+        let mut vec = ManuallyDrop::new(vec::Vec::with_capacity_in(capacity, &**allocator));
         vec.extend(iter);
         Self(vec)
     }
@@ -128,7 +138,8 @@ impl<'alloc, T> Vec<'alloc, T> {
     ///
     /// [owned slice]: Box
     pub fn into_boxed_slice(self) -> Box<'alloc, [T]> {
-        let slice = self.0.leak();
+        let inner = ManuallyDrop::into_inner(self.0);
+        let slice = inner.leak();
         let ptr = NonNull::from(slice);
         // SAFETY: `ptr` points to a valid slice `[T]`.
         // `allocator_api2::vec::Vec::leak` consumes the inner `Vec` without dropping it.
@@ -160,7 +171,10 @@ impl<'alloc, T> IntoIterator for Vec<'alloc, T> {
     type Item = T;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.0.into_iter()
+        let inner = ManuallyDrop::into_inner(self.0);
+        // TODO: `allocator_api2::vec::Vec::IntoIter` is `Drop`.
+        // Wrap it in `ManuallyDrop` to prevent that.
+        inner.into_iter()
     }
 }
 
@@ -198,7 +212,7 @@ where
         S: Serializer,
     {
         let mut seq = s.serialize_seq(Some(self.0.len()))?;
-        for e in &self.0 {
+        for e in self.0.iter() {
             seq.serialize_element(e)?;
         }
         seq.end()
@@ -207,9 +221,16 @@ where
 
 impl<'alloc, T: Hash> Hash for Vec<'alloc, T> {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        for e in &self.0 {
+        for e in self.0.iter() {
             e.hash(state);
         }
+    }
+}
+
+impl<'alloc, T: Debug> Debug for Vec<'alloc, T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let inner = &*self.0;
+        f.debug_tuple("Vec").field(inner).finish()
     }
 }
 
