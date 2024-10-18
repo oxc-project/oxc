@@ -4,6 +4,11 @@ use oxc_span::Span;
 const PREFIX: &str = "Invalid regular expression:";
 
 #[cold]
+pub fn invalid_input(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("{PREFIX} Invalid input string")).with_label(span)
+}
+
+#[cold]
 pub fn duplicated_capturing_group_names(spans: Vec<Span>) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("{PREFIX} Duplicated capturing group names")).with_labels(spans)
 }

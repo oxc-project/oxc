@@ -1,8 +1,8 @@
+mod character;
 mod parser_impl;
 mod reader;
 mod span_factory;
 mod state;
-mod unicode;
 mod unicode_property;
 
 pub use parser_impl::Parser;
@@ -170,6 +170,8 @@ mod test {
             (r"\1", with_unicode_mode()),
             (r"\k<a>", with_unicode_mode()),
             ("a(?:", default()),
+            ("(", default()),
+            (")", with_unicode_sets_mode()),
             ("(a", default()),
             ("(?<a>", default()),
             ("(?<", default()),
@@ -276,9 +278,17 @@ mod test {
     #[test]
     fn should_handle_empty() {
         let allocator = Allocator::default();
-        let pattern = Parser::new(&allocator, "", default()).parse().unwrap();
+        let pattern1 = Parser::new(&allocator, "", default()).parse().unwrap();
+        let pattern2 = Parser::new(
+            &allocator,
+            "''",
+            ParserOptions { parse_string_literal: true, ..default() },
+        )
+        .parse()
+        .unwrap();
 
-        assert_eq!(pattern.body.body[0].body.len(), 1);
+        assert_eq!(pattern1.body.body[0].body.len(), 1);
+        assert_eq!(pattern2.body.body[0].body.len(), 1);
     }
 
     #[test]
@@ -292,5 +302,64 @@ mod test {
             let pattern = Parser::new(&allocator, source_text, *options).parse().unwrap();
             assert_eq!(pattern.body.body[0].body.len(), *expected);
         }
+    }
+
+    #[test]
+    fn span_offset() {
+        let allocator = Allocator::default();
+
+        let source_text = "Adjust span but should have no side effect for parsing";
+        let ret1 = Parser::new(
+            &allocator,
+            source_text,
+            ParserOptions { span_offset: 0, ..ParserOptions::default() },
+        )
+        .parse()
+        .unwrap();
+        let ret2 = Parser::new(
+            &allocator,
+            source_text,
+            ParserOptions { span_offset: 10, ..ParserOptions::default() },
+        )
+        .parse()
+        .unwrap();
+
+        assert_ne!(ret1.span, ret2.span);
+        assert_eq!(ret1.to_string(), ret2.to_string());
+    }
+
+    #[test]
+    fn string_literal() {
+        let allocator = Allocator::default();
+
+        let source_text = r"RegExp('Invalid! -> \u{1234568} <-')";
+        let err = Parser::new(
+            &allocator,
+            source_text,
+            ParserOptions {
+                parse_string_literal: true,
+                span_offset: 7,
+                ..ParserOptions::default()
+            },
+        )
+        .parse();
+        assert!(err.is_err());
+        // println!("{:?}", err.unwrap_err().with_source_code(source_text));
+
+        let ret1 = Parser::new(
+            &allocator,
+            r"\d{4}-\d{2}-\d{2}",
+            ParserOptions { parse_string_literal: false, ..ParserOptions::default() },
+        )
+        .parse()
+        .unwrap();
+        let ret2 = Parser::new(
+            &allocator,
+            r"'\\d{4}-\\d{2}-\\d{2}'",
+            ParserOptions { parse_string_literal: true, ..ParserOptions::default() },
+        )
+        .parse()
+        .unwrap();
+        assert_eq!(ret1.to_string(), ret2.to_string());
     }
 }
