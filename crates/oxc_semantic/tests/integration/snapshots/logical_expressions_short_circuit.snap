@@ -4,102 +4,128 @@ expression: snapshot
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/logical_expressions_short_circuit.js
 ---
 bb0: {
-
+	(BasicBlockFlags(Implicit | Error))
 }
 
 bb1: {
+	(BasicBlockFlags(Start | Referenced | Shared))
 	statement
 }
 
 bb2: {
+	(BasicBlockFlags(TrueCondition | FalseCondition | Referenced | Shared))
 	condition
 }
 
 bb3: {
-
+	(BasicBlockFlags(Referenced))
 }
 
 bb4: {
-
+	(BasicBlockFlags(Referenced))
 }
 
 bb5: {
+	(BasicBlockFlags(Referenced))
 	statement
 	statement
 }
 
 bb6: {
+	(BasicBlockFlags(Referenced | Shared))
 	statement
 }
 
 bb7: {
+	(BasicBlockFlags(TrueCondition | FalseCondition | Referenced | Shared))
 	condition
 }
 
 bb8: {
-
+	(BasicBlockFlags(Referenced))
 }
 
 bb9: {
-
+	(BasicBlockFlags(Referenced))
 }
 
 bb10: {
+	(BasicBlockFlags(Referenced))
 	statement
 }
 
 bb11: {
+	(BasicBlockFlags(Referenced | Shared))
 	statement
 }
 
 bb12: {
+	(BasicBlockFlags(TrueCondition | FalseCondition | Referenced | Shared))
 	condition
 }
 
 bb13: {
-
+	(BasicBlockFlags(Referenced))
 }
 
 bb14: {
-
+	(BasicBlockFlags(Referenced))
 }
 
 bb15: {
+	(BasicBlockFlags(Referenced))
 	statement
 }
 
 bb16: {
-
+	(BasicBlockFlags(0x0))
 }
 
 digraph {
-    0 [ label = "bb0" shape = box]
+    0 [ label = "bb0
+(BasicBlockFlags(Implicit | Error))" shape = box]
     1 [ label = "bb1
+(BasicBlockFlags(Start | Referenced | Shared))
 IfStatement" shape = box]
     2 [ label = "bb2
+(BasicBlockFlags(TrueCondition | FalseCondition | Referenced | Shared))
 Condition(LogicalExpression)" shape = box]
-    3 [ label = "bb3" shape = box]
-    4 [ label = "bb4" shape = box]
+    3 [ label = "bb3
+(BasicBlockFlags(Referenced))" shape = box]
+    4 [ label = "bb4
+(BasicBlockFlags(Referenced))" shape = box]
     5 [ label = "bb5
+(BasicBlockFlags(Referenced))
 BlockStatement
 ExpressionStatement" shape = box]
     6 [ label = "bb6
+(BasicBlockFlags(Referenced | Shared))
 IfStatement" shape = box]
     7 [ label = "bb7
+(BasicBlockFlags(TrueCondition | FalseCondition | Referenced | Shared))
 Condition(LogicalExpression)" shape = box]
-    8 [ label = "bb8" shape = box]
-    9 [ label = "bb9" shape = box]
+    8 [ label = "bb8
+(BasicBlockFlags(Referenced))" shape = box]
+    9 [ label = "bb9
+(BasicBlockFlags(Referenced))" shape = box]
     10 [ label = "bb10
+(BasicBlockFlags(Referenced))
 ExpressionStatement" shape = box]
     11 [ label = "bb11
+(BasicBlockFlags(Referenced | Shared))
 IfStatement" shape = box]
     12 [ label = "bb12
+(BasicBlockFlags(TrueCondition | FalseCondition | Referenced | Shared))
 Condition(LogicalExpression)" shape = box]
-    13 [ label = "bb13" shape = box]
-    14 [ label = "bb14" shape = box]
+    13 [ label = "bb13
+(BasicBlockFlags(Referenced))" shape = box]
+    14 [ label = "bb14
+(BasicBlockFlags(Referenced))" shape = box]
     15 [ label = "bb15
+(BasicBlockFlags(Referenced))
 ExpressionStatement" shape = box]
-    16 [ label = "bb16" shape = box]
+    16 [ label = "bb16
+(BasicBlockFlags(0x0))" shape = box]
     1 -> 0 [ label="Error(Implicit)", style=dashed, color=red]
     2 -> 0 [ label="Error(Implicit)", style=dashed, color=red]
     3 -> 0 [ label="Error(Implicit)", style=dashed, color=red]
