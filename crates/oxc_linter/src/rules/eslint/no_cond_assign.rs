@@ -78,21 +78,46 @@ impl Rule for NoCondAssign {
                 self.check_expression(ctx, expr.test.get_inner_expression());
             }
             AstKind::AssignmentExpression(expr) if self.config == NoCondAssignConfig::Always => {
-                for node_id in ctx.nodes().ancestors(node.id()).skip(1) {
-                    match ctx.nodes().kind(node_id) {
-                        AstKind::IfStatement(_)
-                        | AstKind::WhileStatement(_)
-                        | AstKind::DoWhileStatement(_)
-                        | AstKind::ForStatement(_)
-                        | AstKind::ConditionalExpression(_) => {
-                            Self::emit_diagnostic(ctx, expr);
+                let mut spans = vec![];
+                for ancestor in ctx.nodes().iter_parents(node.id()).skip(1) {
+                    match ancestor.kind() {
+                        AstKind::IfStatement(if_stmt) => {
+                            spans.push(if_stmt.test.span());
+                        }
+                        AstKind::WhileStatement(while_stmt) => {
+                            spans.push(while_stmt.test.span());
+                        }
+                        AstKind::DoWhileStatement(do_while_stmt) => {
+                            spans.push(do_while_stmt.test.span());
+                        }
+                        AstKind::ForStatement(for_stmt) => {
+                            if let Some(test) = &for_stmt.test {
+                                spans.push(test.span());
+                            }
+                            if let Some(update) = &for_stmt.update {
+                                spans.push(update.span());
+                            }
+                            if let Some(update) = &for_stmt.update {
+                                spans.push(update.span());
+                            }
+                        }
+                        AstKind::ConditionalExpression(cond_expr) => {
+                            spans.push(cond_expr.span());
                         }
                         AstKind::Function(_)
                         | AstKind::ArrowFunctionExpression(_)
                         | AstKind::Program(_)
-                        | AstKind::BlockStatement(_) => break,
+                        | AstKind::BlockStatement(_) => {
+                            break;
+                        }
                         _ => {}
-                    }
+                    };
+                }
+
+                // Only report the diagnostic if the assignment is in a span where it should not be.
+                // For example, report `if (a = b) { ...}`, not `if (...) { a = b }`
+                if spans.iter().any(|span| span.contains_inclusive(node.span())) {
+                    Self::emit_diagnostic(ctx, expr);
                 }
             }
             _ => {}
@@ -177,6 +202,29 @@ fn test() {
         ("for (;;) { (obj.key=false) }", Some(serde_json::json!(["always"]))),
         ("while (obj.key) { (obj.key=false) }", Some(serde_json::json!(["always"]))),
         ("do { (obj.key=false) } while (obj.key)", Some(serde_json::json!(["always"]))),
+        // https://github.com/oxc-project/oxc/issues/6656
+        (
+            "
+            if (['a', 'b', 'c', 'd'].includes(value)) newValue = value;
+            else newValue = 'default';
+            ",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "
+            while(true) newValue = value;
+            ",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "
+            for(;;) newValue = value;
+            ",
+            Some(serde_json::json!(["always"])),
+        ),
+        ("for (; (typeof l === 'undefined' ? (l = 0) : l); i++) { }", None),
+        ("for (x = 0;x<10;x++) { x = 0 }", None),
+        ("for (x = 0;x<10;(x = x + 1)) { x = 0 }", None),
     ];
 
     let fail = vec![
