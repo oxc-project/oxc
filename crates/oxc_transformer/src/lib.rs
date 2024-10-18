@@ -342,6 +342,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x0_typescript.exit_statement(stmt, ctx);
         self.x2_es2017.exit_statement(stmt, ctx);
     }
 
