@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use crate::utils::default_true;
 
 // <https://github.com/gajus/eslint-plugin-jsdoc/blob/main/docs/settings.md>
-#[derive(Debug, Deserialize, Serialize, JsonSchema)]
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 #[cfg_attr(test, derive(PartialEq))]
 pub struct JSDocPluginSettings {
     /// For all rules but NOT apply to `check-access` and `empty-tags` rule
