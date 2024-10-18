@@ -147,6 +147,45 @@ impl<'a> AstBuilder<'a> {
         mem::replace(decl, empty_decl)
     }
 
+    /// Move a formal parameters out by replacing it with an empty [FormalParameters].
+    #[inline]
+    pub fn move_formal_parameters(self, params: &mut FormalParameters<'a>) -> FormalParameters<'a> {
+        let empty_params = self.formal_parameters(Span::default(), params.kind, self.vec(), NONE);
+        mem::replace(params, empty_params)
+    }
+
+    /// Move a function out by replacing it with an empty [Function]
+    #[inline]
+    pub fn move_function(self, function: &mut Function<'a>) -> Function<'a> {
+        let params = self.formal_parameters(
+            Span::default(),
+            FormalParameterKind::FormalParameter,
+            self.vec(),
+            NONE,
+        );
+        let empty_function = self.function(
+            FunctionType::FunctionDeclaration,
+            Span::default(),
+            None,
+            false,
+            false,
+            false,
+            NONE,
+            NONE,
+            params,
+            NONE,
+            NONE,
+        );
+        mem::replace(function, empty_function)
+    }
+
+    /// Move a function body out by replacing it with an empty [FunctionBody].
+    #[inline]
+    pub fn move_function_body(self, body: &mut FunctionBody<'a>) -> FunctionBody<'a> {
+        let empty_body = self.function_body(Span::default(), self.vec(), self.vec());
+        mem::replace(body, empty_body)
+    }
+
     /// Move an array element out by replacing it with an
     /// [elision](ArrayExpressionElement::Elision).
     pub fn move_array_expression_element(
