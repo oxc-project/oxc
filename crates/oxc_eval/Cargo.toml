@@ -1,0 +1,30 @@
+[package]
+name = "oxc_eval"
+version = "0.31.0"
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+homepage.workspace = true
+include = ["/src"]
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description.workspace = true
+
+[lints]
+workspace = true
+
+[lib]
+doctest = false
+
+[dependencies]
+oxc_ast = { workspace = true }
+oxc_diagnostics = { workspace = true }
+oxc_span = { workspace = true }
+
+num-bigint = { workspace = true }
+
+[dev-dependencies]
+oxc_allocator = { workspace = true }
+oxc_parser = { workspace = true }
