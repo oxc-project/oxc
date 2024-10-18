@@ -2,7 +2,7 @@ commit: df9d1650
 
 semantic_typescript Summary:
 AST Parsed     : 6490/6490 (100.00%)
-Positive Passed: 2676/6490 (41.23%)
+Positive Passed: 2671/6490 (41.16%)
 tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 semantic error: Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -25801,6 +25801,11 @@ Symbol reference IDs mismatch for "Point":
 after transform: SymbolId(7): [ReferenceId(2), ReferenceId(8)]
 rebuilt        : SymbolId(4): [ReferenceId(6)]
 
+tasks/coverage/typescript/tests/cases/compiler/parameterPropertyInConstructorWithPrologues.ts
+semantic error: Unresolved reference IDs mismatch for "console":
+after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(8)]
+rebuilt        : [ReferenceId(7), ReferenceId(10), ReferenceId(14), ReferenceId(20)]
+
 tasks/coverage/typescript/tests/cases/compiler/parameterReferenceInInitializer1.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["C", "Y", "fn"]
@@ -39277,6 +39282,16 @@ semantic error: Bindings mismatch:
 after transform: ScopeId(7): ["T"]
 rebuilt        : ScopeId(7): []
 
+tasks/coverage/typescript/tests/cases/conformance/classes/constructorDeclarations/superCalls/emitStatementsBeforeSuperCall.ts
+semantic error: Unresolved references mismatch:
+after transform: ["console"]
+rebuilt        : []
+
+tasks/coverage/typescript/tests/cases/conformance/classes/constructorDeclarations/superCalls/emitStatementsBeforeSuperCallWithDefineFields.ts
+semantic error: Unresolved references mismatch:
+after transform: ["console"]
+rebuilt        : []
+
 tasks/coverage/typescript/tests/cases/conformance/classes/members/accessibility/classPropertyIsPublicByDefault.ts
 semantic error: Symbol reference IDs mismatch for "C":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8)]
@@ -46300,6 +46315,14 @@ Unresolved references mismatch:
 after transform: []
 rebuilt        : ["o1", "o2", "o3", "o4", "o5", "o6"]
 
+tasks/coverage/typescript/tests/cases/conformance/expressions/superCalls/superCalls.ts
+semantic error: Bindings mismatch:
+after transform: ScopeId(5): ["p", "q"]
+rebuilt        : ScopeId(5): ["q"]
+Symbol reference IDs mismatch for "v":
+after transform: SymbolId(2): [ReferenceId(1)]
+rebuilt        : SymbolId(2): []
+
 tasks/coverage/typescript/tests/cases/conformance/expressions/typeAssertions/constAssertionOnEnum.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["A", "B", "Foo"]
@@ -51688,6 +51711,14 @@ rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3), SymbolId(5)
 Binding symbols mismatch:
 after transform: ScopeId(37): [SymbolId(27), SymbolId(44)]
 rebuilt        : ScopeId(37): [SymbolId(27), SymbolId(28)]
+
+tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.11.ts
+semantic error: Bindings mismatch:
+after transform: ScopeId(9): ["x", "y"]
+rebuilt        : ScopeId(9): ["y"]
+Bindings mismatch:
+after transform: ScopeId(11): ["x", "y"]
+rebuilt        : ScopeId(11): ["y"]
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.15.ts
 semantic error: Symbol flags mismatch for "_":
