@@ -354,6 +354,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
     }
 
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        println!("index {:?}", ctx.ancestor_index(stmt));
         self.x0_typescript.enter_statement(stmt, ctx);
     }
 

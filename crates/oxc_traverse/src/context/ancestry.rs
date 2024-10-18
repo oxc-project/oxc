@@ -1,8 +1,11 @@
 use std::mem::transmute;
 
+use oxc_ast::ast::Statement;
 use oxc_data_structures::stack::NonEmptyStack;
 
-use crate::ancestor::{Ancestor, AncestorType};
+use crate::ancestor::{
+    Ancestor, AncestorType, OFFSET_FUNCTION_BODY_STATEMENTS, OFFSET_PROGRAM_BODY,
+};
 
 const INITIAL_STACK_CAPACITY: usize = 64; // 64 entries = 1 KiB
 
@@ -86,6 +89,33 @@ impl<'a> TraverseAncestry<'a> {
         } else {
             Ancestor::None
         }
+    }
+
+    #[allow(clippy::cast_ptr_alignment)]
+    pub fn ancestor_index<'t>(&'t self, statement: &Statement<'a>) -> Option<usize> {
+        let ancestor = self.ancestor(0);
+
+        let node_ptr = statement as *const Statement<'a>;
+
+        let base_ptr = match ancestor {
+            Ancestor::FunctionBodyStatements(container) => unsafe {
+                &*container
+                    .0
+                    .cast::<u8>()
+                    .add(OFFSET_FUNCTION_BODY_STATEMENTS)
+                    .cast::<oxc_allocator::Vec<'a, Statement<'a>>>()
+            },
+            Ancestor::ProgramBody(container) => unsafe {
+                &*container
+                    .0
+                    .cast::<u8>()
+                    .add(OFFSET_PROGRAM_BODY)
+                    .cast::<oxc_allocator::Vec<'a, Statement<'a>>>()
+            },
+            _ => return None,
+        };
+
+        Some(unsafe { node_ptr.offset_from(base_ptr.as_ptr()) as usize })
     }
 
     /// Get iterator over ancestors, starting with parent and working up.
