@@ -1,8 +1,5 @@
 //! Literals
 
-// Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
-#![allow(non_snake_case)]
-
 use std::{
     borrow::Cow,
     fmt,

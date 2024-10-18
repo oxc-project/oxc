@@ -22,6 +22,7 @@ use crate::{
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = r#"
 export type IndexVec<I, T> = Array<T>;
+export type CompactStr = string;
 "#;
 
 /// Symbol Table

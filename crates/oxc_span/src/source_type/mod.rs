@@ -1,23 +1,19 @@
-// Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
-#![allow(non_snake_case)]
-
 mod error;
 
 use std::{hash::Hash, path::Path};
 
 use oxc_allocator::{Allocator, CloneIn};
 use oxc_ast_macros::ast;
-#[cfg(feature = "serialize")]
-use {serde::Serialize, tsify::Tsify};
+use oxc_estree::ESTree;
 
 use crate::{cmp::ContentEq, hash::ContentHash};
 pub use error::UnknownExtension;
 
 /// Source Type for JavaScript vs TypeScript / Script vs Module / JSX
 #[ast]
+#[generate_derive(ESTree)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[serde(rename_all = "camelCase")]
+#[estree(no_type)]
 pub struct SourceType {
     /// JavaScript or TypeScript, default JavaScript
     pub(super) language: Language,
@@ -31,24 +27,25 @@ pub struct SourceType {
 
 /// JavaScript or TypeScript
 #[ast]
+#[generate_derive(ESTree)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[serde(rename_all = "lowercase")]
 pub enum Language {
     /// Indicates a JavaScript or JSX file
+    #[estree(rename = "javascript")]
     JavaScript = 0,
     /// Indicates a TypeScript file
+    #[estree(rename = "typescript")]
     TypeScript = 1,
     /// Indicates a TypeScript definition file (`*.d.ts`)
-    #[serde(rename = "typescriptDefinition")]
+    #[estree(rename = "typescriptDefinition")]
     TypeScriptDefinition = 2,
 }
 
 /// Script or Module
 #[ast]
+#[generate_derive(ESTree)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[serde(rename_all = "camelCase")]
+#[estree(rename_all = "camelCase")]
 pub enum ModuleKind {
     /// Regular JS script or CommonJS file
     Script = 0,
@@ -67,9 +64,9 @@ pub enum ModuleKind {
 
 /// JSX for JavaScript and TypeScript
 #[ast]
+#[generate_derive(ESTree)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[serde(rename_all = "camelCase")]
+#[estree(rename_all = "camelCase")]
 pub enum LanguageVariant {
     /// Standard JavaScript or TypeScript without any language extensions. Stage
     /// 3 proposals do not count as language extensions.
