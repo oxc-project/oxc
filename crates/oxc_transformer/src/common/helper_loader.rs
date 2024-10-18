@@ -251,7 +251,7 @@ impl<'a> HelperLoaderStore<'a> {
         source.push_str(&self.module_name);
         source.push_str("/helpers/");
         source.push_str(helper_name);
-        let source = Atom::from(source.into_bump_str());
+        let source = Atom::from(&*source.into_fixed_string().into_str());
 
         let binding = ctx.generate_uid_in_root_scope(helper_name, SymbolFlags::Import);
 

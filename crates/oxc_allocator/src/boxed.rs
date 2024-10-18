@@ -68,7 +68,7 @@ impl<'alloc, T> Box<'alloc, T> {
     /// let in_arena: Box<i32> = Box::new_in(5, &arena);
     /// ```
     pub fn new_in(value: T, allocator: &Allocator) -> Self {
-        Self(NonNull::from(allocator.alloc(value)), PhantomData)
+        Self(allocator.alloc(value).into_raw(), PhantomData)
     }
 
     /// Create a fake [`Box`] with a dangling pointer.
@@ -192,7 +192,7 @@ mod test {
         let allocator = Allocator::default();
         let mut b = Box::new_in("x", &allocator);
         let b = &mut *b;
-        *b = allocator.alloc("v");
+        *b = allocator.alloc("v").into_ref();
         assert_eq!(*b, "v");
     }
 
