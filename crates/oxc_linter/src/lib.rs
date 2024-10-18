@@ -119,23 +119,26 @@ impl Linter {
         let rules = self
             .rules
             .iter()
+            .filter(|rule| rule.plugin_name() != "jest")
             .filter(|rule| rule.should_run(&ctx_host))
-            .map(|rule| (rule, Rc::clone(&ctx_host).spawn(rule)))
-            .collect::<Vec<_>>();
+            .map(|rule| (rule, Rc::clone(&ctx_host).spawn(rule)));
 
-        for (rule, ctx) in &rules {
-            rule.run_once(ctx);
-        }
+        let jest_rules = self
+            .rules
+            .iter()
+            .filter(|rule| rule.plugin_name() == "jest")
+            .filter(|rule| rule.should_run(&ctx_host))
+            .map(|rule| (rule, Rc::clone(&ctx_host).spawn(rule)));
 
         let semantic = ctx_host.semantic();
-        for symbol in semantic.symbols().symbol_ids() {
-            for (rule, ctx) in &rules {
+        for (rule, ref ctx) in rules.chain(jest_rules) {
+            rule.run_once(ctx);
+
+            for symbol in semantic.symbols().symbol_ids() {
                 rule.run_on_symbol(symbol, ctx);
             }
-        }
 
-        for node in semantic.nodes() {
-            for (rule, ctx) in &rules {
+            for node in semantic.nodes() {
                 rule.run(node, ctx);
             }
         }
