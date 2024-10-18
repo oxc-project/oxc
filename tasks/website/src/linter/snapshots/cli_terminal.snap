@@ -72,6 +72,11 @@ Output
 Miscellaneous
         --silent              Do not display any diagnostics
         --threads=INT         Number of threads to use. Set to 1 for using only 1 CPU core
+        --print-config=ARG    This option outputs the configuration to be used. To print current
+                              configuration in your project, use `--print-config all`, print
+                              configuration for a specific file is not supported for now. When
+                              present, no linting is performed and only config-related options are
+                              valid.
 
 Available positional items:
     PATH                      Single file, single path or list of paths
