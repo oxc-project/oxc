@@ -130,7 +130,7 @@ impl<'a> Prettier<'a> {
     }
 
     pub fn semi(&self) -> Option<Doc<'a>> {
-        self.options.semi.then(|| Doc::Str(";"))
+        self.options.semi.then_some(Doc::Str(";"))
     }
 
     pub fn should_print_es5_comma(&self) -> bool {
