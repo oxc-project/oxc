@@ -20,7 +20,7 @@ mod test {
             Reader::new(&allocator, "'RegExp!'", true, true),
             Reader::new(&allocator, "'RegExp!'", false, true),
         ] {
-            reader.collect_units().unwrap();
+            reader.initialize().unwrap();
 
             assert_eq!(reader.peek(), Some('R' as u32));
             assert_eq!(reader.peek2(), Some('e' as u32));
@@ -51,7 +51,7 @@ mod test {
         let source_text = "𠮷野家は👈🏻あっち";
 
         let mut unicode_reader = Reader::new(&allocator, source_text, true, false);
-        unicode_reader.collect_units().unwrap();
+        unicode_reader.initialize().unwrap();
         assert!(unicode_reader.eat('𠮷')); // Can eat
         assert!(unicode_reader.eat2('野', '家'));
         let checkpoint = unicode_reader.checkpoint();
@@ -65,7 +65,7 @@ mod test {
         assert!(unicode_reader.eat('は'));
 
         let mut legacy_reader = Reader::new(&allocator, source_text, false, false);
-        legacy_reader.collect_units().unwrap();
+        legacy_reader.initialize().unwrap();
         assert!(!legacy_reader.eat('𠮷')); // Can not eat
         legacy_reader.advance();
         assert!(!legacy_reader.eat('𠮷')); // Also can not
@@ -96,7 +96,7 @@ mod test {
         let reader2 = Reader::new(&allocator, &source_text2, true, true);
 
         for mut reader in [reader1, reader2] {
-            reader.collect_units().unwrap();
+            reader.initialize().unwrap();
 
             while reader.peek() != Some('^' as u32) {
                 reader.advance();

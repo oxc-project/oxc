@@ -142,7 +142,7 @@ mod tests {
             ("(?<n>.(?<n>..))", (2, 1, true)),
         ] {
             let mut reader = Reader::new(&allocator, source_text, true, false);
-            reader.collect_units().unwrap();
+            reader.initialize().unwrap();
 
             let (
                 num_of_left_capturing_parens,

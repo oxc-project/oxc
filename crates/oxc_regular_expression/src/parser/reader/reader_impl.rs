@@ -11,11 +11,15 @@ struct Collector<'a> {
     unicode_mode: bool,
     parse_string_literal: bool,
 }
+
 impl<'a> Collector<'a> {
     fn new(allocator: &'a Allocator, unicode_mode: bool, parse_string_literal: bool) -> Self {
         Self { allocator, unicode_mode, parse_string_literal }
     }
 
+    /// Collects code points from the source text.
+    /// If `parse_string_literal` is `true`, it parses string literal to resolve escape sequences.
+    /// If `unicode_mode` is `true`, it combines surrogate pairs into a single code point.
     fn collect(&mut self, source_text: &'a str) -> Result<Vec<'a, StringLiteralAst::CodePoint>> {
         // NOTE: This must be `0`.
         // Since `source_text` here may be a slice of the original source text,
@@ -60,7 +64,8 @@ impl<'a> Reader<'a> {
             collector: Collector::new(allocator, unicode_mode, parse_string_literal),
             units: Vec::new_in(allocator),
             index: 0,
-            // +1 to skip quote character
+            // If `parse_string_literal` is `true`, the first character is the opening quote.
+            // We need to +1 to skip it.
             offset: u32::from(parse_string_literal),
         }
     }
@@ -68,17 +73,13 @@ impl<'a> Reader<'a> {
     /// Collects iterating units from the source text.
     /// This method is separated to avoid `new() -> Result<Self>` signature.
     /// This must be called before any other methods.
-    pub fn collect_units(&mut self) -> Result<()> {
+    pub fn initialize(&mut self) -> Result<()> {
         self.units = self.collector.collect(self.source_text)?;
         Ok(())
     }
 
     pub fn offset(&self) -> u32 {
         self.offset
-    }
-
-    pub fn atom(&self, start: u32, end: u32) -> Atom<'a> {
-        Atom::from(&self.source_text[start as usize..end as usize])
     }
 
     pub fn checkpoint(&self) -> (usize, u32) {
@@ -153,5 +154,9 @@ impl<'a> Reader<'a> {
             return true;
         }
         false
+    }
+
+    pub fn atom(&self, start: u32, end: u32) -> Atom<'a> {
+        Atom::from(&self.source_text[start as usize..end as usize])
     }
 }

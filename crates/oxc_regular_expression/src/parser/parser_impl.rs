@@ -45,12 +45,9 @@ impl<'a> Parser<'a> {
     pub fn parse(mut self) -> Result<ast::Pattern<'a>> {
         // When `options.parse_string_literal` is `true`, `StringLiteral` parser may throw for invalid input.
         self.reader
-            .collect_units()
+            .initialize()
             // Reuse propagated labels(span) may be better?
             .map_err(|_| diagnostics::invalid_input(self.span_factory.create(0, 0)))?;
-
-        let checkpoint = self.reader.checkpoint();
-        let span_start = self.reader.offset();
 
         // Pre parse whole pattern to collect:
         // - the number of (named|unnamed) capturing groups
@@ -62,8 +59,10 @@ impl<'a> Parser<'a> {
         // - Pros: Code is simple enough and easy to understand
         // - Cons: 1st pass is completely useless if the pattern does not contain any capturing groups
         // We may re-consider this if we need more performance rather than simplicity.
+        let checkpoint = self.reader.checkpoint();
         let duplicated_named_capturing_groups =
             self.state.initialize_with_parsing(&mut self.reader);
+        self.reader.rewind(checkpoint);
 
         // [SS:EE] Pattern :: Disjunction
         // It is a Syntax Error if CountLeftCapturingParensWithin(Pattern) ≥ 2**32 - 1.
@@ -71,9 +70,7 @@ impl<'a> Parser<'a> {
         // If this is greater than `u32::MAX`, it is memory overflow, though.
         // But I never seen such a gigantic pattern with 4,294,967,295 parens!
         if u32::MAX == self.state.num_of_capturing_groups {
-            return Err(diagnostics::too_may_capturing_groups(
-                self.span_factory.create(span_start, self.reader.offset()),
-            ));
+            return Err(diagnostics::too_may_capturing_groups(self.span_factory.create(0, 0)));
         }
         // [SS:EE] Pattern :: Disjunction
         // It is a Syntax Error if Pattern contains two or more GroupSpecifiers for which the CapturingGroupName of GroupSpecifier is the same.
@@ -87,7 +84,7 @@ impl<'a> Parser<'a> {
         }
 
         // Let's start parsing!
-        self.reader.rewind(checkpoint);
+        let span_start = self.reader.offset();
         let disjunction = self.parse_disjunction()?;
 
         if self.reader.peek().is_some() {

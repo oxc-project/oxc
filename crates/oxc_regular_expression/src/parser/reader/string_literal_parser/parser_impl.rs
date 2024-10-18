@@ -11,13 +11,44 @@ use crate::parser::reader::string_literal_parser::{
     options::ParserOptions,
 };
 
-/// Internal representation of a single character in a string literal.
-/// - offsets: (start, end), // source_text local offsets
-/// - code_point: u32, // char as u32
+// Internal representation of escape sequence resolved unit in a string literal.
 type OffsetsAndCp = ((u32, u32), u32);
+
+/// Helper API for `RegExp` literal parsing.
+/// This time, we don't need to handle escape sequences.
+pub fn parse_regexp_literal<'a>(
+    allocator: &'a Allocator,
+    source_text: &str,
+    span_offset: u32,
+    combine_surrogate_pair: bool,
+) -> AVec<'a, ast::CodePoint> {
+    let mut body = AVec::new_in(allocator);
+
+    let mut offset = 0;
+    for ch in source_text.chars() {
+        let start = offset;
+        #[allow(clippy::cast_possible_truncation)]
+        let end = start + ch.len_utf8() as u32;
+
+        let offsets_and_cp: OffsetsAndCp = ((start, end), ch as u32);
+        StringLiteralParser::handle_code_point(
+            &mut body,
+            offsets_and_cp,
+            span_offset,
+            combine_surrogate_pair,
+        );
+        offset = end;
+    }
+
+    body
+}
 
 pub struct StringLiteralParser<'a> {
     allocator: &'a Allocator,
+    // NOTE: Since string literals in JavaScript are UTF-16 encoded,
+    // we need to be aware of surrogate pairs, while collecting offsets for `Span`.
+    // Rather than using `encode_utf16()`, split surrogate pairs manually is easier
+    // to detect the start and end of each code point.
     chars: Vec<char>,
     index: usize,
     offset: u32,
@@ -25,9 +56,8 @@ pub struct StringLiteralParser<'a> {
 }
 
 impl<'a> StringLiteralParser<'a> {
-    /// Main logic to convert internal state to external parsed units.
-    /// This make it possible to handle both string literals and regexp literals in the same way.
-    fn handle_code_point(
+    // This is public because it is used in `parse_regexp_literal()`.
+    pub fn handle_code_point(
         body: &mut AVec<ast::CodePoint>,
         (offsets, cp): OffsetsAndCp,
         span_offset: u32,
@@ -513,33 +543,4 @@ impl<'a> StringLiteralParser<'a> {
     fn peek2(&mut self) -> Option<char> {
         self.peek_nth(1)
     }
-}
-
-/// Helper API for `RegExp` literal parsing.
-/// This time, we don't need to handle escape sequences.
-pub fn parse_regexp_literal<'a>(
-    allocator: &'a Allocator,
-    source_text: &str,
-    span_offset: u32,
-    combine_surrogate_pair: bool,
-) -> AVec<'a, ast::CodePoint> {
-    let mut body = AVec::new_in(allocator);
-
-    let mut offset = 0;
-    for ch in source_text.chars() {
-        let start = offset;
-        #[allow(clippy::cast_possible_truncation)]
-        let end = start + ch.len_utf8() as u32;
-
-        let offsets_and_cp: OffsetsAndCp = ((start, end), ch as u32);
-        StringLiteralParser::handle_code_point(
-            &mut body,
-            offsets_and_cp,
-            span_offset,
-            combine_surrogate_pair,
-        );
-        offset = end;
-    }
-
-    body
 }
