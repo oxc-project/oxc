@@ -39,9 +39,6 @@ declare_oxc_lint!(
 
 impl Rule for NoUnusedLabels {
     fn run_once(&self, ctx: &LintContext) {
-        if ctx.file_path().extension().is_some_and(|ext| ext == "svelte") {
-            return;
-        }
         for id in ctx.semantic().unused_labels() {
             let node = ctx.semantic().nodes().get_node(*id);
             let AstKind::LabeledStatement(stmt) = node.kind() else {
@@ -52,6 +49,10 @@ impl Rule for NoUnusedLabels {
                 |fixer| fixer.replace_with(stmt, &stmt.body),
             );
         }
+    }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.file_path().extension().is_some_and(|ext| ext != "svelte")
     }
 }
 
