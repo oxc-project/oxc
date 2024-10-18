@@ -162,9 +162,9 @@ impl Generator for AstKindGenerator {
                 parse_quote!(
                     ///@@line_break
                     #[inline]
-                    pub fn #snake_case_name(&self) -> Option<&'a #typ> {
+                    pub fn #snake_case_name(self) -> Option<&'a #typ> {
                         if let Self::#ident(v) = self {
-                            Some(*v)
+                            Some(v)
                         } else {
                             None
                         }

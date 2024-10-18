@@ -529,1134 +529,1134 @@ impl<'a> GetSpan for AstKind<'a> {
 
 impl<'a> AstKind<'a> {
     #[inline]
-    pub fn as_boolean_literal(&self) -> Option<&'a BooleanLiteral> {
+    pub fn as_boolean_literal(self) -> Option<&'a BooleanLiteral> {
         if let Self::BooleanLiteral(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_null_literal(&self) -> Option<&'a NullLiteral> {
+    pub fn as_null_literal(self) -> Option<&'a NullLiteral> {
         if let Self::NullLiteral(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_numeric_literal(&self) -> Option<&'a NumericLiteral<'a>> {
+    pub fn as_numeric_literal(self) -> Option<&'a NumericLiteral<'a>> {
         if let Self::NumericLiteral(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_big_int_literal(&self) -> Option<&'a BigIntLiteral<'a>> {
+    pub fn as_big_int_literal(self) -> Option<&'a BigIntLiteral<'a>> {
         if let Self::BigIntLiteral(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_reg_exp_literal(&self) -> Option<&'a RegExpLiteral<'a>> {
+    pub fn as_reg_exp_literal(self) -> Option<&'a RegExpLiteral<'a>> {
         if let Self::RegExpLiteral(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_string_literal(&self) -> Option<&'a StringLiteral<'a>> {
+    pub fn as_string_literal(self) -> Option<&'a StringLiteral<'a>> {
         if let Self::StringLiteral(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_program(&self) -> Option<&'a Program<'a>> {
+    pub fn as_program(self) -> Option<&'a Program<'a>> {
         if let Self::Program(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_identifier_name(&self) -> Option<&'a IdentifierName<'a>> {
+    pub fn as_identifier_name(self) -> Option<&'a IdentifierName<'a>> {
         if let Self::IdentifierName(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_identifier_reference(&self) -> Option<&'a IdentifierReference<'a>> {
+    pub fn as_identifier_reference(self) -> Option<&'a IdentifierReference<'a>> {
         if let Self::IdentifierReference(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_binding_identifier(&self) -> Option<&'a BindingIdentifier<'a>> {
+    pub fn as_binding_identifier(self) -> Option<&'a BindingIdentifier<'a>> {
         if let Self::BindingIdentifier(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_label_identifier(&self) -> Option<&'a LabelIdentifier<'a>> {
+    pub fn as_label_identifier(self) -> Option<&'a LabelIdentifier<'a>> {
         if let Self::LabelIdentifier(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_this_expression(&self) -> Option<&'a ThisExpression> {
+    pub fn as_this_expression(self) -> Option<&'a ThisExpression> {
         if let Self::ThisExpression(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_array_expression(&self) -> Option<&'a ArrayExpression<'a>> {
+    pub fn as_array_expression(self) -> Option<&'a ArrayExpression<'a>> {
         if let Self::ArrayExpression(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_array_expression_element(&self) -> Option<&'a ArrayExpressionElement<'a>> {
+    pub fn as_array_expression_element(self) -> Option<&'a ArrayExpressionElement<'a>> {
         if let Self::ArrayExpressionElement(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_elision(&self) -> Option<&'a Elision> {
+    pub fn as_elision(self) -> Option<&'a Elision> {
         if let Self::Elision(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_object_expression(&self) -> Option<&'a ObjectExpression<'a>> {
+    pub fn as_object_expression(self) -> Option<&'a ObjectExpression<'a>> {
         if let Self::ObjectExpression(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_object_property(&self) -> Option<&'a ObjectProperty<'a>> {
+    pub fn as_object_property(self) -> Option<&'a ObjectProperty<'a>> {
         if let Self::ObjectProperty(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_property_key(&self) -> Option<&'a PropertyKey<'a>> {
+    pub fn as_property_key(self) -> Option<&'a PropertyKey<'a>> {
         if let Self::PropertyKey(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_template_literal(&self) -> Option<&'a TemplateLiteral<'a>> {
+    pub fn as_template_literal(self) -> Option<&'a TemplateLiteral<'a>> {
         if let Self::TemplateLiteral(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_tagged_template_expression(&self) -> Option<&'a TaggedTemplateExpression<'a>> {
+    pub fn as_tagged_template_expression(self) -> Option<&'a TaggedTemplateExpression<'a>> {
         if let Self::TaggedTemplateExpression(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_member_expression(&self) -> Option<&'a MemberExpression<'a>> {
+    pub fn as_member_expression(self) -> Option<&'a MemberExpression<'a>> {
         if let Self::MemberExpression(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_call_expression(&self) -> Option<&'a CallExpression<'a>> {
+    pub fn as_call_expression(self) -> Option<&'a CallExpression<'a>> {
         if let Self::CallExpression(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_new_expression(&self) -> Option<&'a NewExpression<'a>> {
+    pub fn as_new_expression(self) -> Option<&'a NewExpression<'a>> {
         if let Self::NewExpression(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_meta_property(&self) -> Option<&'a MetaProperty<'a>> {
+    pub fn as_meta_property(self) -> Option<&'a MetaProperty<'a>> {
         if let Self::MetaProperty(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_spread_element(&self) -> Option<&'a SpreadElement<'a>> {
+    pub fn as_spread_element(self) -> Option<&'a SpreadElement<'a>> {
         if let Self::SpreadElement(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_argument(&self) -> Option<&'a Argument<'a>> {
+    pub fn as_argument(self) -> Option<&'a Argument<'a>> {
         if let Self::Argument(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_update_expression(&self) -> Option<&'a UpdateExpression<'a>> {
+    pub fn as_update_expression(self) -> Option<&'a UpdateExpression<'a>> {
         if let Self::UpdateExpression(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_unary_expression(&self) -> Option<&'a UnaryExpression<'a>> {
+    pub fn as_unary_expression(self) -> Option<&'a UnaryExpression<'a>> {
         if let Self::UnaryExpression(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_binary_expression(&self) -> Option<&'a BinaryExpression<'a>> {
+    pub fn as_binary_expression(self) -> Option<&'a BinaryExpression<'a>> {
         if let Self::BinaryExpression(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_private_in_expression(&self) -> Option<&'a PrivateInExpression<'a>> {
+    pub fn as_private_in_expression(self) -> Option<&'a PrivateInExpression<'a>> {
         if let Self::PrivateInExpression(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_logical_expression(&self) -> Option<&'a LogicalExpression<'a>> {
+    pub fn as_logical_expression(self) -> Option<&'a LogicalExpression<'a>> {
         if let Self::LogicalExpression(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_conditional_expression(&self) -> Option<&'a ConditionalExpression<'a>> {
+    pub fn as_conditional_expression(self) -> Option<&'a ConditionalExpression<'a>> {
         if let Self::ConditionalExpression(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_assignment_expression(&self) -> Option<&'a AssignmentExpression<'a>> {
+    pub fn as_assignment_expression(self) -> Option<&'a AssignmentExpression<'a>> {
         if let Self::AssignmentExpression(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_assignment_target(&self) -> Option<&'a AssignmentTarget<'a>> {
+    pub fn as_assignment_target(self) -> Option<&'a AssignmentTarget<'a>> {
         if let Self::AssignmentTarget(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_simple_assignment_target(&self) -> Option<&'a SimpleAssignmentTarget<'a>> {
+    pub fn as_simple_assignment_target(self) -> Option<&'a SimpleAssignmentTarget<'a>> {
         if let Self::SimpleAssignmentTarget(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_assignment_target_pattern(&self) -> Option<&'a AssignmentTargetPattern<'a>> {
+    pub fn as_assignment_target_pattern(self) -> Option<&'a AssignmentTargetPattern<'a>> {
         if let Self::AssignmentTargetPattern(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_array_assignment_target(&self) -> Option<&'a ArrayAssignmentTarget<'a>> {
+    pub fn as_array_assignment_target(self) -> Option<&'a ArrayAssignmentTarget<'a>> {
         if let Self::ArrayAssignmentTarget(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_object_assignment_target(&self) -> Option<&'a ObjectAssignmentTarget<'a>> {
+    pub fn as_object_assignment_target(self) -> Option<&'a ObjectAssignmentTarget<'a>> {
         if let Self::ObjectAssignmentTarget(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_assignment_target_with_default(&self) -> Option<&'a AssignmentTargetWithDefault<'a>> {
+    pub fn as_assignment_target_with_default(self) -> Option<&'a AssignmentTargetWithDefault<'a>> {
         if let Self::AssignmentTargetWithDefault(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_sequence_expression(&self) -> Option<&'a SequenceExpression<'a>> {
+    pub fn as_sequence_expression(self) -> Option<&'a SequenceExpression<'a>> {
         if let Self::SequenceExpression(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_super(&self) -> Option<&'a Super> {
+    pub fn as_super(self) -> Option<&'a Super> {
         if let Self::Super(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_await_expression(&self) -> Option<&'a AwaitExpression<'a>> {
+    pub fn as_await_expression(self) -> Option<&'a AwaitExpression<'a>> {
         if let Self::AwaitExpression(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_chain_expression(&self) -> Option<&'a ChainExpression<'a>> {
+    pub fn as_chain_expression(self) -> Option<&'a ChainExpression<'a>> {
         if let Self::ChainExpression(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_parenthesized_expression(&self) -> Option<&'a ParenthesizedExpression<'a>> {
+    pub fn as_parenthesized_expression(self) -> Option<&'a ParenthesizedExpression<'a>> {
         if let Self::ParenthesizedExpression(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_directive(&self) -> Option<&'a Directive<'a>> {
+    pub fn as_directive(self) -> Option<&'a Directive<'a>> {
         if let Self::Directive(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_hashbang(&self) -> Option<&'a Hashbang<'a>> {
+    pub fn as_hashbang(self) -> Option<&'a Hashbang<'a>> {
         if let Self::Hashbang(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_block_statement(&self) -> Option<&'a BlockStatement<'a>> {
+    pub fn as_block_statement(self) -> Option<&'a BlockStatement<'a>> {
         if let Self::BlockStatement(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_variable_declaration(&self) -> Option<&'a VariableDeclaration<'a>> {
+    pub fn as_variable_declaration(self) -> Option<&'a VariableDeclaration<'a>> {
         if let Self::VariableDeclaration(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_variable_declarator(&self) -> Option<&'a VariableDeclarator<'a>> {
+    pub fn as_variable_declarator(self) -> Option<&'a VariableDeclarator<'a>> {
         if let Self::VariableDeclarator(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_empty_statement(&self) -> Option<&'a EmptyStatement> {
+    pub fn as_empty_statement(self) -> Option<&'a EmptyStatement> {
         if let Self::EmptyStatement(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_expression_statement(&self) -> Option<&'a ExpressionStatement<'a>> {
+    pub fn as_expression_statement(self) -> Option<&'a ExpressionStatement<'a>> {
         if let Self::ExpressionStatement(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_if_statement(&self) -> Option<&'a IfStatement<'a>> {
+    pub fn as_if_statement(self) -> Option<&'a IfStatement<'a>> {
         if let Self::IfStatement(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_do_while_statement(&self) -> Option<&'a DoWhileStatement<'a>> {
+    pub fn as_do_while_statement(self) -> Option<&'a DoWhileStatement<'a>> {
         if let Self::DoWhileStatement(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_while_statement(&self) -> Option<&'a WhileStatement<'a>> {
+    pub fn as_while_statement(self) -> Option<&'a WhileStatement<'a>> {
         if let Self::WhileStatement(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_for_statement(&self) -> Option<&'a ForStatement<'a>> {
+    pub fn as_for_statement(self) -> Option<&'a ForStatement<'a>> {
         if let Self::ForStatement(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_for_statement_init(&self) -> Option<&'a ForStatementInit<'a>> {
+    pub fn as_for_statement_init(self) -> Option<&'a ForStatementInit<'a>> {
         if let Self::ForStatementInit(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_for_in_statement(&self) -> Option<&'a ForInStatement<'a>> {
+    pub fn as_for_in_statement(self) -> Option<&'a ForInStatement<'a>> {
         if let Self::ForInStatement(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_for_of_statement(&self) -> Option<&'a ForOfStatement<'a>> {
+    pub fn as_for_of_statement(self) -> Option<&'a ForOfStatement<'a>> {
         if let Self::ForOfStatement(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_continue_statement(&self) -> Option<&'a ContinueStatement<'a>> {
+    pub fn as_continue_statement(self) -> Option<&'a ContinueStatement<'a>> {
         if let Self::ContinueStatement(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_break_statement(&self) -> Option<&'a BreakStatement<'a>> {
+    pub fn as_break_statement(self) -> Option<&'a BreakStatement<'a>> {
         if let Self::BreakStatement(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_return_statement(&self) -> Option<&'a ReturnStatement<'a>> {
+    pub fn as_return_statement(self) -> Option<&'a ReturnStatement<'a>> {
         if let Self::ReturnStatement(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_with_statement(&self) -> Option<&'a WithStatement<'a>> {
+    pub fn as_with_statement(self) -> Option<&'a WithStatement<'a>> {
         if let Self::WithStatement(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_switch_statement(&self) -> Option<&'a SwitchStatement<'a>> {
+    pub fn as_switch_statement(self) -> Option<&'a SwitchStatement<'a>> {
         if let Self::SwitchStatement(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_switch_case(&self) -> Option<&'a SwitchCase<'a>> {
+    pub fn as_switch_case(self) -> Option<&'a SwitchCase<'a>> {
         if let Self::SwitchCase(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_labeled_statement(&self) -> Option<&'a LabeledStatement<'a>> {
+    pub fn as_labeled_statement(self) -> Option<&'a LabeledStatement<'a>> {
         if let Self::LabeledStatement(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_throw_statement(&self) -> Option<&'a ThrowStatement<'a>> {
+    pub fn as_throw_statement(self) -> Option<&'a ThrowStatement<'a>> {
         if let Self::ThrowStatement(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_try_statement(&self) -> Option<&'a TryStatement<'a>> {
+    pub fn as_try_statement(self) -> Option<&'a TryStatement<'a>> {
         if let Self::TryStatement(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_finally_clause(&self) -> Option<&'a BlockStatement<'a>> {
+    pub fn as_finally_clause(self) -> Option<&'a BlockStatement<'a>> {
         if let Self::FinallyClause(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_catch_clause(&self) -> Option<&'a CatchClause<'a>> {
+    pub fn as_catch_clause(self) -> Option<&'a CatchClause<'a>> {
         if let Self::CatchClause(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_catch_parameter(&self) -> Option<&'a CatchParameter<'a>> {
+    pub fn as_catch_parameter(self) -> Option<&'a CatchParameter<'a>> {
         if let Self::CatchParameter(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_debugger_statement(&self) -> Option<&'a DebuggerStatement> {
+    pub fn as_debugger_statement(self) -> Option<&'a DebuggerStatement> {
         if let Self::DebuggerStatement(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_assignment_pattern(&self) -> Option<&'a AssignmentPattern<'a>> {
+    pub fn as_assignment_pattern(self) -> Option<&'a AssignmentPattern<'a>> {
         if let Self::AssignmentPattern(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_object_pattern(&self) -> Option<&'a ObjectPattern<'a>> {
+    pub fn as_object_pattern(self) -> Option<&'a ObjectPattern<'a>> {
         if let Self::ObjectPattern(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_array_pattern(&self) -> Option<&'a ArrayPattern<'a>> {
+    pub fn as_array_pattern(self) -> Option<&'a ArrayPattern<'a>> {
         if let Self::ArrayPattern(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_binding_rest_element(&self) -> Option<&'a BindingRestElement<'a>> {
+    pub fn as_binding_rest_element(self) -> Option<&'a BindingRestElement<'a>> {
         if let Self::BindingRestElement(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_function(&self) -> Option<&'a Function<'a>> {
+    pub fn as_function(self) -> Option<&'a Function<'a>> {
         if let Self::Function(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_formal_parameters(&self) -> Option<&'a FormalParameters<'a>> {
+    pub fn as_formal_parameters(self) -> Option<&'a FormalParameters<'a>> {
         if let Self::FormalParameters(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_formal_parameter(&self) -> Option<&'a FormalParameter<'a>> {
+    pub fn as_formal_parameter(self) -> Option<&'a FormalParameter<'a>> {
         if let Self::FormalParameter(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_function_body(&self) -> Option<&'a FunctionBody<'a>> {
+    pub fn as_function_body(self) -> Option<&'a FunctionBody<'a>> {
         if let Self::FunctionBody(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_arrow_function_expression(&self) -> Option<&'a ArrowFunctionExpression<'a>> {
+    pub fn as_arrow_function_expression(self) -> Option<&'a ArrowFunctionExpression<'a>> {
         if let Self::ArrowFunctionExpression(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_yield_expression(&self) -> Option<&'a YieldExpression<'a>> {
+    pub fn as_yield_expression(self) -> Option<&'a YieldExpression<'a>> {
         if let Self::YieldExpression(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_class(&self) -> Option<&'a Class<'a>> {
+    pub fn as_class(self) -> Option<&'a Class<'a>> {
         if let Self::Class(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_class_heritage(&self) -> Option<&'a Expression<'a>> {
+    pub fn as_class_heritage(self) -> Option<&'a Expression<'a>> {
         if let Self::ClassHeritage(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_class_body(&self) -> Option<&'a ClassBody<'a>> {
+    pub fn as_class_body(self) -> Option<&'a ClassBody<'a>> {
         if let Self::ClassBody(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_method_definition(&self) -> Option<&'a MethodDefinition<'a>> {
+    pub fn as_method_definition(self) -> Option<&'a MethodDefinition<'a>> {
         if let Self::MethodDefinition(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_property_definition(&self) -> Option<&'a PropertyDefinition<'a>> {
+    pub fn as_property_definition(self) -> Option<&'a PropertyDefinition<'a>> {
         if let Self::PropertyDefinition(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_private_identifier(&self) -> Option<&'a PrivateIdentifier<'a>> {
+    pub fn as_private_identifier(self) -> Option<&'a PrivateIdentifier<'a>> {
         if let Self::PrivateIdentifier(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_static_block(&self) -> Option<&'a StaticBlock<'a>> {
+    pub fn as_static_block(self) -> Option<&'a StaticBlock<'a>> {
         if let Self::StaticBlock(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_module_declaration(&self) -> Option<&'a ModuleDeclaration<'a>> {
+    pub fn as_module_declaration(self) -> Option<&'a ModuleDeclaration<'a>> {
         if let Self::ModuleDeclaration(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_import_expression(&self) -> Option<&'a ImportExpression<'a>> {
+    pub fn as_import_expression(self) -> Option<&'a ImportExpression<'a>> {
         if let Self::ImportExpression(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_import_declaration(&self) -> Option<&'a ImportDeclaration<'a>> {
+    pub fn as_import_declaration(self) -> Option<&'a ImportDeclaration<'a>> {
         if let Self::ImportDeclaration(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_import_specifier(&self) -> Option<&'a ImportSpecifier<'a>> {
+    pub fn as_import_specifier(self) -> Option<&'a ImportSpecifier<'a>> {
         if let Self::ImportSpecifier(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_import_default_specifier(&self) -> Option<&'a ImportDefaultSpecifier<'a>> {
+    pub fn as_import_default_specifier(self) -> Option<&'a ImportDefaultSpecifier<'a>> {
         if let Self::ImportDefaultSpecifier(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_import_namespace_specifier(&self) -> Option<&'a ImportNamespaceSpecifier<'a>> {
+    pub fn as_import_namespace_specifier(self) -> Option<&'a ImportNamespaceSpecifier<'a>> {
         if let Self::ImportNamespaceSpecifier(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_export_named_declaration(&self) -> Option<&'a ExportNamedDeclaration<'a>> {
+    pub fn as_export_named_declaration(self) -> Option<&'a ExportNamedDeclaration<'a>> {
         if let Self::ExportNamedDeclaration(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_export_default_declaration(&self) -> Option<&'a ExportDefaultDeclaration<'a>> {
+    pub fn as_export_default_declaration(self) -> Option<&'a ExportDefaultDeclaration<'a>> {
         if let Self::ExportDefaultDeclaration(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_export_all_declaration(&self) -> Option<&'a ExportAllDeclaration<'a>> {
+    pub fn as_export_all_declaration(self) -> Option<&'a ExportAllDeclaration<'a>> {
         if let Self::ExportAllDeclaration(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_export_specifier(&self) -> Option<&'a ExportSpecifier<'a>> {
+    pub fn as_export_specifier(self) -> Option<&'a ExportSpecifier<'a>> {
         if let Self::ExportSpecifier(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_this_parameter(&self) -> Option<&'a TSThisParameter<'a>> {
+    pub fn as_ts_this_parameter(self) -> Option<&'a TSThisParameter<'a>> {
         if let Self::TSThisParameter(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_enum_declaration(&self) -> Option<&'a TSEnumDeclaration<'a>> {
+    pub fn as_ts_enum_declaration(self) -> Option<&'a TSEnumDeclaration<'a>> {
         if let Self::TSEnumDeclaration(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_enum_member(&self) -> Option<&'a TSEnumMember<'a>> {
+    pub fn as_ts_enum_member(self) -> Option<&'a TSEnumMember<'a>> {
         if let Self::TSEnumMember(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_type_annotation(&self) -> Option<&'a TSTypeAnnotation<'a>> {
+    pub fn as_ts_type_annotation(self) -> Option<&'a TSTypeAnnotation<'a>> {
         if let Self::TSTypeAnnotation(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_literal_type(&self) -> Option<&'a TSLiteralType<'a>> {
+    pub fn as_ts_literal_type(self) -> Option<&'a TSLiteralType<'a>> {
         if let Self::TSLiteralType(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_conditional_type(&self) -> Option<&'a TSConditionalType<'a>> {
+    pub fn as_ts_conditional_type(self) -> Option<&'a TSConditionalType<'a>> {
         if let Self::TSConditionalType(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_union_type(&self) -> Option<&'a TSUnionType<'a>> {
+    pub fn as_ts_union_type(self) -> Option<&'a TSUnionType<'a>> {
         if let Self::TSUnionType(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_intersection_type(&self) -> Option<&'a TSIntersectionType<'a>> {
+    pub fn as_ts_intersection_type(self) -> Option<&'a TSIntersectionType<'a>> {
         if let Self::TSIntersectionType(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_parenthesized_type(&self) -> Option<&'a TSParenthesizedType<'a>> {
+    pub fn as_ts_parenthesized_type(self) -> Option<&'a TSParenthesizedType<'a>> {
         if let Self::TSParenthesizedType(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_indexed_access_type(&self) -> Option<&'a TSIndexedAccessType<'a>> {
+    pub fn as_ts_indexed_access_type(self) -> Option<&'a TSIndexedAccessType<'a>> {
         if let Self::TSIndexedAccessType(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_named_tuple_member(&self) -> Option<&'a TSNamedTupleMember<'a>> {
+    pub fn as_ts_named_tuple_member(self) -> Option<&'a TSNamedTupleMember<'a>> {
         if let Self::TSNamedTupleMember(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_any_keyword(&self) -> Option<&'a TSAnyKeyword> {
+    pub fn as_ts_any_keyword(self) -> Option<&'a TSAnyKeyword> {
         if let Self::TSAnyKeyword(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_string_keyword(&self) -> Option<&'a TSStringKeyword> {
+    pub fn as_ts_string_keyword(self) -> Option<&'a TSStringKeyword> {
         if let Self::TSStringKeyword(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_boolean_keyword(&self) -> Option<&'a TSBooleanKeyword> {
+    pub fn as_ts_boolean_keyword(self) -> Option<&'a TSBooleanKeyword> {
         if let Self::TSBooleanKeyword(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_number_keyword(&self) -> Option<&'a TSNumberKeyword> {
+    pub fn as_ts_number_keyword(self) -> Option<&'a TSNumberKeyword> {
         if let Self::TSNumberKeyword(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_never_keyword(&self) -> Option<&'a TSNeverKeyword> {
+    pub fn as_ts_never_keyword(self) -> Option<&'a TSNeverKeyword> {
         if let Self::TSNeverKeyword(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_intrinsic_keyword(&self) -> Option<&'a TSIntrinsicKeyword> {
+    pub fn as_ts_intrinsic_keyword(self) -> Option<&'a TSIntrinsicKeyword> {
         if let Self::TSIntrinsicKeyword(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_unknown_keyword(&self) -> Option<&'a TSUnknownKeyword> {
+    pub fn as_ts_unknown_keyword(self) -> Option<&'a TSUnknownKeyword> {
         if let Self::TSUnknownKeyword(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_null_keyword(&self) -> Option<&'a TSNullKeyword> {
+    pub fn as_ts_null_keyword(self) -> Option<&'a TSNullKeyword> {
         if let Self::TSNullKeyword(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_undefined_keyword(&self) -> Option<&'a TSUndefinedKeyword> {
+    pub fn as_ts_undefined_keyword(self) -> Option<&'a TSUndefinedKeyword> {
         if let Self::TSUndefinedKeyword(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_void_keyword(&self) -> Option<&'a TSVoidKeyword> {
+    pub fn as_ts_void_keyword(self) -> Option<&'a TSVoidKeyword> {
         if let Self::TSVoidKeyword(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_symbol_keyword(&self) -> Option<&'a TSSymbolKeyword> {
+    pub fn as_ts_symbol_keyword(self) -> Option<&'a TSSymbolKeyword> {
         if let Self::TSSymbolKeyword(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_this_type(&self) -> Option<&'a TSThisType> {
+    pub fn as_ts_this_type(self) -> Option<&'a TSThisType> {
         if let Self::TSThisType(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_object_keyword(&self) -> Option<&'a TSObjectKeyword> {
+    pub fn as_ts_object_keyword(self) -> Option<&'a TSObjectKeyword> {
         if let Self::TSObjectKeyword(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_big_int_keyword(&self) -> Option<&'a TSBigIntKeyword> {
+    pub fn as_ts_big_int_keyword(self) -> Option<&'a TSBigIntKeyword> {
         if let Self::TSBigIntKeyword(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_type_reference(&self) -> Option<&'a TSTypeReference<'a>> {
+    pub fn as_ts_type_reference(self) -> Option<&'a TSTypeReference<'a>> {
         if let Self::TSTypeReference(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_type_name(&self) -> Option<&'a TSTypeName<'a>> {
+    pub fn as_ts_type_name(self) -> Option<&'a TSTypeName<'a>> {
         if let Self::TSTypeName(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_qualified_name(&self) -> Option<&'a TSQualifiedName<'a>> {
+    pub fn as_ts_qualified_name(self) -> Option<&'a TSQualifiedName<'a>> {
         if let Self::TSQualifiedName(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
@@ -1664,73 +1664,73 @@ impl<'a> AstKind<'a> {
 
     #[inline]
     pub fn as_ts_type_parameter_instantiation(
-        &self,
+        self,
     ) -> Option<&'a TSTypeParameterInstantiation<'a>> {
         if let Self::TSTypeParameterInstantiation(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_type_parameter(&self) -> Option<&'a TSTypeParameter<'a>> {
+    pub fn as_ts_type_parameter(self) -> Option<&'a TSTypeParameter<'a>> {
         if let Self::TSTypeParameter(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_type_parameter_declaration(&self) -> Option<&'a TSTypeParameterDeclaration<'a>> {
+    pub fn as_ts_type_parameter_declaration(self) -> Option<&'a TSTypeParameterDeclaration<'a>> {
         if let Self::TSTypeParameterDeclaration(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_type_alias_declaration(&self) -> Option<&'a TSTypeAliasDeclaration<'a>> {
+    pub fn as_ts_type_alias_declaration(self) -> Option<&'a TSTypeAliasDeclaration<'a>> {
         if let Self::TSTypeAliasDeclaration(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_class_implements(&self) -> Option<&'a TSClassImplements<'a>> {
+    pub fn as_ts_class_implements(self) -> Option<&'a TSClassImplements<'a>> {
         if let Self::TSClassImplements(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_interface_declaration(&self) -> Option<&'a TSInterfaceDeclaration<'a>> {
+    pub fn as_ts_interface_declaration(self) -> Option<&'a TSInterfaceDeclaration<'a>> {
         if let Self::TSInterfaceDeclaration(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_property_signature(&self) -> Option<&'a TSPropertySignature<'a>> {
+    pub fn as_ts_property_signature(self) -> Option<&'a TSPropertySignature<'a>> {
         if let Self::TSPropertySignature(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_method_signature(&self) -> Option<&'a TSMethodSignature<'a>> {
+    pub fn as_ts_method_signature(self) -> Option<&'a TSMethodSignature<'a>> {
         if let Self::TSMethodSignature(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
@@ -1738,307 +1738,307 @@ impl<'a> AstKind<'a> {
 
     #[inline]
     pub fn as_ts_construct_signature_declaration(
-        &self,
+        self,
     ) -> Option<&'a TSConstructSignatureDeclaration<'a>> {
         if let Self::TSConstructSignatureDeclaration(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_interface_heritage(&self) -> Option<&'a TSInterfaceHeritage<'a>> {
+    pub fn as_ts_interface_heritage(self) -> Option<&'a TSInterfaceHeritage<'a>> {
         if let Self::TSInterfaceHeritage(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_module_declaration(&self) -> Option<&'a TSModuleDeclaration<'a>> {
+    pub fn as_ts_module_declaration(self) -> Option<&'a TSModuleDeclaration<'a>> {
         if let Self::TSModuleDeclaration(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_module_block(&self) -> Option<&'a TSModuleBlock<'a>> {
+    pub fn as_ts_module_block(self) -> Option<&'a TSModuleBlock<'a>> {
         if let Self::TSModuleBlock(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_type_literal(&self) -> Option<&'a TSTypeLiteral<'a>> {
+    pub fn as_ts_type_literal(self) -> Option<&'a TSTypeLiteral<'a>> {
         if let Self::TSTypeLiteral(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_infer_type(&self) -> Option<&'a TSInferType<'a>> {
+    pub fn as_ts_infer_type(self) -> Option<&'a TSInferType<'a>> {
         if let Self::TSInferType(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_type_query(&self) -> Option<&'a TSTypeQuery<'a>> {
+    pub fn as_ts_type_query(self) -> Option<&'a TSTypeQuery<'a>> {
         if let Self::TSTypeQuery(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_import_type(&self) -> Option<&'a TSImportType<'a>> {
+    pub fn as_ts_import_type(self) -> Option<&'a TSImportType<'a>> {
         if let Self::TSImportType(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_mapped_type(&self) -> Option<&'a TSMappedType<'a>> {
+    pub fn as_ts_mapped_type(self) -> Option<&'a TSMappedType<'a>> {
         if let Self::TSMappedType(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_template_literal_type(&self) -> Option<&'a TSTemplateLiteralType<'a>> {
+    pub fn as_ts_template_literal_type(self) -> Option<&'a TSTemplateLiteralType<'a>> {
         if let Self::TSTemplateLiteralType(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_as_expression(&self) -> Option<&'a TSAsExpression<'a>> {
+    pub fn as_ts_as_expression(self) -> Option<&'a TSAsExpression<'a>> {
         if let Self::TSAsExpression(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_satisfies_expression(&self) -> Option<&'a TSSatisfiesExpression<'a>> {
+    pub fn as_ts_satisfies_expression(self) -> Option<&'a TSSatisfiesExpression<'a>> {
         if let Self::TSSatisfiesExpression(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_type_assertion(&self) -> Option<&'a TSTypeAssertion<'a>> {
+    pub fn as_ts_type_assertion(self) -> Option<&'a TSTypeAssertion<'a>> {
         if let Self::TSTypeAssertion(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_import_equals_declaration(&self) -> Option<&'a TSImportEqualsDeclaration<'a>> {
+    pub fn as_ts_import_equals_declaration(self) -> Option<&'a TSImportEqualsDeclaration<'a>> {
         if let Self::TSImportEqualsDeclaration(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_module_reference(&self) -> Option<&'a TSModuleReference<'a>> {
+    pub fn as_ts_module_reference(self) -> Option<&'a TSModuleReference<'a>> {
         if let Self::TSModuleReference(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_external_module_reference(&self) -> Option<&'a TSExternalModuleReference<'a>> {
+    pub fn as_ts_external_module_reference(self) -> Option<&'a TSExternalModuleReference<'a>> {
         if let Self::TSExternalModuleReference(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_non_null_expression(&self) -> Option<&'a TSNonNullExpression<'a>> {
+    pub fn as_ts_non_null_expression(self) -> Option<&'a TSNonNullExpression<'a>> {
         if let Self::TSNonNullExpression(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_decorator(&self) -> Option<&'a Decorator<'a>> {
+    pub fn as_decorator(self) -> Option<&'a Decorator<'a>> {
         if let Self::Decorator(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_export_assignment(&self) -> Option<&'a TSExportAssignment<'a>> {
+    pub fn as_ts_export_assignment(self) -> Option<&'a TSExportAssignment<'a>> {
         if let Self::TSExportAssignment(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_ts_instantiation_expression(&self) -> Option<&'a TSInstantiationExpression<'a>> {
+    pub fn as_ts_instantiation_expression(self) -> Option<&'a TSInstantiationExpression<'a>> {
         if let Self::TSInstantiationExpression(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_jsx_element(&self) -> Option<&'a JSXElement<'a>> {
+    pub fn as_jsx_element(self) -> Option<&'a JSXElement<'a>> {
         if let Self::JSXElement(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_jsx_opening_element(&self) -> Option<&'a JSXOpeningElement<'a>> {
+    pub fn as_jsx_opening_element(self) -> Option<&'a JSXOpeningElement<'a>> {
         if let Self::JSXOpeningElement(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_jsx_closing_element(&self) -> Option<&'a JSXClosingElement<'a>> {
+    pub fn as_jsx_closing_element(self) -> Option<&'a JSXClosingElement<'a>> {
         if let Self::JSXClosingElement(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_jsx_fragment(&self) -> Option<&'a JSXFragment<'a>> {
+    pub fn as_jsx_fragment(self) -> Option<&'a JSXFragment<'a>> {
         if let Self::JSXFragment(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_jsx_element_name(&self) -> Option<&'a JSXElementName<'a>> {
+    pub fn as_jsx_element_name(self) -> Option<&'a JSXElementName<'a>> {
         if let Self::JSXElementName(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_jsx_namespaced_name(&self) -> Option<&'a JSXNamespacedName<'a>> {
+    pub fn as_jsx_namespaced_name(self) -> Option<&'a JSXNamespacedName<'a>> {
         if let Self::JSXNamespacedName(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_jsx_member_expression(&self) -> Option<&'a JSXMemberExpression<'a>> {
+    pub fn as_jsx_member_expression(self) -> Option<&'a JSXMemberExpression<'a>> {
         if let Self::JSXMemberExpression(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_jsx_member_expression_object(&self) -> Option<&'a JSXMemberExpressionObject<'a>> {
+    pub fn as_jsx_member_expression_object(self) -> Option<&'a JSXMemberExpressionObject<'a>> {
         if let Self::JSXMemberExpressionObject(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_jsx_expression_container(&self) -> Option<&'a JSXExpressionContainer<'a>> {
+    pub fn as_jsx_expression_container(self) -> Option<&'a JSXExpressionContainer<'a>> {
         if let Self::JSXExpressionContainer(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_jsx_attribute_item(&self) -> Option<&'a JSXAttributeItem<'a>> {
+    pub fn as_jsx_attribute_item(self) -> Option<&'a JSXAttributeItem<'a>> {
         if let Self::JSXAttributeItem(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_jsx_spread_attribute(&self) -> Option<&'a JSXSpreadAttribute<'a>> {
+    pub fn as_jsx_spread_attribute(self) -> Option<&'a JSXSpreadAttribute<'a>> {
         if let Self::JSXSpreadAttribute(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_jsx_identifier(&self) -> Option<&'a JSXIdentifier<'a>> {
+    pub fn as_jsx_identifier(self) -> Option<&'a JSXIdentifier<'a>> {
         if let Self::JSXIdentifier(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_jsx_text(&self) -> Option<&'a JSXText<'a>> {
+    pub fn as_jsx_text(self) -> Option<&'a JSXText<'a>> {
         if let Self::JSXText(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_expression_array_element(&self) -> Option<&'a Expression<'a>> {
+    pub fn as_expression_array_element(self) -> Option<&'a Expression<'a>> {
         if let Self::ExpressionArrayElement(v) = self {
-            Some(*v)
+            Some(v)
         } else {
             None
         }
