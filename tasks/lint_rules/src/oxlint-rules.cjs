@@ -135,8 +135,8 @@ exports.overrideTypeScriptPluginStatusWithEslintPluginStatus = (
  */
 exports.syncVitestPluginStatusWithJestPluginStatus = async (ruleEntries) => {
   const vitestCompatibleRulesFile = await readFile(
-    "crates/oxc_linter/src/utils/mod.rs",
-    "utf8"
+    'crates/oxc_linter/src/utils/mod.rs',
+    'utf8',
   );
 
   // Find the start of the list of vitest-compatible rules
@@ -148,24 +148,24 @@ exports.syncVitestPluginStatusWithJestPluginStatus = async (ruleEntries) => {
   // };
   // ```
   const vitestCompatibleRules = vitestCompatibleRulesFile.match(
-    /const VITEST_COMPATIBLE_JEST_RULES.+phf_set! {([^}]+)/s
+    /const VITEST_COMPATIBLE_JEST_RULES.+phf_set! {([^}]+)/s,
   )?.[1];
   if (!vitestCompatibleRules) {
-    throw new Error("Failed to find the list of vitest-compatible rules");
+    throw new Error('Failed to find the list of vitest-compatible rules');
   }
 
   const rules = new Set(
     vitestCompatibleRules
-      .split("\n")
+      .split('\n')
       .map((line) => line.trim())
-      .filter((line) => line && !line.startsWith("//"))
+      .filter((line) => line && !line.startsWith('//'))
       .map((line) =>
         line
-          .replace(/"/g, "")
-          .split(",")
-          .filter((s) => s !== "")
+          .replace(/"/g, '')
+          .split(',')
+          .filter((s) => s !== '')
       )
-      .flat()
+      .flat(),
   );
 
   for (const rule of rules) {
