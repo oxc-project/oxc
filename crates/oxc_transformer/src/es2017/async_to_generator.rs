@@ -40,14 +40,17 @@
 //! * Babel helper implementation: <https://github.com/babel/babel/blob/main/packages/babel-helper-remap-async-to-generator>
 //! * Async / Await TC39 proposal: <https://github.com/tc39/proposal-async-await>
 
+use std::cell::Cell;
+
+use oxc_allocator::Box;
 use oxc_ast::{
     ast::{
-        ArrowFunctionExpression, Expression, Function, FunctionType, Statement,
-        VariableDeclarationKind,
+        ArrowFunctionExpression, Expression, FormalParameters, Function, FunctionBody,
+        FunctionType, Statement,
     },
     NONE,
 };
-use oxc_semantic::ScopeFlags;
+use oxc_semantic::{ScopeFlags, ScopeId};
 use oxc_span::{GetSpan, SPAN};
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
@@ -99,8 +102,9 @@ impl<'a, 'ctx> Traverse<'a> for AsyncToGenerator<'a, 'ctx> {
             if !func.r#async || func.generator {
                 return;
             }
-            let new_function = self.transform_function(func, ctx);
-            *expr = ctx.ast.expression_from_function(new_function);
+            if let Some(new_expr) = self.transform_function(func, ctx) {
+                *expr = new_expr;
+            }
         } else if let Expression::ArrowFunctionExpression(arrow) = expr {
             if !arrow.r#async {
                 return;
@@ -109,33 +113,34 @@ impl<'a, 'ctx> Traverse<'a> for AsyncToGenerator<'a, 'ctx> {
         }
     }
 
-    fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Statement::FunctionDeclaration(func) = stmt {
-            if !func.r#async || func.generator {
-                return;
-            }
-            let new_function = self.transform_function(func, ctx);
-            if let Some(id) = func.id.take() {
-                *stmt = ctx.ast.statement_declaration(ctx.ast.declaration_variable(
-                    SPAN,
-                    VariableDeclarationKind::Const,
-                    ctx.ast.vec1(ctx.ast.variable_declarator(
-                        SPAN,
-                        VariableDeclarationKind::Const,
-                        ctx.ast.binding_pattern(
-                            ctx.ast.binding_pattern_kind_from_binding_identifier(id),
-                            NONE,
-                            false,
-                        ),
-                        Some(ctx.ast.expression_from_function(new_function)),
-                        false,
-                    )),
-                    false,
-                ));
-            } else {
-                *stmt =
-                    ctx.ast.statement_declaration(ctx.ast.declaration_from_function(new_function));
-            }
+    fn exit_statement(&mut self, stmt: &mut Statement<'a>, _ctx: &mut TraverseCtx<'a>) {
+        if let Statement::FunctionDeclaration(_func) = stmt {
+            // TODO: Waiting process
+            // if !func.r#async || func.generator {
+            //     return;
+            // }
+            // let new_function = self.transform_function(func, ctx);
+            // if let Some(id) = func.id.take() {
+            //     *stmt = ctx.ast.statement_declaration(ctx.ast.declaration_variable(
+            //         SPAN,
+            //         VariableDeclarationKind::Const,
+            //         ctx.ast.vec1(ctx.ast.variable_declarator(
+            //             SPAN,
+            //             VariableDeclarationKind::Const,
+            //             ctx.ast.binding_pattern(
+            //                 ctx.ast.binding_pattern_kind_from_binding_identifier(id),
+            //                 NONE,
+            //                 false,
+            //             ),
+            //             Some(ctx.ast.expression_from_function(new_function)),
+            //             false,
+            //         )),
+            //         false,
+            //     ));
+            // } else {
+            //     *stmt =
+            //         ctx.ast.statement_declaration(ctx.ast.declaration_from_function(new_function));
+            // }
         }
     }
 }
@@ -143,9 +148,19 @@ impl<'a, 'ctx> Traverse<'a> for AsyncToGenerator<'a, 'ctx> {
 impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
     fn transform_function(
         &self,
-        func: &mut Function<'a>,
+        func: &mut Box<'a, Function<'a>>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Function<'a> {
+    ) -> Option<Expression<'a>> {
+        if func.is_typescript_syntax() {
+            return None;
+        }
+
+        if func.id.is_none() || !func.params.has_parameter() {
+            let params = ctx.ast.move_formal_parameters(&mut func.params);
+            let body = ctx.ast.move_function_body(func.body.as_mut().unwrap());
+            return Some(self.wrap_helper_function(func.scope_id.get(), params, body, ctx));
+        }
+
         let target = ctx.ast.function(
             func.r#type,
             SPAN,
@@ -172,7 +187,8 @@ impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
         let body = ctx.ast.function_body(SPAN, ctx.ast.vec(), ctx.ast.vec1(body));
         let body = ctx.ast.alloc(body);
         let params = ctx.ast.formal_parameters(SPAN, func.params.kind, ctx.ast.vec(), NONE);
-        ctx.ast.function(
+        // TODO: Waiting process
+        let _function = ctx.ast.function(
             FunctionType::FunctionExpression,
             SPAN,
             None,
@@ -184,7 +200,9 @@ impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
             params,
             func.return_type.take(),
             Some(body),
-        )
+        );
+
+        None
     }
 
     fn transform_arrow_function(
@@ -208,22 +226,41 @@ impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
             *statement = ctx.ast.statement_return(expression.span(), Some(expression));
         }
 
-        let r#type = FunctionType::FunctionExpression;
-        let parameters = ctx.ast.alloc(ctx.ast.formal_parameters(
-            SPAN,
-            arrow.params.kind,
-            ctx.ast.move_vec(&mut arrow.params.items),
-            arrow.params.rest.take(),
-        ));
-        let body = Some(body);
-        let mut function = ctx
-            .ast
-            .function(r#type, SPAN, None, true, false, false, NONE, NONE, parameters, NONE, body);
-        function.scope_id = arrow.scope_id.clone();
-        if let Some(scope_id) = function.scope_id.get() {
+        let scope_id = arrow.scope_id.get();
+        if let Some(scope_id) = scope_id {
             ctx.scopes_mut().get_flags_mut(scope_id).remove(ScopeFlags::Arrow);
         }
 
+        self.wrap_helper_function(
+            scope_id,
+            ctx.ast.move_formal_parameters(&mut arrow.params),
+            body,
+            ctx,
+        )
+    }
+
+    fn wrap_helper_function(
+        &self,
+        scope_id: Option<ScopeId>,
+        parameters: FormalParameters<'a>,
+        body: FunctionBody<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        let r#type = FunctionType::FunctionExpression;
+        let mut function = ctx.ast.function(
+            r#type,
+            SPAN,
+            None,
+            true,
+            false,
+            false,
+            NONE,
+            NONE,
+            parameters,
+            NONE,
+            Some(body),
+        );
+        function.scope_id = Cell::new(scope_id);
         let arguments =
             ctx.ast.vec1(ctx.ast.argument_expression(ctx.ast.expression_from_function(function)));
         self.ctx.helper_call_expr(Helper::AsyncToGenerator, arguments, ctx)
