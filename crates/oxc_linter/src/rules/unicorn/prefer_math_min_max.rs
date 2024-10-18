@@ -77,13 +77,17 @@ impl Rule for PreferMathMinMax {
                 return fixer.noop();
             };
 
-            return match condition_type {
-                TypeOptions::Max => fixer
-                    .replace(conditional_expr.span, format!("Math.max({consequent}, {alternate})")),
-                TypeOptions::Min => fixer
-                    .replace(conditional_expr.span, format!("Math.min({consequent}, {alternate})")),
-                TypeOptions::Unknown => unreachable()
-            };
+            match condition_type {
+                TypeOptions::Max => fixer.replace(
+                    conditional_expr.span,
+                    Cow::Owned(format!("Math.max({consequent}, {alternate})")),
+                ),
+                TypeOptions::Min => fixer.replace(
+                    conditional_expr.span,
+                    Cow::Owned(format!("Math.min({consequent}, {alternate})")),
+                ),
+                TypeOptions::Unknown => unreachable!(),
+            }
         });
     }
 }
@@ -92,17 +96,15 @@ fn get_expr_value(expr: &Expression) -> Option<String> {
     match expr {
         Expression::NumericLiteral(lit) => Some(lit.to_string()),
         Expression::UnaryExpression(lit) => {
-            let mut unary_str: Vec<Cow<str>> = Vec::new();
-
-            unary_str.push(Cow::Borrowed(lit.operator.as_str()));
+            let mut unary_str: String = String::from(lit.operator.as_str());
 
             let Some(unary_lit) = get_expr_value(&lit.argument) else {
-                return Some(unary_str.concat());
+                return Some(unary_str.to_string());
             };
 
-            unary_str.push(Cow::Borrowed(unary_lit.as_str()));
+            unary_str.push_str(unary_lit.as_str());
 
-            Some(unary_str.concat())
+            Some(unary_str.to_string())
         }
         Expression::Identifier(identifier) => Some(identifier.name.to_string()),
         _ => None,
@@ -174,6 +176,7 @@ fn test() {
         r"Math.min(50, height);",
         r"Math.max(-50, height);",
         r"const foo = height < 50n ? height : 50n;",
+    ];
 
     let fail: Vec<&str> = vec![
         r"const foo = height < 50 ? height : 50;",
