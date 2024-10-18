@@ -4,122 +4,152 @@ expression: snapshot
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/if_stmt_in_for_in.js
 ---
 bb0: {
-
+	(BasicBlockFlags(Implicit | Error))
 }
 
 bb1: {
-
+	(BasicBlockFlags(Start | Referenced | Shared))
 }
 
 bb2: {
-
+	(BasicBlockFlags(Implicit | Error))
 }
 
 bb3: {
+	(BasicBlockFlags(Start | Referenced))
 	statement
 	statement
 }
 
 bb4: {
-
+	(BasicBlockFlags(LoopLabel | Referenced))
 }
 
 bb5: {
+	(BasicBlockFlags(Referenced | Shared))
 	iteration <in>
 }
 
 bb6: {
+	(BasicBlockFlags(Referenced | Shared))
 	statement
 	statement
 }
 
 bb7: {
+	(BasicBlockFlags(TrueCondition | FalseCondition | Referenced))
 	condition
 }
 
 bb8: {
+	(BasicBlockFlags(Referenced | Shared))
 	statement
 	statement
 	break
 }
 
 bb9: {
+	(BasicBlockFlags(Unreachable | Referenced))
 	unreachable
 }
 
 bb10: {
+	(BasicBlockFlags(Referenced | Shared))
 	statement
 }
 
 bb11: {
+	(BasicBlockFlags(TrueCondition | FalseCondition | Referenced))
 	condition
 }
 
 bb12: {
+	(BasicBlockFlags(Referenced | Shared))
 	statement
 	statement
 	continue
 }
 
 bb13: {
+	(BasicBlockFlags(Unreachable | Referenced))
 	unreachable
 }
 
 bb14: {
-
+	(BasicBlockFlags(Referenced))
 }
 
 bb15: {
+	(BasicBlockFlags(Referenced))
 	statement
 	statement
 }
 
 bb16: {
+	(BasicBlockFlags(0x0))
 	statement
 }
 
 bb17: {
-
+	(BasicBlockFlags(0x0))
 }
 
 digraph {
-    0 [ label = "bb0" shape = box]
-    1 [ label = "bb1" shape = box]
-    2 [ label = "bb2" shape = box]
+    0 [ label = "bb0
+(BasicBlockFlags(Implicit | Error))" shape = box]
+    1 [ label = "bb1
+(BasicBlockFlags(Start | Referenced | Shared))" shape = box]
+    2 [ label = "bb2
+(BasicBlockFlags(Implicit | Error))" shape = box]
     3 [ label = "bb3
+(BasicBlockFlags(Start | Referenced))
 ForInStatement
 VariableDeclaration" shape = box]
-    4 [ label = "bb4" shape = box]
+    4 [ label = "bb4
+(BasicBlockFlags(LoopLabel | Referenced))" shape = box]
     5 [ label = "bb5
+(BasicBlockFlags(Referenced | Shared))
 Iteration(IdentifierReference(array) in expr)" shape = box]
     6 [ label = "bb6
+(BasicBlockFlags(Referenced | Shared))
 BlockStatement
 IfStatement" shape = box]
     7 [ label = "bb7
+(BasicBlockFlags(TrueCondition | FalseCondition | Referenced))
 Condition(if cond)" shape = box]
     8 [ label = "bb8
+(BasicBlockFlags(Referenced | Shared))
 BlockStatement
 ExpressionStatement
 break" shape = box]
     9 [ label = "bb9
+(BasicBlockFlags(Unreachable | Referenced))
 unreachable" shape = box]
     10 [ label = "bb10
+(BasicBlockFlags(Referenced | Shared))
 IfStatement" shape = box]
     11 [ label = "bb11
+(BasicBlockFlags(TrueCondition | FalseCondition | Referenced))
 Condition(else cond)" shape = box]
     12 [ label = "bb12
+(BasicBlockFlags(Referenced | Shared))
 BlockStatement
 ExpressionStatement
 continue" shape = box]
     13 [ label = "bb13
+(BasicBlockFlags(Unreachable | Referenced))
 unreachable" shape = box]
-    14 [ label = "bb14" shape = box]
+    14 [ label = "bb14
+(BasicBlockFlags(Referenced))" shape = box]
     15 [ label = "bb15
+(BasicBlockFlags(Referenced))
 ExpressionStatement
 ExpressionStatement" shape = box]
     16 [ label = "bb16
+(BasicBlockFlags(0x0))
 ExpressionStatement" shape = box]
-    17 [ label = "bb17" shape = box]
+    17 [ label = "bb17
+(BasicBlockFlags(0x0))" shape = box]
     1 -> 0 [ label="Error(Implicit)", style=dashed, color=red]
     3 -> 2 [ label="Error(Implicit)", style=dashed, color=red]
     1 -> 3 [ label="NewFunction"]

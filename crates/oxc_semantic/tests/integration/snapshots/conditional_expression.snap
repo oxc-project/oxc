@@ -4,38 +4,47 @@ expression: snapshot
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/conditional_expression.js
 ---
 bb0: {
-
+	(BasicBlockFlags(Implicit | Error))
 }
 
 bb1: {
+	(BasicBlockFlags(Start | Referenced))
 	statement
 }
 
 bb2: {
+	(BasicBlockFlags(TrueCondition | FalseCondition | Referenced | Shared))
 	condition
 }
 
 bb3: {
-
+	(BasicBlockFlags(Referenced))
 }
 
 bb4: {
-
+	(BasicBlockFlags(Referenced))
 }
 
 bb5: {
+	(BasicBlockFlags(0x0))
 	statement
 }
 
 digraph {
-    0 [ label = "bb0" shape = box]
+    0 [ label = "bb0
+(BasicBlockFlags(Implicit | Error))" shape = box]
     1 [ label = "bb1
+(BasicBlockFlags(Start | Referenced))
 VariableDeclaration" shape = box]
     2 [ label = "bb2
+(BasicBlockFlags(TrueCondition | FalseCondition | Referenced | Shared))
 Condition(CallExpression(a))" shape = box]
-    3 [ label = "bb3" shape = box]
-    4 [ label = "bb4" shape = box]
+    3 [ label = "bb3
+(BasicBlockFlags(Referenced))" shape = box]
+    4 [ label = "bb4
+(BasicBlockFlags(Referenced))" shape = box]
     5 [ label = "bb5
+(BasicBlockFlags(0x0))
 VariableDeclaration" shape = box]
     1 -> 0 [ label="Error(Implicit)", style=dashed, color=red]
     2 -> 0 [ label="Error(Implicit)", style=dashed, color=red]
