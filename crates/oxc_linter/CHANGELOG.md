@@ -4,6 +4,91 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.10.0] - 2024-10-18
+
+- 782f0a7 codegen: [**BREAKING**] Rename `print_char` method to `print_ascii_byte` (#6512) (overlookmotel)
+
+- 7645e5c codegen: [**BREAKING**] Remove CommentOptions API (#6451) (Boshen)
+
+- 5200960 oxc: [**BREAKING**] Remove passing `Trivias` around (#6446) (Boshen)
+
+- 80266d8 linter: [**BREAKING**] Support plugins in oxlint config files (#6088) (DonIsaac)
+
+### Features
+
+- 6f22538 ecmascript: Add `ToBoolean`, `ToNumber`, `ToString` (#6502) (Boshen)
+- 1e7fab3 linter: Implement `no-callback-in-promise` (#6157) (dalaoshu)
+- c56343d linter: Promote `no_unsafe_optional_chaining` to correctness (#6491) (Boshen)
+- 454874a linter: Implement `react/iframe-missing-sandbox` (#6383) (Radu Baston)
+- c8174e2 linter: Add suggestions for `no-plusplus` (#6376) (camchenry)
+- 6e3224d linter: Configure by category in config files (#6120) (DonIsaac)
+- c5e66e1 linter/no-unused-vars: Report own type references within class, interface, and type alias declarations (#6557) (DonIsaac)
+- 8c78f97 linter/node: Implement no-new-require (#6165) (Jelle van der Waa)
+
+### Bug Fixes
+
+- e340424 linter: Support import type with namespaced import in `import/no-duplicates` (#6650) (Dmitry Zakharov)
+- a668397 linter: Panic in `no-else-return` (#6648) (dalaoshu)
+- 41dc8e3 linter: Stack overflow in `oxc/no-async-endpoint-handlers` (#6614) (DonIsaac)
+- d07a9b0 linter: Panic in `no-zero-fractions` (#6607) (dalaoshu)
+- d6a0d2e linter: Fix file name checking behavior of `unicorn/filename-case` (#6463) (camchenry)
+- 0784e74 linter: Error fixer of `switch-case-braces` (#6474) (dalaoshu)
+- e811812 linter: Error diagnostic message based on parameter length of valid-expect (#6455) (dalaoshu)
+- f71c91e linter: Move `eslint/sort-keys` to `style` category (#6377) (DonIsaac)
+- 2b86de9 linter/no-control-regex: False negative for flags in template literals (#6531) (DonIsaac)
+- 685a590 linter/no-control-regex: Better diagnostic messages (#6530) (DonIsaac)
+- 6d5a9f2 linter/no-control-regex: Allow capture group references (#6529) (DonIsaac)
+- ba53bc9 linter/no-unused-vars: False positives in TS type assertions (#6397) (DonIsaac)
+- d3e59c6 linter/no-unused-vars: False positive in some default export cases (#6395) (DonIsaac)
+- e08f956 linter/no-unused-vars: False positive for functions and classes in arrays (#6394) (DonIsaac)
+- b9d7c5f no-unused-vars: Consider functions within conditional expressions usable (#6553) (Brian Donovan)
+
+### Performance
+
+- 0cbd4d0 linter: Avoid megamorphism in `RuleFixer` methods (#6606) (DonIsaac)
+- 725f9f6 linter: Get fewer parent nodes in `unicorn/prefer-dom-node-text-content` (#6467) (camchenry)
+- c00f669 linter: Use NonZeroUsize for pending module cache entries (#6439) (DonIsaac)
+- a1a2721 linter: Replace `ToString::to_string` with `CompactStr` in remaining rules (#6407) (camchenry)
+- c5c69d6 linter: Use `CompactStr` in `valid-title` (#6406) (camchenry)
+- d66e826 linter: Use `CompactStr` in `prefer-lowercase-title` (#6405) (camchenry)
+- 889400c linter: Use `CompactStr` for `get_node_name` in Jest rules (#6403) (camchenry)
+- 9906849 linter: Use `CompactStr` in `no-large-snapshots` (#6402) (camchenry)
+- c382ec4 linter: Use `CompactStr` in `no-hooks` (#6401) (camchenry)
+- 24a5d9b linter: Use `CompactStr` in `expect-expect` (#6400) (camchenry)
+- 71dbdad linter: Use `CompactStr` in `no-console` (#6399) (camchenry)
+- f5f00a1 linter: Use `CompactStr` in `no-bitwise` (#6398) (camchenry)
+- 62afaa9 linter/jsx-no-comment-textnodes: Remove regex for checking comment patterns (#6534) (camchenry)
+- b3d0cce linter/no-unescaped-entities: Add fast path to check if char should be replaced (#6594) (camchenry)
+- ee73f56 linter/no-unused-vars: Do not construct `Regex` for default ignore pattern (#6590) (camchenry)
+- 77ddab8 linter/numeric-separators-style: Replace regex with number parser (#6546) (camchenry)
+- 8f47cd0 linter/react: Remove regex patterns in `no-unknown-property` (#6536) (camchenry)
+
+### Documentation
+
+- 557f941 linter: Add docs to no-unused-vars and Tester (#6558) (DonIsaac)
+
+### Refactor
+
+- ecce5c5 linter: Improve recursive argument handling and diagnostics creation (#6513) (no-yan)
+- f960e9e linter: Add suggested file names for `unicorn/filename-case` (#6465) (camchenry)
+- 7240ee2 linter: Make advertised fix kinds consistent (#6461) (Alexander S.)
+- b48c368 linter: `no_global_assign` rule: reduce name lookups (#6460) (overlookmotel)
+- 2566ce7 linter: Remove OxlintOptions (#6098) (DonIsaac)
+- 002078a linter: Make Runtime's members private (#6440) (DonIsaac)
+- 6a0a533 linter: Move module cache logic out of Runtime (#6438) (DonIsaac)
+- c18c6e9 linter: Split service code into separate modules (#6437) (DonIsaac)
+- 5ea9ef7 linter: Improve labels and help message for `eslint/no-useless-constructor` (#6389) (DonIsaac)
+- 2c32dac linter/no-control-regex: Remove duplicate code (#6527) (DonIsaac)
+- 435a89c oxc: Remove useless `allocator.alloc(program)` calls (#6571) (Boshen)
+- f70e93b oxc: Ban index methods on std::str::Chars (#6075) (dalaoshu)
+
+### Testing
+
+- a6cae98 linter: Make sure all auto-fixing rules have fixer test (#6378) (DonIsaac)
+- 06b09b2 linter/no-unused-vars: Enable now-passing tests (#6556) (DonIsaac)
+- badd11c linter/no-unused-vars: Ignored catch parameters (#6555) (DonIsaac)
+- 84aa2a2 linter/no-useless-constructor: Add cases for initializers in subclass constructors (#6390) (DonIsaac)
+
 ## [0.9.10] - 2024-10-07
 
 - 5a73a66 regular_expression: [**BREAKING**] Simplify public APIs (#6262) (leaysgur)
