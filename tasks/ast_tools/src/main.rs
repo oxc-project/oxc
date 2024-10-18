@@ -17,7 +17,10 @@ mod rust_ast;
 mod schema;
 mod util;
 
-use derives::{DeriveCloneIn, DeriveContentEq, DeriveContentHash, DeriveGetSpan, DeriveGetSpanMut};
+use derives::{
+    DeriveCloneIn, DeriveContentEq, DeriveContentHash, DeriveESTree, DeriveGetSpan,
+    DeriveGetSpanMut,
+};
 use fmt::cargo_fmt;
 use generators::{
     AssertLayouts, AstBuilderGenerator, AstKindGenerator, Generator, GeneratorOutput,
@@ -40,6 +43,7 @@ static SOURCE_PATHS: &[&str] = &[
 ];
 
 const AST_CRATE: &str = "crates/oxc_ast";
+// const TYPESCRIPT_PACKAGE: &str = "npm/oxc-types";
 
 type Result<R> = std::result::Result<R, String>;
 type TypeId = usize;
@@ -75,6 +79,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         .derive(DeriveGetSpanMut)
         .derive(DeriveContentEq)
         .derive(DeriveContentHash)
+        .derive(DeriveESTree)
         .generate(AssertLayouts)
         .generate(AstKindGenerator)
         .generate(AstBuilderGenerator)

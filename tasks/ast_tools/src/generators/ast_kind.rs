@@ -175,7 +175,7 @@ impl Generator for AstKindGenerator {
 
         let header = generated_header!();
 
-        GeneratorOutput(
+        GeneratorOutput::Rust(
             output(crate::AST_CRATE, "ast_kind.rs"),
             quote! {
                 #header

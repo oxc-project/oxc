@@ -21,6 +21,11 @@ pub use crate::{
     span::{GetSpan, GetSpanMut, Span, SPAN},
 };
 
+mod generated {
+    #[cfg(feature = "serialize")]
+    pub mod derive_estree;
+}
+
 #[doc(hidden)]
 pub mod __internal {
     // Used by `format_compact_str!` macro defined in `compact_str.rs`
