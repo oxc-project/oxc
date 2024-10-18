@@ -156,6 +156,12 @@ impl<'a> TraverseCtx<'a> {
         self.ancestry.ancestor(level)
     }
 
+    /// Get the index of the current node in `Vec<'a, Statements<'a>>`.
+    #[inline]
+    pub fn ancestor_index<'t>(&'t self, statement: &Statement<'a>) -> Option<usize> {
+        self.ancestry.ancestor_index(statement)
+    }
+
     /// Get iterator over ancestors, starting with parent and working up.
     ///
     /// Last `Ancestor` returned will be `Program`. `Ancestor::None` is not included in iteration.
