@@ -83,8 +83,8 @@ impl Rule for NoDuplicates {
 
         for (_path, group) in &groups {
             let has_type_import = module_record.import_entries.iter().any(|entry| entry.is_type);
-            // When prefer_inline is false, 0 is value, 1 is type named, 2 is type default or type namespace
-            // When prefer_inline is true, 0 is value and type named, 2 is type default or type namespace
+            // When prefer_inline is false, 0 is value, 1 is type named, 2 is type namespace and 3 is type default
+            // When prefer_inline is true, 0 is value and type named, 2 is type namespace and 3 is type default
             let import_entries_maps = group
                 .into_iter()
                 .flat_map(|(_path, requested_modules)| requested_modules)
@@ -102,8 +102,8 @@ impl Rule for NoDuplicates {
                         if entry.is_type {
                             return match entry.import_name {
                                 ImportImportName::Name(_) => i8::from(!self.prefer_inline),
-                                ImportImportName::NamespaceObject
-                                | ImportImportName::Default(_) => 2,
+                                ImportImportName::NamespaceObject => 2,
+                                ImportImportName::Default(_) => 3,
                             };
                         }
                     }
@@ -113,6 +113,7 @@ impl Rule for NoDuplicates {
             check_duplicates(import_entries_maps.get(&0));
             check_duplicates(import_entries_maps.get(&1));
             check_duplicates(import_entries_maps.get(&2));
+            check_duplicates(import_entries_maps.get(&3));
         }
     }
 }
@@ -132,8 +133,8 @@ fn test() {
         // r#"import x from './bar?optionX'; import y from './bar?optionY';"#,
         (r"import x from './foo'; import y from './bar';", None),
         // TODO: separate namespace
-        // r#"import * as ns from './foo'; import {y} from './foo'"#,
-        // r#"import {y} from './foo'; import * as ns from './foo'"#,
+        // (r"import * as ns from './foo'; import { y } from './foo'", None),
+        // (r"import { y } from './foo'; import * as ns from './foo'", None),
         // TypeScript
         (r"import type { x } from './foo'; import y from './foo'", None),
         (r"import type x from './foo'; import type y from './bar'", None),
@@ -160,6 +161,16 @@ fn test() {
         (r"import { type x } from './foo'; import { y } from './foo'", None),
         (r"import { type x } from './foo'; import type y from 'foo'", None),
         (r"import { x } from './foo'; export { x } from './foo'", None),
+        // for cases in https://github.com/import-js/eslint-plugin-import/issues/2750
+        (r"import type * as something from './foo'; import type y from './foo';", None),
+        (r"import type * as something from './foo'; import type { y } from './foo';", None),
+        (r"import type y from './foo'; import type * as something from './foo';", None),
+        (r"import type { y } from './foo'; import type * as something from './foo';", None),
+        // type + import
+        (r"import type * as something from './foo'; import y from './foo';", None),
+        (r"import type * as something from './foo'; import { y } from './foo';", None),
+        (r"import y from './foo'; import type * as something from './foo';", None),
+        (r"import { y } from './foo'; import type * as something from './foo';", None),
     ];
 
     let fail = vec![
