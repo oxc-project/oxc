@@ -22,8 +22,8 @@ doctest = false
 
 [dependencies]
 oxc = { workspace = true, features = ["serialize"] }
-serde = { workspace = true, features = ["derive"] }
 
+serde = { workspace = true, features = ["derive"] }
 serde-wasm-bindgen = { workspace = true }
 tsify = { workspace = true }
 wasm-bindgen = { workspace = true }
