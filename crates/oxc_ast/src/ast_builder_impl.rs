@@ -126,6 +126,18 @@ impl<'a> AstBuilder<'a> {
         mem::replace(decl, empty_decl)
     }
 
+    #[inline]
+    pub fn move_formal_parameters(self, params: &mut FormalParameters<'a>) -> FormalParameters<'a> {
+        let empty_params = self.formal_parameters(Span::default(), params.kind, self.vec(), NONE);
+        mem::replace(params, empty_params)
+    }
+
+    #[inline]
+    pub fn move_function_body(self, body: &mut FunctionBody<'a>) -> FunctionBody<'a> {
+        let empty_body = self.function_body(Span::default(), self.vec(), self.vec());
+        mem::replace(body, empty_body)
+    }
+
     pub fn move_array_expression_element(
         self,
         element: &mut ArrayExpressionElement<'a>,
