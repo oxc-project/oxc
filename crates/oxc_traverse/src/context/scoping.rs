@@ -180,7 +180,7 @@ impl TraverseScoping {
     ///
     /// This function is fairly expensive, because it aims to replicate Babel's output.
     ///
-    /// `init_uid_names` iterates through every single binding and unresolved reference in the entire AST,
+    /// `get_uid_names` iterates through every single binding and unresolved reference in the entire AST,
     /// and builds a hashset of symbols which could clash with UIDs.
     /// Once that's built, it's cached, but `find_uid_name` still has to do at least one hashset lookup,
     /// and a hashset insert. If the first name tried is already in use, it will do another hashset lookup,
@@ -218,7 +218,7 @@ impl TraverseScoping {
     pub fn generate_uid_name(&mut self, name: &str) -> CompactStr {
         // If `uid_names` is not already populated, initialize it
         if self.uid_names.is_none() {
-            self.init_uid_names();
+            self.uid_names = Some(self.get_uid_names());
         }
         let uid_names = self.uid_names.as_mut().unwrap();
 
@@ -406,16 +406,15 @@ impl TraverseScoping {
         self.current_scope_id = scope_id;
     }
 
-    /// Initialize `uid_names`.
+    /// Get `uid_names`.
     ///
     /// Iterate through all symbols and unresolved references in AST and identify any var names
     /// which could clash with UIDs (start with `_`). Build a hash set containing them.
     ///
-    /// Once this map is created, generating a UID is a relatively quick operation, rather than
+    /// Once this set is created, generating a UID is a relatively quick operation, rather than
     /// iterating over all symbols and unresolved references every time generate a UID.
-    fn init_uid_names(&mut self) {
-        let uid_names = self
-            .scopes
+    fn get_uid_names(&mut self) -> FxHashSet<CompactStr> {
+        self.scopes
             .root_unresolved_references()
             .keys()
             .chain(self.symbols.names.iter())
@@ -426,8 +425,7 @@ impl TraverseScoping {
                     None
                 }
             })
-            .collect();
-        self.uid_names = Some(uid_names);
+            .collect()
     }
 }
 
