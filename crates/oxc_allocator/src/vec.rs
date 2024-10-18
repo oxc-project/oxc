@@ -11,7 +11,7 @@ use std::{
 };
 
 use allocator_api2::vec;
-use bumpalo::Bump;
+use bump_scope::Bump;
 #[cfg(any(feature = "serialize", test))]
 use serde::{ser::SerializeSeq, Serialize, Serializer};
 

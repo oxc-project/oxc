@@ -44,8 +44,11 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-pub use bumpalo::collections::String;
-use bumpalo::Bump;
+use bump_scope::Bump;
+
+/// A bump-allocated string.
+pub type String<'a> = bump_scope::BumpString<'a, 'a>;
+type BumpScope<'a> = bump_scope::BumpScope<'a>;
 
 mod boxed;
 mod clone_in;
@@ -67,6 +70,12 @@ pub use vec::Vec;
 #[derive(Default)]
 pub struct Allocator {
     bump: Bump,
+}
+
+impl<'a> From<&'a Allocator> for &'a BumpScope<'a> {
+    fn from(value: &'a Allocator) -> Self {
+        value.bump.as_scope()
+    }
 }
 
 impl From<Bump> for Allocator {
@@ -93,7 +102,7 @@ impl DerefMut for Allocator {
 mod test {
     use std::ops::Deref;
 
-    use bumpalo::Bump;
+    use bump_scope::Bump;
 
     use crate::Allocator;
 

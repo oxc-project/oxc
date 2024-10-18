@@ -61,12 +61,12 @@ impl<'a> AstBuilder<'a> {
 
     #[inline]
     pub fn str(self, value: &str) -> &'a str {
-        String::from_str_in(value, self.allocator).into_bump_str()
+        String::from_str_in(value, self.allocator).into_fixed_string().into_str()
     }
 
     #[inline]
     pub fn atom(self, value: &str) -> Atom<'a> {
-        Atom::from(String::from_str_in(value, self.allocator).into_bump_str())
+        Atom::from(&*String::from_str_in(value, self.allocator).into_fixed_string().into_str())
     }
 
     /// # SAFETY
