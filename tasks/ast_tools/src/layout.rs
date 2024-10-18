@@ -170,6 +170,7 @@ impl Layout {
 /// Returns the max valid number in a primitive with the size of `n` bytes.
 /// Panics
 /// For `n` bigger than `16`, Or if it's not a power of 2 number
+#[expect(clippy::cast_lossless)]
 fn max_val_of_bytes(n: usize) -> u128 {
     match n {
         1 => u8::MAX as u128,

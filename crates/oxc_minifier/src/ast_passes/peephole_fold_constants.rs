@@ -300,7 +300,7 @@ impl<'a, 'b> PeepholeFoldConstants {
                 | (ValueType::Boolean, ValueType::Boolean) => {
                 let left_number = ctx.get_number_value(left)?;
                 let right_number = ctx.get_number_value(right)?;
-                let Ok(value) = TryInto::<f64>::try_into(left_number + right_number) else { return None };
+                let value = left_number + right_number;
                 // Float if value has a fractional part, otherwise Decimal
                 let number_base = if is_exact_int64(value) { NumberBase::Decimal } else { NumberBase::Float };
                 // todo: add raw &str

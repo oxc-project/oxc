@@ -846,46 +846,43 @@ impl<'a> Gen for ExportNamedDeclaration<'a> {
         if self.export_kind.is_type() {
             p.print_str("type ");
         }
-        match &self.declaration {
-            Some(decl) => {
-                match decl {
-                    Declaration::VariableDeclaration(decl) => decl.print(p, ctx),
-                    Declaration::FunctionDeclaration(decl) => decl.print(p, ctx),
-                    Declaration::ClassDeclaration(decl) => decl.print(p, ctx),
-                    Declaration::TSModuleDeclaration(decl) => decl.print(p, ctx),
-                    Declaration::TSTypeAliasDeclaration(decl) => decl.print(p, ctx),
-                    Declaration::TSInterfaceDeclaration(decl) => decl.print(p, ctx),
-                    Declaration::TSEnumDeclaration(decl) => decl.print(p, ctx),
-                    Declaration::TSImportEqualsDeclaration(decl) => decl.print(p, ctx),
-                }
-                if matches!(
-                    decl,
-                    Declaration::VariableDeclaration(_)
-                        | Declaration::TSTypeAliasDeclaration(_)
-                        | Declaration::TSImportEqualsDeclaration(_)
-                ) {
-                    p.print_semicolon_after_statement();
-                } else {
-                    p.print_soft_newline();
-                    p.needs_semicolon = false;
-                }
+        if let Some(decl) = &self.declaration {
+            match decl {
+                Declaration::VariableDeclaration(decl) => decl.print(p, ctx),
+                Declaration::FunctionDeclaration(decl) => decl.print(p, ctx),
+                Declaration::ClassDeclaration(decl) => decl.print(p, ctx),
+                Declaration::TSModuleDeclaration(decl) => decl.print(p, ctx),
+                Declaration::TSTypeAliasDeclaration(decl) => decl.print(p, ctx),
+                Declaration::TSInterfaceDeclaration(decl) => decl.print(p, ctx),
+                Declaration::TSEnumDeclaration(decl) => decl.print(p, ctx),
+                Declaration::TSImportEqualsDeclaration(decl) => decl.print(p, ctx),
             }
-            None => {
-                p.print_ascii_byte(b'{');
-                if !self.specifiers.is_empty() {
-                    p.print_soft_space();
-                    p.print_list(&self.specifiers, ctx);
-                    p.print_soft_space();
-                }
-                p.print_ascii_byte(b'}');
-                if let Some(source) = &self.source {
-                    p.print_soft_space();
-                    p.print_str("from");
-                    p.print_soft_space();
-                    source.print(p, ctx);
-                }
+            if matches!(
+                decl,
+                Declaration::VariableDeclaration(_)
+                    | Declaration::TSTypeAliasDeclaration(_)
+                    | Declaration::TSImportEqualsDeclaration(_)
+            ) {
                 p.print_semicolon_after_statement();
+            } else {
+                p.print_soft_newline();
+                p.needs_semicolon = false;
             }
+        } else {
+            p.print_ascii_byte(b'{');
+            if !self.specifiers.is_empty() {
+                p.print_soft_space();
+                p.print_list(&self.specifiers, ctx);
+                p.print_soft_space();
+            }
+            p.print_ascii_byte(b'}');
+            if let Some(source) = &self.source {
+                p.print_soft_space();
+                p.print_str("from");
+                p.print_soft_space();
+                source.print(p, ctx);
+            }
+            p.print_semicolon_after_statement();
         }
     }
 }

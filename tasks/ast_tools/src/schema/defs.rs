@@ -7,6 +7,7 @@ use crate::{
     TypeId,
 };
 
+#[expect(clippy::large_enum_variant)]
 #[derive(Debug, Serialize)]
 #[serde(untagged)]
 pub enum TypeDef {
