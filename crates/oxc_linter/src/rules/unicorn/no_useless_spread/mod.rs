@@ -380,13 +380,26 @@ fn check_useless_clone<'a>(
     is_array: bool,
     spread_elem: &SpreadElement<'a>,
     ctx: &LintContext<'a>,
-) -> bool {
+) {
     let span = Span::new(spread_elem.span.start, spread_elem.span.start + 3);
     let target = spread_elem.argument.get_inner_expression();
 
     // already diagnosed by first check
     if matches!(target, Expression::ArrayExpression(_) | Expression::ObjectExpression(_)) {
-        return false;
+        return;
+    }
+
+    // unsafe fixer of `[...new Array(1)]`
+    if let Expression::NewExpression(new_expr) = target {
+        let is_array_constructor = new_expr
+            .callee
+            .without_parentheses()
+            .get_identifier_reference()
+            .is_some_and(|id| id.name == "Array");
+
+        if is_array_constructor && new_expr.arguments.len() == 1 {
+            return;
+        }
     }
 
     let hint = target.const_eval();
@@ -397,9 +410,7 @@ fn check_useless_clone<'a>(
         ctx.diagnostic_with_fix(clone(span, is_array, name), |fixer| {
             fix_by_removing_array_spread(fixer, &array_or_obj_span, spread_elem)
         });
-        return true;
     }
-    false
 }
 
 fn diagnostic_name<'a>(ctx: &LintContext<'a>, expr: &Expression<'a>) -> Option<&'a str> {
@@ -577,6 +588,7 @@ fn test() {
         "[...arr.reduce((set, b) => set.add(b), new Set(iter))]",
         // NOTE: we may want to consider this a violation in the future
         "[...(foo ? new Set() : [])]",
+        "[...new Array(3)]",
     ];
 
     let fail = vec![
@@ -666,7 +678,6 @@ fn test() {
         r"[...foo.toSpliced(0, 1)]",
         r"[...foo.with(0, bar)]",
         r#"[...foo.split("|")]"#,
-        r"[...new Array(3)]",
         r"[...Object.keys(foo)]",
         r"[...Object.values(foo)]",
         r"[...Array.from(foo)]",
