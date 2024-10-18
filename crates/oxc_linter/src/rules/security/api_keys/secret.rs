@@ -31,20 +31,23 @@ pub struct SecretViolation<'a> {
     message: Cow<'a, str>,   // really should be &'static
 }
 
+// SAFETY: 8 is a valid value for NonZeroU32
+pub(super) const DEFAULT_MIN_LEN: NonZeroU32 = unsafe { NonZeroU32::new_unchecked(8) };
+pub(super) const DEFAULT_MIN_ENTROPY: f32 = 0.5;
+
 /// Metadata trait separated out of [`SecretScanner`]. The easiest way to implement this is with
 /// the [`oxc_macros::declare_oxc_secret!`] macro.
 pub trait SecretScannerMeta {
     /// Human-readable unique identifier describing what service this rule finds api keys for.
     /// Must be kebab-case.
-    fn rule_name(&self) -> &'static str;
+    fn rule_name(&self) -> Cow<'static, str>;
 
-    fn message(&self) -> &'static str;
+    fn message(&self) -> Cow<'static, str>;
 
     /// Min str length a key candidate must have to be considered a violation. Must be >= 1.
     #[inline]
     fn min_len(&self) -> NonZeroU32 {
-        // SAFETY: 8 is a valid value for NonZeroU32
-        unsafe { NonZeroU32::new_unchecked(8) }
+        DEFAULT_MIN_LEN
     }
 
     /// Secret candidates above this length will not be considered.
@@ -60,7 +63,7 @@ pub trait SecretScannerMeta {
     /// Defaults to 0.5
     #[inline]
     fn min_entropy(&self) -> f32 {
-        0.5
+        DEFAULT_MIN_ENTROPY
     }
 }
 
@@ -113,11 +116,7 @@ impl GetSpan for Secret<'_> {
 
 impl<'a> SecretViolation<'a> {
     pub fn new(secret: Secret<'a>, rule: &SecretsEnum) -> Self {
-        Self {
-            secret,
-            rule_name: Cow::Borrowed(rule.rule_name()),
-            message: Cow::Borrowed(rule.message()),
-        }
+        Self { secret, rule_name: rule.rule_name(), message: rule.message() }
     }
 
     pub fn message(&self) -> &str {
