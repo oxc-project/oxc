@@ -42,7 +42,7 @@ macro_rules! define_derive {
                 let prelude = Self::prelude();
 
                 // from `x::y::z` to `crate::y::z::*`
-                let use_modules = module_paths.into_iter().map(|it|{
+                let use_modules = module_paths.into_iter().map(|it| {
                     let local_path = ["crate"]
                         .into_iter()
                         .chain(it.strip_suffix("::mod").unwrap_or(it).split("::").skip(1))
