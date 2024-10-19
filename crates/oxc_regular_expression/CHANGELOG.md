@@ -4,6 +4,27 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.32.0] - 2024-10-19
+
+### Features
+
+- e310e52 parser: Generate `Serialize` impls in ast_tools (#6404) (ottomated)
+- b5b0af9 regular_expression: Support RegExp Modifiers (#6410) (leaysgur)
+
+### Bug Fixes
+
+- 9f9057b regular_expression: Fixed control Y regular expression (#6524) (Tapan Prakash)
+- c822b48 regular_expression: Fix CharacterClass negative codegen (#6415) (leaysgur)
+- 384d5be regular_expression: Flatten Spans on regex AST nodes (#6396) (ottomated)
+
+### Performance
+
+- 7c20056 regex: Reduce string allocations in `Display` impls (#6528) (DonIsaac)
+
+### Styling
+
+- fb916b2 regular_expression: Re-order dependencies in `Cargo.toml` (#6672) (overlookmotel)
+
 ## [0.31.0] - 2024-10-08
 
 - 5a73a66 regular_expression: [**BREAKING**] Simplify public APIs (#6262) (leaysgur)

@@ -4,6 +4,62 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.32.0] - 2024-10-19
+
+- 5200960 oxc: [**BREAKING**] Remove passing `Trivias` around (#6446) (Boshen)
+
+### Features
+
+- a01a5df transformer: Pass TransformerCtx to async-to-generator plugin (#6633) (Dunqing)
+- a9260cf transformer: `async-to-generator` plugin. (#5590) (Ethan Goh)
+- 8fe1b0a transformer: Support helper loader (#6162) (Dunqing)
+- ab51c2a transformer: Support `DefaultImport` in `ModuleImports` (#6434) (Dunqing)
+- a3dea9c transformer/async-to-generator: Handle arrow-function correctly (#6640) (Dunqing)
+- 41c8675 transformer/object-rest-spread: Using helper loader (#6449) (Dunqing)
+
+### Bug Fixes
+
+- 1d3d256 transformer: Correctly trim JSX (#6639) (magic-akari)
+- c6f2b5f transformer: `HelperLoader` common transform: do not assume `babelHelpers` is global (#6569) (overlookmotel)
+- 85d93ed transformer: Arrow function transform: correctly resolve `this` in class accessor properties (#6386) (overlookmotel)
+
+### Performance
+
+- f70a413 transformer: Object spread transform: do not lookup `Object` binding if not needed (#6570) (overlookmotel)
+
+### Documentation
+
+- f3451d7 transformer/async-to-generator: Remove empty lines from doc comment (#6642) (overlookmotel)
+- 448388a transformer/module_imports: Update outdated comments (#6574) (Dunqing)
+
+### Refactor
+
+- 856cab5 ecmascript: Move ToInt32 from `oxc_syntax` to `oxc_ecmascript` (#6471) (Boshen)
+- 1ba2a24 ecmascript: Remove `HasProto` which is not part of the spec (#6470) (Boshen)
+- 435a89c oxc: Remove useless `allocator.alloc(program)` calls (#6571) (Boshen)
+- 9281234 transformer: Shorten imports (#6643) (overlookmotel)
+- 3af0840 transformer: `HelperLoader`: add import immediately (#6601) (overlookmotel)
+- f81aa7f transformer: `HelperLoader` common transform: comments (#6599) (overlookmotel)
+- 679cc68 transformer: `HelperLoader` common transform: construct string directly in arena (#6596) (overlookmotel)
+- c346ebb transformer: `HelperLoader` common transform: `Helper` enum (#6595) (overlookmotel)
+- 7a028b3 transformer: Remove unnecessary `#![warn]` attr (#6585) (overlookmotel)
+- 8c6afe0 transformer: Reorder imports (#6582) (overlookmotel)
+- 779ff46 transformer: `HelperLoader` common transform: `Helper` struct (#6568) (overlookmotel)
+- bc24a24 transformer: `HelperLoader` common transform: use hashmap `Entry` API (#6567) (overlookmotel)
+- 9f02fc7 transformer: `HelperLoader` common transform: re-order fields (#6565) (overlookmotel)
+- 50ecade transformer: `HelperLoader` common transform: remove `Rc`s (#6564) (overlookmotel)
+- 1c1e9fc transformer: `HelperLoader` common transform: reorder methods (#6563) (overlookmotel)
+- c9054c8 transformer: Rename `ImportKind` to `Import` (#6561) (overlookmotel)
+- 9542c4e transformer: Add more specific methods to `ModuleImportsStore` (#6560) (overlookmotel)
+- 7e57a1d transformer: `ImportKind` use `BoundIdentifier` (#6559) (overlookmotel)
+- 602df9d transformer: Re-order fields of `Common` and `TransformCtx` (#6562) (overlookmotel)
+- 390abca transformer/async-to-generator: Use `helper_call_expr` (#6634) (Dunqing)
+- 2ff917f transformer/async-to-generator: Move internal methods below entry points (#6632) (Dunqing)
+
+### Styling
+
+- 9d43a11 transformer: Re-order dependencies (#6659) (overlookmotel)
+
 ## [0.31.0] - 2024-10-08
 
 - 01b878e parser: [**BREAKING**] Use `BindingIdentifier` for `namespace` declaration names (#6003) (DonIsaac)

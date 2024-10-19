@@ -4,6 +4,31 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.32.0] - 2024-10-19
+
+- 5200960 oxc: [**BREAKING**] Remove passing `Trivias` around (#6446) (Boshen)
+
+- 2808973 ast: [**BREAKING**] Add `Program::comments` (#6445) (Boshen)
+
+### Features
+
+- 58467a5 parser: Better handling of invalid modifiers (#6482) (DonIsaac)
+- 8ea6b72 parser: Better errors for reserved words used as identifier names (#6478) (DonIsaac)
+
+### Bug Fixes
+
+- 721cf0f parser: Should be treated comments where after `(` as leading comments of next token (#6588) (Dunqing)
+- b1bf12c parser: Do not parse `as` and `satisfies` expression in javascript (#6442) (Boshen)
+
+### Performance
+
+- 4d8bc8c parser: Precompute `is_typescript` (#6443) (Boshen)
+
+### Refactor
+
+- 073b02a ast: Type params field before params in TS function declaration types (#6391) (overlookmotel)
+- c45723b parser: Fix typo in var name (#6500) (overlookmotel)
+
 ## [0.31.0] - 2024-10-08
 
 - 01b878e parser: [**BREAKING**] Use `BindingIdentifier` for `namespace` declaration names (#6003) (DonIsaac)
