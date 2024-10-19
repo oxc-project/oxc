@@ -61,7 +61,7 @@ pub use convert::{FromIn, IntoIn};
 pub use string::String;
 pub use vec::Vec;
 
-/// A bump-allocated memory arena based on [bumpalo].
+/// A bump-allocated memory arena based on [bump-scope].
 ///
 /// ## No `Drop`s
 ///
