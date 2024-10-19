@@ -1,6 +1,6 @@
 {
   "name": "@oxc-parser/wasm",
-  "version": "0.31.0",
+  "version": "0.32.0",
   "description": "Wasm target for the oxc parser.",
   "packageManager": "pnpm@9.12.1",
   "keywords": [

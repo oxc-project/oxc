@@ -4,6 +4,58 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.32.0] - 2024-10-19
+
+### Features
+
+- e5ed6a5 codegen: Print negative numbers (#6624) (Boshen)
+- 15c04e5 ecmascript: Add feature flag for constant evaluation (Boshen)
+- e561880 ecmascript: Add constant_evaluation and side_effects code (#6550) (Boshen)
+- 3556062 ecmascript: Add `ConstantEvaluation` (#6549) (Boshen)
+- 39c2e66 ecmascript: Add `ToBigInt` and `StringToBigInt` (#6508) (Boshen)
+- 6f22538 ecmascript: Add `ToBoolean`, `ToNumber`, `ToString` (#6502) (Boshen)
+- 071e564 minifier: Finish implementing folding object expressions (#6586) (camc314)
+- 590925a minifier: Finish implementing folding array expressions (#6575) (camc314)
+- ef237cf minifier: Complete implementation of statement fusion (#6566) (camc314)
+- 97c8a36 minifier: Implement `collapse-variable-declarations` (#6464) (dalaoshu)
+- 096e590 minifier: Implement folding `charAt` string fns (#6436) (camc314)
+- e5a6f5d minifier: Implement converting template literals to strings (#6486) (camc314)
+- 14d0590 minifier: Implement folding of simple function calls (`Boolean`) (#6484) (camc314)
+- 7fbc7b6 minifier: Implement folding of simple function calls (`String`) (#6483) (camc314)
+- a4f57a4 minifier: Implement folding `indexOf` and `lastIndexOf` string fns (#6435) (camc314)
+- 3677ef8 minifier: Dce ExpressionStatements with no side effect (#6457) (7086cmd)
+- 06ea121 minifier: Fold for statement (#6450) (7086cmd)
+- a9544ae minifier: Partially implement minification for some known string methods (#6424) (camc314)
+- 9dc4ee9 minifier: Implement block stmt support for `StatementFusion` (#6422) (camc314)
+- ebbf77d minifier: Implement calculations for NumberValue (#6419) (7086cmd)
+- 97ac179 minifier: Arithmetic operations for infinity. (#6332) (7086cmd)
+- 13b0b0b minifier: Fold literal object constructors on window (#6379) (dalaoshu)
+
+### Bug Fixes
+
+- 389d261 minifier: `~~` operator should only work on numbers (#6598) (Boshen)
+- 16bea12 minifier: Use `to_js_string()` instead of `fs64::to_string` (#6597) (Boshen)
+- a71e8a0 minifier: Preserve init variable declarations when removing `for` statements during DCE (#6551) (magic-akari)
+
+### Refactor
+
+- 6d041fb ecmascript: Remove `NumberValue` (#6519) (Boshen)
+- 856cab5 ecmascript: Move ToInt32 from `oxc_syntax` to `oxc_ecmascript` (#6471) (Boshen)
+- f4cdc56 minifier: Use constant folding unary expression from `oxc_ecmascript` (#6647) (Boshen)
+- 67ad08a minifier: Unify `ValueType` (#6545) (Boshen)
+- bbca743 minifier: Move string methods to `oxc_ecmascript` (#6472) (Boshen)
+- 702c049 minifier: Move compress block to dce (#6468) (7086cmd)
+- 46a38c6 minifier: Remove allow `clippy::unused_self` (#6441) (Boshen)
+- 994b60b minifier: Use builtin get_number_value. (#6335) (7086cmd)
+- 435a89c oxc: Remove useless `allocator.alloc(program)` calls (#6571) (Boshen)
+- 1a90ec4 rust: Backport v1.82.0 changes to main branch first (#6690) (Boshen)
+
+### Testing
+
+- c5deb32 minifier: Port the rest of tests (#6420) (7086cmd)
+- e59da61 minifier: Add all test cases for `collapse_variable_declarations` (#6421) (dalaoshu)
+- 73d6a4a minifier: Port all replace_known_methods tests. (#6418) (7086cmd)
+
 ## [0.31.0] - 2024-10-08
 
 - 020bb80 codegen: [**BREAKING**] Change to `CodegenReturn::code` and `CodegenReturn::map` (#6310) (Boshen)

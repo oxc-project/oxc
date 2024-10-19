@@ -4,6 +4,65 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.32.0] - 2024-10-19
+
+- c0e9d7e codegen: [**BREAKING**] `Codegen::into_source_text` consume `Codegen` (#6539) (overlookmotel)
+
+- 782f0a7 codegen: [**BREAKING**] Rename `print_char` method to `print_ascii_byte` (#6512) (overlookmotel)
+
+- 91c87dd codegen: [**BREAKING**] Remove `Codegen::enableSourceMap` API (#6452) (Boshen)
+
+- 7645e5c codegen: [**BREAKING**] Remove CommentOptions API (#6451) (Boshen)
+
+- 5200960 oxc: [**BREAKING**] Remove passing `Trivias` around (#6446) (Boshen)
+
+### Features
+
+- e5ed6a5 codegen: Print negative numbers (#6624) (Boshen)
+
+### Bug Fixes
+
+- ba385fc codegen: Panic occurred when printing the comment of the right parenthesis (#6593) (Dunqing)
+- 02bfbfe codegen: Preserve parenthesis for `ChainExpression` (#6430) (Dunqing)
+- 2ade16e codegen: Invalid codegen when `in` inside bin expr in or loop (#6431) (camc314)
+- 6896efc codegen: Fix `in` in sequence expr in for loops (#6428) (camc314)
+
+### Performance
+
+- 77f3a1a codegen: Check last char with byte methods (#6509) (overlookmotel)
+- 18b68ff codegen: Optimize `CodeBuffer::print_ascii_byte` (#6516) (overlookmotel)
+
+### Documentation
+
+- 7e909a7 codegen: Fix example for `CodeBuffer::print_ascii_bytes` (#6535) (overlookmotel)
+- 235d357 codegen: Improve doc comments for `CodeBuffer` (#6511) (overlookmotel)
+- c8fa2eb codegen: Correct and reformat doc comments for `CodeBuffer` (#6504) (overlookmotel)
+- 40d1ee4 codegen: Fix and reformat `CodeBuffer` examples (#6499) (overlookmotel)
+
+### Refactor
+
+- 51fc63d codegen: Rename `CodeBuffer::print_bytes_unchecked` method (#6517) (overlookmotel)
+- 05a2ebd codegen: Reorder dependencies in `Cargo.toml` (#6514) (overlookmotel)
+- e7f3e28 codegen: Rename var in `CodeBuffer` (#6510) (overlookmotel)
+- 1bbd383 codegen: Rename `CodeBuffer::print_ascii_bytes` method (#6507) (overlookmotel)
+- cd9fe9e codegen: Rename vars in `CodeBuffer` methods (#6506) (overlookmotel)
+- fc536a5 codegen: Inline `CodeBuffer` methods (#6501) (overlookmotel)
+- 7420620 codegen: Add `CodeBuffer::as_bytes` method (#6498) (overlookmotel)
+- 8ae174b codegen: Rename `CodeBuffer::print_byte_unchecked` method (#6496) (overlookmotel)
+- 5843e01 codegen: Shorten `CodeBuffer::take_source_text` (#6495) (overlookmotel)
+- 951def6 codegen: Clarify safety comments in `CodeBuffer` (#6494) (overlookmotel)
+- 84a51ee codegen: Rename vars in `CodeBuffer` (#6493) (overlookmotel)
+- 05bd616 codegen: Add line break (#6492) (overlookmotel)
+- 204bf55 codegen: Add `CodeBuffer` to fix soundness hole (#6148) (DonIsaac)
+- 702b574 codegen: Only print necessary parentheses in TSAsExpression (#6429) (Dunqing)
+- f4cdc56 minifier: Use constant folding unary expression from `oxc_ecmascript` (#6647) (Boshen)
+- 1a90ec4 rust: Backport v1.82.0 changes to main branch first (#6690) (Boshen)
+
+### Testing
+
+- e7c89a5 codegen: Uncomment passed tests that are related to trailing comments (#6589) (Dunqing)
+- d816b0b codegen: Add test for `CodeBuffer::print_byte_unchecked` (#6497) (overlookmotel)
+
 ## [0.31.0] - 2024-10-08
 
 - 020bb80 codegen: [**BREAKING**] Change to `CodegenReturn::code` and `CodegenReturn::map` (#6310) (Boshen)
