@@ -7,7 +7,8 @@ use syn::{
     parse2,
     punctuated::Punctuated,
     spanned::Spanned,
-    token, Attribute, Expr, Ident, Meta, MetaNameValue, Token,
+    token::{self},
+    Attribute, Expr, Ident, Meta, MetaNameValue, Token,
 };
 
 use crate::util::NormalizeError;
@@ -98,17 +99,26 @@ impl From<&Ident> for CloneInAttribute {
 #[derive(Debug, Default)]
 pub struct ScopeAttribute {
     pub flags: Option<Expr>,
-    pub strict_if: Option<Expr>,
+    pub flags_if: Vec<(Expr, Expr)>,
 }
 
 impl Parse for ScopeAttribute {
     fn parse(input: ParseStream) -> Result<Self, syn::Error> {
         let parsed = input.parse_terminated(CommonAttribute::parse, Token![,])?;
         Ok(parsed.into_iter().fold(Self::default(), |mut acc, CommonAttribute { ident, args }| {
-            let expr = parse2(args).expect("Invalid `#[scope]` input.");
+            let exprs = ::syn::parse::Parser::parse2(
+                Punctuated::<Expr, Token![,]>::parse_terminated,
+                args.clone(),
+            )
+            .expect("Invalid `#[scope]` input.");
+            let mut exprs = exprs.into_iter();
             match ident.to_string().as_str() {
-                "flags" => acc.flags = Some(expr),
-                "strict_if" => acc.strict_if = Some(expr),
+                "flags" => acc.flags = Some(exprs.next().expect("Missing flags")),
+                "flags_if" => {
+                    let flags = exprs.next().expect("Missing flags");
+                    let condition = exprs.next().expect("Missing condition");
+                    acc.flags_if.push((flags, condition));
+                }
                 _ => {}
             }
             acc
