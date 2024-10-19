@@ -14,6 +14,11 @@ test = false
 doctest = false
 
 [dependencies]
+oxc_allocator = { workspace = true }
+oxc_parser = { workspace = true }
+oxc_prettier = { workspace = true }
+oxc_span = { workspace = true }
+
 bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }
 convert_case = { workspace = true }
 itertools = { workspace = true }

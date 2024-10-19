@@ -43,6 +43,7 @@ static SOURCE_PATHS: &[&str] = &[
 ];
 
 const AST_CRATE: &str = "crates/oxc_ast";
+// const TYPESCRIPT_PACKAGE: &str = "npm/oxc-types";
 
 type Result<R> = std::result::Result<R, String>;
 type TypeId = usize;
