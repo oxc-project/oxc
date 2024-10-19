@@ -1,7 +1,8 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/derives/estree.rs`
 
-#[allow(unused_imports)]
+#![allow(unused_imports, unused_mut, clippy::match_same_arms)]
+
 use serde::{ser::SerializeMap, Serialize, Serializer};
 
 #[allow(clippy::wildcard_imports)]
@@ -11,7 +12,6 @@ use crate::source_type::*;
 use crate::span::types::*;
 
 impl Serialize for Span {
-    #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -27,7 +27,6 @@ const TS_APPEND_CONTENT: &'static str =
     "export type Span = ({\n\tstart: number;\n\tend: number;\n});";
 
 impl Serialize for SourceType {
-    #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -43,7 +42,6 @@ impl Serialize for SourceType {
 const TS_APPEND_CONTENT: &'static str = "export type SourceType = ({\n\tlanguage: Language;\n\tmoduleKind: ModuleKind;\n\tvariant: LanguageVariant;\n});";
 
 impl Serialize for Language {
-    #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -66,7 +64,6 @@ const TS_APPEND_CONTENT: &'static str =
     "export type Language = 'javascript' | 'typescript' | 'typescriptDefinition';";
 
 impl Serialize for ModuleKind {
-    #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -85,7 +82,6 @@ const TS_APPEND_CONTENT: &'static str =
     "export type ModuleKind = 'script' | 'module' | 'unambiguous';";
 
 impl Serialize for LanguageVariant {
-    #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,

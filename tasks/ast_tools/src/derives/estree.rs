@@ -51,7 +51,6 @@ impl Derive for DeriveESTree {
         let lifetime = if def.has_lifetime() { quote!(<'a>) } else { TokenStream::new() };
         quote! {
             impl #lifetime Serialize for #ident #lifetime {
-                #[allow(clippy::match_same_arms, unused_mut)]
                 fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
                     where S: Serializer,
                 {
@@ -64,7 +63,9 @@ impl Derive for DeriveESTree {
 
     fn prelude() -> TokenStream {
         quote! {
-            #[allow(unused_imports)]
+            #![allow(unused_imports, unused_mut, clippy::match_same_arms)]
+
+            ///@@line_break
             use serde::{Serialize, Serializer, ser::SerializeMap};
         }
     }

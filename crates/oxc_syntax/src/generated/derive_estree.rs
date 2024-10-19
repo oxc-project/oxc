@@ -1,14 +1,14 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/derives/estree.rs`
 
-#[allow(unused_imports)]
+#![allow(unused_imports, unused_mut, clippy::match_same_arms)]
+
 use serde::{ser::SerializeMap, Serialize, Serializer};
 
 #[allow(clippy::wildcard_imports)]
 use crate::operator::*;
 
 impl Serialize for AssignmentOperator {
-    #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -69,7 +69,6 @@ impl Serialize for AssignmentOperator {
 const TS_APPEND_CONTENT: &'static str = "export type AssignmentOperator = '=' | '+=' | '-=' | '*=' | '/=' | '%=' | '<<=' | '>>=' | '>>>=' | '|=' | '^=' | '&=' | '&&=' | '||=' | '??=' | '**=';";
 
 impl Serialize for BinaryOperator {
-    #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -146,7 +145,6 @@ impl Serialize for BinaryOperator {
 const TS_APPEND_CONTENT: &'static str = "export type BinaryOperator = '==' | '!=' | '===' | '!==' | '<' | '<=' | '>' | '>=' | '<<' | '>>' | '>>>' | '+' | '-' | '*' | '/' | '%' | '|' | '^' | '&' | 'in' | 'instanceof' | '**';";
 
 impl Serialize for LogicalOperator {
-    #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -166,7 +164,6 @@ impl Serialize for LogicalOperator {
 const TS_APPEND_CONTENT: &'static str = "export type LogicalOperator = '||' | '&&' | '??';";
 
 impl Serialize for UnaryOperator {
-    #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -199,7 +196,6 @@ const TS_APPEND_CONTENT: &'static str =
     "export type UnaryOperator = '-' | '+' | '!' | '~' | 'typeof' | 'void' | 'delete';";
 
 impl Serialize for UpdateOperator {
-    #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,

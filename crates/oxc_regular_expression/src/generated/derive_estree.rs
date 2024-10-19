@@ -1,14 +1,14 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/derives/estree.rs`
 
-#[allow(unused_imports)]
+#![allow(unused_imports, unused_mut, clippy::match_same_arms)]
+
 use serde::{ser::SerializeMap, Serialize, Serializer};
 
 #[allow(clippy::wildcard_imports)]
 use crate::ast::*;
 
 impl<'a> Serialize for Pattern<'a> {
-    #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -25,7 +25,6 @@ const TS_APPEND_CONTENT: &'static str =
     "export type Pattern = ({\n\ttype: 'Pattern';\n\tbody: Disjunction;\n}) & Span;";
 
 impl<'a> Serialize for Disjunction<'a> {
-    #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -42,7 +41,6 @@ const TS_APPEND_CONTENT: &'static str =
     "export type Disjunction = ({\n\ttype: 'Disjunction';\n\tbody: Array<Alternative>;\n}) & Span;";
 
 impl<'a> Serialize for Alternative<'a> {
-    #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -59,7 +57,6 @@ const TS_APPEND_CONTENT: &'static str =
     "export type Alternative = ({\n\ttype: 'Alternative';\n\tbody: Array<Term>;\n}) & Span;";
 
 impl<'a> Serialize for Term<'a> {
-    #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -84,7 +81,6 @@ impl<'a> Serialize for Term<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type Term = BoundaryAssertion | LookAroundAssertion | Quantifier | Character | Dot | CharacterClassEscape | UnicodePropertyEscape | CharacterClass | CapturingGroup | IgnoreGroup | IndexedReference | NamedReference;";
 
 impl Serialize for BoundaryAssertion {
-    #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -100,7 +96,6 @@ impl Serialize for BoundaryAssertion {
 const TS_APPEND_CONTENT: &'static str = "export type BoundaryAssertion = ({\n\ttype: 'BoundaryAssertion';\n\tspan: Span;\n\tkind: BoundaryAssertionKind;\n});";
 
 impl Serialize for BoundaryAssertionKind {
-    #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -126,7 +121,6 @@ const TS_APPEND_CONTENT: &'static str =
     "export type BoundaryAssertionKind = 'start' | 'end' | 'boundary' | 'negativeBoundary';";
 
 impl<'a> Serialize for LookAroundAssertion<'a> {
-    #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -143,7 +137,6 @@ impl<'a> Serialize for LookAroundAssertion<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type LookAroundAssertion = ({\n\ttype: 'LookAroundAssertion';\n\tkind: LookAroundAssertionKind;\n\tbody: Disjunction;\n}) & Span;";
 
 impl Serialize for LookAroundAssertionKind {
-    #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -172,7 +165,6 @@ impl Serialize for LookAroundAssertionKind {
 const TS_APPEND_CONTENT: &'static str = "export type LookAroundAssertionKind = 'lookahead' | 'negativeLookahead' | 'lookbehind' | 'negativeLookbehind';";
 
 impl<'a> Serialize for Quantifier<'a> {
-    #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -191,7 +183,6 @@ impl<'a> Serialize for Quantifier<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type Quantifier = ({\n\ttype: 'Quantifier';\n\tmin: number;\n\tmax: (number) | null;\n\tgreedy: boolean;\n\tbody: Term;\n}) & Span;";
 
 impl Serialize for Character {
-    #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -208,7 +199,6 @@ impl Serialize for Character {
 const TS_APPEND_CONTENT: &'static str = "export type Character = ({\n\ttype: 'Character';\n\tkind: CharacterKind;\n\tvalue: number;\n}) & Span;";
 
 impl Serialize for CharacterKind {
-    #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -249,7 +239,6 @@ impl Serialize for CharacterKind {
 const TS_APPEND_CONTENT: &'static str = "export type CharacterKind = 'controlLetter' | 'hexadecimalEscape' | 'identifier' | 'null' | 'octal1' | 'octal2' | 'octal3' | 'singleEscape' | 'symbol' | 'unicodeEscape';";
 
 impl Serialize for CharacterClassEscape {
-    #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -265,7 +254,6 @@ impl Serialize for CharacterClassEscape {
 const TS_APPEND_CONTENT: &'static str = "export type CharacterClassEscape = ({\n\ttype: 'CharacterClassEscape';\n\tkind: CharacterClassEscapeKind;\n}) & Span;";
 
 impl Serialize for CharacterClassEscapeKind {
-    #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -296,7 +284,6 @@ impl Serialize for CharacterClassEscapeKind {
 const TS_APPEND_CONTENT: &'static str = "export type CharacterClassEscapeKind = 'd' | 'negativeD' | 's' | 'negativeS' | 'w' | 'negativeW';";
 
 impl<'a> Serialize for UnicodePropertyEscape<'a> {
-    #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -315,7 +302,6 @@ impl<'a> Serialize for UnicodePropertyEscape<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type UnicodePropertyEscape = ({\n\ttype: 'UnicodePropertyEscape';\n\tnegative: boolean;\n\tstrings: boolean;\n\tname: string;\n\tvalue: (string) | null;\n}) & Span;";
 
 impl Serialize for Dot {
-    #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -330,7 +316,6 @@ impl Serialize for Dot {
 const TS_APPEND_CONTENT: &'static str = "export type Dot = ({\n\ttype: 'Dot';\n}) & Span;";
 
 impl<'a> Serialize for CharacterClass<'a> {
-    #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -349,7 +334,6 @@ impl<'a> Serialize for CharacterClass<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type CharacterClass = ({\n\ttype: 'CharacterClass';\n\tnegative: boolean;\n\tstrings: boolean;\n\tkind: CharacterClassContentsKind;\n\tbody: Array<CharacterClassContents>;\n}) & Span;";
 
 impl Serialize for CharacterClassContentsKind {
-    #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -374,7 +358,6 @@ const TS_APPEND_CONTENT: &'static str =
     "export type CharacterClassContentsKind = 'union' | 'intersection' | 'subtraction';";
 
 impl<'a> Serialize for CharacterClassContents<'a> {
-    #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -395,7 +378,6 @@ impl<'a> Serialize for CharacterClassContents<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type CharacterClassContents = CharacterClassRange | CharacterClassEscape | UnicodePropertyEscape | Character | CharacterClass | ClassStringDisjunction;";
 
 impl Serialize for CharacterClassRange {
-    #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -412,7 +394,6 @@ impl Serialize for CharacterClassRange {
 const TS_APPEND_CONTENT: &'static str = "export type CharacterClassRange = ({\n\ttype: 'CharacterClassRange';\n\tmin: Character;\n\tmax: Character;\n}) & Span;";
 
 impl<'a> Serialize for ClassStringDisjunction<'a> {
-    #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -429,7 +410,6 @@ impl<'a> Serialize for ClassStringDisjunction<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type ClassStringDisjunction = ({\n\ttype: 'ClassStringDisjunction';\n\tstrings: boolean;\n\tbody: Array<ClassString>;\n}) & Span;";
 
 impl<'a> Serialize for ClassString<'a> {
-    #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -446,7 +426,6 @@ impl<'a> Serialize for ClassString<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type ClassString = ({\n\ttype: 'ClassString';\n\tstrings: boolean;\n\tbody: Array<Character>;\n}) & Span;";
 
 impl<'a> Serialize for CapturingGroup<'a> {
-    #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -463,7 +442,6 @@ impl<'a> Serialize for CapturingGroup<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type CapturingGroup = ({\n\ttype: 'CapturingGroup';\n\tname: (string) | null;\n\tbody: Disjunction;\n}) & Span;";
 
 impl<'a> Serialize for IgnoreGroup<'a> {
-    #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -480,7 +458,6 @@ impl<'a> Serialize for IgnoreGroup<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type IgnoreGroup = ({\n\ttype: 'IgnoreGroup';\n\tmodifiers: (Modifiers) | null;\n\tbody: Disjunction;\n}) & Span;";
 
 impl Serialize for Modifiers {
-    #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -497,7 +474,6 @@ impl Serialize for Modifiers {
 const TS_APPEND_CONTENT: &'static str = "export type Modifiers = ({\n\ttype: 'Modifiers';\n\tenabling: (Modifier) | null;\n\tdisabling: (Modifier) | null;\n}) & Span;";
 
 impl Serialize for Modifier {
-    #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -514,7 +490,6 @@ impl Serialize for Modifier {
 const TS_APPEND_CONTENT: &'static str = "export type Modifier = ({\n\ttype: 'Modifier';\n\tignoreCase: boolean;\n\tmultiline: boolean;\n\tsticky: boolean;\n});";
 
 impl Serialize for IndexedReference {
-    #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -531,7 +506,6 @@ const TS_APPEND_CONTENT: &'static str =
     "export type IndexedReference = ({\n\ttype: 'IndexedReference';\n\tindex: number;\n}) & Span;";
 
 impl<'a> Serialize for NamedReference<'a> {
-    #[allow(clippy::match_same_arms, unused_mut)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
