@@ -48,30 +48,17 @@ impl Derive for DeriveESTree {
         };
         let ident = def.ident();
 
-        if def.has_lifetime() {
-            quote! {
-                impl<'a> Serialize for #ident<'a> {
-                    #[allow(clippy::match_same_arms, unused_mut)]
-                    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        let lifetime = if def.has_lifetime() { quote!(<'a>) } else { TokenStream::new() };
+        quote! {
+            impl #lifetime Serialize for #ident #lifetime {
+                #[allow(clippy::match_same_arms, unused_mut)]
+                fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
                     where S: Serializer,
-                    {
-                        #body
-                    }
+                {
+                    #body
                 }
-                #ts_type_def
             }
-        } else {
-            quote! {
-                impl Serialize for #ident {
-                    #[allow(clippy::match_same_arms, unused_mut)]
-                    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-                    where S: Serializer,
-                    {
-                        #body
-                    }
-                }
-                #ts_type_def
-            }
+            #ts_type_def
         }
     }
 
