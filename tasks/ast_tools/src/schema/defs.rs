@@ -2,7 +2,10 @@ use serde::Serialize;
 
 use super::{with_either, TypeName};
 use crate::{
-    markers::{DeriveAttributes, ScopeAttribute, ScopeMarkers, VisitMarkers},
+    markers::{
+        DeriveAttributes, ESTreeEnumAttribute, ESTreeStructAttribute, ScopeAttribute, ScopeMarkers,
+        VisitMarkers,
+    },
     util::{ToIdent, TypeAnalysis, TypeWrapper},
     TypeId,
 };
@@ -60,7 +63,7 @@ pub struct StructDef {
     #[serde(skip)]
     pub generated_derives: Vec<String>,
     #[serde(skip)]
-    pub markers: OuterMarkers,
+    pub markers: StructOuterMarkers,
     #[serde(skip)]
     pub module_path: String,
 }
@@ -84,6 +87,8 @@ pub struct EnumDef {
     pub generated_derives: Vec<String>,
     #[serde(skip)]
     pub module_path: String,
+    #[serde(skip)]
+    pub markers: EnumOuterMarkers,
 }
 
 impl EnumDef {
@@ -226,8 +231,14 @@ impl TypeRef {
 }
 
 #[derive(Debug)]
-pub struct OuterMarkers {
+pub struct StructOuterMarkers {
     pub scope: Option<ScopeAttribute>,
+    pub estree: Option<ESTreeStructAttribute>,
+}
+
+#[derive(Debug)]
+pub struct EnumOuterMarkers {
+    pub estree: ESTreeEnumAttribute,
 }
 
 #[derive(Debug, Serialize)]

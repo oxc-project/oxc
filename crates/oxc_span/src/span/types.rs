@@ -1,9 +1,5 @@
-// Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
-#![allow(non_snake_case)]
-
 use oxc_ast_macros::ast;
-#[cfg(feature = "serialize")]
-use ::{serde::Serialize, tsify::Tsify};
+use oxc_estree::ESTree;
 
 /// Newtype for working with text ranges
 ///
@@ -17,8 +13,9 @@ use ::{serde::Serialize, tsify::Tsify};
 /// same content), use [`ContentHash`](crate::hash::ContentHash) instead.
 #[ast]
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[generate_derive(ESTree)]
 #[non_exhaustive] // Disallow struct expression constructor `Span {}`
+#[estree(no_type)]
 pub struct Span {
     /// The zero-based start offset of the span
     pub start: u32,

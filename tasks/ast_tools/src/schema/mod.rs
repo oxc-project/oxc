@@ -5,7 +5,10 @@ use serde::Serialize;
 use crate::{
     codegen,
     layout::KnownLayout,
-    markers::{get_derive_attributes, get_scope_attribute, get_scope_markers, get_visit_markers},
+    markers::{
+        get_derive_attributes, get_estree_attribute, get_scope_attribute, get_scope_markers,
+        get_visit_markers,
+    },
     rust_ast as rust,
     util::{unexpanded_macro_err, TypeExt},
     Result, TypeId,
@@ -14,6 +17,7 @@ use crate::{
 mod defs;
 mod get_generics;
 mod get_ident;
+pub mod serialize;
 mod to_type;
 pub use defs::*;
 pub use get_generics::GetGenerics;
@@ -103,8 +107,15 @@ impl<'a> IntoIterator for &'a Schema {
     }
 }
 
-fn parse_outer_markers(attrs: &Vec<syn::Attribute>) -> Result<OuterMarkers> {
-    Ok(OuterMarkers { scope: get_scope_attribute(attrs).transpose()? })
+fn parse_struct_outer_markers(attrs: &Vec<syn::Attribute>) -> Result<StructOuterMarkers> {
+    Ok(StructOuterMarkers {
+        scope: get_scope_attribute(attrs).transpose()?,
+        estree: get_estree_attribute(attrs).transpose()?,
+    })
+}
+
+fn parse_enum_outer_markers(attrs: &Vec<syn::Attribute>) -> Result<EnumOuterMarkers> {
+    Ok(EnumOuterMarkers { estree: get_estree_attribute(attrs).transpose()?.unwrap_or_default() })
 }
 
 fn parse_inner_markers(attrs: &Vec<syn::Attribute>) -> Result<InnerMarkers> {
@@ -167,6 +178,7 @@ fn lower_ast_enum(it @ rust::Enum { item, meta }: &rust::Enum, ctx: &codegen::Ea
         align_32,
         offsets_32,
 
+        markers: parse_enum_outer_markers(&item.attrs).unwrap(),
         generated_derives: parse_generate_derive(&item.attrs),
 
         module_path: meta.module_path.clone(),
@@ -201,7 +213,7 @@ fn lower_ast_struct(
         align_32,
         offsets_32,
 
-        markers: parse_outer_markers(&item.attrs).unwrap(),
+        markers: parse_struct_outer_markers(&item.attrs).unwrap(),
         generated_derives: parse_generate_derive(&item.attrs),
 
         module_path: meta.module_path.clone(),

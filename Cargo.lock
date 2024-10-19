@@ -1447,12 +1447,12 @@ dependencies = [
  "num-bigint",
  "oxc_allocator",
  "oxc_ast_macros",
+ "oxc_estree",
  "oxc_regular_expression",
  "oxc_span",
  "oxc_syntax",
  "serde",
  "serde_json",
- "tsify",
  "wasm-bindgen",
 ]
 
@@ -1595,6 +1595,10 @@ dependencies = [
  "oxc_span",
  "oxc_syntax",
 ]
+
+[[package]]
+name = "oxc_estree"
+version = "0.31.0"
 
 [[package]]
 name = "oxc_index"
@@ -1857,11 +1861,11 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast_macros",
  "oxc_diagnostics",
+ "oxc_estree",
  "oxc_span",
  "phf 0.11.2",
  "rustc-hash",
  "serde",
- "tsify",
  "unicode-id-start",
  "wasm-bindgen",
 ]
@@ -1932,9 +1936,9 @@ dependencies = [
  "miette",
  "oxc_allocator",
  "oxc_ast_macros",
+ "oxc_estree",
  "schemars",
  "serde",
- "tsify",
  "wasm-bindgen",
 ]
 
@@ -1948,13 +1952,13 @@ dependencies = [
  "nonmax",
  "oxc_allocator",
  "oxc_ast_macros",
+ "oxc_estree",
  "oxc_index",
  "oxc_span",
  "phf 0.11.2",
  "rustc-hash",
  "ryu-js",
  "serde",
- "tsify",
  "unicode-id-start",
  "wasm-bindgen",
 ]
