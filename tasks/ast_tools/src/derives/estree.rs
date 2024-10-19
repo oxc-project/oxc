@@ -23,13 +23,13 @@ impl Derive for DeriveESTree {
     }
 
     fn derive(&mut self, def: &TypeDef, _: &LateCtx) -> TokenStream {
-        let type_def = match def {
+        let ts_type_def = match def {
             TypeDef::Enum(def) => typescript_enum(def),
             TypeDef::Struct(def) => typescript_struct(def),
         };
-        let type_def = quote! {
+        let ts_type_def = quote! {
             #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-            const TS_APPEND_CONTENT: &'static str = #type_def;
+            const TS_APPEND_CONTENT: &'static str = #ts_type_def;
         };
         if let TypeDef::Struct(def) = def {
             if def
@@ -38,7 +38,7 @@ impl Derive for DeriveESTree {
                 .as_ref()
                 .is_some_and(|e| e == &ESTreeStructAttribute::CustomSerialize)
             {
-                return type_def;
+                return ts_type_def;
             }
         }
 
@@ -58,7 +58,7 @@ impl Derive for DeriveESTree {
                         #body
                     }
                 }
-                #type_def
+                #ts_type_def
             }
         } else {
             quote! {
@@ -70,7 +70,7 @@ impl Derive for DeriveESTree {
                         #body
                     }
                 }
-                #type_def
+                #ts_type_def
             }
         }
     }
