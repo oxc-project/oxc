@@ -55,6 +55,8 @@ impl Derive for DeriveESTree {
                     #body
                 }
             }
+
+            ///@@line_break
             #ts_type_def
         }
     }

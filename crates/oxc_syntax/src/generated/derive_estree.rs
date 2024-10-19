@@ -62,6 +62,7 @@ impl Serialize for AssignmentOperator {
         }
     }
 }
+
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = "export type AssignmentOperator = '=' | '+=' | '-=' | '*=' | '/=' | '%=' | '<<=' | '>>=' | '>>>=' | '|=' | '^=' | '&=' | '&&=' | '||=' | '??=' | '**=';";
 
@@ -135,6 +136,7 @@ impl Serialize for BinaryOperator {
         }
     }
 }
+
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = "export type BinaryOperator = '==' | '!=' | '===' | '!==' | '<' | '<=' | '>' | '>=' | '<<' | '>>' | '>>>' | '+' | '-' | '*' | '/' | '%' | '|' | '^' | '&' | 'in' | 'instanceof' | '**';";
 
@@ -151,6 +153,7 @@ impl Serialize for LogicalOperator {
         }
     }
 }
+
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = "export type LogicalOperator = '||' | '&&' | '??';";
 
@@ -179,6 +182,7 @@ impl Serialize for UnaryOperator {
         }
     }
 }
+
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str =
     "export type UnaryOperator = '-' | '+' | '!' | '~' | 'typeof' | 'void' | 'delete';";
@@ -195,5 +199,6 @@ impl Serialize for UpdateOperator {
         }
     }
 }
+
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = "export type UpdateOperator = '++' | '--';";
