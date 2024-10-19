@@ -28,9 +28,9 @@ oxc_span = { workspace = true }
 
 phf = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }
-serde = { workspace = true, optional = true }
 unicode-id-start = { workspace = true }
 
+serde = { workspace = true, optional = true }
 wasm-bindgen = { workspace = true, optional = true }
 
 [features]
