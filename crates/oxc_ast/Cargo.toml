@@ -29,7 +29,7 @@ oxc_syntax = { workspace = true }
 bitflags = { workspace = true }
 num-bigint = { workspace = true }
 
-serde = { workspace = true, optional = true }
+serde = { workspace = true, features = ["derive"], optional = true }
 serde_json = { workspace = true, optional = true }
 wasm-bindgen = { workspace = true, optional = true }
 
