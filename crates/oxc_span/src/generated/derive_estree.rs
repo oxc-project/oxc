@@ -55,7 +55,7 @@ impl Serialize for Language {
 
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str =
-    "export type Language = 'javascript' | 'typescript' | 'typescriptDefinition';";
+    "export type Language = \"javascript\" | \"typescript\" | \"typescriptDefinition\";";
 
 impl Serialize for ModuleKind {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
@@ -71,7 +71,7 @@ impl Serialize for ModuleKind {
 
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str =
-    "export type ModuleKind = 'script' | 'module' | 'unambiguous';";
+    "export type ModuleKind = \"script\" | \"module\" | \"unambiguous\";";
 
 impl Serialize for LanguageVariant {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
@@ -87,4 +87,4 @@ impl Serialize for LanguageVariant {
 }
 
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = "export type LanguageVariant = 'standard' | 'jsx';";
+const TS_APPEND_CONTENT: &'static str = "export type LanguageVariant = \"standard\" | \"jsx\";";

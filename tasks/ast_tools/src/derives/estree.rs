@@ -163,13 +163,13 @@ fn serialize_enum(def: &EnumDef) -> TokenStream {
     }
 }
 
-// Untagged enums: "type Expression = BooleanLiteral | NullLiteral"
-// Tagged enums: "type PropertyKind = 'init' | 'get' | 'set'"
+// Untagged enums: `type Expression = BooleanLiteral | NullLiteral;`
+// Tagged enums: `type PropertyKind = "init" | "get" | "set";`
 fn typescript_enum(def: &EnumDef) -> String {
     let union = if def.markers.estree.untagged {
         def.all_variants().map(|var| type_to_string(var.fields[0].typ.name())).join(" | ")
     } else {
-        def.all_variants().map(|var| format!("'{}'", enum_variant_name(var, def))).join(" | ")
+        def.all_variants().map(|var| format!("\"{}\"", enum_variant_name(var, def))).join(" | ")
     };
     let ident = def.ident();
     format!("export type {ident} = {union};")
@@ -181,7 +181,7 @@ fn typescript_struct(def: &StructDef) -> String {
     let mut extends = vec![];
 
     if let Some(type_tag) = get_type_tag(def) {
-        fields.push_str(&format!("\n\ttype: '{type_tag}';"));
+        fields.push_str(&format!("\n\ttype: \"{type_tag}\";"));
     }
 
     for field in &def.fields {
