@@ -101,12 +101,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// This is behaviorally identical to [`FromIterator::from_iter`].
     #[inline(always)]
     pub fn from_iter_in<I: IntoIterator<Item = T>>(iter: I, allocator: &'alloc Allocator) -> Self {
-        let iter = iter.into_iter();
-        let hint = iter.size_hint();
-        let capacity = hint.1.unwrap_or(hint.0);
-        let mut vec = VecImpl::with_capacity_in(capacity, &**allocator);
-        vec.extend(iter);
-        Self(vec)
+        Self(VecImpl::from_iter_in(iter, allocator))
     }
 
     /// Returns the total number of elements the vector can hold without
