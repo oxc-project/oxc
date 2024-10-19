@@ -181,7 +181,7 @@ fn typescript_struct(def: &StructDef) -> String {
     let mut extends = vec![];
 
     if let Some(type_tag) = get_type_tag(def) {
-        fields.push_str(&format!("\n\ttype: \"{type_tag}\";"));
+        fields.push_str(&format!("\n    type: \"{type_tag}\";"));
     }
 
     for field in &def.fields {
@@ -203,7 +203,7 @@ fn typescript_struct(def: &StructDef) -> String {
             None => field.name.clone().unwrap().to_case(Case::Camel),
         };
 
-        fields.push_str(&format!("\n\t{name}: {ty};"));
+        fields.push_str(&format!("\n    {name}: {ty};"));
     }
     let extends =
         if extends.is_empty() { String::new() } else { format!(" & {}", extends.join(" & ")) };
