@@ -29,4 +29,4 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 
 [features]
-serialize = ["dep:serde"]
+serialize = ["dep:serde", "bump-scope/serde"]

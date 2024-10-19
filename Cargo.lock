@@ -185,6 +185,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1edd128ed0b76d06446c9ac0ae855201f0464df8eaa42e7e8f0bf92d179129de"
 dependencies = [
  "allocator-api2",
+ "serde",
  "sptr",
 ]
 

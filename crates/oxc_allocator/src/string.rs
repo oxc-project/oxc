@@ -3,6 +3,7 @@ use bump_scope::BumpString as StringImpl;
 use crate::Allocator;
 
 /// A bump-allocated string.
+#[cfg_attr(any(feature = "serialize", test), derive(serde::Serialize))]
 pub struct String<'a>(StringImpl<'a, 'a>);
 
 impl<'a> String<'a> {
