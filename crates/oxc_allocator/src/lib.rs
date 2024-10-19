@@ -31,10 +31,10 @@
 //! Consumers of the [`oxc` umbrella crate](https://crates.io/crates/oxc) pass
 //! [`Allocator`] references to other tools.
 //!
-//! ```
+//! ```ignore
 //! use oxc::{allocator::Allocator, parser::Parser, span::SourceType};
 //!
-//! let allocator = Allocator::default()
+//! let allocator = Allocator::default();
 //! let parsed = Parser::new(&allocator, "let x = 1;", SourceType::default());
 //! assert!(parsed.errors.is_empty());
 //! ```

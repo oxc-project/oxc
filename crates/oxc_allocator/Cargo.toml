@@ -22,11 +22,12 @@ doctest = false
 allocator-api2 = { workspace = true }
 bump-scope = { workspace = true }
 
-serde = { workspace = true, optional = true }
+serde = { workspace = true, optional = true, features = ["derive"] }
 
 [dev-dependencies]
-serde = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
+bump-scope = { workspace = true, features = ["serde"] }
 
 [features]
 serialize = ["dep:serde", "bump-scope/serde"]

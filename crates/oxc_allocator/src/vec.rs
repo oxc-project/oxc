@@ -4,18 +4,23 @@
 
 use std::{
     self,
+    borrow::Cow,
     fmt::Debug,
     hash::{Hash, Hasher},
-    ops::{self, RangeBounds},
+    iter::FusedIterator,
+    ops::{self, Index, RangeBounds},
+    slice::SliceIndex,
 };
+
+use allocator_api2::alloc::Global;
 
 use crate::{Allocator, Box};
 
 type VecImpl<'a, T> = bump_scope::BumpVec<'a, 'a, T>;
 
-/// Bumpalo Vec
-#[derive(Debug, PartialEq)]
+/// A bump-allocated vector.
 #[cfg_attr(any(feature = "serialize", test), derive(serde::Serialize))]
+#[derive(Debug)]
 pub struct Vec<'alloc, T>(VecImpl<'alloc, T>);
 
 impl<'alloc, T> Vec<'alloc, T> {
@@ -33,7 +38,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// let mut vec: Vec<i32> = Vec::new_in(&arena);
     /// assert!(vec.is_empty());
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn new_in(allocator: &'alloc Allocator) -> Self {
         Self(VecImpl::new_in(allocator))
     }
@@ -85,7 +90,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// let vec_units = Vec::<()>::with_capacity_in(10, &arena);
     /// assert_eq!(vec_units.capacity(), usize::MAX);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn with_capacity_in(capacity: usize, allocator: &'alloc Allocator) -> Self {
         Self(VecImpl::with_capacity_in(capacity, allocator))
     }
@@ -94,7 +99,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// allocated in the given `allocator`.
     ///
     /// This is behaviorally identical to [`FromIterator::from_iter`].
-    #[inline]
+    #[inline(always)]
     pub fn from_iter_in<I: IntoIterator<Item = T>>(iter: I, allocator: &'alloc Allocator) -> Self {
         let iter = iter.into_iter();
         let hint = iter.size_hint();
@@ -102,6 +107,170 @@ impl<'alloc, T> Vec<'alloc, T> {
         let mut vec = VecImpl::with_capacity_in(capacity, &**allocator);
         vec.extend(iter);
         Self(vec)
+    }
+
+    /// Returns the total number of elements the vector can hold without
+    /// reallocating.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use oxc_allocator::{ Allocator, Vec };
+    /// # let allocator = Allocator::default();
+    /// let vec = Vec::<i32>::with_capacity_in(2048, &allocator);
+    /// assert!(vec.capacity() >= 2048);
+    /// ```
+    #[must_use]
+    #[inline(always)]
+    pub const fn capacity(&self) -> usize {
+        self.0.capacity()
+    }
+
+    /// Extracts a slice containing the entire vector.
+    ///
+    /// Equivalent to `&s[..]`.
+    #[must_use]
+    #[inline(always)]
+    pub const fn as_slice(&self) -> &[T] {
+        self.0.as_slice()
+    }
+
+    /// Extracts a mutable slice containing the entire vector.
+    ///
+    /// Equivalent to `&mut s[..]`.
+    #[must_use]
+    #[inline(always)]
+    pub fn as_mut_slice(&mut self) -> &mut [T] {
+        self.0.as_mut_slice()
+    }
+
+    /// Appends an element to the back of a collection.
+    #[inline(always)]
+    pub fn push(&mut self, value: T) {
+        self.0.push(value)
+    }
+
+    /// Removes the last element from a vector and returns it, or [`None`] if it
+    /// is empty.
+    #[inline(always)]
+    pub fn pop(&mut self) -> Option<T> {
+        self.0.pop()
+    }
+
+    /// Inserts an element at position `index` within the vector, shifting all elements after it to the right.
+    ///
+    /// # Panics
+    /// Panics if `index > len`.
+    ///
+    /// # Examples
+    /// ```
+    /// # use oxc_allocator::{ Allocator, Vec };
+    /// # let allocator = Allocator::default();
+    /// let mut vec = Vec::from_iter_in([1, 2, 3], &allocator);
+    /// vec.insert(1, 4);
+    /// assert_eq!(vec, [1, 4, 2, 3]);
+    /// vec.insert(4, 5);
+    /// assert_eq!(vec, [1, 4, 2, 3, 5]);
+    /// ```
+    #[inline(always)]
+    pub fn insert(&mut self, index: usize, element: T) {
+        self.0.insert(index, element)
+    }
+
+    /// Removes and returns the element at position `index` within the vector,
+    /// shifting all elements after it to the left.
+    ///
+    /// Note: Because this shifts over the remaining elements, it has a
+    /// worst-case performance of *O*(*n*). If you don't need the order of elements
+    /// to be preserved, use [`swap_remove`] instead.
+    ///
+    /// # Panics
+    /// Panics if `index` is out of bounds.
+    ///
+    /// [`swap_remove`]: Self::swap_remove
+    ///
+    /// # Examples
+    /// ```
+    /// # use oxc_allocator::{ Allocator, Vec };
+    /// # let allocator = Allocator::default();
+    /// let mut v = Vec::from_iter_in([1, 2, 3], &allocator);
+    /// assert_eq!(v.remove(1), 2);
+    /// assert_eq!(v, [1, 3]);
+    /// ```
+    #[track_caller]
+    pub fn remove(&mut self, index: usize) -> T {
+        self.0.remove(index)
+    }
+
+    /// Shortens the vector, keeping the first `len` elements and dropping
+    /// the rest.
+    ///
+    /// If `len` is greater than the vector's current length, this has no
+    /// effect.
+    ///
+    /// The [`drain`] method can emulate `truncate`, but causes the excess
+    /// elements to be returned instead of dropped.
+    ///
+    /// Note that this method has no effect on the allocated capacity
+    /// of the vector.
+    ///
+    /// # Examples
+    ///
+    /// Truncating a five element vector to two elements:
+    ///
+    /// ```
+    /// # use oxc_allocator::{ Allocator, Vec };
+    /// # let allocator = Allocator::default();
+    /// #
+    /// let mut vec = Vec::from_iter_in([1, 2, 3, 4, 5], &allocator);
+    /// vec.truncate(2);
+    /// assert_eq!(vec, [1, 2]);
+    /// ```
+    ///
+    /// No truncation occurs when `len` is greater than the vector's current
+    /// length:
+    ///
+    /// ```
+    /// # use oxc_allocator::{ Allocator, Vec };
+    /// # let allocator = Allocator::default();
+    /// #
+    /// let mut vec = Vec::from_iter_in([1, 2, 3], &allocator);
+    /// vec.truncate(8);
+    /// assert_eq!(vec, [1, 2, 3]);
+    /// ```
+    ///
+    /// Truncating when `len == 0` is equivalent to calling the [`clear`]
+    /// method.
+    ///
+    /// ```
+    /// # use oxc_allocator::{ Allocator, Vec };
+    /// # let allocator = Allocator::default();
+    /// #
+    /// let mut vec = Vec::from_iter_in([1, 2, 3], &allocator);
+    /// vec.truncate(0);
+    /// assert_eq!(vec, []);
+    /// ```
+    ///
+    /// [`clear`]: BumpVec::clear
+    /// [`drain`]: BumpVec::drain
+    #[inline(always)]
+    pub fn truncate(&mut self, len: usize) {
+        self.0.truncate(len);
+    }
+
+    /// Clears the vector, removing all values.
+    ///
+    /// # Examples
+    /// ```
+    /// # use oxc_allocator::{ Allocator, Vec };
+    /// # let allocator = Allocator::default();
+    /// let mut vec = Vec::from_iter_in([1, 2, 3, 4, 5], &allocator);
+    /// vec.clear();
+    /// assert!(vec.is_empty());
+    /// ```
+    #[inline(always)]
+    pub fn clear(&mut self) {
+        self.0.clear();
     }
 
     /// Converts the vector into [`Box<[T]>`][owned slice].
@@ -124,6 +293,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// ```
     ///
     /// [owned slice]: Box
+    #[inline(always)]
     pub fn into_boxed_slice(self) -> Box<'alloc, [T]> {
         let ptr = self.0.into_fixed_vec().into_boxed_slice().into_raw();
         // SAFETY: `ptr` points to a valid slice `[T]`.
@@ -152,6 +322,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// assert_eq!(vec, [1, 2, 3, 4, 5, 6]);
     /// assert_eq!(vec2, []);
     /// ```
+    #[inline(always)]
     pub fn append(&mut self, other: &mut Self) {
         self.reserve(other.len());
 
@@ -178,17 +349,17 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// let allocator = Allocator::default();
     /// let mut vec = Vec::from_iter_in([1, 2, 3], &allocator);
     /// let mut vec2 = Vec::from_iter_in([4, 5, 6], &allocator);
-    /// vec.append(&mut vec2);
+    /// vec.prepend(&mut vec2);
     /// assert_eq!(vec, [4, 5, 6, 1, 2, 3]);
     /// assert_eq!(vec2, []);
     /// ```
+    #[inline(always)]
     pub fn prepend(&mut self, other: &mut Self) {
         self.reserve(other.len());
 
         unsafe {
             // copy existing content forward to make space
-            self.as_mut_ptr()
-                .copy_to_nonoverlapping(self.as_mut_ptr().add(self.len()), other.len());
+            self.as_mut_ptr().copy_to(self.as_mut_ptr().add(other.len()), self.len());
 
             // copy other
             other.as_ptr().copy_to_nonoverlapping(self.as_mut_ptr(), other.len());
@@ -198,6 +369,45 @@ impl<'alloc, T> Vec<'alloc, T> {
 
             other.set_len(0);
         }
+    }
+
+    /// Removes the specified range from the vector in bulk, returning all
+    /// removed elements as an iterator. If the iterator is dropped before
+    /// being fully consumed, it drops the remaining removed elements.
+    ///
+    /// The returned iterator keeps a mutable borrow on the vector to optimize
+    /// its implementation.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the starting point is greater than the end point or if
+    /// the end point is greater than the length of the vector.
+    ///
+    /// # Leaking
+    ///
+    /// If the returned iterator goes out of scope without being dropped (due to
+    /// [`mem::forget`](core::mem::forget), for example), the vector may have lost and leaked
+    /// elements arbitrarily, including elements outside the range.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use oxc_allocator::{ Allocator, Vec };
+    /// # let allocator = Allocator::default();
+    /// let mut v = Vec::from_iter_in([1, 2, 3], &allocator);
+    /// let u = Vec::from_iter_in(v.drain(1..), &allocator);
+    /// assert_eq!(v, [1]);
+    /// assert_eq!(u, [2, 3]);
+    ///
+    /// // A full range clears the vector, like `clear()` does
+    /// v.drain(..);
+    /// assert_eq!(v, []);
+    /// ```
+    pub fn drain<R>(&mut self, range: R) -> Drain<'_, T>
+    where
+        R: RangeBounds<usize>,
+    {
+        Drain(self.0.drain(range))
     }
 
     /// Creates a splicing iterator that replaces the specified range in the vector
@@ -227,22 +437,21 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// # Examples
     ///
     /// ```
-    /// use crate::{ Allocator, Vec };
+    /// use oxc_allocator::{ Allocator, Vec };
     /// let allocator: Allocator = Allocator::default();
     /// let mut v = Vec::from_iter_in([1, 2, 3, 4], &allocator);
     /// let new = [7, 8, 9];
-    /// let u = bump.alloc_iter(v.splice(1..3, new));
+    /// let u = Vec::from_iter_in(v.splice(1..3, new), &allocator);
     /// assert_eq!(v, &[1, 7, 8, 9, 4]);
     /// assert_eq!(u, &[2, 3]);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn splice<R, I>(&mut self, range: R, replace_with: I) -> Splice<'_, I::IntoIter>
     where
         R: RangeBounds<usize>,
         I: IntoIterator<Item = T>,
     {
-        _ = (range, replace_with);
-        todo!()
+        Splice(self.0.splice(range, replace_with))
     }
 
     /// Retains only the elements specified by the predicate, passing a mutable reference to it.
@@ -254,8 +463,8 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// # Examples
     ///
     /// ```
-    /// use crate::{ Allocator, Vec };
-    /// let allocator = Allocator::default()
+    /// use oxc_allocator::{ Allocator, Vec };
+    /// let allocator = Allocator::default();
     /// let mut vec = Vec::from_iter_in([1, 2, 3, 4], &allocator);
     ///
     /// vec.retain_mut(|x| if *x <= 3 {
@@ -267,7 +476,37 @@ impl<'alloc, T> Vec<'alloc, T> {
     ///
     /// assert_eq!(vec, [2, 3, 4]);
     /// ```
-    #[allow(clippy::pedantic)]
+    #[inline(always)]
+    pub fn retain<F>(&mut self, mut f: F)
+    where
+        F: FnMut(&T) -> bool,
+    {
+        self.retain_mut(|elem| f(elem))
+    }
+
+    /// Retains only the elements specified by the predicate, passing a mutable reference to it.
+    ///
+    /// In other words, remove all elements `e` such that `f(&mut e)` returns `false`.
+    /// This method operates in place, visiting each element exactly once in the
+    /// original order, and preserves the order of the retained elements.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use oxc_allocator::{ Allocator, Vec };
+    /// let allocator = Allocator::default();
+    /// let mut vec = Vec::from_iter_in([1, 2, 3, 4], &allocator);
+    ///
+    /// vec.retain_mut(|x| if *x <= 3 {
+    ///     *x += 1;
+    ///     true
+    /// } else {
+    ///     false
+    /// });
+    ///
+    /// assert_eq!(vec, [2, 3, 4]);
+    /// ```
+    #[inline(always)]
     pub fn retain_mut<F>(&mut self, f: F)
     where
         F: FnMut(&mut T) -> bool,
@@ -291,14 +530,12 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// use oxc_allocator::{ Allocator, Vec };
     /// let allocator = Allocator::default();
     /// let mut vec = Vec::from_iter_in([1], &allocator);
-    /// vec.reserve_exact(10);
+    /// vec.reserve(10);
     /// assert!(vec.capacity() >= 11);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn reserve(&mut self, additional: usize) {
-        // self.buf.reserve(self.len, additional);
-        let _ = additional;
-        todo!()
+        self.0.reserve(additional);
     }
 
     /// Reserves the minimum capacity for at least `additional` more elements to
@@ -327,40 +564,116 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// vec.reserve_exact(10);
     /// assert!(vec.capacity() >= 11);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn reserve_exact(&mut self, additional: usize) {
-        // self.0.reserve_exact(self.len, additional);
-        let _ = additional;
-        todo!()
+        self.0.reserve_exact(additional);
+    }
+
+    /// Forces the length of the vector to `new_len`.
+    ///
+    /// This is a low-level operation that maintains none of the normal
+    /// invariants of the type. Normally changing the length of a vector
+    /// is done using one of the safe operations instead, such as
+    /// [`resize`], [`truncate`], [`extend`], or [`clear`].
+    ///
+    /// # Safety
+    /// - `new_len` must be less than or equal to the [`capacity`].
+    /// - The elements at `old_len..new_len` must be initialized.
+    ///
+    /// [`resize`]: BumpVec::resize
+    /// [`truncate`]: BumpVec::truncate
+    /// [`extend`]: BumpVec::extend
+    /// [`clear`]: BumpVec::clear
+    /// [`capacity`]: BumpVec::capacity
+    #[inline(always)]
+    pub unsafe fn set_len(&mut self, new_len: usize) {
+        self.0.set_len(new_len);
     }
 }
 
-pub struct Splice<'a, I: Iterator>(std::vec::Splice<'a, I>);
+macro_rules! impl_slice_eq1 {
+    ([$($($vars:tt)+)?] $lhs:ty, $rhs:ty $(where $ty:ty: $bound:ident)?) => {
+        impl<$($($vars)+,)? T, U> PartialEq<$rhs> for $lhs
+        where
+            T: PartialEq<U>,
+            $($ty: $bound)?
+        {
+            #[inline]
+            fn eq(&self, other: &$rhs) -> bool { self[..] == other[..] }
+            #[inline]
+            fn ne(&self, other: &$rhs) -> bool { self[..] != other[..] }
+        }
+    }
+}
+
+impl_slice_eq1! { ['t, 'u] Vec<'t, T>, Vec<'u, U> }
+impl_slice_eq1! { ['t] Vec<'t, T>, &[U] }
+impl_slice_eq1! { [] Vec<'_, T>, &mut [U] }
+impl_slice_eq1! { [] &[T], Vec<'_, U> }
+impl_slice_eq1! { [] &mut [T], Vec<'_, U> }
+impl_slice_eq1! { [] Vec<'_, T>, [U] }
+impl_slice_eq1! { [] [T], Vec<'_, U>  }
+impl_slice_eq1! { ['t] Cow<'_, [T]>, Vec<'t, U> where T: Clone }
+impl_slice_eq1! { ['t, const N: usize] Vec<'t, T>, [U; N] }
+impl_slice_eq1! { ['t, const N: usize] Vec<'t, T>, &[U; N] }
+
+pub struct Drain<'a, T>(bump_scope::owned_slice::Drain<'a, T>);
+
+impl<T> Iterator for Drain<'_, T> {
+    type Item = T;
+
+    #[inline]
+    fn next(&mut self) -> Option<T> {
+        self.0.next()
+    }
+
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.0.size_hint()
+    }
+}
+
+impl<T> DoubleEndedIterator for Drain<'_, T> {
+    #[inline]
+    fn next_back(&mut self) -> Option<T> {
+        self.0.next_back()
+    }
+}
+
+impl<T> ExactSizeIterator for Drain<'_, T> {}
+
+impl<T> FusedIterator for Drain<'_, T> {}
+
+pub struct Splice<'a, I: Iterator>(bump_scope::bump_vec::Splice<'a, I, Global>);
 
 impl<I: Iterator> Iterator for Splice<'_, I> {
     type Item = I::Item;
 
+    #[inline(always)]
     fn next(&mut self) -> Option<Self::Item> {
-        todo!()
+        self.0.next()
     }
 
+    #[inline(always)]
     fn size_hint(&self) -> (usize, Option<usize>) {
-        todo!()
+        self.0.size_hint()
     }
 }
 
 impl<'alloc, T> Eq for Vec<'alloc, T> where T: Eq {}
 
 impl<'alloc, T> ops::Deref for Vec<'alloc, T> {
-    type Target = VecImpl<'alloc, T>;
+    type Target = [T];
 
+    #[inline(always)]
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
 impl<'alloc, T> ops::DerefMut for Vec<'alloc, T> {
-    fn deref_mut(&mut self) -> &mut VecImpl<'alloc, T> {
+    #[inline(always)]
+    fn deref_mut(&mut self) -> &mut [T] {
         &mut self.0
     }
 }
@@ -369,6 +682,7 @@ impl<'alloc, T> IntoIterator for Vec<'alloc, T> {
     type IntoIter = <VecImpl<'alloc, T> as IntoIterator>::IntoIter;
     type Item = T;
 
+    #[inline(always)]
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
     }
@@ -378,16 +692,18 @@ impl<'alloc, T> IntoIterator for &'alloc Vec<'alloc, T> {
     type IntoIter = std::slice::Iter<'alloc, T>;
     type Item = &'alloc T;
 
+    #[inline(always)]
     fn into_iter(self) -> Self::IntoIter {
         self.0.iter()
     }
 }
 
-impl<'alloc, T> ops::Index<usize> for Vec<'alloc, T> {
-    type Output = T;
+impl<T, I: SliceIndex<[T]>> Index<I> for Vec<'_, T> {
+    type Output = I::Output;
 
-    fn index(&self, index: usize) -> &Self::Output {
-        self.0.index(index)
+    #[inline]
+    fn index(&self, index: I) -> &Self::Output {
+        Index::index(&**self, index)
     }
 }
 
@@ -399,10 +715,16 @@ impl<'alloc, T> ops::Index<usize> for Vec<'alloc, T> {
 // }
 
 impl<'alloc, T: Hash> Hash for Vec<'alloc, T> {
+    #[inline(always)]
     fn hash<H: Hasher>(&self, state: &mut H) {
-        for e in &self.0 {
-            e.hash(state);
-        }
+        self.0.hash(state)
+    }
+}
+
+impl<T> Extend<T> for Vec<'_, T> {
+    #[inline(always)]
+    fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
+        self.0.extend(iter)
     }
 }
 

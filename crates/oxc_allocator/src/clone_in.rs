@@ -7,7 +7,7 @@ use crate::{Allocator, Box, Vec};
 /// As a convention `Cloned` associated type should always be the same as `Self`,
 /// It'd only differ in the lifetime, Here's an example:
 ///
-/// ```
+/// ```ignore
 /// impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for Struct<'old_alloc> {
 ///     type Cloned = Struct<'new_alloc>;
 ///     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
