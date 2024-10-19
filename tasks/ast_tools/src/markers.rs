@@ -96,7 +96,7 @@ impl From<&Ident> for CloneInAttribute {
     }
 }
 
-/// An enum representing the serde attributes (`#[estree(...)]`) that we implement for structs.
+/// An enum representing the `#[estree(...)]` attributes that we implement for structs.
 #[derive(Debug, Serialize, PartialEq, Eq)]
 pub enum ESTreeStructAttribute {
     CustomSerialize,
@@ -122,7 +122,7 @@ impl Parse for ESTreeStructAttribute {
     }
 }
 
-/// A struct representing the serde attributes (`#[estree(...)]`) that we implement for enums.
+/// A struct representing the `#[estree(...)]` attributes that we implement for enums.
 #[derive(Debug, Serialize, Default)]
 pub struct ESTreeEnumAttribute {
     pub rename_all: Option<String>,
@@ -164,7 +164,7 @@ impl Parse for ESTreeEnumAttribute {
     }
 }
 
-/// A struct representing the serde attributes (`$[serde(...)]`) that we implement for fields.
+/// A struct representing the `#[estree(...)]` attributes that we implement for fields.
 #[derive(Debug, Serialize, Default)]
 pub struct ESTreeFieldAttribute {
     pub flatten: bool,
