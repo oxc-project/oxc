@@ -34,7 +34,7 @@ impl Generator for AstBuilderGenerator {
 
         let header = generated_header!();
 
-        GeneratorOutput::Rust(
+        GeneratorOutput(
             output(crate::AST_CRATE, "ast_builder.rs"),
             quote! {
                 #header
