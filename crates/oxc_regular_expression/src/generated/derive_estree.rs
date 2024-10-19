@@ -64,19 +64,19 @@ impl<'a> Serialize for Term<'a> {
     where
         S: Serializer,
     {
-        match *self {
-            Term::BoundaryAssertion(ref x) => Serialize::serialize(x, serializer),
-            Term::LookAroundAssertion(ref x) => Serialize::serialize(x, serializer),
-            Term::Quantifier(ref x) => Serialize::serialize(x, serializer),
-            Term::Character(ref x) => Serialize::serialize(x, serializer),
-            Term::Dot(ref x) => Serialize::serialize(x, serializer),
-            Term::CharacterClassEscape(ref x) => Serialize::serialize(x, serializer),
-            Term::UnicodePropertyEscape(ref x) => Serialize::serialize(x, serializer),
-            Term::CharacterClass(ref x) => Serialize::serialize(x, serializer),
-            Term::CapturingGroup(ref x) => Serialize::serialize(x, serializer),
-            Term::IgnoreGroup(ref x) => Serialize::serialize(x, serializer),
-            Term::IndexedReference(ref x) => Serialize::serialize(x, serializer),
-            Term::NamedReference(ref x) => Serialize::serialize(x, serializer),
+        match self {
+            Term::BoundaryAssertion(x) => Serialize::serialize(x, serializer),
+            Term::LookAroundAssertion(x) => Serialize::serialize(x, serializer),
+            Term::Quantifier(x) => Serialize::serialize(x, serializer),
+            Term::Character(x) => Serialize::serialize(x, serializer),
+            Term::Dot(x) => Serialize::serialize(x, serializer),
+            Term::CharacterClassEscape(x) => Serialize::serialize(x, serializer),
+            Term::UnicodePropertyEscape(x) => Serialize::serialize(x, serializer),
+            Term::CharacterClass(x) => Serialize::serialize(x, serializer),
+            Term::CapturingGroup(x) => Serialize::serialize(x, serializer),
+            Term::IgnoreGroup(x) => Serialize::serialize(x, serializer),
+            Term::IndexedReference(x) => Serialize::serialize(x, serializer),
+            Term::NamedReference(x) => Serialize::serialize(x, serializer),
         }
     }
 }
@@ -379,21 +379,13 @@ impl<'a> Serialize for CharacterClassContents<'a> {
     where
         S: Serializer,
     {
-        match *self {
-            CharacterClassContents::CharacterClassRange(ref x) => {
-                Serialize::serialize(x, serializer)
-            }
-            CharacterClassContents::CharacterClassEscape(ref x) => {
-                Serialize::serialize(x, serializer)
-            }
-            CharacterClassContents::UnicodePropertyEscape(ref x) => {
-                Serialize::serialize(x, serializer)
-            }
-            CharacterClassContents::Character(ref x) => Serialize::serialize(x, serializer),
-            CharacterClassContents::NestedCharacterClass(ref x) => {
-                Serialize::serialize(x, serializer)
-            }
-            CharacterClassContents::ClassStringDisjunction(ref x) => {
+        match self {
+            CharacterClassContents::CharacterClassRange(x) => Serialize::serialize(x, serializer),
+            CharacterClassContents::CharacterClassEscape(x) => Serialize::serialize(x, serializer),
+            CharacterClassContents::UnicodePropertyEscape(x) => Serialize::serialize(x, serializer),
+            CharacterClassContents::Character(x) => Serialize::serialize(x, serializer),
+            CharacterClassContents::NestedCharacterClass(x) => Serialize::serialize(x, serializer),
+            CharacterClassContents::ClassStringDisjunction(x) => {
                 Serialize::serialize(x, serializer)
             }
         }

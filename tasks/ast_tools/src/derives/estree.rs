@@ -141,13 +141,13 @@ fn serialize_enum(def: &EnumDef) -> TokenStream {
             let var_ident = var.ident();
             assert!(var.fields.len() == 1, "Each variant of an untagged enum must have exactly one inner field (on {ident}::{var_ident})");
             quote! {
-                #ident::#var_ident(ref x) => {
+                #ident::#var_ident(x) => {
                     Serialize::serialize(x, serializer)
                 }
             }
         });
         quote! {
-            match *self {
+            match self {
                 #(#match_branches),*
             }
         }
