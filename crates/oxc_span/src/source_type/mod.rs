@@ -11,8 +11,8 @@ pub use error::UnknownExtension;
 
 /// Source Type for JavaScript vs TypeScript / Script vs Module / JSX
 #[ast]
-#[generate_derive(ESTree)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[generate_derive(ESTree)]
 #[estree(no_type)]
 pub struct SourceType {
     /// JavaScript or TypeScript, default JavaScript
@@ -27,8 +27,8 @@ pub struct SourceType {
 
 /// JavaScript or TypeScript
 #[ast]
-#[generate_derive(ESTree)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[generate_derive(ESTree)]
 pub enum Language {
     /// Indicates a JavaScript or JSX file
     #[estree(rename = "javascript")]
@@ -43,8 +43,8 @@ pub enum Language {
 
 /// Script or Module
 #[ast]
-#[generate_derive(ESTree)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[generate_derive(ESTree)]
 #[estree(rename_all = "camelCase")]
 pub enum ModuleKind {
     /// Regular JS script or CommonJS file
@@ -64,8 +64,8 @@ pub enum ModuleKind {
 
 /// JSX for JavaScript and TypeScript
 #[ast]
-#[generate_derive(ESTree)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[generate_derive(ESTree)]
 #[estree(rename_all = "camelCase")]
 pub enum LanguageVariant {
     /// Standard JavaScript or TypeScript without any language extensions. Stage

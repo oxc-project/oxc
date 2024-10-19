@@ -12,8 +12,8 @@ use oxc_estree::ESTree;
 /// AST nodes without considering their locations (e.g. to see if they have the
 /// same content), use [`ContentHash`](crate::hash::ContentHash) instead.
 #[ast]
-#[generate_derive(ESTree)]
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[generate_derive(ESTree)]
 #[non_exhaustive] // Disallow struct expression constructor `Span {}`
 #[estree(no_type)]
 pub struct Span {
