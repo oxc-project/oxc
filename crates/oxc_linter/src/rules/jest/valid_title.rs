@@ -298,11 +298,12 @@ fn validate_title(
         return;
     }
 
-    if !valid_title.ignore_space && title.trim() != title {
+    let trimmed_title = title.trim();
+    if !valid_title.ignore_space && trimmed_title != title {
         let (error, help) = Message::AccidentalSpace.detail();
         ctx.diagnostic_with_fix(valid_title_diagnostic(error, help, span), |fixer| {
             let target_span = Span::new(span.start + 1, span.end - 1);
-            fixer.replace(target_span, title.trim().to_string())
+            fixer.replace(target_span, trimmed_title.to_string())
         });
     }
 
