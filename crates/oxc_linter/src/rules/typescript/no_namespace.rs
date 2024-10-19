@@ -83,10 +83,6 @@ impl Rule for NoNamespace {
             return;
         }
 
-        if self.allow_definition_files && ctx.source_type().is_typescript_definition() {
-            return;
-        }
-
         let declaration_code = declaration.span.source_text(ctx.source_text());
 
         let span = match declaration.kind {
@@ -104,6 +100,9 @@ impl Rule for NoNamespace {
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
+        if self.allow_definition_files && ctx.source_type().is_typescript_definition() {
+            return false;
+        }
         ctx.source_type().is_typescript()
     }
 }

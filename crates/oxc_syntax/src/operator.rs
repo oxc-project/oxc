@@ -6,9 +6,8 @@
 
 use oxc_allocator::CloneIn;
 use oxc_ast_macros::ast;
+use oxc_estree::ESTree;
 use oxc_span::{cmp::ContentEq, hash::ContentHash};
-#[cfg(feature = "serialize")]
-use {serde::Serialize, tsify::Tsify};
 
 use crate::precedence::{GetPrecedence, Precedence};
 
@@ -18,56 +17,56 @@ use crate::precedence::{GetPrecedence, Precedence};
 /// - [13.15 Assignment Operators](https://tc39.es/ecma262/#sec-assignment-operators)
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
+#[estree(rename_all = "camelCase")]
 pub enum AssignmentOperator {
     /// `=`
-    #[serde(rename = "=")]
+    #[estree(rename = "=")]
     Assign = 0,
     /// `+=`
-    #[serde(rename = "+=")]
+    #[estree(rename = "+=")]
     Addition = 1,
     /// `-=`
-    #[serde(rename = "-=")]
+    #[estree(rename = "-=")]
     Subtraction = 2,
     /// `*=`
-    #[serde(rename = "*=")]
+    #[estree(rename = "*=")]
     Multiplication = 3,
     /// `/=`
-    #[serde(rename = "/=")]
+    #[estree(rename = "/=")]
     Division = 4,
     /// `%=`
-    #[serde(rename = "%=")]
+    #[estree(rename = "%=")]
     Remainder = 5,
     /// `<<=`
-    #[serde(rename = "<<=")]
+    #[estree(rename = "<<=")]
     ShiftLeft = 6,
     /// `>>=`
-    #[serde(rename = ">>=")]
+    #[estree(rename = ">>=")]
     ShiftRight = 7,
     /// `>>>=`
-    #[serde(rename = ">>>=")]
+    #[estree(rename = ">>>=")]
     ShiftRightZeroFill = 8,
     /// `|=`
-    #[serde(rename = "|=")]
+    #[estree(rename = "|=")]
     BitwiseOR = 9,
     /// `^=`
-    #[serde(rename = "^=")]
+    #[estree(rename = "^=")]
     BitwiseXOR = 10,
     /// `&=`
-    #[serde(rename = "&=")]
+    #[estree(rename = "&=")]
     BitwiseAnd = 11,
     /// `&&=`
-    #[serde(rename = "&&=")]
+    #[estree(rename = "&&=")]
     LogicalAnd = 12,
     /// `||=`
-    #[serde(rename = "||=")]
+    #[estree(rename = "||=")]
     LogicalOr = 13,
     /// `??=`
-    #[serde(rename = "??=")]
+    #[estree(rename = "??=")]
     LogicalNullish = 14,
     /// `**=`
-    #[serde(rename = "**=")]
+    #[estree(rename = "**=")]
     Exponential = 15,
 }
 
@@ -125,74 +124,74 @@ impl AssignmentOperator {
 /// - [12.10 Binary Logical Operators](https://tc39.es/ecma262/#sec-binary-logical-operators)
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
+#[estree(rename_all = "camelCase")]
 pub enum BinaryOperator {
     /// `==`
-    #[serde(rename = "==")]
+    #[estree(rename = "==")]
     Equality = 0,
     /// `!=`
-    #[serde(rename = "!=")]
+    #[estree(rename = "!=")]
     Inequality = 1,
     /// `===`
-    #[serde(rename = "===")]
+    #[estree(rename = "===")]
     StrictEquality = 2,
     /// `!==`
-    #[serde(rename = "!==")]
+    #[estree(rename = "!==")]
     StrictInequality = 3,
     /// `<`
-    #[serde(rename = "<")]
+    #[estree(rename = "<")]
     LessThan = 4,
     /// `<=`
-    #[serde(rename = "<=")]
+    #[estree(rename = "<=")]
     LessEqualThan = 5,
     /// `>`
-    #[serde(rename = ">")]
+    #[estree(rename = ">")]
     GreaterThan = 6,
     /// `>=`
-    #[serde(rename = ">=")]
+    #[estree(rename = ">=")]
     GreaterEqualThan = 7,
     /// `<<`
-    #[serde(rename = "<<")]
+    #[estree(rename = "<<")]
     ShiftLeft = 8,
     /// `>>`
-    #[serde(rename = ">>")]
+    #[estree(rename = ">>")]
     ShiftRight = 9,
     /// `>>>`
-    #[serde(rename = ">>>")]
+    #[estree(rename = ">>>")]
     ShiftRightZeroFill = 10,
     /// `+`
-    #[serde(rename = "+")]
+    #[estree(rename = "+")]
     Addition = 11,
     /// `-`
-    #[serde(rename = "-")]
+    #[estree(rename = "-")]
     Subtraction = 12,
     /// `*`
-    #[serde(rename = "*")]
+    #[estree(rename = "*")]
     Multiplication = 13,
     /// `/`
-    #[serde(rename = "/")]
+    #[estree(rename = "/")]
     Division = 14,
     /// `%`
-    #[serde(rename = "%")]
+    #[estree(rename = "%")]
     Remainder = 15,
     /// `|`
-    #[serde(rename = "|")]
+    #[estree(rename = "|")]
     BitwiseOR = 16,
     /// `^`
-    #[serde(rename = "^")]
+    #[estree(rename = "^")]
     BitwiseXOR = 17,
     /// `&`
-    #[serde(rename = "&")]
+    #[estree(rename = "&")]
     BitwiseAnd = 18,
     /// `in`
-    #[serde(rename = "in")]
+    #[estree(rename = "in")]
     In = 19,
     /// `instanceof`
-    #[serde(rename = "instanceof")]
+    #[estree(rename = "instanceof")]
     Instanceof = 20,
     /// `**`
-    #[serde(rename = "**")]
+    #[estree(rename = "**")]
     Exponential = 21,
 }
 
@@ -356,17 +355,17 @@ impl GetPrecedence for BinaryOperator {
 /// Logical binary operators
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
+#[estree(rename_all = "camelCase")]
 pub enum LogicalOperator {
     /// `||`
-    #[serde(rename = "||")]
+    #[estree(rename = "||")]
     Or = 0,
     /// `&&`
-    #[serde(rename = "&&")]
+    #[estree(rename = "&&")]
     And = 1,
     /// `??`
-    #[serde(rename = "??")]
+    #[estree(rename = "??")]
     Coalesce = 2,
 }
 
@@ -410,29 +409,29 @@ impl GetPrecedence for LogicalOperator {
 /// - [12.5 Unary Operators](https://tc39.es/ecma262/#sec-unary-operators)
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
+#[estree(rename_all = "camelCase")]
 pub enum UnaryOperator {
     /// `-`
-    #[serde(rename = "-")]
+    #[estree(rename = "-")]
     UnaryNegation = 0,
     /// `+`
-    #[serde(rename = "+")]
+    #[estree(rename = "+")]
     UnaryPlus = 1,
     /// `!`
-    #[serde(rename = "!")]
+    #[estree(rename = "!")]
     LogicalNot = 2,
     /// `~`
-    #[serde(rename = "~")]
+    #[estree(rename = "~")]
     BitwiseNot = 3,
     /// `typeof`
-    #[serde(rename = "typeof")]
+    #[estree(rename = "typeof")]
     Typeof = 4,
     /// `void`
-    #[serde(rename = "void")]
+    #[estree(rename = "void")]
     Void = 5,
     /// `delete`
-    #[serde(rename = "delete")]
+    #[estree(rename = "delete")]
     Delete = 6,
 }
 
@@ -481,14 +480,14 @@ impl UnaryOperator {
 /// Unary update operators.
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
+#[estree(rename_all = "camelCase")]
 pub enum UpdateOperator {
     /// `++`
-    #[serde(rename = "++")]
+    #[estree(rename = "++")]
     Increment = 0,
     /// `--`
-    #[serde(rename = "--")]
+    #[estree(rename = "--")]
     Decrement = 1,
 }
 

@@ -1,0 +1,18 @@
+[package]
+name = "oxc_estree"
+version = "0.32.0"
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+license.workspace = true
+publish = true
+repository.workspace = true
+rust-version.workspace = true
+description.workspace = true
+
+[dependencies]
+
+[lints]
+workspace = true

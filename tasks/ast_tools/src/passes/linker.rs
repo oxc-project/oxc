@@ -49,8 +49,8 @@ impl Pass for Linker {
             .meta
             .inherits
             .drain(..)
-            .map(|it| match it {
-                Inherit::Unlinked(ref sup) => {
+            .map(|it| match &it {
+                Inherit::Unlinked(sup) => {
                     let linkee = ctx
                         .find(&Cow::Owned(sup.to_string()))
                         .normalize_with(format!("Unknown type {sup:?}"))?;

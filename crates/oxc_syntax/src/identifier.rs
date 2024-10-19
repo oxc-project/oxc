@@ -52,21 +52,20 @@ const MMSP: char = '\u{205f}';
 
 const IDEOGRAPHIC_SPACE: char = '\u{3000}';
 
+// https://eslint.org/docs/latest/rules/no-irregular-whitespace#rule-details
+#[rustfmt::skip]
 pub fn is_irregular_whitespace(c: char) -> bool {
-    matches!(
-        c,
-        VT | FF | NBSP | ZWNBSP | NEL | OGHAM_SPACE_MARK | EN_QUAD
-            ..ZWSP | NNBSP | MMSP | IDEOGRAPHIC_SPACE
+    matches!(c,
+        VT | FF | NBSP | ZWNBSP | NEL | OGHAM_SPACE_MARK
+        | EN_QUAD..=ZWSP | NNBSP | MMSP | IDEOGRAPHIC_SPACE
     )
 }
 
 // https://github.com/microsoft/TypeScript/blob/b8e4ed8aeb0b228f544c5736908c31f136a9f7e3/src/compiler/scanner.ts#L556
-// TODO: Unclear why we match `ZWSP` here, and not in `is_irregular_whitespace`.
-// https://github.com/oxc-project/oxc/pull/6639
 pub fn is_white_space_single_line(c: char) -> bool {
     // Note: nextLine is in the Zs space, and should be considered to be a whitespace.
     // It is explicitly not a line-break as it isn't in the exact set specified by EcmaScript.
-    matches!(c, SP | TAB | ZWSP) || is_irregular_whitespace(c)
+    matches!(c, SP | TAB) || is_irregular_whitespace(c)
 }
 
 // 11.3 Line Terminators

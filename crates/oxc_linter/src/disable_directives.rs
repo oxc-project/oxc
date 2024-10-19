@@ -134,10 +134,10 @@ impl<'a> DisableDirectivesBuilder<'a> {
                 // `eslint-disable-line`
                 else if let Some(text) = text.strip_prefix("-line") {
                     // Get the span between the preceding newline to this comment
-                    let start = source_text[..=comment.span.start as usize]
+                    let start = source_text[..comment.span.start as usize]
                         .lines()
                         .next_back()
-                        .map_or(0, |line| comment.span.start - (line.len() as u32 - 1));
+                        .map_or(0, |line| comment.span.start - line.len() as u32);
                     let stop = comment.span.start;
 
                     // `eslint-disable-line`
@@ -430,7 +430,8 @@ fn test() {
             format!("
                 /* {prefix}-disable , ,no-debugger, , */
                 debugger;
-            ")
+            "),
+            format!("debugger;//{prefix}-disable-line")
         ];
 
         let fail = vec![

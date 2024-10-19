@@ -4,6 +4,30 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.32.0] - 2024-10-19
+
+- 5200960 oxc: [**BREAKING**] Remove passing `Trivias` around (#6446) (Boshen)
+
+- 2808973 ast: [**BREAKING**] Add `Program::comments` (#6445) (Boshen)
+
+### Features
+
+- 6f22538 ecmascript: Add `ToBoolean`, `ToNumber`, `ToString` (#6502) (Boshen)
+- 590925a minifier: Finish implementing folding array expressions (#6575) (camc314)
+- e310e52 parser: Generate `Serialize` impls in ast_tools (#6404) (ottomated)
+- b5b0af9 regular_expression: Support RegExp Modifiers (#6410) (leaysgur)
+
+### Bug Fixes
+
+- 02bfbfe codegen: Preserve parenthesis for `ChainExpression` (#6430) (Dunqing)
+- a71e8a0 minifier: Preserve init variable declarations when removing `for` statements during DCE (#6551) (magic-akari)
+- 834ee2a semantic: `TSConditionalType` scope enter/exit locations (#6351) (DonIsaac)
+
+### Refactor
+
+- 073b02a ast: Type params field before params in TS function declaration types (#6391) (overlookmotel)
+- 458f8f3 ast_tools: Consistent comments on `AstBuilder` methods (#6664) (overlookmotel)
+
 ## [0.31.0] - 2024-10-08
 
 - 01b878e parser: [**BREAKING**] Use `BindingIdentifier` for `namespace` declaration names (#6003) (DonIsaac)

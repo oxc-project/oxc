@@ -1,6 +1,6 @@
 [package]
 name = "oxc_span"
-version = "0.31.0"
+version = "0.32.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -22,16 +22,16 @@ doctest = false
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_ast_macros = { workspace = true }
+oxc_estree = { workspace = true }
 
 compact_str = { workspace = true }
 miette = { workspace = true }
 
 schemars = { workspace = true, optional = true }
 serde = { workspace = true, features = ["derive"], optional = true }
-tsify = { workspace = true, optional = true }
 wasm-bindgen = { workspace = true, optional = true }
 
 [features]
 default = []
-serialize = ["compact_str/serde", "dep:serde", "dep:tsify", "dep:wasm-bindgen"]
+serialize = ["compact_str/serde", "dep:serde", "dep:wasm-bindgen"]
 schemars = ["dep:schemars"]

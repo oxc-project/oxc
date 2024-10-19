@@ -7,11 +7,13 @@ use crate::{codegen::LateCtx, schema::TypeDef};
 mod clone_in;
 mod content_eq;
 mod content_hash;
+mod estree;
 mod get_span;
 
 pub use clone_in::DeriveCloneIn;
 pub use content_eq::DeriveContentEq;
 pub use content_hash::DeriveContentHash;
+pub use estree::DeriveESTree;
 pub use get_span::{DeriveGetSpan, DeriveGetSpanMut};
 
 pub trait Derive {
@@ -40,10 +42,10 @@ macro_rules! define_derive {
                 let prelude = Self::prelude();
 
                 // from `x::y::z` to `crate::y::z::*`
-                let use_modules = module_paths.into_iter().map(|it|{
+                let use_modules = module_paths.into_iter().map(|it| {
                     let local_path = ["crate"]
                         .into_iter()
-                        .chain(it.split("::").skip(1))
+                        .chain(it.strip_suffix("::mod").unwrap_or(it).split("::").skip(1))
                         .chain(["*"])
                         .join("::");
                     let use_module: syn::ItemUse =
@@ -106,10 +108,17 @@ macro_rules! define_derive {
                     .fold(Vec::new(), |mut acc, (path, (modules, streams))| {
                         let mut modules = Vec::from_iter(modules);
                         modules.sort();
+
+                        let file_name = Self::trait_name().to_case(Case::Snake);
+                        let file_name = match file_name.as_str() {
+                            "es_tree" => "estree",
+                            f => f,
+                        };
+
                         acc.push((
                             $crate::output(
                                 format!("crates/{}", path.split("::").next().unwrap()).as_str(),
-                                format!("derive_{}.rs", Self::trait_name().to_case(Case::Snake)).as_str()
+                                format!("derive_{}.rs", file_name).as_str()
                             ),
                             Self::template(
                                 modules,

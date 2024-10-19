@@ -65,13 +65,6 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider wrapping the assignment in additional parentheses
 
   ⚠ eslint(no-cond-assign): Expected a conditional expression and instead saw an assignment
-   ╭─[no_cond_assign.tsx:1:39]
- 1 │ for (; (typeof l === 'undefined' ? (l = 0) : l); i++) { }
-   ·                                       ─
-   ╰────
-  help: Consider wrapping the assignment in additional parentheses
-
-  ⚠ eslint(no-cond-assign): Expected a conditional expression and instead saw an assignment
    ╭─[no_cond_assign.tsx:1:7]
  1 │ if (x = 0) { }
    ·       ─

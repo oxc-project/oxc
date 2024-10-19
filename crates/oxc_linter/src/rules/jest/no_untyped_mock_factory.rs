@@ -93,13 +93,13 @@ declare_oxc_lint!(
 
 impl Rule for NoUntypedMockFactory {
     fn run_once(&self, ctx: &LintContext<'_>) {
-        if !ctx.source_type().is_typescript() {
-            return;
-        }
-
         for possible_jest_node in &collect_possible_jest_call_node(ctx) {
             Self::run(possible_jest_node, ctx);
         }
+    }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 

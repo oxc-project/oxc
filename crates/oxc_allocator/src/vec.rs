@@ -2,26 +2,38 @@
 //!
 //! Originally based on [jsparagus](https://github.com/mozilla-spidermonkey/jsparagus/blob/master/crates/ast/src/arena.rs)
 
+use core::fmt;
 use std::{
     self,
     borrow::Cow,
     fmt::Debug,
     hash::{Hash, Hasher},
     iter::FusedIterator,
+    mem::ManuallyDrop,
     ops::{self, Index, RangeBounds},
     slice::SliceIndex,
 };
 
 use allocator_api2::alloc::Global;
 
+#[cfg(any(feature = "serialize", test))]
+use serde::{ser::SerializeSeq, Serialize, Serializer};
+
 use crate::{Allocator, Box};
 
 type VecImpl<'a, T> = bump_scope::BumpVec<'a, 'a, T>;
 
-/// A bump-allocated vector.
-#[cfg_attr(any(feature = "serialize", test), derive(serde::Serialize))]
-#[derive(Debug)]
-pub struct Vec<'alloc, T>(VecImpl<'alloc, T>);
+/// A `Vec` without [`Drop`], which stores its data in the arena allocator.
+///
+/// Should only be used for storing AST types.
+///
+/// Must NOT be used to store types which have a [`Drop`] implementation.
+/// `T::drop` will NOT be called on the `Vec`'s contents when the `Vec` is dropped.
+/// If `T` owns memory outside of the arena, this will be a memory leak.
+///
+/// Note: This is not a soundness issue, as Rust does not support relying on `drop`
+/// being called to guarantee soundness.
+pub struct Vec<'alloc, T>(ManuallyDrop<VecImpl<'alloc, T>>);
 
 impl<'alloc, T> Vec<'alloc, T> {
     /// Constructs a new, empty `Vec<T>`.
@@ -40,7 +52,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// ```
     #[inline(always)]
     pub fn new_in(allocator: &'alloc Allocator) -> Self {
-        Self(VecImpl::new_in(allocator))
+        Self(ManuallyDrop::new(VecImpl::new_in(allocator)))
     }
 
     /// Constructs a new, empty `Vec<T>` with at least the specified capacity
@@ -92,7 +104,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// ```
     #[inline(always)]
     pub fn with_capacity_in(capacity: usize, allocator: &'alloc Allocator) -> Self {
-        Self(VecImpl::with_capacity_in(capacity, allocator))
+        Self(ManuallyDrop::new(VecImpl::with_capacity_in(capacity, allocator)))
     }
 
     /// Create a new [`Vec`] whose elements are taken from an iterator and
@@ -101,7 +113,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// This is behaviorally identical to [`FromIterator::from_iter`].
     #[inline(always)]
     pub fn from_iter_in<I: IntoIterator<Item = T>>(iter: I, allocator: &'alloc Allocator) -> Self {
-        Self(VecImpl::from_iter_in(iter, allocator))
+        Self(ManuallyDrop::new(VecImpl::from_iter_in(iter, allocator)))
     }
 
     /// Returns the total number of elements the vector can hold without
@@ -117,7 +129,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// ```
     #[must_use]
     #[inline(always)]
-    pub const fn capacity(&self) -> usize {
+    pub fn capacity(&self) -> usize {
         self.0.capacity()
     }
 
@@ -126,7 +138,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// Equivalent to `&s[..]`.
     #[must_use]
     #[inline(always)]
-    pub const fn as_slice(&self) -> &[T] {
+    pub fn as_slice(&self) -> &[T] {
         self.0.as_slice()
     }
 
@@ -290,7 +302,8 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// [owned slice]: Box
     #[inline(always)]
     pub fn into_boxed_slice(self) -> Box<'alloc, [T]> {
-        let ptr = self.0.into_fixed_vec().into_boxed_slice().into_raw();
+        // By first calling `into_fixed_vec` we don't shrink the allocation.
+        let ptr = ManuallyDrop::into_inner(self.0).into_fixed_vec().into_boxed_slice().into_raw();
         // SAFETY: `ptr` points to a valid slice `[T]`.
         // Lifetime of returned `Box<'alloc, [T]>` is same as lifetime of consumed `Vec<'alloc, T>`,
         // so data in the `Box` must be valid for its lifetime.
@@ -586,6 +599,30 @@ impl<'alloc, T> Vec<'alloc, T> {
     }
 }
 
+impl<'alloc, T: Debug> Debug for Vec<'alloc, T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let inner = &*self.0;
+        f.debug_tuple("Vec").field(inner).finish()
+    }
+}
+
+#[cfg(any(feature = "serialize", test))]
+impl<'alloc, T> Serialize for Vec<'alloc, T>
+where
+    T: Serialize,
+{
+    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut seq = s.serialize_seq(Some(self.0.len()))?;
+        for e in self.0.iter() {
+            seq.serialize_element(e)?;
+        }
+        seq.end()
+    }
+}
+
 macro_rules! impl_slice_eq1 {
     ([$($($vars:tt)+)?] $lhs:ty, $rhs:ty $(where $ty:ty: $bound:ident)?) => {
         impl<$($($vars)+,)? T, U> PartialEq<$rhs> for $lhs
@@ -679,7 +716,10 @@ impl<'alloc, T> IntoIterator for Vec<'alloc, T> {
 
     #[inline(always)]
     fn into_iter(self) -> Self::IntoIter {
-        self.0.into_iter()
+        let inner = ManuallyDrop::into_inner(self.0);
+        // TODO: `allocator_api2::vec::Vec::IntoIter` is `Drop`.
+        // Wrap it in `ManuallyDrop` to prevent that.
+        inner.into_iter()
     }
 }
 
@@ -710,9 +750,10 @@ impl<T, I: SliceIndex<[T]>> Index<I> for Vec<'_, T> {
 // }
 
 impl<'alloc, T: Hash> Hash for Vec<'alloc, T> {
-    #[inline(always)]
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.0.hash(state)
+        for e in self.0.iter() {
+            e.hash(state);
+        }
     }
 }
 
