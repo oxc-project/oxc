@@ -165,7 +165,7 @@ const TS_APPEND_CONTENT: &'static str = r#"
 export type FormalParameterRest = ({
     type: "RestElement",
     argument: BindingPatternKind,
-    typeAnnotation?: TSTypeAnnotation,
+    typeAnnotation: TSTypeAnnotation | null,
     optional: boolean,
 }) & Span;
 "#;
