@@ -898,7 +898,10 @@ fn test() {
     let fix = vec![
         ("describe(' foo', function () {})", "describe('foo', function () {})"),
         ("describe.each()(' foo', function () {})", "describe.each()('foo', function () {})"),
-        ("describe.only.each()(' foo', function () {})", "describe.only.each()('foo', function () {})"),
+        (
+            "describe.only.each()(' foo', function () {})",
+            "describe.only.each()('foo', function () {})",
+        ),
         ("describe(' foo foe fum', function () {})", "describe('foo foe fum', function () {})"),
         ("describe('foo foe fum ', function () {})", "describe('foo foe fum', function () {})"),
         ("fdescribe(' foo', function () {})", "fdescribe('foo', function () {})"),
@@ -928,9 +931,15 @@ fn test() {
         ("test(` foo`, function () {})", "test(`foo`, function () {})"),
         ("test.concurrent(` foo`, function () {})", "test.concurrent(`foo`, function () {})"),
         ("test(` foo bar bang`, function () {})", "test(`foo bar bang`, function () {})"),
-        ("test.concurrent(` foo bar bang`, function () {})", "test.concurrent(`foo bar bang`, function () {})"),
+        (
+            "test.concurrent(` foo bar bang`, function () {})",
+            "test.concurrent(`foo bar bang`, function () {})",
+        ),
         ("test(` foo bar bang  `, function () {})", "test(`foo bar bang`, function () {})"),
-        ("test.concurrent(` foo bar bang  `, function () {})", "test.concurrent(`foo bar bang`, function () {})"),
+        (
+            "test.concurrent(` foo bar bang  `, function () {})",
+            "test.concurrent(`foo bar bang`, function () {})",
+        ),
         ("xtest(' foo', function () {})", "xtest('foo', function () {})"),
         ("xtest(' foo  ', function () {})", "xtest('foo', function () {})"),
         (
@@ -959,5 +968,8 @@ fn test() {
         ),
     ];
 
-    Tester::new(ValidTitle::NAME, pass, fail).with_jest_plugin(true).expect_fix(fix).test_and_snapshot();
+    Tester::new(ValidTitle::NAME, pass, fail)
+        .with_jest_plugin(true)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }
