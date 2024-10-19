@@ -17,9 +17,9 @@ pub fn enum_variant_name(var: &VariantDef, enm: &EnumDef) -> String {
 
 pub fn get_type_tag(def: &StructDef) -> Option<String> {
     match def.markers.estree {
-        Some(ESTreeStructAttribute::NoType | ESTreeStructAttribute::CustomSerialize) => None,
+        Some(ESTreeStructAttribute::NoType) => None,
         Some(ESTreeStructAttribute::Type(ref type_name)) => Some(type_name.clone()),
-        None => {
+        Some(ESTreeStructAttribute::CustomSerialize) | None => {
             let has_type_field =
                 def.fields.iter().any(|f| matches!(f.name.as_deref(), Some("type")));
             if has_type_field {

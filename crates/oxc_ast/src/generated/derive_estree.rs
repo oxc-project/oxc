@@ -1027,10 +1027,10 @@ const TS_APPEND_CONTENT: &'static str =
     "export type AssignmentTargetPattern = ArrayAssignmentTarget | ObjectAssignmentTarget;";
 
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = "export type ArrayAssignmentTarget = ({\n\telements: Array<AssignmentTargetMaybeDefault | AssignmentTargetRest | null>;\n}) & Span;";
+const TS_APPEND_CONTENT: &'static str = "export type ArrayAssignmentTarget = ({\n\ttype: 'ArrayAssignmentTarget';\n\telements: Array<AssignmentTargetMaybeDefault | AssignmentTargetRest | null>;\n}) & Span;";
 
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = "export type ObjectAssignmentTarget = ({\n\tproperties: Array<AssignmentTargetProperty | AssignmentTargetRest>;\n}) & Span;";
+const TS_APPEND_CONTENT: &'static str = "export type ObjectAssignmentTarget = ({\n\ttype: 'ObjectAssignmentTarget';\n\tproperties: Array<AssignmentTargetProperty | AssignmentTargetRest>;\n}) & Span;";
 
 impl<'a> Serialize for AssignmentTargetRest<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1927,7 +1927,7 @@ impl<'a> Serialize for AssignmentPattern<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type AssignmentPattern = ({\n\ttype: 'AssignmentPattern';\n\tleft: BindingPattern;\n\tright: Expression;\n}) & Span;";
 
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = "export type ObjectPattern = ({\n\tproperties: Array<BindingProperty | BindingRestElement>;\n}) & Span;";
+const TS_APPEND_CONTENT: &'static str = "export type ObjectPattern = ({\n\ttype: 'ObjectPattern';\n\tproperties: Array<BindingProperty | BindingRestElement>;\n}) & Span;";
 
 impl<'a> Serialize for BindingProperty<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -1949,7 +1949,7 @@ impl<'a> Serialize for BindingProperty<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type BindingProperty = ({\n\ttype: 'BindingProperty';\n\tkey: PropertyKey;\n\tvalue: BindingPattern;\n\tshorthand: boolean;\n\tcomputed: boolean;\n}) & Span;";
 
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = "export type ArrayPattern = ({\n\telements: Array<BindingPattern | BindingRestElement | null>;\n}) & Span;";
+const TS_APPEND_CONTENT: &'static str = "export type ArrayPattern = ({\n\ttype: 'ArrayPattern';\n\telements: Array<BindingPattern | BindingRestElement | null>;\n}) & Span;";
 
 impl<'a> Serialize for BindingRestElement<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -2019,7 +2019,7 @@ impl Serialize for FunctionType {
 const TS_APPEND_CONTENT: &'static str = "export type FunctionType = 'FunctionDeclaration' | 'FunctionExpression' | 'TSDeclareFunction' | 'TSEmptyBodyFunctionExpression';";
 
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = "export type FormalParameters = ({\n\tkind: FormalParameterKind;\n\titems: Array<FormalParameter | FormalParameterRest>;\n}) & Span;";
+const TS_APPEND_CONTENT: &'static str = "export type FormalParameters = ({\n\ttype: 'FormalParameters';\n\tkind: FormalParameterKind;\n\titems: Array<FormalParameter | FormalParameterRest>;\n}) & Span;";
 
 impl<'a> Serialize for FormalParameter<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
@@ -4010,8 +4010,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type TSModuleDeclarationBody = TSModuleDeclaration | TSModuleBlock;";
 
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str =
-    "export type TSModuleBlock = ({\n\tbody: Array<Statement>;\n}) & Span;";
+const TS_APPEND_CONTENT: &'static str = "export type TSModuleBlock = ({\n\ttype: 'TSModuleBlock';\n\tbody: Array<Statement>;\n}) & Span;";
 
 impl<'a> Serialize for TSTypeLiteral<'a> {
     #[allow(clippy::match_same_arms, unused_mut)]
