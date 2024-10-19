@@ -47,17 +47,18 @@ use std::{
 use bump_scope::Bump;
 
 /// A bump-allocated string.
-pub type String<'a> = bump_scope::BumpString<'a, 'a>;
 type BumpScope<'a> = bump_scope::BumpScope<'a>;
 
 mod boxed;
 mod clone_in;
 mod convert;
+mod string;
 mod vec;
 
 pub use boxed::{Address, Box};
 pub use clone_in::CloneIn;
 pub use convert::{FromIn, IntoIn};
+pub use string::String;
 pub use vec::Vec;
 
 /// A bump-allocated memory arena based on [bumpalo].

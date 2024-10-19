@@ -146,7 +146,7 @@ macro_rules! handle_string_literal_escape {
         }
 
         // Convert `str` to arena slice and save to `escaped_strings`
-        $lexer.save_string(true, str.into_fixed_string().into_str());
+        $lexer.save_string(true, str.into_str());
 
         Kind::Str
     }};
