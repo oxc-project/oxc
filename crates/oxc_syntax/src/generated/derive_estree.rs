@@ -9,10 +9,7 @@ use serde::{ser::SerializeMap, Serialize, Serializer};
 use crate::operator::*;
 
 impl Serialize for AssignmentOperator {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             AssignmentOperator::Assign => {
                 serializer.serialize_unit_variant("AssignmentOperator", 0u32, "=")
@@ -69,10 +66,7 @@ impl Serialize for AssignmentOperator {
 const TS_APPEND_CONTENT: &'static str = "export type AssignmentOperator = '=' | '+=' | '-=' | '*=' | '/=' | '%=' | '<<=' | '>>=' | '>>>=' | '|=' | '^=' | '&=' | '&&=' | '||=' | '??=' | '**=';";
 
 impl Serialize for BinaryOperator {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             BinaryOperator::Equality => {
                 serializer.serialize_unit_variant("BinaryOperator", 0u32, "==")
@@ -145,10 +139,7 @@ impl Serialize for BinaryOperator {
 const TS_APPEND_CONTENT: &'static str = "export type BinaryOperator = '==' | '!=' | '===' | '!==' | '<' | '<=' | '>' | '>=' | '<<' | '>>' | '>>>' | '+' | '-' | '*' | '/' | '%' | '|' | '^' | '&' | 'in' | 'instanceof' | '**';";
 
 impl Serialize for LogicalOperator {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             LogicalOperator::Or => serializer.serialize_unit_variant("LogicalOperator", 0u32, "||"),
             LogicalOperator::And => {
@@ -164,10 +155,7 @@ impl Serialize for LogicalOperator {
 const TS_APPEND_CONTENT: &'static str = "export type LogicalOperator = '||' | '&&' | '??';";
 
 impl Serialize for UnaryOperator {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             UnaryOperator::UnaryNegation => {
                 serializer.serialize_unit_variant("UnaryOperator", 0u32, "-")
@@ -196,10 +184,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type UnaryOperator = '-' | '+' | '!' | '~' | 'typeof' | 'void' | 'delete';";
 
 impl Serialize for UpdateOperator {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             UpdateOperator::Increment => {
                 serializer.serialize_unit_variant("UpdateOperator", 0u32, "++")

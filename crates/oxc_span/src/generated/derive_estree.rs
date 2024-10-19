@@ -12,10 +12,7 @@ use crate::source_type::*;
 use crate::span::types::*;
 
 impl Serialize for Span {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("start", &self.start)?;
         map.serialize_entry("end", &self.end)?;
@@ -27,10 +24,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type Span = ({\n\tstart: number;\n\tend: number;\n});";
 
 impl Serialize for SourceType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("language", &self.language)?;
         map.serialize_entry("moduleKind", &self.module_kind)?;
@@ -42,10 +36,7 @@ impl Serialize for SourceType {
 const TS_APPEND_CONTENT: &'static str = "export type SourceType = ({\n\tlanguage: Language;\n\tmoduleKind: ModuleKind;\n\tvariant: LanguageVariant;\n});";
 
 impl Serialize for Language {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             Language::JavaScript => {
                 serializer.serialize_unit_variant("Language", 0u32, "javascript")
@@ -64,10 +55,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type Language = 'javascript' | 'typescript' | 'typescriptDefinition';";
 
 impl Serialize for ModuleKind {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             ModuleKind::Script => serializer.serialize_unit_variant("ModuleKind", 0u32, "script"),
             ModuleKind::Module => serializer.serialize_unit_variant("ModuleKind", 1u32, "module"),
@@ -82,10 +70,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type ModuleKind = 'script' | 'module' | 'unambiguous';";
 
 impl Serialize for LanguageVariant {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             LanguageVariant::Standard => {
                 serializer.serialize_unit_variant("LanguageVariant", 0u32, "standard")

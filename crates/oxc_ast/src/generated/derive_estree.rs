@@ -18,10 +18,7 @@ use crate::ast::literal::*;
 use crate::ast::ts::*;
 
 impl Serialize for BooleanLiteral {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "BooleanLiteral")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -34,10 +31,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type BooleanLiteral = ({\n\ttype: 'BooleanLiteral';\n\tvalue: boolean;\n}) & Span;";
 
 impl Serialize for NullLiteral {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "NullLiteral")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -49,10 +43,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type NullLiteral = ({\n\ttype: 'NullLiteral';\n}) & Span;";
 
 impl<'a> Serialize for NumericLiteral<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "NumericLiteral")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -65,10 +56,7 @@ impl<'a> Serialize for NumericLiteral<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type NumericLiteral = ({\n\ttype: 'NumericLiteral';\n\tvalue: number;\n\traw: string;\n}) & Span;";
 
 impl<'a> Serialize for BigIntLiteral<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "BigIntLiteral")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -81,10 +69,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type BigIntLiteral = ({\n\ttype: 'BigIntLiteral';\n\traw: string;\n}) & Span;";
 
 impl<'a> Serialize for RegExpLiteral<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "RegExpLiteral")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -97,10 +82,7 @@ impl<'a> Serialize for RegExpLiteral<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type RegExpLiteral = ({\n\ttype: 'RegExpLiteral';\n\tvalue: EmptyObject;\n\tregex: RegExp;\n}) & Span;";
 
 impl<'a> Serialize for RegExp<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("pattern", &self.pattern)?;
         map.serialize_entry("flags", &self.flags)?;
@@ -112,10 +94,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type RegExp = ({\n\tpattern: RegExpPattern;\n\tflags: RegExpFlags;\n});";
 
 impl<'a> Serialize for RegExpPattern<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             RegExpPattern::Raw(x) => Serialize::serialize(x, serializer),
             RegExpPattern::Invalid(x) => Serialize::serialize(x, serializer),
@@ -127,10 +106,7 @@ impl<'a> Serialize for RegExpPattern<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type RegExpPattern = string | string | Pattern;";
 
 impl Serialize for EmptyObject {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.end()
     }
@@ -139,10 +115,7 @@ impl Serialize for EmptyObject {
 const TS_APPEND_CONTENT: &'static str = "export type EmptyObject = ({\n});";
 
 impl<'a> Serialize for StringLiteral<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "StringLiteral")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -155,10 +128,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type StringLiteral = ({\n\ttype: 'StringLiteral';\n\tvalue: string;\n}) & Span;";
 
 impl<'a> Serialize for Program<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "Program")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -173,10 +143,7 @@ impl<'a> Serialize for Program<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type Program = ({\n\ttype: 'Program';\n\tsourceType: SourceType;\n\thashbang: (Hashbang) | null;\n\tdirectives: Array<Directive>;\n\tbody: Array<Statement>;\n}) & Span;";
 
 impl<'a> Serialize for Expression<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             Expression::BooleanLiteral(x) => Serialize::serialize(x, serializer),
             Expression::NullLiteral(x) => Serialize::serialize(x, serializer),
@@ -227,10 +194,7 @@ impl<'a> Serialize for Expression<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type Expression = BooleanLiteral | NullLiteral | NumericLiteral | BigIntLiteral | RegExpLiteral | StringLiteral | TemplateLiteral | IdentifierReference | MetaProperty | Super | ArrayExpression | ArrowFunctionExpression | AssignmentExpression | AwaitExpression | BinaryExpression | CallExpression | ChainExpression | Class | ConditionalExpression | Function | ImportExpression | LogicalExpression | NewExpression | ObjectExpression | ParenthesizedExpression | SequenceExpression | TaggedTemplateExpression | ThisExpression | UnaryExpression | UpdateExpression | YieldExpression | PrivateInExpression | JSXElement | JSXFragment | TSAsExpression | TSSatisfiesExpression | TSTypeAssertion | TSNonNullExpression | TSInstantiationExpression | ComputedMemberExpression | StaticMemberExpression | PrivateFieldExpression;";
 
 impl<'a> Serialize for IdentifierName<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "Identifier")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -243,10 +207,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type IdentifierName = ({\n\ttype: 'Identifier';\n\tname: string;\n}) & Span;";
 
 impl<'a> Serialize for IdentifierReference<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "Identifier")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -259,10 +220,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type IdentifierReference = ({\n\ttype: 'Identifier';\n\tname: string;\n}) & Span;";
 
 impl<'a> Serialize for BindingIdentifier<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "Identifier")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -275,10 +233,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type BindingIdentifier = ({\n\ttype: 'Identifier';\n\tname: string;\n}) & Span;";
 
 impl<'a> Serialize for LabelIdentifier<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "Identifier")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -291,10 +246,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type LabelIdentifier = ({\n\ttype: 'Identifier';\n\tname: string;\n}) & Span;";
 
 impl Serialize for ThisExpression {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ThisExpression")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -306,10 +258,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type ThisExpression = ({\n\ttype: 'ThisExpression';\n}) & Span;";
 
 impl<'a> Serialize for ArrayExpression<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ArrayExpression")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -321,10 +270,7 @@ impl<'a> Serialize for ArrayExpression<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type ArrayExpression = ({\n\ttype: 'ArrayExpression';\n\telements: Array<SpreadElement | Expression | null>;\n}) & Span;";
 
 impl<'a> Serialize for ArrayExpressionElement<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             ArrayExpressionElement::SpreadElement(x) => Serialize::serialize(x, serializer),
             ArrayExpressionElement::Elision(x) => Serialize::serialize(x, serializer),
@@ -391,10 +337,7 @@ impl<'a> Serialize for ArrayExpressionElement<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type ArrayExpressionElement = SpreadElement | Elision | BooleanLiteral | NullLiteral | NumericLiteral | BigIntLiteral | RegExpLiteral | StringLiteral | TemplateLiteral | IdentifierReference | MetaProperty | Super | ArrayExpression | ArrowFunctionExpression | AssignmentExpression | AwaitExpression | BinaryExpression | CallExpression | ChainExpression | Class | ConditionalExpression | Function | ImportExpression | LogicalExpression | NewExpression | ObjectExpression | ParenthesizedExpression | SequenceExpression | TaggedTemplateExpression | ThisExpression | UnaryExpression | UpdateExpression | YieldExpression | PrivateInExpression | JSXElement | JSXFragment | TSAsExpression | TSSatisfiesExpression | TSTypeAssertion | TSNonNullExpression | TSInstantiationExpression | ComputedMemberExpression | StaticMemberExpression | PrivateFieldExpression;";
 
 impl<'a> Serialize for ObjectExpression<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ObjectExpression")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -406,10 +349,7 @@ impl<'a> Serialize for ObjectExpression<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type ObjectExpression = ({\n\ttype: 'ObjectExpression';\n\tproperties: Array<ObjectPropertyKind>;\n}) & Span;";
 
 impl<'a> Serialize for ObjectPropertyKind<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             ObjectPropertyKind::ObjectProperty(x) => Serialize::serialize(x, serializer),
             ObjectPropertyKind::SpreadProperty(x) => Serialize::serialize(x, serializer),
@@ -421,10 +361,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type ObjectPropertyKind = ObjectProperty | SpreadElement;";
 
 impl<'a> Serialize for ObjectProperty<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ObjectProperty")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -442,10 +379,7 @@ impl<'a> Serialize for ObjectProperty<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type ObjectProperty = ({\n\ttype: 'ObjectProperty';\n\tkind: PropertyKind;\n\tkey: PropertyKey;\n\tvalue: Expression;\n\tinit: (Expression) | null;\n\tmethod: boolean;\n\tshorthand: boolean;\n\tcomputed: boolean;\n}) & Span;";
 
 impl<'a> Serialize for PropertyKey<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             PropertyKey::StaticIdentifier(x) => Serialize::serialize(x, serializer),
             PropertyKey::PrivateIdentifier(x) => Serialize::serialize(x, serializer),
@@ -498,10 +432,7 @@ impl<'a> Serialize for PropertyKey<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type PropertyKey = IdentifierName | PrivateIdentifier | BooleanLiteral | NullLiteral | NumericLiteral | BigIntLiteral | RegExpLiteral | StringLiteral | TemplateLiteral | IdentifierReference | MetaProperty | Super | ArrayExpression | ArrowFunctionExpression | AssignmentExpression | AwaitExpression | BinaryExpression | CallExpression | ChainExpression | Class | ConditionalExpression | Function | ImportExpression | LogicalExpression | NewExpression | ObjectExpression | ParenthesizedExpression | SequenceExpression | TaggedTemplateExpression | ThisExpression | UnaryExpression | UpdateExpression | YieldExpression | PrivateInExpression | JSXElement | JSXFragment | TSAsExpression | TSSatisfiesExpression | TSTypeAssertion | TSNonNullExpression | TSInstantiationExpression | ComputedMemberExpression | StaticMemberExpression | PrivateFieldExpression;";
 
 impl Serialize for PropertyKind {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             PropertyKind::Init => serializer.serialize_unit_variant("PropertyKind", 0u32, "init"),
             PropertyKind::Get => serializer.serialize_unit_variant("PropertyKind", 1u32, "get"),
@@ -513,10 +444,7 @@ impl Serialize for PropertyKind {
 const TS_APPEND_CONTENT: &'static str = "export type PropertyKind = 'init' | 'get' | 'set';";
 
 impl<'a> Serialize for TemplateLiteral<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TemplateLiteral")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -529,10 +457,7 @@ impl<'a> Serialize for TemplateLiteral<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TemplateLiteral = ({\n\ttype: 'TemplateLiteral';\n\tquasis: Array<TemplateElement>;\n\texpressions: Array<Expression>;\n}) & Span;";
 
 impl<'a> Serialize for TaggedTemplateExpression<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TaggedTemplateExpression")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -546,10 +471,7 @@ impl<'a> Serialize for TaggedTemplateExpression<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TaggedTemplateExpression = ({\n\ttype: 'TaggedTemplateExpression';\n\ttag: Expression;\n\tquasi: TemplateLiteral;\n\ttypeParameters: (TSTypeParameterInstantiation) | null;\n}) & Span;";
 
 impl<'a> Serialize for TemplateElement<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TemplateElement")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -562,10 +484,7 @@ impl<'a> Serialize for TemplateElement<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TemplateElement = ({\n\ttype: 'TemplateElement';\n\ttail: boolean;\n\tvalue: TemplateElementValue;\n}) & Span;";
 
 impl<'a> Serialize for TemplateElementValue<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("raw", &self.raw)?;
         map.serialize_entry("cooked", &self.cooked)?;
@@ -577,10 +496,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type TemplateElementValue = ({\n\traw: string;\n\tcooked: (string) | null;\n});";
 
 impl<'a> Serialize for MemberExpression<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             MemberExpression::ComputedMemberExpression(x) => Serialize::serialize(x, serializer),
             MemberExpression::StaticMemberExpression(x) => Serialize::serialize(x, serializer),
@@ -592,10 +508,7 @@ impl<'a> Serialize for MemberExpression<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type MemberExpression = ComputedMemberExpression | StaticMemberExpression | PrivateFieldExpression;";
 
 impl<'a> Serialize for ComputedMemberExpression<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ComputedMemberExpression")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -609,10 +522,7 @@ impl<'a> Serialize for ComputedMemberExpression<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type ComputedMemberExpression = ({\n\ttype: 'ComputedMemberExpression';\n\tobject: Expression;\n\texpression: Expression;\n\toptional: boolean;\n}) & Span;";
 
 impl<'a> Serialize for StaticMemberExpression<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "StaticMemberExpression")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -626,10 +536,7 @@ impl<'a> Serialize for StaticMemberExpression<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type StaticMemberExpression = ({\n\ttype: 'StaticMemberExpression';\n\tobject: Expression;\n\tproperty: IdentifierName;\n\toptional: boolean;\n}) & Span;";
 
 impl<'a> Serialize for PrivateFieldExpression<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "PrivateFieldExpression")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -643,10 +550,7 @@ impl<'a> Serialize for PrivateFieldExpression<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type PrivateFieldExpression = ({\n\ttype: 'PrivateFieldExpression';\n\tobject: Expression;\n\tfield: PrivateIdentifier;\n\toptional: boolean;\n}) & Span;";
 
 impl<'a> Serialize for CallExpression<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "CallExpression")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -661,10 +565,7 @@ impl<'a> Serialize for CallExpression<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type CallExpression = ({\n\ttype: 'CallExpression';\n\tcallee: Expression;\n\ttypeParameters: (TSTypeParameterInstantiation) | null;\n\targuments: Array<Argument>;\n\toptional: boolean;\n}) & Span;";
 
 impl<'a> Serialize for NewExpression<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "NewExpression")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -678,10 +579,7 @@ impl<'a> Serialize for NewExpression<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type NewExpression = ({\n\ttype: 'NewExpression';\n\tcallee: Expression;\n\targuments: Array<Argument>;\n\ttypeParameters: (TSTypeParameterInstantiation) | null;\n}) & Span;";
 
 impl<'a> Serialize for MetaProperty<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "MetaProperty")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -694,10 +592,7 @@ impl<'a> Serialize for MetaProperty<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type MetaProperty = ({\n\ttype: 'MetaProperty';\n\tmeta: IdentifierName;\n\tproperty: IdentifierName;\n}) & Span;";
 
 impl<'a> Serialize for SpreadElement<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "SpreadElement")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -710,10 +605,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type SpreadElement = ({\n\ttype: 'SpreadElement';\n\targument: Expression;\n}) & Span;";
 
 impl<'a> Serialize for Argument<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             Argument::SpreadElement(x) => Serialize::serialize(x, serializer),
             Argument::BooleanLiteral(x) => Serialize::serialize(x, serializer),
@@ -765,10 +657,7 @@ impl<'a> Serialize for Argument<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type Argument = SpreadElement | BooleanLiteral | NullLiteral | NumericLiteral | BigIntLiteral | RegExpLiteral | StringLiteral | TemplateLiteral | IdentifierReference | MetaProperty | Super | ArrayExpression | ArrowFunctionExpression | AssignmentExpression | AwaitExpression | BinaryExpression | CallExpression | ChainExpression | Class | ConditionalExpression | Function | ImportExpression | LogicalExpression | NewExpression | ObjectExpression | ParenthesizedExpression | SequenceExpression | TaggedTemplateExpression | ThisExpression | UnaryExpression | UpdateExpression | YieldExpression | PrivateInExpression | JSXElement | JSXFragment | TSAsExpression | TSSatisfiesExpression | TSTypeAssertion | TSNonNullExpression | TSInstantiationExpression | ComputedMemberExpression | StaticMemberExpression | PrivateFieldExpression;";
 
 impl<'a> Serialize for UpdateExpression<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "UpdateExpression")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -782,10 +671,7 @@ impl<'a> Serialize for UpdateExpression<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type UpdateExpression = ({\n\ttype: 'UpdateExpression';\n\toperator: UpdateOperator;\n\tprefix: boolean;\n\targument: SimpleAssignmentTarget;\n}) & Span;";
 
 impl<'a> Serialize for UnaryExpression<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "UnaryExpression")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -798,10 +684,7 @@ impl<'a> Serialize for UnaryExpression<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type UnaryExpression = ({\n\ttype: 'UnaryExpression';\n\toperator: UnaryOperator;\n\targument: Expression;\n}) & Span;";
 
 impl<'a> Serialize for BinaryExpression<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "BinaryExpression")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -815,10 +698,7 @@ impl<'a> Serialize for BinaryExpression<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type BinaryExpression = ({\n\ttype: 'BinaryExpression';\n\tleft: Expression;\n\toperator: BinaryOperator;\n\tright: Expression;\n}) & Span;";
 
 impl<'a> Serialize for PrivateInExpression<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "PrivateInExpression")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -832,10 +712,7 @@ impl<'a> Serialize for PrivateInExpression<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type PrivateInExpression = ({\n\ttype: 'PrivateInExpression';\n\tleft: PrivateIdentifier;\n\toperator: BinaryOperator;\n\tright: Expression;\n}) & Span;";
 
 impl<'a> Serialize for LogicalExpression<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "LogicalExpression")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -849,10 +726,7 @@ impl<'a> Serialize for LogicalExpression<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type LogicalExpression = ({\n\ttype: 'LogicalExpression';\n\tleft: Expression;\n\toperator: LogicalOperator;\n\tright: Expression;\n}) & Span;";
 
 impl<'a> Serialize for ConditionalExpression<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ConditionalExpression")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -866,10 +740,7 @@ impl<'a> Serialize for ConditionalExpression<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type ConditionalExpression = ({\n\ttype: 'ConditionalExpression';\n\ttest: Expression;\n\tconsequent: Expression;\n\talternate: Expression;\n}) & Span;";
 
 impl<'a> Serialize for AssignmentExpression<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "AssignmentExpression")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -883,10 +754,7 @@ impl<'a> Serialize for AssignmentExpression<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type AssignmentExpression = ({\n\ttype: 'AssignmentExpression';\n\toperator: AssignmentOperator;\n\tleft: AssignmentTarget;\n\tright: Expression;\n}) & Span;";
 
 impl<'a> Serialize for AssignmentTarget<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             AssignmentTarget::AssignmentTargetIdentifier(x) => Serialize::serialize(x, serializer),
             AssignmentTarget::TSAsExpression(x) => Serialize::serialize(x, serializer),
@@ -906,10 +774,7 @@ impl<'a> Serialize for AssignmentTarget<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type AssignmentTarget = IdentifierReference | TSAsExpression | TSSatisfiesExpression | TSNonNullExpression | TSTypeAssertion | TSInstantiationExpression | ComputedMemberExpression | StaticMemberExpression | PrivateFieldExpression | ArrayAssignmentTarget | ObjectAssignmentTarget;";
 
 impl<'a> Serialize for SimpleAssignmentTarget<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             SimpleAssignmentTarget::AssignmentTargetIdentifier(x) => {
                 Serialize::serialize(x, serializer)
@@ -937,10 +802,7 @@ impl<'a> Serialize for SimpleAssignmentTarget<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type SimpleAssignmentTarget = IdentifierReference | TSAsExpression | TSSatisfiesExpression | TSNonNullExpression | TSTypeAssertion | TSInstantiationExpression | ComputedMemberExpression | StaticMemberExpression | PrivateFieldExpression;";
 
 impl<'a> Serialize for AssignmentTargetPattern<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             AssignmentTargetPattern::ArrayAssignmentTarget(x) => {
                 Serialize::serialize(x, serializer)
@@ -962,10 +824,7 @@ const TS_APPEND_CONTENT: &'static str = "export type ArrayAssignmentTarget = ({\
 const TS_APPEND_CONTENT: &'static str = "export type ObjectAssignmentTarget = ({\n\ttype: 'ObjectAssignmentTarget';\n\tproperties: Array<AssignmentTargetProperty | AssignmentTargetRest>;\n}) & Span;";
 
 impl<'a> Serialize for AssignmentTargetRest<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "RestElement")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -977,10 +836,7 @@ impl<'a> Serialize for AssignmentTargetRest<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type AssignmentTargetRest = ({\n\ttype: 'RestElement';\n\targument: AssignmentTarget;\n}) & Span;";
 
 impl<'a> Serialize for AssignmentTargetMaybeDefault<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(x) => {
                 Serialize::serialize(x, serializer)
@@ -1021,10 +877,7 @@ impl<'a> Serialize for AssignmentTargetMaybeDefault<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type AssignmentTargetMaybeDefault = AssignmentTargetWithDefault | IdentifierReference | TSAsExpression | TSSatisfiesExpression | TSNonNullExpression | TSTypeAssertion | TSInstantiationExpression | ComputedMemberExpression | StaticMemberExpression | PrivateFieldExpression | ArrayAssignmentTarget | ObjectAssignmentTarget;";
 
 impl<'a> Serialize for AssignmentTargetWithDefault<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "AssignmentTargetWithDefault")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1037,10 +890,7 @@ impl<'a> Serialize for AssignmentTargetWithDefault<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type AssignmentTargetWithDefault = ({\n\ttype: 'AssignmentTargetWithDefault';\n\tbinding: AssignmentTarget;\n\tinit: Expression;\n}) & Span;";
 
 impl<'a> Serialize for AssignmentTargetProperty<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(x) => {
                 Serialize::serialize(x, serializer)
@@ -1055,10 +905,7 @@ impl<'a> Serialize for AssignmentTargetProperty<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type AssignmentTargetProperty = AssignmentTargetPropertyIdentifier | AssignmentTargetPropertyProperty;";
 
 impl<'a> Serialize for AssignmentTargetPropertyIdentifier<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "AssignmentTargetPropertyIdentifier")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1071,10 +918,7 @@ impl<'a> Serialize for AssignmentTargetPropertyIdentifier<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type AssignmentTargetPropertyIdentifier = ({\n\ttype: 'AssignmentTargetPropertyIdentifier';\n\tbinding: IdentifierReference;\n\tinit: (Expression) | null;\n}) & Span;";
 
 impl<'a> Serialize for AssignmentTargetPropertyProperty<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "AssignmentTargetPropertyProperty")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1087,10 +931,7 @@ impl<'a> Serialize for AssignmentTargetPropertyProperty<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type AssignmentTargetPropertyProperty = ({\n\ttype: 'AssignmentTargetPropertyProperty';\n\tname: PropertyKey;\n\tbinding: AssignmentTargetMaybeDefault;\n}) & Span;";
 
 impl<'a> Serialize for SequenceExpression<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "SequenceExpression")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1102,10 +943,7 @@ impl<'a> Serialize for SequenceExpression<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type SequenceExpression = ({\n\ttype: 'SequenceExpression';\n\texpressions: Array<Expression>;\n}) & Span;";
 
 impl Serialize for Super {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "Super")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1116,10 +954,7 @@ impl Serialize for Super {
 const TS_APPEND_CONTENT: &'static str = "export type Super = ({\n\ttype: 'Super';\n}) & Span;";
 
 impl<'a> Serialize for AwaitExpression<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "AwaitExpression")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1131,10 +966,7 @@ impl<'a> Serialize for AwaitExpression<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type AwaitExpression = ({\n\ttype: 'AwaitExpression';\n\targument: Expression;\n}) & Span;";
 
 impl<'a> Serialize for ChainExpression<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ChainExpression")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1146,10 +978,7 @@ impl<'a> Serialize for ChainExpression<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type ChainExpression = ({\n\ttype: 'ChainExpression';\n\texpression: ChainElement;\n}) & Span;";
 
 impl<'a> Serialize for ChainElement<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             ChainElement::CallExpression(x) => Serialize::serialize(x, serializer),
             ChainElement::ComputedMemberExpression(x) => Serialize::serialize(x, serializer),
@@ -1162,10 +991,7 @@ impl<'a> Serialize for ChainElement<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type ChainElement = CallExpression | ComputedMemberExpression | StaticMemberExpression | PrivateFieldExpression;";
 
 impl<'a> Serialize for ParenthesizedExpression<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ParenthesizedExpression")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1177,10 +1003,7 @@ impl<'a> Serialize for ParenthesizedExpression<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type ParenthesizedExpression = ({\n\ttype: 'ParenthesizedExpression';\n\texpression: Expression;\n}) & Span;";
 
 impl<'a> Serialize for Statement<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             Statement::BlockStatement(x) => Serialize::serialize(x, serializer),
             Statement::BreakStatement(x) => Serialize::serialize(x, serializer),
@@ -1221,10 +1044,7 @@ impl<'a> Serialize for Statement<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type Statement = BlockStatement | BreakStatement | ContinueStatement | DebuggerStatement | DoWhileStatement | EmptyStatement | ExpressionStatement | ForInStatement | ForOfStatement | ForStatement | IfStatement | LabeledStatement | ReturnStatement | SwitchStatement | ThrowStatement | TryStatement | WhileStatement | WithStatement | VariableDeclaration | Function | Class | TSTypeAliasDeclaration | TSInterfaceDeclaration | TSEnumDeclaration | TSModuleDeclaration | TSImportEqualsDeclaration | ImportDeclaration | ExportAllDeclaration | ExportDefaultDeclaration | ExportNamedDeclaration | TSExportAssignment | TSNamespaceExportDeclaration;";
 
 impl<'a> Serialize for Directive<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "Directive")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1237,10 +1057,7 @@ impl<'a> Serialize for Directive<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type Directive = ({\n\ttype: 'Directive';\n\texpression: StringLiteral;\n\tdirective: string;\n}) & Span;";
 
 impl<'a> Serialize for Hashbang<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "Hashbang")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1253,10 +1070,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type Hashbang = ({\n\ttype: 'Hashbang';\n\tvalue: string;\n}) & Span;";
 
 impl<'a> Serialize for BlockStatement<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "BlockStatement")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1268,10 +1082,7 @@ impl<'a> Serialize for BlockStatement<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type BlockStatement = ({\n\ttype: 'BlockStatement';\n\tbody: Array<Statement>;\n}) & Span;";
 
 impl<'a> Serialize for Declaration<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             Declaration::VariableDeclaration(x) => Serialize::serialize(x, serializer),
             Declaration::FunctionDeclaration(x) => Serialize::serialize(x, serializer),
@@ -1288,10 +1099,7 @@ impl<'a> Serialize for Declaration<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type Declaration = VariableDeclaration | Function | Class | TSTypeAliasDeclaration | TSInterfaceDeclaration | TSEnumDeclaration | TSModuleDeclaration | TSImportEqualsDeclaration;";
 
 impl<'a> Serialize for VariableDeclaration<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "VariableDeclaration")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1305,10 +1113,7 @@ impl<'a> Serialize for VariableDeclaration<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type VariableDeclaration = ({\n\ttype: 'VariableDeclaration';\n\tkind: VariableDeclarationKind;\n\tdeclarations: Array<VariableDeclarator>;\n\tdeclare: boolean;\n}) & Span;";
 
 impl Serialize for VariableDeclarationKind {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             VariableDeclarationKind::Var => {
                 serializer.serialize_unit_variant("VariableDeclarationKind", 0u32, "var")
@@ -1333,10 +1138,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type VariableDeclarationKind = 'var' | 'const' | 'let' | 'using' | 'await using';";
 
 impl<'a> Serialize for VariableDeclarator<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "VariableDeclarator")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1350,10 +1152,7 @@ impl<'a> Serialize for VariableDeclarator<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type VariableDeclarator = ({\n\ttype: 'VariableDeclarator';\n\tid: BindingPattern;\n\tinit: (Expression) | null;\n\tdefinite: boolean;\n}) & Span;";
 
 impl Serialize for EmptyStatement {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "EmptyStatement")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1365,10 +1164,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type EmptyStatement = ({\n\ttype: 'EmptyStatement';\n}) & Span;";
 
 impl<'a> Serialize for ExpressionStatement<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ExpressionStatement")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1380,10 +1176,7 @@ impl<'a> Serialize for ExpressionStatement<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type ExpressionStatement = ({\n\ttype: 'ExpressionStatement';\n\texpression: Expression;\n}) & Span;";
 
 impl<'a> Serialize for IfStatement<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "IfStatement")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1397,10 +1190,7 @@ impl<'a> Serialize for IfStatement<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type IfStatement = ({\n\ttype: 'IfStatement';\n\ttest: Expression;\n\tconsequent: Statement;\n\talternate: (Statement) | null;\n}) & Span;";
 
 impl<'a> Serialize for DoWhileStatement<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "DoWhileStatement")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1413,10 +1203,7 @@ impl<'a> Serialize for DoWhileStatement<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type DoWhileStatement = ({\n\ttype: 'DoWhileStatement';\n\tbody: Statement;\n\ttest: Expression;\n}) & Span;";
 
 impl<'a> Serialize for WhileStatement<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "WhileStatement")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1429,10 +1216,7 @@ impl<'a> Serialize for WhileStatement<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type WhileStatement = ({\n\ttype: 'WhileStatement';\n\ttest: Expression;\n\tbody: Statement;\n}) & Span;";
 
 impl<'a> Serialize for ForStatement<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ForStatement")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1447,10 +1231,7 @@ impl<'a> Serialize for ForStatement<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type ForStatement = ({\n\ttype: 'ForStatement';\n\tinit: (ForStatementInit) | null;\n\ttest: (Expression) | null;\n\tupdate: (Expression) | null;\n\tbody: Statement;\n}) & Span;";
 
 impl<'a> Serialize for ForStatementInit<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             ForStatementInit::VariableDeclaration(x) => Serialize::serialize(x, serializer),
             ForStatementInit::BooleanLiteral(x) => Serialize::serialize(x, serializer),
@@ -1502,10 +1283,7 @@ impl<'a> Serialize for ForStatementInit<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type ForStatementInit = VariableDeclaration | BooleanLiteral | NullLiteral | NumericLiteral | BigIntLiteral | RegExpLiteral | StringLiteral | TemplateLiteral | IdentifierReference | MetaProperty | Super | ArrayExpression | ArrowFunctionExpression | AssignmentExpression | AwaitExpression | BinaryExpression | CallExpression | ChainExpression | Class | ConditionalExpression | Function | ImportExpression | LogicalExpression | NewExpression | ObjectExpression | ParenthesizedExpression | SequenceExpression | TaggedTemplateExpression | ThisExpression | UnaryExpression | UpdateExpression | YieldExpression | PrivateInExpression | JSXElement | JSXFragment | TSAsExpression | TSSatisfiesExpression | TSTypeAssertion | TSNonNullExpression | TSInstantiationExpression | ComputedMemberExpression | StaticMemberExpression | PrivateFieldExpression;";
 
 impl<'a> Serialize for ForInStatement<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ForInStatement")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1519,10 +1297,7 @@ impl<'a> Serialize for ForInStatement<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type ForInStatement = ({\n\ttype: 'ForInStatement';\n\tleft: ForStatementLeft;\n\tright: Expression;\n\tbody: Statement;\n}) & Span;";
 
 impl<'a> Serialize for ForStatementLeft<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             ForStatementLeft::VariableDeclaration(x) => Serialize::serialize(x, serializer),
             ForStatementLeft::AssignmentTargetIdentifier(x) => Serialize::serialize(x, serializer),
@@ -1543,10 +1318,7 @@ impl<'a> Serialize for ForStatementLeft<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type ForStatementLeft = VariableDeclaration | IdentifierReference | TSAsExpression | TSSatisfiesExpression | TSNonNullExpression | TSTypeAssertion | TSInstantiationExpression | ComputedMemberExpression | StaticMemberExpression | PrivateFieldExpression | ArrayAssignmentTarget | ObjectAssignmentTarget;";
 
 impl<'a> Serialize for ForOfStatement<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ForOfStatement")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1561,10 +1333,7 @@ impl<'a> Serialize for ForOfStatement<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type ForOfStatement = ({\n\ttype: 'ForOfStatement';\n\tawait: boolean;\n\tleft: ForStatementLeft;\n\tright: Expression;\n\tbody: Statement;\n}) & Span;";
 
 impl<'a> Serialize for ContinueStatement<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ContinueStatement")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1576,10 +1345,7 @@ impl<'a> Serialize for ContinueStatement<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type ContinueStatement = ({\n\ttype: 'ContinueStatement';\n\tlabel: (LabelIdentifier) | null;\n}) & Span;";
 
 impl<'a> Serialize for BreakStatement<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "BreakStatement")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1591,10 +1357,7 @@ impl<'a> Serialize for BreakStatement<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type BreakStatement = ({\n\ttype: 'BreakStatement';\n\tlabel: (LabelIdentifier) | null;\n}) & Span;";
 
 impl<'a> Serialize for ReturnStatement<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ReturnStatement")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1606,10 +1369,7 @@ impl<'a> Serialize for ReturnStatement<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type ReturnStatement = ({\n\ttype: 'ReturnStatement';\n\targument: (Expression) | null;\n}) & Span;";
 
 impl<'a> Serialize for WithStatement<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "WithStatement")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1622,10 +1382,7 @@ impl<'a> Serialize for WithStatement<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type WithStatement = ({\n\ttype: 'WithStatement';\n\tobject: Expression;\n\tbody: Statement;\n}) & Span;";
 
 impl<'a> Serialize for SwitchStatement<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "SwitchStatement")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1638,10 +1395,7 @@ impl<'a> Serialize for SwitchStatement<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type SwitchStatement = ({\n\ttype: 'SwitchStatement';\n\tdiscriminant: Expression;\n\tcases: Array<SwitchCase>;\n}) & Span;";
 
 impl<'a> Serialize for SwitchCase<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "SwitchCase")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1654,10 +1408,7 @@ impl<'a> Serialize for SwitchCase<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type SwitchCase = ({\n\ttype: 'SwitchCase';\n\ttest: (Expression) | null;\n\tconsequent: Array<Statement>;\n}) & Span;";
 
 impl<'a> Serialize for LabeledStatement<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "LabeledStatement")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1670,10 +1421,7 @@ impl<'a> Serialize for LabeledStatement<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type LabeledStatement = ({\n\ttype: 'LabeledStatement';\n\tlabel: LabelIdentifier;\n\tbody: Statement;\n}) & Span;";
 
 impl<'a> Serialize for ThrowStatement<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ThrowStatement")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1685,10 +1433,7 @@ impl<'a> Serialize for ThrowStatement<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type ThrowStatement = ({\n\ttype: 'ThrowStatement';\n\targument: Expression;\n}) & Span;";
 
 impl<'a> Serialize for TryStatement<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TryStatement")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1702,10 +1447,7 @@ impl<'a> Serialize for TryStatement<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TryStatement = ({\n\ttype: 'TryStatement';\n\tblock: BlockStatement;\n\thandler: (CatchClause) | null;\n\tfinalizer: (BlockStatement) | null;\n}) & Span;";
 
 impl<'a> Serialize for CatchClause<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "CatchClause")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1718,10 +1460,7 @@ impl<'a> Serialize for CatchClause<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type CatchClause = ({\n\ttype: 'CatchClause';\n\tparam: (CatchParameter) | null;\n\tbody: BlockStatement;\n}) & Span;";
 
 impl<'a> Serialize for CatchParameter<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "CatchParameter")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1733,10 +1472,7 @@ impl<'a> Serialize for CatchParameter<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type CatchParameter = ({\n\ttype: 'CatchParameter';\n\tpattern: BindingPattern;\n}) & Span;";
 
 impl Serialize for DebuggerStatement {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "DebuggerStatement")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1748,10 +1484,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type DebuggerStatement = ({\n\ttype: 'DebuggerStatement';\n}) & Span;";
 
 impl<'a> Serialize for BindingPattern<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         self.kind.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
         map.serialize_entry("typeAnnotation", &self.type_annotation)?;
@@ -1763,10 +1496,7 @@ impl<'a> Serialize for BindingPattern<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type BindingPattern = ({\n\ttypeAnnotation: (TSTypeAnnotation) | null;\n\toptional: boolean;\n}) & (BindingIdentifier | ObjectPattern | ArrayPattern | AssignmentPattern);";
 
 impl<'a> Serialize for BindingPatternKind<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             BindingPatternKind::BindingIdentifier(x) => Serialize::serialize(x, serializer),
             BindingPatternKind::ObjectPattern(x) => Serialize::serialize(x, serializer),
@@ -1779,10 +1509,7 @@ impl<'a> Serialize for BindingPatternKind<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type BindingPatternKind = BindingIdentifier | ObjectPattern | ArrayPattern | AssignmentPattern;";
 
 impl<'a> Serialize for AssignmentPattern<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "AssignmentPattern")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1798,10 +1525,7 @@ const TS_APPEND_CONTENT: &'static str = "export type AssignmentPattern = ({\n\tt
 const TS_APPEND_CONTENT: &'static str = "export type ObjectPattern = ({\n\ttype: 'ObjectPattern';\n\tproperties: Array<BindingProperty | BindingRestElement>;\n}) & Span;";
 
 impl<'a> Serialize for BindingProperty<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "BindingProperty")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1819,10 +1543,7 @@ const TS_APPEND_CONTENT: &'static str = "export type BindingProperty = ({\n\ttyp
 const TS_APPEND_CONTENT: &'static str = "export type ArrayPattern = ({\n\ttype: 'ArrayPattern';\n\telements: Array<BindingPattern | BindingRestElement | null>;\n}) & Span;";
 
 impl<'a> Serialize for BindingRestElement<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "RestElement")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1834,10 +1555,7 @@ impl<'a> Serialize for BindingRestElement<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type BindingRestElement = ({\n\ttype: 'RestElement';\n\targument: BindingPattern;\n}) & Span;";
 
 impl<'a> Serialize for Function<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", &self.r#type)?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1857,10 +1575,7 @@ impl<'a> Serialize for Function<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type Function = ({\n\ttype: FunctionType;\n\tid: (BindingIdentifier) | null;\n\tgenerator: boolean;\n\tasync: boolean;\n\tdeclare: boolean;\n\ttypeParameters: (TSTypeParameterDeclaration) | null;\n\tthisParam: (TSThisParameter) | null;\n\tparams: FormalParameters;\n\treturnType: (TSTypeAnnotation) | null;\n\tbody: (FunctionBody) | null;\n}) & Span;";
 
 impl Serialize for FunctionType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             FunctionType::FunctionDeclaration => {
                 serializer.serialize_unit_variant("FunctionType", 0u32, "FunctionDeclaration")
@@ -1886,10 +1601,7 @@ const TS_APPEND_CONTENT: &'static str = "export type FunctionType = 'FunctionDec
 const TS_APPEND_CONTENT: &'static str = "export type FormalParameters = ({\n\ttype: 'FormalParameters';\n\tkind: FormalParameterKind;\n\titems: Array<FormalParameter | FormalParameterRest>;\n}) & Span;";
 
 impl<'a> Serialize for FormalParameter<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "FormalParameter")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1905,10 +1617,7 @@ impl<'a> Serialize for FormalParameter<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type FormalParameter = ({\n\ttype: 'FormalParameter';\n\tdecorators: Array<Decorator>;\n\tpattern: BindingPattern;\n\taccessibility: (TSAccessibility) | null;\n\treadonly: boolean;\n\toverride: boolean;\n}) & Span;";
 
 impl Serialize for FormalParameterKind {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             FormalParameterKind::FormalParameter => {
                 serializer.serialize_unit_variant("FormalParameterKind", 0u32, "FormalParameter")
@@ -1933,10 +1642,7 @@ impl Serialize for FormalParameterKind {
 const TS_APPEND_CONTENT: &'static str = "export type FormalParameterKind = 'FormalParameter' | 'UniqueFormalParameters' | 'ArrowFormalParameters' | 'Signature';";
 
 impl<'a> Serialize for FunctionBody<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "FunctionBody")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1949,10 +1655,7 @@ impl<'a> Serialize for FunctionBody<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type FunctionBody = ({\n\ttype: 'FunctionBody';\n\tdirectives: Array<Directive>;\n\tstatements: Array<Statement>;\n}) & Span;";
 
 impl<'a> Serialize for ArrowFunctionExpression<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ArrowFunctionExpression")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1969,10 +1672,7 @@ impl<'a> Serialize for ArrowFunctionExpression<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type ArrowFunctionExpression = ({\n\ttype: 'ArrowFunctionExpression';\n\texpression: boolean;\n\tasync: boolean;\n\ttypeParameters: (TSTypeParameterDeclaration) | null;\n\tparams: FormalParameters;\n\treturnType: (TSTypeAnnotation) | null;\n\tbody: FunctionBody;\n}) & Span;";
 
 impl<'a> Serialize for YieldExpression<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "YieldExpression")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -1985,10 +1685,7 @@ impl<'a> Serialize for YieldExpression<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type YieldExpression = ({\n\ttype: 'YieldExpression';\n\tdelegate: boolean;\n\targument: (Expression) | null;\n}) & Span;";
 
 impl<'a> Serialize for Class<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", &self.r#type)?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -2008,10 +1705,7 @@ impl<'a> Serialize for Class<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type Class = ({\n\ttype: ClassType;\n\tdecorators: Array<Decorator>;\n\tid: (BindingIdentifier) | null;\n\ttypeParameters: (TSTypeParameterDeclaration) | null;\n\tsuperClass: (Expression) | null;\n\tsuperTypeParameters: (TSTypeParameterInstantiation) | null;\n\timplements: (Array<TSClassImplements>) | null;\n\tbody: ClassBody;\n\tabstract: boolean;\n\tdeclare: boolean;\n}) & Span;";
 
 impl Serialize for ClassType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             ClassType::ClassDeclaration => {
                 serializer.serialize_unit_variant("ClassType", 0u32, "ClassDeclaration")
@@ -2027,10 +1721,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type ClassType = 'ClassDeclaration' | 'ClassExpression';";
 
 impl<'a> Serialize for ClassBody<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ClassBody")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -2043,10 +1734,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type ClassBody = ({\n\ttype: 'ClassBody';\n\tbody: Array<ClassElement>;\n}) & Span;";
 
 impl<'a> Serialize for ClassElement<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             ClassElement::StaticBlock(x) => Serialize::serialize(x, serializer),
             ClassElement::MethodDefinition(x) => Serialize::serialize(x, serializer),
@@ -2060,10 +1748,7 @@ impl<'a> Serialize for ClassElement<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type ClassElement = StaticBlock | MethodDefinition | PropertyDefinition | AccessorProperty | TSIndexSignature;";
 
 impl<'a> Serialize for MethodDefinition<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", &self.r#type)?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -2083,10 +1768,7 @@ impl<'a> Serialize for MethodDefinition<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type MethodDefinition = ({\n\ttype: MethodDefinitionType;\n\tdecorators: Array<Decorator>;\n\tkey: PropertyKey;\n\tvalue: Function;\n\tkind: MethodDefinitionKind;\n\tcomputed: boolean;\n\tstatic: boolean;\n\toverride: boolean;\n\toptional: boolean;\n\taccessibility: (TSAccessibility) | null;\n}) & Span;";
 
 impl Serialize for MethodDefinitionType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             MethodDefinitionType::MethodDefinition => {
                 serializer.serialize_unit_variant("MethodDefinitionType", 0u32, "MethodDefinition")
@@ -2104,10 +1786,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type MethodDefinitionType = 'MethodDefinition' | 'TSAbstractMethodDefinition';";
 
 impl<'a> Serialize for PropertyDefinition<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", &self.r#type)?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -2130,10 +1809,7 @@ impl<'a> Serialize for PropertyDefinition<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type PropertyDefinition = ({\n\ttype: PropertyDefinitionType;\n\tdecorators: Array<Decorator>;\n\tkey: PropertyKey;\n\tvalue: (Expression) | null;\n\tcomputed: boolean;\n\tstatic: boolean;\n\tdeclare: boolean;\n\toverride: boolean;\n\toptional: boolean;\n\tdefinite: boolean;\n\treadonly: boolean;\n\ttypeAnnotation: (TSTypeAnnotation) | null;\n\taccessibility: (TSAccessibility) | null;\n}) & Span;";
 
 impl Serialize for PropertyDefinitionType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             PropertyDefinitionType::PropertyDefinition => serializer.serialize_unit_variant(
                 "PropertyDefinitionType",
@@ -2154,10 +1830,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type PropertyDefinitionType = 'PropertyDefinition' | 'TSAbstractPropertyDefinition';";
 
 impl Serialize for MethodDefinitionKind {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             MethodDefinitionKind::Constructor => {
                 serializer.serialize_unit_variant("MethodDefinitionKind", 0u32, "constructor")
@@ -2179,10 +1852,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type MethodDefinitionKind = 'constructor' | 'method' | 'get' | 'set';";
 
 impl<'a> Serialize for PrivateIdentifier<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "PrivateIdentifier")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -2195,10 +1865,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type PrivateIdentifier = ({\n\ttype: 'PrivateIdentifier';\n\tname: string;\n}) & Span;";
 
 impl<'a> Serialize for StaticBlock<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "StaticBlock")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -2211,10 +1878,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type StaticBlock = ({\n\ttype: 'StaticBlock';\n\tbody: Array<Statement>;\n}) & Span;";
 
 impl<'a> Serialize for ModuleDeclaration<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             ModuleDeclaration::ImportDeclaration(x) => Serialize::serialize(x, serializer),
             ModuleDeclaration::ExportAllDeclaration(x) => Serialize::serialize(x, serializer),
@@ -2231,10 +1895,7 @@ impl<'a> Serialize for ModuleDeclaration<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type ModuleDeclaration = ImportDeclaration | ExportAllDeclaration | ExportDefaultDeclaration | ExportNamedDeclaration | TSExportAssignment | TSNamespaceExportDeclaration;";
 
 impl Serialize for AccessorPropertyType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             AccessorPropertyType::AccessorProperty => {
                 serializer.serialize_unit_variant("AccessorPropertyType", 0u32, "AccessorProperty")
@@ -2252,10 +1913,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type AccessorPropertyType = 'AccessorProperty' | 'TSAbstractAccessorProperty';";
 
 impl<'a> Serialize for AccessorProperty<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", &self.r#type)?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -2274,10 +1932,7 @@ impl<'a> Serialize for AccessorProperty<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type AccessorProperty = ({\n\ttype: AccessorPropertyType;\n\tdecorators: Array<Decorator>;\n\tkey: PropertyKey;\n\tvalue: (Expression) | null;\n\tcomputed: boolean;\n\tstatic: boolean;\n\tdefinite: boolean;\n\ttypeAnnotation: (TSTypeAnnotation) | null;\n\taccessibility: (TSAccessibility) | null;\n}) & Span;";
 
 impl<'a> Serialize for ImportExpression<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ImportExpression")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -2290,10 +1945,7 @@ impl<'a> Serialize for ImportExpression<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type ImportExpression = ({\n\ttype: 'ImportExpression';\n\tsource: Expression;\n\targuments: Array<Expression>;\n}) & Span;";
 
 impl<'a> Serialize for ImportDeclaration<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ImportDeclaration")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -2308,10 +1960,7 @@ impl<'a> Serialize for ImportDeclaration<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type ImportDeclaration = ({\n\ttype: 'ImportDeclaration';\n\tspecifiers: (Array<ImportDeclarationSpecifier>) | null;\n\tsource: StringLiteral;\n\twithClause: (WithClause) | null;\n\timportKind: ImportOrExportKind;\n}) & Span;";
 
 impl<'a> Serialize for ImportDeclarationSpecifier<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             ImportDeclarationSpecifier::ImportSpecifier(x) => Serialize::serialize(x, serializer),
             ImportDeclarationSpecifier::ImportDefaultSpecifier(x) => {
@@ -2327,10 +1976,7 @@ impl<'a> Serialize for ImportDeclarationSpecifier<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type ImportDeclarationSpecifier = ImportSpecifier | ImportDefaultSpecifier | ImportNamespaceSpecifier;";
 
 impl<'a> Serialize for ImportSpecifier<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ImportSpecifier")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -2344,10 +1990,7 @@ impl<'a> Serialize for ImportSpecifier<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type ImportSpecifier = ({\n\ttype: 'ImportSpecifier';\n\timported: ModuleExportName;\n\tlocal: BindingIdentifier;\n\timportKind: ImportOrExportKind;\n}) & Span;";
 
 impl<'a> Serialize for ImportDefaultSpecifier<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ImportDefaultSpecifier")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -2359,10 +2002,7 @@ impl<'a> Serialize for ImportDefaultSpecifier<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type ImportDefaultSpecifier = ({\n\ttype: 'ImportDefaultSpecifier';\n\tlocal: BindingIdentifier;\n}) & Span;";
 
 impl<'a> Serialize for ImportNamespaceSpecifier<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ImportNamespaceSpecifier")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -2374,10 +2014,7 @@ impl<'a> Serialize for ImportNamespaceSpecifier<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type ImportNamespaceSpecifier = ({\n\ttype: 'ImportNamespaceSpecifier';\n\tlocal: BindingIdentifier;\n}) & Span;";
 
 impl<'a> Serialize for WithClause<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "WithClause")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -2390,10 +2027,7 @@ impl<'a> Serialize for WithClause<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type WithClause = ({\n\ttype: 'WithClause';\n\tattributesKeyword: IdentifierName;\n\twithEntries: Array<ImportAttribute>;\n}) & Span;";
 
 impl<'a> Serialize for ImportAttribute<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ImportAttribute")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -2406,10 +2040,7 @@ impl<'a> Serialize for ImportAttribute<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type ImportAttribute = ({\n\ttype: 'ImportAttribute';\n\tkey: ImportAttributeKey;\n\tvalue: StringLiteral;\n}) & Span;";
 
 impl<'a> Serialize for ImportAttributeKey<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             ImportAttributeKey::Identifier(x) => Serialize::serialize(x, serializer),
             ImportAttributeKey::StringLiteral(x) => Serialize::serialize(x, serializer),
@@ -2421,10 +2052,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type ImportAttributeKey = IdentifierName | StringLiteral;";
 
 impl<'a> Serialize for ExportNamedDeclaration<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ExportNamedDeclaration")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -2440,10 +2068,7 @@ impl<'a> Serialize for ExportNamedDeclaration<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type ExportNamedDeclaration = ({\n\ttype: 'ExportNamedDeclaration';\n\tdeclaration: (Declaration) | null;\n\tspecifiers: Array<ExportSpecifier>;\n\tsource: (StringLiteral) | null;\n\texportKind: ImportOrExportKind;\n\twithClause: (WithClause) | null;\n}) & Span;";
 
 impl<'a> Serialize for ExportDefaultDeclaration<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ExportDefaultDeclaration")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -2456,10 +2081,7 @@ impl<'a> Serialize for ExportDefaultDeclaration<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type ExportDefaultDeclaration = ({\n\ttype: 'ExportDefaultDeclaration';\n\tdeclaration: ExportDefaultDeclarationKind;\n\texported: ModuleExportName;\n}) & Span;";
 
 impl<'a> Serialize for ExportAllDeclaration<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ExportAllDeclaration")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -2474,10 +2096,7 @@ impl<'a> Serialize for ExportAllDeclaration<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type ExportAllDeclaration = ({\n\ttype: 'ExportAllDeclaration';\n\texported: (ModuleExportName) | null;\n\tsource: StringLiteral;\n\twithClause: (WithClause) | null;\n\texportKind: ImportOrExportKind;\n}) & Span;";
 
 impl<'a> Serialize for ExportSpecifier<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ExportSpecifier")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -2491,10 +2110,7 @@ impl<'a> Serialize for ExportSpecifier<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type ExportSpecifier = ({\n\ttype: 'ExportSpecifier';\n\tlocal: ModuleExportName;\n\texported: ModuleExportName;\n\texportKind: ImportOrExportKind;\n}) & Span;";
 
 impl<'a> Serialize for ExportDefaultDeclarationKind<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             ExportDefaultDeclarationKind::FunctionDeclaration(x) => {
                 Serialize::serialize(x, serializer)
@@ -2592,10 +2208,7 @@ impl<'a> Serialize for ExportDefaultDeclarationKind<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type ExportDefaultDeclarationKind = Function | Class | TSInterfaceDeclaration | BooleanLiteral | NullLiteral | NumericLiteral | BigIntLiteral | RegExpLiteral | StringLiteral | TemplateLiteral | IdentifierReference | MetaProperty | Super | ArrayExpression | ArrowFunctionExpression | AssignmentExpression | AwaitExpression | BinaryExpression | CallExpression | ChainExpression | Class | ConditionalExpression | Function | ImportExpression | LogicalExpression | NewExpression | ObjectExpression | ParenthesizedExpression | SequenceExpression | TaggedTemplateExpression | ThisExpression | UnaryExpression | UpdateExpression | YieldExpression | PrivateInExpression | JSXElement | JSXFragment | TSAsExpression | TSSatisfiesExpression | TSTypeAssertion | TSNonNullExpression | TSInstantiationExpression | ComputedMemberExpression | StaticMemberExpression | PrivateFieldExpression;";
 
 impl<'a> Serialize for ModuleExportName<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             ModuleExportName::IdentifierName(x) => Serialize::serialize(x, serializer),
             ModuleExportName::IdentifierReference(x) => Serialize::serialize(x, serializer),
@@ -2608,10 +2221,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type ModuleExportName = IdentifierName | IdentifierReference | StringLiteral;";
 
 impl<'a> Serialize for TSThisParameter<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSThisParameter")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -2624,10 +2234,7 @@ impl<'a> Serialize for TSThisParameter<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSThisParameter = ({\n\ttype: 'TSThisParameter';\n\tthisSpan: Span;\n\ttypeAnnotation: (TSTypeAnnotation) | null;\n}) & Span;";
 
 impl<'a> Serialize for TSEnumDeclaration<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSEnumDeclaration")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -2642,10 +2249,7 @@ impl<'a> Serialize for TSEnumDeclaration<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSEnumDeclaration = ({\n\ttype: 'TSEnumDeclaration';\n\tid: BindingIdentifier;\n\tmembers: Array<TSEnumMember>;\n\tconst: boolean;\n\tdeclare: boolean;\n}) & Span;";
 
 impl<'a> Serialize for TSEnumMember<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSEnumMember")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -2658,10 +2262,7 @@ impl<'a> Serialize for TSEnumMember<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSEnumMember = ({\n\ttype: 'TSEnumMember';\n\tid: TSEnumMemberName;\n\tinitializer: (Expression) | null;\n}) & Span;";
 
 impl<'a> Serialize for TSEnumMemberName<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             TSEnumMemberName::StaticIdentifier(x) => Serialize::serialize(x, serializer),
             TSEnumMemberName::StaticStringLiteral(x) => Serialize::serialize(x, serializer),
@@ -2716,10 +2317,7 @@ impl<'a> Serialize for TSEnumMemberName<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSEnumMemberName = IdentifierName | StringLiteral | TemplateLiteral | NumericLiteral | BooleanLiteral | NullLiteral | NumericLiteral | BigIntLiteral | RegExpLiteral | StringLiteral | TemplateLiteral | IdentifierReference | MetaProperty | Super | ArrayExpression | ArrowFunctionExpression | AssignmentExpression | AwaitExpression | BinaryExpression | CallExpression | ChainExpression | Class | ConditionalExpression | Function | ImportExpression | LogicalExpression | NewExpression | ObjectExpression | ParenthesizedExpression | SequenceExpression | TaggedTemplateExpression | ThisExpression | UnaryExpression | UpdateExpression | YieldExpression | PrivateInExpression | JSXElement | JSXFragment | TSAsExpression | TSSatisfiesExpression | TSTypeAssertion | TSNonNullExpression | TSInstantiationExpression | ComputedMemberExpression | StaticMemberExpression | PrivateFieldExpression;";
 
 impl<'a> Serialize for TSTypeAnnotation<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSTypeAnnotation")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -2731,10 +2329,7 @@ impl<'a> Serialize for TSTypeAnnotation<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSTypeAnnotation = ({\n\ttype: 'TSTypeAnnotation';\n\ttypeAnnotation: TSType;\n}) & Span;";
 
 impl<'a> Serialize for TSLiteralType<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSLiteralType")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -2747,10 +2342,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type TSLiteralType = ({\n\ttype: 'TSLiteralType';\n\tliteral: TSLiteral;\n}) & Span;";
 
 impl<'a> Serialize for TSLiteral<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             TSLiteral::BooleanLiteral(x) => Serialize::serialize(x, serializer),
             TSLiteral::NullLiteral(x) => Serialize::serialize(x, serializer),
@@ -2767,10 +2359,7 @@ impl<'a> Serialize for TSLiteral<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSLiteral = BooleanLiteral | NullLiteral | NumericLiteral | BigIntLiteral | RegExpLiteral | StringLiteral | TemplateLiteral | UnaryExpression;";
 
 impl<'a> Serialize for TSType<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             TSType::TSAnyKeyword(x) => Serialize::serialize(x, serializer),
             TSType::TSBigIntKeyword(x) => Serialize::serialize(x, serializer),
@@ -2817,10 +2406,7 @@ impl<'a> Serialize for TSType<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSType = TSAnyKeyword | TSBigIntKeyword | TSBooleanKeyword | TSIntrinsicKeyword | TSNeverKeyword | TSNullKeyword | TSNumberKeyword | TSObjectKeyword | TSStringKeyword | TSSymbolKeyword | TSUndefinedKeyword | TSUnknownKeyword | TSVoidKeyword | TSArrayType | TSConditionalType | TSConstructorType | TSFunctionType | TSImportType | TSIndexedAccessType | TSInferType | TSIntersectionType | TSLiteralType | TSMappedType | TSNamedTupleMember | TSQualifiedName | TSTemplateLiteralType | TSThisType | TSTupleType | TSTypeLiteral | TSTypeOperator | TSTypePredicate | TSTypeQuery | TSTypeReference | TSUnionType | TSParenthesizedType | JSDocNullableType | JSDocNonNullableType | JSDocUnknownType;";
 
 impl<'a> Serialize for TSConditionalType<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSConditionalType")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -2835,10 +2421,7 @@ impl<'a> Serialize for TSConditionalType<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSConditionalType = ({\n\ttype: 'TSConditionalType';\n\tcheckType: TSType;\n\textendsType: TSType;\n\ttrueType: TSType;\n\tfalseType: TSType;\n}) & Span;";
 
 impl<'a> Serialize for TSUnionType<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSUnionType")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -2851,10 +2434,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type TSUnionType = ({\n\ttype: 'TSUnionType';\n\ttypes: Array<TSType>;\n}) & Span;";
 
 impl<'a> Serialize for TSIntersectionType<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSIntersectionType")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -2866,10 +2446,7 @@ impl<'a> Serialize for TSIntersectionType<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSIntersectionType = ({\n\ttype: 'TSIntersectionType';\n\ttypes: Array<TSType>;\n}) & Span;";
 
 impl<'a> Serialize for TSParenthesizedType<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSParenthesizedType")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -2881,10 +2458,7 @@ impl<'a> Serialize for TSParenthesizedType<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSParenthesizedType = ({\n\ttype: 'TSParenthesizedType';\n\ttypeAnnotation: TSType;\n}) & Span;";
 
 impl<'a> Serialize for TSTypeOperator<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSTypeOperator")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -2897,10 +2471,7 @@ impl<'a> Serialize for TSTypeOperator<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSTypeOperator = ({\n\ttype: 'TSTypeOperator';\n\toperator: TSTypeOperatorOperator;\n\ttypeAnnotation: TSType;\n}) & Span;";
 
 impl Serialize for TSTypeOperatorOperator {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             TSTypeOperatorOperator::Keyof => {
                 serializer.serialize_unit_variant("TSTypeOperatorOperator", 0u32, "keyof")
@@ -2919,10 +2490,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type TSTypeOperatorOperator = 'keyof' | 'unique' | 'readonly';";
 
 impl<'a> Serialize for TSArrayType<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSArrayType")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -2935,10 +2503,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type TSArrayType = ({\n\ttype: 'TSArrayType';\n\telementType: TSType;\n}) & Span;";
 
 impl<'a> Serialize for TSIndexedAccessType<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSIndexedAccessType")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -2951,10 +2516,7 @@ impl<'a> Serialize for TSIndexedAccessType<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSIndexedAccessType = ({\n\ttype: 'TSIndexedAccessType';\n\tobjectType: TSType;\n\tindexType: TSType;\n}) & Span;";
 
 impl<'a> Serialize for TSTupleType<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSTupleType")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -2966,10 +2528,7 @@ impl<'a> Serialize for TSTupleType<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSTupleType = ({\n\ttype: 'TSTupleType';\n\telementTypes: Array<TSTupleElement>;\n}) & Span;";
 
 impl<'a> Serialize for TSNamedTupleMember<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSNamedTupleMember")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -2983,10 +2542,7 @@ impl<'a> Serialize for TSNamedTupleMember<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSNamedTupleMember = ({\n\ttype: 'TSNamedTupleMember';\n\telementType: TSTupleElement;\n\tlabel: IdentifierName;\n\toptional: boolean;\n}) & Span;";
 
 impl<'a> Serialize for TSOptionalType<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSOptionalType")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -2998,10 +2554,7 @@ impl<'a> Serialize for TSOptionalType<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSOptionalType = ({\n\ttype: 'TSOptionalType';\n\ttypeAnnotation: TSType;\n}) & Span;";
 
 impl<'a> Serialize for TSRestType<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSRestType")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3014,10 +2567,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type TSRestType = ({\n\ttype: 'TSRestType';\n\ttypeAnnotation: TSType;\n}) & Span;";
 
 impl<'a> Serialize for TSTupleElement<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             TSTupleElement::TSOptionalType(x) => Serialize::serialize(x, serializer),
             TSTupleElement::TSRestType(x) => Serialize::serialize(x, serializer),
@@ -3066,10 +2616,7 @@ impl<'a> Serialize for TSTupleElement<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSTupleElement = TSOptionalType | TSRestType | TSAnyKeyword | TSBigIntKeyword | TSBooleanKeyword | TSIntrinsicKeyword | TSNeverKeyword | TSNullKeyword | TSNumberKeyword | TSObjectKeyword | TSStringKeyword | TSSymbolKeyword | TSUndefinedKeyword | TSUnknownKeyword | TSVoidKeyword | TSArrayType | TSConditionalType | TSConstructorType | TSFunctionType | TSImportType | TSIndexedAccessType | TSInferType | TSIntersectionType | TSLiteralType | TSMappedType | TSNamedTupleMember | TSQualifiedName | TSTemplateLiteralType | TSThisType | TSTupleType | TSTypeLiteral | TSTypeOperator | TSTypePredicate | TSTypeQuery | TSTypeReference | TSUnionType | TSParenthesizedType | JSDocNullableType | JSDocNonNullableType | JSDocUnknownType;";
 
 impl Serialize for TSAnyKeyword {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSAnyKeyword")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3081,10 +2628,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type TSAnyKeyword = ({\n\ttype: 'TSAnyKeyword';\n}) & Span;";
 
 impl Serialize for TSStringKeyword {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSStringKeyword")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3096,10 +2640,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type TSStringKeyword = ({\n\ttype: 'TSStringKeyword';\n}) & Span;";
 
 impl Serialize for TSBooleanKeyword {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSBooleanKeyword")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3111,10 +2652,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type TSBooleanKeyword = ({\n\ttype: 'TSBooleanKeyword';\n}) & Span;";
 
 impl Serialize for TSNumberKeyword {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSNumberKeyword")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3126,10 +2664,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type TSNumberKeyword = ({\n\ttype: 'TSNumberKeyword';\n}) & Span;";
 
 impl Serialize for TSNeverKeyword {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSNeverKeyword")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3141,10 +2676,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type TSNeverKeyword = ({\n\ttype: 'TSNeverKeyword';\n}) & Span;";
 
 impl Serialize for TSIntrinsicKeyword {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSIntrinsicKeyword")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3156,10 +2688,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type TSIntrinsicKeyword = ({\n\ttype: 'TSIntrinsicKeyword';\n}) & Span;";
 
 impl Serialize for TSUnknownKeyword {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSUnknownKeyword")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3171,10 +2700,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type TSUnknownKeyword = ({\n\ttype: 'TSUnknownKeyword';\n}) & Span;";
 
 impl Serialize for TSNullKeyword {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSNullKeyword")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3186,10 +2712,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type TSNullKeyword = ({\n\ttype: 'TSNullKeyword';\n}) & Span;";
 
 impl Serialize for TSUndefinedKeyword {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSUndefinedKeyword")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3201,10 +2724,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type TSUndefinedKeyword = ({\n\ttype: 'TSUndefinedKeyword';\n}) & Span;";
 
 impl Serialize for TSVoidKeyword {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSVoidKeyword")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3216,10 +2736,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type TSVoidKeyword = ({\n\ttype: 'TSVoidKeyword';\n}) & Span;";
 
 impl Serialize for TSSymbolKeyword {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSSymbolKeyword")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3231,10 +2748,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type TSSymbolKeyword = ({\n\ttype: 'TSSymbolKeyword';\n}) & Span;";
 
 impl Serialize for TSThisType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSThisType")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3246,10 +2760,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type TSThisType = ({\n\ttype: 'TSThisType';\n}) & Span;";
 
 impl Serialize for TSObjectKeyword {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSObjectKeyword")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3261,10 +2772,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type TSObjectKeyword = ({\n\ttype: 'TSObjectKeyword';\n}) & Span;";
 
 impl Serialize for TSBigIntKeyword {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSBigIntKeyword")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3276,10 +2784,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type TSBigIntKeyword = ({\n\ttype: 'TSBigIntKeyword';\n}) & Span;";
 
 impl<'a> Serialize for TSTypeReference<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSTypeReference")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3292,10 +2797,7 @@ impl<'a> Serialize for TSTypeReference<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSTypeReference = ({\n\ttype: 'TSTypeReference';\n\ttypeName: TSTypeName;\n\ttypeParameters: (TSTypeParameterInstantiation) | null;\n}) & Span;";
 
 impl<'a> Serialize for TSTypeName<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             TSTypeName::IdentifierReference(x) => Serialize::serialize(x, serializer),
             TSTypeName::QualifiedName(x) => Serialize::serialize(x, serializer),
@@ -3307,10 +2809,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type TSTypeName = IdentifierReference | TSQualifiedName;";
 
 impl<'a> Serialize for TSQualifiedName<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSQualifiedName")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3323,10 +2822,7 @@ impl<'a> Serialize for TSQualifiedName<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSQualifiedName = ({\n\ttype: 'TSQualifiedName';\n\tleft: TSTypeName;\n\tright: IdentifierName;\n}) & Span;";
 
 impl<'a> Serialize for TSTypeParameterInstantiation<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSTypeParameterInstantiation")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3338,10 +2834,7 @@ impl<'a> Serialize for TSTypeParameterInstantiation<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSTypeParameterInstantiation = ({\n\ttype: 'TSTypeParameterInstantiation';\n\tparams: Array<TSType>;\n}) & Span;";
 
 impl<'a> Serialize for TSTypeParameter<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSTypeParameter")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3358,10 +2851,7 @@ impl<'a> Serialize for TSTypeParameter<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSTypeParameter = ({\n\ttype: 'TSTypeParameter';\n\tname: BindingIdentifier;\n\tconstraint: (TSType) | null;\n\tdefault: (TSType) | null;\n\tin: boolean;\n\tout: boolean;\n\tconst: boolean;\n}) & Span;";
 
 impl<'a> Serialize for TSTypeParameterDeclaration<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSTypeParameterDeclaration")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3373,10 +2863,7 @@ impl<'a> Serialize for TSTypeParameterDeclaration<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSTypeParameterDeclaration = ({\n\ttype: 'TSTypeParameterDeclaration';\n\tparams: Array<TSTypeParameter>;\n}) & Span;";
 
 impl<'a> Serialize for TSTypeAliasDeclaration<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSTypeAliasDeclaration")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3391,10 +2878,7 @@ impl<'a> Serialize for TSTypeAliasDeclaration<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSTypeAliasDeclaration = ({\n\ttype: 'TSTypeAliasDeclaration';\n\tid: BindingIdentifier;\n\ttypeParameters: (TSTypeParameterDeclaration) | null;\n\ttypeAnnotation: TSType;\n\tdeclare: boolean;\n}) & Span;";
 
 impl Serialize for TSAccessibility {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             TSAccessibility::Private => {
                 serializer.serialize_unit_variant("TSAccessibility", 0u32, "private")
@@ -3413,10 +2897,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type TSAccessibility = 'private' | 'protected' | 'public';";
 
 impl<'a> Serialize for TSClassImplements<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSClassImplements")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3429,10 +2910,7 @@ impl<'a> Serialize for TSClassImplements<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSClassImplements = ({\n\ttype: 'TSClassImplements';\n\texpression: TSTypeName;\n\ttypeParameters: (TSTypeParameterInstantiation) | null;\n}) & Span;";
 
 impl<'a> Serialize for TSInterfaceDeclaration<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSInterfaceDeclaration")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3448,10 +2926,7 @@ impl<'a> Serialize for TSInterfaceDeclaration<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSInterfaceDeclaration = ({\n\ttype: 'TSInterfaceDeclaration';\n\tid: BindingIdentifier;\n\textends: (Array<TSInterfaceHeritage>) | null;\n\ttypeParameters: (TSTypeParameterDeclaration) | null;\n\tbody: TSInterfaceBody;\n\tdeclare: boolean;\n}) & Span;";
 
 impl<'a> Serialize for TSInterfaceBody<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSInterfaceBody")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3463,10 +2938,7 @@ impl<'a> Serialize for TSInterfaceBody<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSInterfaceBody = ({\n\ttype: 'TSInterfaceBody';\n\tbody: Array<TSSignature>;\n}) & Span;";
 
 impl<'a> Serialize for TSPropertySignature<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSPropertySignature")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3482,10 +2954,7 @@ impl<'a> Serialize for TSPropertySignature<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSPropertySignature = ({\n\ttype: 'TSPropertySignature';\n\tcomputed: boolean;\n\toptional: boolean;\n\treadonly: boolean;\n\tkey: PropertyKey;\n\ttypeAnnotation: (TSTypeAnnotation) | null;\n}) & Span;";
 
 impl<'a> Serialize for TSSignature<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             TSSignature::TSIndexSignature(x) => Serialize::serialize(x, serializer),
             TSSignature::TSPropertySignature(x) => Serialize::serialize(x, serializer),
@@ -3499,10 +2968,7 @@ impl<'a> Serialize for TSSignature<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSSignature = TSIndexSignature | TSPropertySignature | TSCallSignatureDeclaration | TSConstructSignatureDeclaration | TSMethodSignature;";
 
 impl<'a> Serialize for TSIndexSignature<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSIndexSignature")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3516,10 +2982,7 @@ impl<'a> Serialize for TSIndexSignature<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSIndexSignature = ({\n\ttype: 'TSIndexSignature';\n\tparameters: Array<TSIndexSignatureName>;\n\ttypeAnnotation: TSTypeAnnotation;\n\treadonly: boolean;\n}) & Span;";
 
 impl<'a> Serialize for TSCallSignatureDeclaration<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSCallSignatureDeclaration")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3534,10 +2997,7 @@ impl<'a> Serialize for TSCallSignatureDeclaration<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSCallSignatureDeclaration = ({\n\ttype: 'TSCallSignatureDeclaration';\n\ttypeParameters: (TSTypeParameterDeclaration) | null;\n\tthisParam: (TSThisParameter) | null;\n\tparams: FormalParameters;\n\treturnType: (TSTypeAnnotation) | null;\n}) & Span;";
 
 impl Serialize for TSMethodSignatureKind {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             TSMethodSignatureKind::Method => {
                 serializer.serialize_unit_variant("TSMethodSignatureKind", 0u32, "method")
@@ -3556,10 +3016,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type TSMethodSignatureKind = 'method' | 'get' | 'set';";
 
 impl<'a> Serialize for TSMethodSignature<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSMethodSignature")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3578,10 +3035,7 @@ impl<'a> Serialize for TSMethodSignature<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSMethodSignature = ({\n\ttype: 'TSMethodSignature';\n\tkey: PropertyKey;\n\tcomputed: boolean;\n\toptional: boolean;\n\tkind: TSMethodSignatureKind;\n\ttypeParameters: (TSTypeParameterDeclaration) | null;\n\tthisParam: (TSThisParameter) | null;\n\tparams: FormalParameters;\n\treturnType: (TSTypeAnnotation) | null;\n}) & Span;";
 
 impl<'a> Serialize for TSConstructSignatureDeclaration<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSConstructSignatureDeclaration")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3595,10 +3049,7 @@ impl<'a> Serialize for TSConstructSignatureDeclaration<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSConstructSignatureDeclaration = ({\n\ttype: 'TSConstructSignatureDeclaration';\n\ttypeParameters: (TSTypeParameterDeclaration) | null;\n\tparams: FormalParameters;\n\treturnType: (TSTypeAnnotation) | null;\n}) & Span;";
 
 impl<'a> Serialize for TSIndexSignatureName<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "Identifier")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3611,10 +3062,7 @@ impl<'a> Serialize for TSIndexSignatureName<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSIndexSignatureName = ({\n\ttype: 'Identifier';\n\tname: string;\n\ttypeAnnotation: TSTypeAnnotation;\n}) & Span;";
 
 impl<'a> Serialize for TSInterfaceHeritage<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSInterfaceHeritage")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3627,10 +3075,7 @@ impl<'a> Serialize for TSInterfaceHeritage<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSInterfaceHeritage = ({\n\ttype: 'TSInterfaceHeritage';\n\texpression: Expression;\n\ttypeParameters: (TSTypeParameterInstantiation) | null;\n}) & Span;";
 
 impl<'a> Serialize for TSTypePredicate<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSTypePredicate")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3644,10 +3089,7 @@ impl<'a> Serialize for TSTypePredicate<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSTypePredicate = ({\n\ttype: 'TSTypePredicate';\n\tparameterName: TSTypePredicateName;\n\tasserts: boolean;\n\ttypeAnnotation: (TSTypeAnnotation) | null;\n}) & Span;";
 
 impl<'a> Serialize for TSTypePredicateName<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             TSTypePredicateName::Identifier(x) => Serialize::serialize(x, serializer),
             TSTypePredicateName::This(x) => Serialize::serialize(x, serializer),
@@ -3659,10 +3101,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type TSTypePredicateName = IdentifierName | TSThisType;";
 
 impl<'a> Serialize for TSModuleDeclaration<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSModuleDeclaration")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3677,10 +3116,7 @@ impl<'a> Serialize for TSModuleDeclaration<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSModuleDeclaration = ({\n\ttype: 'TSModuleDeclaration';\n\tid: TSModuleDeclarationName;\n\tbody: (TSModuleDeclarationBody) | null;\n\tkind: TSModuleDeclarationKind;\n\tdeclare: boolean;\n}) & Span;";
 
 impl Serialize for TSModuleDeclarationKind {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             TSModuleDeclarationKind::Global => {
                 serializer.serialize_unit_variant("TSModuleDeclarationKind", 0u32, "global")
@@ -3699,10 +3135,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type TSModuleDeclarationKind = 'global' | 'module' | 'namespace';";
 
 impl<'a> Serialize for TSModuleDeclarationName<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             TSModuleDeclarationName::Identifier(x) => Serialize::serialize(x, serializer),
             TSModuleDeclarationName::StringLiteral(x) => Serialize::serialize(x, serializer),
@@ -3714,10 +3147,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type TSModuleDeclarationName = BindingIdentifier | StringLiteral;";
 
 impl<'a> Serialize for TSModuleDeclarationBody<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             TSModuleDeclarationBody::TSModuleDeclaration(x) => Serialize::serialize(x, serializer),
             TSModuleDeclarationBody::TSModuleBlock(x) => Serialize::serialize(x, serializer),
@@ -3732,10 +3162,7 @@ const TS_APPEND_CONTENT: &'static str =
 const TS_APPEND_CONTENT: &'static str = "export type TSModuleBlock = ({\n\ttype: 'TSModuleBlock';\n\tbody: Array<Statement>;\n}) & Span;";
 
 impl<'a> Serialize for TSTypeLiteral<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSTypeLiteral")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3747,10 +3174,7 @@ impl<'a> Serialize for TSTypeLiteral<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSTypeLiteral = ({\n\ttype: 'TSTypeLiteral';\n\tmembers: Array<TSSignature>;\n}) & Span;";
 
 impl<'a> Serialize for TSInferType<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSInferType")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3762,10 +3186,7 @@ impl<'a> Serialize for TSInferType<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSInferType = ({\n\ttype: 'TSInferType';\n\ttypeParameter: TSTypeParameter;\n}) & Span;";
 
 impl<'a> Serialize for TSTypeQuery<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSTypeQuery")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3778,10 +3199,7 @@ impl<'a> Serialize for TSTypeQuery<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSTypeQuery = ({\n\ttype: 'TSTypeQuery';\n\texprName: TSTypeQueryExprName;\n\ttypeParameters: (TSTypeParameterInstantiation) | null;\n}) & Span;";
 
 impl<'a> Serialize for TSTypeQueryExprName<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             TSTypeQueryExprName::TSImportType(x) => Serialize::serialize(x, serializer),
             TSTypeQueryExprName::IdentifierReference(x) => Serialize::serialize(x, serializer),
@@ -3794,10 +3212,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type TSTypeQueryExprName = TSImportType | IdentifierReference | TSQualifiedName;";
 
 impl<'a> Serialize for TSImportType<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSImportType")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3813,10 +3228,7 @@ impl<'a> Serialize for TSImportType<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSImportType = ({\n\ttype: 'TSImportType';\n\tisTypeOf: boolean;\n\tparameter: TSType;\n\tqualifier: (TSTypeName) | null;\n\tattributes: (TSImportAttributes) | null;\n\ttypeParameters: (TSTypeParameterInstantiation) | null;\n}) & Span;";
 
 impl<'a> Serialize for TSImportAttributes<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSImportAttributes")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3829,10 +3241,7 @@ impl<'a> Serialize for TSImportAttributes<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSImportAttributes = ({\n\ttype: 'TSImportAttributes';\n\tattributesKeyword: IdentifierName;\n\telements: Array<TSImportAttribute>;\n}) & Span;";
 
 impl<'a> Serialize for TSImportAttribute<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSImportAttribute")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3845,10 +3254,7 @@ impl<'a> Serialize for TSImportAttribute<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSImportAttribute = ({\n\ttype: 'TSImportAttribute';\n\tname: TSImportAttributeName;\n\tvalue: Expression;\n}) & Span;";
 
 impl<'a> Serialize for TSImportAttributeName<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             TSImportAttributeName::Identifier(x) => Serialize::serialize(x, serializer),
             TSImportAttributeName::StringLiteral(x) => Serialize::serialize(x, serializer),
@@ -3860,10 +3266,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type TSImportAttributeName = IdentifierName | StringLiteral;";
 
 impl<'a> Serialize for TSFunctionType<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSFunctionType")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3878,10 +3281,7 @@ impl<'a> Serialize for TSFunctionType<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSFunctionType = ({\n\ttype: 'TSFunctionType';\n\ttypeParameters: (TSTypeParameterDeclaration) | null;\n\tthisParam: (TSThisParameter) | null;\n\tparams: FormalParameters;\n\treturnType: TSTypeAnnotation;\n}) & Span;";
 
 impl<'a> Serialize for TSConstructorType<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSConstructorType")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3896,10 +3296,7 @@ impl<'a> Serialize for TSConstructorType<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSConstructorType = ({\n\ttype: 'TSConstructorType';\n\tabstract: boolean;\n\ttypeParameters: (TSTypeParameterDeclaration) | null;\n\tparams: FormalParameters;\n\treturnType: TSTypeAnnotation;\n}) & Span;";
 
 impl<'a> Serialize for TSMappedType<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSMappedType")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3915,10 +3312,7 @@ impl<'a> Serialize for TSMappedType<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSMappedType = ({\n\ttype: 'TSMappedType';\n\ttypeParameter: TSTypeParameter;\n\tnameType: (TSType) | null;\n\ttypeAnnotation: (TSType) | null;\n\toptional: TSMappedTypeModifierOperator;\n\treadonly: TSMappedTypeModifierOperator;\n}) & Span;";
 
 impl Serialize for TSMappedTypeModifierOperator {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             TSMappedTypeModifierOperator::True => {
                 serializer.serialize_unit_variant("TSMappedTypeModifierOperator", 0u32, "true")
@@ -3940,10 +3334,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type TSMappedTypeModifierOperator = 'true' | '+' | '-' | 'none';";
 
 impl<'a> Serialize for TSTemplateLiteralType<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSTemplateLiteralType")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3956,10 +3347,7 @@ impl<'a> Serialize for TSTemplateLiteralType<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSTemplateLiteralType = ({\n\ttype: 'TSTemplateLiteralType';\n\tquasis: Array<TemplateElement>;\n\ttypes: Array<TSType>;\n}) & Span;";
 
 impl<'a> Serialize for TSAsExpression<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSAsExpression")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3972,10 +3360,7 @@ impl<'a> Serialize for TSAsExpression<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSAsExpression = ({\n\ttype: 'TSAsExpression';\n\texpression: Expression;\n\ttypeAnnotation: TSType;\n}) & Span;";
 
 impl<'a> Serialize for TSSatisfiesExpression<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSSatisfiesExpression")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -3988,10 +3373,7 @@ impl<'a> Serialize for TSSatisfiesExpression<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSSatisfiesExpression = ({\n\ttype: 'TSSatisfiesExpression';\n\texpression: Expression;\n\ttypeAnnotation: TSType;\n}) & Span;";
 
 impl<'a> Serialize for TSTypeAssertion<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSTypeAssertion")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -4004,10 +3386,7 @@ impl<'a> Serialize for TSTypeAssertion<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSTypeAssertion = ({\n\ttype: 'TSTypeAssertion';\n\texpression: Expression;\n\ttypeAnnotation: TSType;\n}) & Span;";
 
 impl<'a> Serialize for TSImportEqualsDeclaration<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSImportEqualsDeclaration")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -4021,10 +3400,7 @@ impl<'a> Serialize for TSImportEqualsDeclaration<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSImportEqualsDeclaration = ({\n\ttype: 'TSImportEqualsDeclaration';\n\tid: BindingIdentifier;\n\tmoduleReference: TSModuleReference;\n\timportKind: ImportOrExportKind;\n}) & Span;";
 
 impl<'a> Serialize for TSModuleReference<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             TSModuleReference::ExternalModuleReference(x) => Serialize::serialize(x, serializer),
             TSModuleReference::IdentifierReference(x) => Serialize::serialize(x, serializer),
@@ -4036,10 +3412,7 @@ impl<'a> Serialize for TSModuleReference<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSModuleReference = TSExternalModuleReference | IdentifierReference | TSQualifiedName;";
 
 impl<'a> Serialize for TSExternalModuleReference<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSExternalModuleReference")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -4051,10 +3424,7 @@ impl<'a> Serialize for TSExternalModuleReference<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSExternalModuleReference = ({\n\ttype: 'TSExternalModuleReference';\n\texpression: StringLiteral;\n}) & Span;";
 
 impl<'a> Serialize for TSNonNullExpression<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSNonNullExpression")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -4066,10 +3436,7 @@ impl<'a> Serialize for TSNonNullExpression<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSNonNullExpression = ({\n\ttype: 'TSNonNullExpression';\n\texpression: Expression;\n}) & Span;";
 
 impl<'a> Serialize for Decorator<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "Decorator")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -4082,10 +3449,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type Decorator = ({\n\ttype: 'Decorator';\n\texpression: Expression;\n}) & Span;";
 
 impl<'a> Serialize for TSExportAssignment<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSExportAssignment")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -4097,10 +3461,7 @@ impl<'a> Serialize for TSExportAssignment<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSExportAssignment = ({\n\ttype: 'TSExportAssignment';\n\texpression: Expression;\n}) & Span;";
 
 impl<'a> Serialize for TSNamespaceExportDeclaration<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSNamespaceExportDeclaration")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -4112,10 +3473,7 @@ impl<'a> Serialize for TSNamespaceExportDeclaration<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSNamespaceExportDeclaration = ({\n\ttype: 'TSNamespaceExportDeclaration';\n\tid: IdentifierName;\n}) & Span;";
 
 impl<'a> Serialize for TSInstantiationExpression<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSInstantiationExpression")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -4128,10 +3486,7 @@ impl<'a> Serialize for TSInstantiationExpression<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type TSInstantiationExpression = ({\n\ttype: 'TSInstantiationExpression';\n\texpression: Expression;\n\ttypeParameters: TSTypeParameterInstantiation;\n}) & Span;";
 
 impl Serialize for ImportOrExportKind {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             ImportOrExportKind::Value => {
                 serializer.serialize_unit_variant("ImportOrExportKind", 0u32, "value")
@@ -4146,10 +3501,7 @@ impl Serialize for ImportOrExportKind {
 const TS_APPEND_CONTENT: &'static str = "export type ImportOrExportKind = 'value' | 'type';";
 
 impl<'a> Serialize for JSDocNullableType<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSDocNullableType")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -4162,10 +3514,7 @@ impl<'a> Serialize for JSDocNullableType<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type JSDocNullableType = ({\n\ttype: 'JSDocNullableType';\n\ttypeAnnotation: TSType;\n\tpostfix: boolean;\n}) & Span;";
 
 impl<'a> Serialize for JSDocNonNullableType<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSDocNonNullableType")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -4178,10 +3527,7 @@ impl<'a> Serialize for JSDocNonNullableType<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type JSDocNonNullableType = ({\n\ttype: 'JSDocNonNullableType';\n\ttypeAnnotation: TSType;\n\tpostfix: boolean;\n}) & Span;";
 
 impl Serialize for JSDocUnknownType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSDocUnknownType")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -4193,10 +3539,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type JSDocUnknownType = ({\n\ttype: 'JSDocUnknownType';\n}) & Span;";
 
 impl<'a> Serialize for JSXElement<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSXElement")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -4210,10 +3553,7 @@ impl<'a> Serialize for JSXElement<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type JSXElement = ({\n\ttype: 'JSXElement';\n\topeningElement: JSXOpeningElement;\n\tclosingElement: (JSXClosingElement) | null;\n\tchildren: Array<JSXChild>;\n}) & Span;";
 
 impl<'a> Serialize for JSXOpeningElement<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSXOpeningElement")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -4228,10 +3568,7 @@ impl<'a> Serialize for JSXOpeningElement<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type JSXOpeningElement = ({\n\ttype: 'JSXOpeningElement';\n\tselfClosing: boolean;\n\tname: JSXElementName;\n\tattributes: Array<JSXAttributeItem>;\n\ttypeParameters: (TSTypeParameterInstantiation) | null;\n}) & Span;";
 
 impl<'a> Serialize for JSXClosingElement<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSXClosingElement")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -4243,10 +3580,7 @@ impl<'a> Serialize for JSXClosingElement<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type JSXClosingElement = ({\n\ttype: 'JSXClosingElement';\n\tname: JSXElementName;\n}) & Span;";
 
 impl<'a> Serialize for JSXFragment<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSXFragment")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -4260,10 +3594,7 @@ impl<'a> Serialize for JSXFragment<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type JSXFragment = ({\n\ttype: 'JSXFragment';\n\topeningFragment: JSXOpeningFragment;\n\tclosingFragment: JSXClosingFragment;\n\tchildren: Array<JSXChild>;\n}) & Span;";
 
 impl Serialize for JSXOpeningFragment {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSXOpeningFragment")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -4275,10 +3606,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type JSXOpeningFragment = ({\n\ttype: 'JSXOpeningFragment';\n}) & Span;";
 
 impl Serialize for JSXClosingFragment {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSXClosingFragment")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -4290,10 +3618,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type JSXClosingFragment = ({\n\ttype: 'JSXClosingFragment';\n}) & Span;";
 
 impl<'a> Serialize for JSXNamespacedName<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSXNamespacedName")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -4306,10 +3631,7 @@ impl<'a> Serialize for JSXNamespacedName<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type JSXNamespacedName = ({\n\ttype: 'JSXNamespacedName';\n\tnamespace: JSXIdentifier;\n\tproperty: JSXIdentifier;\n}) & Span;";
 
 impl<'a> Serialize for JSXMemberExpression<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSXMemberExpression")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -4322,10 +3644,7 @@ impl<'a> Serialize for JSXMemberExpression<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type JSXMemberExpression = ({\n\ttype: 'JSXMemberExpression';\n\tobject: JSXMemberExpressionObject;\n\tproperty: JSXIdentifier;\n}) & Span;";
 
 impl<'a> Serialize for JSXExpressionContainer<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSXExpressionContainer")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -4337,10 +3656,7 @@ impl<'a> Serialize for JSXExpressionContainer<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type JSXExpressionContainer = ({\n\ttype: 'JSXExpressionContainer';\n\texpression: JSXExpression;\n}) & Span;";
 
 impl<'a> Serialize for JSXExpression<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             JSXExpression::EmptyExpression(x) => Serialize::serialize(x, serializer),
             JSXExpression::BooleanLiteral(x) => Serialize::serialize(x, serializer),
@@ -4392,10 +3708,7 @@ impl<'a> Serialize for JSXExpression<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type JSXExpression = JSXEmptyExpression | BooleanLiteral | NullLiteral | NumericLiteral | BigIntLiteral | RegExpLiteral | StringLiteral | TemplateLiteral | IdentifierReference | MetaProperty | Super | ArrayExpression | ArrowFunctionExpression | AssignmentExpression | AwaitExpression | BinaryExpression | CallExpression | ChainExpression | Class | ConditionalExpression | Function | ImportExpression | LogicalExpression | NewExpression | ObjectExpression | ParenthesizedExpression | SequenceExpression | TaggedTemplateExpression | ThisExpression | UnaryExpression | UpdateExpression | YieldExpression | PrivateInExpression | JSXElement | JSXFragment | TSAsExpression | TSSatisfiesExpression | TSTypeAssertion | TSNonNullExpression | TSInstantiationExpression | ComputedMemberExpression | StaticMemberExpression | PrivateFieldExpression;";
 
 impl Serialize for JSXEmptyExpression {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSXEmptyExpression")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -4407,10 +3720,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type JSXEmptyExpression = ({\n\ttype: 'JSXEmptyExpression';\n}) & Span;";
 
 impl<'a> Serialize for JSXAttributeItem<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             JSXAttributeItem::Attribute(x) => Serialize::serialize(x, serializer),
             JSXAttributeItem::SpreadAttribute(x) => Serialize::serialize(x, serializer),
@@ -4422,10 +3732,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type JSXAttributeItem = JSXAttribute | JSXSpreadAttribute;";
 
 impl<'a> Serialize for JSXAttribute<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSXAttribute")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -4438,10 +3745,7 @@ impl<'a> Serialize for JSXAttribute<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type JSXAttribute = ({\n\ttype: 'JSXAttribute';\n\tname: JSXAttributeName;\n\tvalue: (JSXAttributeValue) | null;\n}) & Span;";
 
 impl<'a> Serialize for JSXSpreadAttribute<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSXSpreadAttribute")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -4453,10 +3757,7 @@ impl<'a> Serialize for JSXSpreadAttribute<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type JSXSpreadAttribute = ({\n\ttype: 'JSXSpreadAttribute';\n\targument: Expression;\n}) & Span;";
 
 impl<'a> Serialize for JSXAttributeName<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             JSXAttributeName::Identifier(x) => Serialize::serialize(x, serializer),
             JSXAttributeName::NamespacedName(x) => Serialize::serialize(x, serializer),
@@ -4468,10 +3769,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type JSXAttributeName = JSXIdentifier | JSXNamespacedName;";
 
 impl<'a> Serialize for JSXAttributeValue<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             JSXAttributeValue::StringLiteral(x) => Serialize::serialize(x, serializer),
             JSXAttributeValue::ExpressionContainer(x) => Serialize::serialize(x, serializer),
@@ -4484,10 +3782,7 @@ impl<'a> Serialize for JSXAttributeValue<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type JSXAttributeValue = StringLiteral | JSXExpressionContainer | JSXElement | JSXFragment;";
 
 impl<'a> Serialize for JSXIdentifier<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSXIdentifier")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -4500,10 +3795,7 @@ const TS_APPEND_CONTENT: &'static str =
     "export type JSXIdentifier = ({\n\ttype: 'JSXIdentifier';\n\tname: string;\n}) & Span;";
 
 impl<'a> Serialize for JSXChild<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             JSXChild::Text(x) => Serialize::serialize(x, serializer),
             JSXChild::Element(x) => Serialize::serialize(x, serializer),
@@ -4517,10 +3809,7 @@ impl<'a> Serialize for JSXChild<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type JSXChild = JSXText | JSXElement | JSXFragment | JSXExpressionContainer | JSXSpreadChild;";
 
 impl<'a> Serialize for JSXSpreadChild<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSXSpreadChild")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
@@ -4532,10 +3821,7 @@ impl<'a> Serialize for JSXSpreadChild<'a> {
 const TS_APPEND_CONTENT: &'static str = "export type JSXSpreadChild = ({\n\ttype: 'JSXSpreadChild';\n\texpression: Expression;\n}) & Span;";
 
 impl<'a> Serialize for JSXText<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSXText")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
