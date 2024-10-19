@@ -90,7 +90,7 @@ fn serialize_struct(def: &StructDef) -> TokenStream {
     let type_tag = get_type_tag(def);
 
     let mut fields = vec![];
-    if let Some(ref ty) = type_tag {
+    if let Some(ty) = &type_tag {
         fields.push(quote! { map.serialize_entry("type", #ty)?; });
     }
     for field in &def.fields {
