@@ -1,6 +1,6 @@
 [package]
 name = "oxc_syntax"
-version = "0.31.0"
+version = "0.32.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -22,6 +22,7 @@ doctest = false
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_ast_macros = { workspace = true }
+oxc_estree = { workspace = true }
 oxc_index = { workspace = true }
 oxc_span = { workspace = true }
 
@@ -35,13 +36,12 @@ unicode-id-start = { workspace = true }
 
 ryu-js = { workspace = true, optional = true }
 serde = { workspace = true, features = ["derive"], optional = true }
-tsify = { workspace = true, optional = true }
 wasm-bindgen = { workspace = true, optional = true }
 
 [features]
 default = []
 to_js_string = ["dep:ryu-js"]
-serialize = ["bitflags/serde", "dep:serde", "dep:tsify", "dep:wasm-bindgen", "oxc_index/serialize"]
+serialize = ["bitflags/serde", "dep:serde", "dep:wasm-bindgen", "oxc_index/serialize"]
 
 [package.metadata.cargo-shear]
 # We use `oxc_ast_macros::CloneIn` which expands to use `oxc_allocator`.

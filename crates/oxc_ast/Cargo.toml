@@ -1,6 +1,6 @@
 [package]
 name = "oxc_ast"
-version = "0.31.0"
+version = "0.32.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -21,6 +21,7 @@ doctest = false
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_ast_macros = { workspace = true }
+oxc_estree = { workspace = true }
 oxc_regular_expression = { workspace = true }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
@@ -30,8 +31,6 @@ num-bigint = { workspace = true }
 
 serde = { workspace = true, features = ["derive"], optional = true }
 serde_json = { workspace = true, optional = true }
-
-tsify = { workspace = true, optional = true }
 wasm-bindgen = { workspace = true, optional = true }
 
 [features]
@@ -39,7 +38,6 @@ default = []
 serialize = [
   "dep:serde",
   "dep:serde_json",
-  "dep:tsify",
   "dep:wasm-bindgen",
   "oxc_allocator/serialize",
   "oxc_regular_expression/serialize",

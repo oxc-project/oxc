@@ -7,7 +7,7 @@ use syn::{
     parse2,
     punctuated::Punctuated,
     spanned::Spanned,
-    token, Attribute, Expr, Ident, Meta, MetaNameValue, Token,
+    token, Attribute, Expr, Ident, LitStr, Meta, MetaNameValue, Token,
 };
 
 use crate::util::NormalizeError;
@@ -74,6 +74,8 @@ pub struct ScopeMarkers {
 #[derive(Debug, Default, Serialize)]
 pub struct DeriveAttributes {
     pub clone_in: CloneInAttribute,
+    pub estree: ESTreeFieldAttribute,
+    pub tsify_type: Option<String>,
 }
 
 /// A enum representing the value passed in `#[clone_in(...)]` derive helper attribute.
@@ -91,6 +93,137 @@ impl From<&Ident> for CloneInAttribute {
         } else {
             panic!("Invalid argument used in `#[clone_in(...)]` attribute.");
         }
+    }
+}
+
+/// An enum representing the `#[estree(...)]` attributes that we implement for structs.
+#[derive(Debug, Serialize, PartialEq, Eq)]
+pub enum ESTreeStructAttribute {
+    CustomSerialize,
+    NoType,
+    Type(String),
+}
+
+impl Parse for ESTreeStructAttribute {
+    fn parse(input: ParseStream) -> Result<Self, syn::Error> {
+        let is_type = input.peek(Token![type]);
+        if is_type {
+            input.parse::<Token![type]>()?;
+            input.parse::<Token![=]>()?;
+            Ok(Self::Type(input.parse::<LitStr>()?.value()))
+        } else {
+            let ident = input.call(Ident::parse_any).unwrap().to_string();
+            match ident.as_str() {
+                "no_type" => Ok(Self::NoType),
+                "custom_serialize" => Ok(Self::CustomSerialize),
+                _ => panic!("Unsupported #[estree(...)] argument: {ident}"),
+            }
+        }
+    }
+}
+
+/// A struct representing the `#[estree(...)]` attributes that we implement for enums.
+#[derive(Debug, Serialize, Default)]
+pub struct ESTreeEnumAttribute {
+    pub rename_all: Option<String>,
+    pub untagged: bool,
+}
+
+impl Parse for ESTreeEnumAttribute {
+    fn parse(input: ParseStream) -> Result<Self, syn::Error> {
+        let mut rename_all = None;
+        let mut untagged = false;
+
+        loop {
+            let ident = input.call(Ident::parse_any).unwrap().to_string();
+            match ident.as_str() {
+                "rename_all" => {
+                    input.parse::<Token![=]>()?;
+                    assert!(
+                        rename_all.replace(input.parse::<LitStr>()?.value()).is_none(),
+                        "Duplicate estree(rename_all)"
+                    );
+                }
+                "untagged" => {
+                    if untagged {
+                        panic!("Duplicate estree(untagged)");
+                    } else {
+                        untagged = true;
+                    }
+                }
+                arg => panic!("Unsupported #[estree(...)] argument: {arg}"),
+            }
+            let comma = input.peek(Token![,]);
+            if comma {
+                input.parse::<Token![,]>().unwrap();
+            } else {
+                break;
+            }
+        }
+        Ok(Self { rename_all, untagged })
+    }
+}
+
+/// A struct representing the `#[estree(...)]` attributes that we implement for fields.
+#[derive(Debug, Serialize, Default)]
+pub struct ESTreeFieldAttribute {
+    pub flatten: bool,
+    pub skip: bool,
+    pub rename: Option<String>,
+}
+
+impl Parse for ESTreeFieldAttribute {
+    fn parse(input: ParseStream) -> Result<Self, syn::Error> {
+        let mut flatten = false;
+        let mut skip = false;
+        let mut rename = None;
+
+        loop {
+            let ident = input.call(Ident::parse_any).unwrap().to_string();
+            match ident.as_str() {
+                "rename" => {
+                    input.parse::<Token![=]>()?;
+                    assert!(
+                        rename.replace(input.parse::<LitStr>()?.value()).is_none(),
+                        "Duplicate estree(rename)"
+                    );
+                }
+                "flatten" => {
+                    if flatten {
+                        panic!("Duplicate estree(flatten)");
+                    } else {
+                        flatten = true;
+                    }
+                }
+                "skip" => {
+                    if skip {
+                        panic!("Duplicate estree(skip)");
+                    } else {
+                        skip = true;
+                    }
+                }
+                arg => panic!("Unsupported #[estree(...)] argument: {arg}"),
+            }
+            let comma = input.peek(Token![,]);
+            if comma {
+                input.parse::<Token![,]>().unwrap();
+            } else {
+                break;
+            }
+        }
+        Ok(Self { flatten, skip, rename })
+    }
+}
+
+/// A struct representing the `#[tsify(type = "...")]` attribute.
+pub struct TsifyAttribute(String);
+
+impl Parse for TsifyAttribute {
+    fn parse(input: ParseStream) -> Result<Self, syn::Error> {
+        input.parse::<Token![type]>()?;
+        input.parse::<Token![=]>()?;
+        let type_ = input.parse::<LitStr>()?;
+        Ok(Self(type_.value()))
     }
 }
 
@@ -228,13 +361,44 @@ where
             Ok(None)
         }
     }
+    fn try_parse_estree(attr: &Attribute) -> crate::Result<Option<ESTreeFieldAttribute>> {
+        if attr.path().is_ident("estree") {
+            let arg = attr.parse_args_with(ESTreeFieldAttribute::parse).normalize()?;
+            Ok(Some(arg))
+        } else {
+            Ok(None)
+        }
+    }
+    fn try_parse_tsify_type(attr: &Attribute) -> crate::Result<Option<String>> {
+        if attr.path().is_ident("tsify") {
+            let arg = attr.parse_args_with(TsifyAttribute::parse).normalize()?;
+            Ok(Some(arg.0))
+        } else {
+            Ok(None)
+        }
+    }
     let mut clone_in = None;
+    let mut estree = None;
+    let mut tsify_type = None;
     for attr in attrs {
         if let Some(attr) = try_parse_clone_in(attr)? {
             assert!(clone_in.replace(attr).is_none(), "Duplicate `#[clone_in(...)]` attribute.");
         }
+        if let Some(attr) = try_parse_estree(attr)? {
+            assert!(estree.replace(attr).is_none(), "Duplicate `#[estree(...)]` attribute.");
+        }
+        if let Some(attr) = try_parse_tsify_type(attr)? {
+            assert!(
+                tsify_type.replace(attr).is_none(),
+                "Duplicate `#[tsify(type = \"...\")]` attribute."
+            );
+        }
     }
-    Ok(DeriveAttributes { clone_in: clone_in.unwrap_or_default() })
+    Ok(DeriveAttributes {
+        clone_in: clone_in.unwrap_or_default(),
+        estree: estree.unwrap_or_default(),
+        tsify_type,
+    })
 }
 
 pub fn get_scope_attribute<'a, I>(attrs: I) -> Option<crate::Result<ScopeAttribute>>
@@ -252,5 +416,17 @@ where
         };
 
         result.normalize()
+    })
+}
+
+pub fn get_estree_attribute<'a, T, I>(attrs: I) -> Option<crate::Result<T>>
+where
+    I: IntoIterator<Item = &'a Attribute>,
+    T: Parse,
+{
+    let attr = attrs.into_iter().find(|it| it.path().is_ident("estree"));
+    attr.map(|attr| {
+        debug_assert!(attr.path().is_ident("estree"));
+        attr.parse_args_with(T::parse).normalize()
     })
 }

@@ -76,29 +76,30 @@ doc_lazy_continuation = "allow" # FIXME
 
 [workspace.dependencies]
 # publish = true
-oxc = { version = "0.31.0", path = "crates/oxc" }
-oxc_allocator = { version = "0.31.0", path = "crates/oxc_allocator" }
-oxc_ast = { version = "0.31.0", path = "crates/oxc_ast" }
-oxc_ast_macros = { version = "0.31.0", path = "crates/oxc_ast_macros" }
-oxc_cfg = { version = "0.31.0", path = "crates/oxc_cfg" }
-oxc_codegen = { version = "0.31.0", path = "crates/oxc_codegen" }
-oxc_data_structures = { version = "0.31.0", path = "crates/oxc_data_structures" }
-oxc_diagnostics = { version = "0.31.0", path = "crates/oxc_diagnostics" }
-oxc_ecmascript = { version = "0.31.0", path = "crates/oxc_ecmascript" }
-oxc_index = { version = "0.31.0", path = "crates/oxc_index" }
-oxc_isolated_declarations = { version = "0.31.0", path = "crates/oxc_isolated_declarations" }
-oxc_mangler = { version = "0.31.0", path = "crates/oxc_mangler" }
-oxc_minifier = { version = "0.31.0", path = "crates/oxc_minifier" }
-oxc_module_lexer = { version = "0.31.0", path = "crates/oxc_module_lexer" }
-oxc_parser = { version = "0.31.0", path = "crates/oxc_parser" }
-oxc_regular_expression = { version = "0.31.0", path = "crates/oxc_regular_expression" }
-oxc_semantic = { version = "0.31.0", path = "crates/oxc_semantic" }
-oxc_sourcemap = { version = "0.31.0", path = "crates/oxc_sourcemap" }
-oxc_span = { version = "0.31.0", path = "crates/oxc_span" }
-oxc_syntax = { version = "0.31.0", path = "crates/oxc_syntax" }
-oxc_transform_napi = { version = "0.31.0", path = "napi/transform" }
-oxc_transformer = { version = "0.31.0", path = "crates/oxc_transformer" }
-oxc_traverse = { version = "0.31.0", path = "crates/oxc_traverse" }
+oxc = { version = "0.32.0", path = "crates/oxc" }
+oxc_allocator = { version = "0.32.0", path = "crates/oxc_allocator" }
+oxc_ast = { version = "0.32.0", path = "crates/oxc_ast" }
+oxc_ast_macros = { version = "0.32.0", path = "crates/oxc_ast_macros" }
+oxc_cfg = { version = "0.32.0", path = "crates/oxc_cfg" }
+oxc_codegen = { version = "0.32.0", path = "crates/oxc_codegen" }
+oxc_data_structures = { version = "0.32.0", path = "crates/oxc_data_structures" }
+oxc_diagnostics = { version = "0.32.0", path = "crates/oxc_diagnostics" }
+oxc_ecmascript = { version = "0.32.0", path = "crates/oxc_ecmascript" }
+oxc_estree = { version = "0.32.0", path = "crates/oxc_estree" }
+oxc_index = { version = "0.32.0", path = "crates/oxc_index" }
+oxc_isolated_declarations = { version = "0.32.0", path = "crates/oxc_isolated_declarations" }
+oxc_mangler = { version = "0.32.0", path = "crates/oxc_mangler" }
+oxc_minifier = { version = "0.32.0", path = "crates/oxc_minifier" }
+oxc_module_lexer = { version = "0.32.0", path = "crates/oxc_module_lexer" }
+oxc_parser = { version = "0.32.0", path = "crates/oxc_parser" }
+oxc_regular_expression = { version = "0.32.0", path = "crates/oxc_regular_expression" }
+oxc_semantic = { version = "0.32.0", path = "crates/oxc_semantic" }
+oxc_sourcemap = { version = "0.32.0", path = "crates/oxc_sourcemap" }
+oxc_span = { version = "0.32.0", path = "crates/oxc_span" }
+oxc_syntax = { version = "0.32.0", path = "crates/oxc_syntax" }
+oxc_transform_napi = { version = "0.32.0", path = "napi/transform" }
+oxc_transformer = { version = "0.32.0", path = "crates/oxc_transformer" }
+oxc_traverse = { version = "0.32.0", path = "crates/oxc_traverse" }
 
 # publish = false
 oxc_linter = { path = "crates/oxc_linter" }

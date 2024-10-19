@@ -10,12 +10,6 @@ use serde::Serialize;
 
 use crate::{cmp::ContentEq, hash::ContentHash, CompactStr};
 
-#[cfg(feature = "serialize")]
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = r#"
-export type Atom = string;
-"#;
-
 /// An inlinable string for oxc_allocator.
 ///
 /// Use [CompactStr] with [Atom::to_compact_str] or [Atom::into_compact_str] for

@@ -38,6 +38,7 @@ impl<'a> Traverse<'a> for PeepholeRemoveDeadCode {
             Statement::ExpressionStatement(expr_stmt) => {
                 Self::try_fold_expression_stmt(expr_stmt, ctx)
             }
+            Statement::LabeledStatement(labeled) => Self::try_fold_labeled(labeled, ctx),
             _ => None,
         } {
             *stmt = new_stmt;
@@ -235,6 +236,30 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
         }
     }
 
+    /// Remove meaningless labeled statements.
+    ///
+    /// ```js
+    /// a: break a;
+    /// ```
+    fn try_fold_labeled(
+        labeled: &mut LabeledStatement<'a>,
+        ctx: Ctx<'a, 'b>,
+    ) -> Option<Statement<'a>> {
+        let id = labeled.label.name.as_str();
+        // Check the first statement in the block, or just the `break [id] ` statement.
+        // Check if we need to remove the whole block.
+        match &mut labeled.body {
+            Statement::BreakStatement(break_stmt)
+                if break_stmt.label.as_ref().is_some_and(|l| l.name.as_str() == id) => {}
+            Statement::BlockStatement(block) if block.body.first().is_some_and(|first| matches!(first, Statement::BreakStatement(break_stmt) if break_stmt.label.as_ref().is_some_and(|l| l.name.as_str() == id))) => {}
+            _ => return None,
+        }
+        let mut var = KeepVar::new(ctx.ast);
+        var.visit_statement(&labeled.body);
+        let var_decl = var.get_variable_declaration_statement();
+        var_decl.unwrap_or(ctx.ast.statement_empty(SPAN)).into()
+    }
+
     fn try_fold_expression_stmt(
         stmt: &mut ExpressionStatement<'a>,
         ctx: Ctx<'a, 'b>,
@@ -322,12 +347,12 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
             );
         }
 
-        return Some(ctx.ast.statement_expression(
+        Some(ctx.ast.statement_expression(
             array_expr.span,
             ctx.ast.expression_from_sequence(
                 ctx.ast.sequence_expression(array_expr.span, transformed_elements),
             ),
-        ));
+        ))
     }
 
     // `{a: 1, b: 2, c: foo()}` -> `foo()`
@@ -413,12 +438,12 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
             );
         }
 
-        return Some(ctx.ast.statement_expression(
+        Some(ctx.ast.statement_expression(
             object_expr.span,
             ctx.ast.expression_from_sequence(
                 ctx.ast.sequence_expression(object_expr.span, filtered_properties),
             ),
-        ));
+        ))
     }
 
     /// Try folding conditional expression (?:) if the condition results of the condition is known.
@@ -497,7 +522,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_remove_no_op_labelled_statement() {
         fold("a: break a;", "");
         fold("a: { break a; }", "");

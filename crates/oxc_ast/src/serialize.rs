@@ -60,6 +60,9 @@ impl Serialize for Elision {
         serializer.serialize_none()
     }
 }
+#[cfg(feature = "serialize")]
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "export type Elision = null;";
 
 /// Serialize `ArrayAssignmentTarget`, `ObjectAssignmentTarget`, `ObjectPattern`, `ArrayPattern`
 /// to be estree compatible, with `elements`/`properties` and `rest` fields combined.
@@ -155,6 +158,17 @@ impl<'a> Serialize for FormalParameters<'a> {
         converted.serialize(serializer)
     }
 }
+
+#[cfg(feature = "serialize")]
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = r#"
+export type FormalParameterRest = ({
+    type: "RestElement",
+    argument: BindingPatternKind,
+    typeAnnotation: TSTypeAnnotation | null,
+    optional: boolean,
+}) & Span;
+"#;
 
 #[derive(Serialize)]
 #[serde(tag = "type", rename = "FormalParameters")]
