@@ -108,11 +108,12 @@ macro_rules! define_derive {
                     .fold(Vec::new(), |mut acc, (path, (modules, streams))| {
                         let mut modules = Vec::from_iter(modules);
                         modules.sort();
-												let file_name = Self::trait_name().to_case(Case::Snake);
-												let file_name = match file_name.as_str() {
-													"es_tree" => "estree",
-													f => f,
-												};
+
+                        let file_name = Self::trait_name().to_case(Case::Snake);
+                        let file_name = match file_name.as_str() {
+                            "es_tree" => "estree",
+                            f => f,
+                        };
 
                         acc.push((
                             $crate::output(
