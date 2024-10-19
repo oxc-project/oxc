@@ -348,8 +348,8 @@ lazy_static! {
         },
         // External Bumpalo type
         Vec: {
-            64 => Layout::known(32, 8, 1),
-            32 => Layout::known(16, 4, 1),
+            64 => Layout::known(24, 8, 1),
+            32 => Layout::known(24, 8, 1),
         },
         // Unsupported: we don't analyze `Cell` types
         Cell<Option<ScopeId>>: { _ => Layout::known(4, 4, 0), },
