@@ -60,13 +60,6 @@ impl<'a, 'b> Ctx<'a, 'b> {
         self.eval_to_boolean(expr)
     }
 
-    /// Gets the value of a node as a Number, or None if it cannot be converted.
-    /// This method does not consider whether `expr` may have side effects.
-    /// <https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/NodeUtil.java#L348>
-    pub fn get_number_value(self, expr: &Expression<'a>) -> Option<f64> {
-        self.eval_to_number(expr)
-    }
-
     /// port from [closure compiler](https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/AbstractPeepholeOptimization.java#L104-L114)
     /// Returns the number value of the node if it has one and it cannot have side effects.
     pub fn get_side_free_number_value(self, expr: &Expression<'a>) -> Option<f64> {

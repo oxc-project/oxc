@@ -1724,7 +1724,6 @@ dependencies = [
  "cow-utils",
  "insta",
  "num-bigint",
- "num-traits",
  "oxc_allocator",
  "oxc_ast",
  "oxc_codegen",
