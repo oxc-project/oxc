@@ -334,6 +334,7 @@ mod unicorn {
     pub mod prefer_event_target;
     pub mod prefer_includes;
     pub mod prefer_logical_operator_over_ternary;
+    pub mod prefer_math_min_max;
     pub mod prefer_math_trunc;
     pub mod prefer_modern_dom_apis;
     pub mod prefer_modern_math_apis;
@@ -909,6 +910,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_event_target,
     unicorn::prefer_includes,
     unicorn::prefer_logical_operator_over_ternary,
+    unicorn::prefer_math_min_max,
     unicorn::prefer_math_trunc,
     unicorn::prefer_modern_dom_apis,
     unicorn::prefer_modern_math_apis,
