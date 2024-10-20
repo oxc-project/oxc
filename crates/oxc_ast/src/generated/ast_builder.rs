@@ -1,3 +1,4 @@
+//! AST node factories
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/ast_builder.rs`
 
@@ -6,6 +7,7 @@
     clippy::too_many_arguments,
     clippy::fn_params_excessive_bools
 )]
+#![warn(missing_docs)]
 
 use oxc_allocator::{Allocator, Box, IntoIn, Vec};
 
@@ -15,6 +17,7 @@ use crate::ast::*;
 /// AST builder for creating AST nodes
 #[derive(Clone, Copy)]
 pub struct AstBuilder<'a> {
+    /// The memory allocator used to allocate AST nodes in the arena.
     pub allocator: &'a Allocator,
 }
 
@@ -1484,6 +1487,7 @@ impl<'a> AstBuilder<'a> {
         Expression::TSInstantiationExpression(inner.into_in(self.allocator))
     }
 
+    /// Convert a [`MemberExpression`] into the corresponding variant of [`Expression`] without copying or re-allocating memory.
     #[inline]
     pub fn expression_member(self, inner: MemberExpression<'a>) -> Expression<'a> {
         Expression::from(inner)
@@ -1725,6 +1729,7 @@ impl<'a> AstBuilder<'a> {
         ArrayExpressionElement::Elision(inner.into_in(self.allocator))
     }
 
+    /// Convert a [`Expression`] into the corresponding variant of [`ArrayExpressionElement`] without copying or re-allocating memory.
     #[inline]
     pub fn array_expression_element_expression(
         self,
@@ -1964,6 +1969,7 @@ impl<'a> AstBuilder<'a> {
         PropertyKey::PrivateIdentifier(inner.into_in(self.allocator))
     }
 
+    /// Convert a [`Expression`] into the corresponding variant of [`PropertyKey`] without copying or re-allocating memory.
     #[inline]
     pub fn property_key_expression(self, inner: Expression<'a>) -> PropertyKey<'a> {
         PropertyKey::from(inner)
@@ -2509,6 +2515,7 @@ impl<'a> AstBuilder<'a> {
         Argument::SpreadElement(inner.into_in(self.allocator))
     }
 
+    /// Convert a [`Expression`] into the corresponding variant of [`Argument`] without copying or re-allocating memory.
     #[inline]
     pub fn argument_expression(self, inner: Expression<'a>) -> Argument<'a> {
         Argument::from(inner)
@@ -2790,6 +2797,7 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(self.assignment_expression(span, operator, left, right), self.allocator)
     }
 
+    /// Convert a [`SimpleAssignmentTarget`] into the corresponding variant of [`AssignmentTarget`] without copying or re-allocating memory.
     #[inline]
     pub fn assignment_target_simple(
         self,
@@ -2798,6 +2806,7 @@ impl<'a> AstBuilder<'a> {
         AssignmentTarget::from(inner)
     }
 
+    /// Convert a [`AssignmentTargetPattern`] into the corresponding variant of [`AssignmentTarget`] without copying or re-allocating memory.
     #[inline]
     pub fn assignment_target_assignment_target_pattern(
         self,
@@ -3006,6 +3015,7 @@ impl<'a> AstBuilder<'a> {
         SimpleAssignmentTarget::TSInstantiationExpression(inner.into_in(self.allocator))
     }
 
+    /// Convert a [`MemberExpression`] into the corresponding variant of [`SimpleAssignmentTarget`] without copying or re-allocating memory.
     #[inline]
     pub fn simple_assignment_target_member_expression(
         self,
@@ -3226,6 +3236,7 @@ impl<'a> AstBuilder<'a> {
         AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(inner.into_in(self.allocator))
     }
 
+    /// Convert a [`AssignmentTarget`] into the corresponding variant of [`AssignmentTargetMaybeDefault`] without copying or re-allocating memory.
     #[inline]
     pub fn assignment_target_maybe_default_assignment_target(
         self,
@@ -3556,6 +3567,7 @@ impl<'a> AstBuilder<'a> {
         ChainElement::CallExpression(inner.into_in(self.allocator))
     }
 
+    /// Convert a [`MemberExpression`] into the corresponding variant of [`ChainElement`] without copying or re-allocating memory.
     #[inline]
     pub fn chain_element_member_expression(self, inner: MemberExpression<'a>) -> ChainElement<'a> {
         ChainElement::from(inner)
@@ -4054,11 +4066,13 @@ impl<'a> AstBuilder<'a> {
         Statement::WithStatement(inner.into_in(self.allocator))
     }
 
+    /// Convert a [`Declaration`] into the corresponding variant of [`Statement`] without copying or re-allocating memory.
     #[inline]
     pub fn statement_declaration(self, inner: Declaration<'a>) -> Statement<'a> {
         Statement::from(inner)
     }
 
+    /// Convert a [`ModuleDeclaration`] into the corresponding variant of [`Statement`] without copying or re-allocating memory.
     #[inline]
     pub fn statement_module_declaration(self, inner: ModuleDeclaration<'a>) -> Statement<'a> {
         Statement::from(inner)
@@ -4832,6 +4846,7 @@ impl<'a> AstBuilder<'a> {
         ForStatementInit::VariableDeclaration(inner.into_in(self.allocator))
     }
 
+    /// Convert a [`Expression`] into the corresponding variant of [`ForStatementInit`] without copying or re-allocating memory.
     #[inline]
     pub fn for_statement_init_expression(self, inner: Expression<'a>) -> ForStatementInit<'a> {
         ForStatementInit::from(inner)
@@ -4911,6 +4926,7 @@ impl<'a> AstBuilder<'a> {
         ForStatementLeft::VariableDeclaration(inner.into_in(self.allocator))
     }
 
+    /// Convert a [`AssignmentTarget`] into the corresponding variant of [`ForStatementLeft`] without copying or re-allocating memory.
     #[inline]
     pub fn for_statement_left_assignment_target(
         self,
@@ -7866,6 +7882,7 @@ impl<'a> AstBuilder<'a> {
         ExportDefaultDeclarationKind::TSInterfaceDeclaration(inner.into_in(self.allocator))
     }
 
+    /// Convert a [`Expression`] into the corresponding variant of [`ExportDefaultDeclarationKind`] without copying or re-allocating memory.
     #[inline]
     pub fn export_default_declaration_kind_expression(
         self,
@@ -8183,6 +8200,7 @@ impl<'a> AstBuilder<'a> {
         TSEnumMemberName::StaticNumericLiteral(inner.into_in(self.allocator))
     }
 
+    /// Convert a [`Expression`] into the corresponding variant of [`TSEnumMemberName`] without copying or re-allocating memory.
     #[inline]
     pub fn ts_enum_member_name_expression(self, inner: Expression<'a>) -> TSEnumMemberName<'a> {
         TSEnumMemberName::from(inner)
@@ -9879,6 +9897,7 @@ impl<'a> AstBuilder<'a> {
         TSTupleElement::TSRestType(inner.into_in(self.allocator))
     }
 
+    /// Convert a [`TSType`] into the corresponding variant of [`TSTupleElement`] without copying or re-allocating memory.
     #[inline]
     pub fn ts_tuple_element_type(self, inner: TSType<'a>) -> TSTupleElement<'a> {
         TSTupleElement::from(inner)
@@ -11755,6 +11774,7 @@ impl<'a> AstBuilder<'a> {
         TSTypeQueryExprName::TSImportType(inner.into_in(self.allocator))
     }
 
+    /// Convert a [`TSTypeName`] into the corresponding variant of [`TSTypeQueryExprName`] without copying or re-allocating memory.
     #[inline]
     pub fn ts_type_query_expr_name_type_name(
         self,
@@ -12383,6 +12403,7 @@ impl<'a> AstBuilder<'a> {
         TSModuleReference::ExternalModuleReference(inner.into_in(self.allocator))
     }
 
+    /// Convert a [`TSTypeName`] into the corresponding variant of [`TSModuleReference`] without copying or re-allocating memory.
     #[inline]
     pub fn ts_module_reference_type_name(self, inner: TSTypeName<'a>) -> TSModuleReference<'a> {
         TSModuleReference::from(inner)
@@ -13212,6 +13233,7 @@ impl<'a> AstBuilder<'a> {
         JSXExpression::EmptyExpression(inner.into_in(self.allocator))
     }
 
+    /// Convert a [`Expression`] into the corresponding variant of [`JSXExpression`] without copying or re-allocating memory.
     #[inline]
     pub fn jsx_expression_expression(self, inner: Expression<'a>) -> JSXExpression<'a> {
         JSXExpression::from(inner)
