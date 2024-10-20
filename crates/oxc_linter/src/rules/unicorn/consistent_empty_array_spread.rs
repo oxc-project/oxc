@@ -87,7 +87,7 @@ impl Rule for ConsistentEmptyArraySpread {
             }
             (Expression::StringLiteral(_), Expression::ArrayExpression(right_array_expr)) => {
                 if right_array_expr.elements.is_empty() {
-                    ctx.diagnostic_with_fix(
+                    ctx.diagnostic_with_suggestion(
                         consistent_empty_array_spread_diagnostic(conditional_expr.span),
                         |fixer| fixer.replace(right_array_expr.span, "''"),
                     );
