@@ -7,7 +7,6 @@
     clippy::too_many_arguments,
     clippy::fn_params_excessive_bools
 )]
-#![warn(missing_docs)]
 
 use oxc_allocator::{Allocator, Box, IntoIn, Vec};
 

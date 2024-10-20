@@ -1,5 +1,4 @@
 // FIXME: lots of methods are missing docs. If you have time, it would be a huge help to add some :)
-#![warn(missing_docs)]
 use std::{borrow::Cow, cell::Cell, fmt};
 
 use oxc_allocator::{Box, FromIn, Vec};

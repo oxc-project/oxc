@@ -1,4 +1,5 @@
 //! Trivias such as comments and irregular whitespaces
+#![allow(missing_docs)] // FIXME
 
 use std::{
     iter::FusedIterator,
