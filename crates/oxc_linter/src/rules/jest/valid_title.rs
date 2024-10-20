@@ -312,9 +312,12 @@ fn validate_title(
         return;
     };
 
-    // TODO: support fixer
     if first_word == un_prefixed_name {
-        Message::DuplicatePrefix.diagnostic(ctx, span);
+        let (error, help) = Message::DuplicatePrefix.detail();
+        ctx.diagnostic_with_fix(valid_title_diagnostic(error, help, span), |fixer| {
+            let replaced_title = title[first_word.len()..].trim().to_string();
+            fixer.replace(span.shrink_left(1).shrink_right(1), replaced_title)
+        });
         return;
     }
 
@@ -959,6 +962,55 @@ fn test() {
             "
                 describe('foo', () => {
                     it(' bar', () => {})
+                })
+            ",
+            "
+                describe('foo', () => {
+                    it('bar', () => {})
+                })
+            ",
+        ),
+        ("describe('describe foo', function () {})", "describe('foo', function () {})"),
+        ("fdescribe('describe foo', function () {})", "fdescribe('foo', function () {})"),
+        ("xdescribe('describe foo', function () {})", "xdescribe('foo', function () {})"),
+        ("describe('describe foo', function () {})", "describe('foo', function () {})"),
+        ("fdescribe(`describe foo`, function () {})", "fdescribe(`foo`, function () {})"),
+        ("test('test foo', function () {})", "test('foo', function () {})"),
+        ("xtest('test foo', function () {})", "xtest('foo', function () {})"),
+        ("test(`test foo`, function () {})", "test(`foo`, function () {})"),
+        ("test(`test foo test`, function () {})", "test(`foo test`, function () {})"),
+        ("it('it foo', function () {})", "it('foo', function () {})"),
+        ("fit('it foo', function () {})", "fit('foo', function () {})"),
+        ("xit('it foo', function () {})", "xit('foo', function () {})"),
+        ("it('it foos it correctly', function () {})", "it('foos it correctly', function () {})"),
+        (
+            "
+                describe('describe foo', () => {
+                    it('bar', () => {})
+                })
+            ",
+            "
+                describe('foo', () => {
+                    it('bar', () => {})
+                })
+            ",
+        ),
+        (
+            "
+                describe('describe foo', () => {
+                    it('describes things correctly', () => {})
+                })
+            ",
+            "
+                describe('foo', () => {
+                    it('describes things correctly', () => {})
+                })
+            ",
+        ),
+        (
+            "
+                describe('foo', () => {
+                    it('it bar', () => {})
                 })
             ",
             "
