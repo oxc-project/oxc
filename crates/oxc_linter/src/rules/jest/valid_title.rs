@@ -302,8 +302,7 @@ fn validate_title(
     if !valid_title.ignore_space && trimmed_title != title {
         let (error, help) = Message::AccidentalSpace.detail();
         ctx.diagnostic_with_fix(valid_title_diagnostic(error, help, span), |fixer| {
-            let target_span = Span::new(span.start + 1, span.end - 1);
-            fixer.replace(target_span, trimmed_title.to_string())
+            fixer.replace(span.shrink_left(1).shrink_right(1), trimmed_title.to_string())
         });
     }
 
