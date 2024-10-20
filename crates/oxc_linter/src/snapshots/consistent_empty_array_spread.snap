@@ -1,0 +1,37 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-unicorn(consistent-empty-array-spread): Prefer consistent types when spreading a ternary in an array literal.
+   ╭─[consistent_empty_array_spread.tsx:1:24]
+ 1 │ const array = [ a, ...(foo ? [b, c] : '') ]
+   ·                        ─────────────────
+   ╰────
+  help: Replace `''` with `[]`.
+
+  ⚠ eslint-plugin-unicorn(consistent-empty-array-spread): Prefer consistent types when spreading a ternary in an array literal.
+   ╭─[consistent_empty_array_spread.tsx:1:24]
+ 1 │ const array = [ a, ...(foo ? 'bc' : []) ]
+   ·                        ───────────────
+   ╰────
+  help: Replace `[]` with `''`.
+
+  ⚠ eslint-plugin-unicorn(consistent-empty-array-spread): Prefer consistent types when spreading a ternary in an array literal.
+   ╭─[consistent_empty_array_spread.tsx:1:24]
+ 1 │ const array = [ a, ...(foo ? ['str', 'str'] : '') ]
+   ·                        ─────────────────────────
+   ╰────
+  help: Replace `''` with `[]`.
+
+  ⚠ eslint-plugin-unicorn(consistent-empty-array-spread): Prefer consistent types when spreading a ternary in an array literal.
+   ╭─[consistent_empty_array_spread.tsx:1:24]
+ 1 │ const array = [ a, ...(foo ? [1, 2, 3] : '') ]
+   ·                        ────────────────────
+   ╰────
+  help: Replace `''` with `[]`.
+
+  ⚠ eslint-plugin-unicorn(consistent-empty-array-spread): Prefer consistent types when spreading a ternary in an array literal.
+   ╭─[consistent_empty_array_spread.tsx:1:25]
+ 1 │ const array = [ {}, ...(foo ? [{}, {}] : '') ]
+   ·                         ───────────────────
+   ╰────
+  help: Replace `''` with `[]`.

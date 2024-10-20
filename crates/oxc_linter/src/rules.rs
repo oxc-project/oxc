@@ -272,6 +272,7 @@ mod react_perf {
 
 mod unicorn {
     pub mod catch_error_name;
+    pub mod consistent_empty_array_spread;
     pub mod consistent_function_scoping;
     pub mod empty_brace_spaces;
     pub mod error_message;
@@ -846,6 +847,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::prefer_ts_expect_error,
     typescript::triple_slash_reference,
     unicorn::catch_error_name,
+    unicorn::consistent_empty_array_spread,
     unicorn::consistent_function_scoping,
     unicorn::empty_brace_spaces,
     unicorn::error_message,
