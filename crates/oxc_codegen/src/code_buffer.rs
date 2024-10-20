@@ -75,6 +75,15 @@ impl CodeBuffer {
         self.buf.len()
     }
 
+    /// Returns the capacity of the buffer in bytes.
+    ///
+    /// This is *not* the same as capacity in characters,
+    /// since non-ASCII characters require multiple bytes.
+    #[inline]
+    pub fn capacity(&self) -> usize {
+        self.buf.capacity()
+    }
+
     /// Returns `true` if the buffer contains no characters.
     ///
     /// # Example
@@ -363,6 +372,55 @@ impl CodeBuffer {
         I: IntoIterator<Item = u8>,
     {
         self.buf.extend(bytes);
+    }
+
+    /// Print `n` tab characters into the buffer (indentation).
+    ///
+    /// Optimized on assumption that more that 16 levels of indentation is rare.
+    ///
+    /// Fast path is to write 16 bytes of tabs in a single load + store,
+    /// but only advance `len` by `n` bytes. This avoids a `memset` function call.
+    ///
+    /// Take alternative slow path if either:
+    /// 1. `n > 16`.
+    /// 2. Less than 16 bytes spare capacity in buffer (needs to grow).
+    /// Both of these cases should be rare.
+    ///
+    /// <https://godbolt.org/z/e1EP5cnPc>
+    #[inline]
+    pub fn print_indent(&mut self, n: usize) {
+        /// Size of chunks to write indent in.
+        /// 16 is largest register size (XMM) available on all x86_84 targets.
+        const CHUNK_SIZE: usize = 16;
+
+        #[cold]
+        #[inline(never)]
+        fn write_slow(code_buffer: &mut CodeBuffer, n: usize) {
+            code_buffer.buf.extend(std::iter::repeat(b'\t').take(n));
+        }
+
+        let len = self.len();
+        let spare_capacity = self.capacity() - len;
+        if n > CHUNK_SIZE || spare_capacity < CHUNK_SIZE {
+            write_slow(self, n);
+            return;
+        }
+
+        // Write 16 tabs into buffer.
+        // On x86_86, this is 1 XMM register load + 1 XMM store (16 byte copy).
+        // SAFETY: We checked there are at least 16 bytes spare capacity.
+        unsafe {
+            let ptr = self.buf.as_mut_ptr().add(len).cast::<[u8; CHUNK_SIZE]>();
+            ptr.write([b'\t'; CHUNK_SIZE]);
+        }
+
+        // Update length of buffer.
+        // SAFETY: We checked there's at least 16 bytes spare capacity, and `n <= 16`,
+        // so `len + n` cannot exceed capacity.
+        // `len` cannot exceed `isize::MAX`, so `len + n` cannot wrap around.
+        unsafe {
+            self.buf.set_len(len + n);
+        }
     }
 
     /// Get contents of buffer as a byte slice.
