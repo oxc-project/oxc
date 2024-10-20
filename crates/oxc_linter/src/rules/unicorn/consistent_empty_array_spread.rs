@@ -48,7 +48,7 @@ declare_oxc_lint!(
     /// ```
     ConsistentEmptyArraySpread,
     pedantic,
-    fix
+    suggestion
 );
 
 impl Rule for ConsistentEmptyArraySpread {
