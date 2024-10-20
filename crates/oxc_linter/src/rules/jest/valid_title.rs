@@ -302,7 +302,7 @@ fn validate_title(
     if !valid_title.ignore_space && trimmed_title != title {
         let (error, help) = Message::AccidentalSpace.detail();
         ctx.diagnostic_with_fix(valid_title_diagnostic(error, help, span), |fixer| {
-            fixer.replace(span.shrink_left(1).shrink_right(1), trimmed_title.to_string())
+            fixer.replace(span.shrink(1), trimmed_title.to_string())
         });
     }
 
@@ -315,7 +315,7 @@ fn validate_title(
         let (error, help) = Message::DuplicatePrefix.detail();
         ctx.diagnostic_with_fix(valid_title_diagnostic(error, help, span), |fixer| {
             let replaced_title = title[first_word.len()..].trim().to_string();
-            fixer.replace(span.shrink_left(1).shrink_right(1), replaced_title)
+            fixer.replace(span.shrink(1), replaced_title)
         });
         return;
     }
