@@ -1,9 +1,35 @@
+use std::borrow::Cow;
+
 use itertools::Itertools;
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
 use oxc_syntax::module_record::{ImportImportName, RequestedModule};
 
 use crate::{context::LintContext, rule::Rule};
+
+fn no_duplicates_diagnostic<I>(
+    module_name: &str,
+    first_import: Span,
+    other_imports: I,
+) -> OxcDiagnostic
+where
+    I: IntoIterator<Item = Span>,
+{
+    const MAX_MODULE_LEN: usize = 16;
+
+    let message = if module_name.len() > MAX_MODULE_LEN {
+        Cow::Borrowed("Modules should not be imported multiple times in the same file")
+    } else {
+        Cow::Owned(format!("Module '{module_name}' is imported more than once in this file"))
+    };
+    let labels = std::iter::once(first_import.primary_label("It is first imported here"))
+        .chain(other_imports.into_iter().map(LabeledSpan::underline));
+
+    OxcDiagnostic::warn(message)
+        .with_labels(labels)
+        .with_help("Merge these imports into a single import statement")
+}
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/no-duplicates.md>
 #[derive(Debug, Default, Clone)]
@@ -64,23 +90,6 @@ impl Rule for NoDuplicates {
             })
             .chunk_by(|r| r.0.clone());
 
-        let check_duplicates = |requested_modules: Option<&Vec<&RequestedModule>>| {
-            if let Some(requested_modules) = requested_modules {
-                if requested_modules.len() > 1 {
-                    let labels = requested_modules
-                        .iter()
-                        .map(|requested_module| LabeledSpan::underline(requested_module.span()))
-                        .collect::<Vec<_>>();
-                    ctx.diagnostic(
-                        OxcDiagnostic::warn(
-                            "Forbid repeated import of the same module in multiple places",
-                        )
-                        .with_labels(labels),
-                    );
-                }
-            }
-        };
-
         for (_path, group) in &groups {
             let has_type_import = module_record.import_entries.iter().any(|entry| entry.is_type);
             // When prefer_inline is false, 0 is value, 1 is type named, 2 is type namespace and 3 is type default
@@ -110,10 +119,20 @@ impl Rule for NoDuplicates {
                     0
                 });
 
-            check_duplicates(import_entries_maps.get(&0));
-            check_duplicates(import_entries_maps.get(&1));
-            check_duplicates(import_entries_maps.get(&2));
-            check_duplicates(import_entries_maps.get(&3));
+            for i in 0..4 {
+                check_duplicates(ctx, import_entries_maps.get(&i));
+            }
+        }
+    }
+}
+
+fn check_duplicates(ctx: &LintContext, requested_modules: Option<&Vec<&RequestedModule>>) {
+    if let Some(requested_modules) = requested_modules {
+        if requested_modules.len() > 1 {
+            let mut labels = requested_modules.iter().map(|m| m.span());
+            let first = labels.next().unwrap(); // we know there is at least one
+            let module_name = ctx.source_range(first).trim_matches('\'').trim_matches('"');
+            ctx.diagnostic(no_duplicates_diagnostic(module_name, first, labels));
         }
     }
 }
