@@ -34,9 +34,9 @@ impl Generator for AstBuilderGenerator {
 
         let header = generated_header!();
 
-        GeneratorOutput(
-            output(crate::AST_CRATE, "ast_builder.rs"),
-            quote! {
+        GeneratorOutput {
+            path: output(crate::AST_CRATE, "ast_builder.rs"),
+            tokens: quote! {
                 #header
 
                 #![allow(
@@ -64,7 +64,7 @@ impl Generator for AstBuilderGenerator {
                     #(#fns)*
                 }
             },
-        )
+        }
     }
 }
 

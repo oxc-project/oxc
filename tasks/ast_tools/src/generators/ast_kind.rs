@@ -175,9 +175,9 @@ impl Generator for AstKindGenerator {
 
         let header = generated_header!();
 
-        GeneratorOutput(
-            output(crate::AST_CRATE, "ast_kind.rs"),
-            quote! {
+        GeneratorOutput {
+            path: output(crate::AST_CRATE, "ast_kind.rs"),
+            tokens: quote! {
                 #header
 
                 use oxc_span::{GetSpan, Span};
@@ -214,6 +214,6 @@ impl Generator for AstKindGenerator {
                     #(#as_ast_kind_impls)*
                 }
             },
-        )
+        }
     }
 }

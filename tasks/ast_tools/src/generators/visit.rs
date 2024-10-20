@@ -28,13 +28,19 @@ define_generator! {
 
 impl Generator for VisitGenerator {
     fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
-        GeneratorOutput(output(crate::AST_CRATE, "visit.rs"), generate_visit::<false>(ctx))
+        GeneratorOutput {
+            path: output(crate::AST_CRATE, "visit.rs"),
+            tokens: generate_visit::<false>(ctx),
+        }
     }
 }
 
 impl Generator for VisitMutGenerator {
     fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
-        GeneratorOutput(output(crate::AST_CRATE, "visit_mut.rs"), generate_visit::<true>(ctx))
+        GeneratorOutput {
+            path: output(crate::AST_CRATE, "visit_mut.rs"),
+            tokens: generate_visit::<true>(ctx),
+        }
     }
 }
 

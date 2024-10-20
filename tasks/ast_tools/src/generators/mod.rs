@@ -27,7 +27,10 @@ pub trait Generator {
 }
 
 #[derive(Debug, Clone)]
-pub struct GeneratorOutput(/* output path */ pub PathBuf, pub TokenStream);
+pub struct GeneratorOutput {
+    pub path: PathBuf,
+    pub tokens: TokenStream,
+}
 
 macro_rules! define_generator {
     ($vis:vis struct $ident:ident $($lifetime:lifetime)? $($rest:tt)*) => {
