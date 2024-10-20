@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -83,7 +81,7 @@ impl Rule for ConsistentEmptyArraySpread {
                 if right_str_lit.value.is_empty() {
                     ctx.diagnostic_with_fix(
                         consistent_empty_array_spread_diagnostic(conditional_expr.span),
-                        |fixer| fixer.replace(right_str_lit.span, Cow::Owned(format!("[]"))),
+                        |fixer| fixer.replace(right_str_lit.span, "[]"),
                     );
                 }
             }
@@ -91,7 +89,7 @@ impl Rule for ConsistentEmptyArraySpread {
                 if right_array_expr.elements.is_empty() {
                     ctx.diagnostic_with_fix(
                         consistent_empty_array_spread_diagnostic(conditional_expr.span),
-                        |fixer| fixer.replace(right_array_expr.span, Cow::Owned(format!("''"))),
+                        |fixer| fixer.replace(right_array_expr.span, "''"),
                     );
                 }
             }
