@@ -11,7 +11,7 @@ mod usage;
 
 use std::ops::Deref;
 
-use options::NoUnusedVarsOptions;
+use options::{IgnorePattern, NoUnusedVarsOptions};
 use oxc_ast::AstKind;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, ScopeFlags, SymbolFlags, SymbolId};
@@ -238,7 +238,7 @@ impl NoUnusedVars {
         match (is_used, is_ignored) {
             (true, true) => {
                 if self.report_used_ignore_pattern {
-                    ctx.diagnostic(diagnostic::used_ignored(symbol));
+                    ctx.diagnostic(diagnostic::used_ignored(symbol, &self.vars_ignore_pattern));
                 }
                 return;
             },
@@ -283,9 +283,9 @@ impl NoUnusedVars {
                     if let Some(last_write) = symbol.references().rev().find(|r| r.is_write()) {
                         // ahg
                         let span = ctx.nodes().get_node(last_write.node_id()).kind().span();
-                        diagnostic::assign(symbol, span)
+                        diagnostic::assign(symbol, span, &self.vars_ignore_pattern)
                     } else {
-                        diagnostic::declared(symbol)
+                        diagnostic::declared(symbol, &self.vars_ignore_pattern)
                     };
 
                 ctx.diagnostic_with_suggestion(report, |fixer| {
@@ -298,39 +298,42 @@ impl NoUnusedVars {
                 if self.is_allowed_argument(ctx.semantic().as_ref(), symbol, param) {
                     return;
                 }
-                ctx.diagnostic(diagnostic::param(symbol));
+                ctx.diagnostic(diagnostic::param(symbol, &self.args_ignore_pattern));
             }
             AstKind::BindingRestElement(_) => {
                 if NoUnusedVars::is_allowed_binding_rest_element(symbol) {
                     return;
                 }
-                ctx.diagnostic(diagnostic::declared(symbol));
+                ctx.diagnostic(diagnostic::declared(symbol, &self.vars_ignore_pattern));
             }
             AstKind::Class(_) | AstKind::Function(_) => {
                 if self.is_allowed_class_or_function(symbol) {
                     return;
                 }
-                ctx.diagnostic(diagnostic::declared(symbol));
+                ctx.diagnostic(diagnostic::declared(symbol, &IgnorePattern::<&str>::None));
             }
             AstKind::TSModuleDeclaration(namespace) => {
                 if self.is_allowed_ts_namespace(symbol, namespace) {
                     return;
                 }
-                ctx.diagnostic(diagnostic::declared(symbol));
+                ctx.diagnostic(diagnostic::declared(symbol, &IgnorePattern::<&str>::None));
             }
             AstKind::TSInterfaceDeclaration(_) => {
                 if symbol.is_in_declared_module() {
                     return;
                 }
-                ctx.diagnostic(diagnostic::declared(symbol));
+                ctx.diagnostic(diagnostic::declared(symbol, &IgnorePattern::<&str>::None));
             }
             AstKind::TSTypeParameter(_) => {
                 if self.is_allowed_type_parameter(symbol, declaration.id()) {
                     return;
                 }
-                ctx.diagnostic(diagnostic::declared(symbol));
+                ctx.diagnostic(diagnostic::declared(symbol, &self.vars_ignore_pattern));
             }
-            _ => ctx.diagnostic(diagnostic::declared(symbol)),
+            AstKind::CatchParameter(_) => {
+                ctx.diagnostic(diagnostic::declared(symbol, &self.caught_errors_ignore_pattern));
+            }
+            _ => ctx.diagnostic(diagnostic::declared(symbol, &IgnorePattern::<&str>::None)),
         };
     }
 

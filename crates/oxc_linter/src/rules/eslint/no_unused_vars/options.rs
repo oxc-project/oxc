@@ -271,6 +271,22 @@ impl<R> IgnorePattern<R> {
         }
     }
 }
+impl<R> IgnorePattern<R>
+where
+    R: std::fmt::Display,
+{
+    pub(super) fn diagnostic_help(&self, symbol_kind_plural: &str) -> Cow<'static, str> {
+        match self {
+            Self::None => Cow::Borrowed(""),
+            Self::Default => {
+                Cow::Owned(format!(" Unused {symbol_kind_plural} should start with a '_'."))
+            }
+            Self::Some(reg) => {
+                Cow::Owned(format!(" Unused {symbol_kind_plural} should match /{reg}/."))
+            }
+        }
+    }
+}
 
 impl From<Option<Regex>> for IgnorePattern<Regex> {
     #[inline]

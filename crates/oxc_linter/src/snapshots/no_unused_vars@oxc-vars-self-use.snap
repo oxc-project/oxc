@@ -11,7 +11,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing this declaration.
 
-  ⚠ eslint(no-unused-vars): Variable 'foo' is declared but never used.
+  ⚠ eslint(no-unused-vars): Variable 'foo' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:2:15]
  1 │ 
  2 │         const foo = () => {
