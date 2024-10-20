@@ -1,4 +1,5 @@
 use oxc_ast::ast::*;
+use oxc_span::SPAN;
 use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::CompressorPass;
@@ -42,19 +43,65 @@ impl<'a> PeepholeMinimizeConditions {
         Self { changed: false }
     }
 
+    // Utils
+    fn apply_unary_not(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+        match expr {
+            Expression::UnaryExpression(unary) if unary.operator.is_not() => {
+                ctx.ast.move_expression(&mut unary.argument)
+            }
+            _ => ctx.ast.expression_unary(
+                SPAN,
+                UnaryOperator::LogicalNot,
+                ctx.ast.move_expression(expr),
+            ),
+        }
+    }
+
+    /// This functionality checks if the unary operator will increase the number of quotes.
+    /// Scenes that will increase the number of quotes are binary.
+    fn will_unary_increase_quotes(expr: &Expression<'a>) -> i32 {
+        match expr {
+            Expression::BinaryExpression(_) | Expression::LogicalExpression(_) => 1,
+            Expression::UnaryExpression(un) if un.operator.is_not() => -1,
+            _ => 0,
+        }
+    }
+
     /// Try to minimize NOT nodes such as `!(x==y)`.
     fn try_minimize_not(
         expr: &mut UnaryExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         debug_assert!(expr.operator.is_not());
-        if let Expression::BinaryExpression(binary_expr) = &mut expr.argument {
-            if let Some(new_op) = binary_expr.operator.equality_inverse_operator() {
-                binary_expr.operator = new_op;
-                return Some(ctx.ast.move_expression(&mut expr.argument));
+        match &mut expr.argument {
+            Expression::BinaryExpression(binary_expr) => {
+                binary_expr.operator = binary_expr.operator.equality_inverse_operator()?;
+                Some(ctx.ast.move_expression(&mut expr.argument))
             }
+            Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
+                Some(ctx.ast.move_expression(&mut unary_expr.argument))
+            }
+            Expression::LogicalExpression(logical_expr) => {
+                let new_op = match logical_expr.operator {
+                    LogicalOperator::And => LogicalOperator::Or,
+                    LogicalOperator::Or => LogicalOperator::And,
+                    LogicalOperator::Coalesce => return None,
+                };
+                // Apply each of the De Morgan's laws
+                // It can handle the not in other iterations.
+                let left_increase = Self::will_unary_increase_quotes(&logical_expr.left);
+                let right_increase = Self::will_unary_increase_quotes(&logical_expr.right);
+                (left_increase + right_increase < 1).then(|| {
+                    ctx.ast.expression_logical(
+                        expr.span,
+                        Self::apply_unary_not(&mut logical_expr.left, ctx),
+                        new_op,
+                        Self::apply_unary_not(&mut logical_expr.right, ctx),
+                    )
+                })
+            }
+            _ => None,
         }
-        None
     }
 }
 
@@ -357,10 +404,9 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_minimize_while_condition() {
         // This test uses constant folding logic, so is only here for completeness.
-        fold("while(!!true) foo()", "while(1) foo()");
+        // fold("while(!!true) foo()", "while(1) foo()");
         // These test tryMinimizeCondition
         fold("while(!!x) foo()", "while(x) foo()");
         fold("while(!(!x&&!y)) foo()", "while(x||y) foo()");
@@ -374,9 +420,9 @@ mod test {
         fold_same("while(!(x+y||z)) foo()");
         fold_same("while(!(x&&y*z)) foo()");
         fold("while(!(!!x&&y)) foo()", "while(!x||!y) foo()");
-        fold("while(x&&!0) foo()", "while(x) foo()");
-        fold("while(x||!1) foo()", "while(x) foo()");
-        fold("while(!((x,y)&&z)) foo()", "while((x,!y)||!z) foo()");
+        // fold("while(x&&!0) foo()", "while(x) foo()");
+        // fold("while(x||!1) foo()", "while(x) foo()");
+        // fold("while(!((x,y)&&z)) foo()", "while((x,!y)||!z) foo()");
     }
 
     #[test]
