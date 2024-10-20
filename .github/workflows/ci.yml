@@ -42,7 +42,11 @@ jobs:
           # cache `target` directory to avoid download crates
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: warm
+          components: clippy
       - run: cargo ck
+        # Run clippy after merge so that `lint` job can benefit from caching
+      - run: cargo lint -- -D warnings
+        if: matrix.os == 'ubuntu-latest' && github.ref_name == 'main'
       - run: cargo test
       - run: git diff --exit-code # Must commit everything
 
