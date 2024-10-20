@@ -316,7 +316,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing this declaration.
 
-  ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should match /^_/.
+  ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:13]
  1 │ var _a; var b;
    ·             ┬
@@ -324,7 +324,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing this declaration.
 
-  ⚠ eslint(no-unused-vars): Variable 'c_' is declared but never used. Unused variables should match /^_/.
+  ⚠ eslint(no-unused-vars): Variable 'c_' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:37]
  1 │ var a; function foo() { var _b; var c_; } foo();
    ·                                     ─┬
@@ -332,7 +332,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing this declaration.
 
-  ⚠ eslint(no-unused-vars): Parameter 'a' is declared but never used. Unused parameters should match /^_/.
+  ⚠ eslint(no-unused-vars): Parameter 'a' is declared but never used. Unused parameters should start with a '_'.
    ╭─[no_unused_vars.tsx:1:14]
  1 │ function foo(a, _b) { } foo();
    ·              ┬
@@ -340,7 +340,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing this parameter.
 
-  ⚠ eslint(no-unused-vars): Parameter 'c' is declared but never used. Unused parameters should match /^_/.
+  ⚠ eslint(no-unused-vars): Parameter 'c' is declared but never used. Unused parameters should start with a '_'.
    ╭─[no_unused_vars.tsx:1:21]
  1 │ function foo(a, _b, c) { return a; } foo();
    ·                     ┬
@@ -1376,7 +1376,7 @@ source: crates/oxc_linter/src/tester.rs
    ·       ─┬
    ·        ╰── '_a' is declared here
    ╰────
-  help: Consider renaming this variable to match the pattern /^_/.
+  help: Consider renaming this variable to 'a'.
 
   ⚠ eslint(no-unused-vars): Variable '_a' is marked as ignored but is used.
    ╭─[no_unused_vars.tsx:1:7]
@@ -1384,7 +1384,7 @@ source: crates/oxc_linter/src/tester.rs
    ·       ─┬
    ·        ╰── '_a' is declared here
    ╰────
-  help: Consider renaming this variable to match the pattern /^_/.
+  help: Consider renaming this variable to 'a'.
 
   ⚠ eslint(no-unused-vars): Variable '_a' is marked as ignored but is used.
    ╭─[no_unused_vars.tsx:1:15]

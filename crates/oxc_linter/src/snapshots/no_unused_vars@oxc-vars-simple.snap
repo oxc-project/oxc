@@ -32,7 +32,7 @@ source: crates/oxc_linter/src/tester.rs
    ·     ─┬
    ·      ╰── '_a' is declared here
    ╰────
-  help: Consider renaming this variable to match the pattern /^_/.
+  help: Consider renaming this variable to 'a'.
 
   ⚠ eslint(no-unused-vars): Variable 'fooBar' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:14]
