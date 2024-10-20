@@ -1,7 +1,7 @@
-commit: a709f989
+commit: df9d1650
 
 transformer_typescript Summary:
-AST Parsed     : 6479/6479 (100.00%)
-Positive Passed: 6477/6479 (99.97%)
+AST Parsed     : 6490/6490 (100.00%)
+Positive Passed: 6488/6490 (99.97%)
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/declarationEmit/leaveOptionalParameterAsWritten.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/inline/inlineJsxAndJsxFragPragmaOverridesCompilerOptions.tsx

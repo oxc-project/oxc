@@ -1,9 +1,9 @@
-commit: 3bcfee23
+commit: d20b314c
 
 parser_babel Summary:
-AST Parsed     : 2119/2129 (99.53%)
-Positive Passed: 2109/2129 (99.06%)
-Negative Passed: 1385/1498 (92.46%)
+AST Parsed     : 2126/2136 (99.53%)
+Positive Passed: 2116/2136 (99.06%)
+Negative Passed: 1385/1500 (92.33%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.1-sloppy-labeled-functions-if-body/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-if/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-loop/input.js
@@ -96,7 +96,9 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/call-optional-chain-invalid/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-function/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-interface-extends/input.ts
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-interface-extends-babel-7/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-interface-implements/input.ts
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-interface-implements-babel-7/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-new/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-superclass/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-tsx/input.ts

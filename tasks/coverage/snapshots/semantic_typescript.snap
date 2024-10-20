@@ -1,8 +1,8 @@
-commit: a709f989
+commit: df9d1650
 
 semantic_typescript Summary:
-AST Parsed     : 6479/6479 (100.00%)
-Positive Passed: 2668/6479 (41.18%)
+AST Parsed     : 6490/6490 (100.00%)
+Positive Passed: 2676/6490 (41.23%)
 tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 semantic error: Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -2039,6 +2039,26 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["console"]
+
+tasks/coverage/typescript/tests/cases/compiler/classNonUniqueSymbolMethodHasSymbolIndexer.ts
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["A", "Constructor", "Mixer", "a", "e1"]
+rebuilt        : ScopeId(0): ["A", "Mixer"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(5)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
+Symbol reference IDs mismatch for "A":
+after transform: SymbolId(1): [ReferenceId(1)]
+rebuilt        : SymbolId(0): []
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["Mix", "true"]
+rebuilt        : ["Mix", "a"]
 
 tasks/coverage/typescript/tests/cases/compiler/classOrderBug.ts
 semantic error: Symbol reference IDs mismatch for "foo":
@@ -17194,14 +17214,6 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
-tasks/coverage/typescript/tests/cases/compiler/implicitAnyGenericTypeInference.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Comparer", "c", "r"]
-rebuilt        : ScopeId(0): ["c", "r"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
-
 tasks/coverage/typescript/tests/cases/compiler/implicitAnyGenerics.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["T"]
@@ -23126,6 +23138,17 @@ tasks/coverage/typescript/tests/cases/compiler/modulePreserve5.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["data1", "data2"]
 rebuilt        : ScopeId(0): ["data2"]
+
+tasks/coverage/typescript/tests/cases/compiler/modulePreserveImportHelpers.ts
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["A", "dec"]
+rebuilt        : ScopeId(0): ["A"]
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["dec"]
 
 tasks/coverage/typescript/tests/cases/compiler/moduleRedifinitionErrors.ts
 semantic error: Scope children mismatch:
@@ -31482,6 +31505,17 @@ Bindings mismatch:
 after transform: ScopeId(4): ["T", "key"]
 rebuilt        : ScopeId(2): ["key"]
 
+tasks/coverage/typescript/tests/cases/compiler/signatureCombiningRestParameters2.ts
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["Console", "logs", "originalLog"]
+rebuilt        : ScopeId(0): ["logs", "originalLog"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Unresolved reference IDs mismatch for "console":
+after transform: [ReferenceId(0), ReferenceId(1)]
+rebuilt        : [ReferenceId(0)]
+
 tasks/coverage/typescript/tests/cases/compiler/signatureInstantiationWithRecursiveConstraints.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(2): ["T", "arg"]
@@ -35113,26 +35147,6 @@ rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-
-tasks/coverage/typescript/tests/cases/compiler/typeAliasDeclarationEmit3.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(2): ["foo", "i"]
-rebuilt        : ScopeId(2): ["i"]
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(8)]
-rebuilt        : ScopeId(2): [ScopeId(3)]
-Bindings mismatch:
-after transform: ScopeId(4): ["foo"]
-rebuilt        : ScopeId(4): []
-Scope children mismatch:
-after transform: ScopeId(4): [ScopeId(5), ScopeId(9)]
-rebuilt        : ScopeId(4): [ScopeId(5)]
-Bindings mismatch:
-after transform: ScopeId(6): ["foo"]
-rebuilt        : ScopeId(6): []
-Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(7), ScopeId(10)]
-rebuilt        : ScopeId(6): [ScopeId(7)]
 
 tasks/coverage/typescript/tests/cases/compiler/typeAliasDoesntMakeModuleInstantiated.ts
 semantic error: Bindings mismatch:
@@ -42616,6 +42630,11 @@ Unresolved references mismatch:
 after transform: []
 rebuilt        : ["yadda"]
 
+tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringParameterDeclaration10.ts
+semantic error: Unresolved references mismatch:
+after transform: ["Partial", "Record"]
+rebuilt        : []
+
 tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringParameterDeclaration7ES5.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["ISomething", "baz", "foo", "one", "two"]
@@ -47233,6 +47252,11 @@ Please consider using `import lib from '...';` alongside Typescript's --allowSyn
 Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 `import lib = require(...);` is only supported when compiling modules to CommonJS.
 Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+
+tasks/coverage/typescript/tests/cases/conformance/externalModules/rewriteRelativeImportExtensions/nodeModulesTsFiles.ts
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["add"]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelAmbientModule.ts
 semantic error: Bindings mismatch:

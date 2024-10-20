@@ -1,8 +1,8 @@
-commit: 3bcfee23
+commit: d20b314c
 
 semantic_babel Summary:
-AST Parsed     : 2129/2129 (100.00%)
-Positive Passed: 1756/2129 (82.48%)
+AST Parsed     : 2136/2136 (100.00%)
+Positive Passed: 1756/2136 (82.21%)
 tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body/input.js
 semantic error: Symbol scope ID mismatch for "f":
 after transform: SymbolId(0): ScopeId(4294967294)
@@ -414,6 +414,11 @@ semantic error: Unresolved references mismatch:
 after transform: ["T", "X", "f"]
 rebuilt        : ["f"]
 
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/expression-extends-implements-babel-7/input.ts
+semantic error: Unresolved references mismatch:
+after transform: ["T", "X", "f"]
+rebuilt        : ["f"]
+
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/expression-generic/input.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["T"]
@@ -435,12 +440,22 @@ semantic error: Unresolved references mismatch:
 after transform: ["T", "X"]
 rebuilt        : []
 
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/expression-implements-babel-7/input.ts
+semantic error: Unresolved references mismatch:
+after transform: ["T", "X"]
+rebuilt        : []
+
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/extends/input.ts
 semantic error: Unresolved references mismatch:
 after transform: ["T", "f"]
 rebuilt        : ["f"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/extends-implements/input.ts
+semantic error: Unresolved references mismatch:
+after transform: ["T", "X", "f"]
+rebuilt        : ["f"]
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/extends-implements-babel-7/input.ts
 semantic error: Unresolved references mismatch:
 after transform: ["T", "X", "f"]
 rebuilt        : ["f"]
@@ -466,6 +481,11 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/implements/input.ts
+semantic error: Unresolved references mismatch:
+after transform: ["T", "X"]
+rebuilt        : []
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/implements-babel-7/input.ts
 semantic error: Unresolved references mismatch:
 after transform: ["T", "X"]
 rebuilt        : []
@@ -1085,6 +1105,17 @@ Unresolved references mismatch:
 after transform: ["X", "Z"]
 rebuilt        : []
 
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/extends-babel-7/input.ts
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["I"]
+rebuilt        : ScopeId(0): []
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
+Unresolved references mismatch:
+after transform: ["X", "Z"]
+rebuilt        : []
+
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/function-like-node-1/input.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["Foo"]
@@ -1508,6 +1539,28 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
 after transform: ["var"]
+rebuilt        : []
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-2-babel-7/input.ts
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["A", "T"]
+rebuilt        : ScopeId(0): []
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): []
+Unresolved references mismatch:
+after transform: ["var"]
+rebuilt        : []
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-babel-7/input.ts
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["A", "T"]
+rebuilt        : ScopeId(0): []
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): []
+Unresolved references mismatch:
+after transform: ["this"]
 rebuilt        : []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/nested-extends-in-arrow-type-param/input.ts
