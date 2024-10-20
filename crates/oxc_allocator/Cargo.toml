@@ -25,9 +25,9 @@ bump-scope = { workspace = true }
 serde = { workspace = true, optional = true }
 
 [dev-dependencies]
+bump-scope = { workspace = true, features = ["serde"] }
 serde = { workspace = true }
 serde_json = { workspace = true }
-bump-scope = { workspace = true, features = ["serde"] }
 
 [features]
 serialize = ["dep:serde", "bump-scope/serde"]
