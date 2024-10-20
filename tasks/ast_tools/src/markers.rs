@@ -127,12 +127,14 @@ impl Parse for ESTreeStructAttribute {
 pub struct ESTreeEnumAttribute {
     pub rename_all: Option<String>,
     pub untagged: bool,
+    pub custom_ts_def: bool,
 }
 
 impl Parse for ESTreeEnumAttribute {
     fn parse(input: ParseStream) -> Result<Self, syn::Error> {
         let mut rename_all = None;
         let mut untagged = false;
+        let mut custom_ts_def = false;
 
         loop {
             let ident = input.call(Ident::parse_any).unwrap().to_string();
@@ -151,6 +153,13 @@ impl Parse for ESTreeEnumAttribute {
                         untagged = true;
                     }
                 }
+                "custom_ts_def" => {
+                    if custom_ts_def {
+                        panic!("Duplicate estree(custom_ts_def)");
+                    } else {
+                        custom_ts_def = true;
+                    }
+                }
                 arg => panic!("Unsupported #[estree(...)] argument: {arg}"),
             }
             let comma = input.peek(Token![,]);
@@ -160,7 +169,7 @@ impl Parse for ESTreeEnumAttribute {
                 break;
             }
         }
-        Ok(Self { rename_all, untagged })
+        Ok(Self { rename_all, untagged, custom_ts_def })
     }
 }
 
