@@ -316,7 +316,7 @@ fn validate_title(
         let (error, help) = Message::DuplicatePrefix.detail();
         ctx.diagnostic_with_fix(valid_title_diagnostic(error, help, span), |fixer| {
             let replaced_title = title[first_word.len()..].trim().to_string();
-            fixer.replace(Span::new(span.start + 1, span.end - 1), replaced_title)
+            fixer.replace(span.shrink_left(1).shrink_right(1), replaced_title)
         });
         return;
     }
