@@ -92,6 +92,19 @@ impl SymbolTable {
         self.spans
             .iter_enumerated()
             .find_map(|(symbol, &inner_span)| if inner_span == span { Some(symbol) } else { None })
+            .or_else(|| self.get_symbol_id_from_redeclaration_span(span))
+    }
+
+    fn get_symbol_id_from_redeclaration_span(&self, span: Span) -> Option<SymbolId> {
+        self.redeclarations
+            .iter_enumerated()
+            .filter(|(_, &redeclaration)| redeclaration.is_some())
+            .flat_map(|(symbol, &redeclaration)| {
+                self.redeclaration_spans[redeclaration.unwrap()]
+                    .iter()
+                    .map(move |&inner_span| (symbol, inner_span))
+            })
+            .find_map(|(symbol, inner_span)| if inner_span == span { Some(symbol) } else { None })
     }
 
     /// Get the [`Span`] of the [`AstNode`] declaring a symbol.

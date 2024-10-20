@@ -1,6 +1,9 @@
-use oxc_semantic::{Reference, SymbolFlags};
+use std::rc::Rc;
 
-use crate::util::SemanticTester;
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_semantic::{Reference, Semantic, SymbolFlags, SymbolId};
+
+use crate::util::{Expect, SemanticTester};
 
 #[test]
 fn test_class_simple() {
@@ -488,5 +491,46 @@ fn test_class_merging() {
     .has_root_symbol("Foo")
     .contains_flags(SymbolFlags::Class)
     .contains_flags(SymbolFlags::Interface)
+    .test();
+}
+
+#[test]
+fn test_type_value_merging() {
+    SemanticTester::ts(
+        "
+        const Foo = [
+            'bar',
+            'baz'
+        ] as const;
+
+        type Foo = typeof Foo[number];
+    ",
+    )
+    .has_root_symbol("Foo")
+    .contains_flags(SymbolFlags::BlockScopedVariable | SymbolFlags::ConstVariable)
+    .contains_flags(SymbolFlags::TypeAlias)
+    .expect(|(semantic, symbol): (Rc<Semantic<'_>>, SymbolId)| -> Result<(), OxcDiagnostic> {
+        let symbol_table = semantic.symbols();
+        let redeclarations = symbol_table.get_redeclarations(symbol);
+        if redeclarations.len() != 1 {
+            return Err(OxcDiagnostic::error(format!(
+                "Could not find redeclaration for {}",
+                symbol_table.get_name(symbol)
+            )));
+        }
+
+        match symbol_table.get_symbol_id_from_span(redeclarations[0]) {
+            Some(found_symbol) if found_symbol == symbol => Ok(()),
+            None => Err(OxcDiagnostic::error(format!(
+                "Could not find {} from its redeclaration span",
+                symbol_table.get_name(symbol)
+            ))),
+            Some(found_symbol) => Err(OxcDiagnostic::error(format!(
+                "Expected redeclaration span to find {}, but found {}",
+                symbol_table.get_name(symbol),
+                symbol_table.get_name(found_symbol)
+            ))),
+        }
+    })
     .test();
 }
