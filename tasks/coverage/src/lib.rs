@@ -11,10 +11,10 @@ mod typescript;
 mod driver;
 mod tools;
 
-use std::{fs, path::PathBuf, process::Command, time::Duration};
+use std::{path::PathBuf, process::Command};
 
-use oxc_tasks_common::{agent, project_root};
-use runtime::{CodegenRuntimeTest262Case, V8_TEST_262_FAILED_TESTS_PATH};
+use oxc_tasks_common::project_root;
+use runtime::CodegenRuntimeTest262Case;
 use similar::DiffableStr;
 
 use crate::{
@@ -128,34 +128,6 @@ impl AppArgs {
             .expect("Run runtime.js failed");
         Test262Suite::<CodegenRuntimeTest262Case>::new().run_async("codegen_runtime_test262", self);
         let _ = runtime_process.kill();
-    }
-
-    // Generate v8 test262 status file, which is used to skip failed tests
-    // see https://chromium.googlesource.com/v8/v8/+/refs/heads/main/test/test262/test262.status
-    #[expect(clippy::missing_panics_doc)]
-    pub fn run_sync_v8_test262_status(&self) {
-        let res = agent()
-            .get("http://raw.githubusercontent.com/v8/v8/main/test/test262/test262.status")
-            .timeout(Duration::from_secs(10))
-            .call()
-            .expect("Get v8 test262 status failed")
-            .into_string()
-            .expect("Get v8 test262 status failed");
-
-        let mut tests = vec![];
-        regex::Regex::new(r"'(.+)': \[(FAIL|SKIP)\]").unwrap().captures_iter(&res).for_each(
-            |caps| {
-                if let Some(name) = caps.get(1).map(|f| f.as_str()) {
-                    if !name.eq("*") {
-                        tests.push(name);
-                    }
-                }
-            },
-        );
-        tests.sort_unstable();
-
-        fs::write(workspace_root().join(V8_TEST_262_FAILED_TESTS_PATH), tests.join("\n"))
-            .expect("Write v8 test262 status failed");
     }
 
     pub fn run_minifier(&self) {

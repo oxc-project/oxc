@@ -234,10 +234,10 @@ impl<R> IgnorePattern<R> {
         matches!(self, Self::None)
     }
 
-    /// Returns `true` if the pattern is [`IgnorePattern::Some`].
+    /// Returns `true` if the pattern is [`IgnorePattern::Some`] or [`IgnorePattern::Default`].
     #[inline]
     pub fn is_some(&self) -> bool {
-        matches!(self, Self::Some(_))
+        matches!(self, Self::Some(_) | Self::Default)
     }
 
     /// Returns the inner value if it is [`IgnorePattern::Some`], otherwise
@@ -288,12 +288,16 @@ where
     }
 }
 
-impl From<Option<Regex>> for IgnorePattern<Regex> {
-    #[inline]
-    fn from(value: Option<Regex>) -> Self {
+impl TryFrom<Option<&str>> for IgnorePattern<Regex> {
+    type Error = regex::Error;
+
+    fn try_from(value: Option<&str>) -> Result<Self, Self::Error> {
         match value {
-            None => Self::None,
-            Some(regex) => Self::Some(regex),
+            None => Ok(Self::None),
+            Some("^_") => Ok(Self::Default),
+            Some(pattern) => {
+                regex::RegexBuilder::new(pattern).unicode(true).build().map(Self::Some)
+            }
         }
     }
 }
@@ -488,15 +492,13 @@ impl TryFrom<&Value> for CaughtErrors {
 
 /// Parses a potential pattern into a [`Regex`] that accepts unicode characters.
 fn parse_unicode_rule(value: Option<&Value>, name: &str) -> IgnorePattern<Regex> {
-    IgnorePattern::from(
-        value
-            .and_then(Value::as_str)
-            .map(|pattern| regex::RegexBuilder::new(pattern).unicode(true).build())
-            .transpose()
-            .map_err(|err| panic!("Invalid '{name}' option for no-unused-vars: {err}"))
-            .unwrap(),
-    )
+    IgnorePattern::try_from(value.and_then(Value::as_str))
+        .map_err(|err| {
+            OxcDiagnostic::error(format!("Invalid '{name}' option for no-unused-vars: {err}"))
+        })
+        .unwrap()
 }
+
 impl TryFrom<Value> for NoUnusedVarsOptions {
     type Error = OxcDiagnostic;
     fn try_from(value: Value) -> Result<Self, Self::Error> {
@@ -635,12 +637,12 @@ mod tests {
         .unwrap();
 
         assert_eq!(rule.vars, VarsOption::Local);
-        assert_eq!(rule.vars_ignore_pattern.unwrap().as_str(), "^_");
+        assert!(rule.vars_ignore_pattern.is_default());
         assert_eq!(rule.args, ArgsOption::All);
-        assert_eq!(rule.args_ignore_pattern.unwrap().as_str(), "^_");
+        assert!(rule.args_ignore_pattern.is_default());
         assert_eq!(rule.caught_errors, CaughtErrors::all());
-        assert_eq!(rule.caught_errors_ignore_pattern.unwrap().as_str(), "^_");
-        assert_eq!(rule.destructured_array_ignore_pattern.unwrap().as_str(), "^_");
+        assert!(rule.caught_errors_ignore_pattern.is_default());
+        assert!(rule.destructured_array_ignore_pattern.is_default());
         assert!(rule.ignore_rest_siblings);
         assert!(!rule.ignore_class_with_static_init_block);
         assert!(rule.report_used_ignore_pattern);
@@ -657,7 +659,7 @@ mod tests {
         .unwrap();
         // option object provided, no default varsIgnorePattern
         assert!(rule.vars_ignore_pattern.is_none());
-        assert!(rule.args_ignore_pattern.unwrap().as_str() == "^_");
+        assert!(rule.args_ignore_pattern.is_default());
 
         let rule: NoUnusedVarsOptions = json!([
             {
@@ -668,7 +670,7 @@ mod tests {
         .unwrap();
 
         // option object provided, no default argsIgnorePattern
-        assert!(rule.vars_ignore_pattern.unwrap().as_str() == "^_");
+        assert!(matches!(rule.vars_ignore_pattern, IgnorePattern::Default));
         assert!(rule.args_ignore_pattern.is_none());
     }
 
@@ -708,9 +710,12 @@ mod tests {
 
     #[test]
     fn test_parse_unicode_regex() {
-        let pat = json!("^_");
+        let pat = json!("^[iI]gnore");
         parse_unicode_rule(Some(&pat), "varsIgnorePattern")
             .expect("json strings should get parsed into a regex");
+
+        let pat = json!("^_");
+        assert!(parse_unicode_rule(Some(&pat), "varsIgnorePattern").is_default());
     }
 
     #[test]
