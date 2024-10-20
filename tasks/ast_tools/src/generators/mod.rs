@@ -27,9 +27,16 @@ pub trait Generator {
 }
 
 #[derive(Debug, Clone)]
-pub struct GeneratorOutput {
-    pub path: PathBuf,
-    pub tokens: TokenStream,
+pub enum GeneratorOutput {
+    Rust {
+        path: PathBuf,
+        tokens: TokenStream,
+    },
+    #[expect(dead_code)]
+    Text {
+        path: PathBuf,
+        content: String,
+    },
 }
 
 macro_rules! define_generator {

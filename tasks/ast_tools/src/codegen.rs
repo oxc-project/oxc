@@ -59,7 +59,10 @@ impl From<(PathBuf, TokenStream)> for SideEffect {
 
 impl From<GeneratorOutput> for SideEffect {
     fn from(output: GeneratorOutput) -> Self {
-        Self::from((output.path, output.tokens))
+        match output {
+            GeneratorOutput::Rust { path, tokens } => Self::from((path, tokens)),
+            GeneratorOutput::Text { path, content } => Self { path, content: content.into() },
+        }
     }
 }
 

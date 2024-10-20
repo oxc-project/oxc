@@ -28,7 +28,7 @@ impl Generator for AssertLayouts {
 
         let header = generated_header!();
 
-        GeneratorOutput {
+        GeneratorOutput::Rust {
             path: output(crate::AST_CRATE, "assert_layouts.rs"),
             tokens: quote! {
                 #header
