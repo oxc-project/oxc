@@ -154,7 +154,8 @@ impl Test262RuntimeCase {
         if transform {
             let (symbols, scopes) =
                 SemanticBuilder::new().build(&program).semantic.into_symbol_table_and_scope_tree();
-            let options = TransformOptions::enable_all();
+            let mut options = TransformOptions::enable_all();
+            options.react.refresh = None;
             Transformer::new(&allocator, self.path(), options).build_with_symbols_and_scopes(
                 symbols,
                 scopes,

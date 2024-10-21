@@ -2,7 +2,7 @@ commit: 06454619
 
 runtime Summary:
 AST Parsed     : 18667/18667 (100.00%)
-Positive Passed: 16563/18667 (88.73%)
+Positive Passed: 16834/18667 (90.18%)
 tasks/coverage/test262/test/annexB/language/comments/single-line-html-close-first-line-1.js
 codegen error: ReferenceError: Test262Error is not defined
 
@@ -246,6 +246,9 @@ minify error: ReferenceError: f is not defined
 tasks/coverage/test262/test/annexB/language/function-code/switch-dflt-func-no-skip-try.js
 minify error: ReferenceError: f is not defined
 
+tasks/coverage/test262/test/annexB/language/function-code/switch-dflt-func-skip-early-err-for-in.js
+transform error: http://localhost:32055/run: Network Error: Network Error: Error encountered in the status line: timed out reading response
+
 tasks/coverage/test262/test/annexB/language/function-code/switch-dflt-func-update.js
 minify error: ReferenceError: f is not defined
 
@@ -262,7 +265,7 @@ tasks/coverage/test262/test/annexB/language/global-code/block-decl-global-existi
 minify error: Test262Error: Expected SameValue(«"outer declaration"», «"inner declaration"») to be true
 
 tasks/coverage/test262/test/annexB/language/global-code/block-decl-global-existing-var-update.js
-minify error: Test262Error: Expected SameValue(«"undefined"», «"function"») to be true
+transform error: http://localhost:32055/run: Network Error: Network Error: Error encountered in the status line: timed out reading response
 
 tasks/coverage/test262/test/annexB/language/global-code/block-decl-global-init.js
 minify error: ReferenceError: f is not defined
@@ -308,6 +311,9 @@ minify error: Test262Error: Expected SameValue(«function f(){}», «undefined»
 
 tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-b-global-existing-fn-update.js
 minify error: Test262Error: Expected SameValue(«"outer declaration"», «"inner declaration"») to be true
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-b-global-existing-var-update.js
+transform error: http://localhost:32055/run: Network Error: Network Error: Error encountered in the status line: timed out reading response
 
 tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-b-global-init.js
 minify error: Test262Error: binding is initialized to `undefined` Expected SameValue(«function f(){}», «undefined») to be true
@@ -456,59 +462,11 @@ minify error: ReferenceError: f is not defined
 tasks/coverage/test262/test/annexB/language/global-code/switch-dflt-global-update.js
 minify error: Test262Error: Expected SameValue(«"undefined"», «"function"») to be true
 
-tasks/coverage/test262/test/harness/assert-throws-custom.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/harness/asyncHelpers-throwsAsync-custom.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/computed-property-names/basics/number.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/computed-property-names/basics/string.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/computed-property-names/basics/symbol.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/computed-property-names/class/method/number.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/computed-property-names/class/method/string.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/computed-property-names/class/method/symbol.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/computed-property-names/object/accessor/getter-super.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/computed-property-names/object/accessor/setter-super.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/computed-property-names/object/method/number.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/computed-property-names/object/method/string.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/computed-property-names/object/method/super.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/computed-property-names/object/method/symbol.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
 tasks/coverage/test262/test/language/destructuring/binding/keyed-destructuring-property-reference-target-evaluation-order-with-bindings.js
 codegen error: Test262Error: Actual [binding::source, binding::sourceKey, sourceKey, get source, binding::defaultValue, binding::varTarget] and expected [binding::source, binding::sourceKey, sourceKey, binding::varTarget, get source, binding::defaultValue] should have the same contents. 
 
 tasks/coverage/test262/test/language/expressions/addition/S11.6.1_A4_T5.js
 minify error: Test262Error: #1.1: -0 + -0 === - 0. Actual: +0
-
-tasks/coverage/test262/test/language/expressions/addition/bigint-toprimitive.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/addition/order-of-evaluation.js
-transform error: ReferenceError: $RefreshReg$ is not defined
 
 tasks/coverage/test262/test/language/expressions/array/spread-err-mult-err-obj-unresolvable.js
 transform error: ReferenceError: require is not defined
@@ -633,24 +591,6 @@ minify error: Test262Error: Expected SameValue(«"c"», «"gen"») to be true
 tasks/coverage/test262/test/language/expressions/arrow-function/eval-var-scope-syntax-err.js
 minify error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
 
-tasks/coverage/test262/test/language/expressions/arrow-function/forbidden-ext/b2/arrow-function-forbidden-ext-indirect-access-own-prop-caller-get.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/arrow-function/forbidden-ext/b2/arrow-function-forbidden-ext-indirect-access-own-prop-caller-value.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/arrow-function/forbidden-ext/b2/arrow-function-forbidden-ext-indirect-access-prop-caller.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/arrow-function/lexical-new.target-closure-returned.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/arrow-function/lexical-new.target.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/arrow-function/lexical-this.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
 tasks/coverage/test262/test/language/expressions/arrow-function/scope-body-lex-distinct.js
 minify error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
 
@@ -672,62 +612,11 @@ codegen error: Test262Error: #1: innerX === 2. Actual: 1
 tasks/coverage/test262/test/language/expressions/assignment/S11.13.1_A6_T3.js
 codegen error: Test262Error: #1: scope.x === 2. Actual: 1
 
-tasks/coverage/test262/test/language/expressions/assignment/dstr/array-elem-iter-thrw-close-err.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/assignment/dstr/array-elem-trlg-iter-list-thrw-close-err.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/assignment/dstr/array-elem-trlg-iter-rest-thrw-close-err.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/assignment/dstr/array-rest-iter-thrw-close-err.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
 tasks/coverage/test262/test/language/expressions/assignment/fn-name-lhs-cover.js
 codegen error: Test262Error: descriptor value should be ; object value should be 
 
-tasks/coverage/test262/test/language/expressions/assignment/target-member-computed-reference-null.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/assignment/target-member-computed-reference-undefined.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/assignment/target-member-computed-reference.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/assignment/target-super-computed-reference.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
 tasks/coverage/test262/test/language/expressions/async-arrow-function/eval-var-scope-syntax-err.js
 minify error: Test262Error: function should not be resolved
-
-tasks/coverage/test262/test/language/expressions/async-arrow-function/forbidden-ext/b2/async-arrow-function-forbidden-ext-indirect-access-own-prop-caller-get.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/async-arrow-function/forbidden-ext/b2/async-arrow-function-forbidden-ext-indirect-access-own-prop-caller-value.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/async-arrow-function/forbidden-ext/b2/async-arrow-function-forbidden-ext-indirect-access-prop-caller.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/async-function/forbidden-ext/b2/async-func-expr-named-forbidden-ext-indirect-access-own-prop-caller-get.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/async-function/forbidden-ext/b2/async-func-expr-named-forbidden-ext-indirect-access-own-prop-caller-value.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/async-function/forbidden-ext/b2/async-func-expr-named-forbidden-ext-indirect-access-prop-caller.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/async-function/forbidden-ext/b2/async-func-expr-nameless-forbidden-ext-indirect-access-own-prop-caller-get.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/async-function/forbidden-ext/b2/async-func-expr-nameless-forbidden-ext-indirect-access-own-prop-caller-value.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/async-function/forbidden-ext/b2/async-func-expr-nameless-forbidden-ext-indirect-access-prop-caller.js
-transform error: ReferenceError: $RefreshReg$ is not defined
 
 tasks/coverage/test262/test/language/expressions/async-function/name.js
 minify error: Test262Error: descriptor value should be func; object value should be func
@@ -740,9 +629,6 @@ minify error: Test262Error: Expected true but got false
 
 tasks/coverage/test262/test/language/expressions/async-function/nameless-eval-var-scope-syntax-err.js
 minify error: Test262Error: function should not be resolved
-
-tasks/coverage/test262/test/language/expressions/async-generator/default-proto.js
-transform error: ReferenceError: $RefreshReg$ is not defined
 
 tasks/coverage/test262/test/language/expressions/async-generator/dstr/ary-ptrn-elem-id-init-fn-name-arrow.js
 minify error: Test262Error: Expected SameValue(«"c"», «"arrow"») to be true
@@ -867,24 +753,6 @@ minify error: Test262Error: Expected SameValue(«"c"», «"gen"») to be true
 tasks/coverage/test262/test/language/expressions/async-generator/eval-var-scope-syntax-err.js
 minify error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
 
-tasks/coverage/test262/test/language/expressions/async-generator/forbidden-ext/b2/async-gen-func-expr-forbidden-ext-indirect-access-own-prop-caller-get.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/async-generator/forbidden-ext/b2/async-gen-func-expr-forbidden-ext-indirect-access-own-prop-caller-value.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/async-generator/forbidden-ext/b2/async-gen-func-expr-forbidden-ext-indirect-access-prop-caller.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/async-generator/forbidden-ext/b2/async-gen-named-func-expr-forbidden-ext-indirect-access-own-prop-caller-get.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/async-generator/forbidden-ext/b2/async-gen-named-func-expr-forbidden-ext-indirect-access-own-prop-caller-value.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/async-generator/forbidden-ext/b2/async-gen-named-func-expr-forbidden-ext-indirect-access-prop-caller.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
 tasks/coverage/test262/test/language/expressions/async-generator/generator-created-after-decl-inst.js
 codegen error: Test262Error: Expected SameValue(«[object AsyncGenerator]», «[object AsyncGenerator]») to be false
 
@@ -908,24 +776,6 @@ transform error: ReferenceError: require is not defined
 
 tasks/coverage/test262/test/language/expressions/async-generator/yield-spread-obj.js
 transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/bitwise-and/bigint-toprimitive.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/bitwise-and/order-of-evaluation.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/bitwise-or/bigint-toprimitive.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/bitwise-or/order-of-evaluation.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/bitwise-xor/bigint-toprimitive.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/bitwise-xor/order-of-evaluation.js
-transform error: ReferenceError: $RefreshReg$ is not defined
 
 tasks/coverage/test262/test/language/expressions/call/eval-spread-empty-leading.js
 minify error: Test262Error: Expected SameValue(«"local"», «0») to be true
@@ -993,47 +843,11 @@ transform error: ReferenceError: require is not defined
 tasks/coverage/test262/test/language/expressions/call/spread-sngl-obj-ident.js
 transform error: ReferenceError: require is not defined
 
-tasks/coverage/test262/test/language/expressions/class/async-gen-method/forbidden-ext/b2/cls-expr-async-gen-meth-forbidden-ext-indirect-access-own-prop-caller-get.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/class/async-gen-method/forbidden-ext/b2/cls-expr-async-gen-meth-forbidden-ext-indirect-access-own-prop-caller-value.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/class/async-gen-method/forbidden-ext/b2/cls-expr-async-gen-meth-forbidden-ext-indirect-access-prop-caller.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
 tasks/coverage/test262/test/language/expressions/class/async-gen-method/yield-spread-obj.js
 transform error: ReferenceError: require is not defined
 
-tasks/coverage/test262/test/language/expressions/class/async-gen-method-static/forbidden-ext/b2/cls-expr-async-gen-meth-static-forbidden-ext-indirect-access-own-prop-caller-get.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/class/async-gen-method-static/forbidden-ext/b2/cls-expr-async-gen-meth-static-forbidden-ext-indirect-access-own-prop-caller-value.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/class/async-gen-method-static/forbidden-ext/b2/cls-expr-async-gen-meth-static-forbidden-ext-indirect-access-prop-caller.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
 tasks/coverage/test262/test/language/expressions/class/async-gen-method-static/yield-spread-obj.js
 transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/class/async-method/forbidden-ext/b2/cls-expr-async-meth-forbidden-ext-indirect-access-own-prop-caller-get.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/class/async-method/forbidden-ext/b2/cls-expr-async-meth-forbidden-ext-indirect-access-own-prop-caller-value.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/class/async-method/forbidden-ext/b2/cls-expr-async-meth-forbidden-ext-indirect-access-prop-caller.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/class/async-method-static/forbidden-ext/b2/cls-expr-async-meth-static-forbidden-ext-indirect-access-own-prop-caller-get.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/class/async-method-static/forbidden-ext/b2/cls-expr-async-meth-static-forbidden-ext-indirect-access-own-prop-caller-value.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/class/async-method-static/forbidden-ext/b2/cls-expr-async-meth-static-forbidden-ext-indirect-access-prop-caller.js
-transform error: ReferenceError: $RefreshReg$ is not defined
 
 tasks/coverage/test262/test/language/expressions/class/decorator/syntax/class-valid/decorator-member-expr-private-identifier.js
 codegen error: SyntaxError: Invalid or unexpected token
@@ -1088,6 +902,9 @@ minify error: Test262Error: Expected SameValue(«"c"», «"fn"») to be true
 
 tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-dflt-ary-ptrn-elem-id-init-fn-name-gen.js
 minify error: Test262Error: Expected SameValue(«"c"», «"gen"») to be true
+
+tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-dflt-ary-ptrn-elem-id-iter-val-array-prototype.js
+codegen error: http://localhost:32055/run: Network Error: Network Error: Error encountered in the status line: timed out reading response
 
 tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-dflt-obj-ptrn-id-init-fn-name-arrow.js
 minify error: Test262Error: Expected SameValue(«"c"», «"arrow"») to be true
@@ -1312,7 +1129,10 @@ tasks/coverage/test262/test/language/expressions/class/dstr/gen-meth-ary-ptrn-el
 minify error: Test262Error: Expected SameValue(«"c"», «"fn"») to be true
 
 tasks/coverage/test262/test/language/expressions/class/dstr/gen-meth-ary-ptrn-elem-id-init-fn-name-gen.js
-minify error: Test262Error: Expected SameValue(«"c"», «"gen"») to be true
+codegen error: http://localhost:32055/run: Network Error: Network Error: Error encountered in the status line: timed out reading response
+
+tasks/coverage/test262/test/language/expressions/class/dstr/gen-meth-ary-ptrn-elision-exhausted.js
+codegen error: http://localhost:32055/run: Network Error: Network Error: Error encountered in the status line: timed out reading response
 
 tasks/coverage/test262/test/language/expressions/class/dstr/gen-meth-dflt-ary-ptrn-elem-id-init-fn-name-arrow.js
 minify error: Test262Error: Expected SameValue(«"c"», «"arrow"») to be true
@@ -1629,6 +1449,9 @@ minify error: Test262Error: Expected SameValue(«"c"», «"fn"») to be true
 tasks/coverage/test262/test/language/expressions/class/dstr/private-gen-meth-static-dflt-ary-ptrn-elem-id-init-fn-name-gen.js
 minify error: Test262Error: Expected SameValue(«"c"», «"gen"») to be true
 
+tasks/coverage/test262/test/language/expressions/class/dstr/private-gen-meth-static-dflt-ary-ptrn-rest-ary-elem.js
+codegen error: http://localhost:32055/run: Network Error: Network Error: Error encountered in the status line: timed out reading response
+
 tasks/coverage/test262/test/language/expressions/class/dstr/private-gen-meth-static-dflt-obj-ptrn-id-init-fn-name-arrow.js
 minify error: Test262Error: Expected SameValue(«"c"», «"arrow"») to be true
 
@@ -1734,6 +1557,9 @@ minify error: Test262Error: Expected SameValue(«"c"», «"fn"») to be true
 tasks/coverage/test262/test/language/expressions/class/dstr/private-meth-static-ary-ptrn-elem-id-init-fn-name-gen.js
 minify error: Test262Error: Expected SameValue(«"c"», «"gen"») to be true
 
+tasks/coverage/test262/test/language/expressions/class/dstr/private-meth-static-ary-ptrn-elision-exhausted.js
+codegen error: http://localhost:32055/run: Network Error: Network Error: Error encountered in the status line: timed out reading response
+
 tasks/coverage/test262/test/language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-elem-id-init-fn-name-arrow.js
 minify error: Test262Error: Expected SameValue(«"c"», «"arrow"») to be true
 
@@ -1797,98 +1623,14 @@ transform error: ReferenceError: require is not defined
 tasks/coverage/test262/test/language/expressions/class/elements/syntax/valid/grammar-field-accessor.js
 codegen error: SyntaxError: Unexpected identifier '$'
 
-tasks/coverage/test262/test/language/expressions/class/gen-method/forbidden-ext/b2/cls-expr-gen-meth-forbidden-ext-indirect-access-own-prop-caller-get.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/class/gen-method/forbidden-ext/b2/cls-expr-gen-meth-forbidden-ext-indirect-access-own-prop-caller-value.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/class/gen-method/forbidden-ext/b2/cls-expr-gen-meth-forbidden-ext-indirect-access-prop-caller.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
 tasks/coverage/test262/test/language/expressions/class/gen-method/yield-spread-obj.js
 transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/class/gen-method-static/forbidden-ext/b2/cls-expr-gen-meth-static-forbidden-ext-indirect-access-own-prop-caller-get.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/class/gen-method-static/forbidden-ext/b2/cls-expr-gen-meth-static-forbidden-ext-indirect-access-own-prop-caller-value.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/class/gen-method-static/forbidden-ext/b2/cls-expr-gen-meth-static-forbidden-ext-indirect-access-prop-caller.js
-transform error: ReferenceError: $RefreshReg$ is not defined
 
 tasks/coverage/test262/test/language/expressions/class/gen-method-static/yield-spread-obj.js
 transform error: ReferenceError: require is not defined
 
-tasks/coverage/test262/test/language/expressions/class/method/forbidden-ext/b2/cls-expr-meth-forbidden-ext-indirect-access-own-prop-caller-get.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/class/method/forbidden-ext/b2/cls-expr-meth-forbidden-ext-indirect-access-own-prop-caller-value.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/class/method/forbidden-ext/b2/cls-expr-meth-forbidden-ext-indirect-access-prop-caller.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/class/method-static/forbidden-ext/b2/cls-expr-meth-static-forbidden-ext-indirect-access-own-prop-caller-get.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/class/method-static/forbidden-ext/b2/cls-expr-meth-static-forbidden-ext-indirect-access-own-prop-caller-value.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/class/method-static/forbidden-ext/b2/cls-expr-meth-static-forbidden-ext-indirect-access-prop-caller.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
 tasks/coverage/test262/test/language/expressions/class/name.js
 minify error: Test262Error: descriptor value should be cls; object value should be cls
-
-tasks/coverage/test262/test/language/expressions/class/private-static-field-multiple-evaluations-of-class-direct-eval.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/class/private-static-field-multiple-evaluations-of-class-eval-indirect.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/class/private-static-field-multiple-evaluations-of-class-factory.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/class/private-static-field-multiple-evaluations-of-class-function-ctor.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/class/private-static-getter-multiple-evaluations-of-class-direct-eval.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/class/private-static-getter-multiple-evaluations-of-class-eval-indirect.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/class/private-static-getter-multiple-evaluations-of-class-factory.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/class/private-static-getter-multiple-evaluations-of-class-function-ctor.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/class/private-static-method-brand-check-multiple-evaluations-of-class-direct-eval.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/class/private-static-method-brand-check-multiple-evaluations-of-class-eval-indirect.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/class/private-static-method-brand-check-multiple-evaluations-of-class-factory.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/class/private-static-method-brand-check-multiple-evaluations-of-class-function-ctor.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/class/private-static-setter-multiple-evaluations-of-class-direct-eval.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/class/private-static-setter-multiple-evaluations-of-class-eval-indirect.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/class/private-static-setter-multiple-evaluations-of-class-factory.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/class/private-static-setter-multiple-evaluations-of-class-function-ctor.js
-transform error: ReferenceError: $RefreshReg$ is not defined
 
 tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A5.10_T1.js
 codegen error: Test262Error: #1: scope.x === 1. Actual: undefined
@@ -2022,134 +1764,35 @@ codegen error: Test262Error: #1: innerX === 2. Actual: 4
 tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A6.9_T1.js
 codegen error: Test262Error: #1: innerX === 2. Actual: 1
 
-tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.10_T1.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.10_T2.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.10_T3.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
 tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.10_T4.js
 codegen error: Test262Error: Expected true but got false
-
-tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.11_T1.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.11_T2.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.11_T3.js
-transform error: ReferenceError: $RefreshReg$ is not defined
 
 tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.11_T4.js
 codegen error: Test262Error: Expected true but got false
 
-tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.1_T1.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.1_T2.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.1_T3.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
 tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.1_T4.js
 codegen error: Test262Error: Expected true but got false
-
-tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.2_T1.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.2_T2.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.2_T3.js
-transform error: ReferenceError: $RefreshReg$ is not defined
 
 tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.2_T4.js
 codegen error: Test262Error: Expected true but got false
 
-tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.3_T1.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.3_T2.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.3_T3.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
 tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.3_T4.js
 codegen error: Test262Error: Expected true but got false
-
-tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.4_T1.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.4_T2.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.4_T3.js
-transform error: ReferenceError: $RefreshReg$ is not defined
 
 tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.4_T4.js
 codegen error: Test262Error: Expected true but got false
 
-tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.5_T1.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.5_T2.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.5_T3.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
 tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.5_T4.js
 codegen error: Test262Error: Expected true but got false
-
-tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.6_T1.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.6_T2.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.6_T3.js
-transform error: ReferenceError: $RefreshReg$ is not defined
 
 tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.6_T4.js
 codegen error: Test262Error: Expected true but got false
 
-tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.7_T1.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.7_T2.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.7_T3.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
 tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.7_T4.js
 codegen error: Test262Error: Expected true but got false
 
-tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.8_T1.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.8_T2.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.8_T3.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
 tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.8_T4.js
 codegen error: Test262Error: Expected true but got false
-
-tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.9_T1.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.9_T2.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.9_T3.js
-transform error: ReferenceError: $RefreshReg$ is not defined
 
 tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.9_T4.js
 codegen error: Test262Error: Expected true but got false
@@ -2190,47 +1833,11 @@ codegen error: Test262Error: Expected a ReferenceError but got a TypeError
 tasks/coverage/test262/test/language/expressions/conditional/in-branch-1.js
 minify error: Test262Error: Expected SameValue(«0», «1») to be true
 
-tasks/coverage/test262/test/language/expressions/delete/S11.4.1_A2.2_T2.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/delete/S11.4.1_A3.1.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/delete/S11.4.1_A3.2_T2.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/delete/S11.4.1_A3.2_T3.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/delete/S11.4.1_A3.3_T2.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/delete/S11.4.1_A3.3_T3.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/delete/S11.4.1_A3.3_T4.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/delete/S11.4.1_A3.3_T5.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/delete/S11.4.1_A3.3_T6.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/delete/S8.12.7_A2_T2.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
 tasks/coverage/test262/test/language/expressions/delete/super-property-uninitialized-this.js
 codegen error: Test262Error: Expected a ReferenceError but got a Test262Error
 
 tasks/coverage/test262/test/language/expressions/division/S11.5.2_A4_T8.js
 minify error: Test262Error: #1.2: -0 / 1 === - 0. Actual: +0
-
-tasks/coverage/test262/test/language/expressions/division/bigint-toprimitive.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/division/order-of-evaluation.js
-transform error: ReferenceError: $RefreshReg$ is not defined
 
 tasks/coverage/test262/test/language/expressions/does-not-equals/bigint-and-object.js
 minify error: Test262Error: The result of (0n != {valueOf: function() {return 0n;}}) is false Expected SameValue(«true», «false») to be true
@@ -3210,12 +2817,6 @@ minify error: Test262Error: The result of (0n == {valueOf: function() {return 0n
 tasks/coverage/test262/test/language/expressions/exponentiation/bigint-negative-exponent-throws.js
 transform error: Test262Error: (-1n) ** -1n throws RangeError Expected a RangeError but got a TypeError
 
-tasks/coverage/test262/test/language/expressions/exponentiation/bigint-toprimitive.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/exponentiation/order-of-evaluation.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
 tasks/coverage/test262/test/language/expressions/function/dstr/ary-ptrn-elem-id-init-fn-name-arrow.js
 minify error: Test262Error: Expected SameValue(«"c"», «"arrow"») to be true
 
@@ -3279,15 +2880,6 @@ minify error: Test262Error: Expected SameValue(«"c"», «"gen"») to be true
 tasks/coverage/test262/test/language/expressions/function/eval-var-scope-syntax-err.js
 minify error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
 
-tasks/coverage/test262/test/language/expressions/function/forbidden-ext/b2/func-expr-forbidden-ext-indirect-access-own-prop-caller-get.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/function/forbidden-ext/b2/func-expr-forbidden-ext-indirect-access-own-prop-caller-value.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/function/forbidden-ext/b2/func-expr-forbidden-ext-indirect-access-prop-caller.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
 tasks/coverage/test262/test/language/expressions/function/name.js
 minify error: Test262Error: descriptor value should be func; object value should be func
 
@@ -3311,6 +2903,9 @@ minify error: Test262Error: Expected SameValue(«"c"», «"fn"») to be true
 
 tasks/coverage/test262/test/language/expressions/generators/dstr/ary-ptrn-elem-id-init-fn-name-gen.js
 minify error: Test262Error: Expected SameValue(«"c"», «"gen"») to be true
+
+tasks/coverage/test262/test/language/expressions/generators/dstr/dflt-ary-ptrn-elem-id-init-exhausted.js
+codegen error: http://localhost:32055/run: Network Error: Network Error: Error encountered in the status line: timed out reading response
 
 tasks/coverage/test262/test/language/expressions/generators/dstr/dflt-ary-ptrn-elem-id-init-fn-name-arrow.js
 minify error: Test262Error: Expected SameValue(«"c"», «"arrow"») to be true
@@ -3360,15 +2955,6 @@ minify error: Test262Error: Expected SameValue(«"c"», «"gen"») to be true
 tasks/coverage/test262/test/language/expressions/generators/eval-var-scope-syntax-err.js
 minify error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
 
-tasks/coverage/test262/test/language/expressions/generators/forbidden-ext/b2/gen-func-expr-forbidden-ext-indirect-access-own-prop-caller-get.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/generators/forbidden-ext/b2/gen-func-expr-forbidden-ext-indirect-access-own-prop-caller-value.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/generators/forbidden-ext/b2/gen-func-expr-forbidden-ext-indirect-access-prop-caller.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
 tasks/coverage/test262/test/language/expressions/generators/generator-created-after-decl-inst.js
 codegen error: Test262Error: Expected SameValue(«[object Generator]», «[object Generator]») to be false
 
@@ -3402,26 +2988,8 @@ minify error: Test262Error: The result of (1n >= "0.") is false Expected SameVal
 tasks/coverage/test262/test/language/expressions/import.meta/distinct-for-each-module.js
 codegen error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/import.meta/distinct-for-each-module_FIXTURE.js'
 
-tasks/coverage/test262/test/language/expressions/in/S8.12.6_A2_T2.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
 tasks/coverage/test262/test/language/expressions/in/private-field-rhs-non-object.js
 codegen error: Test262Error: Expected SameValue(«null», «null») to be false
-
-tasks/coverage/test262/test/language/expressions/instanceof/S11.8.6_A6_T3.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/instanceof/S11.8.6_A6_T4.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/instanceof/prototype-getter-with-object-throws.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/left-shift/bigint-toprimitive.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/left-shift/order-of-evaluation.js
-transform error: ReferenceError: $RefreshReg$ is not defined
 
 tasks/coverage/test262/test/language/expressions/less-than/bigint-and-incomparable-string.js
 minify error: Test262Error: The result of ("0." < 1n) is false Expected SameValue(«true», «false») to be true
@@ -3435,15 +3003,6 @@ minify error: Test262Error: #1.2: (-0 && -1) === -0
 tasks/coverage/test262/test/language/expressions/logical-and/S11.11.1_A4_T2.js
 minify error: Test262Error: #1.2: (-1 && -0) === -0
 
-tasks/coverage/test262/test/language/expressions/logical-assignment/lgcl-and-assignment-operator-lhs-before-rhs.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/logical-assignment/lgcl-nullish-assignment-operator-lhs-before-rhs.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/logical-assignment/lgcl-or-assignment-operator-lhs-before-rhs.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
 tasks/coverage/test262/test/language/expressions/logical-or/S11.11.2_A3_T2.js
 minify error: Test262Error: #1.2: (0 || -0) === -0
 
@@ -3453,20 +3012,8 @@ minify error: Test262Error: #2.2: -1 % -1 === - 0. Actual: +0
 tasks/coverage/test262/test/language/expressions/modulus/S11.5.3_A4_T6.js
 minify error: Test262Error: #3.2: -0 % 1 === - 0. Actual: +0
 
-tasks/coverage/test262/test/language/expressions/modulus/bigint-toprimitive.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/modulus/order-of-evaluation.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
 tasks/coverage/test262/test/language/expressions/multiplication/S11.5.1_A4_T2.js
 minify error: Test262Error: #6.2: 0 * -0 === - 0. Actual: +0
-
-tasks/coverage/test262/test/language/expressions/multiplication/bigint-toprimitive.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/multiplication/order-of-evaluation.js
-transform error: ReferenceError: $RefreshReg$ is not defined
 
 tasks/coverage/test262/test/language/expressions/new/spread-err-mult-err-obj-unresolvable.js
 transform error: ReferenceError: require is not defined
@@ -3524,6 +3071,9 @@ transform error: ReferenceError: require is not defined
 
 tasks/coverage/test262/test/language/expressions/new/spread-sngl-obj-ident.js
 transform error: ReferenceError: require is not defined
+
+tasks/coverage/test262/test/language/expressions/new.target/value-via-reflect-apply.js
+codegen error: http://localhost:32055/run: Network Error: Network Error: Error encountered in the status line: timed out reading response
 
 tasks/coverage/test262/test/language/expressions/object/__proto__-permitted-dup-shorthand.js
 codegen error: SyntaxError: Duplicate __proto__ fields are not allowed in object literals
@@ -3726,42 +3276,6 @@ transform error: ReferenceError: require is not defined
 tasks/coverage/test262/test/language/expressions/object/method-definition/async-meth-eval-var-scope-syntax-err.js
 minify error: Test262Error: function should not be resolved
 
-tasks/coverage/test262/test/language/expressions/object/method-definition/forbidden-ext/b2/async-gen-meth-forbidden-ext-indirect-access-own-prop-caller-get.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/object/method-definition/forbidden-ext/b2/async-gen-meth-forbidden-ext-indirect-access-own-prop-caller-value.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/object/method-definition/forbidden-ext/b2/async-gen-meth-forbidden-ext-indirect-access-prop-caller.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/object/method-definition/forbidden-ext/b2/async-meth-forbidden-ext-indirect-access-own-prop-caller-get.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/object/method-definition/forbidden-ext/b2/async-meth-forbidden-ext-indirect-access-own-prop-caller-value.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/object/method-definition/forbidden-ext/b2/async-meth-forbidden-ext-indirect-access-prop-caller.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/object/method-definition/forbidden-ext/b2/gen-meth-forbidden-ext-indirect-access-own-prop-caller-get.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/object/method-definition/forbidden-ext/b2/gen-meth-forbidden-ext-indirect-access-own-prop-caller-value.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/object/method-definition/forbidden-ext/b2/gen-meth-forbidden-ext-indirect-access-prop-caller.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/object/method-definition/forbidden-ext/b2/meth-forbidden-ext-indirect-access-own-prop-caller-get.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/object/method-definition/forbidden-ext/b2/meth-forbidden-ext-indirect-access-own-prop-caller-value.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/object/method-definition/forbidden-ext/b2/meth-forbidden-ext-indirect-access-prop-caller.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
 tasks/coverage/test262/test/language/expressions/object/method-definition/gen-meth-eval-var-scope-syntax-err.js
 minify error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
 
@@ -3804,9 +3318,6 @@ minify error: Test262Error: Expected a SyntaxError to be thrown but no exception
 tasks/coverage/test262/test/language/expressions/optional-chaining/member-expression.js
 minify error: Test262Error: Expected SameValue(«"a"», «"m"») to be true
 
-tasks/coverage/test262/test/language/expressions/optional-chaining/new-target-optional-call.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
 tasks/coverage/test262/test/language/expressions/postfix-decrement/S11.3.2_A5_T1.js
 codegen error: Test262Error: #1: scope.x === 1. Actual: undefined
 
@@ -3815,12 +3326,6 @@ codegen error: Test262Error: #1: scope.x === 1. Actual: undefined
 
 tasks/coverage/test262/test/language/expressions/postfix-decrement/S11.3.2_A5_T3.js
 codegen error: Test262Error: #1: innerScope.x === 1. Actual: undefined
-
-tasks/coverage/test262/test/language/expressions/postfix-decrement/S11.3.2_A6_T1.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/postfix-decrement/S11.3.2_A6_T2.js
-transform error: ReferenceError: $RefreshReg$ is not defined
 
 tasks/coverage/test262/test/language/expressions/postfix-decrement/S11.3.2_A6_T3.js
 codegen error: Test262Error: Expected true but got false
@@ -3837,12 +3342,6 @@ codegen error: Test262Error: #1: scope.x === 3. Actual: undefined
 tasks/coverage/test262/test/language/expressions/postfix-increment/S11.3.1_A5_T3.js
 codegen error: Test262Error: #1: innerScope.x === 3. Actual: undefined
 
-tasks/coverage/test262/test/language/expressions/postfix-increment/S11.3.1_A6_T1.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/postfix-increment/S11.3.1_A6_T2.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
 tasks/coverage/test262/test/language/expressions/postfix-increment/S11.3.1_A6_T3.js
 codegen error: Test262Error: Expected true but got false
 
@@ -3857,12 +3356,6 @@ codegen error: Test262Error: #1: scope.x === 1. Actual: undefined
 
 tasks/coverage/test262/test/language/expressions/prefix-decrement/S11.4.5_A5_T3.js
 codegen error: Test262Error: #1: innerScope.x === 1. Actual: undefined
-
-tasks/coverage/test262/test/language/expressions/prefix-decrement/S11.4.5_A6_T1.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/prefix-decrement/S11.4.5_A6_T2.js
-transform error: ReferenceError: $RefreshReg$ is not defined
 
 tasks/coverage/test262/test/language/expressions/prefix-decrement/S11.4.5_A6_T3.js
 codegen error: Test262Error: Expected true but got false
@@ -3879,53 +3372,17 @@ codegen error: Test262Error: #1: scope.x === 3. Actual: undefined
 tasks/coverage/test262/test/language/expressions/prefix-increment/S11.4.4_A5_T3.js
 codegen error: Test262Error: #1: innerScope.x === 3. Actual: undefined
 
-tasks/coverage/test262/test/language/expressions/prefix-increment/S11.4.4_A6_T1.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/prefix-increment/S11.4.4_A6_T2.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
 tasks/coverage/test262/test/language/expressions/prefix-increment/S11.4.4_A6_T3.js
 codegen error: Test262Error: Expected true but got false
 
 tasks/coverage/test262/test/language/expressions/prefix-increment/operator-prefix-increment-x-calls-putvalue-lhs-newvalue--1.js
 codegen error: Test262Error: Expected a ReferenceError but got a TypeError
 
-tasks/coverage/test262/test/language/expressions/property-accessors/S8.12.3_A1.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/right-shift/bigint-toprimitive.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/right-shift/order-of-evaluation.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
 tasks/coverage/test262/test/language/expressions/subtraction/S11.6.2_A4_T5.js
 minify error: Test262Error: #3.2: -0 - 0 === - 0. Actual: +0
 
 tasks/coverage/test262/test/language/expressions/subtraction/bigint-arithmetic.js
 minify error: SyntaxError: Invalid left-hand side expression in postfix operation
-
-tasks/coverage/test262/test/language/expressions/subtraction/bigint-toprimitive.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/subtraction/order-of-evaluation.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/super/call-bind-this-value-twice.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/super/call-bind-this-value.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/super/call-construct-error.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/super/call-construct-invocation.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/super/call-expr-value.js
-transform error: ReferenceError: $RefreshReg$ is not defined
 
 tasks/coverage/test262/test/language/expressions/super/call-spread-err-mult-err-obj-unresolvable.js
 transform error: ReferenceError: require is not defined
@@ -3999,15 +3456,6 @@ codegen error: Test262Error: Expected SameValue(«"bad"», «"ok"») to be true
 tasks/coverage/test262/test/language/expressions/tagged-template/cache-eval-inner-function.js
 minify error: ReferenceError: a is not defined
 
-tasks/coverage/test262/test/language/expressions/tagged-template/constructor-invocation.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/this/S11.1.1_A3.1.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/this/S11.1.1_A3.2.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
 tasks/coverage/test262/test/language/expressions/unary-plus/S11.4.6_A3_T3.js
 minify error: Test262Error: #4: +"INFINITY" === Not-a-Number. Actual: Infinity
 
@@ -4016,12 +3464,6 @@ minify error: Test262Error: #3.2: +(-0) === -0. Actual: +0
 
 tasks/coverage/test262/test/language/expressions/unary-plus/bigint-throws.js
 minify error: Test262Error: +0n throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/unsigned-right-shift/bigint-toprimitive.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/expressions/unsigned-right-shift/order-of-evaluation.js
-transform error: ReferenceError: $RefreshReg$ is not defined
 
 tasks/coverage/test262/test/language/expressions/void/S11.4.2_A2_T2.js
 minify error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
@@ -4053,6 +3495,9 @@ codegen error: SyntaxError: Invalid or unexpected token
 tasks/coverage/test262/test/language/identifiers/part-unicode-16.0.0.js
 codegen error: SyntaxError: Invalid or unexpected token
 
+tasks/coverage/test262/test/language/identifiers/part-unicode-8.0.0-class-escaped.js
+transform error: http://localhost:32055/run: Network Error: Network Error: Error encountered in the status line: timed out reading response
+
 tasks/coverage/test262/test/language/import/import-attributes/json-extensibility-array.js
 codegen error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/import/import-attributes/json-value-array_FIXTURE.json'
 
@@ -4082,6 +3527,9 @@ codegen error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc
 
 tasks/coverage/test262/test/language/import/import-attributes/json-via-namespace.js
 codegen error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/import/import-attributes/json-via-namespace_FIXTURE.json'
+
+tasks/coverage/test262/test/language/literals/numeric/S7.8.3_A4.1_T8.js
+codegen error: http://localhost:32055/run: Network Error: Network Error: Error encountered in the status line: timed out reading response
 
 tasks/coverage/test262/test/language/literals/regexp/u-surrogate-pairs-atom-escape-decimal.js
 codegen error: Test262Error: Expected SameValue(«true», «false») to be true
@@ -4142,18 +3590,6 @@ codegen error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc
 
 tasks/coverage/test262/test/language/module-code/eval-self-once.js
 codegen error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/eval-self-once.js'
-
-tasks/coverage/test262/test/language/module-code/export-default-asyncfunction-declaration-binding.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/module-code/export-default-asyncgenerator-declaration-binding.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/module-code/export-default-function-declaration-binding.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/module-code/export-default-generator-declaration-binding.js
-transform error: ReferenceError: $RefreshReg$ is not defined
 
 tasks/coverage/test262/test/language/module-code/export-expname-binding-index.js
 codegen error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/export-expname-binding-index_FIXTURE.js'
@@ -4470,17 +3906,11 @@ codegen error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc
 tasks/coverage/test262/test/language/module-code/verify-dfs.js
 codegen error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/verify-dfs-a_FIXTURE.js'
 
+tasks/coverage/test262/test/language/statementList/block-with-statment-arrow-function-assignment-expr.js
+transform error: http://localhost:32055/run: Network Error: Network Error: Error encountered in the status line: timed out reading response
+
 tasks/coverage/test262/test/language/statements/async-function/eval-var-scope-syntax-err.js
 minify error: Test262Error: function should not be resolved
-
-tasks/coverage/test262/test/language/statements/async-function/forbidden-ext/b2/async-func-decl-forbidden-ext-indirect-access-own-prop-caller-get.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/async-function/forbidden-ext/b2/async-func-decl-forbidden-ext-indirect-access-own-prop-caller-value.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/async-function/forbidden-ext/b2/async-func-decl-forbidden-ext-indirect-access-prop-caller.js
-transform error: ReferenceError: $RefreshReg$ is not defined
 
 tasks/coverage/test262/test/language/statements/async-generator/dstr/ary-ptrn-elem-id-init-fn-name-arrow.js
 minify error: Test262Error: Expected SameValue(«"c"», «"arrow"») to be true
@@ -4545,15 +3975,6 @@ minify error: Test262Error: Expected SameValue(«"c"», «"gen"») to be true
 tasks/coverage/test262/test/language/statements/async-generator/eval-var-scope-syntax-err.js
 minify error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
 
-tasks/coverage/test262/test/language/statements/async-generator/forbidden-ext/b2/async-gen-func-decl-forbidden-ext-indirect-access-own-prop-caller-get.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/async-generator/forbidden-ext/b2/async-gen-func-decl-forbidden-ext-indirect-access-own-prop-caller-value.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/async-generator/forbidden-ext/b2/async-gen-func-decl-forbidden-ext-indirect-access-prop-caller.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
 tasks/coverage/test262/test/language/statements/async-generator/generator-created-after-decl-inst.js
 codegen error: Test262Error: Expected SameValue(«[object AsyncGenerator]», «[object AsyncGenerator]») to be false
 
@@ -4566,56 +3987,14 @@ transform error: ReferenceError: require is not defined
 tasks/coverage/test262/test/language/statements/async-generator/yield-spread-obj.js
 transform error: ReferenceError: require is not defined
 
-tasks/coverage/test262/test/language/statements/async-generator/yield-star-async-from-sync-iterator-inaccessible.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
 tasks/coverage/test262/test/language/statements/await-using/throws-if-initializer-not-object.js
 codegen error: SyntaxError: Unexpected identifier 'x'
-
-tasks/coverage/test262/test/language/statements/break/S12.8_A3.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/class/async-gen-method/forbidden-ext/b2/cls-decl-async-gen-meth-forbidden-ext-indirect-access-own-prop-caller-get.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/class/async-gen-method/forbidden-ext/b2/cls-decl-async-gen-meth-forbidden-ext-indirect-access-own-prop-caller-value.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/class/async-gen-method/forbidden-ext/b2/cls-decl-async-gen-meth-forbidden-ext-indirect-access-prop-caller.js
-transform error: ReferenceError: $RefreshReg$ is not defined
 
 tasks/coverage/test262/test/language/statements/class/async-gen-method/yield-spread-obj.js
 transform error: ReferenceError: require is not defined
 
-tasks/coverage/test262/test/language/statements/class/async-gen-method-static/forbidden-ext/b2/cls-decl-async-gen-meth-static-forbidden-ext-indirect-access-own-prop-caller-get.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/class/async-gen-method-static/forbidden-ext/b2/cls-decl-async-gen-meth-static-forbidden-ext-indirect-access-own-prop-caller-value.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/class/async-gen-method-static/forbidden-ext/b2/cls-decl-async-gen-meth-static-forbidden-ext-indirect-access-prop-caller.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
 tasks/coverage/test262/test/language/statements/class/async-gen-method-static/yield-spread-obj.js
 transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/statements/class/async-method/forbidden-ext/b2/cls-decl-async-meth-forbidden-ext-indirect-access-own-prop-caller-get.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/class/async-method/forbidden-ext/b2/cls-decl-async-meth-forbidden-ext-indirect-access-own-prop-caller-value.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/class/async-method/forbidden-ext/b2/cls-decl-async-meth-forbidden-ext-indirect-access-prop-caller.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/class/async-method-static/forbidden-ext/b2/cls-decl-async-meth-static-forbidden-ext-indirect-access-own-prop-caller-get.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/class/async-method-static/forbidden-ext/b2/cls-decl-async-meth-static-forbidden-ext-indirect-access-own-prop-caller-value.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/class/async-method-static/forbidden-ext/b2/cls-decl-async-meth-static-forbidden-ext-indirect-access-prop-caller.js
-transform error: ReferenceError: $RefreshReg$ is not defined
 
 tasks/coverage/test262/test/language/statements/class/decorator/syntax/class-valid/decorator-member-expr-private-identifier.js
 codegen error: SyntaxError: Invalid or unexpected token
@@ -4655,18 +4034,6 @@ codegen error: SyntaxError: Invalid or unexpected token
 
 tasks/coverage/test262/test/language/statements/class/definition/basics.js
 minify error: Test262Error: The value of `C.name` is `'C'` Expected SameValue(«"f"», «"C"») to be true
-
-tasks/coverage/test262/test/language/statements/class/definition/constructable-but-no-prototype.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/class/definition/prototype-getter.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/class/definition/prototype-setter.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/class/definition/side-effects-in-property-define.js
-transform error: ReferenceError: $RefreshReg$ is not defined
 
 tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-arrow.js
 minify error: Test262Error: Expected SameValue(«"c"», «"arrow"») to be true
@@ -5394,9 +4761,6 @@ transform error: ReferenceError: require is not defined
 tasks/coverage/test262/test/language/statements/class/elements/async-gen-private-method-static/yield-spread-obj.js
 transform error: ReferenceError: require is not defined
 
-tasks/coverage/test262/test/language/statements/class/elements/class-field-is-observable-by-proxy.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
 tasks/coverage/test262/test/language/statements/class/elements/gen-private-method/yield-spread-obj.js
 transform error: ReferenceError: require is not defined
 
@@ -5406,95 +4770,14 @@ transform error: ReferenceError: require is not defined
 tasks/coverage/test262/test/language/statements/class/elements/private-setter-visible-to-direct-eval.js
 minify error: ReferenceError: v is not defined
 
-tasks/coverage/test262/test/language/statements/class/elements/privatefieldget-success-1.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/class/elements/privatefieldget-typeerror-2.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/class/elements/privatefieldget-typeerror-3.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/class/elements/privatefieldget-typeerror-4.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/class/elements/privatefieldget-typeerror-5.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/class/elements/privatefieldset-typeerror-2.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/class/elements/privatefieldset-typeerror-3.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/class/elements/privatefieldset-typeerror-4.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/class/elements/privatefieldset-typeerror-5.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/class/elements/public-class-field-initialization-is-visible-to-proxy.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
 tasks/coverage/test262/test/language/statements/class/elements/syntax/valid/grammar-field-accessor.js
 codegen error: SyntaxError: Unexpected identifier '$'
-
-tasks/coverage/test262/test/language/statements/class/gen-method/forbidden-ext/b2/cls-decl-gen-meth-forbidden-ext-indirect-access-own-prop-caller-get.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/class/gen-method/forbidden-ext/b2/cls-decl-gen-meth-forbidden-ext-indirect-access-own-prop-caller-value.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/class/gen-method/forbidden-ext/b2/cls-decl-gen-meth-forbidden-ext-indirect-access-prop-caller.js
-transform error: ReferenceError: $RefreshReg$ is not defined
 
 tasks/coverage/test262/test/language/statements/class/gen-method/yield-spread-obj.js
 transform error: ReferenceError: require is not defined
 
-tasks/coverage/test262/test/language/statements/class/gen-method-static/forbidden-ext/b2/cls-decl-gen-meth-static-forbidden-ext-indirect-access-own-prop-caller-get.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/class/gen-method-static/forbidden-ext/b2/cls-decl-gen-meth-static-forbidden-ext-indirect-access-own-prop-caller-value.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/class/gen-method-static/forbidden-ext/b2/cls-decl-gen-meth-static-forbidden-ext-indirect-access-prop-caller.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
 tasks/coverage/test262/test/language/statements/class/gen-method-static/yield-spread-obj.js
 transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/statements/class/method/forbidden-ext/b2/cls-decl-meth-forbidden-ext-indirect-access-own-prop-caller-get.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/class/method/forbidden-ext/b2/cls-decl-meth-forbidden-ext-indirect-access-own-prop-caller-value.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/class/method/forbidden-ext/b2/cls-decl-meth-forbidden-ext-indirect-access-prop-caller.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/class/method-static/forbidden-ext/b2/cls-decl-meth-static-forbidden-ext-indirect-access-own-prop-caller-get.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/class/method-static/forbidden-ext/b2/cls-decl-meth-static-forbidden-ext-indirect-access-own-prop-caller-value.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/class/method-static/forbidden-ext/b2/cls-decl-meth-static-forbidden-ext-indirect-access-prop-caller.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/class/static-init-super-property.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/class/subclass/class-definition-parent-proto-null.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/class/subclass/superclass-prototype-setter-constructor.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/class/subclass/superclass-prototype-setter-method-override.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/class/subclass/superclass-static-method-override.js
-transform error: ReferenceError: $RefreshReg$ is not defined
 
 tasks/coverage/test262/test/language/statements/for/dstr/const-ary-ptrn-elem-id-init-fn-name-arrow.js
 minify error: Test262Error: Expected SameValue(«"b"», «"arrow"») to be true
@@ -5742,6 +5025,9 @@ minify error: Test262Error: Expected SameValue(«"c"», «"fn"») to be true
 tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-var-obj-ptrn-id-init-fn-name-gen.js
 minify error: Test262Error: Expected SameValue(«"c"», «"gen"») to be true
 
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-const-ary-ptrn-elem-ary-elision-init.js
+transform error: http://localhost:32055/run: Network Error: Network Error: Error encountered in the status line: timed out reading response
+
 tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-const-ary-ptrn-elem-id-init-fn-name-arrow.js
 minify error: Test262Error: Expected SameValue(«"c"», «"arrow"») to be true
 
@@ -5922,27 +5208,6 @@ minify error: Test262Error: Expected SameValue(«"c"», «"fn"») to be true
 tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-var-obj-ptrn-id-init-fn-name-gen.js
 minify error: Test262Error: Expected SameValue(«"c"», «"gen"») to be true
 
-tasks/coverage/test262/test/language/statements/for-in/12.6.4-2.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/for-in/S12.6.4_A6.1.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/for-in/S12.6.4_A6.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/for-of/dstr/array-elem-iter-thrw-close-err.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/for-of/dstr/array-elem-trlg-iter-list-thrw-close-err.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/for-of/dstr/array-elem-trlg-iter-rest-thrw-close-err.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/for-of/dstr/array-rest-iter-thrw-close-err.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
 tasks/coverage/test262/test/language/statements/for-of/dstr/const-ary-ptrn-elem-id-init-fn-name-arrow.js
 minify error: Test262Error: Expected SameValue(«"b"», «"arrow"») to be true
 
@@ -6006,35 +5271,8 @@ minify error: Test262Error: Expected SameValue(«"b"», «"gen"») to be true
 tasks/coverage/test262/test/language/statements/for-of/string-astral-truncated.js
 codegen error: Test262Error: Expected SameValue(«"\\"», «"\\ud801"») to be true
 
-tasks/coverage/test262/test/language/statements/for-of/throw-from-catch.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/for-of/throw-from-finally.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/for-of/throw.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/function/S13.2.2_A10.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/function/S13.2.2_A11.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/function/S13.2.2_A12.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/function/S13.2.2_A13.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/function/S13.2.2_A14.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
 tasks/coverage/test262/test/language/statements/function/S13.2.2_A17_T3.js
 minify error: Test262Error: #4: __obj.getRight() === false. Actual: __obj.getRight()===right
-
-tasks/coverage/test262/test/language/statements/function/S13.2.2_A9.js
-transform error: ReferenceError: $RefreshReg$ is not defined
 
 tasks/coverage/test262/test/language/statements/function/dstr/ary-ptrn-elem-id-init-fn-name-arrow.js
 minify error: Test262Error: Expected SameValue(«"c"», «"arrow"») to be true
@@ -6098,15 +5336,6 @@ minify error: Test262Error: Expected SameValue(«"c"», «"gen"») to be true
 
 tasks/coverage/test262/test/language/statements/function/eval-var-scope-syntax-err.js
 minify error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/statements/function/forbidden-ext/b2/func-decl-forbidden-ext-indirect-access-own-prop-caller-get.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/function/forbidden-ext/b2/func-decl-forbidden-ext-indirect-access-own-prop-caller-value.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/function/forbidden-ext/b2/func-decl-forbidden-ext-indirect-access-prop-caller.js
-transform error: ReferenceError: $RefreshReg$ is not defined
 
 tasks/coverage/test262/test/language/statements/function/scope-body-lex-distinct.js
 minify error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
@@ -6174,15 +5403,6 @@ minify error: Test262Error: Expected SameValue(«"c"», «"gen"») to be true
 tasks/coverage/test262/test/language/statements/generators/eval-var-scope-syntax-err.js
 minify error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
 
-tasks/coverage/test262/test/language/statements/generators/forbidden-ext/b2/gen-func-decl-forbidden-ext-indirect-access-own-prop-caller-get.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/generators/forbidden-ext/b2/gen-func-decl-forbidden-ext-indirect-access-own-prop-caller-value.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/generators/forbidden-ext/b2/gen-func-decl-forbidden-ext-indirect-access-prop-caller.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
 tasks/coverage/test262/test/language/statements/generators/generator-created-after-decl-inst.js
 codegen error: Test262Error: Expected SameValue(«[object Generator]», «[object Generator]») to be false
 
@@ -6197,33 +5417,6 @@ transform error: ReferenceError: require is not defined
 
 tasks/coverage/test262/test/language/statements/let/dstr/obj-init-undefined.js
 minify error: SyntaxError: Missing initializer in destructuring declaration
-
-tasks/coverage/test262/test/language/statements/return/S12.9_A4.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/switch/S12.11_A1_T1.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/switch/S12.11_A1_T2.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/switch/S12.11_A1_T3.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/switch/S12.11_A1_T4.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/switch/S12.11_A4_T1.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/try/S12.14_A15.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/try/S12.14_A17.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/statements/try/S12.14_A5.js
-transform error: ReferenceError: $RefreshReg$ is not defined
 
 tasks/coverage/test262/test/language/statements/try/dstr/ary-ptrn-elem-id-init-fn-name-arrow.js
 minify error: Test262Error: Expected SameValue(«"b"», «"arrow"») to be true
@@ -6308,10 +5501,4 @@ codegen error: Test262Error: Actual [has:p, get:Symbol(Symbol.unscopables), get:
 
 tasks/coverage/test262/test/language/statements/with/set-mutable-binding-idref-with-proxy-env.js
 codegen error: Test262Error: Actual [has:p, get:Symbol(Symbol.unscopables), set:p, getOwnPropertyDescriptor:p, defineProperty:p] and expected [has:p, get:Symbol(Symbol.unscopables), has:p, set:p, getOwnPropertyDescriptor:p, defineProperty:p] should have the same contents. 
-
-tasks/coverage/test262/test/language/types/object/S8.6.2_A1.js
-transform error: ReferenceError: $RefreshReg$ is not defined
-
-tasks/coverage/test262/test/language/types/object/S8.6.2_A2.js
-transform error: ReferenceError: $RefreshReg$ is not defined
 
