@@ -130,6 +130,5 @@ impl AppArgs {
 #[test]
 #[cfg(any(coverage, coverage_nightly))]
 fn test() {
-    let args = AppArgs { debug: false, filter: None, detail: false, diff: false };
-    args.run_all()
+    AppArgs::default().run_default()
 }
