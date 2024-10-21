@@ -1307,10 +1307,11 @@ impl<'a> ClassElement<'a> {
     /// static modifier.
     pub fn r#static(&self) -> bool {
         match self {
-            Self::TSIndexSignature(_) | Self::StaticBlock(_) => false,
+            Self::ClassElement(_) => true,
             Self::MethodDefinition(def) => def.r#static,
             Self::PropertyDefinition(def) => def.r#static,
             Self::AccessorProperty(def) => def.r#static,
+            Self::TSIndexSignature(_) => false,
         }
     }
 
