@@ -134,13 +134,13 @@ pub fn declare_oxc_secret(meta: SecretRuleMeta) -> TokenStream {
     let output = quote! {
         impl super::SecretScannerMeta for #struct_name {
             #[inline]
-            fn rule_name(&self) -> &'static str {
-                #rule_name
+            fn rule_name(&self) -> std::borrow::Cow<'static, str> {
+                std::borrow::Cow::Borrowed(#rule_name)
             }
 
             #[inline]
-            fn message(&self) -> &'static str {
-                #message
+            fn message(&self) -> std::borrow::Cow<'static, str> {
+                std::borrow::Cow::Borrowed(#message)
             }
 
             #min_len_fn
