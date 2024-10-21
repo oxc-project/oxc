@@ -133,10 +133,11 @@ impl<'a, 'ctx> Traverse<'a> for RegExp<'a, 'ctx> {
             }
 
             let span = regexp.span;
+            let _flags_text = flags.to_string(); // TODO: How to add `&'a str` lifetime?
             let pattern = match &mut regexp.regex.pattern {
                 RegExpPattern::Raw(raw) => {
                     // Try to parse pattern
-                    match try_parse_pattern(raw, span, flags, ctx) {
+                    match try_parse_pattern(raw, span, None, ctx) {
                         Ok(pattern) => {
                             regexp.regex.pattern = RegExpPattern::Pattern(ctx.alloc(pattern));
                             let RegExpPattern::Pattern(pattern) = &regexp.regex.pattern else {
@@ -239,13 +240,14 @@ fn character_class_has_unicode_property_escape(character_class: &CharacterClass)
 fn try_parse_pattern<'a>(
     raw: &'a str,
     span: Span,
-    flags: RegExpFlags,
+    flags_text: Option<&'a str>,
     ctx: &mut TraverseCtx<'a>,
 ) -> Result<Pattern<'a>> {
-    use oxc_regular_expression::{Parser, ParserOptions};
+    use oxc_regular_expression::{LiteralParser, Options};
 
-    let options = ParserOptions::default()
-        .with_span_offset(span.start + 1) // exclude `/`
-        .with_flags(&flags.to_string());
-    Parser::new(ctx.ast.allocator, raw, options).parse()
+    let options = Options {
+        pattern_span_offset: span.start + 1, // exclude `/`
+        flags_span_offset: 0,
+    };
+    LiteralParser::new(ctx.ast.allocator, raw, flags_text, options).parse()
 }
