@@ -7,7 +7,7 @@ use oxc_span::{Atom, GetSpan, SPAN};
 use crate::{diagnostics::default_export_inferred, IsolatedDeclarations};
 
 impl<'a> IsolatedDeclarations<'a> {
-    pub fn transform_export_named_declaration(
+    pub(crate) fn transform_export_named_declaration(
         &mut self,
         prev_decl: &ExportNamedDeclaration<'a>,
     ) -> Option<ExportNamedDeclaration<'a>> {
@@ -23,7 +23,7 @@ impl<'a> IsolatedDeclarations<'a> {
         ))
     }
 
-    pub fn create_unique_name(&mut self, name: &str) -> Atom<'a> {
+    pub(crate) fn create_unique_name(&mut self, name: &str) -> Atom<'a> {
         let mut binding = self.ast.atom(name);
         let mut i = 1;
         while self.scope.has_reference(&binding) {
@@ -33,7 +33,7 @@ impl<'a> IsolatedDeclarations<'a> {
         binding
     }
 
-    pub fn transform_export_default_declaration(
+    pub(crate) fn transform_export_default_declaration(
         &mut self,
         decl: &ExportDefaultDeclaration<'a>,
     ) -> Option<(Option<VariableDeclaration<'a>>, ExportDefaultDeclaration<'a>)> {
@@ -91,7 +91,7 @@ impl<'a> IsolatedDeclarations<'a> {
         })
     }
 
-    pub fn transform_import_declaration(
+    pub(crate) fn transform_import_declaration(
         &self,
         decl: &ImportDeclaration<'a>,
     ) -> Option<Box<'a, ImportDeclaration<'a>>> {

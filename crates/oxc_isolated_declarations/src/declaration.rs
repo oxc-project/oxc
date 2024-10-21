@@ -21,7 +21,7 @@ use crate::{
 };
 
 impl<'a> IsolatedDeclarations<'a> {
-    pub fn transform_variable_declaration(
+    pub(crate) fn transform_variable_declaration(
         &self,
         decl: &VariableDeclaration<'a>,
         check_binding: bool,
@@ -37,7 +37,7 @@ impl<'a> IsolatedDeclarations<'a> {
         }
     }
 
-    pub fn transform_variable_declaration_with_new_declarations(
+    pub(crate) fn transform_variable_declaration_with_new_declarations(
         &self,
         decl: &VariableDeclaration<'a>,
         declarations: oxc_allocator::Vec<'a, VariableDeclarator<'a>>,
@@ -50,7 +50,7 @@ impl<'a> IsolatedDeclarations<'a> {
         )
     }
 
-    pub fn transform_variable_declarator(
+    pub(crate) fn transform_variable_declarator(
         &self,
         decl: &VariableDeclarator<'a>,
         check_binding: bool,
@@ -117,31 +117,6 @@ impl<'a> IsolatedDeclarations<'a> {
         Some(self.ast.variable_declarator(decl.span, decl.kind, id, init, decl.definite))
     }
 
-    pub fn transform_using_declaration(
-        &self,
-        decl: &VariableDeclaration<'a>,
-        check_binding: bool,
-    ) -> Box<'a, VariableDeclaration<'a>> {
-        let declarations =
-            self.ast.vec_from_iter(decl.declarations.iter().filter_map(|declarator| {
-                self.transform_variable_declarator(declarator, check_binding)
-            }));
-        self.transform_using_declaration_with_new_declarations(decl, declarations)
-    }
-
-    pub fn transform_using_declaration_with_new_declarations(
-        &self,
-        decl: &VariableDeclaration<'a>,
-        declarations: oxc_allocator::Vec<'a, VariableDeclarator<'a>>,
-    ) -> Box<'a, VariableDeclaration<'a>> {
-        self.ast.alloc_variable_declaration(
-            decl.span,
-            VariableDeclarationKind::Const,
-            declarations,
-            self.is_declare(),
-        )
-    }
-
     fn transform_ts_module_block(
         &mut self,
         block: &Box<'a, TSModuleBlock<'a>>,
@@ -154,7 +129,7 @@ impl<'a> IsolatedDeclarations<'a> {
         self.ast.alloc_ts_module_block(SPAN, self.ast.vec(), stmts)
     }
 
-    pub fn transform_ts_module_declaration(
+    pub(crate) fn transform_ts_module_declaration(
         &mut self,
         decl: &Box<'a, TSModuleDeclaration<'a>>,
     ) -> Box<'a, TSModuleDeclaration<'a>> {
@@ -194,7 +169,7 @@ impl<'a> IsolatedDeclarations<'a> {
         }
     }
 
-    pub fn transform_declaration(
+    pub(crate) fn transform_declaration(
         &mut self,
         decl: &Declaration<'a>,
         check_binding: bool,
