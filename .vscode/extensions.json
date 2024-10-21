@@ -1,0 +1,7 @@
+{
+  "recommendations": [
+    "rust-lang.rust-analyzer", // official rust extension
+    "vadimcn.vscode-lldb", // for debugging
+    "tamasfe.even-better-toml" // toml syntax
+  ]
+}
