@@ -1,19 +1,19 @@
-import { ConfigurationChangeEvent, workspace, WorkspaceConfiguration } from 'vscode';
-import { IDisposable } from './types';
+import {ConfigurationChangeEvent, workspace, WorkspaceConfiguration} from 'vscode';
+import {IDisposable} from './types';
 
 export class ConfigService implements Config, IDisposable {
   private static readonly _namespace = 'oxc';
   private readonly _disposables: IDisposable[] = [];
   private _inner: WorkspaceConfiguration;
-  private _runTrigger: 'onSave' | 'onType';
+  private _runTrigger: Trigger;
   private _enable: boolean;
-  private _trace: 'off' | 'messages' | 'verbose';
+  private _trace: TraceLevel;
   private _configPath: string;
   private _binPath: string | undefined;
 
   public onConfigChange:
-    | ((this: ConfigService, config: ConfigurationChangeEvent) => void)
-    | undefined;
+      | ((this: ConfigService, config: ConfigurationChangeEvent) => void)
+      | undefined;
 
   constructor() {
     this._inner = workspace.getConfiguration(ConfigService._namespace);
@@ -25,13 +25,9 @@ export class ConfigService implements Config, IDisposable {
     this.onConfigChange = undefined;
 
     const disposeChangeListener = workspace.onDidChangeConfiguration(
-      this.onVscodeConfigChange.bind(this),
+        this.onVscodeConfigChange.bind(this),
     );
     this._disposables.push(disposeChangeListener);
-  }
-
-  get rawConfig(): WorkspaceConfiguration {
-    return this._inner;
   }
 
   get runTrigger(): Trigger {
@@ -41,8 +37,8 @@ export class ConfigService implements Config, IDisposable {
   set runTrigger(value: Trigger) {
     this._runTrigger = value;
     workspace
-      .getConfiguration(ConfigService._namespace)
-      .update('lint.run', value);
+    .getConfiguration(ConfigService._namespace)
+    .update('lint.run', value);
   }
 
   get enable(): boolean {
@@ -52,8 +48,8 @@ export class ConfigService implements Config, IDisposable {
   set enable(value: boolean) {
     this._enable = value;
     workspace
-      .getConfiguration(ConfigService._namespace)
-      .update('enable', value);
+    .getConfiguration(ConfigService._namespace)
+    .update('enable', value);
   }
 
   get trace(): TraceLevel {
@@ -63,8 +59,8 @@ export class ConfigService implements Config, IDisposable {
   set trace(value: TraceLevel) {
     this._trace = value;
     workspace
-      .getConfiguration(ConfigService._namespace)
-      .update('trace.server', value);
+    .getConfiguration(ConfigService._namespace)
+    .update('trace.server', value);
   }
 
   get configPath(): string {
@@ -74,8 +70,8 @@ export class ConfigService implements Config, IDisposable {
   set configPath(value: string) {
     this._configPath = value;
     workspace
-      .getConfiguration(ConfigService._namespace)
-      .update('configPath', value);
+    .getConfiguration(ConfigService._namespace)
+    .update('configPath', value);
   }
 
   get binPath(): string | undefined {
@@ -85,8 +81,8 @@ export class ConfigService implements Config, IDisposable {
   set binPath(value: string | undefined) {
     this._binPath = value;
     workspace
-      .getConfiguration(ConfigService._namespace)
-      .update('path.server', value);
+    .getConfiguration(ConfigService._namespace)
+    .update('path.server', value);
   }
 
   private onVscodeConfigChange(event: ConfigurationChangeEvent): void {
@@ -100,25 +96,30 @@ export class ConfigService implements Config, IDisposable {
     }
   }
 
+
   dispose() {
     for (const disposable of this._disposables) {
       disposable.dispose();
     }
   }
 
-  public toJSON(): Config {
+  public toLanguageServerConfig(): LanguageServerConfig {
     return {
-      runTrigger: this.runTrigger,
+      run: this.runTrigger,
       enable: this.enable,
-      trace: this.trace,
       configPath: this.configPath,
-      binPath: this.binPath,
     };
   }
 }
 
 type Trigger = 'onSave' | 'onType';
 type TraceLevel = 'off' | 'messages' | 'verbose';
+
+interface LanguageServerConfig {
+  configPath: string;
+  enable: boolean;
+  run: Trigger;
+}
 
 /**
  * See `"contributes.configuration"` in `package.json`
