@@ -30,7 +30,6 @@ impl<'s, 'a> Symbol<'s, 'a> {
                 // e.g. `const x = [function foo() {}]`
                 // Only considered used if the array containing the symbol is used.
                 | AstKind::ArrayExpressionElement(_)
-                | AstKind::ExpressionArrayElement(_)
                 | AstKind::ArrayExpression(_)
                 // a ? b : function foo() {}
                 // Only considered used if the function is the test or the selected branch,

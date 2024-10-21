@@ -57,7 +57,7 @@ impl Rule for PreferEventTarget {
         };
 
         match parent.kind() {
-            AstKind::ClassHeritage(_) => {}
+            AstKind::Class(_) => {}
             AstKind::NewExpression(new_expr) => {
                 let Expression::Identifier(callee_ident) = &new_expr.callee else {
                     return;

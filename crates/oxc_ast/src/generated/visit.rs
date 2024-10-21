@@ -208,11 +208,6 @@ pub trait Visit<'a>: Sized {
     }
 
     #[inline]
-    fn visit_expression_array_element(&mut self, it: &Expression<'a>) {
-        walk_expression_array_element(self, it);
-    }
-
-    #[inline]
     fn visit_arrow_function_expression(&mut self, it: &ArrowFunctionExpression<'a>) {
         walk_arrow_function_expression(self, it);
     }
@@ -799,11 +794,6 @@ pub trait Visit<'a>: Sized {
     #[inline]
     fn visit_class(&mut self, it: &Class<'a>) {
         walk_class(self, it);
-    }
-
-    #[inline]
-    fn visit_class_heritage(&mut self, it: &Expression<'a>) {
-        walk_class_heritage(self, it);
     }
 
     #[inline]
@@ -1670,7 +1660,7 @@ pub mod walk {
             ArrayExpressionElement::SpreadElement(it) => visitor.visit_spread_element(it),
             ArrayExpressionElement::Elision(it) => visitor.visit_elision(it),
             match_expression!(ArrayExpressionElement) => {
-                visitor.visit_expression_array_element(it.to_expression())
+                visitor.visit_expression(it.to_expression())
             }
         }
         visitor.leave_node(kind);
@@ -1688,13 +1678,6 @@ pub mod walk {
     pub fn walk_elision<'a, V: Visit<'a>>(visitor: &mut V, it: &Elision) {
         let kind = AstKind::Elision(visitor.alloc(it));
         visitor.enter_node(kind);
-        visitor.leave_node(kind);
-    }
-
-    pub fn walk_expression_array_element<'a, V: Visit<'a>>(visitor: &mut V, it: &Expression<'a>) {
-        let kind = AstKind::ExpressionArrayElement(visitor.alloc(it));
-        visitor.enter_node(kind);
-        visitor.visit_expression(it);
         visitor.leave_node(kind);
     }
 
@@ -2950,7 +2933,7 @@ pub mod walk {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
         if let Some(super_class) = &it.super_class {
-            visitor.visit_class_heritage(super_class);
+            visitor.visit_expression(super_class);
         }
         if let Some(super_type_parameters) = &it.super_type_parameters {
             visitor.visit_ts_type_parameter_instantiation(super_type_parameters);
@@ -2960,13 +2943,6 @@ pub mod walk {
         }
         visitor.visit_class_body(&it.body);
         visitor.leave_scope();
-        visitor.leave_node(kind);
-    }
-
-    pub fn walk_class_heritage<'a, V: Visit<'a>>(visitor: &mut V, it: &Expression<'a>) {
-        let kind = AstKind::ClassHeritage(visitor.alloc(it));
-        visitor.enter_node(kind);
-        visitor.visit_expression(it);
         visitor.leave_node(kind);
     }
 

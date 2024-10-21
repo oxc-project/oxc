@@ -1839,7 +1839,6 @@ pub struct Class<'a> {
     /// class Foo extends Bar {}
     /// //                ^^^
     /// ```
-    #[visit(as(ClassHeritage))]
     pub super_class: Option<Expression<'a>>,
     /// Type parameters passed to super class.
     ///

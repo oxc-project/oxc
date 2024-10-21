@@ -298,7 +298,6 @@ impl<'a> AstKind<'a> {
             Self::AssignmentTargetWithDefault(_) => "AssignmentTargetWithDefault".into(),
             Self::SpreadElement(_) => "SpreadElement".into(),
             Self::Elision(_) => "Elision".into(),
-            Self::ExpressionArrayElement(_) => "ExpressionArrayElement".into(),
             Self::BindingRestElement(_) => "BindingRestElement".into(),
 
             Self::Function(x) => format!("Function({})", or_anonymous(x.id.as_ref())).into(),
@@ -314,7 +313,6 @@ impl<'a> AstKind<'a> {
             Self::Class(c) => format!("Class({})", or_anonymous(c.id.as_ref())).into(),
             Self::TSClassImplements(_) => "TSClassImplements".into(),
             Self::ClassBody(_) => "ClassBody".into(),
-            Self::ClassHeritage(_) => "ClassHeritage".into(),
             Self::StaticBlock(_) => "StaticBlock".into(),
             Self::PropertyDefinition(_) => "PropertyDefinition".into(),
             Self::MethodDefinition(_) => "MethodDefinition".into(),
