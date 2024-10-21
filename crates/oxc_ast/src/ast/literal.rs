@@ -1,4 +1,5 @@
 //! Literals
+#![warn(missing_docs)]
 
 // NB: `#[span]`, `#[scope(...)]`,`#[visit(...)]` and `#[generate_derive(...)]` do NOT do anything to the code.
 // They are purely markers for codegen used in `tasks/ast_tools` and `crates/oxc_traverse/scripts`. See docs in those crates.
@@ -21,8 +22,10 @@ use oxc_syntax::number::{BigintBase, NumberBase};
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct BooleanLiteral {
+    /// Node location in source code
     #[estree(flatten)]
     pub span: Span,
+    /// The boolean value itself
     pub value: bool,
 }
 
@@ -33,6 +36,7 @@ pub struct BooleanLiteral {
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct NullLiteral {
+    /// Node location in source code
     #[estree(flatten)]
     pub span: Span,
 }
@@ -44,13 +48,14 @@ pub struct NullLiteral {
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct NumericLiteral<'a> {
+    /// Node location in source code
     #[estree(flatten)]
     pub span: Span,
     /// The value of the number, converted into base 10
     pub value: f64,
-    /// The number as it appears in the source code
+    /// The number as it appears in source code
     pub raw: &'a str,
-    /// The base representation used by the literal in the source code
+    /// The base representation used by the literal in source code
     #[estree(skip)]
     pub base: NumberBase,
 }
@@ -60,11 +65,12 @@ pub struct NumericLiteral<'a> {
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct BigIntLiteral<'a> {
+    /// Node location in source code
     #[estree(flatten)]
     pub span: Span,
-    /// The bigint as it appears in the source code
+    /// The bigint as it appears in source code
     pub raw: Atom<'a>,
-    /// The base representation used by the literal in the source code
+    /// The base representation used by the literal in source code
     #[estree(skip)]
     pub base: BigintBase,
 }
@@ -76,11 +82,17 @@ pub struct BigIntLiteral<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct RegExpLiteral<'a> {
+    /// Node location in source code
     #[estree(flatten)]
     pub span: Span,
-    // valid regex is printed as {}
-    // invalid regex is printed as null, which we can't implement yet
+    /// Placeholder for printing.
+    ///
+    /// Valid regular expressions are printed as `{}`, while invalid ones are
+    /// printed as `null`. Note that invalid regular expressions are not yet
+    /// printed properly.
     pub value: EmptyObject,
+    /// The parsed regular expression. See [`oxc_regular_expression`] for more
+    /// details.
     pub regex: RegExp<'a>,
 }
 
@@ -117,6 +129,7 @@ pub enum RegExpPattern<'a> {
     Pattern(Box<'a, Pattern<'a>>) = 2,
 }
 
+/// An empty object literal (`{}`)
 #[ast]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
@@ -130,8 +143,10 @@ pub struct EmptyObject;
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct StringLiteral<'a> {
+    /// Node location in source code
     #[estree(flatten)]
     pub span: Span,
+    /// The string as it appears in source code
     pub value: Atom<'a>,
 }
 

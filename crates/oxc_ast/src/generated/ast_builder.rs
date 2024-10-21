@@ -24,8 +24,8 @@ impl<'a> AstBuilder<'a> {
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_boolean_literal`] instead.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
-    /// - value
+    /// - span: Node location in source code
+    /// - value: The boolean value itself
     #[inline]
     pub fn boolean_literal(self, span: Span, value: bool) -> BooleanLiteral {
         BooleanLiteral { span, value }
@@ -36,8 +36,8 @@ impl<'a> AstBuilder<'a> {
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::boolean_literal`] instead.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
-    /// - value
+    /// - span: Node location in source code
+    /// - value: The boolean value itself
     #[inline]
     pub fn alloc_boolean_literal(self, span: Span, value: bool) -> Box<'a, BooleanLiteral> {
         Box::new_in(self.boolean_literal(span, value), self.allocator)
@@ -48,7 +48,7 @@ impl<'a> AstBuilder<'a> {
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_null_literal`] instead.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     #[inline]
     pub fn null_literal(self, span: Span) -> NullLiteral {
         NullLiteral { span }
@@ -59,7 +59,7 @@ impl<'a> AstBuilder<'a> {
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::null_literal`] instead.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     #[inline]
     pub fn alloc_null_literal(self, span: Span) -> Box<'a, NullLiteral> {
         Box::new_in(self.null_literal(span), self.allocator)
@@ -70,10 +70,10 @@ impl<'a> AstBuilder<'a> {
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_numeric_literal`] instead.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - value: The value of the number, converted into base 10
-    /// - raw: The number as it appears in the source code
-    /// - base: The base representation used by the literal in the source code
+    /// - raw: The number as it appears in source code
+    /// - base: The base representation used by the literal in source code
     #[inline]
     pub fn numeric_literal<S>(
         self,
@@ -93,10 +93,10 @@ impl<'a> AstBuilder<'a> {
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::numeric_literal`] instead.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - value: The value of the number, converted into base 10
-    /// - raw: The number as it appears in the source code
-    /// - base: The base representation used by the literal in the source code
+    /// - raw: The number as it appears in source code
+    /// - base: The base representation used by the literal in source code
     #[inline]
     pub fn alloc_numeric_literal<S>(
         self,
@@ -116,9 +116,9 @@ impl<'a> AstBuilder<'a> {
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_big_int_literal`] instead.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
-    /// - raw: The bigint as it appears in the source code
-    /// - base: The base representation used by the literal in the source code
+    /// - span: Node location in source code
+    /// - raw: The bigint as it appears in source code
+    /// - base: The base representation used by the literal in source code
     #[inline]
     pub fn big_int_literal<A>(self, span: Span, raw: A, base: BigintBase) -> BigIntLiteral<'a>
     where
@@ -132,9 +132,9 @@ impl<'a> AstBuilder<'a> {
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::big_int_literal`] instead.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
-    /// - raw: The bigint as it appears in the source code
-    /// - base: The base representation used by the literal in the source code
+    /// - span: Node location in source code
+    /// - raw: The bigint as it appears in source code
+    /// - base: The base representation used by the literal in source code
     #[inline]
     pub fn alloc_big_int_literal<A>(
         self,
@@ -153,9 +153,9 @@ impl<'a> AstBuilder<'a> {
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_reg_exp_literal`] instead.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
-    /// - value
-    /// - regex
+    /// - span: Node location in source code
+    /// - value: Placeholder for printing.
+    /// - regex: The parsed regular expression. See [`oxc_regular_expression`] for more
     #[inline]
     pub fn reg_exp_literal(
         self,
@@ -171,9 +171,9 @@ impl<'a> AstBuilder<'a> {
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::reg_exp_literal`] instead.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
-    /// - value
-    /// - regex
+    /// - span: Node location in source code
+    /// - value: Placeholder for printing.
+    /// - regex: The parsed regular expression. See [`oxc_regular_expression`] for more
     #[inline]
     pub fn alloc_reg_exp_literal(
         self,
@@ -189,8 +189,8 @@ impl<'a> AstBuilder<'a> {
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_string_literal`] instead.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
-    /// - value
+    /// - span: Node location in source code
+    /// - value: The string as it appears in source code
     #[inline]
     pub fn string_literal<A>(self, span: Span, value: A) -> StringLiteral<'a>
     where
@@ -204,8 +204,8 @@ impl<'a> AstBuilder<'a> {
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::string_literal`] instead.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
-    /// - value
+    /// - span: Node location in source code
+    /// - value: The string as it appears in source code
     #[inline]
     pub fn alloc_string_literal<A>(self, span: Span, value: A) -> Box<'a, StringLiteral<'a>>
     where
@@ -289,8 +289,8 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`BooleanLiteral`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
-    /// - value
+    /// - span: Node location in source code
+    /// - value: The boolean value itself
     #[inline]
     pub fn expression_boolean_literal(self, span: Span, value: bool) -> Expression<'a> {
         Expression::BooleanLiteral(self.alloc(self.boolean_literal(span, value)))
@@ -310,7 +310,7 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`NullLiteral`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     #[inline]
     pub fn expression_null_literal(self, span: Span) -> Expression<'a> {
         Expression::NullLiteral(self.alloc(self.null_literal(span)))
@@ -330,10 +330,10 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`NumericLiteral`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - value: The value of the number, converted into base 10
-    /// - raw: The number as it appears in the source code
-    /// - base: The base representation used by the literal in the source code
+    /// - raw: The number as it appears in source code
+    /// - base: The base representation used by the literal in source code
     #[inline]
     pub fn expression_numeric_literal<S>(
         self,
@@ -362,9 +362,9 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`BigIntLiteral`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
-    /// - raw: The bigint as it appears in the source code
-    /// - base: The base representation used by the literal in the source code
+    /// - span: Node location in source code
+    /// - raw: The bigint as it appears in source code
+    /// - base: The base representation used by the literal in source code
     #[inline]
     pub fn expression_big_int_literal<A>(
         self,
@@ -392,9 +392,9 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`RegExpLiteral`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
-    /// - value
-    /// - regex
+    /// - span: Node location in source code
+    /// - value: Placeholder for printing.
+    /// - regex: The parsed regular expression. See [`oxc_regular_expression`] for more
     #[inline]
     pub fn expression_reg_exp_literal(
         self,
@@ -419,8 +419,8 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
-    /// - value
+    /// - span: Node location in source code
+    /// - value: The string as it appears in source code
     #[inline]
     pub fn expression_string_literal<A>(self, span: Span, value: A) -> Expression<'a>
     where
@@ -1269,7 +1269,7 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`JSXElement`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - opening_element: Opening tag of the element.
     /// - closing_element: Closing tag of the element. Will be [`None`] for self-closing tags.
     /// - children: Children of the element. This can be text, other elements, or expressions.
@@ -1307,7 +1307,7 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`JSXFragment`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - opening_fragment: `<>`
     /// - closing_fragment: `</>`
     /// - children: Elements inside the fragment.
@@ -7467,8 +7467,8 @@ impl<'a> AstBuilder<'a> {
     /// Build an [`ImportAttributeKey::StringLiteral`]
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
-    /// - value
+    /// - span: Node location in source code
+    /// - value: The string as it appears in source code
     #[inline]
     pub fn import_attribute_key_string_literal<A>(
         self,
@@ -7925,8 +7925,8 @@ impl<'a> AstBuilder<'a> {
     /// Build a [`ModuleExportName::StringLiteral`]
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
-    /// - value
+    /// - span: Node location in source code
+    /// - value: The string as it appears in source code
     #[inline]
     pub fn module_export_name_string_literal<A>(self, span: Span, value: A) -> ModuleExportName<'a>
     where
@@ -8099,8 +8099,8 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
-    /// - value
+    /// - span: Node location in source code
+    /// - value: The string as it appears in source code
     #[inline]
     pub fn ts_enum_member_name_string_literal<A>(self, span: Span, value: A) -> TSEnumMemberName<'a>
     where
@@ -8154,10 +8154,10 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`NumericLiteral`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - value: The value of the number, converted into base 10
-    /// - raw: The number as it appears in the source code
-    /// - base: The base representation used by the literal in the source code
+    /// - raw: The number as it appears in source code
+    /// - base: The base representation used by the literal in source code
     #[inline]
     pub fn ts_enum_member_name_numeric_literal<S>(
         self,
@@ -8253,8 +8253,8 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`BooleanLiteral`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
-    /// - value
+    /// - span: Node location in source code
+    /// - value: The boolean value itself
     #[inline]
     pub fn ts_literal_boolean_literal(self, span: Span, value: bool) -> TSLiteral<'a> {
         TSLiteral::BooleanLiteral(self.alloc(self.boolean_literal(span, value)))
@@ -8274,7 +8274,7 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`NullLiteral`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     #[inline]
     pub fn ts_literal_null_literal(self, span: Span) -> TSLiteral<'a> {
         TSLiteral::NullLiteral(self.alloc(self.null_literal(span)))
@@ -8294,10 +8294,10 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`NumericLiteral`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - value: The value of the number, converted into base 10
-    /// - raw: The number as it appears in the source code
-    /// - base: The base representation used by the literal in the source code
+    /// - raw: The number as it appears in source code
+    /// - base: The base representation used by the literal in source code
     #[inline]
     pub fn ts_literal_numeric_literal<S>(
         self,
@@ -8326,9 +8326,9 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`BigIntLiteral`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
-    /// - raw: The bigint as it appears in the source code
-    /// - base: The base representation used by the literal in the source code
+    /// - span: Node location in source code
+    /// - raw: The bigint as it appears in source code
+    /// - base: The base representation used by the literal in source code
     #[inline]
     pub fn ts_literal_big_int_literal<A>(
         self,
@@ -8356,9 +8356,9 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`RegExpLiteral`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
-    /// - value
-    /// - regex
+    /// - span: Node location in source code
+    /// - value: Placeholder for printing.
+    /// - regex: The parsed regular expression. See [`oxc_regular_expression`] for more
     #[inline]
     pub fn ts_literal_reg_exp_literal(
         self,
@@ -8383,8 +8383,8 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
-    /// - value
+    /// - span: Node location in source code
+    /// - value: The string as it appears in source code
     #[inline]
     pub fn ts_literal_string_literal<A>(self, span: Span, value: A) -> TSLiteral<'a>
     where
@@ -11477,8 +11477,8 @@ impl<'a> AstBuilder<'a> {
     /// Build a [`TSModuleDeclarationName::StringLiteral`]
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
-    /// - value
+    /// - span: Node location in source code
+    /// - value: The string as it appears in source code
     #[inline]
     pub fn ts_module_declaration_name_string_literal<A>(
         self,
@@ -11940,8 +11940,8 @@ impl<'a> AstBuilder<'a> {
     /// Build a [`TSImportAttributeName::StringLiteral`]
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
-    /// - value
+    /// - span: Node location in source code
+    /// - value: The string as it appears in source code
     #[inline]
     pub fn ts_import_attribute_name_string_literal<A>(
         self,
@@ -12688,7 +12688,7 @@ impl<'a> AstBuilder<'a> {
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_element`] instead.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - opening_element: Opening tag of the element.
     /// - closing_element: Closing tag of the element. Will be [`None`] for self-closing tags.
     /// - children: Children of the element. This can be text, other elements, or expressions.
@@ -12717,7 +12717,7 @@ impl<'a> AstBuilder<'a> {
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_element`] instead.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - opening_element: Opening tag of the element.
     /// - closing_element: Closing tag of the element. Will be [`None`] for self-closing tags.
     /// - children: Children of the element. This can be text, other elements, or expressions.
@@ -12744,9 +12744,9 @@ impl<'a> AstBuilder<'a> {
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_opening_element`] instead.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - self_closing: Is this tag self-closing?
-    /// - name
+    /// - name: The possibly-namespaced tag name, e.g. `Foo` in `<Foo />`.
     /// - attributes: List of JSX attributes. In React-like applications, these become props.
     /// - type_parameters: Type parameters for generic JSX elements.
     #[inline]
@@ -12775,9 +12775,9 @@ impl<'a> AstBuilder<'a> {
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_opening_element`] instead.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - self_closing: Is this tag self-closing?
-    /// - name
+    /// - name: The possibly-namespaced tag name, e.g. `Foo` in `<Foo />`.
     /// - attributes: List of JSX attributes. In React-like applications, these become props.
     /// - type_parameters: Type parameters for generic JSX elements.
     #[inline]
@@ -12803,8 +12803,8 @@ impl<'a> AstBuilder<'a> {
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_closing_element`] instead.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
-    /// - name
+    /// - span: Node location in source code
+    /// - name: The tag name, e.g. `Foo` in `</Foo>`.
     #[inline]
     pub fn jsx_closing_element(
         self,
@@ -12819,8 +12819,8 @@ impl<'a> AstBuilder<'a> {
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_closing_element`] instead.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
-    /// - name
+    /// - span: Node location in source code
+    /// - name: The tag name, e.g. `Foo` in `</Foo>`.
     #[inline]
     pub fn alloc_jsx_closing_element(
         self,
@@ -12835,7 +12835,7 @@ impl<'a> AstBuilder<'a> {
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_fragment`] instead.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - opening_fragment: `<>`
     /// - closing_fragment: `</>`
     /// - children: Elements inside the fragment.
@@ -12855,7 +12855,7 @@ impl<'a> AstBuilder<'a> {
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_fragment`] instead.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - opening_fragment: `<>`
     /// - closing_fragment: `</>`
     /// - children: Elements inside the fragment.
@@ -12878,7 +12878,7 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`JSXIdentifier`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - name: The name of the identifier.
     #[inline]
     pub fn jsx_element_name_jsx_identifier<A>(self, span: Span, name: A) -> JSXElementName<'a>
@@ -12926,7 +12926,7 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`JSXNamespacedName`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - namespace: Namespace portion of the name, e.g. `Apple` in `<Apple:Orange />`
     /// - property: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
     #[inline]
@@ -12955,7 +12955,7 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`JSXMemberExpression`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - object: The object being accessed. This is everything before the last `.`.
     /// - property: The property being accessed. This is everything after the last `.`.
     #[inline]
@@ -13004,7 +13004,7 @@ impl<'a> AstBuilder<'a> {
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_namespaced_name`] instead.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - namespace: Namespace portion of the name, e.g. `Apple` in `<Apple:Orange />`
     /// - property: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
     #[inline]
@@ -13022,7 +13022,7 @@ impl<'a> AstBuilder<'a> {
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_namespaced_name`] instead.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - namespace: Namespace portion of the name, e.g. `Apple` in `<Apple:Orange />`
     /// - property: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
     #[inline]
@@ -13040,7 +13040,7 @@ impl<'a> AstBuilder<'a> {
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_member_expression`] instead.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - object: The object being accessed. This is everything before the last `.`.
     /// - property: The property being accessed. This is everything after the last `.`.
     #[inline]
@@ -13058,7 +13058,7 @@ impl<'a> AstBuilder<'a> {
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_member_expression`] instead.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - object: The object being accessed. This is everything before the last `.`.
     /// - property: The property being accessed. This is everything after the last `.`.
     #[inline]
@@ -13109,7 +13109,7 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`JSXMemberExpression`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - object: The object being accessed. This is everything before the last `.`.
     /// - property: The property being accessed. This is everything after the last `.`.
     #[inline]
@@ -13167,7 +13167,7 @@ impl<'a> AstBuilder<'a> {
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_expression_container`] instead.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - expression: The expression inside the container.
     #[inline]
     pub fn jsx_expression_container(
@@ -13183,7 +13183,7 @@ impl<'a> AstBuilder<'a> {
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_expression_container`] instead.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - expression: The expression inside the container.
     #[inline]
     pub fn alloc_jsx_expression_container(
@@ -13197,7 +13197,7 @@ impl<'a> AstBuilder<'a> {
     /// Build a [`JSXExpression::EmptyExpression`]
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     #[inline]
     pub fn jsx_expression_jsx_empty_expression(self, span: Span) -> JSXExpression<'a> {
         JSXExpression::EmptyExpression(self.jsx_empty_expression(span))
@@ -13222,7 +13222,7 @@ impl<'a> AstBuilder<'a> {
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_empty_expression`] instead.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     #[inline]
     pub fn jsx_empty_expression(self, span: Span) -> JSXEmptyExpression {
         JSXEmptyExpression { span }
@@ -13233,7 +13233,7 @@ impl<'a> AstBuilder<'a> {
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_empty_expression`] instead.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     #[inline]
     pub fn alloc_jsx_empty_expression(self, span: Span) -> Box<'a, JSXEmptyExpression> {
         Box::new_in(self.jsx_empty_expression(span), self.allocator)
@@ -13244,7 +13244,7 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`JSXAttribute`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - name: The name of the attribute. This is a prop in React-like applications.
     /// - value: The value of the attribute. This can be a string literal, an expression,
     #[inline]
@@ -13271,8 +13271,8 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`JSXSpreadAttribute`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
-    /// - argument
+    /// - span: Node location in source code
+    /// - argument: The expression being spread.
     #[inline]
     pub fn jsx_attribute_item_jsx_spread_attribute(
         self,
@@ -13296,7 +13296,7 @@ impl<'a> AstBuilder<'a> {
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_attribute`] instead.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - name: The name of the attribute. This is a prop in React-like applications.
     /// - value: The value of the attribute. This can be a string literal, an expression,
     #[inline]
@@ -13314,7 +13314,7 @@ impl<'a> AstBuilder<'a> {
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_attribute`] instead.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - name: The name of the attribute. This is a prop in React-like applications.
     /// - value: The value of the attribute. This can be a string literal, an expression,
     #[inline]
@@ -13332,8 +13332,8 @@ impl<'a> AstBuilder<'a> {
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_spread_attribute`] instead.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
-    /// - argument
+    /// - span: Node location in source code
+    /// - argument: The expression being spread.
     #[inline]
     pub fn jsx_spread_attribute(
         self,
@@ -13348,8 +13348,8 @@ impl<'a> AstBuilder<'a> {
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_spread_attribute`] instead.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
-    /// - argument
+    /// - span: Node location in source code
+    /// - argument: The expression being spread.
     #[inline]
     pub fn alloc_jsx_spread_attribute(
         self,
@@ -13364,7 +13364,7 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`JSXIdentifier`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - name: The name of the identifier.
     #[inline]
     pub fn jsx_attribute_name_jsx_identifier<A>(self, span: Span, name: A) -> JSXAttributeName<'a>
@@ -13388,7 +13388,7 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`JSXNamespacedName`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - namespace: Namespace portion of the name, e.g. `Apple` in `<Apple:Orange />`
     /// - property: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
     #[inline]
@@ -13417,8 +13417,8 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
-    /// - value
+    /// - span: Node location in source code
+    /// - value: The string as it appears in source code
     #[inline]
     pub fn jsx_attribute_value_string_literal<A>(
         self,
@@ -13445,7 +13445,7 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`JSXExpressionContainer`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - expression: The expression inside the container.
     #[inline]
     pub fn jsx_attribute_value_jsx_expression_container(
@@ -13475,7 +13475,7 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`JSXElement`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - opening_element: Opening tag of the element.
     /// - closing_element: Closing tag of the element. Will be [`None`] for self-closing tags.
     /// - children: Children of the element. This can be text, other elements, or expressions.
@@ -13513,7 +13513,7 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`JSXFragment`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - opening_fragment: `<>`
     /// - closing_fragment: `</>`
     /// - children: Elements inside the fragment.
@@ -13547,7 +13547,7 @@ impl<'a> AstBuilder<'a> {
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_identifier`] instead.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - name: The name of the identifier.
     #[inline]
     pub fn jsx_identifier<A>(self, span: Span, name: A) -> JSXIdentifier<'a>
@@ -13562,7 +13562,7 @@ impl<'a> AstBuilder<'a> {
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_identifier`] instead.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - name: The name of the identifier.
     #[inline]
     pub fn alloc_jsx_identifier<A>(self, span: Span, name: A) -> Box<'a, JSXIdentifier<'a>>
@@ -13577,7 +13577,7 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`JSXText`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - value: The text content.
     #[inline]
     pub fn jsx_child_jsx_text<A>(self, span: Span, value: A) -> JSXChild<'a>
@@ -13601,7 +13601,7 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`JSXElement`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - opening_element: Opening tag of the element.
     /// - closing_element: Closing tag of the element. Will be [`None`] for self-closing tags.
     /// - children: Children of the element. This can be text, other elements, or expressions.
@@ -13639,7 +13639,7 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`JSXFragment`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - opening_fragment: `<>`
     /// - closing_fragment: `</>`
     /// - children: Elements inside the fragment.
@@ -13673,7 +13673,7 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`JSXExpressionContainer`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - expression: The expression inside the container.
     #[inline]
     pub fn jsx_child_jsx_expression_container(
@@ -13698,7 +13698,7 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`JSXSpreadChild`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - expression: The expression being spread.
     #[inline]
     pub fn jsx_child_jsx_spread_child(
@@ -13723,7 +13723,7 @@ impl<'a> AstBuilder<'a> {
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_spread_child`] instead.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - expression: The expression being spread.
     #[inline]
     pub fn jsx_spread_child(self, span: Span, expression: Expression<'a>) -> JSXSpreadChild<'a> {
@@ -13735,7 +13735,7 @@ impl<'a> AstBuilder<'a> {
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_spread_child`] instead.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - expression: The expression being spread.
     #[inline]
     pub fn alloc_jsx_spread_child(
@@ -13751,7 +13751,7 @@ impl<'a> AstBuilder<'a> {
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_text`] instead.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - value: The text content.
     #[inline]
     pub fn jsx_text<A>(self, span: Span, value: A) -> JSXText<'a>
@@ -13766,7 +13766,7 @@ impl<'a> AstBuilder<'a> {
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_text`] instead.
     ///
     /// ## Parameters
-    /// - span: The [`Span`] covering this node
+    /// - span: Node location in source code
     /// - value: The text content.
     #[inline]
     pub fn alloc_jsx_text<A>(self, span: Span, value: A) -> Box<'a, JSXText<'a>>
