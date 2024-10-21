@@ -176,11 +176,21 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         id: Option<BindingIdentifier<'a>>,
         params: FormalParameters<'a>,
-        body: Option<FunctionBody<'a>>,
+        body: FunctionBody<'a>,
     ) -> Box<'a, Function<'a>> {
-        self.alloc(
-            self.function(r#type, span, id, false, false, false, NONE, NONE, params, NONE, body),
-        )
+        self.alloc(self.function(
+            r#type,
+            span,
+            id,
+            false,
+            false,
+            false,
+            NONE,
+            NONE,
+            params,
+            NONE,
+            Some(body),
+        ))
     }
 
     /* ---------- Modules ---------- */
