@@ -14,10 +14,12 @@ use oxc_syntax::number::NumberBase;
 use crate::ast::*;
 
 impl BooleanLiteral {
+    /// Create a new boolean literal representing the given `value`.
     pub fn new(span: Span, value: bool) -> Self {
         Self { span, value }
     }
 
+    /// `"true"` or `"false"` depending on this boolean's value.
     pub fn as_str(&self) -> &'static str {
         if self.value {
             "true"
@@ -42,6 +44,7 @@ impl ContentHash for NullLiteral {
 }
 
 impl NullLiteral {
+    /// Create a new `null` literal at the given location.
     pub fn new(span: Span) -> Self {
         Self { span }
     }
@@ -55,6 +58,7 @@ impl fmt::Display for NullLiteral {
 }
 
 impl<'a> NumericLiteral<'a> {
+    /// Create a numeric literal representing the given `value`.
     pub fn new(span: Span, value: f64, raw: &'a str, base: NumberBase) -> Self {
         Self { span, value, raw, base }
     }
@@ -101,6 +105,7 @@ impl<'a> fmt::Display for NumericLiteral<'a> {
 }
 
 impl<'a> BigIntLiteral<'a> {
+    /// Is this BigInt literal zero? (`0n`).
     pub fn is_zero(&self) -> bool {
         self.raw == "0n"
     }
@@ -119,6 +124,7 @@ impl<'a> fmt::Display for RegExp<'a> {
 }
 
 impl<'a> RegExpPattern<'a> {
+    /// Returns the number of characters in the pattern.
     pub fn len(&self) -> usize {
         match self {
             Self::Raw(it) | Self::Invalid(it) => it.len(),
@@ -126,10 +132,13 @@ impl<'a> RegExpPattern<'a> {
         }
     }
 
+    /// Returns `true` if the pattern is empty (i.e. has a
+    /// [len](RegExpPattern::len) of `0`).
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
 
+    /// Returns the string as this regular expression would appear in source code.
     pub fn source_text(&self, source_text: &'a str) -> Cow<str> {
         match self {
             Self::Raw(raw) | Self::Invalid(raw) => Cow::Borrowed(raw),
@@ -152,6 +161,8 @@ impl<'a> RegExpPattern<'a> {
         }
     }
 
+    /// Flatten this regular expression into a compiled [`Pattern`], returning
+    /// [`None`] if the pattern is invalid or not parsed.
     pub fn as_pattern(&self) -> Option<&Pattern<'a>> {
         if let Self::Pattern(it) = self {
             Some(it.as_ref())
@@ -257,6 +268,7 @@ impl fmt::Display for RegExpFlags {
 }
 
 impl<'a> StringLiteral<'a> {
+    /// Create a new string literal representing the given `value`.
     pub fn new(span: Span, value: Atom<'a>) -> Self {
         Self { span, value }
     }

@@ -1,3 +1,4 @@
+//! [Expression precedence trait](GetPrecedence) implementations.
 use oxc_syntax::precedence::{GetPrecedence, Precedence};
 
 use crate::ast::{
