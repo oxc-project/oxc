@@ -16,7 +16,7 @@ alias new-typescript-rule := new-ts-rule
 # or install via `cargo install cargo-binstall`
 # Initialize the project by installing all the necessary tools.
 init:
-  cargo binstall cargo-watch cargo-insta typos-cli cargo-shear dprint -y
+  cargo binstall bacon cargo-insta typos-cli cargo-shear dprint -y
 
 # When ready, run the same CI commands
 ready:
@@ -42,15 +42,15 @@ install-hook:
   echo -e "#!/bin/sh\njust fmt" > .git/hooks/pre-commit
   chmod +x .git/hooks/pre-commit
 
-# --no-vcs-ignores: cargo-watch has a bug loading all .gitignores, including the ones listed in .gitignore
-# use .ignore file getting the ignore list
-# Run `cargo watch`
-watch command:
-  cargo watch --no-vcs-ignores -i '*snap*' -x '{{command}}'
+watch:
+  bacon
 
 # Run the example in `parser`, `formatter`, `linter`
 example tool *args='':
-  just watch 'run -p oxc_{{tool}} --example {{tool}} -- {{args}}'
+  cargo --color always run -p oxc_{{tool}} --example {{tool}} -- {{args}}
+
+watch-example args='':
+  bacon example -- {{args}}
 
 # Generate AST related boilerplate code.
 # Run this when AST definition is changed.
@@ -101,13 +101,13 @@ coverage:
 conformance *args='':
   cargo coverage -- {{args}}
 
-# Watch oxlint
-watch-oxlint *args='':
-  just watch 'run -p oxlint -- {{args}}'
-
 # Build oxlint in release build
 oxlint:
   cargo oxlint
+
+# Watch oxlint
+watch-oxlint *args='':
+  bacon oxlint -- {{args}}
 
 # Get code coverage
 codecov:
@@ -132,7 +132,7 @@ install-wasm:
   cargo binstall wasm-pack
 
 watch-wasm:
-  cargo watch --no-vcs-ignores -i 'npm/oxc-wasm/**' -- just build-wasm dev
+  bacon wasm
 
 build-wasm mode="release":
   wasm-pack build --out-dir ../../npm/oxc-wasm --target web --{{mode}} --scope oxc crates/oxc_wasm
