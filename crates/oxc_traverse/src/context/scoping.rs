@@ -139,6 +139,21 @@ impl TraverseScoping {
         new_scope_id
     }
 
+    pub fn remove_scope_expression(&mut self, scope_id: ScopeId, expr: &Expression) {
+        let mut collector = ChildScopeCollector::new();
+        collector.visit_expression(expr);
+
+        let child_ids = collector.scope_ids;
+        if !child_ids.is_empty() {
+            let parent_id = self.scopes.get_parent_id(scope_id);
+            for child_id in child_ids {
+                self.scopes.set_parent_id(child_id, parent_id);
+            }
+        }
+
+        self.scopes.delete_scope(scope_id);
+    }
+
     /// Generate UID var name.
     ///
     /// Finds a unique variable name which does clash with any other variables used in the program.
