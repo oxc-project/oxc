@@ -14,9 +14,9 @@
 
 use std::cell::RefCell;
 
-use oxc_allocator::{Address, Vec as AVec};
+use oxc_allocator::{Address, GetAddress, Vec as AVec};
 
-use oxc_ast::{address::GetAddress, ast::*};
+use oxc_ast::ast::*;
 use oxc_traverse::{Traverse, TraverseCtx};
 use rustc_hash::FxHashMap;
 

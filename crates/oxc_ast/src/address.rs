@@ -1,15 +1,10 @@
-//! Defines the `GetAddress` trait for getting the memory address of AST.
-
-use oxc_allocator::Address;
+use oxc_allocator::{Address, GetAddress};
 
 use crate::ast::Statement;
 
-/// Trait for getting the memory address of AST.
-pub trait GetAddress {
-    fn address(&self) -> Address;
-}
-
 impl<'a> GetAddress for Statement<'a> {
+    // `#[inline]` because compiler should boil this down to a single assembly instruction
+    #[inline]
     fn address(&self) -> Address {
         match self {
             Statement::BlockStatement(s) => s.address(),
