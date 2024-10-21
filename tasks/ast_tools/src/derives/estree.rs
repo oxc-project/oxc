@@ -22,6 +22,10 @@ impl Derive for DeriveESTree {
         "ESTree"
     }
 
+    fn snake_name() -> String {
+        "estree".to_string()
+    }
+
     fn derive(&mut self, def: &TypeDef, _: &LateCtx) -> TokenStream {
         let ts_type_def = match def {
             TypeDef::Enum(def) => typescript_enum(def),
