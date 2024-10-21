@@ -27,6 +27,7 @@ use config::LintConfig;
 use context::ContextHost;
 use options::LintOptions;
 use oxc_semantic::{AstNode, Semantic};
+use utils::iter_possible_jest_call_node;
 
 pub use crate::{
     builder::LinterBuilder,
@@ -137,6 +138,14 @@ impl Linter {
         for node in semantic.nodes() {
             for (rule, ctx) in &rules {
                 rule.run(node, ctx);
+            }
+        }
+
+        if ctx_host.frameworks().is_test() && self.options.plugins.has_test() {
+            for jest_node in iter_possible_jest_call_node(semantic) {
+                for (rule, ctx) in &rules {
+                    rule.run_on_jest_node(&jest_node, ctx);
+                }
             }
         }
 
