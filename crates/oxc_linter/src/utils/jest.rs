@@ -146,9 +146,17 @@ pub struct PossibleJestNode<'a, 'b> {
 
 /// Collect all possible Jest fn Call Expression,
 /// for `expect(1).toBe(1)`, the result will be a collection of node `expect(1)` and node `expect(1).toBe(1)`.
-pub fn collect_possible_jest_call_node<'a, 'b>(
-    ctx: &'b LintContext<'a>,
-) -> Vec<PossibleJestNode<'a, 'b>> {
+pub fn collect_possible_jest_call_node<'a, 'c>(
+    ctx: &'c LintContext<'a>,
+) -> Vec<PossibleJestNode<'a, 'c>> {
+    iter_possible_jest_call_node(ctx).collect()
+}
+
+/// Iterate over all possible Jest fn Call Expression,
+/// for `expect(1).toBe(1)`, the result will be an iter over node `expect(1)` and node `expect(1).toBe(1)`.
+pub fn iter_possible_jest_call_node<'a, 'c>(
+    ctx: &'c LintContext<'a>,
+) -> impl Iterator<Item = PossibleJestNode<'a, 'c>> + 'c {
     // Some people may write codes like below, we need lookup imported test function and global test function.
     // ```
     // import { jest as Jest } from '@jest/globals';
@@ -164,30 +172,27 @@ pub fn collect_possible_jest_call_node<'a, 'b>(
     );
 
     // get the longest valid chain of Jest Call Expression
-    reference_id_with_original_list.fold(vec![], |mut acc, id_with_original| {
-        let (reference_id, original) = id_with_original;
+    reference_id_with_original_list.flat_map(move |(reference_id, original)| {
         let mut id = ctx.symbols().get_reference(reference_id).node_id();
-        loop {
+        std::iter::from_fn(move || loop {
             let parent = ctx.nodes().parent_node(id);
             if let Some(parent) = parent {
                 let parent_kind = parent.kind();
                 if matches!(parent_kind, AstKind::CallExpression(_)) {
-                    acc.push(PossibleJestNode { node: parent, original });
                     id = parent.id();
+                    return Some(PossibleJestNode { node: parent, original });
                 } else if matches!(
                     parent_kind,
                     AstKind::MemberExpression(_) | AstKind::TaggedTemplateExpression(_)
                 ) {
                     id = parent.id();
                 } else {
-                    break;
+                    return None;
                 }
             } else {
-                break;
+                return None;
             }
-        }
-
-        acc
+        })
     })
 }
 
