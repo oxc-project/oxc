@@ -117,7 +117,9 @@ impl Rule for NoDuplicates {
                     .collect::<Vec<_>>();
                 if imports.is_empty() {
                     import_entries_maps.entry(0).or_default().push(requested_module);
+                    continue;
                 }
+                let mut flags = [true; 4];
                 for imports in imports {
                     let key = if imports.is_type {
                         match imports.import_name {
@@ -131,7 +133,11 @@ impl Rule for NoDuplicates {
                             _ => 0,
                         }
                     };
-                    import_entries_maps.entry(key).or_default().push(requested_module);
+
+                    if flags[key as usize] {
+                        flags[key as usize] = false;
+                        import_entries_maps.entry(key).or_default().push(requested_module);
+                    }
                 }
             }
 
@@ -206,6 +212,7 @@ fn test() {
         (r"import type * as something from './foo'; import { y } from './foo';", None),
         (r"import y from './foo'; import type * as something from './foo';", None),
         (r"import { y } from './foo'; import type * as something from './foo';", None),
+        (r"import { RouterModule, Routes } from '@angular/router';", None),
     ];
 
     let fail = vec![
