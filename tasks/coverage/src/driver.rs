@@ -166,16 +166,8 @@ impl Driver {
             };
             let printed1 = pattern.to_string();
             let flags = literal.regex.flags.to_string();
-            match LiteralParser::new(
-                &allocator,
-                &printed1,
-                Some(&flags),
-                Options {
-                    pattern_span_offset: literal.span.start + 1, // Skip the left `/`
-                    flags_span_offset: literal.span.end + 1,     // Skip the right `/`
-                },
-            )
-            .parse()
+            match LiteralParser::new(&allocator, &printed1, Some(&flags), Options::default())
+                .parse()
             {
                 Ok(pattern2) => {
                     let printed2 = pattern2.to_string();
