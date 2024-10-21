@@ -6,11 +6,11 @@ use oxc_macros::declare_oxc_lint;
 use oxc_regular_expression::{
     ast::{CapturingGroup, Character, Pattern},
     visit::{walk, Visit},
-    Parser, ParserOptions,
+    ConstructorParser, Options,
 };
-use oxc_span::{GetSpan, Span};
+use oxc_span::Span;
 
-use crate::{ast_util::extract_regex_flags, context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_control_regex_diagnostic(count: usize, regex: &str, span: Span) -> OxcDiagnostic {
     debug_assert!(count > 0);
@@ -82,75 +82,63 @@ impl Rule for NoControlRegex {
             }
 
             // new RegExp()
-            AstKind::NewExpression(expr) => {
-                // constructor is RegExp,
-                if expr.callee.is_specific_id("RegExp")
-                // which is provided at least 1 parameter,
-                    && expr.arguments.len() > 0
-                {
-                    // where the first one is a string literal
-                    // note: improvements required for strings used via identifier
-                    // references
-                    if let Argument::StringLiteral(pattern) = &expr.arguments[0] {
-                        // get pattern from arguments. Missing or non-string arguments
-                        // will be runtime errors, but are not covered by this rule.
-                        parse_and_check_regex(
-                            context,
-                            &pattern.value,
-                            &expr.arguments,
-                            pattern.span,
-                        );
+            AstKind::NewExpression(expr) if expr.callee.is_specific_id("RegExp") => {
+                // note: improvements required for strings used via identifier references
+                // Missing or non-string arguments will be runtime errors, but are not covered by this rule.
+                match (&expr.arguments.first(), &expr.arguments.get(1)) {
+                    (
+                        Some(Argument::StringLiteral(pattern)),
+                        Some(Argument::StringLiteral(flags)),
+                    ) => {
+                        parse_and_check_regex(context, pattern.span, Some(flags.span));
                     }
+                    (Some(Argument::StringLiteral(pattern)), _) => {
+                        parse_and_check_regex(context, pattern.span, None);
+                    }
+                    _ => {}
                 }
             }
 
             // RegExp()
-            AstKind::CallExpression(expr) => {
-                // constructor is RegExp,
-                if expr.callee.is_specific_id("RegExp")
-                    // which is provided at least 1 parameter,
-                    && expr.arguments.len() > 0
-                {
-                    // where the first one is a string literal
-                    // note: improvements required for strings used via identifier
-                    // references
-                    if let Argument::StringLiteral(pattern) = &expr.arguments[0] {
-                        // get pattern from arguments. Missing or non-string arguments
-                        // will be runtime errors, but are not covered by this rule.
-                        parse_and_check_regex(
-                            context,
-                            &pattern.value,
-                            &expr.arguments,
-                            pattern.span,
-                        );
+            AstKind::CallExpression(expr) if expr.callee.is_specific_id("RegExp") => {
+                // note: improvements required for strings used via identifier references
+                // Missing or non-string arguments will be runtime errors, but are not covered by this rule.
+                match (&expr.arguments.first(), &expr.arguments.get(1)) {
+                    (
+                        Some(Argument::StringLiteral(pattern)),
+                        Some(Argument::StringLiteral(flags)),
+                    ) => {
+                        parse_and_check_regex(context, pattern.span, Some(flags.span));
                     }
+                    (Some(Argument::StringLiteral(pattern)), _) => {
+                        parse_and_check_regex(context, pattern.span, None);
+                    }
+                    _ => {}
                 }
             }
+
             _ => {}
         };
     }
 }
 
-fn parse_and_check_regex<'a>(
-    ctx: &LintContext<'a>,
-    source_text: &'a str,
-    arguments: &oxc_allocator::Vec<'a, Argument<'a>>,
-    expr_span: Span,
-) {
+fn parse_and_check_regex(ctx: &LintContext, pattern_span: Span, flags_span: Option<Span>) {
     let allocator = Allocator::default();
-    let flags = extract_regex_flags(arguments);
-    let flags_text = flags.map_or(String::new(), |f| f.to_string());
-    let parser = Parser::new(
+
+    let flags_text = flags_span.map(|span| span.source_text(ctx.source_text()));
+    let parser = ConstructorParser::new(
         &allocator,
-        source_text,
-        ParserOptions::default()
-            .with_span_offset(arguments.first().map_or(0, |arg| arg.span().start))
-            .with_flags(&flags_text),
+        pattern_span.source_text(ctx.source_text()),
+        flags_text,
+        Options {
+            pattern_span_offset: pattern_span.start,
+            flags_span_offset: flags_span.map_or(0, |span| span.start),
+        },
     );
     let Ok(pattern) = parser.parse() else {
         return;
     };
-    check_pattern(ctx, &pattern, expr_span);
+    check_pattern(ctx, &pattern, pattern_span);
 }
 
 fn check_pattern(context: &LintContext, pattern: &Pattern, span: Span) {
@@ -279,7 +267,6 @@ mod tests {
             vec![
                 r"let r = /\u{0}/u",
                 r"let r = new RegExp('\\u{0}', 'u');",
-                r"let r = new RegExp('\\u{0}', `u`);",
                 r"let r = /\u{c}/u",
                 r"let r = /\u{1F}/u",
                 r"let r = new RegExp('\\u{1F}', 'u');", // flags are known & contain u

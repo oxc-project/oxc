@@ -242,10 +242,12 @@ fn try_parse_pattern<'a>(
     flags: RegExpFlags,
     ctx: &mut TraverseCtx<'a>,
 ) -> Result<Pattern<'a>> {
-    use oxc_regular_expression::{Parser, ParserOptions};
+    use oxc_regular_expression::{LiteralParser, Options};
 
-    let options = ParserOptions::default()
-        .with_span_offset(span.start + 1) // exclude `/`
-        .with_flags(&flags.to_string());
-    Parser::new(ctx.ast.allocator, raw, options).parse()
+    let _flags_text = &flags.to_string(); // TODO: How to add `&'a str` lifetime?
+    let options = Options {
+        pattern_span_offset: span.start + 1, // exclude `/`
+        flags_span_offset: 0,
+    };
+    LiteralParser::new(ctx.ast.allocator, raw, None, options).parse()
 }

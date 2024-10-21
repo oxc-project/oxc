@@ -4,7 +4,7 @@ use std::{env, fs, path::Path, sync::Arc};
 use oxc_allocator::Allocator;
 use oxc_ast::{ast, AstKind, Visit};
 use oxc_parser::{ParseOptions, Parser};
-use oxc_regular_expression::{Parser as RegExpParser, ParserOptions as RegExpParserOptions};
+use oxc_regular_expression::{ConstructorParser as RegExpParser, Options as RegExpParserOptions};
 use oxc_span::SourceType;
 
 // `cargo run -p oxc_parser --example regular_expression`
@@ -62,32 +62,24 @@ impl<'a> Visit<'a> for RegularExpressionVisitor {
             {
                 println!("🍀 {}", new_expr.span.source_text(&self.source_text));
 
-                let (pattern, pattern_span) = match new_expr.arguments.first() {
-                    Some(ast::Argument::StringLiteral(sl)) => (&sl.value, &sl.span),
-                    Some(ast::Argument::TemplateLiteral(tl))
-                        if tl.is_no_substitution_template() =>
-                    {
-                        (&tl.quasi().unwrap(), &tl.span)
-                    }
+                let pattern_span = match new_expr.arguments.first() {
+                    Some(ast::Argument::StringLiteral(sl)) => sl.span,
                     _ => return,
                 };
 
-                let flags = match new_expr.arguments.get(1) {
-                    Some(ast::Argument::StringLiteral(sl)) => &sl.value,
-                    Some(ast::Argument::TemplateLiteral(tl))
-                        if tl.is_no_substitution_template() =>
-                    {
-                        &tl.quasi().unwrap()
-                    }
-                    _ => "",
+                let flags_span = match new_expr.arguments.get(1) {
+                    Some(ast::Argument::StringLiteral(sl)) => Some(sl.span),
+                    _ => None,
                 };
 
                 let parsed = RegExpParser::new(
                     &allocator,
-                    pattern,
-                    RegExpParserOptions::default()
-                        .with_span_offset(pattern_span.start + 1)
-                        .with_flags(flags),
+                    pattern_span.source_text(&self.source_text),
+                    flags_span.map(|span| span.source_text(&self.source_text)),
+                    RegExpParserOptions {
+                        pattern_span_offset: pattern_span.start,
+                        flags_span_offset: flags_span.map_or(0, |span| span.start),
+                    },
                 )
                 .parse();
 

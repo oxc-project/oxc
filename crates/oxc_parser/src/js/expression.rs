@@ -371,9 +371,18 @@ impl<'a> ParserImpl<'a> {
         pattern: &'a str,
         flags: &'a str,
     ) -> Option<Box<'a, Pattern<'a>>> {
-        use oxc_regular_expression::{Parser, ParserOptions};
-        let options = ParserOptions::default().with_span_offset(span_offset).with_flags(flags);
-        match Parser::new(self.ast.allocator, pattern, options).parse() {
+        use oxc_regular_expression::{LiteralParser, Options};
+        match LiteralParser::new(
+            self.ast.allocator,
+            pattern,
+            Some(flags),
+            Options {
+                pattern_span_offset: span_offset,
+                flags_span_offset: 0, // Flags are already valid here, no chance of error reports
+            },
+        )
+        .parse()
+        {
             Ok(regular_expression) => Some(self.ast.alloc(regular_expression)),
             Err(diagnostic) => {
                 self.error(diagnostic);

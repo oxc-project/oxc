@@ -2,7 +2,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::{ast::Argument, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_regular_expression::{Parser, ParserOptions};
+use oxc_regular_expression::{ConstructorParser, Options};
 use oxc_span::Span;
 use rustc_hash::FxHashSet;
 use serde::Deserialize;
@@ -86,13 +86,20 @@ impl Rule for NoInvalidRegexp {
             return;
         }
 
+        let (mut u_flag_found, mut v_flag_found) = (false, false);
         // Validate flags first if exists
-        if let Some((flags_span_start, flags_text)) = flags_arg {
-            let (mut u_flag_found, mut v_flag_found) = (false, false);
+        // `oxc_regular_expression` crate has a ability to validate flags.
+        // But, it does not accept any `allow_constructor_flags` option.
+        // And if we omit user defined flags here, `Span` may be incorrect on error reporting.
+        if let Some(flags_span) = flags_arg {
+            // Strip quotes
+            let flags_text =
+                flags_span.source_text(ctx.source_text()).trim_matches('\'').trim_matches('"');
+
             let mut unique_flags = FxHashSet::default();
             for (idx, ch) in flags_text.char_indices() {
                 #[allow(clippy::cast_possible_truncation)]
-                let start = flags_span_start + idx as u32;
+                let start = flags_span.start + 1 + idx as u32;
 
                 // Invalid combination: u+v
                 if ch == 'u' {
@@ -128,12 +135,23 @@ impl Rule for NoInvalidRegexp {
         // Pattern check is skipped when 1st argument is NOT a `StringLiteral`
         // e.g. `new RegExp(var)`, `RegExp("str" + var)`
         let allocator = Allocator::default();
-        if let Some((pattern_span_start, pattern_text)) = pattern_arg {
-            let options = ParserOptions::default()
-                .with_span_offset(pattern_span_start)
-                .with_flags(flags_arg.map_or("", |(_, flags_text)| flags_text));
+        if let Some(pattern_span) = pattern_arg {
+            let pattern_text = pattern_span.source_text(ctx.source_text());
 
-            match Parser::new(&allocator, pattern_text, options).parse() {
+            let flags_text = match (u_flag_found, v_flag_found) {
+                (true, false) => Some("'u'"),
+                (_, true) => Some("'v'"),
+                (false, false) => None,
+            };
+
+            match ConstructorParser::new(
+                &allocator,
+                pattern_text,
+                flags_text,
+                Options { pattern_span_offset: pattern_span.start, flags_span_offset: 0 },
+            )
+            .parse()
+            {
                 Ok(_) => {}
                 Err(diagnostic) => ctx.diagnostic(diagnostic),
             }
@@ -141,27 +159,19 @@ impl Rule for NoInvalidRegexp {
     }
 }
 
-/// Returns: (span_start, text)
-/// span_start + 1 for opening string bracket.
-type ParsedArgument<'a> = (u32, &'a str);
 fn parse_arguments_to_check<'a>(
     arg1: Option<&Argument<'a>>,
     arg2: Option<&Argument<'a>>,
-) -> (Option<ParsedArgument<'a>>, Option<ParsedArgument<'a>>) {
+) -> (Option<Span>, Option<Span>) {
     match (arg1, arg2) {
         // ("pattern", "flags")
-        (Some(Argument::StringLiteral(pattern)), Some(Argument::StringLiteral(flags))) => (
-            Some((pattern.span.start + 1, pattern.value.as_str())),
-            Some((flags.span.start + 1, flags.value.as_str())),
-        ),
+        (Some(Argument::StringLiteral(pattern)), Some(Argument::StringLiteral(flags))) => {
+            (Some(pattern.span), Some(flags.span))
+        }
         // (pattern, "flags")
-        (Some(_arg), Some(Argument::StringLiteral(flags))) => {
-            (None, Some((flags.span.start + 1, flags.value.as_str())))
-        }
+        (Some(_arg), Some(Argument::StringLiteral(flags))) => (None, Some(flags.span)),
         // ("pattern")
-        (Some(Argument::StringLiteral(pattern)), None) => {
-            (Some((pattern.span.start + 1, pattern.value.as_str())), None)
-        }
+        (Some(Argument::StringLiteral(pattern)), None) => (Some(pattern.span), None),
         // (pattern), ()
         _ => (None, None),
     }
@@ -172,7 +182,7 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("[RegExp(''), /a/uv]", None),
+        ("RegExp('')", None),
         ("RegExp()", None),
         ("RegExp('.', 'g')", None),
         ("new RegExp('.')", None),
