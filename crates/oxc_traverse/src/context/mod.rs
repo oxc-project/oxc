@@ -13,7 +13,7 @@ use oxc_syntax::{
 
 use crate::{
     ancestor::{Ancestor, AncestorType},
-    ast_operations::get_var_name_from_node,
+    ast_operations::{get_var_name_from_node, GatherNodeParts},
 };
 
 mod ancestry;
@@ -352,9 +352,9 @@ impl<'a> TraverseCtx<'a> {
     /// Based on Babel's `scope.generateUidBasedOnNode` logic.
     /// <https://github.com/babel/babel/blob/419644f27c5c59deb19e71aaabd417a3bc5483ca/packages/babel-traverse/src/scope/index.ts#L543>
     #[inline]
-    pub fn generate_uid_based_on_node(
+    pub fn generate_uid_based_on_node<N: GatherNodeParts<'a>>(
         &mut self,
-        node: &Expression<'a>,
+        node: &N,
         scope_id: ScopeId,
         flags: SymbolFlags,
     ) -> BoundIdentifier<'a> {
@@ -367,9 +367,9 @@ impl<'a> TraverseCtx<'a> {
     /// See also comments on [`TraverseScoping::generate_uid_name`] for important information
     /// on how UIDs are generated. There are some potential "gotchas".
     #[inline]
-    pub fn generate_uid_in_current_scope_based_on_node(
+    pub fn generate_uid_in_current_scope_based_on_node<N: GatherNodeParts<'a>>(
         &mut self,
-        node: &Expression<'a>,
+        node: &N,
         flags: SymbolFlags,
     ) -> BoundIdentifier<'a> {
         self.generate_uid_based_on_node(node, self.current_scope_id(), flags)
