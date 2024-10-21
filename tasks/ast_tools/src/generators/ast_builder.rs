@@ -37,6 +37,7 @@ impl Generator for AstBuilderGenerator {
         GeneratorOutput::Rust {
             path: output(crate::AST_CRATE, "ast_builder.rs"),
             tokens: quote! {
+                //! AST node factories
                 #header
 
                 #![allow(
@@ -44,6 +45,7 @@ impl Generator for AstBuilderGenerator {
                     clippy::too_many_arguments,
                     clippy::fn_params_excessive_bools,
                 )]
+                #![warn(missing_docs)]
 
                 ///@@line_break
                 use oxc_allocator::{Allocator, Box, IntoIn, Vec};
@@ -56,6 +58,7 @@ impl Generator for AstBuilderGenerator {
                 /// AST builder for creating AST nodes
                 #[derive(Clone, Copy)]
                 pub struct AstBuilder<'a> {
+                    /// The memory allocator used to allocate AST nodes in the arena.
                     pub allocator: &'a Allocator,
                 }
 
@@ -121,8 +124,14 @@ fn generate_enum_inherit_builder_fn(
     let fn_name =
         enum_builder_name(enum_ident.to_string(), inherit.super_.name().inner_name().to_string());
 
+    let docs = DocComment::new(format!(
+        "Convert a [`{}`] into the corresponding variant of [`{}`] without copying or re-allocating memory.",
+        inherit.super_.name(),
+        enum_ident
+    ));
     quote! {
         ///@@line_break
+        #docs
         #[inline]
         pub fn #fn_name(self, inner: #super_type) -> #enum_as_type {
             #enum_ident::from(inner)

@@ -1,3 +1,5 @@
+use std::fmt;
+
 use quote::ToTokens;
 use rustc_hash::FxHashSet;
 use serde::Serialize;
@@ -83,6 +85,18 @@ impl<'a> From<crate::util::TypeIdentResult<'a>> for TypeName {
             TypeIdentResult::Option(it) => Self::Opt(Box::new(Self::from(*it))),
             TypeIdentResult::Reference(it) => Self::Ref(Box::new(Self::from(*it))),
             TypeIdentResult::Complex(it) => Self::Complex(Box::new(Self::from(*it))),
+        }
+    }
+}
+impl fmt::Display for TypeName {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Ident(it) => write!(f, "{it}"),
+            Self::Vec(it) => write!(f, "Vec<{it}>"),
+            Self::Box(it) => write!(f, "Box<{it}>"),
+            Self::Opt(it) => write!(f, "Option<{it}>"),
+            Self::Ref(it) => write!(f, "&{it}"),
+            Self::Complex(it) => write!(f, "{it}"),
         }
     }
 }
