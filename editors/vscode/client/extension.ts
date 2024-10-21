@@ -136,7 +136,6 @@ export async function activate(context: ExtensionContext) {
   // If the extension is launched in debug mode then the debug server options are used
   // Otherwise the run options are used
   // Options to control the language client
-  let clientConfig: any = JSON.parse(JSON.stringify(config.rawConfig));
   let clientOptions: LanguageClientOptions = {
     // Register the server for plain text documents
     documentSelector: [
@@ -155,7 +154,7 @@ export async function activate(context: ExtensionContext) {
       fileEvents: workspace.createFileSystemWatcher('**/.clientrc'),
     },
     initializationOptions: {
-      settings: clientConfig,
+      settings: config.toLanguageServerConfig(),
     },
     outputChannel,
     traceOutputChannel,
@@ -200,7 +199,7 @@ export async function activate(context: ExtensionContext) {
 
     myStatusBarItem.backgroundColor = bgColor;
   }
-  updateStatsBar(clientConfig.enable);
+  updateStatsBar(config.enable);
   client.start();
 }
 
