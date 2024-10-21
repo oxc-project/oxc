@@ -1,0 +1,144 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
+   ╭─[no_map_spread.tsx:1:21]
+ 1 │ let a = b.map(x => ({ ...x }))
+   ·           ─┬─       ────┬───
+   ·            │            ╰── That could be mutated in place
+   ·            ╰── This map call spreads an object
+   ╰────
+  help: Consider using `Object.assign` instead
+
+  ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
+   ╭─[no_map_spread.tsx:1:25]
+ 1 │ let a = b.flatMap(x => ({ ...x }))
+   ·           ───┬───       ────┬───
+   ·              │              ╰── That could be mutated in place
+   ·              ╰── This map call spreads an object
+   ╰────
+  help: Consider using `Object.assign` instead
+
+  ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
+   ╭─[no_map_spread.tsx:1:21]
+ 1 │ let a = b.map(x => ({ ...x, ...y }))
+   ·           ─┬─       ───────┬──────
+   ·            │               ╰── That could be mutated in place
+   ·            ╰── This map call spreads an object
+   ╰────
+  help: Consider using `Object.assign` instead
+
+  ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
+   ╭─[no_map_spread.tsx:1:33]
+ 1 │ let b = []; let a = b.map(x => ({ ...x }))
+   ·                       ─┬─       ────┬───
+   ·                        │            ╰── That could be mutated in place
+   ·                        ╰── This map call spreads an object
+   ╰────
+  help: Consider using `Object.assign` instead
+
+  ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
+   ╭─[no_map_spread.tsx:1:29]
+ 1 │ let a = b.map(x => { return { ...x } })
+   ·           ─┬─               ────┬───
+   ·            │                    ╰── That could be mutated in place
+   ·            ╰── This map call spreads an object
+   ╰────
+  help: Consider using `Object.assign` instead
+
+  ⚠ oxc(no-map-spread): Spreading to modify array elements in `map` calls is inefficient
+   ╭─[no_map_spread.tsx:1:20]
+ 1 │ let a = b.map(x => [ ...x ])
+   ·           ─┬─      ────┬───
+   ·            │           ╰── That could be mutated in place
+   ·            ╰── This map call spreads an array
+   ╰────
+  help: Consider using `Array.prototype.concat` or `Array.prototype.push` instead
+
+  ⚠ oxc(no-map-spread): Spreading to modify array elements in `map` calls is inefficient
+   ╭─[no_map_spread.tsx:1:20]
+ 1 │ let a = b.map(x => [ ...x, ...y ])
+   ·           ─┬─      ───────┬──────
+   ·            │              ╰── That could be mutated in place
+   ·            ╰── This map call spreads an array
+   ╰────
+  help: Consider using `Array.prototype.concat` or `Array.prototype.push` instead
+
+  ⚠ oxc(no-map-spread): Spreading to modify array elements in `map` calls is inefficient
+   ╭─[no_map_spread.tsx:1:29]
+ 1 │ let a = b.map(x => { return [ ...x ] })
+   ·           ─┬─               ────┬───
+   ·            │                    ╰── That could be mutated in place
+   ·            ╰── This map call spreads an array
+   ╰────
+  help: Consider using `Array.prototype.concat` or `Array.prototype.push` instead
+
+  ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
+   ╭─[no_map_spread.tsx:1:31]
+ 1 │ let a = b.map(x => { let x2 = { ...x }; return x2; })
+   ·           ─┬─                 ────┬───
+   ·            │                      ╰── That could be mutated in place
+   ·            ╰── This map call spreads an object
+   ╰────
+  help: Consider using `Object.assign` instead
+
+  ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
+   ╭─[no_map_spread.tsx:1:21]
+ 1 │ let a = b.map(x => ({ ...x })); console.log(b)
+   ·           ─┬─       ────┬───
+   ·            │            ╰── That could be mutated in place
+   ·            ╰── This map call spreads an object
+   ╰────
+  help: Consider using `Object.assign` instead
+
+  ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
+   ╭─[no_map_spread.tsx:1:31]
+ 1 │ let a = b.map(x => someCond ? { ...x, foo: true } : { ...x, foo: false })
+   ·           ─┬─                 ─────────┬─────────
+   ·            │                           ╰── That could be mutated in place
+   ·            ╰── This map call spreads an object
+   ╰────
+  help: Consider using `Object.assign` instead
+
+  ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
+   ╭─[no_map_spread.tsx:1:53]
+ 1 │ let a = b.map(x => someCond ? { ...x, foo: true } : { ...x, foo: false })
+   ·           ─┬─                                       ──────────┬─────────
+   ·            │                                                  ╰── That could be mutated in place
+   ·            ╰── This map call spreads an object
+   ╰────
+  help: Consider using `Object.assign` instead
+
+  × Expected `,` but found `}`
+   ╭─[no_map_spread.tsx:1:49]
+ 1 │ let a = b.map(({ x, y }) => ({ ...(cond ? x : y })
+   ·                                                 ┬
+   ·                                                 ╰── `,` expected
+   ╰────
+
+  ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
+   ╭─[no_map_spread.tsx:1:24]
+ 1 │ let a = b.map(x => (0, { ...x }))
+   ·           ─┬─          ────┬───
+   ·            │               ╰── That could be mutated in place
+   ·            ╰── This map call spreads an object
+   ╰────
+  help: Consider using `Object.assign` instead
+
+  ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
+   ╭─[no_map_spread.tsx:1:35]
+ 1 │ let a = b.map(({ x, y }) => (x ?? { ...y }))
+   ·           ─┬─                     ────┬───
+   ·            │                          ╰── That could be mutated in place
+   ·            ╰── This map call spreads an object
+   ╰────
+  help: Consider using `Object.assign` instead
+
+  ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
+   ╭─[no_map_spread.tsx:1:22]
+ 1 │ let a = b.map((x => ({ ...x }))) as MyCustomMapper
+   ·           ─┬─        ────┬───
+   ·            │             ╰── That could be mutated in place
+   ·            ╰── This map call spreads an object
+   ╰────
+  help: Consider using `Object.assign` instead
