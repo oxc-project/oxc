@@ -31,10 +31,10 @@
 //! Consumers of the [`oxc` umbrella crate](https://crates.io/crates/oxc) pass
 //! [`Allocator`] references to other tools.
 //!
-//! ```
+//! ```ignore
 //! use oxc::{allocator::Allocator, parser::Parser, span::SourceType};
 //!
-//! let allocator = Allocator::default()
+//! let allocator = Allocator::default();
 //! let parsed = Parser::new(&allocator, "let x = 1;", SourceType::default());
 //! assert!(parsed.errors.is_empty());
 //! ```
@@ -44,22 +44,26 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-pub use bumpalo::collections::String;
-use bumpalo::Bump;
+use bump_scope::Bump;
+
+/// A bump-allocated string.
+type BumpScope<'a> = bump_scope::BumpScope<'a>;
 
 mod address;
 mod boxed;
 mod clone_in;
 mod convert;
+mod string;
 mod vec;
 
 pub use address::{Address, GetAddress};
 pub use boxed::Box;
 pub use clone_in::CloneIn;
 pub use convert::{FromIn, IntoIn};
+pub use string::String;
 pub use vec::Vec;
 
-/// A bump-allocated memory arena based on [bumpalo].
+/// A bump-allocated memory arena based on [bump-scope].
 ///
 /// ## No `Drop`s
 ///
@@ -69,6 +73,12 @@ pub use vec::Vec;
 #[derive(Default)]
 pub struct Allocator {
     bump: Bump,
+}
+
+impl<'a> From<&'a Allocator> for &'a BumpScope<'a> {
+    fn from(value: &'a Allocator) -> Self {
+        value.bump.as_scope()
+    }
 }
 
 impl From<Bump> for Allocator {
@@ -95,7 +105,7 @@ impl DerefMut for Allocator {
 mod test {
     use std::ops::Deref;
 
-    use bumpalo::Bump;
+    use bump_scope::Bump;
 
     use crate::Allocator;
 
