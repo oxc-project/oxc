@@ -4,22 +4,25 @@ expression: snapshot
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/labeled_block_break.js
 ---
 bb0: {
-
+	(BasicBlockFlags(Implicit | Error))
 }
 
 bb1: {
+	(BasicBlockFlags(Start | Referenced))
 	statement
 }
 
 bb2: {
-
+	(BasicBlockFlags(Referenced | Error))
 }
 
 bb3: {
+	(BasicBlockFlags(Referenced | Shared))
 	statement
 }
 
 bb4: {
+	(BasicBlockFlags(Referenced | Shared))
 	statement
 	statement
 	statement
@@ -27,52 +30,66 @@ bb4: {
 }
 
 bb5: {
+	(BasicBlockFlags(TrueCondition | FalseCondition | Referenced))
 	condition
 }
 
 bb6: {
+	(BasicBlockFlags(Referenced | Shared))
 	statement
 	break <label>
 }
 
 bb7: {
+	(BasicBlockFlags(Unreachable | Referenced))
 	unreachable
 }
 
 bb8: {
-
+	(BasicBlockFlags(Referenced))
 }
 
 bb9: {
-
+	(BasicBlockFlags(Referenced))
 }
 
 bb10: {
-
+	(BasicBlockFlags(0x0))
 }
 
 digraph {
-    0 [ label = "bb0" shape = box]
+    0 [ label = "bb0
+(BasicBlockFlags(Implicit | Error))" shape = box]
     1 [ label = "bb1
+(BasicBlockFlags(Start | Referenced))
 TryStatement" shape = box]
-    2 [ label = "bb2" shape = box]
+    2 [ label = "bb2
+(BasicBlockFlags(Referenced | Error))" shape = box]
     3 [ label = "bb3
+(BasicBlockFlags(Referenced | Shared))
 BlockStatement" shape = box]
     4 [ label = "bb4
+(BasicBlockFlags(Referenced | Shared))
 BlockStatement
 LabeledStatement(LABEL)
 BlockStatement
 IfStatement" shape = box]
     5 [ label = "bb5
+(BasicBlockFlags(TrueCondition | FalseCondition | Referenced))
 Condition(IdentifierReference(condition))" shape = box]
     6 [ label = "bb6
+(BasicBlockFlags(Referenced | Shared))
 BlockStatement
 break <LABEL>" shape = box]
     7 [ label = "bb7
+(BasicBlockFlags(Unreachable | Referenced))
 unreachable" shape = box]
-    8 [ label = "bb8" shape = box]
-    9 [ label = "bb9" shape = box]
-    10 [ label = "bb10" shape = box]
+    8 [ label = "bb8
+(BasicBlockFlags(Referenced))" shape = box]
+    9 [ label = "bb9
+(BasicBlockFlags(Referenced))" shape = box]
+    10 [ label = "bb10
+(BasicBlockFlags(0x0))" shape = box]
     1 -> 0 [ label="Error(Implicit)", style=dashed, color=red]
     3 -> 2 [ label="Error(Explicit)", color=red]
     4 -> 0 [ label="Error(Implicit)", style=dashed, color=red]
