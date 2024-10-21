@@ -1,6 +1,6 @@
 commit: d20b314c
 
-Passed: 342/1051
+Passed: 343/1051
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1628,7 +1628,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-async-to-generator (2/24)
+# babel-plugin-transform-async-to-generator (3/24)
 * assumption-ignoreFunctionLength-true/basic/input.mjs
 x Output mismatch
 
@@ -1645,19 +1645,249 @@ x Output mismatch
 x Output mismatch
 
 * async-to-generator/function-arity/input.js
-x Output mismatch
+Bindings mismatch:
+after transform: ScopeId(0): ["_foo", "_name", "_ref", "foo"]
+rebuilt        : ScopeId(0): ["foo"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(7)]
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(0))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
+Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(4)]
+rebuilt        : ScopeId(3): []
+Bindings mismatch:
+after transform: ScopeId(4): ["_x"]
+rebuilt        : ScopeId(2): ["_foo"]
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(1))
+rebuilt        : ScopeId(2): Some(ScopeId(0))
+Scope children mismatch:
+after transform: ScopeId(4): []
+rebuilt        : ScopeId(2): [ScopeId(3)]
+Bindings mismatch:
+after transform: ScopeId(2): ["a", "b", "name"]
+rebuilt        : ScopeId(5): ["a", "b"]
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(0))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+Scope children mismatch:
+after transform: ScopeId(2): [ScopeId(5)]
+rebuilt        : ScopeId(5): []
+Bindings mismatch:
+after transform: ScopeId(5): ["_x2"]
+rebuilt        : ScopeId(6): ["_x2", "name"]
+Scope parent mismatch:
+after transform: ScopeId(5): Some(ScopeId(2))
+rebuilt        : ScopeId(6): Some(ScopeId(4))
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(0))
+rebuilt        : ScopeId(8): Some(ScopeId(7))
+Scope children mismatch:
+after transform: ScopeId(3): [ScopeId(6)]
+rebuilt        : ScopeId(8): []
+Scope parent mismatch:
+after transform: ScopeId(6): Some(ScopeId(3))
+rebuilt        : ScopeId(9): Some(ScopeId(7))
+Symbol scope ID mismatch for "_x":
+after transform: SymbolId(9): ScopeId(4)
+rebuilt        : SymbolId(1): ScopeId(1)
+Symbol flags mismatch for "_foo":
+after transform: SymbolId(8): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
+Symbol scope ID mismatch for "_foo":
+after transform: SymbolId(8): ScopeId(0)
+rebuilt        : SymbolId(2): ScopeId(2)
+Symbol reference IDs mismatch for "_foo":
+after transform: SymbolId(8): [ReferenceId(3), ReferenceId(5), ReferenceId(7)]
+rebuilt        : SymbolId(2): [ReferenceId(2), ReferenceId(4)]
+Symbol scope ID mismatch for "_name":
+after transform: SymbolId(10): ScopeId(0)
+rebuilt        : SymbolId(5): ScopeId(4)
+Symbol flags mismatch for "name":
+after transform: SymbolId(11): SymbolFlags(FunctionScopedVariable | Function)
+rebuilt        : SymbolId(8): SymbolFlags(Function)
+Symbol scope ID mismatch for "name":
+after transform: SymbolId(11): ScopeId(2)
+rebuilt        : SymbolId(8): ScopeId(6)
+Symbol reference IDs mismatch for "name":
+after transform: SymbolId(11): [ReferenceId(11)]
+rebuilt        : SymbolId(8): []
+Symbol scope ID mismatch for "_ref":
+after transform: SymbolId(13): ScopeId(0)
+rebuilt        : SymbolId(10): ScopeId(7)
+Reference symbol mismatch for "_foo":
+after transform: SymbolId(8) "_foo"
+rebuilt        : <None>
+Reference flags mismatch for "_foo":
+after transform: ReferenceId(7): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Write)
+Reference symbol mismatch for "name":
+after transform: SymbolId(11) "name"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["arguments", "babelHelpers", "call"]
+rebuilt        : ["_foo", "arguments", "babelHelpers", "call", "name"]
 
 * async-to-generator/object-method-with-super/input.js
 x Output mismatch
 
 * async-to-generator/shadowed-promise/input.js
-x Output mismatch
+Bindings mismatch:
+after transform: ScopeId(0): ["Promise", "_foo", "foo"]
+rebuilt        : ScopeId(0): ["Promise", "foo"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(0))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
+Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(3): [ScopeId(4)]
+Bindings mismatch:
+after transform: ScopeId(3): []
+rebuilt        : ScopeId(2): ["_foo"]
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(1))
+rebuilt        : ScopeId(2): Some(ScopeId(0))
+Scope children mismatch:
+after transform: ScopeId(3): []
+rebuilt        : ScopeId(2): [ScopeId(3)]
+Symbol flags mismatch for "_foo":
+after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
+Symbol scope ID mismatch for "_foo":
+after transform: SymbolId(3): ScopeId(0)
+rebuilt        : SymbolId(2): ScopeId(2)
+Symbol reference IDs mismatch for "_foo":
+after transform: SymbolId(3): [ReferenceId(3), ReferenceId(5), ReferenceId(7)]
+rebuilt        : SymbolId(2): [ReferenceId(2), ReferenceId(6)]
+Reference symbol mismatch for "_foo":
+after transform: SymbolId(3) "_foo"
+rebuilt        : <None>
+Reference flags mismatch for "_foo":
+after transform: ReferenceId(7): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Write)
+Unresolved references mismatch:
+after transform: ["arguments", "babelHelpers"]
+rebuilt        : ["_foo", "arguments", "babelHelpers"]
 
 * async-to-generator/shadowed-promise-import/input.mjs
-x Output mismatch
+Bindings mismatch:
+after transform: ScopeId(0): ["Promise", "_foo", "foo"]
+rebuilt        : ScopeId(0): ["Promise", "foo"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(0))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
+Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(3): []
+Bindings mismatch:
+after transform: ScopeId(2): []
+rebuilt        : ScopeId(2): ["_foo"]
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(1))
+rebuilt        : ScopeId(2): Some(ScopeId(0))
+Scope children mismatch:
+after transform: ScopeId(2): []
+rebuilt        : ScopeId(2): [ScopeId(3)]
+Symbol flags mismatch for "_foo":
+after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
+Symbol scope ID mismatch for "_foo":
+after transform: SymbolId(2): ScopeId(0)
+rebuilt        : SymbolId(2): ScopeId(2)
+Symbol reference IDs mismatch for "_foo":
+after transform: SymbolId(2): [ReferenceId(2), ReferenceId(4), ReferenceId(6)]
+rebuilt        : SymbolId(2): [ReferenceId(2), ReferenceId(5)]
+Reference symbol mismatch for "_foo":
+after transform: SymbolId(2) "_foo"
+rebuilt        : <None>
+Reference flags mismatch for "_foo":
+after transform: ReferenceId(6): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Write)
+Unresolved references mismatch:
+after transform: ["arguments", "babelHelpers"]
+rebuilt        : ["_foo", "arguments", "babelHelpers"]
 
 * async-to-generator/shadowed-promise-nested/input.js
-x Output mismatch
+Bindings mismatch:
+after transform: ScopeId(0): ["Promise", "_foo", "foo"]
+rebuilt        : ScopeId(0): ["Promise", "foo"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Bindings mismatch:
+after transform: ScopeId(1): ["Promise", "_bar", "bar"]
+rebuilt        : ScopeId(3): ["Promise", "bar"]
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(0))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
+Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(4)]
+rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5)]
+Bindings mismatch:
+after transform: ScopeId(4): []
+rebuilt        : ScopeId(2): ["_foo"]
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(1))
+rebuilt        : ScopeId(2): Some(ScopeId(0))
+Scope children mismatch:
+after transform: ScopeId(4): []
+rebuilt        : ScopeId(2): [ScopeId(3)]
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(1))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+Scope children mismatch:
+after transform: ScopeId(2): [ScopeId(3)]
+rebuilt        : ScopeId(6): []
+Bindings mismatch:
+after transform: ScopeId(3): []
+rebuilt        : ScopeId(5): ["_bar"]
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(2))
+rebuilt        : ScopeId(5): Some(ScopeId(3))
+Scope children mismatch:
+after transform: ScopeId(3): []
+rebuilt        : ScopeId(5): [ScopeId(6)]
+Symbol flags mismatch for "_foo":
+after transform: SymbolId(5): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(Function)
+Symbol scope ID mismatch for "_foo":
+after transform: SymbolId(5): ScopeId(0)
+rebuilt        : SymbolId(2): ScopeId(2)
+Symbol reference IDs mismatch for "_foo":
+after transform: SymbolId(5): [ReferenceId(9), ReferenceId(11), ReferenceId(13)]
+rebuilt        : SymbolId(2): [ReferenceId(2), ReferenceId(12)]
+Symbol flags mismatch for "_bar":
+after transform: SymbolId(4): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(5): SymbolFlags(Function)
+Symbol scope ID mismatch for "_bar":
+after transform: SymbolId(4): ScopeId(1)
+rebuilt        : SymbolId(5): ScopeId(5)
+Symbol reference IDs mismatch for "_bar":
+after transform: SymbolId(4): [ReferenceId(3), ReferenceId(5), ReferenceId(7)]
+rebuilt        : SymbolId(5): [ReferenceId(7), ReferenceId(10)]
+Reference symbol mismatch for "_foo":
+after transform: SymbolId(5) "_foo"
+rebuilt        : <None>
+Reference flags mismatch for "_foo":
+after transform: ReferenceId(13): ReferenceFlags(Read)
+rebuilt        : ReferenceId(2): ReferenceFlags(Write)
+Reference symbol mismatch for "_bar":
+after transform: SymbolId(4) "_bar"
+rebuilt        : <None>
+Reference flags mismatch for "_bar":
+after transform: ReferenceId(7): ReferenceFlags(Read)
+rebuilt        : ReferenceId(7): ReferenceFlags(Write)
+Unresolved references mismatch:
+after transform: ["arguments", "babelHelpers"]
+rebuilt        : ["_bar", "_foo", "arguments", "babelHelpers"]
 
 * bluebird-coroutines/arrow-function/input.js
 x Output mismatch
@@ -1678,12 +1908,50 @@ x Output mismatch
 x Output mismatch
 
 * regression/8783/input.js
-x Output mismatch
+Bindings mismatch:
+after transform: ScopeId(0): ["_poll"]
+rebuilt        : ScopeId(0): []
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Bindings mismatch:
+after transform: ScopeId(1): ["poll"]
+rebuilt        : ScopeId(2): []
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(0))
+rebuilt        : ScopeId(2): Some(ScopeId(1))
+Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(2): []
+Bindings mismatch:
+after transform: ScopeId(2): []
+rebuilt        : ScopeId(3): ["poll"]
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(1))
+rebuilt        : ScopeId(3): Some(ScopeId(1))
+Symbol scope ID mismatch for "_poll":
+after transform: SymbolId(1): ScopeId(0)
+rebuilt        : SymbolId(0): ScopeId(1)
+Symbol flags mismatch for "poll":
+after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable | Function)
+rebuilt        : SymbolId(1): SymbolFlags(Function)
+Symbol scope ID mismatch for "poll":
+after transform: SymbolId(2): ScopeId(1)
+rebuilt        : SymbolId(1): ScopeId(3)
+Symbol reference IDs mismatch for "poll":
+after transform: SymbolId(2): [ReferenceId(7)]
+rebuilt        : SymbolId(1): []
+Reference symbol mismatch for "poll":
+after transform: SymbolId(0) "poll"
+rebuilt        : <None>
+Reference symbol mismatch for "poll":
+after transform: SymbolId(2) "poll"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["Promise", "arguments", "babelHelpers", "console", "setTimeout"]
+rebuilt        : ["Promise", "arguments", "babelHelpers", "console", "poll", "setTimeout"]
 
 * regression/T7108/input.js
-x Output mismatch
-
-* regression/T7194/input.js
 x Output mismatch
 
 * regression/gh-6923/input.js
