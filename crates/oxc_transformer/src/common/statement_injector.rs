@@ -14,7 +14,7 @@
 
 use std::cell::RefCell;
 
-use oxc_allocator::{Address, Vec as OxcVec};
+use oxc_allocator::{Address, Vec as AVec};
 
 use oxc_ast::{address::GetAddress, ast::*};
 use oxc_traverse::{Traverse, TraverseCtx};
@@ -36,7 +36,7 @@ impl<'a, 'ctx> StatementInjector<'a, 'ctx> {
 impl<'a, 'ctx> Traverse<'a> for StatementInjector<'a, 'ctx> {
     fn exit_statements(
         &mut self,
-        statements: &mut OxcVec<'a, Statement<'a>>,
+        statements: &mut AVec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         self.ctx.statement_injector.insert_into_statements(statements, ctx);
@@ -98,7 +98,7 @@ impl<'a> StatementInjectorStore<'a> {
     /// Insert statements immediately before / after the target statement.
     pub(self) fn insert_into_statements(
         &self,
-        statements: &mut OxcVec<'a, Statement<'a>>,
+        statements: &mut AVec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         let mut insertions = self.insertions.borrow_mut();
