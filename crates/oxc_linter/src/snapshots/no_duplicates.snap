@@ -209,7 +209,7 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:8]
  1 │ import './foo'; import def, {x} from './foo'
-   ·        ───┬───                       ────────
+   ·        ───┬───                       ───────
    ·           ╰── It is first imported here
    ╰────
   help: Merge these imports into a single import statement
@@ -249,7 +249,7 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import {x} from './foo'; import def, {y} from './foo'
-   ·                 ───┬───                       ────────
+   ·                 ───┬───                       ───────
    ·                    ╰── It is first imported here
    ╰────
   help: Merge these imports into a single import statement
@@ -537,14 +537,6 @@ source: crates/oxc_linter/src/tester.rs
  1 │ import {type x} from './foo'; import {type y} from './foo'
    ·                      ───┬───                       ───────
    ·                         ╰── It is first imported here
-   ╰────
-  help: Merge these imports into a single import statement
-
-  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
-   ╭─[index.ts:1:38]
- 1 │ import {AValue, type x, BValue} from './foo'; import {type y} from './foo'
-   ·                                      ───┬────
-   ·                                         ╰── It is first imported here
    ╰────
   help: Merge these imports into a single import statement
 
