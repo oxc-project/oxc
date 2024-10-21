@@ -58,7 +58,10 @@ impl Rule for NoEmptyStaticBlock {
                 if ctx.semantic().has_comments_between(static_block.span) {
                     return;
                 }
-                ctx.diagnostic_with_suggestion(no_empty_static_block_diagnostic(static_block.span), |fixer| fixer.delete(&static_block.span));
+                ctx.diagnostic_with_suggestion(
+                    no_empty_static_block_diagnostic(static_block.span),
+                    |fixer| fixer.delete(&static_block.span),
+                );
             }
         }
     }
@@ -89,10 +92,12 @@ fn test() {
     let fix = vec![
         ("class Foo { static {} }", "class Foo {  }"),
         ("class Foo { static { } }", "class Foo {  }"),
-        ("class Foo { static {
+        (
+            "class Foo { static {
 
 			 } }",
-        "class Foo {  }"),
+            "class Foo {  }",
+        ),
         ("class Foo { static { bar(); } static {} }", "class Foo { static { bar(); }  }"),
     ];
 
