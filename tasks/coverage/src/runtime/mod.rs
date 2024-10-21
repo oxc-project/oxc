@@ -1,5 +1,4 @@
 use std::{
-    fs,
     path::{Path, PathBuf},
     time::Duration,
 };
@@ -7,7 +6,6 @@ use std::{
 use oxc::{allocator::Allocator, codegen::CodeGenerator, parser::Parser, span::SourceType};
 use oxc_tasks_common::agent;
 use phf::{phf_set, Set};
-use rustc_hash::FxHashSet;
 use serde_json::json;
 
 use crate::{
@@ -15,21 +13,6 @@ use crate::{
     test262::{Test262Case, TestFlag},
     workspace_root,
 };
-
-pub const V8_TEST_262_FAILED_TESTS_PATH: &str = "src/runtime/v8_test262.status";
-
-lazy_static::lazy_static! {
-    static ref V8_TEST_262_FAILED_TESTS: FxHashSet<String> = {
-        let mut set = FxHashSet::default();
-        fs::read_to_string(workspace_root().join(V8_TEST_262_FAILED_TESTS_PATH))
-            .expect("Failed to read v8_test262.status")
-            .lines()
-            .for_each(|line| {
-                set.insert(line.replace(".*", "").replace('*', ""));
-            });
-        set
-    };
-}
 
 static SKIP_EVALUATING_FEATURES: Set<&'static str> = phf_set! {
   // Node's version of V8 doesn't implement these
@@ -110,7 +93,7 @@ impl Case for CodegenRuntimeTest262Case {
             || base_path.contains("staging")
             || base_path.contains("intl402")
             // skip v8 test-262 failed tests
-            || V8_TEST_262_FAILED_TESTS.iter().any(|test| base_path.contains(test))
+            // || V8_TEST_262_FAILED_TESTS.iter().any(|test| base_path.contains(test))
             || self
                 .base
                 .meta()

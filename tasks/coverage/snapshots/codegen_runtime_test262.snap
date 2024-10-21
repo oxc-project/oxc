@@ -1,13 +1,244 @@
-commit: d62fa93c
+commit: 06454619
 
 codegen_runtime_test262 Summary:
-AST Parsed     : 18456/18456 (100.00%)
-Positive Passed: 17987/18456 (97.46%)
+AST Parsed     : 18667/18667 (100.00%)
+Positive Passed: 18062/18667 (96.76%)
+tasks/coverage/test262/test/annexB/language/comments/single-line-html-close-first-line-1.js
+runtime error: ReferenceError: Test262Error is not defined
+
+tasks/coverage/test262/test/annexB/language/comments/single-line-html-close-first-line-2.js
+runtime error: ReferenceError: Test262Error is not defined
+
+tasks/coverage/test262/test/annexB/language/comments/single-line-html-close-first-line-3.js
+runtime error: ReferenceError: Test262Error is not defined
+
+tasks/coverage/test262/test/annexB/language/function-code/block-decl-func-skip-arguments.js
+runtime error: Test262Error: Expected SameValue(«"function arguments() {}"», «"[object Arguments]"») to be true
+
+tasks/coverage/test262/test/annexB/language/function-code/block-decl-nested-blocks-with-fun-decl.js
+runtime error: Test262Error: Expected SameValue(«2», «1») to be true
+
+tasks/coverage/test262/test/language/destructuring/binding/keyed-destructuring-property-reference-target-evaluation-order-with-bindings.js
+runtime error: Test262Error: Actual [binding::source, binding::sourceKey, sourceKey, get source, binding::defaultValue, binding::varTarget] and expected [binding::source, binding::sourceKey, sourceKey, binding::varTarget, get source, binding::defaultValue] should have the same contents. 
+
+tasks/coverage/test262/test/language/expressions/assignment/S11.13.1_A5_T1.js
+runtime error: Test262Error: #1: scope.x === 2. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/assignment/S11.13.1_A5_T2.js
+runtime error: Test262Error: #1: scope.x === 2. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/assignment/S11.13.1_A5_T3.js
+runtime error: Test262Error: #1: innerScope.x === 2. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/assignment/S11.13.1_A6_T1.js
+runtime error: Test262Error: #1: innerX === undefined. Actual: 1
+
+tasks/coverage/test262/test/language/expressions/assignment/S11.13.1_A6_T2.js
+runtime error: Test262Error: #1: innerX === 2. Actual: 1
+
+tasks/coverage/test262/test/language/expressions/assignment/S11.13.1_A6_T3.js
+runtime error: Test262Error: #1: scope.x === 2. Actual: 1
+
 tasks/coverage/test262/test/language/expressions/assignment/fn-name-lhs-cover.js
 runtime error: Test262Error: descriptor value should be ; object value should be 
 
+tasks/coverage/test262/test/language/expressions/async-generator/generator-created-after-decl-inst.js
+runtime error: Test262Error: Expected SameValue(«[object AsyncGenerator]», «[object AsyncGenerator]») to be false
+
+tasks/coverage/test262/test/language/expressions/call/eval-spread.js
+runtime error: Test262Error: Expected SameValue(«"local"», «1») to be true
+
+tasks/coverage/test262/test/language/expressions/class/decorator/syntax/class-valid/decorator-member-expr-private-identifier.js
+runtime error: SyntaxError: Invalid or unexpected token
+
+tasks/coverage/test262/test/language/expressions/class/decorator/syntax/valid/decorator-call-expr-identifier-reference-yield.js
+runtime error: SyntaxError: Invalid or unexpected token
+
+tasks/coverage/test262/test/language/expressions/class/decorator/syntax/valid/decorator-call-expr-identifier-reference.js
+runtime error: SyntaxError: Invalid or unexpected token
+
+tasks/coverage/test262/test/language/expressions/class/decorator/syntax/valid/decorator-member-expr-decorator-member-expr.js
+runtime error: SyntaxError: Invalid or unexpected token
+
+tasks/coverage/test262/test/language/expressions/class/decorator/syntax/valid/decorator-member-expr-identifier-reference-yield.js
+runtime error: SyntaxError: Invalid or unexpected token
+
+tasks/coverage/test262/test/language/expressions/class/decorator/syntax/valid/decorator-member-expr-identifier-reference.js
+runtime error: SyntaxError: Invalid or unexpected token
+
+tasks/coverage/test262/test/language/expressions/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference-yield.js
+runtime error: SyntaxError: Invalid or unexpected token
+
+tasks/coverage/test262/test/language/expressions/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference.js
+runtime error: SyntaxError: Invalid or unexpected token
+
 tasks/coverage/test262/test/language/expressions/class/elements/syntax/valid/grammar-field-accessor.js
 runtime error: SyntaxError: Unexpected identifier '$'
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A5.10_T1.js
+runtime error: Test262Error: #1: scope.x === 1. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A5.10_T2.js
+runtime error: Test262Error: #1: scope.x === 1. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A5.10_T3.js
+runtime error: Test262Error: #1: innerScope.x === 1. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A5.11_T1.js
+runtime error: Test262Error: #1: scope.x === 6. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A5.11_T2.js
+runtime error: Test262Error: #1: scope.x === 6. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A5.11_T3.js
+runtime error: Test262Error: #1: innerScope.x === 6. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A5.1_T1.js
+runtime error: Test262Error: #1: scope.x === 6. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A5.1_T2.js
+runtime error: Test262Error: #1: scope.x === 6. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A5.1_T3.js
+runtime error: Test262Error: #1: innerScope.x === 6. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A5.2_T1.js
+runtime error: Test262Error: #1: scope.x === 2. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A5.2_T2.js
+runtime error: Test262Error: #1: scope.x === 2. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A5.2_T3.js
+runtime error: Test262Error: #1: innerScope.x === 2. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A5.3_T1.js
+runtime error: Test262Error: #1: scope.x === 2. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A5.3_T2.js
+runtime error: Test262Error: #1: scope.x === 2. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A5.3_T3.js
+runtime error: Test262Error: #1: innerScope.x === 2. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A5.4_T1.js
+runtime error: Test262Error: #1: scope.x === 3. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A5.4_T2.js
+runtime error: Test262Error: #1: scope.x === 3. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A5.4_T3.js
+runtime error: Test262Error: #1: innerScope.x === 3. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A5.5_T1.js
+runtime error: Test262Error: #1: scope.x === 1. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A5.5_T2.js
+runtime error: Test262Error: #1: scope.x === 1. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A5.5_T3.js
+runtime error: Test262Error: #1: innerScope.x === 1. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A5.6_T1.js
+runtime error: Test262Error: #1: scope.x === 16. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A5.6_T2.js
+runtime error: Test262Error: #1: scope.x === 16. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A5.6_T3.js
+runtime error: Test262Error: #1: innerScope.x === 16. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A5.7_T1.js
+runtime error: Test262Error: #1: scope.x === 2. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A5.7_T2.js
+runtime error: Test262Error: #1: scope.x === 2. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A5.7_T3.js
+runtime error: Test262Error: #1: innerScope.x === 2. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A5.8_T1.js
+runtime error: Test262Error: #1: scope.x === 2. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A5.8_T2.js
+runtime error: Test262Error: #1: scope.x === 2. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A5.8_T3.js
+runtime error: Test262Error: #1: innerScope.x === 2. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A5.9_T1.js
+runtime error: Test262Error: #1: scope.x === 1. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A5.9_T2.js
+runtime error: Test262Error: #1: scope.x === 1. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A5.9_T3.js
+runtime error: Test262Error: #1: innerScope.x === 1. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A6.10_T1.js
+runtime error: Test262Error: #1: innerX === 2. Actual: 5
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A6.11_T1.js
+runtime error: Test262Error: #1: innerX === 2. Actual: 5
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A6.1_T1.js
+runtime error: Test262Error: #1: innerX === 2. Actual: 12
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A6.2_T1.js
+runtime error: Test262Error: #1: innerX === 2. Actual: 5
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A6.3_T1.js
+runtime error: Test262Error: #1: innerX === 2. Actual: 3
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A6.4_T1.js
+runtime error: Test262Error: #1: innerX === 2. Actual: 4
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A6.5_T1.js
+runtime error: Test262Error: #1: innerX === 2. Actual: 4
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A6.6_T1.js
+runtime error: Test262Error: #1: innerX === 2. Actual: 8
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A6.7_T1.js
+runtime error: Test262Error: #1: innerX === 2. Actual: 4
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A6.8_T1.js
+runtime error: Test262Error: #1: innerX === 2. Actual: 4
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A6.9_T1.js
+runtime error: Test262Error: #1: innerX === 2. Actual: 1
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.10_T4.js
+runtime error: Test262Error: Expected true but got false
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.11_T4.js
+runtime error: Test262Error: Expected true but got false
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.1_T4.js
+runtime error: Test262Error: Expected true but got false
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.2_T4.js
+runtime error: Test262Error: Expected true but got false
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.3_T4.js
+runtime error: Test262Error: Expected true but got false
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.4_T4.js
+runtime error: Test262Error: Expected true but got false
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.5_T4.js
+runtime error: Test262Error: Expected true but got false
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.6_T4.js
+runtime error: Test262Error: Expected true but got false
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.7_T4.js
+runtime error: Test262Error: Expected true but got false
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.8_T4.js
+runtime error: Test262Error: Expected true but got false
+
+tasks/coverage/test262/test/language/expressions/compound-assignment/S11.13.2_A7.9_T4.js
+runtime error: Test262Error: Expected true but got false
 
 tasks/coverage/test262/test/language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--1.js
 runtime error: Test262Error: Expected a ReferenceError but got a TypeError
@@ -41,6 +272,9 @@ runtime error: Test262Error: Expected a ReferenceError but got a TypeError
 
 tasks/coverage/test262/test/language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--9.js
 runtime error: Test262Error: Expected a ReferenceError but got a TypeError
+
+tasks/coverage/test262/test/language/expressions/delete/super-property-uninitialized-this.js
+runtime error: Test262Error: Expected a ReferenceError but got a Test262Error
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/always-create-new-promise.js
 runtime error: Test262Error: p1 constructor is %Promise% Expected SameValue(«function Promise() { [native code] }», «function Promise() { [native code] }») to be true
@@ -124,244 +358,244 @@ tasks/coverage/test262/test/language/expressions/dynamic-import/await-import-eva
 runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/await-import-evaluation_FIXTURE.js'
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-arrow-import-catch-eval-rqstd-abrupt-typeerror.js
-runtime error: Test262Error: Expected SameValue(«Error», «TypeError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"TypeError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-arrow-import-catch-eval-rqstd-abrupt-urierror.js
-runtime error: Test262Error: Expected SameValue(«Error», «URIError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"URIError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-arrow-import-catch-eval-script-code-target.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-arrow-import-catch-instn-iee-err-ambiguous-import.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-arrow-import-catch-instn-iee-err-circular.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-arrow-function-await-eval-rqstd-abrupt-typeerror.js
-runtime error: Test262Error: Expected SameValue(«Error», «TypeError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"TypeError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-arrow-function-await-eval-rqstd-abrupt-urierror.js
-runtime error: Test262Error: Expected SameValue(«Error», «URIError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"URIError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-arrow-function-await-eval-script-code-target.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-arrow-function-await-instn-iee-err-ambiguous-import.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-arrow-function-await-instn-iee-err-circular.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-arrow-function-return-await-eval-rqstd-abrupt-typeerror.js
-runtime error: Test262Error: Expected SameValue(«Error», «TypeError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"TypeError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-arrow-function-return-await-eval-rqstd-abrupt-urierror.js
-runtime error: Test262Error: Expected SameValue(«Error», «URIError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"URIError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-arrow-function-return-await-eval-script-code-target.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-arrow-function-return-await-instn-iee-err-ambiguous-import.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-arrow-function-return-await-instn-iee-err-circular.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-function-await-eval-rqstd-abrupt-typeerror.js
-runtime error: Test262Error: Expected SameValue(«Error», «TypeError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"TypeError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-function-await-eval-rqstd-abrupt-urierror.js
-runtime error: Test262Error: Expected SameValue(«Error», «URIError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"URIError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-function-await-eval-script-code-target.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-function-await-instn-iee-err-ambiguous-import.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-function-await-instn-iee-err-circular.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-function-eval-rqstd-abrupt-typeerror.js
-runtime error: Test262Error: Expected SameValue(«Error», «TypeError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"TypeError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-function-eval-rqstd-abrupt-urierror.js
-runtime error: Test262Error: Expected SameValue(«Error», «URIError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"URIError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-function-eval-script-code-target.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-function-instn-iee-err-ambiguous-import.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-function-instn-iee-err-circular.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-function-return-await-eval-rqstd-abrupt-typeerror.js
-runtime error: Test262Error: Expected SameValue(«Error», «TypeError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"TypeError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-function-return-await-eval-rqstd-abrupt-urierror.js
-runtime error: Test262Error: Expected SameValue(«Error», «URIError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"URIError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-function-return-await-eval-script-code-target.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-function-return-await-instn-iee-err-ambiguous-import.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-function-return-await-instn-iee-err-circular.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-gen-await-eval-rqstd-abrupt-typeerror.js
-runtime error: Test262Error: Expected SameValue(«Error», «TypeError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"TypeError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-gen-await-eval-rqstd-abrupt-urierror.js
-runtime error: Test262Error: Expected SameValue(«Error», «URIError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"URIError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-gen-await-eval-script-code-target.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-gen-await-instn-iee-err-ambiguous-import.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-gen-await-instn-iee-err-circular.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-gen-return-await-eval-rqstd-abrupt-typeerror.js
-runtime error: Test262Error: Expected SameValue(«Error», «TypeError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"TypeError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-gen-return-await-eval-rqstd-abrupt-urierror.js
-runtime error: Test262Error: Expected SameValue(«Error», «URIError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"URIError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-gen-return-await-eval-script-code-target.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-gen-return-await-instn-iee-err-ambiguous-import.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-gen-return-await-instn-iee-err-circular.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-block-import-catch-eval-rqstd-abrupt-typeerror.js
-runtime error: Test262Error: Expected SameValue(«Error», «TypeError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"TypeError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-block-import-catch-eval-rqstd-abrupt-urierror.js
-runtime error: Test262Error: Expected SameValue(«Error», «URIError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"URIError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-block-import-catch-eval-script-code-target.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-block-import-catch-instn-iee-err-ambiguous-import.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-block-import-catch-instn-iee-err-circular.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-block-labeled-eval-rqstd-abrupt-typeerror.js
-runtime error: Test262Error: Expected SameValue(«Error», «TypeError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"TypeError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-block-labeled-eval-rqstd-abrupt-urierror.js
-runtime error: Test262Error: Expected SameValue(«Error», «URIError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"URIError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-block-labeled-eval-script-code-target.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-block-labeled-instn-iee-err-ambiguous-import.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-block-labeled-instn-iee-err-circular.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-do-while-eval-rqstd-abrupt-typeerror.js
-runtime error: Test262Error: Expected SameValue(«Error», «TypeError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"TypeError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-do-while-eval-rqstd-abrupt-urierror.js
-runtime error: Test262Error: Expected SameValue(«Error», «URIError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"URIError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-do-while-eval-script-code-target.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-do-while-instn-iee-err-ambiguous-import.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-do-while-instn-iee-err-circular.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-else-import-catch-eval-rqstd-abrupt-typeerror.js
-runtime error: Test262Error: Expected SameValue(«Error», «TypeError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"TypeError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-else-import-catch-eval-rqstd-abrupt-urierror.js
-runtime error: Test262Error: Expected SameValue(«Error», «URIError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"URIError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-else-import-catch-eval-script-code-target.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-else-import-catch-instn-iee-err-ambiguous-import.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-else-import-catch-instn-iee-err-circular.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-function-import-catch-eval-rqstd-abrupt-typeerror.js
-runtime error: Test262Error: Expected SameValue(«Error», «TypeError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"TypeError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-function-import-catch-eval-rqstd-abrupt-urierror.js
-runtime error: Test262Error: Expected SameValue(«Error», «URIError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"URIError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-function-import-catch-eval-script-code-target.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-function-import-catch-instn-iee-err-ambiguous-import.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-function-import-catch-instn-iee-err-circular.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-if-import-catch-eval-rqstd-abrupt-typeerror.js
-runtime error: Test262Error: Expected SameValue(«Error», «TypeError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"TypeError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-if-import-catch-eval-rqstd-abrupt-urierror.js
-runtime error: Test262Error: Expected SameValue(«Error», «URIError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"URIError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-if-import-catch-eval-script-code-target.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-if-import-catch-instn-iee-err-ambiguous-import.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-if-import-catch-instn-iee-err-circular.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-while-import-catch-eval-rqstd-abrupt-typeerror.js
-runtime error: Test262Error: Expected SameValue(«Error», «TypeError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"TypeError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-while-import-catch-eval-rqstd-abrupt-urierror.js
-runtime error: Test262Error: Expected SameValue(«Error», «URIError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"URIError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-while-import-catch-eval-script-code-target.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-while-import-catch-instn-iee-err-ambiguous-import.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-while-import-catch-instn-iee-err-circular.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/top-level-import-catch-eval-rqstd-abrupt-typeerror.js
-runtime error: Test262Error: Expected SameValue(«Error», «TypeError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"TypeError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/top-level-import-catch-eval-rqstd-abrupt-urierror.js
-runtime error: Test262Error: Expected SameValue(«Error», «URIError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"URIError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/top-level-import-catch-eval-script-code-target.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/top-level-import-catch-instn-iee-err-ambiguous-import.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/catch/top-level-import-catch-instn-iee-err-circular.js
-runtime error: Test262Error: Expected SameValue(«Error», «SyntaxError») to be true
+runtime error: Test262Error: Expected SameValue(«"Error"», «"SyntaxError"») to be true
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/custom-primitive.js
 runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/custom-tostring_FIXTURE.js'
@@ -415,7 +649,7 @@ tasks/coverage/test262/test/language/expressions/dynamic-import/for-await-resolu
 runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/for-await-resolution-and-error-a_FIXTURE.js'
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/for-await-resolution-and-error.js
-runtime error: Test262Error: Expected [] and [42, 39] to have the same contents. 
+runtime error: Test262Error: Actual [] and expected [42, 39] should have the same contents. 
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/import-attributes/2nd-param-await-expr.js
 runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/import-attributes/2nd-param_FIXTURE.js'
@@ -428,6 +662,9 @@ runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/import-attributes/2nd-param-trailing-comma-fulfill.js
 runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/import-attributes/2nd-param_FIXTURE.js'
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/import-attributes/2nd-param-with-enumeration-enumerable.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/import-attributes/2nd-param_FIXTURE.json'
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/import-attributes/2nd-param-with-enumeration.js
 runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/dynamic-import/import-attributes/2nd-param_FIXTURE.js'
@@ -1008,6 +1245,9 @@ runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc
 tasks/coverage/test262/test/language/expressions/dynamic-import/usage-from-eval.js
 runtime error: Test262Error: constructor is %Promise% Expected SameValue(«[object Promise]», «[object Promise]») to be true
 
+tasks/coverage/test262/test/language/expressions/generators/generator-created-after-decl-inst.js
+runtime error: Test262Error: Expected SameValue(«[object Generator]», «[object Generator]») to be false
+
 tasks/coverage/test262/test/language/expressions/import.meta/distinct-for-each-module.js
 runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/expressions/import.meta/distinct-for-each-module_FIXTURE.js'
 
@@ -1017,20 +1257,122 @@ runtime error: Test262Error: Expected SameValue(«null», «null») to be false
 tasks/coverage/test262/test/language/expressions/object/__proto__-permitted-dup-shorthand.js
 runtime error: SyntaxError: Duplicate __proto__ fields are not allowed in object literals
 
+tasks/coverage/test262/test/language/expressions/postfix-decrement/S11.3.2_A5_T1.js
+runtime error: Test262Error: #1: scope.x === 1. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/postfix-decrement/S11.3.2_A5_T2.js
+runtime error: Test262Error: #1: scope.x === 1. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/postfix-decrement/S11.3.2_A5_T3.js
+runtime error: Test262Error: #1: innerScope.x === 1. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/postfix-decrement/S11.3.2_A6_T3.js
+runtime error: Test262Error: Expected true but got false
+
 tasks/coverage/test262/test/language/expressions/postfix-decrement/operator-x-postfix-decrement-calls-putvalue-lhs-newvalue--1.js
 runtime error: Test262Error: Expected a ReferenceError but got a TypeError
+
+tasks/coverage/test262/test/language/expressions/postfix-increment/S11.3.1_A5_T1.js
+runtime error: Test262Error: #1: scope.x === 3. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/postfix-increment/S11.3.1_A5_T2.js
+runtime error: Test262Error: #1: scope.x === 3. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/postfix-increment/S11.3.1_A5_T3.js
+runtime error: Test262Error: #1: innerScope.x === 3. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/postfix-increment/S11.3.1_A6_T3.js
+runtime error: Test262Error: Expected true but got false
 
 tasks/coverage/test262/test/language/expressions/postfix-increment/operator-x-postfix-increment-calls-putvalue-lhs-newvalue--1.js
 runtime error: Test262Error: Expected a ReferenceError but got a TypeError
 
+tasks/coverage/test262/test/language/expressions/prefix-decrement/S11.4.5_A5_T1.js
+runtime error: Test262Error: #1: scope.x === 1. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/prefix-decrement/S11.4.5_A5_T2.js
+runtime error: Test262Error: #1: scope.x === 1. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/prefix-decrement/S11.4.5_A5_T3.js
+runtime error: Test262Error: #1: innerScope.x === 1. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/prefix-decrement/S11.4.5_A6_T3.js
+runtime error: Test262Error: Expected true but got false
+
 tasks/coverage/test262/test/language/expressions/prefix-decrement/operator-prefix-decrement-x-calls-putvalue-lhs-newvalue--1.js
 runtime error: Test262Error: Expected a ReferenceError but got a TypeError
+
+tasks/coverage/test262/test/language/expressions/prefix-increment/S11.4.4_A5_T1.js
+runtime error: Test262Error: #1: scope.x === 3. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/prefix-increment/S11.4.4_A5_T2.js
+runtime error: Test262Error: #1: scope.x === 3. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/prefix-increment/S11.4.4_A5_T3.js
+runtime error: Test262Error: #1: innerScope.x === 3. Actual: undefined
+
+tasks/coverage/test262/test/language/expressions/prefix-increment/S11.4.4_A6_T3.js
+runtime error: Test262Error: Expected true but got false
 
 tasks/coverage/test262/test/language/expressions/prefix-increment/operator-prefix-increment-x-calls-putvalue-lhs-newvalue--1.js
 runtime error: Test262Error: Expected a ReferenceError but got a TypeError
 
+tasks/coverage/test262/test/language/expressions/super/prop-expr-getsuperbase-before-topropertykey-getvalue.js
+runtime error: Test262Error: Expected SameValue(«"bad"», «"ok"») to be true
+
+tasks/coverage/test262/test/language/expressions/super/prop-expr-getsuperbase-before-topropertykey-putvalue-compound-assign.js
+runtime error: Test262Error: Expected SameValue(«0», «2») to be true
+
+tasks/coverage/test262/test/language/expressions/super/prop-expr-getsuperbase-before-topropertykey-putvalue-increment.js
+runtime error: Test262Error: Expected SameValue(«0», «2») to be true
+
+tasks/coverage/test262/test/language/expressions/super/prop-expr-getsuperbase-before-topropertykey-putvalue.js
+runtime error: Test262Error: Expected SameValue(«"bad"», «"ok"») to be true
+
 tasks/coverage/test262/test/language/global-code/decl-func.js
 runtime error: Test262Error: descriptor should not be configurable
+
+tasks/coverage/test262/test/language/identifiers/part-unicode-16.0.0-class-escaped.js
+runtime error: SyntaxError: Invalid or unexpected token
+
+tasks/coverage/test262/test/language/identifiers/part-unicode-16.0.0-class.js
+runtime error: SyntaxError: Invalid or unexpected token
+
+tasks/coverage/test262/test/language/identifiers/part-unicode-16.0.0-escaped.js
+runtime error: SyntaxError: Invalid or unexpected token
+
+tasks/coverage/test262/test/language/identifiers/part-unicode-16.0.0.js
+runtime error: SyntaxError: Invalid or unexpected token
+
+tasks/coverage/test262/test/language/import/import-attributes/json-extensibility-array.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/import/import-attributes/json-value-array_FIXTURE.json'
+
+tasks/coverage/test262/test/language/import/import-attributes/json-extensibility-object.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/import/import-attributes/json-value-object_FIXTURE.json'
+
+tasks/coverage/test262/test/language/import/import-attributes/json-idempotency.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/import/import-attributes/json-idempotency_FIXTURE.json'
+
+tasks/coverage/test262/test/language/import/import-attributes/json-value-array.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/import/import-attributes/json-value-array_FIXTURE.json'
+
+tasks/coverage/test262/test/language/import/import-attributes/json-value-boolean.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/import/import-attributes/json-value-boolean_FIXTURE.json'
+
+tasks/coverage/test262/test/language/import/import-attributes/json-value-null.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/import/import-attributes/json-value-null_FIXTURE.json'
+
+tasks/coverage/test262/test/language/import/import-attributes/json-value-number.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/import/import-attributes/json-value-number_FIXTURE.json'
+
+tasks/coverage/test262/test/language/import/import-attributes/json-value-object.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/import/import-attributes/json-value-object_FIXTURE.json'
+
+tasks/coverage/test262/test/language/import/import-attributes/json-value-string.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/import/import-attributes/json-value-string_FIXTURE.json'
+
+tasks/coverage/test262/test/language/import/import-attributes/json-via-namespace.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/import/import-attributes/json-via-namespace_FIXTURE.json'
 
 tasks/coverage/test262/test/language/literals/regexp/u-surrogate-pairs-atom-escape-decimal.js
 runtime error: Test262Error: Expected SameValue(«true», «false») to be true
@@ -1121,6 +1463,9 @@ runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc
 
 tasks/coverage/test262/test/language/module-code/export-star-as-dflt.js
 runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/export-star-as-dflt_FIXTURE.js'
+
+tasks/coverage/test262/test/language/module-code/import-attributes/allow-nlt-before-with.js
+runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/resources/ensure-linking-error_FIXTURE.js'
 
 tasks/coverage/test262/test/language/module-code/import-attributes/import-attribute-empty.js
 runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/import-attributes/import-attribute-1_FIXTURE.js'
@@ -1404,9 +1749,72 @@ runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc
 tasks/coverage/test262/test/language/module-code/verify-dfs.js
 runtime error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/verify-dfs-a_FIXTURE.js'
 
+tasks/coverage/test262/test/language/statements/async-generator/generator-created-after-decl-inst.js
+runtime error: Test262Error: Expected SameValue(«[object AsyncGenerator]», «[object AsyncGenerator]») to be false
+
+tasks/coverage/test262/test/language/statements/await-using/throws-if-initializer-not-object.js
+runtime error: SyntaxError: Unexpected identifier 'x'
+
+tasks/coverage/test262/test/language/statements/class/decorator/syntax/class-valid/decorator-member-expr-private-identifier.js
+runtime error: SyntaxError: Invalid or unexpected token
+
+tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/class-element-decorator-call-expr-identifier-reference.js
+runtime error: SyntaxError: Invalid or unexpected token
+
+tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/class-element-decorator-member-expr-decorator-member-expr.js
+runtime error: SyntaxError: Invalid or unexpected token
+
+tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/class-element-decorator-member-expr-identifier-reference.js
+runtime error: SyntaxError: Invalid or unexpected token
+
+tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/class-element-decorator-parenthesized-expr-identifier-reference.js
+runtime error: SyntaxError: Invalid or unexpected token
+
+tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/decorator-call-expr-identifier-reference-yield.js
+runtime error: SyntaxError: Invalid or unexpected token
+
+tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/decorator-call-expr-identifier-reference.js
+runtime error: SyntaxError: Invalid or unexpected token
+
+tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/decorator-member-expr-decorator-member-expr.js
+runtime error: SyntaxError: Invalid or unexpected token
+
+tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/decorator-member-expr-identifier-reference-yield.js
+runtime error: SyntaxError: Invalid or unexpected token
+
+tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/decorator-member-expr-identifier-reference.js
+runtime error: SyntaxError: Invalid or unexpected token
+
+tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference-yield.js
+runtime error: SyntaxError: Invalid or unexpected token
+
+tasks/coverage/test262/test/language/statements/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference.js
+runtime error: SyntaxError: Invalid or unexpected token
+
 tasks/coverage/test262/test/language/statements/class/elements/syntax/valid/grammar-field-accessor.js
 runtime error: SyntaxError: Unexpected identifier '$'
 
 tasks/coverage/test262/test/language/statements/for-of/string-astral-truncated.js
-runtime error: Test262Error: Expected SameValue(«\», «\ud801») to be true
+runtime error: Test262Error: Expected SameValue(«"\\"», «"\\ud801"») to be true
+
+tasks/coverage/test262/test/language/statements/generators/generator-created-after-decl-inst.js
+runtime error: Test262Error: Expected SameValue(«[object Generator]», «[object Generator]») to be false
+
+tasks/coverage/test262/test/language/statements/using/throws-if-initializer-not-object.js
+runtime error: SyntaxError: Unexpected identifier 'x'
+
+tasks/coverage/test262/test/language/statements/variable/binding-resolution.js
+runtime error: Test262Error: Expected SameValue(«undefined», «true») to be true
+
+tasks/coverage/test262/test/language/statements/with/get-binding-value-call-with-proxy-env.js
+runtime error: Test262Error: Actual [has:Object, get:Symbol(Symbol.unscopables), get:Object] and expected [has:Object, get:Symbol(Symbol.unscopables), has:Object, get:Object] should have the same contents. 
+
+tasks/coverage/test262/test/language/statements/with/get-binding-value-idref-with-proxy-env.js
+runtime error: Test262Error: Actual [has:Object, get:Symbol(Symbol.unscopables), get:Object] and expected [has:Object, get:Symbol(Symbol.unscopables), has:Object, get:Object] should have the same contents. 
+
+tasks/coverage/test262/test/language/statements/with/set-mutable-binding-idref-compound-assign-with-proxy-env.js
+runtime error: Test262Error: Actual [has:p, get:Symbol(Symbol.unscopables), get:p, has:p, get:Symbol(Symbol.unscopables), set:p, getOwnPropertyDescriptor:p, defineProperty:p] and expected [has:p, get:Symbol(Symbol.unscopables), has:p, get:p, has:p, set:p, getOwnPropertyDescriptor:p, defineProperty:p] should have the same contents. 
+
+tasks/coverage/test262/test/language/statements/with/set-mutable-binding-idref-with-proxy-env.js
+runtime error: Test262Error: Actual [has:p, get:Symbol(Symbol.unscopables), set:p, getOwnPropertyDescriptor:p, defineProperty:p] and expected [has:p, get:Symbol(Symbol.unscopables), has:p, set:p, getOwnPropertyDescriptor:p, defineProperty:p] should have the same contents. 
 
