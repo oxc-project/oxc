@@ -3,7 +3,15 @@ use std::{
     time::Duration,
 };
 
-use oxc::{allocator::Allocator, codegen::CodeGenerator, parser::Parser, span::SourceType};
+use oxc::{
+    allocator::Allocator,
+    codegen::{CodeGenerator, CodegenOptions},
+    minifier::{Minifier, MinifierOptions},
+    parser::Parser,
+    semantic::SemanticBuilder,
+    span::SourceType,
+    transformer::{TransformOptions, Transformer},
+};
 use oxc_tasks_common::agent;
 use phf::{phf_set, Set};
 use serde_json::json;
@@ -63,12 +71,12 @@ static SKIP_TEST_CASES: Set<&'static str> = phf_set! {
 
 const FIXTURES_PATH: &str = "test262/test";
 
-pub struct CodegenRuntimeTest262Case {
+pub struct Test262RuntimeCase {
     base: Test262Case,
     test_root: PathBuf,
 }
 
-impl Case for CodegenRuntimeTest262Case {
+impl Case for Test262RuntimeCase {
     fn new(path: PathBuf, code: String) -> Self {
         Self { base: Test262Case::new(path, code), test_root: workspace_root().join(FIXTURES_PATH) }
     }
@@ -92,8 +100,6 @@ impl Case for CodegenRuntimeTest262Case {
             || base_path.contains("built-ins")
             || base_path.contains("staging")
             || base_path.contains("intl402")
-            // skip v8 test-262 failed tests
-            // || V8_TEST_262_FAILED_TESTS.iter().any(|test| base_path.contains(test))
             || self
                 .base
                 .meta()
@@ -114,33 +120,72 @@ impl Case for CodegenRuntimeTest262Case {
     fn run(&mut self) {}
 
     async fn run_async(&mut self) {
-        let result = async {
-            let codegen_source_text = {
-                let source_text = self.base.code();
-                let is_module = self.base.meta().flags.contains(&TestFlag::Module);
-                let is_only_strict = self.base.meta().flags.contains(&TestFlag::OnlyStrict);
-                let source_type = SourceType::default().with_module(is_module);
-                let allocator = Allocator::default();
-                let ret = Parser::new(&allocator, source_text, source_type).parse();
-                let mut text = CodeGenerator::new().build(&ret.program).code;
-                if is_only_strict {
-                    text = format!("\"use strict\";\n{text}");
-                }
-                if is_module {
-                    text = format!("{text}\n export {{}}");
-                }
-                text
-            };
+        let code = self.get_code(false, false);
+        let result = self.run_test_code("codegen", code).await;
 
-            self.run_test_code(codegen_source_text).await
+        if result != TestResult::Passed {
+            self.base.set_result(result);
+            return;
         }
-        .await;
+
+        let code = self.get_code(true, false);
+        let result = self.run_test_code("transform", code).await;
+
+        if result != TestResult::Passed {
+            self.base.set_result(result);
+            return;
+        }
+
+        let code = self.get_code(false, true);
+        let result = self.run_test_code("minify", code).await;
         self.base.set_result(result);
     }
 }
 
-impl CodegenRuntimeTest262Case {
-    async fn run_test_code(&self, codegen_text: String) -> TestResult {
+impl Test262RuntimeCase {
+    fn get_code(&self, transform: bool, minify: bool) -> String {
+        let source_text = self.base.code();
+        let is_module = self.base.meta().flags.contains(&TestFlag::Module);
+        let is_only_strict = self.base.meta().flags.contains(&TestFlag::OnlyStrict);
+        let source_type = SourceType::default().with_module(is_module);
+        let allocator = Allocator::default();
+        let mut program = Parser::new(&allocator, source_text, source_type).parse().program;
+
+        if transform {
+            let (symbols, scopes) =
+                SemanticBuilder::new().build(&program).semantic.into_symbol_table_and_scope_tree();
+            let mut options = TransformOptions::enable_all();
+            options.react.refresh = None;
+            Transformer::new(&allocator, self.path(), options).build_with_symbols_and_scopes(
+                symbols,
+                scopes,
+                &mut program,
+            );
+        }
+
+        let mangler = if minify {
+            Minifier::new(MinifierOptions { mangle: true, ..MinifierOptions::default() })
+                .build(&allocator, &mut program)
+                .mangler
+        } else {
+            None
+        };
+
+        let mut text = CodeGenerator::new()
+            .with_options(CodegenOptions { minify, ..CodegenOptions::default() })
+            .with_mangler(mangler)
+            .build(&program)
+            .code;
+        if is_only_strict {
+            text = format!("\"use strict\";\n{text}");
+        }
+        if is_module {
+            text = format!("{text}\n export {{}}");
+        }
+        text
+    }
+
+    async fn run_test_code(&self, case: &'static str, codegen_text: String) -> TestResult {
         let is_async = self.base.meta().flags.contains(&TestFlag::Async);
         let is_module = self.base.meta().flags.contains(&TestFlag::Module);
         let is_raw = self.base.meta().flags.contains(&TestFlag::Raw);
@@ -172,10 +217,10 @@ impl CodegenRuntimeTest262Case {
                             return TestResult::Passed;
                         }
                     }
-                    TestResult::GenericError("runtime", output)
+                    TestResult::GenericError(case, output)
                 }
             }
-            Err(error) => TestResult::GenericError("runtime", error),
+            Err(error) => TestResult::GenericError(case, error),
         }
     }
 }
@@ -184,7 +229,7 @@ async fn request_run_code(json: impl serde::Serialize + Send + 'static) -> Resul
     tokio::spawn(async move {
         agent()
             .post("http://localhost:32055/run")
-            .timeout(Duration::from_secs(10))
+            .timeout(Duration::from_secs(2))
             .send_json(json)
             .map_err(|err| err.to_string())
             .and_then(|res| res.into_string().map_err(|err| err.to_string()))

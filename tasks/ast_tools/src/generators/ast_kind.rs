@@ -84,11 +84,6 @@ pub fn blacklist((ident, _): &(Ident, Type)) -> bool {
     !BLACK_LIST.contains(&ident.to_string().as_str())
 }
 
-pub fn aliased_nodes() -> [(Ident, Type); 1] {
-    use syn::parse_quote as pq;
-    [(pq!(ExpressionArrayElement), pq!(Expression<'a>))]
-}
-
 pub fn process_types(def: &TypeDef, _: &LateCtx) -> Vec<(Ident, Type)> {
     let aliases = match def {
         TypeDef::Enum(enum_) => enum_
@@ -140,7 +135,6 @@ impl Generator for AstKindGenerator {
             )
             .flat_map(|it| process_types(it, ctx))
             .filter(blacklist)
-            .chain(aliased_nodes())
             .collect();
 
         let types: Vec<Variant> =

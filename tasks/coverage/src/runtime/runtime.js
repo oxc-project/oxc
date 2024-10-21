@@ -112,6 +112,10 @@ function createHarnessForTest(includes) {
 }
 
 const server = createServer((req, res) => {
+  if (req.method == 'DELETE') {
+    server.closeAllConnections();
+    server.close();
+  }
   if (req.method === 'POST') {
     let body = '';
     req.on('data', chunk => {
@@ -140,5 +144,7 @@ const server = createServer((req, res) => {
 process.on('unhandledRejection', () => {
   // Don't exit when a test does this
 });
+
+server.timeout = 2000;
 
 server.listen(32055, () => {});

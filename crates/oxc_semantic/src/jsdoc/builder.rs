@@ -158,7 +158,6 @@ fn should_attach_jsdoc(kind: &AstKind) -> bool {
 
         | AstKind::SwitchCase(_)
         | AstKind::CatchClause(_)
-        | AstKind::FinallyClause(_)
 
         | AstKind::VariableDeclaration(_)
         | AstKind::VariableDeclarator(_)

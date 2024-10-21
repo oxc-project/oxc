@@ -14,8 +14,7 @@ mod tools;
 use std::{path::PathBuf, process::Command};
 
 use oxc_tasks_common::project_root;
-use runtime::CodegenRuntimeTest262Case;
-use similar::DiffableStr;
+use runtime::Test262RuntimeCase;
 
 use crate::{
     babel::{BabelCase, BabelSuite},
@@ -62,14 +61,13 @@ impl AppArgs {
         self.filter.is_some() || self.detail
     }
 
-    pub fn run_all(&self) {
+    pub fn run_default(&self) {
         self.run_parser();
         self.run_semantic();
         self.run_codegen();
         // self.run_prettier();
         self.run_transformer();
         self.run_transpiler();
-        // self.run_codegen_runtime();
         self.run_minifier();
     }
 
@@ -113,20 +111,13 @@ impl AppArgs {
     }
 
     /// # Panics
-    pub fn run_codegen_runtime(&self) {
-        // Run runtime.js to test codegen runtime
+    pub fn run_runtime(&self) {
+        let path = workspace_root().join("src/runtime/runtime.js").to_string_lossy().to_string();
         let mut runtime_process = Command::new("node")
-            .args([
-                "--experimental-vm-modules",
-                workspace_root()
-                    .join("src/runtime/runtime.js")
-                    .to_string_lossy()
-                    .as_str()
-                    .unwrap_or_default(),
-            ])
+            .args(["--experimental-vm-modules", &path])
             .spawn()
             .expect("Run runtime.js failed");
-        Test262Suite::<CodegenRuntimeTest262Case>::new().run_async("codegen_runtime_test262", self);
+        Test262Suite::<Test262RuntimeCase>::new().run_async(self);
         let _ = runtime_process.kill();
     }
 
@@ -139,6 +130,5 @@ impl AppArgs {
 #[test]
 #[cfg(any(coverage, coverage_nightly))]
 fn test() {
-    let args = AppArgs { debug: false, filter: None, detail: false, diff: false };
-    args.run_all()
+    AppArgs::default().run_default()
 }

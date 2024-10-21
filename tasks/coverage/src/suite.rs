@@ -57,26 +57,19 @@ pub trait Suite<T: Case> {
         self.run_coverage(name, args);
     }
 
-    fn run_async(&mut self, name: &str, args: &AppArgs) {
+    fn run_async(&mut self, args: &AppArgs) {
         let rt = Runtime::new().unwrap();
-        self.read_test_cases(name, args);
-
+        self.read_test_cases("runtime", args);
         let cases = self.get_test_cases_mut();
-
-        rt.block_on(async {
-            join_all(cases.iter_mut().map(T::run_async)).await;
-        });
-
-        self.run_coverage(name, args);
+        rt.block_on(join_all(cases.iter_mut().map(T::run_async)));
+        self.run_coverage("runtime", args);
+        let _ = oxc_tasks_common::agent().delete("http://localhost:32055").call();
     }
 
     fn run_coverage(&self, name: &str, args: &AppArgs) {
         let report = self.coverage_report();
-
         let mut out = stdout();
-
         self.print_coverage(name, args, &report, &mut out).unwrap();
-
         if args.filter.is_none() {
             self.snapshot_errors(name, &report).unwrap();
         }

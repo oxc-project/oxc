@@ -265,8 +265,8 @@ mod test {
         let args = &["fixtures/linter"];
         let result = test(args);
         assert!(result.number_of_rules > 0);
-        assert_eq!(result.number_of_files, 2);
-        assert_eq!(result.number_of_warnings, 2);
+        assert_eq!(result.number_of_files, 3);
+        assert_eq!(result.number_of_warnings, 3);
         assert_eq!(result.number_of_errors, 0);
     }
 
@@ -563,5 +563,27 @@ mod test {
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 0);
         assert_eq!(result.number_of_errors, 1);
+    }
+
+    #[test]
+    fn test_fix() {
+        use std::fs;
+        let file = "fixtures/linter/fix.js";
+        let args = &["--fix", file];
+        let content = fs::read_to_string(file).unwrap();
+        assert_eq!(&content, "debugger\n");
+
+        // Apply fix to the file.
+        let _ = test(args);
+        assert_eq!(fs::read_to_string(file).unwrap(), "\n");
+
+        // File should not be modified if no fix is applied.
+        let modified_before = fs::metadata(file).unwrap().modified().unwrap();
+        let _ = test(args);
+        let modified_after = fs::metadata(file).unwrap().modified().unwrap();
+        assert_eq!(modified_before, modified_after);
+
+        // Write the file back.
+        fs::write(file, content).unwrap();
     }
 }

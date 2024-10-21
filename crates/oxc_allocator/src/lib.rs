@@ -47,12 +47,14 @@ use std::{
 pub use bumpalo::collections::String;
 use bumpalo::Bump;
 
+mod address;
 mod boxed;
 mod clone_in;
 mod convert;
 mod vec;
 
-pub use boxed::{Address, Box};
+pub use address::{Address, GetAddress};
+pub use boxed::Box;
 pub use clone_in::CloneIn;
 pub use convert::{FromIn, IntoIn};
 pub use vec::Vec;

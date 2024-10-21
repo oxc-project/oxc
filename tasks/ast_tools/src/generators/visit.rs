@@ -272,26 +272,6 @@ impl<'a> VisitBuilder<'a> {
             )
         } else {
             match def {
-                // TODO: this one is a hot-fix to prevent flattening aliased `Expression`s,
-                // Such as `ExpressionArrayElement` and `ClassHeritage`.
-                // Shouldn't be an edge case, <https://github.com/oxc-project/oxc/issues/4060>
-                TypeDef::Enum(enum_)
-                    if enum_.name == "Expression"
-                        && visit_as.as_ref().is_some_and(|it| {
-                            it == "ExpressionArrayElement" || it == "ClassHeritage"
-                        }) =>
-                {
-                    let kind = self.kind_type(visit_as.as_ref().unwrap());
-                    (
-                        quote! {
-                            let kind = #kind;
-                            visitor.enter_node(kind);
-                            visitor.visit_expression(it);
-                            visitor.leave_node(kind);
-                        },
-                        false,
-                    )
-                }
                 TypeDef::Enum(enum_) => self.generate_enum_walk(enum_, visit_as),
                 TypeDef::Struct(struct_) => self.generate_struct_walk(struct_, visit_as),
             }
@@ -378,20 +358,12 @@ impl<'a> VisitBuilder<'a> {
                 let snake_name = type_name.to_case(Case::Snake);
                 let match_macro = format_ident!("match_{snake_name}");
                 let match_macro = quote!(#match_macro!(#ident));
-                // HACK: edge case till we get attributes to work with inheritance.
-                let visit_as = if ident == "ArrayExpressionElement"
-                    && super_.name().inner_name() == "Expression"
-                {
-                    Some(format_ident!("ExpressionArrayElement"))
-                } else {
-                    None
-                };
                 let to_child = if self.is_mut {
                     format_ident!("to_{snake_name}_mut")
                 } else {
                     format_ident!("to_{snake_name}")
                 };
-                let visit = self.get_visitor(def, false, visit_as);
+                let visit = self.get_visitor(def, false, None);
                 Some(quote!(#match_macro => visitor.#visit(it.#to_child())))
             } else {
                 None

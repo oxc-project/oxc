@@ -1435,7 +1435,6 @@ pub struct TryStatement<'a> {
     /// The `catch` clause, including the parameter and the block statement
     pub handler: Option<Box<'a, CatchClause<'a>>>,
     /// The `finally` clause
-    #[visit(as(FinallyClause))]
     pub finalizer: Option<Box<'a, BlockStatement<'a>>>,
 }
 
@@ -1839,7 +1838,6 @@ pub struct Class<'a> {
     /// class Foo extends Bar {}
     /// //                ^^^
     /// ```
-    #[visit(as(ClassHeritage))]
     pub super_class: Option<Expression<'a>>,
     /// Type parameters passed to super class.
     ///
