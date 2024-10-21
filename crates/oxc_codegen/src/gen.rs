@@ -15,17 +15,23 @@ use crate::{
     Codegen, Context, Operator,
 };
 
+/// Generate source code for an AST node.
 pub trait Gen: GetSpan {
+    /// Generate code for an AST node.
     fn gen(&self, p: &mut Codegen, ctx: Context);
 
+    /// Generate code for an AST node. Alias for `gen`.
     fn print(&self, p: &mut Codegen, ctx: Context) {
         self.gen(p, ctx);
     }
 }
 
+/// Generate source code for an expression.
 pub trait GenExpr: GetSpan {
+    /// Generate code for an expression, respecting operator precedence.
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context);
 
+    /// Generate code for an expression, respecting operator precedence. Alias for `gen_expr`.
     fn print_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         self.gen_expr(p, precedence, ctx);
     }
