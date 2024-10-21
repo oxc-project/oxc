@@ -14,10 +14,7 @@ use rustc_hash::FxHashMap;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{
-        collect_possible_jest_call_node, parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind,
-        PossibleJestNode,
-    },
+    utils::{parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind, PossibleJestNode},
 };
 
 fn valid_title_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
@@ -105,10 +102,12 @@ impl Rule for ValidTitle {
         }))
     }
 
-    fn run_once(&self, ctx: &LintContext) {
-        for node in &collect_possible_jest_call_node(ctx) {
-            self.run(node, ctx);
-        }
+    fn run_on_jest_node<'a, 'c>(
+        &self,
+        jest_node: &PossibleJestNode<'a, 'c>,
+        ctx: &'c LintContext<'a>,
+    ) {
+        self.run(jest_node, ctx);
     }
 }
 

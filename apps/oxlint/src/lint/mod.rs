@@ -539,7 +539,7 @@ mod test {
         let args = &[
             "-c",
             "fixtures/eslintrc_vitest_replace/eslintrc.json",
-            "fixtures/eslintrc_vitest_replace/foo.js",
+            "fixtures/eslintrc_vitest_replace/foo.test.js",
         ];
         let result = test(args);
         assert_eq!(result.number_of_files, 1);
@@ -549,7 +549,7 @@ mod test {
             "--vitest-plugin",
             "-c",
             "fixtures/eslintrc_vitest_replace/eslintrc.json",
-            "fixtures/eslintrc_vitest_replace/foo.js",
+            "fixtures/eslintrc_vitest_replace/foo.test.js",
         ];
         let result = test(args);
         assert_eq!(result.number_of_files, 1);

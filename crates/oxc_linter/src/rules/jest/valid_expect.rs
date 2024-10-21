@@ -11,9 +11,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{
-        collect_possible_jest_call_node, parse_expect_jest_fn_call, ExpectError, PossibleJestNode,
-    },
+    utils::{parse_expect_jest_fn_call, ExpectError, PossibleJestNode},
     AstNode,
 };
 
@@ -115,10 +113,12 @@ impl Rule for ValidExpect {
         Self(Box::new(ValidExpectConfig { async_matchers, min_args, max_args, always_await }))
     }
 
-    fn run_once(&self, ctx: &LintContext) {
-        for possible_jest_node in &collect_possible_jest_call_node(ctx) {
-            self.run(possible_jest_node, ctx);
-        }
+    fn run_on_jest_node<'a, 'b>(
+        &self,
+        jest_node: &PossibleJestNode<'a, 'b>,
+        ctx: &'b LintContext<'a>,
+    ) {
+        self.run(jest_node, ctx);
     }
 }
 
