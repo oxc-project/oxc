@@ -124,16 +124,33 @@ jobs:
   build-linter:
     name: Build Linter Benchmark
     runs-on: ubuntu-latest
+    outputs:
+      src: ${{ steps.filter.outputs.src }}
     steps:
       - name: Checkout Branch
         uses: taiki-e/checkout-action@v1
 
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            src:
+              - '!crates/oxc_isolated_declarations/**'
+              - '!crates/oxc_minifier/**'
+              - '!crates/oxc_prettier/**'
+              - '!crates/oxc_transformer/**'
+              - '!crates/oxc_traverse/**'
+              - '!crates/oxc_wasm/**'
+              - '!crates/oxc/**'
+
       - uses: Boshen/setup-rust@main
+        if: steps.filter.outputs.src == 'true'
         with:
           cache-key: benchmark-linter
           save-cache: ${{ github.ref_name == 'main' }}
 
       - name: Build benchmark
+        if: steps.filter.outputs.src == 'true'
         env:
           RUSTFLAGS: "-C debuginfo=1 -C strip=none -g --cfg codspeed"
         run: |
@@ -144,6 +161,7 @@ jobs:
           rm target/codspeed/oxc_benchmark/*.d
 
       - name: Upload Binary
+        if: steps.filter.outputs.src == 'true'
         uses: actions/upload-artifact@v4
         with:
           if-no-files-found: error
@@ -156,6 +174,7 @@ jobs:
     name: Benchmark linter
     needs: build-linter
     runs-on: ubuntu-latest
+    if: needs.build-linter.outputs.src == 'true'
     strategy:
       fail-fast: true
       matrix:
