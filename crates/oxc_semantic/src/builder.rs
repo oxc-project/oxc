@@ -1481,7 +1481,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             });
             /* cfg */
 
-            self.visit_finally_clause(finalizer);
+            self.visit_block_statement(finalizer);
 
             /* cfg */
             control_flow!(self, |cfg| {

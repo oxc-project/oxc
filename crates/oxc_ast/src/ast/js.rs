@@ -1435,7 +1435,6 @@ pub struct TryStatement<'a> {
     /// The `catch` clause, including the parameter and the block statement
     pub handler: Option<Box<'a, CatchClause<'a>>>,
     /// The `finally` clause
-    #[visit(as(FinallyClause))]
     pub finalizer: Option<Box<'a, BlockStatement<'a>>>,
 }
 

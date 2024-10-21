@@ -1127,11 +1127,6 @@ pub trait VisitMut<'a>: Sized {
     }
 
     #[inline]
-    fn visit_finally_clause(&mut self, it: &mut BlockStatement<'a>) {
-        walk_finally_clause(self, it);
-    }
-
-    #[inline]
     fn visit_while_statement(&mut self, it: &mut WhileStatement<'a>) {
         walk_while_statement(self, it);
     }
@@ -3860,7 +3855,7 @@ pub mod walk_mut {
             visitor.visit_catch_clause(handler);
         }
         if let Some(finalizer) = &mut it.finalizer {
-            visitor.visit_finally_clause(finalizer);
+            visitor.visit_block_statement(finalizer);
         }
         visitor.leave_node(kind);
     }
@@ -3883,16 +3878,6 @@ pub mod walk_mut {
         let kind = AstType::CatchParameter;
         visitor.enter_node(kind);
         visitor.visit_binding_pattern(&mut it.pattern);
-        visitor.leave_node(kind);
-    }
-
-    #[inline]
-    pub fn walk_finally_clause<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut BlockStatement<'a>) {
-        let kind = AstType::FinallyClause;
-        visitor.enter_node(kind);
-        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
-        visitor.visit_statements(&mut it.body);
-        visitor.leave_scope();
         visitor.leave_node(kind);
     }
 

@@ -75,7 +75,6 @@ pub enum AstType {
     LabeledStatement,
     ThrowStatement,
     TryStatement,
-    FinallyClause,
     CatchClause,
     CatchParameter,
     DebuggerStatement,
@@ -246,7 +245,6 @@ pub enum AstKind<'a> {
     LabeledStatement(&'a LabeledStatement<'a>),
     ThrowStatement(&'a ThrowStatement<'a>),
     TryStatement(&'a TryStatement<'a>),
-    FinallyClause(&'a BlockStatement<'a>),
     CatchClause(&'a CatchClause<'a>),
     CatchParameter(&'a CatchParameter<'a>),
     DebuggerStatement(&'a DebuggerStatement),
@@ -418,7 +416,6 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::LabeledStatement(it) => it.span(),
             Self::ThrowStatement(it) => it.span(),
             Self::TryStatement(it) => it.span(),
-            Self::FinallyClause(it) => it.span(),
             Self::CatchClause(it) => it.span(),
             Self::CatchParameter(it) => it.span(),
             Self::DebuggerStatement(it) => it.span(),
@@ -1119,15 +1116,6 @@ impl<'a> AstKind<'a> {
     #[inline]
     pub fn as_try_statement(&self) -> Option<&'a TryStatement<'a>> {
         if let Self::TryStatement(v) = self {
-            Some(*v)
-        } else {
-            None
-        }
-    }
-
-    #[inline]
-    pub fn as_finally_clause(&self) -> Option<&'a BlockStatement<'a>> {
-        if let Self::FinallyClause(v) = self {
             Some(*v)
         } else {
             None

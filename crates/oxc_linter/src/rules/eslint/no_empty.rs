@@ -59,46 +59,30 @@ impl Rule for NoEmpty {
                 }
                 ctx.diagnostic_with_suggestion(no_empty_diagnostic("block", block.span), |fixer| {
                     if let Some(parent) = parent {
-                        if matches!(parent, AstKind::CatchClause(_)) {
-                            fixer.noop()
-                        } else {
-                            fixer.delete(&parent)
+                        if let AstKind::TryStatement(try_stmt) = parent {
+                            if let Some(try_block_stmt) = &try_stmt.finalizer {
+                                if try_block_stmt.span == block.span {
+                                    return if let Some(finally_kw_start) =
+                                        find_finally_start(ctx, block)
+                                    {
+                                        fixer.delete_range(Span::new(
+                                            finally_kw_start,
+                                            block.span.end,
+                                        ))
+                                    } else {
+                                        fixer.noop()
+                                    };
+                                }
+                            }
                         }
+                        if matches!(parent, AstKind::CatchClause(_)) {
+                            return fixer.noop();
+                        }
+                        fixer.delete(&parent)
                     } else {
                         fixer.noop()
                     }
                 });
-            }
-            // The visitor does not visit the `BlockStatement` inside the `FinallyClause`.
-            // See `Visit::visit_finally_clause`.
-            AstKind::FinallyClause(finally_clause) if finally_clause.body.is_empty() => {
-                if ctx.semantic().has_comments_between(finally_clause.span) {
-                    return;
-                }
-                ctx.diagnostic_with_suggestion(
-                    no_empty_diagnostic("block", finally_clause.span),
-                    |fixer| {
-                        let parent = ctx
-                            .nodes()
-                            .parent_kind(node.id())
-                            .expect("finally clauses must have a parent node");
-
-                        let AstKind::TryStatement(parent) = parent else {
-                            unreachable!("finally clauses must be children of a try statement");
-                        };
-
-                        // if there's no `catch`, we can't remove the `finally` block
-                        if parent.handler.is_none() {
-                            return fixer.noop();
-                        }
-
-                        if let Some(finally_kw_start) = find_finally_start(ctx, finally_clause) {
-                            fixer.delete_range(Span::new(finally_kw_start, finally_clause.span.end))
-                        } else {
-                            fixer.noop()
-                        }
-                    },
-                );
             }
             AstKind::SwitchStatement(switch) if switch.cases.is_empty() => {
                 ctx.diagnostic_with_suggestion(

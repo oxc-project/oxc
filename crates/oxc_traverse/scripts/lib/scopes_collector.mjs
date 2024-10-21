@@ -43,11 +43,6 @@ export default function generateScopesCollectorCode(types) {
 
     impl<'a> Visit<'a> for ChildScopeCollector {
       ${methods}
-
-      #[inline]
-      fn visit_finally_clause(&mut self, it: &BlockStatement<'a>) {
-        self.add_scope(&it.scope_id);
-      }
     }
   `;
 }

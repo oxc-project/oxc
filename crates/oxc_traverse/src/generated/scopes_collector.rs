@@ -123,9 +123,4 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     fn visit_ts_mapped_type(&mut self, it: &TSMappedType<'a>) {
         self.add_scope(&it.scope_id);
     }
-
-    #[inline]
-    fn visit_finally_clause(&mut self, it: &BlockStatement<'a>) {
-        self.add_scope(&it.scope_id);
-    }
 }
