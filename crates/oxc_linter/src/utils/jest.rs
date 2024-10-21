@@ -157,28 +157,22 @@ pub fn collect_possible_jest_call_node<'a, 'b>(
     //     expect(1 + 2).toEqual(3);
     // });
     // ```
-    let mut reference_id_with_original_list = collect_ids_referenced_to_import(ctx);
-    if JEST_METHOD_NAMES
-        .iter()
-        .any(|name| ctx.scopes().root_unresolved_references().contains_key(*name))
-    {
-        reference_id_with_original_list.extend(
-            collect_ids_referenced_to_global(ctx)
-                // set the original of global test function to None
-                .map(|id| (id, None)),
-        );
-    }
+    let reference_id_with_original_list = collect_ids_referenced_to_import(ctx).chain(
+        collect_ids_referenced_to_global(ctx)
+            // set the original of global test function to None
+            .map(|id| (id, None)),
+    );
 
     // get the longest valid chain of Jest Call Expression
-    reference_id_with_original_list.iter().fold(vec![], |mut acc, id_with_original| {
+    reference_id_with_original_list.fold(vec![], |mut acc, id_with_original| {
         let (reference_id, original) = id_with_original;
-        let mut id = ctx.symbols().get_reference(*reference_id).node_id();
+        let mut id = ctx.symbols().get_reference(reference_id).node_id();
         loop {
             let parent = ctx.nodes().parent_node(id);
             if let Some(parent) = parent {
                 let parent_kind = parent.kind();
                 if matches!(parent_kind, AstKind::CallExpression(_)) {
-                    acc.push(PossibleJestNode { node: parent, original: *original });
+                    acc.push(PossibleJestNode { node: parent, original });
                     id = parent.id();
                 } else if matches!(
                     parent_kind,
@@ -197,9 +191,9 @@ pub fn collect_possible_jest_call_node<'a, 'b>(
     })
 }
 
-fn collect_ids_referenced_to_import<'a>(
-    ctx: &LintContext<'a>,
-) -> Vec<(ReferenceId, Option<&'a str>)> {
+fn collect_ids_referenced_to_import<'a, 'c>(
+    ctx: &'c LintContext<'a>,
+) -> impl Iterator<Item = (ReferenceId, Option<&'a str>)> + 'c {
     ctx.symbols()
         .resolved_references
         .iter_enumerated()
@@ -226,7 +220,6 @@ fn collect_ids_referenced_to_import<'a>(
             None
         })
         .flatten()
-        .collect()
 }
 
 /// Find name in the Import Declaration, not use name because of lifetime not long enough.
