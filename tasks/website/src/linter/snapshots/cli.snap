@@ -117,6 +117,8 @@ Arguments:
   Do not display any diagnostics
 - **`    --threads`**=_`INT`_ &mdash; 
   Number of threads to use. Set to 1 for using only 1 CPU core
+- **`    --print-config`**=_`ARG`_ &mdash; 
+  This option outputs the configuration to be used. To print current configuration in your project, use `--print-config all`, print configuration for a specific file is not supported for now. When present, no linting is performed and only config-related options are valid.
 
 
 

@@ -10,8 +10,8 @@ use oxc_span::VALID_EXTENSIONS;
 
 use crate::{
     cli::{
-        CliRunResult, LintCommand, LintResult, MiscOptions, OutputFormat, OutputOptions, Runner,
-        WarningOptions,
+        CliRunResult, LintCommand, LintResult, MiscOptions, OutputFormat, OutputOptions,
+        PrintConfig, Runner, WarningOptions,
     },
     walk::{Extensions, Walk},
 };
@@ -116,9 +116,29 @@ impl Runner for LintRunner {
         };
 
         enable_plugins.apply_overrides(&mut oxlintrc.plugins);
+
+        let oxlintrc_for_print =
+            if misc_options.print_config.is_some() { Some(oxlintrc.clone()) } else { None };
         let builder = LinterBuilder::from_oxlintrc(false, oxlintrc)
             .with_filters(filter)
             .with_fix(fix_options.fix_kind());
+
+        if let Some(mut basic_config_file) = oxlintrc_for_print {
+            match misc_options.print_config {
+                Some(PrintConfig::All) => {
+                    return CliRunResult::PrintConfigResult {
+                        config_file: builder.resolve_final_config_file(&mut basic_config_file),
+                    };
+                }
+                // TODO: add support for printing the configuration for a specific path when overrides supported.
+                Some(PrintConfig::Path(_path)) => return CliRunResult::InvalidOptions {
+                    message: "Inspect config for a path is not supported yet, for now, this command only supports using `--print-config all` to output project config.".to_string()
+                },
+                None => {
+                    unreachable!("If oxlintrc_for_print is Some, then misc_options.print_config should be Some")
+                }
+            }
+        }
 
         let mut options =
             LintServiceOptions::new(cwd, paths).with_cross_module(builder.plugins().has_import());
@@ -563,5 +583,57 @@ mod test {
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 0);
         assert_eq!(result.number_of_errors, 1);
+    }
+
+    #[test]
+    fn test_print_config_ban_all_rules() {
+        let args = &["-A", "all", "--print-config", "all"];
+        let options = lint_command().run_inner(args).unwrap();
+        let ret = LintRunner::new(options).run();
+        let CliRunResult::PrintConfigResult { config_file: config } = ret else {
+            panic!("Expected PrintConfigResult, got {ret:?}")
+        };
+
+        let expect_json =
+            std::fs::read_to_string("fixtures/print_config/normal/expect.json").unwrap();
+        assert_eq!(config, expect_json.trim());
+    }
+
+    #[test]
+    fn test_print_config_ban_rules() {
+        let args = &[
+            "-c",
+            "fixtures/print_config/ban_rules/eslintrc.json",
+            "-A",
+            "all",
+            "-D",
+            "eqeqeq",
+            "--print-config",
+            "all",
+        ];
+        let options = lint_command().run_inner(args).unwrap();
+        let ret = LintRunner::new(options).run();
+        let CliRunResult::PrintConfigResult { config_file: config } = ret else {
+            panic!("Expected PrintConfigResult, got {ret:?}")
+        };
+
+        let expect_json =
+            std::fs::read_to_string("fixtures/print_config/ban_rules/expect.json").unwrap();
+        assert_eq!(config, expect_json.trim());
+    }
+
+    #[test]
+    fn test_print_config_with_path() {
+        let args = &["--print-config", "path"];
+        let options = lint_command().run_inner(args).unwrap();
+        let ret = LintRunner::new(options).run();
+        let CliRunResult::InvalidOptions { message } = ret else {
+            panic!("Expected InvalidOptions, got {ret:?}")
+        };
+
+        assert_eq!(
+            message,
+            "Inspect config for a path is not supported yet, for now, this command only supports using `--print-config all` to output project config."
+        );
     }
 }
