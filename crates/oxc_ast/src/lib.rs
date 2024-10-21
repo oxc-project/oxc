@@ -28,6 +28,7 @@
 #[cfg(feature = "serialize")]
 mod serialize;
 
+pub mod address;
 pub mod ast;
 mod ast_builder_impl;
 mod ast_impl;
