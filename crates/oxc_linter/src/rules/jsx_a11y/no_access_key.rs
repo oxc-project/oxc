@@ -51,12 +51,16 @@ impl Rule for NoAccessKey {
         {
             match attr.value.as_ref() {
                 Some(JSXAttributeValue::StringLiteral(_)) => {
-                    ctx.diagnostic_with_fix(no_access_key_diagnostic(attr.span), |fixer| fixer.delete(&attr.span));
+                    ctx.diagnostic_with_fix(no_access_key_diagnostic(attr.span), |fixer| {
+                        fixer.delete(&attr.span)
+                    });
                 }
                 Some(JSXAttributeValue::ExpressionContainer(container)) => {
                     if container.expression.is_expression() && !container.expression.is_undefined()
                     {
-                        ctx.diagnostic_with_fix(no_access_key_diagnostic(attr.span), |fixer| fixer.delete(&attr.span));
+                        ctx.diagnostic_with_fix(no_access_key_diagnostic(attr.span), |fixer| {
+                            fixer.delete(&attr.span)
+                        });
                     }
                 }
                 _ => {}
