@@ -107,7 +107,7 @@ impl Rule for NoDuplicates {
                 .filter(|requested_module| requested_module.is_import());
             // When prefer_inline is false, 0 is value, 1 is type named, 2 is type namespace and 3 is type default
             // When prefer_inline is true, 0 is value and type named, 2 is type // namespace and 3 is type default
-            let mut import_entries_maps: FxHashMap<i8, Vec<&RequestedModule>> =
+            let mut import_entries_maps: FxHashMap<u8, Vec<&RequestedModule>> =
                 FxHashMap::default();
             for requested_module in requested_modules {
                 let imports = module_record
@@ -123,7 +123,7 @@ impl Rule for NoDuplicates {
                 for imports in imports {
                     let key = if imports.is_type {
                         match imports.import_name {
-                            ImportImportName::Name(_) => i8::from(!self.prefer_inline),
+                            ImportImportName::Name(_) => u8::from(!self.prefer_inline),
                             ImportImportName::NamespaceObject => 2,
                             ImportImportName::Default(_) => 3,
                         }
