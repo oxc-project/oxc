@@ -53,7 +53,7 @@ impl IntoIterator for OxlintRules {
 }
 
 impl OxlintRules {
-    #[allow(clippy::option_if_let_else)]
+    #[allow(clippy::option_if_let_else, clippy::print_stdout)]
     pub(crate) fn override_rules(&self, rules_for_override: &mut RuleSet, all_rules: &[RuleEnum]) {
         use itertools::Itertools;
         let mut rules_to_replace: Vec<RuleWithSeverity> = vec![];
