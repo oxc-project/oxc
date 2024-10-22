@@ -15,6 +15,12 @@ async function runCodeInHarness(options = {}) {
   const { code = '', includes = [], importDir = '', isAsync = false, isModule = true, isRaw = false } = options;
   const context = {};
 
+  if (process.env.DEBUG) {
+    const { code: c, ...o } = options;
+    console.log(c);
+    console.log(o);
+  }
+
   // See: https://github.com/nodejs/node/issues/36351
   const unique = () => '//' + Math.random();
 
