@@ -55,7 +55,6 @@ impl Parse for VisitArgs {
 /// A struct representing `#[visit(...)]` markers
 #[derive(Default, Debug)]
 pub struct VisitMarkers {
-    pub visit_as: Option<Ident>,
     pub visit_args: Option<VisitArgs>,
     pub enter_before: bool,
     pub ignore: bool,
@@ -299,7 +298,6 @@ where
     attr.map_or_else(
         || Ok(VisitMarkers::default()),
         |attr| {
-            let mut visit_as = None;
             let mut visit_args = None;
             let mut enter_before = false;
             let mut ignore = false;
@@ -310,9 +308,6 @@ where
                     for com in nested {
                         if com.ident == "args" {
                             visit_args = Some(parse2(com.args).unwrap());
-                        } else if com.ident == "as" {
-                            visit_as =
-                                Some(parse2(com.args).expect("Invalid `#[visit[as(...)]]` input!"));
                         } else if com.ident == "enter_before" {
                             enter_before = true;
                         } else if com.ident == "ignore" {
@@ -322,7 +317,7 @@ where
                         }
                     }
                 })
-                .map(|()| VisitMarkers { visit_as, visit_args, enter_before, ignore })
+                .map(|()| VisitMarkers { visit_args, enter_before, ignore })
                 .normalize()
         },
     )

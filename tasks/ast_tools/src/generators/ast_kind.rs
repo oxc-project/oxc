@@ -8,7 +8,6 @@ use crate::{
     codegen::{generated_header, LateCtx},
     output,
     schema::{GetIdent, ToType, TypeDef},
-    util::ToIdent,
     Generator, GeneratorOutput,
 };
 
@@ -80,50 +79,6 @@ pub const BLACK_LIST: [&str; 61] = [
     "JSXSpreadChild",
 ];
 
-pub fn blacklist((ident, _): &(Ident, Type)) -> bool {
-    !BLACK_LIST.contains(&ident.to_string().as_str())
-}
-
-pub fn process_types(def: &TypeDef, _: &LateCtx) -> Vec<(Ident, Type)> {
-    let aliases = match def {
-        TypeDef::Enum(enum_) => enum_
-            .variants
-            .iter()
-            .filter(|it| it.markers.visit.visit_as.is_some())
-            .map(|var| {
-                let field = var.fields.first().unwrap();
-                let type_name = field.typ.name().inner_name();
-                (
-                    var.markers.visit.visit_as.clone().expect("Already checked"),
-                    parse_quote!(#type_name<'a>),
-                )
-            })
-            .collect_vec(),
-        TypeDef::Struct(struct_) => struct_
-            .fields
-            .iter()
-            .filter(|it| it.markers.visit.visit_as.is_some())
-            .map(|field| {
-                let type_name = field.typ.name().inner_name().to_ident();
-                (
-                    field.markers.visit.visit_as.clone().expect("Already checked"),
-                    parse_quote!(#type_name<'a>),
-                )
-            })
-            .collect_vec(),
-    };
-
-    Some(def)
-        .into_iter()
-        .map(|def| {
-            let ident = def.ident();
-            let typ = def.to_type();
-            (ident, typ)
-        })
-        .chain(aliases)
-        .collect()
-}
-
 impl Generator for AstKindGenerator {
     fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
         let have_kinds: Vec<(Ident, Type)> = ctx
@@ -133,8 +88,12 @@ impl Generator for AstKindGenerator {
             .filter(
                 |maybe_kind| matches!(maybe_kind, kind @ (TypeDef::Enum(_) | TypeDef::Struct(_)) if kind.visitable())
             )
-            .flat_map(|it| process_types(it, ctx))
-            .filter(blacklist)
+            .map(|def| {
+                let ident = def.ident();
+                let typ = def.to_type();
+                (ident, typ)
+            })
+            .filter(|(ident, _)| !BLACK_LIST.contains(&ident.to_string().as_str()))
             .collect();
 
         let types: Vec<Variant> =

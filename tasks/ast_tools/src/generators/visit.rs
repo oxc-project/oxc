@@ -159,7 +159,7 @@ impl<'a> VisitBuilder<'a> {
             .find(|it| it.name() == "Program")
             .expect("Couldn't find the `Program` type!");
 
-        self.get_visitor(program, false, None);
+        self.get_visitor(program, false);
         (self.visits, self.walks)
     }
 
@@ -182,20 +182,13 @@ impl<'a> VisitBuilder<'a> {
         }
     }
 
-    fn get_visitor(
-        &mut self,
-        def: &TypeDef,
-        collection: bool,
-        visit_as: Option<Ident>,
-    ) -> Cow<'a, Ident> {
+    fn get_visitor(&mut self, def: &TypeDef, collection: bool) -> Cow<'a, Ident> {
         let cache_ix = usize::from(collection);
         let (ident, as_type) = {
             debug_assert!(def.visitable(), "{def:?}");
 
             let ident = def.name().to_ident();
             let as_type = def.to_type();
-
-            let ident = visit_as.clone().unwrap_or(ident);
 
             (ident, if collection { parse_quote!(Vec<'a, #as_type>) } else { as_type })
         };
@@ -260,7 +253,7 @@ impl<'a> VisitBuilder<'a> {
         self.walks.push(TokenStream::default());
 
         let (walk_body, may_inline) = if collection {
-            let singular_visit = self.get_visitor(def, false, None);
+            let singular_visit = self.get_visitor(def, false);
             let iter = if self.is_mut { quote!(it.iter_mut()) } else { quote!(it) };
             (
                 quote! {
@@ -272,8 +265,8 @@ impl<'a> VisitBuilder<'a> {
             )
         } else {
             match def {
-                TypeDef::Enum(enum_) => self.generate_enum_walk(enum_, visit_as),
-                TypeDef::Struct(struct_) => self.generate_struct_walk(struct_, visit_as),
+                TypeDef::Enum(enum_) => self.generate_enum_walk(enum_),
+                TypeDef::Struct(struct_) => self.generate_struct_walk(struct_),
             }
         };
 
@@ -292,11 +285,7 @@ impl<'a> VisitBuilder<'a> {
         visit_name
     }
 
-    fn generate_enum_walk(
-        &mut self,
-        enum_: &EnumDef,
-        visit_as: Option<Ident>,
-    ) -> (TokenStream, /* inline */ bool) {
+    fn generate_enum_walk(&mut self, enum_: &EnumDef) -> (TokenStream, /* inline */ bool) {
         let ident = enum_.ident();
         let mut non_exhaustive = false;
         let variants_matches = enum_
@@ -324,7 +313,7 @@ impl<'a> VisitBuilder<'a> {
                 let def = self.ctx.type_def(type_id)?;
                 let visitable = def.visitable();
                 if visitable {
-                    let visit = self.get_visitor(def, false, None);
+                    let visit = self.get_visitor(def, false);
                     let (args_def, args) = var
                         .markers
                         .visit
@@ -363,7 +352,7 @@ impl<'a> VisitBuilder<'a> {
                 } else {
                     format_ident!("to_{snake_name}")
                 };
-                let visit = self.get_visitor(def, false, None);
+                let visit = self.get_visitor(def, false);
                 Some(quote!(#match_macro => visitor.#visit(it.#to_child())))
             } else {
                 None
@@ -373,7 +362,6 @@ impl<'a> VisitBuilder<'a> {
         let matches = variants_matches.into_iter().chain(inherit_matches).collect_vec();
 
         let with_node_events = |tk| {
-            let ident = visit_as.unwrap_or(ident);
             if KIND_BLACK_LIST.contains(&ident.to_string().as_str()) {
                 tk
             } else {
@@ -394,12 +382,8 @@ impl<'a> VisitBuilder<'a> {
         )
     }
 
-    fn generate_struct_walk(
-        &mut self,
-        struct_: &StructDef,
-        visit_as: Option<Ident>,
-    ) -> (TokenStream, /* inline */ bool) {
-        let ident = visit_as.unwrap_or_else(|| struct_.ident());
+    fn generate_struct_walk(&mut self, struct_: &StructDef) -> (TokenStream, /* inline */ bool) {
+        let ident = struct_.ident();
         let scope_events =
             struct_.markers.scope.as_ref().map_or_else(Default::default, |markers| {
                 let flags = markers
@@ -456,7 +440,6 @@ impl<'a> VisitBuilder<'a> {
                 }
                 let typ_wrapper = &analysis.wrapper;
                 let markers = &field.markers;
-                let visit_as = markers.visit.visit_as.clone();
                 let visit_args = markers.visit.visit_args.clone();
 
                 let have_enter_scope = markers.scope.enter_before;
@@ -472,7 +455,6 @@ impl<'a> VisitBuilder<'a> {
                         typ_wrapper,
                         TypeWrapper::Vec | TypeWrapper::VecBox | TypeWrapper::OptVec
                     ),
-                    visit_as,
                 );
                 let name = field.ident().expect("expected named fields!");
                 let borrowed_field = self.with_ref_pat(quote!(it.#name));
