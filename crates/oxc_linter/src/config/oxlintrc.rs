@@ -29,6 +29,7 @@ use crate::{options::LintPlugins, utils::read_to_string};
 ///
 /// ```json
 /// {
+///   "$schema": "./node_modules/oxlint/configuration_schema.json",
 ///   "env": {
 ///     "browser": true
 ///   },
@@ -72,21 +73,26 @@ impl Oxlintrc {
             OxcDiagnostic::error(format!("Failed to parse jsonc file {path:?}: {err:?}"))
         })?;
 
-        let json = serde_json::from_str::<serde_json::Value>(&string).map_err(|err| {
+        // Parse JSON into a serde_json::Value
+        let mut json = serde_json::from_str::<serde_json::Value>(&string).map_err(|err| {
             let guess = mime_guess::from_path(path);
             let err = match guess.first() {
                 // syntax error
                 Some(mime) if mime.subtype() == "json" => err.to_string(),
                 Some(_) => "Only json configuration is supported".to_string(),
                 None => {
-                    format!(
-                        "{err}, if the configuration is not a json file, please use json instead."
-                    )
+                    format!("{err}, if the configuration is not a json file, please use json instead.")
                 }
             };
             OxcDiagnostic::error(format!("Failed to parse eslint config {path:?}.\n{err}"))
         })?;
 
+        // Remove the $schema field if present
+        if let Some(obj) = json.as_object_mut() {
+            obj.remove("$schema");
+        }
+
+        // Deserialize the remaining JSON into Oxlintrc
         let config = Self::deserialize(&json).map_err(|err| {
             OxcDiagnostic::error(format!("Failed to parse config with error {err:?}"))
         })?;
@@ -118,15 +124,11 @@ mod test {
 
     #[test]
     fn test_oxlintrc_de_plugins_enabled_by_default() {
-        // NOTE(@DonIsaac): creating a Value with `json!` then deserializing it with serde_json::from_value
-        // Errs with "invalid type: string \"eslint\", expected a borrowed string" and I can't
-        // figure out why. This seems to work. Why???
         let configs = [
             r#"{ "plugins": ["eslint"] }"#,
             r#"{ "plugins": ["oxc"] }"#,
             r#"{ "plugins": ["deepscan"] }"#, // alias for oxc
         ];
-        // ^ these plugins are enabled by default already
         for oxlintrc in configs {
             let config: Oxlintrc = serde_json::from_str(oxlintrc).unwrap();
             assert_eq!(config.plugins, LintPlugins::default());
@@ -137,5 +139,17 @@ mod test {
     fn test_oxlintrc_de_plugins_new() {
         let config: Oxlintrc = serde_json::from_str(r#"{ "plugins": ["import"] }"#).unwrap();
         assert_eq!(config.plugins, LintPlugins::default().union(LintPlugins::IMPORT));
+    }
+
+    #[test]
+    fn test_oxlintrc_with_schema() {
+        // Simulate a configuration file with the $schema field
+        let config: Oxlintrc = serde_json::from_value(json!({
+            "$schema": "./node_modules/oxlint/configuration_schema.json", // This should be ignored
+            "env": { "browser": true }
+        })).unwrap();
+
+        // Assert that the env configuration is parsed correctly and $schema is ignored
+        assert_eq!(config.env, OxlintEnv::default().with_browser(true));
     }
 }
