@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, Serializer};
 
-#[derive(Debug, Deserialize, Default, Serialize, JsonSchema)]
+#[derive(Debug, Clone, Deserialize, Default, Serialize, JsonSchema)]
 #[cfg_attr(test, derive(PartialEq))]
 pub struct NextPluginSettings {
     #[serde(default)]

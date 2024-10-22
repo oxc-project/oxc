@@ -9,6 +9,8 @@ pub use self::{
     env::OxlintEnv,
     globals::OxlintGlobals,
     oxlintrc::Oxlintrc,
+    rules::ESLintRule,
+    rules::OxlintRules,
     settings::{jsdoc::JSDocPluginSettings, OxlintSettings},
 };
 

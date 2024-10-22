@@ -26,6 +26,12 @@ type RuleSet = FxHashSet<RuleWithSeverity>;
 #[cfg_attr(test, derive(PartialEq))]
 pub struct OxlintRules(Vec<ESLintRule>);
 
+impl OxlintRules {
+    pub fn new(rules: Vec<ESLintRule>) -> Self {
+        Self(rules)
+    }
+}
+
 #[derive(Debug, Clone)]
 #[cfg_attr(test, derive(PartialEq))]
 pub struct ESLintRule {
