@@ -96,8 +96,7 @@ impl Generator for AstKindGenerator {
             })
             .collect_vec();
 
-        let types: Vec<Variant> =
-            have_kinds.iter().map(|(ident, _)| parse_quote!(#ident)).collect_vec();
+        let types = have_kinds.iter().map(|(ident, _)| ident).collect_vec();
 
         let kinds: Vec<Variant> =
             have_kinds.iter().map(|(ident, typ)| parse_quote!(#ident(&'a #typ))).collect_vec();
