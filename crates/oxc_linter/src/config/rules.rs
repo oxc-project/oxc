@@ -127,10 +127,10 @@ impl OxlintRules {
             rules_for_override.replace(rule);
         }
 
-        if (rules_not_matched.len() > 0) {
+        if !rules_not_matched.is_empty() {
             println!("The following rules do not match the currently supported rules:");
             for rule in rules_not_matched {
-                println!("{}", rule);
+                println!("{rule}");
             }
         }
     }
