@@ -37,7 +37,8 @@ declare_oxc_lint!(
     /// <div />
     /// ```
     NoAccessKey,
-    correctness
+    correctness,
+    fix
 );
 
 impl Rule for NoAccessKey {
@@ -50,12 +51,12 @@ impl Rule for NoAccessKey {
         {
             match attr.value.as_ref() {
                 Some(JSXAttributeValue::StringLiteral(_)) => {
-                    ctx.diagnostic(no_access_key_diagnostic(attr.span));
+                    ctx.diagnostic_with_fix(no_access_key_diagnostic(attr.span), |fixer| fixer.delete(&attr.span));
                 }
                 Some(JSXAttributeValue::ExpressionContainer(container)) => {
                     if container.expression.is_expression() && !container.expression.is_undefined()
                     {
-                        ctx.diagnostic(no_access_key_diagnostic(attr.span));
+                        ctx.diagnostic_with_fix(no_access_key_diagnostic(attr.span), |fixer| fixer.delete(&attr.span));
                     }
                 }
                 _ => {}
@@ -84,5 +85,19 @@ fn test() {
         r"<div accessKey={`${undefined}${undefined}`} />",
     ];
 
-    Tester::new(NoAccessKey::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        (r#"<div accesskey="h" />"#, r#"<div  />"#),
+        (r#"<div accessKey="h" />"#, r#"<div  />"#),
+        (r#"<div accessKey="h" {...props} />"#, r#"<div  {...props} />"#),
+        (r#"<div acCesSKeY="y" />"#, r#"<div  />"#),
+        (r#"<div accessKey={"y"} />"#, r#"<div  />"#),
+        (r"<div accessKey={`${y}`} />", r"<div  />"),
+        (r"<div accessKey={`${undefined}y${undefined}`} />", r"<div  />"),
+        (r"<div accessKey={`This is ${bad}`} />", r"<div  />"),
+        (r"<div accessKey={accessKey} />", r"<div  />"),
+        (r"<div accessKey={`${undefined}`} />", r"<div  />"),
+        (r"<div accessKey={`${undefined}${undefined}`} />", r"<div  />"),
+    ];
+
+    Tester::new(NoAccessKey::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }
