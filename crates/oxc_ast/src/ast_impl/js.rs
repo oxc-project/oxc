@@ -1344,7 +1344,7 @@ impl<'a> ClassElement<'a> {
         matches!(self, Self::StaticBlock(_))
     }
 
-    /// Returns `true` if this [`ClassElement`] is a static block or has a
+    /// Returns `true` if this [`ClassElement`] is a property and has a
     /// static modifier.
     pub fn r#static(&self) -> bool {
         match self {
