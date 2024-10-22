@@ -12,3 +12,8 @@ need_stdout = true
 command = ["just", "build-wasm", "dev"]
 allow_warnings = true
 need_stdout = true
+
+[jobs.coverage]
+command = ["cargo", "--color", "always", "run", "-p", "oxc_coverage"]
+allow_warnings = true
+need_stdout = true

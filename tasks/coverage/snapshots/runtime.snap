@@ -2,16 +2,7 @@ commit: 06454619
 
 runtime Summary:
 AST Parsed     : 18667/18667 (100.00%)
-Positive Passed: 16834/18667 (90.18%)
-tasks/coverage/test262/test/annexB/language/comments/single-line-html-close-first-line-1.js
-codegen error: ReferenceError: Test262Error is not defined
-
-tasks/coverage/test262/test/annexB/language/comments/single-line-html-close-first-line-2.js
-codegen error: ReferenceError: Test262Error is not defined
-
-tasks/coverage/test262/test/annexB/language/comments/single-line-html-close-first-line-3.js
-codegen error: ReferenceError: Test262Error is not defined
-
+Positive Passed: 16849/18667 (90.26%)
 tasks/coverage/test262/test/annexB/language/function-code/block-decl-func-block-scoping.js
 minify error: ReferenceError: f is not defined
 
@@ -246,9 +237,6 @@ minify error: ReferenceError: f is not defined
 tasks/coverage/test262/test/annexB/language/function-code/switch-dflt-func-no-skip-try.js
 minify error: ReferenceError: f is not defined
 
-tasks/coverage/test262/test/annexB/language/function-code/switch-dflt-func-skip-early-err-for-in.js
-transform error: http://localhost:32055/run: Network Error: Network Error: Error encountered in the status line: timed out reading response
-
 tasks/coverage/test262/test/annexB/language/function-code/switch-dflt-func-update.js
 minify error: ReferenceError: f is not defined
 
@@ -265,7 +253,7 @@ tasks/coverage/test262/test/annexB/language/global-code/block-decl-global-existi
 minify error: Test262Error: Expected SameValue(«"outer declaration"», «"inner declaration"») to be true
 
 tasks/coverage/test262/test/annexB/language/global-code/block-decl-global-existing-var-update.js
-transform error: http://localhost:32055/run: Network Error: Network Error: Error encountered in the status line: timed out reading response
+minify error: Test262Error: Expected SameValue(«"undefined"», «"function"») to be true
 
 tasks/coverage/test262/test/annexB/language/global-code/block-decl-global-init.js
 minify error: ReferenceError: f is not defined
@@ -311,9 +299,6 @@ minify error: Test262Error: Expected SameValue(«function f(){}», «undefined»
 
 tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-b-global-existing-fn-update.js
 minify error: Test262Error: Expected SameValue(«"outer declaration"», «"inner declaration"») to be true
-
-tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-b-global-existing-var-update.js
-transform error: http://localhost:32055/run: Network Error: Network Error: Error encountered in the status line: timed out reading response
 
 tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-b-global-init.js
 minify error: Test262Error: binding is initialized to `undefined` Expected SameValue(«function f(){}», «undefined») to be true
@@ -903,9 +888,6 @@ minify error: Test262Error: Expected SameValue(«"c"», «"fn"») to be true
 tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-dflt-ary-ptrn-elem-id-init-fn-name-gen.js
 minify error: Test262Error: Expected SameValue(«"c"», «"gen"») to be true
 
-tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-dflt-ary-ptrn-elem-id-iter-val-array-prototype.js
-codegen error: http://localhost:32055/run: Network Error: Network Error: Error encountered in the status line: timed out reading response
-
 tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-dflt-obj-ptrn-id-init-fn-name-arrow.js
 minify error: Test262Error: Expected SameValue(«"c"», «"arrow"») to be true
 
@@ -1129,10 +1111,7 @@ tasks/coverage/test262/test/language/expressions/class/dstr/gen-meth-ary-ptrn-el
 minify error: Test262Error: Expected SameValue(«"c"», «"fn"») to be true
 
 tasks/coverage/test262/test/language/expressions/class/dstr/gen-meth-ary-ptrn-elem-id-init-fn-name-gen.js
-codegen error: http://localhost:32055/run: Network Error: Network Error: Error encountered in the status line: timed out reading response
-
-tasks/coverage/test262/test/language/expressions/class/dstr/gen-meth-ary-ptrn-elision-exhausted.js
-codegen error: http://localhost:32055/run: Network Error: Network Error: Error encountered in the status line: timed out reading response
+minify error: Test262Error: Expected SameValue(«"c"», «"gen"») to be true
 
 tasks/coverage/test262/test/language/expressions/class/dstr/gen-meth-dflt-ary-ptrn-elem-id-init-fn-name-arrow.js
 minify error: Test262Error: Expected SameValue(«"c"», «"arrow"») to be true
@@ -1449,9 +1428,6 @@ minify error: Test262Error: Expected SameValue(«"c"», «"fn"») to be true
 tasks/coverage/test262/test/language/expressions/class/dstr/private-gen-meth-static-dflt-ary-ptrn-elem-id-init-fn-name-gen.js
 minify error: Test262Error: Expected SameValue(«"c"», «"gen"») to be true
 
-tasks/coverage/test262/test/language/expressions/class/dstr/private-gen-meth-static-dflt-ary-ptrn-rest-ary-elem.js
-codegen error: http://localhost:32055/run: Network Error: Network Error: Error encountered in the status line: timed out reading response
-
 tasks/coverage/test262/test/language/expressions/class/dstr/private-gen-meth-static-dflt-obj-ptrn-id-init-fn-name-arrow.js
 minify error: Test262Error: Expected SameValue(«"c"», «"arrow"») to be true
 
@@ -1556,9 +1532,6 @@ minify error: Test262Error: Expected SameValue(«"c"», «"fn"») to be true
 
 tasks/coverage/test262/test/language/expressions/class/dstr/private-meth-static-ary-ptrn-elem-id-init-fn-name-gen.js
 minify error: Test262Error: Expected SameValue(«"c"», «"gen"») to be true
-
-tasks/coverage/test262/test/language/expressions/class/dstr/private-meth-static-ary-ptrn-elision-exhausted.js
-codegen error: http://localhost:32055/run: Network Error: Network Error: Error encountered in the status line: timed out reading response
 
 tasks/coverage/test262/test/language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-elem-id-init-fn-name-arrow.js
 minify error: Test262Error: Expected SameValue(«"c"», «"arrow"») to be true
@@ -2904,9 +2877,6 @@ minify error: Test262Error: Expected SameValue(«"c"», «"fn"») to be true
 tasks/coverage/test262/test/language/expressions/generators/dstr/ary-ptrn-elem-id-init-fn-name-gen.js
 minify error: Test262Error: Expected SameValue(«"c"», «"gen"») to be true
 
-tasks/coverage/test262/test/language/expressions/generators/dstr/dflt-ary-ptrn-elem-id-init-exhausted.js
-codegen error: http://localhost:32055/run: Network Error: Network Error: Error encountered in the status line: timed out reading response
-
 tasks/coverage/test262/test/language/expressions/generators/dstr/dflt-ary-ptrn-elem-id-init-fn-name-arrow.js
 minify error: Test262Error: Expected SameValue(«"c"», «"arrow"») to be true
 
@@ -3071,9 +3041,6 @@ transform error: ReferenceError: require is not defined
 
 tasks/coverage/test262/test/language/expressions/new/spread-sngl-obj-ident.js
 transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/new.target/value-via-reflect-apply.js
-codegen error: http://localhost:32055/run: Network Error: Network Error: Error encountered in the status line: timed out reading response
 
 tasks/coverage/test262/test/language/expressions/object/__proto__-permitted-dup-shorthand.js
 codegen error: SyntaxError: Duplicate __proto__ fields are not allowed in object literals
@@ -3495,9 +3462,6 @@ codegen error: SyntaxError: Invalid or unexpected token
 tasks/coverage/test262/test/language/identifiers/part-unicode-16.0.0.js
 codegen error: SyntaxError: Invalid or unexpected token
 
-tasks/coverage/test262/test/language/identifiers/part-unicode-8.0.0-class-escaped.js
-transform error: http://localhost:32055/run: Network Error: Network Error: Error encountered in the status line: timed out reading response
-
 tasks/coverage/test262/test/language/import/import-attributes/json-extensibility-array.js
 codegen error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/import/import-attributes/json-value-array_FIXTURE.json'
 
@@ -3527,9 +3491,6 @@ codegen error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc
 
 tasks/coverage/test262/test/language/import/import-attributes/json-via-namespace.js
 codegen error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/import/import-attributes/json-via-namespace_FIXTURE.json'
-
-tasks/coverage/test262/test/language/literals/numeric/S7.8.3_A4.1_T8.js
-codegen error: http://localhost:32055/run: Network Error: Network Error: Error encountered in the status line: timed out reading response
 
 tasks/coverage/test262/test/language/literals/regexp/u-surrogate-pairs-atom-escape-decimal.js
 codegen error: Test262Error: Expected SameValue(«true», «false») to be true
@@ -3905,9 +3866,6 @@ codegen error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc
 
 tasks/coverage/test262/test/language/module-code/verify-dfs.js
 codegen error: Error: ENOENT: no such file or directory, open '/Users/boshen/oxc/oxc/tasks/coverage/test262/test/test262/test/language/module-code/verify-dfs-a_FIXTURE.js'
-
-tasks/coverage/test262/test/language/statementList/block-with-statment-arrow-function-assignment-expr.js
-transform error: http://localhost:32055/run: Network Error: Network Error: Error encountered in the status line: timed out reading response
 
 tasks/coverage/test262/test/language/statements/async-function/eval-var-scope-syntax-err.js
 minify error: Test262Error: function should not be resolved
@@ -5024,9 +4982,6 @@ minify error: Test262Error: Expected SameValue(«"c"», «"fn"») to be true
 
 tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-var-obj-ptrn-id-init-fn-name-gen.js
 minify error: Test262Error: Expected SameValue(«"c"», «"gen"») to be true
-
-tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-const-ary-ptrn-elem-ary-elision-init.js
-transform error: http://localhost:32055/run: Network Error: Network Error: Error encountered in the status line: timed out reading response
 
 tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-const-ary-ptrn-elem-id-init-fn-name-arrow.js
 minify error: Test262Error: Expected SameValue(«"c"», «"arrow"») to be true

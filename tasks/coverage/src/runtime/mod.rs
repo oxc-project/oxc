@@ -147,7 +147,7 @@ impl Test262RuntimeCase {
         let source_text = self.base.code();
         let is_module = self.base.meta().flags.contains(&TestFlag::Module);
         let is_only_strict = self.base.meta().flags.contains(&TestFlag::OnlyStrict);
-        let source_type = SourceType::default().with_module(is_module);
+        let source_type = SourceType::cjs().with_module(is_module);
         let allocator = Allocator::default();
         let mut program = Parser::new(&allocator, source_text, source_type).parse().program;
 
@@ -185,18 +185,21 @@ impl Test262RuntimeCase {
         text
     }
 
-    async fn run_test_code(&self, case: &'static str, codegen_text: String) -> TestResult {
+    async fn run_test_code(&self, case: &'static str, code: String) -> TestResult {
         let is_async = self.base.meta().flags.contains(&TestFlag::Async);
         let is_module = self.base.meta().flags.contains(&TestFlag::Module);
-        let is_raw = self.base.meta().flags.contains(&TestFlag::Raw);
-        let import_dir = self
-            .test_root
-            .join(self.base.path().parent().expect("Failed to get parent directory"))
-            .to_string_lossy()
-            .to_string();
+        let mut is_raw = self.base.meta().flags.contains(&TestFlag::Raw);
+        let import_dir =
+            self.test_root.join(self.base.path().parent().unwrap()).to_string_lossy().to_string();
+
+        // Tests for --> in the first line should not have raw flag
+        // https://github.com/tc39/test262/issues/4020
+        if self.base.path().to_string_lossy().contains("single-line-html-close-first-line-") {
+            is_raw = false;
+        }
 
         let result = request_run_code(json!({
-            "code": codegen_text,
+            "code": code,
             "includes": self.base.meta().includes,
             "isAsync": is_async,
             "isModule": is_module,

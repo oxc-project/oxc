@@ -1,3 +1,5 @@
+// https://github.com/evanw/esbuild/blob/main/scripts/test262.js
+//
 import fs from 'node:fs';
 import { createServer } from 'node:http';
 import path from 'node:path';
@@ -37,11 +39,11 @@ async function runCodeInHarness(options = {}) {
       return module;
     };
 
-    const linker = (specifier, referencingModule) => {
+    const linker = (specifier) => {
       return findModule(path.join(importDir, specifier));
     };
 
-    const importModuleDynamically = (specifier, script) => {
+    const importModuleDynamically = (specifier) => {
       const where = path.join(importDir, specifier);
       let promise = dynamicImportCache.get(where);
       if (!promise) {
