@@ -9,7 +9,10 @@
 )]
 #![warn(missing_docs)]
 
+use std::cell::Cell;
+
 use oxc_allocator::{Allocator, Box, IntoIn, Vec};
+use oxc_syntax::{reference::ReferenceId, scope::ScopeId, symbol::SymbolId};
 
 #[allow(clippy::wildcard_imports)]
 use crate::ast::*;
@@ -283,6 +286,89 @@ impl<'a> AstBuilder<'a> {
     {
         Box::new_in(
             self.program(span, source_type, source_text, comments, hashbang, directives, body),
+            self.allocator,
+        )
+    }
+
+    /// Build a [`Program`] with `ScopeId`.
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_program_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - source_type
+    /// - source_text
+    /// - comments: Sorted comments
+    /// - hashbang
+    /// - directives
+    /// - body
+    /// - scope_id
+    #[inline]
+    pub fn program_with_scope_id<S>(
+        self,
+        span: Span,
+        source_type: SourceType,
+        source_text: S,
+        comments: Vec<'a, Comment>,
+        hashbang: Option<Hashbang<'a>>,
+        directives: Vec<'a, Directive<'a>>,
+        body: Vec<'a, Statement<'a>>,
+        scope_id: ScopeId,
+    ) -> Program<'a>
+    where
+        S: IntoIn<'a, &'a str>,
+    {
+        Program {
+            span,
+            source_type,
+            source_text: source_text.into_in(self.allocator),
+            comments,
+            hashbang,
+            directives,
+            body,
+            scope_id: Cell::new(Some(scope_id)),
+        }
+    }
+
+    /// Build a [`Program`] with `ScopeId`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::program_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - source_type
+    /// - source_text
+    /// - comments: Sorted comments
+    /// - hashbang
+    /// - directives
+    /// - body
+    /// - scope_id
+    #[inline]
+    pub fn alloc_program_with_scope_id<S>(
+        self,
+        span: Span,
+        source_type: SourceType,
+        source_text: S,
+        comments: Vec<'a, Comment>,
+        hashbang: Option<Hashbang<'a>>,
+        directives: Vec<'a, Directive<'a>>,
+        body: Vec<'a, Statement<'a>>,
+        scope_id: ScopeId,
+    ) -> Box<'a, Program<'a>>
+    where
+        S: IntoIn<'a, &'a str>,
+    {
+        Box::new_in(
+            self.program_with_scope_id(
+                span,
+                source_type,
+                source_text,
+                comments,
+                hashbang,
+                directives,
+                body,
+                scope_id,
+            ),
             self.allocator,
         )
     }
@@ -1561,6 +1647,55 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(self.identifier_reference(span, name), self.allocator)
     }
 
+    /// Build an [`IdentifierReference`] with `ReferenceId`.
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_identifier_reference_with_reference_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - name: The name of the identifier being referenced.
+    /// - reference_id: Reference ID
+    #[inline]
+    pub fn identifier_reference_with_reference_id<A>(
+        self,
+        span: Span,
+        name: A,
+        reference_id: ReferenceId,
+    ) -> IdentifierReference<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        IdentifierReference {
+            span,
+            name: name.into_in(self.allocator),
+            reference_id: Cell::new(Some(reference_id)),
+        }
+    }
+
+    /// Build an [`IdentifierReference`] with `ReferenceId`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::identifier_reference_with_reference_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - name: The name of the identifier being referenced.
+    /// - reference_id: Reference ID
+    #[inline]
+    pub fn alloc_identifier_reference_with_reference_id<A>(
+        self,
+        span: Span,
+        name: A,
+        reference_id: ReferenceId,
+    ) -> Box<'a, IdentifierReference<'a>>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        Box::new_in(
+            self.identifier_reference_with_reference_id(span, name, reference_id),
+            self.allocator,
+        )
+    }
+
     /// Build a [`BindingIdentifier`].
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_binding_identifier`] instead.
@@ -1593,6 +1728,52 @@ impl<'a> AstBuilder<'a> {
         A: IntoIn<'a, Atom<'a>>,
     {
         Box::new_in(self.binding_identifier(span, name), self.allocator)
+    }
+
+    /// Build a [`BindingIdentifier`] with `SymbolId`.
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_binding_identifier_with_symbol_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - name: The identifier name being bound.
+    /// - symbol_id: Unique identifier for this binding.
+    #[inline]
+    pub fn binding_identifier_with_symbol_id<A>(
+        self,
+        span: Span,
+        name: A,
+        symbol_id: SymbolId,
+    ) -> BindingIdentifier<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        BindingIdentifier {
+            span,
+            name: name.into_in(self.allocator),
+            symbol_id: Cell::new(Some(symbol_id)),
+        }
+    }
+
+    /// Build a [`BindingIdentifier`] with `SymbolId`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::binding_identifier_with_symbol_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - name: The identifier name being bound.
+    /// - symbol_id: Unique identifier for this binding.
+    #[inline]
+    pub fn alloc_binding_identifier_with_symbol_id<A>(
+        self,
+        span: Span,
+        name: A,
+        symbol_id: SymbolId,
+    ) -> Box<'a, BindingIdentifier<'a>>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        Box::new_in(self.binding_identifier_with_symbol_id(span, name, symbol_id), self.allocator)
     }
 
     /// Build a [`LabelIdentifier`].
@@ -4178,6 +4359,42 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(self.block_statement(span, body), self.allocator)
     }
 
+    /// Build a [`BlockStatement`] with `ScopeId`.
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_block_statement_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - body
+    /// - scope_id
+    #[inline]
+    pub fn block_statement_with_scope_id(
+        self,
+        span: Span,
+        body: Vec<'a, Statement<'a>>,
+        scope_id: ScopeId,
+    ) -> BlockStatement<'a> {
+        BlockStatement { span, body, scope_id: Cell::new(Some(scope_id)) }
+    }
+
+    /// Build a [`BlockStatement`] with `ScopeId`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::block_statement_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - body
+    /// - scope_id
+    #[inline]
+    pub fn alloc_block_statement_with_scope_id(
+        self,
+        span: Span,
+        body: Vec<'a, Statement<'a>>,
+        scope_id: ScopeId,
+    ) -> Box<'a, BlockStatement<'a>> {
+        Box::new_in(self.block_statement_with_scope_id(span, body, scope_id), self.allocator)
+    }
+
     /// Build a [`Declaration::VariableDeclaration`]
     ///
     /// This node contains a [`VariableDeclaration`] that will be stored in the memory arena.
@@ -4812,6 +5029,57 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(self.for_statement(span, init, test, update, body), self.allocator)
     }
 
+    /// Build a [`ForStatement`] with `ScopeId`.
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_for_statement_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - init
+    /// - test
+    /// - update
+    /// - body
+    /// - scope_id
+    #[inline]
+    pub fn for_statement_with_scope_id(
+        self,
+        span: Span,
+        init: Option<ForStatementInit<'a>>,
+        test: Option<Expression<'a>>,
+        update: Option<Expression<'a>>,
+        body: Statement<'a>,
+        scope_id: ScopeId,
+    ) -> ForStatement<'a> {
+        ForStatement { span, init, test, update, body, scope_id: Cell::new(Some(scope_id)) }
+    }
+
+    /// Build a [`ForStatement`] with `ScopeId`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::for_statement_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - init
+    /// - test
+    /// - update
+    /// - body
+    /// - scope_id
+    #[inline]
+    pub fn alloc_for_statement_with_scope_id(
+        self,
+        span: Span,
+        init: Option<ForStatementInit<'a>>,
+        test: Option<Expression<'a>>,
+        update: Option<Expression<'a>>,
+        body: Statement<'a>,
+        scope_id: ScopeId,
+    ) -> Box<'a, ForStatement<'a>> {
+        Box::new_in(
+            self.for_statement_with_scope_id(span, init, test, update, body, scope_id),
+            self.allocator,
+        )
+    }
+
     /// Build a [`ForStatementInit::VariableDeclaration`]
     ///
     /// This node contains a [`VariableDeclaration`] that will be stored in the memory arena.
@@ -4890,6 +5158,53 @@ impl<'a> AstBuilder<'a> {
         body: Statement<'a>,
     ) -> Box<'a, ForInStatement<'a>> {
         Box::new_in(self.for_in_statement(span, left, right, body), self.allocator)
+    }
+
+    /// Build a [`ForInStatement`] with `ScopeId`.
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_for_in_statement_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - left
+    /// - right
+    /// - body
+    /// - scope_id
+    #[inline]
+    pub fn for_in_statement_with_scope_id(
+        self,
+        span: Span,
+        left: ForStatementLeft<'a>,
+        right: Expression<'a>,
+        body: Statement<'a>,
+        scope_id: ScopeId,
+    ) -> ForInStatement<'a> {
+        ForInStatement { span, left, right, body, scope_id: Cell::new(Some(scope_id)) }
+    }
+
+    /// Build a [`ForInStatement`] with `ScopeId`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::for_in_statement_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - left
+    /// - right
+    /// - body
+    /// - scope_id
+    #[inline]
+    pub fn alloc_for_in_statement_with_scope_id(
+        self,
+        span: Span,
+        left: ForStatementLeft<'a>,
+        right: Expression<'a>,
+        body: Statement<'a>,
+        scope_id: ScopeId,
+    ) -> Box<'a, ForInStatement<'a>> {
+        Box::new_in(
+            self.for_in_statement_with_scope_id(span, left, right, body, scope_id),
+            self.allocator,
+        )
     }
 
     /// Build a [`ForStatementLeft::VariableDeclaration`]
@@ -4977,6 +5292,57 @@ impl<'a> AstBuilder<'a> {
         body: Statement<'a>,
     ) -> Box<'a, ForOfStatement<'a>> {
         Box::new_in(self.for_of_statement(span, r#await, left, right, body), self.allocator)
+    }
+
+    /// Build a [`ForOfStatement`] with `ScopeId`.
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_for_of_statement_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - r#await
+    /// - left
+    /// - right
+    /// - body
+    /// - scope_id
+    #[inline]
+    pub fn for_of_statement_with_scope_id(
+        self,
+        span: Span,
+        r#await: bool,
+        left: ForStatementLeft<'a>,
+        right: Expression<'a>,
+        body: Statement<'a>,
+        scope_id: ScopeId,
+    ) -> ForOfStatement<'a> {
+        ForOfStatement { span, r#await, left, right, body, scope_id: Cell::new(Some(scope_id)) }
+    }
+
+    /// Build a [`ForOfStatement`] with `ScopeId`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::for_of_statement_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - r#await
+    /// - left
+    /// - right
+    /// - body
+    /// - scope_id
+    #[inline]
+    pub fn alloc_for_of_statement_with_scope_id(
+        self,
+        span: Span,
+        r#await: bool,
+        left: ForStatementLeft<'a>,
+        right: Expression<'a>,
+        body: Statement<'a>,
+        scope_id: ScopeId,
+    ) -> Box<'a, ForOfStatement<'a>> {
+        Box::new_in(
+            self.for_of_statement_with_scope_id(span, r#await, left, right, body, scope_id),
+            self.allocator,
+        )
     }
 
     /// Build a [`ContinueStatement`].
@@ -5145,6 +5511,49 @@ impl<'a> AstBuilder<'a> {
         cases: Vec<'a, SwitchCase<'a>>,
     ) -> Box<'a, SwitchStatement<'a>> {
         Box::new_in(self.switch_statement(span, discriminant, cases), self.allocator)
+    }
+
+    /// Build a [`SwitchStatement`] with `ScopeId`.
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_switch_statement_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - discriminant
+    /// - cases
+    /// - scope_id
+    #[inline]
+    pub fn switch_statement_with_scope_id(
+        self,
+        span: Span,
+        discriminant: Expression<'a>,
+        cases: Vec<'a, SwitchCase<'a>>,
+        scope_id: ScopeId,
+    ) -> SwitchStatement<'a> {
+        SwitchStatement { span, discriminant, cases, scope_id: Cell::new(Some(scope_id)) }
+    }
+
+    /// Build a [`SwitchStatement`] with `ScopeId`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::switch_statement_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - discriminant
+    /// - cases
+    /// - scope_id
+    #[inline]
+    pub fn alloc_switch_statement_with_scope_id(
+        self,
+        span: Span,
+        discriminant: Expression<'a>,
+        cases: Vec<'a, SwitchCase<'a>>,
+        scope_id: ScopeId,
+    ) -> Box<'a, SwitchStatement<'a>> {
+        Box::new_in(
+            self.switch_statement_with_scope_id(span, discriminant, cases, scope_id),
+            self.allocator,
+        )
     }
 
     /// Build a [`SwitchCase`].
@@ -5347,6 +5756,57 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Box<'a, BlockStatement<'a>>>,
     {
         Box::new_in(self.catch_clause(span, param, body), self.allocator)
+    }
+
+    /// Build a [`CatchClause`] with `ScopeId`.
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_catch_clause_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - param: The caught error parameter, e.g. `e` in `catch (e) {}`
+    /// - body: The statements run when an error is caught
+    /// - scope_id
+    #[inline]
+    pub fn catch_clause_with_scope_id<T1>(
+        self,
+        span: Span,
+        param: Option<CatchParameter<'a>>,
+        body: T1,
+        scope_id: ScopeId,
+    ) -> CatchClause<'a>
+    where
+        T1: IntoIn<'a, Box<'a, BlockStatement<'a>>>,
+    {
+        CatchClause {
+            span,
+            param,
+            body: body.into_in(self.allocator),
+            scope_id: Cell::new(Some(scope_id)),
+        }
+    }
+
+    /// Build a [`CatchClause`] with `ScopeId`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::catch_clause_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - param: The caught error parameter, e.g. `e` in `catch (e) {}`
+    /// - body: The statements run when an error is caught
+    /// - scope_id
+    #[inline]
+    pub fn alloc_catch_clause_with_scope_id<T1>(
+        self,
+        span: Span,
+        param: Option<CatchParameter<'a>>,
+        body: T1,
+        scope_id: ScopeId,
+    ) -> Box<'a, CatchClause<'a>>
+    where
+        T1: IntoIn<'a, Box<'a, BlockStatement<'a>>>,
+    {
+        Box::new_in(self.catch_clause_with_scope_id(span, param, body, scope_id), self.allocator)
     }
 
     /// Build a [`CatchParameter`].
@@ -5864,6 +6324,121 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
+    /// Build a [`Function`] with `ScopeId`.
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_function_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - r#type
+    /// - span: The [`Span`] covering this node
+    /// - id: The function identifier. [`None`] for anonymous function expressions.
+    /// - generator: Is this a generator function?
+    /// - r#async
+    /// - declare
+    /// - type_parameters
+    /// - this_param: Declaring `this` in a Function <https://www.typescriptlang.org/docs/handbook/2/functions.html#declaring-this-in-a-function>
+    /// - params: Function parameters.
+    /// - return_type: The TypeScript return type annotation.
+    /// - body: The function body.
+    /// - scope_id
+    #[inline]
+    pub fn function_with_scope_id<T1, T2, T3, T4, T5>(
+        self,
+        r#type: FunctionType,
+        span: Span,
+        id: Option<BindingIdentifier<'a>>,
+        generator: bool,
+        r#async: bool,
+        declare: bool,
+        type_parameters: T1,
+        this_param: T2,
+        params: T3,
+        return_type: T4,
+        body: T5,
+        scope_id: ScopeId,
+    ) -> Function<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
+    {
+        Function {
+            r#type,
+            span,
+            id,
+            generator,
+            r#async,
+            declare,
+            type_parameters: type_parameters.into_in(self.allocator),
+            this_param: this_param.into_in(self.allocator),
+            params: params.into_in(self.allocator),
+            return_type: return_type.into_in(self.allocator),
+            body: body.into_in(self.allocator),
+            scope_id: Cell::new(Some(scope_id)),
+        }
+    }
+
+    /// Build a [`Function`] with `ScopeId`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::function_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - r#type
+    /// - span: The [`Span`] covering this node
+    /// - id: The function identifier. [`None`] for anonymous function expressions.
+    /// - generator: Is this a generator function?
+    /// - r#async
+    /// - declare
+    /// - type_parameters
+    /// - this_param: Declaring `this` in a Function <https://www.typescriptlang.org/docs/handbook/2/functions.html#declaring-this-in-a-function>
+    /// - params: Function parameters.
+    /// - return_type: The TypeScript return type annotation.
+    /// - body: The function body.
+    /// - scope_id
+    #[inline]
+    pub fn alloc_function_with_scope_id<T1, T2, T3, T4, T5>(
+        self,
+        r#type: FunctionType,
+        span: Span,
+        id: Option<BindingIdentifier<'a>>,
+        generator: bool,
+        r#async: bool,
+        declare: bool,
+        type_parameters: T1,
+        this_param: T2,
+        params: T3,
+        return_type: T4,
+        body: T5,
+        scope_id: ScopeId,
+    ) -> Box<'a, Function<'a>>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
+    {
+        Box::new_in(
+            self.function_with_scope_id(
+                r#type,
+                span,
+                id,
+                generator,
+                r#async,
+                declare,
+                type_parameters,
+                this_param,
+                params,
+                return_type,
+                body,
+                scope_id,
+            ),
+            self.allocator,
+        )
+    }
+
     /// Build a [`FormalParameters`].
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_formal_parameters`] instead.
@@ -6081,6 +6656,95 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
+    /// Build an [`ArrowFunctionExpression`] with `ScopeId`.
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_arrow_function_expression_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - expression: Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
+    /// - r#async
+    /// - type_parameters
+    /// - params
+    /// - return_type
+    /// - body: See `expression` for whether this arrow expression returns an expression.
+    /// - scope_id
+    #[inline]
+    pub fn arrow_function_expression_with_scope_id<T1, T2, T3, T4>(
+        self,
+        span: Span,
+        expression: bool,
+        r#async: bool,
+        type_parameters: T1,
+        params: T2,
+        return_type: T3,
+        body: T4,
+        scope_id: ScopeId,
+    ) -> ArrowFunctionExpression<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T4: IntoIn<'a, Box<'a, FunctionBody<'a>>>,
+    {
+        ArrowFunctionExpression {
+            span,
+            expression,
+            r#async,
+            type_parameters: type_parameters.into_in(self.allocator),
+            params: params.into_in(self.allocator),
+            return_type: return_type.into_in(self.allocator),
+            body: body.into_in(self.allocator),
+            scope_id: Cell::new(Some(scope_id)),
+        }
+    }
+
+    /// Build an [`ArrowFunctionExpression`] with `ScopeId`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::arrow_function_expression_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - expression: Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
+    /// - r#async
+    /// - type_parameters
+    /// - params
+    /// - return_type
+    /// - body: See `expression` for whether this arrow expression returns an expression.
+    /// - scope_id
+    #[inline]
+    pub fn alloc_arrow_function_expression_with_scope_id<T1, T2, T3, T4>(
+        self,
+        span: Span,
+        expression: bool,
+        r#async: bool,
+        type_parameters: T1,
+        params: T2,
+        return_type: T3,
+        body: T4,
+        scope_id: ScopeId,
+    ) -> Box<'a, ArrowFunctionExpression<'a>>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T4: IntoIn<'a, Box<'a, FunctionBody<'a>>>,
+    {
+        Box::new_in(
+            self.arrow_function_expression_with_scope_id(
+                span,
+                expression,
+                r#async,
+                type_parameters,
+                params,
+                return_type,
+                body,
+                scope_id,
+            ),
+            self.allocator,
+        )
+    }
+
     /// Build a [`YieldExpression`].
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_yield_expression`] instead.
@@ -6218,6 +6882,117 @@ impl<'a> AstBuilder<'a> {
                 body,
                 r#abstract,
                 declare,
+            ),
+            self.allocator,
+        )
+    }
+
+    /// Build a [`Class`] with `ScopeId`.
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_class_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - r#type
+    /// - span: The [`Span`] covering this node
+    /// - decorators: Decorators applied to the class.
+    /// - id: Class identifier, AKA the name
+    /// - type_parameters
+    /// - super_class: Super class. When present, this will usually be an [`IdentifierReference`].
+    /// - super_type_parameters: Type parameters passed to super class.
+    /// - implements: Interface implementation clause for TypeScript classes.
+    /// - body
+    /// - r#abstract: Whether the class is abstract
+    /// - declare: Whether the class was `declare`ed
+    /// - scope_id: Id of the scope created by the [`Class`], including type parameters and
+    #[inline]
+    pub fn class_with_scope_id<T1, T2, T3>(
+        self,
+        r#type: ClassType,
+        span: Span,
+        decorators: Vec<'a, Decorator<'a>>,
+        id: Option<BindingIdentifier<'a>>,
+        type_parameters: T1,
+        super_class: Option<Expression<'a>>,
+        super_type_parameters: T2,
+        implements: Option<Vec<'a, TSClassImplements<'a>>>,
+        body: T3,
+        r#abstract: bool,
+        declare: bool,
+        scope_id: ScopeId,
+    ) -> Class<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T3: IntoIn<'a, Box<'a, ClassBody<'a>>>,
+    {
+        Class {
+            r#type,
+            span,
+            decorators,
+            id,
+            type_parameters: type_parameters.into_in(self.allocator),
+            super_class,
+            super_type_parameters: super_type_parameters.into_in(self.allocator),
+            implements,
+            body: body.into_in(self.allocator),
+            r#abstract,
+            declare,
+            scope_id: Cell::new(Some(scope_id)),
+        }
+    }
+
+    /// Build a [`Class`] with `ScopeId`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::class_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - r#type
+    /// - span: The [`Span`] covering this node
+    /// - decorators: Decorators applied to the class.
+    /// - id: Class identifier, AKA the name
+    /// - type_parameters
+    /// - super_class: Super class. When present, this will usually be an [`IdentifierReference`].
+    /// - super_type_parameters: Type parameters passed to super class.
+    /// - implements: Interface implementation clause for TypeScript classes.
+    /// - body
+    /// - r#abstract: Whether the class is abstract
+    /// - declare: Whether the class was `declare`ed
+    /// - scope_id: Id of the scope created by the [`Class`], including type parameters and
+    #[inline]
+    pub fn alloc_class_with_scope_id<T1, T2, T3>(
+        self,
+        r#type: ClassType,
+        span: Span,
+        decorators: Vec<'a, Decorator<'a>>,
+        id: Option<BindingIdentifier<'a>>,
+        type_parameters: T1,
+        super_class: Option<Expression<'a>>,
+        super_type_parameters: T2,
+        implements: Option<Vec<'a, TSClassImplements<'a>>>,
+        body: T3,
+        r#abstract: bool,
+        declare: bool,
+        scope_id: ScopeId,
+    ) -> Box<'a, Class<'a>>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T3: IntoIn<'a, Box<'a, ClassBody<'a>>>,
+    {
+        Box::new_in(
+            self.class_with_scope_id(
+                r#type,
+                span,
+                decorators,
+                id,
+                type_parameters,
+                super_class,
+                super_type_parameters,
+                implements,
+                body,
+                r#abstract,
+                declare,
+                scope_id,
             ),
             self.allocator,
         )
@@ -6769,6 +7544,42 @@ impl<'a> AstBuilder<'a> {
         body: Vec<'a, Statement<'a>>,
     ) -> Box<'a, StaticBlock<'a>> {
         Box::new_in(self.static_block(span, body), self.allocator)
+    }
+
+    /// Build a [`StaticBlock`] with `ScopeId`.
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_static_block_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - body
+    /// - scope_id
+    #[inline]
+    pub fn static_block_with_scope_id(
+        self,
+        span: Span,
+        body: Vec<'a, Statement<'a>>,
+        scope_id: ScopeId,
+    ) -> StaticBlock<'a> {
+        StaticBlock { span, body, scope_id: Cell::new(Some(scope_id)) }
+    }
+
+    /// Build a [`StaticBlock`] with `ScopeId`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::static_block_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - body
+    /// - scope_id
+    #[inline]
+    pub fn alloc_static_block_with_scope_id(
+        self,
+        span: Span,
+        body: Vec<'a, Statement<'a>>,
+        scope_id: ScopeId,
+    ) -> Box<'a, StaticBlock<'a>> {
+        Box::new_in(self.static_block_with_scope_id(span, body, scope_id), self.allocator)
     }
 
     /// Build a [`ModuleDeclaration::ImportDeclaration`]
@@ -8049,6 +8860,64 @@ impl<'a> AstBuilder<'a> {
         declare: bool,
     ) -> Box<'a, TSEnumDeclaration<'a>> {
         Box::new_in(self.ts_enum_declaration(span, id, members, r#const, declare), self.allocator)
+    }
+
+    /// Build a [`TSEnumDeclaration`] with `ScopeId`.
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_enum_declaration_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - id
+    /// - members
+    /// - r#const: `true` for const enums
+    /// - declare
+    /// - scope_id
+    #[inline]
+    pub fn ts_enum_declaration_with_scope_id(
+        self,
+        span: Span,
+        id: BindingIdentifier<'a>,
+        members: Vec<'a, TSEnumMember<'a>>,
+        r#const: bool,
+        declare: bool,
+        scope_id: ScopeId,
+    ) -> TSEnumDeclaration<'a> {
+        TSEnumDeclaration {
+            span,
+            id,
+            members,
+            r#const,
+            declare,
+            scope_id: Cell::new(Some(scope_id)),
+        }
+    }
+
+    /// Build a [`TSEnumDeclaration`] with `ScopeId`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_enum_declaration_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - id
+    /// - members
+    /// - r#const: `true` for const enums
+    /// - declare
+    /// - scope_id
+    #[inline]
+    pub fn alloc_ts_enum_declaration_with_scope_id(
+        self,
+        span: Span,
+        id: BindingIdentifier<'a>,
+        members: Vec<'a, TSEnumMember<'a>>,
+        r#const: bool,
+        declare: bool,
+        scope_id: ScopeId,
+    ) -> Box<'a, TSEnumDeclaration<'a>> {
+        Box::new_in(
+            self.ts_enum_declaration_with_scope_id(span, id, members, r#const, declare, scope_id),
+            self.allocator,
+        )
     }
 
     /// Build a [`TSEnumMember`].
@@ -9527,6 +10396,71 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
+    /// Build a [`TSConditionalType`] with `ScopeId`.
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_conditional_type_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - check_type: The type before `extends` in the test expression.
+    /// - extends_type: The type `check_type` is being tested against.
+    /// - true_type: The type evaluated to if the test is true.
+    /// - false_type: The type evaluated to if the test is false.
+    /// - scope_id
+    #[inline]
+    pub fn ts_conditional_type_with_scope_id(
+        self,
+        span: Span,
+        check_type: TSType<'a>,
+        extends_type: TSType<'a>,
+        true_type: TSType<'a>,
+        false_type: TSType<'a>,
+        scope_id: ScopeId,
+    ) -> TSConditionalType<'a> {
+        TSConditionalType {
+            span,
+            check_type,
+            extends_type,
+            true_type,
+            false_type,
+            scope_id: Cell::new(Some(scope_id)),
+        }
+    }
+
+    /// Build a [`TSConditionalType`] with `ScopeId`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_conditional_type_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - check_type: The type before `extends` in the test expression.
+    /// - extends_type: The type `check_type` is being tested against.
+    /// - true_type: The type evaluated to if the test is true.
+    /// - false_type: The type evaluated to if the test is false.
+    /// - scope_id
+    #[inline]
+    pub fn alloc_ts_conditional_type_with_scope_id(
+        self,
+        span: Span,
+        check_type: TSType<'a>,
+        extends_type: TSType<'a>,
+        true_type: TSType<'a>,
+        false_type: TSType<'a>,
+        scope_id: ScopeId,
+    ) -> Box<'a, TSConditionalType<'a>> {
+        Box::new_in(
+            self.ts_conditional_type_with_scope_id(
+                span,
+                check_type,
+                extends_type,
+                true_type,
+                false_type,
+                scope_id,
+            ),
+            self.allocator,
+        )
+    }
+
     /// Build a [`TSUnionType`].
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_union_type`] instead.
@@ -10523,6 +11457,77 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
+    /// Build a [`TSTypeAliasDeclaration`] with `ScopeId`.
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_type_alias_declaration_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - id: Type alias's identifier, e.g. `Foo` in `type Foo = number`.
+    /// - type_parameters
+    /// - type_annotation
+    /// - declare
+    /// - scope_id
+    #[inline]
+    pub fn ts_type_alias_declaration_with_scope_id<T1>(
+        self,
+        span: Span,
+        id: BindingIdentifier<'a>,
+        type_parameters: T1,
+        type_annotation: TSType<'a>,
+        declare: bool,
+        scope_id: ScopeId,
+    ) -> TSTypeAliasDeclaration<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+    {
+        TSTypeAliasDeclaration {
+            span,
+            id,
+            type_parameters: type_parameters.into_in(self.allocator),
+            type_annotation,
+            declare,
+            scope_id: Cell::new(Some(scope_id)),
+        }
+    }
+
+    /// Build a [`TSTypeAliasDeclaration`] with `ScopeId`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_type_alias_declaration_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - id: Type alias's identifier, e.g. `Foo` in `type Foo = number`.
+    /// - type_parameters
+    /// - type_annotation
+    /// - declare
+    /// - scope_id
+    #[inline]
+    pub fn alloc_ts_type_alias_declaration_with_scope_id<T1>(
+        self,
+        span: Span,
+        id: BindingIdentifier<'a>,
+        type_parameters: T1,
+        type_annotation: TSType<'a>,
+        declare: bool,
+        scope_id: ScopeId,
+    ) -> Box<'a, TSTypeAliasDeclaration<'a>>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+    {
+        Box::new_in(
+            self.ts_type_alias_declaration_with_scope_id(
+                span,
+                id,
+                type_parameters,
+                type_annotation,
+                declare,
+                scope_id,
+            ),
+            self.allocator,
+        )
+    }
+
     /// Build a [`TSClassImplements`].
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_class_implements`] instead.
@@ -10632,6 +11637,85 @@ impl<'a> AstBuilder<'a> {
     {
         Box::new_in(
             self.ts_interface_declaration(span, id, extends, type_parameters, body, declare),
+            self.allocator,
+        )
+    }
+
+    /// Build a [`TSInterfaceDeclaration`] with `ScopeId`.
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_interface_declaration_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - id: The identifier (name) of the interface.
+    /// - extends: Other interfaces/types this interface extends.
+    /// - type_parameters: Type parameters that get bound to the interface.
+    /// - body
+    /// - declare: `true` for `declare interface Foo {}`
+    /// - scope_id
+    #[inline]
+    pub fn ts_interface_declaration_with_scope_id<T1, T2>(
+        self,
+        span: Span,
+        id: BindingIdentifier<'a>,
+        extends: Option<Vec<'a, TSInterfaceHeritage<'a>>>,
+        type_parameters: T1,
+        body: T2,
+        declare: bool,
+        scope_id: ScopeId,
+    ) -> TSInterfaceDeclaration<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Box<'a, TSInterfaceBody<'a>>>,
+    {
+        TSInterfaceDeclaration {
+            span,
+            id,
+            extends,
+            type_parameters: type_parameters.into_in(self.allocator),
+            body: body.into_in(self.allocator),
+            declare,
+            scope_id: Cell::new(Some(scope_id)),
+        }
+    }
+
+    /// Build a [`TSInterfaceDeclaration`] with `ScopeId`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_interface_declaration_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - id: The identifier (name) of the interface.
+    /// - extends: Other interfaces/types this interface extends.
+    /// - type_parameters: Type parameters that get bound to the interface.
+    /// - body
+    /// - declare: `true` for `declare interface Foo {}`
+    /// - scope_id
+    #[inline]
+    pub fn alloc_ts_interface_declaration_with_scope_id<T1, T2>(
+        self,
+        span: Span,
+        id: BindingIdentifier<'a>,
+        extends: Option<Vec<'a, TSInterfaceHeritage<'a>>>,
+        type_parameters: T1,
+        body: T2,
+        declare: bool,
+        scope_id: ScopeId,
+    ) -> Box<'a, TSInterfaceDeclaration<'a>>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Box<'a, TSInterfaceBody<'a>>>,
+    {
+        Box::new_in(
+            self.ts_interface_declaration_with_scope_id(
+                span,
+                id,
+                extends,
+                type_parameters,
+                body,
+                declare,
+                scope_id,
+            ),
             self.allocator,
         )
     }
@@ -11167,6 +12251,107 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
+    /// Build a [`TSMethodSignature`] with `ScopeId`.
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_method_signature_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - key
+    /// - computed
+    /// - optional
+    /// - kind
+    /// - type_parameters
+    /// - this_param
+    /// - params
+    /// - return_type
+    /// - scope_id
+    #[inline]
+    pub fn ts_method_signature_with_scope_id<T1, T2, T3, T4>(
+        self,
+        span: Span,
+        key: PropertyKey<'a>,
+        computed: bool,
+        optional: bool,
+        kind: TSMethodSignatureKind,
+        type_parameters: T1,
+        this_param: T2,
+        params: T3,
+        return_type: T4,
+        scope_id: ScopeId,
+    ) -> TSMethodSignature<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+    {
+        TSMethodSignature {
+            span,
+            key,
+            computed,
+            optional,
+            kind,
+            type_parameters: type_parameters.into_in(self.allocator),
+            this_param: this_param.into_in(self.allocator),
+            params: params.into_in(self.allocator),
+            return_type: return_type.into_in(self.allocator),
+            scope_id: Cell::new(Some(scope_id)),
+        }
+    }
+
+    /// Build a [`TSMethodSignature`] with `ScopeId`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_method_signature_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - key
+    /// - computed
+    /// - optional
+    /// - kind
+    /// - type_parameters
+    /// - this_param
+    /// - params
+    /// - return_type
+    /// - scope_id
+    #[inline]
+    pub fn alloc_ts_method_signature_with_scope_id<T1, T2, T3, T4>(
+        self,
+        span: Span,
+        key: PropertyKey<'a>,
+        computed: bool,
+        optional: bool,
+        kind: TSMethodSignatureKind,
+        type_parameters: T1,
+        this_param: T2,
+        params: T3,
+        return_type: T4,
+        scope_id: ScopeId,
+    ) -> Box<'a, TSMethodSignature<'a>>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+    {
+        Box::new_in(
+            self.ts_method_signature_with_scope_id(
+                span,
+                key,
+                computed,
+                optional,
+                kind,
+                type_parameters,
+                this_param,
+                params,
+                return_type,
+                scope_id,
+            ),
+            self.allocator,
+        )
+    }
+
     /// Build a [`TSConstructSignatureDeclaration`].
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_construct_signature_declaration`] instead.
@@ -11222,6 +12407,75 @@ impl<'a> AstBuilder<'a> {
     {
         Box::new_in(
             self.ts_construct_signature_declaration(span, type_parameters, params, return_type),
+            self.allocator,
+        )
+    }
+
+    /// Build a [`TSConstructSignatureDeclaration`] with `ScopeId`.
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_construct_signature_declaration_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - type_parameters
+    /// - params
+    /// - return_type
+    /// - scope_id
+    #[inline]
+    pub fn ts_construct_signature_declaration_with_scope_id<T1, T2, T3>(
+        self,
+        span: Span,
+        type_parameters: T1,
+        params: T2,
+        return_type: T3,
+        scope_id: ScopeId,
+    ) -> TSConstructSignatureDeclaration<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+    {
+        TSConstructSignatureDeclaration {
+            span,
+            type_parameters: type_parameters.into_in(self.allocator),
+            params: params.into_in(self.allocator),
+            return_type: return_type.into_in(self.allocator),
+            scope_id: Cell::new(Some(scope_id)),
+        }
+    }
+
+    /// Build a [`TSConstructSignatureDeclaration`] with `ScopeId`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_construct_signature_declaration_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - type_parameters
+    /// - params
+    /// - return_type
+    /// - scope_id
+    #[inline]
+    pub fn alloc_ts_construct_signature_declaration_with_scope_id<T1, T2, T3>(
+        self,
+        span: Span,
+        type_parameters: T1,
+        params: T2,
+        return_type: T3,
+        scope_id: ScopeId,
+    ) -> Box<'a, TSConstructSignatureDeclaration<'a>>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+    {
+        Box::new_in(
+            self.ts_construct_signature_declaration_with_scope_id(
+                span,
+                type_parameters,
+                params,
+                return_type,
+                scope_id,
+            ),
             self.allocator,
         )
     }
@@ -11462,6 +12716,57 @@ impl<'a> AstBuilder<'a> {
         declare: bool,
     ) -> Box<'a, TSModuleDeclaration<'a>> {
         Box::new_in(self.ts_module_declaration(span, id, body, kind, declare), self.allocator)
+    }
+
+    /// Build a [`TSModuleDeclaration`] with `ScopeId`.
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_module_declaration_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - id: The name of the module/namespace being declared.
+    /// - body
+    /// - kind: The keyword used to define this module declaration.
+    /// - declare
+    /// - scope_id
+    #[inline]
+    pub fn ts_module_declaration_with_scope_id(
+        self,
+        span: Span,
+        id: TSModuleDeclarationName<'a>,
+        body: Option<TSModuleDeclarationBody<'a>>,
+        kind: TSModuleDeclarationKind,
+        declare: bool,
+        scope_id: ScopeId,
+    ) -> TSModuleDeclaration<'a> {
+        TSModuleDeclaration { span, id, body, kind, declare, scope_id: Cell::new(Some(scope_id)) }
+    }
+
+    /// Build a [`TSModuleDeclaration`] with `ScopeId`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_module_declaration_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - id: The name of the module/namespace being declared.
+    /// - body
+    /// - kind: The keyword used to define this module declaration.
+    /// - declare
+    /// - scope_id
+    #[inline]
+    pub fn alloc_ts_module_declaration_with_scope_id(
+        self,
+        span: Span,
+        id: TSModuleDeclarationName<'a>,
+        body: Option<TSModuleDeclarationBody<'a>>,
+        kind: TSModuleDeclarationKind,
+        declare: bool,
+        scope_id: ScopeId,
+    ) -> Box<'a, TSModuleDeclaration<'a>> {
+        Box::new_in(
+            self.ts_module_declaration_with_scope_id(span, id, body, kind, declare, scope_id),
+            self.allocator,
+        )
     }
 
     /// Build a [`TSModuleDeclarationName::Identifier`]
@@ -12181,6 +13486,83 @@ impl<'a> AstBuilder<'a> {
                 type_annotation,
                 optional,
                 readonly,
+            ),
+            self.allocator,
+        )
+    }
+
+    /// Build a [`TSMappedType`] with `ScopeId`.
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_mapped_type_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - type_parameter: Key type parameter, e.g. `P` in `[P in keyof T]`.
+    /// - name_type
+    /// - type_annotation
+    /// - optional: Optional modifier on type annotation
+    /// - readonly: Readonly modifier before keyed index signature
+    /// - scope_id
+    #[inline]
+    pub fn ts_mapped_type_with_scope_id<T1>(
+        self,
+        span: Span,
+        type_parameter: T1,
+        name_type: Option<TSType<'a>>,
+        type_annotation: Option<TSType<'a>>,
+        optional: TSMappedTypeModifierOperator,
+        readonly: TSMappedTypeModifierOperator,
+        scope_id: ScopeId,
+    ) -> TSMappedType<'a>
+    where
+        T1: IntoIn<'a, Box<'a, TSTypeParameter<'a>>>,
+    {
+        TSMappedType {
+            span,
+            type_parameter: type_parameter.into_in(self.allocator),
+            name_type,
+            type_annotation,
+            optional,
+            readonly,
+            scope_id: Cell::new(Some(scope_id)),
+        }
+    }
+
+    /// Build a [`TSMappedType`] with `ScopeId`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_mapped_type_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - type_parameter: Key type parameter, e.g. `P` in `[P in keyof T]`.
+    /// - name_type
+    /// - type_annotation
+    /// - optional: Optional modifier on type annotation
+    /// - readonly: Readonly modifier before keyed index signature
+    /// - scope_id
+    #[inline]
+    pub fn alloc_ts_mapped_type_with_scope_id<T1>(
+        self,
+        span: Span,
+        type_parameter: T1,
+        name_type: Option<TSType<'a>>,
+        type_annotation: Option<TSType<'a>>,
+        optional: TSMappedTypeModifierOperator,
+        readonly: TSMappedTypeModifierOperator,
+        scope_id: ScopeId,
+    ) -> Box<'a, TSMappedType<'a>>
+    where
+        T1: IntoIn<'a, Box<'a, TSTypeParameter<'a>>>,
+    {
+        Box::new_in(
+            self.ts_mapped_type_with_scope_id(
+                span,
+                type_parameter,
+                name_type,
+                type_annotation,
+                optional,
+                readonly,
+                scope_id,
             ),
             self.allocator,
         )
