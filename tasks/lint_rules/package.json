@@ -6,7 +6,7 @@
   "dependencies": {
     "@next/eslint-plugin-next": "latest",
     "@typescript-eslint/eslint-plugin": "latest",
-    "eslint": "latest",
+    "eslint": "^9.13.0",
     "eslint-plugin-import": "latest",
     "eslint-plugin-jest": "latest",
     "eslint-plugin-jsdoc": "latest",
@@ -15,7 +15,7 @@
     "eslint-plugin-promise": "latest",
     "eslint-plugin-react": "latest",
     "eslint-plugin-react-hooks": "latest",
-    "eslint-plugin-react-perf": "latest",
+    "eslint-plugin-react-perf": "^3.3.3",
     "eslint-plugin-unicorn": "latest",
     "eslint-plugin-vitest": "latest"
   }
