@@ -121,30 +121,74 @@ impl Linter {
             .rules
             .iter()
             .filter(|rule| rule.should_run(&ctx_host))
-            .map(|rule| (rule, Rc::clone(&ctx_host).spawn(rule)))
-            .collect::<Vec<_>>();
-
-        for (rule, ctx) in &rules {
-            rule.run_once(ctx);
-        }
+            .map(|rule| (rule, Rc::clone(&ctx_host).spawn(rule)));
 
         let semantic = ctx_host.semantic();
-        for symbol in semantic.symbols().symbol_ids() {
-            for (rule, ctx) in &rules {
-                rule.run_on_symbol(symbol, ctx);
-            }
-        }
 
-        for node in semantic.nodes() {
-            for (rule, ctx) in &rules {
-                rule.run(node, ctx);
-            }
-        }
+        let should_run_on_jest_node =
+            self.options.plugins.has_test() && ctx_host.frameworks().is_test();
 
-        if ctx_host.frameworks().is_test() && self.options.plugins.has_test() {
-            for jest_node in iter_possible_jest_call_node(semantic) {
+        // IMPORTANT: We have two branches here for performance reasons:
+        //
+        // 1) Branch where we iterate over each node, then each rule
+        // 2) Branch where we iterate over each rule, then each node
+        //
+        // When the number of nodes is relatively small, most of them can fit
+        // in the cache and we can save iterating over the rules multiple times.
+        // But for large files, the number of nodes can be so large that it
+        // starts to not fit into the cache and pushes out other data, like the rules.
+        // So we end up thrashing the cache with each rule iteration. In this case,
+        // it's better to put rules in the inner loop, as the rules data is smaller
+        // and is more likely to fit in the cache.
+        //
+        // The threshold here is chosen to balance between performance improvement
+        // from not iterating over rules multiple times, but also ensuring that we
+        // don't thrash the cache too much. Feel free to tweak based on benchmarking.
+        //
+        // See https://github.com/oxc-project/oxc/pull/6600 for more context.
+        if semantic.stats().nodes > 200_000 {
+            // Collect rules into a Vec so that we can iterate over the rules multiple times
+            let rules = rules.collect::<Vec<_>>();
+
+            for (rule, ctx) in &rules {
+                rule.run_once(ctx);
+            }
+
+            for symbol in semantic.symbols().symbol_ids() {
                 for (rule, ctx) in &rules {
-                    rule.run_on_jest_node(&jest_node, ctx);
+                    rule.run_on_symbol(symbol, ctx);
+                }
+            }
+
+            for node in semantic.nodes() {
+                for (rule, ctx) in &rules {
+                    rule.run(node, ctx);
+                }
+            }
+
+            if should_run_on_jest_node {
+                for jest_node in iter_possible_jest_call_node(semantic) {
+                    for (rule, ctx) in &rules {
+                        rule.run_on_jest_node(&jest_node, ctx);
+                    }
+                }
+            }
+        } else {
+            for (rule, ref ctx) in rules {
+                rule.run_once(ctx);
+
+                for symbol in semantic.symbols().symbol_ids() {
+                    rule.run_on_symbol(symbol, ctx);
+                }
+
+                for node in semantic.nodes() {
+                    rule.run(node, ctx);
+                }
+
+                if should_run_on_jest_node {
+                    for jest_node in iter_possible_jest_call_node(semantic) {
+                        rule.run_on_jest_node(&jest_node, ctx);
+                    }
                 }
             }
         }
