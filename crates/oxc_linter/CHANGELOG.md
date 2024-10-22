@@ -4,6 +4,29 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.10.2] - 2024-10-22
+
+- 1248557 ast: [**BREAKING**] Remove `AstKind::FinallyClause` (#6744) (Boshen)
+
+- 202c7f6 ast: [**BREAKING**] Remove `AstKind::ExpressionArrayElement` and `AstKind::ClassHeritage` (#6740) (Boshen)
+
+### Features
+
+- dbe1972 linter: Import/no-cycle should turn on ignore_types by default (#6761) (Boshen)
+- 619d06f linter: Fix suggestion for `eslint:no_empty_static_block` rule (#6732) (Tapan Prakash)
+
+### Bug Fixes
+
+
+### Performance
+
+- 8387bac linter: Apply small file optimization, up to 30% faster (#6600) (camchenry)
+
+### Refactor
+
+- b884577 linter: All ast_util functions take Semantic (#6753) (DonIsaac)
+- 744aa74 linter: Impl `Deref<Target = Semantic>` for `LintContext` (#6752) (DonIsaac)
+
 ## [0.10.1] - 2024-10-21
 
 ### Features
