@@ -240,13 +240,12 @@ fn default_init_field(field: &FieldDef) -> bool {
             field!(scope_id: Cell<Option<ScopeId>>),
             field!(symbol_id: Cell<Option<SymbolId>>),
             field!(reference_id: Cell<Option<ReferenceId>>),
-            field!(reference_flags: ReferenceFlags),
         ]);
     }
 
     let ident = field.ident().expect("expected named field");
-    if let Some(default_type) = DEFAULT_FIELDS.get(ident.to_string().as_str()) {
-        *default_type == field.typ.raw()
+    if let Some(&default_type) = DEFAULT_FIELDS.get(ident.to_string().as_str()) {
+        default_type == field.typ.raw()
     } else {
         false
     }
