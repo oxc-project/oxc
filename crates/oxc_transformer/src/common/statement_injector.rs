@@ -131,6 +131,8 @@ impl<'a> StatementInjectorStore<'a> {
                     new_statements.push(stmt);
                     new_statements.extend(adjacent_stmts.into_iter().map(|s| s.stmt));
                 }
+            } else {
+                new_statements.push(stmt);
             }
         }
 
