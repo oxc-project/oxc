@@ -58,6 +58,7 @@ impl OxlintRules {
         use itertools::Itertools;
         let mut rules_to_replace: Vec<RuleWithSeverity> = vec![];
         let mut rules_to_remove: Vec<RuleWithSeverity> = vec![];
+        let mut rules_not_matched: Vec<&str> = vec![];
 
         // Rules can have the same name but different plugin names
         let lookup = self.iter().into_group_map_by(|r| r.rule_name.as_str());
@@ -81,6 +82,8 @@ impl OxlintRules {
                                 let config = rule_config.config.clone().unwrap_or_default();
                                 let rule = rule.read_json(config);
                                 rules_to_replace.push(RuleWithSeverity::new(rule, severity));
+                            } else {
+                                rules_not_matched.push(rule_name);
                             }
                         }
                         AllowWarnDeny::Allow => {
@@ -90,6 +93,8 @@ impl OxlintRules {
                             {
                                 let rule = rule.clone();
                                 rules_to_remove.push(rule);
+                            } else {
+                                rules_not_matched.push(rule_name);
                             }
                         }
                     }
@@ -120,6 +125,13 @@ impl OxlintRules {
         }
         for rule in rules_to_replace {
             rules_for_override.replace(rule);
+        }
+
+        if (rules_not_matched.len() > 0) {
+            println!("The following rules do not match the currently supported rules:");
+            for rule in rules_not_matched {
+                println!("{}", rule);
+            }
         }
     }
 }
