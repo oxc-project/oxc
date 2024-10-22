@@ -1871,9 +1871,9 @@ dependencies = [
 
 [[package]]
 name = "oxc_resolver"
-version = "1.12.0"
+version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c20bb345f290c46058ba650fef7ca2b579612cf2786b927ebad7b8bec0845a7"
+checksum = "9cf8bcda84674ae69228a823dcdb81eac9a398d99f1bbc1dbf00623009fc11c1"
 dependencies = [
  "cfg-if",
  "dashmap 6.1.0",
