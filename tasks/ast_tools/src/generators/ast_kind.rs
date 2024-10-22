@@ -1,13 +1,13 @@
 use convert_case::{Case, Casing};
 use itertools::Itertools;
 use quote::{format_ident, quote};
-use syn::{parse_quote, Arm, Ident, ImplItemFn, Type, Variant};
+use syn::{parse_quote, Arm, ImplItemFn, Variant};
 
 use super::define_generator;
 use crate::{
     codegen::{generated_header, LateCtx},
     output,
-    schema::{GetIdent, ToType, TypeDef},
+    schema::{GetIdent, ToType},
     Generator, GeneratorOutput,
 };
 
@@ -81,20 +81,20 @@ pub const BLACK_LIST: [&str; 61] = [
 
 impl Generator for AstKindGenerator {
     fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
-        let have_kinds: Vec<(Ident, Type)> = ctx
+        let have_kinds = ctx
             .schema()
             .into_iter()
-            .filter(|it| it.visitable())
-            .filter(
-                |maybe_kind| matches!(maybe_kind, kind @ (TypeDef::Enum(_) | TypeDef::Struct(_)) if kind.visitable())
-            )
+            .filter(|def| {
+                let is_visitable = def.visitable();
+                let is_blacklisted = BLACK_LIST.contains(&def.name().as_str());
+                is_visitable && !is_blacklisted
+            })
             .map(|def| {
                 let ident = def.ident();
                 let typ = def.to_type();
                 (ident, typ)
             })
-            .filter(|(ident, _)| !BLACK_LIST.contains(&ident.to_string().as_str()))
-            .collect();
+            .collect_vec();
 
         let types: Vec<Variant> =
             have_kinds.iter().map(|(ident, _)| parse_quote!(#ident)).collect_vec();
