@@ -240,13 +240,12 @@ fn default_init_field(field: &FieldDef) -> bool {
             field!(scope_id: Cell<Option<ScopeId>>),
             field!(symbol_id: Cell<Option<SymbolId>>),
             field!(reference_id: Cell<Option<ReferenceId>>),
-            field!(reference_flags: ReferenceFlags),
         ]);
     }
 
     let ident = field.ident().expect("expected named field");
-    if let Some(default_type) = DEFAULT_FIELDS.get(ident.to_string().as_str()) {
-        *default_type == field.typ.raw()
+    if let Some(&default_type) = DEFAULT_FIELDS.get(ident.to_string().as_str()) {
+        default_type == field.typ.raw()
     } else {
         false
     }
@@ -285,12 +284,12 @@ fn generate_struct_builder_fn(ty: &StructDef, ctx: &LateCtx) -> TokenStream {
     let alloc_fn_name = format_ident!("alloc_{fn_name}");
 
     let article = article_for(ident.to_string());
-    let fn_docs = DocComment::new(format!("Build {article} [`{ident}`]"))
+    let fn_docs = DocComment::new(format!("Build {article} [`{ident}`]."))
         .with_description(format!("If you want the built node to be allocated in the memory arena, use [`AstBuilder::{alloc_fn_name}`] instead."))
         .with_params(&params);
 
     let alloc_docs =
-        DocComment::new(format!("Build {article} [`{ident}`] and stores it in the memory arena."))
+        DocComment::new(format!("Build {article} [`{ident}`], and store it in the memory arena."))
             .with_description(format!("Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::{fn_name}`] instead."))
             .with_params(&params);
 

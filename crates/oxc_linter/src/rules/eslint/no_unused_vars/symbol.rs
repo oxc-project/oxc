@@ -199,7 +199,6 @@ impl<'s, 'a> Symbol<'s, 'a> {
                     return true;
                 }
                 AstKind::VariableDeclaration(_)
-                | AstKind::ExpressionArrayElement(_)
                 | AstKind::ArrayExpressionElement(_)
                 | AstKind::ArrayExpression(_)
                 | AstKind::ParenthesizedExpression(_)

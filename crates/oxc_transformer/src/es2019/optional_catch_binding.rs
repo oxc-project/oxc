@@ -1,6 +1,7 @@
 //! ES2019: Optional Catch Binding
 //!
-//! This plugin transform catch clause without parameter to add a parameter called `unused` in catch clause.
+//! This plugin transforms catch clause without parameter to add a parameter
+//! called `unused` in catch clause.
 //!
 //! > This plugin is included in `preset-env`, in ES2019
 //!
