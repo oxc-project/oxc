@@ -90,11 +90,11 @@ fn test() {
     ];
 
     let fix = vec![
-        (r#"<div accesskey="h" />"#, r#"<div  />"#),
-        (r#"<div accessKey="h" />"#, r#"<div  />"#),
-        (r#"<div accessKey="h" {...props} />"#, r#"<div  {...props} />"#),
-        (r#"<div acCesSKeY="y" />"#, r#"<div  />"#),
-        (r#"<div accessKey={"y"} />"#, r#"<div  />"#),
+        (r#"<div accesskey="h" />"#, r"<div  />"),
+        (r#"<div accessKey="h" />"#, r"<div  />"),
+        (r#"<div accessKey="h" {...props} />"#, r"<div  {...props} />"),
+        (r#"<div acCesSKeY="y" />"#, r"<div  />"),
+        (r#"<div accessKey={"y"} />"#, r"<div  />"),
         (r"<div accessKey={`${y}`} />", r"<div  />"),
         (r"<div accessKey={`${undefined}y${undefined}`} />", r"<div  />"),
         (r"<div accessKey={`This is ${bad}`} />", r"<div  />"),
