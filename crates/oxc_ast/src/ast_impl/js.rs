@@ -1344,8 +1344,22 @@ impl<'a> ClassElement<'a> {
         matches!(self, Self::StaticBlock(_))
     }
 
-    /// Returns `true` if this [`ClassElement`] is a property and has a
-    /// static modifier.
+    /// Returns `true` if this [`ClassElement`] has a static modifier.
+    ///
+    /// Note: Class static blocks do not have a "modifier", as there is no non-static equivalent.
+    /// Therefore, returns `false` for static blocks.
+    ///
+    /// The following all return `true`:
+    /// ```ts
+    /// class {
+    ///   static prop = 1;
+    ///   static method() {}
+    ///   static #private = 2;
+    ///   static #privateMethod() {}
+    ///   static accessor accessorProp = 3;
+    ///   static accessor #privateAccessorProp = 4;
+    /// }
+    /// ```
     pub fn r#static(&self) -> bool {
         match self {
             Self::TSIndexSignature(_) | Self::StaticBlock(_) => false,
