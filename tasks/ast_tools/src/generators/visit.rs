@@ -14,7 +14,7 @@ use crate::{
     markers::VisitArg,
     output,
     schema::{EnumDef, GetIdent, StructDef, ToType, TypeDef},
-    util::{StrExt, ToIdent, TokenStreamExt, TypeWrapper},
+    util::{StrExt, TokenStreamExt, TypeWrapper},
     Generator, GeneratorOutput,
 };
 
@@ -187,7 +187,7 @@ impl<'a> VisitBuilder<'a> {
         let (ident, as_type) = {
             debug_assert!(def.visitable(), "{def:?}");
 
-            let ident = def.name().to_ident();
+            let ident = def.ident();
             let as_type = def.to_type();
 
             (ident, if collection { parse_quote!(Vec<'a, #as_type>) } else { as_type })
