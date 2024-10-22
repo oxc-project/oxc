@@ -173,6 +173,17 @@ impl ScopeTree {
         }
     }
 
+    /// Delete a scope.
+    pub fn delete_scope(&mut self, scope_id: ScopeId) {
+        if self.build_child_ids {
+            self.child_ids[scope_id].clear();
+            let parent_id = self.parent_ids[scope_id];
+            if let Some(parent_id) = parent_id {
+                self.child_ids[parent_id].retain(|&child_id| child_id != scope_id);
+            }
+        }
+    }
+
     /// Get a variable binding by name that was declared in the top-level scope
     #[inline]
     pub fn get_root_binding(&self, name: &str) -> Option<SymbolId> {

@@ -139,6 +139,32 @@ impl TraverseScoping {
         new_scope_id
     }
 
+    /// Remove scope for an expression from the scope chain.
+    ///
+    /// Delete the scope and set parent of its child scopes to its parent scope.
+    /// e.g.:
+    /// * Starting scopes parentage `A -> B`, `B -> C`, `B -> D`.
+    /// * Remove scope `B` from chain.
+    /// * End result: scopes `A -> C`, `A -> D`.
+    ///
+    /// Use this when removing an expression which owns a scope, without removing its children.
+    /// For example when unwrapping `(() => foo)()` to just `foo`.
+    /// `foo` here could be an expression which itself contains scopes.
+    pub fn remove_scope_for_expression(&mut self, scope_id: ScopeId, expr: &Expression) {
+        let mut collector = ChildScopeCollector::new();
+        collector.visit_expression(expr);
+
+        let child_ids = collector.scope_ids;
+        if !child_ids.is_empty() {
+            let parent_id = self.scopes.get_parent_id(scope_id);
+            for child_id in child_ids {
+                self.scopes.set_parent_id(child_id, parent_id);
+            }
+        }
+
+        self.scopes.delete_scope(scope_id);
+    }
+
     /// Generate UID var name.
     ///
     /// Finds a unique variable name which does clash with any other variables used in the program.

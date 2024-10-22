@@ -38,6 +38,7 @@ base64 = { workspace = true }
 cow-utils = { workspace = true }
 dashmap = { workspace = true }
 indexmap = { workspace = true }
+itoa = { workspace = true }
 ropey = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true, features = ["derive"] }

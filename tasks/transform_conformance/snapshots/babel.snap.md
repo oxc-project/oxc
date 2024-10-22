@@ -1,8 +1,9 @@
 commit: d20b314c
 
-Passed: 342/1051
+Passed: 348/1058
 
 # All Passed:
+* babel-plugin-transform-class-static-block
 * babel-plugin-transform-logical-assignment-operators
 * babel-plugin-transform-optional-catch-binding
 * babel-preset-react
@@ -11,7 +12,7 @@ Passed: 342/1051
 * babel-plugin-transform-react-jsx-source
 
 
-# babel-preset-env (109/585)
+# babel-preset-env (108/585)
 * .plugins-overlapping/chrome-49/input.js
 x Output mismatch
 
@@ -1435,6 +1436,9 @@ x Output mismatch
 x Output mismatch
 
 * shipped-proposals/new-class-features-chrome-90/input.js
+x Output mismatch
+
+* shipped-proposals/new-class-features-chrome-94/input.js
 x Output mismatch
 
 * shipped-proposals/new-class-features-firefox-70/input.js

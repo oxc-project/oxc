@@ -284,6 +284,23 @@ impl<'a> TraverseCtx<'a> {
         self.scoping.insert_scope_below_expression(expr, flags)
     }
 
+    /// Remove scope for an expression from the scope chain.
+    ///
+    /// Delete the scope and set parent of its child scopes to its parent scope.
+    /// e.g.:
+    /// * Starting scopes parentage `A -> B`, `B -> C`, `B -> D`.
+    /// * Remove scope `B` from chain.
+    /// * End result: scopes `A -> C`, `A -> D`.
+    ///
+    /// Use this when removing an expression which owns a scope, without removing its children.
+    /// For example when unwrapping `(() => foo)()` to just `foo`.
+    /// `foo` here could be an expression which itself contains scopes.
+    ///
+    /// This is a shortcut for `ctx.scoping.remove_scope_for_expression`.
+    pub fn remove_scope_for_expression(&mut self, scope_id: ScopeId, expr: &Expression) {
+        self.scoping.remove_scope_for_expression(scope_id, expr);
+    }
+
     /// Generate UID var name.
     ///
     /// Finds a unique variable name which does clash with any other variables used in the program.
