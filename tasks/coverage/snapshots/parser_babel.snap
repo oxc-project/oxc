@@ -6919,10 +6919,22 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·  ────────────────
    ╰────
 
+  × Invalid regular expression: Invalid unicode flags combination `u` and `v`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2024/regexp-unicode-sets/uv-error/input.js:1:6]
+ 1 │ /a/ugv;
+   ·      ─
+   ╰────
+
   × The 'u' and 'v' regular expression flags cannot be enabled at the same time
    ╭─[babel/packages/babel-parser/test/fixtures/es2024/regexp-unicode-sets/uv-error/input.js:1:1]
  1 │ /a/ugv;
    · ──────
+   ╰────
+
+  × Invalid regular expression: Invalid unicode flags combination `u` and `v`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2024/regexp-unicode-sets/vu-error/input.js:1:5]
+ 1 │ /a/vu;
+   ·     ─
    ╰────
 
   × The 'u' and 'v' regular expression flags cannot be enabled at the same time

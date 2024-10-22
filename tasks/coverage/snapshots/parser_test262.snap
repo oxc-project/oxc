@@ -1404,6 +1404,13 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
     ·  ──
     ╰────
 
+  × Invalid regular expression: Invalid unicode flags combination `u` and `v`
+    ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/uv-flags.js:18:5]
+ 17 │ 
+ 18 │ /./uv;
+    ·     ─
+    ╰────
+
   × The 'u' and 'v' regular expression flags cannot be enabled at the same time
     ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/uv-flags.js:18:1]
  17 │ 
