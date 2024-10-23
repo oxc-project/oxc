@@ -47,12 +47,12 @@ impl<'a> BoundIdentifier<'a> {
     }
 
     /// Create `BindingIdentifier` for this binding
-    pub fn create_binding_identifier(&self, ctx: &mut TraverseCtx<'a>) -> BindingIdentifier<'a> {
+    pub fn create_binding_identifier(&self, ctx: &TraverseCtx<'a>) -> BindingIdentifier<'a> {
         ctx.ast.binding_identifier_with_symbol_id(SPAN, self.name.clone(), self.symbol_id)
     }
 
     /// Create `BindingPattern` for this binding
-    pub fn create_binding_pattern(&self, ctx: &mut TraverseCtx<'a>) -> BindingPattern<'a> {
+    pub fn create_binding_pattern(&self, ctx: &TraverseCtx<'a>) -> BindingPattern<'a> {
         let ident = self.create_binding_identifier(ctx);
         let binding_pattern_kind = ctx.ast.binding_pattern_kind_from_binding_identifier(ident);
         ctx.ast.binding_pattern(binding_pattern_kind, NONE, false)

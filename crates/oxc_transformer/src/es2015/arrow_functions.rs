@@ -407,7 +407,7 @@ impl<'a> ArrowFunctions<'a> {
         &mut self,
         statements: &mut Vec<'a, Statement<'a>>,
         this_var: &BoundIdentifier<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) {
         let binding_pattern = ctx.ast.binding_pattern(
             ctx.ast.binding_pattern_kind_from_binding_identifier(
