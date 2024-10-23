@@ -13,9 +13,9 @@ use crate::TraverseCtx;
 ///
 /// ```rs
 /// // Generate a UID for a top-level var
-/// let binding = BoundIdentifier::new_root_uid("foo", SymbolFlags::FunctionScopedVariable, ctx);
+/// let binding = ctx.generate_uid_in_current_scope("foo", SymbolFlags::FunctionScopedVariable);
 ///
-/// // Generate an `IdentifierReference`s and insert them into AST
+/// // Generate `IdentifierReference`s and insert them into AST
 /// some_node.id = binding.create_read_reference(ctx);
 /// some_other_node.id = binding.create_read_reference(ctx);
 ///
@@ -23,7 +23,7 @@ use crate::TraverseCtx;
 /// self.foo_binding = binding;
 ///
 /// // Later on in `exit_program`
-/// let id = binding.create_binding_identifier();
+/// let id = self.foo_binding.create_binding_identifier(ctx);
 /// // Insert `var <id> = something;` into `program.body`
 /// ```
 ///
