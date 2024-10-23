@@ -9,7 +9,7 @@ use std::{
 
 use oxc_allocator::CloneIn;
 use oxc_regular_expression::ast::Pattern;
-use oxc_span::{cmp::ContentEq, hash::ContentHash, Atom, Span};
+use oxc_span::{cmp::ContentEq, hash::ContentHash, Span};
 
 use crate::ast::*;
 
@@ -263,11 +263,6 @@ impl fmt::Display for RegExpFlags {
 }
 
 impl<'a> StringLiteral<'a> {
-    /// Create a new string literal representing the given `value`.
-    pub fn new(span: Span, value: Atom<'a>) -> Self {
-        Self { span, value }
-    }
-
     /// Static Semantics: `IsStringWellFormedUnicode`
     /// test for \uD800-\uDFFF
     ///

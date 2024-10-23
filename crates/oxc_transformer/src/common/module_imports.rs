@@ -214,7 +214,7 @@ impl<'a> ModuleImportsStore<'a> {
         let import_stmt = ctx.ast.module_declaration_import_declaration(
             SPAN,
             Some(specifiers),
-            StringLiteral::new(SPAN, source),
+            ctx.ast.string_literal(SPAN, source),
             NONE,
             ImportOrExportKind::Value,
         );
