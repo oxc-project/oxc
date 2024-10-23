@@ -53,7 +53,7 @@ mod boxed;
 mod clone_in;
 mod convert;
 mod string;
-mod vec;
+pub mod vec;
 
 pub use boxed::{Address, Box};
 pub use clone_in::CloneIn;

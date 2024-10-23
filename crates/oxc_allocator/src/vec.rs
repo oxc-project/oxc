@@ -649,6 +649,19 @@ impl_slice_eq1! { ['t] Cow<'_, [T]>, Vec<'t, U> where T: Clone }
 impl_slice_eq1! { ['t, const N: usize] Vec<'t, T>, [U; N] }
 impl_slice_eq1! { ['t, const N: usize] Vec<'t, T>, &[U; N] }
 
+/// A draining iterator for `Vec<T>`.
+///
+/// This `struct` is created by [`Vec::drain`].
+/// See its documentation for more.
+///
+/// # Example
+///
+/// ```
+/// # use oxc_allocator::{ Allocator, Vec };
+/// # let allocator = Allocator::default();
+/// let mut v = Vec::from_iter_in([0, 1, 2], &allocator);
+/// let iter: oxc_allocator::vec::Drain<'_, _> = v.drain(..);
+/// ```
 pub struct Drain<'a, T>(bump_scope::owned_slice::Drain<'a, T>);
 
 impl<T> Iterator for Drain<'_, T> {
@@ -676,6 +689,20 @@ impl<T> ExactSizeIterator for Drain<'_, T> {}
 
 impl<T> FusedIterator for Drain<'_, T> {}
 
+/// A splicing iterator for `Vec`.
+///
+/// This struct is created by [`Vec::splice()`].
+/// See its documentation for more.
+///
+/// # Example
+///
+/// ```
+/// # use oxc_allocator::{ Allocator, Vec };
+/// # let allocator = Allocator::default();
+/// let mut v = Vec::from_iter_in([0, 1, 2], &allocator);
+/// let new = [7, 8];
+/// let iter: oxc_allocator::vec::Splice<'_, _> = v.splice(1.., new);
+/// ```
 pub struct Splice<'a, I: Iterator>(bump_scope::bump_vec::Splice<'a, I, Global>);
 
 impl<I: Iterator> Iterator for Splice<'_, I> {
@@ -710,8 +737,73 @@ impl<'alloc, T> ops::DerefMut for Vec<'alloc, T> {
     }
 }
 
+/// An iterator that moves out of a vector.
+///
+/// This `struct` is created by the `into_iter` method on [`Vec`](super::Vec)
+/// (provided by the [`IntoIterator`] trait).
+///
+/// # Example
+///
+/// ```
+/// # use oxc_allocator::{ Allocator, Vec };
+/// let v = Vec::from_iter_in([0, 1, 2], &allocator);
+/// let iter: std::vec::IntoIter<_> = v.into_iter();
+/// ```
+pub struct IntoIter<'alloc, T>(bump_scope::bump_vec::IntoIter<'alloc, 'alloc, T>);
+
+impl<T> IntoIter<'_, T> {
+    /// Returns the remaining items of this iterator as a slice.
+    #[must_use]
+    #[inline(always)]
+    pub fn as_slice(&self) -> &[T] {
+        self.0.as_slice()
+    }
+
+    /// Returns the remaining items of this iterator as a mutable slice.
+    #[must_use]
+    #[inline(always)]
+    pub fn as_mut_slice(&mut self) -> &mut [T] {
+        self.0.as_mut_slice()
+    }
+}
+
+impl<T> Iterator for IntoIter<'_, T> {
+    type Item = T;
+
+    #[inline(always)]
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next()
+    }
+
+    #[inline(always)]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.0.size_hint()
+    }
+
+    #[inline(always)]
+    fn count(self) -> usize {
+        self.0.count()
+    }
+}
+
+impl<T> DoubleEndedIterator for IntoIter<'_, T> {
+    #[inline(always)]
+    fn next_back(&mut self) -> Option<Self::Item> {
+        self.0.next_back()
+    }
+}
+
+impl<T> ExactSizeIterator for IntoIter<'_, T> {
+    #[inline(always)]
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+}
+
+impl<T> FusedIterator for IntoIter<'_, T> {}
+
 impl<'alloc, T> IntoIterator for Vec<'alloc, T> {
-    type IntoIter = <VecImpl<'alloc, T> as IntoIterator>::IntoIter;
+    type IntoIter = IntoIter<'alloc, T>;
     type Item = T;
 
     #[inline(always)]
@@ -719,7 +811,7 @@ impl<'alloc, T> IntoIterator for Vec<'alloc, T> {
         let inner = ManuallyDrop::into_inner(self.0);
         // TODO: `allocator_api2::vec::Vec::IntoIter` is `Drop`.
         // Wrap it in `ManuallyDrop` to prevent that.
-        inner.into_iter()
+        IntoIter(inner.into_iter())
     }
 }
 
