@@ -102,6 +102,8 @@ for (const entry of fs.readdirSync(harnessDir)) {
   harnessFiles.set(entry, content);
 }
 
+const babelHelpers = fs.readFileSync(path.join(__dirname, './babelHelpers.js'), 'utf8');
+
 function createHarnessForTest(includes) {
   let harness = defaultHarness;
 
@@ -112,6 +114,8 @@ function createHarnessForTest(includes) {
       harness += content;
     }
   }
+
+  harness += babelHelpers;
 
   return harness;
 }
