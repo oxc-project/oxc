@@ -312,25 +312,6 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
                         ),
                     ));
                 }
-                Expression::BinaryExpression(bin_expr) => {
-                    let left = bin_expr.left.may_have_side_effects();
-                    let right = bin_expr.left.may_have_side_effects();
-
-                    if left && right {
-                        return None;
-                    }
-                    if !left && !right {
-                        return Some(ctx.ast.statement_empty(SPAN));
-                    }
-                    return Some(ctx.ast.statement_expression(
-                        bin_expr.span,
-                        ctx.ast.move_expression(if left {
-                            &mut bin_expr.right
-                        } else {
-                            &mut bin_expr.left
-                        }),
-                    ));
-                }
                 Expression::FunctionExpression(function_expr) if function_expr.id.is_none() => {
                     Some(ctx.ast.statement_empty(SPAN))
                 }
@@ -555,7 +536,7 @@ mod test {
         fold("{if(false)if(false)if(false)foo(); {bar()}}", "bar()");
 
         fold("{'hi'}", "");
-        fold("{x==3}", "");
+        fold("{x==3}", "x == 3");
         fold("{`hello ${foo}`}", "");
         fold("{ (function(){x++}) }", "");
         fold_same("function f(){return;}");

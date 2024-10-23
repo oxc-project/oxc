@@ -2,7 +2,7 @@ commit: 06454619
 
 runtime Summary:
 AST Parsed     : 18444/18444 (100.00%)
-Positive Passed: 18198/18444 (98.67%)
+Positive Passed: 18260/18444 (99.00%)
 tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-existing-block-fn-no-init.js
 minify error: Test262Error: Expected SameValue(«function f(){}», «undefined») to be true
 
@@ -321,65 +321,11 @@ minify error: SyntaxError: Identifier 'f' has already been declared
 tasks/coverage/test262/test/language/expressions/addition/S11.6.1_A4_T5.js
 minify error: Test262Error: #1.1: -0 + -0 === - 0. Actual: +0
 
-tasks/coverage/test262/test/language/expressions/addition/bigint-and-number.js
-minify error: Test262Error: 1n + 1 throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/addition/bigint-errors.js
-minify error: Test262Error: 0n + Symbol("1") throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/addition/bigint-toprimitive.js
-minify error: Test262Error: 0n + {[Symbol.toPrimitive]: 1} throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/addition/coerce-symbol-to-prim-err.js
-minify error: Test262Error: error thrown by left-hand side Expected a Test262Error to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/addition/coerce-symbol-to-prim-invocation.js
-minify error: Test262Error: methods invoked in correct sequence Expected SameValue(«""», «"leftright"») to be true
-
-tasks/coverage/test262/test/language/expressions/addition/coerce-symbol-to-prim-return-obj.js
-minify error: Test262Error: ordinary object value, right-hand side Expected a TypeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/addition/coerce-symbol-to-prim-return-prim.js
-minify error: Test262Error: ToNumber(Symbol): right-hand side Expected a TypeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/addition/get-symbol-to-prim-err.js
-minify error: Test262Error: error from property access of left-hand side Expected a Test262Error to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/addition/symbol-to-string.js
-minify error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
 tasks/coverage/test262/test/language/expressions/array/spread-obj-getter-init.js
 transform error: Test262Error: Expected SameValue(«true», «false») to be true
 
 tasks/coverage/test262/test/language/expressions/assignment/fn-name-lhs-cover.js
 codegen error: Test262Error: descriptor value should be ; object value should be 
-
-tasks/coverage/test262/test/language/expressions/bitwise-and/bigint-and-number.js
-minify error: Test262Error: 1n & 1 throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/bitwise-and/bigint-errors.js
-minify error: Test262Error: 0n & Symbol("1") throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/bitwise-and/bigint-toprimitive.js
-minify error: Test262Error: 0n & {[Symbol.toPrimitive]: 1} throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/bitwise-or/bigint-and-number.js
-minify error: Test262Error: 1n | 1 throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/bitwise-or/bigint-errors.js
-minify error: Test262Error: 0n | Symbol("1") throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/bitwise-or/bigint-toprimitive.js
-minify error: Test262Error: 0n | {[Symbol.toPrimitive]: 1} throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/bitwise-xor/bigint-and-number.js
-minify error: Test262Error: 1n ^ 1 throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/bitwise-xor/bigint-errors.js
-minify error: Test262Error: 0n ^ Symbol("1") throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/bitwise-xor/bigint-toprimitive.js
-minify error: Test262Error: 0n ^ {[Symbol.toPrimitive]: 1} throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
 
 tasks/coverage/test262/test/language/expressions/call/spread-obj-getter-init.js
 transform error: Test262Error: Expected SameValue(«true», «false») to be true
@@ -389,18 +335,6 @@ minify error: Test262Error: Expected SameValue(«0», «1») to be true
 
 tasks/coverage/test262/test/language/expressions/division/S11.5.2_A4_T8.js
 minify error: Test262Error: #1.2: -0 / 1 === - 0. Actual: +0
-
-tasks/coverage/test262/test/language/expressions/division/bigint-and-number.js
-minify error: Test262Error: 1n / 1 throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/division/bigint-complex-infinity.js
-minify error: Test262Error: 1n / 0n throws RangeError Expected a RangeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/division/bigint-errors.js
-minify error: Test262Error: 0n / Symbol("1") throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/division/bigint-toprimitive.js
-minify error: Test262Error: 0n / {[Symbol.toPrimitive]: 1} throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
 
 tasks/coverage/test262/test/language/expressions/does-not-equals/bigint-and-object.js
 minify error: Test262Error: The result of (0n != {valueOf: function() {return 0n;}}) is false Expected SameValue(«true», «false») to be true
@@ -444,68 +378,17 @@ codegen error: Test262Error: constructor is %Promise% Expected SameValue(«[obje
 tasks/coverage/test262/test/language/expressions/equals/bigint-and-object.js
 minify error: Test262Error: The result of (0n == {valueOf: function() {return 0n;}}) is true Expected SameValue(«false», «true») to be true
 
-tasks/coverage/test262/test/language/expressions/equals/coerce-symbol-to-prim-err.js
-minify error: Test262Error: Expected a Test262Error to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/equals/coerce-symbol-to-prim-invocation.js
-minify error: Test262Error: method invoked exactly once Expected SameValue(«0», «1») to be true
-
-tasks/coverage/test262/test/language/expressions/equals/coerce-symbol-to-prim-return-obj.js
-minify error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/equals/get-symbol-to-prim-err.js
-minify error: Test262Error: Expected a Test262Error to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/exponentiation/bigint-and-number.js
-minify error: Test262Error: 1n ** 1 throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/exponentiation/bigint-errors.js
-minify error: Test262Error: 0n ** Symbol("1") throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
-
 tasks/coverage/test262/test/language/expressions/exponentiation/bigint-negative-exponent-throws.js
 transform error: Test262Error: (-1n) ** -1n throws RangeError Expected a RangeError but got a TypeError
-
-tasks/coverage/test262/test/language/expressions/exponentiation/bigint-toprimitive.js
-minify error: Test262Error: 0n ** {[Symbol.toPrimitive]: 1} throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
 
 tasks/coverage/test262/test/language/expressions/greater-than/bigint-and-incomparable-string.js
 minify error: Test262Error: The result of (1n > "0.") is false Expected SameValue(«true», «false») to be true
 
-tasks/coverage/test262/test/language/expressions/greater-than/bigint-and-symbol.js
-minify error: Test262Error: 3n > Symbol("2") throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
-
 tasks/coverage/test262/test/language/expressions/greater-than-or-equal/bigint-and-incomparable-string.js
 minify error: Test262Error: The result of (1n >= "0.") is false Expected SameValue(«true», «false») to be true
 
-tasks/coverage/test262/test/language/expressions/instanceof/primitive-prototype-with-object.js
-minify error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/instanceof/prototype-getter-with-object-throws.js
-minify error: Test262Error: Expected a DummyError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/instanceof/symbol-hasinstance-get-err.js
-minify error: Test262Error: Expected a Test262Error to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/instanceof/symbol-hasinstance-invocation.js
-minify error: Test262Error: Expected SameValue(«0», «1») to be true
-
-tasks/coverage/test262/test/language/expressions/instanceof/symbol-hasinstance-not-callable.js
-minify error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/left-shift/bigint-and-number.js
-minify error: Test262Error: 1n << 1 throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/left-shift/bigint-errors.js
-minify error: Test262Error: 0n << Symbol("1") throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/left-shift/bigint-toprimitive.js
-minify error: Test262Error: 0n << {[Symbol.toPrimitive]: 1} throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
-
 tasks/coverage/test262/test/language/expressions/less-than/bigint-and-incomparable-string.js
 minify error: Test262Error: The result of ("0." < 1n) is false Expected SameValue(«true», «false») to be true
-
-tasks/coverage/test262/test/language/expressions/less-than/bigint-and-symbol.js
-minify error: Test262Error: 3n < Symbol("2") throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
 
 tasks/coverage/test262/test/language/expressions/less-than-or-equal/bigint-and-incomparable-string.js
 minify error: Test262Error: The result of ("0." <= 1n) is false Expected SameValue(«true», «false») to be true
@@ -525,29 +408,8 @@ minify error: Test262Error: #2.2: -1 % -1 === - 0. Actual: +0
 tasks/coverage/test262/test/language/expressions/modulus/S11.5.3_A4_T6.js
 minify error: Test262Error: #3.2: -0 % 1 === - 0. Actual: +0
 
-tasks/coverage/test262/test/language/expressions/modulus/bigint-and-number.js
-minify error: Test262Error: 1n % 1 throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/modulus/bigint-errors.js
-minify error: Test262Error: 0n % Symbol("1") throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/modulus/bigint-modulo-zero.js
-minify error: Test262Error: 1n % 0n throws RangeError Expected a RangeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/modulus/bigint-toprimitive.js
-minify error: Test262Error: 0n % {[Symbol.toPrimitive]: 1} throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
-
 tasks/coverage/test262/test/language/expressions/multiplication/S11.5.1_A4_T2.js
 minify error: Test262Error: #6.2: 0 * -0 === - 0. Actual: +0
-
-tasks/coverage/test262/test/language/expressions/multiplication/bigint-and-number.js
-minify error: Test262Error: 1n * 1 throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/multiplication/bigint-errors.js
-minify error: Test262Error: 0n * Symbol("1") throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/multiplication/bigint-toprimitive.js
-minify error: Test262Error: 0n * {[Symbol.toPrimitive]: 1} throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
 
 tasks/coverage/test262/test/language/expressions/new/spread-obj-getter-init.js
 transform error: Test262Error: Expected SameValue(«true», «false») to be true
@@ -576,26 +438,8 @@ minify error: Test262Error: Expected a Test262Error to be thrown but no exceptio
 tasks/coverage/test262/test/language/expressions/object/prop-def-id-get-error.js
 minify error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
 
-tasks/coverage/test262/test/language/expressions/right-shift/bigint-and-number.js
-minify error: Test262Error: 1n >> 1 throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/right-shift/bigint-errors.js
-minify error: Test262Error: 0n >> Symbol("1") throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/right-shift/bigint-toprimitive.js
-minify error: Test262Error: 0n >> {[Symbol.toPrimitive]: 1} throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
-
 tasks/coverage/test262/test/language/expressions/subtraction/S11.6.2_A4_T5.js
 minify error: Test262Error: #3.2: -0 - 0 === - 0. Actual: +0
-
-tasks/coverage/test262/test/language/expressions/subtraction/bigint-and-number.js
-minify error: Test262Error: 1n - 1 throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/subtraction/bigint-errors.js
-minify error: Test262Error: 0n - Symbol("1") throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/subtraction/bigint-toprimitive.js
-minify error: Test262Error: 0n - {[Symbol.toPrimitive]: 1} throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
 
 tasks/coverage/test262/test/language/expressions/super/call-spread-obj-getter-init.js
 transform error: Test262Error: Expected SameValue(«true», «false») to be true
@@ -618,41 +462,11 @@ minify error: Test262Error: #3.2: +(-0) === -0. Actual: +0
 tasks/coverage/test262/test/language/expressions/unary-plus/bigint-throws.js
 minify error: Test262Error: +0n throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
 
-tasks/coverage/test262/test/language/expressions/unsigned-right-shift/bigint-and-number.js
-minify error: Test262Error: 1n >>> 1 throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/unsigned-right-shift/bigint-errors.js
-minify error: Test262Error: 0n >>> Symbol("1") throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/unsigned-right-shift/bigint-non-primitive.js
-minify error: Test262Error: ({valueOf: function() {return 0b101n;}, toString: err}) >>> 1n throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/unsigned-right-shift/bigint-toprimitive.js
-minify error: Test262Error: 0n >>> {[Symbol.toPrimitive]: function() {return 2n;}, valueOf: err, toString: err} throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/unsigned-right-shift/bigint-wrapped-values.js
-minify error: Test262Error: 0n >>> Object(2n) throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/unsigned-right-shift/bigint.js
-minify error: Test262Error: bigint >>> bigint throws a TypeError Expected a TypeError to be thrown but no exception was thrown at all
-
 tasks/coverage/test262/test/language/expressions/void/S11.4.2_A2_T2.js
 minify error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
 
 tasks/coverage/test262/test/language/global-code/decl-func.js
 codegen error: Test262Error: descriptor should not be configurable
-
-tasks/coverage/test262/test/language/literals/numeric/S7.8.3_A4.1_T3.js
-minify error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/literals/numeric/S7.8.3_A4.1_T4.js
-minify error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/literals/numeric/S7.8.3_A4.1_T5.js
-minify error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/literals/numeric/S7.8.3_A4.1_T6.js
-minify error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
 
 tasks/coverage/test262/test/language/literals/regexp/u-surrogate-pairs-atom-escape-decimal.js
 codegen error: Test262Error: Expected SameValue(«true», «false») to be true
