@@ -2,7 +2,7 @@ commit: 06454619
 
 runtime Summary:
 AST Parsed     : 18444/18444 (100.00%)
-Positive Passed: 17223/18444 (93.38%)
+Positive Passed: 17226/18444 (93.40%)
 tasks/coverage/test262/test/annexB/language/function-code/block-decl-func-block-scoping.js
 minify error: ReferenceError: f is not defined
 
@@ -2095,7 +2095,7 @@ tasks/coverage/test262/test/language/literals/regexp/u-surrogate-pairs-atom-esca
 codegen error: Test262Error: Expected SameValue(«true», «false») to be true
 
 tasks/coverage/test262/test/language/module-code/eval-rqstd-order.js
-transform error: Test262Error: Expected SameValue(«"1279"», «"123456789"») to be true
+transform error: Test262Error: Expected SameValue(«"12346789"», «"123456789"») to be true
 
 tasks/coverage/test262/test/language/module-code/eval-self-once.js
 codegen error: Test262Error: global property initially unset Expected SameValue(«262», «undefined») to be true
@@ -2165,15 +2165,6 @@ codegen error: Test262Error: Expected a ReferenceError to be thrown but no excep
 
 tasks/coverage/test262/test/language/module-code/namespace/internals/object-propertyIsEnumerable-binding-uninit.js
 codegen error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/module-code/top-level-await/module-import-rejection-body.js
-transform error: Test262Error: this should be unreachable
-
-tasks/coverage/test262/test/language/module-code/top-level-await/module-import-rejection-tick.js
-transform error: Test262Error: this should be unreachable
-
-tasks/coverage/test262/test/language/module-code/top-level-await/module-import-rejection.js
-transform error: Test262Error: this should be unreachable
 
 tasks/coverage/test262/test/language/module-code/verify-dfs.js
 codegen error: Test262Error: Expected SameValue(«"B"», «"A"») to be true

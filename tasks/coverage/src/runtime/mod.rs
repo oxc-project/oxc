@@ -164,6 +164,7 @@ impl Test262RuntimeCase {
             let mut options = TransformOptions::enable_all();
             options.react.refresh = None;
             options.helper_loader.mode = HelperLoaderMode::External;
+            options.typescript.only_remove_type_imports = true;
             Transformer::new(&allocator, self.path(), options).build_with_symbols_and_scopes(
                 symbols,
                 scopes,
