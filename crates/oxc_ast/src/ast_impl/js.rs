@@ -5,10 +5,7 @@ use std::{borrow::Cow, cell::Cell, fmt};
 use oxc_allocator::{Address, Box, FromIn, GetAddress, Vec};
 use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::{
-    operator::UnaryOperator,
-    reference::ReferenceId,
-    scope::{ScopeFlags, ScopeId},
-    symbol::SymbolId,
+    operator::UnaryOperator, reference::ReferenceId, scope::ScopeFlags, symbol::SymbolId,
 };
 
 use crate::ast::*;
@@ -815,18 +812,6 @@ impl<'a> Directive<'a> {
     /// <https://tc39.es/ecma262/#sec-directive-prologues-and-the-use-strict-directive>
     pub fn is_use_strict(&self) -> bool {
         self.directive == "use strict"
-    }
-}
-
-impl<'a> BlockStatement<'a> {
-    #[allow(missing_docs)]
-    pub fn new(span: Span, body: Vec<'a, Statement<'a>>) -> Self {
-        Self { span, body, scope_id: Cell::default() }
-    }
-
-    #[allow(missing_docs)]
-    pub fn new_with_scope_id(span: Span, body: Vec<'a, Statement<'a>>, scope_id: ScopeId) -> Self {
-        Self { span, body, scope_id: Cell::new(Some(scope_id)) }
     }
 }
 
