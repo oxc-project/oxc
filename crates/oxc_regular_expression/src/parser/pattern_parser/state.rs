@@ -1,5 +1,5 @@
 use oxc_span::Atom;
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::parser::reader::Reader;
 
@@ -16,6 +16,8 @@ pub struct State<'a> {
     pub capturing_group_names: FxHashSet<Atom<'a>>,
 }
 
+type DuplicatedNamedCapturingGroupOffsets = Vec<(u32, u32)>;
+
 impl<'a> State<'a> {
     pub fn new(unicode_mode: bool, unicode_sets_mode: bool) -> Self {
         Self {
@@ -27,12 +29,11 @@ impl<'a> State<'a> {
         }
     }
 
-    pub fn initialize_with_parsing(&mut self, reader: &mut Reader<'a>) -> Vec<(u32, u32)> {
-        let (
-            num_of_left_capturing_parens,
-            capturing_group_names,
-            duplicated_named_capturing_groups,
-        ) = parse_capturing_groups(reader);
+    pub fn initialize_with_parsing(
+        &mut self,
+        reader: &mut Reader<'a>,
+    ) -> Result<(), DuplicatedNamedCapturingGroupOffsets> {
+        let (num_of_left_capturing_parens, capturing_group_names) = parse_capturing_groups(reader)?;
 
         // In Annex B, this is `false` by default.
         // It is `true`
@@ -44,17 +45,19 @@ impl<'a> State<'a> {
         self.num_of_capturing_groups = num_of_left_capturing_parens;
         self.capturing_group_names = capturing_group_names;
 
-        duplicated_named_capturing_groups
+        Ok(())
     }
 }
 
-/// Returns: (num_of_left_parens, capturing_group_names, duplicated_named_capturing_groups)
+/// Returns: Result<
+///   (num_of_left_parens, capturing_group_names),
+///   duplicated_named_capturing_group_offsets
+/// >
 fn parse_capturing_groups<'a>(
     reader: &mut Reader<'a>,
-) -> (u32, FxHashSet<Atom<'a>>, Vec<(u32, u32)>) {
+) -> Result<(u32, FxHashSet<Atom<'a>>), DuplicatedNamedCapturingGroupOffsets> {
     let mut num_of_left_capturing_parens = 0;
-    let mut capturing_group_names = FxHashSet::default();
-    let mut duplicated_named_capturing_groups = vec![];
+    let mut capturing_group_name_and_spans = FxHashMap::default();
 
     let mut in_escape = false;
     let mut in_character_class = false;
@@ -102,20 +105,25 @@ fn parse_capturing_groups<'a>(
                 let span_end = reader.offset();
 
                 if reader.eat('>') {
+                    let group_name = reader.atom(span_start, span_end);
+
                     // May be duplicated
-                    if !capturing_group_names.insert(reader.atom(span_start, span_end)) {
-                        // Report them with `Span`
-                        duplicated_named_capturing_groups.push((span_start, span_end));
+                    if let Some(may_duplicate) = capturing_group_name_and_spans.get(&group_name) {
+                        return Err(vec![*may_duplicate, (span_start, span_end)]);
                     }
+                    capturing_group_name_and_spans.insert(group_name, (span_start, span_end));
+
                     continue;
                 }
             }
+
+            continue;
         }
 
         reader.advance();
     }
 
-    (num_of_left_capturing_parens, capturing_group_names, duplicated_named_capturing_groups)
+    Ok((num_of_left_capturing_parens, capturing_group_name_and_spans.keys().cloned().collect()))
 }
 
 #[cfg(test)]
@@ -123,35 +131,35 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_count_capturing_groups() {
+    fn count_capturing_groups() {
         for (source_text, expected) in [
-            ("()", (1, 0, false)),
-            (r"\1()", (1, 0, false)),
-            ("(foo)", (1, 0, false)),
-            ("(foo)(bar)", (2, 0, false)),
-            ("(foo(bar))", (2, 0, false)),
-            ("(foo)[(bar)]", (1, 0, false)),
-            (r"(foo)\(bar\)", (1, 0, false)),
-            ("(foo)(?<n>bar)", (2, 1, false)),
-            ("(foo)(?=...)(?!...)(?<=...)(?<!...)(?:...)", (1, 0, false)),
-            ("(foo)(?<n>bar)(?<nn>baz)", (3, 2, false)),
-            ("(?<n>.)(?<n>..)", (2, 1, true)),
-            ("(?<n>.(?<n>..))", (2, 1, true)),
+            ("()", (1, 0)),
+            (r"\1()", (1, 0)),
+            ("(foo)", (1, 0)),
+            ("(foo)(bar)", (2, 0)),
+            ("(foo(bar))", (2, 0)),
+            ("(foo)[(bar)]", (1, 0)),
+            (r"(foo)\(bar\)", (1, 0)),
+            ("(foo)(?<n>bar)", (2, 1)),
+            ("(foo)(?=...)(?!...)(?<=...)(?<!...)(?:...)", (1, 0)),
+            ("(foo)(?<n>bar)(?<nn>baz)", (3, 2)),
         ] {
             let mut reader = Reader::initialize(source_text, true, false).unwrap();
 
-            let (
-                num_of_left_capturing_parens,
-                capturing_group_names,
-                duplicated_named_capturing_groups,
-            ) = parse_capturing_groups(&mut reader);
+            let (num_of_left_capturing_parens, capturing_group_names) =
+                parse_capturing_groups(&mut reader).unwrap();
 
-            let actual = (
-                num_of_left_capturing_parens,
-                capturing_group_names.len(),
-                !duplicated_named_capturing_groups.is_empty(),
-            );
+            let actual = (num_of_left_capturing_parens, capturing_group_names.len());
             assert_eq!(expected, actual, "{source_text}");
+        }
+    }
+
+    #[test]
+    fn duplicated_named_capturing_groups() {
+        for source_text in ["(?<n>.)(?<n>..)", "(?<n>.(?<n>..))"] {
+            let mut reader = Reader::initialize(source_text, true, false).unwrap();
+
+            assert!(parse_capturing_groups(&mut reader).is_err(), "{source_text}");
         }
     }
 }
