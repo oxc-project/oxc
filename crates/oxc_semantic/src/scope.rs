@@ -1,4 +1,4 @@
-use std::hash::BuildHasherDefault;
+use std::{hash::BuildHasherDefault, mem};
 
 use indexmap::IndexMap;
 use rustc_hash::{FxHashMap, FxHasher};
@@ -168,6 +168,23 @@ impl ScopeTree {
         if self.build_child_ids {
             // Set this scope as child of parent scope
             if let Some(parent_id) = parent_id {
+                self.child_ids[parent_id].push(scope_id);
+            }
+        }
+    }
+
+    /// Change the parent scope of a scope.
+    ///
+    /// This will also remove the scope from the child list of the old parent and add it to the new parent.
+    pub fn change_parent_id(&mut self, scope_id: ScopeId, new_parent_id: Option<ScopeId>) {
+        let old_parent_id = mem::replace(&mut self.parent_ids[scope_id], new_parent_id);
+        if self.build_child_ids {
+            // Remove this scope from old parent scope
+            if let Some(old_parent_id) = old_parent_id {
+                self.child_ids[old_parent_id].retain(|&child_id| child_id != scope_id);
+            }
+            // And add it to new parent scope
+            if let Some(parent_id) = new_parent_id {
                 self.child_ids[parent_id].push(scope_id);
             }
         }
