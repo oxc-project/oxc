@@ -2,7 +2,7 @@ commit: 06454619
 
 runtime Summary:
 AST Parsed     : 18444/18444 (100.00%)
-Positive Passed: 18194/18444 (98.64%)
+Positive Passed: 18198/18444 (98.67%)
 tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-existing-block-fn-no-init.js
 minify error: Test262Error: Expected SameValue(«function f(){}», «undefined») to be true
 
@@ -735,20 +735,8 @@ codegen error: Test262Error: Expected SameValue(«"B"», «"A"») to be true
 tasks/coverage/test262/test/language/statements/async-generator/return-undefined-implicit-and-explicit.js
 minify error: Test262Error: Actual [tick 1, g1 ret, g2 ret, g3 ret, g4 ret, tick 2] and expected [tick 1, g1 ret, g2 ret, tick 2, g3 ret, g4 ret] should have the same contents. Ticks for implicit and explicit return undefined
 
-tasks/coverage/test262/test/language/statements/for/dstr/let-obj-init-undefined.js
-minify error: SyntaxError: Missing initializer in destructuring declaration
-
-tasks/coverage/test262/test/language/statements/for/dstr/var-obj-init-undefined.js
-minify error: SyntaxError: Missing initializer in destructuring declaration
-
 tasks/coverage/test262/test/language/statements/for-of/string-astral-truncated.js
 codegen error: Test262Error: Expected SameValue(«"\\"», «"\\ud801"») to be true
-
-tasks/coverage/test262/test/language/statements/let/dstr/obj-init-undefined.js
-minify error: SyntaxError: Missing initializer in destructuring declaration
-
-tasks/coverage/test262/test/language/statements/variable/dstr/obj-init-undefined.js
-minify error: SyntaxError: Missing initializer in destructuring declaration
 
 tasks/coverage/test262/test/language/statements/with/has-binding-call-with-proxy-env.js
 minify error: Test262Error: Actual [] and expected [has:Object] should have the same contents. 
