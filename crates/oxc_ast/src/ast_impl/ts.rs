@@ -4,25 +4,12 @@
 //! [Archived TypeScript spec](https://github.com/microsoft/TypeScript/blob/3c99d50da5a579d9fa92d02664b1b66d4ff55944/doc/spec-ARCHIVED.md)
 #![warn(missing_docs)]
 
-use std::{cell::Cell, fmt};
+use std::fmt;
 
-use oxc_allocator::Vec;
-use oxc_span::{Atom, Span};
+use oxc_span::Atom;
 
 use crate::ast::*;
 
-impl<'a> TSEnumDeclaration<'a> {
-    /// Create a new enum declaration.
-    pub fn new(
-        span: Span,
-        id: BindingIdentifier<'a>,
-        members: Vec<'a, TSEnumMember<'a>>,
-        r#const: bool,
-        declare: bool,
-    ) -> Self {
-        Self { span, id, members, r#const, declare, scope_id: Cell::default() }
-    }
-}
 impl<'a> TSEnumMemberName<'a> {
     /// Get the name of this enum member if it can be determined statically.
     pub fn static_name(&self) -> Option<&'a str> {
@@ -187,17 +174,6 @@ impl fmt::Display for TSAccessibility {
 }
 
 impl<'a> TSModuleDeclaration<'a> {
-    /// Create a new module declaration with no bound scope.
-    pub fn new(
-        span: Span,
-        id: TSModuleDeclarationName<'a>,
-        body: Option<TSModuleDeclarationBody<'a>>,
-        kind: TSModuleDeclarationKind,
-        declare: bool,
-    ) -> Self {
-        Self { span, id, body, kind, declare, scope_id: Cell::default() }
-    }
-
     /// Returns `true` if this module's body exists and uses strict mode
     /// semantics (as determined by [`TSModuleDeclarationBody::is_strict`]).
     pub fn is_strict(&self) -> bool {

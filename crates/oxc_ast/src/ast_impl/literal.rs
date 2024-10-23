@@ -9,16 +9,11 @@ use std::{
 
 use oxc_allocator::CloneIn;
 use oxc_regular_expression::ast::Pattern;
-use oxc_span::{cmp::ContentEq, hash::ContentHash, Span};
+use oxc_span::{cmp::ContentEq, hash::ContentHash};
 
 use crate::ast::*;
 
 impl BooleanLiteral {
-    /// Create a new boolean literal representing the given `value`.
-    pub fn new(span: Span, value: bool) -> Self {
-        Self { span, value }
-    }
-
     /// `"true"` or `"false"` depending on this boolean's value.
     pub fn as_str(&self) -> &'static str {
         if self.value {
@@ -40,13 +35,6 @@ impl ContentHash for NullLiteral {
     #[inline]
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         Hash::hash(&Option::<bool>::None, state);
-    }
-}
-
-impl NullLiteral {
-    /// Create a new `null` literal at the given location.
-    pub fn new(span: Span) -> Self {
-        Self { span }
     }
 }
 
