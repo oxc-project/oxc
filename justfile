@@ -49,7 +49,7 @@ watch:
 example tool *args='':
   cargo --color always run -p oxc_{{tool}} --example {{tool}} -- {{args}}
 
-watch-example args='':
+watch-example *args='':
   bacon example -- {{args}}
 
 # Generate AST related boilerplate code.

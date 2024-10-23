@@ -15,8 +15,11 @@ async function runCodeInHarness(options = {}) {
   const { code = '', includes = [], importDir = '', isAsync = false, isModule = true, isRaw = false } = options;
   const context = {};
 
-  // See: https://github.com/nodejs/node/issues/36351
-  const unique = () => '//' + Math.random();
+  if (process.env.DEBUG) {
+    const { code: c, ...o } = options;
+    console.log(c);
+    console.log(o);
+  }
 
   const runCode = async () => {
     const moduleCache = new Map();
@@ -32,7 +35,7 @@ async function runCodeInHarness(options = {}) {
           };
           module = new SyntheticModule(['default'], evaluate, { context });
         } else {
-          module = new SourceTextModule(code + unique(), { context, importModuleDynamically });
+          module = new SourceTextModule(code, { context, importModuleDynamically });
         }
         moduleCache.set(modulePath, module);
       }
@@ -64,7 +67,7 @@ async function runCodeInHarness(options = {}) {
     if (!isRaw) runInContext(createHarnessForTest(includes), context);
 
     if (isModule) {
-      const module = new SourceTextModule(code + unique(), { context, importModuleDynamically });
+      const module = new SourceTextModule(code, { context, importModuleDynamically });
       await module.link(linker);
       await module.evaluate();
     } else {
@@ -128,8 +131,8 @@ const server = createServer((req, res) => {
       try {
         await runCodeInHarness(options);
       } catch (err) {
-        if (parseInt(process.version.split('.')[0].replace('v', '')) < 20) {
-          return res.end('Please upgrade the Node.js version to 20 or later.');
+        if (parseInt(process.version.split('.')[0].replace('v', '')) < 22) {
+          return res.end('Please upgrade the Node.js version to 22 or later.');
         }
         return res.end(err.toString());
       }
@@ -147,6 +150,6 @@ process.on('unhandledRejection', () => {
   // Don't exit when a test does this
 });
 
-server.timeout = 2000;
+server.timeout = 3000;
 
 server.listen(32055, () => {});

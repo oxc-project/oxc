@@ -410,8 +410,9 @@ impl<'a> ArrowFunctions<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let binding_pattern = ctx.ast.binding_pattern(
-            ctx.ast
-                .binding_pattern_kind_from_binding_identifier(this_var.create_binding_identifier()),
+            ctx.ast.binding_pattern_kind_from_binding_identifier(
+                this_var.create_binding_identifier(ctx),
+            ),
             NONE,
             false,
         );

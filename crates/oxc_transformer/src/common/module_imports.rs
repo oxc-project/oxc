@@ -199,20 +199,22 @@ impl<'a> ModuleImportsStore<'a> {
             Import::Named(import) => {
                 ImportDeclarationSpecifier::ImportSpecifier(ctx.ast.alloc_import_specifier(
                     SPAN,
-                    ModuleExportName::IdentifierName(IdentifierName::new(SPAN, import.imported)),
-                    import.local.create_binding_identifier(),
+                    ModuleExportName::IdentifierName(
+                        ctx.ast.identifier_name(SPAN, import.imported),
+                    ),
+                    import.local.create_binding_identifier(ctx),
                     ImportOrExportKind::Value,
                 ))
             }
             Import::Default(local) => ImportDeclarationSpecifier::ImportDefaultSpecifier(
-                ctx.ast.alloc_import_default_specifier(SPAN, local.create_binding_identifier()),
+                ctx.ast.alloc_import_default_specifier(SPAN, local.create_binding_identifier(ctx)),
             ),
         }));
 
         let import_stmt = ctx.ast.module_declaration_import_declaration(
             SPAN,
             Some(specifiers),
-            StringLiteral::new(SPAN, source),
+            ctx.ast.string_literal(SPAN, source),
             NONE,
             ImportOrExportKind::Value,
         );

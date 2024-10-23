@@ -1147,6 +1147,10 @@ impl<'a> GenExpr for NumericLiteral<'a> {
 
 impl<'a> Gen for BigIntLiteral<'a> {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
+        if self.raw.starts_with('-') {
+            p.print_space_before_operator(Operator::Unary(UnaryOperator::UnaryNegation));
+        }
+        p.print_space_before_identifier();
         p.add_source_mapping(self.span.start);
         p.print_str(self.raw.as_str());
     }
@@ -1522,8 +1526,10 @@ impl<'a> Gen for ObjectProperty<'a> {
 
         let mut shorthand = false;
         if let PropertyKey::StaticIdentifier(key) = &self.key {
-            if let Expression::Identifier(ident) = self.value.without_parentheses() {
-                if key.name == p.get_identifier_reference_name(ident) && key.name != "__proto__" {
+            if key.name == "__proto__" {
+                shorthand = self.shorthand;
+            } else if let Expression::Identifier(ident) = self.value.without_parentheses() {
+                if key.name == p.get_identifier_reference_name(ident) {
                     shorthand = true;
                 }
             }
@@ -1696,7 +1702,7 @@ impl<'a> GenExpr for PrivateInExpression<'a> {
         p.wrap(precedence >= Precedence::Compare, |p| {
             self.left.print(p, ctx);
             p.print_str(" in ");
-            self.right.print_expr(p, Precedence::Equals, Context::empty());
+            self.right.print_expr(p, Precedence::Equals, Context::FORBID_IN);
         });
     }
 }

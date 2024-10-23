@@ -758,7 +758,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_type_name(&mut self) -> Result<TSTypeName<'a>> {
         let span = self.start_span();
         let ident = self.parse_identifier_name()?;
-        let ident = IdentifierReference::new(ident.span, ident.name);
+        let ident = self.ast.identifier_reference(ident.span, ident.name);
         let mut left = TSTypeName::IdentifierReference(self.ast.alloc(ident));
         while self.eat(Kind::Dot) {
             let right = self.parse_identifier_name()?;

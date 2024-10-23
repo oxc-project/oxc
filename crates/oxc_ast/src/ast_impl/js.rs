@@ -1,14 +1,11 @@
 // FIXME: lots of methods are missing docs. If you have time, it would be a huge help to add some :)
 #![warn(missing_docs)]
-use std::{borrow::Cow, cell::Cell, fmt};
+use std::{borrow::Cow, fmt};
 
 use oxc_allocator::{Address, Box, FromIn, GetAddress, Vec};
 use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::{
-    operator::UnaryOperator,
-    reference::ReferenceId,
-    scope::{ScopeFlags, ScopeId},
-    symbol::SymbolId,
+    operator::UnaryOperator, reference::ReferenceId, scope::ScopeFlags, symbol::SymbolId,
 };
 
 use crate::ast::*;
@@ -302,13 +299,6 @@ impl<'a> Expression<'a> {
     }
 }
 
-impl<'a> IdentifierName<'a> {
-    #[allow(missing_docs)]
-    pub fn new(span: Span, name: Atom<'a>) -> Self {
-        Self { span, name }
-    }
-}
-
 impl<'a> fmt::Display for IdentifierName<'a> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -317,22 +307,6 @@ impl<'a> fmt::Display for IdentifierName<'a> {
 }
 
 impl<'a> IdentifierReference<'a> {
-    #[allow(missing_docs)]
-    #[inline]
-    pub fn new(span: Span, name: Atom<'a>) -> Self {
-        Self { span, name, reference_id: Cell::default() }
-    }
-
-    #[inline]
-    #[allow(missing_docs)]
-    pub fn new_with_reference_id(
-        span: Span,
-        name: Atom<'a>,
-        reference_id: Option<ReferenceId>,
-    ) -> Self {
-        Self { span, name, reference_id: Cell::new(reference_id) }
-    }
-
     #[inline]
     #[allow(missing_docs)]
     pub fn reference_id(&self) -> Option<ReferenceId> {
@@ -343,18 +317,6 @@ impl<'a> IdentifierReference<'a> {
 impl<'a> fmt::Display for IdentifierReference<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.name.fmt(f)
-    }
-}
-
-impl<'a> BindingIdentifier<'a> {
-    #[allow(missing_docs)]
-    pub fn new(span: Span, name: Atom<'a>) -> Self {
-        Self { span, name, symbol_id: Cell::default() }
-    }
-
-    #[allow(missing_docs)]
-    pub fn new_with_symbol_id(span: Span, name: Atom<'a>, symbol_id: SymbolId) -> Self {
-        Self { span, name, symbol_id: Cell::new(Some(symbol_id)) }
     }
 }
 
@@ -818,18 +780,6 @@ impl<'a> Directive<'a> {
     }
 }
 
-impl<'a> BlockStatement<'a> {
-    #[allow(missing_docs)]
-    pub fn new(span: Span, body: Vec<'a, Statement<'a>>) -> Self {
-        Self { span, body, scope_id: Cell::default() }
-    }
-
-    #[allow(missing_docs)]
-    pub fn new_with_scope_id(span: Span, body: Vec<'a, Statement<'a>>, scope_id: ScopeId) -> Self {
-        Self { span, body, scope_id: Cell::new(Some(scope_id)) }
-    }
-}
-
 impl<'a> Declaration<'a> {
     #[allow(missing_docs)]
     pub fn is_typescript_syntax(&self) -> bool {
@@ -927,49 +877,11 @@ impl fmt::Display for VariableDeclarationKind {
     }
 }
 
-impl<'a> ForStatement<'a> {
-    #[allow(missing_docs)]
-    pub fn new(
-        span: Span,
-        init: Option<ForStatementInit<'a>>,
-        test: Option<Expression<'a>>,
-        update: Option<Expression<'a>>,
-        body: Statement<'a>,
-    ) -> Self {
-        Self { span, init, test, update, body, scope_id: Cell::default() }
-    }
-}
-
 impl<'a> ForStatementInit<'a> {
     /// LexicalDeclaration[In, Yield, Await] :
     ///   LetOrConst BindingList[?In, ?Yield, ?Await] ;
     pub fn is_lexical_declaration(&self) -> bool {
         matches!(self, Self::VariableDeclaration(decl) if decl.kind.is_lexical())
-    }
-}
-
-impl<'a> ForInStatement<'a> {
-    #[allow(missing_docs)]
-    pub fn new(
-        span: Span,
-        left: ForStatementLeft<'a>,
-        right: Expression<'a>,
-        body: Statement<'a>,
-    ) -> Self {
-        Self { span, left, right, body, scope_id: Cell::default() }
-    }
-}
-
-impl<'a> ForOfStatement<'a> {
-    #[allow(missing_docs)]
-    pub fn new(
-        span: Span,
-        r#await: bool,
-        left: ForStatementLeft<'a>,
-        right: Expression<'a>,
-        body: Statement<'a>,
-    ) -> Self {
-        Self { span, r#await, left, right, body, scope_id: Cell::default() }
     }
 }
 
@@ -981,28 +893,10 @@ impl<'a> ForStatementLeft<'a> {
     }
 }
 
-impl<'a> SwitchStatement<'a> {
-    #[allow(missing_docs)]
-    pub fn new(span: Span, discriminant: Expression<'a>, cases: Vec<'a, SwitchCase<'a>>) -> Self {
-        Self { span, discriminant, cases, scope_id: Cell::default() }
-    }
-}
-
 impl<'a> SwitchCase<'a> {
     /// `true` for `default:` cases.
     pub fn is_default_case(&self) -> bool {
         self.test.is_none()
-    }
-}
-
-impl<'a> CatchClause<'a> {
-    #[allow(missing_docs)]
-    pub fn new(
-        span: Span,
-        param: Option<CatchParameter<'a>>,
-        body: Box<'a, BlockStatement<'a>>,
-    ) -> Self {
-        Self { span, param, body, scope_id: Cell::default() }
     }
 }
 
@@ -1082,36 +976,6 @@ impl<'a> ArrayPattern<'a> {
 }
 
 impl<'a> Function<'a> {
-    #![allow(clippy::too_many_arguments, missing_docs)]
-    pub fn new(
-        r#type: FunctionType,
-        span: Span,
-        id: Option<BindingIdentifier<'a>>,
-        generator: bool,
-        r#async: bool,
-        declare: bool,
-        this_param: Option<Box<'a, TSThisParameter<'a>>>,
-        params: Box<'a, FormalParameters<'a>>,
-        body: Option<Box<'a, FunctionBody<'a>>>,
-        type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-        return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
-    ) -> Self {
-        Self {
-            r#type,
-            span,
-            id,
-            generator,
-            r#async,
-            declare,
-            this_param,
-            params,
-            body,
-            type_parameters,
-            return_type,
-            scope_id: Cell::default(),
-        }
-    }
-
     /// Returns this [`Function`]'s name, if it has one.
     #[inline]
     pub fn name(&self) -> Option<Atom<'a>> {
@@ -1246,28 +1110,6 @@ impl<'a> FunctionBody<'a> {
 }
 
 impl<'a> ArrowFunctionExpression<'a> {
-    #[allow(missing_docs)]
-    pub fn new(
-        span: Span,
-        expression: bool,
-        r#async: bool,
-        params: Box<'a, FormalParameters<'a>>,
-        body: Box<'a, FunctionBody<'a>>,
-        type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-        return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
-    ) -> Self {
-        Self {
-            span,
-            expression,
-            r#async,
-            params,
-            body,
-            type_parameters,
-            return_type,
-            scope_id: Cell::default(),
-        }
-    }
-
     /// Get expression part of `ArrowFunctionExpression`: `() => expression_part`.
     pub fn get_expression(&self) -> Option<&Expression<'a>> {
         if self.expression {
@@ -1280,36 +1122,6 @@ impl<'a> ArrowFunctionExpression<'a> {
 }
 
 impl<'a> Class<'a> {
-    #[allow(clippy::too_many_arguments, missing_docs)]
-    pub fn new(
-        r#type: ClassType,
-        span: Span,
-        decorators: Vec<'a, Decorator<'a>>,
-        id: Option<BindingIdentifier<'a>>,
-        super_class: Option<Expression<'a>>,
-        body: Box<'a, ClassBody<'a>>,
-        type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-        super_type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
-        implements: Option<Vec<'a, TSClassImplements<'a>>>,
-        r#abstract: bool,
-        declare: bool,
-    ) -> Self {
-        Self {
-            r#type,
-            span,
-            decorators,
-            id,
-            super_class,
-            body,
-            type_parameters,
-            super_type_parameters,
-            implements,
-            r#abstract,
-            declare,
-            scope_id: Cell::default(),
-        }
-    }
-
     /// `true` if this [`Class`] is an expression.
     ///
     /// For example,
@@ -1531,20 +1343,6 @@ impl MethodDefinitionType {
     }
 }
 
-impl<'a> PrivateIdentifier<'a> {
-    #[allow(missing_docs)]
-    pub fn new(span: Span, name: Atom<'a>) -> Self {
-        Self { span, name }
-    }
-}
-
-impl<'a> StaticBlock<'a> {
-    #[allow(missing_docs)]
-    pub fn new(span: Span, body: Vec<'a, Statement<'a>>) -> Self {
-        Self { span, body, scope_id: Cell::default() }
-    }
-}
-
 impl<'a> ModuleDeclaration<'a> {
     #[allow(missing_docs)]
     pub fn is_typescript_syntax(&self) -> bool {
@@ -1657,13 +1455,6 @@ impl<'a> ExportAllDeclaration<'a> {
     #[allow(missing_docs)]
     pub fn is_typescript_syntax(&self) -> bool {
         self.export_kind.is_type()
-    }
-}
-
-impl<'a> ExportSpecifier<'a> {
-    #[allow(missing_docs)]
-    pub fn new(span: Span, local: ModuleExportName<'a>, exported: ModuleExportName<'a>) -> Self {
-        Self { span, local, exported, export_kind: ImportOrExportKind::Value }
     }
 }
 

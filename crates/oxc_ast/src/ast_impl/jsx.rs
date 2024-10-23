@@ -2,7 +2,7 @@
 #![warn(missing_docs)]
 use std::fmt;
 
-use oxc_span::{Atom, Span};
+use oxc_span::Atom;
 
 use crate::ast::*;
 
@@ -14,13 +14,6 @@ export type JSXMemberExpressionObject = JSXIdentifier | JSXMemberExpression;
 "#;
 
 // 1.2 JSX Elements
-
-impl<'a> JSXIdentifier<'a> {
-    /// Create a new JSX identifier with the given `name`.
-    pub fn new(span: Span, name: Atom<'a>) -> Self {
-        Self { span, name }
-    }
-}
 
 impl<'a> fmt::Display for JSXIdentifier<'a> {
     #[inline]

@@ -116,9 +116,18 @@ impl Runner for LintRunner {
         };
 
         enable_plugins.apply_overrides(&mut oxlintrc.plugins);
+
+        let oxlintrc_for_print =
+            if misc_options.print_config { Some(oxlintrc.clone()) } else { None };
         let builder = LinterBuilder::from_oxlintrc(false, oxlintrc)
             .with_filters(filter)
             .with_fix(fix_options.fix_kind());
+
+        if let Some(basic_config_file) = oxlintrc_for_print {
+            return CliRunResult::PrintConfigResult {
+                config_file: builder.resolve_final_config_file(basic_config_file),
+            };
+        }
 
         let mut options =
             LintServiceOptions::new(cwd, paths).with_cross_module(builder.plugins().has_import());
@@ -585,5 +594,41 @@ mod test {
 
         // Write the file back.
         fs::write(file, content).unwrap();
+    }
+
+    #[test]
+    fn test_print_config_ban_all_rules() {
+        let args = &["-A", "all", "--print-config"];
+        let options = lint_command().run_inner(args).unwrap();
+        let ret = LintRunner::new(options).run();
+        let CliRunResult::PrintConfigResult { config_file: config } = ret else {
+            panic!("Expected PrintConfigResult, got {ret:?}")
+        };
+
+        let expect_json =
+            std::fs::read_to_string("fixtures/print_config/normal/expect.json").unwrap();
+        assert_eq!(config, expect_json.trim());
+    }
+
+    #[test]
+    fn test_print_config_ban_rules() {
+        let args = &[
+            "-c",
+            "fixtures/print_config/ban_rules/eslintrc.json",
+            "-A",
+            "all",
+            "-D",
+            "eqeqeq",
+            "--print-config",
+        ];
+        let options = lint_command().run_inner(args).unwrap();
+        let ret = LintRunner::new(options).run();
+        let CliRunResult::PrintConfigResult { config_file: config } = ret else {
+            panic!("Expected PrintConfigResult, got {ret:?}")
+        };
+
+        let expect_json =
+            std::fs::read_to_string("fixtures/print_config/ban_rules/expect.json").unwrap();
+        assert_eq!(config, expect_json.trim());
     }
 }

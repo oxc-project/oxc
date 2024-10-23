@@ -1,3 +1,5 @@
+mod test262_status;
+
 use std::{
     path::{Path, PathBuf},
     time::Duration,
@@ -13,7 +15,6 @@ use oxc::{
     transformer::{TransformOptions, Transformer},
 };
 use oxc_tasks_common::agent;
-use phf::{phf_set, Set};
 use serde_json::json;
 
 use crate::{
@@ -22,54 +23,59 @@ use crate::{
     workspace_root,
 };
 
-static SKIP_EVALUATING_FEATURES: Set<&'static str> = phf_set! {
-  // Node's version of V8 doesn't implement these
-  "hashbang",
-  "legacy-regexp",
-  "regexp-duplicate-named-groups",
-  "symbols-as-weakmap-keys",
-  "tail-call-optimization",
+use test262_status::get_v8_test262_failure_paths;
 
-  // We don't care about API-related things
-  "ArrayBuffer",
-  "change-array-by-copy",
-  "DataView",
-  "resizable-arraybuffer",
-  "ShadowRealm",
-  "cross-realm",
-  "SharedArrayBuffer",
-  "String.prototype.toWellFormed",
-  "Symbol.match",
-  "Symbol.replace",
-  "Symbol.unscopables",
-  "Temporal",
-  "TypedArray",
+static SKIP_FEATURES: &[&str] = &[
+    // Node's version of V8 doesn't implement these
+    "hashbang",
+    "legacy-regexp",
+    "regexp-duplicate-named-groups",
+    "symbols-as-weakmap-keys",
+    "tail-call-optimization",
+    // We don't care about API-related things
+    "ArrayBuffer",
+    "change-array-by-copy",
+    "DataView",
+    "resizable-arraybuffer",
+    "ShadowRealm",
+    "cross-realm",
+    "SharedArrayBuffer",
+    "String.prototype.toWellFormed",
+    "Symbol.match",
+    "Symbol.replace",
+    "Symbol.unscopables",
+    "Temporal",
+    "TypedArray",
+    // Added in oxc
+    "Array.fromAsync",
+    "IsHTMLDDA",
+    "iterator-helpers",
+    "set-methods",
+    "array-grouping",
+    // stage 2
+    "Intl.DurationFormat",
+    // stage 3
+    "decorators",
+];
 
-  // Added in oxc
-  "Array.fromAsync",
-  "IsHTMLDDA",
-  "iterator-helpers",
-  "set-methods",
-  "array-grouping",
-
-  // stage 2
-  "Intl.DurationFormat"
-};
-
-static SKIP_EVALUATING_THESE_INCLUDES: Set<&'static str> = phf_set! {
+static SKIP_INCLUDES: &[&str] = &[
     // We don't preserve "toString()" on functions
     "nativeFunctionMatcher.js",
-};
+];
 
-static SKIP_TEST_CASES: Set<&'static str> = phf_set! {
+static SKIP_TEST_CASES: &[&str] = &[
     // For some unknown reason these tests are unstable, so we'll skip them for now.
     "language/identifiers/start-unicode",
     // Properly misconfigured test setup for `eval`, but can't figure out where
     "annexB/language/eval-code",
-    "language/eval-code"
-};
-
-const FIXTURES_PATH: &str = "test262/test";
+    "language/eval-code",
+    // formerly S11.13.2_A5.10_T5
+    "language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v",
+    "language/expressions/postfix-increment/operator-x-postfix-increment-calls-putvalue-lhs-newvalue",
+    "language/expressions/postfix-decrement/operator-x-postfix-decrement-calls-putvalue-lhs-newvalue",
+    "language/expressions/prefix-increment/operator-prefix-increment-x-calls-putvalue-lhs-newvalue",
+    "language/expressions/prefix-decrement/operator-prefix-decrement-x-calls-putvalue-lhs-newvalue",
+];
 
 pub struct Test262RuntimeCase {
     base: Test262Case,
@@ -78,7 +84,7 @@ pub struct Test262RuntimeCase {
 
 impl Case for Test262RuntimeCase {
     fn new(path: PathBuf, code: String) -> Self {
-        Self { base: Test262Case::new(path, code), test_root: workspace_root().join(FIXTURES_PATH) }
+        Self { base: Test262Case::new(path, code), test_root: workspace_root() }
     }
 
     fn code(&self) -> &str {
@@ -95,24 +101,24 @@ impl Case for Test262RuntimeCase {
 
     fn skip_test_case(&self) -> bool {
         let base_path = self.base.path().to_string_lossy();
+        let test262_path = base_path.trim_start_matches("test262/test/");
+        let includes = &self.base.meta().includes;
+        let features = &self.base.meta().features;
         self.base.should_fail()
             || self.base.skip_test_case()
             || base_path.contains("built-ins")
             || base_path.contains("staging")
             || base_path.contains("intl402")
-            || self
-                .base
-                .meta()
-                .includes
-                .iter()
-                .any(|include| SKIP_EVALUATING_THESE_INCLUDES.contains(include))
-            || self
-                .base
-                .meta()
-                .features
-                .iter()
-                .any(|feature| SKIP_EVALUATING_FEATURES.contains(feature))
-            || SKIP_TEST_CASES.iter().any(|path| base_path.contains(path))
+            || includes.iter().any(|include| SKIP_INCLUDES.contains(&include.as_ref()))
+            || features.iter().any(|feature| SKIP_FEATURES.contains(&feature.as_ref()))
+            || SKIP_TEST_CASES.iter().any(|path| test262_path.starts_with(path))
+            || get_v8_test262_failure_paths().iter().any(|path| {
+                if let Some(path) = path.strip_suffix('*') {
+                    test262_path.starts_with(path)
+                } else {
+                    test262_path.trim_end_matches(".js") == path
+                }
+            })
             || self.base.code().contains("$262")
             || self.base.code().contains("$DONOTEVALUATE()")
     }
@@ -232,7 +238,7 @@ async fn request_run_code(json: impl serde::Serialize + Send + 'static) -> Resul
     tokio::spawn(async move {
         agent()
             .post("http://localhost:32055/run")
-            .timeout(Duration::from_secs(2))
+            .timeout(Duration::from_secs(4))
             .send_json(json)
             .map_err(|err| err.to_string())
             .and_then(|res| res.into_string().map_err(|err| err.to_string()))

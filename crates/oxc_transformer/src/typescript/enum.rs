@@ -86,7 +86,7 @@ impl<'a> TypeScriptEnum<'a> {
         );
         ctx.scopes_mut().add_binding(func_scope_id, enum_name.to_compact_str(), param_symbol_id);
 
-        let ident = BindingIdentifier::new_with_symbol_id(
+        let ident = ctx.ast.binding_identifier_with_symbol_id(
             decl.id.span,
             decl.id.name.clone(),
             param_symbol_id,

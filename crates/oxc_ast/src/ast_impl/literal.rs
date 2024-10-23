@@ -9,17 +9,11 @@ use std::{
 
 use oxc_allocator::CloneIn;
 use oxc_regular_expression::ast::Pattern;
-use oxc_span::{cmp::ContentEq, hash::ContentHash, Atom, Span};
-use oxc_syntax::number::NumberBase;
+use oxc_span::{cmp::ContentEq, hash::ContentHash};
 
 use crate::ast::*;
 
 impl BooleanLiteral {
-    /// Create a new boolean literal representing the given `value`.
-    pub fn new(span: Span, value: bool) -> Self {
-        Self { span, value }
-    }
-
     /// `"true"` or `"false"` depending on this boolean's value.
     pub fn as_str(&self) -> &'static str {
         if self.value {
@@ -44,13 +38,6 @@ impl ContentHash for NullLiteral {
     }
 }
 
-impl NullLiteral {
-    /// Create a new `null` literal at the given location.
-    pub fn new(span: Span) -> Self {
-        Self { span }
-    }
-}
-
 impl fmt::Display for NullLiteral {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -59,11 +46,6 @@ impl fmt::Display for NullLiteral {
 }
 
 impl<'a> NumericLiteral<'a> {
-    /// Create a numeric literal representing the given `value`.
-    pub fn new(span: Span, value: f64, raw: &'a str, base: NumberBase) -> Self {
-        Self { span, value, raw, base }
-    }
-
     /// port from [closure compiler](https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/base/JSCompDoubles.java#L113)
     ///
     /// <https://262.ecma-international.org/5.1/#sec-9.5>
@@ -269,11 +251,6 @@ impl fmt::Display for RegExpFlags {
 }
 
 impl<'a> StringLiteral<'a> {
-    /// Create a new string literal representing the given `value`.
-    pub fn new(span: Span, value: Atom<'a>) -> Self {
-        Self { span, value }
-    }
-
     /// Static Semantics: `IsStringWellFormedUnicode`
     /// test for \uD800-\uDFFF
     ///

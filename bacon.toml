@@ -1,5 +1,5 @@
 [jobs.example]
-command = ["just", "run-example"]
+command = ["just", "example"]
 allow_warnings = true
 need_stdout = true
 

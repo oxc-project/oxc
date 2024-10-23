@@ -67,7 +67,7 @@ impl<'a> ParserImpl<'a> {
         }
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
         self.check_identifier(span, &name);
-        Ok(IdentifierReference::new(span, name))
+        Ok(self.ast.identifier_reference(span, name))
     }
 
     /// `BindingIdentifier` : Identifier
@@ -321,7 +321,7 @@ impl<'a> ParserImpl<'a> {
             _ => return Err(self.unexpected()),
         };
         self.bump_any();
-        Ok(NumericLiteral::new(self.end_span(span), value, src, base))
+        Ok(self.ast.numeric_literal(self.end_span(span), value, src, base))
     }
 
     pub(crate) fn parse_literal_bigint(&mut self) -> Result<BigIntLiteral<'a>> {

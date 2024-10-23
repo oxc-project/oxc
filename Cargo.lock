@@ -1554,7 +1554,6 @@ dependencies = [
  "oxc_prettier",
  "oxc_tasks_common",
  "oxc_tasks_transform_checker",
- "phf 0.11.2",
  "pico-args",
  "rayon",
  "regex",
