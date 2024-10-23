@@ -59,6 +59,9 @@ fn shorthand() {
     test("let { x } = y", "let { x } = y;\n");
     test("({ x: (x) })", "({ x });\n");
     test("({ x } = y)", "({x} = y);\n");
+    // https://github.com/tc39/test262/blob/main/test/language/expressions/object/__proto__-permitted-dup-shorthand.js
+    test("var obj = { __proto__, __proto__, };", "var obj = {\n\t__proto__,\n\t__proto__\n};\n");
+    test("var obj = { __proto__: __proto__, };", "var obj = { __proto__: __proto__ };\n");
 }
 
 #[test]
