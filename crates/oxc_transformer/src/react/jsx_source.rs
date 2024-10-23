@@ -201,7 +201,7 @@ impl<'a, 'ctx> ReactJsxSource<'a, 'ctx> {
 
     pub fn get_filename_var_declarator(
         &self,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> Option<VariableDeclarator<'a>> {
         let filename_var = self.filename_var.as_ref()?;
 
