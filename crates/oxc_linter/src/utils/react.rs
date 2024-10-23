@@ -12,16 +12,13 @@ use oxc_semantic::AstNode;
 
 use crate::{LintContext, OxlintSettings};
 
-pub fn is_create_element_call(call_expr: &CallExpression) -> bool {
+pub fn is_create_element_call(call_expr: &CallExpression, ctx: &LintContext) -> bool {
     match &call_expr.callee {
-        Expression::StaticMemberExpression(member_expr) => {
-            member_expr.property.name == "createElement"
-        }
-        Expression::ComputedMemberExpression(member_expr) => {
-            member_expr.static_property_name().is_some_and(|name| name == "createElement")
-        }
         Expression::Identifier(ident) => ident.name == "createElement",
-        _ => false,
+        expr => expr.is_specific_member_access(
+            ctx.settings().react.pragma.as_ref().map_or("React", |pragma| pragma.as_str()),
+            "createElement",
+        ),
     }
 }
 

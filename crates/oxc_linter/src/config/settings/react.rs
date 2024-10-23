@@ -8,6 +8,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Deserialize, Default, Serialize, JsonSchema)]
 #[cfg_attr(test, derive(PartialEq))]
 pub struct ReactPluginSettings {
+    pub pragma: Option<CompactStr>,
+
     #[serde(default)]
     #[serde(rename = "formComponents")]
     form_components: Vec<CustomComponent>,
@@ -30,7 +32,6 @@ impl ReactPluginSettings {
 }
 
 // Deserialize helper types
-
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 #[cfg_attr(test, derive(PartialEq))]
 #[serde(untagged)]
