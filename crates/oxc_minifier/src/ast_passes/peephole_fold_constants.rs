@@ -601,6 +601,12 @@ mod test {
         tester::test(&allocator, source_text, expected, &mut pass);
     }
 
+    fn test_nospace(source_text: &str, expected: &str) {
+        let allocator = Allocator::default();
+        let mut pass = super::PeepholeFoldConstants::new();
+        tester::test_impl(&allocator, source_text, expected, &mut pass, true);
+    }
+
     fn test_same(source_text: &str) {
         test(source_text, source_text);
     }
@@ -1312,6 +1318,10 @@ mod test {
         test("x = 0 / 0", "x = NaN");
         test("x = 0 % 0", "x = NaN");
         test("x = (-1) ** 0.5", "x = NaN");
+
+        test_nospace("1n+ +1n", "1n + +1n");
+        test_nospace("1n- -1n", "1n - -1n");
+        test_nospace("a- -b", "a - -b");
     }
 
     #[test]

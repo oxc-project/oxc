@@ -2,7 +2,7 @@ commit: 06454619
 
 runtime Summary:
 AST Parsed     : 18446/18446 (100.00%)
-Positive Passed: 17182/18446 (93.15%)
+Positive Passed: 17183/18446 (93.15%)
 tasks/coverage/test262/test/annexB/language/function-code/block-decl-func-block-scoping.js
 minify error: ReferenceError: f is not defined
 
@@ -2087,9 +2087,6 @@ minify error: Test262Error: Expected SameValue(«"a"», «"m"») to be true
 
 tasks/coverage/test262/test/language/expressions/subtraction/S11.6.2_A4_T5.js
 minify error: Test262Error: #3.2: -0 - 0 === - 0. Actual: +0
-
-tasks/coverage/test262/test/language/expressions/subtraction/bigint-arithmetic.js
-minify error: SyntaxError: Invalid left-hand side expression in postfix operation
 
 tasks/coverage/test262/test/language/expressions/super/call-spread-err-mult-err-obj-unresolvable.js
 transform error: ReferenceError: require is not defined

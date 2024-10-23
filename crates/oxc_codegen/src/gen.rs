@@ -1147,6 +1147,10 @@ impl<'a> GenExpr for NumericLiteral<'a> {
 
 impl<'a> Gen for BigIntLiteral<'a> {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
+        if self.raw.starts_with('-') {
+            p.print_space_before_operator(Operator::Unary(UnaryOperator::UnaryNegation));
+        }
+        p.print_space_before_identifier();
         p.add_source_mapping(self.span.start);
         p.print_str(self.raw.as_str());
     }
