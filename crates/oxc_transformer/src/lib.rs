@@ -52,6 +52,7 @@ use regexp::RegExp;
 use typescript::TypeScript;
 
 pub use crate::{
+    common::helper_loader::HelperLoaderMode,
     compiler_assumptions::CompilerAssumptions,
     env::{EnvOptions, Targets},
     es2015::{ArrowFunctionsOptions, ES2015Options},

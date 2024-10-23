@@ -2,7 +2,7 @@ commit: 06454619
 
 runtime Summary:
 AST Parsed     : 18444/18444 (100.00%)
-Positive Passed: 17119/18444 (92.82%)
+Positive Passed: 17223/18444 (93.38%)
 tasks/coverage/test262/test/annexB/language/function-code/block-decl-func-block-scoping.js
 minify error: ReferenceError: f is not defined
 
@@ -471,62 +471,8 @@ minify error: Test262Error: error from property access of left-hand side Expecte
 tasks/coverage/test262/test/language/expressions/addition/symbol-to-string.js
 minify error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
-tasks/coverage/test262/test/language/expressions/array/spread-err-mult-err-obj-unresolvable.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/array/spread-err-sngl-err-obj-unresolvable.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/array/spread-mult-obj-ident.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/array/spread-mult-obj-null.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/array/spread-mult-obj-undefined.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/array/spread-obj-getter-descriptor.js
-transform error: ReferenceError: require is not defined
-
 tasks/coverage/test262/test/language/expressions/array/spread-obj-getter-init.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/array/spread-obj-manipulate-outter-obj-in-getter.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/array/spread-obj-mult-spread-getter.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/array/spread-obj-mult-spread.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/array/spread-obj-null.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/array/spread-obj-override-immutable.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/array/spread-obj-overrides-prev-properties.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/array/spread-obj-skip-non-enumerable.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/array/spread-obj-spread-order.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/array/spread-obj-symbol-property.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/array/spread-obj-undefined.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/array/spread-obj-with-overrides.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/array/spread-sngl-obj-ident.js
-transform error: ReferenceError: require is not defined
+transform error: Test262Error: Expected SameValue(«true», «false») to be true
 
 tasks/coverage/test262/test/language/expressions/arrow-function/arrow/capturing-closure-variables-2.js
 minify error: Test262Error: Closure variable was captured incorrectly. Expected SameValue(«[object Object]», «10») to be true
@@ -747,18 +693,6 @@ minify error: Test262Error: Expected a SyntaxError to be thrown but no exception
 tasks/coverage/test262/test/language/expressions/async-generator/named-strict-error-reassign-fn-name-in-body-in-eval.js
 minify error: Test262Error: Expected true but got false
 
-tasks/coverage/test262/test/language/expressions/async-generator/named-yield-identifier-spread-non-strict.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/async-generator/named-yield-spread-obj.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/async-generator/yield-identifier-spread-non-strict.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/async-generator/yield-spread-obj.js
-transform error: ReferenceError: require is not defined
-
 tasks/coverage/test262/test/language/expressions/bitwise-and/bigint-and-number.js
 minify error: Test262Error: 1n & 1 throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
 
@@ -792,68 +726,8 @@ minify error: Test262Error: Expected SameValue(«"local"», «0») to be true
 tasks/coverage/test262/test/language/expressions/call/eval-spread-empty-trailing.js
 minify error: Test262Error: Expected SameValue(«"local"», «0») to be true
 
-tasks/coverage/test262/test/language/expressions/call/spread-err-mult-err-obj-unresolvable.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/call/spread-err-sngl-err-obj-unresolvable.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/call/spread-mult-obj-ident.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/call/spread-mult-obj-null.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/call/spread-mult-obj-undefined.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/call/spread-obj-getter-descriptor.js
-transform error: ReferenceError: require is not defined
-
 tasks/coverage/test262/test/language/expressions/call/spread-obj-getter-init.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/call/spread-obj-manipulate-outter-obj-in-getter.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/call/spread-obj-mult-spread-getter.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/call/spread-obj-mult-spread.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/call/spread-obj-null.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/call/spread-obj-override-immutable.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/call/spread-obj-overrides-prev-properties.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/call/spread-obj-skip-non-enumerable.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/call/spread-obj-spread-order.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/call/spread-obj-symbol-property.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/call/spread-obj-undefined.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/call/spread-obj-with-overrides.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/call/spread-sngl-obj-ident.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/class/async-gen-method/yield-spread-obj.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/class/async-gen-method-static/yield-spread-obj.js
-transform error: ReferenceError: require is not defined
+transform error: Test262Error: Expected SameValue(«true», «false») to be true
 
 tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-arrow.js
 minify error: Test262Error: Expected SameValue(«"c"», «"arrow"») to be true
@@ -1575,26 +1449,8 @@ minify error: Test262Error: Expected SameValue(«"c"», «"fn"») to be true
 tasks/coverage/test262/test/language/expressions/class/dstr/private-meth-static-obj-ptrn-id-init-fn-name-gen.js
 minify error: Test262Error: Expected SameValue(«"c"», «"gen"») to be true
 
-tasks/coverage/test262/test/language/expressions/class/elements/async-gen-private-method/yield-spread-obj.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/class/elements/async-gen-private-method-static/yield-spread-obj.js
-transform error: ReferenceError: require is not defined
-
 tasks/coverage/test262/test/language/expressions/class/elements/class-name-static-initializer-expr.js
 minify error: Test262Error: Expected SameValue(«"c"», «"C"») to be true
-
-tasks/coverage/test262/test/language/expressions/class/elements/gen-private-method/yield-spread-obj.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/class/elements/gen-private-method-static/yield-spread-obj.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/class/gen-method/yield-spread-obj.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/class/gen-method-static/yield-spread-obj.js
-transform error: ReferenceError: require is not defined
 
 tasks/coverage/test262/test/language/expressions/class/name.js
 minify error: Test262Error: descriptor value should be cls; object value should be cls
@@ -1824,20 +1680,8 @@ minify error: Test262Error: descriptor value should be func; object value should
 tasks/coverage/test262/test/language/expressions/generators/named-strict-error-reassign-fn-name-in-body-in-eval.js
 minify error: Test262Error: Expected a TypeError but got a ReferenceError
 
-tasks/coverage/test262/test/language/expressions/generators/named-yield-identifier-spread-non-strict.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/generators/named-yield-spread-obj.js
-transform error: ReferenceError: require is not defined
-
 tasks/coverage/test262/test/language/expressions/generators/scope-body-lex-distinct.js
 minify error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/generators/yield-identifier-spread-non-strict.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/generators/yield-spread-obj.js
-transform error: ReferenceError: require is not defined
 
 tasks/coverage/test262/test/language/expressions/greater-than/bigint-and-incomparable-string.js
 minify error: Test262Error: The result of (1n > "0.") is false Expected SameValue(«true», «false») to be true
@@ -1920,62 +1764,8 @@ minify error: Test262Error: 0n * Symbol("1") throws TypeError Expected a TypeErr
 tasks/coverage/test262/test/language/expressions/multiplication/bigint-toprimitive.js
 minify error: Test262Error: 0n * {[Symbol.toPrimitive]: 1} throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
 
-tasks/coverage/test262/test/language/expressions/new/spread-err-mult-err-obj-unresolvable.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/new/spread-err-sngl-err-obj-unresolvable.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/new/spread-mult-obj-ident.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/new/spread-mult-obj-null.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/new/spread-mult-obj-undefined.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/new/spread-obj-getter-descriptor.js
-transform error: ReferenceError: require is not defined
-
 tasks/coverage/test262/test/language/expressions/new/spread-obj-getter-init.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/new/spread-obj-manipulate-outter-obj-in-getter.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/new/spread-obj-mult-spread-getter.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/new/spread-obj-mult-spread.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/new/spread-obj-null.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/new/spread-obj-override-immutable.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/new/spread-obj-overrides-prev-properties.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/new/spread-obj-skip-non-enumerable.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/new/spread-obj-spread-order.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/new/spread-obj-symbol-property.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/new/spread-obj-undefined.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/new/spread-obj-with-overrides.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/new/spread-sngl-obj-ident.js
-transform error: ReferenceError: require is not defined
+transform error: Test262Error: Expected SameValue(«true», «false») to be true
 
 tasks/coverage/test262/test/language/expressions/object/__proto__-permitted-dup-shorthand.js
 codegen error: Test262Error: Expected SameValue(«[object Object]», «2») to be true
@@ -2169,35 +1959,23 @@ minify error: Test262Error: Expected SameValue(«"c"», «"gen"») to be true
 tasks/coverage/test262/test/language/expressions/object/method-definition/async-gen-meth-eval-var-scope-syntax-err.js
 minify error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
 
-tasks/coverage/test262/test/language/expressions/object/method-definition/async-gen-yield-identifier-spread-non-strict.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/object/method-definition/async-gen-yield-spread-obj.js
-transform error: ReferenceError: require is not defined
-
 tasks/coverage/test262/test/language/expressions/object/method-definition/async-meth-eval-var-scope-syntax-err.js
 minify error: Test262Error: function should not be resolved
 
 tasks/coverage/test262/test/language/expressions/object/method-definition/gen-meth-eval-var-scope-syntax-err.js
 minify error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
 
-tasks/coverage/test262/test/language/expressions/object/method-definition/gen-yield-identifier-spread-non-strict.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/object/method-definition/gen-yield-spread-obj.js
-transform error: ReferenceError: require is not defined
-
 tasks/coverage/test262/test/language/expressions/object/method-definition/meth-eval-var-scope-syntax-err.js
 minify error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
 
 tasks/coverage/test262/test/language/expressions/object/object-spread-proxy-get-not-called-on-dontenum-keys.js
-transform error: ReferenceError: require is not defined
+transform error: Test262Error: Actual [dontEnumString, 0, enumerableString, 1, Symbol(dont_enum_symbol), Symbol(enumerable_symbol)] and expected [Symbol(dont_enum_symbol), dontEnumString, 0, Symbol(enumerable_symbol), enumerableString, 1] should have the same contents. 
 
 tasks/coverage/test262/test/language/expressions/object/object-spread-proxy-no-excluded-keys.js
-transform error: ReferenceError: require is not defined
+transform error: TypeError: Cannot read properties of undefined (reading 'enumerable')
 
 tasks/coverage/test262/test/language/expressions/object/object-spread-proxy-ownkeys-returned-keys-order.js
-transform error: ReferenceError: require is not defined
+transform error: TypeError: Cannot read properties of undefined (reading 'enumerable')
 
 tasks/coverage/test262/test/language/expressions/object/prop-def-id-eval-error-2.js
 minify error: Test262Error: Expected a Test262Error to be thrown but no exception was thrown at all
@@ -2241,62 +2019,8 @@ minify error: Test262Error: 0n - Symbol("1") throws TypeError Expected a TypeErr
 tasks/coverage/test262/test/language/expressions/subtraction/bigint-toprimitive.js
 minify error: Test262Error: 0n - {[Symbol.toPrimitive]: 1} throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
 
-tasks/coverage/test262/test/language/expressions/super/call-spread-err-mult-err-obj-unresolvable.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/super/call-spread-err-sngl-err-obj-unresolvable.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/super/call-spread-mult-obj-ident.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/super/call-spread-mult-obj-null.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/super/call-spread-mult-obj-undefined.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/super/call-spread-obj-getter-descriptor.js
-transform error: ReferenceError: require is not defined
-
 tasks/coverage/test262/test/language/expressions/super/call-spread-obj-getter-init.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/super/call-spread-obj-manipulate-outter-obj-in-getter.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/super/call-spread-obj-mult-spread-getter.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/super/call-spread-obj-mult-spread.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/super/call-spread-obj-null.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/super/call-spread-obj-override-immutable.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/super/call-spread-obj-overrides-prev-properties.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/super/call-spread-obj-skip-non-enumerable.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/super/call-spread-obj-spread-order.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/super/call-spread-obj-symbol-property.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/super/call-spread-obj-undefined.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/super/call-spread-obj-with-overrides.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/expressions/super/call-spread-sngl-obj-ident.js
-transform error: ReferenceError: require is not defined
+transform error: Test262Error: Expected SameValue(«true», «false») to be true
 
 tasks/coverage/test262/test/language/expressions/tagged-template/cache-eval-inner-function.js
 minify error: ReferenceError: a is not defined
@@ -2522,18 +2246,6 @@ minify error: Test262Error: Expected a SyntaxError to be thrown but no exception
 
 tasks/coverage/test262/test/language/statements/async-generator/return-undefined-implicit-and-explicit.js
 minify error: Test262Error: Actual [tick 1, g1 ret, g2 ret, g3 ret, g4 ret, tick 2] and expected [tick 1, g1 ret, g2 ret, tick 2, g3 ret, g4 ret] should have the same contents. Ticks for implicit and explicit return undefined
-
-tasks/coverage/test262/test/language/statements/async-generator/yield-identifier-spread-non-strict.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/statements/async-generator/yield-spread-obj.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/statements/class/async-gen-method/yield-spread-obj.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/statements/class/async-gen-method-static/yield-spread-obj.js
-transform error: ReferenceError: require is not defined
 
 tasks/coverage/test262/test/language/statements/class/definition/basics.js
 minify error: Test262Error: The value of `C.name` is `'C'` Expected SameValue(«"f"», «"C"») to be true
@@ -3258,26 +2970,8 @@ minify error: Test262Error: Expected SameValue(«"c"», «"fn"») to be true
 tasks/coverage/test262/test/language/statements/class/dstr/private-meth-static-obj-ptrn-id-init-fn-name-gen.js
 minify error: Test262Error: Expected SameValue(«"c"», «"gen"») to be true
 
-tasks/coverage/test262/test/language/statements/class/elements/async-gen-private-method/yield-spread-obj.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/statements/class/elements/async-gen-private-method-static/yield-spread-obj.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/statements/class/elements/gen-private-method/yield-spread-obj.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/statements/class/elements/gen-private-method-static/yield-spread-obj.js
-transform error: ReferenceError: require is not defined
-
 tasks/coverage/test262/test/language/statements/class/elements/private-setter-visible-to-direct-eval.js
 minify error: ReferenceError: v is not defined
-
-tasks/coverage/test262/test/language/statements/class/gen-method/yield-spread-obj.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/statements/class/gen-method-static/yield-spread-obj.js
-transform error: ReferenceError: require is not defined
 
 tasks/coverage/test262/test/language/statements/for/dstr/const-ary-ptrn-elem-id-init-fn-name-arrow.js
 minify error: Test262Error: Expected SameValue(«"b"», «"arrow"») to be true
@@ -3902,12 +3596,6 @@ minify error: Test262Error: Expected a SyntaxError to be thrown but no exception
 
 tasks/coverage/test262/test/language/statements/generators/scope-body-lex-distinct.js
 minify error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/statements/generators/yield-identifier-spread-non-strict.js
-transform error: ReferenceError: require is not defined
-
-tasks/coverage/test262/test/language/statements/generators/yield-spread-obj.js
-transform error: ReferenceError: require is not defined
 
 tasks/coverage/test262/test/language/statements/let/dstr/obj-init-undefined.js
 minify error: SyntaxError: Missing initializer in destructuring declaration
