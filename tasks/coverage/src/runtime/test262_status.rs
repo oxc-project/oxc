@@ -1,6 +1,7 @@
 use std::{fs, sync::OnceLock, time::Duration};
 
 use oxc_tasks_common::agent;
+use regex::Regex;
 
 use crate::workspace_root;
 
@@ -23,16 +24,13 @@ pub fn get_v8_test262_failure_paths() -> &'static Vec<String> {
                 .unwrap()
                 .into_string()
                 .unwrap();
-            let mut tests = vec![];
-            regex::Regex::new(r"'(.+)': \[(FAIL|SKIP)\]").unwrap().captures_iter(&res).for_each(
-                |caps| {
-                    if let Some(name) = caps.get(1).map(|f| f.as_str()) {
-                        if !name.eq("*") {
-                            tests.push(name.to_string());
-                        }
-                    }
-                },
-            );
+            let mut tests = Regex::new(r"'(.+)': \[(FAIL|SKIP)\]")
+                .unwrap()
+                .captures_iter(&res)
+                .filter_map(|capture| capture.get(1))
+                .filter(|m| m.as_str() != "*")
+                .map(|m| m.as_str().to_string())
+                .collect::<Vec<_>>();
             tests.sort_unstable();
             tests.dedup();
             fs::write(path, tests.join("\n")).unwrap();

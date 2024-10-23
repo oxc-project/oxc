@@ -25,7 +25,7 @@ use crate::{
 
 use test262_status::get_v8_test262_failure_paths;
 
-static SKIP_EVALUATING_FEATURES: &[&str] = &[
+static SKIP_FEATURES: &[&str] = &[
     // Node's version of V8 doesn't implement these
     "hashbang",
     "legacy-regexp",
@@ -56,7 +56,7 @@ static SKIP_EVALUATING_FEATURES: &[&str] = &[
     "Intl.DurationFormat",
 ];
 
-static SKIP_EVALUATING_THESE_INCLUDES: &[&str] = &[
+static SKIP_INCLUDES: &[&str] = &[
     // We don't preserve "toString()" on functions
     "nativeFunctionMatcher.js",
 ];
@@ -93,6 +93,7 @@ impl Case for Test262RuntimeCase {
 
     fn skip_test_case(&self) -> bool {
         let base_path = self.base.path().to_string_lossy();
+        let test262_path = base_path.trim_start_matches("test262/test/");
         let includes = &self.base.meta().includes;
         let features = &self.base.meta().features;
         self.base.should_fail()
@@ -100,12 +101,16 @@ impl Case for Test262RuntimeCase {
             || base_path.contains("built-ins")
             || base_path.contains("staging")
             || base_path.contains("intl402")
-            || get_v8_test262_failure_paths().iter().any(|test| base_path.contains(test))
-            || includes
-                .iter()
-                .any(|include| SKIP_EVALUATING_THESE_INCLUDES.contains(&include.as_ref()))
-            || features.iter().any(|feature| SKIP_EVALUATING_FEATURES.contains(&feature.as_ref()))
-            || SKIP_TEST_CASES.iter().any(|path| base_path.contains(path))
+            || includes.iter().any(|include| SKIP_INCLUDES.contains(&include.as_ref()))
+            || features.iter().any(|feature| SKIP_FEATURES.contains(&feature.as_ref()))
+            || SKIP_TEST_CASES.iter().any(|path| test262_path.starts_with(path))
+            || get_v8_test262_failure_paths().iter().any(|path| {
+                if let Some(path) = path.strip_suffix('*') {
+                    test262_path.starts_with(path)
+                } else {
+                    test262_path.trim_end_matches(".js") == path
+                }
+            })
             || self.base.code().contains("$262")
             || self.base.code().contains("$DONOTEVALUATE()")
     }

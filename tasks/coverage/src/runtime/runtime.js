@@ -21,9 +21,6 @@ async function runCodeInHarness(options = {}) {
     console.log(o);
   }
 
-  // See: https://github.com/nodejs/node/issues/36351
-  const unique = () => '//' + Math.random();
-
   const runCode = async () => {
     const moduleCache = new Map();
     const dynamicImportCache = new Map();
@@ -38,7 +35,7 @@ async function runCodeInHarness(options = {}) {
           };
           module = new SyntheticModule(['default'], evaluate, { context });
         } else {
-          module = new SourceTextModule(code + unique(), { context, importModuleDynamically });
+          module = new SourceTextModule(code, { context, importModuleDynamically });
         }
         moduleCache.set(modulePath, module);
       }
@@ -70,7 +67,7 @@ async function runCodeInHarness(options = {}) {
     if (!isRaw) runInContext(createHarnessForTest(includes), context);
 
     if (isModule) {
-      const module = new SourceTextModule(code + unique(), { context, importModuleDynamically });
+      const module = new SourceTextModule(code, { context, importModuleDynamically });
       await module.link(linker);
       await module.evaluate();
     } else {
