@@ -156,7 +156,8 @@ impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
         let mut new_statements = ctx.ast.vec_with_capacity(self.registrations.len() + 1);
         for (symbol_id, persistent_id) in self.registrations.drain(..) {
             let name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
-            let binding_identifier = BindingIdentifier::new_with_symbol_id(SPAN, name, symbol_id);
+            let binding_identifier =
+                ctx.ast.binding_identifier_with_symbol_id(SPAN, name, symbol_id);
             variable_declarator_items.push(
                 ctx.ast.variable_declarator(
                     SPAN,
@@ -683,7 +684,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
             .unwrap_or_else(|| ctx.current_scope_id());
 
         let binding = ctx.generate_uid("s", target_scope_id, SymbolFlags::FunctionScopedVariable);
-        let binding_identifier = binding.create_binding_identifier();
+        let binding_identifier = binding.create_binding_identifier(ctx);
 
         // _s();
         let call_expression = ctx.ast.statement_expression(

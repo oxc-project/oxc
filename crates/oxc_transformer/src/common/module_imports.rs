@@ -202,12 +202,12 @@ impl<'a> ModuleImportsStore<'a> {
                     ModuleExportName::IdentifierName(
                         ctx.ast.identifier_name(SPAN, import.imported),
                     ),
-                    import.local.create_binding_identifier(),
+                    import.local.create_binding_identifier(ctx),
                     ImportOrExportKind::Value,
                 ))
             }
             Import::Default(local) => ImportDeclarationSpecifier::ImportDefaultSpecifier(
-                ctx.ast.alloc_import_default_specifier(SPAN, local.create_binding_identifier()),
+                ctx.ast.alloc_import_default_specifier(SPAN, local.create_binding_identifier(ctx)),
             ),
         }));
 

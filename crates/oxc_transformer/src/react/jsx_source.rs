@@ -207,7 +207,7 @@ impl<'a, 'ctx> ReactJsxSource<'a, 'ctx> {
 
         let var_kind = VariableDeclarationKind::Var;
         let id = {
-            let ident = filename_var.create_binding_identifier();
+            let ident = filename_var.create_binding_identifier(ctx);
             let ident = ctx.ast.binding_pattern_kind_from_binding_identifier(ident);
             ctx.ast.binding_pattern(ident, NONE, false)
         };

@@ -74,7 +74,7 @@ impl<'a> VarDeclarationsStore<'a> {
         init: Option<Expression<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let ident = binding.create_binding_identifier();
+        let ident = binding.create_binding_identifier(ctx);
         let ident = ctx.ast.binding_pattern_kind_from_binding_identifier(ident);
         let ident = ctx.ast.binding_pattern(ident, NONE, false);
         self.insert_binding_pattern(ident, init, ctx);

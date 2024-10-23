@@ -320,18 +320,6 @@ impl<'a> fmt::Display for IdentifierReference<'a> {
     }
 }
 
-impl<'a> BindingIdentifier<'a> {
-    #[allow(missing_docs)]
-    pub fn new(span: Span, name: Atom<'a>) -> Self {
-        Self { span, name, symbol_id: Cell::default() }
-    }
-
-    #[allow(missing_docs)]
-    pub fn new_with_symbol_id(span: Span, name: Atom<'a>, symbol_id: SymbolId) -> Self {
-        Self { span, name, symbol_id: Cell::new(Some(symbol_id)) }
-    }
-}
-
 impl<'a> fmt::Display for BindingIdentifier<'a> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
