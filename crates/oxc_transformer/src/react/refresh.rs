@@ -20,7 +20,7 @@ use super::options::ReactRefreshOptions;
 enum RefreshIdentifierResolver<'a> {
     /// Simple IdentifierReference (e.g. `$RefreshReg$`)
     Identifier(IdentifierReference<'a>),
-    /// StaticMemberExpression  (object, property) (e.g. `window.$RefreshReg$`)
+    /// StaticMemberExpression (object, property) (e.g. `window.$RefreshReg$`)
     Member((IdentifierReference<'a>, IdentifierName<'a>)),
     /// Used for `import.meta` expression (e.g. `import.meta.$RefreshReg$`)
     Expression(Expression<'a>),
@@ -849,10 +849,10 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
                 // babel-plugin-styled-components)
             }
             Expression::CallExpression(call_expr) => {
-                let is_import_expression =  match call_expr.callee.get_inner_expression() {
-                     Expression::ImportExpression(_) => {
+                let is_import_expression = match call_expr.callee.get_inner_expression() {
+                    Expression::ImportExpression(_) => {
                         true
-                     }
+                    }
                     Expression::Identifier(ident) => {
                         ident.name.starts_with("require")
                     },

@@ -12,7 +12,7 @@ use oxc::{
     parser::Parser,
     semantic::SemanticBuilder,
     span::SourceType,
-    transformer::{TransformOptions, Transformer},
+    transformer::{HelperLoaderMode, TransformOptions, Transformer},
 };
 use oxc_tasks_common::agent;
 use serde_json::json;
@@ -56,6 +56,7 @@ static SKIP_FEATURES: &[&str] = &[
     "Intl.DurationFormat",
     // stage 3
     "decorators",
+    "explicit-resource-management",
 ];
 
 static SKIP_INCLUDES: &[&str] = &[
@@ -162,6 +163,7 @@ impl Test262RuntimeCase {
                 SemanticBuilder::new().build(&program).semantic.into_symbol_table_and_scope_tree();
             let mut options = TransformOptions::enable_all();
             options.react.refresh = None;
+            options.helper_loader.mode = HelperLoaderMode::External;
             Transformer::new(&allocator, self.path(), options).build_with_symbols_and_scopes(
                 symbols,
                 scopes,

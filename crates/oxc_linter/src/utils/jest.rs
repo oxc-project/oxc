@@ -215,11 +215,10 @@ fn collect_ids_referenced_to_import<'a, 'c>(
 
                 if matches!(import_decl.source.value.as_str(), "@jest/globals" | "vitest") {
                     let original = find_original_name(import_decl, name);
-                    let mut ret = vec![];
-                    for reference_id in reference_ids {
-                        ret.push((*reference_id, original));
-                    }
-
+                    let ret = reference_ids
+                        .iter()
+                        .map(|&reference_id| (reference_id, original))
+                        .collect::<Vec<_>>();
                     return Some(ret);
                 }
             }

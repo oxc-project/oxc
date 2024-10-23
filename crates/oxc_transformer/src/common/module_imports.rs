@@ -193,7 +193,7 @@ impl<'a> ModuleImportsStore<'a> {
     fn get_import(
         source: Atom<'a>,
         names: Vec<Import<'a>>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> Statement<'a> {
         let specifiers = ctx.ast.vec_from_iter(names.into_iter().map(|import| match import {
             Import::Named(import) => {
