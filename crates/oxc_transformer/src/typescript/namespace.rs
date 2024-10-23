@@ -362,7 +362,7 @@ impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
                         ctx.ast.member_expression_static(
                             SPAN,
                             parent_export,
-                            IdentifierName::new(SPAN, real_name.clone()),
+                            ctx.ast.identifier_name(SPAN, real_name.clone()),
                             false,
                         ),
                     )
@@ -387,7 +387,7 @@ impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
                 let assign_left =
                     ctx.ast.simple_assignment_target_identifier_reference(SPAN, &real_name);
                 let assign_right = {
-                    let property = IdentifierName::new(SPAN, real_name.clone());
+                    let property = ctx.ast.identifier_name(SPAN, real_name.clone());
                     let logical_left =
                         ctx.ast.member_expression_static(SPAN, parent_export, property, false);
                     let op = LogicalOperator::Or;

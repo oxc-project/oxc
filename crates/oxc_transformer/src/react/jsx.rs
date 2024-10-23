@@ -800,7 +800,7 @@ impl<'a, 'ctx> ReactJsx<'a, 'ctx> {
             }
             JSXMemberExpressionObject::ThisExpression(expr) => ctx.ast.expression_this(expr.span),
         };
-        let property = IdentifierName::new(expr.property.span, expr.property.name.clone());
+        let property = ctx.ast.identifier_name(expr.property.span, expr.property.name.clone());
         ctx.ast.member_expression_static(expr.span, object, property, false).into()
     }
 

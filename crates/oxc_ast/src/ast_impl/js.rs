@@ -299,13 +299,6 @@ impl<'a> Expression<'a> {
     }
 }
 
-impl<'a> IdentifierName<'a> {
-    #[allow(missing_docs)]
-    pub fn new(span: Span, name: Atom<'a>) -> Self {
-        Self { span, name }
-    }
-}
-
 impl<'a> fmt::Display for IdentifierName<'a> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
