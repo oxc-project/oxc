@@ -94,7 +94,7 @@ impl Rule for ButtonHasType {
                 );
             }
             AstKind::CallExpression(call_expr) => {
-                if is_create_element_call(call_expr) {
+                if is_create_element_call(call_expr, ctx) {
                     let Some(Argument::StringLiteral(str)) = call_expr.arguments.first() else {
                         return;
                     };
