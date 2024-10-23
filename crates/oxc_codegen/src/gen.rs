@@ -1700,7 +1700,7 @@ impl<'a> GenExpr for PrivateInExpression<'a> {
         p.wrap(precedence >= Precedence::Compare, |p| {
             self.left.print(p, ctx);
             p.print_str(" in ");
-            self.right.print_expr(p, Precedence::Equals, Context::empty());
+            self.right.print_expr(p, Precedence::Equals, Context::FORBID_IN);
         });
     }
 }

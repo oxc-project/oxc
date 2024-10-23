@@ -2,7 +2,7 @@ commit: 06454619
 
 runtime Summary:
 AST Parsed     : 18446/18446 (100.00%)
-Positive Passed: 17183/18446 (93.15%)
+Positive Passed: 17184/18446 (93.16%)
 tasks/coverage/test262/test/annexB/language/function-code/block-decl-func-block-scoping.js
 minify error: ReferenceError: f is not defined
 
@@ -1757,9 +1757,6 @@ minify error: Test262Error: The result of (1n > "0.") is false Expected SameValu
 
 tasks/coverage/test262/test/language/expressions/greater-than-or-equal/bigint-and-incomparable-string.js
 minify error: Test262Error: The result of (1n >= "0.") is false Expected SameValue(«true», «false») to be true
-
-tasks/coverage/test262/test/language/expressions/in/private-field-rhs-non-object.js
-codegen error: Test262Error: Expected SameValue(«null», «null») to be false
 
 tasks/coverage/test262/test/language/expressions/less-than/bigint-and-incomparable-string.js
 minify error: Test262Error: The result of ("0." < 1n) is false Expected SameValue(«true», «false») to be true
