@@ -307,22 +307,6 @@ impl<'a> fmt::Display for IdentifierName<'a> {
 }
 
 impl<'a> IdentifierReference<'a> {
-    #[allow(missing_docs)]
-    #[inline]
-    pub fn new(span: Span, name: Atom<'a>) -> Self {
-        Self { span, name, reference_id: Cell::default() }
-    }
-
-    #[inline]
-    #[allow(missing_docs)]
-    pub fn new_with_reference_id(
-        span: Span,
-        name: Atom<'a>,
-        reference_id: Option<ReferenceId>,
-    ) -> Self {
-        Self { span, name, reference_id: Cell::new(reference_id) }
-    }
-
     #[inline]
     #[allow(missing_docs)]
     pub fn reference_id(&self) -> Option<ReferenceId> {
