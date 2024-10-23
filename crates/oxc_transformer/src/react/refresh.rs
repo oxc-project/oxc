@@ -784,7 +784,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
         let declarator = decl.declarations.first_mut().unwrap_or_else(|| unreachable!());
         let init = declarator.init.as_mut()?;
         let id = declarator.id.get_binding_identifier()?;
-        let symbol_id = id.symbol_id.get()?;
+        let symbol_id = id.symbol_id.get().unwrap();
 
         if !is_componentish_name(&id.name) {
             return None;
