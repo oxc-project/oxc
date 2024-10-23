@@ -68,6 +68,7 @@ expression: json
           "rootDir": []
         },
         "react": {
+          "pragma": null,
           "formComponents": [],
           "linkComponents": []
         },
@@ -369,6 +370,7 @@ expression: json
         },
         "react": {
           "default": {
+            "pragma": null,
             "formComponents": [],
             "linkComponents": []
           },
@@ -396,6 +398,12 @@ expression: json
           "items": {
             "$ref": "#/definitions/CustomComponent"
           }
+        },
+        "pragma": {
+          "type": [
+            "string",
+            "null"
+          ]
         }
       }
     },
