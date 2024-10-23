@@ -316,16 +316,33 @@ impl<'a> Visit<'a> for TestCase {
     }
 
     fn visit_tagged_template_expression(&mut self, expr: &TaggedTemplateExpression<'a>) {
-        if expr.tag.is_specific_id("dedent") || expr.tag.is_specific_id("outdent") {
-            return;
+        fn dedent(s: &str) -> String {
+            let lines: Vec<&str> = s.lines().collect();
+            if lines.is_empty() {
+                return String::new();
+            }
+            let min_indent = lines
+                .iter()
+                .filter(|line| !line.trim().is_empty())
+                .map(|line| line.chars().take_while(|c| c.is_whitespace()).count())
+                .min()
+                .unwrap_or_default();
+            lines
+                .iter()
+                .map(|line| if line.len() >= min_indent { &line[min_indent..] } else { line })
+                .collect::<Vec<&str>>()
+                .join("\n")
         }
 
         // If it is a raw string like String.raw`something`, then we import that as a Rust raw string literal
         self.code = if expr.tag.is_specific_member_access("String", "raw") {
             expr.quasi.quasis.first().map(|quasi| format!("r#\"{}\"#", quasi.value.raw))
+        } else if expr.tag.is_specific_id("dedent") || expr.tag.is_specific_id("outdent") {
+            expr.quasi.quasis.first().map(|quasi| dedent(&quasi.value.raw).to_string())
         } else {
             expr.quasi.quasi().map(|quasi| quasi.to_string())
         };
+
         self.config = None;
     }
 }
