@@ -646,7 +646,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
         let target_scope_id = ctx
             .scopes()
             .ancestors(ctx.current_scope_id())
-            .find(|scope_id| ctx.scopes().get_flags(*scope_id).is_var())
+            .find(|&scope_id| ctx.scopes().get_flags(scope_id).is_var())
             .unwrap_or_else(|| ctx.current_scope_id());
 
         let binding = ctx.generate_uid("s", target_scope_id, SymbolFlags::FunctionScopedVariable);
