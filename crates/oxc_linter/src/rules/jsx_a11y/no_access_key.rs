@@ -38,7 +38,7 @@ declare_oxc_lint!(
     /// ```
     NoAccessKey,
     correctness,
-    fix
+    suggestion,
 );
 
 impl Rule for NoAccessKey {
