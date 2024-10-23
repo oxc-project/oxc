@@ -102,7 +102,7 @@ pub struct ReactRefresh<'a, 'ctx> {
     emit_full_signatures: bool,
     ctx: &'ctx TransformCtx<'a>,
     // States
-    registrations: Vec<(SymbolId, Atom<'a>)>,
+    registrations: Vec<(BoundIdentifier<'a>, Atom<'a>)>,
     signature_declarator_items: Vec<oxc_allocator::Vec<'a, VariableDeclarator<'a>>>,
     /// Used to wrap call expression with signature.
     /// (eg: hoc(() => {}) -> _s1(hoc(_s1(() => {}))))
@@ -154,9 +154,7 @@ impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
 
         let mut variable_declarator_items = ctx.ast.vec_with_capacity(self.registrations.len());
         let mut new_statements = ctx.ast.vec_with_capacity(self.registrations.len() + 1);
-        for (symbol_id, persistent_id) in self.registrations.drain(..) {
-            let name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
-            let binding = BoundIdentifier::new(name, symbol_id);
+        for (binding, persistent_id) in self.registrations.drain(..) {
             variable_declarator_items.push(ctx.ast.variable_declarator(
                 SPAN,
                 VariableDeclarationKind::Var,
@@ -451,8 +449,9 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) -> AssignmentTarget<'a> {
         let binding = ctx.generate_uid_in_root_scope("c", SymbolFlags::FunctionScopedVariable);
-        self.registrations.push((binding.symbol_id, persistent_id));
-        binding.create_target(reference_flags, ctx)
+        let target = binding.create_target(reference_flags, ctx);
+        self.registrations.push((binding, persistent_id));
+        target
     }
 
     /// Similar to the `findInnerComponents` function in `react-refresh/babel`.
