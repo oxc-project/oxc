@@ -1,8 +1,8 @@
 commit: 06454619
 
 runtime Summary:
-AST Parsed     : 18446/18446 (100.00%)
-Positive Passed: 17119/18446 (92.81%)
+AST Parsed     : 18444/18444 (100.00%)
+Positive Passed: 17119/18444 (92.82%)
 tasks/coverage/test262/test/annexB/language/function-code/block-decl-func-block-scoping.js
 minify error: ReferenceError: f is not defined
 
@@ -2529,9 +2529,6 @@ transform error: ReferenceError: require is not defined
 tasks/coverage/test262/test/language/statements/async-generator/yield-spread-obj.js
 transform error: ReferenceError: require is not defined
 
-tasks/coverage/test262/test/language/statements/await-using/throws-if-initializer-not-object.js
-codegen error: SyntaxError: Unexpected identifier 'x'
-
 tasks/coverage/test262/test/language/statements/class/async-gen-method/yield-spread-obj.js
 transform error: ReferenceError: require is not defined
 
@@ -3944,9 +3941,6 @@ minify error: Test262Error: Expected SameValue(«"b"», «"fn"») to be true
 
 tasks/coverage/test262/test/language/statements/try/dstr/obj-ptrn-id-init-fn-name-gen.js
 minify error: Test262Error: Expected SameValue(«"b"», «"gen"») to be true
-
-tasks/coverage/test262/test/language/statements/using/throws-if-initializer-not-object.js
-codegen error: SyntaxError: Unexpected identifier 'x'
 
 tasks/coverage/test262/test/language/statements/variable/dstr/obj-init-undefined.js
 minify error: SyntaxError: Missing initializer in destructuring declaration

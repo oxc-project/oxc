@@ -56,6 +56,7 @@ static SKIP_FEATURES: &[&str] = &[
     "Intl.DurationFormat",
     // stage 3
     "decorators",
+    "explicit-resource-management",
 ];
 
 static SKIP_INCLUDES: &[&str] = &[
