@@ -21345,31 +21345,31 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
     ╰────
 
   × Invalid regular expression: Duplicated capturing group names
-    ╭─[test262/test/language/literals/regexp/named-groups/invalid-duplicate-groupspecifier-2-u.js:20:19]
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-duplicate-groupspecifier-2-u.js:20:5]
  19 │ 
  20 │ /(?<a>a)(?<b>b)(?<a>a)/u;
-    ·                   ─
+    ·     ─             ─
     ╰────
 
   × Invalid regular expression: Duplicated capturing group names
-    ╭─[test262/test/language/literals/regexp/named-groups/invalid-duplicate-groupspecifier-2.js:20:19]
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-duplicate-groupspecifier-2.js:20:5]
  19 │ 
  20 │ /(?<a>a)(?<b>b)(?<a>a)/;
-    ·                   ─
+    ·     ─             ─
     ╰────
 
   × Invalid regular expression: Duplicated capturing group names
-    ╭─[test262/test/language/literals/regexp/named-groups/invalid-duplicate-groupspecifier-u.js:20:12]
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-duplicate-groupspecifier-u.js:20:5]
  19 │ 
  20 │ /(?<a>a)(?<a>a)/u;
-    ·            ─
+    ·     ─      ─
     ╰────
 
   × Invalid regular expression: Duplicated capturing group names
-    ╭─[test262/test/language/literals/regexp/named-groups/invalid-duplicate-groupspecifier.js:20:12]
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-duplicate-groupspecifier.js:20:5]
  19 │ 
  20 │ /(?<a>a)(?<a>a)/;
-    ·            ─
+    ·     ─      ─
     ╰────
 
   × Invalid regular expression: Unterminated capturing group name
