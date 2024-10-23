@@ -328,6 +328,14 @@ impl ScopeTree {
         self.bindings[scope_id].shift_remove(name);
     }
 
+    /// Move a binding from one scope to another.
+    pub fn move_binding(&mut self, from: ScopeId, to: ScopeId, name: &str) {
+        let from_map = &mut self.bindings[from];
+        if let Some((name, symbol_id)) = from_map.swap_remove_entry(name) {
+            self.bindings[to].insert(name, symbol_id);
+        }
+    }
+
     /// Reserve memory for an `additional` number of scopes.
     pub fn reserve(&mut self, additional: usize) {
         self.parent_ids.reserve(additional);
