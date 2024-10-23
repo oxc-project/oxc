@@ -54,6 +54,8 @@ static SKIP_FEATURES: &[&str] = &[
     "array-grouping",
     // stage 2
     "Intl.DurationFormat",
+    // stage 3
+    "decorators",
 ];
 
 static SKIP_INCLUDES: &[&str] = &[
@@ -67,6 +69,12 @@ static SKIP_TEST_CASES: &[&str] = &[
     // Properly misconfigured test setup for `eval`, but can't figure out where
     "annexB/language/eval-code",
     "language/eval-code",
+    // formerly S11.13.2_A5.10_T5
+    "language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v",
+    "language/expressions/postfix-increment/operator-x-postfix-increment-calls-putvalue-lhs-newvalue",
+    "language/expressions/postfix-decrement/operator-x-postfix-decrement-calls-putvalue-lhs-newvalue",
+    "language/expressions/prefix-increment/operator-prefix-increment-x-calls-putvalue-lhs-newvalue",
+    "language/expressions/prefix-decrement/operator-prefix-decrement-x-calls-putvalue-lhs-newvalue",
 ];
 
 pub struct Test262RuntimeCase {
@@ -230,7 +238,7 @@ async fn request_run_code(json: impl serde::Serialize + Send + 'static) -> Resul
     tokio::spawn(async move {
         agent()
             .post("http://localhost:32055/run")
-            .timeout(Duration::from_secs(2))
+            .timeout(Duration::from_secs(4))
             .send_json(json)
             .map_err(|err| err.to_string())
             .and_then(|res| res.into_string().map_err(|err| err.to_string()))

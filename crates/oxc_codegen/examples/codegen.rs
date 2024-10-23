@@ -35,10 +35,11 @@ fn main() -> std::io::Result<()> {
 
         let Some(ret) = parse(&allocator, &printed, source_type) else { return Ok(()) };
         println!("Second time:");
-        let printed = codegen(&ret, minify);
-        println!("{printed}");
+        let printed2 = codegen(&ret, minify);
+        println!("{printed2}");
         // Check syntax error
-        parse(&allocator, &printed, source_type);
+        parse(&allocator, &printed2, source_type);
+        println!("same = {}", printed == printed2);
     }
 
     Ok(())

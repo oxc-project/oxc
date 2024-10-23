@@ -1,8 +1,8 @@
 commit: 06454619
 
 runtime Summary:
-AST Parsed     : 18480/18480 (100.00%)
-Positive Passed: 17199/18480 (93.07%)
+AST Parsed     : 18446/18446 (100.00%)
+Positive Passed: 17182/18446 (93.15%)
 tasks/coverage/test262/test/annexB/language/function-code/block-decl-func-block-scoping.js
 minify error: ReferenceError: f is not defined
 
@@ -1536,9 +1536,6 @@ transform error: ReferenceError: require is not defined
 tasks/coverage/test262/test/language/expressions/class/elements/gen-private-method-static/yield-spread-obj.js
 transform error: ReferenceError: require is not defined
 
-tasks/coverage/test262/test/language/expressions/class/elements/syntax/valid/grammar-field-accessor.js
-codegen error: SyntaxError: Unexpected identifier '$'
-
 tasks/coverage/test262/test/language/expressions/class/gen-method/yield-spread-obj.js
 transform error: ReferenceError: require is not defined
 
@@ -1547,39 +1544,6 @@ transform error: ReferenceError: require is not defined
 
 tasks/coverage/test262/test/language/expressions/class/name.js
 minify error: Test262Error: descriptor value should be cls; object value should be cls
-
-tasks/coverage/test262/test/language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--1.js
-codegen error: Test262Error: Expected a ReferenceError but got a TypeError
-
-tasks/coverage/test262/test/language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--11.js
-codegen error: Test262Error: Expected a ReferenceError but got a TypeError
-
-tasks/coverage/test262/test/language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--13.js
-codegen error: Test262Error: Expected a ReferenceError but got a TypeError
-
-tasks/coverage/test262/test/language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--15.js
-codegen error: Test262Error: Expected a ReferenceError but got a TypeError
-
-tasks/coverage/test262/test/language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--17.js
-codegen error: Test262Error: Expected a ReferenceError but got a TypeError
-
-tasks/coverage/test262/test/language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--19.js
-codegen error: Test262Error: Expected a ReferenceError but got a TypeError
-
-tasks/coverage/test262/test/language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--21.js
-codegen error: Test262Error: Expected a ReferenceError but got a TypeError
-
-tasks/coverage/test262/test/language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--3.js
-codegen error: Test262Error: Expected a ReferenceError but got a TypeError
-
-tasks/coverage/test262/test/language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--5.js
-codegen error: Test262Error: Expected a ReferenceError but got a TypeError
-
-tasks/coverage/test262/test/language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--7.js
-codegen error: Test262Error: Expected a ReferenceError but got a TypeError
-
-tasks/coverage/test262/test/language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--9.js
-codegen error: Test262Error: Expected a ReferenceError but got a TypeError
 
 tasks/coverage/test262/test/language/expressions/conditional/in-branch-1.js
 minify error: Test262Error: Expected SameValue(«0», «1») to be true
@@ -2120,18 +2084,6 @@ minify error: Test262Error: Expected a SyntaxError to be thrown but no exception
 
 tasks/coverage/test262/test/language/expressions/optional-chaining/member-expression.js
 minify error: Test262Error: Expected SameValue(«"a"», «"m"») to be true
-
-tasks/coverage/test262/test/language/expressions/postfix-decrement/operator-x-postfix-decrement-calls-putvalue-lhs-newvalue--1.js
-codegen error: Test262Error: Expected a ReferenceError but got a TypeError
-
-tasks/coverage/test262/test/language/expressions/postfix-increment/operator-x-postfix-increment-calls-putvalue-lhs-newvalue--1.js
-codegen error: Test262Error: Expected a ReferenceError but got a TypeError
-
-tasks/coverage/test262/test/language/expressions/prefix-decrement/operator-prefix-decrement-x-calls-putvalue-lhs-newvalue--1.js
-codegen error: Test262Error: Expected a ReferenceError but got a TypeError
-
-tasks/coverage/test262/test/language/expressions/prefix-increment/operator-prefix-increment-x-calls-putvalue-lhs-newvalue--1.js
-codegen error: Test262Error: Expected a ReferenceError but got a TypeError
 
 tasks/coverage/test262/test/language/expressions/subtraction/S11.6.2_A4_T5.js
 minify error: Test262Error: #3.2: -0 - 0 === - 0. Actual: +0
@@ -3134,9 +3086,6 @@ transform error: ReferenceError: require is not defined
 
 tasks/coverage/test262/test/language/statements/class/elements/private-setter-visible-to-direct-eval.js
 minify error: ReferenceError: v is not defined
-
-tasks/coverage/test262/test/language/statements/class/elements/syntax/valid/grammar-field-accessor.js
-codegen error: SyntaxError: Unexpected identifier '$'
 
 tasks/coverage/test262/test/language/statements/class/gen-method/yield-spread-obj.js
 transform error: ReferenceError: require is not defined

@@ -131,8 +131,8 @@ const server = createServer((req, res) => {
       try {
         await runCodeInHarness(options);
       } catch (err) {
-        if (parseInt(process.version.split('.')[0].replace('v', '')) < 20) {
-          return res.end('Please upgrade the Node.js version to 20 or later.');
+        if (parseInt(process.version.split('.')[0].replace('v', '')) < 22) {
+          return res.end('Please upgrade the Node.js version to 22 or later.');
         }
         return res.end(err.toString());
       }
@@ -150,6 +150,6 @@ process.on('unhandledRejection', () => {
   // Don't exit when a test does this
 });
 
-server.timeout = 2000;
+server.timeout = 3000;
 
 server.listen(32055, () => {});
