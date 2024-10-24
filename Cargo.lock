@@ -1723,7 +1723,6 @@ version = "0.33.0"
 dependencies = [
  "cow-utils",
  "insta",
- "num-bigint",
  "oxc_allocator",
  "oxc_ast",
  "oxc_codegen",

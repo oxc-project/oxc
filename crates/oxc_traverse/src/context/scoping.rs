@@ -7,14 +7,14 @@ use rustc_hash::FxHashSet;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, visit::Visit};
 use oxc_semantic::{NodeId, Reference, ScopeTree, SymbolTable};
-use oxc_span::CompactStr;
+use oxc_span::{CompactStr, SPAN};
 use oxc_syntax::{
     reference::{ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
-    symbol::SymbolId,
+    symbol::{SymbolFlags, SymbolId},
 };
 
-use crate::scopes_collector::ChildScopeCollector;
+use crate::{scopes_collector::ChildScopeCollector, BoundIdentifier};
 
 /// Traverse scope context.
 ///
@@ -163,6 +163,36 @@ impl TraverseScoping {
         }
 
         self.scopes.delete_scope(scope_id);
+    }
+
+    /// Generate binding.
+    ///
+    /// Creates a symbol with the provided name and flags and adds it to the specified scope.
+    pub fn generate_binding<'a>(
+        &mut self,
+        name: Atom<'a>,
+        scope_id: ScopeId,
+        flags: SymbolFlags,
+    ) -> BoundIdentifier<'a> {
+        let owned_name = name.to_compact_str();
+
+        // Add binding to scope
+        let symbol_id =
+            self.symbols.create_symbol(SPAN, owned_name.clone(), flags, scope_id, NodeId::DUMMY);
+        self.scopes.add_binding(scope_id, owned_name, symbol_id);
+
+        BoundIdentifier::new(name, symbol_id)
+    }
+
+    /// Generate binding in current scope.
+    ///
+    /// Creates a symbol with the provided name and flags and adds it to the current scope.
+    pub fn generate_in_current_scope<'a>(
+        &mut self,
+        name: Atom<'a>,
+        flags: SymbolFlags,
+    ) -> BoundIdentifier<'a> {
+        self.generate_binding(name, self.current_scope_id, flags)
     }
 
     /// Generate UID var name.

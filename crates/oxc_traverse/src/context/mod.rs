@@ -304,36 +304,28 @@ impl<'a> TraverseCtx<'a> {
     /// Generate binding.
     ///
     /// Creates a symbol with the provided name and flags and adds it to the specified scope.
+    ///
+    /// This is a shortcut for `ctx.scoping.generate_binding`.
     pub fn generate_binding(
         &mut self,
         name: Atom<'a>,
         scope_id: ScopeId,
         flags: SymbolFlags,
     ) -> BoundIdentifier<'a> {
-        let owned_name = name.to_compact_str();
-
-        // Add binding to scope
-        let symbol_id = self.symbols_mut().create_symbol(
-            SPAN,
-            owned_name.clone(),
-            flags,
-            scope_id,
-            NodeId::DUMMY,
-        );
-        self.scopes_mut().add_binding(scope_id, owned_name, symbol_id);
-
-        BoundIdentifier::new(name, symbol_id)
+        self.scoping.generate_binding(name, scope_id, flags)
     }
 
     /// Generate binding in current scope.
     ///
     /// Creates a symbol with the provided name and flags and adds it to the current scope.
+    ///
+    /// This is a shortcut for `ctx.scoping.generate_in_current_scope`.
     pub fn generate_in_current_scope(
         &mut self,
         name: Atom<'a>,
         flags: SymbolFlags,
     ) -> BoundIdentifier<'a> {
-        self.generate_binding(name, self.current_scope_id(), flags)
+        self.scoping.generate_in_current_scope(name, flags)
     }
 
     /// Generate UID var name.
