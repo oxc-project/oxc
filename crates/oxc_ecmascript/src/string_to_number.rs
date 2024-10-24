@@ -7,15 +7,26 @@ pub trait StringToNumber {
 /// <https://tc39.es/ecma262/#sec-stringtonumber>
 impl StringToNumber for &str {
     fn string_to_number(&self) -> f64 {
-        let s = self.trim_matches(is_trimmable_whitespace);
-
+        let s = *self;
         match s {
             "" => return 0.0,
             "-Infinity" => return f64::NEG_INFINITY,
             "Infinity" | "+Infinity" => return f64::INFINITY,
-            // Make sure that no further variants of "infinity" are parsed.
-            "inf" | "-inf" | "+inf" => return f64::NAN,
-            _ => {}
+            _ => {
+                // Make sure that no further variants of "infinity" are parsed by `f64::parse`.
+                // Note that alphabetical characters are not case-sensitive.
+                // <https://doc.rust-lang.org/std/primitive.f64.html#method.from_str>
+                let mut bytes = s.trim_start_matches(['-', '+']).bytes();
+                if bytes
+                    .next()
+                    .filter(|c| c.to_ascii_lowercase() == b'i')
+                    .and_then(|_| bytes.next().filter(|c| c.to_ascii_lowercase() == b'n'))
+                    .and_then(|_| bytes.next().filter(|c| c.to_ascii_lowercase() == b'f'))
+                    .is_some()
+                {
+                    return f64::NAN;
+                }
+            }
         }
 
         let mut bytes = s.bytes();
@@ -51,25 +62,4 @@ impl StringToNumber for &str {
 
         s.parse::<f64>().unwrap_or(f64::NAN)
     }
-}
-
-// <https://github.com/boa-dev/boa/blob/94d08fe4e68791ceca3c4b7d94ccc5f3588feeb3/core/string/src/lib.rs#L55>
-/// Helper function to check if a `char` is trimmable.
-pub(crate) const fn is_trimmable_whitespace(c: char) -> bool {
-    // The rust implementation of `trim` does not regard the same characters whitespace as ecma standard does
-    //
-    // Rust uses \p{White_Space} by default, which also includes:
-    // `\u{0085}' (next line)
-    // And does not include:
-    // '\u{FEFF}' (zero width non-breaking space)
-    // Explicit whitespace: https://tc39.es/ecma262/#sec-white-space
-    matches!(
-        c,
-        '\u{0009}' | '\u{000B}' | '\u{000C}' | '\u{0020}' | '\u{00A0}' | '\u{FEFF}' |
-    // Unicode Space_Separator category
-    '\u{1680}' | '\u{2000}'
-            ..='\u{200A}' | '\u{202F}' | '\u{205F}' | '\u{3000}' |
-    // Line terminators: https://tc39.es/ecma262/#sec-line-terminators
-    '\u{000A}' | '\u{000D}' | '\u{2028}' | '\u{2029}'
-    )
 }

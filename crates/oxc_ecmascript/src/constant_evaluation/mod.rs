@@ -222,19 +222,7 @@ pub trait ConstantEvaluation<'a> {
                 let rval = self.eval_to_number(right)?;
                 let val = match e.operator {
                     BinaryOperator::Subtraction => lval - rval,
-                    BinaryOperator::Division => {
-                        if rval.is_zero() {
-                            if lval.is_zero() || lval.is_nan() || lval.is_infinite() {
-                                f64::NAN
-                            } else if lval.is_sign_positive() {
-                                f64::INFINITY
-                            } else {
-                                f64::NEG_INFINITY
-                            }
-                        } else {
-                            lval / rval
-                        }
-                    }
+                    BinaryOperator::Division => lval / rval,
                     BinaryOperator::Remainder => {
                         if rval.is_zero() {
                             f64::NAN
@@ -332,17 +320,17 @@ pub trait ConstantEvaluation<'a> {
     fn eval_unary_expression(&self, expr: &UnaryExpression<'a>) -> Option<ConstantValue<'a>> {
         match expr.operator {
             UnaryOperator::Typeof => {
-                if !expr.argument.is_literal_value(true) {
-                    return None;
-                }
                 let s = match &expr.argument {
+                    Expression::ObjectExpression(_) | Expression::ArrayExpression(_)
+                        if expr.argument.is_literal_value(true) =>
+                    {
+                        "object"
+                    }
                     Expression::FunctionExpression(_) => "function",
                     Expression::StringLiteral(_) => "string",
                     Expression::NumericLiteral(_) => "number",
                     Expression::BooleanLiteral(_) => "boolean",
-                    Expression::NullLiteral(_)
-                    | Expression::ObjectExpression(_)
-                    | Expression::ArrayExpression(_) => "object",
+                    Expression::NullLiteral(_) => "object",
                     Expression::UnaryExpression(e) if e.operator == UnaryOperator::Void => {
                         "undefined"
                     }

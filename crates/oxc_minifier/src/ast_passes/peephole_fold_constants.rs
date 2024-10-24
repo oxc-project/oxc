@@ -1206,7 +1206,20 @@ mod test {
 
         test("x = Infinity / Infinity", "x = NaN");
         test("x = Infinity % Infinity", "x = NaN");
-        test("x = Infinity / 0", "x = NaN");
+        test("x = Infinity / 0", "x = Infinity");
         test("x = Infinity % 0", "x = NaN");
+    }
+
+    #[test]
+    fn test_to_number() {
+        test("x = +''", "x = 0");
+        test("x = +'+Infinity'", "x = Infinity");
+        test("x = +'-Infinity'", "x = -Infinity");
+
+        for op in ["", "+", "-"] {
+            for s in ["inf", "infinity", "INFINITY", "InFiNiTy"] {
+                test(&format!("x = +'{op}{s}'"), "x = NaN");
+            }
+        }
     }
 }
