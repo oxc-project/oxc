@@ -2,7 +2,7 @@ commit: 06454619
 
 runtime Summary:
 AST Parsed     : 18444/18444 (100.00%)
-Positive Passed: 18276/18444 (99.09%)
+Positive Passed: 18287/18444 (99.15%)
 tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-existing-block-fn-no-init.js
 minify error: Test262Error: Expected SameValue(«function f(){}», «undefined») to be true
 
@@ -318,9 +318,6 @@ minify error: SyntaxError: Identifier 'f' has already been declared
 tasks/coverage/test262/test/annexB/language/global-code/if-stmt-else-decl-global-skip-early-err.js
 minify error: SyntaxError: Identifier 'f' has already been declared
 
-tasks/coverage/test262/test/language/expressions/addition/S11.6.1_A4_T5.js
-minify error: Test262Error: #1.1: -0 + -0 === - 0. Actual: +0
-
 tasks/coverage/test262/test/language/expressions/array/spread-obj-getter-init.js
 transform error: Test262Error: Expected SameValue(«true», «false») to be true
 
@@ -330,12 +327,6 @@ codegen error: Test262Error: descriptor value should be ; object value should be
 tasks/coverage/test262/test/language/expressions/call/spread-obj-getter-init.js
 transform error: Test262Error: Expected SameValue(«true», «false») to be true
 
-tasks/coverage/test262/test/language/expressions/conditional/in-branch-1.js
-minify error: Test262Error: Expected SameValue(«0», «1») to be true
-
-tasks/coverage/test262/test/language/expressions/division/S11.5.2_A4_T8.js
-minify error: Test262Error: #1.2: -0 / 1 === - 0. Actual: +0
-
 tasks/coverage/test262/test/language/expressions/does-not-equals/bigint-and-object.js
 minify error: Test262Error: The result of (0n != {valueOf: function() {return 0n;}}) is false Expected SameValue(«true», «false») to be true
 
@@ -344,9 +335,6 @@ codegen error: Test262Error: p1 constructor is %Promise% Expected SameValue(«fu
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/eval-self-once-module.js
 codegen error: Test262Error: global property was defined and incremented only once Expected SameValue(«2», «1») to be true
-
-tasks/coverage/test262/test/language/expressions/dynamic-import/import-attributes/2nd-param-in.js
-minify error: TypeError: Cannot read properties of undefined (reading 'then')
 
 tasks/coverage/test262/test/language/expressions/dynamic-import/imported-self-update.js
 codegen error: Test262Error: updated value, direct binding Expected SameValue(«0», «1») to be true
@@ -381,24 +369,6 @@ minify error: Test262Error: The result of (0n == {valueOf: function() {return 0n
 tasks/coverage/test262/test/language/expressions/exponentiation/bigint-negative-exponent-throws.js
 transform error: Test262Error: (-1n) ** -1n throws RangeError Expected a RangeError but got a TypeError
 
-tasks/coverage/test262/test/language/expressions/logical-and/S11.11.1_A3_T2.js
-minify error: Test262Error: #1.2: (-0 && -1) === -0
-
-tasks/coverage/test262/test/language/expressions/logical-and/S11.11.1_A4_T2.js
-minify error: Test262Error: #1.2: (-1 && -0) === -0
-
-tasks/coverage/test262/test/language/expressions/logical-or/S11.11.2_A3_T2.js
-minify error: Test262Error: #1.2: (0 || -0) === -0
-
-tasks/coverage/test262/test/language/expressions/modulus/S11.5.3_A4_T2.js
-minify error: Test262Error: #2.2: -1 % -1 === - 0. Actual: +0
-
-tasks/coverage/test262/test/language/expressions/modulus/S11.5.3_A4_T6.js
-minify error: Test262Error: #3.2: -0 % 1 === - 0. Actual: +0
-
-tasks/coverage/test262/test/language/expressions/multiplication/S11.5.1_A4_T2.js
-minify error: Test262Error: #6.2: 0 * -0 === - 0. Actual: +0
-
 tasks/coverage/test262/test/language/expressions/new/spread-obj-getter-init.js
 transform error: Test262Error: Expected SameValue(«true», «false») to be true
 
@@ -414,20 +384,8 @@ transform error: TypeError: Cannot read properties of undefined (reading 'enumer
 tasks/coverage/test262/test/language/expressions/object/object-spread-proxy-ownkeys-returned-keys-order.js
 transform error: TypeError: Cannot read properties of undefined (reading 'enumerable')
 
-tasks/coverage/test262/test/language/expressions/subtraction/S11.6.2_A4_T5.js
-minify error: Test262Error: #3.2: -0 - 0 === - 0. Actual: +0
-
 tasks/coverage/test262/test/language/expressions/super/call-spread-obj-getter-init.js
 transform error: Test262Error: Expected SameValue(«true», «false») to be true
-
-tasks/coverage/test262/test/language/expressions/unary-plus/S11.4.6_A3_T3.js
-minify error: Test262Error: #4: +"INFINITY" === Not-a-Number. Actual: Infinity
-
-tasks/coverage/test262/test/language/expressions/unary-plus/S9.3_A4.2_T2.js
-minify error: Test262Error: #3.2: +(-0) === -0. Actual: +0
-
-tasks/coverage/test262/test/language/expressions/unary-plus/bigint-throws.js
-minify error: Test262Error: +0n throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
 
 tasks/coverage/test262/test/language/global-code/decl-func.js
 codegen error: Test262Error: descriptor should not be configurable

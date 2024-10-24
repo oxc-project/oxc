@@ -4,7 +4,7 @@ use std::cell::Cell;
 
 use rustc_hash::FxHashSet;
 
-use oxc_allocator::{GetAddress, Vec as ArenaVec};
+use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::SymbolFlags;
@@ -414,11 +414,10 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
 
         // Add assignments after super calls
         self.ctx.statement_injector.insert_many_after(
-            stmt.address(),
+            stmt,
             self.assignments
                 .iter()
-                .map(|assignment| assignment.create_this_property_assignment(ctx))
-                .collect::<Vec<_>>(),
+                .map(|assignment| assignment.create_this_property_assignment(ctx)),
         );
         self.has_super_call = true;
     }

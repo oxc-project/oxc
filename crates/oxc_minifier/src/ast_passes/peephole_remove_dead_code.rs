@@ -204,15 +204,11 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
     ) -> Option<Statement<'a>> {
         let test_boolean = for_stmt.test.as_ref().and_then(|test| ctx.get_boolean_value(test));
         match test_boolean {
-            Some(false) => {
-                // Remove the entire `for` statement.
-                // Check vars in statement
-                let mut keep_var = KeepVar::new(ctx.ast);
-                keep_var.visit_statement(&for_stmt.body);
-
-                let mut var_decl = keep_var.get_variable_declaration();
-
-                if let Some(ForStatementInit::VariableDeclaration(var_init)) = &mut for_stmt.init {
+            Some(false) => match &mut for_stmt.init {
+                Some(ForStatementInit::VariableDeclaration(var_init)) => {
+                    let mut keep_var = KeepVar::new(ctx.ast);
+                    keep_var.visit_statement(&for_stmt.body);
+                    let mut var_decl = keep_var.get_variable_declaration();
                     if var_init.kind.is_var() {
                         if let Some(var_decl) = &mut var_decl {
                             var_decl
@@ -222,14 +218,27 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
                             var_decl = Some(ctx.ast.move_variable_declaration(var_init));
                         }
                     }
+                    Some(var_decl.map_or_else(
+                        || ctx.ast.statement_empty(SPAN),
+                        |var_decl| {
+                            ctx.ast
+                                .statement_declaration(ctx.ast.declaration_from_variable(var_decl))
+                        },
+                    ))
                 }
-
-                var_decl
-                    .map(|var_decl| {
-                        ctx.ast.statement_declaration(ctx.ast.declaration_from_variable(var_decl))
-                    })
-                    .or_else(|| Some(ctx.ast.statement_empty(SPAN)))
-            }
+                None => {
+                    let mut keep_var = KeepVar::new(ctx.ast);
+                    keep_var.visit_statement(&for_stmt.body);
+                    Some(keep_var.get_variable_declaration().map_or_else(
+                        || ctx.ast.statement_empty(SPAN),
+                        |var_decl| {
+                            ctx.ast
+                                .statement_declaration(ctx.ast.declaration_from_variable(var_decl))
+                        },
+                    ))
+                }
+                _ => None,
+            },
             Some(true) => {
                 // Remove the test expression.
                 for_stmt.test = None;
@@ -508,6 +517,7 @@ mod test {
         fold("for (var se = [1, 2]; false;);", "var se = [1, 2];");
         fold("for (var se = [1, 2]; false;) { var a = 0; }", "var se = [1, 2], a;");
 
+        fold("for (foo = bar; false;) {}", "for (foo = bar; false;);");
         // fold("l1:for(;false;) {  }", "");
     }
 

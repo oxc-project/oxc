@@ -32,6 +32,12 @@ use wasm_bindgen::prelude::*;
 
 use crate::options::{OxcOptions, OxcRunOptions};
 
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = r#"
+import type { Program, Span } from "@oxc/types";
+export * from "@oxc/types";
+"#;
+
 #[wasm_bindgen(getter_with_clone)]
 #[derive(Default, Tsify)]
 #[serde(rename_all = "camelCase")]

@@ -29,9 +29,8 @@ miette = { workspace = true }
 
 schemars = { workspace = true, optional = true }
 serde = { workspace = true, features = ["derive"], optional = true }
-wasm-bindgen = { workspace = true, optional = true }
 
 [features]
 default = []
-serialize = ["compact_str/serde", "dep:serde", "dep:wasm-bindgen"]
+serialize = ["compact_str/serde", "dep:serde"]
 schemars = ["dep:schemars"]

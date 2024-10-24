@@ -36,11 +36,9 @@ impl Generator for AssertLayouts {
                 use std::mem::{align_of, offset_of, size_of};
 
                 ///@@line_break
-                #[allow(clippy::wildcard_imports)]
                 use crate::ast::*;
 
                 ///@@line_break
-                #[allow(clippy::wildcard_imports)]
                 use oxc_regular_expression::ast::*;
 
                 ///@@line_break

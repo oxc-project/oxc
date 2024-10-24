@@ -1,5 +1,4 @@
 use oxc_allocator::Box;
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, NONE};
 use oxc_span::{Span, SPAN};
 

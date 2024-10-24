@@ -1,4 +1,3 @@
-#[allow(clippy::wildcard_imports)]
 use super::*;
 
 /// A slice that only accepts indices of a specific type. Note that the intended

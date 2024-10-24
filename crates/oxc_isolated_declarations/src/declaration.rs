@@ -3,7 +3,6 @@ use std::cell::Cell;
 use oxc_allocator::Box;
 use oxc_allocator::CloneIn;
 use oxc_allocator::Vec;
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 use oxc_ast::visit::walk_mut::walk_ts_signatures;
 use oxc_ast::{Visit, VisitMut};

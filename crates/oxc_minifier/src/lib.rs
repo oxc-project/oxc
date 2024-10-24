@@ -1,5 +1,3 @@
-#![allow(clippy::wildcard_imports)]
-
 //! ECMAScript Minifier
 
 mod ast_passes;
