@@ -44,7 +44,7 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use bump_scope::Bump;
+use allocator_api2::alloc::Global;
 
 /// A bump-allocated string.
 type BumpScope<'a> = bump_scope::BumpScope<'a>;
@@ -63,6 +63,13 @@ pub use convert::{FromIn, IntoIn};
 pub use string::String;
 pub use vec::Vec;
 
+const BUMP_UPWARDS: bool = true;
+const MINIMUM_ALIGNMENT: usize = 1;
+
+type BumpImpl = bump_scope::Bump<Global, MINIMUM_ALIGNMENT, BUMP_UPWARDS>;
+type VecImpl<'a, T> = bump_scope::BumpVec<'a, 'a, T, Global, MINIMUM_ALIGNMENT, BUMP_UPWARDS>;
+type StringImpl<'a> = bump_scope::BumpString<'a, 'a, Global, MINIMUM_ALIGNMENT, BUMP_UPWARDS>;
+
 /// A bump-allocated memory arena based on [bump-scope].
 ///
 /// ## No `Drop`s
@@ -72,7 +79,7 @@ pub use vec::Vec;
 /// easy to leak memory or other resources.
 #[derive(Default)]
 pub struct Allocator {
-    bump: Bump,
+    bump: BumpImpl,
 }
 
 impl<'a> From<&'a Allocator> for &'a BumpScope<'a> {
@@ -81,14 +88,14 @@ impl<'a> From<&'a Allocator> for &'a BumpScope<'a> {
     }
 }
 
-impl From<Bump> for Allocator {
-    fn from(bump: Bump) -> Self {
+impl From<BumpImpl> for Allocator {
+    fn from(bump: BumpImpl) -> Self {
         Self { bump }
     }
 }
 
 impl Deref for Allocator {
-    type Target = Bump;
+    type Target = BumpImpl;
 
     fn deref(&self) -> &Self::Target {
         &self.bump
@@ -105,13 +112,13 @@ impl DerefMut for Allocator {
 mod test {
     use std::ops::Deref;
 
-    use bump_scope::Bump;
+    use super::BumpImpl;
 
     use crate::Allocator;
 
     #[test]
     fn test_api() {
-        let bump = Bump::new();
+        let bump = BumpImpl::new();
         let allocator: Allocator = bump.into();
         #[allow(clippy::explicit_deref_methods)]
         {

@@ -1,12 +1,10 @@
-use bump_scope::BumpString as StringImpl;
-
-use crate::Allocator;
+use crate::{Allocator, StringImpl};
 
 #[cfg(any(feature = "serialize", test))]
 use serde::{Serialize, Serializer};
 
 /// A bump-allocated string.
-pub struct String<'a>(StringImpl<'a, 'a>);
+pub struct String<'a>(StringImpl<'a>);
 
 impl<'a> String<'a> {
     /// Constructs a new empty `String`.

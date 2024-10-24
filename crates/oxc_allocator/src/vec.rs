@@ -23,9 +23,7 @@ use allocator_api2::alloc::Global;
 #[cfg(any(feature = "serialize", test))]
 use serde::{ser::SerializeSeq, Serialize, Serializer};
 
-use crate::{Allocator, Box};
-
-type VecImpl<'a, T> = bump_scope::BumpVec<'a, 'a, T>;
+use crate::{Allocator, Box, VecImpl};
 
 /// A `Vec` without [`Drop`], which stores its data in the arena allocator.
 ///
