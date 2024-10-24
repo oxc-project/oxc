@@ -59,7 +59,6 @@ mod eslint {
     pub mod no_debugger;
     pub mod no_delete_var;
     pub mod no_div_regex;
-    pub mod no_dupe_args;
     pub mod no_dupe_class_members;
     pub mod no_dupe_else_if;
     pub mod no_dupe_keys;
@@ -536,7 +535,6 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_debugger,
     eslint::no_delete_var,
     eslint::no_div_regex,
-    eslint::no_dupe_args,
     eslint::no_dupe_class_members,
     eslint::no_dupe_else_if,
     eslint::no_dupe_keys,
