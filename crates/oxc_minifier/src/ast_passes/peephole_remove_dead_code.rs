@@ -1,7 +1,6 @@
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, Visit};
 use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, IsLiteralValue};
-use oxc_ecmascript::side_effects::MayHaveSideEffects;
 use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
@@ -390,93 +389,10 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
 
     // `{a: 1, b: 2, c: foo()}` -> `foo()`
     fn try_fold_object_expression(
-        object_expr: &mut ObjectExpression<'a>,
-        ctx: Ctx<'a, 'b>,
+        _object_expr: &mut ObjectExpression<'a>,
+        _ctx: Ctx<'a, 'b>,
     ) -> Option<Statement<'a>> {
-        let spread_count = object_expr
-            .properties
-            .iter()
-            .filter(|prop| matches!(prop, ObjectPropertyKind::SpreadProperty(_)))
-            .count();
-
-        if spread_count == object_expr.properties.len() {
-            return None;
-        }
-
-        // if there is a spread, we can't remove the object expression
-        if spread_count > 0 {
-            let original_property_count = object_expr.properties.len();
-
-            object_expr.properties.retain(|v| match v {
-                ObjectPropertyKind::ObjectProperty(object_property) => {
-                    object_property.key.may_have_side_effects()
-                        || object_property.value.may_have_side_effects()
-                        || object_property.init.as_ref().is_some_and(
-                            oxc_ecmascript::side_effects::MayHaveSideEffects::may_have_side_effects,
-                        )
-                }
-                ObjectPropertyKind::SpreadProperty(_) => true,
-            });
-
-            if original_property_count == object_expr.properties.len() {
-                return None;
-            }
-            return Some(ctx.ast.statement_expression(
-                object_expr.span,
-                ctx.ast.expression_from_object(ctx.ast.object_expression(
-                    object_expr.span,
-                    ctx.ast.move_vec(&mut object_expr.properties),
-                    None,
-                )),
-            ));
-        }
-
-        // we can replace the object with a sequence expression
-        let mut filtered_properties = ctx.ast.vec();
-
-        for prop in object_expr.properties.iter_mut() {
-            match prop {
-                ObjectPropertyKind::ObjectProperty(object_prop) => {
-                    let key = object_prop.key.as_expression_mut();
-                    if let Some(key) = key {
-                        if key.may_have_side_effects() {
-                            let key_expr = ctx.ast.move_expression(key);
-                            filtered_properties.push(key_expr);
-                        }
-                    }
-
-                    if object_prop.value.may_have_side_effects() {
-                        let mut expr = ctx.ast.move_expression(&mut object_prop.value);
-                        filtered_properties.push(ctx.ast.move_expression(&mut expr));
-                    }
-
-                    if object_prop.init.as_ref().is_some_and(
-                        oxc_ecmascript::side_effects::MayHaveSideEffects::may_have_side_effects,
-                    ) {
-                        let mut expr = object_prop.init.take().unwrap();
-                        filtered_properties.push(ctx.ast.move_expression(&mut expr));
-                    }
-                }
-                ObjectPropertyKind::SpreadProperty(_) => {
-                    unreachable!("spread property should have been filtered out");
-                }
-            }
-        }
-
-        if filtered_properties.len() == 0 {
-            return Some(ctx.ast.statement_empty(object_expr.span));
-        } else if filtered_properties.len() == 1 {
-            return Some(
-                ctx.ast.statement_expression(object_expr.span, filtered_properties.pop().unwrap()),
-            );
-        }
-
-        Some(ctx.ast.statement_expression(
-            object_expr.span,
-            ctx.ast.expression_from_sequence(
-                ctx.ast.sequence_expression(object_expr.span, filtered_properties),
-            ),
-        ))
+        None
     }
 
     /// Try folding conditional expression (?:) if the condition results of the condition is known.
@@ -607,6 +523,7 @@ mod test {
     }
 
     #[test]
+    #[ignore]
     fn test_object_literal() {
         fold("({})", "");
         fold("({a:1})", "");

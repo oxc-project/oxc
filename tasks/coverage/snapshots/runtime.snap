@@ -2,7 +2,7 @@ commit: 06454619
 
 runtime Summary:
 AST Parsed     : 18444/18444 (100.00%)
-Positive Passed: 18260/18444 (99.00%)
+Positive Passed: 18264/18444 (99.02%)
 tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-existing-block-fn-no-init.js
 minify error: Test262Error: Expected SameValue(«function f(){}», «undefined») to be true
 
@@ -417,12 +417,6 @@ transform error: Test262Error: Expected SameValue(«true», «false») to be tru
 tasks/coverage/test262/test/language/expressions/object/__proto__-permitted-dup-shorthand.js
 codegen error: Test262Error: Expected SameValue(«[object Object]», «2») to be true
 
-tasks/coverage/test262/test/language/expressions/object/accessor-name-computed-err-to-prop-key.js
-minify error: Test262Error: `get` accessor Expected a TypeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/object/accessor-name-computed-err-unresolvable.js
-minify error: Test262Error: `get` accessor Expected a ReferenceError to be thrown but no exception was thrown at all
-
 tasks/coverage/test262/test/language/expressions/object/object-spread-proxy-get-not-called-on-dontenum-keys.js
 transform error: Test262Error: Actual [dontEnumString, 0, enumerableString, 1, Symbol(dont_enum_symbol), Symbol(enumerable_symbol)] and expected [Symbol(dont_enum_symbol), dontEnumString, 0, Symbol(enumerable_symbol), enumerableString, 1] should have the same contents. 
 
@@ -431,12 +425,6 @@ transform error: TypeError: Cannot read properties of undefined (reading 'enumer
 
 tasks/coverage/test262/test/language/expressions/object/object-spread-proxy-ownkeys-returned-keys-order.js
 transform error: TypeError: Cannot read properties of undefined (reading 'enumerable')
-
-tasks/coverage/test262/test/language/expressions/object/prop-def-id-eval-error-2.js
-minify error: Test262Error: Expected a Test262Error to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/object/prop-def-id-get-error.js
-minify error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
 
 tasks/coverage/test262/test/language/expressions/subtraction/S11.6.2_A4_T5.js
 minify error: Test262Error: #3.2: -0 - 0 === - 0. Actual: +0
