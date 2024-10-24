@@ -49,6 +49,13 @@ impl<'a> State<'a> {
     }
 }
 
+enum SimpleUnit<'a> {
+    Open,
+    Close,
+    Pipe,
+    GroupName(Atom<'a>),
+}
+
 /// Returns: Result<
 ///   (num_of_left_parens, capturing_group_names),
 ///   duplicated_named_capturing_group_offsets
@@ -74,12 +81,6 @@ fn parse_capturing_groups<'a>(
     // And as long as it works simply, this may be enough.
     let mut may_duplicates: FxHashMap<Atom<'a>, DuplicatedNamedCapturingGroupOffsets> =
         FxHashMap::default();
-    enum SimpleUnit<'a> {
-        Open,
-        Close,
-        Pipe,
-        GroupName(Atom<'a>),
-    }
     let mut simplified: Vec<SimpleUnit<'a>> = vec![];
 
     let mut in_escape = false;
@@ -155,13 +156,13 @@ fn parse_capturing_groups<'a>(
     if !may_duplicates.is_empty() {
         // Check must be done for each group name
         for (group_name, spans) in may_duplicates {
-            let mut iter = simplified.iter().clone();
+            let iter = simplified.iter().clone();
 
             let mut alternative_depth = FxHashSet::default();
             let mut depth = 0_u32;
             let mut is_first = true;
 
-            'outer: while let Some(token) = iter.next() {
+            'outer: for token in iter {
                 match token {
                     SimpleUnit::Open => {
                         depth += 1;
@@ -175,8 +176,11 @@ fn parse_capturing_groups<'a>(
                             alternative_depth.insert(depth);
                         }
                     }
-                    // Check target group name only
-                    SimpleUnit::GroupName(name) if *name == group_name => {
+                    SimpleUnit::GroupName(name) => {
+                        // Check target group name only
+                        if *name != group_name {
+                            continue;
+                        }
                         // Skip the first one, because it is not duplicated
                         if is_first {
                             is_first = false;
@@ -197,7 +201,6 @@ fn parse_capturing_groups<'a>(
 
                         return Err(spans);
                     }
-                    _ => {}
                 }
             }
         }
