@@ -5,7 +5,6 @@ use oxc_ast::{ast::*, visit::walk_mut, VisitMut, NONE};
 use oxc_ecmascript::ToInt32;
 use oxc_span::{Atom, Span, SPAN};
 use oxc_syntax::{
-    node::NodeId,
     number::{NumberBase, ToJsString},
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
     reference::ReferenceFlags,
@@ -77,20 +76,13 @@ impl<'a> TypeScriptEnum<'a> {
 
         let enum_name = decl.id.name.clone();
         let func_scope_id = decl.scope_id.get().unwrap();
-        let param_symbol_id = ctx.symbols_mut().create_symbol(
-            decl.id.span,
+        let param_ident = ctx.generate_binding(
             enum_name.to_compact_str(),
-            SymbolFlags::FunctionScopedVariable,
             func_scope_id,
-            NodeId::DUMMY,
+            SymbolFlags::FunctionScopedVariable,
         );
-        ctx.scopes_mut().add_binding(func_scope_id, enum_name.to_compact_str(), param_symbol_id);
 
-        let ident = ctx.ast.binding_identifier_with_symbol_id(
-            decl.id.span,
-            decl.id.name.clone(),
-            param_symbol_id,
-        );
+        let ident = param_ident.create_binding_identifier(ctx);
         let kind = ast.binding_pattern_kind_from_binding_identifier(ident.clone());
         let id = ast.binding_pattern(kind, NONE, false);
 

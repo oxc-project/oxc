@@ -1,5 +1,4 @@
 //! Literals
-#![warn(missing_docs)]
 
 use std::{
     borrow::Cow,
