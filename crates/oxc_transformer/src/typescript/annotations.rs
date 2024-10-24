@@ -417,8 +417,7 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
             stmt.address(),
             self.assignments
                 .iter()
-                .map(|assignment| assignment.create_this_property_assignment(ctx))
-                .collect::<Vec<_>>(),
+                .map(|assignment| assignment.create_this_property_assignment(ctx)),
         );
         self.has_super_call = true;
     }
