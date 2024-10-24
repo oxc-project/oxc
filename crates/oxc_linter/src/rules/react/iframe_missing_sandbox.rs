@@ -104,7 +104,7 @@ impl Rule for IframeMissingSandbox {
                 );
             }
             AstKind::CallExpression(call_expr) => {
-                if is_create_element_call(call_expr) {
+                if is_create_element_call(call_expr, ctx) {
                     let Some(Argument::StringLiteral(str)) = call_expr.arguments.first() else {
                         return;
                     };
@@ -212,6 +212,7 @@ fn test() {
         r#"React.createElement("iframe", { sandbox: "allow-top-navigation-by-user-activation" })"#,
         r#"React.createElement("iframe", { sandbox: "allow-forms allow-modals" })"#,
         r#"React.createElement("iframe", { sandbox: "allow-popups allow-popups-to-escape-sandbox allow-pointer-lock allow-same-origin allow-top-navigation" })"#,
+        r#"document.createElement("iframe");"#,
     ];
 
     let fail = vec![

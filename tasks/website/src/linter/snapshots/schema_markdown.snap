@@ -330,3 +330,14 @@ default: `[]`
 
 
 ##### settings.react.linkComponents[n]
+
+
+
+
+
+
+#### settings.react.pragma
+
+type: `string`
+
+default: `"React"`

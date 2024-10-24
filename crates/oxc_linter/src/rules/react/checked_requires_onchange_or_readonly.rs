@@ -118,7 +118,7 @@ impl Rule for CheckedRequiresOnchangeOrReadonly {
                 }
             }
             AstKind::CallExpression(call_expr) => {
-                if !is_create_element_call(call_expr) {
+                if !is_create_element_call(call_expr, ctx) {
                     return;
                 }
 

@@ -64,6 +64,7 @@
           "rootDir": []
         },
         "react": {
+          "pragma": "React",
           "formComponents": [],
           "linkComponents": []
         },
@@ -365,6 +366,7 @@
         },
         "react": {
           "default": {
+            "pragma": "React",
             "formComponents": [],
             "linkComponents": []
           },
@@ -392,6 +394,10 @@
           "items": {
             "$ref": "#/definitions/CustomComponent"
           }
+        },
+        "pragma": {
+          "default": "React",
+          "type": "string"
         }
       }
     },
