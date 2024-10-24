@@ -4,7 +4,6 @@ use compact_str::CompactString;
 use itoa::Buffer as ItoaBuffer;
 use rustc_hash::FxHashSet;
 
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, visit::Visit};
 use oxc_semantic::{NodeId, Reference, ScopeTree, SymbolTable};
 use oxc_span::{CompactStr, SPAN};

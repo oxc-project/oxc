@@ -5,7 +5,6 @@
 
 use serde::{ser::SerializeMap, Serialize, Serializer};
 
-#[allow(clippy::wildcard_imports)]
 use crate::operator::*;
 
 impl Serialize for AssignmentOperator {

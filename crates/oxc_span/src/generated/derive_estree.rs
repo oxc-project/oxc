@@ -5,10 +5,8 @@
 
 use serde::{ser::SerializeMap, Serialize, Serializer};
 
-#[allow(clippy::wildcard_imports)]
 use crate::source_type::*;
 
-#[allow(clippy::wildcard_imports)]
 use crate::span::types::*;
 
 impl Serialize for Span {

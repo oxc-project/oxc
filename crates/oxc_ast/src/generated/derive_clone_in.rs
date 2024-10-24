@@ -5,19 +5,14 @@
 
 use oxc_allocator::{Allocator, CloneIn};
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::comment::*;
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::js::*;
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::jsx::*;
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::literal::*;
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::ts::*;
 
 impl<'alloc> CloneIn<'alloc> for BooleanLiteral {

@@ -7,7 +7,6 @@ use std::{borrow::Cow, cmp::Ordering};
 use num_bigint::BigInt;
 use num_traits::{One, Zero};
 
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 
 use crate::{side_effects::MayHaveSideEffects, ToBigInt, ToInt32, ToJsString};
