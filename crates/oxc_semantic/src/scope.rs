@@ -1,4 +1,4 @@
-use std::hash::BuildHasherDefault;
+use std::{hash::BuildHasherDefault, mem};
 
 use indexmap::IndexMap;
 use rustc_hash::{FxHashMap, FxHasher};
@@ -173,6 +173,23 @@ impl ScopeTree {
         }
     }
 
+    /// Change the parent scope of a scope.
+    ///
+    /// This will also remove the scope from the child list of the old parent and add it to the new parent.
+    pub fn change_parent_id(&mut self, scope_id: ScopeId, new_parent_id: Option<ScopeId>) {
+        let old_parent_id = mem::replace(&mut self.parent_ids[scope_id], new_parent_id);
+        if self.build_child_ids {
+            // Remove this scope from old parent scope
+            if let Some(old_parent_id) = old_parent_id {
+                self.child_ids[old_parent_id].retain(|&child_id| child_id != scope_id);
+            }
+            // And add it to new parent scope
+            if let Some(parent_id) = new_parent_id {
+                self.child_ids[parent_id].push(scope_id);
+            }
+        }
+    }
+
     /// Delete a scope.
     pub fn delete_scope(&mut self, scope_id: ScopeId) {
         if self.build_child_ids {
@@ -309,6 +326,14 @@ impl ScopeTree {
     /// Remove an existing binding from a scope.
     pub fn remove_binding(&mut self, scope_id: ScopeId, name: &CompactStr) {
         self.bindings[scope_id].shift_remove(name);
+    }
+
+    /// Move a binding from one scope to another.
+    pub fn move_binding(&mut self, from: ScopeId, to: ScopeId, name: &str) {
+        let from_map = &mut self.bindings[from];
+        if let Some((name, symbol_id)) = from_map.swap_remove_entry(name) {
+            self.bindings[to].insert(name, symbol_id);
+        }
     }
 
     /// Reserve memory for an `additional` number of scopes.

@@ -35,7 +35,7 @@
 
 use ropey::Rope;
 
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Span, SPAN};
 use oxc_syntax::{number::NumberBase, symbol::SymbolFlags};
@@ -201,21 +201,14 @@ impl<'a, 'ctx> ReactJsxSource<'a, 'ctx> {
 
     pub fn get_filename_var_declarator(
         &self,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> Option<VariableDeclarator<'a>> {
         let filename_var = self.filename_var.as_ref()?;
 
-        let var_kind = VariableDeclarationKind::Var;
-        let id = {
-            let ident = filename_var.create_binding_identifier(ctx);
-            let ident = ctx.ast.binding_pattern_kind_from_binding_identifier(ident);
-            ctx.ast.binding_pattern(ident, NONE, false)
-        };
-        let decl = {
-            let init =
-                ctx.ast.expression_string_literal(SPAN, self.ctx.source_path.to_string_lossy());
-            ctx.ast.variable_declarator(SPAN, var_kind, id, Some(init), false)
-        };
+        let id = filename_var.create_binding_pattern(ctx);
+        let init = ctx.ast.expression_string_literal(SPAN, self.ctx.source_path.to_string_lossy());
+        let decl =
+            ctx.ast.variable_declarator(SPAN, VariableDeclarationKind::Var, id, Some(init), false);
         Some(decl)
     }
 

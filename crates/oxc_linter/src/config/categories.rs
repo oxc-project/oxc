@@ -64,6 +64,7 @@ Rules enabled or disabled this way will be overwritten by individual rules in th
 # Example
 ```json
 {
+    "$schema": "./node_modules/oxlint/configuration_schema.json",
     "categories": {
         "correctness": "warn"
     },

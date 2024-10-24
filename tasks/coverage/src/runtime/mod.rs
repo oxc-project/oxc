@@ -12,7 +12,7 @@ use oxc::{
     parser::Parser,
     semantic::SemanticBuilder,
     span::SourceType,
-    transformer::{TransformOptions, Transformer},
+    transformer::{HelperLoaderMode, TransformOptions, Transformer},
 };
 use oxc_tasks_common::agent;
 use serde_json::json;
@@ -163,6 +163,8 @@ impl Test262RuntimeCase {
                 SemanticBuilder::new().build(&program).semantic.into_symbol_table_and_scope_tree();
             let mut options = TransformOptions::enable_all();
             options.react.refresh = None;
+            options.helper_loader.mode = HelperLoaderMode::External;
+            options.typescript.only_remove_type_imports = true;
             Transformer::new(&allocator, self.path(), options).build_with_symbols_and_scopes(
                 symbols,
                 scopes,
@@ -171,7 +173,7 @@ impl Test262RuntimeCase {
         }
 
         let mangler = if minify {
-            Minifier::new(MinifierOptions { mangle: true, ..MinifierOptions::default() })
+            Minifier::new(MinifierOptions { mangle: false, ..MinifierOptions::default() })
                 .build(&allocator, &mut program)
                 .mangler
         } else {

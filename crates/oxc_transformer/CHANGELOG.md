@@ -4,6 +4,51 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.33.0] - 2024-10-24
+
+- 4d2d214 ast, transformer: [**BREAKING**] Remove `StringLiteral::new` method (#6788) (overlookmotel)
+
+- aeaa27a ast, parser, transformer, traverse: [**BREAKING**] Remove `BindingIdentifier::new` methods (#6786) (overlookmotel)
+
+- ecc9151 ast, parser, transformer, traverse: [**BREAKING**] Remove `IdentifierReference::new` methods (#6785) (overlookmotel)
+
+- c91ffbc ast, transformer: [**BREAKING**] Remove `IdentifierName::new` method (#6784) (overlookmotel)
+
+- 2bee4e2 ast, transformer: [**BREAKING**] Remove `BlockStatement::new` methods (#6783) (overlookmotel)
+
+- 8032813 regular_expression: [**BREAKING**] Migrate to new regexp parser API (#6741) (leaysgur)
+
+### Features
+
+- 10484cd transformer: Class static block transform (#6733) (overlookmotel)
+- 7fbca9d transformer: Introduce `StatementInjector` helper (#6653) (Dunqing)
+
+### Bug Fixes
+
+- 1107770 coverage: Inject babel helpers for transform (#6818) (Boshen)
+- b711ee1 transformer: After using StatementInjector, some statements disappeared (#6778) (Dunqing)
+
+### Documentation
+
+- ab03535 transformer: Correct typos and reformat doc comments (#6758) (overlookmotel)
+
+### Refactor
+
+- ab8aa2f allocator: Move `GetAddress` trait into `oxc_allocator` (#6738) (overlookmotel)
+- 0e9b695 ast: Change `plain_function` to accept `FunctionBody` as a required parameter (#6709) (Dunqing)
+- b8dfa19 transformer: Shorten code (#6809) (overlookmotel)
+- 759710a transformer: Methods only take `&TraverseCtx` where possible (#6812) (overlookmotel)
+- 06e06e3 transformer: Rename `OxcVec` to `AVec` (#6737) (overlookmotel)
+- e5f4b4a transformer/react-refresh: Dereference `ScopeId` as soon as possible (#6820) (overlookmotel)
+- 57685b2 transformer/react-refresh: Unwrap `BindingIdentifier::symbol_id` (#6817) (overlookmotel)
+- 4f6dc22 transformer/react-refresh: Avoid re-creating `Atom`s (#6816) (overlookmotel)
+- 8316069 transformer/react-refresh: Shorten code by using `BoundIdentifier` (#6815) (overlookmotel)
+- fdd69e4 transformer/typescript: Use `TraverseCtx::generate_binding` to create a symbol (#6806) (Dunqing)
+
+### Styling
+
+- 871b9f5 transformer/react-refresh: Fix whitespace (#6813) (overlookmotel)
+
 ## [0.32.0] - 2024-10-19
 
 - 5200960 oxc: [**BREAKING**] Remove passing `Trivias` around (#6446) (Boshen)

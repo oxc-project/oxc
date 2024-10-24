@@ -1,5 +1,4 @@
 //! [JSX](https://facebook.github.io/jsx)
-#![warn(missing_docs)]
 use std::fmt;
 
 use oxc_span::Atom;

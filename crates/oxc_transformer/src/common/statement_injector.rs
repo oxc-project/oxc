@@ -86,7 +86,6 @@ impl<'a> StatementInjectorStore<'a> {
     }
 
     /// Add multiple statements to be inserted immediately after the target statement.
-    #[expect(dead_code)]
     pub fn insert_many_after(&self, target: Address, stmts: Vec<Statement<'a>>) {
         let mut insertions = self.insertions.borrow_mut();
         let adjacent_stmts = insertions.entry(target).or_default();

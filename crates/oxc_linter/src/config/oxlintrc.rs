@@ -29,6 +29,8 @@ use crate::{options::LintPlugins, utils::read_to_string};
 ///
 /// ```json
 /// {
+///   "$schema": "./node_modules/oxlint/configuration_schema.json",
+///   "plugins": ["import", "unicorn"],
 ///   "env": {
 ///     "browser": true
 ///   },
