@@ -85,6 +85,20 @@ impl<'a> StatementInjectorStore<'a> {
         adjacent_stmts.push(AdjacentStatement { stmt, direction: Direction::After });
     }
 
+    /// Add multiple statements to be inserted immediately before the target statement.
+    #[expect(dead_code)]
+    pub fn insert_many_before<S>(&self, target: Address, stmts: S)
+    where
+        S: IntoIterator<Item = Statement<'a>>,
+    {
+        let mut insertions = self.insertions.borrow_mut();
+        let adjacent_stmts = insertions.entry(target).or_default();
+        adjacent_stmts.splice(
+            0..0,
+            stmts.into_iter().map(|stmt| AdjacentStatement { stmt, direction: Direction::Before }),
+        );
+    }
+
     /// Add multiple statements to be inserted immediately after the target statement.
     pub fn insert_many_after<S>(&self, target: Address, stmts: S)
     where
