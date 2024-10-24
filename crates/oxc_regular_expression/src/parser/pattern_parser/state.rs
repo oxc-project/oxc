@@ -137,6 +137,11 @@ mod tests {
             ("(foo)(?<n>bar)(?<nn>baz)", (3, 2, false)),
             ("(?<n>.)(?<n>..)", (2, 1, true)),
             ("(?<n>.(?<n>..))", (2, 1, true)),
+            ("(?<n>.)|(?<n>.)", (2, 1, false)),
+            ("(?<n>.)(?<n>.)", (2, 1, true)),
+            ("(?<n>|(?<n>))", (2, 1, true)),
+            ("(?<n>(?<n>)|)", (2, 1, true)),
+            ("((?<n>)|(?<n>))(?<n>)", (4, 1, true)),
         ] {
             let mut reader = Reader::initialize(source_text, true, false).unwrap();
 
