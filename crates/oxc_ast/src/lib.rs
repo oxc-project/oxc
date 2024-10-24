@@ -3,12 +3,12 @@
 #![allow(clippy::self_named_module_files)]
 #![warn(missing_docs)]
 
-//! # Oxc AST
+//! # Oxc AST (Abstract Syntax Tree) Nodes
 //!
-//! Abstract Syntax Tree nodes for Oxc. Supports both TypeScript and JavaScript.
+//! Supports JavaScript, TypeScript and JSX.
 //!
-//! This is almost similar to [estree](https://github.com/estree/estree) except a few places:
-//! * `Identifier` is replaced with explicit [`BindingIdentifier`], [`IdentifierReference`], [`IdentifierName`] per spec
+//! Compared to [estree] and [typescript-eslint]'s definition, node ordering is identifical and the shape is similar except a few places:
+//! * `Identifier` is replaced with explicit [`BindingIdentifier`], [`IdentifierReference`], [`IdentifierName`] per ECMAScript Specification
 //! * `AssignmentExpression`.`left` `Pattern` is replaced with [`AssignmentTarget`]
 //!
 //! ## Parsing
@@ -24,6 +24,8 @@
 //! [`AssignmentTarget`]: ast::AssignmentTarget
 //! [`oxc_parser`]: <https://docs.rs/oxc_parser>
 //! [`Parser`]: <https://docs.rs/oxc_parser/latest/oxc_parser/struct.Parser.html>
+//! [estree]: <https://github.com/estree/estree>
+//! [typescript-eslint]: <https://github.com/typescript-eslint/typescript-eslint/tree/main/packages/ast-spec>
 
 #[cfg(feature = "serialize")]
 mod serialize;
