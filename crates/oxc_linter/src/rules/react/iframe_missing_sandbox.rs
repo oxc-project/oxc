@@ -8,6 +8,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use phf::{phf_set, Set};
 
+use crate::ast_util::is_method_call;
 use crate::utils::{get_prop_value, has_jsx_prop_ignore_case, is_create_element_call};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -57,12 +58,19 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// The sandbox attribute enables an extra set of restrictions for the content in the iframe. Using sandbox attribute is considered a good security practice.
-    /// To learn more about sandboxing, see [MDN's documentation on the `sandbox` attribute](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#sandbox).
-
+    /// The sandbox attribute enables an extra set of restrictions for the
+    /// content in the iframe. Using sandbox attribute is considered a good
+    /// security practice.  To learn more about sandboxing, see [MDN's
+    /// documentation on the `sandbox`
+    /// attribute](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#sandbox).
     ///
-    /// This rule checks all React `<iframe>` elements and verifies that there is `sandbox` attribute and that it's value is valid. In addition to that it also reports cases where attribute contains `allow-scripts` and `allow-same-origin` at the same time as this combination allows the embedded document to remove the sandbox attribute and bypass the restrictions.
-
+    /// This rule checks all React `<iframe>` elements and verifies that there
+    /// is `sandbox` attribute and that it's value is valid. In addition to that
+    /// it also reports cases where attribute contains `allow-scripts` and
+    /// `allow-same-origin` at the same time as this combination allows the
+    /// embedded document to remove the sandbox attribute and bypass the
+    /// restrictions.
+    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
@@ -78,7 +86,7 @@ declare_oxc_lint!(
     /// <iframe sandbox="allow-origin" />;
     /// ```
     IframeMissingSandbox,
-    correctness,
+    suspicious,
     pending
 );
 
@@ -110,6 +118,19 @@ impl Rule for IframeMissingSandbox {
                     };
 
                     if str.value != "iframe" {
+                        return;
+                    }
+
+                    // ignore document.createElement, since sandbox attributes
+                    // cannot be set here.
+                    // NOTE: should come after cheaper checks
+                    if is_method_call(
+                        call_expr,
+                        Some(&["document"]),
+                        Some(&["createElement"]),
+                        Some(1), // (el, options?)
+                        Some(2),
+                    ) {
                         return;
                     }
 
@@ -212,6 +233,9 @@ fn test() {
         r#"React.createElement("iframe", { sandbox: "allow-top-navigation-by-user-activation" })"#,
         r#"React.createElement("iframe", { sandbox: "allow-forms allow-modals" })"#,
         r#"React.createElement("iframe", { sandbox: "allow-popups allow-popups-to-escape-sandbox allow-pointer-lock allow-same-origin allow-top-navigation" })"#,
+        // not react
+        r#"const iframe = document.createElement("iframe");"#,
+        r#"let expandingList = document.createElement("ul", { is: "expanding-list" });"#,
     ];
 
     let fail = vec![
