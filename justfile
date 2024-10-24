@@ -136,6 +136,7 @@ watch-wasm:
 
 build-wasm mode="release":
   wasm-pack build --out-dir ../../npm/oxc-wasm --target web --{{mode}} --scope oxc crates/oxc_wasm
+  cp crates/oxc_wasm/package.json npm/oxc-wasm/package.json
 
 # Generate the JavaScript global variables. See `tasks/javascript_globals`
 javascript-globals:

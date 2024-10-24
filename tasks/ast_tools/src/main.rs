@@ -24,7 +24,7 @@ use derives::{
 use fmt::cargo_fmt;
 use generators::{
     AssertLayouts, AstBuilderGenerator, AstKindGenerator, Generator, GeneratorOutput,
-    VisitGenerator, VisitMutGenerator,
+    TypescriptGenerator, VisitGenerator, VisitMutGenerator,
 };
 use passes::{CalcLayout, Linker};
 use util::{write_all_to, NormalizeError};
@@ -43,6 +43,7 @@ static SOURCE_PATHS: &[&str] = &[
 ];
 
 const AST_CRATE: &str = "crates/oxc_ast";
+const TYPESCRIPT_PACKAGE: &str = "npm/oxc-types";
 
 type Result<R> = std::result::Result<R, String>;
 type TypeId = usize;
@@ -84,6 +85,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         .generate(AstBuilderGenerator)
         .generate(VisitGenerator)
         .generate(VisitMutGenerator)
+        .generate(TypescriptGenerator)
         .run()?;
 
     if !cli_options.dry_run {

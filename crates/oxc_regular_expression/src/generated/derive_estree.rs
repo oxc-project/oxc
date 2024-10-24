@@ -18,10 +18,6 @@ impl<'a> Serialize for Pattern<'a> {
     }
 }
 
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str =
-    "export type Pattern = ({\n\ttype: 'Pattern';\n\tbody: Disjunction;\n}) & Span;";
-
 impl<'a> Serialize for Disjunction<'a> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
@@ -32,10 +28,6 @@ impl<'a> Serialize for Disjunction<'a> {
     }
 }
 
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str =
-    "export type Disjunction = ({\n\ttype: 'Disjunction';\n\tbody: Array<Alternative>;\n}) & Span;";
-
 impl<'a> Serialize for Alternative<'a> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
@@ -45,10 +37,6 @@ impl<'a> Serialize for Alternative<'a> {
         map.end()
     }
 }
-
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str =
-    "export type Alternative = ({\n\ttype: 'Alternative';\n\tbody: Array<Term>;\n}) & Span;";
 
 impl<'a> Serialize for Term<'a> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
@@ -69,9 +57,6 @@ impl<'a> Serialize for Term<'a> {
     }
 }
 
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = "export type Term = BoundaryAssertion | LookAroundAssertion | Quantifier | Character | Dot | CharacterClassEscape | UnicodePropertyEscape | CharacterClass | CapturingGroup | IgnoreGroup | IndexedReference | NamedReference;";
-
 impl Serialize for BoundaryAssertion {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
@@ -81,9 +66,6 @@ impl Serialize for BoundaryAssertion {
         map.end()
     }
 }
-
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = "export type BoundaryAssertion = ({\n\ttype: 'BoundaryAssertion';\n\tspan: Span;\n\tkind: BoundaryAssertionKind;\n});";
 
 impl Serialize for BoundaryAssertionKind {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
@@ -104,10 +86,6 @@ impl Serialize for BoundaryAssertionKind {
     }
 }
 
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str =
-    "export type BoundaryAssertionKind = 'start' | 'end' | 'boundary' | 'negativeBoundary';";
-
 impl<'a> Serialize for LookAroundAssertion<'a> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
@@ -118,9 +96,6 @@ impl<'a> Serialize for LookAroundAssertion<'a> {
         map.end()
     }
 }
-
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = "export type LookAroundAssertion = ({\n\ttype: 'LookAroundAssertion';\n\tkind: LookAroundAssertionKind;\n\tbody: Disjunction;\n}) & Span;";
 
 impl Serialize for LookAroundAssertionKind {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
@@ -145,9 +120,6 @@ impl Serialize for LookAroundAssertionKind {
     }
 }
 
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = "export type LookAroundAssertionKind = 'lookahead' | 'negativeLookahead' | 'lookbehind' | 'negativeLookbehind';";
-
 impl<'a> Serialize for Quantifier<'a> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
@@ -161,9 +133,6 @@ impl<'a> Serialize for Quantifier<'a> {
     }
 }
 
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = "export type Quantifier = ({\n\ttype: 'Quantifier';\n\tmin: number;\n\tmax: (number) | null;\n\tgreedy: boolean;\n\tbody: Term;\n}) & Span;";
-
 impl Serialize for Character {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
@@ -174,9 +143,6 @@ impl Serialize for Character {
         map.end()
     }
 }
-
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = "export type Character = ({\n\ttype: 'Character';\n\tkind: CharacterKind;\n\tvalue: number;\n}) & Span;";
 
 impl Serialize for CharacterKind {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
@@ -213,9 +179,6 @@ impl Serialize for CharacterKind {
     }
 }
 
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = "export type CharacterKind = 'controlLetter' | 'hexadecimalEscape' | 'identifier' | 'null' | 'octal1' | 'octal2' | 'octal3' | 'singleEscape' | 'symbol' | 'unicodeEscape';";
-
 impl Serialize for CharacterClassEscape {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
@@ -225,9 +188,6 @@ impl Serialize for CharacterClassEscape {
         map.end()
     }
 }
-
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = "export type CharacterClassEscape = ({\n\ttype: 'CharacterClassEscape';\n\tkind: CharacterClassEscapeKind;\n}) & Span;";
 
 impl Serialize for CharacterClassEscapeKind {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
@@ -254,9 +214,6 @@ impl Serialize for CharacterClassEscapeKind {
     }
 }
 
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = "export type CharacterClassEscapeKind = 'd' | 'negativeD' | 's' | 'negativeS' | 'w' | 'negativeW';";
-
 impl<'a> Serialize for UnicodePropertyEscape<'a> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
@@ -270,9 +227,6 @@ impl<'a> Serialize for UnicodePropertyEscape<'a> {
     }
 }
 
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = "export type UnicodePropertyEscape = ({\n\ttype: 'UnicodePropertyEscape';\n\tnegative: boolean;\n\tstrings: boolean;\n\tname: string;\n\tvalue: (string) | null;\n}) & Span;";
-
 impl Serialize for Dot {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
@@ -281,9 +235,6 @@ impl Serialize for Dot {
         map.end()
     }
 }
-
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = "export type Dot = ({\n\ttype: 'Dot';\n}) & Span;";
 
 impl<'a> Serialize for CharacterClass<'a> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
@@ -297,9 +248,6 @@ impl<'a> Serialize for CharacterClass<'a> {
         map.end()
     }
 }
-
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = "export type CharacterClass = ({\n\ttype: 'CharacterClass';\n\tnegative: boolean;\n\tstrings: boolean;\n\tkind: CharacterClassContentsKind;\n\tbody: Array<CharacterClassContents>;\n}) & Span;";
 
 impl Serialize for CharacterClassContentsKind {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
@@ -319,10 +267,6 @@ impl Serialize for CharacterClassContentsKind {
     }
 }
 
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str =
-    "export type CharacterClassContentsKind = 'union' | 'intersection' | 'subtraction';";
-
 impl<'a> Serialize for CharacterClassContents<'a> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
@@ -338,9 +282,6 @@ impl<'a> Serialize for CharacterClassContents<'a> {
     }
 }
 
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = "export type CharacterClassContents = CharacterClassRange | CharacterClassEscape | UnicodePropertyEscape | Character | CharacterClass | ClassStringDisjunction;";
-
 impl Serialize for CharacterClassRange {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
@@ -351,9 +292,6 @@ impl Serialize for CharacterClassRange {
         map.end()
     }
 }
-
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = "export type CharacterClassRange = ({\n\ttype: 'CharacterClassRange';\n\tmin: Character;\n\tmax: Character;\n}) & Span;";
 
 impl<'a> Serialize for ClassStringDisjunction<'a> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
@@ -366,9 +304,6 @@ impl<'a> Serialize for ClassStringDisjunction<'a> {
     }
 }
 
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = "export type ClassStringDisjunction = ({\n\ttype: 'ClassStringDisjunction';\n\tstrings: boolean;\n\tbody: Array<ClassString>;\n}) & Span;";
-
 impl<'a> Serialize for ClassString<'a> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
@@ -379,9 +314,6 @@ impl<'a> Serialize for ClassString<'a> {
         map.end()
     }
 }
-
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = "export type ClassString = ({\n\ttype: 'ClassString';\n\tstrings: boolean;\n\tbody: Array<Character>;\n}) & Span;";
 
 impl<'a> Serialize for CapturingGroup<'a> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
@@ -394,9 +326,6 @@ impl<'a> Serialize for CapturingGroup<'a> {
     }
 }
 
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = "export type CapturingGroup = ({\n\ttype: 'CapturingGroup';\n\tname: (string) | null;\n\tbody: Disjunction;\n}) & Span;";
-
 impl<'a> Serialize for IgnoreGroup<'a> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
@@ -407,9 +336,6 @@ impl<'a> Serialize for IgnoreGroup<'a> {
         map.end()
     }
 }
-
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = "export type IgnoreGroup = ({\n\ttype: 'IgnoreGroup';\n\tmodifiers: (Modifiers) | null;\n\tbody: Disjunction;\n}) & Span;";
 
 impl Serialize for Modifiers {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
@@ -422,9 +348,6 @@ impl Serialize for Modifiers {
     }
 }
 
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = "export type Modifiers = ({\n\ttype: 'Modifiers';\n\tenabling: (Modifier) | null;\n\tdisabling: (Modifier) | null;\n}) & Span;";
-
 impl Serialize for Modifier {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
@@ -436,9 +359,6 @@ impl Serialize for Modifier {
     }
 }
 
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = "export type Modifier = ({\n\ttype: 'Modifier';\n\tignoreCase: boolean;\n\tmultiline: boolean;\n\tsticky: boolean;\n});";
-
 impl Serialize for IndexedReference {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
@@ -449,10 +369,6 @@ impl Serialize for IndexedReference {
     }
 }
 
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str =
-    "export type IndexedReference = ({\n\ttype: 'IndexedReference';\n\tindex: number;\n}) & Span;";
-
 impl<'a> Serialize for NamedReference<'a> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
@@ -462,7 +378,3 @@ impl<'a> Serialize for NamedReference<'a> {
         map.end()
     }
 }
-
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str =
-    "export type NamedReference = ({\n\ttype: 'NamedReference';\n\tname: string;\n}) & Span;";

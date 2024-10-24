@@ -1453,7 +1453,6 @@ dependencies = [
  "oxc_syntax",
  "serde",
  "serde_json",
- "wasm-bindgen",
 ]
 
 [[package]]
@@ -1865,7 +1864,6 @@ dependencies = [
  "rustc-hash",
  "serde",
  "unicode-id-start",
- "wasm-bindgen",
 ]
 
 [[package]]
@@ -1937,7 +1935,6 @@ dependencies = [
  "oxc_estree",
  "schemars",
  "serde",
- "wasm-bindgen",
 ]
 
 [[package]]
