@@ -2,8 +2,10 @@ use bump_scope::BumpString as StringImpl;
 
 use crate::Allocator;
 
+#[cfg(any(feature = "serialize", test))]
+use serde::{Serialize, Serializer};
+
 /// A bump-allocated string.
-#[cfg_attr(any(feature = "serialize", test), derive(serde::Serialize))]
 pub struct String<'a>(StringImpl<'a, 'a>);
 
 impl<'a> String<'a> {
@@ -48,5 +50,16 @@ impl<'a> String<'a> {
     #[inline]
     pub fn as_str(&self) -> &str {
         self.0.as_str()
+    }
+}
+
+#[cfg(any(feature = "serialize", test))]
+impl<'alloc> Serialize for String<'alloc> {
+    #[inline(always)]
+    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        self.0.serialize(s)
     }
 }
