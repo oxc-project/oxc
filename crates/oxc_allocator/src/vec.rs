@@ -155,6 +155,22 @@ impl<'alloc, T> Vec<'alloc, T> {
         self.0.as_mut_slice()
     }
 
+    /// Returns a raw pointer to the slice, or a dangling raw pointer
+    /// valid for zero sized reads.
+    #[must_use]
+    #[inline(always)]
+    pub fn as_ptr(&self) -> *const T {
+        self.0.as_ptr()
+    }
+
+    /// Returns an unsafe mutable pointer to slice, or a dangling
+    /// raw pointer valid for zero sized reads.
+    #[must_use]
+    #[inline(always)]
+    pub fn as_mut_ptr(&mut self) -> *mut T {
+        self.0.as_mut_ptr()
+    }
+
     /// Appends an element to the back of a collection.
     #[inline(always)]
     pub fn push(&mut self, value: T) {
