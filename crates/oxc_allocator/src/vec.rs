@@ -1,3 +1,7 @@
+// We're wrapping an existing implementation. Having those wrapper functions
+// must incur no overhead, so we declare them `#[inline(always)]`.
+#![allow(clippy::inline_always)]
+
 //! Arena Vec.
 //!
 //! Originally based on [jsparagus](https://github.com/mozilla-spidermonkey/jsparagus/blob/master/crates/ast/src/arena.rs)
@@ -154,7 +158,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// Appends an element to the back of a collection.
     #[inline(always)]
     pub fn push(&mut self, value: T) {
-        self.0.push(value)
+        self.0.push(value);
     }
 
     /// Removes the last element from a vector and returns it, or [`None`] if it
@@ -181,7 +185,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// ```
     #[inline(always)]
     pub fn insert(&mut self, index: usize, element: T) {
-        self.0.insert(index, element)
+        self.0.insert(index, element);
     }
 
     /// Removes and returns the element at position `index` within the vector,
@@ -207,6 +211,34 @@ impl<'alloc, T> Vec<'alloc, T> {
     #[track_caller]
     pub fn remove(&mut self, index: usize) -> T {
         self.0.remove(index)
+    }
+
+    /// Removes an element from the vector and returns it.
+    ///
+    /// The removed element is replaced by the last element of the vector.
+    ///
+    /// This does not preserve ordering, but is *O*(1).
+    /// If you need to preserve the element order, use [`remove`] instead.
+    ///
+    /// # Panics
+    /// Panics if `index` is out of bounds.
+    ///
+    /// [`remove`]: Self::remove
+    /// # Examples
+    /// ```
+    /// # use oxc_allocator::{ Allocator, Vec };
+    /// # let allocator = Allocator::default();
+    /// let mut v = Vec::from_iter_in(["foo", "bar", "baz", "qux"], &allocator);
+    ///
+    /// assert_eq!(v.swap_remove(1), "bar");
+    /// assert_eq!(v, ["foo", "qux", "baz"]);
+    ///
+    /// assert_eq!(v.swap_remove(0), "foo");
+    /// assert_eq!(v, ["baz", "qux"]);
+    /// ```
+    #[inline(always)]
+    pub fn swap_remove(&mut self, index: usize) -> T {
+        self.0.swap_remove(index)
     }
 
     /// Shortens the vector, keeping the first `len` elements and dropping
@@ -258,8 +290,8 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// assert_eq!(vec, []);
     /// ```
     ///
-    /// [`clear`]: BumpVec::clear
-    /// [`drain`]: BumpVec::drain
+    /// [`clear`]: Self::clear
+    /// [`drain`]: Self::drain
     #[inline(always)]
     pub fn truncate(&mut self, len: usize) {
         self.0.truncate(len);
@@ -334,6 +366,8 @@ impl<'alloc, T> Vec<'alloc, T> {
     pub fn append(&mut self, other: &mut Self) {
         self.reserve(other.len());
 
+        // SAFETY:
+        // We have allocated enough space for the additional elements from `other`.
         unsafe {
             other.as_ptr().copy_to_nonoverlapping(self.as_mut_ptr().add(self.len()), other.len());
 
@@ -365,6 +399,8 @@ impl<'alloc, T> Vec<'alloc, T> {
     pub fn prepend(&mut self, other: &mut Self) {
         self.reserve(other.len());
 
+        // SAFETY:
+        // We have allocated enough space for the additional elements from `other`.
         unsafe {
             // copy existing content forward to make space
             self.as_mut_ptr().copy_to(self.as_mut_ptr().add(other.len()), self.len());
@@ -489,7 +525,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     where
         F: FnMut(&T) -> bool,
     {
-        self.retain_mut(|elem| f(elem))
+        self.retain_mut(|elem| f(elem));
     }
 
     /// Retains only the elements specified by the predicate, passing a mutable reference to it.
@@ -519,7 +555,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     where
         F: FnMut(&mut T) -> bool,
     {
-        self.0.retain(f)
+        self.0.retain(f);
     }
 
     /// Reserves capacity for at least `additional` more elements to be inserted
@@ -588,14 +624,62 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// - `new_len` must be less than or equal to the [`capacity`].
     /// - The elements at `old_len..new_len` must be initialized.
     ///
-    /// [`resize`]: BumpVec::resize
-    /// [`truncate`]: BumpVec::truncate
-    /// [`extend`]: BumpVec::extend
-    /// [`clear`]: BumpVec::clear
-    /// [`capacity`]: BumpVec::capacity
+    /// [`resize`]: Self::resize
+    /// [`truncate`]: Self::truncate
+    /// [`extend`]: Self::extend
+    /// [`clear`]: Self::clear
+    /// [`capacity`]: Self::capacity
     #[inline(always)]
     pub unsafe fn set_len(&mut self, new_len: usize) {
         self.0.set_len(new_len);
+    }
+
+    /// Resizes the `Vec` in-place so that `len` is equal to `new_len`.
+    ///
+    /// If `new_len` is greater than `len`, the `Vec` is extended by the
+    /// difference, with each additional slot filled with the result of
+    /// calling the closure `f`. The return values from `f` will end up
+    /// in the `Vec` in the order they have been generated.
+    ///
+    /// If `new_len` is less than `len`, the `Vec` is simply truncated.
+    ///
+    /// This method uses a closure to create new values on every push. If
+    /// you'd rather [`Clone`] a given value, use [`Vec::resize`]. If you
+    /// want to use the [`Default`] trait to generate values, you can
+    /// pass [`Default::default`] as the second argument.
+    #[inline(always)]
+    pub fn resize_with<F>(&mut self, new_len: usize, f: F)
+    where
+        F: FnMut() -> T,
+    {
+        self.0.resize_with(new_len, f);
+    }
+}
+
+impl<T> Vec<'_, T>
+where
+    T: Clone,
+{
+    /// Resizes the `Vec` in-place so that `len` is equal to `new_len`.
+    ///
+    /// If `new_len` is greater than `len`, the `Vec` is extended by the
+    /// difference, with each additional slot filled with `value`.
+    /// If `new_len` is less than `len`, the `Vec` is simply truncated.
+    ///
+    /// This method requires `T` to implement [`Clone`],
+    /// in order to be able to clone the passed value.
+    /// If you need more flexibility (or want to rely on [`Default`] instead of
+    /// [`Clone`]), use [`resize_with`].
+    /// If you only need to resize to a smaller size, use [`truncate`].
+    ///
+    /// [`resize_with`]: Self::resize_with
+    /// [`truncate`]: Self::truncate
+    #[inline(always)]
+    pub fn resize(&mut self, new_len: usize, value: T)
+    where
+        T: Clone,
+    {
+        self.0.resize(new_len, value);
     }
 }
 
@@ -625,6 +709,7 @@ where
 
 macro_rules! impl_slice_eq1 {
     ([$($($vars:tt)+)?] $lhs:ty, $rhs:ty $(where $ty:ty: $bound:ident)?) => {
+        #[allow(clippy::partialeq_ne_impl)]
         impl<$($($vars)+,)? T, U> PartialEq<$rhs> for $lhs
         where
             T: PartialEq<U>,
@@ -739,7 +824,7 @@ impl<'alloc, T> ops::DerefMut for Vec<'alloc, T> {
 
 /// An iterator that moves out of a vector.
 ///
-/// This `struct` is created by the `into_iter` method on [`Vec`](super::Vec)
+/// This `struct` is created by the `into_iter` method on [`Vec`]
 /// (provided by the [`IntoIterator`] trait).
 ///
 /// # Example
@@ -852,7 +937,7 @@ impl<'alloc, T: Hash> Hash for Vec<'alloc, T> {
 impl<T> Extend<T> for Vec<'_, T> {
     #[inline(always)]
     fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
-        self.0.extend(iter)
+        self.0.extend(iter);
     }
 }
 
