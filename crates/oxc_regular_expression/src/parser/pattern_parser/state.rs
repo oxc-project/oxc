@@ -56,17 +56,34 @@ impl<'a> State<'a> {
 fn parse_capturing_groups<'a>(
     reader: &mut Reader<'a>,
 ) -> Result<(u32, FxHashSet<Atom<'a>>), DuplicatedNamedCapturingGroupOffsets> {
-    let mut num_of_left_capturing_parens = 0;
-    let mut capturing_group_name_and_spans = FxHashMap::default();
-
-    let mut in_escape = false;
-    let mut in_character_class = false;
-
     // Count only normal CapturingGroup(named, unnamed)
     //   (?<name>...), (...)
     // IgnoreGroup, and LookaroundAssertions are ignored
     //   (?:...)
     //   (?=...), (?!...), (?<=...), (?<!...)
+    let mut num_of_left_capturing_parens = 0;
+
+    // Collect capturing group names
+    let mut group_names: FxHashMap<Atom<'a>, (u32, u32)> = FxHashMap::default();
+    // At the same time, check duplicates
+    // If you want to process this most efficiently:
+    // - define a scope for each Disjunction
+    // - then check for duplicates for each `|` while inheriting the parent-child relationship
+    // ref. https://source.chromium.org/chromium/chromium/src/+/main:v8/src/regexp/regexp-parser.cc;l=1644
+    // However, duplicates are rare in the first place.
+    // And as long as it works simply, this may be enough.
+    let mut may_duplicates: FxHashMap<Atom<'a>, DuplicatedNamedCapturingGroupOffsets> =
+        FxHashMap::default();
+    enum SimpleUnit<'a> {
+        Open,
+        Close,
+        Pipe,
+        GroupName(Atom<'a>),
+    }
+    let mut simplified: Vec<SimpleUnit<'a>> = vec![];
+
+    let mut in_escape = false;
+    let mut in_character_class = false;
     while let Some(cp) = reader.peek() {
         if in_escape {
             in_escape = false;
@@ -76,8 +93,14 @@ fn parse_capturing_groups<'a>(
             in_character_class = true;
         } else if cp == ']' as u32 {
             in_character_class = false;
+        } else if !in_character_class && cp == '|' as u32 {
+            simplified.push(SimpleUnit::Pipe);
+        } else if !in_character_class && cp == ')' as u32 {
+            simplified.push(SimpleUnit::Close);
         } else if !in_character_class && cp == '(' as u32 {
             reader.advance();
+
+            simplified.push(SimpleUnit::Open);
 
             // Skip IgnoreGroup
             if reader.eat2('?', ':')
@@ -107,23 +130,80 @@ fn parse_capturing_groups<'a>(
                 if reader.eat('>') {
                     let group_name = reader.atom(span_start, span_end);
 
-                    // May be duplicated
-                    if let Some(may_duplicate) = capturing_group_name_and_spans.get(&group_name) {
-                        return Err(vec![*may_duplicate, (span_start, span_end)]);
+                    simplified.push(SimpleUnit::GroupName(group_name.clone()));
+                    // Check duplicates later
+                    if let Some(last_span) = group_names.get(&group_name) {
+                        let entry = may_duplicates.entry(group_name).or_default();
+                        entry.push(*last_span);
+                        entry.push((span_start, span_end));
+                    } else {
+                        group_names.insert(group_name, (span_start, span_end));
                     }
-                    capturing_group_name_and_spans.insert(group_name, (span_start, span_end));
 
                     continue;
                 }
             }
 
+            // Unnamed
             continue;
         }
 
         reader.advance();
     }
 
-    Ok((num_of_left_capturing_parens, capturing_group_name_and_spans.keys().cloned().collect()))
+    // Check duplicates and emit error if exists
+    if !may_duplicates.is_empty() {
+        // Check must be done for each group name
+        for (group_name, spans) in may_duplicates {
+            let mut iter = simplified.iter().clone();
+
+            let mut alternative_depth = FxHashSet::default();
+            let mut depth = 0_u32;
+            let mut is_first = true;
+
+            'outer: while let Some(token) = iter.next() {
+                match token {
+                    SimpleUnit::Open => {
+                        depth += 1;
+                    }
+                    SimpleUnit::Close => {
+                        // May panic if the pattern has invalid, unbalanced parens
+                        depth = depth.saturating_sub(1);
+                    }
+                    SimpleUnit::Pipe => {
+                        if !is_first {
+                            alternative_depth.insert(depth);
+                        }
+                    }
+                    // Check target group name only
+                    SimpleUnit::GroupName(name) if *name == group_name => {
+                        // Skip the first one, because it is not duplicated
+                        if is_first {
+                            is_first = false;
+                            continue;
+                        }
+
+                        // If left outer `|` is found, both can participate
+                        // `|(?<n>)`
+                        //  ^   ^ depth: 1
+                        //  ^ depth: 0
+                        for i in (0..depth).rev() {
+                            if alternative_depth.contains(&i) {
+                                // Remove it, next duplicates requires another `|`
+                                alternative_depth.remove(&i);
+                                continue 'outer;
+                            }
+                        }
+
+                        return Err(spans);
+                    }
+                    _ => {}
+                }
+            }
+        }
+    }
+
+    Ok((num_of_left_capturing_parens, group_names.keys().cloned().collect()))
 }
 
 #[cfg(test)]
@@ -143,6 +223,8 @@ mod tests {
             ("(foo)(?<n>bar)", (2, 1)),
             ("(foo)(?=...)(?!...)(?<=...)(?<!...)(?:...)", (1, 0)),
             ("(foo)(?<n>bar)(?<nn>baz)", (3, 2)),
+            ("(?<n>.)(?<m>.)|(?<n>..)|(?<m>.)", (4, 2)),
+            ("(?<n>.)(?<m>.)|(?:..)|(?<m>.)", (3, 2)),
         ] {
             let mut reader = Reader::initialize(source_text, true, false).unwrap();
 
@@ -156,7 +238,9 @@ mod tests {
 
     #[test]
     fn duplicated_named_capturing_groups() {
-        for source_text in ["(?<n>.)(?<n>..)", "(?<n>.(?<n>..))"] {
+        for source_text in
+            ["(?<n>.)(?<n>..)", "(?<n>.(?<n>..))", "|(?<n>.(?<n>..))", "(?<m>.)|(?<n>.(?<n>..))"]
+        {
             let mut reader = Reader::initialize(source_text, true, false).unwrap();
 
             assert!(parse_capturing_groups(&mut reader).is_err(), "{source_text}");
