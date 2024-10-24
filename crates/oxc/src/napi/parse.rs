@@ -21,7 +21,7 @@ pub struct ParserOptions {
 
 #[napi(object)]
 pub struct ParseResult {
-    #[napi(ts_type = "import(\"@oxc/types\").Program")]
+    #[napi(ts_type = "import(\"@oxc-project/types\").Program")]
     pub program: String,
     pub comments: Vec<Comment>,
     pub errors: Vec<String>,

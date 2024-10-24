@@ -34,8 +34,8 @@ use crate::options::{OxcOptions, OxcRunOptions};
 
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = r#"
-import type { Program, Span } from "@oxc/types";
-export * from "@oxc/types";
+import type { Program, Span } from "@oxc-project/types";
+export * from "@oxc-project/types";
 "#;
 
 #[wasm_bindgen(getter_with_clone)]

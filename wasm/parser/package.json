@@ -27,7 +27,7 @@
     "web"
   ],
   "devDependencies": {
-    "@oxc/types": "workspace:^"
+    "@oxc-project/types": "workspace:^"
   },
   "scripts": {
     "build": "pnpm run build-node && pnpm run build-web && pnpm run copy-files && pnpm run clean-files",

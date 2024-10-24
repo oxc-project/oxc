@@ -9,8 +9,8 @@ use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = r#"
-import type { Program } from "@oxc/types";
-export * from "@oxc/types";
+import type { Program } from "@oxc-project/types";
+export * from "@oxc-project/types";
 "#;
 
 #[derive(Debug, Default, Clone, Deserialize, Tsify)]

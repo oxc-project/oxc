@@ -1,4 +1,4 @@
-name: Release @oxc/types
+name: Release @oxc-project/types
 
 on:
   workflow_dispatch:
@@ -27,7 +27,7 @@ jobs:
         id: version
         with:
           static-checking: localIsNew
-          file-url: https://unpkg.com/@oxc/types/package.json
+          file-url: https://unpkg.com/@oxc-project/types/package.json
           file-name: npm/oxc-types/package.json
 
       - name: Set version name
@@ -38,7 +38,7 @@ jobs:
   build:
     needs: check
     if: needs.check.outputs.version_changed == 'true'
-    name: Release @oxc/types
+    name: Release @oxc-project/types
     runs-on: ubuntu-latest
     permissions:
       id-token: write # for `pnpm publish --provenance`

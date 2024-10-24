@@ -91,7 +91,7 @@ export declare function moduleLexerSync(sourceText: string, options?: ParserOpti
 export declare function parseAsync(sourceText: string, options?: ParserOptions | undefined | null): Promise<ParseResult>
 
 export interface ParseResult {
-  program: import("@oxc/types").Program
+  program: import("@oxc-project/types").Program
   comments: Array<Comment>
   errors: Array<string>
 }

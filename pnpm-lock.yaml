@@ -60,7 +60,7 @@ importers:
 
   npm/oxc-parser:
     devDependencies:
-      '@oxc/types':
+      '@oxc-project/types':
         specifier: workspace:^
         version: link:../oxc-types
 
@@ -70,7 +70,7 @@ importers:
 
   npm/oxc-wasm:
     devDependencies:
-      '@oxc/types':
+      '@oxc-project/types':
         specifier: workspace:^
         version: link:../oxc-types
 
@@ -78,7 +78,7 @@ importers:
 
   npm/parser-wasm:
     devDependencies:
-      '@oxc/types':
+      '@oxc-project/types':
         specifier: workspace:^
         version: link:../oxc-types
 
@@ -96,7 +96,7 @@ importers:
 
   wasm/parser:
     devDependencies:
-      '@oxc/types':
+      '@oxc-project/types':
         specifier: workspace:^
         version: link:../../npm/oxc-types
 
