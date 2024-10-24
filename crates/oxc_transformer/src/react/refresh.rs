@@ -9,7 +9,7 @@ use oxc_ast::{ast::*, match_expression, AstBuilder, NONE};
 use oxc_semantic::{Reference, ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags, SymbolId};
 use oxc_span::{Atom, GetSpan, SPAN};
 use oxc_syntax::operator::AssignmentOperator;
-use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
+use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
 
 use crate::TransformCtx;
 
@@ -102,7 +102,7 @@ pub struct ReactRefresh<'a, 'ctx> {
     emit_full_signatures: bool,
     ctx: &'ctx TransformCtx<'a>,
     // States
-    registrations: Vec<(SymbolId, Atom<'a>)>,
+    registrations: Vec<(BoundIdentifier<'a>, Atom<'a>)>,
     signature_declarator_items: Vec<oxc_allocator::Vec<'a, VariableDeclarator<'a>>>,
     /// Used to wrap call expression with signature.
     /// (eg: hoc(() => {}) -> _s1(hoc(_s1(() => {}))))
@@ -154,31 +154,18 @@ impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
 
         let mut variable_declarator_items = ctx.ast.vec_with_capacity(self.registrations.len());
         let mut new_statements = ctx.ast.vec_with_capacity(self.registrations.len() + 1);
-        for (symbol_id, persistent_id) in self.registrations.drain(..) {
-            let name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
-            let binding_identifier =
-                ctx.ast.binding_identifier_with_symbol_id(SPAN, name, symbol_id);
-            variable_declarator_items.push(
-                ctx.ast.variable_declarator(
-                    SPAN,
-                    VariableDeclarationKind::Var,
-                    ctx.ast.binding_pattern(
-                        ctx.ast.binding_pattern_kind_from_binding_identifier(
-                            binding_identifier.clone(),
-                        ),
-                        NONE,
-                        false,
-                    ),
-                    None,
-                    false,
-                ),
-            );
+        for (binding, persistent_id) in self.registrations.drain(..) {
+            variable_declarator_items.push(ctx.ast.variable_declarator(
+                SPAN,
+                VariableDeclarationKind::Var,
+                binding.create_binding_pattern(ctx),
+                None,
+                false,
+            ));
 
             let callee = self.refresh_reg.to_expression(ctx);
             let mut arguments = ctx.ast.vec_with_capacity(2);
-            arguments.push(ctx.ast.argument_expression(
-                Self::create_identifier_reference_from_binding_identifier(&binding_identifier, ctx),
-            ));
+            arguments.push(Argument::from(binding.create_read_expression(ctx)));
             arguments.push(ctx.ast.argument_expression(
                 ctx.ast.expression_string_literal(SPAN, ctx.ast.atom(&persistent_id)),
             ));
@@ -265,6 +252,7 @@ impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
         let Some((binding_identifier, mut arguments)) = signature else {
             return;
         };
+        let binding = BoundIdentifier::from_binding_ident(&binding_identifier);
 
         if !matches!(expr, Expression::CallExpression(_)) {
             if let Ancestor::VariableDeclaratorInit(declarator) = ctx.parent() {
@@ -276,31 +264,25 @@ impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
 
                 // Result: let Foo = () => {}; __signature(Foo, ...);
                 let id = declarator.id().get_binding_identifier().unwrap();
-                let symbol_id = id.symbol_id.get().unwrap();
-                let first_argument = Argument::from(ctx.ast.expression_from_identifier_reference(
-                    ctx.create_bound_reference_id(
-                        SPAN,
-                        id.name.clone(),
-                        symbol_id,
-                        ReferenceFlags::Read,
-                    ),
-                ));
+                let id_binding = BoundIdentifier::from_binding_ident(id);
+
+                let first_argument = Argument::from(id_binding.create_read_expression(ctx));
                 arguments.insert(0, first_argument);
 
                 let statement = ctx.ast.statement_expression(
                     SPAN,
                     ctx.ast.expression_call(
                         SPAN,
-                        Self::create_identifier_reference_from_binding_identifier(
-                            &binding_identifier,
-                            ctx,
-                        ),
+                        binding.create_read_expression(ctx),
                         NONE,
                         arguments,
                         false,
                     ),
                 );
-                self.extra_statements.entry(symbol_id).or_insert(ctx.ast.vec()).push(statement);
+                self.extra_statements
+                    .entry(id_binding.symbol_id)
+                    .or_insert(ctx.ast.vec())
+                    .push(statement);
                 return;
             }
         }
@@ -324,7 +306,7 @@ impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
         arguments.insert(0, Argument::from(ctx.ast.move_expression(expr)));
         *expr = ctx.ast.expression_call(
             SPAN,
-            Self::create_identifier_reference_from_binding_identifier(&binding_identifier, ctx),
+            binding.create_read_expression(ctx),
             NONE,
             arguments,
             false,
@@ -347,21 +329,17 @@ impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
         let Some(id) = func.id.as_ref() else {
             return;
         };
+        let id_binding = BoundIdentifier::from_binding_ident(id);
 
-        arguments.insert(
-            0,
-            Argument::from(Self::create_identifier_reference_from_binding_identifier(id, ctx)),
-        );
+        arguments.insert(0, Argument::from(id_binding.create_read_expression(ctx)));
 
-        self.extra_statements.entry(id.symbol_id.get().unwrap()).or_insert(ctx.ast.vec()).push(
+        let binding = BoundIdentifier::from_binding_ident(&binding_identifier);
+        self.extra_statements.entry(id_binding.symbol_id).or_insert(ctx.ast.vec()).push(
             ctx.ast.statement_expression(
                 SPAN,
                 ctx.ast.expression_call(
                     SPAN,
-                    Self::create_identifier_reference_from_binding_identifier(
-                        &binding_identifier,
-                        ctx,
-                    ),
+                    binding.create_read_expression(ctx),
                     NONE,
                     arguments,
                     false,
@@ -471,8 +449,9 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) -> AssignmentTarget<'a> {
         let binding = ctx.generate_uid_in_root_scope("c", SymbolFlags::FunctionScopedVariable);
-        self.registrations.push((binding.symbol_id, persistent_id));
-        binding.create_target(reference_flags, ctx)
+        let target = binding.create_target(reference_flags, ctx);
+        self.registrations.push((binding, persistent_id));
+        target
     }
 
     /// Similar to the `findInnerComponents` function in `react-refresh/babel`.
@@ -562,19 +541,6 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
         }
 
         true
-    }
-
-    /// Create an identifier reference from a binding identifier.
-    fn create_identifier_reference_from_binding_identifier(
-        id: &BindingIdentifier<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Expression<'a> {
-        ctx.ast.expression_from_identifier_reference(ctx.create_bound_reference_id(
-            SPAN,
-            id.name.clone(),
-            id.symbol_id.get().unwrap(),
-            ReferenceFlags::Read,
-        ))
     }
 
     /// _c = id.name;
@@ -680,18 +646,17 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
         let target_scope_id = ctx
             .scopes()
             .ancestors(ctx.current_scope_id())
-            .find(|scope_id| ctx.scopes().get_flags(*scope_id).is_var())
+            .find(|&scope_id| ctx.scopes().get_flags(scope_id).is_var())
             .unwrap_or_else(|| ctx.current_scope_id());
 
         let binding = ctx.generate_uid("s", target_scope_id, SymbolFlags::FunctionScopedVariable);
-        let binding_identifier = binding.create_binding_identifier(ctx);
 
         // _s();
         let call_expression = ctx.ast.statement_expression(
             SPAN,
             ctx.ast.expression_call(
                 SPAN,
-                Self::create_identifier_reference_from_binding_identifier(&binding_identifier, ctx),
+                binding.create_read_expression(ctx),
                 NONE,
                 ctx.ast.vec(),
                 false,
@@ -704,11 +669,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
         self.signature_declarator_items.last_mut().unwrap().push(ctx.ast.variable_declarator(
             SPAN,
             VariableDeclarationKind::Var,
-            ctx.ast.binding_pattern(
-                ctx.ast.binding_pattern_kind_from_binding_identifier(binding_identifier.clone()),
-                NONE,
-                false,
-            ),
+            binding.create_binding_pattern(ctx),
             Some(ctx.ast.expression_call(
                 SPAN,
                 self.refresh_sig.to_expression(ctx),
@@ -722,6 +683,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
         // Following is the signature call expression, will be generated in call site.
         // _s(App, signature_key, false, function() { return [] });
         //                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ custom hooks only
+        let binding_identifier = binding.create_binding_identifier(ctx);
         Some((binding_identifier, arguments))
     }
 
@@ -822,7 +784,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
         let declarator = decl.declarations.first_mut().unwrap_or_else(|| unreachable!());
         let init = declarator.init.as_mut()?;
         let id = declarator.id.get_binding_identifier()?;
-        let symbol_id = id.symbol_id.get()?;
+        let symbol_id = id.symbol_id.get().unwrap();
 
         if !is_componentish_name(&id.name) {
             return None;

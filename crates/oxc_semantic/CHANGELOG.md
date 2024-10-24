@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.33.0] - 2024-10-24
+
+- 1248557 ast: [**BREAKING**] Remove `AstKind::FinallyClause` (#6744) (Boshen)
+
+- 202c7f6 ast: [**BREAKING**] Remove `AstKind::ExpressionArrayElement` and `AstKind::ClassHeritage` (#6740) (Boshen)
+
+### Features
+
+- 5928f04 semantic: Add `move_binding` API in ` ScopeTree` (#6808) (Dunqing)
+- e7e60da semantic: Add `change_parent_id` API in ScopeTree (#6807) (Dunqing)
+- 10484cd transformer: Class static block transform (#6733) (overlookmotel)
+
+### Bug Fixes
+
+
+### Refactor
+
+
 ## [0.32.0] - 2024-10-19
 
 - 5200960 oxc: [**BREAKING**] Remove passing `Trivias` around (#6446) (Boshen)
