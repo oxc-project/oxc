@@ -4,7 +4,7 @@ use std::cell::Cell;
 
 use rustc_hash::FxHashSet;
 
-use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::{GetAddress, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::SymbolFlags;
@@ -403,10 +403,32 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
         );
     }
 
+    fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        // Add assignments after super calls
+        if self.assignments.is_empty() {
+            return;
+        }
+
+        let has_super_call = matches!(stmt, Statement::ExpressionStatement(stmt) if stmt.expression.is_super_call_expression());
+        if !has_super_call {
+            return;
+        }
+
+        // Add assignments after super calls
+        self.ctx.statement_injector.insert_many_after(
+            stmt.address(),
+            self.assignments
+                .iter()
+                .map(|assignment| assignment.create_this_property_assignment(ctx))
+                .collect::<Vec<_>>(),
+        );
+        self.has_super_call = true;
+    }
+
     fn exit_statements(
         &mut self,
         stmts: &mut ArenaVec<'a, Statement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
+        _ctx: &mut TraverseCtx<'a>,
     ) {
         // Remove TS specific statements
         stmts.retain(|stmt| match stmt {
@@ -417,29 +439,6 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
             // Ignore ModuleDeclaration as it's handled in the program
             _ => true,
         });
-
-        // Add assignments after super calls
-        if !self.assignments.is_empty() {
-            let has_super_call = stmts.iter().any(|stmt| {
-                matches!(stmt, Statement::ExpressionStatement(stmt) if stmt.expression.is_super_call_expression())
-            });
-            if has_super_call {
-                let mut new_stmts = ctx.ast.vec();
-                for stmt in stmts.drain(..) {
-                    let is_super_call = matches!(stmt, Statement::ExpressionStatement(ref stmt) if stmt.expression.is_super_call_expression());
-                    new_stmts.push(stmt);
-                    if is_super_call {
-                        new_stmts.extend(
-                            self.assignments
-                                .iter()
-                                .map(|assignment| assignment.create_this_property_assignment(ctx)),
-                        );
-                    }
-                }
-                self.has_super_call = true;
-                *stmts = new_stmts;
-            }
-        }
     }
 
     /// Transform if statement's consequent and alternate to block statements if they are super calls

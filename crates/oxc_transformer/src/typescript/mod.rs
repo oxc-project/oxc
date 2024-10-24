@@ -205,6 +205,10 @@ impl<'a, 'ctx> Traverse<'a> for TypeScript<'a, 'ctx> {
         self.annotations.exit_statements(stmts, ctx);
     }
 
+    fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.annotations.exit_statement(stmt, ctx);
+    }
+
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         self.r#enum.enter_statement(stmt, ctx);
     }
