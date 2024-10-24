@@ -30,6 +30,16 @@ impl<'a, 'ctx> Traverse<'a> for ES2017<'a, 'ctx> {
         }
     }
 
+    fn exit_method_definition(
+        &mut self,
+        node: &mut oxc_ast::ast::MethodDefinition<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.options.async_to_generator {
+            self.async_to_generator.exit_method_definition(node, ctx);
+        }
+    }
+
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.async_to_generator {
             self.async_to_generator.exit_statement(stmt, ctx);

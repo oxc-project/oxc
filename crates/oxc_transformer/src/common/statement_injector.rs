@@ -78,7 +78,6 @@ impl<'a> StatementInjectorStore<'a> {
     }
 
     /// Add a statement to be inserted immediately after the target statement.
-    #[expect(dead_code)]
     pub fn insert_after(&self, target: Address, stmt: Statement<'a>) {
         let mut insertions = self.insertions.borrow_mut();
         let adjacent_stmts = insertions.entry(target).or_default();

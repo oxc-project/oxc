@@ -1,6 +1,6 @@
 commit: d20b314c
 
-Passed: 348/1058
+Passed: 355/1058
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -1632,11 +1632,8 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-async-to-generator (2/24)
+# babel-plugin-transform-async-to-generator (9/24)
 * assumption-ignoreFunctionLength-true/basic/input.mjs
-x Output mismatch
-
-* assumption-ignoreFunctionLength-true/export-default-function/input.mjs
 x Output mismatch
 
 * assumption-noNewArrows-false/basic/input.js
@@ -1648,19 +1645,7 @@ x Output mismatch
 * async-to-generator/async-iife-with-regenerator-spec/input.js
 x Output mismatch
 
-* async-to-generator/function-arity/input.js
-x Output mismatch
-
 * async-to-generator/object-method-with-super/input.js
-x Output mismatch
-
-* async-to-generator/shadowed-promise/input.js
-x Output mismatch
-
-* async-to-generator/shadowed-promise-import/input.mjs
-x Output mismatch
-
-* async-to-generator/shadowed-promise-nested/input.js
 x Output mismatch
 
 * bluebird-coroutines/arrow-function/input.js
@@ -1681,13 +1666,7 @@ x Output mismatch
 * regression/15978/input.js
 x Output mismatch
 
-* regression/8783/input.js
-x Output mismatch
-
 * regression/T7108/input.js
-x Output mismatch
-
-* regression/T7194/input.js
 x Output mismatch
 
 * regression/gh-6923/input.js
