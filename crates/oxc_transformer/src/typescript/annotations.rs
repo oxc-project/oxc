@@ -71,31 +71,29 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
 
         program.body.retain_mut(|stmt| {
             let need_retain = match stmt {
+                Statement::ExportNamedDeclaration(decl) if decl.declaration.is_some() => {
+                    decl.declaration.as_ref().is_some_and(|decl| !decl.is_typescript_syntax())
+                }
                 Statement::ExportNamedDeclaration(decl) => {
                     if decl.export_kind.is_type() {
                         false
+                    } else if decl.specifiers.is_empty() {
+                        // `export {}` or `export {} from 'mod'`
+                        // Keep the export declaration if there are no export specifiers
+                        true
                     } else {
                         decl.specifiers.retain(|specifier| {
                             !(specifier.export_kind.is_type()
                                 || self.type_identifier_names.contains(&specifier.exported.name())
-                                || {
-                                    if let ModuleExportName::IdentifierReference(ident) =
-                                        &specifier.local
-                                    {
-                                        ident.reference_id.get().is_some_and(|id| {
-                                            ctx.symbols().get_reference(id).is_type()
-                                        })
-                                    } else {
-                                        false
-                                    }
-                                })
+                                || matches!(
+                                    &specifier.local, ModuleExportName::IdentifierReference(ident)
+                                    if ident.reference_id.get().is_some_and(|reference_id| {
+                                        ctx.symbols().get_reference(reference_id).is_type()
+                                    })
+                                ))
                         });
-
+                        // Keep the export declaration if there are still specifiers after removing type exports
                         !decl.specifiers.is_empty()
-                            || decl
-                                .declaration
-                                .as_ref()
-                                .is_some_and(|decl| !decl.is_typescript_syntax())
                     }
                 }
                 Statement::ExportAllDeclaration(decl) => !decl.export_kind.is_type(),
