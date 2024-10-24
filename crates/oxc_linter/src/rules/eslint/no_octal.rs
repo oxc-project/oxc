@@ -42,7 +42,7 @@ impl Rule for NoOctal {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::NumericLiteral(numeric) = node.kind() {
             let mut chars = numeric.raw.chars();
-            match (chars.nth(0), chars.nth(1)) {
+            match (chars.next(), chars.next()) {
                 (Some('0'), Some(v)) => {
                     if !matches!(v, '.' | 'x' | 'X') {
                         ctx.diagnostic(no_octal_diagnostic(numeric.span));

@@ -1,0 +1,98 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  × Identifier `b` has already been declared
+   ╭─[no_dupe_args.tsx:1:15]
+ 1 │ function a(a, b, b) {}
+   ·               ┬  ┬
+   ·               │  ╰── It can not be redeclared here
+   ·               ╰── `b` has already been declared here
+   ╰────
+
+  × Identifier `a` has already been declared
+   ╭─[no_dupe_args.tsx:1:12]
+ 1 │ function a(a, a, a) {}
+   ·            ┬  ┬
+   ·            │  ╰── It can not be redeclared here
+   ·            ╰── `a` has already been declared here
+   ╰────
+
+  × Identifier `a` has already been declared
+   ╭─[no_dupe_args.tsx:1:12]
+ 1 │ function a(a, a, a) {}
+   ·            ┬     ┬
+   ·            │     ╰── It can not be redeclared here
+   ·            ╰── `a` has already been declared here
+   ╰────
+
+  × Identifier `a` has already been declared
+   ╭─[no_dupe_args.tsx:1:12]
+ 1 │ function a(a, b, a) {}
+   ·            ┬     ┬
+   ·            │     ╰── It can not be redeclared here
+   ·            ╰── `a` has already been declared here
+   ╰────
+
+  × Identifier `a` has already been declared
+   ╭─[no_dupe_args.tsx:1:12]
+ 1 │ function a(a, b, a, b) {}
+   ·            ┬     ┬
+   ·            │     ╰── It can not be redeclared here
+   ·            ╰── `a` has already been declared here
+   ╰────
+
+  × Identifier `b` has already been declared
+   ╭─[no_dupe_args.tsx:1:15]
+ 1 │ function a(a, b, a, b) {}
+   ·               ┬     ┬
+   ·               │     ╰── It can not be redeclared here
+   ·               ╰── `b` has already been declared here
+   ╰────
+
+  × Identifier `b` has already been declared
+   ╭─[no_dupe_args.tsx:1:21]
+ 1 │ var a = function(a, b, b) {}
+   ·                     ┬  ┬
+   ·                     │  ╰── It can not be redeclared here
+   ·                     ╰── `b` has already been declared here
+   ╰────
+
+  × Identifier `a` has already been declared
+   ╭─[no_dupe_args.tsx:1:18]
+ 1 │ var a = function(a, a, a) {}
+   ·                  ┬  ┬
+   ·                  │  ╰── It can not be redeclared here
+   ·                  ╰── `a` has already been declared here
+   ╰────
+
+  × Identifier `a` has already been declared
+   ╭─[no_dupe_args.tsx:1:18]
+ 1 │ var a = function(a, a, a) {}
+   ·                  ┬     ┬
+   ·                  │     ╰── It can not be redeclared here
+   ·                  ╰── `a` has already been declared here
+   ╰────
+
+  × Identifier `a` has already been declared
+   ╭─[no_dupe_args.tsx:1:18]
+ 1 │ var a = function(a, b, a) {}
+   ·                  ┬     ┬
+   ·                  │     ╰── It can not be redeclared here
+   ·                  ╰── `a` has already been declared here
+   ╰────
+
+  × Identifier `a` has already been declared
+   ╭─[no_dupe_args.tsx:1:18]
+ 1 │ var a = function(a, b, a, b) {}
+   ·                  ┬     ┬
+   ·                  │     ╰── It can not be redeclared here
+   ·                  ╰── `a` has already been declared here
+   ╰────
+
+  × Identifier `b` has already been declared
+   ╭─[no_dupe_args.tsx:1:21]
+ 1 │ var a = function(a, b, a, b) {}
+   ·                     ┬     ┬
+   ·                     │     ╰── It can not be redeclared here
+   ·                     ╰── `b` has already been declared here
+   ╰────

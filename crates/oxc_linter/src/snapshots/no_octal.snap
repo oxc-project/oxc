@@ -1,0 +1,79 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-octal): Octal literals should not be used.
+   ╭─[no_octal.tsx:1:9]
+ 1 │ var a = 01234;
+   ·         ─────
+   ╰────
+  help: Disallow octal literals.
+
+  ⚠ eslint(no-octal): Octal literals should not be used.
+   ╭─[no_octal.tsx:1:9]
+ 1 │ a = 1 + 01234;
+   ·         ─────
+   ╰────
+  help: Disallow octal literals.
+
+  ⚠ eslint(no-octal): Octal literals should not be used.
+   ╭─[no_octal.tsx:1:1]
+ 1 │ 00
+   · ──
+   ╰────
+  help: Disallow octal literals.
+
+  ⚠ eslint(no-octal): Octal literals should not be used.
+   ╭─[no_octal.tsx:1:1]
+ 1 │ 08
+   · ──
+   ╰────
+  help: Disallow octal literals.
+
+  ⚠ eslint(no-octal): Octal literals should not be used.
+   ╭─[no_octal.tsx:1:1]
+ 1 │ 09.1
+   · ────
+   ╰────
+  help: Disallow octal literals.
+
+  ⚠ eslint(no-octal): Octal literals should not be used.
+   ╭─[no_octal.tsx:1:1]
+ 1 │ 09e1
+   · ────
+   ╰────
+  help: Disallow octal literals.
+
+  ⚠ eslint(no-octal): Octal literals should not be used.
+   ╭─[no_octal.tsx:1:1]
+ 1 │ 09.1e1
+   · ──────
+   ╰────
+  help: Disallow octal literals.
+
+  ⚠ eslint(no-octal): Octal literals should not be used.
+   ╭─[no_octal.tsx:1:1]
+ 1 │ 018
+   · ───
+   ╰────
+  help: Disallow octal literals.
+
+  ⚠ eslint(no-octal): Octal literals should not be used.
+   ╭─[no_octal.tsx:1:1]
+ 1 │ 019.1
+   · ─────
+   ╰────
+  help: Disallow octal literals.
+
+  ⚠ eslint(no-octal): Octal literals should not be used.
+   ╭─[no_octal.tsx:1:1]
+ 1 │ 019e1
+   · ─────
+   ╰────
+  help: Disallow octal literals.
+
+  ⚠ eslint(no-octal): Octal literals should not be used.
+   ╭─[no_octal.tsx:1:1]
+ 1 │ 019.1e1
+   · ───────
+   ╰────
+  help: Disallow octal literals.
