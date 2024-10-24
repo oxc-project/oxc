@@ -430,22 +430,6 @@ pub trait ConstantEvaluation<'a> {
                     left_string.cmp(&right_string) == Ordering::Less,
                 ));
             }
-
-            // Special case: `typeof a < typeof a` is always false.
-            if let (Expression::UnaryExpression(left), Expression::UnaryExpression(right)) =
-                (left_expr, right_expr)
-            {
-                if (left.operator, right.operator) == (UnaryOperator::Typeof, UnaryOperator::Typeof)
-                {
-                    if let (Expression::Identifier(left), Expression::Identifier(right)) =
-                        (&left.argument, &right.argument)
-                    {
-                        if left.name == right.name {
-                            return Some(ConstantValue::Boolean(false));
-                        }
-                    }
-                }
-            }
         }
 
         // TODO: bigint is handled very differently in the spec

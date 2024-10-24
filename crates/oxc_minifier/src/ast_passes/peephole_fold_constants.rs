@@ -6,7 +6,7 @@ use oxc_ecmascript::{
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::{
     number::{NumberBase, ToJsString},
-    operator::{BinaryOperator, LogicalOperator, UnaryOperator},
+    operator::{BinaryOperator, LogicalOperator},
 };
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
@@ -411,23 +411,6 @@ impl<'a, 'b> PeepholeFoldConstants {
                         return Tri::from(left_string == right_string);
                     }
 
-                    if let (Expression::UnaryExpression(left), Expression::UnaryExpression(right)) =
-                        (left_expr, right_expr)
-                    {
-                        if (left.operator, right.operator)
-                            == (UnaryOperator::Typeof, UnaryOperator::Typeof)
-                        {
-                            if let (Expression::Identifier(left), Expression::Identifier(right)) =
-                                (&left.argument, &right.argument)
-                            {
-                                if left.name == right.name {
-                                    // Special case, typeof a == typeof a is always true.
-                                    return Tri::True;
-                                }
-                            }
-                        }
-                    }
-
                     Tri::Unknown
                 }
                 ValueType::Undefined | ValueType::Null => Tri::True,
@@ -713,28 +696,28 @@ mod test {
     fn test_boolean_number_comparison() {
         test_same("!x==+y");
         test_same("!x<=+y");
-        test("!x !== +y", "true");
+        test_same("!x !== +y");
     }
 
     #[test]
     fn test_number_boolean_comparison() {
         test_same("+x==!y");
         test_same("+x<=!y");
-        test("+x === !y", "false");
+        test_same("+x === !y");
     }
 
     #[test]
     fn test_boolean_string_comparison() {
         test_same("!x==''+y");
         test_same("!x<=''+y");
-        test("!x !== '' + y", "true");
+        test_same("!x !== '' + y");
     }
 
     #[test]
     fn test_string_boolean_comparison() {
         test_same("''+x==!y");
         test_same("''+x<=!y");
-        test("'' + x === !y", "false");
+        test_same("'' + x === !y");
     }
 
     #[test]
@@ -746,8 +729,8 @@ mod test {
         test("+'a' < +'b'", "false");
         test_same("typeof a < 'a'");
         test_same("'a' >= typeof a");
-        test("typeof a < typeof a", "false");
-        test("typeof a >= typeof a", "true");
+        test_same("typeof a < typeof a");
+        test_same("typeof a >= typeof a");
         test("typeof 3 > typeof 4", "false");
         test("typeof function() {} < typeof function() {}", "false");
         test("'a' == 'a'", "true");
@@ -756,11 +739,11 @@ mod test {
         test_same("typeof a != 'number'");
         test_same("'undefined' == typeof a");
         test_same("'undefined' == typeof a");
-        test("typeof a == typeof a", "true");
+        test_same("typeof a == typeof a");
         test("'a' === 'a'", "true");
         test("'b' !== 'a'", "true");
-        test("typeof a === typeof a", "true");
-        test("typeof a !== typeof a", "false");
+        test_same("typeof a === typeof a");
+        test_same("typeof a !== typeof a");
         test_same("'' + x <= '' + y");
         test_same("'' + x != '' + y");
         test_same("'' + x === '' + y");
@@ -783,7 +766,7 @@ mod test {
         test("1 !== '1'", "true");
         test_same("+x>''+y");
         test_same("+x==''+y");
-        test("+x !== '' + y", "true");
+        test_same("+x !== '' + y");
     }
 
     #[test]
@@ -799,7 +782,7 @@ mod test {
         test("'1' !== 1", "true");
         test_same("''+x<+y");
         test_same("''+x==+y");
-        test("'' + x === +y", "false");
+        test_same("'' + x === +y");
     }
 
     #[test]
@@ -901,8 +884,8 @@ mod test {
         test_same("x>=NaN");
         test_same("NaN==x");
         test_same("x!=NaN");
-        test("NaN === x", "false");
-        test("x !== NaN", "true");
+        test_same("NaN === x");
+        test_same("x !== NaN");
         test_same("NaN==foo()");
     }
 
@@ -1109,7 +1092,7 @@ mod test {
     fn test_fold_void() {
         test_same("void 0");
         test("void 1", "void 0");
-        test("void x", "void 0");
+        test_same("void x");
         test_same("void x()");
     }
 

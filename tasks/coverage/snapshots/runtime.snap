@@ -2,7 +2,7 @@ commit: 06454619
 
 runtime Summary:
 AST Parsed     : 18444/18444 (100.00%)
-Positive Passed: 18269/18444 (99.05%)
+Positive Passed: 18273/18444 (99.07%)
 tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-existing-block-fn-no-init.js
 minify error: Test262Error: Expected SameValue(«function f(){}», «undefined») to be true
 
@@ -420,15 +420,6 @@ minify error: Test262Error: #3.2: -0 - 0 === - 0. Actual: +0
 tasks/coverage/test262/test/language/expressions/super/call-spread-obj-getter-init.js
 transform error: Test262Error: Expected SameValue(«true», «false») to be true
 
-tasks/coverage/test262/test/language/expressions/template-literal/literal-expr-tostr-error.js
-minify error: Test262Error: Expected a Test262Error to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/template-literal/middle-list-many-expr-tostr-error.js
-minify error: Test262Error: Expected a Test262Error to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/template-literal/middle-list-one-expr-tostr-error.js
-minify error: Test262Error: Expected a Test262Error to be thrown but no exception was thrown at all
-
 tasks/coverage/test262/test/language/expressions/unary-plus/S11.4.6_A3_T3.js
 minify error: Test262Error: #4: +"INFINITY" === Not-a-Number. Actual: Infinity
 
@@ -437,9 +428,6 @@ minify error: Test262Error: #3.2: +(-0) === -0. Actual: +0
 
 tasks/coverage/test262/test/language/expressions/unary-plus/bigint-throws.js
 minify error: Test262Error: +0n throws TypeError Expected a TypeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/void/S11.4.2_A2_T2.js
-minify error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
 
 tasks/coverage/test262/test/language/global-code/decl-func.js
 codegen error: Test262Error: descriptor should not be configurable
