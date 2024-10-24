@@ -1,5 +1,5 @@
-// To edit this generated file you have to edit `tasks/ast_tools/src/generators/typescript.rs`
 // Auto-generated code, DO NOT EDIT DIRECTLY!
+// To edit this generated file you have to edit `tasks/ast_tools/src/generators/typescript.rs`
 
 export interface FormalParameterRest extends Span {
   type: 'RestElement';
@@ -78,7 +78,7 @@ export interface StringLiteral extends Span {
 export interface Program extends Span {
   type: 'Program';
   sourceType: SourceType;
-  hashbang: (Hashbang) | null;
+  hashbang: Hashbang | null;
   directives: Array<Directive>;
   body: Array<Statement>;
 }
@@ -168,7 +168,7 @@ export interface ObjectProperty extends Span {
   kind: PropertyKind;
   key: PropertyKey;
   value: Expression;
-  init: (Expression) | null;
+  init: Expression | null;
   method: boolean;
   shorthand: boolean;
   computed: boolean;
@@ -232,7 +232,7 @@ export interface TaggedTemplateExpression extends Span {
   type: 'TaggedTemplateExpression';
   tag: Expression;
   quasi: TemplateLiteral;
-  typeParameters: (TSTypeParameterInstantiation) | null;
+  typeParameters: TSTypeParameterInstantiation | null;
 }
 
 export interface TemplateElement extends Span {
@@ -243,7 +243,7 @@ export interface TemplateElement extends Span {
 
 export interface TemplateElementValue {
   raw: string;
-  cooked: (string) | null;
+  cooked: string | null;
 }
 
 export type MemberExpression = ComputedMemberExpression | StaticMemberExpression | PrivateFieldExpression;
@@ -272,7 +272,7 @@ export interface PrivateFieldExpression extends Span {
 export interface CallExpression extends Span {
   type: 'CallExpression';
   callee: Expression;
-  typeParameters: (TSTypeParameterInstantiation) | null;
+  typeParameters: TSTypeParameterInstantiation | null;
   arguments: Array<Argument>;
   optional: boolean;
 }
@@ -281,7 +281,7 @@ export interface NewExpression extends Span {
   type: 'NewExpression';
   callee: Expression;
   arguments: Array<Argument>;
-  typeParameters: (TSTypeParameterInstantiation) | null;
+  typeParameters: TSTypeParameterInstantiation | null;
 }
 
 export interface MetaProperty extends Span {
@@ -454,7 +454,7 @@ export type AssignmentTargetProperty = AssignmentTargetPropertyIdentifier | Assi
 export interface AssignmentTargetPropertyIdentifier extends Span {
   type: 'AssignmentTargetPropertyIdentifier';
   binding: IdentifierReference;
-  init: (Expression) | null;
+  init: Expression | null;
 }
 
 export interface AssignmentTargetPropertyProperty extends Span {
@@ -561,7 +561,7 @@ export type VariableDeclarationKind = 'var' | 'const' | 'let' | 'using' | 'await
 export interface VariableDeclarator extends Span {
   type: 'VariableDeclarator';
   id: BindingPattern;
-  init: (Expression) | null;
+  init: Expression | null;
   definite: boolean;
 }
 
@@ -578,7 +578,7 @@ export interface IfStatement extends Span {
   type: 'IfStatement';
   test: Expression;
   consequent: Statement;
-  alternate: (Statement) | null;
+  alternate: Statement | null;
 }
 
 export interface DoWhileStatement extends Span {
@@ -595,9 +595,9 @@ export interface WhileStatement extends Span {
 
 export interface ForStatement extends Span {
   type: 'ForStatement';
-  init: (ForStatementInit) | null;
-  test: (Expression) | null;
-  update: (Expression) | null;
+  init: ForStatementInit | null;
+  test: Expression | null;
+  update: Expression | null;
   body: Statement;
 }
 
@@ -677,17 +677,17 @@ export interface ForOfStatement extends Span {
 
 export interface ContinueStatement extends Span {
   type: 'ContinueStatement';
-  label: (LabelIdentifier) | null;
+  label: LabelIdentifier | null;
 }
 
 export interface BreakStatement extends Span {
   type: 'BreakStatement';
-  label: (LabelIdentifier) | null;
+  label: LabelIdentifier | null;
 }
 
 export interface ReturnStatement extends Span {
   type: 'ReturnStatement';
-  argument: (Expression) | null;
+  argument: Expression | null;
 }
 
 export interface WithStatement extends Span {
@@ -704,7 +704,7 @@ export interface SwitchStatement extends Span {
 
 export interface SwitchCase extends Span {
   type: 'SwitchCase';
-  test: (Expression) | null;
+  test: Expression | null;
   consequent: Array<Statement>;
 }
 
@@ -722,13 +722,13 @@ export interface ThrowStatement extends Span {
 export interface TryStatement extends Span {
   type: 'TryStatement';
   block: BlockStatement;
-  handler: (CatchClause) | null;
-  finalizer: (BlockStatement) | null;
+  handler: CatchClause | null;
+  finalizer: BlockStatement | null;
 }
 
 export interface CatchClause extends Span {
   type: 'CatchClause';
-  param: (CatchParameter) | null;
+  param: CatchParameter | null;
   body: BlockStatement;
 }
 
@@ -743,7 +743,7 @@ export interface DebuggerStatement extends Span {
 
 export type BindingPattern =
   & ({
-    typeAnnotation: (TSTypeAnnotation) | null;
+    typeAnnotation: TSTypeAnnotation | null;
     optional: boolean;
   })
   & (BindingIdentifier | ObjectPattern | ArrayPattern | AssignmentPattern);
@@ -781,15 +781,15 @@ export interface BindingRestElement extends Span {
 
 export interface Function extends Span {
   type: FunctionType;
-  id: (BindingIdentifier) | null;
+  id: BindingIdentifier | null;
   generator: boolean;
   async: boolean;
   declare: boolean;
-  typeParameters: (TSTypeParameterDeclaration) | null;
-  thisParam: (TSThisParameter) | null;
+  typeParameters: TSTypeParameterDeclaration | null;
+  thisParam: TSThisParameter | null;
   params: FormalParameters;
-  returnType: (TSTypeAnnotation) | null;
-  body: (FunctionBody) | null;
+  returnType: TSTypeAnnotation | null;
+  body: FunctionBody | null;
 }
 
 export type FunctionType =
@@ -808,7 +808,7 @@ export interface FormalParameter extends Span {
   type: 'FormalParameter';
   decorators: Array<Decorator>;
   pattern: BindingPattern;
-  accessibility: (TSAccessibility) | null;
+  accessibility: TSAccessibility | null;
   readonly: boolean;
   override: boolean;
 }
@@ -825,26 +825,26 @@ export interface ArrowFunctionExpression extends Span {
   type: 'ArrowFunctionExpression';
   expression: boolean;
   async: boolean;
-  typeParameters: (TSTypeParameterDeclaration) | null;
+  typeParameters: TSTypeParameterDeclaration | null;
   params: FormalParameters;
-  returnType: (TSTypeAnnotation) | null;
+  returnType: TSTypeAnnotation | null;
   body: FunctionBody;
 }
 
 export interface YieldExpression extends Span {
   type: 'YieldExpression';
   delegate: boolean;
-  argument: (Expression) | null;
+  argument: Expression | null;
 }
 
 export interface Class extends Span {
   type: ClassType;
   decorators: Array<Decorator>;
-  id: (BindingIdentifier) | null;
-  typeParameters: (TSTypeParameterDeclaration) | null;
-  superClass: (Expression) | null;
-  superTypeParameters: (TSTypeParameterInstantiation) | null;
-  implements: (Array<TSClassImplements>) | null;
+  id: BindingIdentifier | null;
+  typeParameters: TSTypeParameterDeclaration | null;
+  superClass: Expression | null;
+  superTypeParameters: TSTypeParameterInstantiation | null;
+  implements: Array<TSClassImplements> | null;
   body: ClassBody;
   abstract: boolean;
   declare: boolean;
@@ -869,7 +869,7 @@ export interface MethodDefinition extends Span {
   static: boolean;
   override: boolean;
   optional: boolean;
-  accessibility: (TSAccessibility) | null;
+  accessibility: TSAccessibility | null;
 }
 
 export type MethodDefinitionType = 'MethodDefinition' | 'TSAbstractMethodDefinition';
@@ -878,7 +878,7 @@ export interface PropertyDefinition extends Span {
   type: PropertyDefinitionType;
   decorators: Array<Decorator>;
   key: PropertyKey;
-  value: (Expression) | null;
+  value: Expression | null;
   computed: boolean;
   static: boolean;
   declare: boolean;
@@ -886,8 +886,8 @@ export interface PropertyDefinition extends Span {
   optional: boolean;
   definite: boolean;
   readonly: boolean;
-  typeAnnotation: (TSTypeAnnotation) | null;
-  accessibility: (TSAccessibility) | null;
+  typeAnnotation: TSTypeAnnotation | null;
+  accessibility: TSAccessibility | null;
 }
 
 export type PropertyDefinitionType = 'PropertyDefinition' | 'TSAbstractPropertyDefinition';
@@ -918,12 +918,12 @@ export interface AccessorProperty extends Span {
   type: AccessorPropertyType;
   decorators: Array<Decorator>;
   key: PropertyKey;
-  value: (Expression) | null;
+  value: Expression | null;
   computed: boolean;
   static: boolean;
   definite: boolean;
-  typeAnnotation: (TSTypeAnnotation) | null;
-  accessibility: (TSAccessibility) | null;
+  typeAnnotation: TSTypeAnnotation | null;
+  accessibility: TSAccessibility | null;
 }
 
 export interface ImportExpression extends Span {
@@ -934,9 +934,9 @@ export interface ImportExpression extends Span {
 
 export interface ImportDeclaration extends Span {
   type: 'ImportDeclaration';
-  specifiers: (Array<ImportDeclarationSpecifier>) | null;
+  specifiers: Array<ImportDeclarationSpecifier> | null;
   source: StringLiteral;
-  withClause: (WithClause) | null;
+  withClause: WithClause | null;
   importKind: ImportOrExportKind;
 }
 
@@ -975,11 +975,11 @@ export type ImportAttributeKey = IdentifierName | StringLiteral;
 
 export interface ExportNamedDeclaration extends Span {
   type: 'ExportNamedDeclaration';
-  declaration: (Declaration) | null;
+  declaration: Declaration | null;
   specifiers: Array<ExportSpecifier>;
-  source: (StringLiteral) | null;
+  source: StringLiteral | null;
   exportKind: ImportOrExportKind;
-  withClause: (WithClause) | null;
+  withClause: WithClause | null;
 }
 
 export interface ExportDefaultDeclaration extends Span {
@@ -990,9 +990,9 @@ export interface ExportDefaultDeclaration extends Span {
 
 export interface ExportAllDeclaration extends Span {
   type: 'ExportAllDeclaration';
-  exported: (ModuleExportName) | null;
+  exported: ModuleExportName | null;
   source: StringLiteral;
-  withClause: (WithClause) | null;
+  withClause: WithClause | null;
   exportKind: ImportOrExportKind;
 }
 
@@ -1055,7 +1055,7 @@ export type ModuleExportName = IdentifierName | IdentifierReference | StringLite
 export interface TSThisParameter extends Span {
   type: 'TSThisParameter';
   thisSpan: Span;
-  typeAnnotation: (TSTypeAnnotation) | null;
+  typeAnnotation: TSTypeAnnotation | null;
 }
 
 export interface TSEnumDeclaration extends Span {
@@ -1069,7 +1069,7 @@ export interface TSEnumDeclaration extends Span {
 export interface TSEnumMember extends Span {
   type: 'TSEnumMember';
   id: TSEnumMemberName;
-  initializer: (Expression) | null;
+  initializer: Expression | null;
 }
 
 export type TSEnumMemberName =
@@ -1345,7 +1345,7 @@ export interface TSBigIntKeyword extends Span {
 export interface TSTypeReference extends Span {
   type: 'TSTypeReference';
   typeName: TSTypeName;
-  typeParameters: (TSTypeParameterInstantiation) | null;
+  typeParameters: TSTypeParameterInstantiation | null;
 }
 
 export type TSTypeName = IdentifierReference | TSQualifiedName;
@@ -1364,8 +1364,8 @@ export interface TSTypeParameterInstantiation extends Span {
 export interface TSTypeParameter extends Span {
   type: 'TSTypeParameter';
   name: BindingIdentifier;
-  constraint: (TSType) | null;
-  default: (TSType) | null;
+  constraint: TSType | null;
+  default: TSType | null;
   in: boolean;
   out: boolean;
   const: boolean;
@@ -1379,7 +1379,7 @@ export interface TSTypeParameterDeclaration extends Span {
 export interface TSTypeAliasDeclaration extends Span {
   type: 'TSTypeAliasDeclaration';
   id: BindingIdentifier;
-  typeParameters: (TSTypeParameterDeclaration) | null;
+  typeParameters: TSTypeParameterDeclaration | null;
   typeAnnotation: TSType;
   declare: boolean;
 }
@@ -1389,14 +1389,14 @@ export type TSAccessibility = 'private' | 'protected' | 'public';
 export interface TSClassImplements extends Span {
   type: 'TSClassImplements';
   expression: TSTypeName;
-  typeParameters: (TSTypeParameterInstantiation) | null;
+  typeParameters: TSTypeParameterInstantiation | null;
 }
 
 export interface TSInterfaceDeclaration extends Span {
   type: 'TSInterfaceDeclaration';
   id: BindingIdentifier;
-  extends: (Array<TSInterfaceHeritage>) | null;
-  typeParameters: (TSTypeParameterDeclaration) | null;
+  extends: Array<TSInterfaceHeritage> | null;
+  typeParameters: TSTypeParameterDeclaration | null;
   body: TSInterfaceBody;
   declare: boolean;
 }
@@ -1412,7 +1412,7 @@ export interface TSPropertySignature extends Span {
   optional: boolean;
   readonly: boolean;
   key: PropertyKey;
-  typeAnnotation: (TSTypeAnnotation) | null;
+  typeAnnotation: TSTypeAnnotation | null;
 }
 
 export type TSSignature =
@@ -1431,10 +1431,10 @@ export interface TSIndexSignature extends Span {
 
 export interface TSCallSignatureDeclaration extends Span {
   type: 'TSCallSignatureDeclaration';
-  typeParameters: (TSTypeParameterDeclaration) | null;
-  thisParam: (TSThisParameter) | null;
+  typeParameters: TSTypeParameterDeclaration | null;
+  thisParam: TSThisParameter | null;
   params: FormalParameters;
-  returnType: (TSTypeAnnotation) | null;
+  returnType: TSTypeAnnotation | null;
 }
 
 export type TSMethodSignatureKind = 'method' | 'get' | 'set';
@@ -1445,17 +1445,17 @@ export interface TSMethodSignature extends Span {
   computed: boolean;
   optional: boolean;
   kind: TSMethodSignatureKind;
-  typeParameters: (TSTypeParameterDeclaration) | null;
-  thisParam: (TSThisParameter) | null;
+  typeParameters: TSTypeParameterDeclaration | null;
+  thisParam: TSThisParameter | null;
   params: FormalParameters;
-  returnType: (TSTypeAnnotation) | null;
+  returnType: TSTypeAnnotation | null;
 }
 
 export interface TSConstructSignatureDeclaration extends Span {
   type: 'TSConstructSignatureDeclaration';
-  typeParameters: (TSTypeParameterDeclaration) | null;
+  typeParameters: TSTypeParameterDeclaration | null;
   params: FormalParameters;
-  returnType: (TSTypeAnnotation) | null;
+  returnType: TSTypeAnnotation | null;
 }
 
 export interface TSIndexSignatureName extends Span {
@@ -1467,14 +1467,14 @@ export interface TSIndexSignatureName extends Span {
 export interface TSInterfaceHeritage extends Span {
   type: 'TSInterfaceHeritage';
   expression: Expression;
-  typeParameters: (TSTypeParameterInstantiation) | null;
+  typeParameters: TSTypeParameterInstantiation | null;
 }
 
 export interface TSTypePredicate extends Span {
   type: 'TSTypePredicate';
   parameterName: TSTypePredicateName;
   asserts: boolean;
-  typeAnnotation: (TSTypeAnnotation) | null;
+  typeAnnotation: TSTypeAnnotation | null;
 }
 
 export type TSTypePredicateName = IdentifierName | TSThisType;
@@ -1482,7 +1482,7 @@ export type TSTypePredicateName = IdentifierName | TSThisType;
 export interface TSModuleDeclaration extends Span {
   type: 'TSModuleDeclaration';
   id: TSModuleDeclarationName;
-  body: (TSModuleDeclarationBody) | null;
+  body: TSModuleDeclarationBody | null;
   kind: TSModuleDeclarationKind;
   declare: boolean;
 }
@@ -1511,7 +1511,7 @@ export interface TSInferType extends Span {
 export interface TSTypeQuery extends Span {
   type: 'TSTypeQuery';
   exprName: TSTypeQueryExprName;
-  typeParameters: (TSTypeParameterInstantiation) | null;
+  typeParameters: TSTypeParameterInstantiation | null;
 }
 
 export type TSTypeQueryExprName = TSImportType | IdentifierReference | TSQualifiedName;
@@ -1520,9 +1520,9 @@ export interface TSImportType extends Span {
   type: 'TSImportType';
   isTypeOf: boolean;
   parameter: TSType;
-  qualifier: (TSTypeName) | null;
-  attributes: (TSImportAttributes) | null;
-  typeParameters: (TSTypeParameterInstantiation) | null;
+  qualifier: TSTypeName | null;
+  attributes: TSImportAttributes | null;
+  typeParameters: TSTypeParameterInstantiation | null;
 }
 
 export interface TSImportAttributes extends Span {
@@ -1541,8 +1541,8 @@ export type TSImportAttributeName = IdentifierName | StringLiteral;
 
 export interface TSFunctionType extends Span {
   type: 'TSFunctionType';
-  typeParameters: (TSTypeParameterDeclaration) | null;
-  thisParam: (TSThisParameter) | null;
+  typeParameters: TSTypeParameterDeclaration | null;
+  thisParam: TSThisParameter | null;
   params: FormalParameters;
   returnType: TSTypeAnnotation;
 }
@@ -1550,7 +1550,7 @@ export interface TSFunctionType extends Span {
 export interface TSConstructorType extends Span {
   type: 'TSConstructorType';
   abstract: boolean;
-  typeParameters: (TSTypeParameterDeclaration) | null;
+  typeParameters: TSTypeParameterDeclaration | null;
   params: FormalParameters;
   returnType: TSTypeAnnotation;
 }
@@ -1558,8 +1558,8 @@ export interface TSConstructorType extends Span {
 export interface TSMappedType extends Span {
   type: 'TSMappedType';
   typeParameter: TSTypeParameter;
-  nameType: (TSType) | null;
-  typeAnnotation: (TSType) | null;
+  nameType: TSType | null;
+  typeAnnotation: TSType | null;
   optional: TSMappedTypeModifierOperator;
   readonly: TSMappedTypeModifierOperator;
 }
@@ -1651,7 +1651,7 @@ export interface JSDocUnknownType extends Span {
 export interface JSXElement extends Span {
   type: 'JSXElement';
   openingElement: JSXOpeningElement;
-  closingElement: (JSXClosingElement) | null;
+  closingElement: JSXClosingElement | null;
   children: Array<JSXChild>;
 }
 
@@ -1660,7 +1660,7 @@ export interface JSXOpeningElement extends Span {
   selfClosing: boolean;
   name: JSXElementName;
   attributes: Array<JSXAttributeItem>;
-  typeParameters: (TSTypeParameterInstantiation) | null;
+  typeParameters: TSTypeParameterInstantiation | null;
 }
 
 export interface JSXClosingElement extends Span {
@@ -1754,7 +1754,7 @@ export type JSXAttributeItem = JSXAttribute | JSXSpreadAttribute;
 export interface JSXAttribute extends Span {
   type: 'JSXAttribute';
   name: JSXAttributeName;
-  value: (JSXAttributeValue) | null;
+  value: JSXAttributeValue | null;
 }
 
 export interface JSXSpreadAttribute extends Span {
@@ -1896,7 +1896,7 @@ export type LookAroundAssertionKind = 'lookahead' | 'negativeLookahead' | 'lookb
 export interface Quantifier extends Span {
   type: 'Quantifier';
   min: number;
-  max: (number) | null;
+  max: number | null;
   greedy: boolean;
   body: Term;
 }
@@ -1931,7 +1931,7 @@ export interface UnicodePropertyEscape extends Span {
   negative: boolean;
   strings: boolean;
   name: string;
-  value: (string) | null;
+  value: string | null;
 }
 
 export interface Dot extends Span {
@@ -1976,20 +1976,20 @@ export interface ClassString extends Span {
 
 export interface CapturingGroup extends Span {
   type: 'CapturingGroup';
-  name: (string) | null;
+  name: string | null;
   body: Disjunction;
 }
 
 export interface IgnoreGroup extends Span {
   type: 'IgnoreGroup';
-  modifiers: (Modifiers) | null;
+  modifiers: Modifiers | null;
   body: Disjunction;
 }
 
 export interface Modifiers extends Span {
   type: 'Modifiers';
-  enabling: (Modifier) | null;
-  disabling: (Modifier) | null;
+  enabling: Modifier | null;
+  disabling: Modifier | null;
 }
 
 export interface Modifier {

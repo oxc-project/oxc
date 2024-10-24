@@ -27,10 +27,10 @@ impl Generator for TypescriptGenerator {
         let file = file!().replace('\\', "/");
         let mut content = format!(
             "\
-        		// To edit this generated file you have to edit `{file}`\n\
-        		// Auto-generated code, DO NOT EDIT DIRECTLY!\n\n\
-						{CUSTOM_TYPESCRIPT}\n\
-						"
+            // Auto-generated code, DO NOT EDIT DIRECTLY!\n\
+            // To edit this generated file you have to edit `{file}`\n\n\
+            {CUSTOM_TYPESCRIPT}\n\
+            "
         );
 
         for def in ctx.schema() {
@@ -53,8 +53,8 @@ impl Generator for TypescriptGenerator {
     }
 }
 
-// Untagged enums: "type Expression = BooleanLiteral | NullLiteral"
-// Tagged enums: "type PropertyKind = 'init' | 'get' | 'set'"
+// Untagged enums: `type Expression = BooleanLiteral | NullLiteral`
+// Tagged enums: `type PropertyKind = 'init' | 'get' | 'set'`
 fn typescript_enum(def: &EnumDef) -> Option<String> {
     if def.markers.estree.custom_ts_def {
         return None;
@@ -130,7 +130,7 @@ fn type_to_string(ty: &TypeName) -> String {
         TypeName::Box(type_name) | TypeName::Ref(type_name) | TypeName::Complex(type_name) => {
             type_to_string(type_name)
         }
-        TypeName::Opt(type_name) => format!("({}) | null", type_to_string(type_name)),
+        TypeName::Opt(type_name) => format!("{} | null", type_to_string(type_name)),
     }
 }
 
@@ -149,22 +149,3 @@ fn format_typescript(source_text: &str) -> String {
     let output = dprint.wait_with_output().unwrap();
     String::from_utf8(output.stdout).unwrap()
 }
-
-// Unusable until oxc_prettier supports comments
-// fn format_typescript(source_text: &str) -> String {
-//     let allocator = Allocator::default();
-//     let source_type = SourceType::ts();
-//     let ret = Parser::new(&allocator, source_text, source_type)
-//         .with_options(ParseOptions { preserve_parens: false, ..ParseOptions::default() })
-//         .parse();
-//     Prettier::new(
-//         &allocator,
-//         PrettierOptions {
-//             semi: true,
-//             trailing_comma: TrailingComma::All,
-//             single_quote: true,
-//             ..PrettierOptions::default()
-//         },
-//     )
-//     .build(&ret.program)
-// }

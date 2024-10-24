@@ -58,7 +58,11 @@ importers:
 
   napi/transform: {}
 
-  npm/oxc-parser: {}
+  npm/oxc-parser:
+    devDependencies:
+      '@oxc/types':
+        specifier: workspace:^
+        version: link:../oxc-types
 
   npm/oxc-transform: {}
 
