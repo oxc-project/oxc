@@ -319,13 +319,13 @@ impl<'a> TraverseCtx<'a> {
     ///
     /// Creates a symbol with the provided name and flags and adds it to the current scope.
     ///
-    /// This is a shortcut for `ctx.scoping.generate_in_current_scope`.
-    pub fn generate_in_current_scope(
+    /// This is a shortcut for `ctx.scoping.generate_binding_in_current_scope`.
+    pub fn generate_binding_in_current_scope(
         &mut self,
         name: Atom<'a>,
         flags: SymbolFlags,
     ) -> BoundIdentifier<'a> {
-        self.scoping.generate_in_current_scope(name, flags)
+        self.scoping.generate_binding_in_current_scope(name, flags)
     }
 
     /// Generate UID var name.
