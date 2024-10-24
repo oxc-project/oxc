@@ -400,7 +400,7 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
         expr: &mut ConditionalExpression<'a>,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
-        match ctx.eval_to_boolean(&expr.test) {
+        match ctx.get_boolean_value(&expr.test) {
             Some(true) => {
                 // Bail `let o = { f() { assert.ok(this !== o); } }; (true ? o.f : false)(); (true ? o.f : false)``;`
                 let parent = ctx.ancestry.parent();
