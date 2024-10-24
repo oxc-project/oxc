@@ -23,6 +23,7 @@
       "rootDir": []
     },
     "react": {
+      "pragma": "React",
       "formComponents": [],
       "linkComponents": []
     },
