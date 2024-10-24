@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.33.0] - 2024-10-24
+
+### Bug Fixes
+
+- 05ef03d codegen: Correct print `__proto__` shorthand (#6802) (Boshen)
+- 1b7897c codegen: Print `#field in {} << 0;` correctly (#6799) (Boshen)
+- 2f6ad42 codegen: Print negative bigint `1n- -1n` correctly after constant folding (#6798) (Boshen)
+- 8f17953 coverage: Remove some broken cases (#6797) (Boshen)
+
+### Documentation
+
+- 374b972 codegen: Add `#![warn(missing_docs)]` to `oxc_codegen` (#6711) (DonIsaac)
+
 ## [0.32.0] - 2024-10-19
 
 - c0e9d7e codegen: [**BREAKING**] `Codegen::into_source_text` consume `Codegen` (#6539) (overlookmotel)
