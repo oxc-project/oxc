@@ -51,7 +51,7 @@ impl Rule for NoAccessKey {
         {
             match attr.value.as_ref() {
                 Some(JSXAttributeValue::StringLiteral(_)) => {
-                    ctx.diagnostic_with_fix(no_access_key_diagnostic(attr.span), |fixer| {
+                    ctx.diagnostic_with_suggestion(no_access_key_diagnostic(attr.span), |fixer| {
                         fixer.delete(&attr.span)
                     });
                 }
