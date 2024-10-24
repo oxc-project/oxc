@@ -22,6 +22,7 @@ use serde::{ser::SerializeSeq, Serialize, Serializer};
 use crate::{Allocator, Box, BUMP_UPWARDS, MINIMUM_ALIGNMENT};
 
 type VecImpl<'a, T> = bump_scope::BumpVec<'a, 'a, T, Global, MINIMUM_ALIGNMENT, BUMP_UPWARDS>;
+type DrainImpl<'a, T> = bump_scope::owned_slice::Drain<'a, T>;
 type SpliceImpl<'a, I> =
     bump_scope::bump_vec::Splice<'a, I, Global, MINIMUM_ALIGNMENT, BUMP_UPWARDS>;
 type IntoIterImpl<'a, T> =
@@ -763,7 +764,7 @@ impl_slice_eq1! { ['t, const N: usize] Vec<'t, T>, &[U; N] }
 /// let mut v = Vec::from_iter_in([0, 1, 2], &allocator);
 /// let iter: oxc_allocator::vec::Drain<'_, _> = v.drain(..);
 /// ```
-pub struct Drain<'a, T>(bump_scope::owned_slice::Drain<'a, T>);
+pub struct Drain<'a, T>(DrainImpl<'a, T>);
 
 impl<T> Iterator for Drain<'_, T> {
     type Item = T;
