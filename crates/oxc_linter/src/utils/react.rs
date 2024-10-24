@@ -15,10 +15,9 @@ use crate::{LintContext, OxlintSettings};
 pub fn is_create_element_call(call_expr: &CallExpression, ctx: &LintContext) -> bool {
     match &call_expr.callee {
         Expression::Identifier(ident) => ident.name == "createElement",
-        expr => expr.is_specific_member_access(
-            ctx.settings().react.pragma.as_ref().map_or("React", |pragma| pragma.as_str()),
-            "createElement",
-        ),
+        expr => {
+            expr.is_specific_member_access(ctx.settings().react.pragma.as_str(), "createElement")
+        }
     }
 }
 

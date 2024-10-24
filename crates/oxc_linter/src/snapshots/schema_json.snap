@@ -68,7 +68,7 @@ expression: json
           "rootDir": []
         },
         "react": {
-          "pragma": null,
+          "pragma": "React",
           "formComponents": [],
           "linkComponents": []
         },
@@ -370,7 +370,7 @@ expression: json
         },
         "react": {
           "default": {
-            "pragma": null,
+            "pragma": "React",
             "formComponents": [],
             "linkComponents": []
           },
@@ -400,10 +400,8 @@ expression: json
           }
         },
         "pragma": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "default": "React",
+          "type": "string"
         }
       }
     },
