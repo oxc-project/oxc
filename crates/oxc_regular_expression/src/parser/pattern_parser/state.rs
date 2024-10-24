@@ -56,10 +56,7 @@ enum SimpleUnit<'a> {
     GroupName(Atom<'a>),
 }
 
-/// Returns: Result<
-///   (num_of_left_parens, capturing_group_names),
-///   duplicated_named_capturing_group_offsets
-/// >
+/// Returns: Result<(num_of_left_parens, capturing_group_names), duplicated_named_capturing_group_offsets>
 fn parse_capturing_groups<'a>(
     reader: &mut Reader<'a>,
 ) -> Result<(u32, FxHashSet<Atom<'a>>), DuplicatedNamedCapturingGroupOffsets> {
