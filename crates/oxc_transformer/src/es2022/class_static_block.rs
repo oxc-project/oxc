@@ -298,7 +298,7 @@ impl<'a> Keys<'a> {
         let mut key = AString::with_capacity_in(num_str.len() + 1, ctx.ast.allocator);
         key.push('_');
         key.push_str(num_str);
-        let key = Atom::from(key.into_bump_str());
+        let key = Atom::from(key.into_str());
 
         self.numbered.push(&key.as_str()[1..]);
 
