@@ -2,7 +2,7 @@ commit: 06454619
 
 runtime Summary:
 AST Parsed     : 18444/18444 (100.00%)
-Positive Passed: 18273/18444 (99.07%)
+Positive Passed: 18276/18444 (99.09%)
 tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-existing-block-fn-no-init.js
 minify error: Test262Error: Expected SameValue(«function f(){}», «undefined») to be true
 
@@ -325,7 +325,7 @@ tasks/coverage/test262/test/language/expressions/array/spread-obj-getter-init.js
 transform error: Test262Error: Expected SameValue(«true», «false») to be true
 
 tasks/coverage/test262/test/language/expressions/assignment/fn-name-lhs-cover.js
-codegen error: Test262Error: descriptor value should be ; object value should be 
+codegen error: Test262Error: descriptor value should be ; object value should be
 
 tasks/coverage/test262/test/language/expressions/call/spread-obj-getter-init.js
 transform error: Test262Error: Expected SameValue(«true», «false») to be true
@@ -406,7 +406,7 @@ tasks/coverage/test262/test/language/expressions/object/__proto__-permitted-dup-
 codegen error: Test262Error: Expected SameValue(«[object Object]», «2») to be true
 
 tasks/coverage/test262/test/language/expressions/object/object-spread-proxy-get-not-called-on-dontenum-keys.js
-transform error: Test262Error: Actual [dontEnumString, 0, enumerableString, 1, Symbol(dont_enum_symbol), Symbol(enumerable_symbol)] and expected [Symbol(dont_enum_symbol), dontEnumString, 0, Symbol(enumerable_symbol), enumerableString, 1] should have the same contents. 
+transform error: Test262Error: Actual [dontEnumString, 0, enumerableString, 1, Symbol(dont_enum_symbol), Symbol(enumerable_symbol)] and expected [Symbol(dont_enum_symbol), dontEnumString, 0, Symbol(enumerable_symbol), enumerableString, 1] should have the same contents.
 
 tasks/coverage/test262/test/language/expressions/object/object-spread-proxy-no-excluded-keys.js
 transform error: TypeError: Cannot read properties of undefined (reading 'enumerable')
@@ -514,5 +514,5 @@ tasks/coverage/test262/test/language/statements/for-of/string-astral-truncated.j
 codegen error: Test262Error: Expected SameValue(«"\\"», «"\\ud801"») to be true
 
 tasks/coverage/test262/test/language/statements/with/has-binding-call-with-proxy-env.js
-minify error: Test262Error: Actual [] and expected [has:Object] should have the same contents. 
+minify error: Test262Error: Actual [] and expected [has:Object] should have the same contents.
 
