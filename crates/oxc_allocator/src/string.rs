@@ -1,7 +1,10 @@
-use crate::{Allocator, StringImpl};
+use crate::{Allocator, BUMP_UPWARDS, MINIMUM_ALIGNMENT};
 
+use allocator_api2::alloc::Global;
 #[cfg(any(feature = "serialize", test))]
 use serde::{Serialize, Serializer};
+
+type StringImpl<'a> = bump_scope::BumpString<'a, 'a, Global, MINIMUM_ALIGNMENT, BUMP_UPWARDS>;
 
 /// A bump-allocated string.
 pub struct String<'a>(StringImpl<'a>);

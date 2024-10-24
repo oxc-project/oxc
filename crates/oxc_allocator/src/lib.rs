@@ -59,8 +59,6 @@ const BUMP_UPWARDS: bool = true;
 const MINIMUM_ALIGNMENT: usize = 1;
 
 type BumpImpl = bump_scope::Bump<Global, MINIMUM_ALIGNMENT, BUMP_UPWARDS>;
-type VecImpl<'a, T> = bump_scope::BumpVec<'a, 'a, T, Global, MINIMUM_ALIGNMENT, BUMP_UPWARDS>;
-type StringImpl<'a> = bump_scope::BumpString<'a, 'a, Global, MINIMUM_ALIGNMENT, BUMP_UPWARDS>;
 
 /// A bump-allocated memory arena based on [bump-scope].
 ///

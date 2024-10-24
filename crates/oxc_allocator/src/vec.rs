@@ -23,7 +23,13 @@ use allocator_api2::alloc::Global;
 #[cfg(any(feature = "serialize", test))]
 use serde::{ser::SerializeSeq, Serialize, Serializer};
 
-use crate::{Allocator, Box, VecImpl};
+use crate::{Allocator, Box, BUMP_UPWARDS, MINIMUM_ALIGNMENT};
+
+type VecImpl<'a, T> = bump_scope::BumpVec<'a, 'a, T, Global, MINIMUM_ALIGNMENT, BUMP_UPWARDS>;
+type SpliceImpl<'a, I> =
+    bump_scope::bump_vec::Splice<'a, I, Global, MINIMUM_ALIGNMENT, BUMP_UPWARDS>;
+type IntoIterImpl<'a, T> =
+    bump_scope::bump_vec::IntoIter<'a, 'a, T, Global, MINIMUM_ALIGNMENT, BUMP_UPWARDS>;
 
 /// A `Vec` without [`Drop`], which stores its data in the arena allocator.
 ///
@@ -802,7 +808,7 @@ impl<T> FusedIterator for Drain<'_, T> {}
 /// let new = [7, 8];
 /// let iter: oxc_allocator::vec::Splice<'_, _> = v.splice(1.., new);
 /// ```
-pub struct Splice<'a, I: Iterator>(bump_scope::bump_vec::Splice<'a, I, Global>);
+pub struct Splice<'a, I: Iterator>(SpliceImpl<'a, I>);
 
 impl<I: Iterator> Iterator for Splice<'_, I> {
     type Item = I::Item;
@@ -848,7 +854,7 @@ impl<'alloc, T> ops::DerefMut for Vec<'alloc, T> {
 /// let v = Vec::from_iter_in([0, 1, 2], &allocator);
 /// let iter: std::vec::IntoIter<_> = v.into_iter();
 /// ```
-pub struct IntoIter<'alloc, T>(bump_scope::bump_vec::IntoIter<'alloc, 'alloc, T>);
+pub struct IntoIter<'alloc, T>(IntoIterImpl<'alloc, T>);
 
 impl<T> IntoIter<'_, T> {
     /// Returns the remaining items of this iterator as a slice.
