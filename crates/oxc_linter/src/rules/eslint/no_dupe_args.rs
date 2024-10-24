@@ -5,7 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
-use std::collections::HashSet;
+use rustc_hash::FxHashSet;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -66,7 +66,7 @@ impl Rule for NoDupeArgs {
 }
 
 fn no_dupe_rags<'a>(items: &'a [FormalParameter<'a>], ctx: &LintContext<'a>) {
-    let mut param_name_set: HashSet<CompactStr> = HashSet::new();
+    let mut param_name_set: FxHashSet<CompactStr> = FxHashSet::default();
     for param in items.iter() {
         if let BindingPatternKind::BindingIdentifier(iden) = &param.pattern.kind {
             let param_name: CompactStr = iden.name.to_compact_str();

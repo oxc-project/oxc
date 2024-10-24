@@ -2,7 +2,6 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use regex::Regex;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -42,9 +41,14 @@ declare_oxc_lint!(
 impl Rule for NoOctal {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::NumericLiteral(numeric) = node.kind() {
-            let re = Regex::new(r"^0\d").unwrap();
-            if re.is_match(numeric.raw) {
-                ctx.diagnostic(no_octal_diagnostic(numeric.span));
+            let mut chars = numeric.raw.chars();
+            match (chars.nth(0), chars.nth(1)) {
+                (Some('0'), Some(v)) => {
+                    if !matches!(v, '.' | 'x' | 'X') {
+                        ctx.diagnostic(no_octal_diagnostic(numeric.span));
+                    }
+                }
+                _ => {}
             }
         }
     }
