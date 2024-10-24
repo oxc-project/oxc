@@ -85,7 +85,7 @@ impl Rule for NoTypeofUndefined {
     }
 }
 
-fn is_global_variable(ident: &Expression, ctx: &LintContext) -> bool {
+fn is_global_variable<'a>(ident: &Expression<'a>, ctx: &LintContext<'a>) -> bool {
     let Expression::Identifier(ident) = ident else {
         return false;
     };

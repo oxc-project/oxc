@@ -55,7 +55,6 @@ impl Parse for VisitArgs {
 /// A struct representing `#[visit(...)]` markers
 #[derive(Default, Debug)]
 pub struct VisitMarkers {
-    pub visit_as: Option<Ident>,
     pub visit_args: Option<VisitArgs>,
     pub enter_before: bool,
     pub ignore: bool,
@@ -127,12 +126,14 @@ impl Parse for ESTreeStructAttribute {
 pub struct ESTreeEnumAttribute {
     pub rename_all: Option<String>,
     pub untagged: bool,
+    pub custom_ts_def: bool,
 }
 
 impl Parse for ESTreeEnumAttribute {
     fn parse(input: ParseStream) -> Result<Self, syn::Error> {
         let mut rename_all = None;
         let mut untagged = false;
+        let mut custom_ts_def = false;
 
         loop {
             let ident = input.call(Ident::parse_any).unwrap().to_string();
@@ -151,6 +152,13 @@ impl Parse for ESTreeEnumAttribute {
                         untagged = true;
                     }
                 }
+                "custom_ts_def" => {
+                    if custom_ts_def {
+                        panic!("Duplicate estree(custom_ts_def)");
+                    } else {
+                        custom_ts_def = true;
+                    }
+                }
                 arg => panic!("Unsupported #[estree(...)] argument: {arg}"),
             }
             let comma = input.peek(Token![,]);
@@ -160,7 +168,7 @@ impl Parse for ESTreeEnumAttribute {
                 break;
             }
         }
-        Ok(Self { rename_all, untagged })
+        Ok(Self { rename_all, untagged, custom_ts_def })
     }
 }
 
@@ -290,7 +298,6 @@ where
     attr.map_or_else(
         || Ok(VisitMarkers::default()),
         |attr| {
-            let mut visit_as = None;
             let mut visit_args = None;
             let mut enter_before = false;
             let mut ignore = false;
@@ -301,9 +308,6 @@ where
                     for com in nested {
                         if com.ident == "args" {
                             visit_args = Some(parse2(com.args).unwrap());
-                        } else if com.ident == "as" {
-                            visit_as =
-                                Some(parse2(com.args).expect("Invalid `#[visit[as(...)]]` input!"));
                         } else if com.ident == "enter_before" {
                             enter_before = true;
                         } else if com.ident == "ignore" {
@@ -313,7 +317,7 @@ where
                         }
                     }
                 })
-                .map(|()| VisitMarkers { visit_as, visit_args, enter_before, ignore })
+                .map(|()| VisitMarkers { visit_args, enter_before, ignore })
                 .normalize()
         },
     )

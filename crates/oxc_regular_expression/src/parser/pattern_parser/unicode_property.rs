@@ -23,6 +23,7 @@ pub fn is_valid_lone_unicode_property_of_strings(name_or_value: &str) -> bool {
 }
 
 // spellchecker:off
+// # General_Category (gc)
 // https://unicode.org/Public/UCD/latest/ucd/PropertyValueAliases.txt
 static GC_PROPERTY_VALUES: Set<&'static str> = phf_set! {
     "C", "Other",
@@ -103,6 +104,7 @@ static SC_PROPERTY_VALUES: Set<&'static str> = phf_set! {
     "Elba", "Elbasan",
     "Elym", "Elymaic",
     "Ethi", "Ethiopic",
+    "Gara", "Garay",
     "Geor", "Georgian",
     "Glag", "Glagolitic",
     "Gong", "Gunjala_Gondi",
@@ -111,6 +113,7 @@ static SC_PROPERTY_VALUES: Set<&'static str> = phf_set! {
     "Gran", "Grantha",
     "Grek", "Greek",
     "Gujr", "Gujarati",
+    "Gukh", "Gurung_Khema",
     "Guru", "Gurmukhi",
     "Hang", "Hangul",
     "Hani", "Han",
@@ -133,6 +136,7 @@ static SC_PROPERTY_VALUES: Set<&'static str> = phf_set! {
     "Khoj", "Khojki",
     "Kits", "Khitan_Small_Script",
     "Knda", "Kannada",
+    "Krai", "Kirat_Rai",
     "Kthi", "Kaithi",
     "Lana", "Tai_Tham",
     "Laoo", "Lao",
@@ -169,6 +173,7 @@ static SC_PROPERTY_VALUES: Set<&'static str> = phf_set! {
     "Nshu", "Nushu",
     "Ogam", "Ogham",
     "Olck", "Ol_Chiki",
+    "Onao", "Ol_Onal",
     "Orkh", "Old_Turkic",
     "Orya", "Oriya",
     "Osge", "Osage",
@@ -200,6 +205,7 @@ static SC_PROPERTY_VALUES: Set<&'static str> = phf_set! {
     "Sora", "Sora_Sompeng",
     "Soyo", "Soyombo",
     "Sund", "Sundanese",
+    "Sunu", "Sunuwar",
     "Sylo", "Syloti_Nagri",
     "Syrc", "Syriac",
     "Tagb", "Tagbanwa",
@@ -217,7 +223,9 @@ static SC_PROPERTY_VALUES: Set<&'static str> = phf_set! {
     "Tibt", "Tibetan",
     "Tirh", "Tirhuta",
     "Tnsa", "Tangsa",
+    "Todr", "Todhri",
     "Toto",
+    "Tutg", "Tulu_Tigalari",
     "Ugar", "Ugaritic",
     "Vaii", "Vai",
     "Vith", "Vithkuqi",
@@ -230,7 +238,7 @@ static SC_PROPERTY_VALUES: Set<&'static str> = phf_set! {
     "Zanb", "Zanabazar_Square",
     "Zinh", "Inherited", "Qaai",
     "Zyyy", "Common",
-    "Zzzz", "Unknown"
+    "Zzzz", "Unknown",
 };
 
 static SCX_PROPERTY_VALUES: Set<&'static str> = phf_set! {

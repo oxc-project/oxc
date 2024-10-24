@@ -411,7 +411,7 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::{Parser, ParserOptions};
+    use crate::{LiteralParser, Options};
     use oxc_allocator::Allocator;
 
     type Case<'a> = (
@@ -557,13 +557,9 @@ mod test {
             let pattern = &input[left_slash + 1..right_slash];
             let flags = &input[right_slash + 1..];
 
-            let actual = Parser::new(
-                allocator,
-                pattern,
-                ParserOptions::default().with_span_offset(1).with_flags(flags),
-            )
-            .parse()
-            .unwrap();
+            let actual = LiteralParser::new(allocator, pattern, Some(flags), Options::default())
+                .parse()
+                .unwrap();
 
             let expect = output.unwrap_or(input);
             assert_eq!(expect, format!("/{actual}/{flags}")); // This uses `Display` impls

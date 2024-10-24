@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.10.2] - 2024-10-22
+
+### Refactor
+
+- 6ffdcc0 oxlint: Lint/mod.rs -> lint.rs (#6746) (Boshen)
+
+### Testing
+
+- b03cec6 oxlint: Add `--fix` test case (#6747) (Boshen)
+
+## [0.10.1] - 2024-10-21
+
+### Refactor
+
+- d6609e9 linter: Use `run_on_jest_node` for existing lint rules (#6722) (camchenry)
+
 ## [0.10.0] - 2024-10-18
 
 - 80266d8 linter: [**BREAKING**] Support plugins in oxlint config files (#6088) (DonIsaac)

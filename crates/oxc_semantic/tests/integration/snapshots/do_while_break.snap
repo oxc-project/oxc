@@ -29,6 +29,7 @@ bb5: {
 
 bb6: {
 	statement
+	statement
 }
 
 bb7: {
@@ -67,6 +68,7 @@ TryStatement" shape = box]
     5 [ label = "bb5
 BlockStatement" shape = box]
     6 [ label = "bb6
+BlockStatement
 DoWhileStatement" shape = box]
     7 [ label = "bb7
 BlockStatement

@@ -202,7 +202,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           body: ${{ steps.run.outputs.CHANGELOG }}
-          draft: true
+          draft: false
           files: oxlint-*
           name: oxlint v${{ needs.check.outputs.version }}
           tag_name: oxlint_v${{ needs.check.outputs.version }}

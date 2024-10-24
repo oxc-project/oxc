@@ -22,15 +22,24 @@ impl Derive for DeriveESTree {
         "ESTree"
     }
 
+    fn snake_name() -> String {
+        "estree".to_string()
+    }
+
     fn derive(&mut self, def: &TypeDef, _: &LateCtx) -> TokenStream {
         let ts_type_def = match def {
             TypeDef::Enum(def) => typescript_enum(def),
-            TypeDef::Struct(def) => typescript_struct(def),
+            TypeDef::Struct(def) => Some(typescript_struct(def)),
         };
-        let ts_type_def = quote! {
-            #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-            const TS_APPEND_CONTENT: &'static str = #ts_type_def;
+        let ts_type_def = if let Some(ts_type_def) = ts_type_def {
+            quote! {
+                #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+                const TS_APPEND_CONTENT: &'static str = #ts_type_def;
+            }
+        } else {
+            TokenStream::new()
         };
+
         if let TypeDef::Struct(def) = def {
             if def
                 .markers
@@ -165,14 +174,18 @@ fn serialize_enum(def: &EnumDef) -> TokenStream {
 
 // Untagged enums: "type Expression = BooleanLiteral | NullLiteral"
 // Tagged enums: "type PropertyKind = 'init' | 'get' | 'set'"
-fn typescript_enum(def: &EnumDef) -> String {
+fn typescript_enum(def: &EnumDef) -> Option<String> {
+    if def.markers.estree.custom_ts_def {
+        return None;
+    }
+
     let union = if def.markers.estree.untagged {
         def.all_variants().map(|var| type_to_string(var.fields[0].typ.name())).join(" | ")
     } else {
         def.all_variants().map(|var| format!("'{}'", enum_variant_name(var, def))).join(" | ")
     };
     let ident = def.ident();
-    format!("export type {ident} = {union};")
+    Some(format!("export type {ident} = {union};"))
 }
 
 fn typescript_struct(def: &StructDef) -> String {

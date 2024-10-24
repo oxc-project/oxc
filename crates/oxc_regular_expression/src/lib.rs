@@ -15,4 +15,8 @@ mod generated {
 }
 
 pub mod ast;
-pub use crate::{ast_impl::visit, options::ParserOptions, parser::Parser};
+pub use crate::{
+    ast_impl::visit,
+    options::Options,
+    parser::{ConstructorParser, LiteralParser},
+};

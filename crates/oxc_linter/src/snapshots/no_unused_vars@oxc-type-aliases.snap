@@ -25,7 +25,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing this declaration.
 
-  ⚠ eslint(no-unused-vars): Variable 'R' is declared but never used.
+  ⚠ eslint(no-unused-vars): Variable 'R' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:36]
  1 │ export type F<T> = T extends infer R ? /* R not used */ string : never
    ·                                    ┬

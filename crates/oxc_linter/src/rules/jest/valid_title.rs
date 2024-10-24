@@ -14,10 +14,7 @@ use rustc_hash::FxHashMap;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{
-        collect_possible_jest_call_node, parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind,
-        PossibleJestNode,
-    },
+    utils::{parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind, PossibleJestNode},
 };
 
 fn valid_title_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
@@ -67,7 +64,8 @@ declare_oxc_lint!(
     /// xtest('', () => {});
     /// ```
     ValidTitle,
-    correctness
+    correctness,
+    conditional_fix
 );
 
 impl Rule for ValidTitle {
@@ -104,10 +102,12 @@ impl Rule for ValidTitle {
         }))
     }
 
-    fn run_once(&self, ctx: &LintContext) {
-        for node in &collect_possible_jest_call_node(ctx) {
-            self.run(node, ctx);
-        }
+    fn run_on_jest_node<'a, 'c>(
+        &self,
+        jest_node: &PossibleJestNode<'a, 'c>,
+        ctx: &'c LintContext<'a>,
+    ) {
+        self.run(jest_node, ctx);
     }
 }
 
@@ -297,9 +297,12 @@ fn validate_title(
         return;
     }
 
-    // TODO: support fixer
-    if !valid_title.ignore_space && title.trim() != title {
-        Message::AccidentalSpace.diagnostic(ctx, span);
+    let trimmed_title = title.trim();
+    if !valid_title.ignore_space && trimmed_title != title {
+        let (error, help) = Message::AccidentalSpace.detail();
+        ctx.diagnostic_with_fix(valid_title_diagnostic(error, help, span), |fixer| {
+            fixer.replace(span.shrink(1), trimmed_title.to_string())
+        });
     }
 
     let un_prefixed_name = name.trim_start_matches(['f', 'x']);
@@ -307,9 +310,12 @@ fn validate_title(
         return;
     };
 
-    // TODO: support fixer
     if first_word == un_prefixed_name {
-        Message::DuplicatePrefix.diagnostic(ctx, span);
+        let (error, help) = Message::DuplicatePrefix.detail();
+        ctx.diagnostic_with_fix(valid_title_diagnostic(error, help, span), |fixer| {
+            let replaced_title = title[first_word.len()..].trim().to_string();
+            fixer.replace(span.shrink(1), replaced_title)
+        });
         return;
     }
 
@@ -891,5 +897,130 @@ fn test() {
         ),
     ];
 
-    Tester::new(ValidTitle::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
+    let fix = vec![
+        ("describe(' foo', function () {})", "describe('foo', function () {})"),
+        ("describe.each()(' foo', function () {})", "describe.each()('foo', function () {})"),
+        (
+            "describe.only.each()(' foo', function () {})",
+            "describe.only.each()('foo', function () {})",
+        ),
+        ("describe(' foo foe fum', function () {})", "describe('foo foe fum', function () {})"),
+        ("describe('foo foe fum ', function () {})", "describe('foo foe fum', function () {})"),
+        ("fdescribe(' foo', function () {})", "fdescribe('foo', function () {})"),
+        ("fdescribe(' foo', function () {})", "fdescribe('foo', function () {})"),
+        ("xdescribe(' foo', function () {})", "xdescribe('foo', function () {})"),
+        ("it(' foo', function () {})", "it('foo', function () {})"),
+        ("it.concurrent(' foo', function () {})", "it.concurrent('foo', function () {})"),
+        ("fit(' foo', function () {})", "fit('foo', function () {})"),
+        ("it.skip(' foo', function () {})", "it.skip('foo', function () {})"),
+        ("fit('foo ', function () {})", "fit('foo', function () {})"),
+        ("it.skip('foo ', function () {})", "it.skip('foo', function () {})"),
+        (
+            "
+                import { test as testThat } from '@jest/globals';
+
+                testThat('foo works ', () => {});
+            ",
+            "
+                import { test as testThat } from '@jest/globals';
+
+                testThat('foo works', () => {});
+            ",
+        ),
+        ("xit(' foo', function () {})", "xit('foo', function () {})"),
+        ("test(' foo', function () {})", "test('foo', function () {})"),
+        ("test.concurrent(' foo', function () {})", "test.concurrent('foo', function () {})"),
+        ("test(` foo`, function () {})", "test(`foo`, function () {})"),
+        ("test.concurrent(` foo`, function () {})", "test.concurrent(`foo`, function () {})"),
+        ("test(` foo bar bang`, function () {})", "test(`foo bar bang`, function () {})"),
+        (
+            "test.concurrent(` foo bar bang`, function () {})",
+            "test.concurrent(`foo bar bang`, function () {})",
+        ),
+        ("test(` foo bar bang  `, function () {})", "test(`foo bar bang`, function () {})"),
+        (
+            "test.concurrent(` foo bar bang  `, function () {})",
+            "test.concurrent(`foo bar bang`, function () {})",
+        ),
+        ("xtest(' foo', function () {})", "xtest('foo', function () {})"),
+        ("xtest(' foo  ', function () {})", "xtest('foo', function () {})"),
+        (
+            "
+                describe(' foo', () => {
+                    it('bar', () => {})
+                })
+            ",
+            "
+                describe('foo', () => {
+                    it('bar', () => {})
+                })
+            ",
+        ),
+        (
+            "
+                describe('foo', () => {
+                    it(' bar', () => {})
+                })
+            ",
+            "
+                describe('foo', () => {
+                    it('bar', () => {})
+                })
+            ",
+        ),
+        ("describe('describe foo', function () {})", "describe('foo', function () {})"),
+        ("fdescribe('describe foo', function () {})", "fdescribe('foo', function () {})"),
+        ("xdescribe('describe foo', function () {})", "xdescribe('foo', function () {})"),
+        ("describe('describe foo', function () {})", "describe('foo', function () {})"),
+        ("fdescribe(`describe foo`, function () {})", "fdescribe(`foo`, function () {})"),
+        ("test('test foo', function () {})", "test('foo', function () {})"),
+        ("xtest('test foo', function () {})", "xtest('foo', function () {})"),
+        ("test(`test foo`, function () {})", "test(`foo`, function () {})"),
+        ("test(`test foo test`, function () {})", "test(`foo test`, function () {})"),
+        ("it('it foo', function () {})", "it('foo', function () {})"),
+        ("fit('it foo', function () {})", "fit('foo', function () {})"),
+        ("xit('it foo', function () {})", "xit('foo', function () {})"),
+        ("it('it foos it correctly', function () {})", "it('foos it correctly', function () {})"),
+        (
+            "
+                describe('describe foo', () => {
+                    it('bar', () => {})
+                })
+            ",
+            "
+                describe('foo', () => {
+                    it('bar', () => {})
+                })
+            ",
+        ),
+        (
+            "
+                describe('describe foo', () => {
+                    it('describes things correctly', () => {})
+                })
+            ",
+            "
+                describe('foo', () => {
+                    it('describes things correctly', () => {})
+                })
+            ",
+        ),
+        (
+            "
+                describe('foo', () => {
+                    it('it bar', () => {})
+                })
+            ",
+            "
+                describe('foo', () => {
+                    it('bar', () => {})
+                })
+            ",
+        ),
+    ];
+
+    Tester::new(ValidTitle::NAME, pass, fail)
+        .with_jest_plugin(true)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

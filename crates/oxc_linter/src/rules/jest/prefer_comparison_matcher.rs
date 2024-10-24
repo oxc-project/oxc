@@ -12,8 +12,8 @@ use crate::{
     fixer::RuleFixer,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, is_equality_matcher, parse_expect_jest_fn_call,
-        KnownMemberExpressionProperty, PossibleJestNode,
+        is_equality_matcher, parse_expect_jest_fn_call, KnownMemberExpressionProperty,
+        PossibleJestNode,
     },
 };
 
@@ -60,10 +60,12 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferComparisonMatcher {
-    fn run_once(&self, ctx: &LintContext) {
-        for possible_jest_node in &collect_possible_jest_call_node(ctx) {
-            Self::run(possible_jest_node, ctx);
-        }
+    fn run_on_jest_node<'a, 'c>(
+        &self,
+        jest_node: &PossibleJestNode<'a, 'c>,
+        ctx: &'c LintContext<'a>,
+    ) {
+        Self::run(jest_node, ctx);
     }
 }
 

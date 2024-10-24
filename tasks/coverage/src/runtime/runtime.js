@@ -1,3 +1,5 @@
+// https://github.com/evanw/esbuild/blob/main/scripts/test262.js
+//
 import fs from 'node:fs';
 import { createServer } from 'node:http';
 import path from 'node:path';
@@ -13,8 +15,11 @@ async function runCodeInHarness(options = {}) {
   const { code = '', includes = [], importDir = '', isAsync = false, isModule = true, isRaw = false } = options;
   const context = {};
 
-  // See: https://github.com/nodejs/node/issues/36351
-  const unique = () => '//' + Math.random();
+  if (process.env.DEBUG) {
+    const { code: c, ...o } = options;
+    console.log(c);
+    console.log(o);
+  }
 
   const runCode = async () => {
     const moduleCache = new Map();
@@ -30,18 +35,18 @@ async function runCodeInHarness(options = {}) {
           };
           module = new SyntheticModule(['default'], evaluate, { context });
         } else {
-          module = new SourceTextModule(code + unique(), { context, importModuleDynamically });
+          module = new SourceTextModule(code, { context, importModuleDynamically });
         }
         moduleCache.set(modulePath, module);
       }
       return module;
     };
 
-    const linker = (specifier, referencingModule) => {
+    const linker = (specifier) => {
       return findModule(path.join(importDir, specifier));
     };
 
-    const importModuleDynamically = (specifier, script) => {
+    const importModuleDynamically = (specifier) => {
       const where = path.join(importDir, specifier);
       let promise = dynamicImportCache.get(where);
       if (!promise) {
@@ -62,7 +67,7 @@ async function runCodeInHarness(options = {}) {
     if (!isRaw) runInContext(createHarnessForTest(includes), context);
 
     if (isModule) {
-      const module = new SourceTextModule(code + unique(), { context, importModuleDynamically });
+      const module = new SourceTextModule(code, { context, importModuleDynamically });
       await module.link(linker);
       await module.evaluate();
     } else {
@@ -97,6 +102,8 @@ for (const entry of fs.readdirSync(harnessDir)) {
   harnessFiles.set(entry, content);
 }
 
+const babelHelpers = fs.readFileSync(path.join(__dirname, './babelHelpers.js'), 'utf8');
+
 function createHarnessForTest(includes) {
   let harness = defaultHarness;
 
@@ -108,10 +115,16 @@ function createHarnessForTest(includes) {
     }
   }
 
+  harness += babelHelpers;
+
   return harness;
 }
 
 const server = createServer((req, res) => {
+  if (req.method == 'DELETE') {
+    server.closeAllConnections();
+    server.close();
+  }
   if (req.method === 'POST') {
     let body = '';
     req.on('data', chunk => {
@@ -122,8 +135,8 @@ const server = createServer((req, res) => {
       try {
         await runCodeInHarness(options);
       } catch (err) {
-        if (parseInt(process.version.split('.')[0].replace('v', '')) < 20) {
-          return res.end('Please upgrade the Node.js version to 20 or later.');
+        if (parseInt(process.version.split('.')[0].replace('v', '')) < 22) {
+          return res.end('Please upgrade the Node.js version to 22 or later.');
         }
         return res.end(err.toString());
       }
@@ -140,5 +153,7 @@ const server = createServer((req, res) => {
 process.on('unhandledRejection', () => {
   // Don't exit when a test does this
 });
+
+server.timeout = 3000;
 
 server.listen(32055, () => {});

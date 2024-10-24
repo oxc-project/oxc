@@ -15,7 +15,8 @@ use crate::{
 };
 
 impl<'a> IsolatedDeclarations<'a> {
-    pub fn is_literal_key(&self, key: &PropertyKey<'a>) -> bool {
+    #[allow(clippy::unused_self)]
+    pub(crate) fn is_literal_key(&self, key: &PropertyKey<'a>) -> bool {
         match key {
             PropertyKey::StringLiteral(_)
             | PropertyKey::NumericLiteral(_)
@@ -32,7 +33,7 @@ impl<'a> IsolatedDeclarations<'a> {
         }
     }
 
-    pub fn report_property_key(&self, key: &PropertyKey<'a>, computed: bool) -> bool {
+    pub(crate) fn report_property_key(&self, key: &PropertyKey<'a>, computed: bool) -> bool {
         if computed && !self.is_literal_key(key) {
             self.error(computed_property_name(key.span()));
             true
@@ -41,7 +42,8 @@ impl<'a> IsolatedDeclarations<'a> {
         }
     }
 
-    pub fn transform_accessibility(
+    #[allow(clippy::unused_self)]
+    pub(crate) fn transform_accessibility(
         &self,
         accessibility: Option<TSAccessibility>,
     ) -> Option<TSAccessibility> {
@@ -328,7 +330,7 @@ impl<'a> IsolatedDeclarations<'a> {
         method_annotations
     }
 
-    pub fn transform_class(
+    pub(crate) fn transform_class(
         &self,
         decl: &Class<'a>,
         declare: Option<bool>,
@@ -557,7 +559,7 @@ impl<'a> IsolatedDeclarations<'a> {
         ))
     }
 
-    pub fn create_formal_parameters(
+    pub(crate) fn create_formal_parameters(
         &self,
         kind: BindingPatternKind<'a>,
     ) -> Box<'a, FormalParameters<'a>> {

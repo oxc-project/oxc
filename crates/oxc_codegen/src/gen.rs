@@ -15,17 +15,23 @@ use crate::{
     Codegen, Context, Operator,
 };
 
+/// Generate source code for an AST node.
 pub trait Gen: GetSpan {
+    /// Generate code for an AST node.
     fn gen(&self, p: &mut Codegen, ctx: Context);
 
+    /// Generate code for an AST node. Alias for `gen`.
     fn print(&self, p: &mut Codegen, ctx: Context) {
         self.gen(p, ctx);
     }
 }
 
+/// Generate source code for an expression.
 pub trait GenExpr: GetSpan {
+    /// Generate code for an expression, respecting operator precedence.
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context);
 
+    /// Generate code for an expression, respecting operator precedence. Alias for `gen_expr`.
     fn print_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         self.gen_expr(p, precedence, ctx);
     }
@@ -1141,6 +1147,10 @@ impl<'a> GenExpr for NumericLiteral<'a> {
 
 impl<'a> Gen for BigIntLiteral<'a> {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
+        if self.raw.starts_with('-') {
+            p.print_space_before_operator(Operator::Unary(UnaryOperator::UnaryNegation));
+        }
+        p.print_space_before_identifier();
         p.add_source_mapping(self.span.start);
         p.print_str(self.raw.as_str());
     }
@@ -1516,8 +1526,10 @@ impl<'a> Gen for ObjectProperty<'a> {
 
         let mut shorthand = false;
         if let PropertyKey::StaticIdentifier(key) = &self.key {
-            if let Expression::Identifier(ident) = self.value.without_parentheses() {
-                if key.name == p.get_identifier_reference_name(ident) && key.name != "__proto__" {
+            if key.name == "__proto__" {
+                shorthand = self.shorthand;
+            } else if let Expression::Identifier(ident) = self.value.without_parentheses() {
+                if key.name == p.get_identifier_reference_name(ident) {
                     shorthand = true;
                 }
             }
@@ -1690,7 +1702,7 @@ impl<'a> GenExpr for PrivateInExpression<'a> {
         p.wrap(precedence >= Precedence::Compare, |p| {
             self.left.print(p, ctx);
             p.print_str(" in ");
-            self.right.print_expr(p, Precedence::Equals, Context::empty());
+            self.right.print_expr(p, Precedence::Equals, Context::FORBID_IN);
         });
     }
 }

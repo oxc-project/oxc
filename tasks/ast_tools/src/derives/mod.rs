@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use convert_case::{Case, Casing};
 use proc_macro2::TokenStream;
 
 use crate::{codegen::LateCtx, schema::TypeDef};
@@ -18,7 +19,13 @@ pub use get_span::{DeriveGetSpan, DeriveGetSpanMut};
 
 pub trait Derive {
     fn trait_name() -> &'static str;
+
+    fn snake_name() -> String {
+        Self::trait_name().to_case(Case::Snake)
+    }
+
     fn derive(&mut self, def: &TypeDef, ctx: &LateCtx) -> TokenStream;
+
     fn prelude() -> TokenStream {
         TokenStream::default()
     }
@@ -80,13 +87,13 @@ macro_rules! define_derive {
 
             fn run(&mut self, ctx: &$crate::codegen::LateCtx) -> $crate::Result<Self::Output> {
                 use std::vec::Vec;
-                use convert_case::{Case, Casing};
                 use itertools::Itertools;
                 use rustc_hash::{FxHashMap, FxHashSet};
 
                 use $crate::derives::DeriveTemplate;
 
                 let trait_name = Self::trait_name();
+                let filename = format!("derive_{}.rs", Self::snake_name());
                 let output = ctx
                     .schema()
                     .into_iter()
@@ -109,16 +116,10 @@ macro_rules! define_derive {
                         let mut modules = Vec::from_iter(modules);
                         modules.sort();
 
-                        let file_name = Self::trait_name().to_case(Case::Snake);
-                        let file_name = match file_name.as_str() {
-                            "es_tree" => "estree",
-                            f => f,
-                        };
-
                         acc.push((
                             $crate::output(
                                 format!("crates/{}", path.split("::").next().unwrap()).as_str(),
-                                format!("derive_{}.rs", file_name).as_str()
+                                &filename,
                             ),
                             Self::template(
                                 modules,

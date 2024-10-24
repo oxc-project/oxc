@@ -1,8 +1,8 @@
 //! [JSX](https://facebook.github.io/jsx)
-
+#![warn(missing_docs)]
 use std::fmt;
 
-use oxc_span::{Atom, Span};
+use oxc_span::Atom;
 
 use crate::ast::*;
 
@@ -14,12 +14,6 @@ export type JSXMemberExpressionObject = JSXIdentifier | JSXMemberExpression;
 "#;
 
 // 1.2 JSX Elements
-
-impl<'a> JSXIdentifier<'a> {
-    pub fn new(span: Span, name: Atom<'a>) -> Self {
-        Self { span, name }
-    }
-}
 
 impl<'a> fmt::Display for JSXIdentifier<'a> {
     #[inline]
@@ -35,6 +29,9 @@ impl<'a> fmt::Display for JSXNamespacedName<'a> {
 }
 
 impl<'a> JSXElementName<'a> {
+    /// Get this name's contained identifier reference, returning [`None`] if it
+    /// is some other variant. Note that [namespaced
+    /// identifiers](JSXElementName::NamespacedName) are not included.
     pub fn get_identifier(&self) -> Option<&IdentifierReference<'a>> {
         match self {
             JSXElementName::Identifier(_)
@@ -45,6 +42,7 @@ impl<'a> JSXElementName<'a> {
         }
     }
 
+    #[allow(missing_docs)]
     pub fn get_identifier_name(&self) -> Option<Atom<'a>> {
         match self {
             Self::Identifier(id) => Some(id.as_ref().name.clone()),
@@ -55,12 +53,17 @@ impl<'a> JSXElementName<'a> {
 }
 
 impl<'a> JSXMemberExpression<'a> {
+    /// Get the identifier being referenced, if there is one. Will return
+    /// [`None`] for `this` expressions or if semantic analysis was skipped.
     pub fn get_identifier(&self) -> Option<&IdentifierReference<'a>> {
         self.object.get_identifier()
     }
 }
 
 impl<'a> JSXMemberExpressionObject<'a> {
+    /// Get the identifier being referenced, if there is one. Will return
+    /// [`None`] for [`this`](JSXMemberExpressionObject::ThisExpression)
+    /// expressions or if semantic analysis was skipped.
     pub fn get_identifier(&self) -> Option<&IdentifierReference<'a>> {
         let mut object = self;
         loop {
@@ -111,20 +114,35 @@ impl<'a> JSXExpression<'a> {
 }
 
 impl<'a> JSXAttribute<'a> {
+    /// Returns `true` if this attribute's name is the expected `name`.
+    ///
+    /// Use [`JSXAttribute::is_identifier_ignore_case`] if you want to ignore
+    /// upper/lower case differences.
     pub fn is_identifier(&self, name: &str) -> bool {
         matches!(&self.name, JSXAttributeName::Identifier(ident) if ident.name == name)
     }
 
+    /// Returns `true` if this attribute's name is the expected `name`, ignoring
+    /// casing.
     pub fn is_identifier_ignore_case(&self, name: &str) -> bool {
         matches!(&self.name, JSXAttributeName::Identifier(ident) if ident.name.eq_ignore_ascii_case(name))
     }
 
+    /// Returns `true` if this is a React `key`.
+    ///
+    /// ## Example
+    /// ```tsx
+    /// <Foo key="value" /> // -> `true`
+    /// <Foo bar="value" /> // -> `false`
+    /// ```
     pub fn is_key(&self) -> bool {
         self.is_identifier("key")
     }
 }
 
 impl<'a> JSXAttributeName<'a> {
+    /// Try to convert this attribute name into an [identifier](JSXIdentifier).
+    /// Returns [`None`] for [namespaced names](JSXAttributeName::NamespacedName).
     pub fn as_identifier(&self) -> Option<&JSXIdentifier<'a>> {
         match self {
             Self::Identifier(ident) => Some(ident.as_ref()),
@@ -132,6 +150,14 @@ impl<'a> JSXAttributeName<'a> {
         }
     }
 
+    /// Get the rightmost identifier in the attribute name.
+    ///
+    /// ## Example
+    /// ```tsx
+    /// <Foo /> // -> `Foo`
+    /// <Foo.Bar /> // -> `Bar`
+    /// <Foo.Bar.Baz /> // -> `Baz`
+    /// ```
     pub fn get_identifier(&self) -> &JSXIdentifier<'a> {
         match self {
             Self::Identifier(ident) => ident.as_ref(),
@@ -140,6 +166,8 @@ impl<'a> JSXAttributeName<'a> {
     }
 }
 impl<'a> JSXAttributeValue<'a> {
+    /// Get the contained [`StringLiteral`], or [`None`] if this is some other
+    /// kind of value.
     pub fn as_string_literal(&self) -> Option<&StringLiteral<'a>> {
         match self {
             Self::StringLiteral(lit) => Some(lit.as_ref()),
@@ -173,6 +201,7 @@ impl<'a> JSXAttributeItem<'a> {
 }
 
 impl<'a> JSXChild<'a> {
+    /// Returns `true` if this an [expression container](JSXChild::ExpressionContainer).
     pub const fn is_expression_container(&self) -> bool {
         matches!(self, Self::ExpressionContainer(_))
     }

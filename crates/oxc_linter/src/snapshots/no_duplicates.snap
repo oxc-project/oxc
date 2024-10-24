@@ -1,68 +1,88 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:19]
  1 │ import { x } from './foo'; import { y } from './foo'
-   ·                   ───────                    ───────
+   ·                   ───┬───                    ───────
+   ·                      ╰── It is first imported here
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import {x} from './foo'; import {y} from './foo'; import { z } from './foo'
-   ·                 ───────                  ───────                    ───────
+   ·                 ───┬───                  ───────                    ───────
+   ·                    ╰── It is first imported here
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
-   ╭─[index.ts:1:15]
+  ⚠ eslint-plugin-import(no-duplicates): Module './bar?optionX' is imported more than once in this file
+   ╭─[index.ts:1:49]
  1 │ import x from './bar.js?optionX'; import y from './bar?optionX';
-   ·               ──────────────────                ───────────────
+   ·               ──────────────────                ───────┬───────
+   ·                        │                               ╰── It is first imported here
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
-   ╭─[index.ts:1:15]
+  ⚠ eslint-plugin-import(no-duplicates): Module './bar?optionY' is imported more than once in this file
+   ╭─[index.ts:1:46]
  1 │ import x from './bar?optionX'; import y from './bar?optionY';
-   ·               ───────────────                ───────────────
+   ·               ───────────────                ───────┬───────
+   ·                      │                              ╰── It is first imported here
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
-   ╭─[index.ts:1:15]
+  ⚠ eslint-plugin-import(no-duplicates): Module './bar.js?optionX' is imported more than once in this file
+   ╭─[index.ts:1:46]
  1 │ import x from './bar?optionX'; import y from './bar.js?optionX';
-   ·               ───────────────                ──────────────────
+   ·               ───────────────                ─────────┬────────
+   ·                      │                                ╰── It is first imported here
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module 'non-existent' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import foo from 'non-existent'; import bar from 'non-existent';
-   ·                 ──────────────                  ──────────────
+   ·                 ───────┬──────                  ──────────────
+   ·                        ╰── It is first imported here
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:24]
  1 │ import type { x } from './foo'; import type { y } from './foo'
-   ·                        ───────                         ───────
+   ·                        ───┬───                         ───────
+   ·                           ╰── It is first imported here
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:8]
  1 │ import './foo'; import './foo'
-   ·        ───────         ───────
+   ·        ───┬───         ───────
+   ·           ╰── It is first imported here
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:28]
  1 │ import { x, /* x */ } from './foo'; import {//y
-   ·                            ───────
+   ·                            ───┬───
+   ·                               ╰── It is first imported here
  2 │         y//y2
  3 │         } from './foo'
    ·                ───────
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import {x} from './foo'; import {} from './foo'
-   ·                 ───────                 ───────
+   ·                 ───┬───                 ───────
+   ·                    ╰── It is first imported here
    ╰────
+  help: Merge these imports into a single import statement
 
   × Identifier `a` has already been declared
    ╭─[index.ts:1:9]
@@ -144,221 +164,279 @@ source: crates/oxc_linter/src/tester.rs
    ·         ╰── `a` has already been declared here
    ╰────
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import {x} from './foo'; import {} from './foo'; import {/*c*/} from './foo'; import {y} from './foo'
-   ·                 ───────                 ───────                      ───────                  ───────
+   ·                 ───┬───                 ───────                      ───────                  ───────
+   ·                    ╰── It is first imported here
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import { } from './foo'; import {x} from './foo'
-   ·                 ───────                  ───────
+   ·                 ───┬───                  ───────
+   ·                    ╰── It is first imported here
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:8]
  1 │ import './foo'; import {x} from './foo'
-   ·        ───────                  ───────
+   ·        ───┬───                  ───────
+   ·           ╰── It is first imported here
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:7]
  1 │ import'./foo'; import {x} from './foo'
-   ·       ───────                  ───────
+   ·       ───┬───                  ───────
+   ·          ╰── It is first imported here
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:8]
  1 │ import './foo'; import { /*x*/} from './foo'; import {//y
-   ·        ───────                       ───────
+   ·        ───┬───                       ───────
+   ·           ╰── It is first imported here
  2 │         } from './foo'; import {z} from './foo'
    ·                ───────                  ───────
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:8]
  1 │ import './foo'; import def, {x} from './foo'
-   ·        ───────                       ───────
+   ·        ───┬───                       ───────
+   ·           ╰── It is first imported here
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:8]
  1 │ import './foo'; import def from './foo'
-   ·        ───────                  ───────
+   ·        ───┬───                  ───────
+   ·           ╰── It is first imported here
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import def from './foo'; import {x} from './foo'
-   ·                 ───────                  ───────
+   ·                 ───┬───                  ───────
+   ·                    ╰── It is first imported here
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import {x} from './foo'; import def from './foo'
-   ·                 ───────                  ───────
+   ·                 ───┬───                  ───────
+   ·                    ╰── It is first imported here
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:16]
  1 │ import{x} from './foo'; import def from './foo'
-   ·                ───────                  ───────
+   ·                ───┬───                  ───────
+   ·                   ╰── It is first imported here
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import {x} from './foo'; import def, {y} from './foo'
-   ·                 ───────                       ───────
+   ·                 ───┬───                       ───────
+   ·                    ╰── It is first imported here
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:22]
  1 │ import * as ns1 from './foo'; import * as ns2 from './foo'
-   ·                      ───────                       ───────
+   ·                      ───┬───                       ───────
+   ·                         ╰── It is first imported here
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
-   ╭─[index.ts:1:21]
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
+   ╭─[index.ts:1:46]
  1 │ import * as ns from './foo'; import {x} from './foo'; import {y} from './foo'
-   ·                     ───────                  ───────                  ───────
+   ·                                              ───┬───                  ───────
+   ·                                                 ╰── It is first imported here
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import {x} from './foo'; import * as ns from './foo'; import {y} from './foo'; import './foo'
-   ·                 ───────                      ───────                  ───────         ───────
+   ·                 ───┬───                                               ───────         ───────
+   ·                    ╰── It is first imported here
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:2:29]
  1 │ // some-tool-disable-next-line
  2 │             import {x} from './foo'
-   ·                             ───────
+   ·                             ───┬───
+   ·                                ╰── It is first imported here
  3 │             import {//y
  4 │         y} from './foo'
    ·                 ───────
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import {x} from './foo'
-   ·                 ───────
+   ·                 ───┬───
+   ·                    ╰── It is first imported here
  2 │             // some-tool-disable-next-line
  3 │             import {y} from './foo'
    ·                             ───────
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import {x} from './foo' // some-tool-disable-line
-   ·                 ───────
+   ·                 ───┬───
+   ·                    ╰── It is first imported here
  2 │             import {y} from './foo'
    ·                             ───────
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import {x} from './foo'
-   ·                 ───────
+   ·                 ───┬───
+   ·                    ╰── It is first imported here
  2 │             import {y} from './foo' // some-tool-disable-line
    ·                             ───────
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import {x} from './foo'
-   ·                 ───────
+   ·                 ───┬───
+   ·                    ╰── It is first imported here
  2 │             /* comment */ import {y} from './foo'
    ·                                           ───────
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import {x} from './foo'
-   ·                 ───────
+   ·                 ───┬───
+   ·                    ╰── It is first imported here
  2 │             import {y} from './foo' /* comment
    ·                             ───────
  3 │             multiline */
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import {x} from './foo'
-   ·                 ───────
+   ·                 ───┬───
+   ·                    ╰── It is first imported here
  2 │         import {y} from './foo'
    ·                         ───────
  3 │         // some-tool-disable-next-line
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import {x} from './foo'
-   ·                 ───────
+   ·                 ───┬───
+   ·                    ╰── It is first imported here
  2 │         // comment
  3 │ 
  4 │         import {y} from './foo'
    ·                         ───────
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import {x} from './foo'
-   ·                 ───────
+   ·                 ───┬───
+   ·                    ╰── It is first imported here
  2 │             import/* comment */{y} from './foo'
    ·                                         ───────
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import {x} from './foo'
-   ·                 ───────
+   ·                 ───┬───
+   ·                    ╰── It is first imported here
  2 │             import/* comment */'./foo'
    ·                                ───────
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import {x} from './foo'
-   ·                 ───────
+   ·                 ───┬───
+   ·                    ╰── It is first imported here
  2 │             import{y}/* comment */from './foo'
    ·                                        ───────
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import {x} from './foo'
-   ·                 ───────
+   ·                 ───┬───
+   ·                    ╰── It is first imported here
  2 │             import{y}from/* comment */'./foo'
    ·                                       ───────
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:3:13]
  2 │             // some-tool-disable-next-line
  3 │             './foo'
-   ·             ───────
+   ·             ───┬───
+   ·                ╰── It is first imported here
  4 │             import {y} from './foo'
    ·                             ───────
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:21]
  1 │ import { Foo } from './foo';
-   ·                     ───────
+   ·                     ───┬───
+   ·                        ╰── It is first imported here
  2 │         import { Bar } from './foo';
    ·                             ───────
  3 │         export const value = {}
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:21]
  1 │ import { Foo } from './foo';
-   ·                     ───────
+   ·                     ───┬───
+   ·                        ╰── It is first imported here
  2 │         import Bar from './foo';
    ·                         ───────
  3 │         export const value = {}
    ╰────
+  help: Merge these imports into a single import statement
 
   × Unexpected token
     ╭─[index.ts:12:16]
@@ -368,22 +446,25 @@ source: crates/oxc_linter/src/tester.rs
  13 │             }
     ╰────
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module 'foo' is imported more than once in this file
    ╭─[index.ts:1:19]
  1 │ import {A1,} from 'foo';
-   ·                   ─────
+   ·                   ──┬──
+   ·                     ╰── It is first imported here
  2 │             import {B1,} from 'foo';
    ·                               ─────
  3 │             import {C1,} from 'foo';
    ·                               ─────
  4 │ 
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module 'bar' is imported more than once in this file
     ╭─[index.ts:7:20]
   6 │             A2,
   7 │             } from 'bar';
-    ·                    ─────
+    ·                    ──┬──
+    ·                      ╰── It is first imported here
   8 │             import {
   9 │             B2,
  10 │             } from 'bar';
@@ -393,12 +474,15 @@ source: crates/oxc_linter/src/tester.rs
  13 │             } from 'bar';
     ·                    ─────
     ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:20]
  1 │ import type x from './foo'; import type y from './foo'
-   ·                    ───────                     ───────
+   ·                    ───┬───                     ───────
+   ·                       ╰── It is first imported here
    ╰────
+  help: Merge these imports into a single import statement
 
   × Identifier `x` has already been declared
    ╭─[index.ts:1:13]
@@ -408,50 +492,66 @@ source: crates/oxc_linter/src/tester.rs
    ·             ╰── `x` has already been declared here
    ╰────
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:22]
  1 │ import type {x} from './foo'; import type {y} from './foo'
-   ·                      ───────                       ───────
+   ·                      ───┬───                       ───────
+   ·                         ╰── It is first imported here
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:22]
  1 │ import {type x} from './foo'; import type {y} from './foo'
-   ·                      ───────                       ───────
+   ·                      ───┬───                       ───────
+   ·                         ╰── It is first imported here
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module 'foo' is imported more than once in this file
    ╭─[index.ts:1:22]
  1 │ import {type x} from 'foo'; import type {y} from 'foo'
-   ·                      ─────                       ─────
+   ·                      ──┬──                       ─────
+   ·                        ╰── It is first imported here
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module 'foo' is imported more than once in this file
    ╭─[index.ts:1:22]
  1 │ import {type x} from 'foo'; import type {y} from 'foo'
-   ·                      ─────                       ─────
+   ·                      ──┬──                       ─────
+   ·                        ╰── It is first imported here
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:22]
  1 │ import {type x} from './foo'; import {type y} from './foo'
-   ·                      ───────                       ───────
+   ·                      ───┬───                       ───────
+   ·                         ╰── It is first imported here
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:22]
  1 │ import {type x} from './foo'; import {type y} from './foo'
-   ·                      ───────                       ───────
+   ·                      ───┬───                       ───────
+   ·                         ╰── It is first imported here
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:38]
  1 │ import {AValue, type x, BValue} from './foo'; import {type y} from './foo'
-   ·                                      ───────                       ───────
+   ·                                      ───┬───                       ───────
+   ·                                         ╰── It is first imported here
    ╰────
+  help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+  ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:22]
  1 │ import {AValue} from './foo'; import type {AType} from './foo'
-   ·                      ───────                           ───────
+   ·                      ───┬───                           ───────
+   ·                         ╰── It is first imported here
    ╰────
+  help: Merge these imports into a single import statement

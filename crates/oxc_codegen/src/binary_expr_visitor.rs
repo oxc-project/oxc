@@ -196,6 +196,12 @@ impl<'a> BinaryExpressionVisitor<'a> {
             _ => {}
         }
 
+        if let Expression::PrivateInExpression(e) = self.e.left() {
+            e.gen_expr(p, Precedence::Lowest, Context::empty());
+            self.visit_right_and_finish(p);
+            return false;
+        }
+
         true
     }
 

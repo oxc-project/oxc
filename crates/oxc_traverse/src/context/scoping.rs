@@ -7,7 +7,7 @@ use rustc_hash::FxHashSet;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, visit::Visit};
 use oxc_semantic::{NodeId, Reference, ScopeTree, SymbolTable};
-use oxc_span::{Atom, CompactStr, Span};
+use oxc_span::CompactStr;
 use oxc_syntax::{
     reference::{ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
@@ -139,6 +139,32 @@ impl TraverseScoping {
         new_scope_id
     }
 
+    /// Remove scope for an expression from the scope chain.
+    ///
+    /// Delete the scope and set parent of its child scopes to its parent scope.
+    /// e.g.:
+    /// * Starting scopes parentage `A -> B`, `B -> C`, `B -> D`.
+    /// * Remove scope `B` from chain.
+    /// * End result: scopes `A -> C`, `A -> D`.
+    ///
+    /// Use this when removing an expression which owns a scope, without removing its children.
+    /// For example when unwrapping `(() => foo)()` to just `foo`.
+    /// `foo` here could be an expression which itself contains scopes.
+    pub fn remove_scope_for_expression(&mut self, scope_id: ScopeId, expr: &Expression) {
+        let mut collector = ChildScopeCollector::new();
+        collector.visit_expression(expr);
+
+        let child_ids = collector.scope_ids;
+        if !child_ids.is_empty() {
+            let parent_id = self.scopes.get_parent_id(scope_id);
+            for child_id in child_ids {
+                self.scopes.set_parent_id(child_id, parent_id);
+            }
+        }
+
+        self.scopes.delete_scope(scope_id);
+    }
+
     /// Generate UID var name.
     ///
     /// Finds a unique variable name which does clash with any other variables used in the program.
@@ -240,18 +266,6 @@ impl TraverseScoping {
         reference_id
     }
 
-    /// Create an `IdentifierReference` bound to a `SymbolId`
-    pub fn create_bound_reference_id<'a>(
-        &mut self,
-        span: Span,
-        name: Atom<'a>,
-        symbol_id: SymbolId,
-        flags: ReferenceFlags,
-    ) -> IdentifierReference<'a> {
-        let reference_id = self.create_bound_reference(symbol_id, flags);
-        IdentifierReference::new_with_reference_id(span, name, Some(reference_id))
-    }
-
     /// Create an unbound reference
     pub fn create_unbound_reference(
         &mut self,
@@ -262,17 +276,6 @@ impl TraverseScoping {
         let reference_id = self.symbols.create_reference(reference);
         self.scopes.add_root_unresolved_reference(name, reference_id);
         reference_id
-    }
-
-    /// Create an unbound `IdentifierReference`
-    pub fn create_unbound_reference_id<'a>(
-        &mut self,
-        span: Span,
-        name: Atom<'a>,
-        flags: ReferenceFlags,
-    ) -> IdentifierReference<'a> {
-        let reference_id = self.create_unbound_reference(name.to_compact_str(), flags);
-        IdentifierReference::new_with_reference_id(span, name, Some(reference_id))
     }
 
     /// Create a reference optionally bound to a `SymbolId`.
@@ -289,24 +292,6 @@ impl TraverseScoping {
             self.create_bound_reference(symbol_id, flags)
         } else {
             self.create_unbound_reference(name, flags)
-        }
-    }
-
-    /// Create an `IdentifierReference` optionally bound to a `SymbolId`.
-    ///
-    /// If you know if there's a `SymbolId` or not, prefer `TraverseCtx::create_bound_reference_id`
-    /// or `TraverseCtx::create_unbound_reference_id`.
-    pub fn create_reference_id<'a>(
-        &mut self,
-        span: Span,
-        name: Atom<'a>,
-        symbol_id: Option<SymbolId>,
-        flags: ReferenceFlags,
-    ) -> IdentifierReference<'a> {
-        if let Some(symbol_id) = symbol_id {
-            self.create_bound_reference_id(span, name, symbol_id, flags)
-        } else {
-            self.create_unbound_reference_id(span, name, flags)
         }
     }
 
@@ -337,24 +322,6 @@ impl TraverseScoping {
     pub fn delete_reference_for_identifier(&mut self, ident: &IdentifierReference) {
         // `unwrap` should never panic as `IdentifierReference`s should always have a `ReferenceId`
         self.delete_reference(ident.reference_id().unwrap(), &ident.name);
-    }
-
-    /// Clone `IdentifierReference` based on the original reference's `SymbolId` and name.
-    ///
-    /// This method makes a lookup of the `SymbolId` for the reference. If you need to create multiple
-    /// `IdentifierReference`s for the same binding, it is better to look up the `SymbolId` only once,
-    /// and generate `IdentifierReference`s with `TraverseScoping::create_reference_id`.
-    pub fn clone_identifier_reference<'a>(
-        &mut self,
-        ident: &IdentifierReference<'a>,
-        flags: ReferenceFlags,
-    ) -> IdentifierReference<'a> {
-        let reference =
-            self.symbols().get_reference(ident.reference_id.get().unwrap_or_else(|| {
-                unreachable!("IdentifierReference must have a reference_id");
-            }));
-        let symbol_id = reference.symbol_id();
-        self.create_reference_id(ident.span, ident.name.clone(), symbol_id, flags)
     }
 
     /// Determine whether evaluating the specific input `node` is a consequenceless reference.

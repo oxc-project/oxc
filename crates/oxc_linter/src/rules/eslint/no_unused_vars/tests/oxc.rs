@@ -6,12 +6,18 @@ use super::NoUnusedVars;
 use crate::{tester::Tester, FixKind, RuleMeta as _};
 
 // uncomment to only run a single test. useful for step-through debugging.
-// #[test]
-// fn test_debug() {
-//     let pass: Vec<&str> = vec![];
-//     let fail = vec![];
-//     Tester::new(NoUnusedVars::NAME, pass, fail).intentionally_allow_no_fix_tests().test();
-// }
+#[test]
+fn test_debug() {
+    let pass = vec![
+        (
+            "const [ a, _b, c ] = items;
+			console.log(a+c);",
+            Some(serde_json::json!([{ "destructuredArrayIgnorePattern": "^_" }])),
+        ), // { "ecmaVersion": 6 },
+    ];
+    let fail = vec![];
+    Tester::new(NoUnusedVars::NAME, pass, fail).intentionally_allow_no_fix_tests().test();
+}
 
 #[test]
 fn test_vars_simple() {

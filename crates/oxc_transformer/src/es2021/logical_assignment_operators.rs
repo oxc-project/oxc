@@ -1,6 +1,7 @@
 //! ES2021: Logical Assignment Operators
 //!
-//! This plugin transform logical assignment operators `&&=`, `||=`, and `??=` to a series of logical expressions.
+//! This plugin transforms logical assignment operators (`&&=`, `||=`, `??=`)
+//! to a series of logical expressions.
 //!
 //! > This plugin is included in `preset-env`, in ES2021
 //!

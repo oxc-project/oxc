@@ -207,7 +207,9 @@ pub trait ConstantEvaluation<'a> {
                     BinaryOperator::Subtraction => lval - rval,
                     BinaryOperator::Division => {
                         if rval.is_zero() {
-                            if lval.is_sign_positive() {
+                            if lval.is_zero() || lval.is_nan() || lval.is_infinite() {
+                                f64::NAN
+                            } else if lval.is_sign_positive() {
                                 f64::INFINITY
                             } else {
                                 f64::NEG_INFINITY
@@ -217,12 +219,10 @@ pub trait ConstantEvaluation<'a> {
                         }
                     }
                     BinaryOperator::Remainder => {
-                        if !rval.is_zero() && rval.is_finite() {
-                            lval % rval
-                        } else if rval.is_infinite() {
+                        if rval.is_zero() {
                             f64::NAN
                         } else {
-                            return None;
+                            lval % rval
                         }
                     }
                     BinaryOperator::Multiplication => lval * rval,

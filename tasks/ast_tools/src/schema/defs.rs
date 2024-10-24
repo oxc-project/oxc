@@ -22,7 +22,7 @@ impl TypeDef {
         with_either!(self, it => it.id)
     }
 
-    pub fn name(&self) -> &String {
+    pub fn name(&self) -> &str {
         with_either!(self, it => &it.name)
     }
 

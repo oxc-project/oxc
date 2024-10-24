@@ -77,6 +77,9 @@ impl BabelOptions {
                 if existing_json.plugins.is_empty() {
                     existing_json.plugins = new_json.plugins;
                 }
+                if existing_json.presets.is_empty() {
+                    existing_json.presets = new_json.presets;
+                }
             } else {
                 options_json = Some(new_json);
             }

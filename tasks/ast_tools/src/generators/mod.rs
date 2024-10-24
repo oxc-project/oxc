@@ -27,7 +27,17 @@ pub trait Generator {
 }
 
 #[derive(Debug, Clone)]
-pub struct GeneratorOutput(/* output path */ pub PathBuf, pub TokenStream);
+pub enum GeneratorOutput {
+    Rust {
+        path: PathBuf,
+        tokens: TokenStream,
+    },
+    #[expect(dead_code)]
+    Text {
+        path: PathBuf,
+        content: String,
+    },
+}
 
 macro_rules! define_generator {
     ($vis:vis struct $ident:ident $($lifetime:lifetime)? $($rest:tt)*) => {

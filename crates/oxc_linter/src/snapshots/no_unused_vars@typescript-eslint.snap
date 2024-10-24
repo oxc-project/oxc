@@ -272,7 +272,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing this declaration.
 
-  ⚠ eslint(no-unused-vars): Variable 'x' is declared but never used.
+  ⚠ eslint(no-unused-vars): Variable 'x' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.ts:7:31]
  6 │                     namespace Bam {
  7 │                         const x = 1;
@@ -292,7 +292,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing this declaration.
 
-  ⚠ eslint(no-unused-vars): Variable 'foo' is assigned a value but never used.
+  ⚠ eslint(no-unused-vars): Variable 'foo' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.ts:2:15]
  1 │ 
  2 │           let foo = 1;
@@ -333,7 +333,7 @@ source: crates/oxc_linter/src/tester.rs
  8 │         
    ╰────
 
-  ⚠ eslint(no-unused-vars): Variable 'foo' is declared but never used.
+  ⚠ eslint(no-unused-vars): Variable 'foo' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.ts:1:7]
  1 │ const foo: number = 1;
    ·       ─┬─

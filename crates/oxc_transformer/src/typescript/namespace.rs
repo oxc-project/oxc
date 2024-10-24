@@ -336,13 +336,8 @@ impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
                 let items = ctx.ast.vec1(ctx.ast.plain_formal_parameter(SPAN, pattern));
                 ctx.ast.formal_parameters(SPAN, FormalParameterKind::FormalParameter, items, NONE)
             };
-            let function = ctx.ast.plain_function(
-                FunctionType::FunctionExpression,
-                SPAN,
-                None,
-                params,
-                Some(body),
-            );
+            let function =
+                ctx.ast.plain_function(FunctionType::FunctionExpression, SPAN, None, params, body);
             function.scope_id.set(Some(scope_id));
             *ctx.scopes_mut().get_flags_mut(scope_id) =
                 ScopeFlags::Function | ScopeFlags::StrictMode;
@@ -367,7 +362,7 @@ impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
                         ctx.ast.member_expression_static(
                             SPAN,
                             parent_export,
-                            IdentifierName::new(SPAN, real_name.clone()),
+                            ctx.ast.identifier_name(SPAN, real_name.clone()),
                             false,
                         ),
                     )
@@ -392,7 +387,7 @@ impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
                 let assign_left =
                     ctx.ast.simple_assignment_target_identifier_reference(SPAN, &real_name);
                 let assign_right = {
-                    let property = IdentifierName::new(SPAN, real_name.clone());
+                    let property = ctx.ast.identifier_name(SPAN, real_name.clone());
                     let logical_left =
                         ctx.ast.member_expression_static(SPAN, parent_export, property, false);
                     let op = LogicalOperator::Or;

@@ -49,13 +49,15 @@ use bump_scope::Bump;
 /// A bump-allocated string.
 type BumpScope<'a> = bump_scope::BumpScope<'a>;
 
+mod address;
 mod boxed;
 mod clone_in;
 mod convert;
 mod string;
 pub mod vec;
 
-pub use boxed::{Address, Box};
+pub use address::{Address, GetAddress};
+pub use boxed::Box;
 pub use clone_in::CloneIn;
 pub use convert::{FromIn, IntoIn};
 pub use string::String;

@@ -4,6 +4,60 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.10.2] - 2024-10-22
+
+- 1248557 ast: [**BREAKING**] Remove `AstKind::FinallyClause` (#6744) (Boshen)
+
+- 202c7f6 ast: [**BREAKING**] Remove `AstKind::ExpressionArrayElement` and `AstKind::ClassHeritage` (#6740) (Boshen)
+
+### Features
+
+- dbe1972 linter: Import/no-cycle should turn on ignore_types by default (#6761) (Boshen)
+- 619d06f linter: Fix suggestion for `eslint:no_empty_static_block` rule (#6732) (Tapan Prakash)
+
+### Bug Fixes
+
+
+### Performance
+
+- 8387bac linter: Apply small file optimization, up to 30% faster (#6600) (camchenry)
+
+### Refactor
+
+- b884577 linter: All ast_util functions take Semantic (#6753) (DonIsaac)
+- 744aa74 linter: Impl `Deref<Target = Semantic>` for `LintContext` (#6752) (DonIsaac)
+
+## [0.10.1] - 2024-10-21
+
+### Features
+
+- af25752 linter: Add `unicorn/prefer-math-min-max` (#6621) (Brian Liu)
+- 5095f02 linter: Added fixer for duplicate prefix in valid title jest rule (#6699) (Tapan Prakash)
+- e9976d4 linter: Add title whitespace fixer for jest valid title rule (#6669) (Tapan Prakash)
+- 45f02d5 linter: Add `unicorn/consistent-empty-array-spread` (#6695) (Brian Liu)
+- 01a35bb linter/eslint: Show ignore patterns in `eslint/no-unused-vars` diagnostic messages (#6696) (DonIsaac)
+
+### Bug Fixes
+
+- ce25c45 linter: Panic in `disable-directives` (#6677) (dalaoshu)
+- a5de230 linter/import: `import/no-duplicates` handles namespace imports correctly (#6694) (DonIsaac)
+- b0b6ac7 linter/no-cond-assign: False positive when assignment is in body statement (#6665) (camchenry)
+
+### Performance
+
+- 6a76ea8 linter/no-unused-vars: Use default IgnorePattern when /^_/ is provided as a pattern (#6697) (DonIsaac)
+
+### Refactor
+
+- d6609e9 linter: Use `run_on_jest_node` for existing lint rules (#6722) (camchenry)
+- 97195ec linter: Add `run_on_jest_node` to run rules on only jest nodes (#6721) (camchenry)
+- 155fe7e linter: Allow `Semantic` to be passed for collecting Jest nodes (#6720) (camchenry)
+- ad8f281 linter: Use iter for collecting jest nodes (#6719) (camchenry)
+- dc19a8f linter: Use iterator for collecting jest imports (#6718) (camchenry)
+- 29c1447 linter: `jest/valid-title` fixer to use `Span::shrink` method (#6703) (Tapan Prakash)
+- 2eb984a linter: Add missing `should_run` implementations (#6666) (camchenry)
+- 23f88b3 linter/import: Better diagnostic messages for `import/no-duplicates` (#6693) (DonIsaac)
+
 ## [0.10.0] - 2024-10-18
 
 - 782f0a7 codegen: [**BREAKING**] Rename `print_char` method to `print_ascii_byte` (#6512) (overlookmotel)

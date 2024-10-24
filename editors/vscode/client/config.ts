@@ -5,9 +5,9 @@ export class ConfigService implements Config, IDisposable {
   private static readonly _namespace = 'oxc';
   private readonly _disposables: IDisposable[] = [];
   private _inner: WorkspaceConfiguration;
-  private _runTrigger: 'onSave' | 'onType';
+  private _runTrigger: Trigger;
   private _enable: boolean;
-  private _trace: 'off' | 'messages' | 'verbose';
+  private _trace: TraceLevel;
   private _configPath: string;
   private _binPath: string | undefined;
 
@@ -28,10 +28,6 @@ export class ConfigService implements Config, IDisposable {
       this.onVscodeConfigChange.bind(this),
     );
     this._disposables.push(disposeChangeListener);
-  }
-
-  get rawConfig(): WorkspaceConfiguration {
-    return this._inner;
   }
 
   get runTrigger(): Trigger {
@@ -106,19 +102,23 @@ export class ConfigService implements Config, IDisposable {
     }
   }
 
-  public toJSON(): Config {
+  public toLanguageServerConfig(): LanguageServerConfig {
     return {
-      runTrigger: this.runTrigger,
+      run: this.runTrigger,
       enable: this.enable,
-      trace: this.trace,
       configPath: this.configPath,
-      binPath: this.binPath,
     };
   }
 }
 
 type Trigger = 'onSave' | 'onType';
 type TraceLevel = 'off' | 'messages' | 'verbose';
+
+interface LanguageServerConfig {
+  configPath: string;
+  enable: boolean;
+  run: Trigger;
+}
 
 /**
  * See `"contributes.configuration"` in `package.json`

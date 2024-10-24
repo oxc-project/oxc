@@ -1,8 +1,9 @@
-commit: 3bcfee23
+commit: d20b314c
 
-Passed: 61/70
+Passed: 66/75
 
 # All Passed:
+* babel-plugin-transform-class-static-block
 * babel-plugin-transform-nullish-coalescing-operator
 * babel-plugin-transform-optional-catch-binding
 * babel-plugin-transform-exponentiation-operator

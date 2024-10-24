@@ -800,7 +800,7 @@ impl<'a, 'ctx> ReactJsx<'a, 'ctx> {
             }
             JSXMemberExpressionObject::ThisExpression(expr) => ctx.ast.expression_this(expr.span),
         };
-        let property = IdentifierName::new(expr.property.span, expr.property.name.clone());
+        let property = ctx.ast.identifier_name(expr.property.span, expr.property.name.clone());
         ctx.ast.member_expression_static(expr.span, object, property, false).into()
     }
 
@@ -1033,7 +1033,7 @@ fn get_read_identifier_reference<'a>(
 ) -> IdentifierReference<'a> {
     let reference_id =
         ctx.create_reference_in_current_scope(name.to_compact_str(), ReferenceFlags::Read);
-    IdentifierReference::new_with_reference_id(span, name, Some(reference_id))
+    ctx.ast.identifier_reference_with_reference_id(span, name, reference_id)
 }
 
 fn create_static_member_expression<'a>(

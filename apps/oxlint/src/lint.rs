@@ -116,9 +116,18 @@ impl Runner for LintRunner {
         };
 
         enable_plugins.apply_overrides(&mut oxlintrc.plugins);
+
+        let oxlintrc_for_print =
+            if misc_options.print_config { Some(oxlintrc.clone()) } else { None };
         let builder = LinterBuilder::from_oxlintrc(false, oxlintrc)
             .with_filters(filter)
             .with_fix(fix_options.fix_kind());
+
+        if let Some(basic_config_file) = oxlintrc_for_print {
+            return CliRunResult::PrintConfigResult {
+                config_file: builder.resolve_final_config_file(basic_config_file),
+            };
+        }
 
         let mut options =
             LintServiceOptions::new(cwd, paths).with_cross_module(builder.plugins().has_import());
@@ -265,8 +274,8 @@ mod test {
         let args = &["fixtures/linter"];
         let result = test(args);
         assert!(result.number_of_rules > 0);
-        assert_eq!(result.number_of_files, 2);
-        assert_eq!(result.number_of_warnings, 2);
+        assert_eq!(result.number_of_files, 3);
+        assert_eq!(result.number_of_warnings, 3);
         assert_eq!(result.number_of_errors, 0);
     }
 
@@ -539,7 +548,7 @@ mod test {
         let args = &[
             "-c",
             "fixtures/eslintrc_vitest_replace/eslintrc.json",
-            "fixtures/eslintrc_vitest_replace/foo.js",
+            "fixtures/eslintrc_vitest_replace/foo.test.js",
         ];
         let result = test(args);
         assert_eq!(result.number_of_files, 1);
@@ -549,7 +558,7 @@ mod test {
             "--vitest-plugin",
             "-c",
             "fixtures/eslintrc_vitest_replace/eslintrc.json",
-            "fixtures/eslintrc_vitest_replace/foo.js",
+            "fixtures/eslintrc_vitest_replace/foo.test.js",
         ];
         let result = test(args);
         assert_eq!(result.number_of_files, 1);
@@ -563,5 +572,63 @@ mod test {
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 0);
         assert_eq!(result.number_of_errors, 1);
+    }
+
+    #[test]
+    fn test_fix() {
+        use std::fs;
+        let file = "fixtures/linter/fix.js";
+        let args = &["--fix", file];
+        let content = fs::read_to_string(file).unwrap();
+        assert_eq!(&content, "debugger\n");
+
+        // Apply fix to the file.
+        let _ = test(args);
+        assert_eq!(fs::read_to_string(file).unwrap(), "\n");
+
+        // File should not be modified if no fix is applied.
+        let modified_before = fs::metadata(file).unwrap().modified().unwrap();
+        let _ = test(args);
+        let modified_after = fs::metadata(file).unwrap().modified().unwrap();
+        assert_eq!(modified_before, modified_after);
+
+        // Write the file back.
+        fs::write(file, content).unwrap();
+    }
+
+    #[test]
+    fn test_print_config_ban_all_rules() {
+        let args = &["-A", "all", "--print-config"];
+        let options = lint_command().run_inner(args).unwrap();
+        let ret = LintRunner::new(options).run();
+        let CliRunResult::PrintConfigResult { config_file: config } = ret else {
+            panic!("Expected PrintConfigResult, got {ret:?}")
+        };
+
+        let expect_json =
+            std::fs::read_to_string("fixtures/print_config/normal/expect.json").unwrap();
+        assert_eq!(config, expect_json.trim());
+    }
+
+    #[test]
+    fn test_print_config_ban_rules() {
+        let args = &[
+            "-c",
+            "fixtures/print_config/ban_rules/eslintrc.json",
+            "-A",
+            "all",
+            "-D",
+            "eqeqeq",
+            "--print-config",
+        ];
+        let options = lint_command().run_inner(args).unwrap();
+        let ret = LintRunner::new(options).run();
+        let CliRunResult::PrintConfigResult { config_file: config } = ret else {
+            panic!("Expected PrintConfigResult, got {ret:?}")
+        };
+
+        let expect_json =
+            std::fs::read_to_string("fixtures/print_config/ban_rules/expect.json").unwrap();
+        assert_eq!(config, expect_json.trim());
     }
 }

@@ -72,6 +72,8 @@ Output
 Miscellaneous
         --silent              Do not display any diagnostics
         --threads=INT         Number of threads to use. Set to 1 for using only 1 CPU core
+        --print-config        This option outputs the configuration to be used. When present, no
+                              linting is performed and only config-related options are valid.
 
 Available positional items:
     PATH                      Single file, single path or list of paths

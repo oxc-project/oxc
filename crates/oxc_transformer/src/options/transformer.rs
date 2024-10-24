@@ -15,6 +15,7 @@ use crate::{
     es2019::ES2019Options,
     es2020::ES2020Options,
     es2021::ES2021Options,
+    es2022::ES2022Options,
     options::babel::BabelOptions,
     react::JsxOptions,
     regexp::RegExpOptions,
@@ -59,6 +60,8 @@ pub struct TransformOptions {
 
     pub es2021: ES2021Options,
 
+    pub es2022: ES2022Options,
+
     pub helper_loader: HelperLoaderOptions,
 }
 
@@ -97,6 +100,7 @@ impl TransformOptions {
             es2019: ES2019Options { optional_catch_binding: true },
             es2020: ES2020Options { nullish_coalescing_operator: true },
             es2021: ES2021Options { logical_assignment_operators: true },
+            es2022: ES2022Options { class_static_block: true },
             helper_loader: HelperLoaderOptions {
                 mode: HelperLoaderMode::Runtime,
                 ..Default::default()
@@ -113,6 +117,7 @@ impl TransformOptions {
             es2019: ES2019Options::from_targets_and_bugfixes(targets, bugfixes),
             es2020: ES2020Options::from_targets_and_bugfixes(targets, bugfixes),
             es2021: ES2021Options::from_targets_and_bugfixes(targets, bugfixes),
+            es2022: ES2022Options::from_targets_and_bugfixes(targets, bugfixes),
             regexp: RegExpOptions::from_targets_and_bugfixes(targets, bugfixes),
             ..Default::default()
         }
@@ -251,6 +256,11 @@ impl TransformOptions {
 
         transformer_options.es2021.with_logical_assignment_operators({
             let plugin_name = "transform-logical-assignment-operators";
+            get_enabled_plugin_options(plugin_name, options, targets.as_ref(), bugfixes).is_some()
+        });
+
+        transformer_options.es2022.with_class_static_block({
+            let plugin_name = "transform-class-static-block";
             get_enabled_plugin_options(plugin_name, options, targets.as_ref(), bugfixes).is_some()
         });
 

@@ -7,10 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{
-        collect_possible_jest_call_node, is_equality_matcher,
-        parse_expect_and_typeof_vitest_fn_call, PossibleJestNode,
-    },
+    utils::{is_equality_matcher, parse_expect_and_typeof_vitest_fn_call, PossibleJestNode},
 };
 
 use oxc_diagnostics::OxcDiagnostic;
@@ -104,10 +101,12 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferToBeTruthy {
-    fn run_once(&self, ctx: &LintContext) {
-        for possible_vitest_node in &collect_possible_jest_call_node(ctx) {
-            prefer_to_be_simply_bool(possible_vitest_node, ctx, true);
-        }
+    fn run_on_jest_node<'a, 'c>(
+        &self,
+        jest_node: &PossibleJestNode<'a, 'c>,
+        ctx: &'c LintContext<'a>,
+    ) {
+        prefer_to_be_simply_bool(jest_node, ctx, true);
     }
 }
 
@@ -168,5 +167,8 @@ fn test() {
             None,
         ),
     ];
-    Tester::new(PreferToBeTruthy::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(PreferToBeTruthy::NAME, pass, fail)
+        .expect_fix(fix)
+        .with_vitest_plugin(true)
+        .test_and_snapshot();
 }

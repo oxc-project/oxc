@@ -35,6 +35,7 @@ bitflags! {
         const Jest = 1 << 9;
         const Vitest = 1 << 10;
         const OtherTest = 1 << 11;
+        /// Flag for if any test frameworks are used, such as Jest or Vitest.
         const Test = Self::Jest.bits() | Self::Vitest.bits() | Self::OtherTest.bits();
     }
 }

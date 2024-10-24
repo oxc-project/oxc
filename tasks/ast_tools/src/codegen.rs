@@ -29,21 +29,23 @@ pub struct AstCodegenResult {
     pub outputs: Vec<SideEffect>,
 }
 
-pub struct SideEffect(/* path */ pub PathBuf, /* output */ pub Vec<u8>);
+pub struct SideEffect {
+    pub path: PathBuf,
+    pub content: Vec<u8>,
+}
 
 impl SideEffect {
     /// Apply the side-effect
     pub fn apply(self) -> std::io::Result<()> {
-        let Self(path, data) = self;
+        let Self { path, content } = self;
         let path = path.into_os_string();
         let path = path.to_str().unwrap();
-        write_all_to(&data, path)?;
+        write_all_to(&content, path)?;
         Ok(())
     }
 
     pub fn path(&self) -> String {
-        let Self(path, _) = self;
-        let path = path.to_string_lossy();
+        let path = self.path.to_string_lossy();
         path.replace('\\', "/")
     }
 }
@@ -51,13 +53,16 @@ impl SideEffect {
 impl From<(PathBuf, TokenStream)> for SideEffect {
     fn from((path, stream): (PathBuf, TokenStream)) -> Self {
         let content = pretty_print(&stream);
-        Self(path, content.as_bytes().into())
+        Self { path, content: content.into() }
     }
 }
 
 impl From<GeneratorOutput> for SideEffect {
     fn from(output: GeneratorOutput) -> Self {
-        Self::from((output.0, output.1))
+        match output {
+            GeneratorOutput::Rust { path, tokens } => Self::from((path, tokens)),
+            GeneratorOutput::Text { path, content } => Self { path, content: content.into() },
+        }
     }
 }
 

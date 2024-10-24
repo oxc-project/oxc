@@ -146,7 +146,12 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
                 return;
             }
             if block.body.len() == 0
-                && (ctx.parent().is_block_statement() || ctx.parent().is_program())
+                && (ctx.parent().is_while_statement()
+                    || ctx.parent().is_for_statement()
+                    || ctx.parent().is_for_in_statement()
+                    || ctx.parent().is_for_of_statement()
+                    || ctx.parent().is_block_statement()
+                    || ctx.parent().is_program())
             {
                 // Remove the block if it is empty and the parent is a block statement.
                 *stmt = ctx.ast.statement_empty(SPAN);
@@ -281,6 +286,34 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
                 Expression::ArrayExpression(expr) => Self::try_fold_array_expression(expr, ctx),
                 Expression::ObjectExpression(object_expr) => {
                     Self::try_fold_object_expression(object_expr, ctx)
+                }
+                Expression::TemplateLiteral(template_lit) => {
+                    template_lit.expressions.retain(
+                        oxc_ecmascript::side_effects::MayHaveSideEffects::may_have_side_effects,
+                    );
+
+                    let mut expressions = ctx.ast.move_vec(&mut template_lit.expressions);
+
+                    if expressions.len() == 0 {
+                        return Some(ctx.ast.statement_empty(SPAN));
+                    } else if expressions.len() == 1 {
+                        return Some(
+                            ctx.ast.statement_expression(
+                                template_lit.span,
+                                expressions.pop().unwrap(),
+                            ),
+                        );
+                    }
+
+                    return Some(ctx.ast.statement_expression(
+                        template_lit.span,
+                        ctx.ast.expression_from_sequence(
+                            ctx.ast.sequence_expression(template_lit.span, expressions),
+                        ),
+                    ));
+                }
+                Expression::FunctionExpression(function_expr) if function_expr.id.is_none() => {
+                    Some(ctx.ast.statement_empty(SPAN))
                 }
                 _ => None,
             })
@@ -503,22 +536,22 @@ mod test {
         fold("{if(false)if(false)if(false)foo(); {bar()}}", "bar()");
 
         fold("{'hi'}", "");
-        // fold("{x==3}", "");
-        // fold("{`hello ${foo}`}", "");
-        // fold("{ (function(){x++}) }", "");
-        // fold_same("function f(){return;}");
-        // fold("function f(){return 3;}", "function f(){return 3}");
+        fold("{x==3}", "x == 3");
+        fold("{`hello ${foo}`}", "");
+        fold("{ (function(){x++}) }", "");
+        fold_same("function f(){return;}");
+        fold("function f(){return 3;}", "function f(){return 3}");
         // fold_same("function f(){if(x)return; x=3; return; }");
         // fold("{x=3;;;y=2;;;}", "x=3;y=2");
 
         // Cases to test for empty block.
         // fold("while(x()){x}", "while(x());");
-        // fold("while(x()){x()}", "while(x())x()");
+        fold("while(x()){x()}", "while(x())x()");
         // fold("for(x=0;x<100;x++){x}", "for(x=0;x<100;x++);");
         // fold("for(x in y){x}", "for(x in y);");
         // fold("for (x of y) {x}", "for(x of y);");
-        // fold_same("for (let x = 1; x <10; x++ ) {}");
-        // fold_same("for (var x = 1; x <10; x++ ) {}");
+        fold("for (let x = 1; x <10; x++ ) {}", "for (let x = 1; x <10; x++ );");
+        fold("for (var x = 1; x <10; x++ ) {}", "for (var x = 1; x <10; x++ );");
     }
 
     #[test]

@@ -10,21 +10,21 @@ runs:
         show-progress: false
         repository: tc39/test262
         path: tasks/coverage/test262
-        ref: d62fa93c8f9ce5e687c0bbaa5d2b59670ab2ff60
+        ref: 0645461999632a17426e45d044ee519a0f07d022
 
     - uses: actions/checkout@v4
       with:
         show-progress: false
         repository: babel/babel
         path: tasks/coverage/babel
-        ref: 3bcfee232506a4cebe410f02042fb0f0adeeb0b1
+        ref: d20b314c14533ab86351ecf6ca6b7296b66a57b3
 
     - uses: actions/checkout@v4
       with:
         show-progress: false
         repository: microsoft/TypeScript
         path: tasks/coverage/typescript
-        ref: a709f9899c2a544b6de65a0f2623ecbbe1394eab
+        ref: df9d16503f6755dd071e4c591b9d21c39d03d95e
 
     - uses: actions/checkout@v4
       with:
