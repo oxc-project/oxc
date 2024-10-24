@@ -58,7 +58,7 @@ impl Rule for NoAccessKey {
                 Some(JSXAttributeValue::ExpressionContainer(container)) => {
                     if container.expression.is_expression() && !container.expression.is_undefined()
                     {
-                        ctx.diagnostic_with_fix(no_access_key_diagnostic(attr.span), |fixer| {
+                        ctx.diagnostic_with_suggestion(no_access_key_diagnostic(attr.span), |fixer| {
                             fixer.delete(&attr.span)
                         });
                     }
