@@ -287,9 +287,9 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
                     Self::try_fold_object_expression(object_expr, ctx)
                 }
                 Expression::TemplateLiteral(template_lit) => {
-                    template_lit.expressions.retain(
-                        oxc_ecmascript::side_effects::MayHaveSideEffects::may_have_side_effects,
-                    );
+                    if !template_lit.expressions.is_empty() {
+                        return None;
+                    }
 
                     let mut expressions = ctx.ast.move_vec(&mut template_lit.expressions);
 
@@ -453,7 +453,7 @@ mod test {
 
         fold("{'hi'}", "");
         fold("{x==3}", "x == 3");
-        fold("{`hello ${foo}`}", "");
+        fold("{`hello ${foo}`}", "`hello ${foo}`");
         fold("{ (function(){x++}) }", "");
         fold_same("function f(){return;}");
         fold("function f(){return 3;}", "function f(){return 3}");
