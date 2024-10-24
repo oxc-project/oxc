@@ -16,6 +16,7 @@ use serde::{de::Visitor, Deserialize, Serialize};
 /// ```json
 ///
 /// {
+///     "$schema": "./node_modules/oxlint/configuration_schema.json",
 ///     "env": {
 ///         "es6": true
 ///     },

@@ -1,6 +1,6 @@
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, NONE};
-use oxc_ecmascript::ToInt32;
+use oxc_ecmascript::{ToInt32, ToJsString};
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::{
@@ -115,7 +115,7 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
                 }
             }
             Expression::TemplateLiteral(_) => {
-                if let Some(val) = ctx.get_string_value(expr) {
+                if let Some(val) = expr.to_js_string() {
                     let new_expr = ctx.ast.string_literal(expr.span(), val);
                     *expr = ctx.ast.expression_from_string_literal(new_expr);
                     self.changed = true;
@@ -298,7 +298,8 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
         decl: &mut VariableDeclarator<'a>,
         ctx: Ctx<'a, 'b>,
     ) {
-        if decl.kind.is_const() {
+        // Destructuring Pattern has error throwing side effect.
+        if decl.kind.is_const() || decl.id.kind.is_destructuring_pattern() {
             return;
         }
         if decl.init.as_ref().is_some_and(|init| ctx.is_expression_undefined(init)) {
@@ -592,6 +593,10 @@ mod test {
 
         // shadowd
         test_same("(function(undefined) { let x = typeof undefined; })()");
+
+        // destructuring throw error side effect
+        test_same("var {} = void 0");
+        test_same("var [] = void 0");
     }
 
     #[test]

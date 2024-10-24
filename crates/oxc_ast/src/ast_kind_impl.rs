@@ -1,3 +1,4 @@
+#![allow(missing_docs)] // FIXME
 use oxc_span::Atom;
 use oxc_syntax::scope::ScopeId;
 

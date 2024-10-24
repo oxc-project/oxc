@@ -301,6 +301,33 @@ impl<'a> TraverseCtx<'a> {
         self.scoping.remove_scope_for_expression(scope_id, expr);
     }
 
+    /// Generate binding.
+    ///
+    /// Creates a symbol with the provided name and flags and adds it to the specified scope.
+    ///
+    /// This is a shortcut for `ctx.scoping.generate_binding`.
+    pub fn generate_binding(
+        &mut self,
+        name: Atom<'a>,
+        scope_id: ScopeId,
+        flags: SymbolFlags,
+    ) -> BoundIdentifier<'a> {
+        self.scoping.generate_binding(name, scope_id, flags)
+    }
+
+    /// Generate binding in current scope.
+    ///
+    /// Creates a symbol with the provided name and flags and adds it to the current scope.
+    ///
+    /// This is a shortcut for `ctx.scoping.generate_binding_in_current_scope`.
+    pub fn generate_binding_in_current_scope(
+        &mut self,
+        name: Atom<'a>,
+        flags: SymbolFlags,
+    ) -> BoundIdentifier<'a> {
+        self.scoping.generate_binding_in_current_scope(name, flags)
+    }
+
     /// Generate UID var name.
     ///
     /// Finds a unique variable name which does clash with any other variables used in the program.

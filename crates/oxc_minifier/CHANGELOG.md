@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.33.0] - 2024-10-24
+
+### Features
+
+- b4bc300 minifier: Improve folding block stmts (#6793) (camc314)
+- 34fe7c0 minifier: Dce meaningless labeled statements (#6688) (7086cmd)
+
+### Bug Fixes
+
+- 2f6ad42 codegen: Print negative bigint `1n- -1n` correctly after constant folding (#6798) (Boshen)
+- ca79993 minifier: Do not dce object literals yet (#6839) (Boshen)
+- ec5a19b minifier: Do not remove binary expressions (#6829) (Boshen)
+- 22355f7 minifier: Do not remove `undefined` for destructuring patterns (#6828) (Boshen)
+
+### Refactor
+
+- 8b25131 minifier: Binary operations use `ConstantEvaluation` (#6700) (Boshen)
+
 ## [0.32.0] - 2024-10-19
 
 ### Features

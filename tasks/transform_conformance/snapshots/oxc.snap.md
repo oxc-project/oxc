@@ -1,6 +1,6 @@
 commit: d20b314c
 
-Passed: 66/75
+Passed: 67/76
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -13,7 +13,7 @@ Passed: 66/75
 * regexp
 
 
-# babel-plugin-transform-typescript (1/8)
+# babel-plugin-transform-typescript (2/9)
 * class-property-definition/input.ts
 Unresolved references mismatch:
 after transform: ["const"]
