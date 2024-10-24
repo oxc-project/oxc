@@ -48,12 +48,14 @@ pub use bumpalo::collections::String;
 use bumpalo::Bump;
 
 mod address;
+mod arena_ref;
 mod boxed;
 mod clone_in;
 mod convert;
 mod vec;
 
 pub use address::{Address, GetAddress};
+pub use arena_ref::AsArenaRef;
 pub use boxed::Box;
 pub use clone_in::CloneIn;
 pub use convert::{FromIn, IntoIn};

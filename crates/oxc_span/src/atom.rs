@@ -4,7 +4,7 @@ use std::{
     ops::Deref,
 };
 
-use oxc_allocator::{Allocator, CloneIn, FromIn};
+use oxc_allocator::{Allocator, AsArenaRef, CloneIn, FromIn};
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 
@@ -138,6 +138,12 @@ impl<'a> Deref for Atom<'a> {
 
 impl<'a> AsRef<str> for Atom<'a> {
     fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+
+impl<'a> AsArenaRef<'a, str> for Atom<'a> {
+    fn as_arena_ref(&'a self) -> &'a str {
         self.as_str()
     }
 }
