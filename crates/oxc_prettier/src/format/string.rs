@@ -61,5 +61,5 @@ pub(super) fn print_string<'a>(
     prefer_single_quote: bool,
 ) -> &'a str {
     let enclosing_quote = get_preferred_quote(raw_text, prefer_single_quote);
-    make_string(p, raw_text, enclosing_quote).into_str()
+    make_string(p, raw_text, enclosing_quote).into_bump_str()
 }

@@ -72,13 +72,13 @@ impl<'a> AstBuilder<'a> {
     /// in the heap.
     #[inline]
     pub fn str(self, value: &str) -> &'a str {
-        String::from_str_in(value, self.allocator).into_str()
+        String::from_str_in(value, self.allocator).into_bump_str()
     }
 
     /// Allocate an [`Atom`] from a string slice.
     #[inline]
     pub fn atom(self, value: &str) -> Atom<'a> {
-        Atom::from(String::from_str_in(value, self.allocator).into_str())
+        Atom::from(String::from_str_in(value, self.allocator).into_bump_str())
     }
 
     /// # SAFETY

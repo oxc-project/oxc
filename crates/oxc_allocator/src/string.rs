@@ -30,7 +30,7 @@ impl<'a> String<'a> {
 
     /// Converts a `String` into a `&str`.
     #[inline(always)]
-    pub fn into_str(self) -> &'a str {
+    pub fn into_bump_str(self) -> &'a str {
         // First converts it to a `FixedBumpString` to suppress it trying to shrink its allocation.
         self.0.into_fixed_string().into_str()
     }

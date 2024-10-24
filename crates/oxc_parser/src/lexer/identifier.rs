@@ -199,7 +199,7 @@ impl<'a> Lexer<'a> {
         }
 
         // Convert `str` to arena slice and save to `escaped_strings`
-        let id = str.into_str();
+        let id = str.into_bump_str();
         self.save_string(true, id);
         id
     }

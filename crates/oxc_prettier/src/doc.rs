@@ -188,7 +188,7 @@ pub trait DocBuilder<'a> {
 
     #[inline]
     fn str(&self, s: &str) -> Doc<'a> {
-        Doc::Str(String::from_str_in(s, self.allocator()).into_str())
+        Doc::Str(String::from_str_in(s, self.allocator()).into_bump_str())
     }
 
     #[inline]

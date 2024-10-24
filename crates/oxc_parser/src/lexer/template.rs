@@ -300,7 +300,7 @@ impl<'a> Lexer<'a> {
             },
         };
 
-        self.save_template_string(is_valid_escape_sequence, str.into_str());
+        self.save_template_string(is_valid_escape_sequence, str.into_bump_str());
 
         ret
     }
