@@ -54,7 +54,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// ```
     #[inline(always)]
     pub fn new_in(allocator: &'alloc Allocator) -> Self {
-        Self(ManuallyDrop::new(VecImpl::new_in(allocator)))
+        Self(ManuallyDrop::new(VecImpl::new_in(&allocator.bump)))
     }
 
     /// Constructs a new, empty `Vec<T>` with at least the specified capacity
@@ -106,7 +106,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// ```
     #[inline(always)]
     pub fn with_capacity_in(capacity: usize, allocator: &'alloc Allocator) -> Self {
-        Self(ManuallyDrop::new(VecImpl::with_capacity_in(capacity, allocator)))
+        Self(ManuallyDrop::new(VecImpl::with_capacity_in(capacity, &allocator.bump)))
     }
 
     /// Create a new [`Vec`] whose elements are taken from an iterator and
@@ -115,7 +115,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// This is behaviorally identical to [`FromIterator::from_iter`].
     #[inline(always)]
     pub fn from_iter_in<I: IntoIterator<Item = T>>(iter: I, allocator: &'alloc Allocator) -> Self {
-        Self(ManuallyDrop::new(VecImpl::from_iter_in(iter, allocator)))
+        Self(ManuallyDrop::new(VecImpl::from_iter_in(iter, &allocator.bump)))
     }
 
     /// Returns the total number of elements the vector can hold without

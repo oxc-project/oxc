@@ -75,7 +75,7 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for &'old_alloc str {
     type Cloned = &'new_alloc str;
 
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        allocator.alloc_str(self).into_ref()
+        allocator.alloc_str(self)
     }
 }
 

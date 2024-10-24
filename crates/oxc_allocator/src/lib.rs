@@ -39,15 +39,7 @@
 //! assert!(parsed.errors.is_empty());
 //! ```
 #![warn(missing_docs)]
-use std::{
-    convert::From,
-    ops::{Deref, DerefMut},
-};
-
 use allocator_api2::alloc::Global;
-
-/// A bump-allocated string.
-type BumpScope<'a> = bump_scope::BumpScope<'a>;
 
 mod address;
 mod boxed;
@@ -82,47 +74,14 @@ pub struct Allocator {
     bump: BumpImpl,
 }
 
-impl<'a> From<&'a Allocator> for &'a BumpScope<'a> {
-    fn from(value: &'a Allocator) -> Self {
-        value.bump.as_scope()
+impl Allocator {
+    /// Allocate a string slice.
+    pub fn alloc_str(&self, s: &str) -> &mut str {
+        self.bump.alloc_str(s).into_mut()
     }
-}
 
-impl From<BumpImpl> for Allocator {
-    fn from(bump: BumpImpl) -> Self {
-        Self { bump }
-    }
-}
-
-impl Deref for Allocator {
-    type Target = BumpImpl;
-
-    fn deref(&self) -> &Self::Target {
-        &self.bump
-    }
-}
-
-impl DerefMut for Allocator {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.bump
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use std::ops::Deref;
-
-    use super::BumpImpl;
-
-    use crate::Allocator;
-
-    #[test]
-    fn test_api() {
-        let bump = BumpImpl::new();
-        let allocator: Allocator = bump.into();
-        #[allow(clippy::explicit_deref_methods)]
-        {
-            _ = allocator.deref();
-        }
+    /// Deallocates every chunk but the newest, which is also the biggest.
+    pub fn reset(&mut self) {
+        self.bump.reset();
     }
 }

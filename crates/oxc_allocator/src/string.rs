@@ -10,19 +10,19 @@ impl<'a> String<'a> {
     /// Constructs a new empty `String`.
     #[inline]
     pub fn new_in(allocator: &'a Allocator) -> Self {
-        Self(StringImpl::new_in(allocator))
+        Self(StringImpl::new_in(&allocator.bump))
     }
 
     /// Constructs a `String` from a `&str`.
     #[inline]
     pub fn from_str_in(string: &str, allocator: &'a Allocator) -> Self {
-        Self(StringImpl::from_str_in(string, allocator))
+        Self(StringImpl::from_str_in(string, &allocator.bump))
     }
 
     /// Constructs a new empty `String` with the specified capacity.
     #[inline]
     pub fn with_capacity_in(capacity: usize, allocator: &'a Allocator) -> Self {
-        Self(StringImpl::with_capacity_in(capacity, allocator))
+        Self(StringImpl::with_capacity_in(capacity, &allocator.bump))
     }
 
     /// Converts a `String` into a `&str`.
@@ -53,7 +53,7 @@ impl<'a> String<'a> {
 
 #[cfg(any(feature = "serialize", test))]
 impl<'alloc> Serialize for String<'alloc> {
-    #[inline(always)]
+    #[inline]
     fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
