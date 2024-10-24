@@ -5,10 +5,11 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 // <https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc->
-#[derive(Debug, Clone, Deserialize, Default, Serialize, JsonSchema)]
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 #[cfg_attr(test, derive(PartialEq))]
 pub struct ReactPluginSettings {
-    pub pragma: Option<CompactStr>,
+    #[serde(default = "default_pragma")]
+    pub pragma: CompactStr,
 
     #[serde(default)]
     #[serde(rename = "formComponents")]
@@ -18,6 +19,16 @@ pub struct ReactPluginSettings {
     #[serde(rename = "linkComponents")]
     link_components: Vec<CustomComponent>,
     // TODO: More properties should be added
+}
+
+fn default_pragma() -> CompactStr {
+    CompactStr::new("React")
+}
+
+impl Default for ReactPluginSettings {
+    fn default() -> Self {
+        Self { pragma: default_pragma(), form_components: Vec::new(), link_components: Vec::new() }
+    }
 }
 
 pub type ComponentAttrs<'c> = Cow<'c, Vec<CompactStr>>;
