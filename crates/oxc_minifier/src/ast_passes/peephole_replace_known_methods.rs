@@ -76,7 +76,6 @@ impl PeepholeReplaceKnownMethods {
                     ctx,
                 ),
                 // TODO: Implement the rest of the string methods
-                "substr" => None,
                 "substring" | "slice" => None,
                 "charAt" => {
                     Self::try_fold_string_char_at(call_expr.span, call_expr, string_lit, ctx)
@@ -340,24 +339,6 @@ mod test {
         fold_same("x = [foo()].join('')");
         fold_same("[foo()].join('')");
         fold("[null].join('')", "''");
-    }
-
-    #[test]
-    #[ignore]
-    fn test_fold_string_substr() {
-        fold("x = 'abcde'.substr(0,2)", "x = 'ab'");
-        fold("x = 'abcde'.substr(1,2)", "x = 'bc'");
-        fold("x = 'abcde'.substr(2)", "x = 'cde'");
-
-        // we should be leaving negative indexes alone for now
-        fold_same("x = 'abcde'.substr(-1)");
-        fold_same("x = 'abcde'.substr(1, -2)");
-        fold_same("x = 'abcde'.substr(1, 2, 3)");
-        fold_same("x = 'a'.substr(0, 2)");
-
-        // Template strings
-        fold_same("x = `abcdef`.substr(0,2)");
-        fold_same("x = `abc ${xyz} def`.substr(0,2)");
     }
 
     #[test]
@@ -941,22 +922,9 @@ mod test {
         fold_same_string_typed("a.slice(2, 1)");
         fold_same_string_typed("a.slice(3, 1)");
 
-        fold_string_typed("a.substr(0, 1)", "a.charAt(0)");
-        fold_string_typed("a.substr(2, 1)", "a.charAt(2)");
-        fold_same_string_typed("a.substr(-2, 1)");
-        fold_same_string_typed("a.substr(bar(), 1)");
-        fold_same_string_typed("''.substr(bar(), 1)");
-        fold_same_string_typed("a.substr(2, 1, 3)");
-        fold_same_string_typed("a.substr(1, 2, 3)");
-        fold_same_string_typed("a.substr()");
-        fold_same_string_typed("a.substr(1)");
-        fold_same_string_typed("a.substr(1, 2)");
-        fold_same_string_typed("a.substr(1, 2, 3)");
-
         // enableTypeCheck();
 
         fold_same("function f(/** ? */ a) { a.substring(0, 1); }");
-        fold_same("function f(/** ? */ a) { a.substr(0, 1); }");
         // fold_same(lines(
         //     "/** @constructor */ function A() {};",
         //     "A.prototype.substring = function(begin, end) {};",
@@ -970,7 +938,6 @@ mod test {
 
         // useTypes = false;
         fold_same_string_typed("a.substring(0, 1)");
-        fold_same_string_typed("a.substr(0, 1)");
         fold_same_string_typed("''.substring(i, i + 1)");
     }
 
