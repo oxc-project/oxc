@@ -60,14 +60,14 @@ impl Rule for NoDupeArgs {
                 no_dupe_rags(&func.params.items, ctx);
             }
             AstKind::ArrowFunctionExpression(func) => no_dupe_rags(&func.params.items, ctx),
-            _ => return,
+            _ => (),
         }
     }
 }
 
 fn no_dupe_rags<'a>(items: &'a [FormalParameter<'a>], ctx: &LintContext<'a>) {
     let mut param_name_set: FxHashSet<CompactStr> = FxHashSet::default();
-    for param in items.iter() {
+    for param in items {
         if let BindingPatternKind::BindingIdentifier(iden) = &param.pattern.kind {
             let param_name: CompactStr = iden.name.to_compact_str();
             if param_name_set.contains(&param_name) {
