@@ -49,17 +49,9 @@ impl<'a> PatternParser<'a> {
 
         // [SS:EE] Pattern :: Disjunction
         // It is a Syntax Error if Pattern contains two or more GroupSpecifiers for which the CapturingGroupName of GroupSpecifier is the same.
-        // if !duplicated_named_capturing_groups.is_empty() {
-        //     return Err(diagnostics::duplicated_capturing_group_names(
-        //         duplicated_named_capturing_groups
-        //             .iter()
-        //             .map(|&(start, end)| self.span_factory.create(start, end))
-        //             .collect(),
-        //     ));
-        // }
-        self.state.initialize_with_parsing(&mut self.reader).map_err(|spans| {
+        self.state.initialize_with_parsing(&mut self.reader).map_err(|offsets| {
             diagnostics::duplicated_capturing_group_names(
-                spans.iter().map(|&(start, end)| self.span_factory.create(start, end)).collect(),
+                offsets.iter().map(|&(start, end)| self.span_factory.create(start, end)).collect(),
             )
         })?;
         self.reader.rewind(checkpoint);
