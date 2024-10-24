@@ -39,6 +39,10 @@
 //! assert!(parsed.errors.is_empty());
 //! ```
 #![warn(missing_docs)]
+// We're wrapping an existing implementation. Having those wrapper functions
+// must incur no overhead, so we declare them `#[inline(always)]`.
+#![allow(clippy::inline_always)]
+
 use allocator_api2::alloc::Global;
 
 mod address;
@@ -55,7 +59,7 @@ pub use convert::{FromIn, IntoIn};
 pub use string::String;
 pub use vec::Vec;
 
-const BUMP_UPWARDS: bool = true;
+const BUMP_UPWARDS: bool = false;
 const MINIMUM_ALIGNMENT: usize = 1;
 
 type BumpImpl = bump_scope::Bump<Global, MINIMUM_ALIGNMENT, BUMP_UPWARDS>;
@@ -74,11 +78,13 @@ pub struct Allocator {
 
 impl Allocator {
     /// Allocate a string slice.
+    #[inline(always)]
     pub fn alloc_str(&self, s: &str) -> &mut str {
         self.bump.alloc_str(s).into_mut()
     }
 
     /// Deallocates every chunk but the newest, which is also the biggest.
+    #[inline(always)]
     pub fn reset(&mut self) {
         self.bump.reset();
     }

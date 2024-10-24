@@ -1,7 +1,3 @@
-// We're wrapping an existing implementation. Having those wrapper functions
-// must incur no overhead, so we declare them `#[inline(always)]`.
-#![allow(clippy::inline_always)]
-
 //! Arena Vec.
 //!
 //! Originally based on [jsparagus](https://github.com/mozilla-spidermonkey/jsparagus/blob/master/crates/ast/src/arena.rs)
