@@ -8,7 +8,6 @@ use quote::{format_ident, quote, ToTokens};
 use rustc_hash::FxHashMap;
 use syn::{parse_quote, Ident, Type};
 
-use super::define_generator;
 use crate::{
     codegen::LateCtx,
     output::{output_path, Output},
@@ -18,6 +17,8 @@ use crate::{
     util::{TypeAnalysis, TypeWrapper},
     Generator,
 };
+
+use super::define_generator;
 
 pub struct AstBuilderGenerator;
 

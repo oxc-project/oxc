@@ -1,7 +1,6 @@
 use convert_case::{Case, Casing};
 use itertools::Itertools;
 
-use super::define_generator;
 use crate::{
     codegen::LateCtx,
     output::{output_path, Output},
@@ -11,6 +10,8 @@ use crate::{
     },
     Generator,
 };
+
+use super::define_generator;
 
 const CUSTOM_TYPESCRIPT: &str = include_str!("../../../../crates/oxc_ast/src/ast/types.d.ts");
 

@@ -2,7 +2,6 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::Type;
 
-use super::define_generator;
 use crate::{
     codegen::LateCtx,
     output::{output_path, Output},
@@ -10,6 +9,8 @@ use crate::{
     util::ToIdent,
     Generator,
 };
+
+use super::define_generator;
 
 pub struct AssertLayouts;
 
