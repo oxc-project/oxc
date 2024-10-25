@@ -48,7 +48,10 @@ impl<'a> Compressor<'a> {
             &mut PeepholeRemoveDeadCode::new(),
             // TODO: MinimizeExitPoints
             &mut PeepholeMinimizeConditions::new(),
-            &mut PeepholeSubstituteAlternateSyntax::new(self.options),
+            &mut PeepholeSubstituteAlternateSyntax::new(
+                /* in_fixed_loop */ true,
+                self.options,
+            ),
             &mut PeepholeReplaceKnownMethods::new(),
             &mut PeepholeFoldConstants::new(),
         ];
@@ -75,6 +78,10 @@ impl<'a> Compressor<'a> {
         // Passes listed in `getFinalization` in `DefaultPassConfig`
         ExploitAssigns::new().build(program, &mut ctx);
         CollapseVariableDeclarations::new(self.options).build(program, &mut ctx);
+
+        // Late latePeepholeOptimizations
+        PeepholeSubstituteAlternateSyntax::new(/* in_fixed_loop */ false, self.options)
+            .build(program, &mut ctx);
     }
 
     fn dead_code_elimination(program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {

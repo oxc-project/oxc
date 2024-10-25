@@ -65,8 +65,8 @@ impl<'a> ToJsString<'a> for ConstantValue<'a> {
                 use oxc_syntax::number::ToJsString;
                 Some(Cow::Owned(n.to_js_string()))
             }
-            // FIXME: to js number string
-            Self::BigInt(n) => Some(Cow::Owned(n.to_string() + "n")),
+            // https://tc39.es/ecma262/#sec-numeric-types-bigint-tostring
+            Self::BigInt(n) => Some(Cow::Owned(n.to_string())),
             Self::String(s) => Some(s.clone()),
             Self::Boolean(b) => Some(Cow::Borrowed(if *b { "true" } else { "false" })),
             Self::Undefined => Some(Cow::Borrowed("undefined")),

@@ -43,8 +43,17 @@ impl<'a> Traverse<'a> for PeepholeFoldConstants {
             Expression::ArrayExpression(e) => Self::try_flatten_array_expression(e, ctx),
             Expression::ObjectExpression(e) => Self::try_flatten_object_expression(e, ctx),
             Expression::BinaryExpression(e) => Self::try_fold_binary_expression(e, ctx),
+            #[allow(clippy::float_cmp)]
             Expression::UnaryExpression(e) => {
-                ctx.eval_unary_expression(e).map(|v| ctx.value_to_expr(e.span, v))
+                match e.operator {
+                    // Do not fold `void 0` back to `undefined`.
+                    UnaryOperator::Void if e.argument.is_number_0() => None,
+                    // Do not fold `true` and `false` back to `!0` and `!1`
+                    UnaryOperator::LogicalNot if matches!(&e.argument, Expression::NumericLiteral(lit) if lit.value == 0.0 || lit.value == 1.0) => {
+                        None
+                    }
+                    _ => ctx.eval_unary_expression(e).map(|v| ctx.value_to_expr(e.span, v)),
+                }
             }
             // TODO: return tryFoldGetProp(subtree);
             Expression::LogicalExpression(e) => Self::try_fold_logical_expression(e, ctx),
@@ -414,7 +423,19 @@ impl<'a, 'b> PeepholeFoldConstants {
                     Tri::Unknown
                 }
                 ValueType::Undefined | ValueType::Null => Tri::True,
-                _ => Tri::Unknown,
+                ValueType::Boolean if right.is_boolean() => {
+                    let left = ctx.get_boolean_value(left_expr);
+                    let right = ctx.get_boolean_value(right_expr);
+                    if let (Some(left_bool), Some(right_bool)) = (left, right) {
+                        return Tri::from(left_bool == right_bool);
+                    }
+                    Tri::Unknown
+                }
+                // TODO
+                ValueType::BigInt
+                | ValueType::Object
+                | ValueType::Boolean
+                | ValueType::Undetermined => Tri::Unknown,
             };
         }
 
