@@ -43,3 +43,11 @@ impl<'a, T> GetAddress for Box<'a, T> {
         Address::from_ptr(ptr::addr_of!(**self))
     }
 }
+
+impl GetAddress for Address {
+    /// Address of an `Address` is itself.
+    #[inline]
+    fn address(&self) -> Address {
+        *self
+    }
+}
