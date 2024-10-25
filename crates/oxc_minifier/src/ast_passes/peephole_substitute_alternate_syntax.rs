@@ -1,6 +1,6 @@
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, NONE};
-use oxc_ecmascript::ToInt32;
+use oxc_ecmascript::{ToInt32, ToJsString};
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::{
@@ -115,7 +115,7 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
                 }
             }
             Expression::TemplateLiteral(_) => {
-                if let Some(val) = ctx.get_string_value(expr) {
+                if let Some(val) = expr.to_js_string() {
                     let new_expr = ctx.ast.string_literal(expr.span(), val);
                     *expr = ctx.ast.expression_from_string_literal(new_expr);
                     self.changed = true;

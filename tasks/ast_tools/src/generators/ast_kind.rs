@@ -137,7 +137,6 @@ impl Generator for AstKindGenerator {
                 use oxc_span::{GetSpan, Span};
 
                 ///@@line_break
-                #[allow(clippy::wildcard_imports)]
                 use crate::ast::*;
 
                 ///@@line_break

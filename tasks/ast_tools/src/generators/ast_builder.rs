@@ -54,7 +54,6 @@ impl Generator for AstBuilderGenerator {
                 use oxc_syntax::{scope::ScopeId, symbol::SymbolId, reference::ReferenceId};
 
                 ///@@line_break
-                #[allow(clippy::wildcard_imports)]
                 use crate::ast::*;
 
                 ///@@line_break

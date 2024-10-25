@@ -8,7 +8,6 @@ use std::{
 
 use rustc_hash::FxHashMap;
 
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind, Visit};
 use oxc_cfg::{
     ControlFlowGraphBuilder, CtxCursor, CtxFlags, EdgeType, ErrorEdgeKind,

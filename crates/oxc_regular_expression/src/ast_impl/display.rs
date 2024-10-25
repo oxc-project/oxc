@@ -4,7 +4,6 @@ use std::{
     iter::Peekable,
 };
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::*;
 use crate::surrogate_pair::{combine_surrogate_pair, is_lead_surrogate, is_trail_surrogate};
 

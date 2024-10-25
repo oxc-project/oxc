@@ -4,7 +4,6 @@ use compact_str::CompactString;
 use itoa::Buffer as ItoaBuffer;
 use rustc_hash::FxHashSet;
 
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, visit::Visit};
 use oxc_semantic::{NodeId, Reference, ScopeTree, SymbolTable};
 use oxc_span::{CompactStr, SPAN};
@@ -187,7 +186,7 @@ impl TraverseScoping {
     /// Generate binding in current scope.
     ///
     /// Creates a symbol with the provided name and flags and adds it to the current scope.
-    pub fn generate_in_current_scope<'a>(
+    pub fn generate_binding_in_current_scope<'a>(
         &mut self,
         name: Atom<'a>,
         flags: SymbolFlags,

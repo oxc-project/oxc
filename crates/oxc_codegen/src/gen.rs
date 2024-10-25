@@ -1,7 +1,6 @@
 use std::ops::Not;
 
 use cow_utils::CowUtils;
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 use oxc_syntax::{

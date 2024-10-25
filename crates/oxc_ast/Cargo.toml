@@ -31,14 +31,12 @@ num-bigint = { workspace = true }
 
 serde = { workspace = true, features = ["derive"], optional = true }
 serde_json = { workspace = true, optional = true }
-wasm-bindgen = { workspace = true, optional = true }
 
 [features]
 default = []
 serialize = [
   "dep:serde",
   "dep:serde_json",
-  "dep:wasm-bindgen",
   "oxc_allocator/serialize",
   "oxc_regular_expression/serialize",
   "oxc_span/serialize",

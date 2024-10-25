@@ -98,7 +98,6 @@ fn generate_visit<const MUT: bool>(ctx: &LateCtx) -> TokenStream {
         use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
         ///@@line_break
-        #[allow(clippy::wildcard_imports)]
         use crate::ast::*;
         use crate::ast_kind::#ast_kind_type;
 

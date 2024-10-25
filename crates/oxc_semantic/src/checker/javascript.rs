@@ -1,7 +1,6 @@
 use phf::{phf_set, Set};
 use rustc_hash::FxHashMap;
 
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind};
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_ecmascript::{IsSimpleParameterList, PropName};

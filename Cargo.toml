@@ -62,6 +62,8 @@ too_many_lines = "allow"
 # except nagging the programmer to add a `#[must_use]` after clippy has been run.
 # Having `#[must_use]` everywhere also hinders readability.
 must_use_candidate = "allow"
+# Too annoying, we import by name anyway.
+wildcard_imports = "allow"
 # used_underscore_binding= "allow"
 doc_markdown = "allow"
 # nursery

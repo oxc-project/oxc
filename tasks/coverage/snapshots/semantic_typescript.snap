@@ -2,7 +2,7 @@ commit: df9d1650
 
 semantic_typescript Summary:
 AST Parsed     : 6490/6490 (100.00%)
-Positive Passed: 2676/6490 (41.23%)
+Positive Passed: 2681/6490 (41.31%)
 tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 semantic error: Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -146,11 +146,6 @@ rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
-
-tasks/coverage/typescript/tests/cases/compiler/SystemModuleForStatementNoInitializer.ts
-semantic error: Symbol flags mismatch for "i":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Export)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/abstractInterfaceIdentifierName.ts
 semantic error: Bindings mismatch:
@@ -2111,9 +2106,6 @@ rebuilt        : ScopeId(1): []
 Bindings mismatch:
 after transform: ScopeId(4): ["T"]
 rebuilt        : ScopeId(2): []
-Symbol flags mismatch for "Bar":
-after transform: SymbolId(0): SymbolFlags(Export | Class)
-rebuilt        : SymbolId(0): SymbolFlags(Class)
 Symbol reference IDs mismatch for "Bar":
 after transform: SymbolId(0): [ReferenceId(6), ReferenceId(8)]
 rebuilt        : SymbolId(0): []
@@ -17967,11 +17959,6 @@ Unresolved references mismatch:
 after transform: ["Record", "Required", "genericFn1", "genericFn2", "genericFn3"]
 rebuilt        : ["genericFn1", "genericFn2", "genericFn3", "key", "obj"]
 
-tasks/coverage/typescript/tests/cases/compiler/indirectGlobalSymbolPartOfObjectType.ts
-semantic error: Symbol flags mismatch for "Symbol":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | Export)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable)
-
 tasks/coverage/typescript/tests/cases/compiler/indirectTypeParameterReferences.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["B", "combined", "flowtypes", "literal", "n"]
@@ -20686,11 +20673,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["shouldBeIdentity"]
 rebuilt        : ["p1", "shouldBeIdentity"]
-
-tasks/coverage/typescript/tests/cases/compiler/jsFileESModuleWithEnumTag.ts
-semantic error: Symbol flags mismatch for "ChangeDetectionStrategy":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | Export)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/jsdocAccessEnumType.ts
 semantic error: Bindings mismatch:
@@ -30367,6 +30349,9 @@ rebuilt        : ScopeId(0): ["t", "y1", "y2"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(10), ScopeId(12), ScopeId(16), ScopeId(24), ScopeId(25), ScopeId(33), ScopeId(36), ScopeId(37), ScopeId(39), ScopeId(40), ScopeId(41), ScopeId(42), ScopeId(44), ScopeId(46)]
 rebuilt        : ScopeId(0): []
+Symbol flags mismatch for "y1":
+after transform: SymbolId(51): SymbolFlags(BlockScopedVariable)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Export)
 Unresolved references mismatch:
 after transform: ["Array"]
 rebuilt        : []
@@ -30623,6 +30608,9 @@ rebuilt        : ScopeId(0): ["zipped1", "zipped2", "zipped3"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(5), ScopeId(7), ScopeId(10), ScopeId(12)]
 rebuilt        : ScopeId(0): []
+Symbol flags mismatch for "zipped1":
+after transform: SymbolId(21): SymbolFlags(BlockScopedVariable | ConstVariable)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | Export)
 Reference symbol mismatch for "opt1":
 after transform: SymbolId(18) "opt1"
 rebuilt        : <None>
@@ -34794,11 +34782,6 @@ Reference symbol mismatch for "bar":
 after transform: SymbolId(0) "bar"
 rebuilt        : SymbolId(0) "bar"
 
-tasks/coverage/typescript/tests/cases/compiler/thisInObjectJs.ts
-semantic error: Symbol flags mismatch for "obj":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Export)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-
 tasks/coverage/typescript/tests/cases/compiler/thisInPropertyBoundDeclarations.ts
 semantic error: Symbol reference IDs mismatch for "Bug":
 after transform: SymbolId(0): [ReferenceId(0)]
@@ -37022,9 +37005,6 @@ rebuilt        : ScopeId(1): ["a"]
 Binding symbols mismatch:
 after transform: ScopeId(43): [SymbolId(30), SymbolId(31)]
 rebuilt        : ScopeId(43): [SymbolId(29), SymbolId(30)]
-Symbol flags mismatch for "defered":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Export | Function)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Function)
 Reference symbol mismatch for "N":
 after transform: SymbolId(29) "N"
 rebuilt        : SymbolId(28) "N"
@@ -51689,11 +51669,6 @@ Binding symbols mismatch:
 after transform: ScopeId(37): [SymbolId(27), SymbolId(44)]
 rebuilt        : ScopeId(37): [SymbolId(27), SymbolId(28)]
 
-tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.15.ts
-semantic error: Symbol flags mismatch for "_":
-after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | Export)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsDeclarationEmit.2.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["R1", "R2", "r1", "r2"]
@@ -51712,6 +51687,9 @@ tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["C1", "C2", "C3", "C4", "dec"]
 rebuilt        : ScopeId(0): ["C1", "C2", "C3", "C4"]
+Symbol flags mismatch for "C1":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable | Export)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -51730,6 +51708,9 @@ tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["C", "before", "dec"]
 rebuilt        : ScopeId(0): ["C", "before"]
+Symbol flags mismatch for "before":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable | Export)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -51741,6 +51722,9 @@ tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["after", "dec"]
 rebuilt        : ScopeId(0): ["after"]
+Symbol flags mismatch for "after":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable | Export)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -51774,6 +51758,9 @@ tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["C", "before", "dec"]
 rebuilt        : ScopeId(0): ["C", "before"]
+Symbol flags mismatch for "before":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable | Export)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -51785,6 +51772,9 @@ tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["C", "before", "dec"]
 rebuilt        : ScopeId(0): ["C", "before"]
+Symbol flags mismatch for "before":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable | Export)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -51796,6 +51786,9 @@ tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["before", "dec"]
 rebuilt        : ScopeId(0): ["before"]
+Symbol flags mismatch for "before":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable | Export)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -51807,6 +51800,9 @@ tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["C", "before", "dec"]
 rebuilt        : ScopeId(0): ["C", "before"]
+Symbol flags mismatch for "before":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable | Export)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -51818,6 +51814,9 @@ tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["C", "before", "dec"]
 rebuilt        : ScopeId(0): ["C", "before"]
+Symbol flags mismatch for "before":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable | Export)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -51829,6 +51828,9 @@ tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["C", "after", "dec"]
 rebuilt        : ScopeId(0): ["C", "after"]
+Symbol flags mismatch for "C":
+after transform: SymbolId(1): SymbolFlags(Class)
+rebuilt        : SymbolId(0): SymbolFlags(Export | Class)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -51862,6 +51864,9 @@ tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["C", "before", "dec"]
 rebuilt        : ScopeId(0): ["C", "before"]
+Symbol flags mismatch for "before":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable | Export)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -51873,6 +51878,9 @@ tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["after", "dec"]
 rebuilt        : ScopeId(0): ["after"]
+Symbol flags mismatch for "after":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable | Export)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -51906,6 +51914,9 @@ tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["C", "before", "dec"]
 rebuilt        : ScopeId(0): ["C", "before"]
+Symbol flags mismatch for "before":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable | Export)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -51917,6 +51928,9 @@ tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["C", "before", "dec"]
 rebuilt        : ScopeId(0): ["C", "before"]
+Symbol flags mismatch for "before":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable | Export)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -51928,6 +51942,9 @@ tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["before", "dec"]
 rebuilt        : ScopeId(0): ["before"]
+Symbol flags mismatch for "before":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable | Export)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -51939,6 +51956,9 @@ tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["C", "before", "dec"]
 rebuilt        : ScopeId(0): ["C", "before"]
+Symbol flags mismatch for "before":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable | Export)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -51950,6 +51970,9 @@ tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["C", "before", "dec"]
 rebuilt        : ScopeId(0): ["C", "before"]
+Symbol flags mismatch for "before":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable | Export)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -51961,6 +51984,9 @@ tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["C", "after", "dec"]
 rebuilt        : ScopeId(0): ["C", "after"]
+Symbol flags mismatch for "C":
+after transform: SymbolId(1): SymbolFlags(Class)
+rebuilt        : SymbolId(0): SymbolFlags(Export | Class)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>

@@ -6,10 +6,9 @@ use oxc_span::GetSpan;
 use super::assignment::AssignmentLikeNode;
 use crate::{
     array,
-    doc::{Doc, DocBuilder, Group, IfBreak, Line},
+    doc::{Doc, DocBuilder, Group, IfBreak},
     format::{assignment, Separator},
-    group, hardline, if_break, indent, indent_if_break, line, softline, space, ss, Format,
-    Prettier,
+    group, hardline, indent, line, softline, space, ss, Format, Prettier,
 };
 
 pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a> {

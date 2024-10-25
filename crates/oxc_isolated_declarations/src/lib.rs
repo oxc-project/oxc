@@ -23,7 +23,6 @@ use std::{cell::RefCell, mem};
 
 use diagnostics::function_with_assigning_properties;
 use oxc_allocator::{Allocator, CloneIn};
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstBuilder, Visit, NONE};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Atom, GetSpan, SourceType, SPAN};

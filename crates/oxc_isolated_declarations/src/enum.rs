@@ -1,6 +1,5 @@
 use rustc_hash::FxHashMap;
 
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 use oxc_ecmascript::ToInt32;
 use oxc_span::{Atom, GetSpan, SPAN};

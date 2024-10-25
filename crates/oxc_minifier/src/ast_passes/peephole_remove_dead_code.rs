@@ -204,15 +204,11 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
     ) -> Option<Statement<'a>> {
         let test_boolean = for_stmt.test.as_ref().and_then(|test| ctx.get_boolean_value(test));
         match test_boolean {
-            Some(false) => {
-                // Remove the entire `for` statement.
-                // Check vars in statement
-                let mut keep_var = KeepVar::new(ctx.ast);
-                keep_var.visit_statement(&for_stmt.body);
-
-                let mut var_decl = keep_var.get_variable_declaration();
-
-                if let Some(ForStatementInit::VariableDeclaration(var_init)) = &mut for_stmt.init {
+            Some(false) => match &mut for_stmt.init {
+                Some(ForStatementInit::VariableDeclaration(var_init)) => {
+                    let mut keep_var = KeepVar::new(ctx.ast);
+                    keep_var.visit_statement(&for_stmt.body);
+                    let mut var_decl = keep_var.get_variable_declaration();
                     if var_init.kind.is_var() {
                         if let Some(var_decl) = &mut var_decl {
                             var_decl
@@ -222,14 +218,27 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
                             var_decl = Some(ctx.ast.move_variable_declaration(var_init));
                         }
                     }
+                    Some(var_decl.map_or_else(
+                        || ctx.ast.statement_empty(SPAN),
+                        |var_decl| {
+                            ctx.ast
+                                .statement_declaration(ctx.ast.declaration_from_variable(var_decl))
+                        },
+                    ))
                 }
-
-                var_decl
-                    .map(|var_decl| {
-                        ctx.ast.statement_declaration(ctx.ast.declaration_from_variable(var_decl))
-                    })
-                    .or_else(|| Some(ctx.ast.statement_empty(SPAN)))
-            }
+                None => {
+                    let mut keep_var = KeepVar::new(ctx.ast);
+                    keep_var.visit_statement(&for_stmt.body);
+                    Some(keep_var.get_variable_declaration().map_or_else(
+                        || ctx.ast.statement_empty(SPAN),
+                        |var_decl| {
+                            ctx.ast
+                                .statement_declaration(ctx.ast.declaration_from_variable(var_decl))
+                        },
+                    ))
+                }
+                _ => None,
+            },
             Some(true) => {
                 // Remove the test expression.
                 for_stmt.test = None;
@@ -287,9 +296,9 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
                     Self::try_fold_object_expression(object_expr, ctx)
                 }
                 Expression::TemplateLiteral(template_lit) => {
-                    template_lit.expressions.retain(
-                        oxc_ecmascript::side_effects::MayHaveSideEffects::may_have_side_effects,
-                    );
+                    if !template_lit.expressions.is_empty() {
+                        return None;
+                    }
 
                     let mut expressions = ctx.ast.move_vec(&mut template_lit.expressions);
 
@@ -400,7 +409,7 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
         expr: &mut ConditionalExpression<'a>,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
-        match ctx.eval_to_boolean(&expr.test) {
+        match ctx.get_boolean_value(&expr.test) {
             Some(true) => {
                 // Bail `let o = { f() { assert.ok(this !== o); } }; (true ? o.f : false)(); (true ? o.f : false)``;`
                 let parent = ctx.ancestry.parent();
@@ -453,7 +462,7 @@ mod test {
 
         fold("{'hi'}", "");
         fold("{x==3}", "x == 3");
-        fold("{`hello ${foo}`}", "");
+        fold("{`hello ${foo}`}", "`hello ${foo}`");
         fold("{ (function(){x++}) }", "");
         fold_same("function f(){return;}");
         fold("function f(){return 3;}", "function f(){return 3}");
@@ -508,6 +517,7 @@ mod test {
         fold("for (var se = [1, 2]; false;);", "var se = [1, 2];");
         fold("for (var se = [1, 2]; false;) { var a = 0; }", "var se = [1, 2], a;");
 
+        fold("for (foo = bar; false;) {}", "for (foo = bar; false;);");
         // fold("l1:for(;false;) {  }", "");
     }
 

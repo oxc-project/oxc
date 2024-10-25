@@ -1,8 +1,7 @@
+#![allow(unused, clippy::unused_self)]
 //! Prettier
 //!
 //! A port of <https://github.com/prettier/prettier>
-
-#![allow(unused, clippy::wildcard_imports, clippy::unused_self)]
 
 mod binaryish;
 mod comments;

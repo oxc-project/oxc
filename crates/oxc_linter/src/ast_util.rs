@@ -4,7 +4,6 @@ use oxc_semantic::{AstNode, IsGlobalReference, NodeId, Semantic, SymbolId};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};
 
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 
 /// Test if an AST node is a boolean value that never changes. Specifically we

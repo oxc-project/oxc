@@ -1,9 +1,12 @@
 use cow_utils::CowUtils;
 use oxc_ast::ast::*;
-use oxc_ecmascript::{StringCharAt, StringIndexOf, StringLastIndexOf};
+use oxc_ecmascript::{
+    constant_evaluation::ConstantEvaluation, StringCharAt, StringCharCodeAt, StringIndexOf,
+    StringLastIndexOf,
+};
 use oxc_traverse::{Traverse, TraverseCtx};
 
-use crate::CompressorPass;
+use crate::{node_util::Ctx, CompressorPass};
 
 /// Minimize With Known Methods
 /// <https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeReplaceKnownMethods.java>
@@ -73,12 +76,13 @@ impl PeepholeReplaceKnownMethods {
                     ctx,
                 ),
                 // TODO: Implement the rest of the string methods
-                "substr" => None,
                 "substring" | "slice" => None,
                 "charAt" => {
                     Self::try_fold_string_char_at(call_expr.span, call_expr, string_lit, ctx)
                 }
-                "charCodeAt" => None,
+                "charCodeAt" => {
+                    Self::try_fold_string_char_code_at(call_expr.span, call_expr, string_lit, ctx)
+                }
                 "replace" => None,
                 "replaceAll" => None,
                 _ => None,
@@ -133,6 +137,10 @@ impl PeepholeReplaceKnownMethods {
         string_lit: &StringLiteral<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
+        if call_expr.arguments.len() > 1 {
+            return None;
+        }
+
         let char_at_index: Option<f64> = match call_expr.arguments.first() {
             Some(Argument::NumericLiteral(numeric_lit)) => Some(numeric_lit.value),
             Some(Argument::UnaryExpression(unary_expr))
@@ -154,6 +162,35 @@ impl PeepholeReplaceKnownMethods {
             .map_or(String::new(), |v| v.to_string());
 
         return Some(ctx.ast.expression_from_string_literal(ctx.ast.string_literal(span, result)));
+    }
+
+    fn try_fold_string_char_code_at<'a>(
+        span: Span,
+        call_expr: &CallExpression<'a>,
+        string_lit: &StringLiteral<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        let char_at_index = call_expr.arguments.first();
+        let char_at_index = if let Some(v) = char_at_index {
+            let val = match v {
+                Argument::SpreadElement(_) => None,
+                _ => Ctx(ctx).get_side_free_number_value(v.to_expression()),
+            }?;
+            Some(val)
+        } else {
+            None
+        };
+
+        // TODO: if `result` is `None`, return `NaN` instead of skipping the optimization
+        let result = string_lit.value.as_str().char_code_at(char_at_index)?;
+
+        #[expect(clippy::cast_lossless)]
+        Some(ctx.ast.expression_from_numeric_literal(ctx.ast.numeric_literal(
+            span,
+            result as f64,
+            result.to_string(),
+            NumberBase::Decimal,
+        )))
     }
 }
 
@@ -306,24 +343,6 @@ mod test {
 
     #[test]
     #[ignore]
-    fn test_fold_string_substr() {
-        fold("x = 'abcde'.substr(0,2)", "x = 'ab'");
-        fold("x = 'abcde'.substr(1,2)", "x = 'bc'");
-        fold("x = 'abcde'.substr(2)", "x = 'cde'");
-
-        // we should be leaving negative indexes alone for now
-        fold_same("x = 'abcde'.substr(-1)");
-        fold_same("x = 'abcde'.substr(1, -2)");
-        fold_same("x = 'abcde'.substr(1, 2, 3)");
-        fold_same("x = 'a'.substr(0, 2)");
-
-        // Template strings
-        fold_same("x = `abcdef`.substr(0,2)");
-        fold_same("x = `abc ${xyz} def`.substr(0,2)");
-    }
-
-    #[test]
-    #[ignore]
     fn test_fold_string_replace() {
         fold("'c'.replace('c','x')", "'x'");
         fold("'ac'.replace('c','x')", "'ax'");
@@ -418,12 +437,10 @@ mod test {
         fold("x = 'abcde'.charAt(2)", "x = 'c'");
         fold("x = 'abcde'.charAt(3)", "x = 'd'");
         fold("x = 'abcde'.charAt(4)", "x = 'e'");
-        // START: note, the following test cases outputs differ from Google's
         fold("x = 'abcde'.charAt(5)", "x = ''");
         fold("x = 'abcde'.charAt(-1)", "x = ''");
         fold("x = 'abcde'.charAt()", "x = 'a'");
-        fold("x = 'abcde'.charAt(0, ++z)", "x = 'a'");
-        // END
+        fold_same("x = 'abcde'.charAt(0, ++z)");
         fold_same("x = 'abcde'.charAt(y)");
         fold_same("x = 'abcde'.charAt(null)"); // or x = 'a'
         fold_same("x = 'abcde'.charAt(true)"); // or x = 'b'
@@ -436,7 +453,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_fold_string_char_code_at() {
         fold("x = 'abcde'.charCodeAt(0)", "x = 97");
         fold("x = 'abcde'.charCodeAt(1)", "x = 98");
@@ -446,12 +462,12 @@ mod test {
         fold_same("x = 'abcde'.charCodeAt(5)"); // or x = (0/0)
         fold_same("x = 'abcde'.charCodeAt(-1)"); // or x = (0/0)
         fold_same("x = 'abcde'.charCodeAt(y)");
-        fold_same("x = 'abcde'.charCodeAt()"); // or x = 97
-        fold_same("x = 'abcde'.charCodeAt(0, ++z)"); // or (++z, 97)
-        fold_same("x = 'abcde'.charCodeAt(null)"); // or x = 97
-        fold_same("x = 'abcde'.charCodeAt(true)"); // or x = 98
-                                                   // fold("x = '\\ud834\udd1e'.charCodeAt(0)", "x = 55348");
-                                                   // fold("x = '\\ud834\udd1e'.charCodeAt(1)", "x = 56606");
+        fold("x = 'abcde'.charCodeAt()", "x = 97");
+        fold("x = 'abcde'.charCodeAt(0, ++z)", "x = 97");
+        fold("x = 'abcde'.charCodeAt(null)", "x = 97");
+        fold("x = 'abcde'.charCodeAt(true)", "x = 98");
+        // fold("x = '\\ud834\udd1e'.charCodeAt(0)", "x = 55348");
+        // fold("x = '\\ud834\udd1e'.charCodeAt(1)", "x = 56606");
 
         // Template strings
         fold_same("x = `abcdef`.charCodeAt(0)");
@@ -906,22 +922,9 @@ mod test {
         fold_same_string_typed("a.slice(2, 1)");
         fold_same_string_typed("a.slice(3, 1)");
 
-        fold_string_typed("a.substr(0, 1)", "a.charAt(0)");
-        fold_string_typed("a.substr(2, 1)", "a.charAt(2)");
-        fold_same_string_typed("a.substr(-2, 1)");
-        fold_same_string_typed("a.substr(bar(), 1)");
-        fold_same_string_typed("''.substr(bar(), 1)");
-        fold_same_string_typed("a.substr(2, 1, 3)");
-        fold_same_string_typed("a.substr(1, 2, 3)");
-        fold_same_string_typed("a.substr()");
-        fold_same_string_typed("a.substr(1)");
-        fold_same_string_typed("a.substr(1, 2)");
-        fold_same_string_typed("a.substr(1, 2, 3)");
-
         // enableTypeCheck();
 
         fold_same("function f(/** ? */ a) { a.substring(0, 1); }");
-        fold_same("function f(/** ? */ a) { a.substr(0, 1); }");
         // fold_same(lines(
         //     "/** @constructor */ function A() {};",
         //     "A.prototype.substring = function(begin, end) {};",
@@ -935,7 +938,6 @@ mod test {
 
         // useTypes = false;
         fold_same_string_typed("a.substring(0, 1)");
-        fold_same_string_typed("a.substr(0, 1)");
         fold_same_string_typed("''.substring(i, i + 1)");
     }
 

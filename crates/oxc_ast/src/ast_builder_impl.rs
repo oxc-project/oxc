@@ -12,7 +12,6 @@ use oxc_allocator::{Allocator, Box, FromIn, String, Vec};
 use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::{number::NumberBase, operator::UnaryOperator};
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::*;
 use crate::AstBuilder;
 

@@ -1,5 +1,3 @@
-#![allow(clippy::wildcard_imports)]
-
 //! Transformer / Transpiler
 //!
 //! References:

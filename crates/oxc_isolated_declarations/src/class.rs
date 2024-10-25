@@ -1,7 +1,6 @@
 use std::borrow::Cow;
 
 use oxc_allocator::{Box, CloneIn};
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, NONE};
 use oxc_span::{GetSpan, SPAN};
 use rustc_hash::FxHashMap;

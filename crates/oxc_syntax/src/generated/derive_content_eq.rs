@@ -5,10 +5,8 @@
 
 use oxc_span::cmp::ContentEq;
 
-#[allow(clippy::wildcard_imports)]
 use crate::number::*;
 
-#[allow(clippy::wildcard_imports)]
 use crate::operator::*;
 
 impl ContentEq for NumberBase {

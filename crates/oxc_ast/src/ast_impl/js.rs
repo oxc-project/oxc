@@ -272,24 +272,6 @@ impl<'a> Expression<'a> {
     }
 
     #[allow(missing_docs)]
-    pub fn is_immutable_value(&self) -> bool {
-        match self {
-            Self::BooleanLiteral(_)
-            | Self::NullLiteral(_)
-            | Self::NumericLiteral(_)
-            | Self::BigIntLiteral(_)
-            | Self::RegExpLiteral(_)
-            | Self::StringLiteral(_) => true,
-            Self::TemplateLiteral(lit) if lit.is_no_substitution_template() => true,
-            Self::UnaryExpression(unary_expr) => unary_expr.argument.is_immutable_value(),
-            Self::Identifier(ident) => {
-                matches!(ident.name.as_str(), "undefined" | "Infinity" | "NaN")
-            }
-            _ => false,
-        }
-    }
-
-    #[allow(missing_docs)]
     pub fn is_require_call(&self) -> bool {
         if let Self::CallExpression(call_expr) = self {
             call_expr.is_require_call()

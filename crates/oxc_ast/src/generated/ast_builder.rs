@@ -13,7 +13,6 @@ use std::cell::Cell;
 use oxc_allocator::{Allocator, Box, IntoIn, Vec};
 use oxc_syntax::{reference::ReferenceId, scope::ScopeId, symbol::SymbolId};
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::*;
 
 /// AST builder for creating AST nodes

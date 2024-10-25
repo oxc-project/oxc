@@ -1,5 +1,4 @@
 use convert_case::{Case, Casing};
-use itertools::Itertools;
 use proc_macro2::TokenStream;
 use quote::quote;
 
@@ -9,7 +8,7 @@ use crate::{
     markers::ESTreeStructAttribute,
     schema::{
         serialize::{enum_variant_name, get_type_tag},
-        EnumDef, GetGenerics, GetIdent, StructDef, TypeDef, TypeName,
+        EnumDef, GetGenerics, GetIdent, StructDef, TypeDef,
     },
 };
 
@@ -27,19 +26,6 @@ impl Derive for DeriveESTree {
     }
 
     fn derive(&mut self, def: &TypeDef, _: &LateCtx) -> TokenStream {
-        let ts_type_def = match def {
-            TypeDef::Enum(def) => typescript_enum(def),
-            TypeDef::Struct(def) => Some(typescript_struct(def)),
-        };
-        let ts_type_def = if let Some(ts_type_def) = ts_type_def {
-            quote! {
-                #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-                const TS_APPEND_CONTENT: &'static str = #ts_type_def;
-            }
-        } else {
-            TokenStream::new()
-        };
-
         if let TypeDef::Struct(def) = def {
             if def
                 .markers
@@ -47,7 +33,7 @@ impl Derive for DeriveESTree {
                 .as_ref()
                 .is_some_and(|e| e == &ESTreeStructAttribute::CustomSerialize)
             {
-                return ts_type_def;
+                return TokenStream::new();
             }
         }
 
@@ -64,9 +50,6 @@ impl Derive for DeriveESTree {
                     #body
                 }
             }
-
-            ///@@line_break
-            #ts_type_def
         }
     }
 
@@ -169,74 +152,5 @@ fn serialize_enum(def: &EnumDef) -> TokenStream {
                 #(#match_branches),*
             }
         }
-    }
-}
-
-// Untagged enums: "type Expression = BooleanLiteral | NullLiteral"
-// Tagged enums: "type PropertyKind = 'init' | 'get' | 'set'"
-fn typescript_enum(def: &EnumDef) -> Option<String> {
-    if def.markers.estree.custom_ts_def {
-        return None;
-    }
-
-    let union = if def.markers.estree.untagged {
-        def.all_variants().map(|var| type_to_string(var.fields[0].typ.name())).join(" | ")
-    } else {
-        def.all_variants().map(|var| format!("'{}'", enum_variant_name(var, def))).join(" | ")
-    };
-    let ident = def.ident();
-    Some(format!("export type {ident} = {union};"))
-}
-
-fn typescript_struct(def: &StructDef) -> String {
-    let ident = def.ident();
-    let mut fields = String::new();
-    let mut extends = vec![];
-
-    if let Some(type_tag) = get_type_tag(def) {
-        fields.push_str(&format!("\n\ttype: '{type_tag}';"));
-    }
-
-    for field in &def.fields {
-        if field.markers.derive_attributes.estree.skip {
-            continue;
-        }
-        let ty = match &field.markers.derive_attributes.tsify_type {
-            Some(ty) => ty.clone(),
-            None => type_to_string(field.typ.name()),
-        };
-
-        if field.markers.derive_attributes.estree.flatten {
-            extends.push(ty);
-            continue;
-        }
-
-        let name = match &field.markers.derive_attributes.estree.rename {
-            Some(rename) => rename.to_string(),
-            None => field.name.clone().unwrap().to_case(Case::Camel),
-        };
-
-        fields.push_str(&format!("\n\t{name}: {ty};"));
-    }
-    let extends =
-        if extends.is_empty() { String::new() } else { format!(" & {}", extends.join(" & ")) };
-    format!("export type {ident} = ({{{fields}\n}}){extends};")
-}
-
-fn type_to_string(ty: &TypeName) -> String {
-    match ty {
-        TypeName::Ident(ident) => match ident.as_str() {
-            "f64" | "f32" | "usize" | "u64" | "u32" | "u16" | "u8" | "i64" | "i32" | "i16"
-            | "i8" => "number",
-            "bool" => "boolean",
-            "str" | "String" | "Atom" | "CompactStr" => "string",
-            ty => ty,
-        }
-        .to_string(),
-        TypeName::Vec(type_name) => format!("Array<{}>", type_to_string(type_name)),
-        TypeName::Box(type_name) | TypeName::Ref(type_name) | TypeName::Complex(type_name) => {
-            type_to_string(type_name)
-        }
-        TypeName::Opt(type_name) => format!("({}) | null", type_to_string(type_name)),
     }
 }

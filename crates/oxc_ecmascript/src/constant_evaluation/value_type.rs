@@ -24,6 +24,10 @@ impl ValueType {
     pub fn is_number(self) -> bool {
         matches!(self, Self::Number)
     }
+
+    pub fn is_bigint(self) -> bool {
+        matches!(self, Self::BigInt)
+    }
 }
 
 /// `get_known_value_type`

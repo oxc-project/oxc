@@ -3,10 +3,8 @@
 
 use std::mem::{align_of, offset_of, size_of};
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::*;
 
-#[allow(clippy::wildcard_imports)]
 use oxc_regular_expression::ast::*;
 
 #[cfg(target_pointer_width = "64")]

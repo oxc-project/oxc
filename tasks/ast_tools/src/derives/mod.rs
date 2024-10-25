@@ -59,7 +59,6 @@ macro_rules! define_derive {
                         syn::parse_str(format!("use {local_path};").as_str()).unwrap();
                     quote::quote! {
                         ///@@line_break
-                        #[allow(clippy::wildcard_imports)]
                         #use_module
                     }
                 });

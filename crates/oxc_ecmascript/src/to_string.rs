@@ -1,6 +1,5 @@
 use std::borrow::Cow;
 
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 use oxc_syntax::operator::UnaryOperator;
 

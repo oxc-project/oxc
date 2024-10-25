@@ -1,4 +1,3 @@
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 
 /// Returns true if this is a literal value. We define a literal value as any node that evaluates
@@ -17,6 +16,22 @@ pub trait IsLiteralValue<'a, 'b> {
     fn is_literal_value(&self, include_functions: bool) -> bool;
 }
 
+pub fn is_immutable_value(expr: &Expression<'_>) -> bool {
+    match expr {
+        Expression::BooleanLiteral(_)
+        | Expression::NullLiteral(_)
+        | Expression::NumericLiteral(_)
+        | Expression::BigIntLiteral(_)
+        | Expression::RegExpLiteral(_)
+        | Expression::StringLiteral(_) => true,
+        Expression::TemplateLiteral(lit) if lit.is_no_substitution_template() => true,
+        Expression::Identifier(ident) => {
+            matches!(ident.name.as_str(), "undefined" | "Infinity" | "NaN")
+        }
+        _ => false,
+    }
+}
+
 impl<'a, 'b> IsLiteralValue<'a, 'b> for Expression<'a> {
     fn is_literal_value(&self, include_functions: bool) -> bool {
         match self {
@@ -27,7 +42,7 @@ impl<'a, 'b> IsLiteralValue<'a, 'b> for Expression<'a> {
             Self::ObjectExpression(expr) => {
                 expr.properties.iter().all(|property| property.is_literal_value(include_functions))
             }
-            _ => self.is_immutable_value(),
+            _ => is_immutable_value(self),
         }
     }
 }

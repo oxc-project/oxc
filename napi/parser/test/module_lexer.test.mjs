@@ -1,6 +1,6 @@
 import { assert, describe, it } from 'vitest';
 
-import oxc from './index.js';
+import * as oxc from '../index.js';
 
 describe('module lexer', () => {
   const code = 'export { foo }';
@@ -10,7 +10,7 @@ describe('module lexer', () => {
     assert(ret.exports.length == 1);
   });
 
-  it('matches output async ', async () => {
+  it('matches output async', async () => {
     const ret = await oxc.moduleLexerAsync(code);
     assert(ret.exports.length == 1);
   });

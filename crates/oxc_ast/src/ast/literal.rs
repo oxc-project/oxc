@@ -190,26 +190,3 @@ bitflags! {
         const V = 1 << 7;
     }
 }
-
-#[cfg(feature = "serialize")]
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = r#"
-export type RegExpFlags = {
-    /** Global flag */
-    G: 1,
-    /** Ignore case flag */
-    I: 2,
-    /** Multiline flag */
-    M: 4,
-    /** DotAll flag */
-    S: 8,
-    /** Unicode flag */
-    U: 16,
-    /** Sticky flag */
-    Y: 32,
-    /** Indices flag */
-    D: 64,
-    /** Unicode sets flag */
-    V: 128
-};
-"#;

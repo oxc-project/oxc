@@ -40,16 +40,4 @@ impl Tri {
             Self::Unknown => Self::Unknown,
         }
     }
-
-    pub fn xor(self, other: Self) -> Self {
-        Self::from(-self.value() * other.value())
-    }
-
-    pub fn value(self) -> i8 {
-        match self {
-            Self::True => 1,
-            Self::False => -1,
-            Self::Unknown => 0,
-        }
-    }
 }

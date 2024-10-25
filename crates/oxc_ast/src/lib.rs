@@ -1,4 +1,3 @@
-#![allow(clippy::wildcard_imports)]
 // TODO: I'm not sure if it is a but or intentional but clippy needs this allowed both on this
 // module and the generated one.
 #![allow(clippy::self_named_module_files)]

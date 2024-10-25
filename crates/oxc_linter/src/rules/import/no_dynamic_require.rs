@@ -87,7 +87,11 @@ impl Rule for NoDynamicRequire {
 }
 
 fn is_static_value(expr: &Expression) -> bool {
-    expr.is_string_literal() && expr.is_immutable_value()
+    match expr {
+        Expression::StringLiteral(_) => true,
+        Expression::TemplateLiteral(t) => t.is_no_substitution_template(),
+        _ => false,
+    }
 }
 
 #[test]
