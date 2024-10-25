@@ -5,7 +5,7 @@ use syn::{
     parenthesized,
     parse::{Parse, ParseStream},
     parse2,
-    punctuated::Punctuated,
+    punctuated::{self, Punctuated},
     spanned::Spanned,
     token, Attribute, Expr, Ident, LitStr, Meta, MetaNameValue, Token,
 };
@@ -38,7 +38,7 @@ impl Parse for VisitArg {
 pub struct VisitArgs(Punctuated<VisitArg, Token![,]>);
 
 impl IntoIterator for VisitArgs {
-    type IntoIter = syn::punctuated::IntoIter<Self::Item>;
+    type IntoIter = punctuated::IntoIter<Self::Item>;
     type Item = VisitArg;
 
     fn into_iter(self) -> Self::IntoIter {

@@ -1,4 +1,5 @@
 use serde::Serialize;
+use syn::Ident;
 
 use super::{with_either, TypeName};
 use crate::{
@@ -120,7 +121,7 @@ pub struct VariantDef {
 }
 
 impl VariantDef {
-    pub fn ident(&self) -> syn::Ident {
+    pub fn ident(&self) -> Ident {
         self.name.to_ident()
     }
 
@@ -176,7 +177,7 @@ impl From<&syn::Visibility> for Visibility {
 }
 
 impl FieldDef {
-    pub fn ident(&self) -> Option<syn::Ident> {
+    pub fn ident(&self) -> Option<Ident> {
         self.name.as_ref().map(ToIdent::to_ident)
     }
 }

@@ -1,7 +1,9 @@
 use convert_case::{Case, Casing};
 use itertools::Itertools;
 use proc_macro2::TokenStream;
+use quote::quote;
 use rustc_hash::{FxHashMap, FxHashSet};
+use syn::{parse_str, ItemUse};
 
 use crate::{
     codegen::LateCtx,
@@ -49,15 +51,14 @@ pub trait Derive {
                 .chain(it.strip_suffix("::mod").unwrap_or(it).split("::").skip(1))
                 .chain(["*"])
                 .join("::");
-            let use_module: syn::ItemUse =
-                syn::parse_str(format!("use {local_path};").as_str()).unwrap();
-            quote::quote! {
+            let use_module: ItemUse = parse_str(format!("use {local_path};").as_str()).unwrap();
+            quote! {
                 ///@@line_break
                 #use_module
             }
         });
 
-        quote::quote! {
+        quote! {
             #prelude
 
             #(#use_modules)*
@@ -103,7 +104,7 @@ pub trait Derive {
                     tokens: Self::template(
                         modules,
                         streams.into_iter().fold(TokenStream::new(), |mut acc, it| {
-                            acc.extend(quote::quote! {
+                            acc.extend(quote! {
                                 ///@@line_break
                             });
                             acc.extend(it);

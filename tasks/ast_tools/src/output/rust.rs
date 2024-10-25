@@ -28,7 +28,7 @@ fn generate_header(generator_path: &str) -> TokenStream {
 
     // TODO: Add generation date, AST source hash, etc here.
     let edit_comment = format!("@ To edit this generated file you have to edit `{generator_path}`");
-    quote::quote! {
+    quote! {
         //!@ Auto-generated code, DO NOT EDIT DIRECTLY!
         #![doc = #edit_comment]
         //!@@line_break

@@ -3,9 +3,13 @@ use std::fmt;
 use quote::ToTokens;
 use rustc_hash::FxHashSet;
 use serde::Serialize;
+use syn::{
+    punctuated::Punctuated, Attribute, Expr, ExprLit, Field, Ident, Lit, Meta, MetaNameValue,
+    Token, Type, Variant,
+};
 
 use crate::{
-    codegen,
+    codegen::EarlyCtx,
     layout::KnownLayout,
     markers::{
         get_derive_attributes, get_estree_attribute, get_scope_attribute, get_scope_markers,
@@ -121,18 +125,18 @@ impl<'a> IntoIterator for &'a Schema {
     }
 }
 
-fn parse_struct_outer_markers(attrs: &Vec<syn::Attribute>) -> Result<StructOuterMarkers> {
+fn parse_struct_outer_markers(attrs: &Vec<Attribute>) -> Result<StructOuterMarkers> {
     Ok(StructOuterMarkers {
         scope: get_scope_attribute(attrs).transpose()?,
         estree: get_estree_attribute(attrs).transpose()?,
     })
 }
 
-fn parse_enum_outer_markers(attrs: &Vec<syn::Attribute>) -> Result<EnumOuterMarkers> {
+fn parse_enum_outer_markers(attrs: &Vec<Attribute>) -> Result<EnumOuterMarkers> {
     Ok(EnumOuterMarkers { estree: get_estree_attribute(attrs).transpose()?.unwrap_or_default() })
 }
 
-fn parse_inner_markers(attrs: &Vec<syn::Attribute>) -> Result<InnerMarkers> {
+fn parse_inner_markers(attrs: &Vec<Attribute>) -> Result<InnerMarkers> {
     Ok(InnerMarkers {
         span: attrs.iter().any(|a| a.path().is_ident("span")),
         visit: get_visit_markers(attrs)?,
@@ -142,7 +146,7 @@ fn parse_inner_markers(attrs: &Vec<syn::Attribute>) -> Result<InnerMarkers> {
 }
 
 // lower `AstType` to `TypeDef`.
-pub fn lower_ast_types(ctx: &codegen::EarlyCtx) -> Schema {
+pub fn lower_ast_types(ctx: &EarlyCtx) -> Schema {
     let defs = ctx
         .mods()
         .borrow()
@@ -153,7 +157,7 @@ pub fn lower_ast_types(ctx: &codegen::EarlyCtx) -> Schema {
     Schema { defs }
 }
 
-fn lower_ast_type(ty: &rust::AstType, ctx: &codegen::EarlyCtx) -> TypeDef {
+fn lower_ast_type(ty: &rust::AstType, ctx: &EarlyCtx) -> TypeDef {
     match ty {
         rust::AstType::Enum(it) => TypeDef::Enum(lower_ast_enum(it, ctx)),
         rust::AstType::Struct(it) => TypeDef::Struct(lower_ast_struct(it, ctx)),
@@ -161,7 +165,7 @@ fn lower_ast_type(ty: &rust::AstType, ctx: &codegen::EarlyCtx) -> TypeDef {
     }
 }
 
-fn lower_ast_enum(it @ rust::Enum { item, meta }: &rust::Enum, ctx: &codegen::EarlyCtx) -> EnumDef {
+fn lower_ast_enum(it @ rust::Enum { item, meta }: &rust::Enum, ctx: &EarlyCtx) -> EnumDef {
     let (size_64, align_64, offsets_64) = meta
         .layout_64
         .clone()
@@ -199,10 +203,7 @@ fn lower_ast_enum(it @ rust::Enum { item, meta }: &rust::Enum, ctx: &codegen::Ea
     }
 }
 
-fn lower_ast_struct(
-    it @ rust::Struct { item, meta }: &rust::Struct,
-    ctx: &codegen::EarlyCtx,
-) -> StructDef {
+fn lower_ast_struct(it @ rust::Struct { item, meta }: &rust::Struct, ctx: &EarlyCtx) -> StructDef {
     let (size_64, align_64, offsets_64) = meta
         .layout_64
         .clone()
@@ -234,7 +235,7 @@ fn lower_ast_struct(
     }
 }
 
-fn lower_variant<F>(variant: &syn::Variant, enum_dbg_name: F, ctx: &codegen::EarlyCtx) -> VariantDef
+fn lower_variant<F>(variant: &Variant, enum_dbg_name: F, ctx: &EarlyCtx) -> VariantDef
 where
     F: Fn() -> String,
 {
@@ -243,7 +244,7 @@ where
         discriminant: variant.discriminant.as_ref().map_or_else(
             || panic!("expected explicit enum discriminants on {}", enum_dbg_name()),
             |(_, disc)| match disc {
-                syn::Expr::Lit(syn::ExprLit { lit: syn::Lit::Int(lit), .. }) => {
+                Expr::Lit(ExprLit { lit: Lit::Int(lit), .. }) => {
                     lit.base10_parse().expect("invalid base10 enum discriminant")
                 }
                 _ => panic!("invalid enum discriminant {:?} on {}", disc, enum_dbg_name()),
@@ -254,7 +255,7 @@ where
     }
 }
 
-fn lower_inherit(inherit: &rust::Inherit, ctx: &codegen::EarlyCtx) -> InheritDef {
+fn lower_inherit(inherit: &rust::Inherit, ctx: &EarlyCtx) -> InheritDef {
     match inherit {
         rust::Inherit::Linked { super_, variants } => InheritDef {
             super_: create_type_ref(super_, ctx),
@@ -269,7 +270,7 @@ fn lower_inherit(inherit: &rust::Inherit, ctx: &codegen::EarlyCtx) -> InheritDef
     }
 }
 
-fn lower_field(field: &syn::Field, ctx: &codegen::EarlyCtx) -> FieldDef {
+fn lower_field(field: &Field, ctx: &EarlyCtx) -> FieldDef {
     FieldDef {
         name: field
             .ident
@@ -282,7 +283,7 @@ fn lower_field(field: &syn::Field, ctx: &codegen::EarlyCtx) -> FieldDef {
     }
 }
 
-fn create_type_ref(ty: &syn::Type, ctx: &codegen::EarlyCtx) -> TypeRef {
+fn create_type_ref(ty: &Type, ctx: &EarlyCtx) -> TypeRef {
     let ident = ty.get_ident();
     let id = ident.as_ident().and_then(|id| ctx.type_id(&id.to_string()));
     let transparent_id = ctx.type_id(&ident.inner_ident().to_string());
@@ -296,21 +297,16 @@ fn create_type_ref(ty: &syn::Type, ctx: &codegen::EarlyCtx) -> TypeRef {
     }
 }
 
-fn get_docs(attrs: &[syn::Attribute]) -> Vec<String> {
+fn get_docs(attrs: &[Attribute]) -> Vec<String> {
     attrs
         .iter()
         .filter_map(|attr| {
-            if let syn::Meta::NameValue(syn::MetaNameValue {
-                path,
-                value: syn::Expr::Lit(lit),
-                ..
-            }) = &attr.meta
-            {
+            if let Meta::NameValue(MetaNameValue { path, value: Expr::Lit(lit), .. }) = &attr.meta {
                 if !path.is_ident("doc") {
                     return None;
                 }
                 match &lit.lit {
-                    syn::Lit::Str(lit) => Some(lit.value().trim().to_string()),
+                    Lit::Str(lit) => Some(lit.value().trim().to_string()),
                     _ => None,
                 }
             } else {
@@ -320,15 +316,15 @@ fn get_docs(attrs: &[syn::Attribute]) -> Vec<String> {
         .collect()
 }
 
-fn parse_generate_derive(attrs: &[syn::Attribute]) -> Vec<String> {
+fn parse_generate_derive(attrs: &[Attribute]) -> Vec<String> {
     let mut derives = FxHashSet::default();
     for attr in attrs {
         if !attr.path().is_ident("generate_derive") {
             continue;
         }
 
-        let args: syn::punctuated::Punctuated<syn::Ident, syn::Token![,]> =
-            attr.parse_args_with(syn::punctuated::Punctuated::parse_terminated).unwrap();
+        let args: Punctuated<Ident, Token![,]> =
+            attr.parse_args_with(Punctuated::parse_terminated).unwrap();
 
         for arg in args {
             derives.insert(arg.to_string());
