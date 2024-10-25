@@ -6,7 +6,6 @@ use quote::ToTokens;
 use rustc_hash::FxHashMap;
 use syn::Type;
 
-use super::{define_pass, Pass};
 use crate::{
     codegen::EarlyCtx,
     layout::{KnownLayout, Layout},
@@ -15,15 +14,17 @@ use crate::{
     Result,
 };
 
+use super::{define_pass, Pass};
+
 /// We use compiler to infer 64bit type layouts.
 #[cfg(not(target_pointer_width = "64"))]
 compile_error!("This module only supports 64bit architectures.");
 
 type WellKnown = FxHashMap<&'static str, PlatformLayout>;
 
-define_pass! {
-    pub struct CalcLayout;
-}
+pub struct CalcLayout;
+
+define_pass!(CalcLayout);
 
 impl Pass for CalcLayout {
     fn each(&mut self, ty: &mut AstType, ctx: &EarlyCtx) -> crate::Result<bool> {

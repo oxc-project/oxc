@@ -2,12 +2,13 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::Ident;
 
-use super::{define_derive, Derive};
 use crate::{
     codegen::LateCtx,
     schema::{EnumDef, GetGenerics, StructDef, ToType, TypeDef},
     util::{ToIdent, TypeWrapper},
 };
+
+use super::{define_derive, Derive};
 
 pub struct DeriveGetSpan;
 

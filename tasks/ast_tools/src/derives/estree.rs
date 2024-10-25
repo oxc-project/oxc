@@ -2,7 +2,6 @@ use convert_case::{Case, Casing};
 use proc_macro2::TokenStream;
 use quote::quote;
 
-use super::{define_derive, Derive};
 use crate::{
     codegen::LateCtx,
     markers::ESTreeStructAttribute,
@@ -11,6 +10,8 @@ use crate::{
         EnumDef, GetGenerics, GetIdent, StructDef, TypeDef,
     },
 };
+
+use super::{define_derive, Derive};
 
 pub struct DeriveESTree;
 

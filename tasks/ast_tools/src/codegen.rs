@@ -1,18 +1,16 @@
 use std::{cell::RefCell, path::PathBuf};
 
 use itertools::Itertools;
-use proc_macro2::TokenStream;
 use rustc_hash::{FxBuildHasher, FxHashMap};
 
 use crate::{
-    derives::{Derive, DeriveOutput},
-    fmt::pretty_print,
-    generators::{Generator, GeneratorOutput},
+    derives::Derive,
+    generators::Generator,
     log, logln,
+    output::{Output, RawOutput},
     passes::Pass,
     rust_ast::{self, AstRef},
     schema::{lower_ast_types, Schema, TypeDef},
-    util::write_all_to,
     Result, TypeId,
 };
 
@@ -20,56 +18,20 @@ use crate::{
 pub struct AstCodegen {
     files: Vec<PathBuf>,
     passes: Vec<Box<dyn Runner<Output = (), Context = EarlyCtx>>>,
-    generators: Vec<Box<dyn Runner<Output = GeneratorOutput, Context = LateCtx>>>,
-    derives: Vec<Box<dyn Runner<Output = DeriveOutput, Context = LateCtx>>>,
+    generators: Vec<Box<dyn Runner<Output = Output, Context = LateCtx>>>,
+    derives: Vec<Box<dyn Runner<Output = Vec<Output>, Context = LateCtx>>>,
 }
 
 pub struct AstCodegenResult {
     pub schema: Schema,
-    pub outputs: Vec<SideEffect>,
-}
-
-pub struct SideEffect {
-    pub path: PathBuf,
-    pub content: Vec<u8>,
-}
-
-impl SideEffect {
-    /// Apply the side-effect
-    pub fn apply(self) -> std::io::Result<()> {
-        let Self { path, content } = self;
-        let path = path.into_os_string();
-        let path = path.to_str().unwrap();
-        write_all_to(&content, path)?;
-        Ok(())
-    }
-
-    pub fn path(&self) -> String {
-        let path = self.path.to_string_lossy();
-        path.replace('\\', "/")
-    }
-}
-
-impl From<(PathBuf, TokenStream)> for SideEffect {
-    fn from((path, stream): (PathBuf, TokenStream)) -> Self {
-        let content = pretty_print(&stream);
-        Self { path, content: content.into() }
-    }
-}
-
-impl From<GeneratorOutput> for SideEffect {
-    fn from(output: GeneratorOutput) -> Self {
-        match output {
-            GeneratorOutput::Rust { path, tokens } => Self::from((path, tokens)),
-            GeneratorOutput::Javascript { path, code } => Self { path, content: code.into() },
-        }
-    }
+    pub outputs: Vec<RawOutput>,
 }
 
 pub trait Runner {
     type Context;
     type Output;
     fn name(&self) -> &'static str;
+    fn file_path(&self) -> &'static str;
     fn run(&mut self, ctx: &Self::Context) -> Result<Self::Output>;
 }
 
@@ -162,7 +124,7 @@ impl AstCodegen {
     #[must_use]
     pub fn generate<G>(mut self, generator: G) -> Self
     where
-        G: Generator + Runner<Output = GeneratorOutput, Context = LateCtx> + 'static,
+        G: Generator + Runner<Output = Output, Context = LateCtx> + 'static,
     {
         self.generators.push(Box::new(generator));
         self
@@ -171,7 +133,7 @@ impl AstCodegen {
     #[must_use]
     pub fn derive<D>(mut self, derive: D) -> Self
     where
-        D: Derive + Runner<Output = DeriveOutput, Context = LateCtx> + 'static,
+        D: Derive + Runner<Output = Vec<Output>, Context = LateCtx> + 'static,
     {
         self.derives.push(Box::new(derive));
         self
@@ -206,63 +168,39 @@ impl AstCodegen {
                 let name = runner.name();
                 log!("Derive {name}... ");
                 let result = runner.run(&ctx);
-                if result.is_ok() {
-                    logln!("Done!");
-                } else {
-                    logln!("Fail!");
+                match result {
+                    Ok(outputs) => {
+                        logln!("Done!");
+                        let generator_path = runner.file_path();
+                        Ok(outputs.into_iter().map(|output| output.output(generator_path)))
+                    }
+                    Err(err) => {
+                        logln!("FAILED");
+                        Err(err)
+                    }
                 }
-                result
             })
-            .map_ok(|output| output.0.into_iter().map(SideEffect::from))
             .flatten_ok();
 
-        let outputs = self
-            .generators
-            .into_iter()
-            .map(|mut runner| {
-                let name = runner.name();
-                log!("Generate {name}... ");
-                let result = runner.run(&ctx);
-                if result.is_ok() {
+        let outputs = self.generators.into_iter().map(|mut runner| {
+            let name = runner.name();
+            log!("Generate {name}... ");
+            let result = runner.run(&ctx);
+            match result {
+                Ok(output) => {
                     logln!("Done!");
-                } else {
-                    logln!("Fail!");
+                    let generator_path = runner.file_path();
+                    Ok(output.output(generator_path))
                 }
-                result
-            })
-            .map_ok(SideEffect::from);
+                Err(err) => {
+                    logln!("FAILED");
+                    Err(err)
+                }
+            }
+        });
 
         let outputs = derives.chain(outputs).collect::<Result<Vec<_>>>()?;
 
         Ok(AstCodegenResult { outputs, schema: ctx.schema })
     }
-}
-
-/// Implemented by `define_derive!` and `define_generator!` macros
-pub trait CodegenBase {
-    fn file_path() -> &'static str;
-}
-
-/// Creates a generated file warning + required information for a generated file.
-pub fn generate_rust_header(file_path: &str) -> TokenStream {
-    let file_path = file_path.replace('\\', "/");
-
-    // TODO: Add generation date, AST source hash, etc here.
-    let edit_comment = format!("@ To edit this generated file you have to edit `{file_path}`");
-    quote::quote! {
-        //!@ Auto-generated code, DO NOT EDIT DIRECTLY!
-        #![doc = #edit_comment]
-        //!@@line_break
-    }
-}
-
-/// Creates a generated file warning + required information for a generated file.
-pub fn generate_javascript_header(file_path: &str) -> String {
-    let file_path = file_path.replace('\\', "/");
-
-    // TODO: Add generation date, AST source hash, etc here.
-    format!(
-        "// Auto-generated code, DO NOT EDIT DIRECTLY!\n\
-        // To edit this generated file you have to edit `{file_path}`\n\n"
-    )
 }

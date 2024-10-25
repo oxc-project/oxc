@@ -1,12 +1,13 @@
-use std::path::PathBuf;
-
 use convert_case::{Case, Casing};
 use itertools::Itertools;
 use proc_macro2::TokenStream;
+use quote::quote;
 use rustc_hash::{FxHashMap, FxHashSet};
+use syn::{parse_str, ItemUse};
 
 use crate::{
-    codegen::{generate_rust_header, CodegenBase, LateCtx},
+    codegen::LateCtx,
+    output::{output_path, Output},
     schema::TypeDef,
     Result,
 };
@@ -23,10 +24,7 @@ pub use content_hash::DeriveContentHash;
 pub use estree::DeriveESTree;
 pub use get_span::{DeriveGetSpan, DeriveGetSpanMut};
 
-#[derive(Debug, Clone)]
-pub struct DeriveOutput(pub Vec<(PathBuf, TokenStream)>);
-
-pub trait Derive: CodegenBase {
+pub trait Derive {
     // Methods defined by implementer
 
     fn trait_name() -> &'static str;
@@ -44,7 +42,6 @@ pub trait Derive: CodegenBase {
     // Standard methods
 
     fn template(module_paths: Vec<&str>, impls: TokenStream) -> TokenStream {
-        let header = generate_rust_header(Self::file_path());
         let prelude = Self::prelude();
 
         // from `x::y::z` to `crate::y::z::*`
@@ -54,17 +51,14 @@ pub trait Derive: CodegenBase {
                 .chain(it.strip_suffix("::mod").unwrap_or(it).split("::").skip(1))
                 .chain(["*"])
                 .join("::");
-            let use_module: syn::ItemUse =
-                syn::parse_str(format!("use {local_path};").as_str()).unwrap();
-            quote::quote! {
+            let use_module: ItemUse = parse_str(format!("use {local_path};").as_str()).unwrap();
+            quote! {
                 ///@@line_break
                 #use_module
             }
         });
 
-        quote::quote! {
-            #header
-
+        quote! {
             #prelude
 
             #(#use_modules)*
@@ -74,7 +68,7 @@ pub trait Derive: CodegenBase {
         }
     }
 
-    fn output(&mut self, ctx: &LateCtx) -> Result<DeriveOutput> {
+    fn output(&mut self, ctx: &LateCtx) -> Result<Vec<Output>> {
         let trait_name = Self::trait_name();
         let filename = format!("derive_{}.rs", Self::snake_name());
         let output = ctx
@@ -102,25 +96,27 @@ pub trait Derive: CodegenBase {
                 let mut modules = Vec::from_iter(modules);
                 modules.sort_unstable();
 
-                acc.push((
-                    crate::output(
+                let output = Output::Rust {
+                    path: output_path(
                         format!("crates/{}", path.split("::").next().unwrap()).as_str(),
                         &filename,
                     ),
-                    Self::template(
+                    tokens: Self::template(
                         modules,
                         streams.into_iter().fold(TokenStream::new(), |mut acc, it| {
-                            acc.extend(quote::quote! {
+                            acc.extend(quote! {
                                 ///@@line_break
                             });
                             acc.extend(it);
                             acc
                         }),
                     ),
-                ));
+                };
+
+                acc.push(output);
                 acc
             });
-        Ok(DeriveOutput(output))
+        Ok(output)
     }
 }
 
@@ -128,26 +124,24 @@ macro_rules! define_derive {
     ($ident:ident $($lifetime:lifetime)?) => {
         const _: () = {
             use $crate::{
-                codegen::{CodegenBase, LateCtx, Runner},
-                derives::DeriveOutput,
+                codegen::{LateCtx, Runner},
+                output::Output,
                 Result,
             };
 
-            impl $($lifetime)? CodegenBase for $ident $($lifetime)? {
-                fn file_path() -> &'static str {
-                    file!()
-                }
-            }
-
             impl $($lifetime)? Runner for $ident $($lifetime)? {
                 type Context = LateCtx;
-                type Output = DeriveOutput;
+                type Output = Vec<Output>;
 
                 fn name(&self) -> &'static str {
                     stringify!($ident)
                 }
 
-                fn run(&mut self, ctx: &LateCtx) -> Result<DeriveOutput> {
+                fn file_path(&self) -> &'static str {
+                    file!()
+                }
+
+                fn run(&mut self, ctx: &LateCtx) -> Result<Vec<Output>> {
                     self.output(ctx)
                 }
             }

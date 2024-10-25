@@ -1,12 +1,4 @@
-use std::path::PathBuf;
-
-use proc_macro2::TokenStream;
-use quote::quote;
-
-use crate::{
-    codegen::{generate_javascript_header, generate_rust_header, CodegenBase, LateCtx},
-    Result,
-};
+use crate::{codegen::LateCtx, output::Output, Result};
 
 mod assert_layouts;
 mod ast_builder;
@@ -20,37 +12,15 @@ pub use ast_kind::AstKindGenerator;
 pub use typescript::TypescriptGenerator;
 pub use visit::{VisitGenerator, VisitMutGenerator};
 
-#[derive(Debug, Clone)]
-pub enum GeneratorOutput {
-    Rust { path: PathBuf, tokens: TokenStream },
-    Javascript { path: PathBuf, code: String },
-}
-
-pub trait Generator: CodegenBase {
+pub trait Generator {
     // Methods defined by implementer
 
-    fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput;
+    fn generate(&mut self, ctx: &LateCtx) -> Output;
 
     // Standard methods
 
-    fn output(&mut self, ctx: &LateCtx) -> Result<GeneratorOutput> {
-        let mut output = self.generate(ctx);
-
-        match &mut output {
-            GeneratorOutput::Rust { tokens, .. } => {
-                let header = generate_rust_header(Self::file_path());
-                *tokens = quote! {
-                    #header
-                    #tokens
-                };
-            }
-            GeneratorOutput::Javascript { code: content, .. } => {
-                let header = generate_javascript_header(Self::file_path());
-                *content = format!("{header}{content}");
-            }
-        }
-
-        Ok(output)
+    fn output(&mut self, ctx: &LateCtx) -> Result<Output> {
+        Ok(self.generate(ctx))
     }
 }
 
@@ -58,26 +28,24 @@ macro_rules! define_generator {
     ($ident:ident $($lifetime:lifetime)?) => {
         const _: () = {
             use $crate::{
-                codegen::{CodegenBase, LateCtx, Runner},
-                generators::GeneratorOutput,
+                codegen::{LateCtx, Runner},
+                output::Output,
                 Result,
             };
 
-            impl $($lifetime)? CodegenBase for $ident $($lifetime)? {
-                fn file_path() -> &'static str {
-                    file!()
-                }
-            }
-
             impl $($lifetime)? Runner for $ident $($lifetime)? {
                 type Context = LateCtx;
-                type Output = GeneratorOutput;
+                type Output = Output;
 
                 fn name(&self) -> &'static str {
                     stringify!($ident)
                 }
 
-                fn run(&mut self, ctx: &LateCtx) -> Result<GeneratorOutput> {
+                fn file_path(&self) -> &'static str {
+                    file!()
+                }
+
+                fn run(&mut self, ctx: &LateCtx) -> Result<Output> {
                     self.output(ctx)
                 }
             }

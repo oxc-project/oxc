@@ -43,19 +43,30 @@ pub trait Pass {
 }
 
 macro_rules! define_pass {
-    ($vis:vis struct $ident:ident $($lifetime:lifetime)? $($rest:tt)*) => {
-        $vis struct $ident $($lifetime)? $($rest)*
-        impl $($lifetime)? $crate::codegen::Runner for $ident $($lifetime)? {
-            type Context = $crate::codegen::EarlyCtx;
-            type Output = ();
-            fn name(&self) -> &'static str {
-                stringify!($ident)
-            }
+    ($ident:ident $($lifetime:lifetime)?) => {
+        const _: () = {
+            use $crate::{
+                codegen::{EarlyCtx, Runner},
+                Result,
+            };
 
-            fn run(&mut self, ctx: &Self::Context) -> $crate::Result<Self::Output> {
-                self.call(ctx).map(|_| ())
+            impl $($lifetime)? Runner for $ident $($lifetime)? {
+                type Context = EarlyCtx;
+                type Output = ();
+
+                fn name(&self) -> &'static str {
+                    stringify!($ident)
+                }
+
+                fn file_path(&self) -> &'static str {
+                    file!()
+                }
+
+                fn run(&mut self, ctx: &Self::Context) -> Result<()> {
+                    self.call(ctx).map(|_| ())
+                }
             }
-        }
+        };
     };
 }
 
