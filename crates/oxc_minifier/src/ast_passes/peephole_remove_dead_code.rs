@@ -1,7 +1,6 @@
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, Visit};
 use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, IsLiteralValue};
-use oxc_ecmascript::side_effects::MayHaveSideEffects;
 use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
@@ -205,15 +204,11 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
     ) -> Option<Statement<'a>> {
         let test_boolean = for_stmt.test.as_ref().and_then(|test| ctx.get_boolean_value(test));
         match test_boolean {
-            Some(false) => {
-                // Remove the entire `for` statement.
-                // Check vars in statement
-                let mut keep_var = KeepVar::new(ctx.ast);
-                keep_var.visit_statement(&for_stmt.body);
-
-                let mut var_decl = keep_var.get_variable_declaration();
-
-                if let Some(ForStatementInit::VariableDeclaration(var_init)) = &mut for_stmt.init {
+            Some(false) => match &mut for_stmt.init {
+                Some(ForStatementInit::VariableDeclaration(var_init)) => {
+                    let mut keep_var = KeepVar::new(ctx.ast);
+                    keep_var.visit_statement(&for_stmt.body);
+                    let mut var_decl = keep_var.get_variable_declaration();
                     if var_init.kind.is_var() {
                         if let Some(var_decl) = &mut var_decl {
                             var_decl
@@ -223,14 +218,27 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
                             var_decl = Some(ctx.ast.move_variable_declaration(var_init));
                         }
                     }
+                    Some(var_decl.map_or_else(
+                        || ctx.ast.statement_empty(SPAN),
+                        |var_decl| {
+                            ctx.ast
+                                .statement_declaration(ctx.ast.declaration_from_variable(var_decl))
+                        },
+                    ))
                 }
-
-                var_decl
-                    .map(|var_decl| {
-                        ctx.ast.statement_declaration(ctx.ast.declaration_from_variable(var_decl))
-                    })
-                    .or_else(|| Some(ctx.ast.statement_empty(SPAN)))
-            }
+                None => {
+                    let mut keep_var = KeepVar::new(ctx.ast);
+                    keep_var.visit_statement(&for_stmt.body);
+                    Some(keep_var.get_variable_declaration().map_or_else(
+                        || ctx.ast.statement_empty(SPAN),
+                        |var_decl| {
+                            ctx.ast
+                                .statement_declaration(ctx.ast.declaration_from_variable(var_decl))
+                        },
+                    ))
+                }
+                _ => None,
+            },
             Some(true) => {
                 // Remove the test expression.
                 for_stmt.test = None;
@@ -288,9 +296,9 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
                     Self::try_fold_object_expression(object_expr, ctx)
                 }
                 Expression::TemplateLiteral(template_lit) => {
-                    template_lit.expressions.retain(
-                        oxc_ecmascript::side_effects::MayHaveSideEffects::may_have_side_effects,
-                    );
+                    if !template_lit.expressions.is_empty() {
+                        return None;
+                    }
 
                     let mut expressions = ctx.ast.move_vec(&mut template_lit.expressions);
 
@@ -390,93 +398,10 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
 
     // `{a: 1, b: 2, c: foo()}` -> `foo()`
     fn try_fold_object_expression(
-        object_expr: &mut ObjectExpression<'a>,
-        ctx: Ctx<'a, 'b>,
+        _object_expr: &mut ObjectExpression<'a>,
+        _ctx: Ctx<'a, 'b>,
     ) -> Option<Statement<'a>> {
-        let spread_count = object_expr
-            .properties
-            .iter()
-            .filter(|prop| matches!(prop, ObjectPropertyKind::SpreadProperty(_)))
-            .count();
-
-        if spread_count == object_expr.properties.len() {
-            return None;
-        }
-
-        // if there is a spread, we can't remove the object expression
-        if spread_count > 0 {
-            let original_property_count = object_expr.properties.len();
-
-            object_expr.properties.retain(|v| match v {
-                ObjectPropertyKind::ObjectProperty(object_property) => {
-                    object_property.key.may_have_side_effects()
-                        || object_property.value.may_have_side_effects()
-                        || object_property.init.as_ref().is_some_and(
-                            oxc_ecmascript::side_effects::MayHaveSideEffects::may_have_side_effects,
-                        )
-                }
-                ObjectPropertyKind::SpreadProperty(_) => true,
-            });
-
-            if original_property_count == object_expr.properties.len() {
-                return None;
-            }
-            return Some(ctx.ast.statement_expression(
-                object_expr.span,
-                ctx.ast.expression_from_object(ctx.ast.object_expression(
-                    object_expr.span,
-                    ctx.ast.move_vec(&mut object_expr.properties),
-                    None,
-                )),
-            ));
-        }
-
-        // we can replace the object with a sequence expression
-        let mut filtered_properties = ctx.ast.vec();
-
-        for prop in object_expr.properties.iter_mut() {
-            match prop {
-                ObjectPropertyKind::ObjectProperty(object_prop) => {
-                    let key = object_prop.key.as_expression_mut();
-                    if let Some(key) = key {
-                        if key.may_have_side_effects() {
-                            let key_expr = ctx.ast.move_expression(key);
-                            filtered_properties.push(key_expr);
-                        }
-                    }
-
-                    if object_prop.value.may_have_side_effects() {
-                        let mut expr = ctx.ast.move_expression(&mut object_prop.value);
-                        filtered_properties.push(ctx.ast.move_expression(&mut expr));
-                    }
-
-                    if object_prop.init.as_ref().is_some_and(
-                        oxc_ecmascript::side_effects::MayHaveSideEffects::may_have_side_effects,
-                    ) {
-                        let mut expr = object_prop.init.take().unwrap();
-                        filtered_properties.push(ctx.ast.move_expression(&mut expr));
-                    }
-                }
-                ObjectPropertyKind::SpreadProperty(_) => {
-                    unreachable!("spread property should have been filtered out");
-                }
-            }
-        }
-
-        if filtered_properties.len() == 0 {
-            return Some(ctx.ast.statement_empty(object_expr.span));
-        } else if filtered_properties.len() == 1 {
-            return Some(
-                ctx.ast.statement_expression(object_expr.span, filtered_properties.pop().unwrap()),
-            );
-        }
-
-        Some(ctx.ast.statement_expression(
-            object_expr.span,
-            ctx.ast.expression_from_sequence(
-                ctx.ast.sequence_expression(object_expr.span, filtered_properties),
-            ),
-        ))
+        None
     }
 
     /// Try folding conditional expression (?:) if the condition results of the condition is known.
@@ -484,7 +409,7 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
         expr: &mut ConditionalExpression<'a>,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
-        match ctx.eval_to_boolean(&expr.test) {
+        match ctx.get_boolean_value(&expr.test) {
             Some(true) => {
                 // Bail `let o = { f() { assert.ok(this !== o); } }; (true ? o.f : false)(); (true ? o.f : false)``;`
                 let parent = ctx.ancestry.parent();
@@ -537,7 +462,7 @@ mod test {
 
         fold("{'hi'}", "");
         fold("{x==3}", "x == 3");
-        fold("{`hello ${foo}`}", "");
+        fold("{`hello ${foo}`}", "`hello ${foo}`");
         fold("{ (function(){x++}) }", "");
         fold_same("function f(){return;}");
         fold("function f(){return 3;}", "function f(){return 3}");
@@ -592,6 +517,7 @@ mod test {
         fold("for (var se = [1, 2]; false;);", "var se = [1, 2];");
         fold("for (var se = [1, 2]; false;) { var a = 0; }", "var se = [1, 2], a;");
 
+        fold("for (foo = bar; false;) {}", "for (foo = bar; false;);");
         // fold("l1:for(;false;) {  }", "");
     }
 
@@ -607,6 +533,7 @@ mod test {
     }
 
     #[test]
+    #[ignore]
     fn test_object_literal() {
         fold("({})", "");
         fold("({a:1})", "");

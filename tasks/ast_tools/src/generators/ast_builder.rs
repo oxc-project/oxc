@@ -45,7 +45,6 @@ impl Generator for AstBuilderGenerator {
                     clippy::too_many_arguments,
                     clippy::fn_params_excessive_bools,
                 )]
-                #![warn(missing_docs)]
 
                 ///@@line_break
                 use std::cell::Cell;
@@ -55,7 +54,6 @@ impl Generator for AstBuilderGenerator {
                 use oxc_syntax::{scope::ScopeId, symbol::SymbolId, reference::ReferenceId};
 
                 ///@@line_break
-                #[allow(clippy::wildcard_imports)]
                 use crate::ast::*;
 
                 ///@@line_break

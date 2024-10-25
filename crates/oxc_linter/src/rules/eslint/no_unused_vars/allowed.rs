@@ -1,6 +1,5 @@
 //! This module checks if an unused variable is allowed. Note that this does not
 //! consider variables ignored by name pattern, but by where they are declared.
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind};
 use oxc_semantic::{AstNode, NodeId, Semantic};
 use oxc_span::GetSpan;

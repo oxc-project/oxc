@@ -2,7 +2,6 @@ use std::borrow::Cow;
 
 use rustc_hash::FxHashMap;
 
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{BoundNames, PropName};

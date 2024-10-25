@@ -71,31 +71,29 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
 
         program.body.retain_mut(|stmt| {
             let need_retain = match stmt {
+                Statement::ExportNamedDeclaration(decl) if decl.declaration.is_some() => {
+                    decl.declaration.as_ref().is_some_and(|decl| !decl.is_typescript_syntax())
+                }
                 Statement::ExportNamedDeclaration(decl) => {
                     if decl.export_kind.is_type() {
                         false
+                    } else if decl.specifiers.is_empty() {
+                        // `export {}` or `export {} from 'mod'`
+                        // Keep the export declaration if there are no export specifiers
+                        true
                     } else {
                         decl.specifiers.retain(|specifier| {
                             !(specifier.export_kind.is_type()
                                 || self.type_identifier_names.contains(&specifier.exported.name())
-                                || {
-                                    if let ModuleExportName::IdentifierReference(ident) =
-                                        &specifier.local
-                                    {
-                                        ident.reference_id.get().is_some_and(|id| {
-                                            ctx.symbols().get_reference(id).is_type()
-                                        })
-                                    } else {
-                                        false
-                                    }
-                                })
+                                || matches!(
+                                    &specifier.local, ModuleExportName::IdentifierReference(ident)
+                                    if ident.reference_id.get().is_some_and(|reference_id| {
+                                        ctx.symbols().get_reference(reference_id).is_type()
+                                    })
+                                ))
                         });
-
+                        // Keep the export declaration if there are still specifiers after removing type exports
                         !decl.specifiers.is_empty()
-                            || decl
-                                .declaration
-                                .as_ref()
-                                .is_some_and(|decl| !decl.is_typescript_syntax())
                     }
                 }
                 Statement::ExportAllDeclaration(decl) => !decl.export_kind.is_type(),
@@ -403,10 +401,31 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
         );
     }
 
+    fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        // Add assignments after super calls
+        if self.assignments.is_empty() {
+            return;
+        }
+
+        let has_super_call = matches!(stmt, Statement::ExpressionStatement(stmt) if stmt.expression.is_super_call_expression());
+        if !has_super_call {
+            return;
+        }
+
+        // Add assignments after super calls
+        self.ctx.statement_injector.insert_many_after(
+            stmt,
+            self.assignments
+                .iter()
+                .map(|assignment| assignment.create_this_property_assignment(ctx)),
+        );
+        self.has_super_call = true;
+    }
+
     fn exit_statements(
         &mut self,
         stmts: &mut ArenaVec<'a, Statement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
+        _ctx: &mut TraverseCtx<'a>,
     ) {
         // Remove TS specific statements
         stmts.retain(|stmt| match stmt {
@@ -417,29 +436,6 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
             // Ignore ModuleDeclaration as it's handled in the program
             _ => true,
         });
-
-        // Add assignments after super calls
-        if !self.assignments.is_empty() {
-            let has_super_call = stmts.iter().any(|stmt| {
-                matches!(stmt, Statement::ExpressionStatement(stmt) if stmt.expression.is_super_call_expression())
-            });
-            if has_super_call {
-                let mut new_stmts = ctx.ast.vec();
-                for stmt in stmts.drain(..) {
-                    let is_super_call = matches!(stmt, Statement::ExpressionStatement(ref stmt) if stmt.expression.is_super_call_expression());
-                    new_stmts.push(stmt);
-                    if is_super_call {
-                        new_stmts.extend(
-                            self.assignments
-                                .iter()
-                                .map(|assignment| assignment.create_this_property_assignment(ctx)),
-                        );
-                    }
-                }
-                self.has_super_call = true;
-                *stmts = new_stmts;
-            }
-        }
     }
 
     /// Transform if statement's consequent and alternate to block statements if they are super calls

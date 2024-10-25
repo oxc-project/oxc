@@ -1,7 +1,6 @@
 //! This module contains logic for checking if any [`Reference`]s to a
 //! [`Symbol`] are considered a usage.
 
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind};
 use oxc_semantic::{AstNode, NodeId, Reference, ScopeId, SymbolFlags, SymbolId};
 use oxc_span::{GetSpan, Span};

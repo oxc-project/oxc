@@ -95,7 +95,6 @@ use indexmap::IndexMap;
 use rustc_hash::FxHasher;
 
 use oxc_allocator::{Allocator, CloneIn};
-#[allow(clippy::wildcard_imports, clippy::allow_attributes)]
 use oxc_ast::{ast::*, visit::walk, Visit};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{ScopeTree, SemanticBuilder, SymbolTable};

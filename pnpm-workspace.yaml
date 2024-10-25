@@ -3,6 +3,7 @@ packages:
   - 'wasm/**'
   - 'editors/**'
   - 'tasks/benchmark/codspeed'
+  - 'npm/**'
 
 catalog:
   "@napi-rs/cli": 3.0.0-alpha.61

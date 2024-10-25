@@ -46,8 +46,14 @@ impl<'a> PatternParser<'a> {
         // - Cons: 1st pass is completely useless if the pattern does not contain any capturing groups
         // We may re-consider this if we need more performance rather than simplicity.
         let checkpoint = self.reader.checkpoint();
-        let duplicated_named_capturing_groups =
-            self.state.initialize_with_parsing(&mut self.reader);
+
+        // [SS:EE] Pattern :: Disjunction
+        // It is a Syntax Error if Pattern contains two or more GroupSpecifiers for which the CapturingGroupName of GroupSpecifier is the same.
+        self.state.initialize_with_parsing(&mut self.reader).map_err(|offsets| {
+            diagnostics::duplicated_capturing_group_names(
+                offsets.iter().map(|&(start, end)| self.span_factory.create(start, end)).collect(),
+            )
+        })?;
         self.reader.rewind(checkpoint);
 
         // [SS:EE] Pattern :: Disjunction
@@ -57,16 +63,6 @@ impl<'a> PatternParser<'a> {
         // But I never seen such a gigantic pattern with 4,294,967,295 parens!
         if u32::MAX == self.state.num_of_capturing_groups {
             return Err(diagnostics::too_may_capturing_groups(self.span_factory.create(0, 0)));
-        }
-        // [SS:EE] Pattern :: Disjunction
-        // It is a Syntax Error if Pattern contains two or more GroupSpecifiers for which the CapturingGroupName of GroupSpecifier is the same.
-        if !duplicated_named_capturing_groups.is_empty() {
-            return Err(diagnostics::duplicated_capturing_group_names(
-                duplicated_named_capturing_groups
-                    .iter()
-                    .map(|&(start, end)| self.span_factory.create(start, end))
-                    .collect(),
-            ));
         }
 
         // Let's start parsing!

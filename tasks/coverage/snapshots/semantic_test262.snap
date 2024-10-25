@@ -1,8 +1,8 @@
 commit: 06454619
 
 semantic_test262 Summary:
-AST Parsed     : 43832/43832 (100.00%)
-Positive Passed: 43632/43832 (99.54%)
+AST Parsed     : 43851/43851 (100.00%)
+Positive Passed: 43651/43851 (99.54%)
 tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-block-scoping.js
 semantic error: Symbol scope ID mismatch for "f":
 after transform: SymbolId(3): ScopeId(4294967294)
@@ -1123,6 +1123,9 @@ tasks/coverage/test262/test/language/module-code/eval-rqstd-once.js
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["dflt1", "dflt2", "dflt3", "global", "ns1", "ns3"]
 rebuilt        : ScopeId(0): ["global"]
+Symbol flags mismatch for "global":
+after transform: SymbolId(5): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable | Export)
 
 tasks/coverage/test262/test/language/module-code/eval-rqstd-order.js
 semantic error: Bindings mismatch:
@@ -1133,6 +1136,9 @@ tasks/coverage/test262/test/language/module-code/eval-self-once.js
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["dflt1", "dflt2", "dflt3", "global", "ns", "ns1"]
 rebuilt        : ScopeId(0): ["global"]
+Symbol flags mismatch for "global":
+after transform: SymbolId(5): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable | Export)
 
 tasks/coverage/test262/test/language/module-code/import-attributes/allow-nlt-before-with.js
 semantic error: Bindings mismatch:
@@ -1198,6 +1204,9 @@ tasks/coverage/test262/test/language/module-code/instn-once.js
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["dflt1", "dflt2", "dflt3", "ns", "ns1", "x"]
 rebuilt        : ScopeId(0): ["x"]
+Symbol flags mismatch for "x":
+after transform: SymbolId(5): SymbolFlags(BlockScopedVariable)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Export)
 
 tasks/coverage/test262/test/language/module-code/instn-star-err-not-found.js
 semantic error: Bindings mismatch:

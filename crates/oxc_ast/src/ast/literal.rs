@@ -1,5 +1,4 @@
 //! Literals
-#![warn(missing_docs)]
 
 // NB: `#[span]`, `#[scope(...)]`,`#[visit(...)]` and `#[generate_derive(...)]` do NOT do anything to the code.
 // They are purely markers for codegen used in `tasks/ast_tools` and `crates/oxc_traverse/scripts`. See docs in those crates.
@@ -191,26 +190,3 @@ bitflags! {
         const V = 1 << 7;
     }
 }
-
-#[cfg(feature = "serialize")]
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = r#"
-export type RegExpFlags = {
-    /** Global flag */
-    G: 1,
-    /** Ignore case flag */
-    I: 2,
-    /** Multiline flag */
-    M: 4,
-    /** DotAll flag */
-    S: 8,
-    /** Unicode flag */
-    U: 16,
-    /** Sticky flag */
-    Y: 32,
-    /** Indices flag */
-    D: 64,
-    /** Unicode sets flag */
-    V: 128
-};
-"#;

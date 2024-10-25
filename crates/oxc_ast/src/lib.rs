@@ -1,7 +1,7 @@
-#![allow(clippy::wildcard_imports)]
 // TODO: I'm not sure if it is a but or intentional but clippy needs this allowed both on this
 // module and the generated one.
 #![allow(clippy::self_named_module_files)]
+#![warn(missing_docs)]
 
 //! # Oxc AST
 //!
@@ -36,6 +36,7 @@ pub mod precedence;
 mod trivia;
 
 mod generated {
+    #![allow(missing_docs)]
     #[cfg(debug_assertions)]
     pub mod assert_layouts;
     pub mod ast_builder;
@@ -52,6 +53,7 @@ mod generated {
 }
 
 pub mod visit {
+    #![allow(missing_docs)]
     pub use crate::generated::{visit::*, visit_mut::*};
 }
 

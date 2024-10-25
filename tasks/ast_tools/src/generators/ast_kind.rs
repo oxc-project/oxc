@@ -131,11 +131,12 @@ impl Generator for AstKindGenerator {
             path: output(crate::AST_CRATE, "ast_kind.rs"),
             tokens: quote! {
                 #header
+                #![allow(missing_docs)] ///@ FIXME (in ast_tools/src/generators/ast_kind.rs)
+                ///@@line_break
 
                 use oxc_span::{GetSpan, Span};
 
                 ///@@line_break
-                #[allow(clippy::wildcard_imports)]
                 use crate::ast::*;
 
                 ///@@line_break
