@@ -105,18 +105,18 @@ use crate::TransformCtx;
 use super::diagnostics;
 
 pub use super::{
-    jsx_self::ReactJsxSelf,
-    jsx_source::ReactJsxSource,
+    jsx_self::JsxSelf,
+    jsx_source::JsxSource,
     options::{JsxOptions, JsxRuntime},
 };
 
-pub struct ReactJsx<'a, 'ctx> {
+pub struct JsxImpl<'a, 'ctx> {
     options: JsxOptions,
 
     ctx: &'ctx TransformCtx<'a>,
 
-    pub(super) jsx_self: ReactJsxSelf<'a, 'ctx>,
-    pub(super) jsx_source: ReactJsxSource<'a, 'ctx>,
+    pub(super) jsx_self: JsxSelf<'a, 'ctx>,
+    pub(super) jsx_source: JsxSource<'a, 'ctx>,
 
     // States
     bindings: Bindings<'a, 'ctx>,
@@ -128,6 +128,7 @@ enum Bindings<'a, 'ctx> {
     AutomaticScript(AutomaticScriptBindings<'a, 'ctx>),
     AutomaticModule(AutomaticModuleBindings<'a, 'ctx>),
 }
+
 impl<'a, 'ctx> Bindings<'a, 'ctx> {
     #[inline]
     fn is_classic(&self) -> bool {
@@ -367,7 +368,7 @@ impl<'a> Pragma<'a> {
     }
 }
 
-impl<'a, 'ctx> ReactJsx<'a, 'ctx> {
+impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
     pub fn new(options: JsxOptions, ast: AstBuilder<'a>, ctx: &'ctx TransformCtx<'a>) -> Self {
         let bindings = match options.runtime {
             JsxRuntime::Classic => {
@@ -434,14 +435,14 @@ impl<'a, 'ctx> ReactJsx<'a, 'ctx> {
         Self {
             options,
             ctx,
-            jsx_self: ReactJsxSelf::new(ctx),
-            jsx_source: ReactJsxSource::new(ctx),
+            jsx_self: JsxSelf::new(ctx),
+            jsx_source: JsxSource::new(ctx),
             bindings,
         }
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for ReactJsx<'a, 'ctx> {
+impl<'a, 'ctx> Traverse<'a> for JsxImpl<'a, 'ctx> {
     fn exit_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.insert_filename_var_statement(ctx);
     }
@@ -457,7 +458,7 @@ impl<'a, 'ctx> Traverse<'a> for ReactJsx<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> ReactJsx<'a, 'ctx> {
+impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
     fn is_script(&self) -> bool {
         self.ctx.source_type.is_script()
     }
@@ -613,7 +614,7 @@ impl<'a, 'ctx> ReactJsx<'a, 'ctx> {
                 if let Some(span) = self_attr_span {
                     self.jsx_self.report_error(span);
                 } else {
-                    properties.push(ReactJsxSelf::get_object_property_kind_for_jsx_plugin(ctx));
+                    properties.push(JsxSelf::get_object_property_kind_for_jsx_plugin(ctx));
                 }
             }
 

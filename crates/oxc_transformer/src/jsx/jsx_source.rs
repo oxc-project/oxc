@@ -48,19 +48,19 @@ use super::utils::get_line_column;
 const SOURCE: &str = "__source";
 const FILE_NAME_VAR: &str = "jsxFileName";
 
-pub struct ReactJsxSource<'a, 'ctx> {
+pub struct JsxSource<'a, 'ctx> {
     filename_var: Option<BoundIdentifier<'a>>,
     source_rope: Option<Rope>,
     ctx: &'ctx TransformCtx<'a>,
 }
 
-impl<'a, 'ctx> ReactJsxSource<'a, 'ctx> {
+impl<'a, 'ctx> JsxSource<'a, 'ctx> {
     pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
         Self { filename_var: None, source_rope: None, ctx }
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for ReactJsxSource<'a, 'ctx> {
+impl<'a, 'ctx> Traverse<'a> for JsxSource<'a, 'ctx> {
     fn exit_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(stmt) = self.get_filename_var_statement(ctx) {
             self.ctx.top_level_statements.insert_statement(stmt);
@@ -76,7 +76,7 @@ impl<'a, 'ctx> Traverse<'a> for ReactJsxSource<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> ReactJsxSource<'a, 'ctx> {
+impl<'a, 'ctx> JsxSource<'a, 'ctx> {
     pub fn get_line_column(&mut self, offset: u32) -> (usize, usize) {
         let source_rope =
             self.source_rope.get_or_insert_with(|| Rope::from_str(self.ctx.source_text));

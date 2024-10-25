@@ -37,17 +37,17 @@ use crate::TransformCtx;
 
 const SELF: &str = "__self";
 
-pub struct ReactJsxSelf<'a, 'ctx> {
+pub struct JsxSelf<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,
 }
 
-impl<'a, 'ctx> ReactJsxSelf<'a, 'ctx> {
+impl<'a, 'ctx> JsxSelf<'a, 'ctx> {
     pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
         Self { ctx }
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for ReactJsxSelf<'a, 'ctx> {
+impl<'a, 'ctx> Traverse<'a> for JsxSelf<'a, 'ctx> {
     fn enter_jsx_opening_element(
         &mut self,
         elem: &mut JSXOpeningElement<'a>,
@@ -57,7 +57,7 @@ impl<'a, 'ctx> Traverse<'a> for ReactJsxSelf<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> ReactJsxSelf<'a, 'ctx> {
+impl<'a, 'ctx> JsxSelf<'a, 'ctx> {
     pub fn report_error(&self, span: Span) {
         let error = OxcDiagnostic::warn("Duplicate __self prop found.").with_label(span);
         self.ctx.error(error);
