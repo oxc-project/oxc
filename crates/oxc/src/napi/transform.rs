@@ -97,7 +97,7 @@ impl From<TransformOptions> for oxc_transformer::TransformOptions {
         Self {
             cwd: options.cwd.map(PathBuf::from).unwrap_or_default(),
             typescript: options.typescript.map(Into::into).unwrap_or_default(),
-            react: options.jsx.map(Into::into).unwrap_or_default(),
+            jsx: options.jsx.map(Into::into).unwrap_or_default(),
             es2015: options.es2015.map(Into::into).unwrap_or_default(),
             ..Self::default()
         }

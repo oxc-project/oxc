@@ -93,7 +93,7 @@ impl<'a> Transformer<'a> {
 
         let mut transformer = TransformerImpl {
             x0_typescript: TypeScript::new(&self.options.typescript, &self.ctx),
-            x1_jsx: Jsx::new(self.options.react, ast_builder, &self.ctx),
+            x1_jsx: Jsx::new(self.options.jsx, ast_builder, &self.ctx),
             x2_es2022: ES2022::new(self.options.es2022),
             x2_es2021: ES2021::new(self.options.es2021, &self.ctx),
             x2_es2020: ES2020::new(self.options.es2020, &self.ctx),

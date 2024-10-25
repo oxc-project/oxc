@@ -38,14 +38,14 @@ fn update_options_with_comment(
         "" => {
             // Don't set React option unless React transform is enabled
             // otherwise can cause error in `ReactJsx::new`
-            if options.react.jsx_plugin || options.react.development {
-                options.react.pragma = Some(remainder.to_string());
+            if options.jsx.jsx_plugin || options.jsx.development {
+                options.jsx.pragma = Some(remainder.to_string());
             }
             options.typescript.jsx_pragma = Cow::from(remainder.to_string());
         }
         // @jsxRuntime
         "Runtime" => {
-            options.react.runtime = match remainder {
+            options.jsx.runtime = match remainder {
                 "classic" => JsxRuntime::Classic,
                 "automatic" => JsxRuntime::Automatic,
                 _ => return,
@@ -53,14 +53,14 @@ fn update_options_with_comment(
         }
         // @jsxImportSource
         "ImportSource" => {
-            options.react.import_source = Some(remainder.to_string());
+            options.jsx.import_source = Some(remainder.to_string());
         }
         // @jsxFrag
         "Frag" => {
             // Don't set React option unless React transform is enabled
             // otherwise can cause error in `ReactJsx::new`
-            if options.react.jsx_plugin || options.react.development {
-                options.react.pragma_frag = Some(remainder.to_string());
+            if options.jsx.jsx_plugin || options.jsx.development {
+                options.jsx.pragma_frag = Some(remainder.to_string());
             }
             options.typescript.jsx_pragma_frag = Cow::from(remainder.to_string());
         }

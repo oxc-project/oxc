@@ -41,8 +41,10 @@ pub struct TransformOptions {
     /// [preset-typescript](https://babeljs.io/docs/babel-preset-typescript)
     pub typescript: TypeScriptOptions,
 
-    /// [preset-react](https://babeljs.io/docs/babel-preset-react)
-    pub react: JsxOptions,
+    /// Jsx Transform
+    ///
+    /// See [preset-react](https://babeljs.io/docs/babel-preset-react)
+    pub jsx: JsxOptions,
 
     pub regexp: RegExpOptions,
 
@@ -72,7 +74,7 @@ impl TransformOptions {
             cwd: PathBuf::new(),
             assumptions: CompilerAssumptions::default(),
             typescript: TypeScriptOptions::default(),
-            react: JsxOptions {
+            jsx: JsxOptions {
                 development: true,
                 refresh: Some(ReactRefreshOptions::default()),
                 ..JsxOptions::default()
@@ -175,7 +177,7 @@ impl TransformOptions {
         };
 
         let preset_name = "react";
-        transformer_options.react = if let Some(value) = get_preset_options(preset_name, options) {
+        transformer_options.jsx = if let Some(value) = get_preset_options(preset_name, options) {
             match from_value::<JsxOptions>(value) {
                 Ok(res) => res,
                 Err(err) => {
