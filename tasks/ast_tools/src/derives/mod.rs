@@ -4,8 +4,8 @@ use proc_macro2::TokenStream;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
-    codegen::{CodegenBase, LateCtx},
-    output::{output_path, Output, RawOutput},
+    codegen::LateCtx,
+    output::{output_path, Output},
     schema::TypeDef,
     Result,
 };
@@ -22,7 +22,7 @@ pub use content_hash::DeriveContentHash;
 pub use estree::DeriveESTree;
 pub use get_span::{DeriveGetSpan, DeriveGetSpanMut};
 
-pub trait Derive: CodegenBase {
+pub trait Derive {
     // Methods defined by implementer
 
     fn trait_name() -> &'static str;
@@ -67,7 +67,7 @@ pub trait Derive: CodegenBase {
         }
     }
 
-    fn output(&mut self, ctx: &LateCtx) -> Result<Vec<RawOutput>> {
+    fn output(&mut self, ctx: &LateCtx) -> Result<Vec<Output>> {
         let trait_name = Self::trait_name();
         let filename = format!("derive_{}.rs", Self::snake_name());
         let output = ctx
@@ -112,7 +112,7 @@ pub trait Derive: CodegenBase {
                     ),
                 };
 
-                acc.push(output.output(Self::file_path()));
+                acc.push(output);
                 acc
             });
         Ok(output)
@@ -123,26 +123,24 @@ macro_rules! define_derive {
     ($ident:ident $($lifetime:lifetime)?) => {
         const _: () = {
             use $crate::{
-                codegen::{CodegenBase, LateCtx, Runner},
-                output::RawOutput,
+                codegen::{LateCtx, Runner},
+                output::Output,
                 Result,
             };
 
-            impl $($lifetime)? CodegenBase for $ident $($lifetime)? {
-                fn file_path() -> &'static str {
-                    file!()
-                }
-            }
-
             impl $($lifetime)? Runner for $ident $($lifetime)? {
                 type Context = LateCtx;
-                type Output = Vec<RawOutput>;
+                type Output = Vec<Output>;
 
                 fn name(&self) -> &'static str {
                     stringify!($ident)
                 }
 
-                fn run(&mut self, ctx: &LateCtx) -> Result<Vec<RawOutput>> {
+                fn file_path(&self) -> &'static str {
+                    file!()
+                }
+
+                fn run(&mut self, ctx: &LateCtx) -> Result<Vec<Output>> {
                     self.output(ctx)
                 }
             }

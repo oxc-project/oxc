@@ -7,7 +7,7 @@ use crate::{
     derives::Derive,
     generators::Generator,
     log, logln,
-    output::RawOutput,
+    output::{Output, RawOutput},
     passes::Pass,
     rust_ast::{self, AstRef},
     schema::{lower_ast_types, Schema, TypeDef},
@@ -18,8 +18,8 @@ use crate::{
 pub struct AstCodegen {
     files: Vec<PathBuf>,
     passes: Vec<Box<dyn Runner<Output = (), Context = EarlyCtx>>>,
-    generators: Vec<Box<dyn Runner<Output = RawOutput, Context = LateCtx>>>,
-    derives: Vec<Box<dyn Runner<Output = Vec<RawOutput>, Context = LateCtx>>>,
+    generators: Vec<Box<dyn Runner<Output = Output, Context = LateCtx>>>,
+    derives: Vec<Box<dyn Runner<Output = Vec<Output>, Context = LateCtx>>>,
 }
 
 pub struct AstCodegenResult {
@@ -31,6 +31,7 @@ pub trait Runner {
     type Context;
     type Output;
     fn name(&self) -> &'static str;
+    fn file_path(&self) -> &'static str;
     fn run(&mut self, ctx: &Self::Context) -> Result<Self::Output>;
 }
 
@@ -123,7 +124,7 @@ impl AstCodegen {
     #[must_use]
     pub fn generate<G>(mut self, generator: G) -> Self
     where
-        G: Generator + Runner<Output = RawOutput, Context = LateCtx> + 'static,
+        G: Generator + Runner<Output = Output, Context = LateCtx> + 'static,
     {
         self.generators.push(Box::new(generator));
         self
@@ -132,7 +133,7 @@ impl AstCodegen {
     #[must_use]
     pub fn derive<D>(mut self, derive: D) -> Self
     where
-        D: Derive + Runner<Output = Vec<RawOutput>, Context = LateCtx> + 'static,
+        D: Derive + Runner<Output = Vec<Output>, Context = LateCtx> + 'static,
     {
         self.derives.push(Box::new(derive));
         self
@@ -167,12 +168,17 @@ impl AstCodegen {
                 let name = runner.name();
                 log!("Derive {name}... ");
                 let result = runner.run(&ctx);
-                if result.is_ok() {
-                    logln!("Done!");
-                } else {
-                    logln!("Fail!");
+                match result {
+                    Ok(outputs) => {
+                        logln!("Done!");
+                        let generator_path = runner.file_path();
+                        Ok(outputs.into_iter().map(|output| output.output(generator_path)))
+                    }
+                    Err(err) => {
+                        logln!("FAILED");
+                        Err(err)
+                    }
                 }
-                result
             })
             .flatten_ok();
 
@@ -180,21 +186,21 @@ impl AstCodegen {
             let name = runner.name();
             log!("Generate {name}... ");
             let result = runner.run(&ctx);
-            if result.is_ok() {
-                logln!("Done!");
-            } else {
-                logln!("Fail!");
+            match result {
+                Ok(output) => {
+                    logln!("Done!");
+                    let generator_path = runner.file_path();
+                    Ok(output.output(generator_path))
+                }
+                Err(err) => {
+                    logln!("FAILED");
+                    Err(err)
+                }
             }
-            result
         });
 
         let outputs = derives.chain(outputs).collect::<Result<Vec<_>>>()?;
 
         Ok(AstCodegenResult { outputs, schema: ctx.schema })
     }
-}
-
-/// Implemented by `define_derive!` and `define_generator!` macros
-pub trait CodegenBase {
-    fn file_path() -> &'static str;
 }

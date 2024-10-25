@@ -58,6 +58,10 @@ macro_rules! define_pass {
                     stringify!($ident)
                 }
 
+                fn file_path(&self) -> &'static str {
+                    file!()
+                }
+
                 fn run(&mut self, ctx: &Self::Context) -> Result<()> {
                     self.call(ctx).map(|_| ())
                 }

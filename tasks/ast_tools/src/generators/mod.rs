@@ -1,8 +1,4 @@
-use crate::{
-    codegen::{CodegenBase, LateCtx},
-    output::{Output, RawOutput},
-    Result,
-};
+use crate::{codegen::LateCtx, output::Output, Result};
 
 mod assert_layouts;
 mod ast_builder;
@@ -16,16 +12,15 @@ pub use ast_kind::AstKindGenerator;
 pub use typescript::TypescriptGenerator;
 pub use visit::{VisitGenerator, VisitMutGenerator};
 
-pub trait Generator: CodegenBase {
+pub trait Generator {
     // Methods defined by implementer
 
     fn generate(&mut self, ctx: &LateCtx) -> Output;
 
     // Standard methods
 
-    fn output(&mut self, ctx: &LateCtx) -> Result<RawOutput> {
-        let output = self.generate(ctx);
-        Ok(output.output(Self::file_path()))
+    fn output(&mut self, ctx: &LateCtx) -> Result<Output> {
+        Ok(self.generate(ctx))
     }
 }
 
@@ -33,26 +28,24 @@ macro_rules! define_generator {
     ($ident:ident $($lifetime:lifetime)?) => {
         const _: () = {
             use $crate::{
-                codegen::{CodegenBase, LateCtx, Runner},
-                output::RawOutput,
+                codegen::{LateCtx, Runner},
+                output::Output,
                 Result,
             };
 
-            impl $($lifetime)? CodegenBase for $ident $($lifetime)? {
-                fn file_path() -> &'static str {
-                    file!()
-                }
-            }
-
             impl $($lifetime)? Runner for $ident $($lifetime)? {
                 type Context = LateCtx;
-                type Output = RawOutput;
+                type Output = Output;
 
                 fn name(&self) -> &'static str {
                     stringify!($ident)
                 }
 
-                fn run(&mut self, ctx: &LateCtx) -> Result<RawOutput> {
+                fn file_path(&self) -> &'static str {
+                    file!()
+                }
+
+                fn run(&mut self, ctx: &LateCtx) -> Result<Output> {
                     self.output(ctx)
                 }
             }
