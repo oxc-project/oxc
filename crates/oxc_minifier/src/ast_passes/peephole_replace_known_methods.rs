@@ -45,7 +45,6 @@ impl PeepholeReplaceKnownMethods {
 
         let Expression::StaticMemberExpression(member) = &call_expr.callee else { return };
         if let Expression::StringLiteral(string_lit) = &member.object {
-            #[expect(clippy::match_same_arms)]
             let replacement = match member.property.name.as_str() {
                 "toLowerCase" | "toUpperCase" | "trim" => {
                     let transformed_value =
@@ -75,7 +74,6 @@ impl PeepholeReplaceKnownMethods {
                     string_lit,
                     ctx,
                 ),
-                // TODO: Implement the rest of the string methods
                 "substring" | "slice" => Self::try_fold_string_substring_or_slice(
                     call_expr.span,
                     call_expr,
@@ -88,10 +86,13 @@ impl PeepholeReplaceKnownMethods {
                 "charCodeAt" => {
                     Self::try_fold_string_char_code_at(call_expr.span, call_expr, string_lit, ctx)
                 }
-                "replace" => {
-                    Self::try_fold_string_replace(call_expr.span, call_expr, string_lit, ctx)
-                }
-                "replaceAll" => None,
+                "replace" | "replaceAll" => Self::try_fold_string_replace_or_string_replace_all(
+                    call_expr.span,
+                    call_expr,
+                    member,
+                    string_lit,
+                    ctx,
+                ),
                 _ => None,
             };
 
@@ -246,9 +247,10 @@ impl PeepholeReplaceKnownMethods {
             NumberBase::Decimal,
         )))
     }
-    fn try_fold_string_replace<'a>(
+    fn try_fold_string_replace_or_string_replace_all<'a>(
         span: Span,
         call_expr: &CallExpression<'a>,
+        member: &StaticMemberExpression<'a>,
         string_lit: &StringLiteral<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
@@ -275,8 +277,15 @@ impl PeepholeReplaceKnownMethods {
             return None;
         }
 
-        let result =
-            string_lit.value.as_str().cow_replacen(search_value.as_ref(), &replace_value, 1);
+        let result = match member.property.name.as_str() {
+            "replace" => {
+                string_lit.value.as_str().cow_replacen(search_value.as_ref(), &replace_value, 1)
+            }
+            "replaceAll" => {
+                string_lit.value.as_str().cow_replace(search_value.as_ref(), &replace_value)
+            }
+            _ => unreachable!(),
+        };
 
         Some(ctx.ast.expression_from_string_literal(ctx.ast.string_literal(span, result)))
     }
@@ -456,7 +465,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_fold_string_replace_all() {
         fold("x = 'abcde'.replaceAll('bcd','c')", "x = 'ace'");
         fold("x = 'abcde'.replaceAll('c','xxx')", "x = 'abxxxde'");
