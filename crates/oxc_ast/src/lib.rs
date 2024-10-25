@@ -1,8 +1,3 @@
-// TODO: I'm not sure if it is a but or intentional but clippy needs this allowed both on this
-// module and the generated one.
-#![allow(clippy::self_named_module_files)]
-#![warn(missing_docs)]
-
 //! # Oxc AST (Abstract Syntax Tree) Nodes
 //!
 //! Supports JavaScript, TypeScript and JSX.
@@ -43,6 +38,11 @@
 //! [ECMAScript spec]: <https://tc39.es/ecma262/>
 //! [tsc]: <https://github.com/microsoft/TypeScript>
 //! [`Traverse`]: <https://github.com/oxc-project/oxc/tree/main/crates/oxc_traverse>
+
+// TODO: I'm not sure if it is a but or intentional but clippy needs this allowed both on this
+// module and the generated one.
+#![allow(clippy::self_named_module_files)]
+#![warn(missing_docs)]
 
 #[cfg(feature = "serialize")]
 mod serialize;
