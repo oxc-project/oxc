@@ -64,11 +64,11 @@ impl Rule for PreferObjectHasOwn {
             return;
         };
 
-        let Some(callee) = unwrap_parenthesized_expr(&call_expr.callee).get_member_expr() else {
+        let Some(callee) = call_expr.callee.get_inner_expression().get_member_expr() else {
             return;
         };
 
-        let Some(object) = unwrap_parenthesized_expr(callee.object()).get_member_expr() else {
+        let Some(object) = callee.object().get_inner_expression().get_member_expr() else {
             return;
         };
 
@@ -82,7 +82,7 @@ impl Rule for PreferObjectHasOwn {
             && is_object
             && is_global_scope
         {
-            let replace_target_span = unwrap_parenthesized_expr(&call_expr.callee).span();
+            let replace_target_span = callee.span();
             let diagnostic = prefer_object_has_own_diagnostic(call_expr.span);
             if ctx.has_comments_between(replace_target_span) {
                 ctx.diagnostic(diagnostic);
@@ -110,17 +110,8 @@ impl Rule for PreferObjectHasOwn {
     }
 }
 
-fn unwrap_parenthesized_expr<'a>(node: &'a Expression<'a>) -> &'a Expression<'a> {
-    match node {
-        Expression::ParenthesizedExpression(paren_expr) => {
-            unwrap_parenthesized_expr(&paren_expr.expression)
-        }
-        _ => node,
-    }
-}
-
 fn has_left_hand_object(node: &MemberExpression) -> bool {
-    let object = unwrap_parenthesized_expr(node.object());
+    let object = node.object().get_inner_expression();
 
     if let Expression::ObjectExpression(object_expr) = object {
         return object_expr.properties.len() == 0;
@@ -137,7 +128,7 @@ fn has_left_hand_object(node: &MemberExpression) -> bool {
         _ => object,
     };
 
-    if let Expression::Identifier(ident) = unwrap_parenthesized_expr(object_node_to_check) {
+    if let Expression::Identifier(ident) = object_node_to_check.get_inner_expression() {
         return ident.name == "Object";
     }
 
