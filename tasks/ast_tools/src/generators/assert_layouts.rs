@@ -5,10 +5,10 @@ use syn::Type;
 use super::define_generator;
 use crate::{
     codegen::LateCtx,
-    output,
+    output::{output_path, Output},
     schema::{FieldDef, ToType, TypeDef},
     util::ToIdent,
-    Generator, GeneratorOutput,
+    Generator,
 };
 
 pub struct AssertLayouts;
@@ -16,7 +16,7 @@ pub struct AssertLayouts;
 define_generator!(AssertLayouts);
 
 impl Generator for AssertLayouts {
-    fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
+    fn generate(&mut self, ctx: &LateCtx) -> Output {
         let (assertions_64, assertions_32) = ctx
             .schema()
             .into_iter()
@@ -26,8 +26,8 @@ impl Generator for AssertLayouts {
             })
             .collect::<(Vec<TokenStream>, Vec<TokenStream>)>();
 
-        GeneratorOutput::Rust {
-            path: output(crate::AST_CRATE, "assert_layouts.rs"),
+        Output::Rust {
+            path: output_path(crate::AST_CRATE, "assert_layouts.rs"),
             tokens: quote! {
                 use std::mem::{align_of, offset_of, size_of};
 

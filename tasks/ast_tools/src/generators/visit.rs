@@ -12,10 +12,10 @@ use crate::{
     codegen::LateCtx,
     generators::ast_kind::BLACK_LIST as KIND_BLACK_LIST,
     markers::VisitArg,
-    output,
+    output::{output_path, Output},
     schema::{EnumDef, GetIdent, StructDef, ToType, TypeDef},
     util::{StrExt, TokenStreamExt, TypeWrapper},
-    Generator, GeneratorOutput,
+    Generator,
 };
 
 pub struct VisitGenerator;
@@ -23,9 +23,9 @@ pub struct VisitGenerator;
 define_generator!(VisitGenerator);
 
 impl Generator for VisitGenerator {
-    fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
-        GeneratorOutput::Rust {
-            path: output(crate::AST_CRATE, "visit.rs"),
+    fn generate(&mut self, ctx: &LateCtx) -> Output {
+        Output::Rust {
+            path: output_path(crate::AST_CRATE, "visit.rs"),
             tokens: generate_visit::<false>(ctx),
         }
     }
@@ -36,9 +36,9 @@ pub struct VisitMutGenerator;
 define_generator!(VisitMutGenerator);
 
 impl Generator for VisitMutGenerator {
-    fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
-        GeneratorOutput::Rust {
-            path: output(crate::AST_CRATE, "visit_mut.rs"),
+    fn generate(&mut self, ctx: &LateCtx) -> Output {
+        Output::Rust {
+            path: output_path(crate::AST_CRATE, "visit_mut.rs"),
             tokens: generate_visit::<true>(ctx),
         }
     }

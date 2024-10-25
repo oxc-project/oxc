@@ -1,12 +1,11 @@
-use std::path::PathBuf;
-
 use convert_case::{Case, Casing};
 use itertools::Itertools;
 use proc_macro2::TokenStream;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
-    codegen::{generate_rust_header, CodegenBase, LateCtx},
+    codegen::{CodegenBase, LateCtx},
+    output::{output_path, Output, RawOutput},
     schema::TypeDef,
     Result,
 };
@@ -22,9 +21,6 @@ pub use content_eq::DeriveContentEq;
 pub use content_hash::DeriveContentHash;
 pub use estree::DeriveESTree;
 pub use get_span::{DeriveGetSpan, DeriveGetSpanMut};
-
-#[derive(Debug, Clone)]
-pub struct DeriveOutput(pub Vec<(PathBuf, TokenStream)>);
 
 pub trait Derive: CodegenBase {
     // Methods defined by implementer
@@ -44,7 +40,6 @@ pub trait Derive: CodegenBase {
     // Standard methods
 
     fn template(module_paths: Vec<&str>, impls: TokenStream) -> TokenStream {
-        let header = generate_rust_header(Self::file_path());
         let prelude = Self::prelude();
 
         // from `x::y::z` to `crate::y::z::*`
@@ -63,8 +58,6 @@ pub trait Derive: CodegenBase {
         });
 
         quote::quote! {
-            #header
-
             #prelude
 
             #(#use_modules)*
@@ -74,7 +67,7 @@ pub trait Derive: CodegenBase {
         }
     }
 
-    fn output(&mut self, ctx: &LateCtx) -> Result<DeriveOutput> {
+    fn output(&mut self, ctx: &LateCtx) -> Result<Vec<RawOutput>> {
         let trait_name = Self::trait_name();
         let filename = format!("derive_{}.rs", Self::snake_name());
         let output = ctx
@@ -102,12 +95,12 @@ pub trait Derive: CodegenBase {
                 let mut modules = Vec::from_iter(modules);
                 modules.sort_unstable();
 
-                acc.push((
-                    crate::output(
+                let output = Output::Rust {
+                    path: output_path(
                         format!("crates/{}", path.split("::").next().unwrap()).as_str(),
                         &filename,
                     ),
-                    Self::template(
+                    tokens: Self::template(
                         modules,
                         streams.into_iter().fold(TokenStream::new(), |mut acc, it| {
                             acc.extend(quote::quote! {
@@ -117,10 +110,12 @@ pub trait Derive: CodegenBase {
                             acc
                         }),
                     ),
-                ));
+                };
+
+                acc.push(output.output(Self::file_path()));
                 acc
             });
-        Ok(DeriveOutput(output))
+        Ok(output)
     }
 }
 
@@ -129,7 +124,7 @@ macro_rules! define_derive {
         const _: () = {
             use $crate::{
                 codegen::{CodegenBase, LateCtx, Runner},
-                derives::DeriveOutput,
+                output::RawOutput,
                 Result,
             };
 
@@ -141,13 +136,13 @@ macro_rules! define_derive {
 
             impl $($lifetime)? Runner for $ident $($lifetime)? {
                 type Context = LateCtx;
-                type Output = DeriveOutput;
+                type Output = Vec<RawOutput>;
 
                 fn name(&self) -> &'static str {
                     stringify!($ident)
                 }
 
-                fn run(&mut self, ctx: &LateCtx) -> Result<DeriveOutput> {
+                fn run(&mut self, ctx: &LateCtx) -> Result<Vec<RawOutput>> {
                     self.output(ctx)
                 }
             }

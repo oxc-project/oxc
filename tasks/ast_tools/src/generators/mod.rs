@@ -1,10 +1,6 @@
-use std::path::PathBuf;
-
-use proc_macro2::TokenStream;
-use quote::quote;
-
 use crate::{
-    codegen::{generate_javascript_header, generate_rust_header, CodegenBase, LateCtx},
+    codegen::{CodegenBase, LateCtx},
+    output::{Output, RawOutput},
     Result,
 };
 
@@ -20,37 +16,16 @@ pub use ast_kind::AstKindGenerator;
 pub use typescript::TypescriptGenerator;
 pub use visit::{VisitGenerator, VisitMutGenerator};
 
-#[derive(Debug, Clone)]
-pub enum GeneratorOutput {
-    Rust { path: PathBuf, tokens: TokenStream },
-    Javascript { path: PathBuf, code: String },
-}
-
 pub trait Generator: CodegenBase {
     // Methods defined by implementer
 
-    fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput;
+    fn generate(&mut self, ctx: &LateCtx) -> Output;
 
     // Standard methods
 
-    fn output(&mut self, ctx: &LateCtx) -> Result<GeneratorOutput> {
-        let mut output = self.generate(ctx);
-
-        match &mut output {
-            GeneratorOutput::Rust { tokens, .. } => {
-                let header = generate_rust_header(Self::file_path());
-                *tokens = quote! {
-                    #header
-                    #tokens
-                };
-            }
-            GeneratorOutput::Javascript { code: content, .. } => {
-                let header = generate_javascript_header(Self::file_path());
-                *content = format!("{header}{content}");
-            }
-        }
-
-        Ok(output)
+    fn output(&mut self, ctx: &LateCtx) -> Result<RawOutput> {
+        let output = self.generate(ctx);
+        Ok(output.output(Self::file_path()))
     }
 }
 
@@ -59,7 +34,7 @@ macro_rules! define_generator {
         const _: () = {
             use $crate::{
                 codegen::{CodegenBase, LateCtx, Runner},
-                generators::GeneratorOutput,
+                output::RawOutput,
                 Result,
             };
 
@@ -71,13 +46,13 @@ macro_rules! define_generator {
 
             impl $($lifetime)? Runner for $ident $($lifetime)? {
                 type Context = LateCtx;
-                type Output = GeneratorOutput;
+                type Output = RawOutput;
 
                 fn name(&self) -> &'static str {
                     stringify!($ident)
                 }
 
-                fn run(&mut self, ctx: &LateCtx) -> Result<GeneratorOutput> {
+                fn run(&mut self, ctx: &LateCtx) -> Result<RawOutput> {
                     self.output(ctx)
                 }
             }

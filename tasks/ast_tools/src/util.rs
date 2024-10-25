@@ -309,17 +309,6 @@ where
     }
 }
 
-pub fn write_all_to<S: AsRef<std::path::Path>>(data: &[u8], path: S) -> std::io::Result<()> {
-    use std::{fs, io::Write};
-    let path = path.as_ref();
-    if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent)?;
-    }
-    let mut file = fs::File::create(path)?;
-    file.write_all(data)?;
-    Ok(())
-}
-
 pub fn unexpanded_macro_err(mac: &ItemMacro) -> String {
     format!("Unexpanded macro: {:?}:{:?}", mac.ident, mac.span())
 }
