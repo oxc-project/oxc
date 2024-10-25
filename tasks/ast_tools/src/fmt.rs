@@ -1,4 +1,7 @@
-use std::process::Command;
+use std::{
+    io::Write,
+    process::{Command, Stdio},
+};
 
 use lazy_static::lazy_static;
 use proc_macro2::TokenStream;
@@ -9,12 +12,22 @@ use syn::parse_file;
 pub fn pretty_print(input: &TokenStream) -> String {
     let result = prettyplease::unparse(&parse_file(input.to_string().as_str()).unwrap());
     let result = COMMENT_REGEX.replace_all(&result, CommentReplacer).to_string();
-    result
+    rust_fmt(&result)
 }
 
-/// Run `cargo fmt`
-pub fn cargo_fmt() {
-    Command::new("cargo").arg("fmt").status().unwrap();
+pub fn rust_fmt(source_text: &str) -> String {
+    let mut rustfmt = Command::new("rustfmt")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .spawn()
+        .expect("Failed to run rustfmt (is it installed?)");
+
+    let stdin = rustfmt.stdin.as_mut().unwrap();
+    stdin.write_all(source_text.as_bytes()).unwrap();
+    stdin.flush().unwrap();
+
+    let output = rustfmt.wait_with_output().unwrap();
+    String::from_utf8(output.stdout).unwrap()
 }
 
 /// Replace doc comments which start with `@` with plain comments or line breaks.

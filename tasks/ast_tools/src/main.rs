@@ -21,7 +21,6 @@ use derives::{
     DeriveCloneIn, DeriveContentEq, DeriveContentHash, DeriveESTree, DeriveGetSpan,
     DeriveGetSpanMut,
 };
-use fmt::cargo_fmt;
 use generators::{
     AssertLayouts, AstBuilderGenerator, AstKindGenerator, Generator, GeneratorOutput,
     TypescriptGenerator, VisitGenerator, VisitMutGenerator,
@@ -53,9 +52,6 @@ pub struct CliOptions {
     /// Runs all generators but won't write anything down.
     #[bpaf(switch)]
     dry_run: bool,
-    /// Don't run cargo fmt at the end
-    #[bpaf(switch)]
-    no_fmt: bool,
     /// Prints no logs.
     quiet: bool,
     /// Path of output `schema.json`.
@@ -100,10 +96,6 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
             })
             .collect();
         write_ci_filter(SOURCE_PATHS, side_effects, ".github/.generated_ast_watch_list.yml")?;
-    }
-
-    if !cli_options.no_fmt {
-        cargo_fmt();
     }
 
     if let CliOptions { schema: Some(schema_path), dry_run: false, .. } = cli_options {
