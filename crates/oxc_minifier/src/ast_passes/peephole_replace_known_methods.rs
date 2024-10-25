@@ -88,7 +88,9 @@ impl PeepholeReplaceKnownMethods {
                 "charCodeAt" => {
                     Self::try_fold_string_char_code_at(call_expr.span, call_expr, string_lit, ctx)
                 }
-                "replace" => None,
+                "replace" => {
+                    Self::try_fold_string_replace(call_expr.span, call_expr, string_lit, ctx)
+                }
                 "replaceAll" => None,
                 _ => None,
             };
@@ -244,6 +246,40 @@ impl PeepholeReplaceKnownMethods {
             NumberBase::Decimal,
         )))
     }
+    fn try_fold_string_replace<'a>(
+        span: Span,
+        call_expr: &CallExpression<'a>,
+        string_lit: &StringLiteral<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        if call_expr.arguments.len() != 2 {
+            return None;
+        }
+
+        let search_value = call_expr.arguments.first().unwrap();
+        let search_value = match search_value {
+            Argument::SpreadElement(_) => return None,
+            match_expression!(Argument) => {
+                Ctx(ctx).get_side_free_string_value(search_value.to_expression())?
+            }
+        };
+        let replace_value = call_expr.arguments.get(1).unwrap();
+        let replace_value = match replace_value {
+            Argument::SpreadElement(_) => return None,
+            match_expression!(Argument) => {
+                Ctx(ctx).get_side_free_string_value(replace_value.to_expression())?
+            }
+        };
+
+        if replace_value.contains('$') {
+            return None;
+        }
+
+        let result =
+            string_lit.value.as_str().cow_replacen(search_value.as_ref(), &replace_value, 1);
+
+        Some(ctx.ast.expression_from_string_literal(ctx.ast.string_literal(span, result)))
+    }
 }
 
 /// Port from: <https://github.com/google/closure-compiler/blob/master/test/com/google/javascript/jscomp/PeepholeReplaceKnownMethodsTest.java>
@@ -394,7 +430,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_fold_string_replace() {
         fold("'c'.replace('c','x')", "'x'");
         fold("'ac'.replace('c','x')", "'ax'");
