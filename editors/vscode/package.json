@@ -1,7 +1,6 @@
 {
   "name": "oxc-vscode",
   "description": "oxc vscode extension",
-  "packageManager": "pnpm@9.12.2",
   "license": "MIT",
   "version": "0.10.2",
   "icon": "icon.png",
