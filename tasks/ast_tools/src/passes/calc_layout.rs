@@ -21,9 +21,9 @@ compile_error!("This module only supports 64bit architectures.");
 
 type WellKnown = FxHashMap<&'static str, PlatformLayout>;
 
-define_pass! {
-    pub struct CalcLayout;
-}
+pub struct CalcLayout;
+
+define_pass!(CalcLayout);
 
 impl Pass for CalcLayout {
     fn each(&mut self, ty: &mut AstType, ctx: &EarlyCtx) -> crate::Result<bool> {

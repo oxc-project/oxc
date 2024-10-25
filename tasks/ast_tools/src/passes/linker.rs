@@ -27,9 +27,9 @@ impl Unresolved for Vec<Inherit> {
     }
 }
 
-define_pass! {
-    pub struct Linker;
-}
+pub struct Linker;
+
+define_pass!(Linker);
 
 impl Pass for Linker {
     /// # Panics
