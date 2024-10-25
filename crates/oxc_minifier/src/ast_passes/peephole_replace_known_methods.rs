@@ -2,7 +2,7 @@ use cow_utils::CowUtils;
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
     constant_evaluation::ConstantEvaluation, StringCharAt, StringCharCodeAt, StringIndexOf,
-    StringLastIndexOf,
+    StringLastIndexOf, StringSubstring,
 };
 use oxc_traverse::{Traverse, TraverseCtx};
 
@@ -76,7 +76,12 @@ impl PeepholeReplaceKnownMethods {
                     ctx,
                 ),
                 // TODO: Implement the rest of the string methods
-                "substring" | "slice" => None,
+                "substring" | "slice" => Self::try_fold_string_substring_or_slice(
+                    call_expr.span,
+                    call_expr,
+                    string_lit,
+                    ctx,
+                ),
                 "charAt" => {
                     Self::try_fold_string_char_at(call_expr.span, call_expr, string_lit, ctx)
                 }
@@ -129,6 +134,53 @@ impl PeepholeReplaceKnownMethods {
             result.to_string(),
             NumberBase::Decimal,
         )));
+    }
+
+    fn try_fold_string_substring_or_slice<'a>(
+        span: Span,
+        call_expr: &CallExpression<'a>,
+        string_lit: &StringLiteral<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        if call_expr.arguments.len() > 2 {
+            return None;
+        }
+
+        let start_idx = if let Some(v) = call_expr.arguments.first() {
+            let val = match v {
+                Argument::SpreadElement(_) => None,
+                _ => Ctx(ctx).get_side_free_number_value(v.to_expression()),
+            }?;
+            Some(val)
+        } else {
+            None
+        };
+        let end_idx = if let Some(v) = call_expr.arguments.get(1) {
+            let val = match v {
+                Argument::SpreadElement(_) => None,
+                _ => Ctx(ctx).get_side_free_number_value(v.to_expression()),
+            }?;
+            Some(val)
+        } else {
+            None
+        };
+
+        #[expect(clippy::cast_precision_loss)]
+        if start_idx.is_some_and(|start| start > string_lit.value.len() as f64 || start < 0.0)
+            || end_idx.is_some_and(|end| end > string_lit.value.len() as f64 || end < 0.0)
+        {
+            return None;
+        }
+
+        if let (Some(start), Some(end)) = (start_idx, end_idx) {
+            if start > end {
+                return None;
+            }
+        };
+
+        return Some(ctx.ast.expression_from_string_literal(
+            ctx.ast.string_literal(span, string_lit.value.as_str().substring(start_idx, end_idx)),
+        ));
     }
 
     fn try_fold_string_char_at<'a>(
@@ -393,7 +445,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_fold_string_substring() {
         fold("x = 'abcde'.substring(0,2)", "x = 'ab'");
         fold("x = 'abcde'.substring(1,2)", "x = 'b'");
@@ -412,7 +463,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_fold_string_slice() {
         fold("x = 'abcde'.slice(0,2)", "x = 'ab'");
         fold("x = 'abcde'.slice(1,2)", "x = 'b'");
