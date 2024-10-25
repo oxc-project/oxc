@@ -6,7 +6,6 @@ use oxc_ast::visit::walk::{
     walk_export_all_declaration, walk_export_named_declaration, walk_import_declaration,
     walk_import_expression, walk_meta_property, walk_module_declaration, walk_statement,
 };
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, Visit};
 use oxc_ecmascript::BoundNames;
 use oxc_span::{Atom, GetSpan};

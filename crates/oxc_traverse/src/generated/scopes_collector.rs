@@ -4,7 +4,6 @@
 
 use std::cell::Cell;
 
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, visit::Visit};
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
@@ -121,11 +120,6 @@ impl<'a> Visit<'a> for ChildScopeCollector {
 
     #[inline]
     fn visit_ts_mapped_type(&mut self, it: &TSMappedType<'a>) {
-        self.add_scope(&it.scope_id);
-    }
-
-    #[inline]
-    fn visit_finally_clause(&mut self, it: &BlockStatement<'a>) {
         self.add_scope(&it.scope_id);
     }
 }

@@ -9,8 +9,8 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, is_type_of_jest_fn_call, parse_expect_jest_fn_call,
-        JestFnKind, JestGeneralFnKind, PossibleJestNode,
+        is_type_of_jest_fn_call, parse_expect_jest_fn_call, JestFnKind, JestGeneralFnKind,
+        PossibleJestNode,
     },
 };
 
@@ -70,10 +70,12 @@ declare_oxc_lint!(
 struct InConditional(bool);
 
 impl Rule for NoConditionalExpect {
-    fn run_once(&self, ctx: &LintContext) {
-        for node in &collect_possible_jest_call_node(ctx) {
-            run(node, ctx);
-        }
+    fn run_on_jest_node<'a, 'c>(
+        &self,
+        jest_node: &PossibleJestNode<'a, 'c>,
+        ctx: &'c LintContext<'a>,
+    ) {
+        run(jest_node, ctx);
     }
 }
 

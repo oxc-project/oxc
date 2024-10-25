@@ -67,28 +67,38 @@ impl Rule for NoUnsafeFinally {
             _ => None,
         };
 
+        let nodes = ctx.nodes();
         let mut label_inside = false;
-        for node_id in ctx.nodes().ancestors(node.id()) {
-            let ast_kind = ctx.nodes().kind(node_id);
+        for node_id in nodes.ancestors(node.id()) {
+            let ast_kind = nodes.kind(node_id);
 
             if sentinel_node_type.test(ast_kind) {
                 break;
             }
 
-            let parent_kind = ctx.nodes().parent_kind(node_id);
+            let Some(parent_node_id) = nodes.parent_id(node_id) else { break };
+            let parent_kind = nodes.kind(parent_node_id);
 
-            if let Some(AstKind::LabeledStatement(labeled_stmt)) = parent_kind {
+            if let AstKind::LabeledStatement(labeled_stmt) = parent_kind {
                 if label_name == Some(&labeled_stmt.label.name) {
                     label_inside = true;
                 }
             }
 
-            if let Some(AstKind::FinallyClause(_)) = parent_kind {
-                if label_name.is_some() && label_inside {
-                    break;
+            // Finally Block
+            let parent_parent_kind = nodes.parent_kind(node_id);
+            if let Some(AstKind::TryStatement(try_stmt)) = parent_parent_kind {
+                if let Some(try_block_stmt) = &try_stmt.finalizer {
+                    if let AstKind::BlockStatement(block_stmt) = ast_kind {
+                        if try_block_stmt.span == block_stmt.span {
+                            if label_name.is_some() && label_inside {
+                                break;
+                            }
+                            ctx.diagnostic(no_unsafe_finally_diagnostic(node.kind().span()));
+                            return;
+                        }
+                    }
                 }
-                ctx.diagnostic(no_unsafe_finally_diagnostic(node.kind().span()));
-                return;
             }
         }
     }

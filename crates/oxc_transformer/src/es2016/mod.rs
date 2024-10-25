@@ -1,12 +1,13 @@
+use oxc_ast::ast::*;
+use oxc_traverse::{Traverse, TraverseCtx};
+
+use crate::TransformCtx;
+
 mod exponentiation_operator;
 mod options;
 
 pub use exponentiation_operator::ExponentiationOperator;
 pub use options::ES2016Options;
-use oxc_ast::ast::*;
-use oxc_traverse::{Traverse, TraverseCtx};
-
-use crate::TransformCtx;
 
 pub struct ES2016<'a, 'ctx> {
     options: ES2016Options,

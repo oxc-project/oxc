@@ -2,6 +2,7 @@
 //!
 //! Code adapted from
 //! * [esbuild](https://github.com/evanw/esbuild/blob/main/internal/js_printer/js_printer.go)
+#![warn(missing_docs)]
 
 mod binary_expr_visitor;
 mod code_buffer;
@@ -36,6 +37,7 @@ pub use crate::{
 /// Code generator without whitespace removal.
 pub type CodeGenerator<'a> = Codegen<'a>;
 
+/// Options for [`Codegen`].
 #[derive(Debug, Clone)]
 pub struct CodegenOptions {
     /// Use single quotes instead of double quotes.
@@ -60,6 +62,11 @@ pub struct CodegenOptions {
     /// Default is `false`.
     pub annotation_comments: bool,
 
+    /// Override the source map path. This affects the `sourceMappingURL`
+    /// comment at the end of the generated code.
+    ///
+    /// By default, the source map path is the same as the input source code
+    /// (with a `.map` extension).
     pub source_map_path: Option<PathBuf>,
 }
 
@@ -92,6 +99,24 @@ pub struct CodegenReturn {
     pub map: Option<oxc_sourcemap::SourceMap>,
 }
 
+/// A code generator for printing JavaScript and TypeScript code.
+///
+/// ## Example
+/// ```rust
+/// use oxc_codegen::{Codegen, CodegenOptions};
+/// use oxc_ast::ast::Program;
+/// use oxc_parser::Parser;
+/// use oxc_allocator::Allocator;
+/// use oxc_span::SourceType;
+///
+/// let allocator = Allocator::default();
+/// let source = "const a = 1 + 2;";
+/// let parsed = Parser::new(&allocator, source, SourceType::mjs()).parse();
+/// assert!(parsed.errors.is_empty());
+///
+/// let js = Codegen::new().build(&parsed.program);
+/// assert_eq!(js.code, "const a = 1 + 2;\n");
+/// ```
 pub struct Codegen<'a> {
     pub(crate) options: CodegenOptions,
 
@@ -164,6 +189,9 @@ impl<'a> From<Codegen<'a>> for Cow<'a, str> {
 
 // Public APIs
 impl<'a> Codegen<'a> {
+    /// Create a new code generator.
+    ///
+    /// This is equivalent to [`Codegen::default`].
     #[must_use]
     pub fn new() -> Self {
         Self {
@@ -189,6 +217,7 @@ impl<'a> Codegen<'a> {
         }
     }
 
+    /// Pass options to the code generator.
     #[must_use]
     pub fn with_options(mut self, options: CodegenOptions) -> Self {
         self.quote = if options.single_quote { b'\'' } else { b'"' };
@@ -196,12 +225,15 @@ impl<'a> Codegen<'a> {
         self
     }
 
+    /// Set the mangler for mangling identifiers.
     #[must_use]
     pub fn with_mangler(mut self, mangler: Option<Mangler>) -> Self {
         self.mangler = mangler;
         self
     }
 
+    /// Print a [`Program`] into a string of source code. A source map will be
+    /// generated if [`CodegenOptions::source_map_path`] is set.
     #[must_use]
     pub fn build(mut self, program: &Program<'a>) -> CodegenReturn {
         self.quote = if self.options.single_quote { b'\'' } else { b'"' };
@@ -220,6 +252,14 @@ impl<'a> Codegen<'a> {
         CodegenReturn { code, map }
     }
 
+    /// Turn what's been built so far into a string. Like [`build`],
+    /// this fininishes a print and returns the generated source code. Unlike
+    /// [`build`], no source map is generated.
+    ///
+    /// This is more useful for cases that progressively build code using [`print_expression`].
+    ///
+    /// [`build`]: Codegen::build
+    /// [`print_expression`]: Codegen::print_expression
     #[must_use]
     pub fn into_source_text(self) -> String {
         self.code.into_string()
@@ -240,6 +280,8 @@ impl<'a> Codegen<'a> {
         self.code.print_str(s);
     }
 
+    /// Print a single [`Expression`], adding it to the code generator's
+    /// internal buffer. Unlike [`Codegen::build`], this does not consume `self`.
     #[inline]
     pub fn print_expression(&mut self, expr: &Expression<'_>) {
         expr.print_expr(self, Precedence::Lowest, Context::empty());
@@ -555,6 +597,69 @@ impl<'a> Codegen<'a> {
         {
             self.print_hard_space();
         }
+    }
+
+    fn print_non_negative_float(&mut self, num: f64) {
+        use oxc_syntax::number::ToJsString;
+        if num < 1000.0 && num.fract() == 0.0 {
+            self.print_str(&num.to_js_string());
+            self.need_space_before_dot = self.code_len();
+        } else {
+            let s = Self::get_minified_number(num);
+            self.print_str(&s);
+            if !s.bytes().any(|b| matches!(b, b'.' | b'e' | b'x')) {
+                self.need_space_before_dot = self.code_len();
+            }
+        }
+    }
+
+    // `get_minified_number` from terser
+    // https://github.com/terser/terser/blob/c5315c3fd6321d6b2e076af35a70ef532f498505/lib/output.js#L2418
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_possible_wrap)]
+    fn get_minified_number(num: f64) -> String {
+        use cow_utils::CowUtils;
+        use oxc_syntax::number::ToJsString;
+        if num < 1000.0 && num.fract() == 0.0 {
+            return num.to_js_string();
+        }
+
+        let mut s = num.to_js_string();
+
+        if s.starts_with("0.") {
+            s = s[1..].to_string();
+        }
+
+        s = s.cow_replacen("e+", "e", 1).to_string();
+
+        let mut candidates = vec![s.clone()];
+
+        if num.fract() == 0.0 {
+            candidates.push(format!("0x{:x}", num as u128));
+        }
+
+        if s.starts_with(".0") {
+            // create `1e-2`
+            if let Some((i, _)) = s[1..].bytes().enumerate().find(|(_, c)| *c != b'0') {
+                let len = i + 1; // `+1` to include the dot.
+                let digits = &s[len..];
+                candidates.push(format!("{digits}e-{}", digits.len() + len - 1));
+            }
+        } else if s.ends_with('0') {
+            // create 1e2
+            if let Some((len, _)) = s.bytes().rev().enumerate().find(|(_, c)| *c != b'0') {
+                candidates.push(format!("{}e{len}", &s[0..s.len() - len]));
+            }
+        } else if let Some((integer, point, exponent)) =
+            s.split_once('.').and_then(|(a, b)| b.split_once('e').map(|e| (a, e.0, e.1)))
+        {
+            // `1.2e101` -> ("1", "2", "101")
+            candidates.push(format!(
+                "{integer}{point}e{}",
+                exponent.parse::<isize>().unwrap() - point.len() as isize
+            ));
+        }
+
+        candidates.into_iter().min_by_key(String::len).unwrap()
     }
 
     #[inline]

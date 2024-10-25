@@ -20,8 +20,13 @@ use crate::{Allocator, Box, Vec};
 /// However, it **isn't** guaranteed.
 ///
 pub trait CloneIn<'new_alloc>: Sized {
+    /// The type of the cloned object.
+    ///
+    /// This should always be `Self` with a different lifetime.
     type Cloned;
 
+    /// Clone `self` into the given `allocator`. `allocator` may be the same one
+    /// that `self` is already in.
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned;
 }
 

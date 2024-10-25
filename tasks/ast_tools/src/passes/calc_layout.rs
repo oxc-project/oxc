@@ -1,10 +1,11 @@
+use std::cmp::max;
+
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use quote::ToTokens;
 use rustc_hash::FxHashMap;
 use syn::Type;
 
-use super::{define_pass, Pass};
 use crate::{
     codegen::EarlyCtx,
     layout::{KnownLayout, Layout},
@@ -13,15 +14,17 @@ use crate::{
     Result,
 };
 
+use super::{define_pass, Pass};
+
 /// We use compiler to infer 64bit type layouts.
 #[cfg(not(target_pointer_width = "64"))]
 compile_error!("This module only supports 64bit architectures.");
 
 type WellKnown = FxHashMap<&'static str, PlatformLayout>;
 
-define_pass! {
-    pub struct CalcLayout;
-}
+pub struct CalcLayout;
+
+define_pass!(CalcLayout);
 
 impl Pass for CalcLayout {
     fn each(&mut self, ty: &mut AstType, ctx: &EarlyCtx) -> crate::Result<bool> {
@@ -81,64 +84,56 @@ pub fn calc_layout(ty: &mut AstType, ctx: &EarlyCtx) -> Result<bool> {
 }
 
 fn calc_enum_layout(ty: &mut Enum, ctx: &EarlyCtx) -> Result<PlatformLayout> {
-    fn collect_variant_layouts(ty: &Enum, ctx: &EarlyCtx) -> Result<Vec<PlatformLayout>> {
-        // all unit variants?
-        if ty.item.variants.iter().all(|var| var.fields.is_empty()) {
-            // all AST enums are `repr(u8)` so it would have a 1 byte layout/alignment,
-            // if it holds no data
-            let layout = KnownLayout::new(0, 1, 0);
-            let layout = Layout::Layout(layout);
-            Ok(vec![PlatformLayout(layout.clone(), layout)])
-        } else {
-            ty.item
-                .variants
-                .iter()
-                .map(|var| {
-                    let typ =
-                        var.fields.iter().exactly_one().map(|f| f.ty.analyze(ctx)).normalize()?;
-                    calc_type_layout(&typ, ctx)
-                })
-                .collect()
-        }
+    struct SizeAlign {
+        size: usize,
+        align: usize,
     }
 
-    #[expect(clippy::needless_pass_by_value)]
-    fn fold_layout(mut acc: KnownLayout, layout: KnownLayout) -> KnownLayout {
-        // SAFETY: we are folding valid layouts so it is safe.
-        unsafe {
-            // max alignment
-            if layout.align() > acc.align() {
-                acc.set_align_unchecked(layout.align());
-            }
-            // max size
-            if layout.size() > acc.size() {
-                acc.set_size_unchecked(layout.size());
-            }
-            // min niches
-            if layout.niches() < acc.niches() {
-                acc.set_niches_unchecked(layout.niches());
-            }
+    // Get max size and align of variants
+    let mut size_align_64 = SizeAlign { size: 0, align: 1 };
+    let mut size_align_32 = SizeAlign { size: 0, align: 1 };
+
+    for variant in &ty.item.variants {
+        if variant.fields.is_empty() {
+            continue;
         }
-        acc
+
+        let field = variant.fields.iter().exactly_one().normalize().unwrap();
+        let typ = field.ty.analyze(ctx);
+        let PlatformLayout(variant_layout_64, variant_layout_32) = calc_type_layout(&typ, ctx)?;
+
+        let variant_layout_64 = variant_layout_64.layout().unwrap();
+        size_align_64.size = max(size_align_64.size, variant_layout_64.size());
+        size_align_64.align = max(size_align_64.align, variant_layout_64.align());
+
+        let variant_layout_32 = variant_layout_32.layout().unwrap();
+        size_align_32.size = max(size_align_32.size, variant_layout_32.size());
+        size_align_32.align = max(size_align_32.align, variant_layout_32.align());
     }
 
-    let with_tag = |mut acc: KnownLayout| -> KnownLayout {
-        acc.consume_niches(ty.item.variants.len() as u128, true);
-        acc
-    };
+    // Round up size to largest variant alignment.
+    // Largest variant is not necessarily the most highly aligned e.g. `enum { A([u8; 50]), B(u64) }`
+    size_align_64.size = size_align_64.size.next_multiple_of(size_align_64.align);
+    size_align_32.size = size_align_32.size.next_multiple_of(size_align_32.align);
 
-    let layouts = collect_variant_layouts(ty, ctx)?;
-    let (layouts_x64, layouts_x32): (Vec<KnownLayout>, Vec<KnownLayout>) = layouts
-        .into_iter()
-        .map(|PlatformLayout(x64, x32)| {
-            x64.layout().and_then(|x64| x32.layout().map(|x32| (x64, x32)))
-        })
-        .collect::<Option<_>>()
-        .expect("already checked.");
+    // Add discriminant.
+    // All enums are `#[repr(C, u8)]` (fieldful) or `#[repr(u8)]` (fieldless), so disriminant is 1 byte.
+    // But padding is inserted to align all payloads to largest alignment of any variant.
+    size_align_64.size += size_align_64.align;
+    size_align_32.size += size_align_32.align;
 
-    let x32 = with_tag(layouts_x32.into_iter().fold(KnownLayout::default(), fold_layout));
-    let x64 = with_tag(layouts_x64.into_iter().fold(KnownLayout::default(), fold_layout));
-    Ok(PlatformLayout(Layout::from(x64), Layout::from(x32)))
+    // Variant payloads are not relevant in niche calculation for `#[repr(u8)]` / `#[repr(C, u8)]` enums.
+    // The niche optimization for Option-like enums is disabled by `#[repr(u8)]`.
+    // https://doc.rust-lang.org/nightly/nomicon/other-reprs.html#repru-repri
+    // So number of niches only depends on the number of discriminants.
+    // TODO: This isn't quite correct. Number of niches depends only on how many unused discriminant
+    // values at *start* or *end* of range.
+    // https://github.com/oxc-project/oxc/pull/5774#pullrequestreview-2306334340
+    let niches = (256 - ty.item.variants.len()) as u128;
+
+    let layout_64 = KnownLayout::new(size_align_64.size, size_align_64.align, niches);
+    let layout_32 = KnownLayout::new(size_align_32.size, size_align_32.align, niches);
+    Ok(PlatformLayout(Layout::from(layout_64), Layout::from(layout_32)))
 }
 
 fn calc_struct_layout(ty: &mut Struct, ctx: &EarlyCtx) -> Result<PlatformLayout> {

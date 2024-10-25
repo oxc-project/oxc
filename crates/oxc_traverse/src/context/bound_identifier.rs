@@ -13,9 +13,9 @@ use crate::TraverseCtx;
 ///
 /// ```rs
 /// // Generate a UID for a top-level var
-/// let binding = BoundIdentifier::new_root_uid("foo", SymbolFlags::FunctionScopedVariable, ctx);
+/// let binding = ctx.generate_uid_in_current_scope("foo", SymbolFlags::FunctionScopedVariable);
 ///
-/// // Generate an `IdentifierReference`s and insert them into AST
+/// // Generate `IdentifierReference`s and insert them into AST
 /// some_node.id = binding.create_read_reference(ctx);
 /// some_other_node.id = binding.create_read_reference(ctx);
 ///
@@ -23,7 +23,7 @@ use crate::TraverseCtx;
 /// self.foo_binding = binding;
 ///
 /// // Later on in `exit_program`
-/// let id = binding.create_binding_identifier();
+/// let id = self.foo_binding.create_binding_identifier(ctx);
 /// // Insert `var <id> = something;` into `program.body`
 /// ```
 ///
@@ -46,14 +46,20 @@ impl<'a> BoundIdentifier<'a> {
         Self { name, symbol_id }
     }
 
+    /// Create `BoundIdentifier` from a `BindingIdentifier`
+    #[expect(clippy::missing_panics_doc)]
+    pub fn from_binding_ident(ident: &BindingIdentifier<'a>) -> Self {
+        Self { name: ident.name.clone(), symbol_id: ident.symbol_id.get().unwrap() }
+    }
+
     /// Create `BindingIdentifier` for this binding
-    pub fn create_binding_identifier(&self) -> BindingIdentifier<'a> {
-        BindingIdentifier::new_with_symbol_id(SPAN, self.name.clone(), self.symbol_id)
+    pub fn create_binding_identifier(&self, ctx: &TraverseCtx<'a>) -> BindingIdentifier<'a> {
+        ctx.ast.binding_identifier_with_symbol_id(SPAN, self.name.clone(), self.symbol_id)
     }
 
     /// Create `BindingPattern` for this binding
-    pub fn create_binding_pattern(&self, ctx: &mut TraverseCtx<'a>) -> BindingPattern<'a> {
-        let ident = self.create_binding_identifier();
+    pub fn create_binding_pattern(&self, ctx: &TraverseCtx<'a>) -> BindingPattern<'a> {
+        let ident = self.create_binding_identifier(ctx);
         let binding_pattern_kind = ctx.ast.binding_pattern_kind_from_binding_identifier(ident);
         ctx.ast.binding_pattern(binding_pattern_kind, NONE, false)
     }

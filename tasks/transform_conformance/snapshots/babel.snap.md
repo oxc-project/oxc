@@ -1,8 +1,9 @@
-commit: 3bcfee23
+commit: d20b314c
 
-Passed: 339/1039
+Passed: 357/1058
 
 # All Passed:
+* babel-plugin-transform-class-static-block
 * babel-plugin-transform-logical-assignment-operators
 * babel-plugin-transform-optional-catch-binding
 * babel-preset-react
@@ -11,7 +12,7 @@ Passed: 339/1039
 * babel-plugin-transform-react-jsx-source
 
 
-# babel-preset-env (109/585)
+# babel-preset-env (110/585)
 * .plugins-overlapping/chrome-49/input.js
 x Output mismatch
 
@@ -370,9 +371,6 @@ x Output mismatch
 x Output mismatch
 
 * corejs3/entry-require-es-proposals/input.js
-x Output mismatch
-
-* corejs3/entry-specified-imports/input.mjs
 x Output mismatch
 
 * corejs3/entry-stable/input.mjs
@@ -1221,9 +1219,6 @@ x Output mismatch
 * modules/modules-commonjs/input.mjs
 x Output mismatch
 
-* modules/modules-false/input.mjs
-x Output mismatch
-
 * modules/modules-systemjs/input.mjs
 x Output mismatch
 
@@ -1437,6 +1432,9 @@ x Output mismatch
 * shipped-proposals/new-class-features-chrome-90/input.js
 x Output mismatch
 
+* shipped-proposals/new-class-features-chrome-94/input.js
+x Output mismatch
+
 * shipped-proposals/new-class-features-firefox-70/input.js
 x Output mismatch
 
@@ -1628,14 +1626,20 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-async-to-generator (1/17)
+# babel-plugin-transform-async-to-generator (9/24)
 * assumption-ignoreFunctionLength-true/basic/input.mjs
 x Output mismatch
 
-* assumption-ignoreFunctionLength-true/export-default-function/input.mjs
+* assumption-noNewArrows-false/basic/input.js
 x Output mismatch
 
-* assumption-noNewArrows-false/basic/input.js
+* async-to-generator/async-iife-with-regenerator/input.js
+x Output mismatch
+
+* async-to-generator/async-iife-with-regenerator-spec/input.js
+x Output mismatch
+
+* async-to-generator/object-method-with-super/input.js
 x Output mismatch
 
 * bluebird-coroutines/arrow-function/input.js
@@ -1656,16 +1660,7 @@ x Output mismatch
 * regression/15978/input.js
 x Output mismatch
 
-* regression/4599/input.js
-x Output mismatch
-
-* regression/8783/input.js
-x Output mismatch
-
 * regression/T7108/input.js
-x Output mismatch
-
-* regression/T7194/input.js
 x Output mismatch
 
 * regression/gh-6923/input.js
@@ -1683,7 +1678,16 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-arrow-functions (1/6)
+# babel-plugin-transform-arrow-functions (3/11)
+* arrow-functions/implicit-var-arguments/input.js
+x Output mismatch
+
+* arrow-functions/self-referential/input.js
+x Output mismatch
+
+* arrow-functions/spec/input.js
+x Output mismatch
+
 * assumption-newableArrowFunctions-false/basic/input.js
 x Output mismatch
 

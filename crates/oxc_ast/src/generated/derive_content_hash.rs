@@ -7,19 +7,14 @@ use std::{hash::Hasher, mem::discriminant};
 
 use oxc_span::hash::ContentHash;
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::comment::*;
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::js::*;
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::jsx::*;
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::literal::*;
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::ts::*;
 
 impl ContentHash for BooleanLiteral {

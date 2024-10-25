@@ -124,8 +124,10 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/blob/main/packages/babel-plugin-transform-arrow-functions>
 //! * Arrow function specification: <https://tc39.es/ecma262/#sec-arrow-function-definitions>
 
+use serde::Deserialize;
+
 use oxc_allocator::Vec;
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::ast::*;
 use oxc_data_structures::stack::SparseStack;
 use oxc_span::SPAN;
 use oxc_syntax::{
@@ -133,8 +135,6 @@ use oxc_syntax::{
     symbol::SymbolFlags,
 };
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
-
-use serde::Deserialize;
 
 #[derive(Debug, Default, Clone, Deserialize)]
 pub struct ArrowFunctionsOptions {
@@ -407,19 +407,12 @@ impl<'a> ArrowFunctions<'a> {
         &mut self,
         statements: &mut Vec<'a, Statement<'a>>,
         this_var: &BoundIdentifier<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) {
-        let binding_pattern = ctx.ast.binding_pattern(
-            ctx.ast
-                .binding_pattern_kind_from_binding_identifier(this_var.create_binding_identifier()),
-            NONE,
-            false,
-        );
-
         let variable_declarator = ctx.ast.variable_declarator(
             SPAN,
             VariableDeclarationKind::Var,
-            binding_pattern,
+            this_var.create_binding_pattern(ctx),
             Some(ctx.ast.expression_this(SPAN)),
             false,
         );

@@ -1,6 +1,5 @@
 //! This module checks if an unused variable is allowed. Note that this does not
 //! consider variables ignored by name pattern, but by where they are declared.
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind};
 use oxc_semantic::{AstNode, NodeId, Semantic};
 use oxc_span::GetSpan;
@@ -30,8 +29,11 @@ impl<'s, 'a> Symbol<'s, 'a> {
                 // e.g. `const x = [function foo() {}]`
                 // Only considered used if the array containing the symbol is used.
                 | AstKind::ArrayExpressionElement(_)
-                | AstKind::ExpressionArrayElement(_)
                 | AstKind::ArrayExpression(_)
+                // a ? b : function foo() {}
+                // Only considered used if the function is the test or the selected branch,
+                // but we can't determine that here.
+                | AstKind::ConditionalExpression(_)
                 => {
                     continue;
                 }

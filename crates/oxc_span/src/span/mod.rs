@@ -2,7 +2,7 @@ use std::ops::{Index, IndexMut, Range};
 
 use miette::{LabeledSpan, SourceOffset, SourceSpan};
 
-mod types;
+pub mod types;
 use oxc_allocator::{Allocator, CloneIn};
 pub use types::Span;
 
@@ -364,11 +364,13 @@ impl From<Span> for LabeledSpan {
 
 /// Get the span for an AST node
 pub trait GetSpan {
+    /// Get the [`Span`] for an AST node
     fn span(&self) -> Span;
 }
 
 /// Get mutable ref to span for an AST node
 pub trait GetSpanMut {
+    /// Get a mutable reference to an AST node's [`Span`].
     fn span_mut(&mut self) -> &mut Span;
 }
 
@@ -400,6 +402,17 @@ mod test {
     use super::Span;
 
     #[test]
+    fn test_size() {
+        let s = Span::sized(0, 5);
+        assert_eq!(s.size(), 5);
+        assert!(!s.is_empty());
+
+        let s = Span::sized(5, 0);
+        assert_eq!(s.size(), 0);
+        assert!(s.is_empty());
+    }
+
+    #[test]
     fn test_hash() {
         use std::hash::{DefaultHasher, Hash, Hasher};
         let mut first = DefaultHasher::new();
@@ -408,6 +421,7 @@ mod test {
         Span::new(0, 5).hash(&mut second);
         assert_eq!(first.finish(), second.finish());
     }
+
     #[test]
     fn test_eq() {
         assert_eq!(Span::new(0, 0), Span::new(0, 0));

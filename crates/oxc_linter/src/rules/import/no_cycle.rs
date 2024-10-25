@@ -37,7 +37,7 @@ impl Default for NoCycle {
     fn default() -> Self {
         Self {
             max_depth: u32::MAX,
-            ignore_types: false,
+            ignore_types: true,
             ignore_external: false,
             allow_unsafe_dynamic_cyclic_dependency: false,
         }
@@ -93,24 +93,25 @@ declare_oxc_lint!(
 impl Rule for NoCycle {
     fn from_configuration(value: serde_json::Value) -> Self {
         let obj = value.get(0);
+        let default = NoCycle::default();
         Self {
             max_depth: obj
                 .and_then(|v| v.get("maxDepth"))
                 .and_then(serde_json::Value::as_number)
                 .and_then(serde_json::Number::as_u64)
-                .map_or(u32::MAX, |n| n as u32),
+                .map_or(default.max_depth, |n| n as u32),
             ignore_types: obj
                 .and_then(|v| v.get("ignoreTypes"))
                 .and_then(serde_json::Value::as_bool)
-                .unwrap_or_default(),
+                .unwrap_or(default.ignore_types),
             ignore_external: obj
                 .and_then(|v| v.get("ignoreExternal"))
                 .and_then(serde_json::Value::as_bool)
-                .unwrap_or_default(),
+                .unwrap_or(default.ignore_external),
             allow_unsafe_dynamic_cyclic_dependency: obj
                 .and_then(|v| v.get("allowUnsafeDynamicCyclicDependency"))
                 .and_then(serde_json::Value::as_bool)
-                .unwrap_or_default(),
+                .unwrap_or(default.allow_unsafe_dynamic_cyclic_dependency),
         }
     }
 
@@ -356,7 +357,6 @@ fn test() {
         // (r#"import { bar } from "./flow-types-depth-one""#, None),
         (r#"import { foo } from "./intermediate-ignore""#, None),
         (r#"import { foo } from "./ignore""#, None),
-        (r#"import { foo } from "./typescript/ts-types-only-importing-type";"#, None),
         (
             r#"import { foo } from "./typescript/ts-types-some-type-imports";"#,
             Some(json!([{"ignoreTypes":true}])),

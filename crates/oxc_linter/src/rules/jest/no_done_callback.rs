@@ -10,8 +10,7 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, get_node_name, parse_general_jest_fn_call, JestFnKind,
-        JestGeneralFnKind, PossibleJestNode,
+        get_node_name, parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind, PossibleJestNode,
     },
 };
 
@@ -77,10 +76,12 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoDoneCallback {
-    fn run_once(&self, ctx: &LintContext) {
-        for node in &collect_possible_jest_call_node(ctx) {
-            run(node, ctx);
-        }
+    fn run_on_jest_node<'a, 'c>(
+        &self,
+        jest_node: &PossibleJestNode<'a, 'c>,
+        ctx: &'c LintContext<'a>,
+    ) {
+        run(jest_node, ctx);
     }
 }
 

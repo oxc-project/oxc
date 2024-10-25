@@ -88,9 +88,8 @@ impl Rule for NoZeroFractions {
 
                 // Handle special cases where a space is needed after certain keywords
                 // to prevent the number from being interpreted as a property access
-                let start = number_literal.span.start.saturating_sub(6);
                 let end = number_literal.span.start;
-                let token = ctx.source_range(oxc_span::Span::new(start, end)).to_string();
+                let token = ctx.source_range(oxc_span::Span::new(0, end));
                 if token.ends_with("return")
                     || token.ends_with("throw")
                     || token.ends_with("typeof")
@@ -173,6 +172,7 @@ fn test() {
         r"function foo(){return.0}",
         r"function foo(){return.0.toString()}",
         r"function foo(){return.0+.1}",
+        "ôTest(0.)",
     ];
 
     let fix = vec![
@@ -210,6 +210,7 @@ fn test() {
         (r"void.0", r"void 0"),
         (r"function foo(){void.0.toString()}", r"function foo(){void (0).toString()}"),
         (r"function foo(){void.0+.1;}", r"function foo(){void 0+.1;}"),
+        ("ôTest(0.)", "ôTest(0)"),
     ];
 
     Tester::new(NoZeroFractions::NAME, pass, fail).expect_fix(fix).test_and_snapshot();

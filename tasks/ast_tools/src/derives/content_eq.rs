@@ -2,16 +2,17 @@ use itertools::Itertools;
 use proc_macro2::TokenStream;
 use quote::quote;
 
-use super::{define_derive, Derive, DeriveOutput};
 use crate::{
     codegen::LateCtx,
     schema::{EnumDef, GetGenerics, StructDef, ToType, TypeDef},
     util::ToIdent,
 };
 
-define_derive! {
-    pub struct DeriveContentEq;
-}
+use super::{define_derive, Derive};
+
+pub struct DeriveContentEq;
+
+define_derive!(DeriveContentEq);
 
 const IGNORE_FIELDS: [(/* field name */ &str, /* field type */ &str); 6] = [
     ("span", "Span"),

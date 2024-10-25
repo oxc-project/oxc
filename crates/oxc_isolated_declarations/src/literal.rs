@@ -4,7 +4,7 @@ use oxc_ast::ast::{StringLiteral, TemplateLiteral};
 use crate::IsolatedDeclarations;
 
 impl<'a> IsolatedDeclarations<'a> {
-    pub fn transform_template_to_string(
+    pub(crate) fn transform_template_to_string(
         &self,
         lit: &TemplateLiteral<'a>,
     ) -> Option<Box<'a, StringLiteral<'a>>> {

@@ -3,12 +3,15 @@ use std::{
     fmt,
 };
 
+use oxc_span::CompactStr;
 use rustc_hash::FxHashSet;
 
 use crate::{
-    options::LintPlugins, rules::RULES, AllowWarnDeny, FixKind, FrameworkFlags, LintConfig,
-    LintFilter, LintFilterKind, LintOptions, Linter, Oxlintrc, RuleCategory, RuleEnum,
-    RuleWithSeverity,
+    config::{ESLintRule, OxlintRules},
+    options::LintPlugins,
+    rules::RULES,
+    AllowWarnDeny, FixKind, FrameworkFlags, LintConfig, LintFilter, LintFilterKind, LintOptions,
+    Linter, Oxlintrc, RuleCategory, RuleEnum, RuleWithSeverity,
 };
 
 #[must_use = "You dropped your builder without building a Linter! Did you mean to call .build()?"]
@@ -243,6 +246,44 @@ impl LinterBuilder {
             })
             .map(|rule| RuleWithSeverity { rule: rule.clone(), severity: AllowWarnDeny::Warn })
             .collect()
+    }
+
+    /// # Panics
+    /// This function will panic if the `oxlintrc` is not valid JSON.
+    pub fn resolve_final_config_file(&self, oxlintrc: Oxlintrc) -> String {
+        let mut oxlintrc = oxlintrc;
+        let previous_rules = std::mem::take(&mut oxlintrc.rules);
+
+        let rule_name_to_rule = previous_rules
+            .into_iter()
+            .map(|r| (get_name(&r.plugin_name, &r.rule_name), r))
+            .collect::<rustc_hash::FxHashMap<_, _>>();
+
+        let new_rules = self
+            .rules
+            .iter()
+            .map(|r: &RuleWithSeverity| {
+                return ESLintRule {
+                    plugin_name: r.plugin_name().to_string(),
+                    rule_name: r.rule.name().to_string(),
+                    severity: r.severity,
+                    config: rule_name_to_rule
+                        .get(&get_name(r.plugin_name(), r.rule.name()))
+                        .and_then(|r| r.config.clone()),
+                };
+            })
+            .collect();
+
+        oxlintrc.rules = OxlintRules::new(new_rules);
+        serde_json::to_string_pretty(&oxlintrc).unwrap()
+    }
+}
+
+fn get_name(plugin_name: &str, rule_name: &str) -> CompactStr {
+    if plugin_name == "eslint" {
+        CompactStr::from(rule_name)
+    } else {
+        CompactStr::from(format!("{plugin_name}/{rule_name}"))
     }
 }
 

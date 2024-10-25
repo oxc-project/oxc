@@ -5,6 +5,20 @@ use serde_json::json;
 use super::NoUnusedVars;
 use crate::{tester::Tester, FixKind, RuleMeta as _};
 
+// uncomment to only run a single test. useful for step-through debugging.
+#[test]
+fn test_debug() {
+    let pass = vec![
+        (
+            "const [ a, _b, c ] = items;
+			console.log(a+c);",
+            Some(serde_json::json!([{ "destructuredArrayIgnorePattern": "^_" }])),
+        ), // { "ecmaVersion": 6 },
+    ];
+    let fail = vec![];
+    Tester::new(NoUnusedVars::NAME, pass, fail).intentionally_allow_no_fix_tests().test();
+}
+
 #[test]
 fn test_vars_simple() {
     let pass = vec![
@@ -54,6 +68,9 @@ fn test_vars_simple() {
             ",
             None,
         ),
+        ("console.log(function a() {} ? b : c)", None),
+        ("console.log(a ? function b() {} : c)", None),
+        ("console.log(a ? b : function c() {})", None),
     ];
     let fail = vec![
         ("let a = 1", None),
@@ -619,6 +636,60 @@ fn test_functions() {
 }
 
 #[test]
+fn test_self_call() {
+    let pass = vec![
+        "const _thunk = (function createThunk(count) {
+            if (count === 0) return () => count
+            return () => createThunk(count - 1)()
+        })()",
+    ];
+
+    let fail = vec![
+        // Functions that call themselves are considered unused, even if that
+        // call happens within an inner function.
+        "function foo() { return function bar() { return foo() } }",
+        // Classes that construct themselves are considered unused
+        "class Foo {
+            static createFoo() {
+                return new Foo();
+            }
+        }",
+        "class Foo {
+            static createFoo(): Foo {
+                return new Foo();
+            }
+        }",
+        "class Point {
+            public x: number;
+            public y: number;
+            public add(other): Point {
+                const p = new Point();
+                p.x = this.x + (other as Point).x;
+                p.y = this.y + (other as Point).y;
+                return p;
+            }
+        }
+        ",
+        // FIXME
+        // "class Foo {
+        //     inner: any
+        //     public foo(): Foo {
+        //         if(this.inner?.constructor.name === Foo.name) {
+        //             return this.inner;
+        //         } else {
+        //             return new Foo();
+        //         }
+        //     }
+        // }",
+    ];
+
+    Tester::new(NoUnusedVars::NAME, pass, fail)
+        .intentionally_allow_no_fix_tests()
+        .with_snapshot_suffix("oxc-self-call")
+        .test_and_snapshot();
+}
+
+#[test]
 fn test_imports() {
     let pass = vec![
         ("import { a } from 'b'; console.log(a)", None),
@@ -993,6 +1064,7 @@ fn test_type_aliases() {
         "type Foo = Foo",
         "type Foo = Array<Foo>",
         "type Unbox<B> = B extends Box<infer R> ? Unbox<R> : B",
+        "export type F<T> = T extends infer R ? /* R not used */ string : never",
     ];
 
     Tester::new(NoUnusedVars::NAME, pass, fail)
@@ -1051,13 +1123,52 @@ fn test_type_references() {
     ];
 
     let fail = vec![
+        // Type aliases
         "type T = number; function foo<T>(a: T): T { return a as T }; foo(1)",
         "type A = number; type B<A> = A; console.log(3 as B<3>)",
+        "type T = { foo: T }",
+        "type T = { foo?: T | undefined }",
+        "type A<T> = { foo: T extends Array<infer R> ? A<R> : T }",
+        "type T = { foo(): T }",
+        // Type references on class symbols within that classes' definition is
+        // not considered used
+        "class Foo {
+            private _inner: Foo | undefined;
+        }",
+        "class Foo {
+            _inner: any;
+            constructor(other: Foo);
+            constructor(somethingElse: any) {
+                this._inner = somethingElse;
+            }
+        }",
+        "class LinkedList<T> {
+            #next?: LinkedList<T>;
+            public append(other: LinkedList<T>) {
+                this.#next = other;
+            }
+        }",
+        "class LinkedList<T> {
+            #next?: LinkedList<T>;
+            public nextUnchecked(): LinkedList<T> {
+                return <LinkedList<T>>this.#next!;
+            }
+        }",
+        // FIXME: ambient classes declared using `declare` are not bound by
+        // semantic's binder.
+        // https://github.com/oxc-project/oxc/blob/a9260cf6d1b83917c7a61b25cabd2d40858b0fff/crates/oxc_semantic/src/binder.rs#L105
+        // "declare class LinkedList<T> {
+        //     next(): LinkedList<T> | undefined;
+        // }"
+
+        // Same is true for interfaces
+        "interface LinkedList<T> { next: LinkedList<T> | undefined }",
     ];
 
     Tester::new(NoUnusedVars::NAME, pass, fail)
         .intentionally_allow_no_fix_tests()
         .with_snapshot_suffix("oxc-type-references")
+        .change_rule_path_extension("ts")
         .test_and_snapshot();
 }
 

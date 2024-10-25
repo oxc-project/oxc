@@ -25,6 +25,10 @@ fn fixme() {
     Tester::new(NoUnusedVars::NAME, pass, fail).intentionally_allow_no_fix_tests().test();
 }
 
+/// !!!! STOP !!!
+/// Are you fixing a bug in this rules and want to add a test case? Please put
+/// it in `oxc.rs`. These are _only_ the test cases ported from the original
+/// ESLint rule.
 #[test]
 fn test() {
     let pass = vec![

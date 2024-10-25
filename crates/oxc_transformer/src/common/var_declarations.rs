@@ -15,7 +15,7 @@
 use std::cell::RefCell;
 
 use oxc_allocator::Vec;
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::ast::*;
 use oxc_data_structures::stack::SparseStack;
 use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
@@ -72,12 +72,10 @@ impl<'a> VarDeclarationsStore<'a> {
         &self,
         binding: &BoundIdentifier<'a>,
         init: Option<Expression<'a>>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) {
-        let ident = binding.create_binding_identifier();
-        let ident = ctx.ast.binding_pattern_kind_from_binding_identifier(ident);
-        let ident = ctx.ast.binding_pattern(ident, NONE, false);
-        self.insert_binding_pattern(ident, init, ctx);
+        let pattern = binding.create_binding_pattern(ctx);
+        self.insert_binding_pattern(pattern, init, ctx);
     }
 
     /// Add a `VariableDeclarator` to be inserted at top of current enclosing statement block,
@@ -86,7 +84,7 @@ impl<'a> VarDeclarationsStore<'a> {
         &self,
         ident: BindingPattern<'a>,
         init: Option<Expression<'a>>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) {
         let declarator =
             ctx.ast.variable_declarator(SPAN, VariableDeclarationKind::Var, ident, init, false);
@@ -94,7 +92,7 @@ impl<'a> VarDeclarationsStore<'a> {
     }
 
     /// Add a `VariableDeclarator` to be inserted at top of current enclosing statement block.
-    pub fn insert_declarator(&self, declarator: VariableDeclarator<'a>, ctx: &mut TraverseCtx<'a>) {
+    pub fn insert_declarator(&self, declarator: VariableDeclarator<'a>, ctx: &TraverseCtx<'a>) {
         let mut stack = self.stack.borrow_mut();
         stack.last_mut_or_init(|| ctx.ast.vec()).push(declarator);
     }

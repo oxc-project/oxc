@@ -5,10 +5,8 @@
 
 use oxc_allocator::{Allocator, CloneIn};
 
-#[allow(clippy::wildcard_imports)]
 use crate::number::*;
 
-#[allow(clippy::wildcard_imports)]
 use crate::operator::*;
 
 impl<'alloc> CloneIn<'alloc> for NumberBase {

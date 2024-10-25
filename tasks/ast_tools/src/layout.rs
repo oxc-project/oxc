@@ -61,18 +61,6 @@ impl KnownLayout {
         self.offsets.as_ref()
     }
 
-    pub unsafe fn set_size_unchecked(&mut self, size: usize) {
-        self.size = size;
-    }
-
-    pub unsafe fn set_align_unchecked(&mut self, align: usize) {
-        self.align = align;
-    }
-
-    pub unsafe fn set_niches_unchecked(&mut self, niches: u128) {
-        self.niches = niches;
-    }
-
     pub fn with_offsets(mut self, offsets: Vec<usize>) -> Self {
         self.offsets = Some(offsets);
         self

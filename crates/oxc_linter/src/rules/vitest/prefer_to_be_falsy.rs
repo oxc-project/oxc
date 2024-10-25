@@ -1,6 +1,6 @@
 use oxc_macros::declare_oxc_lint;
 
-use crate::{context::LintContext, rule::Rule, utils::collect_possible_jest_call_node};
+use crate::{context::LintContext, rule::Rule};
 
 use super::prefer_to_be_truthy::prefer_to_be_simply_bool;
 
@@ -38,10 +38,12 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferToBeFalsy {
-    fn run_once(&self, ctx: &LintContext) {
-        for possible_vitest_node in &collect_possible_jest_call_node(ctx) {
-            prefer_to_be_simply_bool(possible_vitest_node, ctx, false);
-        }
+    fn run_on_jest_node<'a, 'c>(
+        &self,
+        jest_node: &crate::utils::PossibleJestNode<'a, 'c>,
+        ctx: &'c LintContext<'a>,
+    ) {
+        prefer_to_be_simply_bool(jest_node, ctx, false);
     }
 }
 
@@ -100,5 +102,8 @@ fn test() {
             None,
         ),
     ];
-    Tester::new(PreferToBeFalsy::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(PreferToBeFalsy::NAME, pass, fail)
+        .expect_fix(fix)
+        .with_vitest_plugin(true)
+        .test_and_snapshot();
 }

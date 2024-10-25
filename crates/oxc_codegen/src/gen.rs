@@ -1,7 +1,6 @@
 use std::ops::Not;
 
 use cow_utils::CowUtils;
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 use oxc_syntax::{
@@ -15,17 +14,23 @@ use crate::{
     Codegen, Context, Operator,
 };
 
+/// Generate source code for an AST node.
 pub trait Gen: GetSpan {
+    /// Generate code for an AST node.
     fn gen(&self, p: &mut Codegen, ctx: Context);
 
+    /// Generate code for an AST node. Alias for `gen`.
     fn print(&self, p: &mut Codegen, ctx: Context) {
         self.gen(p, ctx);
     }
 }
 
+/// Generate source code for an expression.
 pub trait GenExpr: GetSpan {
+    /// Generate code for an expression, respecting operator precedence.
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context);
 
+    /// Generate code for an expression, respecting operator precedence. Alias for `gen_expr`.
     fn print_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         self.gen_expr(p, precedence, ctx);
     }
@@ -846,46 +851,43 @@ impl<'a> Gen for ExportNamedDeclaration<'a> {
         if self.export_kind.is_type() {
             p.print_str("type ");
         }
-        match &self.declaration {
-            Some(decl) => {
-                match decl {
-                    Declaration::VariableDeclaration(decl) => decl.print(p, ctx),
-                    Declaration::FunctionDeclaration(decl) => decl.print(p, ctx),
-                    Declaration::ClassDeclaration(decl) => decl.print(p, ctx),
-                    Declaration::TSModuleDeclaration(decl) => decl.print(p, ctx),
-                    Declaration::TSTypeAliasDeclaration(decl) => decl.print(p, ctx),
-                    Declaration::TSInterfaceDeclaration(decl) => decl.print(p, ctx),
-                    Declaration::TSEnumDeclaration(decl) => decl.print(p, ctx),
-                    Declaration::TSImportEqualsDeclaration(decl) => decl.print(p, ctx),
-                }
-                if matches!(
-                    decl,
-                    Declaration::VariableDeclaration(_)
-                        | Declaration::TSTypeAliasDeclaration(_)
-                        | Declaration::TSImportEqualsDeclaration(_)
-                ) {
-                    p.print_semicolon_after_statement();
-                } else {
-                    p.print_soft_newline();
-                    p.needs_semicolon = false;
-                }
+        if let Some(decl) = &self.declaration {
+            match decl {
+                Declaration::VariableDeclaration(decl) => decl.print(p, ctx),
+                Declaration::FunctionDeclaration(decl) => decl.print(p, ctx),
+                Declaration::ClassDeclaration(decl) => decl.print(p, ctx),
+                Declaration::TSModuleDeclaration(decl) => decl.print(p, ctx),
+                Declaration::TSTypeAliasDeclaration(decl) => decl.print(p, ctx),
+                Declaration::TSInterfaceDeclaration(decl) => decl.print(p, ctx),
+                Declaration::TSEnumDeclaration(decl) => decl.print(p, ctx),
+                Declaration::TSImportEqualsDeclaration(decl) => decl.print(p, ctx),
             }
-            None => {
-                p.print_ascii_byte(b'{');
-                if !self.specifiers.is_empty() {
-                    p.print_soft_space();
-                    p.print_list(&self.specifiers, ctx);
-                    p.print_soft_space();
-                }
-                p.print_ascii_byte(b'}');
-                if let Some(source) = &self.source {
-                    p.print_soft_space();
-                    p.print_str("from");
-                    p.print_soft_space();
-                    source.print(p, ctx);
-                }
+            if matches!(
+                decl,
+                Declaration::VariableDeclaration(_)
+                    | Declaration::TSTypeAliasDeclaration(_)
+                    | Declaration::TSImportEqualsDeclaration(_)
+            ) {
                 p.print_semicolon_after_statement();
+            } else {
+                p.print_soft_newline();
+                p.needs_semicolon = false;
             }
+        } else {
+            p.print_ascii_byte(b'{');
+            if !self.specifiers.is_empty() {
+                p.print_soft_space();
+                p.print_list(&self.specifiers, ctx);
+                p.print_soft_space();
+            }
+            p.print_ascii_byte(b'}');
+            if let Some(source) = &self.source {
+                p.print_soft_space();
+                p.print_str("from");
+                p.print_soft_space();
+                source.print(p, ctx);
+            }
+            p.print_semicolon_after_statement();
         }
     }
 }
@@ -1005,7 +1007,7 @@ impl<'a> GenExpr for Expression<'a> {
         match self {
             Self::BooleanLiteral(lit) => lit.print(p, ctx),
             Self::NullLiteral(lit) => lit.print(p, ctx),
-            Self::NumericLiteral(lit) => lit.print(p, ctx),
+            Self::NumericLiteral(lit) => lit.print_expr(p, precedence, ctx),
             Self::BigIntLiteral(lit) => lit.print(p, ctx),
             Self::RegExpLiteral(lit) => lit.print(p, ctx),
             Self::StringLiteral(lit) => lit.print(p, ctx),
@@ -1102,90 +1104,52 @@ impl Gen for NullLiteral {
     }
 }
 
-// Need a space before "." if it could be parsed as a decimal point.
-fn need_space_before_dot(s: &str, p: &mut Codegen) {
-    if !s.bytes().any(|b| matches!(b, b'.' | b'e' | b'x')) {
-        p.need_space_before_dot = p.code_len();
-    }
-}
-
-impl<'a> Gen for NumericLiteral<'a> {
-    #[allow(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
-    fn gen(&self, p: &mut Codegen, _ctx: Context) {
+impl<'a> GenExpr for NumericLiteral<'a> {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         p.add_source_mapping(self.span.start);
-        if !p.options.minify && !self.raw.is_empty() {
+        let value = self.value;
+        if ctx.contains(Context::TYPESCRIPT) {
             p.print_str(self.raw);
-            need_space_before_dot(self.raw, p);
-        } else if self.value != f64::INFINITY {
+        } else if value.is_nan() {
             p.print_space_before_identifier();
-            let abs_value = self.value.abs();
-            if self.value.is_sign_negative() {
-                p.print_space_before_operator(Operator::Unary(UnaryOperator::UnaryNegation));
-                p.print_str("-");
-            }
-            let result = get_minified_number(abs_value);
-            let bytes = result.as_str();
-            p.print_str(bytes);
-            need_space_before_dot(bytes, p);
-        } else if self.value == f64::INFINITY && self.raw.is_empty() {
-            p.print_str("Infinity");
-            need_space_before_dot("Infinity", p);
+            p.print_str("NaN");
+        } else if value.is_infinite() {
+            let wrap = (p.options.minify && precedence >= Precedence::Multiply)
+                || (value.is_sign_negative() && precedence >= Precedence::Prefix);
+            p.wrap(wrap, |p| {
+                if value.is_sign_negative() {
+                    p.print_space_before_operator(Operator::Unary(UnaryOperator::UnaryNegation));
+                    p.print_ascii_byte(b'-');
+                } else {
+                    p.print_space_before_identifier();
+                }
+                if p.options.minify {
+                    p.print_str("1/0");
+                } else {
+                    p.print_str("Infinity");
+                }
+            });
+        } else if value.is_sign_positive() {
+            p.print_space_before_identifier();
+            p.print_non_negative_float(value);
+        } else if precedence >= Precedence::Prefix {
+            p.print_str("(-");
+            p.print_non_negative_float(value.abs());
+            p.print_ascii_byte(b')');
         } else {
-            p.print_str(self.raw);
-            need_space_before_dot(self.raw, p);
-        };
-    }
-}
-
-// https://github.com/terser/terser/blob/c5315c3fd6321d6b2e076af35a70ef532f498505/lib/output.js#L2418
-#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_possible_wrap)]
-fn get_minified_number(num: f64) -> String {
-    use oxc_syntax::number::ToJsString;
-    if num < 1000.0 && num.fract() == 0.0 {
-        return num.to_js_string();
-    }
-
-    let mut s = num.to_js_string();
-
-    if s.starts_with("0.") {
-        s = s[1..].to_string();
-    }
-
-    s = s.cow_replacen("e+", "e", 1).to_string();
-
-    let mut candidates = vec![s.clone()];
-
-    if num.fract() == 0.0 {
-        candidates.push(format!("0x{:x}", num as u128));
-    }
-
-    if s.starts_with(".0") {
-        // create `1e-2`
-        if let Some((i, _)) = s[1..].bytes().enumerate().find(|(_, c)| *c != b'0') {
-            let len = i + 1; // `+1` to include the dot.
-            let digits = &s[len..];
-            candidates.push(format!("{digits}e-{}", digits.len() + len - 1));
+            p.print_space_before_operator(Operator::Unary(UnaryOperator::UnaryNegation));
+            p.print_ascii_byte(b'-');
+            p.print_non_negative_float(value.abs());
         }
-    } else if s.ends_with('0') {
-        // create 1e2
-        if let Some((len, _)) = s.bytes().rev().enumerate().find(|(_, c)| *c != b'0') {
-            candidates.push(format!("{}e{len}", &s[0..s.len() - len]));
-        }
-    } else if let Some((integer, point, exponent)) =
-        s.split_once('.').and_then(|(a, b)| b.split_once('e').map(|e| (a, e.0, e.1)))
-    {
-        // `1.2e101` -> ("1", "2", "101")
-        candidates.push(format!(
-            "{integer}{point}e{}",
-            exponent.parse::<isize>().unwrap() - point.len() as isize
-        ));
     }
-
-    candidates.into_iter().min_by_key(String::len).unwrap()
 }
 
 impl<'a> Gen for BigIntLiteral<'a> {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
+        if self.raw.starts_with('-') {
+            p.print_space_before_operator(Operator::Unary(UnaryOperator::UnaryNegation));
+        }
+        p.print_space_before_identifier();
         p.add_source_mapping(self.span.start);
         p.print_str(self.raw.as_str());
     }
@@ -1383,13 +1347,15 @@ impl<'a> GenExpr for CallExpression<'a> {
                 type_parameters.print(p, ctx);
             }
             p.print_ascii_byte(b'(');
-            let has_comment = (self.span.end > 0 && p.has_comment(self.span.end - 1))
+            let has_comment_before_right_paren =
+                self.span.end > 0 && p.has_comment(self.span.end - 1);
+            let has_comment = has_comment_before_right_paren
                 || self.arguments.iter().any(|item| p.has_comment(item.span().start));
             if has_comment {
                 p.indent();
                 p.print_list_with_comments(&self.arguments, ctx);
                 // Handle `/* comment */);`
-                if !p.print_expr_comments(self.span.end - 1) {
+                if !has_comment_before_right_paren || !p.print_expr_comments(self.span.end - 1) {
                     p.print_soft_newline();
                 }
                 p.dedent();
@@ -1559,20 +1525,34 @@ impl<'a> Gen for ObjectProperty<'a> {
 
         let mut shorthand = false;
         if let PropertyKey::StaticIdentifier(key) = &self.key {
-            if let Expression::Identifier(ident) = self.value.without_parentheses() {
-                if key.name == p.get_identifier_reference_name(ident) && key.name != "__proto__" {
+            if key.name == "__proto__" {
+                shorthand = self.shorthand;
+            } else if let Expression::Identifier(ident) = self.value.without_parentheses() {
+                if key.name == p.get_identifier_reference_name(ident) {
                     shorthand = true;
                 }
             }
         }
 
-        if self.computed {
+        let mut computed = self.computed;
+
+        // "{ -1: 0 }" must be printed as "{ [-1]: 0 }"
+        // "{ 1/0: 0 }" must be printed as "{ [1/0]: 0 }"
+        if !computed {
+            if let Some(Expression::NumericLiteral(n)) = self.key.as_expression() {
+                if n.value.is_sign_negative() || n.value.is_infinite() {
+                    computed = true;
+                }
+            }
+        }
+
+        if computed {
             p.print_ascii_byte(b'[');
         }
         if !shorthand {
             self.key.print(p, ctx);
         }
-        if self.computed {
+        if computed {
             p.print_ascii_byte(b']');
         }
         if !shorthand {
@@ -1721,7 +1701,7 @@ impl<'a> GenExpr for PrivateInExpression<'a> {
         p.wrap(precedence >= Precedence::Compare, |p| {
             self.left.print(p, ctx);
             p.print_str(" in ");
-            self.right.print_expr(p, Precedence::Equals, Context::empty());
+            self.right.print_expr(p, Precedence::Equals, Context::FORBID_IN);
         });
     }
 }
@@ -1958,7 +1938,8 @@ impl<'a> GenExpr for SequenceExpression<'a> {
 impl<'a> GenExpr for ImportExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         let wrap = precedence >= Precedence::New || ctx.intersects(Context::FORBID_CALL);
-        let has_comment = (self.span.end > 0 && p.has_comment(self.span.end - 1))
+        let has_comment_before_right_paren = self.span.end > 0 && p.has_comment(self.span.end - 1);
+        let has_comment = has_comment_before_right_paren
             || p.has_comment(self.source.span().start)
             || self.arguments.first().is_some_and(|argument| p.has_comment(argument.span().start));
 
@@ -2840,6 +2821,7 @@ impl<'a> Gen for TSTypeAnnotation<'a> {
 
 impl<'a> Gen for TSType<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
+        let ctx = ctx.with_typescript();
         match self {
             Self::TSFunctionType(ty) => ty.print(p, ctx),
             Self::TSConstructorType(ty) => ty.print(p, ctx),
@@ -3159,7 +3141,7 @@ impl<'a> Gen for TSLiteral<'a> {
         match self {
             Self::BooleanLiteral(decl) => decl.print(p, ctx),
             Self::NullLiteral(decl) => decl.print(p, ctx),
-            Self::NumericLiteral(decl) => decl.print(p, ctx),
+            Self::NumericLiteral(decl) => decl.print_expr(p, Precedence::Lowest, ctx),
             Self::BigIntLiteral(decl) => decl.print(p, ctx),
             Self::RegExpLiteral(decl) => decl.print(p, ctx),
             Self::StringLiteral(decl) => decl.print(p, ctx),
@@ -3615,7 +3597,9 @@ impl<'a> Gen for TSEnumMember<'a> {
             TSEnumMemberName::StaticIdentifier(decl) => decl.print(p, ctx),
             TSEnumMemberName::StaticStringLiteral(decl) => decl.print(p, ctx),
             TSEnumMemberName::StaticTemplateLiteral(decl) => decl.print(p, ctx),
-            TSEnumMemberName::StaticNumericLiteral(decl) => decl.print(p, ctx),
+            TSEnumMemberName::StaticNumericLiteral(decl) => {
+                decl.print_expr(p, Precedence::Lowest, ctx);
+            }
             decl @ match_expression!(TSEnumMemberName) => {
                 p.print_str("[");
                 decl.to_expression().print_expr(p, Precedence::Lowest, ctx);

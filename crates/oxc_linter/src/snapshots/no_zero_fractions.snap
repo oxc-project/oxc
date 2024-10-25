@@ -168,3 +168,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ──
    ╰────
   help: Replace the number literal with `0`
+
+  ⚠ eslint-plugin-unicorn(no-zero-fractions): Don't use a dangling dot in the number.
+   ╭─[no_zero_fractions.tsx:1:8]
+ 1 │ ôTest(0.)
+   ·       ──
+   ╰────
+  help: Replace the number literal with `0`

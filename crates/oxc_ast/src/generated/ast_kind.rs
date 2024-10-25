@@ -1,9 +1,11 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/ast_kind.rs`
 
+#![allow(missing_docs)]
+// FIXME (in ast_tools/src/generators/ast_kind.rs)
+
 use oxc_span::{GetSpan, Span};
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::*;
 
 #[derive(Debug, Clone, Copy)]
@@ -75,7 +77,6 @@ pub enum AstType {
     LabeledStatement,
     ThrowStatement,
     TryStatement,
-    FinallyClause,
     CatchClause,
     CatchParameter,
     DebuggerStatement,
@@ -90,7 +91,6 @@ pub enum AstType {
     ArrowFunctionExpression,
     YieldExpression,
     Class,
-    ClassHeritage,
     ClassBody,
     MethodDefinition,
     PropertyDefinition,
@@ -175,7 +175,6 @@ pub enum AstType {
     JSXSpreadAttribute,
     JSXIdentifier,
     JSXText,
-    ExpressionArrayElement,
 }
 
 /// Untyped AST Node Kind
@@ -248,7 +247,6 @@ pub enum AstKind<'a> {
     LabeledStatement(&'a LabeledStatement<'a>),
     ThrowStatement(&'a ThrowStatement<'a>),
     TryStatement(&'a TryStatement<'a>),
-    FinallyClause(&'a BlockStatement<'a>),
     CatchClause(&'a CatchClause<'a>),
     CatchParameter(&'a CatchParameter<'a>),
     DebuggerStatement(&'a DebuggerStatement),
@@ -263,7 +261,6 @@ pub enum AstKind<'a> {
     ArrowFunctionExpression(&'a ArrowFunctionExpression<'a>),
     YieldExpression(&'a YieldExpression<'a>),
     Class(&'a Class<'a>),
-    ClassHeritage(&'a Expression<'a>),
     ClassBody(&'a ClassBody<'a>),
     MethodDefinition(&'a MethodDefinition<'a>),
     PropertyDefinition(&'a PropertyDefinition<'a>),
@@ -348,7 +345,6 @@ pub enum AstKind<'a> {
     JSXSpreadAttribute(&'a JSXSpreadAttribute<'a>),
     JSXIdentifier(&'a JSXIdentifier<'a>),
     JSXText(&'a JSXText<'a>),
-    ExpressionArrayElement(&'a Expression<'a>),
 }
 
 impl<'a> GetSpan for AstKind<'a> {
@@ -422,7 +418,6 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::LabeledStatement(it) => it.span(),
             Self::ThrowStatement(it) => it.span(),
             Self::TryStatement(it) => it.span(),
-            Self::FinallyClause(it) => it.span(),
             Self::CatchClause(it) => it.span(),
             Self::CatchParameter(it) => it.span(),
             Self::DebuggerStatement(it) => it.span(),
@@ -437,7 +432,6 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::ArrowFunctionExpression(it) => it.span(),
             Self::YieldExpression(it) => it.span(),
             Self::Class(it) => it.span(),
-            Self::ClassHeritage(it) => it.span(),
             Self::ClassBody(it) => it.span(),
             Self::MethodDefinition(it) => it.span(),
             Self::PropertyDefinition(it) => it.span(),
@@ -522,7 +516,6 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::JSXSpreadAttribute(it) => it.span(),
             Self::JSXIdentifier(it) => it.span(),
             Self::JSXText(it) => it.span(),
-            Self::ExpressionArrayElement(it) => it.span(),
         }
     }
 }
@@ -1132,15 +1125,6 @@ impl<'a> AstKind<'a> {
     }
 
     #[inline]
-    pub fn as_finally_clause(&self) -> Option<&'a BlockStatement<'a>> {
-        if let Self::FinallyClause(v) = self {
-            Some(*v)
-        } else {
-            None
-        }
-    }
-
-    #[inline]
     pub fn as_catch_clause(&self) -> Option<&'a CatchClause<'a>> {
         if let Self::CatchClause(v) = self {
             Some(*v)
@@ -1260,15 +1244,6 @@ impl<'a> AstKind<'a> {
     #[inline]
     pub fn as_class(&self) -> Option<&'a Class<'a>> {
         if let Self::Class(v) = self {
-            Some(*v)
-        } else {
-            None
-        }
-    }
-
-    #[inline]
-    pub fn as_class_heritage(&self) -> Option<&'a Expression<'a>> {
-        if let Self::ClassHeritage(v) = self {
             Some(*v)
         } else {
             None
@@ -2029,15 +2004,6 @@ impl<'a> AstKind<'a> {
     #[inline]
     pub fn as_jsx_text(&self) -> Option<&'a JSXText<'a>> {
         if let Self::JSXText(v) = self {
-            Some(*v)
-        } else {
-            None
-        }
-    }
-
-    #[inline]
-    pub fn as_expression_array_element(&self) -> Option<&'a Expression<'a>> {
-        if let Self::ExpressionArrayElement(v) = self {
             Some(*v)
         } else {
             None

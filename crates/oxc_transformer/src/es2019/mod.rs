@@ -1,10 +1,11 @@
+use oxc_ast::ast::*;
+use oxc_traverse::{Traverse, TraverseCtx};
+
 mod optional_catch_binding;
 mod options;
 
 pub use optional_catch_binding::OptionalCatchBinding;
 pub use options::ES2019Options;
-use oxc_ast::ast::*;
-use oxc_traverse::{Traverse, TraverseCtx};
 
 pub struct ES2019 {
     options: ES2019Options,

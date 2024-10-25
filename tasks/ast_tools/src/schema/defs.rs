@@ -1,11 +1,16 @@
 use serde::Serialize;
+use syn::Ident;
 
-use super::{with_either, TypeName};
 use crate::{
-    markers::{DeriveAttributes, ScopeAttribute, ScopeMarkers, VisitMarkers},
+    markers::{
+        DeriveAttributes, ESTreeEnumAttribute, ESTreeStructAttribute, ScopeAttribute, ScopeMarkers,
+        VisitMarkers,
+    },
     util::{ToIdent, TypeAnalysis, TypeWrapper},
     TypeId,
 };
+
+use super::{with_either, TypeName};
 
 #[derive(Debug, Serialize)]
 #[serde(untagged)]
@@ -19,7 +24,7 @@ impl TypeDef {
         with_either!(self, it => it.id)
     }
 
-    pub fn name(&self) -> &String {
+    pub fn name(&self) -> &str {
         with_either!(self, it => &it.name)
     }
 
@@ -60,7 +65,7 @@ pub struct StructDef {
     #[serde(skip)]
     pub generated_derives: Vec<String>,
     #[serde(skip)]
-    pub markers: OuterMarkers,
+    pub markers: StructOuterMarkers,
     #[serde(skip)]
     pub module_path: String,
 }
@@ -84,6 +89,8 @@ pub struct EnumDef {
     pub generated_derives: Vec<String>,
     #[serde(skip)]
     pub module_path: String,
+    #[serde(skip)]
+    pub markers: EnumOuterMarkers,
 }
 
 impl EnumDef {
@@ -115,7 +122,7 @@ pub struct VariantDef {
 }
 
 impl VariantDef {
-    pub fn ident(&self) -> syn::Ident {
+    pub fn ident(&self) -> Ident {
         self.name.to_ident()
     }
 
@@ -171,7 +178,7 @@ impl From<&syn::Visibility> for Visibility {
 }
 
 impl FieldDef {
-    pub fn ident(&self) -> Option<syn::Ident> {
+    pub fn ident(&self) -> Option<Ident> {
         self.name.as_ref().map(ToIdent::to_ident)
     }
 }
@@ -226,8 +233,14 @@ impl TypeRef {
 }
 
 #[derive(Debug)]
-pub struct OuterMarkers {
+pub struct StructOuterMarkers {
     pub scope: Option<ScopeAttribute>,
+    pub estree: Option<ESTreeStructAttribute>,
+}
+
+#[derive(Debug)]
+pub struct EnumOuterMarkers {
+    pub estree: ESTreeEnumAttribute,
 }
 
 #[derive(Debug, Serialize)]

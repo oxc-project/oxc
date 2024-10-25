@@ -1,31 +1,24 @@
 import { promises as fsPromises } from 'node:fs';
 
-import {
-  commands,
-  ConfigurationTarget,
-  ExtensionContext,
-  StatusBarAlignment,
-  StatusBarItem,
-  ThemeColor,
-  window,
-  workspace,
-} from 'vscode';
+import { commands, ExtensionContext, StatusBarAlignment, StatusBarItem, ThemeColor, window, workspace } from 'vscode';
 
 import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
 
 import { join } from 'node:path';
+import { ConfigService } from './config';
 
 const languageClientId = 'oxc-vscode';
 const languageClientName = 'oxc';
-const outputChannelName = 'oxc_language_server';
-const traceOutputChannelName = 'oxc_language_server.trace';
+const outputChannelName = 'Oxc';
+const traceOutputChannelName = 'Oxc (Trace)';
+const commandPrefix = 'oxc';
 
 const enum OxcCommands {
-  RestartServer = 'oxc.restartServer',
-  ApplyAllFixes = 'oxc.applyAllFixes',
-  ShowOutputChannel = 'oxc.showOutputChannel',
-  ShowTraceOutputChannel = 'oxc.showTraceOutputChannel',
-  ToggleEnable = 'oxc.toggleEnable',
+  RestartServer = `${commandPrefix}.restartServer`,
+  ApplyAllFixes = `${commandPrefix}.applyAllFixes`,
+  ShowOutputChannel = `${commandPrefix}.showOutputChannel`,
+  ShowTraceOutputChannel = `${commandPrefix}.showTraceOutputChannel`,
+  ToggleEnable = `${commandPrefix}.toggleEnable`,
 }
 
 let client: LanguageClient;
@@ -33,6 +26,7 @@ let client: LanguageClient;
 let myStatusBarItem: StatusBarItem;
 
 export async function activate(context: ExtensionContext) {
+  const config = new ConfigService();
   const restartCommand = commands.registerCommand(
     OxcCommands.RestartServer,
     async () => {
@@ -72,13 +66,7 @@ export async function activate(context: ExtensionContext) {
   const toggleEnable = commands.registerCommand(
     OxcCommands.ToggleEnable,
     () => {
-      let enabled = workspace
-        .getConfiguration('oxc_language_server')
-        .get('enable');
-      let nextState = !enabled;
-      workspace
-        .getConfiguration('oxc_language_server')
-        .update('enable', nextState, ConfigurationTarget.Global);
+      config.enable = !config.enable;
     },
   );
 
@@ -87,15 +75,14 @@ export async function activate(context: ExtensionContext) {
     showOutputCommand,
     showTraceOutputCommand,
     toggleEnable,
+    config,
   );
 
   const outputChannel = window.createOutputChannel(outputChannelName);
   const traceOutputChannel = window.createOutputChannel(traceOutputChannelName);
 
   async function findBinary(): Promise<string> {
-    const cfg = workspace.getConfiguration('oxc');
-
-    let bin = cfg.get<string>('binPath', '');
+    let bin = config.binPath;
     if (bin) {
       try {
         await fsPromises.access(bin);
@@ -149,9 +136,6 @@ export async function activate(context: ExtensionContext) {
   // If the extension is launched in debug mode then the debug server options are used
   // Otherwise the run options are used
   // Options to control the language client
-  let clientConfig: any = JSON.parse(
-    JSON.stringify(workspace.getConfiguration('oxc_language_server')),
-  );
   let clientOptions: LanguageClientOptions = {
     // Register the server for plain text documents
     documentSelector: [
@@ -170,7 +154,7 @@ export async function activate(context: ExtensionContext) {
       fileEvents: workspace.createFileSystemWatcher('**/.clientrc'),
     },
     initializationOptions: {
-      settings: clientConfig,
+      settings: config.toLanguageServerConfig(),
     },
     outputChannel,
     traceOutputChannel,
@@ -190,17 +174,11 @@ export async function activate(context: ExtensionContext) {
     });
   });
 
-  workspace.onDidChangeConfiguration((e) => {
-    let isAffected = e.affectsConfiguration('oxc_language_server');
-    if (!isAffected) {
-      return;
-    }
-    let settings: any = JSON.parse(
-      JSON.stringify(workspace.getConfiguration('oxc_language_server')),
-    );
+  config.onConfigChange = function onConfigChange() {
+    let settings: any = JSON.parse(JSON.stringify(this));
     updateStatsBar(settings.enable);
     client.sendNotification('workspace/didChangeConfiguration', { settings });
-  });
+  };
 
   function updateStatsBar(enable: boolean) {
     if (!myStatusBarItem) {
@@ -221,7 +199,7 @@ export async function activate(context: ExtensionContext) {
 
     myStatusBarItem.backgroundColor = bgColor;
   }
-  updateStatsBar(clientConfig.enable);
+  updateStatsBar(config.enable);
   client.start();
 }
 

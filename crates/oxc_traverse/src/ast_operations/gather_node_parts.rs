@@ -4,7 +4,6 @@
 //!
 //! This trait is used to gather all the parts of a node that are identifiers.
 
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 use oxc_ecmascript::BoundNames;
 

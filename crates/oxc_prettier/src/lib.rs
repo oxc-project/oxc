@@ -1,8 +1,7 @@
+#![allow(unused, clippy::unused_self)]
 //! Prettier
 //!
 //! A port of <https://github.com/prettier/prettier>
-
-#![allow(unused, clippy::wildcard_imports, clippy::unused_self)]
 
 mod binaryish;
 mod comments;
@@ -130,7 +129,7 @@ impl<'a> Prettier<'a> {
     }
 
     pub fn semi(&self) -> Option<Doc<'a>> {
-        self.options.semi.then(|| Doc::Str(";"))
+        self.options.semi.then_some(Doc::Str(";"))
     }
 
     pub fn should_print_es5_comma(&self) -> bool {

@@ -4,6 +4,25 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.10.1] - 2024-10-21
+
+### Bug Fixes
+
+- 1bcd707 editor: Update config sent to language server (#6724) (Nicholas Rayburn)
+
+## [0.10.0] - 2024-10-18
+
+- 7f6b219 editor/vscode: [**BREAKING**] Unify configuration logic (#6630) (DonIsaac)
+
+### Features
+
+
+### Bug Fixes
+
+- cf92730 editor: Use human-readable output channel names (#6629) (DonIsaac)
+- d9159a2 editor: Misaligned command prefixes (#6628) (DonIsaac)
+- b9c94bb editors/vscode: Temporarily solve oxc_language_server issue on windows (#6384) (dalaoshu)
+
 ## [0.9.10] - 2024-10-07
 
 ### Features

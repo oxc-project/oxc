@@ -93,29 +93,41 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
 
     /// Replace a `target` AST node with the source code of a `replacement` node..
     pub fn replace_with<T: GetSpan, S: GetSpan>(&self, target: &T, replacement: &S) -> RuleFix<'a> {
-        let replacement_text = self.ctx.source_range(replacement.span());
-        let fix = Fix::new(replacement_text, target.span());
-        let message = self.auto_message.then(|| {
-            let target_text = self.possibly_truncate_range(target.span());
-            let borrowed_replacement = Cow::Borrowed(replacement_text);
-            let replacement_text = self.possibly_truncate_snippet(&borrowed_replacement);
-            Cow::Owned(format!("Replace `{target_text}` with `{replacement_text}`."))
-        });
+        // use an inner function to avoid megamorphic bloat
+        fn inner<'a>(fixer: &RuleFixer<'_, 'a>, target: Span, replacement: Span) -> RuleFix<'a> {
+            let replacement_text = fixer.ctx.source_range(replacement);
+            let fix = Fix::new(replacement_text, target);
+            let message = fixer.auto_message.then(|| {
+                let target_text = fixer.possibly_truncate_range(target);
+                let borrowed_replacement = Cow::Borrowed(replacement_text);
+                let replacement_text = fixer.possibly_truncate_snippet(&borrowed_replacement);
+                Cow::Owned(format!("Replace `{target_text}` with `{replacement_text}`."))
+            });
 
-        self.new_fix(CompositeFix::Single(fix), message)
+            fixer.new_fix(CompositeFix::Single(fix), message)
+        }
+        inner(self, target.span(), replacement.span())
     }
 
     /// Replace a `target` AST node with a `replacement` string.
     #[allow(clippy::unused_self)]
     pub fn replace<S: Into<Cow<'a, str>>>(&self, target: Span, replacement: S) -> RuleFix<'a> {
-        let fix = Fix::new(replacement, target);
-        let target_text = self.possibly_truncate_range(target);
-        let content = self.possibly_truncate_snippet(&fix.content);
-        let message = self
-            .auto_message
-            .then(|| Cow::Owned(format!("Replace `{target_text}` with `{content}`.")));
+        // use an inner function to avoid megamorphic bloat
+        fn inner<'a>(
+            fixer: &RuleFixer<'_, 'a>,
+            target: Span,
+            replacement: Cow<'a, str>,
+        ) -> RuleFix<'a> {
+            let fix = Fix::new(replacement, target);
+            let target_text = fixer.possibly_truncate_range(target);
+            let content = fixer.possibly_truncate_snippet(&fix.content);
+            let message = fixer
+                .auto_message
+                .then(|| Cow::Owned(format!("Replace `{target_text}` with `{content}`.")));
 
-        self.new_fix(CompositeFix::Single(fix), message)
+            fixer.new_fix(CompositeFix::Single(fix), message)
+        }
+        inner(self, target, replacement.into())
     }
 
     /// Creates a fix command that inserts text before the given node.
@@ -125,7 +137,7 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
         target: &T,
         text: S,
     ) -> RuleFix<'a> {
-        self.insert_text_before_range(target.span(), text)
+        self.insert_text_at(target.span().start, text.into())
     }
 
     /// Creates a fix command that inserts text before the specified range in the source text.
@@ -135,7 +147,7 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
         span: Span,
         text: S,
     ) -> RuleFix<'a> {
-        self.insert_text_at(span.start, text)
+        self.insert_text_at(span.start, text.into())
     }
 
     /// Creates a fix command that inserts text after the given node.
@@ -145,7 +157,7 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
         target: &T,
         text: S,
     ) -> RuleFix<'a> {
-        self.insert_text_after_range(target.span(), text)
+        self.insert_text_at(target.span().end, text.into())
     }
 
     /// Creates a fix command that inserts text after the specified range in the source text.
@@ -155,12 +167,12 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
         span: Span,
         text: S,
     ) -> RuleFix<'a> {
-        self.insert_text_at(span.end, text)
+        self.insert_text_at(span.end, text.into())
     }
 
     /// Creates a fix command that inserts text at the specified index in the source text.
     #[allow(clippy::unused_self)]
-    fn insert_text_at<S: Into<Cow<'a, str>>>(&self, index: u32, text: S) -> RuleFix<'a> {
+    fn insert_text_at(&self, index: u32, text: Cow<'a, str>) -> RuleFix<'a> {
         let fix = Fix::new(text, Span::new(index, index));
         let content = self.possibly_truncate_snippet(&fix.content);
         let message = self.auto_message.then(|| Cow::Owned(format!("Insert `{content}`")));
@@ -168,13 +180,13 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
     }
 
     #[allow(clippy::unused_self)]
+    #[must_use]
     pub fn codegen(self) -> CodeGenerator<'a> {
         CodeGenerator::new()
             .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
     }
 
     #[allow(clippy::unused_self)]
-    #[inline]
     pub fn noop(&self) -> RuleFix<'a> {
         self.new_fix(CompositeFix::None, None)
     }

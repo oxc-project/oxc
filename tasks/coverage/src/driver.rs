@@ -9,7 +9,7 @@ use oxc::{
     diagnostics::OxcDiagnostic,
     minifier::CompressOptions,
     parser::{ParseOptions, ParserReturn},
-    regular_expression::{Parser, ParserOptions},
+    regular_expression::{LiteralParser, Options},
     semantic::{Semantic, SemanticBuilderReturn},
     span::{cmp::ContentEq, SourceType, Span},
     transformer::{TransformOptions, TransformerReturn},
@@ -166,8 +166,9 @@ impl Driver {
             };
             let printed1 = pattern.to_string();
             let flags = literal.regex.flags.to_string();
-            let options = ParserOptions::default().with_flags(&flags);
-            match Parser::new(&allocator, &printed1, options).parse() {
+            match LiteralParser::new(&allocator, &printed1, Some(&flags), Options::default())
+                .parse()
+            {
                 Ok(pattern2) => {
                     let printed2 = pattern2.to_string();
                     if !pattern2.content_eq(pattern) {

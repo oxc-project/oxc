@@ -1,6 +1,6 @@
 [package]
 name = "oxc_minifier"
-version = "0.31.0"
+version = "0.33.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -24,7 +24,7 @@ doctest = false
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
 oxc_codegen = { workspace = true }
-oxc_ecmascript = { workspace = true }
+oxc_ecmascript = { workspace = true, features = ["constant_evaluation"] }
 oxc_mangler = { workspace = true }
 oxc_parser = { workspace = true }
 oxc_semantic = { workspace = true }
@@ -33,8 +33,6 @@ oxc_syntax = { workspace = true }
 oxc_traverse = { workspace = true }
 
 cow-utils = { workspace = true }
-num-bigint = { workspace = true }
-num-traits = { workspace = true }
 
 [dev-dependencies]
 oxc_parser = { workspace = true }

@@ -1,4 +1,3 @@
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 use oxc_syntax::operator::UnaryOperator;
 
@@ -33,11 +32,11 @@ impl<'a, 'b> CheckForStateChange<'a, 'b> for Expression<'a> {
                 .expressions
                 .iter()
                 .any(|expr| expr.check_for_state_change(check_for_new_objects)),
-            Self::Identifier(_ident) =>
-            /* TODO: ident.reference_flags == ReferenceFlags::Write */
-            {
-                false
-            }
+            Self::Identifier(ident) => match ident.name.as_str() {
+                "undefined" | "NaN" | "Infinity" => false,
+                // Reference read can have a side effect.
+                _ => true,
+            },
             Self::UnaryExpression(unary_expr) => {
                 unary_expr.check_for_state_change(check_for_new_objects)
             }

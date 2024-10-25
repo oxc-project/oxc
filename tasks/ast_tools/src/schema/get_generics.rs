@@ -1,4 +1,4 @@
-use syn::parse_quote;
+use syn::{parse_quote, Generics};
 
 use super::{
     defs::{EnumDef, StructDef, TypeDef},
@@ -10,7 +10,7 @@ pub trait GetGenerics {
         false
     }
 
-    fn generics(&self) -> Option<syn::Generics> {
+    fn generics(&self) -> Option<Generics> {
         if self.has_lifetime() {
             Some(parse_quote!(<'a>))
         } else {

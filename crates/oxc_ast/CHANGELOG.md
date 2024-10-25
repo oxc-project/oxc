@@ -4,6 +4,79 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.33.0] - 2024-10-24
+
+- 718ccde ast: [**BREAKING**] Remove unused `new` methods (#6789) (overlookmotel)
+
+- 4d2d214 ast, transformer: [**BREAKING**] Remove `StringLiteral::new` method (#6788) (overlookmotel)
+
+- a1ca964 ast, parser: [**BREAKING**] Remove `NumericLiteral::new` method (#6787) (overlookmotel)
+
+- aeaa27a ast, parser, transformer, traverse: [**BREAKING**] Remove `BindingIdentifier::new` methods (#6786) (overlookmotel)
+
+- ecc9151 ast, parser, transformer, traverse: [**BREAKING**] Remove `IdentifierReference::new` methods (#6785) (overlookmotel)
+
+- c91ffbc ast, transformer: [**BREAKING**] Remove `IdentifierName::new` method (#6784) (overlookmotel)
+
+- 2bee4e2 ast, transformer: [**BREAKING**] Remove `BlockStatement::new` methods (#6783) (overlookmotel)
+
+- 1248557 ast: [**BREAKING**] Remove `AstKind::FinallyClause` (#6744) (Boshen)
+
+- 202c7f6 ast: [**BREAKING**] Remove `AstKind::ExpressionArrayElement` and `AstKind::ClassHeritage` (#6740) (Boshen)
+
+### Features
+
+- 78fee6e ast: Add `AstBuilder::*_with_scope_id` etc methods (#6760) (overlookmotel)
+- b2f3040 ast: Add `GetAddress` trait (#6652) (Dunqing)
+
+### Bug Fixes
+
+- 53049fe wasm: Remove type defs for `ArrayExpressionElement` and `Elision` (#6683) (overlookmotel)
+
+### Documentation
+
+- 63ce9be ast: Enable crate-wide warnings on missing doc comments (#6716) (DonIsaac)
+- 91651e0 ast: Fix comment for `ClassElement::r#static` (#6771) (overlookmotel)
+- c916505 ast: Fix comment of `ClassElement::r#static` (#6731) (_Kerman)
+- 46720be ast: Improve formatting of `AstBuilder` doc comments (#6756) (overlookmotel)
+- a7dd5aa ast: Enforce doc comments on AST node methods (#6714) (DonIsaac)
+- 8d27e2d ast: Enforce doc comments on generated ASTBuilder methods (#6713) (DonIsaac)
+- bad8770 ast: Enforce doc comments on JSX nodes, literal nodes, and comments (#6712) (DonIsaac)
+
+### Refactor
+
+- ab8aa2f allocator: Move `GetAddress` trait into `oxc_allocator` (#6738) (overlookmotel)
+- b66ae2e ast: Move `impl GetAddress for Statement` (#6742) (overlookmotel)
+- 0e9b695 ast: Change `plain_function` to accept `FunctionBody` as a required parameter (#6709) (Dunqing)
+- 85e69a1 ast_tools: Add line breaks to generated code for `ESTree` derive (#6680) (overlookmotel)
+- ad8e293 ast_tools: Shorten generated code for `impl Serialize` (#6684) (overlookmotel)
+- 9ba2b0e ast_tools: Move `#[allow]` attrs to top of generated files (#6679) (overlookmotel)
+- 11458a5 ast_tools: Shorten generated code by avoiding `ref` in matches (#6675) (overlookmotel)
+
+## [0.32.0] - 2024-10-19
+
+- 5200960 oxc: [**BREAKING**] Remove passing `Trivias` around (#6446) (Boshen)
+
+- 2808973 ast: [**BREAKING**] Add `Program::comments` (#6445) (Boshen)
+
+### Features
+
+- 6f22538 ecmascript: Add `ToBoolean`, `ToNumber`, `ToString` (#6502) (Boshen)
+- 590925a minifier: Finish implementing folding array expressions (#6575) (camc314)
+- e310e52 parser: Generate `Serialize` impls in ast_tools (#6404) (ottomated)
+- b5b0af9 regular_expression: Support RegExp Modifiers (#6410) (leaysgur)
+
+### Bug Fixes
+
+- 02bfbfe codegen: Preserve parenthesis for `ChainExpression` (#6430) (Dunqing)
+- a71e8a0 minifier: Preserve init variable declarations when removing `for` statements during DCE (#6551) (magic-akari)
+- 834ee2a semantic: `TSConditionalType` scope enter/exit locations (#6351) (DonIsaac)
+
+### Refactor
+
+- 073b02a ast: Type params field before params in TS function declaration types (#6391) (overlookmotel)
+- 458f8f3 ast_tools: Consistent comments on `AstBuilder` methods (#6664) (overlookmotel)
+
 ## [0.31.0] - 2024-10-08
 
 - 01b878e parser: [**BREAKING**] Use `BindingIdentifier` for `namespace` declaration names (#6003) (DonIsaac)

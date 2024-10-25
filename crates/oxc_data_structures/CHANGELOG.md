@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.32.0] - 2024-10-19
+
+### Bug Fixes
+
+- 7cc05f1 data_structures: Fix compilation failure on older Rust versions (#6526) (overlookmotel)
+
+### Documentation
+
+- de22b81 data-structures: Enable lint warnings on missing docs, and add missing doc comments (#6612) (DonIsaac)
+
 ## [0.31.0] - 2024-10-08
 
 ### Features

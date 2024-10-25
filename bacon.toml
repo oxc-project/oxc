@@ -1,0 +1,19 @@
+[jobs.example]
+command = ["just", "example"]
+allow_warnings = true
+need_stdout = true
+
+[jobs.oxlint]
+command = ["cargo", "--color", "always", "run", "-p", "oxlint"]
+allow_warnings = true
+need_stdout = true
+
+[jobs.wasm]
+command = ["just", "build-wasm", "dev"]
+allow_warnings = true
+need_stdout = true
+
+[jobs.coverage]
+command = ["cargo", "--color", "always", "run", "-p", "oxc_coverage"]
+allow_warnings = true
+need_stdout = true

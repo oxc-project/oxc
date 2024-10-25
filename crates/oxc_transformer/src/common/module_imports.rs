@@ -11,21 +11,19 @@
 //!
 //! ```rs
 //! // import { jsx as _jsx } from 'react';
-//! self.ctx.module_imports.add_import(
+//! self.ctx.module_imports.add_named_import(
 //!     Atom::from("react"),
-//!     ImportKind::new_named(Atom::from("jsx"), Atom::from("_jsx"), symbol_id)
+//!     Atom::from("jsx"),
+//!     Atom::from("_jsx"),
+//!     symbol_id
 //! );
 //!
-//! // import React from 'react';
-//! self.ctx.module_imports.add_import(
+//! // ESM: import React from 'react';
+//! // CJS: var _React = require('react');
+//! self.ctx.module_imports.add_default_import(
 //!     Atom::from("react"),
-//!     ImportKind::new_default(Atom::from("React")), symbol_id)
-//! );
-//!
-//! // var _react = require('react');
-//! self.ctx.module_imports.add_require(
-//!     Atom::from("react"),
-//!     ImportKind::new_default(Atom::from("_react"), symbol_id)
+//!     Atom::from("React"),
+//!     symbol_id
 //! );
 //! ```
 //!
@@ -195,26 +193,28 @@ impl<'a> ModuleImportsStore<'a> {
     fn get_import(
         source: Atom<'a>,
         names: Vec<Import<'a>>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> Statement<'a> {
         let specifiers = ctx.ast.vec_from_iter(names.into_iter().map(|import| match import {
             Import::Named(import) => {
                 ImportDeclarationSpecifier::ImportSpecifier(ctx.ast.alloc_import_specifier(
                     SPAN,
-                    ModuleExportName::IdentifierName(IdentifierName::new(SPAN, import.imported)),
-                    import.local.create_binding_identifier(),
+                    ModuleExportName::IdentifierName(
+                        ctx.ast.identifier_name(SPAN, import.imported),
+                    ),
+                    import.local.create_binding_identifier(ctx),
                     ImportOrExportKind::Value,
                 ))
             }
             Import::Default(local) => ImportDeclarationSpecifier::ImportDefaultSpecifier(
-                ctx.ast.alloc_import_default_specifier(SPAN, local.create_binding_identifier()),
+                ctx.ast.alloc_import_default_specifier(SPAN, local.create_binding_identifier(ctx)),
             ),
         }));
 
         let import_stmt = ctx.ast.module_declaration_import_declaration(
             SPAN,
             Some(specifiers),
-            StringLiteral::new(SPAN, source),
+            ctx.ast.string_literal(SPAN, source),
             NONE,
             ImportOrExportKind::Value,
         );

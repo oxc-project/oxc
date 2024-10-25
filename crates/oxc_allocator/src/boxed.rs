@@ -16,10 +16,16 @@ use serde::{Serialize, Serializer};
 
 use crate::Allocator;
 
-/// A Box without [`Drop`].
+/// A `Box` without [`Drop`], which stores its data in the arena allocator.
 ///
-/// This is used for over coming self-referential structs.
-/// It is a memory leak if the boxed value has a [`Drop`] implementation.
+/// Should only be used for storing AST types.
+///
+/// Must NOT be used to store types which have a [`Drop`] implementation.
+/// `T::drop` will NOT be called on the `Box`'s contents when the `Box` is dropped.
+/// If `T` owns memory outside of the arena, this will be a memory leak.
+///
+/// Note: This is not a soundness issue, as Rust does not support relying on `drop`
+/// being called to guarantee soundness.
 pub struct Box<'alloc, T: ?Sized>(NonNull<T>, PhantomData<(&'alloc (), T)>);
 
 impl<'alloc, T> Box<'alloc, T> {
@@ -155,21 +161,6 @@ where
 impl<'alloc, T: Hash> Hash for Box<'alloc, T> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.deref().hash(state);
-    }
-}
-
-/// Memory address of an AST node in arena.
-///
-/// `Address` is generated from a `Box<T>`.
-/// AST nodes in a `Box` in an arena are guaranteed to never move in memory,
-/// so this address acts as a unique identifier for the duration of the arena's existence.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Address(usize);
-
-impl<'a, T> Box<'a, T> {
-    #[inline]
-    pub fn address(&self) -> Address {
-        Address(ptr::addr_of!(**self) as usize)
     }
 }
 

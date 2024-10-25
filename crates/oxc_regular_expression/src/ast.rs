@@ -1,21 +1,14 @@
-// Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
-#![allow(non_snake_case)]
-
 use oxc_allocator::{Box, CloneIn, Vec};
 use oxc_ast_macros::ast;
+use oxc_estree::ESTree;
 use oxc_span::{cmp::ContentEq, hash::ContentHash, Atom, GetSpan, Span};
-#[cfg(feature = "serialize")]
-use serde::Serialize;
-#[cfg(feature = "serialize")]
-use tsify::Tsify;
 
 /// The root of the `PatternParser` result.
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub struct Pattern<'a> {
-    #[serde(flatten)]
+    #[estree(flatten)]
     pub span: Span,
     pub body: Disjunction<'a>,
 }
@@ -23,10 +16,9 @@ pub struct Pattern<'a> {
 /// Pile of [`Alternative`]s separated by `|`.
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub struct Disjunction<'a> {
-    #[serde(flatten)]
+    #[estree(flatten)]
     pub span: Span,
     pub body: Vec<'a, Alternative<'a>>,
 }
@@ -34,10 +26,9 @@ pub struct Disjunction<'a> {
 /// Single unit of `|` separated alternatives.
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub struct Alternative<'a> {
-    #[serde(flatten)]
+    #[estree(flatten)]
     pub span: Span,
     pub body: Vec<'a, Term<'a>>,
 }
@@ -45,8 +36,8 @@ pub struct Alternative<'a> {
 /// Single unit of [`Alternative`], containing various kinds.
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
+#[estree(untagged)]
 pub enum Term<'a> {
     // Assertion, QuantifiableAssertion
     BoundaryAssertion(Box<'a, BoundaryAssertion>) = 0,
@@ -89,8 +80,7 @@ impl<'a> GetSpan for Term<'a> {
 /// e.g. `^`, `$`, `\b`, `\B`
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub struct BoundaryAssertion {
     pub span: Span,
     pub kind: BoundaryAssertionKind,
@@ -98,8 +88,8 @@ pub struct BoundaryAssertion {
 
 #[ast]
 #[derive(Debug, Clone, PartialEq)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
+#[estree(rename_all = "camelCase")]
 pub enum BoundaryAssertionKind {
     Start = 0,
     End = 1,
@@ -111,10 +101,9 @@ pub enum BoundaryAssertionKind {
 /// e.g. `(?=...)`, `(?!...)`, `(?<=...)`, `(?<!...)`
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub struct LookAroundAssertion<'a> {
-    #[serde(flatten)]
+    #[estree(flatten)]
     pub span: Span,
     pub kind: LookAroundAssertionKind,
     pub body: Disjunction<'a>,
@@ -122,8 +111,8 @@ pub struct LookAroundAssertion<'a> {
 
 #[ast]
 #[derive(Debug, Clone, PartialEq)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
+#[estree(rename_all = "camelCase")]
 pub enum LookAroundAssertionKind {
     Lookahead = 0,
     NegativeLookahead = 1,
@@ -135,10 +124,9 @@ pub enum LookAroundAssertionKind {
 /// e.g. `a*`, `b+`, `c?`, `d{3}`, `e{4,}`, `f{5,6}`
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub struct Quantifier<'a> {
-    #[serde(flatten)]
+    #[estree(flatten)]
     pub span: Span,
     pub min: u64,
     /// `None` means no upper bound.
@@ -150,11 +138,10 @@ pub struct Quantifier<'a> {
 /// Single character.
 #[ast]
 #[derive(Debug, Clone, Copy)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub struct Character {
     /// This will be invalid position when `UnicodeMode` is disabled and `value` is a surrogate pair.
-    #[serde(flatten)]
+    #[estree(flatten)]
     pub span: Span,
     pub kind: CharacterKind,
     /// Unicode code point or UTF-16 code unit.
@@ -163,8 +150,8 @@ pub struct Character {
 
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
+#[estree(rename_all = "camelCase")]
 pub enum CharacterKind {
     ControlLetter = 0,
     HexadecimalEscape = 1,
@@ -183,18 +170,17 @@ pub enum CharacterKind {
 /// e.g. `\d`, `\D`, `\s`, `\S`, `\w`, `\W`
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub struct CharacterClassEscape {
-    #[serde(flatten)]
+    #[estree(flatten)]
     pub span: Span,
     pub kind: CharacterClassEscapeKind,
 }
 
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
+#[estree(rename_all = "camelCase")]
 pub enum CharacterClassEscapeKind {
     D = 0,
     NegativeD = 1,
@@ -208,10 +194,9 @@ pub enum CharacterClassEscapeKind {
 /// e.g. `\p{ASCII}`, `\P{ASCII}`, `\p{sc=Hiragana}`, `\P{sc=Hiragana}`
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub struct UnicodePropertyEscape<'a> {
-    #[serde(flatten)]
+    #[estree(flatten)]
     pub span: Span,
     pub negative: bool,
     /// `true` if `UnicodeSetsMode` and `name` matches unicode property of strings.
@@ -223,10 +208,9 @@ pub struct UnicodePropertyEscape<'a> {
 /// The `.`.
 #[ast]
 #[derive(Debug, Clone, Copy)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub struct Dot {
-    #[serde(flatten)]
+    #[estree(flatten)]
     pub span: Span,
 }
 
@@ -234,10 +218,9 @@ pub struct Dot {
 /// e.g. `[a-z]`, `[^A-Z]`, `[abc]`, `[a&&b&&c]`, `[[a-z]--x--y]`
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub struct CharacterClass<'a> {
-    #[serde(flatten)]
+    #[estree(flatten)]
     pub span: Span,
     pub negative: bool,
     /// `true` if:
@@ -250,8 +233,8 @@ pub struct CharacterClass<'a> {
 
 #[ast]
 #[derive(Debug, PartialEq)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
+#[estree(rename_all = "camelCase")]
 pub enum CharacterClassContentsKind {
     Union = 0,
     /// `UnicodeSetsMode` only.
@@ -262,8 +245,8 @@ pub enum CharacterClassContentsKind {
 
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
+#[estree(untagged)]
 pub enum CharacterClassContents<'a> {
     CharacterClassRange(Box<'a, CharacterClassRange>) = 0,
     CharacterClassEscape(Box<'a, CharacterClassEscape>) = 1,
@@ -293,10 +276,9 @@ impl<'a> GetSpan for CharacterClassContents<'a> {
 /// e.g. `a-z`, `A-Z`, `0-9`
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub struct CharacterClassRange {
-    #[serde(flatten)]
+    #[estree(flatten)]
     pub span: Span,
     pub min: Character,
     pub max: Character,
@@ -305,10 +287,9 @@ pub struct CharacterClassRange {
 /// `|` separated string of characters wrapped by `\q{}`.
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub struct ClassStringDisjunction<'a> {
-    #[serde(flatten)]
+    #[estree(flatten)]
     pub span: Span,
     /// `true` if body is empty or contains [`ClassString`] which `strings` is `true`.
     pub strings: bool,
@@ -318,10 +299,9 @@ pub struct ClassStringDisjunction<'a> {
 /// Single unit of [`ClassStringDisjunction`].
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub struct ClassString<'a> {
-    #[serde(flatten)]
+    #[estree(flatten)]
     pub span: Span,
     /// `true` if body is empty or contain 2 more characters.
     pub strings: bool,
@@ -332,10 +312,9 @@ pub struct ClassString<'a> {
 /// e.g. `(...)`, `(?<name>...)`
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub struct CapturingGroup<'a> {
-    #[serde(flatten)]
+    #[estree(flatten)]
     pub span: Span,
     /// Group name to be referenced by [`NamedReference`].
     pub name: Option<Atom<'a>>,
@@ -346,10 +325,9 @@ pub struct CapturingGroup<'a> {
 /// e.g. `(?:...)`
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub struct IgnoreGroup<'a> {
-    #[serde(flatten)]
+    #[estree(flatten)]
     pub span: Span,
     pub modifiers: Option<Modifiers>,
     pub body: Disjunction<'a>,
@@ -359,10 +337,9 @@ pub struct IgnoreGroup<'a> {
 /// e.g. `i` in `(?i:...)`, `-s` in `(?-s:...)`
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub struct Modifiers {
-    #[serde(flatten)]
+    #[estree(flatten)]
     pub span: Span,
     pub enabling: Option<Modifier>,
     pub disabling: Option<Modifier>,
@@ -371,8 +348,7 @@ pub struct Modifiers {
 /// Each part of modifier in [`Modifiers`].
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub struct Modifier {
     pub ignore_case: bool,
     pub multiline: bool,
@@ -383,10 +359,9 @@ pub struct Modifier {
 /// e.g. `\1`, `\2`, `\3`
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub struct IndexedReference {
-    #[serde(flatten)]
+    #[estree(flatten)]
     pub span: Span,
     pub index: u32,
 }
@@ -395,10 +370,9 @@ pub struct IndexedReference {
 /// e.g. `\k<name>`
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub struct NamedReference<'a> {
-    #[serde(flatten)]
+    #[estree(flatten)]
     pub span: Span,
     pub name: Atom<'a>,
 }

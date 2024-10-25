@@ -35,6 +35,9 @@ const TYPESCRIPT_ESLINT_TEST_PATH: &str = "https://raw.githubusercontent.com/typ
 const UNICORN_TEST_PATH: &str =
     "https://raw.githubusercontent.com/sindresorhus/eslint-plugin-unicorn/main/test";
 
+const IMPORT_TEST_PATH: &str =
+    "https://raw.githubusercontent.com/import-js/eslint-plugin-import/main/tests/src/rules";
+
 const REACT_TEST_PATH: &str =
     "https://raw.githubusercontent.com/jsx-eslint/eslint-plugin-react/master/tests/lib/rules";
 
@@ -596,6 +599,7 @@ pub enum RuleKind {
     Jest,
     Typescript,
     Unicorn,
+    Import,
     React,
     ReactPerf,
     JSXA11y,
@@ -615,6 +619,7 @@ impl RuleKind {
             "jest" => Self::Jest,
             "typescript" => Self::Typescript,
             "unicorn" => Self::Unicorn,
+            "import" => Self::Import,
             "react" => Self::React,
             "react-perf" => Self::ReactPerf,
             "jsx-a11y" => Self::JSXA11y,
@@ -638,6 +643,7 @@ impl Display for RuleKind {
             Self::Typescript => write!(f, "typescript-eslint"),
             Self::Jest => write!(f, "eslint-plugin-jest"),
             Self::Unicorn => write!(f, "eslint-plugin-unicorn"),
+            Self::Import => write!(f, "eslint-plugin-import"),
             Self::React => write!(f, "eslint-plugin-react"),
             Self::ReactPerf => write!(f, "eslint-plugin-react-perf"),
             Self::JSXA11y => write!(f, "eslint-plugin-jsx-a11y"),
@@ -668,6 +674,7 @@ fn main() {
         RuleKind::Jest => format!("{JEST_TEST_PATH}/{kebab_rule_name}.test.ts"),
         RuleKind::Typescript => format!("{TYPESCRIPT_ESLINT_TEST_PATH}/{kebab_rule_name}.test.ts"),
         RuleKind::Unicorn => format!("{UNICORN_TEST_PATH}/{kebab_rule_name}.mjs"),
+        RuleKind::Import => format!("{IMPORT_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::React => format!("{REACT_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::ReactPerf => format!("{REACT_PERF_TEST_PATH}/{kebab_rule_name}.test.ts"),
         RuleKind::JSXA11y => format!("{JSX_A11Y_TEST_PATH}/{kebab_rule_name}-test.js"),
@@ -773,4 +780,93 @@ fn main() {
     if let Err(err) = template.render(rule_kind) {
         eprintln!("failed to render {rule_name} rule template: {err}");
     }
+
+    if let Err(err) = add_rules_entry(&context, rule_kind) {
+        eprintln!("failed to add {rule_name} to rules file: {err}");
+    }
+}
+
+/// Adds a module definition for the given rule to the `rules.rs` file, and adds the rule to the
+/// `declare_all_lint_rules!` macro block.
+fn add_rules_entry(ctx: &Context, rule_kind: RuleKind) -> Result<(), Box<dyn std::error::Error>> {
+    let rules_path = "crates/oxc_linter/src/rules.rs";
+    let mut rules = std::fs::read_to_string(rules_path)?;
+
+    let mod_name = match rule_kind {
+        RuleKind::ESLint => "eslint",
+        RuleKind::Import => "import",
+        RuleKind::Typescript => "typescript",
+        RuleKind::Jest => "jest",
+        RuleKind::React => "react",
+        RuleKind::ReactPerf => "react_perf",
+        RuleKind::Unicorn => "unicorn",
+        RuleKind::JSDoc => "jsdoc",
+        RuleKind::JSXA11y => "jsx_a11y",
+        RuleKind::Oxc => "oxc",
+        RuleKind::NextJS => "nextjs",
+        RuleKind::TreeShaking => "tree_shaking",
+        RuleKind::Promise => "promise",
+        RuleKind::Vitest => "vitest",
+        RuleKind::Node => "node",
+        RuleKind::Security => "security",
+    };
+    let mod_def = format!("mod {mod_name}");
+    let Some(mod_start) = rules.find(&mod_def) else {
+        return Err(format!("failed to find '{mod_def}' in {rules_path}").into());
+    };
+    let mod_end = &rules[mod_start..]
+        .find("}\n")
+        .ok_or(format!("failed to find end of '{mod_def}' module in {rules_path}"))?;
+    let mod_rules = &rules[mod_start..(*mod_end + mod_start)];
+
+    // find the rule name (`pub mod xyz;`) that comes alphabetically before the new rule mod def,
+    // otherwise just append it to the mod.
+    let rule_mod_def = format!("pub mod {};", ctx.kebab_rule_name);
+    let rule_mod_def_start = mod_rules
+        .lines()
+        .filter_map(|line| line.split_once("pub mod ").map(|(_, rest)| rest))
+        .position(|rule_mod| rule_mod < &rule_mod_def)
+        .map(|i| i + 1)
+        .and_then(|i| rules[mod_start + i..].find("pub mod ").map(|j| i + j))
+        .ok_or(format!(
+            "failed to find where to insert the new rule mod def ({rule_mod_def}) in {rules_path}"
+        ))?;
+
+    rules.insert_str(
+        mod_start + rule_mod_def_start,
+        &format!("    pub mod {};\n", ctx.snake_rule_name),
+    );
+
+    // then, insert `{mod_name}::{rule_name};` in the `declare_all_lint_rules!` macro block
+    // in the correct position, alphabetically.
+    let declare_all_lint_rules_start = rules
+        .find("declare_all_lint_rules!")
+        .ok_or(format!("failed to find 'declare_all_lint_rules!' in {rules_path}"))?;
+    let rule_def = format!("{mod_name}::{};", ctx.snake_rule_name);
+    let rule_def_start = rules[declare_all_lint_rules_start..]
+        .lines()
+        .filter_map(|line| line.trim().split_once("::"))
+        .find_map(|(plugin, rule)| {
+            if plugin == mod_name && rule > &ctx.kebab_rule_name {
+                let def = format!("{plugin}::{rule}");
+                rules.find(&def)
+            } else {
+                None
+            }
+        })
+        .ok_or(format!(
+            "failed to find where to insert the new rule def ({rule_def}) in {rules_path}"
+        ))?;
+    rules.insert_str(
+        rule_def_start,
+        &format!(
+            "{mod_name}::{rule_name},\n    ",
+            mod_name = mod_name,
+            rule_name = ctx.snake_rule_name
+        ),
+    );
+
+    std::fs::write(rules_path, rules)?;
+
+    Ok(())
 }

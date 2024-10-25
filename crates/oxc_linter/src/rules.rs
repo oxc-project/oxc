@@ -272,6 +272,7 @@ mod react_perf {
 
 mod unicorn {
     pub mod catch_error_name;
+    pub mod consistent_empty_array_spread;
     pub mod consistent_function_scoping;
     pub mod empty_brace_spaces;
     pub mod error_message;
@@ -333,6 +334,7 @@ mod unicorn {
     pub mod prefer_event_target;
     pub mod prefer_includes;
     pub mod prefer_logical_operator_over_ternary;
+    pub mod prefer_math_min_max;
     pub mod prefer_math_trunc;
     pub mod prefer_modern_dom_apis;
     pub mod prefer_modern_math_apis;
@@ -471,6 +473,7 @@ mod tree_shaking {
 mod promise {
     pub mod avoid_new;
     pub mod catch_or_return;
+    pub mod no_callback_in_promise;
     pub mod no_new_statics;
     pub mod no_return_in_finally;
     pub mod param_names;
@@ -492,6 +495,7 @@ mod vitest {
 
 mod node {
     pub mod no_exports_assign;
+    pub mod no_new_require;
 }
 
 oxc_macros::declare_all_lint_rules! {
@@ -738,6 +742,7 @@ oxc_macros::declare_all_lint_rules! {
     nextjs::no_typos,
     nextjs::no_unwanted_polyfillio,
     node::no_exports_assign,
+    node::no_new_require,
     oxc::approx_constant,
     oxc::bad_array_method_on_arguments,
     oxc::bad_bitwise_operator,
@@ -763,6 +768,7 @@ oxc_macros::declare_all_lint_rules! {
     oxc::uninvoked_array_callback,
     promise::avoid_new,
     promise::catch_or_return,
+    promise::no_callback_in_promise,
     promise::no_new_statics,
     promise::no_return_in_finally,
     promise::param_names,
@@ -842,6 +848,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::prefer_ts_expect_error,
     typescript::triple_slash_reference,
     unicorn::catch_error_name,
+    unicorn::consistent_empty_array_spread,
     unicorn::consistent_function_scoping,
     unicorn::empty_brace_spaces,
     unicorn::error_message,
@@ -903,6 +910,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_event_target,
     unicorn::prefer_includes,
     unicorn::prefer_logical_operator_over_ternary,
+    unicorn::prefer_math_min_max,
     unicorn::prefer_math_trunc,
     unicorn::prefer_modern_dom_apis,
     unicorn::prefer_modern_math_apis,

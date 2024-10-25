@@ -31,7 +31,7 @@ use oxc_semantic::{ReferenceFlags, SymbolId};
 use oxc_span::SPAN;
 use oxc_traverse::{Traverse, TraverseCtx};
 
-use crate::context::TransformCtx;
+use crate::{common::helper_loader::Helper, TransformCtx};
 
 use super::ObjectRestSpreadOptions;
 
@@ -132,6 +132,6 @@ impl<'a, 'ctx> ObjectSpread<'a, 'ctx> {
     }
 
     fn babel_external_helper(&self, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        self.ctx.helper_loader.load(Atom::from("objectSpread2"), ctx)
+        self.ctx.helper_load(Helper::ObjectSpread2, ctx)
     }
 }

@@ -211,7 +211,30 @@ impl Tester {
         self
     }
 
-    /// Change the extension of the path
+    /// Change the extension of the path. Do not include the dot.
+    ///
+    /// By default, the extension is `tsx`.
+    ///
+    /// ## Example
+    /// ```ignore
+    /// use crate::tester::Tester;
+    /// use oxc_macros::declare_oxc_lint;
+    ///
+    /// declare_oxc_lint! (
+    ///     /// docs
+    ///     MyRule,
+    ///     correctness,
+    /// );
+    ///
+    /// #[test]
+    /// fn test() {
+    ///     let pass = vec!["let x = 1;"];
+    ///     let fail = vec![];
+    ///     Tester::new(MyRule::NAME, pass, fail)
+    ///         .change_rule_path_extension("ts")
+    ///         .test_and_snapshot();
+    /// }
+    /// ```
     pub fn change_rule_path_extension(mut self, ext: &str) -> Self {
         self.rule_path = self.rule_path.with_extension(ext);
         self
@@ -394,7 +417,7 @@ impl Tester {
             self.current_working_directory.join(&self.rule_path)
         } else if let Some(path) = path {
             self.current_working_directory.join(path)
-        } else if self.plugins.has_jest() {
+        } else if self.plugins.has_test() {
             self.rule_path.with_extension("test.tsx")
         } else {
             self.rule_path.clone()

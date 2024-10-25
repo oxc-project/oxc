@@ -12,11 +12,11 @@ use crate::{
 };
 
 impl<'a> IsolatedDeclarations<'a> {
-    pub fn can_infer_unary_expression(expr: &UnaryExpression<'a>) -> bool {
+    pub(crate) fn can_infer_unary_expression(expr: &UnaryExpression<'a>) -> bool {
         expr.operator.is_arithmetic() && expr.argument.is_number_literal()
     }
 
-    pub fn infer_type_from_expression(&self, expr: &Expression<'a>) -> Option<TSType<'a>> {
+    pub(crate) fn infer_type_from_expression(&self, expr: &Expression<'a>) -> Option<TSType<'a>> {
         match expr {
             Expression::BooleanLiteral(_) => Some(self.ast.ts_type_boolean_keyword(SPAN)),
             Expression::NullLiteral(_) => Some(self.ast.ts_type_null_keyword(SPAN)),
@@ -84,7 +84,7 @@ impl<'a> IsolatedDeclarations<'a> {
         }
     }
 
-    pub fn infer_type_from_formal_parameter(
+    pub(crate) fn infer_type_from_formal_parameter(
         &self,
         param: &FormalParameter<'a>,
     ) -> Option<TSType<'a>> {
@@ -106,7 +106,7 @@ impl<'a> IsolatedDeclarations<'a> {
         }
     }
 
-    pub fn infer_function_return_type(
+    pub(crate) fn infer_function_return_type(
         &self,
         function: &Function<'a>,
     ) -> Option<Box<'a, TSTypeAnnotation<'a>>> {
@@ -125,7 +125,7 @@ impl<'a> IsolatedDeclarations<'a> {
         })
     }
 
-    pub fn infer_arrow_function_return_type(
+    pub(crate) fn infer_arrow_function_return_type(
         &self,
         function: &ArrowFunctionExpression<'a>,
     ) -> Option<Box<'a, TSTypeAnnotation<'a>>> {
@@ -150,7 +150,7 @@ impl<'a> IsolatedDeclarations<'a> {
             .map(|type_annotation| self.ast.alloc_ts_type_annotation(SPAN, type_annotation))
     }
 
-    pub fn is_need_to_infer_type_from_expression(expr: &Expression<'a>) -> bool {
+    pub(crate) fn is_need_to_infer_type_from_expression(expr: &Expression<'a>) -> bool {
         match expr {
             Expression::NumericLiteral(_)
             | Expression::BigIntLiteral(_)

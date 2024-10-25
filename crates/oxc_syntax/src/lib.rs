@@ -1,5 +1,5 @@
 //! Common code for JavaScript Syntax
-
+#![warn(missing_docs)]
 pub mod class;
 pub mod identifier;
 pub mod keyword;
@@ -17,4 +17,6 @@ mod generated {
     mod derive_clone_in;
     mod derive_content_eq;
     mod derive_content_hash;
+    #[cfg(feature = "serialize")]
+    mod derive_estree;
 }

@@ -209,6 +209,12 @@ impl<'a> ContextHost<'a> {
 
         self
     }
+
+    /// Returns the framework hints for the target file.
+    #[inline]
+    pub fn frameworks(&self) -> FrameworkFlags {
+        self.frameworks
+    }
 }
 
 impl<'a> From<ContextHost<'a>> for Vec<Message<'a>> {

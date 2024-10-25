@@ -34,6 +34,7 @@ bb6: {
 }
 
 bb7: {
+	statement
 	break <label>
 }
 
@@ -72,6 +73,7 @@ return <value>" shape = box]
     6 [ label = "bb6
 unreachable" shape = box]
     7 [ label = "bb7
+BlockStatement
 break <label>" shape = box]
     8 [ label = "bb8
 unreachable" shape = box]
