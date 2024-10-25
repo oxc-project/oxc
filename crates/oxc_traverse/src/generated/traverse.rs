@@ -3,7 +3,6 @@
 // To alter this generated file you have to edit the codegen.
 
 use oxc_allocator::Vec;
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 
 use crate::TraverseCtx;

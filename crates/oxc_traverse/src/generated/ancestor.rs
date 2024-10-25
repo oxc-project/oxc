@@ -15,7 +15,6 @@ use std::{cell::Cell, marker::PhantomData};
 use memoffset::offset_of;
 
 use oxc_allocator::{Box, Vec};
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 use oxc_syntax::scope::ScopeId;
 

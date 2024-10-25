@@ -15,8 +15,7 @@ test(oxc.parseSync(sourceText, options));
 test(await oxc.parseAsync(sourceText, options));
 
 function test(ret) {
-  const program = JSON.parse(ret.program);
-  assert(program.body.length == 1);
+  assert(ret.program.body.length == 1);
   assert(ret.errors.length == 0);
 }
 ```

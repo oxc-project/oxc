@@ -20,6 +20,10 @@
   "main": "index.js",
   "files": [
     "index.d.ts",
-    "index.js"
-  ]
+    "index.js",
+    "bindings.js"
+  ],
+  "devDependencies": {
+    "@oxc-project/types": "workspace:^"
+  }
 }

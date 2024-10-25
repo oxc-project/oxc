@@ -77,7 +77,7 @@ impl<'a> TypeScriptEnum<'a> {
         let enum_name = decl.id.name.clone();
         let func_scope_id = decl.scope_id.get().unwrap();
         let param_ident = ctx.generate_binding(
-            enum_name.to_compact_str(),
+            enum_name.clone(),
             func_scope_id,
             SymbolFlags::FunctionScopedVariable,
         );

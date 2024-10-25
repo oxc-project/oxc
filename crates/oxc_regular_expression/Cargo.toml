@@ -31,8 +31,7 @@ rustc-hash = { workspace = true }
 unicode-id-start = { workspace = true }
 
 serde = { workspace = true, optional = true }
-wasm-bindgen = { workspace = true, optional = true }
 
 [features]
 default = []
-serialize = ["dep:serde", "dep:wasm-bindgen", "oxc_allocator/serialize", "oxc_span/serialize"]
+serialize = ["dep:serde", "oxc_allocator/serialize", "oxc_span/serialize"]

@@ -10975,19 +10975,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  14 │     /(?<foo>)((?<bar>bar)bar)(?<baz>baz)|(foo(?<foo>foo))(?<baz>)/,
     ╰────
 
-  × Invalid regular expression: Duplicated capturing group names
-    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:14:46]
- 13 │     /\2()(\12)(foo)\1\0[\0\1\01\123\08\8](\3\03)\5\005\9\009/u,
- 14 │     /(?<foo>)((?<bar>bar)bar)(?<baz>baz)|(foo(?<foo>foo))(?<baz>)/,
-    ·                                                 ───         ───
- 15 │     /(\k<bar>)\k<absent>(?<foo>foo)|(?<bar>)((?<foo>)|(bar(?<bar>bar)))/,
-    ╰────
-
-  × Invalid regular expression: Duplicated capturing group names
-    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:15:59]
+  × Invalid regular expression: Group specifier is empty
+    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:15:12]
  14 │     /(?<foo>)((?<bar>bar)bar)(?<baz>baz)|(foo(?<foo>foo))(?<baz>)/,
  15 │     /(\k<bar>)\k<absent>(?<foo>foo)|(?<bar>)((?<foo>)|(bar(?<bar>bar)))/,
-    ·                                                              ───
+    ·               ──────────
  16 │     // Quantifiers
     ╰────
 
