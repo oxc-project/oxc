@@ -32,7 +32,7 @@ struct Backend {
     server_linter: RwLock<ServerLinter>,
     diagnostics_report_map: DashMap<String, Vec<DiagnosticReport>>,
     options: Mutex<Options>,
-    gitignore_glob: Mutex<Option<Gitignore>>,
+    gitignore_glob: Mutex<Vec<Gitignore>>,
 }
 #[derive(Debug, Serialize, Deserialize, Default, PartialEq, PartialOrd, Clone, Copy)]
 #[serde(rename_all = "camelCase")]
@@ -303,19 +303,28 @@ impl Backend {
 
         let ignore_file_glob_set = builder.build().unwrap();
 
-        let mut gitignore_builder = ignore::gitignore::GitignoreBuilder::new(uri.path());
         let walk = ignore::WalkBuilder::new(uri.path())
             .ignore(true)
             .hidden(false)
             .git_global(false)
-            .build();
-        for entry in walk.flatten() {
-            if ignore_file_glob_set.is_match(entry.path()) {
-                gitignore_builder.add(entry.path());
+            .build()
+            .flatten();
+
+        let mut gitignore_globs = self.gitignore_glob.lock().await;
+        for entry in walk {
+            let ignore_file_path = entry.path();
+            if !ignore_file_glob_set.is_match(ignore_file_path) {
+                continue;
+            }
+
+            if let Some(ignore_file_dir) = ignore_file_path.parent() {
+                let mut builder = ignore::gitignore::GitignoreBuilder::new(ignore_file_dir);
+                builder.add(ignore_file_path);
+                if let Ok(gitignore) = builder.build() {
+                    gitignore_globs.push(gitignore);
+                }
             }
         }
-
-        *self.gitignore_glob.lock().await = gitignore_builder.build().ok();
     }
 
     #[allow(clippy::ptr_arg)]
@@ -381,15 +390,23 @@ impl Backend {
         if !uri.path().starts_with(root_uri.path()) {
             return false;
         }
-        let Some(ref gitignore_globs) = *self.gitignore_glob.lock().await else {
-            return false;
-        };
-        let path = PathBuf::from(uri.path());
-        let ignored = gitignore_globs.matched_path_or_any_parents(&path, path.is_dir()).is_ignore();
-        if ignored {
-            debug!("ignored: {uri}");
+        let ref gitignore_globs = *self.gitignore_glob.lock().await;
+        for gitignore in gitignore_globs.iter() {
+            if let Ok(uri_path) = uri.to_file_path() {
+                if !uri_path.starts_with(gitignore.path()) {
+                    continue;
+                }
+
+                let path = PathBuf::from(uri.path());
+                let ignored =
+                    gitignore.matched_path_or_any_parents(&path, path.is_dir()).is_ignore();
+                if ignored {
+                    debug!("ignored: {uri}");
+                    return true;
+                }
+            }
         }
-        ignored
+        false
     }
 }
 
@@ -409,7 +426,7 @@ async fn main() {
         server_linter: RwLock::new(server_linter),
         diagnostics_report_map,
         options: Mutex::new(Options::default()),
-        gitignore_glob: Mutex::new(None),
+        gitignore_glob: Mutex::new(vec![]),
     })
     .finish();
 
