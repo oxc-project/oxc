@@ -1,6 +1,6 @@
 commit: d20b314c
 
-Passed: 355/1058
+Passed: 357/1058
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -12,7 +12,7 @@ Passed: 355/1058
 * babel-plugin-transform-react-jsx-source
 
 
-# babel-preset-env (108/585)
+# babel-preset-env (110/585)
 * .plugins-overlapping/chrome-49/input.js
 x Output mismatch
 
@@ -371,9 +371,6 @@ x Output mismatch
 x Output mismatch
 
 * corejs3/entry-require-es-proposals/input.js
-x Output mismatch
-
-* corejs3/entry-specified-imports/input.mjs
 x Output mismatch
 
 * corejs3/entry-stable/input.mjs
@@ -1220,9 +1217,6 @@ x Output mismatch
 x Output mismatch
 
 * modules/modules-commonjs/input.mjs
-x Output mismatch
-
-* modules/modules-false/input.mjs
 x Output mismatch
 
 * modules/modules-systemjs/input.mjs

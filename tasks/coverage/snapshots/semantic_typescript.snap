@@ -2,7 +2,7 @@ commit: df9d1650
 
 semantic_typescript Summary:
 AST Parsed     : 6490/6490 (100.00%)
-Positive Passed: 2681/6490 (41.31%)
+Positive Passed: 2687/6490 (41.40%)
 tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 semantic error: Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -37284,17 +37284,6 @@ Unresolved references mismatch:
 after transform: []
 rebuilt        : ["dec"]
 
-tasks/coverage/typescript/tests/cases/compiler/usedImportNotElidedInJs.ts
-semantic error: Symbol flags mismatch for "moment":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | Import)
-rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable | ConstVariable | Export)
-Symbol span mismatch for "moment":
-after transform: SymbolId(0): Span { start: 24, end: 30 }
-rebuilt        : SymbolId(1): Span { start: 103, end: 109 }
-Symbol redeclarations mismatch for "moment":
-after transform: SymbolId(0): [Span { start: 103, end: 109 }]
-rebuilt        : SymbolId(1): []
-
 tasks/coverage/typescript/tests/cases/compiler/usingModuleWithExportImportInValuePosition.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
@@ -48974,16 +48963,6 @@ Unresolved references mismatch:
 after transform: ["Uint8Array"]
 rebuilt        : []
 
-tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsFunctionLikeClasses.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Point", "magnitude"]
-rebuilt        : ScopeId(0): ["magnitude"]
-
-tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsImportNamespacedType.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["dot2", "dummy"]
-rebuilt        : ScopeId(0): ["dot2"]
-
 tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag1.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["Foo"]
@@ -49080,11 +49059,6 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
 
-tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocAugments_qualifiedName.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["B", "a"]
-rebuilt        : ScopeId(0): ["B"]
-
 tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocLinkTag1.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["A"]
@@ -49092,11 +49066,6 @@ rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-
-tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocLinkTag2.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A", "B"]
-rebuilt        : ScopeId(0): ["B"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocLinkTag3.ts
 semantic error: Bindings mismatch:
@@ -50710,11 +50679,6 @@ semantic error: Expected a semicolon or an implicit semicolon after a statement,
 
 tasks/coverage/typescript/tests/cases/conformance/moduleResolution/untypedModuleImport_vsAmbient.ts
 semantic error: Expected a semicolon or an implicit semicolon after a statement, but found none
-
-tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeAllowJsPackageSelfName2.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["foo"]
-rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesImportAssignments.ts
 semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.

@@ -2,7 +2,7 @@ commit: d20b314c
 
 semantic_babel Summary:
 AST Parsed     : 2136/2136 (100.00%)
-Positive Passed: 1756/2136 (82.21%)
+Positive Passed: 1778/2136 (83.24%)
 tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body/input.js
 semantic error: Symbol scope ID mismatch for "f":
 after transform: SymbolId(0): ScopeId(4294967294)
@@ -10,16 +10,6 @@ rebuilt        : SymbolId(0): ScopeId(4294967294)
 Symbol scope ID mismatch for "g":
 after transform: SymbolId(1): ScopeId(4294967294)
 rebuilt        : SymbolId(1): ScopeId(4294967294)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/interpreter-directive/interpreter-directive-import/input.js
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["spawn"]
-rebuilt        : ScopeId(0): []
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/regression/10892/input.js
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["foo"]
-rebuilt        : ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/core/opts/allowNewTargetOutsideFunction-true/input.js
 semantic error: Unexpected new.target expression
@@ -35,106 +25,6 @@ semantic error: A 'return' statement can only be used within a function body.
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/core/uncategorised/328/input.js
 semantic error: A 'return' statement can only be used within a function body.
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/modules/import-declaration-trailing-comma/input.js
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Foo"]
-rebuilt        : ScopeId(0): []
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/uncategorised/301/input.js
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["bar", "foo"]
-rebuilt        : ScopeId(0): []
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/uncategorised/92/input.js
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["$"]
-rebuilt        : ScopeId(0): []
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/uncategorised/93/input.js
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["decrypt", "encrypt"]
-rebuilt        : ScopeId(0): []
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/uncategorised/94/input.js
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["enc"]
-rebuilt        : ScopeId(0): []
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/uncategorised/95/input.js
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["crypto", "decrypt", "enc"]
-rebuilt        : ScopeId(0): []
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/uncategorised/97/input.js
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["nil"]
-rebuilt        : ScopeId(0): []
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/uncategorised/98/input.js
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["crypto"]
-rebuilt        : ScopeId(0): []
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-import-declaration/import-default/input.js
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["foo"]
-rebuilt        : ScopeId(0): []
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-import-declaration/import-default-and-named-specifiers/input.js
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["bar", "foo"]
-rebuilt        : ScopeId(0): []
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-import-declaration/import-default-and-namespace-specifiers/input.js
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["bar", "foo"]
-rebuilt        : ScopeId(0): []
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-import-declaration/import-default-as/input.js
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["foo"]
-rebuilt        : ScopeId(0): []
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-import-declaration/import-jquery/input.js
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["$"]
-rebuilt        : ScopeId(0): []
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-import-declaration/import-named-as-specifier/input.js
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["baz"]
-rebuilt        : ScopeId(0): []
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-import-declaration/import-named-as-specifiers/input.js
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["baz", "xyz"]
-rebuilt        : ScopeId(0): []
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-import-declaration/import-named-specifier/input.js
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["bar"]
-rebuilt        : ScopeId(0): []
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-import-declaration/import-named-specifiers/input.js
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["bar", "baz"]
-rebuilt        : ScopeId(0): []
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-import-declaration/import-named-specifiers-comma/input.js
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["bar", "baz"]
-rebuilt        : ScopeId(0): []
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-import-declaration/import-namespace-specifier/input.js
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["foo"]
-rebuilt        : ScopeId(0): []
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-import-declaration/import-null-as-nil/input.js
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["nil"]
-rebuilt        : ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/statement-if/migrated_0003/input.js
 semantic error: Symbol scope ID mismatch for "a":
