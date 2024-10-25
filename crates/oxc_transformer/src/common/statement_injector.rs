@@ -43,11 +43,13 @@ impl<'a, 'ctx> Traverse<'a> for StatementInjector<'a, 'ctx> {
     }
 }
 
+#[derive(Debug)]
 enum Direction {
     Before,
     After,
 }
 
+#[derive(Debug)]
 struct AdjacentStatement<'a> {
     stmt: Statement<'a>,
     direction: Direction,
