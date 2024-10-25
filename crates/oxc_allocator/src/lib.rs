@@ -59,7 +59,7 @@ pub use convert::{FromIn, IntoIn};
 pub use string::String;
 pub use vec::Vec;
 
-const BUMP_UPWARDS: bool = false;
+const BUMP_UPWARDS: bool = true;
 const MINIMUM_ALIGNMENT: usize = 1;
 
 type BumpImpl = bump_scope::Bump<Global, MINIMUM_ALIGNMENT, BUMP_UPWARDS>;
