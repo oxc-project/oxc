@@ -121,6 +121,26 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
                     self.changed = true;
                 }
             }
+            // `() => { return foo })` -> `() => foo`
+            Expression::ArrowFunctionExpression(arrow_expr) => {
+                if !arrow_expr.expression
+                    && arrow_expr.body.directives.is_empty()
+                    && arrow_expr.body.statements.len() == 1
+                {
+                    if let Some(body) = arrow_expr.body.statements.first_mut() {
+                        if let Statement::ReturnStatement(ret_stmt) = body {
+                            let return_stmt_arg =
+                                ret_stmt.argument.as_mut().map(|arg| ctx.ast.move_expression(arg));
+
+                            if let Some(return_stmt_arg) = return_stmt_arg {
+                                *body = ctx.ast.statement_expression(SPAN, return_stmt_arg);
+                                arrow_expr.expression = true;
+                                self.changed = true;
+                            }
+                        }
+                    }
+                }
+            }
             _ => {}
         }
     }
@@ -962,5 +982,11 @@ mod test {
     fn test_no_rotate_infinite_loop() {
         test("1/x * (y/1 * (1/z))", "1/x * (y/1) * (1/z)");
         test_same("1/x * (y/1) * (1/z)");
+    }
+
+    #[test]
+    fn test_fold_arrow_function_return() {
+        test("const foo = () => { return 'baz' }", "const foo = () => 'baz'");
+        test_same("const foo = () => { foo; return 'baz' }");
     }
 }
