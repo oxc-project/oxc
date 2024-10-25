@@ -42,7 +42,7 @@ pub struct TransformOptions {
     pub typescript: TypeScriptOptions,
 
     /// [preset-react](https://babeljs.io/docs/babel-preset-react)
-    pub react: JsxOptions,
+    pub jsx: Option<JsxOptions>,
 
     pub regexp: RegExpOptions,
 
@@ -72,11 +72,11 @@ impl TransformOptions {
             cwd: PathBuf::new(),
             assumptions: CompilerAssumptions::default(),
             typescript: TypeScriptOptions::default(),
-            react: JsxOptions {
+            jsx: Some(JsxOptions {
                 development: true,
                 refresh: Some(ReactRefreshOptions::default()),
                 ..JsxOptions::default()
-            },
+            }),
             regexp: RegExpOptions {
                 sticky_flag: true,
                 unicode_flag: true,
@@ -175,14 +175,14 @@ impl TransformOptions {
         };
 
         let preset_name = "react";
-        transformer_options.react = if let Some(value) = get_preset_options(preset_name, options) {
-            match from_value::<JsxOptions>(value) {
+        transformer_options.jsx = if let Some(value) = get_preset_options(preset_name, options) {
+            Some(match from_value::<JsxOptions>(value) {
                 Ok(res) => res,
                 Err(err) => {
                     report_error(preset_name, &err, true, &mut errors);
                     JsxOptions::default()
                 }
-            }
+            })
         } else {
             let has_jsx_plugin = options.has_plugin("transform-react-jsx");
             let has_jsx_development_plugin = options.has_plugin("transform-react-jsx-development");
@@ -207,7 +207,7 @@ impl TransformOptions {
             react_options.display_name_plugin = options.has_plugin("transform-react-display-name");
             react_options.jsx_self_plugin = options.has_plugin("transform-react-jsx-self");
             react_options.jsx_source_plugin = options.has_plugin("transform-react-jsx-source");
-            react_options
+            Some(react_options)
         };
 
         transformer_options.es2015.with_arrow_function({

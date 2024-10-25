@@ -38,29 +38,37 @@ fn update_options_with_comment(
         "" => {
             // Don't set React option unless React transform is enabled
             // otherwise can cause error in `ReactJsx::new`
-            if options.react.jsx_plugin || options.react.development {
-                options.react.pragma = Some(remainder.to_string());
+            if let Some(jsx) = options.jsx.as_mut() {
+                if jsx.jsx_plugin || jsx.development {
+                    jsx.pragma = Some(remainder.to_string());
+                }
             }
             options.typescript.jsx_pragma = Cow::from(remainder.to_string());
         }
         // @jsxRuntime
         "Runtime" => {
-            options.react.runtime = match remainder {
-                "classic" => JsxRuntime::Classic,
-                "automatic" => JsxRuntime::Automatic,
-                _ => return,
-            };
+            if let Some(jsx) = options.jsx.as_mut() {
+                jsx.runtime = match remainder {
+                    "classic" => JsxRuntime::Classic,
+                    "automatic" => JsxRuntime::Automatic,
+                    _ => return,
+                };
+            }
         }
         // @jsxImportSource
         "ImportSource" => {
-            options.react.import_source = Some(remainder.to_string());
+            if let Some(jsx) = options.jsx.as_mut() {
+                jsx.import_source = Some(remainder.to_string());
+            }
         }
         // @jsxFrag
         "Frag" => {
             // Don't set React option unless React transform is enabled
             // otherwise can cause error in `ReactJsx::new`
-            if options.react.jsx_plugin || options.react.development {
-                options.react.pragma_frag = Some(remainder.to_string());
+            if let Some(jsx) = options.jsx.as_mut() {
+                if jsx.jsx_plugin || jsx.development {
+                    jsx.pragma_frag = Some(remainder.to_string());
+                }
             }
             options.typescript.jsx_pragma_frag = Cow::from(remainder.to_string());
         }

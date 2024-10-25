@@ -162,7 +162,9 @@ impl Test262RuntimeCase {
             let (symbols, scopes) =
                 SemanticBuilder::new().build(&program).semantic.into_symbol_table_and_scope_tree();
             let mut options = TransformOptions::enable_all();
-            options.react.refresh = None;
+            if let Some(jsx) = options.jsx.as_mut() {
+                jsx.refresh = None;
+            }
             options.helper_loader.mode = HelperLoaderMode::External;
             options.typescript.only_remove_type_imports = true;
             Transformer::new(&allocator, self.path(), options).build_with_symbols_and_scopes(

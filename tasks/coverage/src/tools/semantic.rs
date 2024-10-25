@@ -18,12 +18,12 @@ fn get_default_transformer_options() -> TransformOptions {
     TransformOptions {
         typescript: TypeScriptOptions::default(),
         es2015: ES2015Options { arrow_function: None },
-        react: JsxOptions {
+        jsx: Some(JsxOptions {
             jsx_plugin: true,
             jsx_self_plugin: true,
             jsx_source_plugin: true,
             ..Default::default()
-        },
+        }),
         ..Default::default()
     }
 }
@@ -150,7 +150,9 @@ impl Case for SemanticTypeScriptCase {
         // handle @jsx: react, `react` of behavior is match babel following options
         if self.base.settings.jsx.last().is_some_and(|jsx| jsx == "react") {
             source_type = source_type.with_module(true);
-            options.react.runtime = JsxRuntime::Classic;
+            if let Some(jsx) = options.jsx.as_mut() {
+                jsx.runtime = JsxRuntime::Classic;
+            }
         }
         get_result(self.base.code(), source_type, self.path(), Some(options))
     }

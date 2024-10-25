@@ -113,7 +113,10 @@ pub trait TestCase {
             if b {
                 // Skip deprecated react options
                 if self.transform_options().as_ref().is_ok_and(|options| {
-                    options.react.use_built_ins.is_some() || options.react.use_spread.is_some()
+                    options
+                        .jsx
+                        .as_ref()
+                        .is_some_and(|jsx| jsx.use_built_ins.is_some() || jsx.use_spread.is_some())
                 }) {
                     return true;
                 }
