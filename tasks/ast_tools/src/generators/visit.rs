@@ -9,7 +9,7 @@ use syn::{parse_quote, Ident};
 
 use super::define_generator;
 use crate::{
-    codegen::{generated_header, LateCtx},
+    codegen::LateCtx,
     generators::ast_kind::BLACK_LIST as KIND_BLACK_LIST,
     markers::VisitArg,
     output,
@@ -18,13 +18,9 @@ use crate::{
     Generator, GeneratorOutput,
 };
 
-define_generator! {
-    pub struct VisitGenerator;
-}
+pub struct VisitGenerator;
 
-define_generator! {
-    pub struct VisitMutGenerator;
-}
+define_generator!(VisitGenerator);
 
 impl Generator for VisitGenerator {
     fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
@@ -34,6 +30,10 @@ impl Generator for VisitGenerator {
         }
     }
 }
+
+pub struct VisitMutGenerator;
+
+define_generator!(VisitMutGenerator);
 
 impl Generator for VisitMutGenerator {
     fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
@@ -45,8 +45,6 @@ impl Generator for VisitMutGenerator {
 }
 
 fn generate_visit<const MUT: bool>(ctx: &LateCtx) -> TokenStream {
-    let header = generated_header!();
-
     let (visits, walks) = VisitBuilder::new(ctx, MUT).build();
 
     let walk_mod = if MUT { quote!(walk_mut) } else { quote!(walk) };
@@ -72,8 +70,6 @@ fn generate_visit<const MUT: bool>(ctx: &LateCtx) -> TokenStream {
     };
 
     quote! {
-        #header
-
         //! Visitor Pattern
         //!
         //! See:

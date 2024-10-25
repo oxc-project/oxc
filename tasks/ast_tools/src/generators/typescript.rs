@@ -18,9 +18,9 @@ use crate::{
 
 const CUSTOM_TYPESCRIPT: &str = include_str!("../../../../crates/oxc_ast/src/ast/types.d.ts");
 
-define_generator! {
-    pub struct TypescriptGenerator;
-}
+pub struct TypescriptGenerator;
+
+define_generator!(TypescriptGenerator);
 
 impl Generator for TypescriptGenerator {
     fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {

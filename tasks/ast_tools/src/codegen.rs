@@ -238,18 +238,20 @@ impl AstCodegen {
     }
 }
 
-/// Creates a generated file warning + required information for a generated file.
-macro_rules! generated_header {
-    () => {{
-        let file = file!().replace("\\", "/");
-        // TODO add generation date, AST source hash, etc here.
-        let edit_comment = format!("@ To edit this generated file you have to edit `{file}`");
-        quote::quote! {
-            //!@ Auto-generated code, DO NOT EDIT DIRECTLY!
-            #![doc = #edit_comment]
-            //!@@line_break
-        }
-    }};
+/// Implemented by `define_derive!` and `define_generator!` macros
+pub trait CodegenBase {
+    fn file_path() -> &'static str;
 }
 
-pub(crate) use generated_header;
+/// Creates a generated file warning + required information for a generated file.
+pub fn generate_header(file_path: &str) -> TokenStream {
+    let file_path = file_path.replace('\\', "/");
+
+    // TODO: Add generation date, AST source hash, etc here.
+    let edit_comment = format!("@ To edit this generated file you have to edit `{file_path}`");
+    quote::quote! {
+        //!@ Auto-generated code, DO NOT EDIT DIRECTLY!
+        #![doc = #edit_comment]
+        //!@@line_break
+    }
+}

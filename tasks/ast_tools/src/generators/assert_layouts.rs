@@ -4,16 +4,16 @@ use syn::Type;
 
 use super::define_generator;
 use crate::{
-    codegen::{generated_header, LateCtx},
+    codegen::LateCtx,
     output,
     schema::{FieldDef, ToType, TypeDef},
     util::ToIdent,
     Generator, GeneratorOutput,
 };
 
-define_generator! {
-    pub struct AssertLayouts;
-}
+pub struct AssertLayouts;
+
+define_generator!(AssertLayouts);
 
 impl Generator for AssertLayouts {
     fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
@@ -26,13 +26,9 @@ impl Generator for AssertLayouts {
             })
             .collect::<(Vec<TokenStream>, Vec<TokenStream>)>();
 
-        let header = generated_header!();
-
         GeneratorOutput::Rust {
             path: output(crate::AST_CRATE, "assert_layouts.rs"),
             tokens: quote! {
-                #header
-
                 use std::mem::{align_of, offset_of, size_of};
 
                 ///@@line_break

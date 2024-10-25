@@ -2,16 +2,16 @@ use itertools::Itertools;
 use proc_macro2::TokenStream;
 use quote::quote;
 
-use super::{define_derive, Derive, DeriveOutput};
+use super::{define_derive, Derive};
 use crate::{
     codegen::LateCtx,
     schema::{EnumDef, GetGenerics, StructDef, ToType, TypeDef},
     util::ToIdent,
 };
 
-define_derive! {
-    pub struct DeriveContentHash;
-}
+pub struct DeriveContentHash;
+
+define_derive!(DeriveContentHash);
 
 const IGNORE_FIELD_TYPES: [/* type name */ &str; 4] = [
     "Span",

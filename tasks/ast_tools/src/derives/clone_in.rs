@@ -3,16 +3,16 @@ use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 use syn::Ident;
 
-use super::{define_derive, Derive, DeriveOutput};
+use super::{define_derive, Derive};
 use crate::{
     codegen::LateCtx,
     markers::CloneInAttribute,
     schema::{EnumDef, GetIdent, StructDef, TypeDef},
 };
 
-define_derive! {
-    pub struct DeriveCloneIn;
-}
+pub struct DeriveCloneIn;
+
+define_derive!(DeriveCloneIn);
 
 impl Derive for DeriveCloneIn {
     fn trait_name() -> &'static str {

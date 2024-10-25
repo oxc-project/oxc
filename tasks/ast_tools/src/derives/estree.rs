@@ -2,7 +2,7 @@ use convert_case::{Case, Casing};
 use proc_macro2::TokenStream;
 use quote::quote;
 
-use super::{define_derive, Derive, DeriveOutput};
+use super::{define_derive, Derive};
 use crate::{
     codegen::LateCtx,
     markers::ESTreeStructAttribute,
@@ -12,9 +12,9 @@ use crate::{
     },
 };
 
-define_derive! {
-    pub struct DeriveESTree;
-}
+pub struct DeriveESTree;
+
+define_derive!(DeriveESTree);
 
 impl Derive for DeriveESTree {
     fn trait_name() -> &'static str {

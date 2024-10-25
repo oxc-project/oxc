@@ -5,15 +5,15 @@ use syn::{parse_quote, Arm, ImplItemFn, Variant};
 
 use super::define_generator;
 use crate::{
-    codegen::{generated_header, LateCtx},
+    codegen::LateCtx,
     output,
     schema::{GetIdent, ToType},
     Generator, GeneratorOutput,
 };
 
-define_generator! {
-    pub struct AstKindGenerator;
-}
+pub struct AstKindGenerator;
+
+define_generator!(AstKindGenerator);
 
 pub const BLACK_LIST: [&str; 61] = [
     "Expression",
@@ -125,15 +125,12 @@ impl Generator for AstKindGenerator {
             })
             .collect_vec();
 
-        let header = generated_header!();
-
         GeneratorOutput::Rust {
             path: output(crate::AST_CRATE, "ast_kind.rs"),
             tokens: quote! {
-                #header
                 #![allow(missing_docs)] ///@ FIXME (in ast_tools/src/generators/ast_kind.rs)
-                ///@@line_break
 
+                ///@@line_break
                 use oxc_span::{GetSpan, Span};
 
                 ///@@line_break

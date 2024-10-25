@@ -10,7 +10,7 @@ use syn::{parse_quote, Ident, Type};
 
 use super::define_generator;
 use crate::{
-    codegen::{generated_header, LateCtx},
+    codegen::LateCtx,
     output,
     schema::{
         EnumDef, FieldDef, GetIdent, InheritDef, StructDef, ToType, TypeDef, TypeName, VariantDef,
@@ -19,9 +19,9 @@ use crate::{
     Generator, GeneratorOutput,
 };
 
-define_generator! {
-    pub struct AstBuilderGenerator;
-}
+pub struct AstBuilderGenerator;
+
+define_generator!(AstBuilderGenerator);
 
 impl Generator for AstBuilderGenerator {
     fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
@@ -32,14 +32,12 @@ impl Generator for AstBuilderGenerator {
             .map(|it| generate_builder_fn(it, ctx))
             .collect_vec();
 
-        let header = generated_header!();
-
         GeneratorOutput::Rust {
             path: output(crate::AST_CRATE, "ast_builder.rs"),
             tokens: quote! {
                 //! AST node factories
-                #header
 
+                //!@@line_break
                 #![allow(
                     clippy::default_trait_access,
                     clippy::too_many_arguments,
