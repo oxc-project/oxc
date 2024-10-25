@@ -6,9 +6,9 @@ use syn::{parse_quote, Arm, ImplItemFn, Variant};
 use super::define_generator;
 use crate::{
     codegen::LateCtx,
-    output,
+    output::{output_path, Output},
     schema::{GetIdent, ToType},
-    Generator, GeneratorOutput,
+    Generator,
 };
 
 pub struct AstKindGenerator;
@@ -80,7 +80,7 @@ pub const BLACK_LIST: [&str; 61] = [
 ];
 
 impl Generator for AstKindGenerator {
-    fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
+    fn generate(&mut self, ctx: &LateCtx) -> Output {
         let have_kinds = ctx
             .schema()
             .into_iter()
@@ -125,8 +125,8 @@ impl Generator for AstKindGenerator {
             })
             .collect_vec();
 
-        GeneratorOutput::Rust {
-            path: output(crate::AST_CRATE, "ast_kind.rs"),
+        Output::Rust {
+            path: output_path(crate::AST_CRATE, "ast_kind.rs"),
             tokens: quote! {
                 #![allow(missing_docs)] ///@ FIXME (in ast_tools/src/generators/ast_kind.rs)
 

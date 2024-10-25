@@ -8,10 +8,10 @@ use syn::parse_file;
 
 mod codegen;
 mod derives;
-mod fmt;
 mod generators;
 mod layout;
 mod markers;
+mod output;
 mod passes;
 mod rust_ast;
 mod schema;
@@ -22,11 +22,12 @@ use derives::{
     DeriveGetSpanMut,
 };
 use generators::{
-    AssertLayouts, AstBuilderGenerator, AstKindGenerator, Generator, GeneratorOutput,
-    TypescriptGenerator, VisitGenerator, VisitMutGenerator,
+    AssertLayouts, AstBuilderGenerator, AstKindGenerator, Generator, TypescriptGenerator,
+    VisitGenerator, VisitMutGenerator,
 };
+use output::write_all_to;
 use passes::{CalcLayout, Linker};
-use util::{write_all_to, NormalizeError};
+use util::NormalizeError;
 
 static SOURCE_PATHS: &[&str] = &[
     "crates/oxc_ast/src/ast/literal.rs",
@@ -90,7 +91,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
             .map(|it| {
                 let path = it.path();
                 log!("Writing {path}...");
-                it.apply().unwrap();
+                it.write_to_file().unwrap();
                 logln!(" Done!");
                 path
             })
@@ -105,10 +106,6 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     }
 
     Ok(())
-}
-
-fn output(krate: &str, path: &str) -> PathBuf {
-    std::path::PathBuf::from_iter(vec![krate, "src", "generated", path])
 }
 
 fn write_ci_filter(

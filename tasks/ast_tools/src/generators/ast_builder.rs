@@ -11,12 +11,12 @@ use syn::{parse_quote, Ident, Type};
 use super::define_generator;
 use crate::{
     codegen::LateCtx,
-    output,
+    output::{output_path, Output},
     schema::{
         EnumDef, FieldDef, GetIdent, InheritDef, StructDef, ToType, TypeDef, TypeName, VariantDef,
     },
     util::{TypeAnalysis, TypeWrapper},
-    Generator, GeneratorOutput,
+    Generator,
 };
 
 pub struct AstBuilderGenerator;
@@ -24,7 +24,7 @@ pub struct AstBuilderGenerator;
 define_generator!(AstBuilderGenerator);
 
 impl Generator for AstBuilderGenerator {
-    fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
+    fn generate(&mut self, ctx: &LateCtx) -> Output {
         let fns = ctx
             .schema()
             .into_iter()
@@ -32,8 +32,8 @@ impl Generator for AstBuilderGenerator {
             .map(|it| generate_builder_fn(it, ctx))
             .collect_vec();
 
-        GeneratorOutput::Rust {
-            path: output(crate::AST_CRATE, "ast_builder.rs"),
+        Output::Rust {
+            path: output_path(crate::AST_CRATE, "ast_builder.rs"),
             tokens: quote! {
                 //! AST node factories
 

@@ -1,19 +1,15 @@
 use convert_case::{Case, Casing};
 use itertools::Itertools;
-use std::{
-    io::Write,
-    process::{Command, Stdio},
-};
 
 use super::define_generator;
 use crate::{
     codegen::LateCtx,
-    output,
+    output::{output_path, Output},
     schema::{
         serialize::{enum_variant_name, get_type_tag},
         EnumDef, GetIdent, StructDef, TypeDef, TypeName,
     },
-    Generator, GeneratorOutput,
+    Generator,
 };
 
 const CUSTOM_TYPESCRIPT: &str = include_str!("../../../../crates/oxc_ast/src/ast/types.d.ts");
@@ -23,7 +19,7 @@ pub struct TypescriptGenerator;
 define_generator!(TypescriptGenerator);
 
 impl Generator for TypescriptGenerator {
-    fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
+    fn generate(&mut self, ctx: &LateCtx) -> Output {
         let mut code = format!("{CUSTOM_TYPESCRIPT}\n");
 
         for def in ctx.schema() {
@@ -40,10 +36,7 @@ impl Generator for TypescriptGenerator {
             code.push_str("\n\n");
         }
 
-        GeneratorOutput::Javascript {
-            path: output(crate::TYPESCRIPT_PACKAGE, "types.d.ts"),
-            code: format_typescript(&code),
-        }
+        Output::Javascript { path: output_path(crate::TYPESCRIPT_PACKAGE, "types.d.ts"), code }
     }
 }
 
@@ -126,20 +119,4 @@ fn type_to_string(ty: &TypeName) -> String {
         }
         TypeName::Opt(type_name) => format!("{} | null", type_to_string(type_name)),
     }
-}
-
-fn format_typescript(source_text: &str) -> String {
-    let mut dprint = Command::new("dprint")
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .args(["fmt", "--stdin", "types.d.ts"])
-        .spawn()
-        .expect("Failed to run dprint (is it installed?)");
-
-    let stdin = dprint.stdin.as_mut().unwrap();
-    stdin.write_all(source_text.as_bytes()).unwrap();
-    stdin.flush().unwrap();
-
-    let output = dprint.wait_with_output().unwrap();
-    String::from_utf8(output.stdout).unwrap()
 }
