@@ -24,14 +24,7 @@ define_generator!(TypescriptGenerator);
 
 impl Generator for TypescriptGenerator {
     fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
-        let file = file!().replace('\\', "/");
-        let mut content = format!(
-            "\
-            // Auto-generated code, DO NOT EDIT DIRECTLY!\n\
-            // To edit this generated file you have to edit `{file}`\n\n\
-            {CUSTOM_TYPESCRIPT}\n\
-            "
-        );
+        let mut code = format!("{CUSTOM_TYPESCRIPT}\n");
 
         for def in ctx.schema() {
             if !def.generates_derive("ESTree") {
@@ -43,12 +36,13 @@ impl Generator for TypescriptGenerator {
             };
             let Some(ts_type_def) = ts_type_def else { continue };
 
-            content.push_str(&ts_type_def);
-            content.push_str("\n\n");
+            code.push_str(&ts_type_def);
+            code.push_str("\n\n");
         }
-        GeneratorOutput::Text {
+
+        GeneratorOutput::Javascript {
             path: output(crate::TYPESCRIPT_PACKAGE, "types.d.ts"),
-            content: format_typescript(&content),
+            code: format_typescript(&code),
         }
     }
 }

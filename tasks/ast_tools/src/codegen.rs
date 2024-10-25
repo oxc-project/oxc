@@ -61,7 +61,7 @@ impl From<GeneratorOutput> for SideEffect {
     fn from(output: GeneratorOutput) -> Self {
         match output {
             GeneratorOutput::Rust { path, tokens } => Self::from((path, tokens)),
-            GeneratorOutput::Text { path, content } => Self { path, content: content.into() },
+            GeneratorOutput::Javascript { path, code } => Self { path, content: code.into() },
         }
     }
 }
@@ -244,7 +244,7 @@ pub trait CodegenBase {
 }
 
 /// Creates a generated file warning + required information for a generated file.
-pub fn generate_header(file_path: &str) -> TokenStream {
+pub fn generate_rust_header(file_path: &str) -> TokenStream {
     let file_path = file_path.replace('\\', "/");
 
     // TODO: Add generation date, AST source hash, etc here.
@@ -254,4 +254,15 @@ pub fn generate_header(file_path: &str) -> TokenStream {
         #![doc = #edit_comment]
         //!@@line_break
     }
+}
+
+/// Creates a generated file warning + required information for a generated file.
+pub fn generate_javascript_header(file_path: &str) -> String {
+    let file_path = file_path.replace('\\', "/");
+
+    // TODO: Add generation date, AST source hash, etc here.
+    format!(
+        "// Auto-generated code, DO NOT EDIT DIRECTLY!\n\
+        // To edit this generated file you have to edit `{file_path}`\n\n"
+    )
 }

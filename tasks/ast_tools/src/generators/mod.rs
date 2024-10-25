@@ -4,7 +4,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 
 use crate::{
-    codegen::{generate_header, CodegenBase, LateCtx},
+    codegen::{generate_javascript_header, generate_rust_header, CodegenBase, LateCtx},
     Result,
 };
 
@@ -23,7 +23,7 @@ pub use visit::{VisitGenerator, VisitMutGenerator};
 #[derive(Debug, Clone)]
 pub enum GeneratorOutput {
     Rust { path: PathBuf, tokens: TokenStream },
-    Text { path: PathBuf, content: String },
+    Javascript { path: PathBuf, code: String },
 }
 
 pub trait Generator: CodegenBase {
@@ -36,12 +36,18 @@ pub trait Generator: CodegenBase {
     fn output(&mut self, ctx: &LateCtx) -> Result<GeneratorOutput> {
         let mut output = self.generate(ctx);
 
-        if let GeneratorOutput::Rust { tokens, .. } = &mut output {
-            let header = generate_header(Self::file_path());
-            *tokens = quote! {
-                #header
-                #tokens
-            };
+        match &mut output {
+            GeneratorOutput::Rust { tokens, .. } => {
+                let header = generate_rust_header(Self::file_path());
+                *tokens = quote! {
+                    #header
+                    #tokens
+                };
+            }
+            GeneratorOutput::Javascript { code: content, .. } => {
+                let header = generate_javascript_header(Self::file_path());
+                *content = format!("{header}{content}");
+            }
         }
 
         Ok(output)

@@ -6,7 +6,7 @@ use proc_macro2::TokenStream;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
-    codegen::{generate_header, CodegenBase, LateCtx},
+    codegen::{generate_rust_header, CodegenBase, LateCtx},
     schema::TypeDef,
     Result,
 };
@@ -44,7 +44,7 @@ pub trait Derive: CodegenBase {
     // Standard methods
 
     fn template(module_paths: Vec<&str>, impls: TokenStream) -> TokenStream {
-        let header = generate_header(Self::file_path());
+        let header = generate_rust_header(Self::file_path());
         let prelude = Self::prelude();
 
         // from `x::y::z` to `crate::y::z::*`
