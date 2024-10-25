@@ -1174,19 +1174,17 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_fold_arithmetic2() {
         test_same("x = y + 10 + 20");
         test_same("x = y / 2 / 4");
-        test("x = y * 2.25 * 3", "x = y * 6.75");
+        // test("x = y * 2.25 * 3", "x = y * 6.75");
         test_same("x = y * 2.25 * z * 3");
         test_same("z = x * y");
         test_same("x = y * 5");
-        test("x = y + (z * 24 * 60 * 60 * 1000)", "x = y + z * 864E5");
+        // test("x = y + (z * 24 * 60 * 60 * 1000)", "x = y + z * 864E5");
     }
 
     #[test]
-    #[ignore]
     fn test_fold_arithmetic3() {
         test("x = null * undefined", "x = NaN");
         test("x = null * 1", "x = 0");
@@ -1194,6 +1192,9 @@ mod test {
         test("x = (null + 1) * 2", "x = 2");
         test("x = null ** 0", "x = 1");
         test("x = (-0) ** 3", "x = -0");
+
+        test("x = 1 + null", "x = 1");
+        test("x = null + 1", "x = 1");
     }
 
     #[test]

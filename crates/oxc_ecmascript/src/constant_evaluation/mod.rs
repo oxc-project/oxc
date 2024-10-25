@@ -9,7 +9,7 @@ use num_traits::{One, Zero};
 
 use oxc_ast::ast::*;
 
-use crate::{side_effects::MayHaveSideEffects, ToBigInt, ToInt32, ToJsString};
+use crate::{side_effects::MayHaveSideEffects, ToBigInt, ToInt32, ToJsString, ToNumber};
 
 pub use self::{is_litral_value::IsLiteralValue, value::ConstantValue, value_type::ValueType};
 
@@ -179,6 +179,7 @@ pub trait ConstantEvaluation<'a> {
             Expression::UnaryExpression(e) => self.eval_unary_expression(e),
             Expression::Identifier(ident) => self.resolve_binding(ident),
             Expression::NumericLiteral(lit) => Some(ConstantValue::Number(lit.value)),
+            Expression::NullLiteral(_) => Some(ConstantValue::Null),
             Expression::StringLiteral(lit) => {
                 Some(ConstantValue::String(Cow::Borrowed(lit.value.as_str())))
             }
@@ -206,8 +207,8 @@ pub trait ConstantEvaluation<'a> {
                 if left_type.is_number() || right_type.is_number() {
                     let lval = self.eval_expression(left)?;
                     let rval = self.eval_expression(right)?;
-                    let lnum = lval.into_number()?;
-                    let rnum = rval.into_number()?;
+                    let lnum = lval.to_number()?;
+                    let rnum = rval.to_number()?;
                     return Some(ConstantValue::Number(lnum + rnum));
                 }
                 None
