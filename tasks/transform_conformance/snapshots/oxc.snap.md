@@ -1,11 +1,12 @@
 commit: d20b314c
 
-Passed: 67/76
+Passed: 73/82
 
 # All Passed:
 * babel-plugin-transform-class-static-block
 * babel-plugin-transform-nullish-coalescing-operator
 * babel-plugin-transform-optional-catch-binding
+* babel-plugin-transform-async-to-generator
 * babel-plugin-transform-exponentiation-operator
 * babel-plugin-transform-arrow-functions
 * babel-preset-typescript
