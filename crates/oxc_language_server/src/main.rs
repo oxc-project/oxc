@@ -390,8 +390,8 @@ impl Backend {
         if !uri.path().starts_with(root_uri.path()) {
             return false;
         }
-        let ref gitignore_globs = *self.gitignore_glob.lock().await;
-        for gitignore in gitignore_globs.iter() {
+        let gitignore_globs = &(*self.gitignore_glob.lock().await);
+        for gitignore in gitignore_globs {
             if let Ok(uri_path) = uri.to_file_path() {
                 if !uri_path.starts_with(gitignore.path()) {
                     continue;
