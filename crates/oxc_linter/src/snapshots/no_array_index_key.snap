@@ -1,0 +1,74 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:13]
+ 1 │ things.map((thing, index) => (
+ 2 │             <Hello key={index} />
+   ·             ─────────────────────
+ 3 │           ));
+   ╰────
+  help: Should use the unique key to avoid unnecessary renders
+
+  ⚠ eslint-plugin-react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:30]
+ 1 │ things.forEach((thing, index) => {
+ 2 │             otherThings.push(<Hello key={index} />);
+   ·                              ─────────────────────
+ 3 │           });
+   ╰────
+  help: Should use the unique key to avoid unnecessary renders
+
+  ⚠ eslint-plugin-react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:30]
+ 1 │ things.filter((thing, index) => {
+ 2 │             otherThings.push(<Hello key={index} />);
+   ·                              ─────────────────────
+ 3 │           });
+   ╰────
+  help: Should use the unique key to avoid unnecessary renders
+
+  ⚠ eslint-plugin-react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:30]
+ 1 │ things.some((thing, index) => {
+ 2 │             otherThings.push(<Hello key={index} />);
+   ·                              ─────────────────────
+ 3 │           });
+   ╰────
+  help: Should use the unique key to avoid unnecessary renders
+
+  ⚠ eslint-plugin-react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:30]
+ 1 │ things.every((thing, index) => {
+ 2 │             otherThings.push(<Hello key={index} />);
+   ·                              ─────────────────────
+ 3 │           });
+   ╰────
+  help: Should use the unique key to avoid unnecessary renders
+
+  ⚠ eslint-plugin-react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:30]
+ 1 │ things.find((thing, index) => {
+ 2 │             otherThings.push(<Hello key={index} />);
+   ·                              ─────────────────────
+ 3 │           });
+   ╰────
+  help: Should use the unique key to avoid unnecessary renders
+
+  ⚠ eslint-plugin-react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:30]
+ 1 │ things.findIndex((thing, index) => {
+ 2 │             otherThings.push(<Hello key={index} />);
+   ·                              ─────────────────────
+ 3 │           });
+   ╰────
+  help: Should use the unique key to avoid unnecessary renders
+
+  ⚠ eslint-plugin-react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:13]
+ 1 │ things.flatMap((thing, index) => (
+ 2 │             <Hello key={index} />
+   ·             ─────────────────────
+ 3 │           ));
+   ╰────
+  help: Should use the unique key to avoid unnecessary renders
