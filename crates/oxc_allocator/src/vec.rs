@@ -117,8 +117,24 @@ impl<'alloc, T> Vec<'alloc, T> {
     ///
     /// This is behaviorally identical to [`FromIterator::from_iter`].
     #[inline(always)]
-    pub fn from_iter_in<I: IntoIterator<Item = T>>(iter: I, allocator: &'alloc Allocator) -> Self {
+    pub fn from_iter_in<I>(iter: I, allocator: &'alloc Allocator) -> Self
+    where
+        I: IntoIterator<Item = T>,
+    {
         Self(ManuallyDrop::new(VecImpl::from_iter_in(iter, &allocator.bump)))
+    }
+
+    /// Create a new [`Vec`] whose elements are taken from an exact iterator and
+    /// allocated in the given `allocator`.
+    ///
+    /// This is behaviorally identical to [`FromIterator::from_iter`].
+    #[inline(always)]
+    pub fn from_iter_exact_in<I>(iter: I, allocator: &'alloc Allocator) -> Self
+    where
+        I: IntoIterator<Item = T>,
+        I::IntoIter: ExactSizeIterator,
+    {
+        Self(ManuallyDrop::new(VecImpl::from_iter_exact_in(iter, &allocator.bump)))
     }
 
     /// Returns the total number of elements the vector can hold without
