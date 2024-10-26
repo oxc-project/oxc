@@ -87,33 +87,27 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         .run()?;
 
     if !cli_options.dry_run {
-        let side_effects = outputs
+        let paths = outputs
             .into_iter()
-            .map(|it| {
-                let path = it.path();
-                log!("Writing {path}...");
-                it.write_to_file().unwrap();
+            .map(|output| {
+                log!("Writing {}...", &output.path);
+                output.write_to_file().unwrap();
                 logln!(" Done!");
-                path
+                output.path
             })
             .collect();
-        write_ci_filter(SOURCE_PATHS, side_effects, ".github/.generated_ast_watch_list.yml")?;
+        write_ci_filter(SOURCE_PATHS, paths, ".github/.generated_ast_watch_list.yml")?;
     }
 
     if let CliOptions { schema: Some(schema_path), dry_run: false, .. } = cli_options {
-        let path = schema_path.to_str().expect("invalid path for schema output.");
         let schema = serde_json::to_string_pretty(&schema.defs).normalize()?;
-        write_all_to(schema.as_bytes(), path)?;
+        write_all_to(schema.as_bytes(), schema_path)?;
     }
 
     Ok(())
 }
 
-fn write_ci_filter(
-    inputs: &[&str],
-    side_effects: Vec<String>,
-    output_path: &str,
-) -> std::io::Result<()> {
+fn write_ci_filter(inputs: &[&str], paths: Vec<String>, output_path: &str) -> std::io::Result<()> {
     let file = file!().replace('\\', "/");
     let mut output = format!(
         "\
@@ -127,8 +121,8 @@ fn write_ci_filter(
         push_item(input);
     }
 
-    for side_effect in side_effects {
-        push_item(side_effect.as_str());
+    for path in paths {
+        push_item(path.as_str());
     }
 
     push_item("tasks/ast_tools/src/**");

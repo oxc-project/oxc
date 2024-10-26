@@ -1,4 +1,8 @@
-use std::{fs, io::Write, path::PathBuf};
+use std::{
+    fs,
+    io::{self, Write},
+    path::Path,
+};
 
 use proc_macro2::TokenStream;
 
@@ -11,8 +15,8 @@ use rust::print_rust;
 ///
 /// Can be either Rust or Javascript.
 pub enum Output {
-    Rust { path: PathBuf, tokens: TokenStream },
-    Javascript { path: PathBuf, code: String },
+    Rust { path: String, tokens: TokenStream },
+    Javascript { path: String, code: String },
 }
 
 impl Output {
@@ -34,34 +38,24 @@ impl Output {
 /// A raw output from codegen.
 #[derive(Debug)]
 pub struct RawOutput {
-    pub path: PathBuf,
+    pub path: String,
     pub content: Vec<u8>,
 }
 
 impl RawOutput {
-    /// Get path of output as a string.
-    pub fn path(&self) -> String {
-        let path = self.path.to_string_lossy();
-        path.replace('\\', "/")
-    }
-
     /// Write output to file
-    pub fn write_to_file(self) -> std::io::Result<()> {
-        let Self { path, content } = self;
-        let path = path.into_os_string();
-        let path = path.to_str().unwrap();
-        write_all_to(&content, path)?;
-        Ok(())
+    pub fn write_to_file(&self) -> io::Result<()> {
+        write_all_to(&self.content, &self.path)
     }
 }
 
 /// Get path for an output.
-pub fn output_path(krate: &str, path: &str) -> PathBuf {
-    std::path::PathBuf::from_iter([krate, "src", "generated", path])
+pub fn output_path(krate: &str, path: &str) -> String {
+    format!("{krate}/src/generated/{path}")
 }
 
 /// Write data to file.
-pub fn write_all_to<S: AsRef<std::path::Path>>(data: &[u8], path: S) -> std::io::Result<()> {
+pub fn write_all_to<P: AsRef<Path>>(data: &[u8], path: P) -> io::Result<()> {
     let path = path.as_ref();
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
