@@ -125,14 +125,12 @@ impl Parse for ESTreeStructAttribute {
 #[derive(Debug, Serialize, Default)]
 pub struct ESTreeEnumAttribute {
     pub rename_all: Option<String>,
-    pub untagged: bool,
     pub custom_ts_def: bool,
 }
 
 impl Parse for ESTreeEnumAttribute {
     fn parse(input: ParseStream) -> Result<Self, syn::Error> {
         let mut rename_all = None;
-        let mut untagged = false;
         let mut custom_ts_def = false;
 
         loop {
@@ -144,13 +142,6 @@ impl Parse for ESTreeEnumAttribute {
                         rename_all.replace(input.parse::<LitStr>()?.value()).is_none(),
                         "Duplicate estree(rename_all)"
                     );
-                }
-                "untagged" => {
-                    if untagged {
-                        panic!("Duplicate estree(untagged)");
-                    } else {
-                        untagged = true;
-                    }
                 }
                 "custom_ts_def" => {
                     if custom_ts_def {
@@ -168,7 +159,7 @@ impl Parse for ESTreeEnumAttribute {
                 break;
             }
         }
-        Ok(Self { rename_all, untagged, custom_ts_def })
+        Ok(Self { rename_all, custom_ts_def })
     }
 }
 

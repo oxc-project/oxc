@@ -37,7 +37,6 @@ pub struct Alternative<'a> {
 #[ast]
 #[derive(Debug)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[estree(untagged)]
 pub enum Term<'a> {
     // Assertion, QuantifiableAssertion
     BoundaryAssertion(Box<'a, BoundaryAssertion>) = 0,
@@ -246,7 +245,6 @@ pub enum CharacterClassContentsKind {
 #[ast]
 #[derive(Debug)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[estree(untagged)]
 pub enum CharacterClassContents<'a> {
     CharacterClassRange(Box<'a, CharacterClassRange>) = 0,
     CharacterClassEscape(Box<'a, CharacterClassEscape>) = 1,

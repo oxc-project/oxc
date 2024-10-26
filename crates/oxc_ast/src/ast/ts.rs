@@ -114,7 +114,6 @@ inherit_variants! {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(untagged)]
 pub enum TSEnumMemberName<'a> {
     StaticIdentifier(Box<'a, IdentifierName<'a>>) = 64,
     StaticStringLiteral(Box<'a, StringLiteral<'a>>) = 65,
@@ -177,7 +176,6 @@ pub struct TSLiteralType<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(untagged)]
 pub enum TSLiteral<'a> {
     BooleanLiteral(Box<'a, BooleanLiteral>) = 0,
     NullLiteral(Box<'a, NullLiteral>) = 1,
@@ -203,7 +201,6 @@ pub enum TSLiteral<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(untagged)]
 pub enum TSType<'a> {
     // Keyword
     TSAnyKeyword(Box<'a, TSAnyKeyword>) = 0,
@@ -545,7 +542,6 @@ inherit_variants! {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(untagged)]
 pub enum TSTupleElement<'a> {
     // Discriminants start at 64, so that `TSTupleElement::is_ts_type` is a single
     // bitwise AND operation on the discriminant (`discriminant & 63 != 0`).
@@ -781,7 +777,6 @@ pub struct TSTypeReference<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(untagged)]
 pub enum TSTypeName<'a> {
     IdentifierReference(Box<'a, IdentifierReference<'a>>) = 0,
     QualifiedName(Box<'a, TSQualifiedName<'a>>) = 1,
@@ -1003,7 +998,6 @@ pub struct TSPropertySignature<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(untagged)]
 pub enum TSSignature<'a> {
     TSIndexSignature(Box<'a, TSIndexSignature<'a>>) = 0,
     TSPropertySignature(Box<'a, TSPropertySignature<'a>>) = 1,
@@ -1165,7 +1159,6 @@ pub struct TSTypePredicate<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(untagged)]
 pub enum TSTypePredicateName<'a> {
     Identifier(Box<'a, IdentifierName<'a>>) = 0,
     This(TSThisType) = 1,
@@ -1269,7 +1262,6 @@ pub enum TSModuleDeclarationKind {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(untagged)]
 pub enum TSModuleDeclarationName<'a> {
     Identifier(BindingIdentifier<'a>) = 0,
     StringLiteral(StringLiteral<'a>) = 1,
@@ -1278,7 +1270,6 @@ pub enum TSModuleDeclarationName<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(untagged)]
 pub enum TSModuleDeclarationBody<'a> {
     TSModuleDeclaration(Box<'a, TSModuleDeclaration<'a>>) = 0,
     TSModuleBlock(Box<'a, TSModuleBlock<'a>>) = 1,
@@ -1357,7 +1348,6 @@ inherit_variants! {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(untagged)]
 pub enum TSTypeQueryExprName<'a> {
     TSImportType(Box<'a, TSImportType<'a>>) = 2,
     // `TSTypeName` variants added here by `inherit_variants!` macro
@@ -1402,7 +1392,6 @@ pub struct TSImportAttribute<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(untagged)]
 pub enum TSImportAttributeName<'a> {
     Identifier(IdentifierName<'a>) = 0,
     StringLiteral(StringLiteral<'a>) = 1,
@@ -1623,7 +1612,6 @@ inherit_variants! {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(untagged)]
 pub enum TSModuleReference<'a> {
     ExternalModuleReference(Box<'a, TSExternalModuleReference<'a>>) = 2,
     // `TSTypeName` variants added here by `inherit_variants!` macro
