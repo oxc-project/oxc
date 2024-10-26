@@ -129,6 +129,7 @@ mod eslint {
     pub mod no_with;
     pub mod prefer_exponentiation_operator;
     pub mod prefer_numeric_literals;
+    pub mod prefer_object_has_own;
     pub mod radix;
     pub mod require_await;
     pub mod require_yield;
@@ -604,6 +605,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_with,
     eslint::prefer_exponentiation_operator,
     eslint::prefer_numeric_literals,
+    eslint::prefer_object_has_own,
     eslint::radix,
     eslint::require_await,
     eslint::require_yield,
