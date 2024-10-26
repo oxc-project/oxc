@@ -1,6 +1,7 @@
-//! AST node factories
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/ast_builder.rs`
+
+//! AST node factories
 
 #![allow(
     clippy::default_trait_access,

@@ -43,11 +43,13 @@ impl<'a, 'ctx> Traverse<'a> for StatementInjector<'a, 'ctx> {
     }
 }
 
+#[derive(Debug)]
 enum Direction {
     Before,
     After,
 }
 
+#[derive(Debug)]
 struct AdjacentStatement<'a> {
     stmt: Statement<'a>,
     direction: Direction,
@@ -58,18 +60,30 @@ pub struct StatementInjectorStore<'a> {
     insertions: RefCell<FxHashMap<Address, Vec<AdjacentStatement<'a>>>>,
 }
 
-// Public methods
 impl<'a> StatementInjectorStore<'a> {
     /// Create new `StatementInjectorStore`.
     pub fn new() -> Self {
         Self { insertions: RefCell::new(FxHashMap::default()) }
     }
 
+    // Each of the `insert_before` / `insert_after` functions is split into 2 parts:
+    //
+    // 1. Outer function which is generic over any `GetAddress`.
+    // 2. Inner function which is non-generic and takes `Address`.
+    //
+    // Outer functions are marked `#[inline]`, as `GetAddress::address` is generally only 1 or 2 instructions.
+    // The non-trivial inner functions are not marked `#[inline]` - compiler can decide whether to inline or not.
+
     /// Add a statement to be inserted immediately before the target statement.
     #[expect(dead_code)]
-    pub fn insert_before(&self, target: &Statement<'a>, stmt: Statement<'a>) {
+    #[inline]
+    pub fn insert_before<A: GetAddress>(&self, target: &A, stmt: Statement<'a>) {
+        self.insert_before_address(target.address(), stmt);
+    }
+
+    fn insert_before_address(&self, target: Address, stmt: Statement<'a>) {
         let mut insertions = self.insertions.borrow_mut();
-        let adjacent_stmts = insertions.entry(target.address()).or_default();
+        let adjacent_stmts = insertions.entry(target).or_default();
         let index = adjacent_stmts
             .iter()
             .position(|s| matches!(s.direction, Direction::After))
@@ -78,20 +92,34 @@ impl<'a> StatementInjectorStore<'a> {
     }
 
     /// Add a statement to be inserted immediately after the target statement.
-    pub fn insert_after(&self, target: &Statement<'a>, stmt: Statement<'a>) {
+    #[inline]
+    pub fn insert_after<A: GetAddress>(&self, target: &A, stmt: Statement<'a>) {
+        self.insert_after_address(target.address(), stmt);
+    }
+
+    fn insert_after_address(&self, target: Address, stmt: Statement<'a>) {
         let mut insertions = self.insertions.borrow_mut();
-        let adjacent_stmts = insertions.entry(target.address()).or_default();
+        let adjacent_stmts = insertions.entry(target).or_default();
         adjacent_stmts.push(AdjacentStatement { stmt, direction: Direction::After });
     }
 
     /// Add multiple statements to be inserted immediately before the target statement.
     #[expect(dead_code)]
-    pub fn insert_many_before<S>(&self, target: &Statement<'a>, stmts: S)
+    #[inline]
+    pub fn insert_many_before<A, S>(&self, target: &A, stmts: S)
+    where
+        A: GetAddress,
+        S: IntoIterator<Item = Statement<'a>>,
+    {
+        self.insert_many_before_address(target.address(), stmts);
+    }
+
+    fn insert_many_before_address<S>(&self, target: Address, stmts: S)
     where
         S: IntoIterator<Item = Statement<'a>>,
     {
         let mut insertions = self.insertions.borrow_mut();
-        let adjacent_stmts = insertions.entry(target.address()).or_default();
+        let adjacent_stmts = insertions.entry(target).or_default();
         adjacent_stmts.splice(
             0..0,
             stmts.into_iter().map(|stmt| AdjacentStatement { stmt, direction: Direction::Before }),
@@ -99,19 +127,28 @@ impl<'a> StatementInjectorStore<'a> {
     }
 
     /// Add multiple statements to be inserted immediately after the target statement.
-    pub fn insert_many_after<S>(&self, target: &Statement<'a>, stmts: S)
+    #[inline]
+    pub fn insert_many_after<A, S>(&self, target: &A, stmts: S)
+    where
+        A: GetAddress,
+        S: IntoIterator<Item = Statement<'a>>,
+    {
+        self.insert_many_after_address(target.address(), stmts);
+    }
+
+    fn insert_many_after_address<S>(&self, target: Address, stmts: S)
     where
         S: IntoIterator<Item = Statement<'a>>,
     {
         let mut insertions = self.insertions.borrow_mut();
-        let adjacent_stmts = insertions.entry(target.address()).or_default();
+        let adjacent_stmts = insertions.entry(target).or_default();
         adjacent_stmts.extend(
             stmts.into_iter().map(|stmt| AdjacentStatement { stmt, direction: Direction::After }),
         );
     }
 
     /// Insert statements immediately before / after the target statement.
-    pub(self) fn insert_into_statements(
+    fn insert_into_statements(
         &self,
         statements: &mut AVec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,

@@ -264,13 +264,8 @@ impl Oxc {
                 mangle: minifier_options.mangle.unwrap_or_default(),
                 compress: if minifier_options.compress.unwrap_or_default() {
                     CompressOptions {
-                        booleans: compress_options.booleans,
                         drop_console: compress_options.drop_console,
                         drop_debugger: compress_options.drop_debugger,
-                        evaluate: compress_options.evaluate,
-                        join_vars: compress_options.join_vars,
-                        loops: compress_options.loops,
-                        typeofs: compress_options.typeofs,
                         ..CompressOptions::default()
                     }
                 } else {

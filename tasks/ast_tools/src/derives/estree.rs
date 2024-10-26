@@ -2,7 +2,6 @@ use convert_case::{Case, Casing};
 use proc_macro2::TokenStream;
 use quote::quote;
 
-use super::{define_derive, Derive, DeriveOutput};
 use crate::{
     codegen::LateCtx,
     markers::ESTreeStructAttribute,
@@ -12,9 +11,11 @@ use crate::{
     },
 };
 
-define_derive! {
-    pub struct DeriveESTree;
-}
+use super::{define_derive, Derive};
+
+pub struct DeriveESTree;
+
+define_derive!(DeriveESTree);
 
 impl Derive for DeriveESTree {
     fn trait_name() -> &'static str {
@@ -116,10 +117,12 @@ fn serialize_struct(def: &StructDef) -> TokenStream {
 //  3. All other enums, which are camelCased.
 fn serialize_enum(def: &EnumDef) -> TokenStream {
     let ident = def.ident();
-    if def.markers.estree.untagged {
+
+    let is_untagged = def.all_variants().all(|var| var.fields.len() == 1);
+
+    if is_untagged {
         let match_branches = def.all_variants().map(|var| {
             let var_ident = var.ident();
-            assert!(var.fields.len() == 1, "Each variant of an untagged enum must have exactly one inner field (on {ident}::{var_ident})");
             quote! {
                 #ident::#var_ident(x) => {
                     Serialize::serialize(x, serializer)

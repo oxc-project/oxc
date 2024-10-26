@@ -12,7 +12,7 @@ Original   | Minified   | esbuild    | Gzip       | esbuild
 
 555.77 kB  | 276.49 kB  | 270.13 kB  | 91.15 kB   | 90.80 kB   | d3.js     
 
-1.01 MB    | 467.63 kB  | 458.89 kB  | 126.75 kB  | 126.71 kB  | bundle.min.js
+1.01 MB    | 467.60 kB  | 458.89 kB  | 126.74 kB  | 126.71 kB  | bundle.min.js
 
 1.25 MB    | 662.86 kB  | 646.76 kB  | 164.00 kB  | 163.73 kB  | three.js  
 

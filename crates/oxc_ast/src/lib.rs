@@ -1,15 +1,21 @@
-// TODO: I'm not sure if it is a but or intentional but clippy needs this allowed both on this
-// module and the generated one.
-#![allow(clippy::self_named_module_files)]
-#![warn(missing_docs)]
-
-//! # Oxc AST
+//! # Oxc AST (Abstract Syntax Tree) Nodes
 //!
-//! Abstract Syntax Tree nodes for Oxc. Supports both TypeScript and JavaScript.
+//! Supports JavaScript, TypeScript and JSX.
 //!
-//! This is almost similar to [estree](https://github.com/estree/estree) except a few places:
-//! * `Identifier` is replaced with explicit [`BindingIdentifier`], [`IdentifierReference`], [`IdentifierName`] per spec
-//! * `AssignmentExpression`.`left` `Pattern` is replaced with [`AssignmentTarget`]
+//! ## Types
+//!
+//! AST types are similar to [estree] and [typescript-eslint]'s definition, with a few notable exceptions:
+//!
+//! * `Identifier` is replaced with explicit [`BindingIdentifier`], [`IdentifierReference`],
+//!   [`IdentifierName`], per ECMAScript Specification.
+//! * `AssignmentExpression`.`left` `Pattern` is replaced with [`AssignmentTarget`].
+//! * `Literal` is replaced with [`BooleanLiteral`], [`NumericLiteral`], [`StringLiteral`] etc.
+//!
+//! Field order of types follows "Evaluation order" defined by [ECMAScript spec].
+//! For TypeScript types, we follow how field order is defined in [tsc].
+//!
+//! Oxc's visitors ([`Visit`], [`VisitMut`], [`Traverse`]) visit AST node fields in same order
+//! as they are defined in the types here.
 //!
 //! ## Parsing
 //!
@@ -22,8 +28,21 @@
 //! [`IdentifierReference`]: ast::IdentifierReference
 //! [`IdentifierName`]: ast::IdentifierName
 //! [`AssignmentTarget`]: ast::AssignmentTarget
+//! [`BooleanLiteral`]: ast::BooleanLiteral
+//! [`NumericLiteral`]: ast::NumericLiteral
+//! [`StringLiteral`]: ast::StringLiteral
 //! [`oxc_parser`]: <https://docs.rs/oxc_parser>
 //! [`Parser`]: <https://docs.rs/oxc_parser/latest/oxc_parser/struct.Parser.html>
+//! [estree]: <https://github.com/estree/estree>
+//! [typescript-eslint]: <https://github.com/typescript-eslint/typescript-eslint/tree/main/packages/ast-spec>
+//! [ECMAScript spec]: <https://tc39.es/ecma262/>
+//! [tsc]: <https://github.com/microsoft/TypeScript>
+//! [`Traverse`]: <https://github.com/oxc-project/oxc/tree/main/crates/oxc_traverse>
+
+// TODO: I'm not sure if it is a but or intentional but clippy needs this allowed both on this
+// module and the generated one.
+#![allow(clippy::self_named_module_files)]
+#![warn(missing_docs)]
 
 #[cfg(feature = "serialize")]
 mod serialize;

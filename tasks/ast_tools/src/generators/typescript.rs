@@ -1,37 +1,27 @@
 use convert_case::{Case, Casing};
 use itertools::Itertools;
-use std::{
-    io::Write,
-    process::{Command, Stdio},
-};
 
-use super::define_generator;
 use crate::{
     codegen::LateCtx,
-    output,
+    output::{output_path, Output},
     schema::{
         serialize::{enum_variant_name, get_type_tag},
         EnumDef, GetIdent, StructDef, TypeDef, TypeName,
     },
-    Generator, GeneratorOutput,
+    Generator,
 };
+
+use super::define_generator;
 
 const CUSTOM_TYPESCRIPT: &str = include_str!("../../../../crates/oxc_ast/src/ast/types.d.ts");
 
-define_generator! {
-    pub struct TypescriptGenerator;
-}
+pub struct TypescriptGenerator;
+
+define_generator!(TypescriptGenerator);
 
 impl Generator for TypescriptGenerator {
-    fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
-        let file = file!().replace('\\', "/");
-        let mut content = format!(
-            "\
-            // Auto-generated code, DO NOT EDIT DIRECTLY!\n\
-            // To edit this generated file you have to edit `{file}`\n\n\
-            {CUSTOM_TYPESCRIPT}\n\
-            "
-        );
+    fn generate(&mut self, ctx: &LateCtx) -> Output {
+        let mut code = format!("{CUSTOM_TYPESCRIPT}\n");
 
         for def in ctx.schema() {
             if !def.generates_derive("ESTree") {
@@ -43,13 +33,11 @@ impl Generator for TypescriptGenerator {
             };
             let Some(ts_type_def) = ts_type_def else { continue };
 
-            content.push_str(&ts_type_def);
-            content.push_str("\n\n");
+            code.push_str(&ts_type_def);
+            code.push_str("\n\n");
         }
-        GeneratorOutput::Text {
-            path: output(crate::TYPESCRIPT_PACKAGE, "types.d.ts"),
-            content: format_typescript(&content),
-        }
+
+        Output::Javascript { path: output_path(crate::TYPESCRIPT_PACKAGE, "types.d.ts"), code }
     }
 }
 
@@ -60,7 +48,9 @@ fn typescript_enum(def: &EnumDef) -> Option<String> {
         return None;
     }
 
-    let union = if def.markers.estree.untagged {
+    let is_untagged = def.all_variants().all(|var| var.fields.len() == 1);
+
+    let union = if is_untagged {
         def.all_variants().map(|var| type_to_string(var.fields[0].typ.name())).join(" | ")
     } else {
         def.all_variants().map(|var| format!("'{}'", enum_variant_name(var, def))).join(" | ")
@@ -132,20 +122,4 @@ fn type_to_string(ty: &TypeName) -> String {
         }
         TypeName::Opt(type_name) => format!("{} | null", type_to_string(type_name)),
     }
-}
-
-fn format_typescript(source_text: &str) -> String {
-    let mut dprint = Command::new("dprint")
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .args(["fmt", "--stdin", "types.d.ts"])
-        .spawn()
-        .expect("Failed to run dprint (is it installed?)");
-
-    let stdin = dprint.stdin.as_mut().unwrap();
-    stdin.write_all(source_text.as_bytes()).unwrap();
-    stdin.flush().unwrap();
-
-    let output = dprint.wait_with_output().unwrap();
-    String::from_utf8(output.stdout).unwrap()
 }

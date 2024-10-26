@@ -2,8 +2,9 @@ use std::borrow::Cow;
 
 use syn::parse_quote;
 
-use super::{define_pass, AstType, Pass, Result};
 use crate::{codegen::EarlyCtx, rust_ast::Inherit, util::NormalizeError};
+
+use super::{define_pass, AstType, Pass, Result};
 
 pub trait Unresolved {
     fn unresolved(&self) -> bool;
@@ -27,9 +28,9 @@ impl Unresolved for Vec<Inherit> {
     }
 }
 
-define_pass! {
-    pub struct Linker;
-}
+pub struct Linker;
+
+define_pass!(Linker);
 
 impl Pass for Linker {
     /// # Panics

@@ -1,6 +1,8 @@
-use super::{EnumDef, StructDef, VariantDef};
-use crate::{markers::ESTreeStructAttribute, schema::GetIdent};
 use convert_case::{Case, Casing};
+
+use crate::{markers::ESTreeStructAttribute, schema::GetIdent};
+
+use super::{EnumDef, StructDef, VariantDef};
 
 pub fn enum_variant_name(var: &VariantDef, enm: &EnumDef) -> String {
     match var.markers.derive_attributes.estree.rename.as_ref() {

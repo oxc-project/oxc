@@ -8,23 +8,24 @@ use quote::{format_ident, quote, ToTokens};
 use rustc_hash::FxHashMap;
 use syn::{parse_quote, Ident, Type};
 
-use super::define_generator;
 use crate::{
-    codegen::{generated_header, LateCtx},
-    output,
+    codegen::LateCtx,
+    output::{output_path, Output},
     schema::{
         EnumDef, FieldDef, GetIdent, InheritDef, StructDef, ToType, TypeDef, TypeName, VariantDef,
     },
     util::{TypeAnalysis, TypeWrapper},
-    Generator, GeneratorOutput,
+    Generator,
 };
 
-define_generator! {
-    pub struct AstBuilderGenerator;
-}
+use super::define_generator;
+
+pub struct AstBuilderGenerator;
+
+define_generator!(AstBuilderGenerator);
 
 impl Generator for AstBuilderGenerator {
-    fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
+    fn generate(&mut self, ctx: &LateCtx) -> Output {
         let fns = ctx
             .schema()
             .into_iter()
@@ -32,14 +33,12 @@ impl Generator for AstBuilderGenerator {
             .map(|it| generate_builder_fn(it, ctx))
             .collect_vec();
 
-        let header = generated_header!();
-
-        GeneratorOutput::Rust {
-            path: output(crate::AST_CRATE, "ast_builder.rs"),
+        Output::Rust {
+            path: output_path(crate::AST_CRATE, "ast_builder.rs"),
             tokens: quote! {
                 //! AST node factories
-                #header
 
+                //!@@line_break
                 #![allow(
                     clippy::default_trait_access,
                     clippy::too_many_arguments,

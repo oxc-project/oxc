@@ -1,6 +1,6 @@
 use serde::Serialize;
+use syn::Ident;
 
-use super::{with_either, TypeName};
 use crate::{
     markers::{
         DeriveAttributes, ESTreeEnumAttribute, ESTreeStructAttribute, ScopeAttribute, ScopeMarkers,
@@ -9,6 +9,8 @@ use crate::{
     util::{ToIdent, TypeAnalysis, TypeWrapper},
     TypeId,
 };
+
+use super::{with_either, TypeName};
 
 #[derive(Debug, Serialize)]
 #[serde(untagged)]
@@ -120,7 +122,7 @@ pub struct VariantDef {
 }
 
 impl VariantDef {
-    pub fn ident(&self) -> syn::Ident {
+    pub fn ident(&self) -> Ident {
         self.name.to_ident()
     }
 
@@ -176,7 +178,7 @@ impl From<&syn::Visibility> for Visibility {
 }
 
 impl FieldDef {
-    pub fn ident(&self) -> Option<syn::Ident> {
+    pub fn ident(&self) -> Option<Ident> {
         self.name.as_ref().map(ToIdent::to_ident)
     }
 }

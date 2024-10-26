@@ -3,17 +3,18 @@ use itertools::Itertools;
 use quote::{format_ident, quote};
 use syn::{parse_quote, Arm, ImplItemFn, Variant};
 
-use super::define_generator;
 use crate::{
-    codegen::{generated_header, LateCtx},
-    output,
+    codegen::LateCtx,
+    output::{output_path, Output},
     schema::{GetIdent, ToType},
-    Generator, GeneratorOutput,
+    Generator,
 };
 
-define_generator! {
-    pub struct AstKindGenerator;
-}
+use super::define_generator;
+
+pub struct AstKindGenerator;
+
+define_generator!(AstKindGenerator);
 
 pub const BLACK_LIST: [&str; 61] = [
     "Expression",
@@ -80,7 +81,7 @@ pub const BLACK_LIST: [&str; 61] = [
 ];
 
 impl Generator for AstKindGenerator {
-    fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
+    fn generate(&mut self, ctx: &LateCtx) -> Output {
         let have_kinds = ctx
             .schema()
             .into_iter()
@@ -125,15 +126,12 @@ impl Generator for AstKindGenerator {
             })
             .collect_vec();
 
-        let header = generated_header!();
-
-        GeneratorOutput::Rust {
-            path: output(crate::AST_CRATE, "ast_kind.rs"),
+        Output::Rust {
+            path: output_path(crate::AST_CRATE, "ast_kind.rs"),
             tokens: quote! {
-                #header
                 #![allow(missing_docs)] ///@ FIXME (in ast_tools/src/generators/ast_kind.rs)
-                ///@@line_break
 
+                ///@@line_break
                 use oxc_span::{GetSpan, Span};
 
                 ///@@line_break

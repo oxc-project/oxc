@@ -10,7 +10,7 @@ use oxc_syntax::{
 };
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
-use crate::{node_util::Ctx, tri::Tri, CompressorPass};
+use crate::{node_util::Ctx, CompressorPass};
 
 /// Constant Folding
 ///
@@ -43,8 +43,17 @@ impl<'a> Traverse<'a> for PeepholeFoldConstants {
             Expression::ArrayExpression(e) => Self::try_flatten_array_expression(e, ctx),
             Expression::ObjectExpression(e) => Self::try_flatten_object_expression(e, ctx),
             Expression::BinaryExpression(e) => Self::try_fold_binary_expression(e, ctx),
+            #[allow(clippy::float_cmp)]
             Expression::UnaryExpression(e) => {
-                ctx.eval_unary_expression(e).map(|v| ctx.value_to_expr(e.span, v))
+                match e.operator {
+                    // Do not fold `void 0` back to `undefined`.
+                    UnaryOperator::Void if e.argument.is_number_0() => None,
+                    // Do not fold `true` and `false` back to `!0` and `!1`
+                    UnaryOperator::LogicalNot if matches!(&e.argument, Expression::NumericLiteral(lit) if lit.value == 0.0 || lit.value == 1.0) => {
+                        None
+                    }
+                    _ => ctx.eval_unary_expression(e).map(|v| ctx.value_to_expr(e.span, v)),
+                }
             }
             // TODO: return tryFoldGetProp(subtree);
             Expression::LogicalExpression(e) => Self::try_fold_logical_expression(e, ctx),
@@ -261,20 +270,20 @@ impl<'a, 'b> PeepholeFoldConstants {
             }
             BinaryOperator::Equality => Self::try_abstract_equality_comparison(left, right, ctx),
             BinaryOperator::Inequality => {
-                Self::try_abstract_equality_comparison(left, right, ctx).not()
+                Self::try_abstract_equality_comparison(left, right, ctx).map(|b| !b)
             }
             BinaryOperator::StrictEquality => {
                 Self::try_strict_equality_comparison(left, right, ctx)
             }
             BinaryOperator::StrictInequality => {
-                Self::try_strict_equality_comparison(left, right, ctx).not()
+                Self::try_strict_equality_comparison(left, right, ctx).map(|b| !b)
             }
-            _ => Tri::Unknown,
+            _ => None,
         };
         let value = match value {
-            Tri::True => true,
-            Tri::False => false,
-            Tri::Unknown => return None,
+            Some(true) => true,
+            Some(false) => false,
+            None => return None,
         };
         Some(ctx.ast.expression_boolean_literal(e.span, value))
     }
@@ -284,7 +293,7 @@ impl<'a, 'b> PeepholeFoldConstants {
         left_expr: &'b Expression<'a>,
         right_expr: &'b Expression<'a>,
         ctx: Ctx<'a, 'b>,
-    ) -> Tri {
+    ) -> Option<bool> {
         let left = ValueType::from(left_expr);
         let right = ValueType::from(right_expr);
         if left != ValueType::Undetermined && right != ValueType::Undetermined {
@@ -295,7 +304,7 @@ impl<'a, 'b> PeepholeFoldConstants {
                 (left, right),
                 (ValueType::Null, ValueType::Undefined) | (ValueType::Undefined, ValueType::Null)
             ) {
-                return Tri::True;
+                return Some(true);
             }
 
             if matches!((left, right), (ValueType::Number, ValueType::String))
@@ -318,7 +327,7 @@ impl<'a, 'b> PeepholeFoldConstants {
                     );
                 }
 
-                return Tri::Unknown;
+                return None;
             }
 
             if matches!((left, right), (ValueType::String, ValueType::Number))
@@ -341,7 +350,7 @@ impl<'a, 'b> PeepholeFoldConstants {
                     );
                 }
 
-                return Tri::Unknown;
+                return None;
             }
 
             if matches!(left, ValueType::BigInt) || matches!(right, ValueType::BigInt) {
@@ -349,25 +358,25 @@ impl<'a, 'b> PeepholeFoldConstants {
                 let right_bigint = ctx.get_side_free_bigint_value(right_expr);
 
                 if let (Some(l_big), Some(r_big)) = (left_bigint, right_bigint) {
-                    return Tri::from(l_big.eq(&r_big));
+                    return Some(l_big.eq(&r_big));
                 }
             }
 
             if matches!(left, ValueType::String | ValueType::Number)
                 && matches!(right, ValueType::Object)
             {
-                return Tri::Unknown;
+                return None;
             }
 
             if matches!(left, ValueType::Object)
                 && matches!(right, ValueType::String | ValueType::Number)
             {
-                return Tri::Unknown;
+                return None;
             }
 
-            return Tri::False;
+            return Some(false);
         }
-        Tri::Unknown
+        None
     }
 
     /// <https://tc39.es/ecma262/#sec-strict-equality-comparison>
@@ -376,13 +385,13 @@ impl<'a, 'b> PeepholeFoldConstants {
         left_expr: &'b Expression<'a>,
         right_expr: &'b Expression<'a>,
         ctx: Ctx<'a, 'b>,
-    ) -> Tri {
+    ) -> Option<bool> {
         let left = ValueType::from(left_expr);
         let right = ValueType::from(right_expr);
         if left != ValueType::Undetermined && right != ValueType::Undetermined {
             // Strict equality can only be true for values of the same type.
             if left != right {
-                return Tri::False;
+                return Some(false);
             }
             return match left {
                 ValueType::Number => {
@@ -391,13 +400,13 @@ impl<'a, 'b> PeepholeFoldConstants {
 
                     if let (Some(l_num), Some(r_num)) = (left_number, right_number) {
                         if l_num.is_nan() || r_num.is_nan() {
-                            return Tri::False;
+                            return Some(false);
                         }
 
-                        return Tri::from(l_num == r_num);
+                        return Some(l_num == r_num);
                     }
 
-                    Tri::Unknown
+                    None
                 }
                 ValueType::String => {
                     let left_string = ctx.get_side_free_string_value(left_expr);
@@ -405,16 +414,28 @@ impl<'a, 'b> PeepholeFoldConstants {
                     if let (Some(left_string), Some(right_string)) = (left_string, right_string) {
                         // In JS, browsers parse \v differently. So do not compare strings if one contains \v.
                         if left_string.contains('\u{000B}') || right_string.contains('\u{000B}') {
-                            return Tri::Unknown;
+                            return None;
                         }
 
-                        return Tri::from(left_string == right_string);
+                        return Some(left_string == right_string);
                     }
 
-                    Tri::Unknown
+                    None
                 }
-                ValueType::Undefined | ValueType::Null => Tri::True,
-                _ => Tri::Unknown,
+                ValueType::Undefined | ValueType::Null => Some(true),
+                ValueType::Boolean if right.is_boolean() => {
+                    let left = ctx.get_boolean_value(left_expr);
+                    let right = ctx.get_boolean_value(right_expr);
+                    if let (Some(left_bool), Some(right_bool)) = (left, right) {
+                        return Some(left_bool == right_bool);
+                    }
+                    None
+                }
+                // TODO
+                ValueType::BigInt
+                | ValueType::Object
+                | ValueType::Boolean
+                | ValueType::Undetermined => None,
             };
         }
 
@@ -422,9 +443,9 @@ impl<'a, 'b> PeepholeFoldConstants {
         // There's only one special case:
         // Any strict equality comparison against NaN returns false.
         if left_expr.is_nan() || right_expr.is_nan() {
-            return Tri::False;
+            return Some(false);
         }
-        Tri::Unknown
+        None
     }
 }
 
@@ -1174,19 +1195,17 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_fold_arithmetic2() {
         test_same("x = y + 10 + 20");
         test_same("x = y / 2 / 4");
-        test("x = y * 2.25 * 3", "x = y * 6.75");
+        // test("x = y * 2.25 * 3", "x = y * 6.75");
         test_same("x = y * 2.25 * z * 3");
         test_same("z = x * y");
         test_same("x = y * 5");
-        test("x = y + (z * 24 * 60 * 60 * 1000)", "x = y + z * 864E5");
+        // test("x = y + (z * 24 * 60 * 60 * 1000)", "x = y + z * 864E5");
     }
 
     #[test]
-    #[ignore]
     fn test_fold_arithmetic3() {
         test("x = null * undefined", "x = NaN");
         test("x = null * 1", "x = 0");
@@ -1194,6 +1213,9 @@ mod test {
         test("x = (null + 1) * 2", "x = 2");
         test("x = null ** 0", "x = 1");
         test("x = (-0) ** 3", "x = -0");
+
+        test("x = 1 + null", "x = 1");
+        test("x = null + 1", "x = 1");
     }
 
     #[test]

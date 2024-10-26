@@ -28,6 +28,10 @@ impl ValueType {
     pub fn is_bigint(self) -> bool {
         matches!(self, Self::BigInt)
     }
+
+    pub fn is_boolean(self) -> bool {
+        matches!(self, Self::Boolean)
+    }
 }
 
 /// `get_known_value_type`

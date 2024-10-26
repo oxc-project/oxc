@@ -5,11 +5,11 @@ mod value_type;
 use std::{borrow::Cow, cmp::Ordering};
 
 use num_bigint::BigInt;
-use num_traits::{One, Zero};
+use num_traits::Zero;
 
 use oxc_ast::ast::*;
 
-use crate::{side_effects::MayHaveSideEffects, ToBigInt, ToInt32, ToJsString};
+use crate::{side_effects::MayHaveSideEffects, ToBigInt, ToBoolean, ToInt32, ToJsString, ToNumber};
 
 pub use self::{is_litral_value::IsLiteralValue, value::ConstantValue, value_type::ValueType};
 
@@ -44,6 +44,14 @@ pub trait ConstantEvaluation<'a> {
 
     fn get_side_free_string_value(&self, expr: &Expression<'a>) -> Option<Cow<'a, str>> {
         let value = expr.to_js_string();
+        if value.is_some() && !expr.may_have_side_effects() {
+            return value;
+        }
+        None
+    }
+
+    fn get_side_free_boolean_value(&self, expr: &Expression<'a>) -> Option<bool> {
+        let value = expr.to_boolean();
         if value.is_some() && !expr.may_have_side_effects() {
             return value;
         }
@@ -102,7 +110,6 @@ pub trait ConstantEvaluation<'a> {
             Expression::UnaryExpression(unary_expr) => {
                 match unary_expr.operator {
                     UnaryOperator::Void => Some(false),
-
                     UnaryOperator::BitwiseNot
                     | UnaryOperator::UnaryPlus
                     | UnaryOperator::UnaryNegation => {
@@ -179,6 +186,9 @@ pub trait ConstantEvaluation<'a> {
             Expression::UnaryExpression(e) => self.eval_unary_expression(e),
             Expression::Identifier(ident) => self.resolve_binding(ident),
             Expression::NumericLiteral(lit) => Some(ConstantValue::Number(lit.value)),
+            Expression::NullLiteral(_) => Some(ConstantValue::Null),
+            Expression::BooleanLiteral(lit) => Some(ConstantValue::Boolean(lit.value)),
+            Expression::BigIntLiteral(lit) => lit.to_big_int().map(ConstantValue::BigInt),
             Expression::StringLiteral(lit) => {
                 Some(ConstantValue::String(Cow::Borrowed(lit.value.as_str())))
             }
@@ -206,8 +216,8 @@ pub trait ConstantEvaluation<'a> {
                 if left_type.is_number() || right_type.is_number() {
                     let lval = self.eval_expression(left)?;
                     let rval = self.eval_expression(right)?;
-                    let lnum = lval.into_number()?;
-                    let rnum = rval.into_number()?;
+                    let lnum = lval.to_number()?;
+                    let rnum = rval.to_number()?;
                     return Some(ConstantValue::Number(lnum + rnum));
                 }
                 None
@@ -352,12 +362,6 @@ pub trait ConstantEvaluation<'a> {
                 None
             }
             UnaryOperator::LogicalNot => {
-                // Don't fold !0 and !1 back to false.
-                if let Expression::NumericLiteral(n) = &expr.argument {
-                    if n.value.is_zero() || n.value.is_one() {
-                        return None;
-                    }
-                }
                 self.get_boolean_value(&expr.argument).map(|b| !b).map(ConstantValue::Boolean)
             }
             UnaryOperator::UnaryPlus => {

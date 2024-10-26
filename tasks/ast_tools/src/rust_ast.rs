@@ -9,10 +9,11 @@ use syn::{
     Variant, Visibility,
 };
 
-use super::{parse_file, Itertools, PathBuf, Rc, Read, RefCell, Result};
 use crate::{
     layout::Layout,
+    parse_file,
     util::{unexpanded_macro_err, NormalizeError},
+    Itertools, PathBuf, Rc, Read, RefCell, Result,
 };
 
 pub type AstRef = Rc<RefCell<AstType>>;

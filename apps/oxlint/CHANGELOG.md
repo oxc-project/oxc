@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.10.3] - 2024-10-26
+
+### Features
+
+- 0acca58 linter: Support `--print-config all` to print config file for project (#6579) (mysteryven)
+
 ## [0.10.2] - 2024-10-22
 
 ### Refactor

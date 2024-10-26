@@ -4,6 +4,33 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.10.3] - 2024-10-26
+
+- 90c786c regular_expression: [**BREAKING**] Support ES2025 Duplicated named capture groups (#6847) (leaysgur)
+
+- 8032813 regular_expression: [**BREAKING**] Migrate to new regexp parser API (#6741) (leaysgur)
+
+### Features
+
+- a73c5af linter: Add fixer for `jsx-a11y/no-access-key` rule (#6781) (Tapan Prakash)
+- 2aa763c linter: Warn unmatched rule names (#6782) (Tapan Prakash)
+- 0acca58 linter: Support `--print-config all` to print config file for project (#6579) (mysteryven)
+
+### Bug Fixes
+
+- f49b3e2 linter: `react/iframe-missing-sandbox` ignores vanilla JS APIs (#6872) (DonIsaac)
+- 54a5032 linter: Correct false positive in `no-duplicates` (#6748) (dalaoshu)
+- a47c70e minifier: Fix remaining runtime bugs (#6855) (Boshen)
+
+### Documentation
+
+- 3923e63 linter: Add schema to config examples (#6838) (Dmitry Zakharov)
+
+### Refactor
+
+- a148023 linter: Dereference IDs as soon as possible (#6821) (overlookmotel)
+- 423d54c rust: Remove the annoying `clippy::wildcard_imports` (#6860) (Boshen)
+
 ## [0.10.2] - 2024-10-22
 
 - 1248557 ast: [**BREAKING**] Remove `AstKind::FinallyClause` (#6744) (Boshen)

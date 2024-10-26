@@ -59,7 +59,7 @@ importers:
   napi/transform: {}
 
   npm/oxc-parser:
-    devDependencies:
+    dependencies:
       '@oxc-project/types':
         specifier: workspace:^
         version: link:../oxc-types
@@ -68,16 +68,12 @@ importers:
 
   npm/oxc-types: {}
 
-  npm/oxc-wasm:
-    devDependencies:
-      '@oxc-project/types':
-        specifier: workspace:^
-        version: link:../oxc-types
+  npm/oxc-wasm: {}
 
   npm/oxlint: {}
 
   npm/parser-wasm:
-    devDependencies:
+    dependencies:
       '@oxc-project/types':
         specifier: workspace:^
         version: link:../oxc-types
@@ -95,12 +91,10 @@ importers:
         version: 7.4.3
 
   wasm/parser:
-    devDependencies:
+    dependencies:
       '@oxc-project/types':
         specifier: workspace:^
         version: link:../../npm/oxc-types
-
-  wasm/parser/pkg: {}
 
 packages:
 
