@@ -115,7 +115,6 @@ fn generate_visit(is_mut: bool, ctx: &LateCtx) -> TokenStream {
             #[inline]
             fn leave_scope(&mut self) {}
 
-            ///@@line_break
             #may_alloc
 
             #(#visits)*
