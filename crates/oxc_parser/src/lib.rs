@@ -397,7 +397,7 @@ impl<'a> ParserImpl<'a> {
     /// Recoverable errors are stored inside `errors`.
     #[inline]
     pub fn parse(mut self) -> ParserReturn<'a> {
-        let (program, panicked) = match self.parse_program() {
+        let (mut program, panicked) = match self.parse_program() {
             Ok(program) => (program, false),
             Err(error) => {
                 self.error(self.overlong_error().unwrap_or(error));
@@ -424,6 +424,9 @@ impl<'a> ParserImpl<'a> {
             errors.reserve(self.lexer.errors.len() + self.errors.len());
             errors.extend(self.lexer.errors);
             errors.extend(self.errors);
+        }
+        if !panicked {
+            program.comments = self.lexer.trivia_builder.comments;
         }
         let irregular_whitespaces =
             self.lexer.trivia_builder.irregular_whitespaces.into_boxed_slice();
@@ -453,12 +456,11 @@ impl<'a> ParserImpl<'a> {
         self.set_source_type_to_script_if_unambiguous();
 
         let span = Span::new(0, self.source_text.len() as u32);
-        let comments = self.ast.vec_from_iter(self.lexer.trivia_builder.comments.iter().copied());
         Ok(self.ast.program(
             span,
             self.source_type,
             self.source_text,
-            comments,
+            self.ast.vec(),
             hashbang,
             directives,
             statements,

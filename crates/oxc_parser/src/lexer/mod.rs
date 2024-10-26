@@ -86,7 +86,7 @@ pub struct Lexer<'a> {
 
     context: LexerContext,
 
-    pub(crate) trivia_builder: TriviaBuilder,
+    pub(crate) trivia_builder: TriviaBuilder<'a>,
 
     /// Data store for escaped strings, indexed by [Token::start] when [Token::escaped] is true
     pub escaped_strings: FxHashMap<u32, &'a str>,
@@ -123,7 +123,7 @@ impl<'a> Lexer<'a> {
             errors: vec![],
             lookahead: VecDeque::with_capacity(4), // 4 is the maximum lookahead for TypeScript
             context: LexerContext::Regular,
-            trivia_builder: TriviaBuilder::default(),
+            trivia_builder: TriviaBuilder::new(allocator),
             escaped_strings: FxHashMap::default(),
             escaped_templates: FxHashMap::default(),
             multi_line_comment_end_finder: None,

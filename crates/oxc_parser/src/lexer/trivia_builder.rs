@@ -1,14 +1,15 @@
+use oxc_allocator::{Allocator, Vec as ArenaVec};
 use oxc_ast::ast::{Comment, CommentKind, CommentPosition};
 use oxc_span::Span;
 
 use super::{Kind, Token};
 
 #[derive(Debug)]
-pub struct TriviaBuilder {
+pub struct TriviaBuilder<'a> {
     // This is a set of unique comments. Duplicated
     // comments could be generated in case of rewind; they are
     // filtered out at insertion time.
-    pub(crate) comments: Vec<Comment>,
+    pub(crate) comments: ArenaVec<'a, Comment>,
 
     pub(crate) irregular_whitespaces: Vec<Span>,
 
@@ -23,19 +24,17 @@ pub struct TriviaBuilder {
     previous_kind: Kind,
 }
 
-impl Default for TriviaBuilder {
-    fn default() -> Self {
+impl<'a> TriviaBuilder<'a> {
+    pub fn new(allocator: &'a Allocator) -> Self {
         Self {
-            comments: vec![],
+            comments: ArenaVec::new_in(allocator),
             irregular_whitespaces: vec![],
             processed: 0,
             saw_newline: true,
             previous_kind: Kind::Undetermined,
         }
     }
-}
 
-impl TriviaBuilder {
     pub fn add_irregular_whitespace(&mut self, start: u32, end: u32) {
         self.irregular_whitespaces.push(Span::new(start, end));
     }
@@ -56,9 +55,9 @@ impl TriviaBuilder {
         // The last unprocessed comment is on a newline.
         let len = self.comments.len();
         if self.processed < len {
-            self.comments[len - 1].followed_by_newline = true;
+            self.comments.last_mut().unwrap().followed_by_newline = true;
             if !self.saw_newline {
-                self.processed = self.comments.len();
+                self.processed = len;
             }
         }
         self.saw_newline = true;
@@ -69,7 +68,7 @@ impl TriviaBuilder {
         self.previous_kind = token.kind;
         if self.processed < len {
             // All unprocessed preceding comments are leading comments attached to this token start.
-            for comment in &mut self.comments[self.processed..] {
+            for comment in &mut self.comments.as_mut_slice()[self.processed..] {
                 comment.position = CommentPosition::Leading;
                 comment.attached_to = token.start;
             }
