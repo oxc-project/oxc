@@ -5,7 +5,6 @@ mod compressor;
 mod keep_var;
 mod node_util;
 mod options;
-mod tri;
 
 #[cfg(test)]
 mod tester;

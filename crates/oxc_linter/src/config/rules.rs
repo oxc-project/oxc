@@ -59,7 +59,7 @@ impl IntoIterator for OxlintRules {
 }
 
 impl OxlintRules {
-    #[allow(clippy::option_if_let_else, clippy::print_stdout)]
+    #[allow(clippy::option_if_let_else, clippy::print_stderr)]
     pub(crate) fn override_rules(&self, rules_for_override: &mut RuleSet, all_rules: &[RuleEnum]) {
         use itertools::Itertools;
         let mut rules_to_replace: Vec<RuleWithSeverity> = vec![];
@@ -134,10 +134,11 @@ impl OxlintRules {
         }
 
         if !rules_not_matched.is_empty() {
-            println!("The following rules do not match the currently supported rules:");
-            for rule in rules_not_matched {
-                println!("{rule}");
-            }
+            let rules = rules_not_matched.join("\n");
+            let error = Error::from(OxcDiagnostic::warn(format!(
+                "The following rules do not match the currently supported rules:\n{rules}"
+            )));
+            eprintln!("{error:?}");
         }
     }
 }

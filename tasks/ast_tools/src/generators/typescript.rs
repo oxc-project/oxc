@@ -48,7 +48,9 @@ fn typescript_enum(def: &EnumDef) -> Option<String> {
         return None;
     }
 
-    let union = if def.markers.estree.untagged {
+    let is_untagged = def.all_variants().all(|var| var.fields.len() == 1);
+
+    let union = if is_untagged {
         def.all_variants().map(|var| type_to_string(var.fields[0].typ.name())).join(" | ")
     } else {
         def.all_variants().map(|var| format!("'{}'", enum_variant_name(var, def))).join(" | ")

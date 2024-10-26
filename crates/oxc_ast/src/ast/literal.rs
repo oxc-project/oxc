@@ -115,7 +115,6 @@ pub struct RegExp<'a> {
 #[ast]
 #[derive(Debug)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[estree(untagged)]
 pub enum RegExpPattern<'a> {
     /// Unparsed pattern. Contains string slice of the pattern.
     /// Pattern was not parsed, so may be valid or invalid.

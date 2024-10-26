@@ -152,7 +152,6 @@ pub struct JSXClosingFragment {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[estree(untagged)]
 pub enum JSXElementName<'a> {
     /// `<div />`
     Identifier(Box<'a, JSXIdentifier<'a>>) = 0,
@@ -233,7 +232,6 @@ pub struct JSXMemberExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[estree(untagged)]
 pub enum JSXMemberExpressionObject<'a> {
     /// `<Apple.Orange />`
     IdentifierReference(Box<'a, IdentifierReference<'a>>) = 0,
@@ -277,7 +275,6 @@ inherit_variants! {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(untagged)]
 pub enum JSXExpression<'a> {
     /// An empty expression
     ///
@@ -316,7 +313,6 @@ pub struct JSXEmptyExpression {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(untagged)]
 pub enum JSXAttributeItem<'a> {
     /// A `key="value"` attribute
     Attribute(Box<'a, JSXAttribute<'a>>) = 0,
@@ -386,7 +382,6 @@ pub struct JSXSpreadAttribute<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(untagged)]
 pub enum JSXAttributeName<'a> {
     /// An attribute name without a namespace prefix, e.g. `foo` in `foo="bar"`.
     Identifier(Box<'a, JSXIdentifier<'a>>) = 0,
@@ -415,7 +410,6 @@ pub enum JSXAttributeName<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(untagged)]
 pub enum JSXAttributeValue<'a> {
     /// `<Component foo="bar" />`
     StringLiteral(Box<'a, StringLiteral<'a>>) = 0,
@@ -451,7 +445,6 @@ pub struct JSXIdentifier<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(untagged)]
 pub enum JSXChild<'a> {
     /// `<Foo>Some Text</Foo>`
     Text(Box<'a, JSXText<'a>>) = 0,
