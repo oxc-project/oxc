@@ -171,7 +171,7 @@ x Output mismatch
 * refresh/does-not-transform-it-because-it-is-not-used-in-the-AST/input.jsx
 x Output mismatch
 
-* refresh/supports-typescript-namespace-syntax/input.tsx
+* refresh/react-refresh/supports-typescript-namespace-syntax/input.tsx
 x Output mismatch
 
 
