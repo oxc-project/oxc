@@ -316,6 +316,14 @@ impl<'a> ArrayExpressionElement<'a> {
     }
 }
 
+impl<'a> ObjectPropertyKind<'a> {
+    /// Returns `true` if this object property is a [spread](SpreadElement).
+    #[inline]
+    pub fn is_spread(&self) -> bool {
+        matches!(self, Self::SpreadProperty(_))
+    }
+}
+
 impl<'a> PropertyKey<'a> {
     #[allow(missing_docs)]
     pub fn static_name(&self) -> Option<Cow<'a, str>> {
