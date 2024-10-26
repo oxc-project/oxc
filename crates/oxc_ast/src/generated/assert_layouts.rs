@@ -3,9 +3,9 @@
 
 use std::mem::{align_of, offset_of, size_of};
 
-use crate::ast::*;
-
 use oxc_regular_expression::ast::*;
+
+use crate::ast::*;
 
 #[cfg(target_pointer_width = "64")]
 const _: () = {

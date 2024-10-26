@@ -33,10 +33,10 @@ impl Generator for AssertLayouts {
                 use std::mem::{align_of, offset_of, size_of};
 
                 ///@@line_break
-                use crate::ast::*;
+                use oxc_regular_expression::ast::*;
 
                 ///@@line_break
-                use oxc_regular_expression::ast::*;
+                use crate::ast::*;
 
                 ///@@line_break
                 #[cfg(target_pointer_width = "64")]
