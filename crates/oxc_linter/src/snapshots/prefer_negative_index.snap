@@ -1,0 +1,506 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:1:1]
+ 1 │ foo.slice(foo.length - 2, foo.length - 1)
+   · ─────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:1:1]
+ 1 │ foo.splice(foo.length - 1, 1)
+   · ─────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:1:1]
+ 1 │ Array.prototype.slice.call(foo, foo.length - 2, foo.length - 1)
+   · ───────────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:1:1]
+ 1 │ Array.prototype.slice.apply(foo, [foo.length - 2, foo.length - 1])
+   · ──────────────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:1:1]
+ 1 │ foo.slice(foo.length - 1 - 1)
+   · ─────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:1:1]
+ 1 │ foo.bar.slice(foo.bar.length - 1)
+   · ─────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:1:1]
+ 1 │ foo['bar'].slice(foo['bar'].length - 1)
+   · ───────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:1:1]
+ 1 │ foo[1].slice(foo[1].length - 1)
+   · ───────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:1:1]
+ 1 │ foo.slice(foo.length/* comment */ - 1)
+   · ──────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+    ╭─[prefer_negative_index.tsx:2:16]
+  1 │     
+  2 │ ╭─▶                                     foo.slice(
+  3 │ │                                           // comment 1
+  4 │ │   
+  5 │ │                                           foo.length
+  6 │ │   
+  7 │ │                                           // comment 2
+  8 │ │                                           - 1
+  9 │ │                                           -1
+ 10 │ │                                           ,
+ 11 │ │                                           foo.length // comment 3
+ 12 │ │                                           - 1
+ 13 │ ╰─▶                                     )
+ 14 │                                     
+    ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:1:1]
+ 1 │ foo.slice((foo.length - 1) - 1)
+   · ───────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:1:1]
+ 1 │ foo.slice(/* will keep */(/* will keep 1 */foo.length - 1) - 1)
+   · ───────────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:2:16]
+ 1 │ 
+ 2 │                                     [].slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+   ·                                     ──────────────────────────────────────────────────────────────────
+ 3 │                                     [].splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:3:16]
+ 2 │                                     [].slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+ 3 │                                     [].splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+   ·                                     ───────────────────────────────────────────────────────────────────
+ 4 │                                     [].slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:4:16]
+ 3 │                                     [].splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+ 4 │                                     [].slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+   ·                                     ─────────────────────────────────────────────────────────────────────
+ 5 │                                     [].splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:5:16]
+ 4 │                                     [].slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+ 5 │                                     [].splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+   ·                                     ──────────────────────────────────────────────────────────────────────
+ 6 │                                     [NOT_EMPTY].slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:6:16]
+ 5 │                                     [].splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+ 6 │                                     [NOT_EMPTY].slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+   ·                                     ───────────────────────────────────────────────────────────────────────────
+ 7 │                                     [NOT_EMPTY].splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:7:16]
+ 6 │                                     [NOT_EMPTY].slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+ 7 │                                     [NOT_EMPTY].splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+   ·                                     ────────────────────────────────────────────────────────────────────────────
+ 8 │                                     [NOT_EMPTY].slice.call(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:8:16]
+ 7 │                                     [NOT_EMPTY].splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+ 8 │                                     [NOT_EMPTY].slice.call(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+   ·                                     ─────────────────────────────────────────────────────────────────────────────
+ 9 │                                     [NOT_EMPTY].splice.call(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+    ╭─[prefer_negative_index.tsx:9:16]
+  8 │                                     [NOT_EMPTY].slice.call(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+  9 │                                     [NOT_EMPTY].splice.call(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+    ·                                     ──────────────────────────────────────────────────────────────────────────────
+ 10 │                                 
+    ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:2:16]
+ 1 │ 
+ 2 │                                     ''.slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+   ·                                     ──────────────────────────────────────────────────────────────────
+ 3 │                                     ''.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:4:16]
+ 3 │                                     ''.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+ 4 │                                     ''.slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+   ·                                     ─────────────────────────────────────────────────────────────────────
+ 5 │                                     ''.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:6:16]
+ 5 │                                     ''.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+ 6 │                                     'NOT_EMPTY'.slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+   ·                                     ───────────────────────────────────────────────────────────────────────────
+ 7 │                                     'NOT_EMPTY'.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:8:16]
+ 7 │                                     'NOT_EMPTY'.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+ 8 │                                     'NOT_EMPTY'.slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+   ·                                     ──────────────────────────────────────────────────────────────────────────────
+ 9 │                                     'NOT_EMPTY'.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:2:16]
+ 1 │ 
+ 2 │                                     Array.prototype.slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+   ·                                     ───────────────────────────────────────────────────────────────────────────────
+ 3 │                                     Array.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:3:16]
+ 2 │                                     Array.prototype.slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+ 3 │                                     Array.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+   ·                                     ────────────────────────────────────────────────────────────────────────────────
+ 4 │                                     String.prototype.slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:4:16]
+ 3 │                                     Array.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+ 4 │                                     String.prototype.slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+   ·                                     ────────────────────────────────────────────────────────────────────────────────
+ 5 │                                     String.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:6:16]
+ 5 │                                     String.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+ 6 │                                     ArrayBuffer.prototype.slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+   ·                                     ─────────────────────────────────────────────────────────────────────────────────────
+ 7 │                                     ArrayBuffer.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:8:16]
+ 7 │                                     ArrayBuffer.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+ 8 │                                     Int8Array.prototype.slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+   ·                                     ───────────────────────────────────────────────────────────────────────────────────
+ 9 │                                     Int8Array.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+    ╭─[prefer_negative_index.tsx:10:16]
+  9 │                                     Int8Array.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+ 10 │                                     Uint8Array.prototype.slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+    ·                                     ────────────────────────────────────────────────────────────────────────────────────
+ 11 │                                     Uint8Array.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+    ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+    ╭─[prefer_negative_index.tsx:12:16]
+ 11 │                                     Uint8Array.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+ 12 │                                     Uint8ClampedArray.prototype.slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+    ·                                     ───────────────────────────────────────────────────────────────────────────────────────────
+ 13 │                                     Uint8ClampedArray.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+    ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+    ╭─[prefer_negative_index.tsx:14:16]
+ 13 │                                     Uint8ClampedArray.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+ 14 │                                     Int16Array.prototype.slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+    ·                                     ────────────────────────────────────────────────────────────────────────────────────
+ 15 │                                     Int16Array.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+    ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+    ╭─[prefer_negative_index.tsx:16:16]
+ 15 │                                     Int16Array.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+ 16 │                                     Uint16Array.prototype.slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+    ·                                     ─────────────────────────────────────────────────────────────────────────────────────
+ 17 │                                     Uint16Array.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+    ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+    ╭─[prefer_negative_index.tsx:18:16]
+ 17 │                                     Uint16Array.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+ 18 │                                     Int32Array.prototype.slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+    ·                                     ────────────────────────────────────────────────────────────────────────────────────
+ 19 │                                     Int32Array.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+    ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+    ╭─[prefer_negative_index.tsx:20:16]
+ 19 │                                     Int32Array.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+ 20 │                                     Uint32Array.prototype.slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+    ·                                     ─────────────────────────────────────────────────────────────────────────────────────
+ 21 │                                     Uint32Array.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+    ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+    ╭─[prefer_negative_index.tsx:22:16]
+ 21 │                                     Uint32Array.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+ 22 │                                     Float32Array.prototype.slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+    ·                                     ──────────────────────────────────────────────────────────────────────────────────────
+ 23 │                                     Float32Array.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+    ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+    ╭─[prefer_negative_index.tsx:24:16]
+ 23 │                                     Float32Array.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+ 24 │                                     Float64Array.prototype.slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+    ·                                     ──────────────────────────────────────────────────────────────────────────────────────
+ 25 │                                     Float64Array.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+    ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+    ╭─[prefer_negative_index.tsx:26:16]
+ 25 │                                     Float64Array.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+ 26 │                                     BigInt64Array.prototype.slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+    ·                                     ───────────────────────────────────────────────────────────────────────────────────────
+ 27 │                                     BigInt64Array.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+    ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+    ╭─[prefer_negative_index.tsx:28:16]
+ 27 │                                     BigInt64Array.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+ 28 │                                     BigUint64Array.prototype.slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+    ·                                     ────────────────────────────────────────────────────────────────────────────────────────
+ 29 │                                     BigUint64Array.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+    ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:2:16]
+ 1 │ 
+ 2 │                                     Array.prototype.slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+   ·                                     ──────────────────────────────────────────────────────────────────────────────────
+ 3 │                                     Array.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:3:16]
+ 2 │                                     Array.prototype.slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+ 3 │                                     Array.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+   ·                                     ───────────────────────────────────────────────────────────────────────────────────
+ 4 │                                     String.prototype.slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:4:16]
+ 3 │                                     Array.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+ 4 │                                     String.prototype.slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+   ·                                     ───────────────────────────────────────────────────────────────────────────────────
+ 5 │                                     String.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:6:16]
+ 5 │                                     String.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+ 6 │                                     ArrayBuffer.prototype.slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+   ·                                     ────────────────────────────────────────────────────────────────────────────────────────
+ 7 │                                     ArrayBuffer.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:8:16]
+ 7 │                                     ArrayBuffer.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+ 8 │                                     Int8Array.prototype.slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+   ·                                     ──────────────────────────────────────────────────────────────────────────────────────
+ 9 │                                     Int8Array.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+    ╭─[prefer_negative_index.tsx:10:16]
+  9 │                                     Int8Array.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+ 10 │                                     Uint8Array.prototype.slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+    ·                                     ───────────────────────────────────────────────────────────────────────────────────────
+ 11 │                                     Uint8Array.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+    ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+    ╭─[prefer_negative_index.tsx:12:16]
+ 11 │                                     Uint8Array.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+ 12 │                                     Uint8ClampedArray.prototype.slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+    ·                                     ──────────────────────────────────────────────────────────────────────────────────────────────
+ 13 │                                     Uint8ClampedArray.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+    ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+    ╭─[prefer_negative_index.tsx:14:16]
+ 13 │                                     Uint8ClampedArray.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+ 14 │                                     Int16Array.prototype.slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+    ·                                     ───────────────────────────────────────────────────────────────────────────────────────
+ 15 │                                     Int16Array.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+    ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+    ╭─[prefer_negative_index.tsx:16:16]
+ 15 │                                     Int16Array.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+ 16 │                                     Uint16Array.prototype.slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+    ·                                     ────────────────────────────────────────────────────────────────────────────────────────
+ 17 │                                     Uint16Array.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+    ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+    ╭─[prefer_negative_index.tsx:18:16]
+ 17 │                                     Uint16Array.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+ 18 │                                     Int32Array.prototype.slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+    ·                                     ───────────────────────────────────────────────────────────────────────────────────────
+ 19 │                                     Int32Array.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+    ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+    ╭─[prefer_negative_index.tsx:20:16]
+ 19 │                                     Int32Array.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+ 20 │                                     Uint32Array.prototype.slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+    ·                                     ────────────────────────────────────────────────────────────────────────────────────────
+ 21 │                                     Uint32Array.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+    ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+    ╭─[prefer_negative_index.tsx:22:16]
+ 21 │                                     Uint32Array.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+ 22 │                                     Float32Array.prototype.slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+    ·                                     ─────────────────────────────────────────────────────────────────────────────────────────
+ 23 │                                     Float32Array.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+    ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+    ╭─[prefer_negative_index.tsx:24:16]
+ 23 │                                     Float32Array.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+ 24 │                                     Float64Array.prototype.slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+    ·                                     ─────────────────────────────────────────────────────────────────────────────────────────
+ 25 │                                     Float64Array.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+    ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+    ╭─[prefer_negative_index.tsx:26:16]
+ 25 │                                     Float64Array.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+ 26 │                                     BigInt64Array.prototype.slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+    ·                                     ──────────────────────────────────────────────────────────────────────────────────────────
+ 27 │                                     BigInt64Array.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+    ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+    ╭─[prefer_negative_index.tsx:28:16]
+ 27 │                                     BigInt64Array.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+ 28 │                                     BigUint64Array.prototype.slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+    ·                                     ───────────────────────────────────────────────────────────────────────────────────────────
+ 29 │                                     BigUint64Array.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+    ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:1:5]
+ 1 │ /**/foo.slice(foo.length - 2, foo.length - 1)
+   ·     ─────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:1:5]
+ 1 │ /**/foo.splice(foo.length - 1, 1)
+   ·     ─────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:1:1]
+ 1 │ foo.bar.slice(foo["bar"].length - 1)
+   · ────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:1:1]
+ 1 │ foo[`bar`].slice(foo["bar"].length - 1)
+   · ───────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:1:1]
+ 1 │ foo[1].slice(foo["1"].length - 1)
+   · ─────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:1:1]
+ 1 │ foo['bar'].slice(foo["bar"].length - 1)
+   · ───────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:1:1]
+ 1 │ foo.toSpliced(foo.length - 3, foo.length - 6)
+   · ─────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:1:1]
+ 1 │ Array.prototype.toSpliced.call(foo, foo.length - 3, foo.length - 6)
+   · ───────────────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:1:1]
+ 1 │ [].toSpliced.call(foo, foo.length - 3, foo.length - 6)
+   · ──────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:1:1]
+ 1 │ foo.with(foo.length - 3, foo.length - 6)
+   · ────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:1:1]
+ 1 │ Array.prototype.with.call(foo, foo.length - 3, foo.length - 6)
+   · ──────────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:1:1]
+ 1 │ foo.subarray(foo.length - 3, foo.length - 6)
+   · ────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:1:1]
+ 1 │ Uint8Array.prototype.subarray.call(foo, foo.length - 3, foo.length - 6)
+   · ───────────────────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over .length - index when possible
+   ╭─[prefer_negative_index.tsx:1:1]
+ 1 │ Uint8Array.prototype.subarray.apply(foo, [foo.length - 3, foo.length - 6])
+   · ──────────────────────────────────────────────────────────────────────────
+   ╰────

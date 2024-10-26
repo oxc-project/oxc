@@ -353,6 +353,7 @@ mod unicorn {
     pub mod prefer_modern_dom_apis;
     pub mod prefer_modern_math_apis;
     pub mod prefer_native_coercion_functions;
+    pub mod prefer_negative_index;
     pub mod prefer_node_protocol;
     pub mod prefer_number_properties;
     pub mod prefer_optional_catch_binding;
@@ -943,6 +944,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_modern_dom_apis,
     unicorn::prefer_modern_math_apis,
     unicorn::prefer_native_coercion_functions,
+    unicorn::prefer_negative_index,
     unicorn::prefer_node_protocol,
     unicorn::prefer_number_properties,
     unicorn::prefer_optional_catch_binding,
