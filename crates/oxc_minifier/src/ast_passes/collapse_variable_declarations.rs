@@ -2,15 +2,13 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_traverse::{Traverse, TraverseCtx};
 
-use crate::{CompressOptions, CompressorPass};
+use crate::CompressorPass;
 
 /// Collapse variable declarations.
 ///
 /// `var a; var b = 1; var c = 2` => `var a, b = 1; c = 2`
 /// <https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/CollapseVariableDeclarations.java>
 pub struct CollapseVariableDeclarations {
-    options: CompressOptions,
-
     changed: bool,
 }
 
@@ -32,8 +30,8 @@ impl<'a> Traverse<'a> for CollapseVariableDeclarations {
 }
 
 impl<'a> CollapseVariableDeclarations {
-    pub fn new(options: CompressOptions) -> Self {
-        Self { options, changed: false }
+    pub fn new() -> Self {
+        Self { changed: false }
     }
 
     fn is_require_call(var_decl: &VariableDeclaration) -> bool {
@@ -58,7 +56,7 @@ impl<'a> CollapseVariableDeclarations {
     }
 
     fn join_vars(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
-        if !self.options.join_vars || stmts.len() < 2 {
+        if stmts.len() < 2 {
             return;
         }
 
@@ -115,11 +113,11 @@ impl<'a> CollapseVariableDeclarations {
 mod test {
     use oxc_allocator::Allocator;
 
-    use crate::{tester, CompressOptions};
+    use crate::tester;
 
     fn test(source_text: &str, expected: &str) {
         let allocator = Allocator::default();
-        let mut pass = super::CollapseVariableDeclarations::new(CompressOptions::default());
+        let mut pass = super::CollapseVariableDeclarations::new();
         tester::test(&allocator, source_text, expected, &mut pass);
     }
 

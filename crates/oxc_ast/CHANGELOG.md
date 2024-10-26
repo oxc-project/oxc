@@ -4,6 +4,30 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.34.0] - 2024-10-26
+
+### Features
+
+- 1145341 ast_tools: Output typescript to a separate package (#6755) (ottomated)
+- 0d0bb17 transformer: Complete the async-to-generator plugin (#6658) (Dunqing)
+
+### Bug Fixes
+
+- a47c70e minifier: Fix remaining runtime bugs (#6855) (Boshen)
+
+### Documentation
+
+- 6eeb0e6 ast: Mention typescript-eslint, field ordering and shape (#6863) (Boshen)
+
+### Refactor
+
+- 3e7507f ast_tools: Reduce macro usage (#6895) (overlookmotel)
+- 423d54c rust: Remove the annoying `clippy::wildcard_imports` (#6860) (Boshen)
+
+### Styling
+
+- 262b2ed ast: Move crate doc comment to top of file (#6890) (overlookmotel)
+
 ## [0.33.0] - 2024-10-24
 
 - 718ccde ast: [**BREAKING**] Remove unused `new` methods (#6789) (overlookmotel)

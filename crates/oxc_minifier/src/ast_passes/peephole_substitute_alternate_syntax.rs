@@ -9,15 +9,13 @@ use oxc_syntax::{
 };
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
-use crate::{node_util::Ctx, CompressOptions, CompressorPass};
+use crate::{node_util::Ctx, CompressorPass};
 
 /// A peephole optimization that minimizes code by simplifying conditional
 /// expressions, replacing IFs with HOOKs, replacing object constructors
 /// with literals, and simplifying returns.
 /// <https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntax.java>
 pub struct PeepholeSubstituteAlternateSyntax {
-    options: CompressOptions,
-
     /// Do not compress syntaxes that are hard to analyze inside the fixed loop.
     /// e.g. Do not compress `undefined -> void 0`, `true` -> `!0`.
     /// Opposite of `late` in Closure Compier.
@@ -162,8 +160,8 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
 }
 
 impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
-    pub fn new(in_fixed_loop: bool, options: CompressOptions) -> Self {
-        Self { options, in_fixed_loop, in_define_export: false, changed: false }
+    pub fn new(in_fixed_loop: bool) -> Self {
+        Self { in_fixed_loop, in_define_export: false, changed: false }
     }
 
     /* Utilities */
@@ -214,14 +212,13 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
     /* Expressions */
 
     /// Transforms boolean expression `true` => `!0` `false` => `!1`.
-    /// Enabled by `compress.booleans`.
     /// Do not compress `true` in `Object.defineProperty(exports, 'Foo', {enumerable: true, ...})`.
     fn try_compress_boolean(&mut self, expr: &mut Expression<'a>, ctx: Ctx<'a, 'b>) {
         if self.in_fixed_loop {
             return;
         }
         let Expression::BooleanLiteral(lit) = expr else { return };
-        if self.options.booleans && !self.in_define_export {
+        if !self.in_define_export {
             let parent = ctx.ancestry.parent();
             let no_unary = {
                 if let Ancestor::BinaryExpressionRight(u) = parent {
@@ -255,10 +252,7 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
 
     /// Compress `typeof foo == "undefined"` into `typeof foo > "u"`
     /// Enabled by `compress.typeofs`
-    fn compress_typeof_undefined(&self, expr: &mut BinaryExpression<'a>, ctx: Ctx<'a, 'b>) {
-        if !self.options.typeofs {
-            return;
-        }
+    fn compress_typeof_undefined(&mut self, expr: &mut BinaryExpression<'a>, ctx: Ctx<'a, 'b>) {
         if !matches!(expr.operator, BinaryOperator::Equality | BinaryOperator::StrictEquality) {
             return;
         }
@@ -289,6 +283,7 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
             ctx.ast.expression_from_string_literal(right),
         );
         *expr = binary_expr;
+        self.changed = true;
     }
 
     fn commutative_pair<A, F, G, RetF: 'a, RetG: 'a>(
@@ -588,12 +583,11 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
 mod test {
     use oxc_allocator::Allocator;
 
-    use crate::{tester, CompressOptions};
+    use crate::tester;
 
     fn test(source_text: &str, expected: &str) {
         let allocator = Allocator::default();
-        let mut pass =
-            super::PeepholeSubstituteAlternateSyntax::new(false, CompressOptions::default());
+        let mut pass = super::PeepholeSubstituteAlternateSyntax::new(false);
         tester::test(&allocator, source_text, expected, &mut pass);
     }
 

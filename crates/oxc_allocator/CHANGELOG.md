@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.34.0] - 2024-10-26
+
+### Features
+
+- 419343b traverse: Implement `GetAddress` for `Ancestor` (#6877) (overlookmotel)
+
+### Refactor
+
+- adb5039 allocator: Add `impl GetAddress for Address` (#6891) (overlookmotel)
+
 ## [0.33.0] - 2024-10-24
 
 - e1c2d30 allocator: [**BREAKING**] Make `Vec` non-drop (#6623) (overlookmotel)

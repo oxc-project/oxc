@@ -4,6 +4,32 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.34.0] - 2024-10-26
+
+- 4618aa2 transformer: [**BREAKING**] Rename `TransformerOptions::react` to `jsx` (#6888) (Boshen)
+
+### Features
+
+- 0d0bb17 transformer: Complete the async-to-generator plugin (#6658) (Dunqing)
+
+### Bug Fixes
+
+- 4dc5e51 transformer: Only run typescript plugin for typescript source (#6889) (Boshen)
+- 076f5c3 transformer/typescript: Retain ExportNamedDeclaration without specifiers and declaration (#6848) (Dunqing)
+
+### Refactor
+
+- 423d54c rust: Remove the annoying `clippy::wildcard_imports` (#6860) (Boshen)
+- 2d95009 transformer: Implement `Debug` on `StatementInjector` internal types (#6886) (overlookmotel)
+- c383c34 transformer: Make `StatementInjectorStore` methods generic over `GetAddress` (#6885) (overlookmotel)
+- 1f29523 transformer: Rename ReactJsx to Jsx (#6883) (Boshen)
+- 333b758 transformer: `StatementInjectorStore` methods take `&Statement` as target (#6858) (overlookmotel)
+- c19996c transformer: Add `StatementInjectorStore::insert_many_before` method (#6857) (overlookmotel)
+- 7339dde transformer: `StatementInjectorStore::insert_many_after` take an iterator (#6856) (overlookmotel)
+- 4348eae transformer/typescript: Re-order visitor methods (#6864) (overlookmotel)
+- 3a56d59 transformer/typescript: Insert assignments after super by `StatementInjector` (#6654) (Dunqing)
+- 60f487a traverse: `TraverseCtx::generate_binding` take an `Atom` (#6830) (overlookmotel)
+
 ## [0.33.0] - 2024-10-24
 
 - 4d2d214 ast, transformer: [**BREAKING**] Remove `StringLiteral::new` method (#6788) (overlookmotel)
