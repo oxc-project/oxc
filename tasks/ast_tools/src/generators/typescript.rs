@@ -13,7 +13,7 @@ use crate::{
 
 use super::define_generator;
 
-const CUSTOM_TYPESCRIPT: &str = include_str!("../../../../crates/oxc_ast/src/ast/types.d.ts");
+const CUSTOM_TYPESCRIPT: &str = include_str!("../../../../crates/oxc_ast/custom_types.d.ts");
 
 pub struct TypescriptGenerator;
 
