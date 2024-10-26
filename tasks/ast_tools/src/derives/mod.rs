@@ -81,10 +81,7 @@ pub trait Derive {
                 |mut acc, (def, stream)| {
                     let module_path = def.module_path();
                     let krate = module_path.split("::").next().unwrap();
-                    if !acc.contains_key(krate) {
-                        acc.insert(krate, Default::default());
-                    }
-                    let streams = acc.get_mut(krate).expect("We checked this right above!");
+                    let streams = acc.entry(krate).or_default();
                     streams.0.insert(module_path);
                     streams.1.push(stream);
                     acc
@@ -92,15 +89,12 @@ pub trait Derive {
             )
             .into_iter()
             .sorted_by(|lhs, rhs| lhs.0.cmp(rhs.0))
-            .fold(Vec::new(), |mut acc, (path, (modules, streams))| {
+            .fold(Vec::new(), |mut acc, (krate, (modules, streams))| {
                 let mut modules = Vec::from_iter(modules);
                 modules.sort_unstable();
 
                 let output = Output::Rust {
-                    path: output_path(
-                        format!("crates/{}", path.split("::").next().unwrap()).as_str(),
-                        &filename,
-                    ),
+                    path: output_path(&format!("crates/{krate}"), &filename),
                     tokens: Self::template(
                         modules,
                         streams.into_iter().fold(TokenStream::new(), |mut acc, it| {
