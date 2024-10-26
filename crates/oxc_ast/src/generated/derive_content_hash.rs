@@ -2388,9 +2388,9 @@ impl ContentHash for CommentPosition {
 
 impl ContentHash for Comment {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
+        ContentHash::content_hash(&self.attached_to, state);
         ContentHash::content_hash(&self.kind, state);
         ContentHash::content_hash(&self.position, state);
-        ContentHash::content_hash(&self.attached_to, state);
         ContentHash::content_hash(&self.preceded_by_newline, state);
         ContentHash::content_hash(&self.followed_by_newline, state);
     }

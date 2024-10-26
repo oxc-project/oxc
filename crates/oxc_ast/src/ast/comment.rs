@@ -46,17 +46,17 @@ pub struct Comment {
     /// The span of the comment text (without leading/trailing delimiters).
     pub span: Span,
 
-    /// Line or block comment
-    pub kind: CommentKind,
-
-    /// Leading or trailing comment
-    pub position: CommentPosition,
-
     /// Start of token this leading comment is attached to.
     /// `/* Leading */ token`
     ///                ^ This start
     /// NOTE: Trailing comment attachment is not computed yet.
     pub attached_to: u32,
+
+    /// Line or block comment
+    pub kind: CommentKind,
+
+    /// Leading or trailing comment
+    pub position: CommentPosition,
 
     /// Whether this comment has a preceding newline.
     /// Used to avoid becoming a trailing comment in codegen.
@@ -73,9 +73,9 @@ impl Comment {
         let span = Span::new(start, end);
         Self {
             span,
+            attached_to: 0,
             kind,
             position: CommentPosition::Trailing,
-            attached_to: 0,
             preceded_by_newline: false,
             followed_by_newline: false,
         }

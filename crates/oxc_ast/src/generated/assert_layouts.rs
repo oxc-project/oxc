@@ -1380,14 +1380,14 @@ const _: () = {
     assert!(size_of::<CommentPosition>() == 1usize);
     assert!(align_of::<CommentPosition>() == 1usize);
 
-    assert!(size_of::<Comment>() == 20usize);
+    assert!(size_of::<Comment>() == 16usize);
     assert!(align_of::<Comment>() == 4usize);
     assert!(offset_of!(Comment, span) == 0usize);
-    assert!(offset_of!(Comment, kind) == 8usize);
-    assert!(offset_of!(Comment, position) == 9usize);
-    assert!(offset_of!(Comment, attached_to) == 12usize);
-    assert!(offset_of!(Comment, preceded_by_newline) == 16usize);
-    assert!(offset_of!(Comment, followed_by_newline) == 17usize);
+    assert!(offset_of!(Comment, attached_to) == 8usize);
+    assert!(offset_of!(Comment, kind) == 12usize);
+    assert!(offset_of!(Comment, position) == 13usize);
+    assert!(offset_of!(Comment, preceded_by_newline) == 14usize);
+    assert!(offset_of!(Comment, followed_by_newline) == 15usize);
 
     assert!(size_of::<NumberBase>() == 1usize);
     assert!(align_of::<NumberBase>() == 1usize);
@@ -2939,14 +2939,14 @@ const _: () = {
     assert!(size_of::<CommentPosition>() == 1usize);
     assert!(align_of::<CommentPosition>() == 1usize);
 
-    assert!(size_of::<Comment>() == 20usize);
+    assert!(size_of::<Comment>() == 16usize);
     assert!(align_of::<Comment>() == 4usize);
     assert!(offset_of!(Comment, span) == 0usize);
-    assert!(offset_of!(Comment, kind) == 8usize);
-    assert!(offset_of!(Comment, position) == 9usize);
-    assert!(offset_of!(Comment, attached_to) == 12usize);
-    assert!(offset_of!(Comment, preceded_by_newline) == 16usize);
-    assert!(offset_of!(Comment, followed_by_newline) == 17usize);
+    assert!(offset_of!(Comment, attached_to) == 8usize);
+    assert!(offset_of!(Comment, kind) == 12usize);
+    assert!(offset_of!(Comment, position) == 13usize);
+    assert!(offset_of!(Comment, preceded_by_newline) == 14usize);
+    assert!(offset_of!(Comment, followed_by_newline) == 15usize);
 
     assert!(size_of::<NumberBase>() == 1usize);
     assert!(align_of::<NumberBase>() == 1usize);
