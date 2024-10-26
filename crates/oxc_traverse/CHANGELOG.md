@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.34.0] - 2024-10-26
+
+### Features
+
+- 419343b traverse: Implement `GetAddress` for `Ancestor` (#6877) (overlookmotel)
+
+### Refactor
+
+- 423d54c rust: Remove the annoying `clippy::wildcard_imports` (#6860) (Boshen)
+- a366fae traverse: Rename `TraverseScoping::generate_binding_in_current_scope` (#6832) (overlookmotel)
+- 3b99fe6 traverse: Move `generate_binding` to `TraverseScoping` (#6831) (overlookmotel)
+- 60f487a traverse: `TraverseCtx::generate_binding` take an `Atom` (#6830) (overlookmotel)
+
 ## [0.33.0] - 2024-10-24
 
 - aeaa27a ast, parser, transformer, traverse: [**BREAKING**] Remove `BindingIdentifier::new` methods (#6786) (overlookmotel)
