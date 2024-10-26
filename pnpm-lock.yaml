@@ -68,19 +68,7 @@ importers:
 
   npm/oxc-types: {}
 
-  npm/oxc-wasm:
-    dependencies:
-      '@oxc-project/types':
-        specifier: workspace:^
-        version: link:../oxc-types
-
   npm/oxlint: {}
-
-  npm/parser-wasm:
-    dependencies:
-      '@oxc-project/types':
-        specifier: workspace:^
-        version: link:../oxc-types
 
   tasks/benchmark/codspeed:
     devDependencies:
@@ -99,8 +87,6 @@ importers:
       '@oxc-project/types':
         specifier: workspace:^
         version: link:../../npm/oxc-types
-
-  wasm/parser/pkg: {}
 
 packages:
 
