@@ -18,8 +18,8 @@
   "funding": {
     "url": "https://github.com/sponsors/Boshen"
   },
-  "types": "src/generated/types.d.ts",
+  "types": "types.d.ts",
   "files": [
-    "src/generated/types.d.ts"
+    "types.d.ts"
   ]
 }

@@ -3,7 +3,7 @@ use itertools::Itertools;
 
 use crate::{
     codegen::LateCtx,
-    output::{output_path, Output},
+    output::Output,
     schema::{
         serialize::{enum_variant_name, get_type_tag},
         EnumDef, GetIdent, StructDef, TypeDef, TypeName,
@@ -37,7 +37,7 @@ impl Generator for TypescriptGenerator {
             code.push_str("\n\n");
         }
 
-        Output::Javascript { path: output_path(crate::TYPESCRIPT_PACKAGE, "types.d.ts"), code }
+        Output::Javascript { path: format!("{}/types.d.ts", crate::TYPESCRIPT_PACKAGE), code }
     }
 }
 
