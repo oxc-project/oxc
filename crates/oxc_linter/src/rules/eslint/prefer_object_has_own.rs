@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
 
 fn prefer_object_has_own_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
@@ -72,12 +72,11 @@ impl Rule for PreferObjectHasOwn {
             return;
         };
 
-        let callee_property_name = callee.static_property_name();
         let object_property_name = object.static_property_name();
         let is_object = has_left_hand_object(object);
         let is_global_scope = ctx.scopes().find_binding(node.scope_id(), "Object").is_none();
 
-        if callee_property_name == Some("call")
+        if is_method_call(call_expr, None, Some(&["call"]), Some(2), Some(2))
             && object_property_name == Some("hasOwnProperty")
             && is_object
             && is_global_scope
