@@ -1,39 +1,6 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/typescript.rs`
 
-export interface FormalParameterRest extends Span {
-  type: 'RestElement';
-  argument: BindingPatternKind;
-  typeAnnotation: TSTypeAnnotation | null;
-  optional: boolean;
-}
-
-export type RegExpFlags = {
-  /** Global flag */
-  G: 1;
-  /** Ignore case flag */
-  I: 2;
-  /** Multiline flag */
-  M: 4;
-  /** DotAll flag */
-  S: 8;
-  /** Unicode flag */
-  U: 16;
-  /** Sticky flag */
-  Y: 32;
-  /** Indices flag */
-  D: 64;
-  /** Unicode sets flag */
-  V: 128;
-};
-
-export type JSXElementName =
-  | JSXIdentifier
-  | JSXNamespacedName
-  | JSXMemberExpression;
-
-export type JSXMemberExpressionObject = JSXIdentifier | JSXMemberExpression;
-
 export interface BooleanLiteral extends Span {
   type: 'BooleanLiteral';
   value: boolean;
@@ -2008,3 +1975,36 @@ export interface NamedReference extends Span {
   type: 'NamedReference';
   name: string;
 }
+
+export interface FormalParameterRest extends Span {
+  type: 'RestElement';
+  argument: BindingPatternKind;
+  typeAnnotation: TSTypeAnnotation | null;
+  optional: boolean;
+}
+
+export type RegExpFlags = {
+  /** Global flag */
+  G: 1;
+  /** Ignore case flag */
+  I: 2;
+  /** Multiline flag */
+  M: 4;
+  /** DotAll flag */
+  S: 8;
+  /** Unicode flag */
+  U: 16;
+  /** Sticky flag */
+  Y: 32;
+  /** Indices flag */
+  D: 64;
+  /** Unicode sets flag */
+  V: 128;
+};
+
+export type JSXElementName =
+  | JSXIdentifier
+  | JSXNamespacedName
+  | JSXMemberExpression;
+
+export type JSXMemberExpressionObject = JSXIdentifier | JSXMemberExpression;

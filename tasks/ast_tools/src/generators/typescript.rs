@@ -21,8 +21,7 @@ define_generator!(TypescriptGenerator);
 
 impl Generator for TypescriptGenerator {
     fn generate(&mut self, ctx: &LateCtx) -> Output {
-        let mut code = format!("{CUSTOM_TYPESCRIPT}\n");
-
+        let mut code = String::new();
         for def in ctx.schema() {
             if !def.generates_derive("ESTree") {
                 continue;
@@ -36,6 +35,8 @@ impl Generator for TypescriptGenerator {
             code.push_str(&ts_type_def);
             code.push_str("\n\n");
         }
+
+        code.push_str(CUSTOM_TYPESCRIPT);
 
         Output::Javascript { path: format!("{}/types.d.ts", crate::TYPESCRIPT_PACKAGE), code }
     }
