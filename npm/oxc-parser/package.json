@@ -23,7 +23,7 @@
     "index.js",
     "bindings.js"
   ],
-  "devDependencies": {
+  "dependencies": {
     "@oxc-project/types": "workspace:^"
   }
 }
