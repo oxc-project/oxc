@@ -57,7 +57,7 @@ impl RawOutput {
 
 /// Get path for an output.
 pub fn output_path(krate: &str, path: &str) -> PathBuf {
-    std::path::PathBuf::from_iter(vec![krate, "src", "generated", path])
+    std::path::PathBuf::from_iter([krate, "src", "generated", path])
 }
 
 /// Write data to file.
