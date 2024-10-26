@@ -133,11 +133,9 @@ jobs:
       - uses: ./.github/actions/pnpm
       - run: just build-wasm debug
       - working-directory: wasm/parser
-        run: |
-          pnpm install --no-frozen-lockfile
-          pnpm build
+        run: pnpm run build
       - name: Check output types
-        run: npx -y -p typescript tsc --lib es2020,dom npm/oxc-wasm/oxc_wasm.d.ts
+        run: npx -y -p typescript tsc --lib es2020,dom npm/parser-wasm/node/oxc_parser_wasm.d.ts
 
   typos:
     name: Spell Check
