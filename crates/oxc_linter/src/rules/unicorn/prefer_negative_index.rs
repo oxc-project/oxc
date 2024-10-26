@@ -106,7 +106,7 @@ impl Rule for PreferNegativeIndex {
 
             let mut member_exprs: Vec<&StaticMemberExpression> = Vec::new();
             let range_increment = if matches!(callee_name, "slice" | "subarray") { 2 } else { 1 };
-            let arg_range_start = if is_prototype { 1 } else { 0 };
+            let arg_range_start = usize::from(is_prototype);
             let arg_range_end = if is_prototype_apply {
                 arg_range_start + 1
             } else {
@@ -124,7 +124,7 @@ impl Rule for PreferNegativeIndex {
 
                 match arg_expr {
                     Expression::BinaryExpression(binary_expr) => {
-                        let Some(member_expr) = get_binary_left_expr(&binary_expr) else {
+                        let Some(member_expr) = get_binary_left_expr(binary_expr) else {
                             continue;
                         };
 
@@ -140,8 +140,7 @@ impl Rule for PreferNegativeIndex {
 
                             match element {
                                 ArrayExpressionElement::BinaryExpression(el_binary_expr) => {
-                                    let Some(el_member_expr) =
-                                        get_binary_left_expr(&el_binary_expr)
+                                    let Some(el_member_expr) = get_binary_left_expr(el_binary_expr)
                                     else {
                                         continue;
                                     };
@@ -158,7 +157,7 @@ impl Rule for PreferNegativeIndex {
                 }
             }
 
-            if member_exprs.len() > 0 {
+            if !member_exprs.is_empty() {
                 ctx.diagnostic_with_fix(
                     prefer_negative_index_diagnostic(call_expr.span),
                     |_fixer| {
@@ -173,15 +172,15 @@ impl Rule for PreferNegativeIndex {
                                 ctx.source_range(member_expr_with_next_span);
 
                             if member_expr_with_next_str.ends_with(' ') {
-                                fixes.push(Fix::delete(member_expr_with_next_span))
+                                fixes.push(Fix::delete(member_expr_with_next_span));
                             } else {
-                                fixes.push(Fix::delete(member_expr_span))
+                                fixes.push(Fix::delete(member_expr_span));
                             }
                         }
 
                         fixes
                     },
-                )
+                );
             }
         }
     }
@@ -196,18 +195,12 @@ fn is_same_node(left: &Expression, right: &Expression, ctx: &LintContext) -> boo
         (
             Expression::ComputedMemberExpression(left_computed_expr),
             Expression::ComputedMemberExpression(right_computed_expr),
-        ) => {
-            return is_same_node(
-                &left_computed_expr.expression,
-                &right_computed_expr.expression,
-                ctx,
-            );
-        }
+        ) => is_same_node(&left_computed_expr.expression, &right_computed_expr.expression, ctx),
         (Expression::StringLiteral(left_lit), Expression::NumericLiteral(right_lit)) => {
-            return left_lit.to_string() == right_lit.to_string();
+            left_lit.to_string() == right_lit.to_string()
         }
         (Expression::NumericLiteral(left_lit), Expression::StringLiteral(right_lit)) => {
-            return left_lit.to_string() == right_lit.to_string();
+            left_lit.to_string() == right_lit.to_string()
         }
         (
             Expression::TemplateLiteral(left_template_lit),
@@ -275,9 +268,9 @@ fn get_binary_left_expr<'a>(
                 return None;
             };
 
-            get_binary_left_expr(&paren_inner_binary_expr)
+            get_binary_left_expr(paren_inner_binary_expr)
         }
-        Expression::BinaryExpression(inner_binary_expr) => get_binary_left_expr(&inner_binary_expr),
+        Expression::BinaryExpression(inner_binary_expr) => get_binary_left_expr(inner_binary_expr),
         Expression::StaticMemberExpression(member_expr) => {
             if member_expr.property.name == "length" {
                 return Some(member_expr.as_ref());
