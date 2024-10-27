@@ -1,7 +1,7 @@
 use oxc_ast::{
     ast::{
         Argument, CallExpression, Expression, JSXAttributeItem, JSXAttributeName,
-        JSXAttributeValue, JSXElement, JSXExpression,
+        JSXAttributeValue, JSXElement, JSXExpression, ObjectPropertyKind, PropertyKey,
     },
     AstKind,
 };
@@ -12,7 +12,6 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_array_index_key_diagnostic(span: Span) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
     OxcDiagnostic::warn("Usage of Array index in keys is not allowed")
         .with_help("Should use the unique key to avoid unnecessary renders")
         .with_label(span)
@@ -44,12 +43,7 @@ declare_oxc_lint!(
     /// ));
     /// ```
     NoArrayIndexKey,
-    nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
-             // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
-
-    pending  // TODO: describe fix capabilities. Remove if no fix can be done,
-             // keep at 'pending' if you think one could be added but don't know how.
-             // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
+    perf,
 );
 
 fn check_jsx_element<'a>(
@@ -58,7 +52,9 @@ fn check_jsx_element<'a>(
     ctx: &'a LintContext,
     prop_name: &'static str,
 ) {
-    let index_param_name_option = find_index_param_name(node, ctx);
+    let Some(index_param_name) = find_index_param_name(node, ctx) else {
+        return;
+    };
 
     for attr in &jsx.opening_element.attributes {
         let JSXAttributeItem::Attribute(attr) = attr else {
@@ -81,11 +77,60 @@ fn check_jsx_element<'a>(
             return;
         };
 
-        if let Some(index_param_name) = index_param_name_option {
-            if expr.name.as_str() == index_param_name {
-                ctx.diagnostic(no_array_index_key_diagnostic(jsx.span));
+        if expr.name.as_str() == index_param_name {
+            ctx.diagnostic(no_array_index_key_diagnostic(jsx.span));
+        }
+    }
+}
+
+fn check_react_clone_element<'a>(
+    call_expr: &'a CallExpression,
+    node: &'a AstNode,
+    ctx: &'a LintContext,
+) {
+    let Some(index_param_name) = find_index_param_name(node, ctx) else {
+        return;
+    };
+
+    match &call_expr.callee {
+        // React.cloneElement
+        Expression::StaticMemberExpression(static_mem_expr) => {
+            let Expression::Identifier(react_ident) = &static_mem_expr.object else {
+                return;
+            };
+
+            if react_ident.name.as_str() == "React"
+                && static_mem_expr.property.name.as_str() == "cloneElement"
+            {
+                let Some(Argument::ObjectExpression(obj_expr)) = call_expr.arguments.get(1) else {
+                    return;
+                };
+
+                for prop_kind in &obj_expr.properties {
+                    let ObjectPropertyKind::ObjectProperty(prop) = prop_kind else {
+                        continue;
+                    };
+
+                    let PropertyKey::StaticIdentifier(key_ident) = &prop.key else {
+                        continue;
+                    };
+
+                    let Expression::Identifier(value_ident) = &prop.value else {
+                        continue;
+                    };
+
+                    if key_ident.name.as_str() == "key"
+                        && value_ident.name.as_str() == index_param_name
+                    {
+                        ctx.diagnostic(no_array_index_key_diagnostic(call_expr.span));
+                    }
+                }
             }
         }
+
+        // TODO: cloneElement
+        Expression::Identifier(indent) => if indent.name.as_str() == "cloneElement" {},
+        _ => (),
     }
 }
 
@@ -156,13 +201,22 @@ const SECOND_INDEX_METHODS: phf::Set<&'static str> = phf::phf_set! {
 };
 
 const THIRD_INDEX_METHODS: phf::Set<&'static str> = phf::phf_set! {
+    // things.reduce((collection, thing, index) => (collection.concat(<Hello key={index} />)), []);
     "reduce",
+    // things.reduceRight((collection, thing, index) => (collection.concat(<Hello key={index} />)), []);
+    "reduceRight",
 };
 
 impl Rule for NoArrayIndexKey {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::JSXElement(jsx) = node.kind() {
-            check_jsx_element(jsx, node, ctx, "key");
+        match node.kind() {
+            AstKind::JSXElement(jsx) => {
+                check_jsx_element(jsx, node, ctx, "key");
+            }
+            AstKind::CallExpression(call_expr) => {
+                check_react_clone_element(call_expr, node, ctx);
+            }
+            _ => (),
         }
     }
 }
@@ -176,11 +230,55 @@ fn test() {
             <Hello key={thing.id} />
           ));
         ",
+        r"things.map((thing, index) => (
+            React.cloneElement(thing, { key: thing.id })
+          ));
+        ",
+        r"things.forEach((thing, index) => {
+            otherThings.push(<Hello key={thing.id} />);
+          });
+        ",
+        r"things.filter((thing, index) => {
+            otherThings.push(<Hello key={thing.id} />);
+          });
+        ",
+        r"things.some((thing, index) => {
+            otherThings.push(<Hello key={thing.id} />);
+          });
+        ",
+        r"things.every((thing, index) => {
+            otherThings.push(<Hello key={thing.id} />);
+          });
+        ",
+        r"things.find((thing, index) => {
+            otherThings.push(<Hello key={thing.id} />);
+          });
+        ",
+        r"things.findIndex((thing, index) => {
+            otherThings.push(<Hello key={thing.id} />);
+          });
+        ",
+        r"things.flatMap((thing, index) => (
+            <Hello key={thing.id} />
+          ));
+        ",
+        r"things.reduce((collection, thing, index) => (
+            collection.concat(<Hello key={thing.id} />)
+          ), []);
+        ",
+        r"things.reduceRight((collection, thing, index) => (
+            collection.concat(<Hello key={thing.id} />)
+          ), []);
+        ",
     ];
 
     let fail = vec![
         r"things.map((thing, index) => (
             <Hello key={index} />
+          ));
+        ",
+        r"things.map((thing, index) => (
+            React.cloneElement(thing, { key: index })
           ));
         ",
         r"things.forEach((thing, index) => {
@@ -210,6 +308,14 @@ fn test() {
         r"things.flatMap((thing, index) => (
             <Hello key={index} />
           ));
+        ",
+        r"things.reduce((collection, thing, index) => (
+            collection.concat(<Hello key={index} />)
+          ), []);
+        ",
+        r"things.reduceRight((collection, thing, index) => (
+            collection.concat(<Hello key={index} />)
+          ), []);
         ",
     ];
 

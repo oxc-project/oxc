@@ -11,6 +11,15 @@ source: crates/oxc_linter/src/tester.rs
   help: Should use the unique key to avoid unnecessary renders
 
   ⚠ eslint-plugin-react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:13]
+ 1 │ things.map((thing, index) => (
+ 2 │             React.cloneElement(thing, { key: index })
+   ·             ─────────────────────────────────────────
+ 3 │           ));
+   ╰────
+  help: Should use the unique key to avoid unnecessary renders
+
+  ⚠ eslint-plugin-react(no-array-index-key): Usage of Array index in keys is not allowed
    ╭─[no_array_index_key.tsx:2:30]
  1 │ things.forEach((thing, index) => {
  2 │             otherThings.push(<Hello key={index} />);
@@ -70,5 +79,23 @@ source: crates/oxc_linter/src/tester.rs
  2 │             <Hello key={index} />
    ·             ─────────────────────
  3 │           ));
+   ╰────
+  help: Should use the unique key to avoid unnecessary renders
+
+  ⚠ eslint-plugin-react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:31]
+ 1 │ things.reduce((collection, thing, index) => (
+ 2 │             collection.concat(<Hello key={index} />)
+   ·                               ─────────────────────
+ 3 │           ), []);
+   ╰────
+  help: Should use the unique key to avoid unnecessary renders
+
+  ⚠ eslint-plugin-react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:31]
+ 1 │ things.reduceRight((collection, thing, index) => (
+ 2 │             collection.concat(<Hello key={index} />)
+   ·                               ─────────────────────
+ 3 │           ), []);
    ╰────
   help: Should use the unique key to avoid unnecessary renders
