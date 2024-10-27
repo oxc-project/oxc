@@ -88,12 +88,6 @@ impl SymbolTable {
         self.spans.iter_enumerated().map(|(symbol_id, _)| symbol_id)
     }
 
-    pub fn get_symbol_id_from_span(&self, span: Span) -> Option<SymbolId> {
-        self.spans
-            .iter_enumerated()
-            .find_map(|(symbol, &inner_span)| if inner_span == span { Some(symbol) } else { None })
-    }
-
     /// Get the [`Span`] of the [`AstNode`] declaring a symbol.
     ///
     /// [`AstNode`]: crate::node::AstNode
@@ -150,10 +144,6 @@ impl SymbolTable {
     #[inline]
     pub fn get_scope_id(&self, symbol_id: SymbolId) -> ScopeId {
         self.scope_ids[symbol_id]
-    }
-
-    pub fn get_scope_id_from_span(&self, span: Span) -> Option<ScopeId> {
-        self.get_symbol_id_from_span(span).map(|symbol_id| self.get_scope_id(symbol_id))
     }
 
     /// Get the ID of the AST node declaring a symbol.

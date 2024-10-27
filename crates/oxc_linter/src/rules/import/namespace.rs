@@ -152,8 +152,7 @@ impl Rule for Namespace {
                 return;
             }
 
-            let Some(symbol_id) =
-                ctx.semantic().symbols().get_symbol_id_from_span(entry.local_name.span())
+            let Some(symbol_id) = ctx.scopes().get_root_binding(entry.local_name.name().as_str())
             else {
                 return;
             };
