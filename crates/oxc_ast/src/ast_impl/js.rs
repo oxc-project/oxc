@@ -279,6 +279,11 @@ impl<'a> Expression<'a> {
             false
         }
     }
+
+    /// Returns `true` if this is an [assignment expression](AssignmentExpression).
+    pub fn is_assignment(&self) -> bool {
+        matches!(self, Expression::AssignmentExpression(_))
+    }
 }
 
 impl<'a> fmt::Display for IdentifierName<'a> {

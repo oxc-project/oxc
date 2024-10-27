@@ -559,6 +559,23 @@ impl<'s, 'a> Symbol<'s, 'a> {
                         return false;
                     }
                 }
+                // x && (a = x)
+                (AstKind::LogicalExpression(expr), _) => {
+                    if expr.left.span().contains_inclusive(ref_span())
+                        && expr.right.get_inner_expression().is_assignment()
+                    {
+                        return false;
+                    }
+                }
+                // x instanceof Foo && (a = x)
+                (AstKind::BinaryExpression(expr), _) if expr.operator.is_relational() => {
+                    if expr.left.span().contains_inclusive(ref_span())
+                        && expr.right.get_inner_expression().is_assignment()
+                    {
+                        return false;
+                    }
+                    continue;
+                }
                 (parent, AstKind::SequenceExpression(seq)) => {
                     debug_assert!(
                         !seq.expressions.is_empty(),

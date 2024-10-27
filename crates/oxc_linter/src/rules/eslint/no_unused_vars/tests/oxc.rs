@@ -208,6 +208,30 @@ fn test_vars_discarded_reads() {
 
         new Test();
         ",
+        "function foo(a) {
+            const Bar = require('./bar');
+            a instanceof Bar && (this.a = a);
+        }
+        foo(1)
+        ",
+        "function foo(a) {
+            const Bar = require('./bar');
+            (a instanceof Bar && (this.a = a), this.b = 1);
+        }
+        foo(1)
+        ",
+        "function foo(a) {
+            const Bar = require('./bar');
+            (a instanceof Bar && (this.a ||= 2), this.b = 1);
+        }
+        foo(1)
+        ",
+        "function foo(a) {
+            const bar = require('./bar');
+            (a in bar && (this.a = a), this.b = 1);
+        }
+        foo(1)
+        ",
     ];
 
     let fail = vec![
