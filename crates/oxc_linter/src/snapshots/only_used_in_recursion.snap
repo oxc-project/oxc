@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ oxc(only-used-in-recursion): Parameter `arg0` is only used in recursive calls
    ╭─[only_used_in_recursion.tsx:2:27]
@@ -78,5 +79,59 @@ source: crates/oxc_linter/src/tester.rs
  1 │ //¿
  2 │ function writeChunks(a,callac){writeChunks(m,callac)}writeChunks(i,{})
    ·                        ──────
+   ╰────
+  help: Remove the argument and its usage. Alternatively, use the argument in the function body.
+
+  ⚠ oxc(only-used-in-recursion): Parameter `depth` is only used in recursive calls
+   ╭─[only_used_in_recursion.tsx:2:33]
+ 1 │ 
+ 2 │             function ListItem({ depth }) {
+   ·                                 ─────
+ 3 │                 return <ListItem depth={depth} />
+   ╰────
+  help: Remove the argument and its usage. Alternatively, use the argument in the function body.
+
+  ⚠ oxc(only-used-in-recursion): Parameter `depth` is only used in recursive calls
+   ╭─[only_used_in_recursion.tsx:2:33]
+ 1 │ 
+ 2 │             function ListItem({ depth: listDepth }) {
+   ·                                 ────────────────
+ 3 │                 return <ListItem depth={listDepth} />;
+   ╰────
+  help: Remove the argument and its usage. Alternatively, use the argument in the function body.
+
+  ⚠ oxc(only-used-in-recursion): Parameter `depth` is only used in recursive calls
+   ╭─[only_used_in_recursion.tsx:2:32]
+ 1 │ 
+ 2 │             function ListItem({depth = 0}) {
+   ·                                ─────────
+ 3 │                 return <ListItem depth={depth} />
+   ╰────
+  help: Remove the argument and its usage. Alternatively, use the argument in the function body.
+
+  ⚠ oxc(only-used-in-recursion): Parameter `depth` is only used in recursive calls
+   ╭─[only_used_in_recursion.tsx:2:32]
+ 1 │ 
+ 2 │             function ListItem({depth, ...otherProps}) {
+   ·                                ─────
+ 3 │                             return <ListItem depth={depth} />
+   ╰────
+  help: Remove the argument and its usage. Alternatively, use the argument in the function body.
+
+  ⚠ oxc(only-used-in-recursion): Parameter `a` is only used in recursive calls
+   ╭─[only_used_in_recursion.tsx:2:28]
+ 1 │ 
+ 2 │             function Test({a, b}) {
+   ·                            ─
+ 3 │                 return (
+   ╰────
+  help: Remove the argument and its usage. Alternatively, use the argument in the function body.
+
+  ⚠ oxc(only-used-in-recursion): Parameter `b` is only used in recursive calls
+   ╭─[only_used_in_recursion.tsx:2:31]
+ 1 │ 
+ 2 │             function Test({a, b}) {
+   ·                               ─
+ 3 │                 return (
    ╰────
   help: Remove the argument and its usage. Alternatively, use the argument in the function body.
