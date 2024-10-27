@@ -133,6 +133,7 @@ mod eslint {
     pub mod prefer_exponentiation_operator;
     pub mod prefer_numeric_literals;
     pub mod prefer_object_has_own;
+    pub mod prefer_spread;
     pub mod radix;
     pub mod require_await;
     pub mod require_yield;
@@ -353,7 +354,6 @@ mod unicorn {
     pub mod prefer_reflect_apply;
     pub mod prefer_regexp_test;
     pub mod prefer_set_size;
-    pub mod prefer_spread;
     pub mod prefer_string_replace_all;
     pub mod prefer_string_slice;
     pub mod prefer_string_starts_ends_with;
@@ -612,6 +612,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::prefer_exponentiation_operator,
     eslint::prefer_numeric_literals,
     eslint::prefer_object_has_own,
+    eslint::prefer_spread,
     eslint::radix,
     eslint::require_await,
     eslint::require_yield,
@@ -937,7 +938,6 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_reflect_apply,
     unicorn::prefer_regexp_test,
     unicorn::prefer_set_size,
-    unicorn::prefer_spread,
     unicorn::prefer_string_replace_all,
     unicorn::prefer_string_slice,
     unicorn::prefer_string_starts_ends_with,
