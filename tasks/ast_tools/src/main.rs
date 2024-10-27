@@ -26,7 +26,7 @@ use generators::{
     AssertLayouts, AstBuilderGenerator, AstKindGenerator, Generator, TypescriptGenerator,
     VisitGenerator, VisitMutGenerator,
 };
-use output::write_all_to;
+use output::{write_all_to, RawOutput};
 use passes::{CalcLayout, Linker};
 use util::NormalizeError;
 
@@ -45,6 +45,7 @@ static SOURCE_PATHS: &[&str] = &[
 
 const AST_CRATE: &str = "crates/oxc_ast";
 const TYPESCRIPT_PACKAGE: &str = "npm/oxc-types";
+const GITHUB_WATCH_LIST_PATH: &str = ".github/.generated_ast_watch_list.yml";
 
 type Result<R> = std::result::Result<R, String>;
 type TypeId = usize;
@@ -67,7 +68,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         logger::quiet().normalize_with("Failed to set logger to `quiet` mode.")?;
     }
 
-    let AstCodegenResult { outputs, schema } = SOURCE_PATHS
+    let AstCodegenResult { mut outputs, schema } = SOURCE_PATHS
         .iter()
         .fold(AstCodegen::default(), AstCodegen::add_file)
         .pass(Linker)
@@ -86,15 +87,12 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         .generate(TypescriptGenerator)
         .run()?;
 
+    outputs.push(generate_ci_filter(&outputs));
+
     if !cli_options.dry_run {
-        let paths = outputs
-            .into_iter()
-            .map(|output| {
-                output.write_to_file().unwrap();
-                output.path
-            })
-            .collect();
-        write_ci_filter(SOURCE_PATHS, paths, ".github/.generated_ast_watch_list.yml")?;
+        for output in outputs {
+            output.write_to_file()?;
+        }
     }
 
     if let CliOptions { schema: Some(schema_path), dry_run: false, .. } = cli_options {
@@ -105,7 +103,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn write_ci_filter(inputs: &[&str], paths: Vec<String>, output_path: &str) -> std::io::Result<()> {
+fn generate_ci_filter(outputs: &[RawOutput]) -> RawOutput {
     let file = file!().replace('\\', "/");
     let mut output = format!(
         "\
@@ -115,18 +113,18 @@ fn write_ci_filter(inputs: &[&str], paths: Vec<String>, output_path: &str) -> st
     );
     let mut push_item = |path: &str| output.push_str(format!("  - '{path}'\n").as_str());
 
-    for input in inputs {
+    for input in SOURCE_PATHS {
         push_item(input);
     }
 
-    for path in paths {
-        push_item(path.as_str());
+    for output in outputs {
+        push_item(output.path.as_str());
     }
 
     push_item("tasks/ast_tools/src/**");
-    push_item(output_path);
+    push_item(GITHUB_WATCH_LIST_PATH);
 
-    write_all_to(output.as_bytes(), output_path)
+    RawOutput { path: GITHUB_WATCH_LIST_PATH.to_string(), content: output.into_bytes() }
 }
 
 #[macro_use]
