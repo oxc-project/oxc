@@ -36,6 +36,10 @@ macro_rules! define_generator {
             impl $($lifetime)? Runner for $ident $($lifetime)? {
                 type Context = LateCtx;
 
+                fn verb(&self) -> &'static str {
+                    "Generate"
+                }
+
                 fn name(&self) -> &'static str {
                     stringify!($ident)
                 }

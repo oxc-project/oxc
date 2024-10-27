@@ -29,6 +29,7 @@ pub struct AstCodegenResult {
 
 pub trait Runner {
     type Context;
+    fn verb(&self) -> &'static str;
     fn name(&self) -> &'static str;
     fn file_path(&self) -> &'static str;
     fn run(&mut self, ctx: &Self::Context) -> Result<Vec<Output>>;
@@ -138,7 +139,7 @@ impl AstCodegen {
         self
     }
 
-    pub fn run(self) -> Result<AstCodegenResult> {
+    pub fn run(mut self) -> Result<AstCodegenResult> {
         let modules = self
             .files
             .into_iter()
@@ -148,62 +149,37 @@ impl AstCodegen {
             .map_ok(|it| it.map(rust_ast::Module::analyze))
             .collect::<Result<Result<Result<Vec<_>>>>>()???;
 
-        // early passes
-        let ctx = {
-            let ctx = EarlyCtx::new(modules);
-            for mut runner in self.passes {
-                let name = runner.name();
-                log!("Pass {name}... ");
-                runner.run(&ctx)?;
-                logln!("Done!");
-            }
-            ctx.into_late_ctx()
-        };
+        // Early passes
+        let early_ctx = EarlyCtx::new(modules);
+        let mut outputs = run_passes(&mut self.passes, &early_ctx)?;
 
-        let derives = self
-            .derives
-            .into_iter()
-            .map(|mut runner| {
-                let name = runner.name();
-                log!("Derive {name}... ");
-                let result = runner.run(&ctx);
-                match result {
-                    Ok(outputs) => {
-                        logln!("Done!");
-                        let generator_path = runner.file_path();
-                        Ok(outputs.into_iter().map(|output| output.output(generator_path)))
-                    }
-                    Err(err) => {
-                        logln!("FAILED");
-                        Err(err)
-                    }
-                }
-            })
-            .flatten_ok();
+        // Late passes
+        let late_ctx = early_ctx.into_late_ctx();
+        outputs.extend(run_passes(&mut self.derives, &late_ctx)?);
+        outputs.extend(run_passes(&mut self.generators, &late_ctx)?);
 
-        let outputs = self
-            .generators
-            .into_iter()
-            .map(|mut runner| {
-                let name = runner.name();
-                log!("Generate {name}... ");
-                let result = runner.run(&ctx);
-                match result {
-                    Ok(outputs) => {
-                        logln!("Done!");
-                        let generator_path = runner.file_path();
-                        Ok(outputs.into_iter().map(|output| output.output(generator_path)))
-                    }
-                    Err(err) => {
-                        logln!("FAILED");
-                        Err(err)
-                    }
-                }
-            })
-            .flatten_ok();
-
-        let outputs = derives.chain(outputs).collect::<Result<Vec<_>>>()?;
-
-        Ok(AstCodegenResult { outputs, schema: ctx.schema })
+        Ok(AstCodegenResult { outputs, schema: late_ctx.schema })
     }
+}
+
+fn run_passes<C>(runners: &mut [Box<dyn Runner<Context = C>>], ctx: &C) -> Result<Vec<RawOutput>> {
+    let mut outputs = vec![];
+    for runner in runners {
+        log!("{} {}... ", runner.verb(), runner.name());
+
+        let result = runner.run(ctx);
+        match result {
+            Ok(runner_outputs) => {
+                logln!("Done!");
+                let generator_path = runner.file_path();
+                outputs
+                    .extend(runner_outputs.into_iter().map(|output| output.output(generator_path)));
+            }
+            Err(err) => {
+                logln!("FAILED");
+                return Err(err);
+            }
+        }
+    }
+    Ok(outputs)
 }

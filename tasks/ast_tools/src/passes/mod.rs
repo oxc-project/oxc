@@ -47,6 +47,10 @@ macro_rules! define_pass {
             impl $($lifetime)? Runner for $ident $($lifetime)? {
                 type Context = EarlyCtx;
 
+                fn verb(&self) -> &'static str {
+                    "Run pass"
+                }
+
                 fn name(&self) -> &'static str {
                     stringify!($ident)
                 }
