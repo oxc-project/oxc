@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use crate::{codegen::EarlyCtx, rust_ast::AstType, Result};
+use crate::{codegen::EarlyCtx, output::Output, rust_ast::AstType, Result};
 
 mod calc_layout;
 mod linker;
@@ -17,7 +17,7 @@ pub trait Pass {
     // Standard methods
 
     /// Run pass.
-    fn output(&mut self, ctx: &EarlyCtx) -> Result<()> {
+    fn output(&mut self, ctx: &EarlyCtx) -> Result<Vec<Output>> {
         // We sort by `TypeId`, so we have the same ordering as it's written in Rust source
         let mut unresolved = ctx.chronological_idents().collect::<VecDeque<_>>();
 
@@ -31,7 +31,7 @@ pub trait Pass {
                 unresolved.push_front(next);
             }
         }
-        Ok(())
+        Ok(vec![])
     }
 }
 
@@ -40,12 +40,12 @@ macro_rules! define_pass {
         const _: () = {
             use $crate::{
                 codegen::{EarlyCtx, Runner},
+                output::Output,
                 Result,
             };
 
             impl $($lifetime)? Runner for $ident $($lifetime)? {
                 type Context = EarlyCtx;
-                type Output = ();
 
                 fn name(&self) -> &'static str {
                     stringify!($ident)
@@ -55,7 +55,7 @@ macro_rules! define_pass {
                     file!()
                 }
 
-                fn run(&mut self, ctx: &Self::Context) -> Result<()> {
+                fn run(&mut self, ctx: &Self::Context) -> Result<Vec<Output>> {
                     self.output(ctx)
                 }
             }

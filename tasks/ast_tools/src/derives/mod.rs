@@ -126,7 +126,6 @@ macro_rules! define_derive {
 
             impl $($lifetime)? Runner for $ident $($lifetime)? {
                 type Context = LateCtx;
-                type Output = Vec<Output>;
 
                 fn name(&self) -> &'static str {
                     stringify!($ident)
