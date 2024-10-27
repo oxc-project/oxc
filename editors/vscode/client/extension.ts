@@ -150,8 +150,12 @@ export async function activate(context: ExtensionContext) {
       scheme: 'file',
     })),
     synchronize: {
-      // Notify the server about file changes to '.clientrc files contained in the workspace
-      fileEvents: workspace.createFileSystemWatcher('**/.clientrc'),
+      // Notify the server about file config changes in the workspace
+      fileEvents: [
+        workspace.createFileSystemWatcher('**/.eslintr{c,c.json}'),
+        workspace.createFileSystemWatcher('**/.oxlint{.json,rc.json,rc}'),
+        workspace.createFileSystemWatcher('**/oxlint{.json,rc.json}'),
+      ],
     },
     initializationOptions: {
       settings: config.toLanguageServerConfig(),
