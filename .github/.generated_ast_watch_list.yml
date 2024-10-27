@@ -1,5 +1,5 @@
-# To edit this generated file you have to edit `tasks/ast_tools/src/main.rs`
 # Auto-generated code, DO NOT EDIT DIRECTLY!
+# To edit this generated file you have to edit `tasks/ast_tools/src/main.rs`
 
 src:
   - 'crates/oxc_ast/src/ast/literal.rs'

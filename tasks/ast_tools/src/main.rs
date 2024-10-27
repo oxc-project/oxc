@@ -26,7 +26,7 @@ use generators::{
     AssertLayouts, AstBuilderGenerator, AstKindGenerator, Generator, TypescriptGenerator,
     VisitGenerator, VisitMutGenerator,
 };
-use output::{write_all_to, RawOutput};
+use output::{write_all_to, Output, RawOutput};
 use passes::{CalcLayout, Linker};
 use util::NormalizeError;
 
@@ -104,14 +104,10 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
 }
 
 fn generate_ci_filter(outputs: &[RawOutput]) -> RawOutput {
-    let file = file!().replace('\\', "/");
-    let mut output = format!(
-        "\
-        # To edit this generated file you have to edit `{file}`\n\
-        # Auto-generated code, DO NOT EDIT DIRECTLY!\n\n\
-        src:\n"
-    );
-    let mut push_item = |path: &str| output.push_str(format!("  - '{path}'\n").as_str());
+    log!("Generate CI filter... ");
+
+    let mut code = "src:\n".to_string();
+    let mut push_item = |path: &str| code.push_str(format!("  - '{path}'\n").as_str());
 
     for input in SOURCE_PATHS {
         push_item(input);
@@ -124,7 +120,9 @@ fn generate_ci_filter(outputs: &[RawOutput]) -> RawOutput {
     push_item("tasks/ast_tools/src/**");
     push_item(GITHUB_WATCH_LIST_PATH);
 
-    RawOutput { path: GITHUB_WATCH_LIST_PATH.to_string(), content: output.into_bytes() }
+    log_success!();
+
+    Output::Yaml { path: GITHUB_WATCH_LIST_PATH.to_string(), code }.output(file!())
 }
 
 #[macro_use]

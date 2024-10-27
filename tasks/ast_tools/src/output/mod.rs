@@ -10,8 +10,10 @@ use crate::{log, log_result};
 
 mod javascript;
 mod rust;
+mod yaml;
 use javascript::print_javascript;
 use rust::print_rust;
+use yaml::print_yaml;
 
 /// An output from codegen.
 ///
@@ -19,6 +21,7 @@ use rust::print_rust;
 pub enum Output {
     Rust { path: String, tokens: TokenStream },
     Javascript { path: String, code: String },
+    Yaml { path: String, code: String },
 }
 
 impl Output {
@@ -30,6 +33,10 @@ impl Output {
             }
             Self::Javascript { path, code } => {
                 let code = print_javascript(&code, generator_path);
+                (path, code)
+            }
+            Self::Yaml { path, code } => {
+                let code = print_yaml(&code, generator_path);
                 (path, code)
             }
         };
