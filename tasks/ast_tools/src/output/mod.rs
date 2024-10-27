@@ -22,6 +22,7 @@ pub enum Output {
     Rust { path: String, tokens: TokenStream },
     Javascript { path: String, code: String },
     Yaml { path: String, code: String },
+    Raw { path: String, code: String },
 }
 
 impl Output {
@@ -39,6 +40,7 @@ impl Output {
                 let code = print_yaml(&code, generator_path);
                 (path, code)
             }
+            Self::Raw { path, code } => (path, code),
         };
         RawOutput { path, content: code.into_bytes() }
     }

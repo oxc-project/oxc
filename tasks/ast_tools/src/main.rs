@@ -26,8 +26,9 @@ use generators::{
     AssertLayouts, AstBuilderGenerator, AstKindGenerator, Generator, TypescriptGenerator,
     VisitGenerator, VisitMutGenerator,
 };
-use output::{write_all_to, Output, RawOutput};
+use output::{Output, RawOutput};
 use passes::{CalcLayout, Linker};
+use schema::Schema;
 use util::NormalizeError;
 
 static SOURCE_PATHS: &[&str] = &[
@@ -90,15 +91,14 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
 
     outputs.push(generate_ci_filter(&outputs));
 
+    if cli_options.schema {
+        outputs.push(generate_json_schema(&schema)?);
+    }
+
     if !cli_options.dry_run {
         for output in outputs {
             output.write_to_file()?;
         }
-    }
-
-    if let CliOptions { schema: true, dry_run: false, .. } = cli_options {
-        let schema = serde_json::to_string_pretty(&schema.defs).normalize()?;
-        write_all_to(schema.as_bytes(), SCHEMA_PATH)?;
     }
 
     Ok(())
@@ -124,6 +124,15 @@ fn generate_ci_filter(outputs: &[RawOutput]) -> RawOutput {
     log_success!();
 
     Output::Yaml { path: GITHUB_WATCH_LIST_PATH.to_string(), code }.into_raw(file!())
+}
+
+fn generate_json_schema(schema: &Schema) -> Result<RawOutput> {
+    log!("Generate JSON schema... ");
+    let result = serde_json::to_string_pretty(&schema.defs).normalize();
+    log_result!(result);
+    let schema = result?;
+    let output = Output::Raw { path: SCHEMA_PATH.to_string(), code: schema }.into_raw(file!());
+    Ok(output)
 }
 
 #[macro_use]
