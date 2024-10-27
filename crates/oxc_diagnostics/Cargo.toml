@@ -20,8 +20,4 @@ doctest = false
 
 [dependencies]
 miette = { workspace = true }
-
-owo-colors = { workspace = true }
 rustc-hash = { workspace = true }
-textwrap = { workspace = true }
-unicode-width = { workspace = true }

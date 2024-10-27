@@ -48,8 +48,6 @@
 //! service.run();
 //! ```
 
-mod graphic_reporter;
-mod graphical_theme;
 mod reporter;
 mod service;
 
@@ -59,11 +57,7 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-pub use crate::{
-    graphic_reporter::GraphicalReportHandler,
-    graphical_theme::GraphicalTheme,
-    service::{DiagnosticSender, DiagnosticService, DiagnosticTuple},
-};
+pub use crate::service::{DiagnosticSender, DiagnosticService, DiagnosticTuple};
 
 pub type Error = miette::Error;
 pub type Severity = miette::Severity;
@@ -71,7 +65,7 @@ pub type Severity = miette::Severity;
 pub type Result<T> = std::result::Result<T, OxcDiagnostic>;
 
 use miette::{Diagnostic, SourceCode};
-pub use miette::{LabeledSpan, NamedSource};
+pub use miette::{GraphicalReportHandler, GraphicalTheme, LabeledSpan, NamedSource};
 
 /// Describes an error or warning that occurred.
 ///

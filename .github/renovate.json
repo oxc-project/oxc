@@ -8,7 +8,7 @@
     {
       "groupName": "rust crates",
       "matchManagers": ["cargo"],
-      "ignoreDeps": ["syn", "ureq", "unicode-width"]
+      "ignoreDeps": ["syn", "ureq"]
     },
     {
       "groupName": "vscode npm packages",

@@ -1706,6 +1706,7 @@ x Output mismatch
 
 # babel-preset-typescript (5/10)
 * jsx-compat/ts-invalid/input.ts
+
   x Expected `>` but found `/`
    ,-[tasks/coverage/babel/packages/babel-preset-typescript/test/fixtures/jsx-compat/ts-invalid/input.ts:1:7]
  1 | (<div />);
@@ -1743,9 +1744,9 @@ after transform: ["T", "x"]
 rebuilt        : ["x"]
 
 * class/accessor-allowDeclareFields-false/input.ts
-TS(18010)
 
-  x An accessibility modifier cannot be used with a private identifier.
+  x TS(18010): An accessibility modifier cannot be used with a private
+  | identifier.
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/class/accessor-allowDeclareFields-false/input.ts:8:3]
  7 |   abstract accessor prop6: number;
  8 |   private accessor #p: any;
@@ -1755,9 +1756,9 @@ TS(18010)
 
 
 * class/accessor-allowDeclareFields-true/input.ts
-TS(18010)
 
-  x An accessibility modifier cannot be used with a private identifier.
+  x TS(18010): An accessibility modifier cannot be used with a private
+  | identifier.
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/class/accessor-allowDeclareFields-true/input.ts:8:3]
  7 |   abstract accessor prop6: number;
  8 |   private accessor #p: any;
@@ -2103,6 +2104,7 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 * exports/export=/input.ts
+
   ! `export = <value>;` is only supported when compiling modules to CommonJS.
   | Please consider using `export default <value>;`, or add @babel/plugin-
   | transform-modules-commonjs to your Babel config.
@@ -2299,6 +2301,7 @@ after transform: ScopeId(0): ["A", "B"]
 rebuilt        : ScopeId(0): []
 
 * imports/import=-module/input.ts
+
   ! `import lib = require(...);` is only supported when compiling modules
   | to CommonJS.
   | Please consider using `import lib from '...';` alongside Typescript's
@@ -2953,6 +2956,7 @@ after transform: ScopeId(2): [SymbolId(2), SymbolId(4)]
 rebuilt        : ScopeId(2): [SymbolId(3), SymbolId(4)]
 
 * namespace/mutable-fail/input.ts
+
   ! Namespaces exporting non-const are not supported by Babel. Change to const
   | or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/mutable-fail/input.ts:2:14]
@@ -2964,6 +2968,7 @@ rebuilt        : ScopeId(2): [SymbolId(3), SymbolId(4)]
 
 
 * namespace/namespace-flag/input.ts
+
   ! Namespace not marked type-only declare. Non-declarative namespaces are
   | only supported experimentally in Babel. To enable and review caveats see:
   | https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -3357,6 +3362,7 @@ pragma and pragmaFrag cannot be set when runtime is automatic.
 Spread children are not supported in React.
 
 * react/should-disallow-valueless-key/input.js
+
   ! Please provide an explicit key value. Using "key" as a shorthand for
   | "key={true}" is not allowed.
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-react-jsx/test/fixtures/react/should-disallow-valueless-key/input.js:2:15]
@@ -3367,6 +3373,7 @@ Spread children are not supported in React.
 
 
 * react/should-disallow-xml-namespacing/input.js
+
   ! Namespace tags are not supported by default. React's JSX doesn't support
   | namespace tags. You can set `throwIfNamespace: false` to bypass this
   | warning.
@@ -3377,6 +3384,7 @@ Spread children are not supported in React.
 
 
 * react/should-throw-error-namespaces-if-not-flag/input.js
+
   ! Namespace tags are not supported by default. React's JSX doesn't support
   | namespace tags. You can set `throwIfNamespace: false` to bypass this
   | warning.
@@ -3399,6 +3407,7 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
 Spread children are not supported in React.
 
 * react-automatic/should-disallow-valueless-key/input.js
+
   ! Please provide an explicit key value. Using "key" as a shorthand for
   | "key={true}" is not allowed.
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-react-jsx/test/fixtures/react-automatic/should-disallow-valueless-key/input.js:2:15]
@@ -3409,6 +3418,7 @@ Spread children are not supported in React.
 
 
 * react-automatic/should-disallow-xml-namespacing/input.js
+
   ! Namespace tags are not supported by default. React's JSX doesn't support
   | namespace tags. You can set `throwIfNamespace: false` to bypass this
   | warning.
@@ -3419,6 +3429,7 @@ Spread children are not supported in React.
 
 
 * react-automatic/should-throw-error-namespaces-if-not-flag/input.js
+
   ! Namespace tags are not supported by default. React's JSX doesn't support
   | namespace tags. You can set `throwIfNamespace: false` to bypass this
   | warning.
@@ -3440,6 +3451,7 @@ x Output mismatch
 
 # babel-plugin-transform-react-jsx-development (8/11)
 * cross-platform/disallow-__self-as-jsx-attribute/input.js
+
   ! Duplicate __self prop found.
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-react-jsx-development/test/fixtures/cross-platform/disallow-__self-as-jsx-attribute/input.js:1:14]
  1 | var x = <div __self={self}></div>;
@@ -3448,6 +3460,7 @@ x Output mismatch
 
 
 * cross-platform/disallow-__source-as-jsx-attribute/input.js
+
   ! Duplicate __source prop found.
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-react-jsx-development/test/fixtures/cross-platform/disallow-__source-as-jsx-attribute/input.js:1:14]
  1 | var x = <div __source={source}></div>;

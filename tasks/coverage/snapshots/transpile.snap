@@ -104,6 +104,7 @@ export declare const D: {
 	"2": number;
 };
 export {};
+
   x TS9010: Variable must have an explicit type annotation with
   | --isolatedDeclarations.
    ,-[declarationComputedPropertyNames.d.ts:2:18]
@@ -486,6 +487,7 @@ export declare class InClassMethodBad {
 	o(array: T, rParam: string): void;
 }
 export {};
+
   x TS9025: Declaration emit for this parameter requires implicitly adding
   | undefined to it's type. This is not supported with --isolatedDeclarations.
     ,-[fnDecl.d.ts:12:27]
@@ -591,6 +593,7 @@ export declare const v2: (...a: [n: "n", a: "a"]) => {
 	n: typeof n;
 };
 export {};
+
   x TS9010: Variable must have an explicit type annotation with
   | --isolatedDeclarations.
    ,-[v2.d.ts:1:7]
