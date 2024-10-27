@@ -517,7 +517,7 @@ impl<'a> StaticMemberExpression<'a> {
                 if let Expression::StaticMemberExpression(expr) = &member.object {
                     expr.get_first_object()
                 } else {
-                    &self.object
+                    member.get_first_object()
                 }
             }
             Expression::ChainExpression(chain) => {
