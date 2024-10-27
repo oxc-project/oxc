@@ -175,7 +175,7 @@ export async function activate(context: ExtensionContext) {
   });
 
   config.onConfigChange = function onConfigChange() {
-    let settings = this.toLanguageServerConfig()
+    let settings = this.toLanguageServerConfig();
     updateStatsBar(settings.enable);
     client.sendNotification('workspace/didChangeConfiguration', { settings });
   };
