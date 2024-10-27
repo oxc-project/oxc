@@ -15,6 +15,11 @@ use javascript::print_javascript;
 use rust::print_rust;
 use yaml::print_yaml;
 
+/// Get path for an output.
+pub fn output_path(krate: &str, path: &str) -> String {
+    format!("{krate}/src/generated/{path}")
+}
+
 /// An output from codegen.
 ///
 /// Can be either Rust or Javascript.
@@ -56,25 +61,15 @@ pub struct RawOutput {
 impl RawOutput {
     /// Write output to file
     pub fn write_to_file(&self) -> io::Result<()> {
-        write_all_to(&self.content, &self.path)
+        log!("Write {}... ", &self.path);
+        let result = write_to_file_impl(&self.content, &self.path);
+        log_result!(result);
+        result
     }
 }
 
-/// Get path for an output.
-pub fn output_path(krate: &str, path: &str) -> String {
-    format!("{krate}/src/generated/{path}")
-}
-
-/// Write data to file.
-pub fn write_all_to<P: AsRef<Path>>(data: &[u8], path: P) -> io::Result<()> {
-    let path = path.as_ref();
-    log!("Write {}... ", path.to_string_lossy());
-    let result = write_all_impl(data, path);
-    log_result!(result);
-    result
-}
-
-fn write_all_impl(data: &[u8], path: &Path) -> io::Result<()> {
+fn write_to_file_impl(data: &[u8], path: &str) -> io::Result<()> {
+    let path = Path::new(path);
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
