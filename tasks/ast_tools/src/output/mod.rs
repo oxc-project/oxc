@@ -6,6 +6,8 @@ use std::{
 
 use proc_macro2::TokenStream;
 
+use crate::{log, log_result};
+
 mod javascript;
 mod rust;
 use javascript::print_javascript;
@@ -57,10 +59,16 @@ pub fn output_path(krate: &str, path: &str) -> String {
 /// Write data to file.
 pub fn write_all_to<P: AsRef<Path>>(data: &[u8], path: P) -> io::Result<()> {
     let path = path.as_ref();
+    log!("Write {}... ", path.to_string_lossy());
+    let result = write_all_impl(data, path);
+    log_result!(result);
+    result
+}
+
+fn write_all_impl(data: &[u8], path: &Path) -> io::Result<()> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
     let mut file = fs::File::create(path)?;
-    file.write_all(data)?;
-    Ok(())
+    file.write_all(data)
 }

@@ -4,7 +4,7 @@ use itertools::Itertools;
 use rustc_hash::{FxBuildHasher, FxHashMap};
 
 use crate::{
-    log, logln,
+    log, log_result,
     output::{Output, RawOutput},
     passes::Pass,
     rust_ast::{self, AstRef},
@@ -155,18 +155,11 @@ fn run_passes<C>(runners: &mut [Box<dyn Runner<Context = C>>], ctx: &C) -> Resul
         log!("{} {}... ", runner.verb(), runner.name());
 
         let result = runner.run(ctx);
-        match result {
-            Ok(runner_outputs) => {
-                logln!("Done!");
-                let generator_path = runner.file_path();
-                outputs
-                    .extend(runner_outputs.into_iter().map(|output| output.output(generator_path)));
-            }
-            Err(err) => {
-                logln!("FAILED");
-                return Err(err);
-            }
-        }
+        log_result!(result);
+        let runner_outputs = result?;
+
+        let generator_path = runner.file_path();
+        outputs.extend(runner_outputs.into_iter().map(|output| output.output(generator_path)));
     }
     Ok(outputs)
 }

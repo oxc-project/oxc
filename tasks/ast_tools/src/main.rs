@@ -90,9 +90,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         let paths = outputs
             .into_iter()
             .map(|output| {
-                log!("Writing {}...", &output.path);
                 output.write_to_file().unwrap();
-                logln!(" Done!");
                 output.path
             })
             .collect();
@@ -128,10 +126,7 @@ fn write_ci_filter(inputs: &[&str], paths: Vec<String>, output_path: &str) -> st
     push_item("tasks/ast_tools/src/**");
     push_item(output_path);
 
-    log!("Writing {output_path}...");
-    write_all_to(output.as_bytes(), output_path)?;
-    logln!(" Done!");
-    Ok(())
+    write_all_to(output.as_bytes(), output_path)
 }
 
 #[macro_use]
@@ -156,13 +151,32 @@ mod logger {
         }
     }
 
-    macro_rules! logln {
-        ($fmt:literal $(, $args:expr)*) => {
-            $crate::log!("{}\n", format!($fmt $(, $args)*));
-        }
+    macro_rules! log_success {
+        () => {
+            $crate::log!("Done!\n");
+        };
     }
 
-    pub(super) use {log, logln};
+    macro_rules! log_failed {
+        () => {
+            $crate::log!("FAILED\n");
+        };
+    }
+
+    macro_rules! log_result {
+        ($result:expr) => {
+            match &($result) {
+                Ok(_) => {
+                    $crate::log_success!();
+                }
+                Err(_) => {
+                    $crate::log_failed!();
+                }
+            }
+        };
+    }
+
+    pub(super) use {log, log_failed, log_result, log_success};
 }
 
-pub(crate) use logger::{log, logln};
+pub(crate) use logger::{log, log_failed, log_result, log_success};
