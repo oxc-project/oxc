@@ -159,7 +159,7 @@ fn run_passes<C>(runners: &mut [Box<dyn Runner<Context = C>>], ctx: &C) -> Resul
         let runner_outputs = result?;
 
         let generator_path = runner.file_path();
-        outputs.extend(runner_outputs.into_iter().map(|output| output.output(generator_path)));
+        outputs.extend(runner_outputs.into_iter().map(|output| output.into_raw(generator_path)));
     }
     Ok(outputs)
 }

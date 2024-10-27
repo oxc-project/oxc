@@ -122,7 +122,7 @@ fn generate_ci_filter(outputs: &[RawOutput]) -> RawOutput {
 
     log_success!();
 
-    Output::Yaml { path: GITHUB_WATCH_LIST_PATH.to_string(), code }.output(file!())
+    Output::Yaml { path: GITHUB_WATCH_LIST_PATH.to_string(), code }.into_raw(file!())
 }
 
 #[macro_use]

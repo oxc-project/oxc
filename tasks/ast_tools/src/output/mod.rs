@@ -25,7 +25,7 @@ pub enum Output {
 }
 
 impl Output {
-    pub fn output(self, generator_path: &str) -> RawOutput {
+    pub fn into_raw(self, generator_path: &str) -> RawOutput {
         let (path, code) = match self {
             Self::Rust { path, tokens } => {
                 let code = print_rust(&tokens, generator_path);
