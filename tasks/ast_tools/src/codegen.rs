@@ -17,9 +17,9 @@ use crate::{
 #[derive(Default)]
 pub struct AstCodegen {
     files: Vec<PathBuf>,
-    passes: Vec<Box<dyn Runner<Output = (), Context = EarlyCtx>>>,
-    generators: Vec<Box<dyn Runner<Output = Output, Context = LateCtx>>>,
-    derives: Vec<Box<dyn Runner<Output = Vec<Output>, Context = LateCtx>>>,
+    passes: Vec<Box<dyn Runner<Context = EarlyCtx>>>,
+    generators: Vec<Box<dyn Runner<Context = LateCtx>>>,
+    derives: Vec<Box<dyn Runner<Context = LateCtx>>>,
 }
 
 pub struct AstCodegenResult {
@@ -29,10 +29,9 @@ pub struct AstCodegenResult {
 
 pub trait Runner {
     type Context;
-    type Output;
     fn name(&self) -> &'static str;
     fn file_path(&self) -> &'static str;
-    fn run(&mut self, ctx: &Self::Context) -> Result<Self::Output>;
+    fn run(&mut self, ctx: &Self::Context) -> Result<Vec<Output>>;
 }
 
 pub struct EarlyCtx {
@@ -115,7 +114,7 @@ impl AstCodegen {
     #[must_use]
     pub fn pass<P>(mut self, pass: P) -> Self
     where
-        P: Pass + Runner<Output = (), Context = EarlyCtx> + 'static,
+        P: Pass + Runner<Context = EarlyCtx> + 'static,
     {
         self.passes.push(Box::new(pass));
         self
@@ -124,7 +123,7 @@ impl AstCodegen {
     #[must_use]
     pub fn generate<G>(mut self, generator: G) -> Self
     where
-        G: Generator + Runner<Output = Output, Context = LateCtx> + 'static,
+        G: Generator + Runner<Context = LateCtx> + 'static,
     {
         self.generators.push(Box::new(generator));
         self
@@ -133,7 +132,7 @@ impl AstCodegen {
     #[must_use]
     pub fn derive<D>(mut self, derive: D) -> Self
     where
-        D: Derive + Runner<Output = Vec<Output>, Context = LateCtx> + 'static,
+        D: Derive + Runner<Context = LateCtx> + 'static,
     {
         self.derives.push(Box::new(derive));
         self
@@ -182,22 +181,26 @@ impl AstCodegen {
             })
             .flatten_ok();
 
-        let outputs = self.generators.into_iter().map(|mut runner| {
-            let name = runner.name();
-            log!("Generate {name}... ");
-            let result = runner.run(&ctx);
-            match result {
-                Ok(output) => {
-                    logln!("Done!");
-                    let generator_path = runner.file_path();
-                    Ok(output.output(generator_path))
+        let outputs = self
+            .generators
+            .into_iter()
+            .map(|mut runner| {
+                let name = runner.name();
+                log!("Generate {name}... ");
+                let result = runner.run(&ctx);
+                match result {
+                    Ok(outputs) => {
+                        logln!("Done!");
+                        let generator_path = runner.file_path();
+                        Ok(outputs.into_iter().map(|output| output.output(generator_path)))
+                    }
+                    Err(err) => {
+                        logln!("FAILED");
+                        Err(err)
+                    }
                 }
-                Err(err) => {
-                    logln!("FAILED");
-                    Err(err)
-                }
-            }
-        });
+            })
+            .flatten_ok();
 
         let outputs = derives.chain(outputs).collect::<Result<Vec<_>>>()?;
 

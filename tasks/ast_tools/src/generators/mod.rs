@@ -19,8 +19,8 @@ pub trait Generator {
 
     // Standard methods
 
-    fn output(&mut self, ctx: &LateCtx) -> Result<Output> {
-        Ok(self.generate(ctx))
+    fn output(&mut self, ctx: &LateCtx) -> Result<Vec<Output>> {
+        Ok(vec![self.generate(ctx)])
     }
 }
 
@@ -35,7 +35,6 @@ macro_rules! define_generator {
 
             impl $($lifetime)? Runner for $ident $($lifetime)? {
                 type Context = LateCtx;
-                type Output = Output;
 
                 fn name(&self) -> &'static str {
                     stringify!($ident)
@@ -45,7 +44,7 @@ macro_rules! define_generator {
                     file!()
                 }
 
-                fn run(&mut self, ctx: &LateCtx) -> Result<Output> {
+                fn run(&mut self, ctx: &LateCtx) -> Result<Vec<Output>> {
                     self.output(ctx)
                 }
             }
