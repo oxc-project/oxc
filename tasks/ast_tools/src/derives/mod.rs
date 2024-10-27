@@ -45,10 +45,11 @@ pub trait Derive {
         let prelude = Self::prelude();
 
         // from `x::y::z` to `crate::y::z::*`
-        let use_modules = module_paths.into_iter().map(|it| {
+        let use_modules = module_paths.into_iter().map(|module_path| {
+            let module_path = module_path.strip_suffix("::mod").unwrap_or(module_path);
             let local_path = ["crate"]
                 .into_iter()
-                .chain(it.strip_suffix("::mod").unwrap_or(it).split("::").skip(1))
+                .chain(module_path.split("::").skip(1))
                 .chain(["*"])
                 .join("::");
             let use_module: ItemUse = parse_str(format!("use {local_path};").as_str()).unwrap();
