@@ -1,6 +1,6 @@
-var _s2 = $RefreshSig$();
 import FancyHook from "fancy";
 import { jsxs as _jsxs } from "react/jsx-runtime";
+var _s2 = $RefreshSig$();
 export default function App() {
   _s2();
   var _s = $RefreshSig$();
@@ -18,9 +18,14 @@ export default function App() {
   use();
   return _jsxs("h1", { children: [bar, baz] });
 }
-_s2(App, "useFancyState{bar}\\nuseThing{baz}\\nuseState{}\\nuseThePlatform{}\\nuse{}", true, function() {
-  return [FancyHook.useThing];
-});
+_s2(
+  App,
+  "useFancyState{bar}\\nuseThing{baz}\\nuseState{}\\nuseThePlatform{}\\nuse{}",
+  true,
+  function () {
+    return [FancyHook.useThing];
+  },
+);
 _c = App;
 var _c;
 $RefreshReg$(_c, "App");

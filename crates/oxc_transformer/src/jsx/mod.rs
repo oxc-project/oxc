@@ -1,4 +1,3 @@
-use oxc_allocator::Vec;
 use oxc_ast::{ast::*, AstBuilder};
 use oxc_traverse::{Traverse, TraverseCtx};
 
@@ -81,18 +80,6 @@ impl<'a, 'ctx> Traverse<'a> for Jsx<'a, 'ctx> {
             self.implementation.exit_program(program, ctx);
         } else if self.source_plugin {
             self.implementation.jsx_source.exit_program(program, ctx);
-        }
-    }
-
-    fn enter_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
-        if self.refresh_plugin {
-            self.refresh.enter_statements(stmts, ctx);
-        }
-    }
-
-    fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
-        if self.refresh_plugin {
-            self.refresh.exit_statements(stmts, ctx);
         }
     }
 

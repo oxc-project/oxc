@@ -101,7 +101,6 @@ pub struct ReactRefresh<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,
     // States
     registrations: Vec<(BoundIdentifier<'a>, Atom<'a>)>,
-    signature_declarator_items: Vec<oxc_allocator::Vec<'a, VariableDeclarator<'a>>>,
     /// Used to wrap call expression with signature.
     /// (eg: hoc(() => {}) -> _s1(hoc(_s1(() => {}))))
     last_signature: Option<(BindingIdentifier<'a>, oxc_allocator::Vec<'a, Argument<'a>>)>,
@@ -120,7 +119,6 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
             refresh_reg: RefreshIdentifierResolver::parse(&options.refresh_reg, ast),
             refresh_sig: RefreshIdentifierResolver::parse(&options.refresh_sig, ast),
             emit_full_signatures: options.emit_full_signatures,
-            signature_declarator_items: Vec::new(),
             registrations: Vec::default(),
             ctx,
             last_signature: None,
@@ -177,33 +175,6 @@ impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
             false,
         )));
         program.body.extend(new_statements);
-    }
-
-    fn enter_statements(
-        &mut self,
-        _stmts: &mut oxc_allocator::Vec<'a, Statement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        self.signature_declarator_items.push(ctx.ast.vec());
-    }
-
-    fn exit_statements(
-        &mut self,
-        stmts: &mut oxc_allocator::Vec<'a, Statement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        let declarations = self.signature_declarator_items.pop().unwrap();
-        if !declarations.is_empty() {
-            stmts.insert(
-                0,
-                Statement::from(ctx.ast.declaration_variable(
-                    SPAN,
-                    VariableDeclarationKind::Var,
-                    declarations,
-                    false,
-                )),
-            );
-        }
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -671,10 +642,8 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
         body.statements.insert(0, call_expression);
 
         // _s = refresh_sig();
-        self.signature_declarator_items.last_mut().unwrap().push(ctx.ast.variable_declarator(
-            SPAN,
-            VariableDeclarationKind::Var,
-            binding.create_binding_pattern(ctx),
+        self.ctx.var_declarations.insert(
+            &binding,
             Some(ctx.ast.expression_call(
                 SPAN,
                 self.refresh_sig.to_expression(ctx),
@@ -682,8 +651,8 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
                 ctx.ast.vec(),
                 false,
             )),
-            false,
-        ));
+            ctx,
+        );
 
         // Following is the signature call expression, will be generated in call site.
         // _s(App, signature_key, false, function() { return [] });

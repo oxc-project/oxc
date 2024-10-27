@@ -361,7 +361,6 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_statements(stmts, ctx);
         }
-        self.x1_jsx.enter_statements(stmts, ctx);
     }
 
     fn exit_arrow_function_expression(
@@ -392,7 +391,6 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.exit_statements(stmts, ctx);
         }
-        self.x1_jsx.exit_statements(stmts, ctx);
         self.common.exit_statements(stmts, ctx);
     }
 
