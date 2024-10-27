@@ -46,6 +46,7 @@ static SOURCE_PATHS: &[&str] = &[
 const AST_CRATE: &str = "crates/oxc_ast";
 const TYPESCRIPT_PACKAGE: &str = "npm/oxc-types";
 const GITHUB_WATCH_LIST_PATH: &str = ".github/.generated_ast_watch_list.yml";
+const SCHEMA_PATH: &str = "schema.json";
 
 type Result<R> = std::result::Result<R, String>;
 type TypeId = usize;
@@ -57,8 +58,8 @@ pub struct CliOptions {
     dry_run: bool,
     /// Prints no logs.
     quiet: bool,
-    /// Path of output `schema.json`.
-    schema: Option<std::path::PathBuf>,
+    /// Output JSON schema.
+    schema: bool,
 }
 
 fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
@@ -95,9 +96,9 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    if let CliOptions { schema: Some(schema_path), dry_run: false, .. } = cli_options {
+    if let CliOptions { schema: true, dry_run: false, .. } = cli_options {
         let schema = serde_json::to_string_pretty(&schema.defs).normalize()?;
-        write_all_to(schema.as_bytes(), schema_path)?;
+        write_all_to(schema.as_bytes(), SCHEMA_PATH)?;
     }
 
     Ok(())
