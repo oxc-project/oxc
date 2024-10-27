@@ -4,8 +4,6 @@ use itertools::Itertools;
 use rustc_hash::{FxBuildHasher, FxHashMap};
 
 use crate::{
-    derives::Derive,
-    generators::Generator,
     log, logln,
     output::{Output, RawOutput},
     passes::Pass,
@@ -19,7 +17,6 @@ pub struct AstCodegen {
     files: Vec<PathBuf>,
     passes: Vec<Box<dyn Runner<Context = EarlyCtx>>>,
     generators: Vec<Box<dyn Runner<Context = LateCtx>>>,
-    derives: Vec<Box<dyn Runner<Context = LateCtx>>>,
 }
 
 pub struct AstCodegenResult {
@@ -124,18 +121,9 @@ impl AstCodegen {
     #[must_use]
     pub fn generate<G>(mut self, generator: G) -> Self
     where
-        G: Generator + Runner<Context = LateCtx> + 'static,
+        G: Runner<Context = LateCtx> + 'static,
     {
         self.generators.push(Box::new(generator));
-        self
-    }
-
-    #[must_use]
-    pub fn derive<D>(mut self, derive: D) -> Self
-    where
-        D: Derive + Runner<Context = LateCtx> + 'static,
-    {
-        self.derives.push(Box::new(derive));
         self
     }
 
@@ -155,7 +143,6 @@ impl AstCodegen {
 
         // Late passes
         let late_ctx = early_ctx.into_late_ctx();
-        outputs.extend(run_passes(&mut self.derives, &late_ctx)?);
         outputs.extend(run_passes(&mut self.generators, &late_ctx)?);
 
         Ok(AstCodegenResult { outputs, schema: late_ctx.schema })
