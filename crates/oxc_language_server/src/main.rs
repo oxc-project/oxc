@@ -217,7 +217,7 @@ impl LanguageServer for Backend {
 
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
         let run_level = { self.options.lock().await.get_lint_level() };
-        if run_level < SyntheticRunLevel::OnType {
+        if run_level <= SyntheticRunLevel::Disable {
             return;
         }
         if self.is_ignored(&params.text_document.uri).await {
