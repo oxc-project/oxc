@@ -1267,12 +1267,24 @@ impl<'a> ParserImpl<'a> {
         ))
     }
 
-    pub(crate) fn parse_ts_index_signature_member(&mut self) -> Result<TSSignature<'a>> {
-        let span = self.start_span();
+    pub(crate) fn parse_ts_index_signature_member_with_modifiers(
+        &mut self,
+    ) -> Result<TSSignature<'a>> {
+        let start_span = self.start_span();
 
         let modifiers = self.parse_class_element_modifiers(false);
+        Ok(self.ast.ts_signature_from_ts_index_signature(
+            self.parse_ts_index_signature_member(start_span, &modifiers)?,
+        ))
+    }
+
+    pub(crate) fn parse_ts_index_signature_member(
+        &mut self,
+        start_span: Span,
+        modifiers: &Modifiers<'a>,
+    ) -> Result<TSIndexSignature<'a>> {
         self.verify_modifiers(
-            &modifiers,
+            modifiers,
             ModifierFlags::READONLY,
             diagnostics::cannot_appear_on_an_index_signature,
         );
@@ -1288,8 +1300,8 @@ impl<'a> ParserImpl<'a> {
         if let Some(type_annotation) = type_annotation {
             self.bump(Kind::Comma);
             self.bump(Kind::Semicolon);
-            Ok(self.ast.ts_signature_index_signature(
-                self.end_span(span),
+            Ok(self.ast.ts_index_signature(
+                self.end_span(start_span),
                 parameters,
                 type_annotation,
                 readonly,

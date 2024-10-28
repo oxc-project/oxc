@@ -696,6 +696,23 @@ mod test {
         assert_eq!(ret.errors.first().unwrap().to_string(), "Source length exceeds 4 GiB limit");
     }
 
+    #[test]
+    fn class_index_signature_modifiers() {
+        use oxc_ast::ast::*;
+        let allocator = Allocator::default();
+        let source_type = SourceType::ts();
+        let source = "class Foo { readonly [a: string]: string }";
+        let ret = Parser::new(&allocator, source, source_type).parse();
+        let Statement::ClassDeclaration(class_decl) = &ret.program.body[0] else {
+            panic!("expected Statement::ClassDeclaration");
+        };
+        let ClassElement::TSIndexSignature(index_sig) = &class_decl.body.body[0] else {
+            panic!("expected ClassElement::TSIndexSignature");
+        };
+        assert!(index_sig.readonly);
+        assert_eq!(index_sig.span.start as usize, source.find("readonly").unwrap());
+    }
+
     // Source with length MAX_LEN parses OK.
     // This test takes over 1 minute on an M1 Macbook Pro unless compiled in release mode.
     // `not(debug_assertions)` is a proxy for detecting release mode.
