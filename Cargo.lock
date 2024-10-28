@@ -1603,7 +1603,9 @@ version = "0.34.0"
 dependencies = [
  "num-bigint",
  "num-traits",
+ "oxc_allocator",
  "oxc_ast",
+ "oxc_parser",
  "oxc_span",
  "oxc_syntax",
 ]

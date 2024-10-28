@@ -984,13 +984,21 @@ pub fn check_object_expression(obj_expr: &ObjectExpression, ctx: &SemanticBuilde
     // It is a Syntax Error if PropertyNameList of PropertyDefinitionList contains any duplicate entries for "__proto__"
     // and at least two of those entries were obtained from productions of the form PropertyDefinition : PropertyName : AssignmentExpression
     let mut prev_proto: Option<Span> = None;
-    let prop_names = obj_expr.properties.iter().filter_map(PropName::prop_name);
-    for prop_name in prop_names {
-        if prop_name.0 == "__proto__" {
-            if let Some(prev_span) = prev_proto {
-                ctx.error(redeclaration("__proto__", prev_span, prop_name.1));
+    for prop in &obj_expr.properties {
+        if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop {
+            // Skip if not a property definition production:
+            // PropertyDefinition : PropertyName : AssignmentExpression
+            if obj_prop.kind != PropertyKind::Init || obj_prop.method {
+                continue;
             }
-            prev_proto = Some(prop_name.1);
+            if let Some((prop_name, span)) = prop.prop_name() {
+                if prop_name == "__proto__" {
+                    if let Some(prev_span) = prev_proto {
+                        ctx.error(redeclaration("__proto__", prev_span, span));
+                    }
+                    prev_proto = Some(span);
+                }
+            }
         }
     }
 }
