@@ -124,30 +124,30 @@ impl Parse for ESTreeStructAttribute {
 /// A struct representing the `#[estree(...)]` attributes that we implement for enums.
 #[derive(Debug, Serialize, Default)]
 pub struct ESTreeEnumAttribute {
-    pub rename_all: Option<String>,
+    pub no_rename_variants: bool,
     pub custom_ts_def: bool,
 }
 
 impl Parse for ESTreeEnumAttribute {
     fn parse(input: ParseStream) -> Result<Self, syn::Error> {
-        let mut rename_all = None;
+        let mut no_rename_variants = false;
         let mut custom_ts_def = false;
 
         loop {
             let ident = input.call(Ident::parse_any).unwrap().to_string();
             match ident.as_str() {
-                "rename_all" => {
-                    input.parse::<Token![=]>()?;
-                    assert!(
-                        rename_all.replace(input.parse::<LitStr>()?.value()).is_none(),
-                        "Duplicate estree(rename_all)"
-                    );
-                }
                 "custom_ts_def" => {
                     if custom_ts_def {
                         panic!("Duplicate estree(custom_ts_def)");
                     } else {
                         custom_ts_def = true;
+                    }
+                }
+                "no_rename_variants" => {
+                    if no_rename_variants {
+                        panic!("Duplicate estree(no_rename_variants)");
+                    } else {
+                        no_rename_variants = true;
                     }
                 }
                 arg => panic!("Unsupported #[estree(...)] argument: {arg}"),
@@ -159,7 +159,7 @@ impl Parse for ESTreeEnumAttribute {
                 break;
             }
         }
-        Ok(Self { rename_all, custom_ts_def })
+        Ok(Self { no_rename_variants, custom_ts_def })
     }
 }
 

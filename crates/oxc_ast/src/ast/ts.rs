@@ -409,7 +409,6 @@ pub struct TSTypeOperator<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[estree(rename_all = "camelCase")]
 pub enum TSTypeOperatorOperator {
     Keyof = 0,
     Unique = 1,
@@ -893,7 +892,6 @@ pub struct TSTypeAliasDeclaration<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[estree(rename_all = "camelCase")]
 pub enum TSAccessibility {
     Private = 0,
     Protected = 1,
@@ -1043,7 +1041,6 @@ pub struct TSCallSignatureDeclaration<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[estree(rename_all = "camelCase")]
 pub enum TSMethodSignatureKind {
     Method = 0,
     Get = 1,
@@ -1229,7 +1226,6 @@ pub struct TSModuleDeclaration<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[estree(rename_all = "camelCase")]
 pub enum TSModuleDeclarationKind {
     /// `declare global {}`
     Global = 0,
@@ -1511,7 +1507,6 @@ pub struct TSMappedType<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[estree(rename_all = "camelCase")]
 pub enum TSMappedTypeModifierOperator {
     /// e.g. `?` in `{ [P in K]?: T }`
     True = 0,
@@ -1708,7 +1703,6 @@ pub struct TSInstantiationExpression<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[estree(rename_all = "camelCase")]
 pub enum ImportOrExportKind {
     /// `import { foo } from './foo'`;
     Value = 0,

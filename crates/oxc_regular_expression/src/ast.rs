@@ -88,7 +88,6 @@ pub struct BoundaryAssertion {
 #[ast]
 #[derive(Debug, Clone, PartialEq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[estree(rename_all = "camelCase")]
 pub enum BoundaryAssertionKind {
     Start = 0,
     End = 1,
@@ -111,7 +110,6 @@ pub struct LookAroundAssertion<'a> {
 #[ast]
 #[derive(Debug, Clone, PartialEq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[estree(rename_all = "camelCase")]
 pub enum LookAroundAssertionKind {
     Lookahead = 0,
     NegativeLookahead = 1,
@@ -150,7 +148,6 @@ pub struct Character {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[estree(rename_all = "camelCase")]
 pub enum CharacterKind {
     ControlLetter = 0,
     HexadecimalEscape = 1,
@@ -179,7 +176,6 @@ pub struct CharacterClassEscape {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[estree(rename_all = "camelCase")]
 pub enum CharacterClassEscapeKind {
     D = 0,
     NegativeD = 1,
@@ -233,7 +229,6 @@ pub struct CharacterClass<'a> {
 #[ast]
 #[derive(Debug, PartialEq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[estree(rename_all = "camelCase")]
 pub enum CharacterClassContentsKind {
     Union = 0,
     /// `UnicodeSetsMode` only.

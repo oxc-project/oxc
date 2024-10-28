@@ -403,7 +403,6 @@ pub enum PropertyKey<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[estree(rename_all = "camelCase")]
 pub enum PropertyKind {
     /// `a: 1` in `const obj = { a: 1 };`
     Init = 0,
@@ -1136,7 +1135,6 @@ pub struct VariableDeclaration<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[estree(rename_all = "camelCase")]
 pub enum VariableDeclarationKind {
     Var = 0,
     Const = 1,
@@ -1696,6 +1694,7 @@ pub struct Function<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
+#[estree(no_rename_variants)]
 pub enum FunctionType {
     FunctionDeclaration = 0,
     FunctionExpression = 1,
@@ -1736,6 +1735,7 @@ pub struct FormalParameter<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
+#[estree(no_rename_variants)]
 pub enum FormalParameterKind {
     /// <https://tc39.es/ecma262/#prod-FormalParameters>
     FormalParameter = 0,
@@ -1868,6 +1868,7 @@ pub struct Class<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
+#[estree(no_rename_variants)]
 pub enum ClassType {
     /// Class declaration statement
     /// ```ts
@@ -1961,6 +1962,7 @@ pub struct MethodDefinition<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
+#[estree(no_rename_variants)]
 pub enum MethodDefinitionType {
     MethodDefinition = 0,
     TSAbstractMethodDefinition = 1,
@@ -2049,6 +2051,7 @@ pub struct PropertyDefinition<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
+#[estree(no_rename_variants)]
 pub enum PropertyDefinitionType {
     PropertyDefinition = 0,
     TSAbstractPropertyDefinition = 1,
@@ -2057,7 +2060,6 @@ pub enum PropertyDefinitionType {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[estree(rename_all = "camelCase")]
 pub enum MethodDefinitionKind {
     /// Class constructor
     Constructor = 0,
@@ -2168,6 +2170,7 @@ pub use match_module_declaration;
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
+#[estree(no_rename_variants)]
 pub enum AccessorPropertyType {
     AccessorProperty = 0,
     TSAbstractAccessorProperty = 1,

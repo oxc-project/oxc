@@ -7,13 +7,13 @@ use super::{EnumDef, StructDef, VariantDef};
 pub fn enum_variant_name(var: &VariantDef, enm: &EnumDef) -> String {
     match var.markers.derive_attributes.estree.rename.as_ref() {
         Some(rename) => rename.to_string(),
-        None => match enm.markers.estree.rename_all.as_deref() {
-            Some("camelCase") => var.ident().to_string().to_case(Case::Camel),
-            Some(case) => {
-                panic!("Unsupported rename_all: {case} (on {})", enm.ident())
+        None => {
+            if enm.markers.estree.no_rename_variants {
+                var.ident().to_string()
+            } else {
+                var.ident().to_string().to_case(Case::Camel)
             }
-            None => var.ident().to_string(),
-        },
+        }
     }
 }
 
