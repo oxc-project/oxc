@@ -116,7 +116,7 @@ fn is_invalid_expression<'a>(expression: Option<&Expression<'a>>, ctx: &LintCont
     }
 }
 
-fn is_invalid_style_attribute(attribute: &JSXAttribute, ctx: &LintContext<'_>) -> bool {
+fn is_invalid_style_attribute<'a>(attribute: &JSXAttribute<'a>, ctx: &LintContext<'a>) -> bool {
     let JSXAttributeName::Identifier(attr_ident) = &attribute.name else {
         return false;
     };
