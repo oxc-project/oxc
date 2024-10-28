@@ -51,6 +51,10 @@ impl PlatformLayout {
         Self(Layout::wide_ptr_64(), Layout::wide_ptr_32())
     }
 
+    pub const fn of<T>() -> Self {
+        Self(Layout::of::<T>(), Layout::of::<T>())
+    }
+
     /// Return `true` if either of platform layouts is unknown.
     fn is_unknown(&self) -> bool {
         self.0.is_unknown() || self.1.is_unknown()
@@ -268,88 +272,33 @@ fn calc_type_layout(ty: &TypeAnalysis, ctx: &EarlyCtx) -> Result<PlatformLayout>
     Ok(layout)
 }
 
-macro_rules! well_known {
-    ($($typ:ty: { $($platform:tt => $layout:expr,)*},)*) => {
-        FxHashMap::from_iter([
-            $((
-                stringify!($typ),
-                well_known!(@ $( $platform => $layout,)*)
-            )),*
-        ])
-    };
-
-    // entries
-    (@ _ => $layout:expr,) => {
-        PlatformLayout($layout, $layout)
-    };
-    (@ 64 => $layout_64:expr, 32 => $layout_32:expr,) => {
-        PlatformLayout($layout_64, $layout_32)
-    };
-    (@ 32 => $layout_32:expr, 64 => $layout_64:expr,) => {
-        well_known!(@ 64 => $layout_64, 32 => $layout_32)
-    };
-
-    // compile errors
-    (@ 32 => $layout:expr,) => {
-        ::std::compile_error!("non_exhaustive well known type, `64` target isn't covered.")
-    };
-    (@ 64 => $layout:expr,) => {
-        ::std::compile_error!("non_exhaustive well known type, `32` target isn't covered.")
-    };
-}
-
 lazy_static! {
-    static ref WELL_KNOWN: WellKnown = well_known! {
-        // builtins
-        // types smaller or equal to 4bytes have the same layout on most platforms.
-        char: { _ => Layout::of::<char>(), },
-        bool: { _ => Layout::of::<bool>(), },
-        u8: { _ => Layout::of::<u8>(), },
-        i8: { _ => Layout::of::<i8>(), },
-        u16: { _ => Layout::of::<u16>(), },
-        i16: { _ => Layout::of::<i16>(), },
-        u32: { _ => Layout::of::<u32>(), },
-        i32: { _ => Layout::of::<i32>(), },
-        f32: { _ => Layout::of::<f32>(), },
-        // 32bit layouts are based on WASM
-        u64: {
-            64 => Layout::of::<u64>(),
-            32 => Layout::known(8, 8, 0),
-        },
-        i64: {
-            64 => Layout::of::<i64>(),
-            32 => Layout::known(8, 8, 0),
-        },
-        f64: {
-            64 => Layout::of::<f64>(),
-            32 => Layout::known(8, 8, 0),
-        },
-        usize: {
-            64 => Layout::of::<usize>(),
-            32 => Layout::known(4, 4, 0),
-        },
-        isize: {
-            64 => Layout::of::<isize>(),
-            32 => Layout::known(4, 4, 0),
-        },
-        // well known types
-        // TODO: generate const assertions for these in the ast crate
-        Atom: {
-            64 => Layout::wide_ptr_64(),
-            32 => Layout::wide_ptr_32(),
-        },
+    static ref WELL_KNOWN: WellKnown = FxHashMap::from_iter([
+        // Primitives
+        ("char", PlatformLayout::of::<char>()),
+        ("bool", PlatformLayout::of::<bool>()),
+        ("u8", PlatformLayout::of::<u8>()),
+        ("i8", PlatformLayout::of::<i8>()),
+        ("u16", PlatformLayout::of::<u16>()),
+        ("i16", PlatformLayout::of::<i16>()),
+        ("u32", PlatformLayout::of::<u32>()),
+        ("i32", PlatformLayout::of::<i32>()),
+        ("f32", PlatformLayout::of::<f32>()),
+        ("u64", PlatformLayout::of::<u64>()),
+        ("i64", PlatformLayout::of::<u64>()),
+        ("f64", PlatformLayout::of::<f64>()),
+        ("usize", PlatformLayout::ptr()),
+        ("isize", PlatformLayout::ptr()),
+        // Well known types
+        // TODO: Generate const assertions for these in `oxc_ast` crate
+        ("Atom", PlatformLayout::wide_ptr()),
         // External Bumpalo type
-        Vec: {
-            64 => Layout::known(32, 8, 1),
-            32 => Layout::known(16, 4, 1),
-        },
-        // Unsupported: we don't analyze `Cell` types
-        Cell<Option<ScopeId>>: { _ => Layout::known(4, 4, 0), },
-        Cell<Option<SymbolId>>: { _ => Layout::known(4, 4, 0), },
-        Cell<Option<ReferenceId>>: { _ => Layout::known(4, 4, 0), },
+        ("Vec", PlatformLayout(Layout::known(32, 8, 1), Layout::known(16, 4, 1))),
+        // Unsupported: We don't analyze `Cell` types
+        ("Cell<Option<ScopeId>>", PlatformLayout::of::<u32>()),
+        ("Cell<Option<SymbolId>>", PlatformLayout::of::<u32>()),
+        ("Cell<Option<ReferenceId>>", PlatformLayout::of::<u32>()),
         // Unsupported: this is a `bitflags` generated type, we don't expand macros
-        ReferenceFlags: { _ => Layout::known(1, 1, 0), },
-        // Unsupported: this is a `bitflags` generated type, we don't expand macros
-        RegExpFlags: { _ => Layout::known(1, 1, 0), },
-    };
+        ("RegExpFlags", PlatformLayout::of::<u8>()),
+    ]);
 }
