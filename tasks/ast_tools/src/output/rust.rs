@@ -24,8 +24,6 @@ pub fn print_rust(tokens: &TokenStream, generator_path: &str) -> String {
 
 /// Creates a generated file warning + required information for a generated file.
 fn generate_header(generator_path: &str) -> TokenStream {
-    let generator_path = generator_path.replace('\\', "/");
-
     // TODO: Add generation date, AST source hash, etc here.
     let edit_comment = format!("@ To edit this generated file you have to edit `{generator_path}`");
     quote! {

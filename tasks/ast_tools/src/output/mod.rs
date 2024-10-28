@@ -32,17 +32,19 @@ pub enum Output {
 
 impl Output {
     pub fn into_raw(self, generator_path: &str) -> RawOutput {
+        let generator_path = generator_path.replace('\\', "/");
+
         let (path, code) = match self {
             Self::Rust { path, tokens } => {
-                let code = print_rust(&tokens, generator_path);
+                let code = print_rust(&tokens, &generator_path);
                 (path, code)
             }
             Self::Javascript { path, code } => {
-                let code = print_javascript(&code, generator_path);
+                let code = print_javascript(&code, &generator_path);
                 (path, code)
             }
             Self::Yaml { path, code } => {
-                let code = print_yaml(&code, generator_path);
+                let code = print_yaml(&code, &generator_path);
                 (path, code)
             }
             Self::Raw { path, code } => (path, code),
