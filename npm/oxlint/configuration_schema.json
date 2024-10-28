@@ -46,7 +46,7 @@
       ]
     },
     "rules": {
-      "description": "See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html).",
+      "description": "Example\n\n`.oxlintrc.json`\n\n```json { \"$schema\": \"./node_modules/oxlint/configuration_schema.json\", \"rules\": { \"eqeqeq\": \"warn\", \"import/no-cycle\": \"error\", \"prefer-const\": [\"error\", { \"ignoreReadBeforeAssign\": true }] } } ```\n\nSee [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html) for the list of rules.",
       "default": {},
       "allOf": [
         {
