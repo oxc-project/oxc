@@ -9,11 +9,11 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
 
 fn no_array_index_key_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Usage of Array index in keys is not allowed")
-        .with_help("Should use the unique key to avoid unnecessary renders")
+        .with_help("Use a unique data-dependent key to avoid unnecessary rerenders")
         .with_label(span)
 }
 
@@ -22,10 +22,13 @@ pub struct NoArrayIndexKey;
 
 declare_oxc_lint!(
     /// ### What it does
-    ///
+    /// Warn if an element uses an Array index in its key.
     ///
     /// ### Why is this bad?
-    ///
+    /// It's a bad idea to use the array index since it doesn't uniquely identify your elements.
+    /// In cases where the array is sorted or an element is added to the beginning of the array,
+    /// the index will be changed even though the element representing that index may be the same.
+    /// This results in unnecessary renders.
     ///
     /// ### Examples
     ///
@@ -78,7 +81,7 @@ fn check_jsx_element<'a>(
         };
 
         if expr.name.as_str() == index_param_name {
-            ctx.diagnostic(no_array_index_key_diagnostic(jsx.span));
+            ctx.diagnostic(no_array_index_key_diagnostic(attr.span));
         }
     }
 }
@@ -92,45 +95,28 @@ fn check_react_clone_element<'a>(
         return;
     };
 
-    match &call_expr.callee {
-        // React.cloneElement
-        Expression::StaticMemberExpression(static_mem_expr) => {
-            let Expression::Identifier(react_ident) = &static_mem_expr.object else {
-                return;
+    if is_method_call(call_expr, Some(&["React"]), Some(&["cloneElement"]), Some(2), Some(3)) {
+        let Some(Argument::ObjectExpression(obj_expr)) = call_expr.arguments.get(1) else {
+            return;
+        };
+
+        for prop_kind in &obj_expr.properties {
+            let ObjectPropertyKind::ObjectProperty(prop) = prop_kind else {
+                continue;
             };
 
-            if react_ident.name.as_str() == "React"
-                && static_mem_expr.property.name.as_str() == "cloneElement"
-            {
-                let Some(Argument::ObjectExpression(obj_expr)) = call_expr.arguments.get(1) else {
-                    return;
-                };
+            let PropertyKey::StaticIdentifier(key_ident) = &prop.key else {
+                continue;
+            };
 
-                for prop_kind in &obj_expr.properties {
-                    let ObjectPropertyKind::ObjectProperty(prop) = prop_kind else {
-                        continue;
-                    };
+            let Expression::Identifier(value_ident) = &prop.value else {
+                continue;
+            };
 
-                    let PropertyKey::StaticIdentifier(key_ident) = &prop.key else {
-                        continue;
-                    };
-
-                    let Expression::Identifier(value_ident) = &prop.value else {
-                        continue;
-                    };
-
-                    if key_ident.name.as_str() == "key"
-                        && value_ident.name.as_str() == index_param_name
-                    {
-                        ctx.diagnostic(no_array_index_key_diagnostic(call_expr.span));
-                    }
-                }
+            if key_ident.name.as_str() == "key" && value_ident.name.as_str() == index_param_name {
+                ctx.diagnostic(no_array_index_key_diagnostic(obj_expr.span));
             }
         }
-
-        // TODO: cloneElement
-        Expression::Identifier(indent) => if indent.name.as_str() == "cloneElement" {},
-        _ => (),
     }
 }
 
@@ -160,19 +146,15 @@ fn find_index_param_name_by_position<'a>(
 ) -> Option<&'a str> {
     match &call_expr.arguments[0] {
         Argument::ArrowFunctionExpression(arrow_fn_expr) => {
-            if let Some(index_param) = arrow_fn_expr.params.items.get(position) {
-                if let Some(index_param_name) = index_param.pattern.get_identifier() {
-                    return Some(index_param_name.as_str());
-                }
-            }
+            return Some(
+                arrow_fn_expr.params.items.get(position)?.pattern.get_identifier()?.as_str(),
+            );
         }
 
         Argument::FunctionExpression(regular_fn_expr) => {
-            if let Some(index_param) = regular_fn_expr.params.items.get(position) {
-                if let Some(index_param_name) = index_param.pattern.get_identifier() {
-                    return Some(index_param_name.as_str());
-                }
-            }
+            return Some(
+                regular_fn_expr.params.items.get(position)?.pattern.get_identifier()?.as_str(),
+            );
         }
 
         _ => (),
