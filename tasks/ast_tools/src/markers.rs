@@ -74,7 +74,6 @@ pub struct ScopeMarkers {
 pub struct DeriveAttributes {
     pub clone_in: CloneInAttribute,
     pub estree: ESTreeFieldAttribute,
-    pub tsify_type: Option<String>,
 }
 
 /// A enum representing the value passed in `#[clone_in(...)]` derive helper attribute.
@@ -169,6 +168,7 @@ pub struct ESTreeFieldAttribute {
     pub flatten: bool,
     pub skip: bool,
     pub rename: Option<String>,
+    pub typescript_type: Option<String>,
 }
 
 impl Parse for ESTreeFieldAttribute {
@@ -176,9 +176,16 @@ impl Parse for ESTreeFieldAttribute {
         let mut flatten = false;
         let mut skip = false;
         let mut rename = None;
+        let mut typescript_type = None;
 
         loop {
-            let ident = input.call(Ident::parse_any).unwrap().to_string();
+            let is_type = input.peek(Token![type]);
+            let ident = if is_type {
+                input.parse::<Token![type]>()?;
+                "type".to_string()
+            } else {
+                input.call(Ident::parse_any).unwrap().to_string()
+            };
             match ident.as_str() {
                 "rename" => {
                     input.parse::<Token![=]>()?;
@@ -201,6 +208,13 @@ impl Parse for ESTreeFieldAttribute {
                         skip = true;
                     }
                 }
+                "type" => {
+                    input.parse::<Token![=]>()?;
+                    assert!(
+                        typescript_type.replace(input.parse::<LitStr>()?.value()).is_none(),
+                        "Duplicate estree(type)"
+                    );
+                }
                 arg => panic!("Unsupported #[estree(...)] argument: {arg}"),
             }
             let comma = input.peek(Token![,]);
@@ -210,19 +224,7 @@ impl Parse for ESTreeFieldAttribute {
                 break;
             }
         }
-        Ok(Self { flatten, skip, rename })
-    }
-}
-
-/// A struct representing the `#[tsify(type = "...")]` attribute.
-pub struct TsifyAttribute(String);
-
-impl Parse for TsifyAttribute {
-    fn parse(input: ParseStream) -> Result<Self, syn::Error> {
-        input.parse::<Token![type]>()?;
-        input.parse::<Token![=]>()?;
-        let type_ = input.parse::<LitStr>()?;
-        Ok(Self(type_.value()))
+        Ok(Self { flatten, skip, rename, typescript_type })
     }
 }
 
@@ -364,17 +366,8 @@ where
             Ok(None)
         }
     }
-    fn try_parse_tsify_type(attr: &Attribute) -> crate::Result<Option<String>> {
-        if attr.path().is_ident("tsify") {
-            let arg = attr.parse_args_with(TsifyAttribute::parse).normalize()?;
-            Ok(Some(arg.0))
-        } else {
-            Ok(None)
-        }
-    }
     let mut clone_in = None;
     let mut estree = None;
-    let mut tsify_type = None;
     for attr in attrs {
         if let Some(attr) = try_parse_clone_in(attr)? {
             assert!(clone_in.replace(attr).is_none(), "Duplicate `#[clone_in(...)]` attribute.");
@@ -382,17 +375,10 @@ where
         if let Some(attr) = try_parse_estree(attr)? {
             assert!(estree.replace(attr).is_none(), "Duplicate `#[estree(...)]` attribute.");
         }
-        if let Some(attr) = try_parse_tsify_type(attr)? {
-            assert!(
-                tsify_type.replace(attr).is_none(),
-                "Duplicate `#[tsify(type = \"...\")]` attribute."
-            );
-        }
     }
     Ok(DeriveAttributes {
         clone_in: clone_in.unwrap_or_default(),
         estree: estree.unwrap_or_default(),
-        tsify_type,
     })
 }
 

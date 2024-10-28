@@ -294,7 +294,7 @@ pub struct ThisExpression {
 pub struct ArrayExpression<'a> {
     #[estree(flatten)]
     pub span: Span,
-    #[tsify(type = "Array<SpreadElement | Expression | null>")]
+    #[estree(type = "Array<SpreadElement | Expression | null>")]
     pub elements: Vec<'a, ArrayExpressionElement<'a>>,
     /// Array trailing comma
     /// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Trailing_commas#arrays>
@@ -832,7 +832,7 @@ pub use match_assignment_target_pattern;
 pub struct ArrayAssignmentTarget<'a> {
     #[estree(flatten)]
     pub span: Span,
-    #[tsify(type = "Array<AssignmentTargetMaybeDefault | AssignmentTargetRest | null>")]
+    #[estree(type = "Array<AssignmentTargetMaybeDefault | AssignmentTargetRest | null>")]
     pub elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
     #[estree(skip)]
     pub rest: Option<AssignmentTargetRest<'a>>,
@@ -850,7 +850,7 @@ pub struct ArrayAssignmentTarget<'a> {
 pub struct ObjectAssignmentTarget<'a> {
     #[estree(flatten)]
     pub span: Span,
-    #[tsify(type = "Array<AssignmentTargetProperty | AssignmentTargetRest>")]
+    #[estree(type = "Array<AssignmentTargetProperty | AssignmentTargetRest>")]
     pub properties: Vec<'a, AssignmentTargetProperty<'a>>,
     #[estree(skip)]
     pub rest: Option<AssignmentTargetRest<'a>>,
@@ -1497,8 +1497,10 @@ pub struct DebuggerStatement {
 #[estree(no_type)]
 pub struct BindingPattern<'a> {
     // serde(flatten) the attributes because estree has no `BindingPattern`
-    #[estree(flatten)]
-    #[tsify(type = "(BindingIdentifier | ObjectPattern | ArrayPattern | AssignmentPattern)")]
+    #[estree(
+        flatten,
+        type = "(BindingIdentifier | ObjectPattern | ArrayPattern | AssignmentPattern)"
+    )]
     #[span]
     pub kind: BindingPatternKind<'a>,
     pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
@@ -1540,7 +1542,7 @@ pub struct AssignmentPattern<'a> {
 pub struct ObjectPattern<'a> {
     #[estree(flatten)]
     pub span: Span,
-    #[tsify(type = "Array<BindingProperty | BindingRestElement>")]
+    #[estree(type = "Array<BindingProperty | BindingRestElement>")]
     pub properties: Vec<'a, BindingProperty<'a>>,
     #[estree(skip)]
     pub rest: Option<Box<'a, BindingRestElement<'a>>>,
@@ -1566,7 +1568,7 @@ pub struct BindingProperty<'a> {
 pub struct ArrayPattern<'a> {
     #[estree(flatten)]
     pub span: Span,
-    #[tsify(type = "Array<BindingPattern | BindingRestElement | null>")]
+    #[estree(type = "Array<BindingPattern | BindingRestElement | null>")]
     pub elements: Vec<'a, Option<BindingPattern<'a>>>,
     #[estree(skip)]
     pub rest: Option<Box<'a, BindingRestElement<'a>>>,
@@ -1713,7 +1715,7 @@ pub struct FormalParameters<'a> {
     #[estree(flatten)]
     pub span: Span,
     pub kind: FormalParameterKind,
-    #[tsify(type = "Array<FormalParameter | FormalParameterRest>")]
+    #[estree(type = "Array<FormalParameter | FormalParameterRest>")]
     pub items: Vec<'a, FormalParameter<'a>>,
     #[estree(skip)]
     pub rest: Option<Box<'a, BindingRestElement<'a>>>,

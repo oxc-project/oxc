@@ -73,7 +73,7 @@ fn typescript_struct(def: &StructDef) -> String {
         if field.markers.derive_attributes.estree.skip {
             continue;
         }
-        let ty = match &field.markers.derive_attributes.tsify_type {
+        let ty = match &field.markers.derive_attributes.estree.typescript_type {
             Some(ty) => ty.clone(),
             None => type_to_string(field.typ.name()),
         };
