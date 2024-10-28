@@ -1470,6 +1470,7 @@ version = "0.0.0"
 dependencies = [
  "bpaf",
  "convert_case",
+ "cow-utils",
  "itertools",
  "lazy_static",
  "prettyplease",

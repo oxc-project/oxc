@@ -1,5 +1,3 @@
-#![allow(clippy::disallowed_methods)]
-
 use std::{cell::RefCell, io::Read, path::PathBuf, rc::Rc};
 
 use bpaf::{Bpaf, Parser};

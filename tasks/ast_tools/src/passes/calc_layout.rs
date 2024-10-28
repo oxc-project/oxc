@@ -1,5 +1,6 @@
 use std::cmp::max;
 
+use cow_utils::CowUtils;
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use quote::ToTokens;
@@ -223,14 +224,10 @@ fn calc_type_layout(ty: &TypeAnalysis, ctx: &EarlyCtx) -> Result<PlatformLayout>
                 panic!();
             };
 
-            let typ = typ
-                .path
-                .segments
-                .first()
-                .map(|it| it.to_token_stream().to_string().replace(' ', ""))
-                .expect("We only accept single segment types.");
+            let typ = typ.path.segments.first().unwrap().to_token_stream().to_string();
+            let typ = &*typ.cow_replace(' ', "");
 
-            if let Some(typ) = WELL_KNOWN.get(typ.as_str()) {
+            if let Some(typ) = WELL_KNOWN.get(typ) {
                 typ.clone()
             } else {
                 panic!("Unsupported type: {:#?}", ty.typ.to_token_stream().to_string())

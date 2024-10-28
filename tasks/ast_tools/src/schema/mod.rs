@@ -287,6 +287,7 @@ fn create_type_ref(ty: &Type, ctx: &EarlyCtx) -> TypeRef {
     let ident = ty.get_ident();
     let id = ident.as_ident().and_then(|id| ctx.type_id(&id.to_string()));
     let transparent_id = ctx.type_id(&ident.inner_ident().to_string());
+    #[expect(clippy::disallowed_methods)]
     let raw = ty.to_token_stream().to_string().replace(' ', "");
     TypeRef {
         id,

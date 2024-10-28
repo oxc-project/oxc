@@ -4,6 +4,7 @@ use std::{
     path::Path,
 };
 
+use cow_utils::CowUtils;
 use proc_macro2::TokenStream;
 
 use crate::{log, log_result};
@@ -32,7 +33,7 @@ pub enum Output {
 
 impl Output {
     pub fn into_raw(self, generator_path: &str) -> RawOutput {
-        let generator_path = generator_path.replace('\\', "/");
+        let generator_path = generator_path.cow_replace('\\', "/");
 
         let (path, code) = match self {
             Self::Rust { path, tokens } => {
