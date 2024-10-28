@@ -5,32 +5,17 @@ use std::{
 
 use lazy_static::lazy_static;
 use proc_macro2::TokenStream;
-use quote::quote;
 use regex::{Captures, Regex, Replacer};
 use syn::parse_file;
 
+use super::add_header;
+
 /// Format Rust code, and add header.
 pub fn print_rust(tokens: &TokenStream, generator_path: &str) -> String {
-    let header = generate_header(generator_path);
-    let tokens = quote! {
-        #header
-        #tokens
-    };
-
-    let result = prettyplease::unparse(&parse_file(tokens.to_string().as_str()).unwrap());
-    let result = COMMENT_REGEX.replace_all(&result, CommentReplacer).to_string();
-    rust_fmt(&result)
-}
-
-/// Creates a generated file warning + required information for a generated file.
-fn generate_header(generator_path: &str) -> TokenStream {
-    // TODO: Add generation date, AST source hash, etc here.
-    let edit_comment = format!("@ To edit this generated file you have to edit `{generator_path}`");
-    quote! {
-        //!@ Auto-generated code, DO NOT EDIT DIRECTLY!
-        #![doc = #edit_comment]
-        //!@@line_break
-    }
+    let code = prettyplease::unparse(&parse_file(tokens.to_string().as_str()).unwrap());
+    let code = COMMENT_REGEX.replace_all(&code, CommentReplacer).to_string();
+    let code = add_header(&code, generator_path, "//");
+    rust_fmt(&code)
 }
 
 fn rust_fmt(source_text: &str) -> String {
