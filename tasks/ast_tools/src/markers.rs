@@ -96,7 +96,13 @@ impl From<&Ident> for CloneInAttribute {
 
 /// An enum representing the `#[estree(...)]` attributes that we implement for structs.
 #[derive(Debug, Serialize, PartialEq, Eq)]
-pub enum ESTreeStructAttribute {
+pub struct ESTreeStructAttribute {
+    pub tag_mode: Option<ESTreeStructTagMode>,
+    pub always_flatten: bool,
+}
+
+#[derive(Debug, Serialize, PartialEq, Eq)]
+pub enum ESTreeStructTagMode {
     CustomSerialize,
     NoType,
     Type(String),
@@ -104,19 +110,55 @@ pub enum ESTreeStructAttribute {
 
 impl Parse for ESTreeStructAttribute {
     fn parse(input: ParseStream) -> Result<Self, syn::Error> {
-        let is_type = input.peek(Token![type]);
-        if is_type {
-            input.parse::<Token![type]>()?;
-            input.parse::<Token![=]>()?;
-            Ok(Self::Type(input.parse::<LitStr>()?.value()))
-        } else {
-            let ident = input.call(Ident::parse_any).unwrap().to_string();
+        let mut tag_mode = None;
+        let mut always_flatten = false;
+
+        loop {
+            let is_type = input.peek(Token![type]);
+            let ident = if is_type {
+                input.parse::<Token![type]>()?;
+                "type".to_string()
+            } else {
+                input.call(Ident::parse_any).unwrap().to_string()
+            };
             match ident.as_str() {
-                "no_type" => Ok(Self::NoType),
-                "custom_serialize" => Ok(Self::CustomSerialize),
-                _ => panic!("Unsupported #[estree(...)] argument: {ident}"),
+                "always_flatten" => {
+                    if always_flatten {
+                        panic!("Duplicate estree(always_flatten)");
+                    } else {
+                        always_flatten = true;
+                    }
+                }
+                "custom_serialize" => {
+                    assert!(
+                        tag_mode.replace(ESTreeStructTagMode::CustomSerialize).is_none(),
+                        "Duplicate tag mode in #[estree(...)]"
+                    );
+                }
+                "no_type" => {
+                    assert!(
+                        tag_mode.replace(ESTreeStructTagMode::NoType).is_none(),
+                        "Duplicate tag mode in #[estree(...)]"
+                    );
+                }
+                "type" => {
+                    input.parse::<Token![=]>()?;
+                    let value = input.parse::<LitStr>()?.value();
+                    assert!(
+                        tag_mode.replace(ESTreeStructTagMode::Type(value)).is_none(),
+                        "Duplicate tag mode in #[estree(...)]"
+                    );
+                }
+                arg => panic!("Unsupported #[estree(...)] argument: {arg}"),
+            }
+            let comma = input.peek(Token![,]);
+            if comma {
+                input.parse::<Token![,]>().unwrap();
+            } else {
+                break;
             }
         }
+        Ok(Self { tag_mode, always_flatten })
     }
 }
 

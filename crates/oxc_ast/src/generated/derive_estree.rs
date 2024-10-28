@@ -1920,7 +1920,6 @@ impl<'a> Serialize for TSThisParameter<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSThisParameter")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("thisSpan", &self.this_span)?;
         map.serialize_entry("typeAnnotation", &self.type_annotation)?;
         map.end()
     }

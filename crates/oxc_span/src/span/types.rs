@@ -60,7 +60,7 @@ use oxc_estree::ESTree;
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[generate_derive(ESTree)]
 #[non_exhaustive] // Disallow struct expression constructor `Span {}`
-#[estree(no_type)]
+#[estree(no_type, always_flatten)]
 pub struct Span {
     /// The zero-based start offset of the span
     pub start: u32,

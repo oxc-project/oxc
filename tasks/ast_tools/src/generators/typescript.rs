@@ -1,14 +1,15 @@
 use convert_case::{Case, Casing};
 use itertools::Itertools;
+use rustc_hash::FxHashSet;
 
 use crate::{
     codegen::LateCtx,
     output::Output,
     schema::{
-        serialize::{enum_variant_name, get_type_tag},
+        serialize::{enum_variant_name, get_always_flatten_structs, get_type_tag},
         EnumDef, GetIdent, StructDef, TypeDef, TypeName,
     },
-    Generator,
+    Generator, TypeId,
 };
 
 use super::define_generator;
@@ -22,12 +23,15 @@ define_generator!(TypescriptGenerator);
 impl Generator for TypescriptGenerator {
     fn generate(&mut self, ctx: &LateCtx) -> Output {
         let mut code = String::new();
+
+        let always_flatten_structs = get_always_flatten_structs(ctx);
+
         for def in ctx.schema() {
             if !def.generates_derive("ESTree") {
                 continue;
             }
             let ts_type_def = match def {
-                TypeDef::Struct(it) => Some(typescript_struct(it)),
+                TypeDef::Struct(it) => Some(typescript_struct(it, &always_flatten_structs)),
                 TypeDef::Enum(it) => typescript_enum(it),
             };
             let Some(ts_type_def) = ts_type_def else { continue };
@@ -60,7 +64,7 @@ fn typescript_enum(def: &EnumDef) -> Option<String> {
     Some(format!("export type {ident} = {union};"))
 }
 
-fn typescript_struct(def: &StructDef) -> String {
+fn typescript_struct(def: &StructDef, always_flatten_structs: &FxHashSet<TypeId>) -> String {
     let ident = def.ident();
     let mut fields = String::new();
     let mut extends = vec![];
@@ -78,7 +82,12 @@ fn typescript_struct(def: &StructDef) -> String {
             None => type_to_string(field.typ.name()),
         };
 
-        if field.markers.derive_attributes.estree.flatten {
+        let always_flatten = match field.typ.type_id() {
+            Some(id) => always_flatten_structs.contains(&id),
+            None => false,
+        };
+
+        if always_flatten || field.markers.derive_attributes.estree.flatten {
             extends.push(ty);
             continue;
         }

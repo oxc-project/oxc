@@ -8,7 +8,6 @@ use oxc_span::{cmp::ContentEq, hash::ContentHash, Atom, GetSpan, Span};
 #[derive(Debug)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub struct Pattern<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub body: Disjunction<'a>,
 }
@@ -18,7 +17,6 @@ pub struct Pattern<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub struct Disjunction<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub body: Vec<'a, Alternative<'a>>,
 }
@@ -28,7 +26,6 @@ pub struct Disjunction<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub struct Alternative<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub body: Vec<'a, Term<'a>>,
 }
@@ -101,7 +98,6 @@ pub enum BoundaryAssertionKind {
 #[derive(Debug)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub struct LookAroundAssertion<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub kind: LookAroundAssertionKind,
     pub body: Disjunction<'a>,
@@ -123,7 +119,6 @@ pub enum LookAroundAssertionKind {
 #[derive(Debug)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub struct Quantifier<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub min: u64,
     /// `None` means no upper bound.
@@ -138,7 +133,6 @@ pub struct Quantifier<'a> {
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub struct Character {
     /// This will be invalid position when `UnicodeMode` is disabled and `value` is a surrogate pair.
-    #[estree(flatten)]
     pub span: Span,
     pub kind: CharacterKind,
     /// Unicode code point or UTF-16 code unit.
@@ -168,7 +162,6 @@ pub enum CharacterKind {
 #[derive(Debug)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub struct CharacterClassEscape {
-    #[estree(flatten)]
     pub span: Span,
     pub kind: CharacterClassEscapeKind,
 }
@@ -191,7 +184,6 @@ pub enum CharacterClassEscapeKind {
 #[derive(Debug)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub struct UnicodePropertyEscape<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub negative: bool,
     /// `true` if `UnicodeSetsMode` and `name` matches unicode property of strings.
@@ -205,7 +197,6 @@ pub struct UnicodePropertyEscape<'a> {
 #[derive(Debug, Clone, Copy)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub struct Dot {
-    #[estree(flatten)]
     pub span: Span,
 }
 
@@ -215,7 +206,6 @@ pub struct Dot {
 #[derive(Debug)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub struct CharacterClass<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub negative: bool,
     /// `true` if:
@@ -271,7 +261,6 @@ impl<'a> GetSpan for CharacterClassContents<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub struct CharacterClassRange {
-    #[estree(flatten)]
     pub span: Span,
     pub min: Character,
     pub max: Character,
@@ -282,7 +271,6 @@ pub struct CharacterClassRange {
 #[derive(Debug)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub struct ClassStringDisjunction<'a> {
-    #[estree(flatten)]
     pub span: Span,
     /// `true` if body is empty or contains [`ClassString`] which `strings` is `true`.
     pub strings: bool,
@@ -294,7 +282,6 @@ pub struct ClassStringDisjunction<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub struct ClassString<'a> {
-    #[estree(flatten)]
     pub span: Span,
     /// `true` if body is empty or contain 2 more characters.
     pub strings: bool,
@@ -307,7 +294,6 @@ pub struct ClassString<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub struct CapturingGroup<'a> {
-    #[estree(flatten)]
     pub span: Span,
     /// Group name to be referenced by [`NamedReference`].
     pub name: Option<Atom<'a>>,
@@ -320,7 +306,6 @@ pub struct CapturingGroup<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub struct IgnoreGroup<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub modifiers: Option<Modifiers>,
     pub body: Disjunction<'a>,
@@ -332,7 +317,6 @@ pub struct IgnoreGroup<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub struct Modifiers {
-    #[estree(flatten)]
     pub span: Span,
     pub enabling: Option<Modifier>,
     pub disabling: Option<Modifier>,
@@ -354,7 +338,6 @@ pub struct Modifier {
 #[derive(Debug)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub struct IndexedReference {
-    #[estree(flatten)]
     pub span: Span,
     pub index: u32,
 }
@@ -365,7 +348,6 @@ pub struct IndexedReference {
 #[derive(Debug)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub struct NamedReference<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub name: Atom<'a>,
 }
