@@ -68,6 +68,8 @@ importers:
 
   npm/oxc-types: {}
 
+  npm/oxc-wasm: {}
+
   npm/oxlint: {}
 
   npm/parser-wasm:

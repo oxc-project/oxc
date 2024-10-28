@@ -9,18 +9,6 @@
       "groupName": "rust crates",
       "matchManagers": ["cargo"],
       "ignoreDeps": ["syn", "ureq"]
-    },
-    {
-      "groupName": "vscode npm packages",
-      "matchFileNames": ["editors/vscode/package.json"],
-      "matchManagers": ["npm"],
-      "ignoreDeps": ["@types/vscode"]
-    },
-    {
-      "groupName": "off",
-      "matchFileNames": ["napi/*/package.json", "npm/*/package.json"],
-      "matchManagers": ["npm"],
-      "enabled": false
     }
   ]
 }
