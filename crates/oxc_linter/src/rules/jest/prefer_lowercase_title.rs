@@ -7,8 +7,7 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, parse_jest_fn_call, JestFnKind, JestGeneralFnKind,
-        ParsedJestFnCallNew, PossibleJestNode,
+        parse_jest_fn_call, JestFnKind, JestGeneralFnKind, ParsedJestFnCallNew, PossibleJestNode,
     },
 };
 
@@ -157,10 +156,12 @@ impl Rule for PreferLowercaseTitle {
         }))
     }
 
-    fn run_once(&self, ctx: &LintContext) {
-        for possible_jest_node in &collect_possible_jest_call_node(ctx) {
-            self.run(possible_jest_node, ctx);
-        }
+    fn run_on_jest_node<'a, 'c>(
+        &self,
+        jest_node: &PossibleJestNode<'a, 'c>,
+        ctx: &'c LintContext<'a>,
+    ) {
+        self.run(jest_node, ctx);
     }
 }
 

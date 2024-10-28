@@ -129,6 +129,7 @@ mod eslint {
     pub mod no_with;
     pub mod prefer_exponentiation_operator;
     pub mod prefer_numeric_literals;
+    pub mod prefer_object_has_own;
     pub mod radix;
     pub mod require_await;
     pub mod require_yield;
@@ -273,6 +274,7 @@ mod react_perf {
 
 mod unicorn {
     pub mod catch_error_name;
+    pub mod consistent_empty_array_spread;
     pub mod consistent_function_scoping;
     pub mod empty_brace_spaces;
     pub mod error_message;
@@ -334,6 +336,7 @@ mod unicorn {
     pub mod prefer_event_target;
     pub mod prefer_includes;
     pub mod prefer_logical_operator_over_ternary;
+    pub mod prefer_math_min_max;
     pub mod prefer_math_trunc;
     pub mod prefer_modern_dom_apis;
     pub mod prefer_modern_math_apis;
@@ -409,6 +412,7 @@ mod oxc {
     pub mod no_async_endpoint_handlers;
     pub mod no_barrel_file;
     pub mod no_const_enum;
+    pub mod no_map_spread;
     pub mod no_optional_chaining;
     pub mod no_rest_spread_properties;
     pub mod number_arg_out_of_range;
@@ -603,6 +607,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_with,
     eslint::prefer_exponentiation_operator,
     eslint::prefer_numeric_literals,
+    eslint::prefer_object_has_own,
     eslint::radix,
     eslint::require_await,
     eslint::require_yield,
@@ -760,6 +765,7 @@ oxc_macros::declare_all_lint_rules! {
     oxc::no_async_endpoint_handlers,
     oxc::no_barrel_file,
     oxc::no_const_enum,
+    oxc::no_map_spread,
     oxc::no_optional_chaining,
     oxc::no_rest_spread_properties,
     oxc::number_arg_out_of_range,
@@ -848,6 +854,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::prefer_ts_expect_error,
     typescript::triple_slash_reference,
     unicorn::catch_error_name,
+    unicorn::consistent_empty_array_spread,
     unicorn::consistent_function_scoping,
     unicorn::empty_brace_spaces,
     unicorn::error_message,
@@ -909,6 +916,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_event_target,
     unicorn::prefer_includes,
     unicorn::prefer_logical_operator_over_ternary,
+    unicorn::prefer_math_min_max,
     unicorn::prefer_math_trunc,
     unicorn::prefer_modern_dom_apis,
     unicorn::prefer_modern_math_apis,

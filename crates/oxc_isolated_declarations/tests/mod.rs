@@ -26,12 +26,10 @@ fn transform(path: &Path, source_text: &str) -> String {
             .errors
             .iter()
             .map(|d| d.clone().with_source_code(Arc::clone(&source)))
-            .map(|error| format!("{error:?}"))
-            .collect::<Vec<_>>()
-            .join("\n");
+            .fold(String::new(), |s, error| s + &format!("{error:?}"));
 
         snapshot.push_str(&format!(
-            "==================== Errors ====================\n\n{error_messages}\n\n```"
+            "==================== Errors ====================\n{error_messages}\n\n```"
         ));
     }
 

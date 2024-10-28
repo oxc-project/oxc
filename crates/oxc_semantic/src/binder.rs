@@ -2,7 +2,6 @@
 
 use std::{borrow::Cow, ptr};
 
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind};
 use oxc_ecmascript::{BoundNames, IsSimpleParameterList};
 use oxc_span::{GetSpan, SourceType};

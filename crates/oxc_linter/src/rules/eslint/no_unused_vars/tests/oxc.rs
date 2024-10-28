@@ -6,12 +6,18 @@ use super::NoUnusedVars;
 use crate::{tester::Tester, FixKind, RuleMeta as _};
 
 // uncomment to only run a single test. useful for step-through debugging.
-// #[test]
-// fn test_debug() {
-//     let pass: Vec<&str> = vec![];
-//     let fail = vec![];
-//     Tester::new(NoUnusedVars::NAME, pass, fail).intentionally_allow_no_fix_tests().test();
-// }
+#[test]
+fn test_debug() {
+    let pass = vec![
+        (
+            "const [ a, _b, c ] = items;
+			console.log(a+c);",
+            Some(serde_json::json!([{ "destructuredArrayIgnorePattern": "^_" }])),
+        ), // { "ecmaVersion": 6 },
+    ];
+    let fail = vec![];
+    Tester::new(NoUnusedVars::NAME, pass, fail).intentionally_allow_no_fix_tests().test();
+}
 
 #[test]
 fn test_vars_simple() {
@@ -201,6 +207,30 @@ fn test_vars_discarded_reads() {
         }
 
         new Test();
+        ",
+        "function foo(a) {
+            const Bar = require('./bar');
+            a instanceof Bar && (this.a = a);
+        }
+        foo(1)
+        ",
+        "function foo(a) {
+            const Bar = require('./bar');
+            (a instanceof Bar && (this.a = a), this.b = 1);
+        }
+        foo(1)
+        ",
+        "function foo(a) {
+            const Bar = require('./bar');
+            (a instanceof Bar && (this.a ||= 2), this.b = 1);
+        }
+        foo(1)
+        ",
+        "function foo(a) {
+            const bar = require('./bar');
+            (a in bar && (this.a = a), this.b = 1);
+        }
+        foo(1)
         ",
     ];
 

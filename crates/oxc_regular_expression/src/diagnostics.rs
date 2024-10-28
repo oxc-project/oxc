@@ -4,6 +4,31 @@ use oxc_span::Span;
 const PREFIX: &str = "Invalid regular expression:";
 
 #[cold]
+pub fn invalid_input(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("{PREFIX} Invalid input string literal")).with_label(span)
+}
+
+// ---
+
+#[cold]
+pub fn unknown_flag(span: Span, flag: &str) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("{PREFIX} Unknown flag: `{flag}` found")).with_label(span)
+}
+
+#[cold]
+pub fn duplicated_flags(span: Span, flag: &str) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("{PREFIX} Duplicated flag: `{flag}` found")).with_label(span)
+}
+
+#[cold]
+pub fn invalid_unicode_flags(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("{PREFIX} Invalid unicode flags combination `u` and `v`"))
+        .with_label(span)
+}
+
+// ---
+
+#[cold]
 pub fn duplicated_capturing_group_names(spans: Vec<Span>) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("{PREFIX} Duplicated capturing group names")).with_labels(spans)
 }

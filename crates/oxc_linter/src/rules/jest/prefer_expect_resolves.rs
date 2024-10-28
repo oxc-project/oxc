@@ -10,10 +10,7 @@ use crate::{
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
-    utils::{
-        collect_possible_jest_call_node, parse_expect_jest_fn_call, ParsedExpectFnCall,
-        PossibleJestNode,
-    },
+    utils::{parse_expect_jest_fn_call, ParsedExpectFnCall, PossibleJestNode},
 };
 
 fn expect_resolves(span: Span) -> OxcDiagnostic {
@@ -76,10 +73,12 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferExpectResolves {
-    fn run_once(&self, ctx: &LintContext) {
-        for possible_jest_node in &collect_possible_jest_call_node(ctx) {
-            Self::run(possible_jest_node, ctx);
-        }
+    fn run_on_jest_node<'a, 'c>(
+        &self,
+        jest_node: &PossibleJestNode<'a, 'c>,
+        ctx: &'c LintContext<'a>,
+    ) {
+        Self::run(jest_node, ctx);
     }
 }
 

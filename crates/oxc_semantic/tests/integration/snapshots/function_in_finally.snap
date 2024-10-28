@@ -21,7 +21,7 @@ bb3: {
 }
 
 bb4: {
-
+	statement
 }
 
 bb5: {
@@ -48,7 +48,8 @@ TryStatement" shape = box]
     3 [ label = "bb3
 BlockStatement
 ExpressionStatement" shape = box]
-    4 [ label = "bb4" shape = box]
+    4 [ label = "bb4
+BlockStatement" shape = box]
     5 [ label = "bb5" shape = box]
     6 [ label = "bb6" shape = box]
     7 [ label = "bb7

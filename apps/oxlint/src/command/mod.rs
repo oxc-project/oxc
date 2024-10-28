@@ -25,6 +25,11 @@ pub struct MiscOptions {
     /// Number of threads to use. Set to 1 for using only 1 CPU core
     #[bpaf(argument("INT"), hide_usage)]
     pub threads: Option<usize>,
+
+    /// This option outputs the configuration to be used.
+    /// When present, no linting is performed and only config-related options are valid.
+    #[bpaf(switch, hide_usage)]
+    pub print_config: bool,
 }
 
 #[allow(clippy::ptr_arg)]

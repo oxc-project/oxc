@@ -4,6 +4,43 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.34.0] - 2024-10-26
+
+### Features
+
+- 1145341 ast_tools: Output typescript to a separate package (#6755) (ottomated)
+
+### Refactor
+
+- 423d54c rust: Remove the annoying `clippy::wildcard_imports` (#6860) (Boshen)
+
+## [0.33.0] - 2024-10-24
+
+### Refactor
+
+- 85e69a1 ast_tools: Add line breaks to generated code for `ESTree` derive (#6680) (overlookmotel)
+- ad8e293 ast_tools: Shorten generated code for `impl Serialize` (#6684) (overlookmotel)
+- 9ba2b0e ast_tools: Move `#[allow]` attrs to top of generated files (#6679) (overlookmotel)
+
+## [0.32.0] - 2024-10-19
+
+### Features
+
+- e310e52 parser: Generate `Serialize` impls in ast_tools (#6404) (ottomated)
+
+### Bug Fixes
+
+- 2ce3e5f identifier: Add `ZWSP` to `is_irregular_whitespace` (#6662) (Boshen)
+- 1d3d256 transformer: Correctly trim JSX (#6639) (magic-akari)
+
+### Documentation
+
+- 335b7f2 syntax: Enable lint warnings on missing docs, and add a lot of documentation (#6611) (DonIsaac)
+
+### Refactor
+
+- 856cab5 ecmascript: Move ToInt32 from `oxc_syntax` to `oxc_ecmascript` (#6471) (Boshen)
+
 ## [0.31.0] - 2024-10-08
 
 ### Refactor

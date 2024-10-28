@@ -1,9 +1,8 @@
 {
   "name": "oxc-vscode",
   "description": "oxc vscode extension",
-  "packageManager": "pnpm@9.12.1",
   "license": "MIT",
-  "version": "0.9.10",
+  "version": "0.10.3",
   "icon": "icon.png",
   "publisher": "oxc",
   "displayName": "Oxc",
@@ -64,7 +63,7 @@
       "type": "object",
       "title": "oxc",
       "properties": {
-        "oxc_language_server.run": {
+        "oxc.lint.run": {
           "scope": "resource",
           "type": "string",
           "enum": [
@@ -74,12 +73,12 @@
           "default": "onType",
           "description": "Run the linter on save (onSave) or on type (onType)"
         },
-        "oxc_language_server.enable": {
+        "oxc.enable": {
           "type": "boolean",
           "default": true,
           "description": "enable oxc language server"
         },
-        "oxc_language_server.trace.server": {
+        "oxc.trace.server": {
           "type": "string",
           "scope": "window",
           "enum": [
@@ -95,11 +94,16 @@
           "default": "off",
           "description": "Traces the communication between VS Code and the language server."
         },
-        "oxc_language_server.configPath": {
+        "oxc.configPath": {
           "type": "string",
           "scope": "window",
           "default": ".eslintrc",
           "description": "Path to ESlint configuration."
+        },
+        "oxc.path.server": {
+          "type": "string",
+          "scope": "window",
+          "description": "Path to Oxc language server binary."
         }
       }
     },

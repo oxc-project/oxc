@@ -9,6 +9,7 @@ export default function generateAncestorsCode(types) {
     ancestorEnumVariants = '',
     isFunctions = '',
     ancestorTypes = '',
+    addressMatchArms = '',
     discriminant = 1;
   for (const type of Object.values(types)) {
     if (type.kind === 'enum') continue;
@@ -62,6 +63,13 @@ export default function generateAncestorsCode(types) {
         impl${lifetimes} ${structName} {
           ${methodsCode}
         }
+
+        impl${lifetimes} GetAddress for ${structName} {
+          #[inline]
+          fn address(&self) -> Address {
+            Address::from_ptr(self.0)
+          }
+        }
       `;
 
       const variantName = `${type.name}${fieldNameCamel}`;
@@ -75,6 +83,8 @@ export default function generateAncestorsCode(types) {
         (variantNamesForEnums[fieldTypeName] || (variantNamesForEnums[fieldTypeName] = []))
           .push(variantName);
       }
+
+      addressMatchArms += `Self::${variantName}(a) => a.address(),\n`;
     }
 
     if (variantNames.length > 0) {
@@ -114,8 +124,7 @@ export default function generateAncestorsCode(types) {
 
     use memoffset::offset_of;
 
-    use oxc_allocator::{Box, Vec};
-    #[allow(clippy::wildcard_imports)]
+    use oxc_allocator::{Address, Box, GetAddress, Vec};
     use oxc_ast::ast::*;
     use oxc_syntax::scope::ScopeId;
 
@@ -156,6 +165,18 @@ export default function generateAncestorsCode(types) {
 
     impl<'a, 't> Ancestor<'a, 't> {
       ${isFunctions}
+    }
+
+    impl<'a, 't> GetAddress for Ancestor<'a, 't> {
+      /// Get memory address of node represented by \`Ancestor\` in the arena.
+      // Compiler should reduce this down to only a couple of assembly operations.
+      #[inline]
+      fn address(&self) -> Address {
+        match self {
+          Self::None => Address::DUMMY,
+          ${addressMatchArms}
+        }
+      }
     }
 
     ${ancestorTypes}

@@ -88,12 +88,20 @@ impl Rule for NoNamedAsDefaultMember {
                 continue;
             };
 
-            if !remote_module_record_ref.exported_bindings.is_empty() {
-                has_members_map.insert(
-                    ctx.symbols().get_symbol_id_from_span(import_entry.local_name.span()).unwrap(),
-                    (remote_module_record_ref, import_entry.module_request.name().clone()),
-                );
+            if remote_module_record_ref.exported_bindings.is_empty() {
+                continue;
             }
+
+            let Some(symbol_id) =
+                ctx.scopes().get_root_binding(import_entry.local_name.name().as_str())
+            else {
+                return;
+            };
+
+            has_members_map.insert(
+                symbol_id,
+                (remote_module_record_ref, import_entry.module_request.name().clone()),
+            );
         }
 
         if has_members_map.is_empty() {

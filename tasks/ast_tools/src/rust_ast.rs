@@ -9,10 +9,11 @@ use syn::{
     Variant, Visibility,
 };
 
-use super::{parse_file, Itertools, PathBuf, Rc, Read, RefCell, Result};
 use crate::{
     layout::Layout,
+    parse_file,
     util::{unexpanded_macro_err, NormalizeError},
+    Itertools, PathBuf, Rc, Read, RefCell, Result,
 };
 
 pub type AstRef = Rc<RefCell<AstType>>;
@@ -200,17 +201,17 @@ impl AstType {
     }
 
     pub fn set_visitable(&mut self, value: bool) -> Result<()> {
-        macro_rules! assign {
-            ($it:ident) => {{
-                debug_assert!($it.meta.ast, "only ast types can be visitable!");
-                $it.meta.visitable = value;
-            }};
-        }
         match self {
-            AstType::Enum(it) => assign!(it),
-            AstType::Struct(it) => assign!(it),
-            AstType::Macro(it) => return Err(unexpanded_macro_err(&it.item)),
-        }
+            AstType::Enum(enum_) => {
+                debug_assert!(enum_.meta.ast, "only AST types can be visitable!");
+                enum_.meta.visitable = value;
+            }
+            AstType::Struct(struct_) => {
+                debug_assert!(struct_.meta.ast, "only AST types can be visitable!");
+                struct_.meta.visitable = value;
+            }
+            AstType::Macro(macro_) => return Err(unexpanded_macro_err(&macro_.item)),
+        };
         Ok(())
     }
 
@@ -244,16 +245,16 @@ impl AstType {
     }
 
     pub fn set_layout(&mut self, layout_64: Layout, layout_32: Layout) -> Result<()> {
-        macro_rules! assign {
-            ($it:ident) => {{
-                $it.meta.layout_32 = layout_32;
-                $it.meta.layout_64 = layout_64;
-            }};
-        }
         match self {
-            AstType::Enum(it) => assign!(it),
-            AstType::Struct(it) => assign!(it),
-            AstType::Macro(it) => return Err(unexpanded_macro_err(&it.item)),
+            AstType::Enum(enum_) => {
+                enum_.meta.layout_32 = layout_32;
+                enum_.meta.layout_64 = layout_64;
+            }
+            AstType::Struct(struct_) => {
+                struct_.meta.layout_32 = layout_32;
+                struct_.meta.layout_64 = layout_64;
+            }
+            AstType::Macro(macro_) => return Err(unexpanded_macro_err(&macro_.item)),
         }
         Ok(())
     }

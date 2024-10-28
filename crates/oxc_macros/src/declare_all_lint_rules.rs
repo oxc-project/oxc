@@ -61,7 +61,12 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
     let expanded = quote! {
         #(pub use self::#use_stmts::#struct_names;)*
 
-        use crate::{context::{ContextHost, LintContext}, rule::{Rule, RuleCategory, RuleFixMeta, RuleMeta}, AstNode};
+        use crate::{
+            context::{ContextHost, LintContext},
+            rule::{Rule, RuleCategory, RuleFixMeta, RuleMeta},
+            utils::PossibleJestNode,
+            AstNode
+        };
         use oxc_semantic::SymbolId;
 
         #[derive(Debug, Clone)]
@@ -131,6 +136,16 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
             pub(super) fn run_once<'a>(&self, ctx: &LintContext<'a>) {
                 match self {
                     #(Self::#struct_names(rule) => rule.run_once(ctx)),*
+                }
+            }
+
+            pub(super) fn run_on_jest_node<'a, 'c>(
+                &self,
+                jest_node: &PossibleJestNode<'a, 'c>,
+                ctx: &'c LintContext<'a>,
+            ) {
+                match self {
+                    #(Self::#struct_names(rule) => rule.run_on_jest_node(jest_node, ctx)),*
                 }
             }
 

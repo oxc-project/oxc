@@ -62,6 +62,8 @@ too_many_lines = "allow"
 # except nagging the programmer to add a `#[must_use]` after clippy has been run.
 # Having `#[must_use]` everywhere also hinders readability.
 must_use_candidate = "allow"
+# Too annoying, we import by name anyway.
+wildcard_imports = "allow"
 # used_underscore_binding= "allow"
 doc_markdown = "allow"
 # nursery
@@ -76,29 +78,30 @@ doc_lazy_continuation = "allow" # FIXME
 
 [workspace.dependencies]
 # publish = true
-oxc = { version = "0.31.0", path = "crates/oxc" }
-oxc_allocator = { version = "0.31.0", path = "crates/oxc_allocator" }
-oxc_ast = { version = "0.31.0", path = "crates/oxc_ast" }
-oxc_ast_macros = { version = "0.31.0", path = "crates/oxc_ast_macros" }
-oxc_cfg = { version = "0.31.0", path = "crates/oxc_cfg" }
-oxc_codegen = { version = "0.31.0", path = "crates/oxc_codegen" }
-oxc_data_structures = { version = "0.31.0", path = "crates/oxc_data_structures" }
-oxc_diagnostics = { version = "0.31.0", path = "crates/oxc_diagnostics" }
-oxc_ecmascript = { version = "0.31.0", path = "crates/oxc_ecmascript" }
-oxc_index = { version = "0.31.0", path = "crates/oxc_index" }
-oxc_isolated_declarations = { version = "0.31.0", path = "crates/oxc_isolated_declarations" }
-oxc_mangler = { version = "0.31.0", path = "crates/oxc_mangler" }
-oxc_minifier = { version = "0.31.0", path = "crates/oxc_minifier" }
-oxc_module_lexer = { version = "0.31.0", path = "crates/oxc_module_lexer" }
-oxc_parser = { version = "0.31.0", path = "crates/oxc_parser" }
-oxc_regular_expression = { version = "0.31.0", path = "crates/oxc_regular_expression" }
-oxc_semantic = { version = "0.31.0", path = "crates/oxc_semantic" }
-oxc_sourcemap = { version = "0.31.0", path = "crates/oxc_sourcemap" }
-oxc_span = { version = "0.31.0", path = "crates/oxc_span" }
-oxc_syntax = { version = "0.31.0", path = "crates/oxc_syntax" }
-oxc_transform_napi = { version = "0.31.0", path = "napi/transform" }
-oxc_transformer = { version = "0.31.0", path = "crates/oxc_transformer" }
-oxc_traverse = { version = "0.31.0", path = "crates/oxc_traverse" }
+oxc = { version = "0.34.0", path = "crates/oxc" }
+oxc_allocator = { version = "0.34.0", path = "crates/oxc_allocator" }
+oxc_ast = { version = "0.34.0", path = "crates/oxc_ast" }
+oxc_ast_macros = { version = "0.34.0", path = "crates/oxc_ast_macros" }
+oxc_cfg = { version = "0.34.0", path = "crates/oxc_cfg" }
+oxc_codegen = { version = "0.34.0", path = "crates/oxc_codegen" }
+oxc_data_structures = { version = "0.34.0", path = "crates/oxc_data_structures" }
+oxc_diagnostics = { version = "0.34.0", path = "crates/oxc_diagnostics" }
+oxc_ecmascript = { version = "0.34.0", path = "crates/oxc_ecmascript" }
+oxc_estree = { version = "0.34.0", path = "crates/oxc_estree" }
+oxc_index = { version = "0.34.0", path = "crates/oxc_index" }
+oxc_isolated_declarations = { version = "0.34.0", path = "crates/oxc_isolated_declarations" }
+oxc_mangler = { version = "0.34.0", path = "crates/oxc_mangler" }
+oxc_minifier = { version = "0.34.0", path = "crates/oxc_minifier" }
+oxc_module_lexer = { version = "0.34.0", path = "crates/oxc_module_lexer" }
+oxc_parser = { version = "0.34.0", path = "crates/oxc_parser" }
+oxc_regular_expression = { version = "0.34.0", path = "crates/oxc_regular_expression" }
+oxc_semantic = { version = "0.34.0", path = "crates/oxc_semantic" }
+oxc_sourcemap = { version = "0.34.0", path = "crates/oxc_sourcemap" }
+oxc_span = { version = "0.34.0", path = "crates/oxc_span" }
+oxc_syntax = { version = "0.34.0", path = "crates/oxc_syntax" }
+oxc_transform_napi = { version = "0.34.0", path = "napi/transform" }
+oxc_transformer = { version = "0.34.0", path = "crates/oxc_transformer" }
+oxc_traverse = { version = "0.34.0", path = "crates/oxc_traverse" }
 
 # publish = false
 oxc_linter = { path = "crates/oxc_linter" }
@@ -157,16 +160,15 @@ log = "0.4.22"
 markdown = "1.0.0-alpha.21"
 memchr = "2.7.4"
 memoffset = "0.9.1"
-miette = { version = "7.2.0", features = ["fancy-no-syscall"] }
+miette = { package = "oxc-miette", version = "1.0.1", features = ["fancy-no-syscall"] }
 mimalloc = "0.1.43"
 mime_guess = "2.0.5"
 nonmax = "0.5.5"
 num-bigint = "0.4.6"
 num-traits = "0.2.19"
 once_cell = "1.20.2"
-owo-colors = "4.1.0"
 oxc-browserslist = "1.0.3"
-oxc_resolver = "1.12.0"
+oxc_resolver = "2.0.0"
 petgraph = "0.6.5"
 phf = "0.11.2"
 pico-args = "0.5.0"
@@ -189,12 +191,10 @@ sha1 = "0.10.6"
 simdutf8 = { version = "0.1.5", features = ["aarch64_neon"] }
 similar = "2.6.0"
 tempfile = "3.13.0"
-textwrap = "0.16.1"
 tokio = "1.40.0"
 tower-lsp = "0.20.0"
 tracing-subscriber = "0.3.18"
 tsify = "0.4.5"
-unicode-width = "0.2.0"
 ureq = { version = "2.10.1", default-features = false }
 url = "2.5.2"
 walkdir = "2.5.0"

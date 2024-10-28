@@ -1,7 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used.
+  ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:7]
  1 │ using a = 1;
    ·       ┬

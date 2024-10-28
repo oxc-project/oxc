@@ -211,9 +211,7 @@ impl Baseline {
         self.oxc_diagnostics
             .iter()
             .map(|d| d.clone().with_source_code(Arc::clone(&source)))
-            .map(|error| format!("{error:?}"))
-            .collect::<Vec<_>>()
-            .join("\n")
+            .fold(String::new(), |s, error| s + &format!("{error:?}"))
     }
 }
 

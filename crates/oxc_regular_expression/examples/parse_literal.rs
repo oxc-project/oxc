@@ -1,12 +1,12 @@
 #![allow(clippy::print_stdout)]
 
 use oxc_allocator::Allocator;
-use oxc_regular_expression::{Parser, ParserOptions};
+use oxc_regular_expression::{LiteralParser, Options};
 
 fn main() {
     let allocator = Allocator::default();
 
-    for (pattern, flags) in [
+    for (pattern_text, flags_text) in [
         (r"ab", ""),
         (r"abc", "i"),
         (r"abcd", "igv"),
@@ -43,14 +43,16 @@ fn main() {
         (r"[\bb]", ""),
         (r"a{2,1}", "v"), // Error
     ] {
-        let parser = Parser::new(
+        let parser = LiteralParser::new(
             &allocator,
-            pattern,
-            ParserOptions::default().with_span_offset(1).with_flags(flags),
+            pattern_text,
+            Some(flags_text),
+            // +1 for added `/` in error reports
+            Options { pattern_span_offset: 1, ..Options::default() },
         );
         let ret = parser.parse();
 
-        let literal = format!("/{pattern}/{flags}");
+        let literal = format!("/{pattern_text}/{flags_text}");
         println!("Parse: {literal}");
         match ret {
             Ok(pattern) => {

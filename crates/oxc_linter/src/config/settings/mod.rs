@@ -12,7 +12,7 @@ use self::{
 };
 
 /// Shared settings for plugins
-#[derive(Debug, Deserialize, Serialize, Default, JsonSchema)]
+#[derive(Debug, Clone, Deserialize, Serialize, Default, JsonSchema)]
 #[cfg_attr(test, derive(PartialEq))]
 pub struct OxlintSettings {
     #[serde(default)]

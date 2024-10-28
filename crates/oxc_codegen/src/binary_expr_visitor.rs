@@ -184,11 +184,22 @@ impl<'a> BinaryExpressionVisitor<'a> {
                 }
             }
             BinaryishOperator::Binary(BinaryOperator::Exponential) => {
-                if matches!(e.left(), Expression::UnaryExpression(_)) {
+                // Negative numbers are printed using a unary operator
+                if matches!(
+                    e.left(),
+                    Expression::UnaryExpression(_) | Expression::NumericLiteral(_)
+                ) {
                     self.left_precedence = Precedence::Call;
                 }
             }
+
             _ => {}
+        }
+
+        if let Expression::PrivateInExpression(e) = self.e.left() {
+            e.gen_expr(p, Precedence::Lowest, Context::empty());
+            self.visit_right_and_finish(p);
+            return false;
         }
 
         true

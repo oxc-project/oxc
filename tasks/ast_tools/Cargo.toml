@@ -16,6 +16,7 @@ doctest = false
 [dependencies]
 bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }
 convert_case = { workspace = true }
+cow-utils = { workspace = true }
 itertools = { workspace = true }
 lazy_static = { workspace = true }
 prettyplease = { workspace = true }

@@ -1,4 +1,5 @@
 //! Trivias such as comments and irregular whitespaces
+#![allow(missing_docs)] // FIXME
 
 use std::{
     iter::FusedIterator,
@@ -21,15 +22,15 @@ pub fn has_comments_between(comments: &[Comment], span: Span) -> bool {
 }
 
 /// Double-ended iterator over a range of comments, by starting position.
-pub struct CommentsRange<'a> {
-    comments: &'a [Comment],
+pub struct CommentsRange<'c> {
+    comments: &'c [Comment],
     range: (Bound<u32>, Bound<u32>),
     current_start: usize,
     current_end: usize,
 }
 
-impl<'a> CommentsRange<'a> {
-    fn new(comments: &'a [Comment], start: Bound<u32>, end: Bound<u32>) -> Self {
+impl<'c> CommentsRange<'c> {
+    fn new(comments: &'c [Comment], start: Bound<u32>, end: Bound<u32>) -> Self {
         // Directly skip all comments that are already known to start
         // outside the requested range.
         let partition_start = {

@@ -1,71 +1,35 @@
 use std::{cell::RefCell, path::PathBuf};
 
 use itertools::Itertools;
-use proc_macro2::TokenStream;
 use rustc_hash::{FxBuildHasher, FxHashMap};
 
 use crate::{
-    derives::{Derive, DeriveOutput},
-    fmt::pretty_print,
-    generators::{Generator, GeneratorOutput},
-    log, logln,
+    log, log_result,
+    output::{Output, RawOutput},
     passes::Pass,
     rust_ast::{self, AstRef},
     schema::{lower_ast_types, Schema, TypeDef},
-    util::write_all_to,
     Result, TypeId,
 };
 
 #[derive(Default)]
 pub struct AstCodegen {
     files: Vec<PathBuf>,
-    passes: Vec<Box<dyn Runner<Output = (), Context = EarlyCtx>>>,
-    generators: Vec<Box<dyn Runner<Output = GeneratorOutput, Context = LateCtx>>>,
-    derives: Vec<Box<dyn Runner<Output = DeriveOutput, Context = LateCtx>>>,
+    passes: Vec<Box<dyn Runner<Context = EarlyCtx>>>,
+    generators: Vec<Box<dyn Runner<Context = LateCtx>>>,
 }
 
 pub struct AstCodegenResult {
     pub schema: Schema,
-    pub outputs: Vec<SideEffect>,
-}
-
-pub struct SideEffect(/* path */ pub PathBuf, /* output */ pub Vec<u8>);
-
-impl SideEffect {
-    /// Apply the side-effect
-    pub fn apply(self) -> std::io::Result<()> {
-        let Self(path, data) = self;
-        let path = path.into_os_string();
-        let path = path.to_str().unwrap();
-        write_all_to(&data, path)?;
-        Ok(())
-    }
-
-    pub fn path(&self) -> String {
-        let Self(path, _) = self;
-        let path = path.to_string_lossy();
-        path.replace('\\', "/")
-    }
-}
-
-impl From<(PathBuf, TokenStream)> for SideEffect {
-    fn from((path, stream): (PathBuf, TokenStream)) -> Self {
-        let content = pretty_print(&stream);
-        Self(path, content.as_bytes().into())
-    }
-}
-
-impl From<GeneratorOutput> for SideEffect {
-    fn from(output: GeneratorOutput) -> Self {
-        Self::from((output.0, output.1))
-    }
+    pub outputs: Vec<RawOutput>,
 }
 
 pub trait Runner {
     type Context;
-    type Output;
+    fn verb(&self) -> &'static str;
     fn name(&self) -> &'static str;
-    fn run(&mut self, ctx: &Self::Context) -> Result<Self::Output>;
+    fn file_path(&self) -> &'static str;
+    fn run(&mut self, ctx: &Self::Context) -> Result<Vec<Output>>;
 }
 
 pub struct EarlyCtx {
@@ -148,7 +112,7 @@ impl AstCodegen {
     #[must_use]
     pub fn pass<P>(mut self, pass: P) -> Self
     where
-        P: Pass + Runner<Output = (), Context = EarlyCtx> + 'static,
+        P: Pass + Runner<Context = EarlyCtx> + 'static,
     {
         self.passes.push(Box::new(pass));
         self
@@ -157,22 +121,13 @@ impl AstCodegen {
     #[must_use]
     pub fn generate<G>(mut self, generator: G) -> Self
     where
-        G: Generator + Runner<Output = GeneratorOutput, Context = LateCtx> + 'static,
+        G: Runner<Context = LateCtx> + 'static,
     {
         self.generators.push(Box::new(generator));
         self
     }
 
-    #[must_use]
-    pub fn derive<D>(mut self, derive: D) -> Self
-    where
-        D: Derive + Runner<Output = DeriveOutput, Context = LateCtx> + 'static,
-    {
-        self.derives.push(Box::new(derive));
-        self
-    }
-
-    pub fn run(self) -> Result<AstCodegenResult> {
+    pub fn run(mut self) -> Result<AstCodegenResult> {
         let modules = self
             .files
             .into_iter()
@@ -182,69 +137,29 @@ impl AstCodegen {
             .map_ok(|it| it.map(rust_ast::Module::analyze))
             .collect::<Result<Result<Result<Vec<_>>>>>()???;
 
-        // early passes
-        let ctx = {
-            let ctx = EarlyCtx::new(modules);
-            for mut runner in self.passes {
-                let name = runner.name();
-                log!("Pass {name}... ");
-                runner.run(&ctx)?;
-                logln!("Done!");
-            }
-            ctx.into_late_ctx()
-        };
+        // Early passes
+        let early_ctx = EarlyCtx::new(modules);
+        let mut outputs = run_passes(&mut self.passes, &early_ctx)?;
 
-        let derives = self
-            .derives
-            .into_iter()
-            .map(|mut runner| {
-                let name = runner.name();
-                log!("Derive {name}... ");
-                let result = runner.run(&ctx);
-                if result.is_ok() {
-                    logln!("Done!");
-                } else {
-                    logln!("Fail!");
-                }
-                result
-            })
-            .map_ok(|output| output.0.into_iter().map(SideEffect::from))
-            .flatten_ok();
+        // Late passes
+        let late_ctx = early_ctx.into_late_ctx();
+        outputs.extend(run_passes(&mut self.generators, &late_ctx)?);
 
-        let outputs = self
-            .generators
-            .into_iter()
-            .map(|mut runner| {
-                let name = runner.name();
-                log!("Generate {name}... ");
-                let result = runner.run(&ctx);
-                if result.is_ok() {
-                    logln!("Done!");
-                } else {
-                    logln!("Fail!");
-                }
-                result
-            })
-            .map_ok(SideEffect::from);
-
-        let outputs = derives.chain(outputs).collect::<Result<Vec<_>>>()?;
-
-        Ok(AstCodegenResult { outputs, schema: ctx.schema })
+        Ok(AstCodegenResult { outputs, schema: late_ctx.schema })
     }
 }
 
-/// Creates a generated file warning + required information for a generated file.
-macro_rules! generated_header {
-    () => {{
-        let file = file!().replace("\\", "/");
-        // TODO add generation date, AST source hash, etc here.
-        let edit_comment = format!("@ To edit this generated file you have to edit `{file}`");
-        quote::quote! {
-            //!@ Auto-generated code, DO NOT EDIT DIRECTLY!
-            #![doc = #edit_comment]
-            //!@@line_break
-        }
-    }};
-}
+fn run_passes<C>(runners: &mut [Box<dyn Runner<Context = C>>], ctx: &C) -> Result<Vec<RawOutput>> {
+    let mut outputs = vec![];
+    for runner in runners {
+        log!("{} {}... ", runner.verb(), runner.name());
 
-pub(crate) use generated_header;
+        let result = runner.run(ctx);
+        log_result!(result);
+        let runner_outputs = result?;
+
+        let generator_path = runner.file_path();
+        outputs.extend(runner_outputs.into_iter().map(|output| output.into_raw(generator_path)));
+    }
+    Ok(outputs)
+}

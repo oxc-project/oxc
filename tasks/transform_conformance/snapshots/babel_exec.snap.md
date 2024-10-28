@@ -1,13 +1,13 @@
-commit: 3bcfee23
+commit: d20b314c
 
-Passed: 34/60
+Passed: 45/73
 
 # All Passed:
+* babel-plugin-transform-class-static-block
 * babel-plugin-transform-logical-assignment-operators
 * babel-plugin-transform-nullish-coalescing-operator
 * babel-plugin-transform-optional-catch-binding
 * babel-plugin-transform-exponentiation-operator
-* babel-plugin-transform-arrow-functions
 
 
 # babel-preset-env (7/11)
@@ -74,7 +74,7 @@ exec failed
 exec failed
 
 
-# babel-plugin-transform-async-to-generator (2/6)
+# babel-plugin-transform-async-to-generator (1/6)
 * regression/15978/exec.js
 exec failed
 
@@ -84,7 +84,15 @@ exec failed
 * regression/T6882/exec.js
 exec failed
 
+* regression/fn-name/exec.js
+exec failed
+
 * regression/test262-fn-length/exec.js
+exec failed
+
+
+# babel-plugin-transform-arrow-functions (2/3)
+* arrow-functions/implicit-var-arguments/exec.js
 exec failed
 
 

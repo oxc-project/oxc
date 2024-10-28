@@ -26,6 +26,12 @@ type RuleSet = FxHashSet<RuleWithSeverity>;
 #[cfg_attr(test, derive(PartialEq))]
 pub struct OxlintRules(Vec<ESLintRule>);
 
+impl OxlintRules {
+    pub fn new(rules: Vec<ESLintRule>) -> Self {
+        Self(rules)
+    }
+}
+
 #[derive(Debug, Clone)]
 #[cfg_attr(test, derive(PartialEq))]
 pub struct ESLintRule {
@@ -53,11 +59,12 @@ impl IntoIterator for OxlintRules {
 }
 
 impl OxlintRules {
-    #[allow(clippy::option_if_let_else)]
+    #[allow(clippy::option_if_let_else, clippy::print_stderr)]
     pub(crate) fn override_rules(&self, rules_for_override: &mut RuleSet, all_rules: &[RuleEnum]) {
         use itertools::Itertools;
         let mut rules_to_replace: Vec<RuleWithSeverity> = vec![];
         let mut rules_to_remove: Vec<RuleWithSeverity> = vec![];
+        let mut rules_not_matched: Vec<&str> = vec![];
 
         // Rules can have the same name but different plugin names
         let lookup = self.iter().into_group_map_by(|r| r.rule_name.as_str());
@@ -81,6 +88,8 @@ impl OxlintRules {
                                 let config = rule_config.config.clone().unwrap_or_default();
                                 let rule = rule.read_json(config);
                                 rules_to_replace.push(RuleWithSeverity::new(rule, severity));
+                            } else {
+                                rules_not_matched.push(rule_name);
                             }
                         }
                         AllowWarnDeny::Allow => {
@@ -90,6 +99,8 @@ impl OxlintRules {
                             {
                                 let rule = rule.clone();
                                 rules_to_remove.push(rule);
+                            } else {
+                                rules_not_matched.push(rule_name);
                             }
                         }
                     }
@@ -120,6 +131,14 @@ impl OxlintRules {
         }
         for rule in rules_to_replace {
             rules_for_override.replace(rule);
+        }
+
+        if !rules_not_matched.is_empty() {
+            let rules = rules_not_matched.join("\n");
+            let error = Error::from(OxcDiagnostic::warn(format!(
+                "The following rules do not match the currently supported rules:\n{rules}"
+            )));
+            eprintln!("{error:?}");
         }
     }
 }

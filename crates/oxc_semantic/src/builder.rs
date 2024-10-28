@@ -8,7 +8,6 @@ use std::{
 
 use rustc_hash::FxHashMap;
 
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind, Visit};
 use oxc_cfg::{
     ControlFlowGraphBuilder, CtxCursor, CtxFlags, EdgeType, ErrorEdgeKind,
@@ -734,7 +733,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             self.visit_ts_type_parameter_declaration(type_parameters);
         }
         if let Some(super_class) = &class.super_class {
-            self.visit_class_heritage(super_class);
+            self.visit_expression(super_class);
         }
         if let Some(super_type_parameters) = &class.super_type_parameters {
             self.visit_ts_type_parameter_instantiation(super_type_parameters);
@@ -1481,7 +1480,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             });
             /* cfg */
 
-            self.visit_finally_clause(finalizer);
+            self.visit_block_statement(finalizer);
 
             /* cfg */
             control_flow!(self, |cfg| {

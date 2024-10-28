@@ -28,15 +28,44 @@ pub const VT: char = '\u{b}';
 /// U+000C FORM FEED, abbreviated `<FF>`.
 pub const FF: char = '\u{c}';
 
+/// U+0020 SPACE, abbreviated `<SP>`.
+pub const SP: char = '\u{20}';
+
 /// U+00A0 NON-BREAKING SPACE, abbreviated `<NBSP>`.
 pub const NBSP: char = '\u{a0}';
 
+// U+0085 NEXT LINE, abbreviated `<NEL>`.
+const NEL: char = '\u{85}';
+
+const OGHAM_SPACE_MARK: char = '\u{1680}';
+
+const EN_QUAD: char = '\u{2000}';
+
+// U+200B ZERO WIDTH SPACE, abbreviated `<ZWSP>`.
+const ZWSP: char = '\u{200b}';
+
+// Narrow NO-BREAK SPACE, abbreviated `<NNBSP>`.
+const NNBSP: char = '\u{202f}';
+
+// U+205F MEDIUM MATHEMATICAL SPACE, abbreviated `<MMSP>`.
+const MMSP: char = '\u{205f}';
+
+const IDEOGRAPHIC_SPACE: char = '\u{3000}';
+
+// https://eslint.org/docs/latest/rules/no-irregular-whitespace#rule-details
+#[rustfmt::skip]
 pub fn is_irregular_whitespace(c: char) -> bool {
-    matches!(
-        c,
-        VT | FF | NBSP | ZWNBSP | '\u{85}' | '\u{1680}' | '\u{2000}'
-            ..='\u{200a}' | '\u{202f}' | '\u{205f}' | '\u{3000}'
+    matches!(c,
+        VT | FF | NBSP | ZWNBSP | NEL | OGHAM_SPACE_MARK
+        | EN_QUAD..=ZWSP | NNBSP | MMSP | IDEOGRAPHIC_SPACE
     )
+}
+
+// https://github.com/microsoft/TypeScript/blob/b8e4ed8aeb0b228f544c5736908c31f136a9f7e3/src/compiler/scanner.ts#L556
+pub fn is_white_space_single_line(c: char) -> bool {
+    // Note: nextLine is in the Zs space, and should be considered to be a whitespace.
+    // It is explicitly not a line-break as it isn't in the exact set specified by EcmaScript.
+    matches!(c, SP | TAB) || is_irregular_whitespace(c)
 }
 
 // 11.3 Line Terminators

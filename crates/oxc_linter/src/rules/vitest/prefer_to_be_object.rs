@@ -10,8 +10,8 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, parse_jest_fn_call, KnownMemberExpressionProperty,
-        ParsedExpectFnCall, ParsedJestFnCallNew, PossibleJestNode,
+        parse_jest_fn_call, KnownMemberExpressionProperty, ParsedExpectFnCall, ParsedJestFnCallNew,
+        PossibleJestNode,
     },
 };
 
@@ -66,10 +66,12 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferToBeObject {
-    fn run_once(&self, ctx: &LintContext) {
-        for possible_vitest_node in &collect_possible_jest_call_node(ctx) {
-            Self::run(possible_vitest_node, ctx);
-        }
+    fn run_on_jest_node<'a, 'c>(
+        &self,
+        jest_node: &PossibleJestNode<'a, 'c>,
+        ctx: &'c LintContext<'a>,
+    ) {
+        Self::run(jest_node, ctx);
     }
 }
 

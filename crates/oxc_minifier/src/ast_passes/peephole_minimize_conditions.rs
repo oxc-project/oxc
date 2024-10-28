@@ -871,24 +871,6 @@ mod test {
 
     #[test]
     #[ignore]
-    fn test_object_literal() {
-        test("({})", "1");
-        test("({a:1})", "1");
-        test_same("({a:foo()})");
-        test_same("({'a':foo()})");
-    }
-
-    #[test]
-    #[ignore]
-    fn test_array_literal() {
-        test("([])", "1");
-        test("([1])", "1");
-        test("([a])", "1");
-        test_same("([foo()])");
-    }
-
-    #[test]
-    #[ignore]
     fn test_remove_else_cause() {
         // test(
         // "function f() {" + " if(x) return 1;" + " else if(x) return 2;" + " else if(x) return 3 }",
