@@ -333,14 +333,3 @@ fn parse_generate_derive(attrs: &[Attribute]) -> Vec<String> {
     }
     Vec::from_iter(derives)
 }
-
-macro_rules! with_either {
-    ($def:expr, $it:ident => $body:expr) => {
-        match $def {
-            TypeDef::Struct($it) => $body,
-            TypeDef::Enum($it) => $body,
-        }
-    };
-}
-
-use with_either;

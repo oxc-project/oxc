@@ -28,13 +28,7 @@ impl ToType for TypeRef {
     }
 }
 
-auto_impl_to_type! {
-    TypeDef,
-    EnumDef,
-    StructDef,
-}
-
-macro_rules! auto_impl_to_type {
+macro_rules! impl_to_type {
     ($($ty:ty,)+) => (
         $(
             impl ToType for $ty {
@@ -55,4 +49,8 @@ macro_rules! auto_impl_to_type {
     )
 }
 
-use auto_impl_to_type;
+impl_to_type! {
+    TypeDef,
+    EnumDef,
+    StructDef,
+}

@@ -10,7 +10,7 @@ use crate::{
     TypeId,
 };
 
-use super::{with_either, TypeName};
+use super::TypeName;
 
 #[derive(Debug, Serialize)]
 #[serde(untagged)]
@@ -21,19 +21,31 @@ pub enum TypeDef {
 
 impl TypeDef {
     pub fn id(&self) -> TypeId {
-        with_either!(self, it => it.id)
+        match self {
+            TypeDef::Struct(def) => def.id,
+            TypeDef::Enum(def) => def.id,
+        }
     }
 
     pub fn name(&self) -> &str {
-        with_either!(self, it => &it.name)
+        match self {
+            TypeDef::Struct(def) => &def.name,
+            TypeDef::Enum(def) => &def.name,
+        }
     }
 
     pub fn visitable(&self) -> bool {
-        with_either!(self, it => it.visitable)
+        match self {
+            TypeDef::Struct(def) => def.visitable,
+            TypeDef::Enum(def) => def.visitable,
+        }
     }
 
     pub fn generated_derives(&self) -> &Vec<String> {
-        with_either!(self, it => &it.generated_derives)
+        match self {
+            TypeDef::Struct(def) => &def.generated_derives,
+            TypeDef::Enum(def) => &def.generated_derives,
+        }
     }
 
     pub fn generates_derive(&self, derive: &str) -> bool {
@@ -42,7 +54,10 @@ impl TypeDef {
     }
 
     pub fn module_path(&self) -> &str {
-        with_either!(self, it => &it.module_path)
+        match self {
+            TypeDef::Struct(def) => &def.module_path,
+            TypeDef::Enum(def) => &def.module_path,
+        }
     }
 }
 
