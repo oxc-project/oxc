@@ -211,14 +211,17 @@ impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
 
         if !matches!(expr, Expression::CallExpression(_)) {
             // Try to get binding from parent VariableDeclarator
-            let id_binding = if let Ancestor::VariableDeclaratorInit(declarator) = ctx.parent() {
-                declarator.id().get_binding_identifier().map(BoundIdentifier::from_binding_ident)
-            } else {
-                None
-            };
-            if let Some(id_binding) = id_binding {
-                self.handle_function_in_variable_declarator(&id_binding, &binding, arguments, ctx);
-                return;
+            if let Ancestor::VariableDeclaratorInit(declarator) = ctx.parent() {
+                if let Some(ident) = declarator.id().get_binding_identifier() {
+                    let id_binding = BoundIdentifier::from_binding_ident(ident);
+                    self.handle_function_in_variable_declarator(
+                        &id_binding,
+                        &binding,
+                        arguments,
+                        ctx,
+                    );
+                    return;
+                }
             }
         }
 
@@ -813,19 +816,17 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
         );
 
         // Get the address of the statement containing this `VariableDeclarator`
-        #[allow(clippy::single_match_else)]
-        let address = match ctx.ancestor(2) {
-            // For `export const Foo = () => {}`
-            // which is a `VariableDeclaration` inside a `Statement::ExportNamedDeclaration`
-            Ancestor::ExportNamedDeclarationDeclaration(export_decl) => export_decl.address(),
-            // Otherwise just a `const Foo = () => {}`
-            // which is a `Statement::VariableDeclaration`
-            _ => {
+        let address =
+            if let Ancestor::ExportNamedDeclarationDeclaration(export_decl) = ctx.ancestor(2) {
+                // For `export const Foo = () => {}`
+                // which is a `VariableDeclaration` inside a `Statement::ExportNamedDeclaration`
+                export_decl.address()
+            } else {
+                // Otherwise just a `const Foo = () => {}` which is a `Statement::VariableDeclaration`
                 let var_decl = ctx.ancestor(1);
                 debug_assert!(matches!(var_decl, Ancestor::VariableDeclarationDeclarations(_)));
                 var_decl.address()
-            }
-        };
+            };
         self.ctx.statement_injector.insert_after(&address, statement);
     }
 
