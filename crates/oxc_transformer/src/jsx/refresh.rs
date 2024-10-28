@@ -2,7 +2,7 @@ use base64::prelude::{Engine, BASE64_STANDARD};
 use rustc_hash::FxHashMap;
 use sha1::{Digest, Sha1};
 
-use oxc_allocator::{CloneIn, GetAddress};
+use oxc_allocator::{CloneIn, GetAddress, Vec as ArenaVec};
 use oxc_ast::{ast::*, match_expression, AstBuilder, NONE};
 use oxc_semantic::{Reference, ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{Atom, GetSpan, SPAN};
@@ -103,7 +103,7 @@ pub struct ReactRefresh<'a, 'ctx> {
     registrations: Vec<(BoundIdentifier<'a>, Atom<'a>)>,
     /// Used to wrap call expression with signature.
     /// (eg: hoc(() => {}) -> _s1(hoc(_s1(() => {}))))
-    last_signature: Option<(BindingIdentifier<'a>, oxc_allocator::Vec<'a, Argument<'a>>)>,
+    last_signature: Option<(BindingIdentifier<'a>, ArenaVec<'a, Argument<'a>>)>,
     // (function_scope_id, (hook_name, hook_key, custom_hook_callee)
     hook_calls: FxHashMap<ScopeId, Vec<(Atom<'a>, Atom<'a>)>>,
     non_builtin_hooks_callee: FxHashMap<ScopeId, Vec<Option<Expression<'a>>>>,
@@ -210,50 +210,14 @@ impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
         let binding = BoundIdentifier::from_binding_ident(&binding_identifier);
 
         if !matches!(expr, Expression::CallExpression(_)) {
-            if let Ancestor::VariableDeclaratorInit(declarator) = ctx.parent() {
-                // Special case when a function would get an inferred name:
-                // let Foo = () => {}
-                // let Foo = function() {}
-                // We'll add signature it on next line so that
-                // we don't mess up the inferred 'Foo' function name.
-
-                // Result: let Foo = () => {}; __signature(Foo, ...);
-                let id = declarator.id().get_binding_identifier().unwrap();
-                let id_binding = BoundIdentifier::from_binding_ident(id);
-
-                let first_argument = Argument::from(id_binding.create_read_expression(ctx));
-                arguments.insert(0, first_argument);
-                let statement = ctx.ast.statement_expression(
-                    SPAN,
-                    ctx.ast.expression_call(
-                        SPAN,
-                        binding.create_read_expression(ctx),
-                        NONE,
-                        arguments,
-                        false,
-                    ),
-                );
-
-                // Get the address of the statement containing this `VariableDeclarator`
-                #[allow(clippy::single_match_else)]
-                let address = match ctx.ancestor(2) {
-                    // For `export const Foo = () => {}`
-                    // which is a `VariableDeclaration` inside a `Statement::ExportNamedDeclaration`
-                    Ancestor::ExportNamedDeclarationDeclaration(export_decl) => {
-                        export_decl.address()
-                    }
-                    // Otherwise just a `const Foo = () => {}`
-                    // which is a `Statement::VariableDeclaration`
-                    _ => {
-                        let var_decl = ctx.ancestor(1);
-                        debug_assert!(matches!(
-                            var_decl,
-                            Ancestor::VariableDeclarationDeclarations(_)
-                        ));
-                        var_decl.address()
-                    }
-                };
-                self.ctx.statement_injector.insert_after(&address, statement);
+            // Try to get binding from parent VariableDeclarator
+            let id_binding = if let Ancestor::VariableDeclaratorInit(declarator) = ctx.parent() {
+                declarator.id().get_binding_identifier().map(BoundIdentifier::from_binding_ident)
+            } else {
+                None
+            };
+            if let Some(id_binding) = id_binding {
+                self.handle_function_in_variable_declarator(&id_binding, &binding, arguments, ctx);
                 return;
             }
         }
@@ -542,7 +506,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
         scope_id: ScopeId,
         body: &mut FunctionBody<'a>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Option<(BindingIdentifier<'a>, oxc_allocator::Vec<'a, Argument<'a>>)> {
+    ) -> Option<(BindingIdentifier<'a>, ArenaVec<'a, Argument<'a>>)> {
         let fn_hook_calls = self.hook_calls.remove(&scope_id)?;
 
         let mut key = fn_hook_calls
@@ -819,6 +783,50 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
         }
 
         Some(self.create_assignment_expression(id, ctx))
+    }
+
+    /// Handle `export const Foo = () => {}` or `const Foo = function() {}`
+    fn handle_function_in_variable_declarator(
+        &self,
+        id_binding: &BoundIdentifier<'a>,
+        binding: &BoundIdentifier<'a>,
+        mut arguments: ArenaVec<'a, Argument<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        // Special case when a function would get an inferred name:
+        // let Foo = () => {}
+        // let Foo = function() {}
+        // We'll add signature it on next line so that
+        // we don't mess up the inferred 'Foo' function name.
+
+        // Result: let Foo = () => {}; __signature(Foo, ...);
+        arguments.insert(0, Argument::from(id_binding.create_read_expression(ctx)));
+        let statement = ctx.ast.statement_expression(
+            SPAN,
+            ctx.ast.expression_call(
+                SPAN,
+                binding.create_read_expression(ctx),
+                NONE,
+                arguments,
+                false,
+            ),
+        );
+
+        // Get the address of the statement containing this `VariableDeclarator`
+        #[allow(clippy::single_match_else)]
+        let address = match ctx.ancestor(2) {
+            // For `export const Foo = () => {}`
+            // which is a `VariableDeclaration` inside a `Statement::ExportNamedDeclaration`
+            Ancestor::ExportNamedDeclarationDeclaration(export_decl) => export_decl.address(),
+            // Otherwise just a `const Foo = () => {}`
+            // which is a `Statement::VariableDeclaration`
+            _ => {
+                let var_decl = ctx.ancestor(1);
+                debug_assert!(matches!(var_decl, Ancestor::VariableDeclarationDeclarations(_)));
+                var_decl.address()
+            }
+        };
+        self.ctx.statement_injector.insert_after(&address, statement);
     }
 
     /// Convert arrow function expression to normal arrow function
