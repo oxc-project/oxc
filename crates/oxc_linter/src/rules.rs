@@ -156,6 +156,7 @@ mod typescript {
     pub mod no_duplicate_enum_values;
     pub mod no_dynamic_delete;
     pub mod no_empty_interface;
+    pub mod no_empty_object_type;
     pub mod no_explicit_any;
     pub mod no_extra_non_null_assertion;
     pub mod no_extraneous_class;
@@ -168,6 +169,7 @@ mod typescript {
     pub mod no_this_alias;
     pub mod no_unnecessary_type_constraint;
     pub mod no_unsafe_declaration_merging;
+    pub mod no_unsafe_function_type;
     pub mod no_useless_empty_export;
     pub mod no_var_requires;
     pub mod no_wrapper_object_types;
@@ -830,6 +832,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_duplicate_enum_values,
     typescript::no_dynamic_delete,
     typescript::no_empty_interface,
+    typescript::no_empty_object_type,
     typescript::no_explicit_any,
     typescript::no_extra_non_null_assertion,
     typescript::no_extraneous_class,
@@ -842,6 +845,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_this_alias,
     typescript::no_unnecessary_type_constraint,
     typescript::no_unsafe_declaration_merging,
+    typescript::no_unsafe_function_type,
     typescript::no_useless_empty_export,
     typescript::no_var_requires,
     typescript::no_wrapper_object_types,
