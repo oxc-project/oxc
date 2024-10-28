@@ -88,7 +88,7 @@ fn is_invalid_type(ty: &TSType) -> bool {
     }
 }
 
-fn is_invalid_expression(expression: Option<&Expression>, ctx: &LintContext<'_>) -> bool {
+fn is_invalid_expression<'a>(expression: Option<&Expression<'a>>, ctx: &LintContext<'a>) -> bool {
     let Some(expression) = expression else {
         return false;
     };
