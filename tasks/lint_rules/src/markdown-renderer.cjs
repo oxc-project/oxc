@@ -81,7 +81,7 @@ ${
     .join('\n')
 }
 
-✨ = Implemented, 🚫 = Not supported
+✨ = Implemented, 🚫 = No need to implement
 
 </details>
 `;
