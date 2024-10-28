@@ -297,13 +297,10 @@ jobs:
         with:
           filters: |
             src:
-              - 'pnpm-lock.yaml'
-              - 'napi/**'
+              - '!crates/oxc_linter/**'
       - uses: Boshen/setup-rust@main
         if: steps.filter.outputs.src == 'true'
         with:
-          # warm cache factory for all other CI jobs
-          # cache `target` directory to avoid download crates
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: warm
       - uses: ./.github/actions/pnpm
