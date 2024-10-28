@@ -143,7 +143,7 @@ declare_oxc_lint!(
     /// ```
     NoUselessSpread,
     correctness,
-    conditional_fix
+    fix_dangerous
 );
 
 impl Rule for NoUselessSpread {
