@@ -17,9 +17,9 @@
     "**/CHANGELOG.md",
     "pnpm-workspace.yaml",
     "pnpm-lock.yaml",
-    "napi/transform/index.js",
+    "napi/{transform,minify}/index.js",
     "napi/parser/bindings.js",
-    "napi/{parser,transform}/index.d.ts",
+    "napi/{parser,transform,minify}/index.d.ts",
     "npm/*/package.json",
     "npm/oxlint/configuration_schema.json",
     ".github/.generated_ast_watch_list.yml"

@@ -35,23 +35,25 @@ describe('react refresh plugin', () => {
 
   it('matches output', () => {
     const ret = oxc.transform('test.tsx', code, { jsx: { refresh: {} } });
+    console.log(ret.code)
     assert.equal(
       ret.code,
-      'var _s = $RefreshSig$();\n' +
-        'import { useState } from "react";\n' +
-        'import { jsxs as _jsxs } from "react/jsx-runtime";\n' +
-        'export const App = () => {\n' +
-        '\t_s();\n' +
-        '\tconst [count, setCount] = useState(0);\n' +
-        '\treturn _jsxs("button", {\n' +
-        '\t\tonClick: () => setCount(count + 1),\n' +
-        '\t\tchildren: ["count is ", count]\n' +
-        '\t});\n' +
-        '};\n' +
-        '_s(App, "oDgYfYHkD9Wkv4hrAPCkI/ev3YU=");\n' +
-        '_c = App;\n' +
-        'var _c;\n' +
-        '$RefreshReg$(_c, "App");\n',
+`import { useState } from "react";
+import { jsxs as _jsxs } from "react/jsx-runtime";
+var _s = $RefreshSig$();
+export const App = () => {
+	_s();
+	const [count, setCount] = useState(0);
+	return _jsxs("button", {
+		onClick: () => setCount(count + 1),
+		children: ["count is ", count]
+	});
+};
+_s(App, "oDgYfYHkD9Wkv4hrAPCkI/ev3YU=");
+_c = App;
+var _c;
+$RefreshReg$(_c, "App");
+`
     );
   });
 });
