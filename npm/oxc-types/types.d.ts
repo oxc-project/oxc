@@ -1393,6 +1393,7 @@ export interface TSIndexSignature extends Span {
   parameters: Array<TSIndexSignatureName>;
   typeAnnotation: TSTypeAnnotation;
   readonly: boolean;
+  static: boolean;
 }
 
 export interface TSCallSignatureDeclaration extends Span {

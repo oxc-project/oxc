@@ -2552,6 +2552,7 @@ impl<'a> Serialize for TSIndexSignature<'a> {
         map.serialize_entry("parameters", &self.parameters)?;
         map.serialize_entry("typeAnnotation", &self.type_annotation)?;
         map.serialize_entry("readonly", &self.readonly)?;
+        map.serialize_entry("static", &self.r#static)?;
         map.end()
     }
 }

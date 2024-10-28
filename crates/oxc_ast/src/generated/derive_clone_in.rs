@@ -3369,6 +3369,7 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for TSIndexSignature<'old_alloc
             parameters: CloneIn::clone_in(&self.parameters, allocator),
             type_annotation: CloneIn::clone_in(&self.type_annotation, allocator),
             readonly: CloneIn::clone_in(&self.readonly, allocator),
+            r#static: CloneIn::clone_in(&self.r#static, allocator),
         }
     }
 }

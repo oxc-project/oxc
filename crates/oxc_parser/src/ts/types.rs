@@ -1285,10 +1285,11 @@ impl<'a> ParserImpl<'a> {
     ) -> Result<TSIndexSignature<'a>> {
         self.verify_modifiers(
             modifiers,
-            ModifierFlags::READONLY,
+            ModifierFlags::READONLY | ModifierFlags::STATIC,
             diagnostics::cannot_appear_on_an_index_signature,
         );
         let readonly = modifiers.contains(ModifierKind::Readonly);
+        let r#static = modifiers.contains(ModifierKind::Static);
 
         self.bump(Kind::LBrack);
         let index_name = self.parse_ts_index_signature_name()?;
@@ -1305,6 +1306,7 @@ impl<'a> ParserImpl<'a> {
                 parameters,
                 type_annotation,
                 readonly,
+                r#static,
             ))
         } else {
             Err(self.unexpected())

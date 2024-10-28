@@ -3450,6 +3450,7 @@ impl<'a> ContentEq for TSIndexSignature<'a> {
         ContentEq::content_eq(&self.parameters, &other.parameters)
             && ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
             && ContentEq::content_eq(&self.readonly, &other.readonly)
+            && ContentEq::content_eq(&self.r#static, &other.r#static)
     }
 }
 

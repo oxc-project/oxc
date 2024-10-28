@@ -1036,6 +1036,7 @@ const _: () = {
     assert!(offset_of!(TSIndexSignature, parameters) == 8usize);
     assert!(offset_of!(TSIndexSignature, type_annotation) == 40usize);
     assert!(offset_of!(TSIndexSignature, readonly) == 48usize);
+    assert!(offset_of!(TSIndexSignature, r#static) == 49usize);
 
     assert!(size_of::<TSCallSignatureDeclaration>() == 64usize);
     assert!(align_of::<TSCallSignatureDeclaration>() == 8usize);
@@ -2595,6 +2596,7 @@ const _: () = {
     assert!(offset_of!(TSIndexSignature, parameters) == 8usize);
     assert!(offset_of!(TSIndexSignature, type_annotation) == 24usize);
     assert!(offset_of!(TSIndexSignature, readonly) == 28usize);
+    assert!(offset_of!(TSIndexSignature, r#static) == 29usize);
 
     assert!(size_of::<TSCallSignatureDeclaration>() == 44usize);
     assert!(align_of::<TSCallSignatureDeclaration>() == 4usize);
