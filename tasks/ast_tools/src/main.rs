@@ -11,6 +11,7 @@ mod codegen;
 mod derives;
 mod generators;
 mod layout;
+mod logger;
 mod markers;
 mod output;
 mod passes;
@@ -26,6 +27,7 @@ use generators::{
     AssertLayouts, AstBuilderGenerator, AstKindGenerator, Generator, TypescriptGenerator,
     VisitGenerator, VisitMutGenerator,
 };
+use logger::{log, log_failed, log_result, log_success};
 use output::{Output, RawOutput};
 use passes::{CalcLayout, Linker};
 use schema::Schema;
@@ -134,55 +136,3 @@ fn generate_json_schema(schema: &Schema) -> Result<RawOutput> {
     let output = Output::Raw { path: SCHEMA_PATH.to_string(), code: schema }.into_raw(file!());
     Ok(output)
 }
-
-#[macro_use]
-mod logger {
-    use std::sync::OnceLock;
-
-    static LOG: OnceLock<bool> = OnceLock::new();
-
-    pub(super) fn quiet() -> Result<(), bool> {
-        LOG.set(false)
-    }
-
-    pub(super) fn __internal_log_enable() -> bool {
-        *LOG.get_or_init(|| true)
-    }
-
-    macro_rules! log {
-        ($fmt:literal $(, $args:expr)*) => {
-            if $crate::logger::__internal_log_enable() {
-                print!("{}", format!($fmt$(, $args)*));
-            }
-        }
-    }
-
-    macro_rules! log_success {
-        () => {
-            $crate::log!("Done!\n");
-        };
-    }
-
-    macro_rules! log_failed {
-        () => {
-            $crate::log!("FAILED\n");
-        };
-    }
-
-    macro_rules! log_result {
-        ($result:expr) => {
-            match &($result) {
-                Ok(_) => {
-                    $crate::log_success!();
-                }
-                Err(_) => {
-                    $crate::log_failed!();
-                }
-            }
-        };
-    }
-
-    pub(super) use {log, log_failed, log_result, log_success};
-}
-
-pub(crate) use logger::{log, log_failed, log_result, log_success};
