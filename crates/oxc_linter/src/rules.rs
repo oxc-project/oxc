@@ -15,6 +15,7 @@ mod import {
     pub mod named;
     pub mod namespace;
     pub mod no_amd;
+    pub mod no_commonjs;
     pub mod no_cycle;
     pub mod no_default_export;
     pub mod no_duplicates;
@@ -624,6 +625,7 @@ oxc_macros::declare_all_lint_rules! {
     import::named,
     import::namespace,
     import::no_amd,
+    import::no_commonjs,
     import::no_cycle,
     import::no_default_export,
     import::no_duplicates,
