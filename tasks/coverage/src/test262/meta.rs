@@ -1,4 +1,4 @@
-use saphyr::{Yaml, YamlLoader};
+use saphyr::Yaml;
 
 #[derive(Debug, Clone, Default)]
 pub struct MetaData {
@@ -87,7 +87,7 @@ impl Phase {
 
 impl MetaData {
     pub fn from_str(s: &str) -> Self {
-        let yamls = YamlLoader::load_from_str(s).unwrap_or_default();
+        let yamls = Yaml::load_from_str(s).unwrap_or_default();
         let Some(yaml) = yamls.first() else { return Self::default() };
         Self {
             // description: yaml["description"].as_str().unwrap_or_default().into(),
