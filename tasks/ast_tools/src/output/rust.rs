@@ -6,13 +6,13 @@ use std::{
 use lazy_static::lazy_static;
 use proc_macro2::TokenStream;
 use regex::{Captures, Regex, Replacer};
-use syn::parse_file;
+use syn::parse2;
 
 use super::add_header;
 
 /// Format Rust code, and add header.
-pub fn print_rust(tokens: &TokenStream, generator_path: &str) -> String {
-    let code = prettyplease::unparse(&parse_file(tokens.to_string().as_str()).unwrap());
+pub fn print_rust(tokens: TokenStream, generator_path: &str) -> String {
+    let code = prettyplease::unparse(&parse2(tokens).unwrap());
     let code = COMMENT_REGEX.replace_all(&code, CommentReplacer).to_string();
     let code = add_header(&code, generator_path, "//");
     rust_fmt(&code)

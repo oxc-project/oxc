@@ -35,10 +35,10 @@ describe('react refresh plugin', () => {
 
   it('matches output', () => {
     const ret = oxc.transform('test.tsx', code, { jsx: { refresh: {} } });
-    console.log(ret.code)
+    console.log(ret.code);
     assert.equal(
       ret.code,
-`import { useState } from "react";
+      `import { useState } from "react";
 import { jsxs as _jsxs } from "react/jsx-runtime";
 var _s = $RefreshSig$();
 export const App = () => {
@@ -53,7 +53,7 @@ _s(App, "oDgYfYHkD9Wkv4hrAPCkI/ev3YU=");
 _c = App;
 var _c;
 $RefreshReg$(_c, "App");
-`
+`,
     );
   });
 });
