@@ -122,11 +122,11 @@ macro_rules! ascii_byte_handler {
     ($id:ident($lex:ident) $body:expr) => {
         byte_handler!($id($lex) {
             // SAFETY: This macro is only used for ASCII characters
-            unsafe {
-                use assert_unchecked::assert_unchecked;
-                assert_unchecked!(!$lex.source.is_eof());
-                assert_unchecked!($lex.source.peek_byte_unchecked() < 128);
-            }
+            // unsafe {
+                // use assert_unchecked::assert_unchecked;
+                // assert_unchecked!(!$lex.source.is_eof());
+                // assert_unchecked!($lex.source.peek_byte_unchecked() < 128);
+            // }
             $body
         });
     };
