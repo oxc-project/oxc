@@ -96,22 +96,26 @@ export type Expression =
 
 export interface IdentifierName extends Span {
   type: 'Identifier';
-  name: string;
+  sourcePtr: number;
+  marker: string;
 }
 
 export interface IdentifierReference extends Span {
   type: 'Identifier';
-  name: string;
+  sourcePtr: number;
+  marker: string;
 }
 
 export interface BindingIdentifier extends Span {
   type: 'Identifier';
-  name: string;
+  sourcePtr: number;
+  marker: string;
 }
 
 export interface LabelIdentifier extends Span {
   type: 'Identifier';
-  name: string;
+  sourcePtr: number;
+  marker: string;
 }
 
 export interface ThisExpression extends Span {
@@ -1734,7 +1738,8 @@ export type JSXAttributeValue = StringLiteral | JSXExpressionContainer | JSXElem
 
 export interface JSXIdentifier extends Span {
   type: 'JSXIdentifier';
-  name: string;
+  sourcePtr: number;
+  marker: string;
 }
 
 export type JSXChild = JSXText | JSXElement | JSXFragment | JSXExpressionContainer | JSXSpreadChild;

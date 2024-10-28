@@ -4,6 +4,8 @@
 // They are purely markers for codegen used in `tasks/ast_tools` and `crates/oxc_traverse/scripts`. See docs in those crates.
 // Read [`macro@oxc_ast_macros::ast`] for more information.
 
+use std::marker::PhantomData;
+
 use oxc_allocator::{Box, CloneIn, Vec};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
@@ -421,7 +423,9 @@ pub struct JSXIdentifier<'a> {
     /// Node location in source code
     pub span: Span,
     /// The name of the identifier.
-    pub name: Atom<'a>,
+    // pub name: Atom<'a>,
+    pub(crate) source_ptr: *const u8,
+    pub(crate) marker: PhantomData<Atom<'a>>,
 }
 
 // 1.4 JSX Children

@@ -167,7 +167,8 @@ impl<'a> Serialize for IdentifierName<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "Identifier")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("name", &self.name)?;
+        map.serialize_entry("sourcePtr", &self.source_ptr)?;
+        map.serialize_entry("marker", &self.marker)?;
         map.end()
     }
 }
@@ -177,7 +178,8 @@ impl<'a> Serialize for IdentifierReference<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "Identifier")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("name", &self.name)?;
+        map.serialize_entry("sourcePtr", &self.source_ptr)?;
+        map.serialize_entry("marker", &self.marker)?;
         map.end()
     }
 }
@@ -187,7 +189,8 @@ impl<'a> Serialize for BindingIdentifier<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "Identifier")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("name", &self.name)?;
+        map.serialize_entry("sourcePtr", &self.source_ptr)?;
+        map.serialize_entry("marker", &self.marker)?;
         map.end()
     }
 }
@@ -197,7 +200,8 @@ impl<'a> Serialize for LabelIdentifier<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "Identifier")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("name", &self.name)?;
+        map.serialize_entry("sourcePtr", &self.source_ptr)?;
+        map.serialize_entry("marker", &self.marker)?;
         map.end()
     }
 }
@@ -3231,7 +3235,8 @@ impl<'a> Serialize for JSXIdentifier<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSXIdentifier")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("name", &self.name)?;
+        map.serialize_entry("sourcePtr", &self.source_ptr)?;
+        map.serialize_entry("marker", &self.marker)?;
         map.end()
     }
 }

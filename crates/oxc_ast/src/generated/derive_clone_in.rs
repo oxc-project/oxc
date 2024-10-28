@@ -239,7 +239,8 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for IdentifierName<'old_alloc> 
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         IdentifierName {
             span: CloneIn::clone_in(&self.span, allocator),
-            name: CloneIn::clone_in(&self.name, allocator),
+            source_ptr: CloneIn::clone_in(&self.source_ptr, allocator),
+            marker: CloneIn::clone_in(&self.marker, allocator),
         }
     }
 }
@@ -249,7 +250,8 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for IdentifierReference<'old_al
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         IdentifierReference {
             span: CloneIn::clone_in(&self.span, allocator),
-            name: CloneIn::clone_in(&self.name, allocator),
+            source_ptr: CloneIn::clone_in(&self.source_ptr, allocator),
+            marker: CloneIn::clone_in(&self.marker, allocator),
             reference_id: Default::default(),
         }
     }
@@ -260,7 +262,8 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for BindingIdentifier<'old_allo
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         BindingIdentifier {
             span: CloneIn::clone_in(&self.span, allocator),
-            name: CloneIn::clone_in(&self.name, allocator),
+            source_ptr: CloneIn::clone_in(&self.source_ptr, allocator),
+            marker: CloneIn::clone_in(&self.marker, allocator),
             symbol_id: Default::default(),
         }
     }
@@ -271,7 +274,8 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for LabelIdentifier<'old_alloc>
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         LabelIdentifier {
             span: CloneIn::clone_in(&self.span, allocator),
-            name: CloneIn::clone_in(&self.name, allocator),
+            source_ptr: CloneIn::clone_in(&self.source_ptr, allocator),
+            marker: CloneIn::clone_in(&self.marker, allocator),
         }
     }
 }
@@ -4191,7 +4195,8 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for JSXIdentifier<'old_alloc> {
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         JSXIdentifier {
             span: CloneIn::clone_in(&self.span, allocator),
-            name: CloneIn::clone_in(&self.name, allocator),
+            source_ptr: CloneIn::clone_in(&self.source_ptr, allocator),
+            marker: CloneIn::clone_in(&self.marker, allocator),
         }
     }
 }

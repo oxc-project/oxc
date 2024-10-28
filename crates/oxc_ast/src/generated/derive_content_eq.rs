@@ -275,25 +275,29 @@ impl<'a> ContentEq for Expression<'a> {
 
 impl<'a> ContentEq for IdentifierName<'a> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.name, &other.name)
+        ContentEq::content_eq(&self.source_ptr, &other.source_ptr)
+            && ContentEq::content_eq(&self.marker, &other.marker)
     }
 }
 
 impl<'a> ContentEq for IdentifierReference<'a> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.name, &other.name)
+        ContentEq::content_eq(&self.source_ptr, &other.source_ptr)
+            && ContentEq::content_eq(&self.marker, &other.marker)
     }
 }
 
 impl<'a> ContentEq for BindingIdentifier<'a> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.name, &other.name)
+        ContentEq::content_eq(&self.source_ptr, &other.source_ptr)
+            && ContentEq::content_eq(&self.marker, &other.marker)
     }
 }
 
 impl<'a> ContentEq for LabelIdentifier<'a> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.name, &other.name)
+        ContentEq::content_eq(&self.source_ptr, &other.source_ptr)
+            && ContentEq::content_eq(&self.marker, &other.marker)
     }
 }
 
@@ -4169,7 +4173,8 @@ impl<'a> ContentEq for JSXAttributeValue<'a> {
 
 impl<'a> ContentEq for JSXIdentifier<'a> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.name, &other.name)
+        ContentEq::content_eq(&self.source_ptr, &other.source_ptr)
+            && ContentEq::content_eq(&self.marker, &other.marker)
     }
 }
 

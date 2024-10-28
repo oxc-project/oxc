@@ -1489,6 +1489,7 @@ dependencies = [
  "cow-utils",
  "itertools",
  "lazy_static",
+ "oxc-miette",
  "prettyplease",
  "proc-macro2",
  "quote",

@@ -1,5 +1,6 @@
 // FIXME: lots of methods are missing docs. If you have time, it would be a huge help to add some :)
 #![warn(missing_docs)]
+use core::str;
 use std::{borrow::Cow, fmt};
 
 use oxc_allocator::{Address, Box, FromIn, GetAddress, Vec};
@@ -102,7 +103,7 @@ impl<'a> Expression<'a> {
 
     /// Determines whether the given expr is a `undefined` literal
     pub fn is_undefined(&self) -> bool {
-        matches!(self, Self::Identifier(ident) if ident.name == "undefined")
+        matches!(self, Self::Identifier(ident) if ident.name() == "undefined")
     }
 
     /// Determines whether the given expr is a `void expr`
@@ -154,7 +155,7 @@ impl<'a> Expression<'a> {
 
     /// Determines whether the given expr is a `NaN` literal
     pub fn is_nan(&self) -> bool {
-        matches!(self, Self::Identifier(ident) if ident.name == "NaN")
+        matches!(self, Self::Identifier(ident) if ident.name() == "NaN")
     }
 
     /// Remove nested parentheses from this expression.
@@ -169,7 +170,7 @@ impl<'a> Expression<'a> {
     #[allow(missing_docs)]
     pub fn is_specific_id(&self, name: &str) -> bool {
         match self.get_inner_expression() {
-            Expression::Identifier(ident) => ident.name == name,
+            Expression::Identifier(ident) => ident.name() == name,
             _ => false,
         }
     }
@@ -286,10 +287,40 @@ impl<'a> Expression<'a> {
     }
 }
 
+macro_rules! impl_identifier_like {
+    ($name:ident) => {
+        impl<'a> $name<'a> {
+            /// Returns the name of this identifier.
+            pub fn name(&self) -> &'a str {
+                unsafe {
+                    let ptr = self.source_ptr.add(self.span.start as usize);
+                    let name_slice = std::slice::from_raw_parts(ptr, self.span.size() as usize);
+                    std::str::from_utf8_unchecked(name_slice)
+                }
+            }
+
+            /// Returns the length of this identifier.
+            pub fn len(&self) -> usize {
+                self.span.size() as usize
+            }
+
+            /// Returns `true` if this identifier is empty.
+            pub fn is_empty(&self) -> bool {
+                self.len() == 0
+            }
+        }
+    };
+}
+pub(super) use impl_identifier_like;
+impl_identifier_like!(IdentifierName);
+impl_identifier_like!(IdentifierReference);
+impl_identifier_like!(BindingIdentifier);
+impl_identifier_like!(LabelIdentifier);
+
 impl<'a> fmt::Display for IdentifierName<'a> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.name.fmt(f)
+        self.name().fmt(f)
     }
 }
 
@@ -303,14 +334,14 @@ impl<'a> IdentifierReference<'a> {
 
 impl<'a> fmt::Display for IdentifierReference<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.name.fmt(f)
+        self.name().fmt(f)
     }
 }
 
 impl<'a> fmt::Display for BindingIdentifier<'a> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.name.fmt(f)
+        self.name().fmt(f)
     }
 }
 
@@ -333,7 +364,7 @@ impl<'a> PropertyKey<'a> {
     #[allow(missing_docs)]
     pub fn static_name(&self) -> Option<Cow<'a, str>> {
         match self {
-            Self::StaticIdentifier(ident) => Some(Cow::Borrowed(ident.name.as_str())),
+            Self::StaticIdentifier(ident) => Some(Cow::Borrowed(ident.name())),
             Self::StringLiteral(lit) => Some(Cow::Borrowed(lit.value.as_str())),
             Self::RegExpLiteral(lit) => Some(Cow::Owned(lit.regex.to_string())),
             Self::NumericLiteral(lit) => Some(Cow::Owned(lit.value.to_string())),
@@ -381,7 +412,7 @@ impl<'a> PropertyKey<'a> {
     #[allow(missing_docs)]
     pub fn is_specific_id(&self, name: &str) -> bool {
         match self {
-            PropertyKey::StaticIdentifier(ident) => ident.name == name,
+            PropertyKey::StaticIdentifier(ident) => ident.name() == name,
             _ => false,
         }
     }
@@ -443,7 +474,7 @@ impl<'a> MemberExpression<'a> {
             MemberExpression::ComputedMemberExpression(expr) => {
                 expr.static_property_name().map(|name| name.as_str())
             }
-            MemberExpression::StaticMemberExpression(expr) => Some(expr.property.name.as_str()),
+            MemberExpression::StaticMemberExpression(expr) => Some(expr.property.name()),
             MemberExpression::PrivateFieldExpression(_) => None,
         }
     }
@@ -463,7 +494,7 @@ impl<'a> MemberExpression<'a> {
                 _ => None,
             },
             MemberExpression::StaticMemberExpression(expr) => {
-                Some((expr.property.span, expr.property.name.as_str()))
+                Some((expr.property.span, expr.property.name()))
             }
             MemberExpression::PrivateFieldExpression(_) => None,
         }
@@ -536,7 +567,7 @@ impl<'a> CallExpression<'a> {
     #[allow(missing_docs)]
     pub fn callee_name(&self) -> Option<&str> {
         match &self.callee {
-            Expression::Identifier(ident) => Some(ident.name.as_str()),
+            Expression::Identifier(ident) => Some(ident.name()),
             expr => expr.as_member_expression().and_then(MemberExpression::static_property_name),
         }
     }
@@ -547,7 +578,7 @@ impl<'a> CallExpression<'a> {
             return false;
         }
         if let Expression::Identifier(id) = &self.callee {
-            id.name == "require"
+            id.name() == "require"
                 && matches!(
                     self.arguments.first(),
                     Some(Argument::StringLiteral(_) | Argument::TemplateLiteral(_)),
@@ -561,10 +592,10 @@ impl<'a> CallExpression<'a> {
     pub fn is_symbol_or_symbol_for_call(&self) -> bool {
         // TODO: is 'Symbol' reference to global object
         match &self.callee {
-            Expression::Identifier(id) => id.name == "Symbol",
+            Expression::Identifier(id) => id.name() == "Symbol",
             expr => match expr.as_member_expression() {
                 Some(member) => {
-                    matches!(member.object(), Expression::Identifier(id) if id.name == "Symbol")
+                    matches!(member.object(), Expression::Identifier(id) if id.name() == "Symbol")
                         && member.static_property_name() == Some("for")
                 }
                 None => false,
@@ -612,7 +643,7 @@ impl<'a> SimpleAssignmentTarget<'a> {
     #[allow(missing_docs)]
     pub fn get_identifier(&self) -> Option<&'a str> {
         match self {
-            Self::AssignmentTargetIdentifier(ident) => Some(ident.name.as_str()),
+            Self::AssignmentTargetIdentifier(ident) => Some(ident.name()),
             match_member_expression!(Self) => self.to_member_expression().static_property_name(),
             _ => None,
         }
@@ -676,10 +707,10 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
     #[allow(missing_docs)]
     pub fn name(&self) -> Option<Atom> {
         match self {
-            AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(id) => Some(id.name.clone()),
+            AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(id) => Some(id.name().into()),
             Self::AssignmentTargetWithDefault(target) => {
                 if let AssignmentTarget::AssignmentTargetIdentifier(id) = &target.binding {
-                    Some(id.name.clone())
+                    Some(id.name().into())
                 } else {
                     None
                 }
@@ -911,7 +942,7 @@ impl<'a> BindingPatternKind<'a> {
     #[allow(missing_docs)]
     pub fn get_identifier(&self) -> Option<Atom<'a>> {
         match self {
-            Self::BindingIdentifier(ident) => Some(ident.name.clone()),
+            Self::BindingIdentifier(ident) => Some(ident.name().into()),
             Self::AssignmentPattern(assign) => assign.left.get_identifier(),
             _ => None,
         }
@@ -974,7 +1005,7 @@ impl<'a> Function<'a> {
     /// Returns this [`Function`]'s name, if it has one.
     #[inline]
     pub fn name(&self) -> Option<Atom<'a>> {
-        self.id.as_ref().map(|id| id.name.clone())
+        self.id.as_ref().map(|id| id.name().into())
     }
 
     /// Get the [`SymbolId`] this [`Function`] is bound to.
@@ -1427,7 +1458,7 @@ impl<'a> ImportDeclarationSpecifier<'a> {
 
     #[allow(missing_docs)]
     pub fn name(&self) -> Cow<'a, str> {
-        Cow::Borrowed(self.local().name.as_str())
+        Cow::Borrowed(self.local().name())
     }
 }
 
@@ -1435,7 +1466,7 @@ impl<'a> ImportAttributeKey<'a> {
     #[allow(missing_docs)]
     pub fn as_atom(&self) -> Atom<'a> {
         match self {
-            Self::Identifier(identifier) => identifier.name.clone(),
+            Self::Identifier(identifier) => identifier.name().into(),
             Self::StringLiteral(literal) => literal.value.clone(),
         }
     }
@@ -1479,9 +1510,9 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
 impl<'a> fmt::Display for ModuleExportName<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let s = match self {
-            Self::IdentifierName(identifier) => identifier.name.to_string(),
-            Self::IdentifierReference(identifier) => identifier.name.to_string(),
-            Self::StringLiteral(literal) => format!(r#""{}""#, literal.value),
+            Self::IdentifierName(identifier) => Cow::Borrowed(identifier.name()),
+            Self::IdentifierReference(identifier) => Cow::Borrowed(identifier.name()),
+            Self::StringLiteral(literal) => Cow::Owned(format!(r#""{}""#, literal.value)),
         };
         write!(f, "{s}")
     }
@@ -1491,8 +1522,8 @@ impl<'a> ModuleExportName<'a> {
     #[allow(missing_docs)]
     pub fn name(&self) -> Atom<'a> {
         match self {
-            Self::IdentifierName(identifier) => identifier.name.clone(),
-            Self::IdentifierReference(identifier) => identifier.name.clone(),
+            Self::IdentifierName(identifier) => identifier.name().into(),
+            Self::IdentifierReference(identifier) => identifier.name().into(),
             Self::StringLiteral(literal) => literal.value.clone(),
         }
     }
@@ -1500,8 +1531,8 @@ impl<'a> ModuleExportName<'a> {
     #[allow(missing_docs)]
     pub fn identifier_name(&self) -> Option<Atom<'a>> {
         match self {
-            Self::IdentifierName(identifier) => Some(identifier.name.clone()),
-            Self::IdentifierReference(identifier) => Some(identifier.name.clone()),
+            Self::IdentifierName(identifier) => Some(identifier.name().into()),
+            Self::IdentifierReference(identifier) => Some(identifier.name().into()),
             Self::StringLiteral(_) => None,
         }
     }

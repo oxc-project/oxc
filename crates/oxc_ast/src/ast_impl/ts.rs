@@ -14,7 +14,7 @@ impl<'a> TSEnumMemberName<'a> {
     /// Get the name of this enum member if it can be determined statically.
     pub fn static_name(&self) -> Option<&'a str> {
         match self {
-            Self::StaticIdentifier(ident) => Some(ident.name.as_str()),
+            Self::StaticIdentifier(ident) => Some(ident.name()),
             Self::StaticStringLiteral(lit) => Some(lit.value.as_str()),
             Self::NumericLiteral(lit) => Some(lit.raw),
             Self::StaticTemplateLiteral(lit) => lit.quasi().map(Into::into),
@@ -100,7 +100,7 @@ impl<'a> TSTypeName<'a> {
     /// Returns `true` if this is a reference to `const`.
     pub fn is_const(&self) -> bool {
         if let TSTypeName::IdentifierReference(ident) = self {
-            if ident.name == "const" {
+            if ident.name() == "const" {
                 return true;
             }
         }
@@ -220,7 +220,7 @@ impl<'a> TSModuleDeclarationName<'a> {
     /// Get the static name of this module declaration name.
     pub fn name(&self) -> Atom<'a> {
         match self {
-            Self::Identifier(ident) => ident.name.clone(),
+            Self::Identifier(ident) => ident.name().into(),
             Self::StringLiteral(lit) => lit.value.clone(),
         }
     }
@@ -286,7 +286,7 @@ impl<'a> Decorator<'a> {
     /// ```
     pub fn name(&self) -> Option<&'a str> {
         match &self.expression {
-            Expression::Identifier(ident) => Some(ident.name.as_str()),
+            Expression::Identifier(ident) => Some(ident.name()),
             expr @ match_member_expression!(Expression) => {
                 expr.to_member_expression().static_property_name()
             }

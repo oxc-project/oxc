@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use oxc_allocator::Box;
 use oxc_span::Span;
 use serde::{
@@ -250,17 +252,23 @@ struct DirectiveAsStatement<'a, 'b> {
     expression: &'b StringLiteral<'a>,
 }
 
+const THIS: &str = "this";
+const THIS_PTR: *const u8 = THIS.as_ptr();
 impl<'a> Serialize for JSXElementName<'a> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             Self::Identifier(ident) => ident.serialize(serializer),
-            Self::IdentifierReference(ident) => {
-                JSXIdentifier { span: ident.span, name: ident.name.clone() }.serialize(serializer)
+            Self::IdentifierReference(ident) => JSXIdentifier {
+                span: ident.span,
+                source_ptr: ident.source_ptr,
+                marker: ident.marker,
             }
+            .serialize(serializer),
             Self::NamespacedName(name) => name.serialize(serializer),
             Self::MemberExpression(expr) => expr.serialize(serializer),
             Self::ThisExpression(expr) => {
-                JSXIdentifier { span: expr.span, name: "this".into() }.serialize(serializer)
+                JSXIdentifier { span: expr.span, source_ptr: THIS_PTR, marker: PhantomData }
+                    .serialize(serializer)
             }
         }
     }
@@ -269,13 +277,9 @@ impl<'a> Serialize for JSXElementName<'a> {
 impl<'a> Serialize for JSXMemberExpressionObject<'a> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            Self::IdentifierReference(ident) => {
-                JSXIdentifier { span: ident.span, name: ident.name.clone() }.serialize(serializer)
-            }
+            Self::IdentifierReference(ident) => ident.clone().serialize(serializer),
             Self::MemberExpression(expr) => expr.serialize(serializer),
-            Self::ThisExpression(expr) => {
-                JSXIdentifier { span: expr.span, name: "this".into() }.serialize(serializer)
-            }
+            Self::ThisExpression(expr) => expr.clone().serialize(serializer),
         }
     }
 }

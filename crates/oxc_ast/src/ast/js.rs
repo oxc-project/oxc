@@ -4,7 +4,7 @@
 // They are purely markers for codegen used in `tasks/ast_tools` and `crates/oxc_traverse/scripts`. See docs in those crates.
 // Read [`macro@oxc_ast_macros::ast`] for more information.
 
-use std::cell::Cell;
+use std::{cell::Cell, marker::PhantomData};
 
 use oxc_allocator::{Box, CloneIn, Vec};
 use oxc_ast_macros::ast;
@@ -205,7 +205,8 @@ pub use match_expression;
 #[estree(type = "Identifier")]
 pub struct IdentifierName<'a> {
     pub span: Span,
-    pub name: Atom<'a>,
+    pub(crate) source_ptr: *const u8,
+    pub(crate) marker: PhantomData<Atom<'a>>,
 }
 
 /// `x` inside `func` in `const x = 0; function func() { console.log(x); }`
@@ -220,7 +221,9 @@ pub struct IdentifierName<'a> {
 pub struct IdentifierReference<'a> {
     pub span: Span,
     /// The name of the identifier being referenced.
-    pub name: Atom<'a>,
+    // pub name: Atom<'a>,
+    pub(crate) source_ptr: *const u8,
+    pub(crate) marker: PhantomData<Atom<'a>>,
     /// Reference ID
     ///
     /// Identifies what identifier this refers to, and how it is used. This is
@@ -243,7 +246,8 @@ pub struct IdentifierReference<'a> {
 pub struct BindingIdentifier<'a> {
     pub span: Span,
     /// The identifier name being bound.
-    pub name: Atom<'a>,
+    pub(crate) source_ptr: *const u8,
+    pub(crate) marker: PhantomData<Atom<'a>>,
     /// Unique identifier for this binding.
     ///
     /// This gets initialized during [`semantic analysis`] in the bind step. If
@@ -266,7 +270,9 @@ pub struct BindingIdentifier<'a> {
 #[estree(type = "Identifier")]
 pub struct LabelIdentifier<'a> {
     pub span: Span,
-    pub name: Atom<'a>,
+    // pub name: Atom<'a>,
+    pub(crate) source_ptr: *const u8,
+    pub(crate) marker: PhantomData<Atom<'a>>,
 }
 
 /// `this` in `return this.prop;`

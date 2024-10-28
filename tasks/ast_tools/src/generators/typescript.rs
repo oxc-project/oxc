@@ -127,9 +127,10 @@ fn type_to_string(ty: &TypeName) -> String {
         }
         .to_string(),
         TypeName::Vec(type_name) => format!("Array<{}>", type_to_string(type_name)),
-        TypeName::Box(type_name) | TypeName::Ref(type_name) | TypeName::Complex(type_name) => {
-            type_to_string(type_name)
-        }
+        TypeName::Box(type_name)
+        | TypeName::Ref(type_name)
+        | TypeName::Ptr(type_name)
+        | TypeName::Complex(type_name) => type_to_string(type_name),
         TypeName::Opt(type_name) => format!("{} | null", type_to_string(type_name)),
     }
 }

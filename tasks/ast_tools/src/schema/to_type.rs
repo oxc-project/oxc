@@ -1,3 +1,4 @@
+use miette::{Context, IntoDiagnostic};
 use proc_macro2::TokenStream;
 use quote::ToTokens;
 use syn::{parse_quote, parse_str, Type};
@@ -15,7 +16,10 @@ pub trait ToType {
 
 impl ToType for TypeRef {
     fn to_type(&self) -> Type {
-        parse_str(self.raw()).unwrap()
+        parse_str(self.raw())
+            .into_diagnostic()
+            .with_context(|| format!("Failed to parse type reference {:?}", self.raw()))
+            .unwrap()
     }
 
     fn to_type_elide(&self) -> Type {

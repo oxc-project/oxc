@@ -1,22 +1,36 @@
 //! [JSX](https://facebook.github.io/jsx)
-use std::fmt;
+use std::{fmt, marker::PhantomData};
 
-use oxc_span::Atom;
-
+use super::js::impl_identifier_like;
 use crate::ast::*;
 
 // 1.2 JSX Elements
 
+impl_identifier_like!(JSXIdentifier);
+
+impl<'a> From<IdentifierName<'a>> for JSXIdentifier<'a> {
+    fn from(ident: IdentifierName<'a>) -> Self {
+        Self { span: ident.span, source_ptr: ident.source_ptr, marker: ident.marker }
+    }
+}
+
+const THIS: *const u8 = "this".as_ptr();
+impl From<ThisExpression> for JSXIdentifier<'static> {
+    fn from(expr: ThisExpression) -> Self {
+        Self { span: expr.span, source_ptr: THIS, marker: PhantomData }
+    }
+}
+
 impl<'a> fmt::Display for JSXIdentifier<'a> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.name.fmt(f)
+        self.name().fmt(f)
     }
 }
 
 impl<'a> fmt::Display for JSXNamespacedName<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}:{}", self.namespace.name, self.property.name)
+        write!(f, "{}:{}", self.namespace.name(), self.property.name())
     }
 }
 
@@ -35,10 +49,10 @@ impl<'a> JSXElementName<'a> {
     }
 
     #[allow(missing_docs)]
-    pub fn get_identifier_name(&self) -> Option<Atom<'a>> {
+    pub fn get_identifier_name(&self) -> Option<&'a str> {
         match self {
-            Self::Identifier(id) => Some(id.as_ref().name.clone()),
-            Self::IdentifierReference(id) => Some(id.as_ref().name.clone()),
+            Self::Identifier(id) => Some(id.name()),
+            Self::IdentifierReference(id) => Some(id.name()),
             _ => None,
         }
     }
@@ -101,7 +115,7 @@ impl<'a> fmt::Display for JSXElementName<'a> {
 impl<'a> JSXExpression<'a> {
     /// Determines whether the given expr is a `undefined` literal
     pub fn is_undefined(&self) -> bool {
-        matches!(self, Self::Identifier(ident) if ident.name == "undefined")
+        matches!(self, Self::Identifier(ident) if ident.name() == "undefined")
     }
 }
 
@@ -111,13 +125,13 @@ impl<'a> JSXAttribute<'a> {
     /// Use [`JSXAttribute::is_identifier_ignore_case`] if you want to ignore
     /// upper/lower case differences.
     pub fn is_identifier(&self, name: &str) -> bool {
-        matches!(&self.name, JSXAttributeName::Identifier(ident) if ident.name == name)
+        matches!(&self.name, JSXAttributeName::Identifier(ident) if ident.name() == name)
     }
 
     /// Returns `true` if this attribute's name is the expected `name`, ignoring
     /// casing.
     pub fn is_identifier_ignore_case(&self, name: &str) -> bool {
-        matches!(&self.name, JSXAttributeName::Identifier(ident) if ident.name.eq_ignore_ascii_case(name))
+        matches!(&self.name, JSXAttributeName::Identifier(ident) if ident.name().eq_ignore_ascii_case(name))
     }
 
     /// Returns `true` if this is a React `key`.

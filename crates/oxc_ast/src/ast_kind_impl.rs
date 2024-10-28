@@ -65,12 +65,12 @@ impl<'a> AstKind<'a> {
         matches!(self, Self::Function(_) | Self::ArrowFunctionExpression(_))
     }
 
-    pub fn identifier_name(self) -> Option<Atom<'a>> {
+    pub fn identifier_name(self) -> Option<&'a str> {
         match self {
-            Self::BindingIdentifier(ident) => Some(ident.name.clone()),
-            Self::IdentifierReference(ident) => Some(ident.name.clone()),
-            Self::LabelIdentifier(ident) => Some(ident.name.clone()),
-            Self::IdentifierName(ident) => Some(ident.name.clone()),
+            Self::BindingIdentifier(ident) => Some(ident.name()),
+            Self::IdentifierReference(ident) => Some(ident.name()),
+            Self::LabelIdentifier(ident) => Some(ident.name()),
+            Self::IdentifierName(ident) => Some(ident.name()),
             _ => None,
         }
     }
@@ -90,7 +90,7 @@ impl<'a> AstKind<'a> {
 
     pub fn is_specific_id_reference(&self, name: &str) -> bool {
         match self {
-            Self::IdentifierReference(ident) => ident.name == name,
+            Self::IdentifierReference(ident) => ident.name() == name,
             _ => false,
         }
     }
@@ -188,7 +188,7 @@ impl<'a> AstKind<'a> {
 
         #[inline]
         fn or_anonymous<'a>(id: Option<&BindingIdentifier<'a>>) -> Cow<'a, str> {
-            id.map_or_else(|| ANONYMOUS.as_ref(), |id| id.name.as_str()).into()
+            id.map_or_else(|| ANONYMOUS.as_ref(), |id| id.name()).into()
         }
 
         match self {
@@ -208,7 +208,7 @@ impl<'a> AstKind<'a> {
             Self::ForStatement(_) => "ForStatement".into(),
             Self::ForStatementInit(_) => "ForStatementInit".into(),
             Self::IfStatement(_) => "IfStatement".into(),
-            Self::LabeledStatement(l) => format!("LabeledStatement({})", l.label.name).into(),
+            Self::LabeledStatement(l) => format!("LabeledStatement({})", l.label.name()).into(),
             Self::ReturnStatement(_) => "ReturnStatement".into(),
             Self::SwitchStatement(_) => "SwitchStatement".into(),
             Self::ThrowStatement(_) => "ThrowStatement".into(),
@@ -226,10 +226,10 @@ impl<'a> AstKind<'a> {
             )
             .into(),
 
-            Self::IdentifierName(x) => format!("IdentifierName({})", x.name).into(),
-            Self::IdentifierReference(x) => format!("IdentifierReference({})", x.name).into(),
-            Self::BindingIdentifier(x) => format!("BindingIdentifier({})", x.name).into(),
-            Self::LabelIdentifier(x) => format!("LabelIdentifier({})", x.name).into(),
+            Self::IdentifierName(x) => format!("IdentifierName({})", x.name()).into(),
+            Self::IdentifierReference(x) => format!("IdentifierReference({})", x.name()).into(),
+            Self::BindingIdentifier(x) => format!("BindingIdentifier({})", x.name()).into(),
+            Self::LabelIdentifier(x) => format!("LabelIdentifier({})", x.name()).into(),
             Self::PrivateIdentifier(x) => format!("PrivateIdentifier({})", x.name).into(),
 
             Self::NumericLiteral(n) => format!("NumericLiteral({})", n.value).into(),
@@ -263,7 +263,7 @@ impl<'a> AstKind<'a> {
             Self::MemberExpression(_) => "MemberExpression".into(),
             Self::NewExpression(n) => {
                 let callee = match &n.callee {
-                    Expression::Identifier(id) => Some(id.name.as_str()),
+                    Expression::Identifier(id) => Some(id.name()),
                     match_member_expression!(Expression) => {
                         n.callee.to_member_expression().static_property_name()
                     }
@@ -325,7 +325,7 @@ impl<'a> AstKind<'a> {
 
             Self::ModuleDeclaration(_) => "ModuleDeclaration".into(),
             Self::ImportDeclaration(_) => "ImportDeclaration".into(),
-            Self::ImportSpecifier(i) => format!("ImportSpecifier({})", i.local.name).into(),
+            Self::ImportSpecifier(i) => format!("ImportSpecifier({})", i.local.name()).into(),
             Self::ExportSpecifier(e) => format!("ExportSpecifier({})", e.local.name()).into(),
             Self::ImportDefaultSpecifier(_) => "ImportDefaultSpecifier".into(),
             Self::ImportNamespaceSpecifier(_) => "ImportNamespaceSpecifier".into(),
@@ -379,7 +379,9 @@ impl<'a> AstKind<'a> {
             Self::TSNonNullExpression(_) => "TSNonNullExpression".into(),
             Self::TSInstantiationExpression(_) => "TSInstantiationExpression".into(),
 
-            Self::TSEnumDeclaration(decl) => format!("TSEnumDeclaration({})", &decl.id.name).into(),
+            Self::TSEnumDeclaration(decl) => {
+                format!("TSEnumDeclaration({})", &decl.id.name()).into()
+            }
 
             Self::TSEnumMember(_) => "TSEnumMember".into(),
 

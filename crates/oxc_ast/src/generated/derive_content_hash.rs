@@ -128,25 +128,29 @@ impl<'a> ContentHash for Expression<'a> {
 
 impl<'a> ContentHash for IdentifierName<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
-        ContentHash::content_hash(&self.name, state);
+        ContentHash::content_hash(&self.source_ptr, state);
+        ContentHash::content_hash(&self.marker, state);
     }
 }
 
 impl<'a> ContentHash for IdentifierReference<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
-        ContentHash::content_hash(&self.name, state);
+        ContentHash::content_hash(&self.source_ptr, state);
+        ContentHash::content_hash(&self.marker, state);
     }
 }
 
 impl<'a> ContentHash for BindingIdentifier<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
-        ContentHash::content_hash(&self.name, state);
+        ContentHash::content_hash(&self.source_ptr, state);
+        ContentHash::content_hash(&self.marker, state);
     }
 }
 
 impl<'a> ContentHash for LabelIdentifier<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
-        ContentHash::content_hash(&self.name, state);
+        ContentHash::content_hash(&self.source_ptr, state);
+        ContentHash::content_hash(&self.marker, state);
     }
 }
 
@@ -2345,7 +2349,8 @@ impl<'a> ContentHash for JSXAttributeValue<'a> {
 
 impl<'a> ContentHash for JSXIdentifier<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
-        ContentHash::content_hash(&self.name, state);
+        ContentHash::content_hash(&self.source_ptr, state);
+        ContentHash::content_hash(&self.marker, state);
     }
 }
 

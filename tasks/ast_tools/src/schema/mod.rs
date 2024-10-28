@@ -37,6 +37,8 @@ pub enum TypeName {
     Box(Box<TypeName>),
     Opt(Box<TypeName>),
     Ref(Box<TypeName>),
+    /// *const T
+    Ptr(Box<TypeName>),
     /// We bailed on detecting wrapper
     Complex(Box<TypeName>),
 }
@@ -45,9 +47,12 @@ impl TypeName {
     pub fn inner_name(&self) -> &str {
         match self {
             Self::Ident(it) => it,
-            Self::Complex(it) | Self::Vec(it) | Self::Box(it) | Self::Opt(it) | Self::Ref(it) => {
-                it.inner_name()
-            }
+            Self::Complex(it)
+            | Self::Vec(it)
+            | Self::Box(it)
+            | Self::Opt(it)
+            | Self::Ref(it)
+            | Self::Ptr(it) => it.inner_name(),
         }
     }
 
@@ -66,7 +71,7 @@ impl TypeName {
     ///
     /// Panics
     ///
-    /// When `self` is `TypeName::Ref` or `TypeName::Complex`.
+    /// When `self` is [`TypeName::Ref`], [`TypeName::Ptr`], or [`TypeName::Complex`].
     ///
     pub fn first_ident(&self) -> &str {
         match self {
@@ -74,7 +79,7 @@ impl TypeName {
             Self::Vec(_) => "Vec",
             Self::Box(_) => "Box",
             Self::Opt(_) => "Option",
-            Self::Ref(_) | Self::Complex(_) => panic!(),
+            Self::Ref(_) | Self::Ptr(_) | Self::Complex(_) => panic!(),
         }
     }
 }
@@ -88,6 +93,7 @@ impl<'a> From<crate::util::TypeIdentResult<'a>> for TypeName {
             TypeIdentResult::Box(it) => Self::Box(Box::new(Self::from(*it))),
             TypeIdentResult::Option(it) => Self::Opt(Box::new(Self::from(*it))),
             TypeIdentResult::Reference(it) => Self::Ref(Box::new(Self::from(*it))),
+            TypeIdentResult::ConstPtr(it) => Self::Ref(Box::new(Self::from(*it))),
             TypeIdentResult::Complex(it) => Self::Complex(Box::new(Self::from(*it))),
         }
     }
@@ -100,6 +106,7 @@ impl fmt::Display for TypeName {
             Self::Box(it) => write!(f, "Box<{it}>"),
             Self::Opt(it) => write!(f, "Option<{it}>"),
             Self::Ref(it) => write!(f, "&{it}"),
+            Self::Ptr(it) => write!(f, "*const {it}"),
             Self::Complex(it) => write!(f, "{it}"),
         }
     }
@@ -287,8 +294,13 @@ fn create_type_ref(ty: &Type, ctx: &EarlyCtx) -> TypeRef {
     let ident = ty.get_ident();
     let id = ident.as_ident().and_then(|id| ctx.type_id(&id.to_string()));
     let transparent_id = ctx.type_id(&ident.inner_ident().to_string());
+
+    let mut raw = ty.to_token_stream().to_string();
     #[expect(clippy::disallowed_methods)]
-    let raw = ty.to_token_stream().to_string().replace(' ', "");
+    if !matches!(ty, Type::Ptr(_)) {
+        raw = raw.replace(" ", "");
+    }
+
     TypeRef {
         id,
         transparent_id,

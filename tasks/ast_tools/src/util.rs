@@ -71,6 +71,7 @@ pub enum TypeIdentResult<'a> {
     Box(Box<TypeIdentResult<'a>>),
     Option(Box<TypeIdentResult<'a>>),
     Reference(Box<TypeIdentResult<'a>>),
+    ConstPtr(Box<TypeIdentResult<'a>>),
     /// We bailed on detecting wrapper
     Complex(Box<TypeIdentResult<'a>>),
 }
@@ -96,6 +97,10 @@ impl<'a> TypeIdentResult<'a> {
         Self::Reference(Box::new(inner))
     }
 
+    fn const_ptr(inner: Self) -> Self {
+        Self::ConstPtr(Box::new(inner))
+    }
+
     pub fn inner_ident(&self) -> &'a Ident {
         match self {
             Self::Ident(it) => it,
@@ -103,6 +108,7 @@ impl<'a> TypeIdentResult<'a> {
             | Self::Vec(it)
             | Self::Box(it)
             | Self::Option(it)
+            | Self::ConstPtr(it)
             | Self::Reference(it) => it.inner_ident(),
         }
     }
@@ -183,7 +189,10 @@ impl TypeExt for Type {
                 }
             }
             Type::Reference(typ) => TypeIdentResult::reference(typ.elem.get_ident()),
-            _ => panic!("Unsupported type."),
+            Type::Ptr(p) if p.mutability.is_none() => {
+                TypeIdentResult::const_ptr(p.elem.get_ident())
+            }
+            ty => panic!("Unsupported type: {ty:?}"),
         }
     }
 
@@ -225,7 +234,7 @@ impl TypeExt for Type {
                     }
                     inner
                 }
-                TypeIdentResult::Reference(_) => return None,
+                TypeIdentResult::Reference(_) | TypeIdentResult::ConstPtr(_) => return None,
             };
             Some((ident, wrapper))
         }

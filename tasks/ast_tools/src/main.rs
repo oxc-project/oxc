@@ -64,6 +64,7 @@ pub struct CliOptions {
 }
 
 fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
+    initialize_miette();
     let cli_options = cli_options().run();
 
     if cli_options.quiet {
@@ -102,6 +103,10 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     }
 
     Ok(())
+}
+
+fn initialize_miette() {
+    miette::set_hook(Box::new(|_| Box::new(miette::MietteHandlerOpts::new().build()))).unwrap();
 }
 
 fn generate_ci_filter(outputs: &[RawOutput]) -> RawOutput {
