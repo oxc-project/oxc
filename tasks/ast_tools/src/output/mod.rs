@@ -23,7 +23,7 @@ pub fn output_path(krate: &str, path: &str) -> String {
 
 /// An output from codegen.
 ///
-/// Can be either Rust or Javascript.
+/// Can be Rust, Javascript, or other formats.
 pub enum Output {
     Rust { path: String, tokens: TokenStream },
     Javascript { path: String, code: String },
@@ -55,6 +55,8 @@ impl Output {
 }
 
 /// A raw output from codegen.
+///
+/// Content is formatted, and converted to bytes.
 #[derive(Debug)]
 pub struct RawOutput {
     pub path: String,
