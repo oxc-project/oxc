@@ -172,8 +172,8 @@ enum AllowInterfaces {
     WithSingleExtends,
 }
 
-impl AllowInterfaces {
-    pub fn from(raw: &str) -> Self {
+impl From<&str> for AllowInterfaces {
+    fn from(raw: &str) -> Self {
         match raw {
             "always" => Self::Always,
             "with-single-extends" => Self::WithSingleExtends,
@@ -189,8 +189,8 @@ enum AllowObjectTypes {
     Always,
 }
 
-impl AllowObjectTypes {
-    pub fn from(raw: &str) -> Self {
+impl From<&str> for AllowObjectTypes {
+    fn from(raw: &str) -> Self {
         match raw {
             "always" => Self::Always,
             _ => Self::Never,
