@@ -16,7 +16,7 @@ alias new-typescript-rule := new-ts-rule
 # or install via `cargo install cargo-binstall`
 # Initialize the project by installing all the necessary tools.
 init:
-  cargo binstall bacon cargo-insta typos-cli cargo-shear dprint -y
+  cargo binstall watchexec-cli cargo-insta typos-cli cargo-shear dprint -y
 
 # When ready, run the same CI commands
 ready:
@@ -42,27 +42,23 @@ install-hook:
   echo -e "#!/bin/sh\njust fmt" > .git/hooks/pre-commit
   chmod +x .git/hooks/pre-commit
 
-watch:
-  bacon
+watch *args='':
+  watchexec {{args}}
 
 # Run the example in `parser`, `formatter`, `linter`
 example tool *args='':
-  cargo --color always run -p oxc_{{tool}} --example {{tool}} -- {{args}}
+  cargo run -p oxc_{{tool}} --example {{tool}} -- {{args}}
 
 watch-example *args='':
-  bacon example -- {{args}}
+  just watch 'just example {{args}}'
 
-# Generate AST related boilerplate code.
-# Run this when AST definition is changed.
-ast:
-  cargo run -p oxc_ast_tools
-  just check
+# Build oxlint in release build; Run with `./target/release/oxlint`.
+oxlint :
+  cargo oxlint
 
-# Format all files
-fmt:
-  cargo shear --fix # remove all unused dependencies
-  cargo fmt --all
-  dprint fmt
+# Watch oxlint
+watch-oxlint *args='':
+  just watch 'cargo run -p oxlint -- {{args}}'
 
 # Run cargo check
 check:
@@ -75,6 +71,12 @@ test:
 # Lint the whole project
 lint:
   cargo lint -- --deny warnings
+
+# Format all files
+fmt:
+  cargo shear --fix # remove all unused dependencies
+  cargo fmt --all
+  dprint fmt
 
 [unix]
 doc:
@@ -98,16 +100,15 @@ coverage:
   cargo run -p oxc_prettier_conformance
   cargo minsize
 
+# Run Test262, Babel and TypeScript conformance suite
 conformance *args='':
   cargo coverage -- {{args}}
 
-# Build oxlint in release build
-oxlint:
-  cargo oxlint
-
-# Watch oxlint
-watch-oxlint *args='':
-  bacon oxlint -- {{args}}
+# Generate AST related boilerplate code.
+# Run this when AST definition is changed.
+ast:
+  cargo run -p oxc_ast_tools
+  just check
 
 # Get code coverage
 codecov:
@@ -132,7 +133,7 @@ install-wasm:
   cargo binstall wasm-pack
 
 watch-wasm:
-  bacon wasm
+  just watch 'just build-wasm dev'
 
 build-wasm mode="release":
   wasm-pack build --out-dir ../../npm/oxc-wasm --target web --{{mode}} --scope oxc crates/oxc_wasm
