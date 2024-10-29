@@ -53,7 +53,7 @@
 
 use std::mem;
 
-use oxc_allocator::Box;
+use oxc_allocator::Box as ArenaBox;
 use oxc_ast::{ast::*, Visit, NONE};
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{Atom, GetSpan, SPAN};
@@ -467,8 +467,8 @@ impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
     #[inline]
     fn create_function(
         id: Option<BindingIdentifier<'a>>,
-        params: Box<'a, FormalParameters<'a>>,
-        body: Box<'a, FunctionBody<'a>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        body: ArenaBox<'a, FunctionBody<'a>>,
         scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
     ) -> Function<'a> {
@@ -536,8 +536,8 @@ impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
     /// ```
     fn create_async_to_generator_call(
         &self,
-        params: Box<'a, FormalParameters<'a>>,
-        body: Box<'a, FunctionBody<'a>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        body: ArenaBox<'a, FunctionBody<'a>>,
         scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
@@ -560,8 +560,8 @@ impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
     fn create_async_to_generator_declaration(
         &self,
         bound_ident: &BoundIdentifier<'a>,
-        params: Box<'a, FormalParameters<'a>>,
-        body: Box<'a, FunctionBody<'a>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        body: ArenaBox<'a, FunctionBody<'a>>,
         scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
@@ -592,8 +592,8 @@ impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
     fn create_async_to_generator_assignment(
         &self,
         bound: &BoundIdentifier<'a>,
-        params: Box<'a, FormalParameters<'a>>,
-        body: Box<'a, FunctionBody<'a>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        body: ArenaBox<'a, FunctionBody<'a>>,
         scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
@@ -613,7 +613,7 @@ impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
         params: &FormalParameters<'a>,
         scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Box<'a, FormalParameters<'a>> {
+    ) -> ArenaBox<'a, FormalParameters<'a>> {
         let mut parameters = ctx.ast.vec_with_capacity(params.items.len());
         for param in &params.items {
             if param.pattern.kind.is_assignment_pattern() {
@@ -636,7 +636,7 @@ impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
 
     /// Creates an empty [FormalParameters] with [FormalParameterKind::FormalParameter].
     #[inline]
-    fn create_empty_params(ctx: &mut TraverseCtx<'a>) -> Box<'a, FormalParameters<'a>> {
+    fn create_empty_params(ctx: &mut TraverseCtx<'a>) -> ArenaBox<'a, FormalParameters<'a>> {
         ctx.ast.alloc_formal_parameters(
             SPAN,
             FormalParameterKind::FormalParameter,

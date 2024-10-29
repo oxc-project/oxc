@@ -1,6 +1,6 @@
 use rustc_hash::FxHashSet;
 
-use oxc_allocator::{Box, Vec as ArenaVec};
+use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
 use oxc_ast::{ast::*, NONE};
 use oxc_ecmascript::BoundNames;
 use oxc_span::{Atom, CompactStr, SPAN};
@@ -446,7 +446,7 @@ impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
     /// Convert `export const foo = 1` to `Namespace.foo = 1`;
     #[allow(clippy::needless_pass_by_value)]
     fn handle_variable_declaration(
-        mut var_decl: Box<'a, VariableDeclaration<'a>>,
+        mut var_decl: ArenaBox<'a, VariableDeclaration<'a>>,
         name: Atom<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> ArenaVec<'a, Statement<'a>> {
