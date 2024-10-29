@@ -11,7 +11,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_empty_object_type_diagnostic(span: Span) -> OxcDiagnostic {
     // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn("Disallow accidentally using the \"empty object\" type.")
+    OxcDiagnostic::warn("Do not use the empty object type literal.")
         .with_help("To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.")
         .with_label(span)
 }
