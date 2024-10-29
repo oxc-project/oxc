@@ -41,7 +41,7 @@
 
 use itoa::Buffer as ItoaBuffer;
 
-use oxc_allocator::String as AString;
+use oxc_allocator::String as ArenaString;
 use oxc_ast::{ast::*, Visit, NONE};
 use oxc_semantic::SymbolTable;
 use oxc_span::SPAN;
@@ -295,7 +295,7 @@ impl<'a> Keys<'a> {
             i += 1;
         }
 
-        let mut key = AString::with_capacity_in(num_str.len() + 1, ctx.ast.allocator);
+        let mut key = ArenaString::with_capacity_in(num_str.len() + 1, ctx.ast.allocator);
         key.push('_');
         key.push_str(num_str);
         let key = Atom::from(key.into_bump_str());

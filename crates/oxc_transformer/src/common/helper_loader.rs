@@ -70,7 +70,7 @@ use std::{borrow::Cow, cell::RefCell};
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
-use oxc_allocator::{String as AString, Vec};
+use oxc_allocator::{String as ArenaString, Vec};
 use oxc_ast::ast::{Argument, CallExpression, Expression, TSTypeParameterInstantiation};
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
 use oxc_span::{Atom, SPAN};
@@ -247,7 +247,7 @@ impl<'a> HelperLoaderStore<'a> {
 
         // Construct string directly in arena without an intermediate temp allocation
         let len = self.module_name.len() + "/helpers/".len() + helper_name.len();
-        let mut source = AString::with_capacity_in(len, ctx.ast.allocator);
+        let mut source = ArenaString::with_capacity_in(len, ctx.ast.allocator);
         source.push_str(&self.module_name);
         source.push_str("/helpers/");
         source.push_str(helper_name);
