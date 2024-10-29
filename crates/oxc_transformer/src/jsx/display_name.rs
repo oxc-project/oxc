@@ -45,7 +45,6 @@
 //!
 //! * Babel plugin implementation: <https://github.com/babel/babel/blob/main/packages/babel-plugin-transform-react-display-name/src/index.ts>
 
-use oxc_allocator::Box as ArenaBox;
 use oxc_ast::ast::*;
 use oxc_span::{Atom, SPAN};
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
@@ -133,7 +132,7 @@ impl<'a, 'ctx> ReactDisplayName<'a, 'ctx> {
     /// Get the object from `React.createClass({})` or `createReactClass({})`
     fn get_object_from_create_class<'b>(
         call_expr: &'b mut CallExpression<'a>,
-    ) -> Option<&'b mut ArenaBox<'a, ObjectExpression<'a>>> {
+    ) -> Option<&'b mut ObjectExpression<'a>> {
         if match &call_expr.callee {
             callee @ match_member_expression!(Expression) => {
                 !callee.to_member_expression().is_specific_member_access("React", "createClass")
