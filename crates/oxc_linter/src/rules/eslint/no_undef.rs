@@ -96,8 +96,6 @@ fn test() {
         // "/*eslint-env browser*/ window;",
         // "/*eslint-env node*/ require(\"a\");",
         "Object; isNaN();",
-        "toString()",
-        "hasOwnProperty()",
         "function evilEval(stuffToEval) { var ultimateAnswer; ultimateAnswer = 42; eval(stuffToEval); }",
         "typeof a",
         "typeof (a)",
@@ -184,6 +182,8 @@ fn test() {
         "class C { static { let a; } [a]; }",
         "class C { static { function a() {} } [a]; }",
         "class C { static { var a; } } a;",
+        "toString()",
+        "hasOwnProperty()",
     ];
 
     Tester::new(NoUndef::NAME, pass, fail).test_and_snapshot();
