@@ -169,7 +169,6 @@ mod typescript {
     pub mod no_this_alias;
     pub mod no_unnecessary_type_constraint;
     pub mod no_unsafe_declaration_merging;
-    pub mod no_unsafe_function_type;
     pub mod no_useless_empty_export;
     pub mod no_var_requires;
     pub mod no_wrapper_object_types;
@@ -845,7 +844,6 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_this_alias,
     typescript::no_unnecessary_type_constraint,
     typescript::no_unsafe_declaration_merging,
-    typescript::no_unsafe_function_type,
     typescript::no_useless_empty_export,
     typescript::no_var_requires,
     typescript::no_wrapper_object_types,
