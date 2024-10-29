@@ -725,10 +725,10 @@ impl<'a> FromIn<'a, Expression<'a>> for Statement<'a> {
     }
 }
 
-impl<'a> GetAddress for Statement<'a> {
+impl GetAddress for &Statement<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         match self {
             Statement::BlockStatement(s) => s.address(),
             Statement::BreakStatement(s) => s.address(),
@@ -763,6 +763,13 @@ impl<'a> GetAddress for Statement<'a> {
             Statement::TSExportAssignment(s) => s.address(),
             Statement::TSNamespaceExportDeclaration(s) => s.address(),
         }
+    }
+}
+
+impl GetAddress for &mut Statement<'_> {
+    #[inline]
+    fn address(self) -> Address {
+        (&*self).address()
     }
 }
 
@@ -1023,9 +1030,16 @@ impl<'a> Function<'a> {
 // FIXME: This is a workaround for we can't get current address by `TraverseCtx`,
 // we will remove this once we support `TraverseCtx::current_address`.
 // See: <https://github.com/oxc-project/oxc/pull/6881#discussion_r1816560516>
-impl GetAddress for Function<'_> {
+impl GetAddress for &Function<'_> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
+        Address::from_ptr(self)
+    }
+}
+
+impl GetAddress for &mut Function<'_> {
+    #[inline]
+    fn address(self) -> Address {
         Address::from_ptr(self)
     }
 }

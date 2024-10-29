@@ -77,7 +77,7 @@ impl<'a> StatementInjectorStore<'a> {
     /// Add a statement to be inserted immediately before the target statement.
     #[expect(dead_code)]
     #[inline]
-    pub fn insert_before<A: GetAddress>(&self, target: &A, stmt: Statement<'a>) {
+    pub fn insert_before<A: GetAddress>(&self, target: A, stmt: Statement<'a>) {
         self.insert_before_address(target.address(), stmt);
     }
 
@@ -93,7 +93,7 @@ impl<'a> StatementInjectorStore<'a> {
 
     /// Add a statement to be inserted immediately after the target statement.
     #[inline]
-    pub fn insert_after<A: GetAddress>(&self, target: &A, stmt: Statement<'a>) {
+    pub fn insert_after<A: GetAddress>(&self, target: A, stmt: Statement<'a>) {
         self.insert_after_address(target.address(), stmt);
     }
 
@@ -106,7 +106,7 @@ impl<'a> StatementInjectorStore<'a> {
     /// Add multiple statements to be inserted immediately before the target statement.
     #[expect(dead_code)]
     #[inline]
-    pub fn insert_many_before<A, S>(&self, target: &A, stmts: S)
+    pub fn insert_many_before<A, S>(&self, target: A, stmts: S)
     where
         A: GetAddress,
         S: IntoIterator<Item = Statement<'a>>,
@@ -128,7 +128,7 @@ impl<'a> StatementInjectorStore<'a> {
 
     /// Add multiple statements to be inserted immediately after the target statement.
     #[inline]
-    pub fn insert_many_after<A, S>(&self, target: &A, stmts: S)
+    pub fn insert_many_after<A, S>(&self, target: A, stmts: S)
     where
         A: GetAddress,
         S: IntoIterator<Item = Statement<'a>>,

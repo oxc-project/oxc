@@ -66,7 +66,7 @@ export default function generateAncestorsCode(types) {
 
         impl${lifetimes} GetAddress for ${structName} {
           #[inline]
-          fn address(&self) -> Address {
+          fn address(self) -> Address {
             Address::from_ptr(self.0)
           }
         }
@@ -171,7 +171,7 @@ export default function generateAncestorsCode(types) {
       /// Get memory address of node represented by \`Ancestor\` in the arena.
       // Compiler should reduce this down to only a couple of assembly operations.
       #[inline]
-      fn address(&self) -> Address {
+      fn address(self) -> Address {
         match self {
           Self::None => Address::DUMMY,
           ${addressMatchArms}

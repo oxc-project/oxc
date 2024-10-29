@@ -288,7 +288,7 @@ impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
             // which is a `Statement::FunctionDeclaration`
             _ => func.address(),
         };
-        self.ctx.statement_injector.insert_after(&address, statement);
+        self.ctx.statement_injector.insert_after(address, statement);
     }
 
     fn enter_call_expression(
@@ -827,7 +827,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
                 debug_assert!(matches!(var_decl, Ancestor::VariableDeclarationDeclarations(_)));
                 var_decl.address()
             };
-        self.ctx.statement_injector.insert_after(&address, statement);
+        self.ctx.statement_injector.insert_after(address, statement);
     }
 
     /// Convert arrow function expression to normal arrow function

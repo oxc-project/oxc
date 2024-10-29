@@ -2202,7 +2202,7 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
     /// Get memory address of node represented by `Ancestor` in the arena.
     // Compiler should reduce this down to only a couple of assembly operations.
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         match self {
             Self::None => Address::DUMMY,
             Self::ProgramHashbang(a) => a.address(),
@@ -2565,7 +2565,7 @@ impl<'a, 't> ProgramWithoutHashbang<'a, 't> {
 
 impl<'a, 't> GetAddress for ProgramWithoutHashbang<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -2622,7 +2622,7 @@ impl<'a, 't> ProgramWithoutDirectives<'a, 't> {
 
 impl<'a, 't> GetAddress for ProgramWithoutDirectives<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -2680,7 +2680,7 @@ impl<'a, 't> ProgramWithoutBody<'a, 't> {
 
 impl<'a, 't> GetAddress for ProgramWithoutBody<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -2714,7 +2714,7 @@ impl<'a, 't> ArrayExpressionWithoutElements<'a, 't> {
 
 impl<'a, 't> GetAddress for ArrayExpressionWithoutElements<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -2749,7 +2749,7 @@ impl<'a, 't> ObjectExpressionWithoutProperties<'a, 't> {
 
 impl<'a, 't> GetAddress for ObjectExpressionWithoutProperties<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -2814,7 +2814,7 @@ impl<'a, 't> ObjectPropertyWithoutKey<'a, 't> {
 
 impl<'a, 't> GetAddress for ObjectPropertyWithoutKey<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -2870,7 +2870,7 @@ impl<'a, 't> ObjectPropertyWithoutValue<'a, 't> {
 
 impl<'a, 't> GetAddress for ObjectPropertyWithoutValue<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -2925,7 +2925,7 @@ impl<'a, 't> ObjectPropertyWithoutInit<'a, 't> {
 
 impl<'a, 't> GetAddress for ObjectPropertyWithoutInit<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -2959,7 +2959,7 @@ impl<'a, 't> TemplateLiteralWithoutQuasis<'a, 't> {
 
 impl<'a, 't> GetAddress for TemplateLiteralWithoutQuasis<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -2988,7 +2988,7 @@ impl<'a, 't> TemplateLiteralWithoutExpressions<'a, 't> {
 
 impl<'a, 't> GetAddress for TemplateLiteralWithoutExpressions<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -3036,7 +3036,7 @@ impl<'a, 't> TaggedTemplateExpressionWithoutTag<'a, 't> {
 
 impl<'a, 't> GetAddress for TaggedTemplateExpressionWithoutTag<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -3075,7 +3075,7 @@ impl<'a, 't> TaggedTemplateExpressionWithoutQuasi<'a, 't> {
 
 impl<'a, 't> GetAddress for TaggedTemplateExpressionWithoutQuasi<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -3114,7 +3114,7 @@ impl<'a, 't> TaggedTemplateExpressionWithoutTypeParameters<'a, 't> {
 
 impl<'a, 't> GetAddress for TaggedTemplateExpressionWithoutTypeParameters<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -3161,7 +3161,7 @@ impl<'a, 't> ComputedMemberExpressionWithoutObject<'a, 't> {
 
 impl<'a, 't> GetAddress for ComputedMemberExpressionWithoutObject<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -3199,7 +3199,7 @@ impl<'a, 't> ComputedMemberExpressionWithoutExpression<'a, 't> {
 
 impl<'a, 't> GetAddress for ComputedMemberExpressionWithoutExpression<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -3246,7 +3246,7 @@ impl<'a, 't> StaticMemberExpressionWithoutObject<'a, 't> {
 
 impl<'a, 't> GetAddress for StaticMemberExpressionWithoutObject<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -3284,7 +3284,7 @@ impl<'a, 't> StaticMemberExpressionWithoutProperty<'a, 't> {
 
 impl<'a, 't> GetAddress for StaticMemberExpressionWithoutProperty<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -3331,7 +3331,7 @@ impl<'a, 't> PrivateFieldExpressionWithoutObject<'a, 't> {
 
 impl<'a, 't> GetAddress for PrivateFieldExpressionWithoutObject<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -3369,7 +3369,7 @@ impl<'a, 't> PrivateFieldExpressionWithoutField<'a, 't> {
 
 impl<'a, 't> GetAddress for PrivateFieldExpressionWithoutField<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -3418,7 +3418,7 @@ impl<'a, 't> CallExpressionWithoutCallee<'a, 't> {
 
 impl<'a, 't> GetAddress for CallExpressionWithoutCallee<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -3459,7 +3459,7 @@ impl<'a, 't> CallExpressionWithoutTypeParameters<'a, 't> {
 
 impl<'a, 't> GetAddress for CallExpressionWithoutTypeParameters<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -3500,7 +3500,7 @@ impl<'a, 't> CallExpressionWithoutArguments<'a, 't> {
 
 impl<'a, 't> GetAddress for CallExpressionWithoutArguments<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -3543,7 +3543,7 @@ impl<'a, 't> NewExpressionWithoutCallee<'a, 't> {
 
 impl<'a, 't> GetAddress for NewExpressionWithoutCallee<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -3579,7 +3579,7 @@ impl<'a, 't> NewExpressionWithoutArguments<'a, 't> {
 
 impl<'a, 't> GetAddress for NewExpressionWithoutArguments<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -3615,7 +3615,7 @@ impl<'a, 't> NewExpressionWithoutTypeParameters<'a, 't> {
 
 impl<'a, 't> GetAddress for NewExpressionWithoutTypeParameters<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -3648,7 +3648,7 @@ impl<'a, 't> MetaPropertyWithoutMeta<'a, 't> {
 
 impl<'a, 't> GetAddress for MetaPropertyWithoutMeta<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -3676,7 +3676,7 @@ impl<'a, 't> MetaPropertyWithoutProperty<'a, 't> {
 
 impl<'a, 't> GetAddress for MetaPropertyWithoutProperty<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -3700,7 +3700,7 @@ impl<'a, 't> SpreadElementWithoutArgument<'a, 't> {
 
 impl<'a, 't> GetAddress for SpreadElementWithoutArgument<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -3739,7 +3739,7 @@ impl<'a, 't> UpdateExpressionWithoutArgument<'a, 't> {
 
 impl<'a, 't> GetAddress for UpdateExpressionWithoutArgument<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -3771,7 +3771,7 @@ impl<'a, 't> UnaryExpressionWithoutArgument<'a, 't> {
 
 impl<'a, 't> GetAddress for UnaryExpressionWithoutArgument<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -3812,7 +3812,7 @@ impl<'a, 't> BinaryExpressionWithoutLeft<'a, 't> {
 
 impl<'a, 't> GetAddress for BinaryExpressionWithoutLeft<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -3848,7 +3848,7 @@ impl<'a, 't> BinaryExpressionWithoutRight<'a, 't> {
 
 impl<'a, 't> GetAddress for BinaryExpressionWithoutRight<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -3891,7 +3891,7 @@ impl<'a, 't> PrivateInExpressionWithoutLeft<'a, 't> {
 
 impl<'a, 't> GetAddress for PrivateInExpressionWithoutLeft<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -3928,7 +3928,7 @@ impl<'a, 't> PrivateInExpressionWithoutRight<'a, 't> {
 
 impl<'a, 't> GetAddress for PrivateInExpressionWithoutRight<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -3970,7 +3970,7 @@ impl<'a, 't> LogicalExpressionWithoutLeft<'a, 't> {
 
 impl<'a, 't> GetAddress for LogicalExpressionWithoutLeft<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -4006,7 +4006,7 @@ impl<'a, 't> LogicalExpressionWithoutRight<'a, 't> {
 
 impl<'a, 't> GetAddress for LogicalExpressionWithoutRight<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -4052,7 +4052,7 @@ impl<'a, 't> ConditionalExpressionWithoutTest<'a, 't> {
 
 impl<'a, 't> GetAddress for ConditionalExpressionWithoutTest<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -4089,7 +4089,7 @@ impl<'a, 't> ConditionalExpressionWithoutConsequent<'a, 't> {
 
 impl<'a, 't> GetAddress for ConditionalExpressionWithoutConsequent<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -4126,7 +4126,7 @@ impl<'a, 't> ConditionalExpressionWithoutAlternate<'a, 't> {
 
 impl<'a, 't> GetAddress for ConditionalExpressionWithoutAlternate<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -4170,7 +4170,7 @@ impl<'a, 't> AssignmentExpressionWithoutLeft<'a, 't> {
 
 impl<'a, 't> GetAddress for AssignmentExpressionWithoutLeft<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -4207,7 +4207,7 @@ impl<'a, 't> AssignmentExpressionWithoutRight<'a, 't> {
 
 impl<'a, 't> GetAddress for AssignmentExpressionWithoutRight<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -4253,7 +4253,7 @@ impl<'a, 't> ArrayAssignmentTargetWithoutElements<'a, 't> {
 
 impl<'a, 't> GetAddress for ArrayAssignmentTargetWithoutElements<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -4290,7 +4290,7 @@ impl<'a, 't> ArrayAssignmentTargetWithoutRest<'a, 't> {
 
 impl<'a, 't> GetAddress for ArrayAssignmentTargetWithoutRest<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -4328,7 +4328,7 @@ impl<'a, 't> ObjectAssignmentTargetWithoutProperties<'a, 't> {
 
 impl<'a, 't> GetAddress for ObjectAssignmentTargetWithoutProperties<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -4359,7 +4359,7 @@ impl<'a, 't> ObjectAssignmentTargetWithoutRest<'a, 't> {
 
 impl<'a, 't> GetAddress for ObjectAssignmentTargetWithoutRest<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -4384,7 +4384,7 @@ impl<'a, 't> AssignmentTargetRestWithoutTarget<'a, 't> {
 
 impl<'a, 't> GetAddress for AssignmentTargetRestWithoutTarget<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -4422,7 +4422,7 @@ impl<'a, 't> AssignmentTargetWithDefaultWithoutBinding<'a, 't> {
 
 impl<'a, 't> GetAddress for AssignmentTargetWithDefaultWithoutBinding<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -4453,7 +4453,7 @@ impl<'a, 't> AssignmentTargetWithDefaultWithoutInit<'a, 't> {
 
 impl<'a, 't> GetAddress for AssignmentTargetWithDefaultWithoutInit<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -4492,7 +4492,7 @@ impl<'a, 't> AssignmentTargetPropertyIdentifierWithoutBinding<'a, 't> {
 
 impl<'a, 't> GetAddress for AssignmentTargetPropertyIdentifierWithoutBinding<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -4524,7 +4524,7 @@ impl<'a, 't> AssignmentTargetPropertyIdentifierWithoutInit<'a, 't> {
 
 impl<'a, 't> GetAddress for AssignmentTargetPropertyIdentifierWithoutInit<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -4563,7 +4563,7 @@ impl<'a, 't> AssignmentTargetPropertyPropertyWithoutName<'a, 't> {
 
 impl<'a, 't> GetAddress for AssignmentTargetPropertyPropertyWithoutName<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -4595,7 +4595,7 @@ impl<'a, 't> AssignmentTargetPropertyPropertyWithoutBinding<'a, 't> {
 
 impl<'a, 't> GetAddress for AssignmentTargetPropertyPropertyWithoutBinding<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -4620,7 +4620,7 @@ impl<'a, 't> SequenceExpressionWithoutExpressions<'a, 't> {
 
 impl<'a, 't> GetAddress for SequenceExpressionWithoutExpressions<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -4644,7 +4644,7 @@ impl<'a, 't> AwaitExpressionWithoutArgument<'a, 't> {
 
 impl<'a, 't> GetAddress for AwaitExpressionWithoutArgument<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -4669,7 +4669,7 @@ impl<'a, 't> ChainExpressionWithoutExpression<'a, 't> {
 
 impl<'a, 't> GetAddress for ChainExpressionWithoutExpression<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -4697,7 +4697,7 @@ impl<'a, 't> ParenthesizedExpressionWithoutExpression<'a, 't> {
 
 impl<'a, 't> GetAddress for ParenthesizedExpressionWithoutExpression<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -4727,7 +4727,7 @@ impl<'a, 't> DirectiveWithoutExpression<'a, 't> {
 
 impl<'a, 't> GetAddress for DirectiveWithoutExpression<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -4760,7 +4760,7 @@ impl<'a, 't> BlockStatementWithoutBody<'a, 't> {
 
 impl<'a, 't> GetAddress for BlockStatementWithoutBody<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -4801,7 +4801,7 @@ impl<'a, 't> VariableDeclarationWithoutDeclarations<'a, 't> {
 
 impl<'a, 't> GetAddress for VariableDeclarationWithoutDeclarations<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -4850,7 +4850,7 @@ impl<'a, 't> VariableDeclaratorWithoutId<'a, 't> {
 
 impl<'a, 't> GetAddress for VariableDeclaratorWithoutId<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -4892,7 +4892,7 @@ impl<'a, 't> VariableDeclaratorWithoutInit<'a, 't> {
 
 impl<'a, 't> GetAddress for VariableDeclaratorWithoutInit<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -4917,7 +4917,7 @@ impl<'a, 't> ExpressionStatementWithoutExpression<'a, 't> {
 
 impl<'a, 't> GetAddress for ExpressionStatementWithoutExpression<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -4958,7 +4958,7 @@ impl<'a, 't> IfStatementWithoutTest<'a, 't> {
 
 impl<'a, 't> GetAddress for IfStatementWithoutTest<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -4992,7 +4992,7 @@ impl<'a, 't> IfStatementWithoutConsequent<'a, 't> {
 
 impl<'a, 't> GetAddress for IfStatementWithoutConsequent<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -5025,7 +5025,7 @@ impl<'a, 't> IfStatementWithoutAlternate<'a, 't> {
 
 impl<'a, 't> GetAddress for IfStatementWithoutAlternate<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -5057,7 +5057,7 @@ impl<'a, 't> DoWhileStatementWithoutBody<'a, 't> {
 
 impl<'a, 't> GetAddress for DoWhileStatementWithoutBody<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -5085,7 +5085,7 @@ impl<'a, 't> DoWhileStatementWithoutTest<'a, 't> {
 
 impl<'a, 't> GetAddress for DoWhileStatementWithoutTest<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -5117,7 +5117,7 @@ impl<'a, 't> WhileStatementWithoutTest<'a, 't> {
 
 impl<'a, 't> GetAddress for WhileStatementWithoutTest<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -5145,7 +5145,7 @@ impl<'a, 't> WhileStatementWithoutBody<'a, 't> {
 
 impl<'a, 't> GetAddress for WhileStatementWithoutBody<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -5202,7 +5202,7 @@ impl<'a, 't> ForStatementWithoutInit<'a, 't> {
 
 impl<'a, 't> GetAddress for ForStatementWithoutInit<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -5252,7 +5252,7 @@ impl<'a, 't> ForStatementWithoutTest<'a, 't> {
 
 impl<'a, 't> GetAddress for ForStatementWithoutTest<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -5302,7 +5302,7 @@ impl<'a, 't> ForStatementWithoutUpdate<'a, 't> {
 
 impl<'a, 't> GetAddress for ForStatementWithoutUpdate<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -5355,7 +5355,7 @@ impl<'a, 't> ForStatementWithoutBody<'a, 't> {
 
 impl<'a, 't> GetAddress for ForStatementWithoutBody<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -5404,7 +5404,7 @@ impl<'a, 't> ForInStatementWithoutLeft<'a, 't> {
 
 impl<'a, 't> GetAddress for ForInStatementWithoutLeft<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -5448,7 +5448,7 @@ impl<'a, 't> ForInStatementWithoutRight<'a, 't> {
 
 impl<'a, 't> GetAddress for ForInStatementWithoutRight<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -5492,7 +5492,7 @@ impl<'a, 't> ForInStatementWithoutBody<'a, 't> {
 
 impl<'a, 't> GetAddress for ForInStatementWithoutBody<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -5547,7 +5547,7 @@ impl<'a, 't> ForOfStatementWithoutLeft<'a, 't> {
 
 impl<'a, 't> GetAddress for ForOfStatementWithoutLeft<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -5596,7 +5596,7 @@ impl<'a, 't> ForOfStatementWithoutRight<'a, 't> {
 
 impl<'a, 't> GetAddress for ForOfStatementWithoutRight<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -5645,7 +5645,7 @@ impl<'a, 't> ForOfStatementWithoutBody<'a, 't> {
 
 impl<'a, 't> GetAddress for ForOfStatementWithoutBody<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -5669,7 +5669,7 @@ impl<'a, 't> ContinueStatementWithoutLabel<'a, 't> {
 
 impl<'a, 't> GetAddress for ContinueStatementWithoutLabel<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -5693,7 +5693,7 @@ impl<'a, 't> BreakStatementWithoutLabel<'a, 't> {
 
 impl<'a, 't> GetAddress for BreakStatementWithoutLabel<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -5717,7 +5717,7 @@ impl<'a, 't> ReturnStatementWithoutArgument<'a, 't> {
 
 impl<'a, 't> GetAddress for ReturnStatementWithoutArgument<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -5747,7 +5747,7 @@ impl<'a, 't> WithStatementWithoutObject<'a, 't> {
 
 impl<'a, 't> GetAddress for WithStatementWithoutObject<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -5775,7 +5775,7 @@ impl<'a, 't> WithStatementWithoutBody<'a, 't> {
 
 impl<'a, 't> GetAddress for WithStatementWithoutBody<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -5818,7 +5818,7 @@ impl<'a, 't> SwitchStatementWithoutDiscriminant<'a, 't> {
 
 impl<'a, 't> GetAddress for SwitchStatementWithoutDiscriminant<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -5855,7 +5855,7 @@ impl<'a, 't> SwitchStatementWithoutCases<'a, 't> {
 
 impl<'a, 't> GetAddress for SwitchStatementWithoutCases<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -5888,7 +5888,7 @@ impl<'a, 't> SwitchCaseWithoutTest<'a, 't> {
 
 impl<'a, 't> GetAddress for SwitchCaseWithoutTest<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -5916,7 +5916,7 @@ impl<'a, 't> SwitchCaseWithoutConsequent<'a, 't> {
 
 impl<'a, 't> GetAddress for SwitchCaseWithoutConsequent<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -5948,7 +5948,7 @@ impl<'a, 't> LabeledStatementWithoutLabel<'a, 't> {
 
 impl<'a, 't> GetAddress for LabeledStatementWithoutLabel<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -5977,7 +5977,7 @@ impl<'a, 't> LabeledStatementWithoutBody<'a, 't> {
 
 impl<'a, 't> GetAddress for LabeledStatementWithoutBody<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -6001,7 +6001,7 @@ impl<'a, 't> ThrowStatementWithoutArgument<'a, 't> {
 
 impl<'a, 't> GetAddress for ThrowStatementWithoutArgument<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -6043,7 +6043,7 @@ impl<'a, 't> TryStatementWithoutBlock<'a, 't> {
 
 impl<'a, 't> GetAddress for TryStatementWithoutBlock<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -6080,7 +6080,7 @@ impl<'a, 't> TryStatementWithoutHandler<'a, 't> {
 
 impl<'a, 't> GetAddress for TryStatementWithoutHandler<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -6117,7 +6117,7 @@ impl<'a, 't> TryStatementWithoutFinalizer<'a, 't> {
 
 impl<'a, 't> GetAddress for TryStatementWithoutFinalizer<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -6159,7 +6159,7 @@ impl<'a, 't> CatchClauseWithoutParam<'a, 't> {
 
 impl<'a, 't> GetAddress for CatchClauseWithoutParam<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -6196,7 +6196,7 @@ impl<'a, 't> CatchClauseWithoutBody<'a, 't> {
 
 impl<'a, 't> GetAddress for CatchClauseWithoutBody<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -6220,7 +6220,7 @@ impl<'a, 't> CatchParameterWithoutPattern<'a, 't> {
 
 impl<'a, 't> GetAddress for CatchParameterWithoutPattern<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -6254,7 +6254,7 @@ impl<'a, 't> BindingPatternWithoutKind<'a, 't> {
 
 impl<'a, 't> GetAddress for BindingPatternWithoutKind<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -6283,7 +6283,7 @@ impl<'a, 't> BindingPatternWithoutTypeAnnotation<'a, 't> {
 
 impl<'a, 't> GetAddress for BindingPatternWithoutTypeAnnotation<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -6315,7 +6315,7 @@ impl<'a, 't> AssignmentPatternWithoutLeft<'a, 't> {
 
 impl<'a, 't> GetAddress for AssignmentPatternWithoutLeft<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -6344,7 +6344,7 @@ impl<'a, 't> AssignmentPatternWithoutRight<'a, 't> {
 
 impl<'a, 't> GetAddress for AssignmentPatternWithoutRight<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -6377,7 +6377,7 @@ impl<'a, 't> ObjectPatternWithoutProperties<'a, 't> {
 
 impl<'a, 't> GetAddress for ObjectPatternWithoutProperties<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -6406,7 +6406,7 @@ impl<'a, 't> ObjectPatternWithoutRest<'a, 't> {
 
 impl<'a, 't> GetAddress for ObjectPatternWithoutRest<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -6451,7 +6451,7 @@ impl<'a, 't> BindingPropertyWithoutKey<'a, 't> {
 
 impl<'a, 't> GetAddress for BindingPropertyWithoutKey<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -6489,7 +6489,7 @@ impl<'a, 't> BindingPropertyWithoutValue<'a, 't> {
 
 impl<'a, 't> GetAddress for BindingPropertyWithoutValue<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -6522,7 +6522,7 @@ impl<'a, 't> ArrayPatternWithoutElements<'a, 't> {
 
 impl<'a, 't> GetAddress for ArrayPatternWithoutElements<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -6551,7 +6551,7 @@ impl<'a, 't> ArrayPatternWithoutRest<'a, 't> {
 
 impl<'a, 't> GetAddress for ArrayPatternWithoutRest<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -6576,7 +6576,7 @@ impl<'a, 't> BindingRestElementWithoutArgument<'a, 't> {
 
 impl<'a, 't> GetAddress for BindingRestElementWithoutArgument<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -6677,7 +6677,7 @@ impl<'a, 't> FunctionWithoutId<'a, 't> {
 
 impl<'a, 't> GetAddress for FunctionWithoutId<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -6765,7 +6765,7 @@ impl<'a, 't> FunctionWithoutTypeParameters<'a, 't> {
 
 impl<'a, 't> GetAddress for FunctionWithoutTypeParameters<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -6853,7 +6853,7 @@ impl<'a, 't> FunctionWithoutThisParam<'a, 't> {
 
 impl<'a, 't> GetAddress for FunctionWithoutThisParam<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -6941,7 +6941,7 @@ impl<'a, 't> FunctionWithoutParams<'a, 't> {
 
 impl<'a, 't> GetAddress for FunctionWithoutParams<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -7029,7 +7029,7 @@ impl<'a, 't> FunctionWithoutReturnType<'a, 't> {
 
 impl<'a, 't> GetAddress for FunctionWithoutReturnType<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -7117,7 +7117,7 @@ impl<'a, 't> FunctionWithoutBody<'a, 't> {
 
 impl<'a, 't> GetAddress for FunctionWithoutBody<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -7159,7 +7159,7 @@ impl<'a, 't> FormalParametersWithoutItems<'a, 't> {
 
 impl<'a, 't> GetAddress for FormalParametersWithoutItems<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -7196,7 +7196,7 @@ impl<'a, 't> FormalParametersWithoutRest<'a, 't> {
 
 impl<'a, 't> GetAddress for FormalParametersWithoutRest<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -7252,7 +7252,7 @@ impl<'a, 't> FormalParameterWithoutDecorators<'a, 't> {
 
 impl<'a, 't> GetAddress for FormalParameterWithoutDecorators<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -7299,7 +7299,7 @@ impl<'a, 't> FormalParameterWithoutPattern<'a, 't> {
 
 impl<'a, 't> GetAddress for FormalParameterWithoutPattern<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -7332,7 +7332,7 @@ impl<'a, 't> FunctionBodyWithoutDirectives<'a, 't> {
 
 impl<'a, 't> GetAddress for FunctionBodyWithoutDirectives<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -7361,7 +7361,7 @@ impl<'a, 't> FunctionBodyWithoutStatements<'a, 't> {
 
 impl<'a, 't> GetAddress for FunctionBodyWithoutStatements<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -7448,7 +7448,7 @@ impl<'a, 't> ArrowFunctionExpressionWithoutTypeParameters<'a, 't> {
 
 impl<'a, 't> GetAddress for ArrowFunctionExpressionWithoutTypeParameters<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -7518,7 +7518,7 @@ impl<'a, 't> ArrowFunctionExpressionWithoutParams<'a, 't> {
 
 impl<'a, 't> GetAddress for ArrowFunctionExpressionWithoutParams<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -7588,7 +7588,7 @@ impl<'a, 't> ArrowFunctionExpressionWithoutReturnType<'a, 't> {
 
 impl<'a, 't> GetAddress for ArrowFunctionExpressionWithoutReturnType<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -7658,7 +7658,7 @@ impl<'a, 't> ArrowFunctionExpressionWithoutBody<'a, 't> {
 
 impl<'a, 't> GetAddress for ArrowFunctionExpressionWithoutBody<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -7688,7 +7688,7 @@ impl<'a, 't> YieldExpressionWithoutArgument<'a, 't> {
 
 impl<'a, 't> GetAddress for YieldExpressionWithoutArgument<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -7788,7 +7788,7 @@ impl<'a, 't> ClassWithoutDecorators<'a, 't> {
 
 impl<'a, 't> GetAddress for ClassWithoutDecorators<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -7871,7 +7871,7 @@ impl<'a, 't> ClassWithoutId<'a, 't> {
 
 impl<'a, 't> GetAddress for ClassWithoutId<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -7956,7 +7956,7 @@ impl<'a, 't> ClassWithoutTypeParameters<'a, 't> {
 
 impl<'a, 't> GetAddress for ClassWithoutTypeParameters<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -8042,7 +8042,7 @@ impl<'a, 't> ClassWithoutSuperClass<'a, 't> {
 
 impl<'a, 't> GetAddress for ClassWithoutSuperClass<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -8127,7 +8127,7 @@ impl<'a, 't> ClassWithoutSuperTypeParameters<'a, 't> {
 
 impl<'a, 't> GetAddress for ClassWithoutSuperTypeParameters<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -8212,7 +8212,7 @@ impl<'a, 't> ClassWithoutImplements<'a, 't> {
 
 impl<'a, 't> GetAddress for ClassWithoutImplements<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -8297,7 +8297,7 @@ impl<'a, 't> ClassWithoutBody<'a, 't> {
 
 impl<'a, 't> GetAddress for ClassWithoutBody<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -8321,7 +8321,7 @@ impl<'a, 't> ClassBodyWithoutBody<'a, 't> {
 
 impl<'a, 't> GetAddress for ClassBodyWithoutBody<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -8416,7 +8416,7 @@ impl<'a, 't> MethodDefinitionWithoutDecorators<'a, 't> {
 
 impl<'a, 't> GetAddress for MethodDefinitionWithoutDecorators<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -8497,7 +8497,7 @@ impl<'a, 't> MethodDefinitionWithoutKey<'a, 't> {
 
 impl<'a, 't> GetAddress for MethodDefinitionWithoutKey<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -8577,7 +8577,7 @@ impl<'a, 't> MethodDefinitionWithoutValue<'a, 't> {
 
 impl<'a, 't> GetAddress for MethodDefinitionWithoutValue<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -8697,7 +8697,7 @@ impl<'a, 't> PropertyDefinitionWithoutDecorators<'a, 't> {
 
 impl<'a, 't> GetAddress for PropertyDefinitionWithoutDecorators<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -8793,7 +8793,7 @@ impl<'a, 't> PropertyDefinitionWithoutKey<'a, 't> {
 
 impl<'a, 't> GetAddress for PropertyDefinitionWithoutKey<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -8888,7 +8888,7 @@ impl<'a, 't> PropertyDefinitionWithoutValue<'a, 't> {
 
 impl<'a, 't> GetAddress for PropertyDefinitionWithoutValue<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -8983,7 +8983,7 @@ impl<'a, 't> PropertyDefinitionWithoutTypeAnnotation<'a, 't> {
 
 impl<'a, 't> GetAddress for PropertyDefinitionWithoutTypeAnnotation<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -9016,7 +9016,7 @@ impl<'a, 't> StaticBlockWithoutBody<'a, 't> {
 
 impl<'a, 't> GetAddress for StaticBlockWithoutBody<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -9105,7 +9105,7 @@ impl<'a, 't> AccessorPropertyWithoutDecorators<'a, 't> {
 
 impl<'a, 't> GetAddress for AccessorPropertyWithoutDecorators<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -9181,7 +9181,7 @@ impl<'a, 't> AccessorPropertyWithoutKey<'a, 't> {
 
 impl<'a, 't> GetAddress for AccessorPropertyWithoutKey<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -9256,7 +9256,7 @@ impl<'a, 't> AccessorPropertyWithoutValue<'a, 't> {
 
 impl<'a, 't> GetAddress for AccessorPropertyWithoutValue<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -9331,7 +9331,7 @@ impl<'a, 't> AccessorPropertyWithoutTypeAnnotation<'a, 't> {
 
 impl<'a, 't> GetAddress for AccessorPropertyWithoutTypeAnnotation<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -9365,7 +9365,7 @@ impl<'a, 't> ImportExpressionWithoutSource<'a, 't> {
 
 impl<'a, 't> GetAddress for ImportExpressionWithoutSource<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -9393,7 +9393,7 @@ impl<'a, 't> ImportExpressionWithoutArguments<'a, 't> {
 
 impl<'a, 't> GetAddress for ImportExpressionWithoutArguments<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -9447,7 +9447,7 @@ impl<'a, 't> ImportDeclarationWithoutSpecifiers<'a, 't> {
 
 impl<'a, 't> GetAddress for ImportDeclarationWithoutSpecifiers<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -9492,7 +9492,7 @@ impl<'a, 't> ImportDeclarationWithoutSource<'a, 't> {
 
 impl<'a, 't> GetAddress for ImportDeclarationWithoutSource<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -9537,7 +9537,7 @@ impl<'a, 't> ImportDeclarationWithoutWithClause<'a, 't> {
 
 impl<'a, 't> GetAddress for ImportDeclarationWithoutWithClause<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -9580,7 +9580,7 @@ impl<'a, 't> ImportSpecifierWithoutImported<'a, 't> {
 
 impl<'a, 't> GetAddress for ImportSpecifierWithoutImported<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -9617,7 +9617,7 @@ impl<'a, 't> ImportSpecifierWithoutLocal<'a, 't> {
 
 impl<'a, 't> GetAddress for ImportSpecifierWithoutLocal<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -9645,7 +9645,7 @@ impl<'a, 't> ImportDefaultSpecifierWithoutLocal<'a, 't> {
 
 impl<'a, 't> GetAddress for ImportDefaultSpecifierWithoutLocal<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -9673,7 +9673,7 @@ impl<'a, 't> ImportNamespaceSpecifierWithoutLocal<'a, 't> {
 
 impl<'a, 't> GetAddress for ImportNamespaceSpecifierWithoutLocal<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -9707,7 +9707,7 @@ impl<'a, 't> WithClauseWithoutAttributesKeyword<'a, 't> {
 
 impl<'a, 't> GetAddress for WithClauseWithoutAttributesKeyword<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -9736,7 +9736,7 @@ impl<'a, 't> WithClauseWithoutWithEntries<'a, 't> {
 
 impl<'a, 't> GetAddress for WithClauseWithoutWithEntries<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -9768,7 +9768,7 @@ impl<'a, 't> ImportAttributeWithoutKey<'a, 't> {
 
 impl<'a, 't> GetAddress for ImportAttributeWithoutKey<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -9797,7 +9797,7 @@ impl<'a, 't> ImportAttributeWithoutValue<'a, 't> {
 
 impl<'a, 't> GetAddress for ImportAttributeWithoutValue<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -9865,7 +9865,7 @@ impl<'a, 't> ExportNamedDeclarationWithoutDeclaration<'a, 't> {
 
 impl<'a, 't> GetAddress for ExportNamedDeclarationWithoutDeclaration<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -9920,7 +9920,7 @@ impl<'a, 't> ExportNamedDeclarationWithoutSpecifiers<'a, 't> {
 
 impl<'a, 't> GetAddress for ExportNamedDeclarationWithoutSpecifiers<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -9975,7 +9975,7 @@ impl<'a, 't> ExportNamedDeclarationWithoutSource<'a, 't> {
 
 impl<'a, 't> GetAddress for ExportNamedDeclarationWithoutSource<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -10030,7 +10030,7 @@ impl<'a, 't> ExportNamedDeclarationWithoutWithClause<'a, 't> {
 
 impl<'a, 't> GetAddress for ExportNamedDeclarationWithoutWithClause<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -10068,7 +10068,7 @@ impl<'a, 't> ExportDefaultDeclarationWithoutDeclaration<'a, 't> {
 
 impl<'a, 't> GetAddress for ExportDefaultDeclarationWithoutDeclaration<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -10099,7 +10099,7 @@ impl<'a, 't> ExportDefaultDeclarationWithoutExported<'a, 't> {
 
 impl<'a, 't> GetAddress for ExportDefaultDeclarationWithoutExported<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -10154,7 +10154,7 @@ impl<'a, 't> ExportAllDeclarationWithoutExported<'a, 't> {
 
 impl<'a, 't> GetAddress for ExportAllDeclarationWithoutExported<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -10199,7 +10199,7 @@ impl<'a, 't> ExportAllDeclarationWithoutSource<'a, 't> {
 
 impl<'a, 't> GetAddress for ExportAllDeclarationWithoutSource<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -10244,7 +10244,7 @@ impl<'a, 't> ExportAllDeclarationWithoutWithClause<'a, 't> {
 
 impl<'a, 't> GetAddress for ExportAllDeclarationWithoutWithClause<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -10287,7 +10287,7 @@ impl<'a, 't> ExportSpecifierWithoutLocal<'a, 't> {
 
 impl<'a, 't> GetAddress for ExportSpecifierWithoutLocal<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -10324,7 +10324,7 @@ impl<'a, 't> ExportSpecifierWithoutExported<'a, 't> {
 
 impl<'a, 't> GetAddress for ExportSpecifierWithoutExported<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -10368,7 +10368,7 @@ impl<'a, 't> JSXElementWithoutOpeningElement<'a, 't> {
 
 impl<'a, 't> GetAddress for JSXElementWithoutOpeningElement<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -10405,7 +10405,7 @@ impl<'a, 't> JSXElementWithoutClosingElement<'a, 't> {
 
 impl<'a, 't> GetAddress for JSXElementWithoutClosingElement<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -10442,7 +10442,7 @@ impl<'a, 't> JSXElementWithoutChildren<'a, 't> {
 
 impl<'a, 't> GetAddress for JSXElementWithoutChildren<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -10495,7 +10495,7 @@ impl<'a, 't> JSXOpeningElementWithoutName<'a, 't> {
 
 impl<'a, 't> GetAddress for JSXOpeningElementWithoutName<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -10539,7 +10539,7 @@ impl<'a, 't> JSXOpeningElementWithoutAttributes<'a, 't> {
 
 impl<'a, 't> GetAddress for JSXOpeningElementWithoutAttributes<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -10583,7 +10583,7 @@ impl<'a, 't> JSXOpeningElementWithoutTypeParameters<'a, 't> {
 
 impl<'a, 't> GetAddress for JSXOpeningElementWithoutTypeParameters<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -10607,7 +10607,7 @@ impl<'a, 't> JSXClosingElementWithoutName<'a, 't> {
 
 impl<'a, 't> GetAddress for JSXClosingElementWithoutName<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -10651,7 +10651,7 @@ impl<'a, 't> JSXFragmentWithoutChildren<'a, 't> {
 
 impl<'a, 't> GetAddress for JSXFragmentWithoutChildren<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -10686,7 +10686,7 @@ impl<'a, 't> JSXNamespacedNameWithoutNamespace<'a, 't> {
 
 impl<'a, 't> GetAddress for JSXNamespacedNameWithoutNamespace<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -10715,7 +10715,7 @@ impl<'a, 't> JSXNamespacedNameWithoutProperty<'a, 't> {
 
 impl<'a, 't> GetAddress for JSXNamespacedNameWithoutProperty<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -10750,7 +10750,7 @@ impl<'a, 't> JSXMemberExpressionWithoutObject<'a, 't> {
 
 impl<'a, 't> GetAddress for JSXMemberExpressionWithoutObject<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -10779,7 +10779,7 @@ impl<'a, 't> JSXMemberExpressionWithoutProperty<'a, 't> {
 
 impl<'a, 't> GetAddress for JSXMemberExpressionWithoutProperty<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -10807,7 +10807,7 @@ impl<'a, 't> JSXExpressionContainerWithoutExpression<'a, 't> {
 
 impl<'a, 't> GetAddress for JSXExpressionContainerWithoutExpression<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -10840,7 +10840,7 @@ impl<'a, 't> JSXAttributeWithoutName<'a, 't> {
 
 impl<'a, 't> GetAddress for JSXAttributeWithoutName<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -10868,7 +10868,7 @@ impl<'a, 't> JSXAttributeWithoutValue<'a, 't> {
 
 impl<'a, 't> GetAddress for JSXAttributeWithoutValue<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -10893,7 +10893,7 @@ impl<'a, 't> JSXSpreadAttributeWithoutArgument<'a, 't> {
 
 impl<'a, 't> GetAddress for JSXSpreadAttributeWithoutArgument<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -10917,7 +10917,7 @@ impl<'a, 't> JSXSpreadChildWithoutExpression<'a, 't> {
 
 impl<'a, 't> GetAddress for JSXSpreadChildWithoutExpression<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -10948,7 +10948,7 @@ impl<'a, 't> TSThisParameterWithoutTypeAnnotation<'a, 't> {
 
 impl<'a, 't> GetAddress for TSThisParameterWithoutTypeAnnotation<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -11003,7 +11003,7 @@ impl<'a, 't> TSEnumDeclarationWithoutId<'a, 't> {
 
 impl<'a, 't> GetAddress for TSEnumDeclarationWithoutId<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -11050,7 +11050,7 @@ impl<'a, 't> TSEnumDeclarationWithoutMembers<'a, 't> {
 
 impl<'a, 't> GetAddress for TSEnumDeclarationWithoutMembers<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -11083,7 +11083,7 @@ impl<'a, 't> TSEnumMemberWithoutId<'a, 't> {
 
 impl<'a, 't> GetAddress for TSEnumMemberWithoutId<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -11111,7 +11111,7 @@ impl<'a, 't> TSEnumMemberWithoutInitializer<'a, 't> {
 
 impl<'a, 't> GetAddress for TSEnumMemberWithoutInitializer<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -11136,7 +11136,7 @@ impl<'a, 't> TSTypeAnnotationWithoutTypeAnnotation<'a, 't> {
 
 impl<'a, 't> GetAddress for TSTypeAnnotationWithoutTypeAnnotation<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -11160,7 +11160,7 @@ impl<'a, 't> TSLiteralTypeWithoutLiteral<'a, 't> {
 
 impl<'a, 't> GetAddress for TSLiteralTypeWithoutLiteral<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -11224,7 +11224,7 @@ impl<'a, 't> TSConditionalTypeWithoutCheckType<'a, 't> {
 
 impl<'a, 't> GetAddress for TSConditionalTypeWithoutCheckType<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -11276,7 +11276,7 @@ impl<'a, 't> TSConditionalTypeWithoutExtendsType<'a, 't> {
 
 impl<'a, 't> GetAddress for TSConditionalTypeWithoutExtendsType<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -11329,7 +11329,7 @@ impl<'a, 't> TSConditionalTypeWithoutTrueType<'a, 't> {
 
 impl<'a, 't> GetAddress for TSConditionalTypeWithoutTrueType<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -11381,7 +11381,7 @@ impl<'a, 't> TSConditionalTypeWithoutFalseType<'a, 't> {
 
 impl<'a, 't> GetAddress for TSConditionalTypeWithoutFalseType<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -11405,7 +11405,7 @@ impl<'a, 't> TSUnionTypeWithoutTypes<'a, 't> {
 
 impl<'a, 't> GetAddress for TSUnionTypeWithoutTypes<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -11429,7 +11429,7 @@ impl<'a, 't> TSIntersectionTypeWithoutTypes<'a, 't> {
 
 impl<'a, 't> GetAddress for TSIntersectionTypeWithoutTypes<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -11454,7 +11454,7 @@ impl<'a, 't> TSParenthesizedTypeWithoutTypeAnnotation<'a, 't> {
 
 impl<'a, 't> GetAddress for TSParenthesizedTypeWithoutTypeAnnotation<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -11488,7 +11488,7 @@ impl<'a, 't> TSTypeOperatorWithoutTypeAnnotation<'a, 't> {
 
 impl<'a, 't> GetAddress for TSTypeOperatorWithoutTypeAnnotation<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -11512,7 +11512,7 @@ impl<'a, 't> TSArrayTypeWithoutElementType<'a, 't> {
 
 impl<'a, 't> GetAddress for TSArrayTypeWithoutElementType<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -11547,7 +11547,7 @@ impl<'a, 't> TSIndexedAccessTypeWithoutObjectType<'a, 't> {
 
 impl<'a, 't> GetAddress for TSIndexedAccessTypeWithoutObjectType<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -11576,7 +11576,7 @@ impl<'a, 't> TSIndexedAccessTypeWithoutIndexType<'a, 't> {
 
 impl<'a, 't> GetAddress for TSIndexedAccessTypeWithoutIndexType<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -11600,7 +11600,7 @@ impl<'a, 't> TSTupleTypeWithoutElementTypes<'a, 't> {
 
 impl<'a, 't> GetAddress for TSTupleTypeWithoutElementTypes<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -11643,7 +11643,7 @@ impl<'a, 't> TSNamedTupleMemberWithoutElementType<'a, 't> {
 
 impl<'a, 't> GetAddress for TSNamedTupleMemberWithoutElementType<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -11679,7 +11679,7 @@ impl<'a, 't> TSNamedTupleMemberWithoutLabel<'a, 't> {
 
 impl<'a, 't> GetAddress for TSNamedTupleMemberWithoutLabel<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -11704,7 +11704,7 @@ impl<'a, 't> TSOptionalTypeWithoutTypeAnnotation<'a, 't> {
 
 impl<'a, 't> GetAddress for TSOptionalTypeWithoutTypeAnnotation<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -11729,7 +11729,7 @@ impl<'a, 't> TSRestTypeWithoutTypeAnnotation<'a, 't> {
 
 impl<'a, 't> GetAddress for TSRestTypeWithoutTypeAnnotation<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -11763,7 +11763,7 @@ impl<'a, 't> TSTypeReferenceWithoutTypeName<'a, 't> {
 
 impl<'a, 't> GetAddress for TSTypeReferenceWithoutTypeName<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -11792,7 +11792,7 @@ impl<'a, 't> TSTypeReferenceWithoutTypeParameters<'a, 't> {
 
 impl<'a, 't> GetAddress for TSTypeReferenceWithoutTypeParameters<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -11825,7 +11825,7 @@ impl<'a, 't> TSQualifiedNameWithoutLeft<'a, 't> {
 
 impl<'a, 't> GetAddress for TSQualifiedNameWithoutLeft<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -11853,7 +11853,7 @@ impl<'a, 't> TSQualifiedNameWithoutRight<'a, 't> {
 
 impl<'a, 't> GetAddress for TSQualifiedNameWithoutRight<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -11882,7 +11882,7 @@ impl<'a, 't> TSTypeParameterInstantiationWithoutParams<'a, 't> {
 
 impl<'a, 't> GetAddress for TSTypeParameterInstantiationWithoutParams<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -11943,7 +11943,7 @@ impl<'a, 't> TSTypeParameterWithoutName<'a, 't> {
 
 impl<'a, 't> GetAddress for TSTypeParameterWithoutName<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -11995,7 +11995,7 @@ impl<'a, 't> TSTypeParameterWithoutConstraint<'a, 't> {
 
 impl<'a, 't> GetAddress for TSTypeParameterWithoutConstraint<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -12047,7 +12047,7 @@ impl<'a, 't> TSTypeParameterWithoutDefault<'a, 't> {
 
 impl<'a, 't> GetAddress for TSTypeParameterWithoutDefault<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -12075,7 +12075,7 @@ impl<'a, 't> TSTypeParameterDeclarationWithoutParams<'a, 't> {
 
 impl<'a, 't> GetAddress for TSTypeParameterDeclarationWithoutParams<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -12142,7 +12142,7 @@ impl<'a, 't> TSTypeAliasDeclarationWithoutId<'a, 't> {
 
 impl<'a, 't> GetAddress for TSTypeAliasDeclarationWithoutId<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -12196,7 +12196,7 @@ impl<'a, 't> TSTypeAliasDeclarationWithoutTypeParameters<'a, 't> {
 
 impl<'a, 't> GetAddress for TSTypeAliasDeclarationWithoutTypeParameters<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -12250,7 +12250,7 @@ impl<'a, 't> TSTypeAliasDeclarationWithoutTypeAnnotation<'a, 't> {
 
 impl<'a, 't> GetAddress for TSTypeAliasDeclarationWithoutTypeAnnotation<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -12285,7 +12285,7 @@ impl<'a, 't> TSClassImplementsWithoutExpression<'a, 't> {
 
 impl<'a, 't> GetAddress for TSClassImplementsWithoutExpression<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -12314,7 +12314,7 @@ impl<'a, 't> TSClassImplementsWithoutTypeParameters<'a, 't> {
 
 impl<'a, 't> GetAddress for TSClassImplementsWithoutTypeParameters<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -12390,7 +12390,7 @@ impl<'a, 't> TSInterfaceDeclarationWithoutId<'a, 't> {
 
 impl<'a, 't> GetAddress for TSInterfaceDeclarationWithoutId<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -12452,7 +12452,7 @@ impl<'a, 't> TSInterfaceDeclarationWithoutExtends<'a, 't> {
 
 impl<'a, 't> GetAddress for TSInterfaceDeclarationWithoutExtends<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -12514,7 +12514,7 @@ impl<'a, 't> TSInterfaceDeclarationWithoutTypeParameters<'a, 't> {
 
 impl<'a, 't> GetAddress for TSInterfaceDeclarationWithoutTypeParameters<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -12576,7 +12576,7 @@ impl<'a, 't> TSInterfaceDeclarationWithoutBody<'a, 't> {
 
 impl<'a, 't> GetAddress for TSInterfaceDeclarationWithoutBody<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -12600,7 +12600,7 @@ impl<'a, 't> TSInterfaceBodyWithoutBody<'a, 't> {
 
 impl<'a, 't> GetAddress for TSInterfaceBodyWithoutBody<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -12661,7 +12661,7 @@ impl<'a, 't> TSPropertySignatureWithoutKey<'a, 't> {
 
 impl<'a, 't> GetAddress for TSPropertySignatureWithoutKey<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -12711,7 +12711,7 @@ impl<'a, 't> TSPropertySignatureWithoutTypeAnnotation<'a, 't> {
 
 impl<'a, 't> GetAddress for TSPropertySignatureWithoutTypeAnnotation<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -12752,7 +12752,7 @@ impl<'a, 't> TSIndexSignatureWithoutParameters<'a, 't> {
 
 impl<'a, 't> GetAddress for TSIndexSignatureWithoutParameters<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -12786,7 +12786,7 @@ impl<'a, 't> TSIndexSignatureWithoutTypeAnnotation<'a, 't> {
 
 impl<'a, 't> GetAddress for TSIndexSignatureWithoutTypeAnnotation<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -12844,7 +12844,7 @@ impl<'a, 't> TSCallSignatureDeclarationWithoutTypeParameters<'a, 't> {
 
 impl<'a, 't> GetAddress for TSCallSignatureDeclarationWithoutTypeParameters<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -12891,7 +12891,7 @@ impl<'a, 't> TSCallSignatureDeclarationWithoutThisParam<'a, 't> {
 
 impl<'a, 't> GetAddress for TSCallSignatureDeclarationWithoutThisParam<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -12938,7 +12938,7 @@ impl<'a, 't> TSCallSignatureDeclarationWithoutParams<'a, 't> {
 
 impl<'a, 't> GetAddress for TSCallSignatureDeclarationWithoutParams<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -12985,7 +12985,7 @@ impl<'a, 't> TSCallSignatureDeclarationWithoutReturnType<'a, 't> {
 
 impl<'a, 't> GetAddress for TSCallSignatureDeclarationWithoutReturnType<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -13081,7 +13081,7 @@ impl<'a, 't> TSMethodSignatureWithoutKey<'a, 't> {
 
 impl<'a, 't> GetAddress for TSMethodSignatureWithoutKey<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -13159,7 +13159,7 @@ impl<'a, 't> TSMethodSignatureWithoutTypeParameters<'a, 't> {
 
 impl<'a, 't> GetAddress for TSMethodSignatureWithoutTypeParameters<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -13237,7 +13237,7 @@ impl<'a, 't> TSMethodSignatureWithoutThisParam<'a, 't> {
 
 impl<'a, 't> GetAddress for TSMethodSignatureWithoutThisParam<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -13315,7 +13315,7 @@ impl<'a, 't> TSMethodSignatureWithoutParams<'a, 't> {
 
 impl<'a, 't> GetAddress for TSMethodSignatureWithoutParams<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -13393,7 +13393,7 @@ impl<'a, 't> TSMethodSignatureWithoutReturnType<'a, 't> {
 
 impl<'a, 't> GetAddress for TSMethodSignatureWithoutReturnType<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -13452,7 +13452,7 @@ impl<'a, 't> TSConstructSignatureDeclarationWithoutTypeParameters<'a, 't> {
 
 impl<'a, 't> GetAddress for TSConstructSignatureDeclarationWithoutTypeParameters<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -13500,7 +13500,7 @@ impl<'a, 't> TSConstructSignatureDeclarationWithoutParams<'a, 't> {
 
 impl<'a, 't> GetAddress for TSConstructSignatureDeclarationWithoutParams<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -13548,7 +13548,7 @@ impl<'a, 't> TSConstructSignatureDeclarationWithoutReturnType<'a, 't> {
 
 impl<'a, 't> GetAddress for TSConstructSignatureDeclarationWithoutReturnType<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -13583,7 +13583,7 @@ impl<'a, 't> TSIndexSignatureNameWithoutTypeAnnotation<'a, 't> {
 
 impl<'a, 't> GetAddress for TSIndexSignatureNameWithoutTypeAnnotation<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -13618,7 +13618,7 @@ impl<'a, 't> TSInterfaceHeritageWithoutExpression<'a, 't> {
 
 impl<'a, 't> GetAddress for TSInterfaceHeritageWithoutExpression<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -13647,7 +13647,7 @@ impl<'a, 't> TSInterfaceHeritageWithoutTypeParameters<'a, 't> {
 
 impl<'a, 't> GetAddress for TSInterfaceHeritageWithoutTypeParameters<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -13688,7 +13688,7 @@ impl<'a, 't> TSTypePredicateWithoutParameterName<'a, 't> {
 
 impl<'a, 't> GetAddress for TSTypePredicateWithoutParameterName<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -13722,7 +13722,7 @@ impl<'a, 't> TSTypePredicateWithoutTypeAnnotation<'a, 't> {
 
 impl<'a, 't> GetAddress for TSTypePredicateWithoutTypeAnnotation<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -13783,7 +13783,7 @@ impl<'a, 't> TSModuleDeclarationWithoutId<'a, 't> {
 
 impl<'a, 't> GetAddress for TSModuleDeclarationWithoutId<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -13835,7 +13835,7 @@ impl<'a, 't> TSModuleDeclarationWithoutBody<'a, 't> {
 
 impl<'a, 't> GetAddress for TSModuleDeclarationWithoutBody<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -13868,7 +13868,7 @@ impl<'a, 't> TSModuleBlockWithoutDirectives<'a, 't> {
 
 impl<'a, 't> GetAddress for TSModuleBlockWithoutDirectives<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -13897,7 +13897,7 @@ impl<'a, 't> TSModuleBlockWithoutBody<'a, 't> {
 
 impl<'a, 't> GetAddress for TSModuleBlockWithoutBody<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -13921,7 +13921,7 @@ impl<'a, 't> TSTypeLiteralWithoutMembers<'a, 't> {
 
 impl<'a, 't> GetAddress for TSTypeLiteralWithoutMembers<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -13946,7 +13946,7 @@ impl<'a, 't> TSInferTypeWithoutTypeParameter<'a, 't> {
 
 impl<'a, 't> GetAddress for TSInferTypeWithoutTypeParameter<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -13980,7 +13980,7 @@ impl<'a, 't> TSTypeQueryWithoutExprName<'a, 't> {
 
 impl<'a, 't> GetAddress for TSTypeQueryWithoutExprName<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -14009,7 +14009,7 @@ impl<'a, 't> TSTypeQueryWithoutTypeParameters<'a, 't> {
 
 impl<'a, 't> GetAddress for TSTypeQueryWithoutTypeParameters<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -14067,7 +14067,7 @@ impl<'a, 't> TSImportTypeWithoutParameter<'a, 't> {
 
 impl<'a, 't> GetAddress for TSImportTypeWithoutParameter<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -14116,7 +14116,7 @@ impl<'a, 't> TSImportTypeWithoutQualifier<'a, 't> {
 
 impl<'a, 't> GetAddress for TSImportTypeWithoutQualifier<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -14165,7 +14165,7 @@ impl<'a, 't> TSImportTypeWithoutAttributes<'a, 't> {
 
 impl<'a, 't> GetAddress for TSImportTypeWithoutAttributes<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -14214,7 +14214,7 @@ impl<'a, 't> TSImportTypeWithoutTypeParameters<'a, 't> {
 
 impl<'a, 't> GetAddress for TSImportTypeWithoutTypeParameters<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -14249,7 +14249,7 @@ impl<'a, 't> TSImportAttributesWithoutAttributesKeyword<'a, 't> {
 
 impl<'a, 't> GetAddress for TSImportAttributesWithoutAttributesKeyword<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -14278,7 +14278,7 @@ impl<'a, 't> TSImportAttributesWithoutElements<'a, 't> {
 
 impl<'a, 't> GetAddress for TSImportAttributesWithoutElements<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -14310,7 +14310,7 @@ impl<'a, 't> TSImportAttributeWithoutName<'a, 't> {
 
 impl<'a, 't> GetAddress for TSImportAttributeWithoutName<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -14339,7 +14339,7 @@ impl<'a, 't> TSImportAttributeWithoutValue<'a, 't> {
 
 impl<'a, 't> GetAddress for TSImportAttributeWithoutValue<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -14392,7 +14392,7 @@ impl<'a, 't> TSFunctionTypeWithoutTypeParameters<'a, 't> {
 
 impl<'a, 't> GetAddress for TSFunctionTypeWithoutTypeParameters<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -14437,7 +14437,7 @@ impl<'a, 't> TSFunctionTypeWithoutThisParam<'a, 't> {
 
 impl<'a, 't> GetAddress for TSFunctionTypeWithoutThisParam<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -14482,7 +14482,7 @@ impl<'a, 't> TSFunctionTypeWithoutParams<'a, 't> {
 
 impl<'a, 't> GetAddress for TSFunctionTypeWithoutParams<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -14527,7 +14527,7 @@ impl<'a, 't> TSFunctionTypeWithoutReturnType<'a, 't> {
 
 impl<'a, 't> GetAddress for TSFunctionTypeWithoutReturnType<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -14578,7 +14578,7 @@ impl<'a, 't> TSConstructorTypeWithoutTypeParameters<'a, 't> {
 
 impl<'a, 't> GetAddress for TSConstructorTypeWithoutTypeParameters<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -14620,7 +14620,7 @@ impl<'a, 't> TSConstructorTypeWithoutParams<'a, 't> {
 
 impl<'a, 't> GetAddress for TSConstructorTypeWithoutParams<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -14662,7 +14662,7 @@ impl<'a, 't> TSConstructorTypeWithoutReturnType<'a, 't> {
 
 impl<'a, 't> GetAddress for TSConstructorTypeWithoutReturnType<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -14733,7 +14733,7 @@ impl<'a, 't> TSMappedTypeWithoutTypeParameter<'a, 't> {
 
 impl<'a, 't> GetAddress for TSMappedTypeWithoutTypeParameter<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -14794,7 +14794,7 @@ impl<'a, 't> TSMappedTypeWithoutNameType<'a, 't> {
 
 impl<'a, 't> GetAddress for TSMappedTypeWithoutNameType<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -14855,7 +14855,7 @@ impl<'a, 't> TSMappedTypeWithoutTypeAnnotation<'a, 't> {
 
 impl<'a, 't> GetAddress for TSMappedTypeWithoutTypeAnnotation<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -14893,7 +14893,7 @@ impl<'a, 't> TSTemplateLiteralTypeWithoutQuasis<'a, 't> {
 
 impl<'a, 't> GetAddress for TSTemplateLiteralTypeWithoutQuasis<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -14924,7 +14924,7 @@ impl<'a, 't> TSTemplateLiteralTypeWithoutTypes<'a, 't> {
 
 impl<'a, 't> GetAddress for TSTemplateLiteralTypeWithoutTypes<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -14958,7 +14958,7 @@ impl<'a, 't> TSAsExpressionWithoutExpression<'a, 't> {
 
 impl<'a, 't> GetAddress for TSAsExpressionWithoutExpression<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -14987,7 +14987,7 @@ impl<'a, 't> TSAsExpressionWithoutTypeAnnotation<'a, 't> {
 
 impl<'a, 't> GetAddress for TSAsExpressionWithoutTypeAnnotation<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -15023,7 +15023,7 @@ impl<'a, 't> TSSatisfiesExpressionWithoutExpression<'a, 't> {
 
 impl<'a, 't> GetAddress for TSSatisfiesExpressionWithoutExpression<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -15052,7 +15052,7 @@ impl<'a, 't> TSSatisfiesExpressionWithoutTypeAnnotation<'a, 't> {
 
 impl<'a, 't> GetAddress for TSSatisfiesExpressionWithoutTypeAnnotation<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -15087,7 +15087,7 @@ impl<'a, 't> TSTypeAssertionWithoutExpression<'a, 't> {
 
 impl<'a, 't> GetAddress for TSTypeAssertionWithoutExpression<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -15116,7 +15116,7 @@ impl<'a, 't> TSTypeAssertionWithoutTypeAnnotation<'a, 't> {
 
 impl<'a, 't> GetAddress for TSTypeAssertionWithoutTypeAnnotation<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -15164,7 +15164,7 @@ impl<'a, 't> TSImportEqualsDeclarationWithoutId<'a, 't> {
 
 impl<'a, 't> GetAddress for TSImportEqualsDeclarationWithoutId<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -15203,7 +15203,7 @@ impl<'a, 't> TSImportEqualsDeclarationWithoutModuleReference<'a, 't> {
 
 impl<'a, 't> GetAddress for TSImportEqualsDeclarationWithoutModuleReference<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -15231,7 +15231,7 @@ impl<'a, 't> TSExternalModuleReferenceWithoutExpression<'a, 't> {
 
 impl<'a, 't> GetAddress for TSExternalModuleReferenceWithoutExpression<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -15256,7 +15256,7 @@ impl<'a, 't> TSNonNullExpressionWithoutExpression<'a, 't> {
 
 impl<'a, 't> GetAddress for TSNonNullExpressionWithoutExpression<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -15280,7 +15280,7 @@ impl<'a, 't> DecoratorWithoutExpression<'a, 't> {
 
 impl<'a, 't> GetAddress for DecoratorWithoutExpression<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -15305,7 +15305,7 @@ impl<'a, 't> TSExportAssignmentWithoutExpression<'a, 't> {
 
 impl<'a, 't> GetAddress for TSExportAssignmentWithoutExpression<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -15334,7 +15334,7 @@ impl<'a, 't> TSNamespaceExportDeclarationWithoutId<'a, 't> {
 
 impl<'a, 't> GetAddress for TSNamespaceExportDeclarationWithoutId<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -15372,7 +15372,7 @@ impl<'a, 't> TSInstantiationExpressionWithoutExpression<'a, 't> {
 
 impl<'a, 't> GetAddress for TSInstantiationExpressionWithoutExpression<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -15403,7 +15403,7 @@ impl<'a, 't> TSInstantiationExpressionWithoutTypeParameters<'a, 't> {
 
 impl<'a, 't> GetAddress for TSInstantiationExpressionWithoutTypeParameters<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -15435,7 +15435,7 @@ impl<'a, 't> JSDocNullableTypeWithoutTypeAnnotation<'a, 't> {
 
 impl<'a, 't> GetAddress for JSDocNullableTypeWithoutTypeAnnotation<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }
@@ -15472,7 +15472,7 @@ impl<'a, 't> JSDocNonNullableTypeWithoutTypeAnnotation<'a, 't> {
 
 impl<'a, 't> GetAddress for JSDocNonNullableTypeWithoutTypeAnnotation<'a, 't> {
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
         Address::from_ptr(self.0)
     }
 }

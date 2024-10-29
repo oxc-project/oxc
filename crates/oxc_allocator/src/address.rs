@@ -30,16 +30,27 @@ impl Address {
 /// Trait for getting the memory address of an AST node.
 pub trait GetAddress {
     /// Get the memory address of a value allocated in the arena.
-    fn address(&self) -> Address;
+    fn address(self) -> Address;
 }
 
-impl<'a, T> GetAddress for Box<'a, T> {
+impl<'a, T> GetAddress for &Box<'a, T> {
     /// Get the memory address of a value allocated in the arena.
     ///
     /// AST nodes in a `Box` in an arena are guaranteed to never move in memory,
     /// so this address acts as a unique identifier for the duration of the arena's existence.
     #[inline]
-    fn address(&self) -> Address {
+    fn address(self) -> Address {
+        Address::from_ptr(ptr::addr_of!(**self))
+    }
+}
+
+impl<'a, T> GetAddress for &mut Box<'a, T> {
+    /// Get the memory address of a value allocated in the arena.
+    ///
+    /// AST nodes in a `Box` in an arena are guaranteed to never move in memory,
+    /// so this address acts as a unique identifier for the duration of the arena's existence.
+    #[inline]
+    fn address(self) -> Address {
         Address::from_ptr(ptr::addr_of!(**self))
     }
 }
@@ -47,7 +58,7 @@ impl<'a, T> GetAddress for Box<'a, T> {
 impl GetAddress for Address {
     /// Address of an `Address` is itself.
     #[inline]
-    fn address(&self) -> Address {
-        *self
+    fn address(self) -> Address {
+        self
     }
 }
