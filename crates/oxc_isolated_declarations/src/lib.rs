@@ -23,7 +23,6 @@ use std::{cell::RefCell, mem};
 
 use diagnostics::function_with_assigning_properties;
 use oxc_allocator::{Allocator, CloneIn};
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstBuilder, Visit, NONE};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Atom, GetSpan, SourceType, SPAN};
@@ -71,7 +70,7 @@ impl<'a> IsolatedDeclarations<'a> {
             ast: AstBuilder::new(allocator),
             strip_internal,
             internal_annotations: FxHashSet::default(),
-            scope: ScopeTree::new(allocator),
+            scope: ScopeTree::new(),
             errors: RefCell::new(vec![]),
         }
     }
@@ -131,7 +130,7 @@ impl<'a> IsolatedDeclarations<'a> {
 }
 
 impl<'a> IsolatedDeclarations<'a> {
-    pub fn transform_program(
+    fn transform_program(
         &mut self,
         program: &Program<'a>,
     ) -> oxc_allocator::Vec<'a, Statement<'a>> {
@@ -152,7 +151,7 @@ impl<'a> IsolatedDeclarations<'a> {
         }
     }
 
-    pub fn transform_program_without_module_declaration(
+    fn transform_program_without_module_declaration(
         &mut self,
         stmts: &oxc_allocator::Vec<'a, Statement<'a>>,
     ) -> oxc_allocator::Vec<'a, Statement<'a>> {
@@ -175,7 +174,7 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     #[allow(clippy::missing_panics_doc)]
-    pub fn transform_statements_on_demand(
+    fn transform_statements_on_demand(
         &mut self,
         stmts: &oxc_allocator::Vec<'a, Statement<'a>>,
     ) -> oxc_allocator::Vec<'a, Statement<'a>> {
@@ -421,7 +420,7 @@ impl<'a> IsolatedDeclarations<'a> {
         new_stm
     }
 
-    pub fn remove_function_overloads_implementation(
+    fn remove_function_overloads_implementation(
         stmts: &mut oxc_allocator::Vec<'a, &Statement<'a>>,
     ) {
         let mut last_function_name: Option<Atom<'a>> = None;
@@ -556,7 +555,7 @@ impl<'a> IsolatedDeclarations<'a> {
         assignable_properties_for_namespace
     }
 
-    pub fn report_error_for_expando_function(&self, stmts: &oxc_allocator::Vec<'a, Statement<'a>>) {
+    fn report_error_for_expando_function(&self, stmts: &oxc_allocator::Vec<'a, Statement<'a>>) {
         let assignable_properties_for_namespace =
             IsolatedDeclarations::get_assignable_properties_for_namespaces(stmts);
 
@@ -644,7 +643,7 @@ impl<'a> IsolatedDeclarations<'a> {
         }
     }
 
-    pub fn is_declare(&self) -> bool {
+    fn is_declare(&self) -> bool {
         // If we are in a module block, we don't need to add declare
         !self.scope.is_ts_module_block()
     }

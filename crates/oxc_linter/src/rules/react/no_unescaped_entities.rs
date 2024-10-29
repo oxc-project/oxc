@@ -51,6 +51,9 @@ impl Rule for NoUnescapedEntities {
         if let AstKind::JSXText(jsx_text) = node.kind() {
             let source = jsx_text.span.source_text(ctx.source_text());
             for (i, char) in source.char_indices() {
+                if !CHARS.contains(&char) {
+                    continue;
+                }
                 if let Some(escapes) = DEFAULTS.get(&char) {
                     #[allow(clippy::cast_possible_truncation)]
                     ctx.diagnostic(no_unescaped_entities_diagnostic(
@@ -70,6 +73,9 @@ impl Rule for NoUnescapedEntities {
         ctx.source_type().is_jsx()
     }
 }
+
+// NOTE: If we add substantially more characters, we should consider using a hash set instead.
+pub const CHARS: [char; 4] = ['>', '"', '\'', '}'];
 
 pub const DEFAULTS: Map<char, &'static [&'static str]> = phf_map! {
     '>' => &["&gt;"],

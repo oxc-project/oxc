@@ -2,6 +2,8 @@
 //!
 //! <https://doc.rust-lang.org/beta/nightly-rustc/rustc_span>
 
+#![warn(missing_docs)]
+
 mod atom;
 mod compact_str;
 mod source_type;
@@ -18,6 +20,11 @@ pub use crate::{
     },
     span::{GetSpan, GetSpanMut, Span, SPAN},
 };
+
+mod generated {
+    #[cfg(feature = "serialize")]
+    pub mod derive_estree;
+}
 
 #[doc(hidden)]
 pub mod __internal {

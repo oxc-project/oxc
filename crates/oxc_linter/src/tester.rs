@@ -10,7 +10,7 @@ use serde::Deserialize;
 use serde_json::Value;
 
 use crate::{
-    fixer::FixKind, options::LintPlugins, rules::RULES, AllowWarnDeny, Fixer, LintService,
+    fixer::FixKind, rules::RULES, AllowWarnDeny, Fixer, LintPlugins, LintService,
     LintServiceOptions, LinterBuilder, Oxlintrc, RuleEnum, RuleWithSeverity,
 };
 
@@ -211,7 +211,30 @@ impl Tester {
         self
     }
 
-    /// Change the extension of the path
+    /// Change the extension of the path. Do not include the dot.
+    ///
+    /// By default, the extension is `tsx`.
+    ///
+    /// ## Example
+    /// ```ignore
+    /// use crate::tester::Tester;
+    /// use oxc_macros::declare_oxc_lint;
+    ///
+    /// declare_oxc_lint! (
+    ///     /// docs
+    ///     MyRule,
+    ///     correctness,
+    /// );
+    ///
+    /// #[test]
+    /// fn test() {
+    ///     let pass = vec!["let x = 1;"];
+    ///     let fail = vec![];
+    ///     Tester::new(MyRule::NAME, pass, fail)
+    ///         .change_rule_path_extension("ts")
+    ///         .test_and_snapshot();
+    /// }
+    /// ```
     pub fn change_rule_path_extension(mut self, ext: &str) -> Self {
         self.rule_path = self.rule_path.with_extension(ext);
         self
@@ -333,17 +356,44 @@ impl Tester {
 
     fn test_pass(&mut self) {
         for TestCase { source, rule_config, eslint_config, path } in self.expect_pass.clone() {
-            let result = self.run(&source, rule_config, &eslint_config, path, ExpectFixKind::None);
+            let result =
+                self.run(&source, rule_config.clone(), &eslint_config, path, ExpectFixKind::None);
             let passed = result == TestResult::Passed;
-            assert!(passed, "expect test to pass: {source} {}", self.snapshot);
+            let config = rule_config.map_or_else(
+                || "\n\n------------------------\n".to_string(),
+                |v| {
+                    format!(
+                        "\n-------- rule config --------\n{}",
+                        serde_json::to_string_pretty(&v).unwrap()
+                    )
+                },
+            );
+            assert!(
+                passed,
+                "expected test to pass, but it failed:\n\n-------- source --------\n\n{source}\n\n-------- error --------\n{}{config}\n",
+                self.snapshot
+            );
         }
     }
 
     fn test_fail(&mut self) {
         for TestCase { source, rule_config, eslint_config, path } in self.expect_fail.clone() {
-            let result = self.run(&source, rule_config, &eslint_config, path, ExpectFixKind::None);
+            let result =
+                self.run(&source, rule_config.clone(), &eslint_config, path, ExpectFixKind::None);
             let failed = result == TestResult::Failed;
-            assert!(failed, "expect test to fail: {source}");
+            let config = rule_config.map_or_else(
+                || "\n\n------------------------".to_string(),
+                |v| {
+                    format!(
+                        "\n-------- rule config --------\n{}",
+                        serde_json::to_string_pretty(&v).unwrap()
+                    )
+                },
+            );
+            assert!(
+                failed,
+                "expected test to fail, but it passed:\n\n-------- source --------\n\n{source}{config}\n",
+            );
         }
     }
 
@@ -394,7 +444,7 @@ impl Tester {
             self.current_working_directory.join(&self.rule_path)
         } else if let Some(path) = path {
             self.current_working_directory.join(path)
-        } else if self.plugins.has_jest() {
+        } else if self.plugins.has_test() {
             self.rule_path.with_extension("test.tsx")
         } else {
             self.rule_path.clone()

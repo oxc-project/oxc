@@ -128,16 +128,16 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a quantifier: ` {2}`
 
   ⚠ eslint(no-regex-spaces): Multiple consecutive spaces are hard to count.
-   ╭─[no_regex_spaces.tsx:1:25]
+   ╭─[no_regex_spaces.tsx:1:26]
  1 │ var foo = new RegExp('\\d  ')
-   ·                         ──
+   ·                          ──
    ╰────
   help: Use a quantifier: ` {2}`
 
   ⚠ eslint(no-regex-spaces): Multiple consecutive spaces are hard to count.
-   ╭─[no_regex_spaces.tsx:1:25]
+   ╭─[no_regex_spaces.tsx:1:26]
  1 │ var foo = RegExp('\\u0041   ')
-   ·                         ───
+   ·                          ───
    ╰────
   help: Use a quantifier: ` {3}`
 

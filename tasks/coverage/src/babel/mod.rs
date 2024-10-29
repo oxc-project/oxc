@@ -167,12 +167,15 @@ impl Case for BabelCase {
     fn skip_test_case(&self) -> bool {
         let not_supported_plugins =
             ["async-do-expression", "flow", "placeholders", "decorators-legacy", "recordAndTuple"];
-        let has_not_supported_plugins = self
-            .options
-            .plugins
-            .iter()
-            .filter_map(Value::as_str)
-            .any(|p| not_supported_plugins.contains(&p));
+        let has_not_supported_plugins = self.options.plugins.iter().any(|p| {
+            let plugin_name = match p {
+                Value::String(plugin_name) => Some(plugin_name.as_str()),
+                Value::Array(a) => a.first().and_then(|plugin_name| plugin_name.as_str()),
+                _ => None,
+            };
+            let plugin_name = plugin_name.expect("Failed to parse plugins config");
+            not_supported_plugins.contains(&plugin_name)
+        });
         has_not_supported_plugins
             || self.options.allow_await_outside_function
             || self.options.allow_undeclared_exports

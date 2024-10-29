@@ -5,19 +5,14 @@
 
 use oxc_allocator::{Allocator, CloneIn};
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::comment::*;
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::js::*;
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::jsx::*;
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::literal::*;
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::ts::*;
 
 impl<'alloc> CloneIn<'alloc> for BooleanLiteral {
@@ -4261,9 +4256,9 @@ impl<'alloc> CloneIn<'alloc> for Comment {
     fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
         Comment {
             span: CloneIn::clone_in(&self.span, allocator),
+            attached_to: CloneIn::clone_in(&self.attached_to, allocator),
             kind: CloneIn::clone_in(&self.kind, allocator),
             position: CloneIn::clone_in(&self.position, allocator),
-            attached_to: CloneIn::clone_in(&self.attached_to, allocator),
             preceded_by_newline: CloneIn::clone_in(&self.preceded_by_newline, allocator),
             followed_by_newline: CloneIn::clone_in(&self.followed_by_newline, allocator),
         }

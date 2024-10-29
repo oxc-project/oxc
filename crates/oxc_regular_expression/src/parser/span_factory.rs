@@ -9,8 +9,9 @@ impl SpanFactory {
         Self { span_offset }
     }
 
-    #[allow(clippy::cast_possible_truncation)]
-    pub fn create(&self, start: usize, end: usize) -> Span {
-        Span::new((start as u32) + self.span_offset, (end as u32) + self.span_offset)
+    /// Add base offset to `Span`.
+    /// Span { start: 4, end: 12 } => Span { start: 4 + N, end: 12 + N }
+    pub fn create(&self, start: u32, end: u32) -> Span {
+        Span::new(start + self.span_offset, end + self.span_offset)
     }
 }

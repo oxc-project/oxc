@@ -22,17 +22,15 @@ fn main() {
         "parser" => args.run_parser(),
         "semantic" => args.run_semantic(),
         "codegen" => args.run_codegen(),
-        "codegen-runtime" => args.run_codegen_runtime(),
         // "prettier" => args.run_prettier(),
         "transformer" => args.run_transformer(),
         "transpiler" => args.run_transpiler(),
         "minifier" => args.run_minifier(),
-        "v8_test262_status" => args.run_sync_v8_test262_status(),
+        "runtime" => args.run_runtime(),
         "all" => {
-            args.run_all();
-            args.run_codegen_runtime();
-            args.run_sync_v8_test262_status();
+            args.run_default();
+            args.run_runtime();
         }
-        _ => args.run_all(),
+        _ => args.run_default(),
     };
 }

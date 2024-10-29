@@ -1,7 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint(no-unused-vars): Parameter 'a' is declared but never used.
+  ⚠ eslint(no-unused-vars): Parameter 'a' is declared but never used. Unused parameters should start with a '_'.
    ╭─[no_unused_vars.tsx:1:14]
  1 │ function foo(a) {} foo()
    ·              ┬
@@ -9,7 +9,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing this parameter.
 
-  ⚠ eslint(no-unused-vars): Parameter 'a' is declared but never used.
+  ⚠ eslint(no-unused-vars): Parameter 'a' is declared but never used. Unused parameters should start with a '_'.
    ╭─[no_unused_vars.tsx:1:14]
  1 │ function foo(a: number) {} foo()
    ·              ┬

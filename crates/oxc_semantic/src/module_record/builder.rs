@@ -1,10 +1,8 @@
 use std::path::PathBuf;
 
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 use oxc_ecmascript::BoundNames;
 use oxc_span::{CompactStr, GetSpan, Span};
-#[allow(clippy::wildcard_imports)]
 use oxc_syntax::module_record::*;
 
 #[derive(Default)]

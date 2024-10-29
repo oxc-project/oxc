@@ -1,7 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used.
+  ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
  1 │ let a = 1; a ||= 2;
    ·     ┬      ┬
@@ -10,7 +10,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Did you mean to use this variable?
 
-  ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used.
+  ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
  1 │ let a = 0; a = a + 1;
    ·     ┬      ┬
@@ -19,7 +19,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Did you mean to use this variable?
 
-  ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used.
+  ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
  1 │ let a = 0; a = a++ as any;
    ·     ┬          ┬
@@ -28,7 +28,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Did you mean to use this variable?
 
-  ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used.
+  ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
  1 │ let a = 0; a = a as unknown as string as unknown as number;
    ·     ┬      ┬
@@ -37,7 +37,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Did you mean to use this variable?
 
-  ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used.
+  ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
  1 │ let a = 0; a = ++a;
    ·     ┬            ┬
@@ -46,7 +46,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Did you mean to use this variable?
 
-  ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used.
+  ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
  1 │ let a = 0; a = (0, ++a);
    ·     ┬                ┬
@@ -55,7 +55,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Did you mean to use this variable?
 
-  ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used.
+  ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
  1 │ let a = 0; a = (a++, 0);
    ·     ┬           ┬
@@ -64,7 +64,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Did you mean to use this variable?
 
-  ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used.
+  ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
  1 │ let a = 0; let b = (a++, 0); f(b);
    ·     ┬               ┬
@@ -73,7 +73,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Did you mean to use this variable?
 
-  ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used.
+  ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
  1 │ let a = 0; let b = (0, (a++, 0)); f(b);
    ·     ┬                   ┬
@@ -82,7 +82,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Did you mean to use this variable?
 
-  ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used.
+  ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
  1 │ let a = 0; let b = ((0, a++), 0); f(b);
    ·     ┬                   ┬
@@ -91,7 +91,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Did you mean to use this variable?
 
-  ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used.
+  ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
  1 │ let a = 0; let b = (a, 0) + 1; f(b);
    ·     ┬

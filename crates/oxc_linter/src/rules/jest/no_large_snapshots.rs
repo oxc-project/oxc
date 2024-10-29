@@ -13,7 +13,7 @@ use rustc_hash::FxHashMap;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{collect_possible_jest_call_node, parse_expect_jest_fn_call, PossibleJestNode},
+    utils::{iter_possible_jest_call_node, parse_expect_jest_fn_call, PossibleJestNode},
 };
 
 // TODO: re-word diagnostic messages
@@ -167,8 +167,8 @@ impl Rule for NoLargeSnapshots {
                 }
             }
         } else {
-            for possible_jest_node in &collect_possible_jest_call_node(ctx) {
-                self.run(possible_jest_node, ctx);
+            for possible_jest_node in iter_possible_jest_call_node(ctx.semantic()) {
+                self.run(&possible_jest_node, ctx);
             }
         }
     }

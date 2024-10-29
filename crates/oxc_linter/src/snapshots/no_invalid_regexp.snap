@@ -104,51 +104,51 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Could not parse the entire pattern
-   ╭─[no_invalid_regexp.tsx:1:14]
+   ╭─[no_invalid_regexp.tsx:1:15]
  1 │ new RegExp('\\a', 'u');
-   ·              ▲
+   ·               ▲
    ╰────
 
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Could not parse the entire pattern
-   ╭─[no_invalid_regexp.tsx:1:14]
+   ╭─[no_invalid_regexp.tsx:1:15]
  1 │ new RegExp('\\a', 'u');
-   ·              ▲
+   ·               ▲
    ╰────
 
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Invalid braced quantifier
-   ╭─[no_invalid_regexp.tsx:1:14]
+   ╭─[no_invalid_regexp.tsx:1:15]
  1 │ RegExp('\\u{0}*');
-   ·              ─
+   ·               ─
    ╰────
 
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Invalid braced quantifier
-   ╭─[no_invalid_regexp.tsx:1:18]
+   ╭─[no_invalid_regexp.tsx:1:19]
  1 │ new RegExp('\\u{0}*');
-   ·                  ─
+   ·                   ─
    ╰────
 
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Invalid braced quantifier
-   ╭─[no_invalid_regexp.tsx:1:18]
+   ╭─[no_invalid_regexp.tsx:1:19]
  1 │ new RegExp('\\u{0}*', '');
-   ·                  ─
+   ·                   ─
    ╰────
 
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Invalid braced quantifier
-   ╭─[no_invalid_regexp.tsx:1:18]
+   ╭─[no_invalid_regexp.tsx:1:19]
  1 │ new RegExp('\\u{0}*', 'a');
-   ·                  ─
+   ·                   ─
    ╰────
 
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Invalid braced quantifier
-   ╭─[no_invalid_regexp.tsx:1:14]
+   ╭─[no_invalid_regexp.tsx:1:15]
  1 │ RegExp('\\u{0}*');
-   ·              ─
+   ·               ─
    ╰────
 
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Invalid extended atom escape
    ╭─[no_invalid_regexp.tsx:1:13]
  1 │ new RegExp('\\');
-   ·             ─
+   ·             ──
    ╰────
 
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unknown flag
@@ -196,11 +196,11 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unterminated character class
    ╭─[no_invalid_regexp.tsx:1:13]
  1 │ new RegExp('[[]\\u{0}*' /* valid only with `u` flag */, 'v')
-   ·             ────────
+   ·             ─────────
    ╰────
 
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Duplicated capturing group names
-   ╭─[no_invalid_regexp.tsx:1:23]
+   ╭─[no_invalid_regexp.tsx:1:16]
  1 │ new RegExp('(?<k>a)(?<k>b)')
-   ·                       ─
+   ·                ─      ─
    ╰────

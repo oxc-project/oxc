@@ -4,6 +4,62 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.34.0] - 2024-10-26
+
+### Features
+
+- 419343b traverse: Implement `GetAddress` for `Ancestor` (#6877) (overlookmotel)
+
+### Refactor
+
+- 423d54c rust: Remove the annoying `clippy::wildcard_imports` (#6860) (Boshen)
+- a366fae traverse: Rename `TraverseScoping::generate_binding_in_current_scope` (#6832) (overlookmotel)
+- 3b99fe6 traverse: Move `generate_binding` to `TraverseScoping` (#6831) (overlookmotel)
+- 60f487a traverse: `TraverseCtx::generate_binding` take an `Atom` (#6830) (overlookmotel)
+
+## [0.33.0] - 2024-10-24
+
+- aeaa27a ast, parser, transformer, traverse: [**BREAKING**] Remove `BindingIdentifier::new` methods (#6786) (overlookmotel)
+
+- ecc9151 ast, parser, transformer, traverse: [**BREAKING**] Remove `IdentifierReference::new` methods (#6785) (overlookmotel)
+
+- 1248557 ast: [**BREAKING**] Remove `AstKind::FinallyClause` (#6744) (Boshen)
+
+### Features
+
+- 10484cd transformer: Class static block transform (#6733) (overlookmotel)
+- c96e739 traverse: Add `generate_binding` and `generate_binding_current_scope` APIs in context (#6805) (Dunqing)
+- ce1d8cf traverse: Add `BoundIdentifier::from_binding_ident` method (#6814) (overlookmotel)
+
+### Documentation
+
+- 55c07f2 traverse: Correct doc comment for `BoundIdentifier` (#6810) (overlookmotel)
+
+### Refactor
+
+- 47bc368 traverse: `BoundIdentifier` methods only take `&TraverseCtx` (#6811) (overlookmotel)
+- 1370c2d traverse: Change `generate_uid_in_based_on_node` to accept a generic type parameter as node type (#6708) (Dunqing)
+
+## [0.32.0] - 2024-10-19
+
+- 2808973 ast: [**BREAKING**] Add `Program::comments` (#6445) (Boshen)
+
+### Features
+
+- d9718ad ast_tools: Support `#[scope(exit_before)]` (#6350) (DonIsaac)
+
+### Bug Fixes
+
+- 834ee2a semantic: `TSConditionalType` scope enter/exit locations (#6351) (DonIsaac)
+
+### Performance
+
+- ac77c87 traverse: Optimize `TraverseScoping::generate_uid_name` (#6663) (overlookmotel)
+
+### Refactor
+
+- 073b02a ast: Type params field before params in TS function declaration types (#6391) (overlookmotel)
+
 ## [0.31.0] - 2024-10-08
 
 - 01b878e parser: [**BREAKING**] Use `BindingIdentifier` for `namespace` declaration names (#6003) (DonIsaac)

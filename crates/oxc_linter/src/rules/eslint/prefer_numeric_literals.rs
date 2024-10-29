@@ -100,7 +100,11 @@ impl Rule for PreferNumericLiterals {
 }
 
 fn is_string_type(arg: &Argument) -> bool {
-    matches!(arg, Argument::StringLiteral(_) | Argument::TemplateLiteral(_))
+    match arg {
+        Argument::StringLiteral(_) => true,
+        Argument::TemplateLiteral(t) => t.is_no_substitution_template(),
+        _ => false,
+    }
 }
 
 fn is_parse_int_call(
@@ -123,7 +127,7 @@ fn check_arguments<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) {
     }
 
     let string_arg = &call_expr.arguments[0];
-    if !is_string_type(string_arg) || !string_arg.to_expression().is_immutable_value() {
+    if !is_string_type(string_arg) {
         return;
     }
 

@@ -6,11 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{
-    context::LintContext,
-    rule::Rule,
-    utils::{collect_possible_jest_call_node, PossibleJestNode},
-};
+use crate::{context::LintContext, rule::Rule, utils::PossibleJestNode};
 
 fn add_type_parameter_to_module_mock_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
@@ -92,14 +88,16 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUntypedMockFactory {
-    fn run_once(&self, ctx: &LintContext<'_>) {
-        if !ctx.source_type().is_typescript() {
-            return;
-        }
+    fn run_on_jest_node<'a, 'c>(
+        &self,
+        jest_node: &PossibleJestNode<'a, 'c>,
+        ctx: &'c LintContext<'a>,
+    ) {
+        Self::run(jest_node, ctx);
+    }
 
-        for possible_jest_node in &collect_possible_jest_call_node(ctx) {
-            Self::run(possible_jest_node, ctx);
-        }
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 

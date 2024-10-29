@@ -3,11 +3,11 @@ use oxc_span::SourceType;
 use std::{cell::RefCell, path::Path, rc::Rc, sync::Arc};
 
 use crate::{
-    config::LintConfig,
+    config::{LintConfig, LintPlugins},
     disable_directives::{DisableDirectives, DisableDirectivesBuilder},
     fixer::{FixKind, Message},
     frameworks,
-    options::{LintOptions, LintPlugins},
+    options::LintOptions,
     utils, FrameworkFlags, RuleWithSeverity,
 };
 
@@ -68,6 +68,7 @@ impl<'a> ContextHost<'a> {
         file_path: P,
         semantic: Rc<Semantic<'a>>,
         options: LintOptions,
+        config: Arc<LintConfig>,
     ) -> Self {
         const DIAGNOSTICS_INITIAL_CAPACITY: usize = 512;
 
@@ -82,6 +83,7 @@ impl<'a> ContextHost<'a> {
             DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments());
 
         let file_path = file_path.as_ref().to_path_buf().into_boxed_path();
+        let plugins = config.plugins;
 
         Self {
             semantic,
@@ -89,17 +91,25 @@ impl<'a> ContextHost<'a> {
             diagnostics: RefCell::new(Vec::with_capacity(DIAGNOSTICS_INITIAL_CAPACITY)),
             fix: options.fix,
             file_path,
-            config: Arc::new(LintConfig::default()),
+            config,
             frameworks: options.framework_hints,
-            plugins: options.plugins,
+            plugins,
         }
         .sniff_for_frameworks()
     }
 
     /// Set the linter configuration for this context.
     #[inline]
+    #[allow(dead_code)] // will be used in up-stack PR
     pub fn with_config(mut self, config: &Arc<LintConfig>) -> Self {
+        let plugins = config.plugins;
         self.config = Arc::clone(config);
+
+        if self.plugins != plugins {
+            self.plugins = plugins;
+            return self.sniff_for_frameworks();
+        }
+
         self
     }
 
@@ -208,6 +218,12 @@ impl<'a> ContextHost<'a> {
         }
 
         self
+    }
+
+    /// Returns the framework hints for the target file.
+    #[inline]
+    pub fn frameworks(&self) -> FrameworkFlags {
+        self.frameworks
     }
 }
 

@@ -1,27 +1,30 @@
-use super::{
-    defs::{EnumDef, StructDef, TypeDef},
-    with_either,
-};
+use syn::Ident;
+
 use crate::util::ToIdent;
 
+use super::defs::{EnumDef, StructDef, TypeDef};
+
 pub trait GetIdent {
-    fn ident(&self) -> syn::Ident;
+    fn ident(&self) -> Ident;
 }
 
 impl GetIdent for TypeDef {
-    fn ident(&self) -> syn::Ident {
-        with_either!(self, it => it.ident())
+    fn ident(&self) -> Ident {
+        match self {
+            TypeDef::Struct(def) => def.ident(),
+            TypeDef::Enum(def) => def.ident(),
+        }
     }
 }
 
 impl GetIdent for StructDef {
-    fn ident(&self) -> syn::Ident {
+    fn ident(&self) -> Ident {
         self.name.to_ident()
     }
 }
 
 impl GetIdent for EnumDef {
-    fn ident(&self) -> syn::Ident {
+    fn ident(&self) -> Ident {
         self.name.to_ident()
     }
 }

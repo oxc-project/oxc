@@ -1,8 +1,9 @@
-commit: 3bcfee23
+commit: d20b314c
 
-Passed: 338/1022
+Passed: 357/1058
 
 # All Passed:
+* babel-plugin-transform-class-static-block
 * babel-plugin-transform-logical-assignment-operators
 * babel-plugin-transform-optional-catch-binding
 * babel-preset-react
@@ -11,7 +12,7 @@ Passed: 338/1022
 * babel-plugin-transform-react-jsx-source
 
 
-# babel-preset-env (109/585)
+# babel-preset-env (110/585)
 * .plugins-overlapping/chrome-49/input.js
 x Output mismatch
 
@@ -370,9 +371,6 @@ x Output mismatch
 x Output mismatch
 
 * corejs3/entry-require-es-proposals/input.js
-x Output mismatch
-
-* corejs3/entry-specified-imports/input.mjs
 x Output mismatch
 
 * corejs3/entry-stable/input.mjs
@@ -1221,9 +1219,6 @@ x Output mismatch
 * modules/modules-commonjs/input.mjs
 x Output mismatch
 
-* modules/modules-false/input.mjs
-x Output mismatch
-
 * modules/modules-systemjs/input.mjs
 x Output mismatch
 
@@ -1437,6 +1432,9 @@ x Output mismatch
 * shipped-proposals/new-class-features-chrome-90/input.js
 x Output mismatch
 
+* shipped-proposals/new-class-features-chrome-94/input.js
+x Output mismatch
+
 * shipped-proposals/new-class-features-firefox-70/input.js
 x Output mismatch
 
@@ -1628,12 +1626,68 @@ x Output mismatch
 x Output mismatch
 
 
+# babel-plugin-transform-async-to-generator (9/24)
+* assumption-ignoreFunctionLength-true/basic/input.mjs
+x Output mismatch
+
+* assumption-noNewArrows-false/basic/input.js
+x Output mismatch
+
+* async-to-generator/async-iife-with-regenerator/input.js
+x Output mismatch
+
+* async-to-generator/async-iife-with-regenerator-spec/input.js
+x Output mismatch
+
+* async-to-generator/object-method-with-super/input.js
+x Output mismatch
+
+* bluebird-coroutines/arrow-function/input.js
+x Output mismatch
+
+* bluebird-coroutines/class/input.js
+x Output mismatch
+
+* bluebird-coroutines/expression/input.js
+x Output mismatch
+
+* bluebird-coroutines/named-expression/input.js
+x Output mismatch
+
+* bluebird-coroutines/statement/input.js
+x Output mismatch
+
+* regression/15978/input.js
+x Output mismatch
+
+* regression/T7108/input.js
+x Output mismatch
+
+* regression/gh-6923/input.js
+x Output mismatch
+
+* regression/in-uncompiled-class-fields/input.js
+x Output mismatch
+
+* regression/regression-2765/input.js
+x Output mismatch
+
+
 # babel-plugin-transform-exponentiation-operator (3/4)
 * regression/4349/input.js
 x Output mismatch
 
 
-# babel-plugin-transform-arrow-functions (1/6)
+# babel-plugin-transform-arrow-functions (3/11)
+* arrow-functions/implicit-var-arguments/input.js
+x Output mismatch
+
+* arrow-functions/self-referential/input.js
+x Output mismatch
+
+* arrow-functions/spec/input.js
+x Output mismatch
+
 * assumption-newableArrowFunctions-false/basic/input.js
 x Output mismatch
 
@@ -1652,6 +1706,7 @@ x Output mismatch
 
 # babel-preset-typescript (5/10)
 * jsx-compat/ts-invalid/input.ts
+
   x Expected `>` but found `/`
    ,-[tasks/coverage/babel/packages/babel-preset-typescript/test/fixtures/jsx-compat/ts-invalid/input.ts:1:7]
  1 | (<div />);
@@ -1689,9 +1744,9 @@ after transform: ["T", "x"]
 rebuilt        : ["x"]
 
 * class/accessor-allowDeclareFields-false/input.ts
-TS(18010)
 
-  x An accessibility modifier cannot be used with a private identifier.
+  x TS(18010): An accessibility modifier cannot be used with a private
+  | identifier.
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/class/accessor-allowDeclareFields-false/input.ts:8:3]
  7 |   abstract accessor prop6: number;
  8 |   private accessor #p: any;
@@ -1701,9 +1756,9 @@ TS(18010)
 
 
 * class/accessor-allowDeclareFields-true/input.ts
-TS(18010)
 
-  x An accessibility modifier cannot be used with a private identifier.
+  x TS(18010): An accessibility modifier cannot be used with a private
+  | identifier.
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/class/accessor-allowDeclareFields-true/input.ts:8:3]
  7 |   abstract accessor prop6: number;
  8 |   private accessor #p: any;
@@ -2049,6 +2104,7 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 * exports/export=/input.ts
+
   ! `export = <value>;` is only supported when compiling modules to CommonJS.
   | Please consider using `export default <value>;`, or add @babel/plugin-
   | transform-modules-commonjs to your Babel config.
@@ -2245,6 +2301,7 @@ after transform: ScopeId(0): ["A", "B"]
 rebuilt        : ScopeId(0): []
 
 * imports/import=-module/input.ts
+
   ! `import lib = require(...);` is only supported when compiling modules
   | to CommonJS.
   | Please consider using `import lib from '...';` alongside Typescript's
@@ -2899,6 +2956,7 @@ after transform: ScopeId(2): [SymbolId(2), SymbolId(4)]
 rebuilt        : ScopeId(2): [SymbolId(3), SymbolId(4)]
 
 * namespace/mutable-fail/input.ts
+
   ! Namespaces exporting non-const are not supported by Babel. Change to const
   | or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/mutable-fail/input.ts:2:14]
@@ -2910,6 +2968,7 @@ rebuilt        : ScopeId(2): [SymbolId(3), SymbolId(4)]
 
 
 * namespace/namespace-flag/input.ts
+
   ! Namespace not marked type-only declare. Non-declarative namespaces are
   | only supported experimentally in Babel. To enable and review caveats see:
   | https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -3303,6 +3362,7 @@ pragma and pragmaFrag cannot be set when runtime is automatic.
 Spread children are not supported in React.
 
 * react/should-disallow-valueless-key/input.js
+
   ! Please provide an explicit key value. Using "key" as a shorthand for
   | "key={true}" is not allowed.
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-react-jsx/test/fixtures/react/should-disallow-valueless-key/input.js:2:15]
@@ -3313,6 +3373,7 @@ Spread children are not supported in React.
 
 
 * react/should-disallow-xml-namespacing/input.js
+
   ! Namespace tags are not supported by default. React's JSX doesn't support
   | namespace tags. You can set `throwIfNamespace: false` to bypass this
   | warning.
@@ -3323,6 +3384,7 @@ Spread children are not supported in React.
 
 
 * react/should-throw-error-namespaces-if-not-flag/input.js
+
   ! Namespace tags are not supported by default. React's JSX doesn't support
   | namespace tags. You can set `throwIfNamespace: false` to bypass this
   | warning.
@@ -3345,6 +3407,7 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
 Spread children are not supported in React.
 
 * react-automatic/should-disallow-valueless-key/input.js
+
   ! Please provide an explicit key value. Using "key" as a shorthand for
   | "key={true}" is not allowed.
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-react-jsx/test/fixtures/react-automatic/should-disallow-valueless-key/input.js:2:15]
@@ -3355,6 +3418,7 @@ Spread children are not supported in React.
 
 
 * react-automatic/should-disallow-xml-namespacing/input.js
+
   ! Namespace tags are not supported by default. React's JSX doesn't support
   | namespace tags. You can set `throwIfNamespace: false` to bypass this
   | warning.
@@ -3365,6 +3429,7 @@ Spread children are not supported in React.
 
 
 * react-automatic/should-throw-error-namespaces-if-not-flag/input.js
+
   ! Namespace tags are not supported by default. React's JSX doesn't support
   | namespace tags. You can set `throwIfNamespace: false` to bypass this
   | warning.
@@ -3386,6 +3451,7 @@ x Output mismatch
 
 # babel-plugin-transform-react-jsx-development (8/11)
 * cross-platform/disallow-__self-as-jsx-attribute/input.js
+
   ! Duplicate __self prop found.
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-react-jsx-development/test/fixtures/cross-platform/disallow-__self-as-jsx-attribute/input.js:1:14]
  1 | var x = <div __self={self}></div>;
@@ -3394,6 +3460,7 @@ x Output mismatch
 
 
 * cross-platform/disallow-__source-as-jsx-attribute/input.js
+
   ! Duplicate __source prop found.
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-react-jsx-development/test/fixtures/cross-platform/disallow-__source-as-jsx-attribute/input.js:1:14]
  1 | var x = <div __source={source}></div>;

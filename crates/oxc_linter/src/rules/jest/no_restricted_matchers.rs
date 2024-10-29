@@ -11,8 +11,8 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, is_type_of_jest_fn_call, parse_expect_jest_fn_call,
-        JestFnKind, KnownMemberExpressionProperty, PossibleJestNode,
+        is_type_of_jest_fn_call, parse_expect_jest_fn_call, JestFnKind,
+        KnownMemberExpressionProperty, PossibleJestNode,
     },
 };
 
@@ -90,10 +90,12 @@ impl Rule for NoRestrictedMatchers {
         }))
     }
 
-    fn run_once(&self, ctx: &LintContext<'_>) {
-        for possible_jest_node in &collect_possible_jest_call_node(ctx) {
-            self.run(possible_jest_node, ctx);
-        }
+    fn run_on_jest_node<'a, 'c>(
+        &self,
+        jest_node: &PossibleJestNode<'a, 'c>,
+        ctx: &'c LintContext<'a>,
+    ) {
+        self.run(jest_node, ctx);
     }
 }
 

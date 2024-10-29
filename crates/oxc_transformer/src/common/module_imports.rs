@@ -11,21 +11,19 @@
 //!
 //! ```rs
 //! // import { jsx as _jsx } from 'react';
-//! self.ctx.module_imports.add_import(
+//! self.ctx.module_imports.add_named_import(
 //!     Atom::from("react"),
-//!     ImportKind::new_named(Atom::from("jsx"), Atom::from("_jsx"), symbol_id)
+//!     Atom::from("jsx"),
+//!     Atom::from("_jsx"),
+//!     symbol_id
 //! );
 //!
-//! // import React from 'react';
-//! self.ctx.module_imports.add_import(
+//! // ESM: import React from 'react';
+//! // CJS: var _React = require('react');
+//! self.ctx.module_imports.add_default_import(
 //!     Atom::from("react"),
-//!     ImportKind::new_default(Atom::from("React")), symbol_id)
-//! );
-//!
-//! // var _react = require('react');
-//! self.ctx.module_imports.add_require(
-//!     Atom::from("react"),
-//!     ImportKind::new_default(Atom::from("_react"), symbol_id)
+//!     Atom::from("React"),
+//!     symbol_id
 //! );
 //! ```
 //!
@@ -42,7 +40,7 @@ use oxc_ast::{ast::*, NONE};
 use oxc_semantic::ReferenceFlags;
 use oxc_span::{Atom, SPAN};
 use oxc_syntax::symbol::SymbolId;
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
 
 use crate::TransformCtx;
 
@@ -62,31 +60,14 @@ impl<'a, 'ctx> Traverse<'a> for ModuleImports<'a, 'ctx> {
     }
 }
 
-#[derive(Clone)]
-pub struct NamedImport<'a> {
+struct NamedImport<'a> {
     imported: Atom<'a>,
-    local: Atom<'a>,
-    symbol_id: SymbolId,
+    local: BoundIdentifier<'a>,
 }
 
-pub struct DefaultImport<'a> {
-    local: Atom<'a>,
-    symbol_id: SymbolId,
-}
-
-pub enum ImportKind<'a> {
+enum Import<'a> {
     Named(NamedImport<'a>),
-    Default(DefaultImport<'a>),
-}
-
-impl<'a> ImportKind<'a> {
-    pub fn new_named(imported: Atom<'a>, local: Atom<'a>, symbol_id: SymbolId) -> Self {
-        Self::Named(NamedImport { imported, local, symbol_id })
-    }
-
-    pub fn new_default(local: Atom<'a>, symbol_id: SymbolId) -> Self {
-        Self::Default(DefaultImport { local, symbol_id })
-    }
+    Default(BoundIdentifier<'a>),
 }
 
 /// Store for `import` / `require` statements to be added at top of program.
@@ -95,7 +76,7 @@ impl<'a> ImportKind<'a> {
 /// to produce output that's the same as Babel's.
 /// Substitute `FxHashMap` once we don't need to match Babel's output exactly.
 pub struct ModuleImportsStore<'a> {
-    imports: RefCell<IndexMap<Atom<'a>, Vec<ImportKind<'a>>>>,
+    imports: RefCell<IndexMap<Atom<'a>, Vec<Import<'a>>>>,
 }
 
 // Public methods
@@ -105,6 +86,43 @@ impl<'a> ModuleImportsStore<'a> {
         Self { imports: RefCell::new(IndexMap::default()) }
     }
 
+    /// Add default `import` or `require` to top of program.
+    ///
+    /// Which it will be depends on the source type.
+    ///
+    /// * `import named_import from 'source';` or
+    /// * `var named_import = require('source');`
+    ///
+    /// If `front` is `true`, `import`/`require` is added to front of the `import`s/`require`s.
+    pub fn add_default_import(&self, source: Atom<'a>, local: BoundIdentifier<'a>, front: bool) {
+        self.add_import(source, Import::Default(local), front);
+    }
+
+    /// Add named `import` to top of program.
+    ///
+    /// `import { named_import } from 'source';`
+    ///
+    /// If `front` is `true`, `import` is added to front of the `import`s.
+    ///
+    /// Adding named `require`s is not supported, and will cause a panic later on.
+    pub fn add_named_import(
+        &self,
+        source: Atom<'a>,
+        imported: Atom<'a>,
+        local: BoundIdentifier<'a>,
+        front: bool,
+    ) {
+        self.add_import(source, Import::Named(NamedImport { imported, local }), front);
+    }
+
+    /// Returns `true` if no imports have been scheduled for insertion.
+    pub fn is_empty(&self) -> bool {
+        self.imports.borrow().is_empty()
+    }
+}
+
+// Internal methods
+impl<'a> ModuleImportsStore<'a> {
     /// Add `import` or `require` to top of program.
     ///
     /// Which it will be depends on the source type.
@@ -112,10 +130,12 @@ impl<'a> ModuleImportsStore<'a> {
     /// * `import { named_import } from 'source';` or
     /// * `var named_import = require('source');`
     ///
+    /// Adding a named `require` is not supported, and will cause a panic later on.
+    ///
     /// If `front` is `true`, `import`/`require` is added to front of the `import`s/`require`s.
     /// TODO(improve-on-babel): `front` option is only required to pass one of Babel's tests. Output
     /// without it is still valid. Remove this once our output doesn't need to match Babel exactly.
-    pub fn add_import(&self, source: Atom<'a>, import: ImportKind<'a>, front: bool) {
+    fn add_import(&self, source: Atom<'a>, import: Import<'a>, front: bool) {
         match self.imports.borrow_mut().entry(source) {
             IndexMapEntry::Occupied(mut entry) => {
                 entry.get_mut().push(import);
@@ -134,14 +154,6 @@ impl<'a> ModuleImportsStore<'a> {
         }
     }
 
-    /// Returns `true` if no imports have been scheduled for insertion.
-    pub fn is_empty(&self) -> bool {
-        self.imports.borrow().is_empty()
-    }
-}
-
-// Internal methods
-impl<'a> ModuleImportsStore<'a> {
     /// Insert `import` / `require` statements at top of program.
     fn insert_into_program(&self, transform_ctx: &TransformCtx<'a>, ctx: &mut TraverseCtx<'a>) {
         if transform_ctx.source_type.is_script() {
@@ -180,31 +192,29 @@ impl<'a> ModuleImportsStore<'a> {
 
     fn get_import(
         source: Atom<'a>,
-        names: Vec<ImportKind<'a>>,
-        ctx: &mut TraverseCtx<'a>,
+        names: Vec<Import<'a>>,
+        ctx: &TraverseCtx<'a>,
     ) -> Statement<'a> {
-        let specifiers = ctx.ast.vec_from_iter(names.into_iter().map(|kind| match kind {
-            ImportKind::Named(name) => {
-                let local = name.local;
+        let specifiers = ctx.ast.vec_from_iter(names.into_iter().map(|import| match import {
+            Import::Named(import) => {
                 ImportDeclarationSpecifier::ImportSpecifier(ctx.ast.alloc_import_specifier(
                     SPAN,
-                    ModuleExportName::IdentifierName(IdentifierName::new(SPAN, name.imported)),
-                    BindingIdentifier::new_with_symbol_id(SPAN, local, name.symbol_id),
+                    ModuleExportName::IdentifierName(
+                        ctx.ast.identifier_name(SPAN, import.imported),
+                    ),
+                    import.local.create_binding_identifier(ctx),
                     ImportOrExportKind::Value,
                 ))
             }
-            ImportKind::Default(name) => ImportDeclarationSpecifier::ImportDefaultSpecifier(
-                ctx.ast.alloc_import_default_specifier(
-                    SPAN,
-                    BindingIdentifier::new_with_symbol_id(SPAN, name.local, name.symbol_id),
-                ),
+            Import::Default(local) => ImportDeclarationSpecifier::ImportDefaultSpecifier(
+                ctx.ast.alloc_import_default_specifier(SPAN, local.create_binding_identifier(ctx)),
             ),
         }));
 
         let import_stmt = ctx.ast.module_declaration_import_declaration(
             SPAN,
             Some(specifiers),
-            StringLiteral::new(SPAN, source),
+            ctx.ast.string_literal(SPAN, source),
             NONE,
             ImportOrExportKind::Value,
         );
@@ -213,7 +223,7 @@ impl<'a> ModuleImportsStore<'a> {
 
     fn get_require(
         source: Atom<'a>,
-        names: std::vec::Vec<ImportKind<'a>>,
+        names: std::vec::Vec<Import<'a>>,
         require_symbol_id: Option<SymbolId>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
@@ -230,15 +240,8 @@ impl<'a> ModuleImportsStore<'a> {
             let arg = Argument::from(ctx.ast.expression_string_literal(SPAN, source));
             ctx.ast.vec1(arg)
         };
-        let ImportKind::Default(name) = names.into_iter().next().unwrap() else { unreachable!() };
-        let id = {
-            let ident = BindingIdentifier::new_with_symbol_id(SPAN, name.local, name.symbol_id);
-            ctx.ast.binding_pattern(
-                ctx.ast.binding_pattern_kind_from_binding_identifier(ident),
-                NONE,
-                false,
-            )
-        };
+        let Some(Import::Default(local)) = names.into_iter().next() else { unreachable!() };
+        let id = local.create_binding_pattern(ctx);
         let decl = {
             let init = ctx.ast.expression_call(SPAN, callee, NONE, args, false);
             let decl = ctx.ast.variable_declarator(SPAN, var_kind, id, Some(init), false);

@@ -21,7 +21,6 @@ use std::cell::Cell;
 use oxc_allocator::Vec;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::*;
 use crate::ast_kind::AstType;
 
@@ -197,11 +196,6 @@ pub trait VisitMut<'a>: Sized {
     #[inline]
     fn visit_elision(&mut self, it: &mut Elision) {
         walk_elision(self, it);
-    }
-
-    #[inline]
-    fn visit_expression_array_element(&mut self, it: &mut Expression<'a>) {
-        walk_expression_array_element(self, it);
     }
 
     #[inline]
@@ -797,11 +791,6 @@ pub trait VisitMut<'a>: Sized {
     }
 
     #[inline]
-    fn visit_class_heritage(&mut self, it: &mut Expression<'a>) {
-        walk_class_heritage(self, it);
-    }
-
-    #[inline]
     fn visit_ts_class_implementses(&mut self, it: &mut Vec<'a, TSClassImplements<'a>>) {
         walk_ts_class_implementses(self, it);
     }
@@ -1134,11 +1123,6 @@ pub trait VisitMut<'a>: Sized {
     #[inline]
     fn visit_catch_parameter(&mut self, it: &mut CatchParameter<'a>) {
         walk_catch_parameter(self, it);
-    }
-
-    #[inline]
-    fn visit_finally_clause(&mut self, it: &mut BlockStatement<'a>) {
-        walk_finally_clause(self, it);
     }
 
     #[inline]
@@ -1689,7 +1673,7 @@ pub mod walk_mut {
             ArrayExpressionElement::SpreadElement(it) => visitor.visit_spread_element(it),
             ArrayExpressionElement::Elision(it) => visitor.visit_elision(it),
             match_expression!(ArrayExpressionElement) => {
-                visitor.visit_expression_array_element(it.to_expression_mut())
+                visitor.visit_expression(it.to_expression_mut())
             }
         }
         visitor.leave_node(kind);
@@ -1707,16 +1691,6 @@ pub mod walk_mut {
     pub fn walk_elision<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Elision) {
         let kind = AstType::Elision;
         visitor.enter_node(kind);
-        visitor.leave_node(kind);
-    }
-
-    pub fn walk_expression_array_element<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        it: &mut Expression<'a>,
-    ) {
-        let kind = AstType::ExpressionArrayElement;
-        visitor.enter_node(kind);
-        visitor.visit_expression(it);
         visitor.leave_node(kind);
     }
 
@@ -3077,7 +3051,7 @@ pub mod walk_mut {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
         if let Some(super_class) = &mut it.super_class {
-            visitor.visit_class_heritage(super_class);
+            visitor.visit_expression(super_class);
         }
         if let Some(super_type_parameters) = &mut it.super_type_parameters {
             visitor.visit_ts_type_parameter_instantiation(super_type_parameters);
@@ -3087,13 +3061,6 @@ pub mod walk_mut {
         }
         visitor.visit_class_body(&mut it.body);
         visitor.leave_scope();
-        visitor.leave_node(kind);
-    }
-
-    pub fn walk_class_heritage<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Expression<'a>) {
-        let kind = AstType::ClassHeritage;
-        visitor.enter_node(kind);
-        visitor.visit_expression(it);
         visitor.leave_node(kind);
     }
 
@@ -3887,7 +3854,7 @@ pub mod walk_mut {
             visitor.visit_catch_clause(handler);
         }
         if let Some(finalizer) = &mut it.finalizer {
-            visitor.visit_finally_clause(finalizer);
+            visitor.visit_block_statement(finalizer);
         }
         visitor.leave_node(kind);
     }
@@ -3910,16 +3877,6 @@ pub mod walk_mut {
         let kind = AstType::CatchParameter;
         visitor.enter_node(kind);
         visitor.visit_binding_pattern(&mut it.pattern);
-        visitor.leave_node(kind);
-    }
-
-    #[inline]
-    pub fn walk_finally_clause<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut BlockStatement<'a>) {
-        let kind = AstType::FinallyClause;
-        visitor.enter_node(kind);
-        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
-        visitor.visit_statements(&mut it.body);
-        visitor.leave_scope();
         visitor.leave_node(kind);
     }
 

@@ -1,62 +1,58 @@
-use std::path::PathBuf;
-
-use proc_macro2::TokenStream;
-
-use crate::codegen::LateCtx;
+use crate::{codegen::LateCtx, output::Output, Result};
 
 mod assert_layouts;
 mod ast_builder;
 mod ast_kind;
+mod typescript;
 mod visit;
 
 pub use assert_layouts::AssertLayouts;
 pub use ast_builder::AstBuilderGenerator;
 pub use ast_kind::AstKindGenerator;
+pub use typescript::TypescriptGenerator;
 pub use visit::{VisitGenerator, VisitMutGenerator};
 
-/// Inserts a newline in the `TokenStream`.
-#[expect(unused)]
-macro_rules! endl {
-    () => {
-        /* only works in the context of `quote` macro family! */
-    };
-}
-
 pub trait Generator {
-    fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput;
-}
+    // Methods defined by implementer
 
-#[derive(Debug, Clone)]
-pub struct GeneratorOutput(/* output path */ pub PathBuf, pub TokenStream);
+    fn generate(&mut self, ctx: &LateCtx) -> Output;
+
+    // Standard methods
+
+    fn output(&mut self, ctx: &LateCtx) -> Result<Vec<Output>> {
+        Ok(vec![self.generate(ctx)])
+    }
+}
 
 macro_rules! define_generator {
-    ($vis:vis struct $ident:ident $($lifetime:lifetime)? $($rest:tt)*) => {
-        $vis struct $ident $($lifetime)? $($rest)*
-        impl $($lifetime)? $crate::codegen::Runner for $ident $($lifetime)? {
-            type Context = $crate::codegen::LateCtx;
-            type Output = $crate::GeneratorOutput;
+    ($ident:ident $($lifetime:lifetime)?) => {
+        const _: () = {
+            use $crate::{
+                codegen::{LateCtx, Runner},
+                output::Output,
+                Result,
+            };
 
-            fn name(&self) -> &'static str {
-                stringify!($ident)
-            }
+            impl $($lifetime)? Runner for $ident $($lifetime)? {
+                type Context = LateCtx;
 
-            fn run(&mut self, ctx: &$crate::codegen::LateCtx) -> $crate::Result<Self::Output> {
-                Ok(self.generate(ctx))
+                fn verb(&self) -> &'static str {
+                    "Generate"
+                }
+
+                fn name(&self) -> &'static str {
+                    stringify!($ident)
+                }
+
+                fn file_path(&self) -> &'static str {
+                    file!()
+                }
+
+                fn run(&mut self, ctx: &LateCtx) -> Result<Vec<Output>> {
+                    self.output(ctx)
+                }
             }
-        }
+        };
     };
 }
 pub(crate) use define_generator;
-
-/// Similar to how `insert` macro works in the context of `quote` macro family, But this one can be
-/// used outside and accepts expressions.
-/// Wraps the result of the given expression in `insert!({value here});` and outputs it as `TokenStream`.
-#[expect(unused)]
-macro_rules! insert {
-    ($fmt:literal $(, $args:expr)*) => {{
-        let txt = format!($fmt, $($args)*);
-        format!(r#"insert!("{}");"#, txt).parse::<proc_macro2::TokenStream>().unwrap()
-    }};
-}
-#[expect(unused_imports)]
-pub(crate) use insert;

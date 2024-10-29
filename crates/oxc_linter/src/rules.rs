@@ -129,6 +129,7 @@ mod eslint {
     pub mod no_with;
     pub mod prefer_exponentiation_operator;
     pub mod prefer_numeric_literals;
+    pub mod prefer_object_has_own;
     pub mod radix;
     pub mod require_await;
     pub mod require_yield;
@@ -261,6 +262,7 @@ mod react {
     pub mod require_render_return;
     pub mod rules_of_hooks;
     pub mod self_closing_comp;
+    pub mod style_prop_object;
     pub mod void_dom_elements_no_children;
 }
 
@@ -273,6 +275,7 @@ mod react_perf {
 
 mod unicorn {
     pub mod catch_error_name;
+    pub mod consistent_empty_array_spread;
     pub mod consistent_function_scoping;
     pub mod empty_brace_spaces;
     pub mod error_message;
@@ -334,6 +337,7 @@ mod unicorn {
     pub mod prefer_event_target;
     pub mod prefer_includes;
     pub mod prefer_logical_operator_over_ternary;
+    pub mod prefer_math_min_max;
     pub mod prefer_math_trunc;
     pub mod prefer_modern_dom_apis;
     pub mod prefer_modern_math_apis;
@@ -409,6 +413,7 @@ mod oxc {
     pub mod no_async_endpoint_handlers;
     pub mod no_barrel_file;
     pub mod no_const_enum;
+    pub mod no_map_spread;
     pub mod no_optional_chaining;
     pub mod no_rest_spread_properties;
     pub mod number_arg_out_of_range;
@@ -472,6 +477,7 @@ mod tree_shaking {
 mod promise {
     pub mod avoid_new;
     pub mod catch_or_return;
+    pub mod no_callback_in_promise;
     pub mod no_new_statics;
     pub mod no_return_in_finally;
     pub mod param_names;
@@ -493,6 +499,7 @@ mod vitest {
 
 mod node {
     pub mod no_exports_assign;
+    pub mod no_new_require;
 }
 
 oxc_macros::declare_all_lint_rules! {
@@ -601,6 +608,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_with,
     eslint::prefer_exponentiation_operator,
     eslint::prefer_numeric_literals,
+    eslint::prefer_object_has_own,
     eslint::radix,
     eslint::require_await,
     eslint::require_yield,
@@ -739,6 +747,7 @@ oxc_macros::declare_all_lint_rules! {
     nextjs::no_typos,
     nextjs::no_unwanted_polyfillio,
     node::no_exports_assign,
+    node::no_new_require,
     oxc::approx_constant,
     oxc::bad_array_method_on_arguments,
     oxc::bad_bitwise_operator,
@@ -757,6 +766,7 @@ oxc_macros::declare_all_lint_rules! {
     oxc::no_async_endpoint_handlers,
     oxc::no_barrel_file,
     oxc::no_const_enum,
+    oxc::no_map_spread,
     oxc::no_optional_chaining,
     oxc::no_rest_spread_properties,
     oxc::number_arg_out_of_range,
@@ -764,6 +774,7 @@ oxc_macros::declare_all_lint_rules! {
     oxc::uninvoked_array_callback,
     promise::avoid_new,
     promise::catch_or_return,
+    promise::no_callback_in_promise,
     promise::no_new_statics,
     promise::no_return_in_finally,
     promise::param_names,
@@ -800,6 +811,7 @@ oxc_macros::declare_all_lint_rules! {
     react::require_render_return,
     react::rules_of_hooks,
     react::self_closing_comp,
+    react::style_prop_object,
     react::void_dom_elements_no_children,
     react_perf::jsx_no_jsx_as_prop,
     react_perf::jsx_no_new_array_as_prop,
@@ -844,6 +856,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::prefer_ts_expect_error,
     typescript::triple_slash_reference,
     unicorn::catch_error_name,
+    unicorn::consistent_empty_array_spread,
     unicorn::consistent_function_scoping,
     unicorn::empty_brace_spaces,
     unicorn::error_message,
@@ -905,6 +918,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_event_target,
     unicorn::prefer_includes,
     unicorn::prefer_logical_operator_over_ternary,
+    unicorn::prefer_math_min_max,
     unicorn::prefer_math_trunc,
     unicorn::prefer_modern_dom_apis,
     unicorn::prefer_modern_math_apis,

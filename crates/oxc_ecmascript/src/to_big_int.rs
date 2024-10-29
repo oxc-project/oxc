@@ -1,7 +1,7 @@
 use num_bigint::BigInt;
 use num_traits::{One, Zero};
 
-use oxc_ast::ast::Expression;
+use oxc_ast::ast::{BigIntLiteral, Expression};
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{StringToBigInt, ToBoolean, ToJsString};
@@ -25,11 +25,7 @@ impl<'a> ToBigInt<'a> for Expression<'a> {
                     None
                 }
             }
-            Expression::BigIntLiteral(bigint_literal) => {
-                let value = bigint_literal.raw.as_str().trim_end_matches('n').string_to_big_int();
-                debug_assert!(value.is_some(), "Failed to parse {}", bigint_literal.raw);
-                value
-            }
+            Expression::BigIntLiteral(lit) => lit.to_big_int(),
             Expression::BooleanLiteral(bool_literal) => {
                 if bool_literal.value {
                     Some(BigInt::one())
@@ -66,5 +62,13 @@ impl<'a> ToBigInt<'a> for Expression<'a> {
             }
             _ => None,
         }
+    }
+}
+
+impl<'a> ToBigInt<'a> for BigIntLiteral<'a> {
+    fn to_big_int(&self) -> Option<BigInt> {
+        let value = self.raw.as_str().trim_end_matches('n').string_to_big_int();
+        debug_assert!(value.is_some(), "Failed to parse {}", self.raw);
+        value
     }
 }

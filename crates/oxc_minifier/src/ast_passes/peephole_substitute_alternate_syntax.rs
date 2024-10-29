@@ -1,6 +1,6 @@
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, NONE};
-use oxc_ecmascript::ToInt32;
+use oxc_ecmascript::{ToInt32, ToJsString};
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::{
@@ -9,15 +9,21 @@ use oxc_syntax::{
 };
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
-use crate::{node_util::NodeUtil, CompressOptions, CompressorPass};
+use crate::{node_util::Ctx, CompressorPass};
 
 /// A peephole optimization that minimizes code by simplifying conditional
 /// expressions, replacing IFs with HOOKs, replacing object constructors
 /// with literals, and simplifying returns.
 /// <https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntax.java>
 pub struct PeepholeSubstituteAlternateSyntax {
-    options: CompressOptions,
+    /// Do not compress syntaxes that are hard to analyze inside the fixed loop.
+    /// e.g. Do not compress `undefined -> void 0`, `true` -> `!0`.
+    /// Opposite of `late` in Closure Compier.
+    in_fixed_loop: bool,
+
+    // states
     in_define_export: bool,
+
     changed: bool,
 }
 
@@ -48,7 +54,7 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
         ctx: &mut TraverseCtx<'a>,
     ) {
         for declarator in decl.declarations.iter_mut() {
-            self.compress_variable_declarator(declarator, ctx);
+            self.compress_variable_declarator(declarator, Ctx(ctx));
         }
     }
 
@@ -76,18 +82,19 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
     }
 
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        let ctx = Ctx(ctx);
         if let Expression::AssignmentExpression(assignment_expr) = expr {
             if let Some(new_expr) = Self::try_compress_assignment_expression(assignment_expr, ctx) {
                 *expr = new_expr;
                 self.changed = true;
             }
         }
-        if !Self::compress_undefined(expr, ctx) {
-            self.compress_boolean(expr, ctx);
-        }
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        let ctx = Ctx(ctx);
+        self.try_compress_boolean(expr, ctx);
+        self.try_compress_undefined(expr, ctx);
         match expr {
             Expression::NewExpression(new_expr) => {
                 if let Some(new_expr) = Self::try_fold_new_expression(new_expr, ctx) {
@@ -113,10 +120,30 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
                 }
             }
             Expression::TemplateLiteral(_) => {
-                if let Some(val) = ctx.get_string_value(expr) {
+                if let Some(val) = expr.to_js_string() {
                     let new_expr = ctx.ast.string_literal(expr.span(), val);
                     *expr = ctx.ast.expression_from_string_literal(new_expr);
                     self.changed = true;
+                }
+            }
+            // `() => { return foo })` -> `() => foo`
+            Expression::ArrowFunctionExpression(arrow_expr) => {
+                if !arrow_expr.expression
+                    && arrow_expr.body.directives.is_empty()
+                    && arrow_expr.body.statements.len() == 1
+                {
+                    if let Some(body) = arrow_expr.body.statements.first_mut() {
+                        if let Statement::ReturnStatement(ret_stmt) = body {
+                            let return_stmt_arg =
+                                ret_stmt.argument.as_mut().map(|arg| ctx.ast.move_expression(arg));
+
+                            if let Some(return_stmt_arg) = return_stmt_arg {
+                                *body = ctx.ast.statement_expression(SPAN, return_stmt_arg);
+                                arrow_expr.expression = true;
+                                self.changed = true;
+                            }
+                        }
+                    }
                 }
             }
             _ => {}
@@ -128,24 +155,26 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
         expr: &mut BinaryExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        self.compress_typeof_undefined(expr, ctx);
+        self.compress_typeof_undefined(expr, Ctx(ctx));
     }
 }
 
-impl<'a> PeepholeSubstituteAlternateSyntax {
-    pub fn new(options: CompressOptions) -> Self {
-        Self { options, in_define_export: false, changed: false }
+impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
+    pub fn new(in_fixed_loop: bool) -> Self {
+        Self { in_fixed_loop, in_define_export: false, changed: false }
     }
 
     /* Utilities */
 
     /// Transforms `undefined` => `void 0`
-    fn compress_undefined(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
+    fn try_compress_undefined(&mut self, expr: &mut Expression<'a>, ctx: Ctx<'a, 'b>) {
+        if self.in_fixed_loop {
+            return;
+        }
         if ctx.is_expression_undefined(expr) {
             *expr = ctx.ast.void_0(expr.span());
-            return true;
-        };
-        false
+            self.changed = true;
+        }
     }
 
     /// Test `Object.defineProperty(exports, ...)`
@@ -183,11 +212,13 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
     /* Expressions */
 
     /// Transforms boolean expression `true` => `!0` `false` => `!1`.
-    /// Enabled by `compress.booleans`.
     /// Do not compress `true` in `Object.defineProperty(exports, 'Foo', {enumerable: true, ...})`.
-    fn compress_boolean(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
-        let Expression::BooleanLiteral(lit) = expr else { return false };
-        if self.options.booleans && !self.in_define_export {
+    fn try_compress_boolean(&mut self, expr: &mut Expression<'a>, ctx: Ctx<'a, 'b>) {
+        if self.in_fixed_loop {
+            return;
+        }
+        let Expression::BooleanLiteral(lit) = expr else { return };
+        if !self.in_define_export {
             let parent = ctx.ancestry.parent();
             let no_unary = {
                 if let Ancestor::BinaryExpressionRight(u) = parent {
@@ -215,22 +246,13 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
             } else {
                 ctx.ast.expression_unary(SPAN, UnaryOperator::LogicalNot, num)
             };
-            true
-        } else {
-            false
+            self.changed = true;
         }
     }
 
     /// Compress `typeof foo == "undefined"` into `typeof foo > "u"`
     /// Enabled by `compress.typeofs`
-    fn compress_typeof_undefined(
-        &self,
-        expr: &mut BinaryExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if !self.options.typeofs {
-            return;
-        }
+    fn compress_typeof_undefined(&mut self, expr: &mut BinaryExpression<'a>, ctx: Ctx<'a, 'b>) {
         if !matches!(expr.operator, BinaryOperator::Equality | BinaryOperator::StrictEquality) {
             return;
         }
@@ -261,6 +283,7 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
             ctx.ast.expression_from_string_literal(right),
         );
         *expr = binary_expr;
+        self.changed = true;
     }
 
     fn commutative_pair<A, F, G, RetF: 'a, RetG: 'a>(
@@ -298,9 +321,10 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
     fn compress_variable_declarator(
         &mut self,
         decl: &mut VariableDeclarator<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) {
-        if decl.kind.is_const() {
+        // Destructuring Pattern has error throwing side effect.
+        if decl.kind.is_const() || decl.id.kind.is_destructuring_pattern() {
             return;
         }
         if decl.init.as_ref().is_some_and(|init| ctx.is_expression_undefined(init)) {
@@ -311,7 +335,7 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
 
     fn try_compress_assignment_expression(
         expr: &mut AssignmentExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         let target = expr.left.as_simple_assignment_target_mut()?;
         if matches!(expr.operator, AssignmentOperator::Subtraction) {
@@ -354,7 +378,7 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
 
     fn try_fold_new_expression(
         new_expr: &mut NewExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         // `new Object` -> `{}`
         if new_expr.arguments.is_empty()
@@ -413,7 +437,7 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
 
     fn try_fold_literal_constructor_call_expression(
         call_expr: &mut CallExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         // `Object()` -> `{}`
         if call_expr.arguments.is_empty()
@@ -467,7 +491,7 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
 
     fn try_fold_simple_function_call(
         call_expr: &mut CallExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         if call_expr.optional || call_expr.arguments.len() != 1 {
             return None;
@@ -521,7 +545,7 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
     fn try_fold_chain_call_expression(
         &mut self,
         call_expr: &mut CallExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) {
         // `window.Object?.()` -> `Object?.()`
         if call_expr.arguments.is_empty() && Self::is_window_object(&call_expr.callee) {
@@ -534,7 +558,7 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
     /// returns an `Array()` constructor call with zero, one, or more arguments, copying from the input
     fn array_constructor_call(
         arguments: Vec<'a, Argument<'a>>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Expression<'a> {
         let callee = ctx.ast.expression_identifier_reference(SPAN, "Array");
         ctx.ast.expression_call(SPAN, callee, NONE, arguments, false)
@@ -543,13 +567,13 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
     /// returns an array literal `[]` of zero, one, or more elements, copying from the input
     fn array_literal(
         elements: Vec<'a, ArrayExpressionElement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, 'b>,
     ) -> Expression<'a> {
         ctx.ast.expression_array(SPAN, elements, None)
     }
 
     /// returns a new empty array literal expression: `[]`
-    fn empty_array_literal(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+    fn empty_array_literal(ctx: Ctx<'a, 'b>) -> Expression<'a> {
         Self::array_literal(ctx.ast.vec(), ctx)
     }
 }
@@ -559,11 +583,11 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
 mod test {
     use oxc_allocator::Allocator;
 
-    use crate::{tester, CompressOptions};
+    use crate::tester;
 
     fn test(source_text: &str, expected: &str) {
         let allocator = Allocator::default();
-        let mut pass = super::PeepholeSubstituteAlternateSyntax::new(CompressOptions::default());
+        let mut pass = super::PeepholeSubstituteAlternateSyntax::new(false);
         tester::test(&allocator, source_text, expected, &mut pass);
     }
 
@@ -594,6 +618,10 @@ mod test {
 
         // shadowd
         test_same("(function(undefined) { let x = typeof undefined; })()");
+
+        // destructuring throw error side effect
+        test_same("var {} = void 0");
+        test_same("var [] = void 0");
     }
 
     #[test]
@@ -959,5 +987,11 @@ mod test {
     fn test_no_rotate_infinite_loop() {
         test("1/x * (y/1 * (1/z))", "1/x * (y/1) * (1/z)");
         test_same("1/x * (y/1) * (1/z)");
+    }
+
+    #[test]
+    fn test_fold_arrow_function_return() {
+        test("const foo = () => { return 'baz' }", "const foo = () => 'baz'");
+        test_same("const foo = () => { foo; return 'baz' }");
     }
 }

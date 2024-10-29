@@ -1,13 +1,12 @@
 #![allow(rustdoc::private_intra_doc_links)] // useful for intellisense
 mod host;
 
-use std::{path::Path, rc::Rc};
+use std::{ops::Deref, path::Path, rc::Rc};
 
 use oxc_cfg::ControlFlowGraph;
 use oxc_diagnostics::{OxcDiagnostic, Severity};
-use oxc_semantic::{AstNodes, JSDocFinder, ScopeTree, Semantic, SymbolTable};
-use oxc_span::{GetSpan, SourceType, Span};
-use oxc_syntax::module_record::ModuleRecord;
+use oxc_semantic::Semantic;
+use oxc_span::{GetSpan, Span};
 
 #[cfg(debug_assertions)]
 use crate::rule::RuleFixMeta;
@@ -54,6 +53,15 @@ pub struct LintContext<'a> {
     /// }
     /// ```
     severity: Severity,
+}
+
+impl<'a> Deref for LintContext<'a> {
+    type Target = Semantic<'a>;
+
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        self.parent.semantic()
+    }
 }
 
 impl<'a> LintContext<'a> {
@@ -111,22 +119,10 @@ impl<'a> LintContext<'a> {
         &self.parent.disable_directives
     }
 
-    /// Source code of the file being linted.
-    #[inline]
-    pub fn source_text(&self) -> &'a str {
-        self.semantic().source_text()
-    }
-
     /// Get a snippet of source text covered by the given [`Span`]. For details,
     /// see [`Span::source_text`].
     pub fn source_range(&self, span: Span) -> &'a str {
         span.source_text(self.semantic().source_text())
-    }
-
-    /// [`SourceType`] of the file currently being linted.
-    #[inline]
-    pub fn source_type(&self) -> &SourceType {
-        self.semantic().source_type()
     }
 
     /// Path to the file currently being linted.
@@ -320,41 +316,6 @@ impl<'a> LintContext<'a> {
     /// Framework flags, indicating front-end frameworks that might be in use.
     pub fn frameworks(&self) -> FrameworkFlags {
         self.parent.frameworks
-    }
-
-    /// AST nodes
-    ///
-    /// Shorthand for `self.semantic().nodes()`.
-    pub fn nodes(&self) -> &AstNodes<'a> {
-        self.semantic().nodes()
-    }
-
-    /// Scope tree
-    ///
-    /// Shorthand for `ctx.semantic().scopes()`.
-    pub fn scopes(&self) -> &ScopeTree {
-        self.semantic().scopes()
-    }
-
-    /// Symbol table
-    ///
-    /// Shorthand for `ctx.semantic().symbols()`.
-    pub fn symbols(&self) -> &SymbolTable {
-        self.semantic().symbols()
-    }
-
-    /// Imported modules and exported symbols
-    ///
-    /// Shorthand for `ctx.semantic().module_record()`.
-    pub fn module_record(&self) -> &ModuleRecord {
-        self.semantic().module_record()
-    }
-
-    /// JSDoc comments
-    ///
-    /// Shorthand for `ctx.semantic().jsdoc()`.
-    pub fn jsdoc(&self) -> &JSDocFinder<'a> {
-        self.semantic().jsdoc()
     }
 }
 

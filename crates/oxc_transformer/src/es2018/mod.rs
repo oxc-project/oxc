@@ -1,12 +1,13 @@
+use oxc_ast::ast::*;
+use oxc_traverse::{Traverse, TraverseCtx};
+
+use crate::TransformCtx;
+
 mod object_rest_spread;
 mod options;
 
 pub use object_rest_spread::{ObjectRestSpread, ObjectRestSpreadOptions};
 pub use options::ES2018Options;
-use oxc_ast::ast::*;
-use oxc_traverse::{Traverse, TraverseCtx};
-
-use crate::context::TransformCtx;
 
 pub struct ES2018<'a, 'ctx> {
     options: ES2018Options,

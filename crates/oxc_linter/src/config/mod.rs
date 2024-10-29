@@ -2,6 +2,7 @@ mod categories;
 mod env;
 mod globals;
 mod oxlintrc;
+mod plugins;
 mod rules;
 mod settings;
 
@@ -9,11 +10,15 @@ pub use self::{
     env::OxlintEnv,
     globals::OxlintGlobals,
     oxlintrc::Oxlintrc,
+    plugins::LintPlugins,
+    rules::ESLintRule,
+    rules::OxlintRules,
     settings::{jsdoc::JSDocPluginSettings, OxlintSettings},
 };
 
 #[derive(Debug, Default)]
 pub(crate) struct LintConfig {
+    pub(crate) plugins: LintPlugins,
     pub(crate) settings: OxlintSettings,
     /// Environments enable and disable collections of global variables.
     pub(crate) env: OxlintEnv,
@@ -23,7 +28,12 @@ pub(crate) struct LintConfig {
 
 impl From<Oxlintrc> for LintConfig {
     fn from(config: Oxlintrc) -> Self {
-        Self { settings: config.settings, env: config.env, globals: config.globals }
+        Self {
+            plugins: config.plugins,
+            settings: config.settings,
+            env: config.env,
+            globals: config.globals,
+        }
     }
 }
 

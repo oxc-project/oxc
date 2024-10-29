@@ -13,7 +13,7 @@ use oxc_syntax::{
 
 use crate::{
     ancestor::{Ancestor, AncestorType},
-    ast_operations::get_var_name_from_node,
+    ast_operations::{get_var_name_from_node, GatherNodeParts},
 };
 
 mod ancestry;
@@ -284,6 +284,50 @@ impl<'a> TraverseCtx<'a> {
         self.scoping.insert_scope_below_expression(expr, flags)
     }
 
+    /// Remove scope for an expression from the scope chain.
+    ///
+    /// Delete the scope and set parent of its child scopes to its parent scope.
+    /// e.g.:
+    /// * Starting scopes parentage `A -> B`, `B -> C`, `B -> D`.
+    /// * Remove scope `B` from chain.
+    /// * End result: scopes `A -> C`, `A -> D`.
+    ///
+    /// Use this when removing an expression which owns a scope, without removing its children.
+    /// For example when unwrapping `(() => foo)()` to just `foo`.
+    /// `foo` here could be an expression which itself contains scopes.
+    ///
+    /// This is a shortcut for `ctx.scoping.remove_scope_for_expression`.
+    pub fn remove_scope_for_expression(&mut self, scope_id: ScopeId, expr: &Expression) {
+        self.scoping.remove_scope_for_expression(scope_id, expr);
+    }
+
+    /// Generate binding.
+    ///
+    /// Creates a symbol with the provided name and flags and adds it to the specified scope.
+    ///
+    /// This is a shortcut for `ctx.scoping.generate_binding`.
+    pub fn generate_binding(
+        &mut self,
+        name: Atom<'a>,
+        scope_id: ScopeId,
+        flags: SymbolFlags,
+    ) -> BoundIdentifier<'a> {
+        self.scoping.generate_binding(name, scope_id, flags)
+    }
+
+    /// Generate binding in current scope.
+    ///
+    /// Creates a symbol with the provided name and flags and adds it to the current scope.
+    ///
+    /// This is a shortcut for `ctx.scoping.generate_binding_in_current_scope`.
+    pub fn generate_binding_in_current_scope(
+        &mut self,
+        name: Atom<'a>,
+        flags: SymbolFlags,
+    ) -> BoundIdentifier<'a> {
+        self.scoping.generate_binding_in_current_scope(name, flags)
+    }
+
     /// Generate UID var name.
     ///
     /// Finds a unique variable name which does clash with any other variables used in the program.
@@ -352,9 +396,9 @@ impl<'a> TraverseCtx<'a> {
     /// Based on Babel's `scope.generateUidBasedOnNode` logic.
     /// <https://github.com/babel/babel/blob/419644f27c5c59deb19e71aaabd417a3bc5483ca/packages/babel-traverse/src/scope/index.ts#L543>
     #[inline]
-    pub fn generate_uid_based_on_node(
+    pub fn generate_uid_based_on_node<N: GatherNodeParts<'a>>(
         &mut self,
-        node: &Expression<'a>,
+        node: &N,
         scope_id: ScopeId,
         flags: SymbolFlags,
     ) -> BoundIdentifier<'a> {
@@ -367,9 +411,9 @@ impl<'a> TraverseCtx<'a> {
     /// See also comments on [`TraverseScoping::generate_uid_name`] for important information
     /// on how UIDs are generated. There are some potential "gotchas".
     #[inline]
-    pub fn generate_uid_in_current_scope_based_on_node(
+    pub fn generate_uid_in_current_scope_based_on_node<N: GatherNodeParts<'a>>(
         &mut self,
-        node: &Expression<'a>,
+        node: &N,
         flags: SymbolFlags,
     ) -> BoundIdentifier<'a> {
         self.generate_uid_based_on_node(node, self.current_scope_id(), flags)
@@ -388,9 +432,6 @@ impl<'a> TraverseCtx<'a> {
     }
 
     /// Create an `IdentifierReference` bound to a `SymbolId`.
-    ///
-    /// This is a shortcut for `ctx.scoping.create_bound_reference_id`.
-    #[inline]
     pub fn create_bound_reference_id(
         &mut self,
         span: Span,
@@ -398,7 +439,8 @@ impl<'a> TraverseCtx<'a> {
         symbol_id: SymbolId,
         flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
-        self.scoping.create_bound_reference_id(span, name, symbol_id, flags)
+        let reference_id = self.create_bound_reference(symbol_id, flags);
+        self.ast.identifier_reference_with_reference_id(span, name, reference_id)
     }
 
     /// Create an unbound reference.
@@ -414,16 +456,14 @@ impl<'a> TraverseCtx<'a> {
     }
 
     /// Create an unbound `IdentifierReference`.
-    ///
-    /// This is a shortcut for `ctx.scoping.create_unbound_reference_id`.
-    #[inline]
     pub fn create_unbound_reference_id(
         &mut self,
         span: Span,
         name: Atom<'a>,
         flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
-        self.scoping.create_unbound_reference_id(span, name, flags)
+        let reference_id = self.create_unbound_reference(name.to_compact_str(), flags);
+        self.ast.identifier_reference_with_reference_id(span, name, reference_id)
     }
 
     /// Create a reference optionally bound to a `SymbolId`.
@@ -446,9 +486,6 @@ impl<'a> TraverseCtx<'a> {
     ///
     /// If you know if there's a `SymbolId` or not, prefer `TraverseCtx::create_bound_reference_id`
     /// or `TraverseCtx::create_unbound_reference_id`.
-    ///
-    /// This is a shortcut for `ctx.scoping.create_reference_id`.
-    #[inline]
     pub fn create_reference_id(
         &mut self,
         span: Span,
@@ -456,7 +493,11 @@ impl<'a> TraverseCtx<'a> {
         symbol_id: Option<SymbolId>,
         flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
-        self.scoping.create_reference_id(span, name, symbol_id, flags)
+        if let Some(symbol_id) = symbol_id {
+            self.create_bound_reference_id(span, name, symbol_id, flags)
+        } else {
+            self.create_unbound_reference_id(span, name, flags)
+        }
     }
 
     /// Create reference in current scope, looking up binding for `name`,
@@ -492,15 +533,17 @@ impl<'a> TraverseCtx<'a> {
     /// This method makes a lookup of the `SymbolId` for the reference. If you need to create multiple
     /// `IdentifierReference`s for the same binding, it is better to look up the `SymbolId` only once,
     /// and generate `IdentifierReference`s with `TraverseCtx::create_reference_id`.
-    ///
-    /// This is a shortcut for `ctx.scoping.clone_identifier_reference`.
-    #[inline]
     pub fn clone_identifier_reference(
         &mut self,
         ident: &IdentifierReference<'a>,
         flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
-        self.scoping.clone_identifier_reference(ident, flags)
+        let reference =
+            self.symbols().get_reference(ident.reference_id.get().unwrap_or_else(|| {
+                unreachable!("IdentifierReference must have a reference_id");
+            }));
+        let symbol_id = reference.symbol_id();
+        self.create_reference_id(ident.span, ident.name.clone(), symbol_id, flags)
     }
 
     /// Determine whether evaluating the specific input `node` is a consequenceless reference.

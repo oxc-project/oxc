@@ -7,7 +7,7 @@ use oxc_ast::{
     },
     AstKind,
 };
-use oxc_semantic::{AstNode, ReferenceId};
+use oxc_semantic::{AstNode, ReferenceId, Semantic};
 use oxc_span::CompactStr;
 use phf::phf_set;
 
@@ -146,9 +146,17 @@ pub struct PossibleJestNode<'a, 'b> {
 
 /// Collect all possible Jest fn Call Expression,
 /// for `expect(1).toBe(1)`, the result will be a collection of node `expect(1)` and node `expect(1).toBe(1)`.
-pub fn collect_possible_jest_call_node<'a, 'b>(
-    ctx: &'b LintContext<'a>,
-) -> Vec<PossibleJestNode<'a, 'b>> {
+pub fn collect_possible_jest_call_node<'a, 'c>(
+    ctx: &'c LintContext<'a>,
+) -> Vec<PossibleJestNode<'a, 'c>> {
+    iter_possible_jest_call_node(ctx.semantic()).collect()
+}
+
+/// Iterate over all possible Jest fn Call Expression,
+/// for `expect(1).toBe(1)`, the result will be an iter over node `expect(1)` and node `expect(1).toBe(1)`.
+pub fn iter_possible_jest_call_node<'a, 'c>(
+    semantic: &'c Semantic<'a>,
+) -> impl Iterator<Item = PossibleJestNode<'a, 'c>> + 'c {
     // Some people may write codes like below, we need lookup imported test function and global test function.
     // ```
     // import { jest as Jest } from '@jest/globals';
@@ -157,68 +165,60 @@ pub fn collect_possible_jest_call_node<'a, 'b>(
     //     expect(1 + 2).toEqual(3);
     // });
     // ```
-    let mut reference_id_with_original_list = collect_ids_referenced_to_import(ctx);
-    if JEST_METHOD_NAMES
-        .iter()
-        .any(|name| ctx.scopes().root_unresolved_references().contains_key(*name))
-    {
-        reference_id_with_original_list.extend(
-            collect_ids_referenced_to_global(ctx)
-                // set the original of global test function to None
-                .map(|id| (id, None)),
-        );
-    }
+    let reference_id_with_original_list = collect_ids_referenced_to_import(semantic).chain(
+        collect_ids_referenced_to_global(semantic)
+            // set the original of global test function to None
+            .map(|id| (id, None)),
+    );
 
     // get the longest valid chain of Jest Call Expression
-    reference_id_with_original_list.iter().fold(vec![], |mut acc, id_with_original| {
-        let (reference_id, original) = id_with_original;
-        let mut id = ctx.symbols().get_reference(*reference_id).node_id();
-        loop {
-            let parent = ctx.nodes().parent_node(id);
+    reference_id_with_original_list.flat_map(move |(reference_id, original)| {
+        let mut id = semantic.symbols().get_reference(reference_id).node_id();
+        std::iter::from_fn(move || loop {
+            let parent = semantic.nodes().parent_node(id);
             if let Some(parent) = parent {
                 let parent_kind = parent.kind();
                 if matches!(parent_kind, AstKind::CallExpression(_)) {
-                    acc.push(PossibleJestNode { node: parent, original: *original });
                     id = parent.id();
+                    return Some(PossibleJestNode { node: parent, original });
                 } else if matches!(
                     parent_kind,
                     AstKind::MemberExpression(_) | AstKind::TaggedTemplateExpression(_)
                 ) {
                     id = parent.id();
                 } else {
-                    break;
+                    return None;
                 }
             } else {
-                break;
+                return None;
             }
-        }
-
-        acc
+        })
     })
 }
 
-fn collect_ids_referenced_to_import<'a>(
-    ctx: &LintContext<'a>,
-) -> Vec<(ReferenceId, Option<&'a str>)> {
-    ctx.symbols()
+fn collect_ids_referenced_to_import<'a, 'c>(
+    semantic: &'c Semantic<'a>,
+) -> impl Iterator<Item = (ReferenceId, Option<&'a str>)> + 'c {
+    semantic
+        .symbols()
         .resolved_references
         .iter_enumerated()
         .filter_map(|(symbol_id, reference_ids)| {
-            if ctx.symbols().get_flags(symbol_id).is_import() {
-                let id = ctx.symbols().get_declaration(symbol_id);
-                let Some(AstKind::ImportDeclaration(import_decl)) = ctx.nodes().parent_kind(id)
+            if semantic.symbols().get_flags(symbol_id).is_import() {
+                let id = semantic.symbols().get_declaration(symbol_id);
+                let Some(AstKind::ImportDeclaration(import_decl)) =
+                    semantic.nodes().parent_kind(id)
                 else {
                     return None;
                 };
-                let name = ctx.symbols().get_name(symbol_id);
+                let name = semantic.symbols().get_name(symbol_id);
 
                 if matches!(import_decl.source.value.as_str(), "@jest/globals" | "vitest") {
                     let original = find_original_name(import_decl, name);
-                    let mut ret = vec![];
-                    for reference_id in reference_ids {
-                        ret.push((*reference_id, original));
-                    }
-
+                    let ret = reference_ids
+                        .iter()
+                        .map(|&reference_id| (reference_id, original))
+                        .collect::<Vec<_>>();
                     return Some(ret);
                 }
             }
@@ -226,7 +226,6 @@ fn collect_ids_referenced_to_import<'a>(
             None
         })
         .flatten()
-        .collect()
 }
 
 /// Find name in the Import Declaration, not use name because of lifetime not long enough.
@@ -243,9 +242,10 @@ fn find_original_name<'a>(import_decl: &'a ImportDeclaration<'a>, name: &str) ->
 }
 
 fn collect_ids_referenced_to_global<'c>(
-    ctx: &'c LintContext,
+    semantic: &'c Semantic,
 ) -> impl Iterator<Item = ReferenceId> + 'c {
-    ctx.scopes()
+    semantic
+        .scopes()
         .root_unresolved_references()
         .iter()
         .filter(|(name, _)| JEST_METHOD_NAMES.contains(name.as_str()))
@@ -303,7 +303,7 @@ pub fn is_equality_matcher(matcher: &KnownMemberExpressionProperty) -> bool {
 
 #[cfg(test)]
 mod test {
-    use std::rc::Rc;
+    use std::{rc::Rc, sync::Arc};
 
     use oxc_allocator::Allocator;
     use oxc_parser::Parser;
@@ -317,13 +317,18 @@ mod test {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
         let parser_ret = Parser::new(&allocator, "", source_type).parse();
-        let program = allocator.alloc(parser_ret.program);
-        let semantic_ret = SemanticBuilder::new().with_cfg(true).build(program).semantic;
+        let semantic_ret =
+            SemanticBuilder::new().with_cfg(true).build(&parser_ret.program).semantic;
         let semantic_ret = Rc::new(semantic_ret);
 
         let build_ctx = |path: &'static str| {
-            Rc::new(ContextHost::new(path, Rc::clone(&semantic_ret), LintOptions::default()))
-                .spawn_for_test()
+            Rc::new(ContextHost::new(
+                path,
+                Rc::clone(&semantic_ret),
+                LintOptions::default(),
+                Arc::default(),
+            ))
+            .spawn_for_test()
         };
 
         let ctx = build_ctx("foo.js");

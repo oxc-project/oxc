@@ -18,7 +18,7 @@ use crate::{
 };
 
 impl<'a> IsolatedDeclarations<'a> {
-    pub fn transform_function_to_ts_type(&self, func: &Function<'a>) -> Option<TSType<'a>> {
+    pub(crate) fn transform_function_to_ts_type(&self, func: &Function<'a>) -> Option<TSType<'a>> {
         let return_type = self.infer_function_return_type(func);
         if return_type.is_none() {
             self.error(function_must_have_explicit_return_type(get_function_span(func)));
@@ -39,7 +39,7 @@ impl<'a> IsolatedDeclarations<'a> {
         })
     }
 
-    pub fn transform_arrow_function_to_ts_type(
+    pub(crate) fn transform_arrow_function_to_ts_type(
         &self,
         func: &ArrowFunctionExpression<'a>,
     ) -> Option<TSType<'a>> {
@@ -148,7 +148,7 @@ impl<'a> IsolatedDeclarations<'a> {
         self.ast.ts_type_type_literal(SPAN, members)
     }
 
-    pub fn transform_array_expression_to_ts_type(
+    pub(crate) fn transform_array_expression_to_ts_type(
         &self,
         expr: &ArrayExpression<'a>,
         is_const: bool,
@@ -181,7 +181,10 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     // https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-4.html#const-assertions
-    pub fn transform_expression_to_ts_type(&self, expr: &Expression<'a>) -> Option<TSType<'a>> {
+    pub(crate) fn transform_expression_to_ts_type(
+        &self,
+        expr: &Expression<'a>,
+    ) -> Option<TSType<'a>> {
         match expr {
             Expression::BooleanLiteral(lit) => Some(self.ast.ts_type_literal_type(
                 SPAN,

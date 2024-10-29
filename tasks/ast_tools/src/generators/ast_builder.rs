@@ -2,29 +2,28 @@ use std::{borrow::Cow, stringify};
 
 use convert_case::{Case, Casing};
 use itertools::Itertools;
-use lazy_static::lazy_static;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens};
-use rustc_hash::FxHashMap;
 use syn::{parse_quote, Ident, Type};
 
-use super::define_generator;
 use crate::{
-    codegen::{generated_header, LateCtx},
-    output,
+    codegen::LateCtx,
+    output::{output_path, Output},
     schema::{
         EnumDef, FieldDef, GetIdent, InheritDef, StructDef, ToType, TypeDef, TypeName, VariantDef,
     },
     util::{TypeAnalysis, TypeWrapper},
-    Generator, GeneratorOutput,
+    Generator,
 };
 
-define_generator! {
-    pub struct AstBuilderGenerator;
-}
+use super::define_generator;
+
+pub struct AstBuilderGenerator;
+
+define_generator!(AstBuilderGenerator);
 
 impl Generator for AstBuilderGenerator {
-    fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
+    fn generate(&mut self, ctx: &LateCtx) -> Output {
         let fns = ctx
             .schema()
             .into_iter()
@@ -32,13 +31,12 @@ impl Generator for AstBuilderGenerator {
             .map(|it| generate_builder_fn(it, ctx))
             .collect_vec();
 
-        let header = generated_header!();
+        Output::Rust {
+            path: output_path(crate::AST_CRATE, "ast_builder.rs"),
+            tokens: quote! {
+                //! AST node factories
 
-        GeneratorOutput(
-            output(crate::AST_CRATE, "ast_builder.rs"),
-            quote! {
-                #header
-
+                //!@@line_break
                 #![allow(
                     clippy::default_trait_access,
                     clippy::too_many_arguments,
@@ -46,16 +44,20 @@ impl Generator for AstBuilderGenerator {
                 )]
 
                 ///@@line_break
-                use oxc_allocator::{Allocator, Box, IntoIn, Vec};
+                use std::cell::Cell;
 
                 ///@@line_break
-                #[allow(clippy::wildcard_imports)]
+                use oxc_allocator::{Allocator, Box, IntoIn, Vec};
+                use oxc_syntax::{scope::ScopeId, symbol::SymbolId, reference::ReferenceId};
+
+                ///@@line_break
                 use crate::ast::*;
 
                 ///@@line_break
                 /// AST builder for creating AST nodes
                 #[derive(Clone, Copy)]
                 pub struct AstBuilder<'a> {
+                    /// The memory allocator used to allocate AST nodes in the arena.
                     pub allocator: &'a Allocator,
                 }
 
@@ -64,7 +66,7 @@ impl Generator for AstBuilderGenerator {
                     #(#fns)*
                 }
             },
-        )
+        }
     }
 }
 
@@ -121,8 +123,14 @@ fn generate_enum_inherit_builder_fn(
     let fn_name =
         enum_builder_name(enum_ident.to_string(), inherit.super_.name().inner_name().to_string());
 
+    let docs = DocComment::new(format!(
+        "Convert a [`{}`] into the corresponding variant of [`{}`] without copying or re-allocating memory.",
+        inherit.super_.name(),
+        enum_ident
+    ));
     quote! {
         ///@@line_break
+        #docs
         #[inline]
         pub fn #fn_name(self, inner: #super_type) -> #enum_as_type {
             #enum_ident::from(inner)
@@ -221,75 +229,113 @@ fn generate_enum_from_variant_builder_fn(
 }
 
 fn default_init_field(field: &FieldDef) -> bool {
-    macro_rules! field {
-        ($ident:ident: $ty:ty) => {
-            (stringify!($ident), stringify!($ty))
-        };
-    }
-    lazy_static! {
-        static ref DEFAULT_FIELDS: FxHashMap<&'static str, &'static str> = FxHashMap::from_iter([
-            field!(scope_id: Cell<Option<ScopeId>>),
-            field!(symbol_id: Cell<Option<SymbolId>>),
-            field!(reference_id: Cell<Option<ReferenceId>>),
-            field!(reference_flags: ReferenceFlags),
-        ]);
-    }
-
     let ident = field.ident().expect("expected named field");
-    if let Some(default_type) = DEFAULT_FIELDS.get(ident.to_string().as_str()) {
-        *default_type == field.typ.raw()
-    } else {
-        false
-    }
+    matches!(
+        (ident.to_string().as_str(), field.typ.raw()),
+        ("scope_id", "Cell<Option<ScopeId>>")
+            | ("symbol_id", "Cell<Option<SymbolId>>")
+            | ("reference_id", "Cell<Option<ReferenceId>>")
+    )
 }
 
+/// Generate builder function for struct.
+///
+/// Generates functions:
+/// 1. to create owned object.
+/// 2. to create boxed object.
+///
+/// If type has default fields (`scope_id`, `symbol_id`, `reference_id`), also generates functions:
+///
+/// 3. to create owned object with provided `ScopeId` / `SymbolId` / `ReferenceId`.
+/// 4. to create boxed object with provided `ScopeId` / `SymbolId` / `ReferenceId`.
 fn generate_struct_builder_fn(ty: &StructDef, ctx: &LateCtx) -> TokenStream {
-    fn default_field(param: &Param) -> TokenStream {
-        debug_assert!(param.is_default);
-        let ident = &param.ident;
-        quote!(#ident: Default::default())
-    }
     let ident = ty.ident();
     let as_type = ty.to_type();
     let fn_name = struct_builder_name(ty);
-
-    let params = get_struct_params(ty, ctx);
-    let (generic_params, where_clause) = get_generic_params(&params);
-
-    let fields = params
-        .iter()
-        .map(|param| {
-            if param.is_default {
-                default_field(param)
-            } else if param.into_in {
-                let ident = &param.ident;
-                quote!(#ident: #ident.into_in(self.allocator))
-            } else {
-                param.ident.to_token_stream()
-            }
-        })
-        .collect_vec();
-
-    let params = params.into_iter().filter(Param::not_default).collect_vec();
-    let args = params.iter().map(|it| it.ident.clone());
-
     let alloc_fn_name = format_ident!("alloc_{fn_name}");
 
+    let params_incl_defaults = get_struct_params(ty, ctx);
+    let (generic_params, where_clause) = get_generic_params(&params_incl_defaults);
+
+    let mut has_default_fields = false;
+    let mut params = vec![];
+    let mut fn_params_incl_defaults = vec![];
+    let mut default_field_names = vec![];
+    let mut default_field_type_names = vec![];
+    let mut fields = vec![];
+    let mut fields_incl_defaults = vec![];
+    let mut args = vec![];
+    let mut args_incl_defaults = vec![];
+
+    for param in &params_incl_defaults {
+        let mut field = if param.into_in {
+            let ident = &param.ident;
+            quote!(#ident: #ident.into_in(self.allocator))
+        } else {
+            param.ident.to_token_stream()
+        };
+
+        if param.is_default && !has_default_fields {
+            has_default_fields = true;
+            fn_params_incl_defaults = params.iter().map(Param::to_token_stream).collect();
+            fields_incl_defaults.clone_from(&fields);
+            args_incl_defaults.clone_from(&args);
+        }
+
+        if param.is_default {
+            let field_ident = &param.ident;
+            field = quote!(#field_ident: Default::default());
+
+            let field_name = field_ident.to_string();
+            let field_type_name = match field_name.as_str() {
+                "scope_id" => "ScopeId",
+                "symbol_id" => "SymbolId",
+                "reference_id" => "ReferenceId",
+                _ => unreachable!(),
+            };
+            let field_type_ident = format_ident!("{field_type_name}");
+            fn_params_incl_defaults.push(quote!(#field_ident: #field_type_ident));
+            fields_incl_defaults.push(quote!( #field_ident: Cell::new(Some(#field_ident)) ));
+
+            default_field_names.push(field_name);
+            default_field_type_names.push(field_type_name);
+        } else {
+            params.push(param.clone());
+            args.push(param.ident.clone());
+
+            if has_default_fields {
+                fn_params_incl_defaults.push(param.to_token_stream());
+                fields_incl_defaults.push(field.clone());
+            }
+        }
+
+        if has_default_fields {
+            args_incl_defaults.push(param.ident.clone());
+        }
+
+        fields.push(field);
+    }
+
     let article = article_for(ident.to_string());
-    let fn_docs = DocComment::new(format!("Builds {article} [`{ident}`]"))
-        .with_description(format!("If you want the built node to be allocated in the memory arena, use [`AstBuilder::{alloc_fn_name}`] instead."))
-        .with_params(&params);
+    let create_docs = |fn_name, alloc_fn_name, params, extra| {
+        let fn_docs = DocComment::new(format!("Build {article} [`{ident}`]{extra}."))
+            .with_description(format!("If you want the built node to be allocated in the memory arena, use [`AstBuilder::{alloc_fn_name}`] instead."))
+            .with_params(params);
 
-    let alloc_docs =
-        DocComment::new(format!("Builds {article} [`{ident}`] and stores it in the memory arena."))
+        let alloc_docs = DocComment::new(format!("Build {article} [`{ident}`]{extra}, and store it in the memory arena."))
             .with_description(format!("Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::{fn_name}`] instead."))
-            .with_params(&params);
+            .with_params(params);
 
-    quote! {
+        (fn_docs, alloc_docs)
+    };
+
+    let (fn_docs, alloc_docs) = create_docs(&fn_name, &alloc_fn_name, &params, "");
+
+    let mut output = quote! {
         ///@@line_break
         #fn_docs
         #[inline]
-        pub fn #fn_name #generic_params (self, #(#params),*) -> #as_type  #where_clause {
+        pub fn #fn_name #generic_params (self, #(#params),*) -> #as_type #where_clause {
             #ident { #(#fields),* }
         }
 
@@ -299,12 +345,41 @@ fn generate_struct_builder_fn(ty: &StructDef, ctx: &LateCtx) -> TokenStream {
         pub fn #alloc_fn_name #generic_params (self, #(#params),*) -> Box<'a, #as_type> #where_clause {
             Box::new_in(self.#fn_name(#(#args),*), self.allocator)
         }
+    };
+
+    if has_default_fields {
+        let fn_name = format_ident!("{fn_name}_with_{}", default_field_names.join("_and_"));
+        let alloc_fn_name = format_ident!("alloc_{fn_name}");
+
+        let with = format!(" with `{}`", default_field_type_names.iter().join("` and `"));
+        let (fn_docs, alloc_docs) =
+            create_docs(&fn_name, &alloc_fn_name, &params_incl_defaults, &with);
+
+        output = quote! {
+            #output
+
+            ///@@line_break
+            #fn_docs
+            #[inline]
+            pub fn #fn_name #generic_params (self, #(#fn_params_incl_defaults),*) -> #as_type #where_clause {
+                #ident { #(#fields_incl_defaults),* }
+            }
+
+            ///@@line_break
+            #alloc_docs
+            #[inline]
+            pub fn #alloc_fn_name #generic_params (self, #(#fn_params_incl_defaults),*) -> Box<'a, #as_type> #where_clause {
+                Box::new_in(self.#fn_name(#(#args_incl_defaults),*), self.allocator)
+            }
+        };
     }
+
+    output
 }
 
 // TODO: remove me
 #[expect(dead_code)]
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct Param {
     is_default: bool,
     analysis: TypeAnalysis,
@@ -444,9 +519,9 @@ impl<'p> DocComment<'p> {
 /// Get the correct article (a/an) that should precede a `word`.
 ///
 /// # Panics
-/// if `word` is empty
+/// Panics if `word` is empty.
 fn article_for<S: AsRef<str>>(word: S) -> &'static str {
-    match word.as_ref().chars().next().unwrap() {
+    match word.as_ref().chars().next().unwrap().to_ascii_lowercase() {
         'a' | 'e' | 'i' | 'o' | 'u' => "an",
         _ => "a",
     }
@@ -454,25 +529,19 @@ fn article_for<S: AsRef<str>>(word: S) -> &'static str {
 
 impl ToTokens for DocComment<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        macro_rules! newline {
-            () => {
-                tokens.extend(quote!( #[doc = ""]));
-            };
-        }
-
         let summary = &self.summary;
         tokens.extend(quote!( #[doc = #summary]));
 
         // print description
         for line in &self.description {
             // extra newline needed to create a new paragraph
-            newline!();
+            tokens.extend(quote!( #[doc = ""]));
             tokens.extend(quote!( #[doc = #line]));
         }
 
         // print docs for function parameters
         if !self.params.is_empty() {
-            newline!();
+            tokens.extend(quote!( #[doc = ""]));
             tokens.extend(quote!( #[doc = " ## Parameters"]));
             for param in self.params {
                 let docs = param.docs.first();

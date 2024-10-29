@@ -12,6 +12,7 @@ pub enum CliRunResult {
     LintResult(LintResult),
     FormatResult(FormatResult),
     TypeCheckResult { duration: Duration, number_of_diagnostics: usize },
+    PrintConfigResult { config_file: String },
 }
 
 #[derive(Debug, Default)]
@@ -105,6 +106,10 @@ impl Termination for CliRunResult {
                     return ExitCode::from(1);
                 }
 
+                ExitCode::from(0)
+            }
+            Self::PrintConfigResult { config_file } => {
+                println!("{config_file}");
                 ExitCode::from(0)
             }
         }

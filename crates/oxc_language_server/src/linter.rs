@@ -1,3 +1,4 @@
+use cow_utils::CowUtils;
 use oxc_linter::loader::LINT_PARTIAL_LOADER_EXT;
 use std::{
     fs,
@@ -114,7 +115,11 @@ impl ErrorWithPosition {
         let code_description = code.as_ref().and_then(|code| {
             let (scope, number) = parse_diagnostic_code(code)?;
             Some(CodeDescription {
-                href: Url::from_str(&format!("{LINT_DOC_LINK_PREFIX}/{scope}/{number}")).ok()?,
+                href: Url::from_str(&format!(
+                    "{LINT_DOC_LINK_PREFIX}/{}/{number}",
+                    scope.strip_prefix("eslint-plugin-").unwrap_or(scope).cow_replace("-", "_")
+                ))
+                .ok()?,
             })
         });
         let message = self.miette_err.help().map_or_else(
@@ -267,9 +272,10 @@ impl IsolatedLintHandler {
                 return Some(Self::wrap_diagnostics(path, &source_text, reports, start));
             };
 
-            let program = allocator.alloc(ret.program);
-            let semantic_ret =
-                SemanticBuilder::new().with_cfg(true).with_check_syntax_error(true).build(program);
+            let semantic_ret = SemanticBuilder::new()
+                .with_cfg(true)
+                .with_check_syntax_error(true)
+                .build(&ret.program);
 
             if !semantic_ret.errors.is_empty() {
                 let reports = semantic_ret

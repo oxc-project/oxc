@@ -34,6 +34,7 @@ impl<'a> Template<'a> {
             RuleKind::Jest => Path::new("crates/oxc_linter/src/rules/jest"),
             RuleKind::Typescript => Path::new("crates/oxc_linter/src/rules/typescript"),
             RuleKind::Unicorn => Path::new("crates/oxc_linter/src/rules/unicorn"),
+            RuleKind::Import => Path::new("crates/oxc_linter/src/rules/import"),
             RuleKind::React => Path::new("crates/oxc_linter/src/rules/react"),
             RuleKind::ReactPerf => Path::new("crates/oxc_linter/src/rules/react_perf"),
             RuleKind::JSXA11y => Path::new("crates/oxc_linter/src/rules/jsx_a11y"),

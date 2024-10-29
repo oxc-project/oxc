@@ -1,6 +1,9 @@
+// Auto-generated code, DO NOT EDIT DIRECTLY!
+// To edit this generated file you have to run `cargo run -p javascript_globals`.
+
 use phf::{phf_map, Map};
 
-pub static ENVIRONMENTS: Map<&'static str, Map<&'static str, bool>> = phf_map! {
+pub static GLOBALS: Map<&'static str, Map<&'static str, bool>> = phf_map! {
 {{#each envs }}
     "{{name}}" => phf_map! {
     {{#each vars}}

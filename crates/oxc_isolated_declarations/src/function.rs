@@ -1,5 +1,4 @@
 use oxc_allocator::Box;
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, NONE};
 use oxc_span::{Span, SPAN};
 
@@ -13,7 +12,7 @@ use crate::{
 };
 
 impl<'a> IsolatedDeclarations<'a> {
-    pub fn transform_function(
+    pub(crate) fn transform_function(
         &mut self,
         func: &Function<'a>,
         declare: Option<bool>,
@@ -45,7 +44,7 @@ impl<'a> IsolatedDeclarations<'a> {
         }
     }
 
-    pub fn transform_formal_parameter(
+    pub(crate) fn transform_formal_parameter(
         &self,
         param: &FormalParameter<'a>,
         is_remaining_params_have_required: bool,
@@ -124,7 +123,7 @@ impl<'a> IsolatedDeclarations<'a> {
         Some(self.ast.formal_parameter(param.span, self.ast.vec(), pattern, None, false, false))
     }
 
-    pub fn transform_formal_parameters(
+    pub(crate) fn transform_formal_parameters(
         &self,
         params: &FormalParameters<'a>,
     ) -> Box<'a, FormalParameters<'a>> {

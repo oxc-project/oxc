@@ -1,0 +1,53 @@
+commit: 06454619
+
+runtime Summary:
+AST Parsed     : 18055/18055 (100.00%)
+Positive Passed: 18039/18055 (99.91%)
+tasks/coverage/test262/test/language/expressions/array/spread-obj-getter-init.js
+transform error: Test262Error: Expected SameValue(«true», «false») to be true
+
+tasks/coverage/test262/test/language/expressions/assignment/fn-name-lhs-cover.js
+codegen error: Test262Error: descriptor value should be ; object value should be 
+
+tasks/coverage/test262/test/language/expressions/call/spread-obj-getter-init.js
+transform error: Test262Error: Expected SameValue(«true», «false») to be true
+
+tasks/coverage/test262/test/language/expressions/does-not-equals/bigint-and-object.js
+minify error: Test262Error: The result of (0n != {valueOf: function() {return 0n;}}) is false Expected SameValue(«true», «false») to be true
+
+tasks/coverage/test262/test/language/expressions/equals/bigint-and-object.js
+minify error: Test262Error: The result of (0n == {valueOf: function() {return 0n;}}) is true Expected SameValue(«false», «true») to be true
+
+tasks/coverage/test262/test/language/expressions/exponentiation/bigint-negative-exponent-throws.js
+transform error: Test262Error: (-1n) ** -1n throws RangeError Expected a RangeError but got a TypeError
+
+tasks/coverage/test262/test/language/expressions/new/spread-obj-getter-init.js
+transform error: Test262Error: Expected SameValue(«true», «false») to be true
+
+tasks/coverage/test262/test/language/expressions/object/__proto__-permitted-dup-shorthand.js
+codegen error: Test262Error: Expected SameValue(«[object Object]», «2») to be true
+
+tasks/coverage/test262/test/language/expressions/object/object-spread-proxy-get-not-called-on-dontenum-keys.js
+transform error: Test262Error: Actual [dontEnumString, 0, enumerableString, 1, Symbol(dont_enum_symbol), Symbol(enumerable_symbol)] and expected [Symbol(dont_enum_symbol), dontEnumString, 0, Symbol(enumerable_symbol), enumerableString, 1] should have the same contents. 
+
+tasks/coverage/test262/test/language/expressions/object/object-spread-proxy-no-excluded-keys.js
+transform error: TypeError: Cannot read properties of undefined (reading 'enumerable')
+
+tasks/coverage/test262/test/language/expressions/object/object-spread-proxy-ownkeys-returned-keys-order.js
+transform error: TypeError: Cannot read properties of undefined (reading 'enumerable')
+
+tasks/coverage/test262/test/language/expressions/super/call-spread-obj-getter-init.js
+transform error: Test262Error: Expected SameValue(«true», «false») to be true
+
+tasks/coverage/test262/test/language/literals/regexp/u-surrogate-pairs-atom-escape-decimal.js
+codegen error: Test262Error: Expected SameValue(«true», «false») to be true
+
+tasks/coverage/test262/test/language/statements/async-generator/return-undefined-implicit-and-explicit.js
+minify error: Test262Error: Actual [tick 1, g1 ret, g2 ret, g3 ret, g4 ret, tick 2] and expected [tick 1, g1 ret, g2 ret, tick 2, g3 ret, g4 ret] should have the same contents. Ticks for implicit and explicit return undefined
+
+tasks/coverage/test262/test/language/statements/for-of/string-astral-truncated.js
+codegen error: Test262Error: Expected SameValue(«"\\"», «"\\ud801"») to be true
+
+tasks/coverage/test262/test/language/statements/with/has-binding-call-with-proxy-env.js
+minify error: Test262Error: Actual [] and expected [has:Object] should have the same contents. 
+

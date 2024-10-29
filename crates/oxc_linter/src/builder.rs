@@ -3,12 +3,14 @@ use std::{
     fmt,
 };
 
+use oxc_span::CompactStr;
 use rustc_hash::FxHashSet;
 
 use crate::{
-    options::LintPlugins, rules::RULES, AllowWarnDeny, FixKind, FrameworkFlags, LintConfig,
-    LintFilter, LintFilterKind, LintOptions, Linter, Oxlintrc, RuleCategory, RuleEnum,
-    RuleWithSeverity,
+    config::{ESLintRule, LintPlugins, OxlintRules},
+    rules::RULES,
+    AllowWarnDeny, FixKind, FrameworkFlags, LintConfig, LintFilter, LintFilterKind, LintOptions,
+    Linter, Oxlintrc, RuleCategory, RuleEnum, RuleWithSeverity,
 };
 
 #[must_use = "You dropped your builder without building a Linter! Did you mean to call .build()?"]
@@ -32,8 +34,11 @@ impl LinterBuilder {
     /// You can think of this as `oxlint -A all`.
     pub fn empty() -> Self {
         let options = LintOptions::default();
-        let cache = RulesCache::new(options.plugins);
-        Self { rules: FxHashSet::default(), options, config: LintConfig::default(), cache }
+        let config = LintConfig::default();
+        let rules = FxHashSet::default();
+        let cache = RulesCache::new(config.plugins);
+
+        Self { rules, options, config, cache }
     }
 
     /// Warn on all rules in all plugins and categories, including those in `nursery`.
@@ -41,15 +46,16 @@ impl LinterBuilder {
     ///
     /// You can think of this as `oxlint -W all -W nursery`.
     pub fn all() -> Self {
-        let options = LintOptions { plugins: LintPlugins::all(), ..LintOptions::default() };
-        let cache = RulesCache::new(options.plugins);
+        let options = LintOptions::default();
+        let config = LintConfig { plugins: LintPlugins::all(), ..LintConfig::default() };
+        let cache = RulesCache::new(config.plugins);
         Self {
             rules: RULES
                 .iter()
                 .map(|rule| RuleWithSeverity { rule: rule.clone(), severity: AllowWarnDeny::Warn })
                 .collect(),
             options,
-            config: LintConfig::default(),
+            config,
             cache,
         }
     }
@@ -73,11 +79,11 @@ impl LinterBuilder {
         let Oxlintrc { plugins, settings, env, globals, categories, rules: oxlintrc_rules } =
             oxlintrc;
 
-        let config = LintConfig { settings, env, globals };
-        let options = LintOptions { plugins, ..Default::default() };
+        let config = LintConfig { plugins, settings, env, globals };
+        let options = LintOptions::default();
         let rules =
             if start_empty { FxHashSet::default() } else { Self::warn_correctness(plugins) };
-        let cache = RulesCache::new(options.plugins);
+        let cache = RulesCache::new(config.plugins);
         let mut builder = Self { rules, options, config, cache };
 
         if !categories.is_empty() {
@@ -125,7 +131,7 @@ impl LinterBuilder {
     /// [`and_plugins`]: LinterBuilder::and_plugins
     #[inline]
     pub fn with_plugins(mut self, plugins: LintPlugins) -> Self {
-        self.options.plugins = plugins;
+        self.config.plugins = plugins;
         self.cache.set_plugins(plugins);
         self
     }
@@ -136,14 +142,14 @@ impl LinterBuilder {
     /// rules.
     #[inline]
     pub fn and_plugins(mut self, plugins: LintPlugins, enabled: bool) -> Self {
-        self.options.plugins.set(plugins, enabled);
-        self.cache.set_plugins(self.options.plugins);
+        self.config.plugins.set(plugins, enabled);
+        self.cache.set_plugins(self.config.plugins);
         self
     }
 
     #[inline]
     pub fn plugins(&self) -> LintPlugins {
-        self.options.plugins
+        self.config.plugins
     }
 
     #[cfg(test)]
@@ -243,6 +249,44 @@ impl LinterBuilder {
             })
             .map(|rule| RuleWithSeverity { rule: rule.clone(), severity: AllowWarnDeny::Warn })
             .collect()
+    }
+
+    /// # Panics
+    /// This function will panic if the `oxlintrc` is not valid JSON.
+    pub fn resolve_final_config_file(&self, oxlintrc: Oxlintrc) -> String {
+        let mut oxlintrc = oxlintrc;
+        let previous_rules = std::mem::take(&mut oxlintrc.rules);
+
+        let rule_name_to_rule = previous_rules
+            .into_iter()
+            .map(|r| (get_name(&r.plugin_name, &r.rule_name), r))
+            .collect::<rustc_hash::FxHashMap<_, _>>();
+
+        let new_rules = self
+            .rules
+            .iter()
+            .map(|r: &RuleWithSeverity| {
+                return ESLintRule {
+                    plugin_name: r.plugin_name().to_string(),
+                    rule_name: r.rule.name().to_string(),
+                    severity: r.severity,
+                    config: rule_name_to_rule
+                        .get(&get_name(r.plugin_name(), r.rule.name()))
+                        .and_then(|r| r.config.clone()),
+                };
+            })
+            .collect();
+
+        oxlintrc.rules = OxlintRules::new(new_rules);
+        serde_json::to_string_pretty(&oxlintrc).unwrap()
+    }
+}
+
+fn get_name(plugin_name: &str, rule_name: &str) -> CompactStr {
+    if plugin_name == "eslint" {
+        CompactStr::from(rule_name)
+    } else {
+        CompactStr::from(format!("{plugin_name}/{rule_name}"))
     }
 }
 

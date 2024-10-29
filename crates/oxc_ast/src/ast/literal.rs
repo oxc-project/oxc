@@ -4,33 +4,26 @@
 // They are purely markers for codegen used in `tasks/ast_tools` and `crates/oxc_traverse/scripts`. See docs in those crates.
 // Read [`macro@oxc_ast_macros::ast`] for more information.
 
-// Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
-#![allow(non_snake_case)]
-
 use std::hash::Hash;
 
 use bitflags::bitflags;
 use oxc_allocator::{Box, CloneIn};
 use oxc_ast_macros::ast;
+use oxc_estree::ESTree;
 use oxc_regular_expression::ast::Pattern;
 use oxc_span::{cmp::ContentEq, hash::ContentHash, Atom, GetSpan, GetSpanMut, Span};
 use oxc_syntax::number::{BigintBase, NumberBase};
-#[cfg(feature = "serialize")]
-use serde::Serialize;
-#[cfg(feature = "serialize")]
-use tsify::Tsify;
 
 /// Boolean literal
 ///
 /// <https://tc39.es/ecma262/#prod-BooleanLiteral>
 #[ast(visit)]
 #[derive(Debug, Clone)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[serde(tag = "type")]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct BooleanLiteral {
-    #[serde(flatten)]
+    /// Node location in source code
     pub span: Span,
+    /// The boolean value itself
     pub value: bool,
 }
 
@@ -39,11 +32,9 @@ pub struct BooleanLiteral {
 /// <https://tc39.es/ecma262/#sec-null-literals>
 #[ast(visit)]
 #[derive(Debug, Clone)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[serde(tag = "type")]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct NullLiteral {
-    #[serde(flatten)]
+    /// Node location in source code
     pub span: Span,
 }
 
@@ -52,34 +43,30 @@ pub struct NullLiteral {
 /// <https://tc39.es/ecma262/#sec-literals-numeric-literals>
 #[ast(visit)]
 #[derive(Debug, Clone)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[serde(tag = "type")]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct NumericLiteral<'a> {
-    #[serde(flatten)]
+    /// Node location in source code
     pub span: Span,
     /// The value of the number, converted into base 10
     pub value: f64,
-    /// The number as it appears in the source code
+    /// The number as it appears in source code
     pub raw: &'a str,
-    /// The base representation used by the literal in the source code
-    #[serde(skip)]
+    /// The base representation used by the literal in source code
+    #[estree(skip)]
     pub base: NumberBase,
 }
 
 /// BigInt literal
 #[ast(visit)]
 #[derive(Debug, Clone)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[serde(tag = "type")]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct BigIntLiteral<'a> {
-    #[serde(flatten)]
+    /// Node location in source code
     pub span: Span,
-    /// The bigint as it appears in the source code
+    /// The bigint as it appears in source code
     pub raw: Atom<'a>,
-    /// The base representation used by the literal in the source code
-    #[serde(skip)]
+    /// The base representation used by the literal in source code
+    #[estree(skip)]
     pub base: BigintBase,
 }
 
@@ -88,15 +75,18 @@ pub struct BigIntLiteral<'a> {
 /// <https://tc39.es/ecma262/#sec-literals-regular-expression-literals>
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[serde(tag = "type")]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct RegExpLiteral<'a> {
-    #[serde(flatten)]
+    /// Node location in source code
     pub span: Span,
-    // valid regex is printed as {}
-    // invalid regex is printed as null, which we can't implement yet
+    /// Placeholder for printing.
+    ///
+    /// Valid regular expressions are printed as `{}`, while invalid ones are
+    /// printed as `null`. Note that invalid regular expressions are not yet
+    /// printed properly.
     pub value: EmptyObject,
+    /// The parsed regular expression. See [`oxc_regular_expression`] for more
+    /// details.
     pub regex: RegExp<'a>,
 }
 
@@ -105,8 +95,8 @@ pub struct RegExpLiteral<'a> {
 /// <https://tc39.es/ecma262/multipage/text-processing.html#sec-regexp-regular-expression-objects>
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
+#[estree(no_type)]
 pub struct RegExp<'a> {
     /// The regex pattern between the slashes
     pub pattern: RegExpPattern<'a>,
@@ -119,8 +109,7 @@ pub struct RegExp<'a> {
 /// This pattern may or may not be parsed.
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub enum RegExpPattern<'a> {
     /// Unparsed pattern. Contains string slice of the pattern.
     /// Pattern was not parsed, so may be valid or invalid.
@@ -133,10 +122,11 @@ pub enum RegExpPattern<'a> {
     Pattern(Box<'a, Pattern<'a>>) = 2,
 }
 
+/// An empty object literal (`{}`)
 #[ast]
 #[derive(Debug, Clone)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
+#[estree(no_type)]
 pub struct EmptyObject;
 
 /// String literal
@@ -144,12 +134,11 @@ pub struct EmptyObject;
 /// <https://tc39.es/ecma262/#sec-literals-string-literals>
 #[ast(visit)]
 #[derive(Debug, Clone)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[serde(tag = "type")]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct StringLiteral<'a> {
-    #[serde(flatten)]
+    /// Node location in source code
     pub span: Span,
+    /// The string as it appears in source code
     pub value: Atom<'a>,
 }
 
@@ -194,26 +183,3 @@ bitflags! {
         const V = 1 << 7;
     }
 }
-
-#[cfg(feature = "serialize")]
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = r#"
-export type RegExpFlags = {
-    /** Global flag */
-    G: 1,
-    /** Ignore case flag */
-    I: 2,
-    /** Multiline flag */
-    M: 4,
-    /** DotAll flag */
-    S: 8,
-    /** Unicode flag */
-    U: 16,
-    /** Sticky flag */
-    Y: 32,
-    /** Indices flag */
-    D: 64,
-    /** Unicode sets flag */
-    V: 128
-};
-"#;

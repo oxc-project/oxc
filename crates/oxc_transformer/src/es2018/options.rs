@@ -1,7 +1,8 @@
 use serde::Deserialize;
 
-use super::ObjectRestSpreadOptions;
 use crate::env::{can_enable_plugin, Versions};
+
+use super::ObjectRestSpreadOptions;
 
 #[derive(Debug, Default, Clone, Deserialize)]
 #[serde(default, rename_all = "camelCase", deny_unknown_fields)]

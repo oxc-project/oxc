@@ -67,7 +67,7 @@ impl<'a> ParserImpl<'a> {
         }
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
         self.check_identifier(span, &name);
-        Ok(IdentifierReference::new(span, name))
+        Ok(self.ast.identifier_reference(span, name))
     }
 
     /// `BindingIdentifier` : Identifier
@@ -321,7 +321,7 @@ impl<'a> ParserImpl<'a> {
             _ => return Err(self.unexpected()),
         };
         self.bump_any();
-        Ok(NumericLiteral::new(self.end_span(span), value, src, base))
+        Ok(self.ast.numeric_literal(self.end_span(span), value, src, base))
     }
 
     pub(crate) fn parse_literal_bigint(&mut self) -> Result<BigIntLiteral<'a>> {
@@ -345,17 +345,18 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_literal_regexp(&mut self) -> Result<RegExpLiteral<'a>> {
         let span = self.start_span();
         // split out pattern
-        let (pattern_end, flags) = self.read_regex()?;
+        let (pattern_end, flags, flags_error) = self.read_regex()?;
         let pattern_start = self.cur_token().start + 1; // +1 to exclude left `/`
         let pattern_text = &self.source_text[pattern_start as usize..pattern_end as usize];
         let flags_start = pattern_end + 1; // +1 to include right `/`
         let flags_text = &self.source_text[flags_start as usize..self.cur_token().end as usize];
         self.bump_any();
-        let pattern = self
-            .options
-            .parse_regular_expression
+        // Parse pattern if options is enabled and also flags are valid
+        let pattern = (self.options.parse_regular_expression && !flags_error)
             .then_some(())
-            .map(|()| self.parse_regex_pattern(pattern_start, pattern_text, flags_text))
+            .map(|()| {
+                self.parse_regex_pattern(pattern_start, pattern_text, flags_start, flags_text)
+            })
             .map_or_else(
                 || RegExpPattern::Raw(pattern_text),
                 |pat| {
@@ -367,13 +368,20 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_regex_pattern(
         &mut self,
-        span_offset: u32,
+        pattern_span_offset: u32,
         pattern: &'a str,
+        flags_span_offset: u32,
         flags: &'a str,
     ) -> Option<Box<'a, Pattern<'a>>> {
-        use oxc_regular_expression::{Parser, ParserOptions};
-        let options = ParserOptions::default().with_span_offset(span_offset).with_flags(flags);
-        match Parser::new(self.ast.allocator, pattern, options).parse() {
+        use oxc_regular_expression::{LiteralParser, Options};
+        match LiteralParser::new(
+            self.ast.allocator,
+            pattern,
+            Some(flags),
+            Options { pattern_span_offset, flags_span_offset },
+        )
+        .parse()
+        {
             Ok(regular_expression) => Some(self.ast.alloc(regular_expression)),
             Err(diagnostic) => {
                 self.error(diagnostic);
@@ -627,12 +635,6 @@ impl<'a> ParserImpl<'a> {
         let mut lhs = lhs;
         loop {
             lhs = match self.cur_kind() {
-                // computed member expression is not allowed in decorator
-                // class C { @dec ["1"]() { } }
-                //                ^
-                Kind::LBrack if !self.ctx.has_decorator() => {
-                    self.parse_computed_member_expression(lhs_span, lhs, false)?
-                }
                 Kind::Dot => self.parse_static_member_expression(lhs_span, lhs, false)?,
                 Kind::QuestionDot => {
                     *in_optional_chain = true;
@@ -649,6 +651,12 @@ impl<'a> ParserImpl<'a> {
                         }
                         _ => break,
                     }
+                }
+                // computed member expression is not allowed in decorator
+                // class C { @dec ["1"]() { } }
+                //                ^
+                Kind::LBrack if !self.ctx.has_decorator() => {
+                    self.parse_computed_member_expression(lhs_span, lhs, false)?
                 }
                 Kind::Bang if !self.cur_token().is_on_new_line && self.is_ts => {
                     self.bump_any();

@@ -2,21 +2,22 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::Type;
 
-use super::define_generator;
 use crate::{
-    codegen::{generated_header, LateCtx},
-    output,
+    codegen::LateCtx,
+    output::{output_path, Output},
     schema::{FieldDef, ToType, TypeDef},
     util::ToIdent,
-    Generator, GeneratorOutput,
+    Generator,
 };
 
-define_generator! {
-    pub struct AssertLayouts;
-}
+use super::define_generator;
+
+pub struct AssertLayouts;
+
+define_generator!(AssertLayouts);
 
 impl Generator for AssertLayouts {
-    fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
+    fn generate(&mut self, ctx: &LateCtx) -> Output {
         let (assertions_64, assertions_32) = ctx
             .schema()
             .into_iter()
@@ -26,22 +27,16 @@ impl Generator for AssertLayouts {
             })
             .collect::<(Vec<TokenStream>, Vec<TokenStream>)>();
 
-        let header = generated_header!();
-
-        GeneratorOutput(
-            output(crate::AST_CRATE, "assert_layouts.rs"),
-            quote! {
-                #header
-
+        Output::Rust {
+            path: output_path(crate::AST_CRATE, "assert_layouts.rs"),
+            tokens: quote! {
                 use std::mem::{align_of, offset_of, size_of};
 
                 ///@@line_break
-                #[allow(clippy::wildcard_imports)]
-                use crate::ast::*;
+                use oxc_regular_expression::ast::*;
 
                 ///@@line_break
-                #[allow(clippy::wildcard_imports)]
-                use oxc_regular_expression::ast::*;
+                use crate::ast::*;
 
                 ///@@line_break
                 #[cfg(target_pointer_width = "64")]
@@ -55,7 +50,7 @@ impl Generator for AssertLayouts {
                 #[cfg(not(any(target_pointer_width = "64", target_pointer_width = "32")))]
                 const _: () = panic!("Platforms with pointer width other than 64 or 32 bit are not supported");
             },
-        )
+        }
     }
 }
 

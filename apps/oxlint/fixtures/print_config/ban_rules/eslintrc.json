@@ -1,0 +1,9 @@
+{
+  "rules": {
+    "no-debugger": "warn",
+    "eqeqeq": [
+      "warn",
+      "always"
+    ]
+  }
+}

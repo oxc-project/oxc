@@ -1,3 +1,4 @@
+#![allow(missing_docs)] // fixme
 use std::{marker::PhantomData, path::PathBuf, sync::Arc};
 
 use oxc_span::CompactStr;

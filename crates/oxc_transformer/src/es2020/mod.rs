@@ -1,12 +1,13 @@
+use oxc_ast::ast::*;
+use oxc_traverse::{Traverse, TraverseCtx};
+
+use crate::TransformCtx;
+
 mod nullish_coalescing_operator;
 mod options;
 
 pub use nullish_coalescing_operator::NullishCoalescingOperator;
 pub use options::ES2020Options;
-use oxc_ast::ast::*;
-use oxc_traverse::{Traverse, TraverseCtx};
-
-use crate::TransformCtx;
 
 pub struct ES2020<'a, 'ctx> {
     options: ES2020Options,

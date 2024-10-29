@@ -58,6 +58,7 @@ use oxc_traverse::{Traverse, TraverseCtx};
 use crate::TransformCtx;
 
 mod options;
+
 pub use options::RegExpOptions;
 
 pub struct RegExp<'a, 'ctx> {
@@ -131,11 +132,23 @@ impl<'a, 'ctx> Traverse<'a> for RegExp<'a, 'ctx> {
                 return;
             }
 
-            let span = regexp.span;
+            let literal_span = regexp.span;
             let pattern = match &mut regexp.regex.pattern {
                 RegExpPattern::Raw(raw) => {
+                    #[expect(clippy::cast_possible_truncation)]
+                    let pattern_len = raw.len() as u32;
+                    let pattern_span_start = literal_span.start + 1; // +1 to skip the opening `/`
+                    let flags_span_start = pattern_span_start + pattern_len + 1; // +1 to skip the closing `/`
+                    let flags_text = Span::new(flags_span_start, literal_span.end)
+                        .source_text(self.ctx.source_text);
                     // Try to parse pattern
-                    match try_parse_pattern(raw, span, flags, ctx) {
+                    match try_parse_pattern(
+                        raw,
+                        pattern_span_start,
+                        flags_text,
+                        flags_span_start,
+                        ctx,
+                    ) {
                         Ok(pattern) => {
                             regexp.regex.pattern = RegExpPattern::Pattern(ctx.alloc(pattern));
                             let RegExpPattern::Pattern(pattern) = &regexp.regex.pattern else {
@@ -237,14 +250,13 @@ fn character_class_has_unicode_property_escape(character_class: &CharacterClass)
 
 fn try_parse_pattern<'a>(
     raw: &'a str,
-    span: Span,
-    flags: RegExpFlags,
+    pattern_span_offset: u32,
+    flags_text: &'a str,
+    flags_span_offset: u32,
     ctx: &mut TraverseCtx<'a>,
 ) -> Result<Pattern<'a>> {
-    use oxc_regular_expression::{Parser, ParserOptions};
+    use oxc_regular_expression::{LiteralParser, Options};
 
-    let options = ParserOptions::default()
-        .with_span_offset(span.start + 1) // exclude `/`
-        .with_flags(&flags.to_string());
-    Parser::new(ctx.ast.allocator, raw, options).parse()
+    let options = Options { pattern_span_offset, flags_span_offset };
+    LiteralParser::new(ctx.ast.allocator, raw, Some(flags_text), options).parse()
 }

@@ -1,0 +1,37 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-unused-vars): Function 'foo' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:10]
+ 1 │ function foo() { return function bar() { return foo() } }
+   ·          ─┬─
+   ·           ╰── 'foo' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Class 'Foo' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:7]
+ 1 │ class Foo {
+   ·       ─┬─
+   ·        ╰── 'Foo' is declared here
+ 2 │             static createFoo() {
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Class 'Foo' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:7]
+ 1 │ class Foo {
+   ·       ─┬─
+   ·        ╰── 'Foo' is declared here
+ 2 │             static createFoo(): Foo {
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Class 'Point' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:7]
+ 1 │ class Point {
+   ·       ──┬──
+   ·         ╰── 'Point' is declared here
+ 2 │             public x: number;
+   ╰────
+  help: Consider removing this declaration.

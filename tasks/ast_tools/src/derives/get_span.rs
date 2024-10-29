@@ -2,16 +2,17 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::Ident;
 
-use super::{define_derive, Derive, DeriveOutput};
 use crate::{
     codegen::LateCtx,
     schema::{EnumDef, GetGenerics, StructDef, ToType, TypeDef},
     util::{ToIdent, TypeWrapper},
 };
 
-define_derive! {
-    pub struct DeriveGetSpan;
-}
+use super::{define_derive, Derive};
+
+pub struct DeriveGetSpan;
+
+define_derive!(DeriveGetSpan);
 
 impl Derive for DeriveGetSpan {
     fn trait_name() -> &'static str {
@@ -47,9 +48,9 @@ impl Derive for DeriveGetSpan {
     }
 }
 
-define_derive! {
-    pub struct DeriveGetSpanMut;
-}
+pub struct DeriveGetSpanMut;
+
+define_derive!(DeriveGetSpanMut);
 
 impl Derive for DeriveGetSpanMut {
     fn trait_name() -> &'static str {

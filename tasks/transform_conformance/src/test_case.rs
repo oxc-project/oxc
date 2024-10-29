@@ -4,6 +4,7 @@ use std::{
 };
 
 use cow_utils::CowUtils;
+use oxc::parser::ParseOptions;
 use oxc::{
     allocator::Allocator,
     codegen::{CodeGenerator, CodegenOptions},
@@ -112,7 +113,7 @@ pub trait TestCase {
             if b {
                 // Skip deprecated react options
                 if self.transform_options().as_ref().is_ok_and(|options| {
-                    options.react.use_built_ins.is_some() || options.react.use_spread.is_some()
+                    options.jsx.use_built_ins.is_some() || options.jsx.use_spread.is_some()
                 }) {
                     return true;
                 }
@@ -298,7 +299,14 @@ impl TestCase for ConformanceTestCase {
                 String::default,
                 |output| {
                     // Get expected code by parsing the source text, so we can get the same code generated result.
-                    let ret = Parser::new(&allocator, &output, source_type).parse();
+                    let ret = Parser::new(&allocator, &output, source_type)
+                        .with_options(ParseOptions {
+                            // Related: async to generator, regression
+                            allow_return_outside_function: true,
+                            ..Default::default()
+                        })
+                        .parse();
+
                     CodeGenerator::new()
                         .with_options(CodegenOptions {
                             comments: false,

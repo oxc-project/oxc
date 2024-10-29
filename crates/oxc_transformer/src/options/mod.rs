@@ -1,4 +1,5 @@
 mod babel;
 mod transformer;
 
-pub use self::{babel::BabelOptions, transformer::TransformOptions};
+pub use babel::BabelOptions;
+pub use transformer::TransformOptions;

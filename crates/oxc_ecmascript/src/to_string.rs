@@ -1,6 +1,5 @@
 use std::borrow::Cow;
 
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 use oxc_syntax::operator::UnaryOperator;
 
@@ -62,8 +61,8 @@ impl<'a> ToJsString<'a> for IdentifierReference<'a> {
 
 impl<'a> ToJsString<'a> for NumericLiteral<'a> {
     fn to_js_string(&self) -> Option<Cow<'a, str>> {
-        // FIXME: to js number string
-        Some(Cow::Owned(self.value.to_string()))
+        use oxc_syntax::number::ToJsString;
+        Some(Cow::Owned(self.value.to_js_string()))
     }
 }
 

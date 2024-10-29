@@ -1,3 +1,4 @@
+//! Specialized hashing traits
 use std::{
     hash::{Hash, Hasher},
     mem::{discriminant, Discriminant},
@@ -9,17 +10,10 @@ use std::{
 ///
 /// As an example, In AST types we ignore fields such as [crate::Span].
 pub trait ContentHash {
+    /// Hash an AST node based on its content alone.
+    ///
+    /// This hash ignores node location, but respects precedence and ordering.
     fn content_hash<H: Hasher>(&self, state: &mut H);
-
-    /// The default implementation is usually sufficient.
-    fn content_hash_slice<H: Hasher>(data: &[Self], state: &mut H)
-    where
-        Self: Sized,
-    {
-        for piece in data {
-            piece.content_hash(state);
-        }
-    }
 }
 
 /// Short-Circuting implementation for [Discriminant] since it is used to hash enums.
@@ -46,7 +40,17 @@ impl<'a, T: ContentHash> ContentHash for oxc_allocator::Box<'a, T> {
 
 impl<'a, T: ContentHash> ContentHash for oxc_allocator::Vec<'a, T> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
-        ContentHash::content_hash_slice(self.as_slice(), state);
+        for piece in self {
+            piece.content_hash(state);
+        }
+    }
+}
+
+impl<T: ContentHash> ContentHash for [T] {
+    fn content_hash<H: Hasher>(&self, state: &mut H) {
+        for piece in self {
+            piece.content_hash(state);
+        }
     }
 }
 

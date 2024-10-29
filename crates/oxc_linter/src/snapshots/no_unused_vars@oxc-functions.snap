@@ -26,7 +26,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing this declaration.
 
-  ⚠ eslint(no-unused-vars): Variable 'interpolations' is declared but never used.
+  ⚠ eslint(no-unused-vars): Variable 'interpolations' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:3:46]
  2 │         export function log(message: string, ...interpolations: unknown[]): void;
  3 │         export function log(message: string, ...interpolations: unknown[]): void {
@@ -36,7 +36,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing this declaration.
 
-  ⚠ eslint(no-unused-vars): Variable 'messages' is declared but never used.
+  ⚠ eslint(no-unused-vars): Variable 'messages' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:2:29]
  1 │ 
  2 │         export function log(...messages: unknown[]): void {
