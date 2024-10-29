@@ -63,11 +63,12 @@ use crate::{common::helper_loader::Helper, TransformCtx};
 
 pub struct AsyncToGenerator<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,
+    executor: AsyncGeneratorExecutor<'a, 'ctx>,
 }
 
 impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
     pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self { ctx }
+        Self { ctx, executor: AsyncGeneratorExecutor::new(Helper::AsyncToGenerator, ctx) }
     }
 }
 
@@ -77,8 +78,20 @@ impl<'a, 'ctx> Traverse<'a> for AsyncToGenerator<'a, 'ctx> {
             Expression::AwaitExpression(await_expr) => {
                 self.transform_await_expression(await_expr, ctx)
             }
-            Expression::FunctionExpression(func) => self.transform_function_expression(func, ctx),
-            Expression::ArrowFunctionExpression(arrow) => self.transform_arrow_function(arrow, ctx),
+            Expression::FunctionExpression(func) => {
+                if func.r#async && !func.generator && !func.is_typescript_syntax() {
+                    Some(self.executor.transform_function_expression(func, ctx))
+                } else {
+                    None
+                }
+            }
+            Expression::ArrowFunctionExpression(arrow) => {
+                if arrow.r#async {
+                    Some(self.executor.transform_arrow_function(arrow, ctx))
+                } else {
+                    None
+                }
+            }
             _ => None,
         };
 
@@ -88,20 +101,20 @@ impl<'a, 'ctx> Traverse<'a> for AsyncToGenerator<'a, 'ctx> {
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let new_statement = match stmt {
-            Statement::FunctionDeclaration(func) => self.transform_function_declaration(func, ctx),
+        let function = match stmt {
+            Statement::FunctionDeclaration(func) => Some(func),
             Statement::ExportDefaultDeclaration(decl) => {
                 if let ExportDefaultDeclarationKind::FunctionDeclaration(func) =
                     &mut decl.declaration
                 {
-                    self.transform_function_declaration(func, ctx)
+                    Some(func)
                 } else {
                     None
                 }
             }
             Statement::ExportNamedDeclaration(decl) => {
                 if let Some(Declaration::FunctionDeclaration(func)) = &mut decl.declaration {
-                    self.transform_function_declaration(func, ctx)
+                    Some(func)
                 } else {
                     None
                 }
@@ -109,8 +122,11 @@ impl<'a, 'ctx> Traverse<'a> for AsyncToGenerator<'a, 'ctx> {
             _ => None,
         };
 
-        if let Some(new_statement) = new_statement {
-            self.ctx.statement_injector.insert_after(stmt, new_statement);
+        if let Some(function) = function {
+            if function.r#async && !function.generator && !function.is_typescript_syntax() {
+                let new_statement = self.executor.transform_function_declaration(function, ctx);
+                self.ctx.statement_injector.insert_after(stmt, new_statement);
+            }
         }
     }
 
@@ -119,7 +135,10 @@ impl<'a, 'ctx> Traverse<'a> for AsyncToGenerator<'a, 'ctx> {
         node: &mut MethodDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        self.transform_function_for_method_definition(&mut node.value, ctx);
+        let function = &mut node.value;
+        if function.r#async && !function.generator && !function.is_typescript_syntax() {
+            self.executor.transform_function_for_method_definition(function, ctx);
+        }
     }
 }
 
@@ -143,6 +162,17 @@ impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
             ))
         }
     }
+}
+
+pub struct AsyncGeneratorExecutor<'a, 'ctx> {
+    helper: Helper,
+    ctx: &'ctx TransformCtx<'a>,
+}
+
+impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
+    pub fn new(helper: Helper, ctx: &'ctx TransformCtx<'a>) -> Self {
+        Self { helper, ctx }
+    }
 
     /// Transforms async method definitions to generator functions wrapped in asyncToGenerator.
     ///
@@ -162,15 +192,11 @@ impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
     ///     })();
     /// }
     /// ```
-    fn transform_function_for_method_definition(
+    pub fn transform_function_for_method_definition(
         &self,
         func: &mut Function<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if !func.r#async {
-            return;
-        }
-
         let Some(body) = func.body.take() else {
             return;
         };
@@ -183,7 +209,7 @@ impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
             ctx.scopes_mut().change_parent_id(scope_id, Some(new_scope_id));
             // We need to transform formal parameters change back to the original scope,
             // because we only move out the function body.
-            BindingMover::new(new_scope_id, ctx).visit_formal_parameters(&func.params);
+            Self::move_formal_parameters_to_target_scope(new_scope_id, &func.params, ctx);
 
             (scope_id, new_scope_id)
         };
@@ -196,36 +222,30 @@ impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
 
         // Modify the wrapper function
         func.r#async = false;
+        func.generator = false;
         func.body = Some(ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), ctx.ast.vec1(statement)));
         func.scope_id.set(Some(wrapper_scope_id));
     }
 
     /// Transforms [`Function`] whose type is [`FunctionType::FunctionExpression`] to a generator function
     /// and wraps it in asyncToGenerator helper function.
-    fn transform_function_expression(
+    pub fn transform_function_expression(
         &self,
         wrapper_function: &mut Function<'a>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Option<Expression<'a>> {
-        if !wrapper_function.r#async
-            || wrapper_function.generator
-            || wrapper_function.is_typescript_syntax()
-        {
-            return None;
-        }
-
+    ) -> Expression<'a> {
         let body = wrapper_function.body.take().unwrap();
         let params = ctx.alloc(ctx.ast.move_formal_parameters(&mut wrapper_function.params));
         let id = wrapper_function.id.take();
         let has_function_id = id.is_some();
 
         if !has_function_id && !Self::is_function_length_affected(&params) {
-            return Some(self.create_async_to_generator_call(
+            return self.create_async_to_generator_call(
                 params,
                 body,
                 wrapper_function.scope_id.take().unwrap(),
                 ctx,
-            ));
+            );
         }
 
         let (generator_scope_id, wrapper_scope_id) = {
@@ -238,7 +258,7 @@ impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
             // and the caller_function is inside the wrapper function.
             // so we need to move the id to the new scope.
             if let Some(id) = id.as_ref() {
-                BindingMover::new(wrapper_scope_id, ctx).visit_binding_identifier(id);
+                Self::move_binding_identifier_to_target_scope(wrapper_scope_id, id, ctx);
                 let symbol_id = id.symbol_id.get().unwrap();
                 *ctx.symbols_mut().get_flags_mut(symbol_id) = SymbolFlags::FunctionScopedVariable;
             }
@@ -294,6 +314,7 @@ impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
             }
             debug_assert!(wrapper_function.body.is_none());
             wrapper_function.r#async = false;
+            wrapper_function.generator = false;
             wrapper_function.body.replace(ctx.ast.alloc_function_body(
                 SPAN,
                 ctx.ast.vec(),
@@ -303,22 +324,15 @@ impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
 
         // Construct the IIFE
         let callee = ctx.ast.expression_from_function(ctx.ast.move_function(wrapper_function));
-        Some(ctx.ast.expression_call(SPAN, callee, NONE, ctx.ast.vec(), false))
+        ctx.ast.expression_call(SPAN, callee, NONE, ctx.ast.vec(), false)
     }
 
     /// Transforms async function declarations into generator functions wrapped in the asyncToGenerator helper.
-    fn transform_function_declaration(
+    pub fn transform_function_declaration(
         &self,
         wrapper_function: &mut Function<'a>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Option<Statement<'a>> {
-        if !wrapper_function.r#async
-            || wrapper_function.generator
-            || wrapper_function.is_typescript_syntax()
-        {
-            return None;
-        }
-
+    ) -> Statement<'a> {
         let (generator_scope_id, wrapper_scope_id) = {
             let wrapper_scope_id =
                 ctx.create_child_scope(ctx.current_scope_id(), ScopeFlags::Function);
@@ -340,6 +354,7 @@ impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
         // Modify the wrapper function
         {
             wrapper_function.r#async = false;
+            wrapper_function.generator = false;
             let statements = ctx.ast.vec1(Self::create_apply_call_statement(&bound_ident, ctx));
             debug_assert!(wrapper_function.body.is_none());
             wrapper_function.body.replace(ctx.ast.alloc_function_body(
@@ -370,20 +385,16 @@ impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
             let params = Self::create_empty_params(ctx);
             let id = Some(bound_ident.create_binding_identifier(ctx));
             let caller_function = Self::create_function(id, params, body, scope_id, ctx);
-            Some(Statement::from(ctx.ast.declaration_from_function(caller_function)))
+            Statement::from(ctx.ast.declaration_from_function(caller_function))
         }
     }
 
     /// Transforms async arrow functions into generator functions wrapped in the asyncToGenerator helper.
-    fn transform_arrow_function(
+    pub(self) fn transform_arrow_function(
         &self,
         arrow: &mut ArrowFunctionExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Option<Expression<'a>> {
-        if !arrow.r#async {
-            return None;
-        }
-
+    ) -> Expression<'a> {
         let mut body = ctx.ast.move_function_body(&mut arrow.body);
 
         // If the arrow's expression is true, we need to wrap the only one expression with return statement.
@@ -401,12 +412,12 @@ impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
         ctx.scopes_mut().get_flags_mut(generator_function_id).remove(ScopeFlags::Arrow);
 
         if !Self::is_function_length_affected(&params) {
-            return Some(self.create_async_to_generator_call(
+            return self.create_async_to_generator_call(
                 params,
                 ctx.ast.alloc(body),
                 generator_function_id,
                 ctx,
-            ));
+            );
         }
 
         let wrapper_scope_id = ctx.create_child_scope(ctx.current_scope_id(), ScopeFlags::Function);
@@ -444,7 +455,7 @@ impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
             let wrapper_function = Self::create_function(None, params, body, wrapper_scope_id, ctx);
             // Construct the IIFE
             let callee = ctx.ast.expression_from_function(wrapper_function);
-            Some(ctx.ast.expression_call(SPAN, callee, NONE, ctx.ast.vec(), false))
+            ctx.ast.expression_call(SPAN, callee, NONE, ctx.ast.vec(), false)
         }
     }
 
@@ -523,7 +534,7 @@ impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
         ctx.ast.statement_return(SPAN, Some(argument))
     }
 
-    /// Creates an [`Expression`] that calls the [`Helper::AsyncToGenerator`] helper function.
+    /// Creates an [`Expression`] that calls the [`AsyncGeneratorExecutor::helper`] helper function.
     ///
     /// This function constructs the helper call with arguments derived from the provided
     /// parameters, body, and scope_id.
@@ -546,7 +557,7 @@ impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
         let function_expression = ctx.ast.expression_from_function(function);
         let argument = ctx.ast.argument_expression(function_expression);
         let arguments = ctx.ast.vec1(argument);
-        self.ctx.helper_call_expr(Helper::AsyncToGenerator, arguments, ctx)
+        self.ctx.helper_call_expr(self.helper, arguments, ctx)
     }
 
     /// Creates a helper declaration statement for async-to-generator transformation.
@@ -666,6 +677,24 @@ impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
     #[inline]
     fn is_function_length_affected(params: &FormalParameters<'_>) -> bool {
         params.items.first().is_some_and(|param| !param.pattern.kind.is_assignment_pattern())
+    }
+
+    #[inline]
+    fn move_formal_parameters_to_target_scope(
+        target_scope_id: ScopeId,
+        params: &FormalParameters<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        BindingMover::new(target_scope_id, ctx).visit_formal_parameters(params);
+    }
+
+    #[inline]
+    fn move_binding_identifier_to_target_scope(
+        target_scope_id: ScopeId,
+        ident: &BindingIdentifier<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        BindingMover::new(target_scope_id, ctx).visit_binding_identifier(ident);
     }
 }
 
