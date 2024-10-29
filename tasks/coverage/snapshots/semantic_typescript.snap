@@ -168,15 +168,21 @@ rebuilt        : ScopeId(1): []
 
 tasks/coverage/typescript/tests/cases/compiler/acceptableAlias1.ts
 semantic error: Missing SymbolId: "r"
-Bindings mismatch:
-after transform: ScopeId(0): ["M", "r"]
-rebuilt        : ScopeId(0): ["r"]
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(3)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(3)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Reference symbol mismatch for "M":
+after transform: <None>
+rebuilt        : SymbolId(0) "M"
 Unresolved references mismatch:
 after transform: ["M", "N"]
-rebuilt        : ["M"]
+rebuilt        : ["N"]
+Unresolved reference IDs mismatch for "N":
+after transform: [ReferenceId(0)]
+rebuilt        : [ReferenceId(0)]
 
 tasks/coverage/typescript/tests/cases/compiler/accessorsEmit.ts
 semantic error: Symbol reference IDs mismatch for "Result":
@@ -205,15 +211,15 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/aliasInaccessibleModule.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["M"]
-rebuilt        : ScopeId(0): []
+semantic error: Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["N"]
-rebuilt        : []
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Unresolved reference IDs mismatch for "N":
+after transform: [ReferenceId(0)]
+rebuilt        : [ReferenceId(0)]
 
 tasks/coverage/typescript/tests/cases/compiler/aliasInaccessibleModule2.ts
 semantic error: Missing SymbolId: "M"
@@ -1156,13 +1162,7 @@ semantic error: Namespaces exporting non-const are not supported by Babel. Chang
 tasks/coverage/typescript/tests/cases/compiler/augmentedTypesExternalModule1.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
-Symbol flags mismatch for "c5":
-after transform: SymbolId(1): SymbolFlags(Class | NameSpaceModule)
-rebuilt        : SymbolId(1): SymbolFlags(Class)
-Symbol redeclarations mismatch for "c5":
-after transform: SymbolId(1): [Span { start: 55, end: 57 }]
-rebuilt        : SymbolId(1): []
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
 
 tasks/coverage/typescript/tests/cases/compiler/augmentedTypesModules3b.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -1838,15 +1838,15 @@ after transform: ScopeId(3): ["T", "t", "x"]
 rebuilt        : ScopeId(3): ["t", "x"]
 
 tasks/coverage/typescript/tests/cases/compiler/classExpressionWithResolutionOfNamespaceOfSameName01.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "x"]
-rebuilt        : ScopeId(0): ["x"]
+semantic error: Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(2)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Symbol reference IDs mismatch for "C":
 after transform: SymbolId(3): [ReferenceId(0)]
-rebuilt        : SymbolId(1): []
+rebuilt        : SymbolId(2): []
 
 tasks/coverage/typescript/tests/cases/compiler/classExpressionWithStaticProperties3.ts
 semantic error: Bindings mismatch:
@@ -1989,18 +1989,18 @@ semantic error: Missing SymbolId: "M2"
 Missing SymbolId: "_M2"
 Missing ReferenceId: "M2"
 Missing ReferenceId: "M2"
-Bindings mismatch:
-after transform: ScopeId(0): ["M1", "M2"]
-rebuilt        : ScopeId(0): ["M2"]
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(2)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Bindings mismatch:
 after transform: ScopeId(4): ["C", "T", "_M2"]
-rebuilt        : ScopeId(1): ["C", "_M2"]
+rebuilt        : ScopeId(2): ["C", "_M2"]
 Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 Unresolved references mismatch:
 after transform: ["M1"]
 rebuilt        : []
@@ -2305,25 +2305,22 @@ Missing ReferenceId: "Moclodule"
 Missing ReferenceId: "Moclodule"
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(5)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 Binding symbols mismatch:
 after transform: ScopeId(5): [SymbolId(2), SymbolId(4)]
-rebuilt        : ScopeId(2): [SymbolId(1), SymbolId(2)]
+rebuilt        : ScopeId(3): [SymbolId(1), SymbolId(2)]
 Scope flags mismatch:
 after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
+rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol flags mismatch for "Moclodule":
 after transform: SymbolId(0): SymbolFlags(Class | NameSpaceModule | ValueModule)
-rebuilt        : SymbolId(0): SymbolFlags(Class)
-Symbol span mismatch for "Moclodule":
-after transform: SymbolId(0): Span { start: 47, end: 56 }
-rebuilt        : SymbolId(0): Span { start: 132, end: 141 }
+rebuilt        : SymbolId(0): SymbolFlags(Class | NameSpaceModule)
 Symbol reference IDs mismatch for "Moclodule":
 after transform: SymbolId(0): []
 rebuilt        : SymbolId(0): [ReferenceId(2), ReferenceId(3)]
 Symbol redeclarations mismatch for "Moclodule":
 after transform: SymbolId(0): [Span { start: 132, end: 141 }, Span { start: 178, end: 187 }]
-rebuilt        : SymbolId(0): []
+rebuilt        : SymbolId(0): [Span { start: 132, end: 141 }]
 Symbol flags mismatch for "Manager":
 after transform: SymbolId(2): SymbolFlags(Export | Class)
 rebuilt        : SymbolId(2): SymbolFlags(Class)
@@ -2741,18 +2738,18 @@ rebuilt        : SymbolId(0) "才能ソЫⅨ蒤郳र\u{94d}क\u{94d}ड\u{94d}
 tasks/coverage/typescript/tests/cases/compiler/collisionExportsRequireAndAmbientClass.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["m1", "m2"]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): ["m2"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(6)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/collisionExportsRequireAndAmbientEnum.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["exports", "m1", "m2", "require"]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): ["m2"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(6)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/collisionExportsRequireAndAmbientFunction.ts
 semantic error: Missing SymbolId: "m2"
@@ -3123,12 +3120,12 @@ semantic error: Missing SymbolId: "foo"
 Missing SymbolId: "_foo"
 Missing ReferenceId: "foo"
 Missing ReferenceId: "foo"
-Bindings mismatch:
-after transform: ScopeId(0): ["empty", "f", "foo"]
-rebuilt        : ScopeId(0): ["f", "foo"]
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(4)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
 Binding symbols mismatch:
 after transform: ScopeId(1): [SymbolId(2), SymbolId(4)]
 rebuilt        : ScopeId(1): [SymbolId(2), SymbolId(3)]
@@ -3238,12 +3235,12 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 
 tasks/coverage/typescript/tests/cases/compiler/commentOnElidedModule1.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["ElidedModule", "ElidedModule2"]
-rebuilt        : ScopeId(0): []
+semantic error: Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 
 tasks/coverage/typescript/tests/cases/compiler/commentOnExportEnumDeclaration.ts
 semantic error: Bindings mismatch:
@@ -3518,12 +3515,12 @@ after transform: SymbolId(0) "multiM"
 rebuilt        : SymbolId(0) "multiM"
 
 tasks/coverage/typescript/tests/cases/compiler/commentsOnJSXExpressionsArePreserved.tsx
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Component", "JSX", "_jsxFileName", "_reactJsxRuntime"]
-rebuilt        : ScopeId(0): ["Component", "_jsxFileName", "_reactJsxRuntime"]
+semantic error: Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3), SymbolId(4)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 
 tasks/coverage/typescript/tests/cases/compiler/commentsOverloads.ts
 semantic error: Bindings mismatch:
@@ -5209,10 +5206,10 @@ rebuilt        : ScopeId(0): [ScopeId(1)]
 tasks/coverage/typescript/tests/cases/compiler/contextualTypingOfOptionalMembers.tsx
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["ActionsArray", "ActionsObject", "ActionsObjectOr", "Bar", "JSX", "Options", "Options2", "_jsxFileName", "_reactJsxRuntime", "a", "y"]
-rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime", "a", "y"]
+rebuilt        : ScopeId(0): ["JSX", "_jsxFileName", "_reactJsxRuntime", "a", "y"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(20), ScopeId(21), ScopeId(22)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9)]
 Unresolved references mismatch:
 after transform: ["App4", "JSX", "app", "app2", "app3", "foo", "require", "undefined"]
 rebuilt        : ["App4", "app", "app2", "app3", "foo", "require", "undefined"]
@@ -6331,67 +6328,67 @@ after transform: ScopeId(0): [SymbolId(0)]
 rebuilt        : ScopeId(0): [SymbolId(0)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(7), ScopeId(10), ScopeId(15), ScopeId(19), ScopeId(24)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(6)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(9)]
 Binding symbols mismatch:
 after transform: ScopeId(19): [SymbolId(16), SymbolId(28)]
-rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2)]
+rebuilt        : ScopeId(4): [SymbolId(3), SymbolId(4)]
 Scope flags mismatch:
 after transform: ScopeId(19): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
+rebuilt        : ScopeId(4): ScopeFlags(Function)
 Binding symbols mismatch:
 after transform: ScopeId(20): [SymbolId(17), SymbolId(29)]
-rebuilt        : ScopeId(2): [SymbolId(3), SymbolId(4)]
+rebuilt        : ScopeId(5): [SymbolId(5), SymbolId(6)]
 Scope flags mismatch:
 after transform: ScopeId(20): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
+rebuilt        : ScopeId(5): ScopeFlags(Function)
 Binding symbols mismatch:
 after transform: ScopeId(21): [SymbolId(18), SymbolId(30)]
-rebuilt        : ScopeId(3): [SymbolId(5), SymbolId(6)]
-Scope flags mismatch:
-after transform: ScopeId(21): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Bindings mismatch:
-after transform: ScopeId(22): ["ModelType"]
-rebuilt        : ScopeId(4): []
-Binding symbols mismatch:
-after transform: ScopeId(24): [SymbolId(20), SymbolId(31)]
 rebuilt        : ScopeId(6): [SymbolId(7), SymbolId(8)]
 Scope flags mismatch:
-after transform: ScopeId(24): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(21): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
+Bindings mismatch:
+after transform: ScopeId(22): ["ModelType"]
+rebuilt        : ScopeId(7): []
+Binding symbols mismatch:
+after transform: ScopeId(24): [SymbolId(20), SymbolId(31)]
+rebuilt        : ScopeId(9): [SymbolId(9), SymbolId(10)]
+Scope flags mismatch:
+after transform: ScopeId(24): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(9): ScopeFlags(Function)
 Binding symbols mismatch:
 after transform: ScopeId(25): [SymbolId(21), SymbolId(32)]
-rebuilt        : ScopeId(7): [SymbolId(9), SymbolId(10)]
+rebuilt        : ScopeId(10): [SymbolId(11), SymbolId(12)]
 Scope flags mismatch:
 after transform: ScopeId(25): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(7): ScopeFlags(Function)
+rebuilt        : ScopeId(10): ScopeFlags(Function)
 Binding symbols mismatch:
 after transform: ScopeId(26): [SymbolId(22), SymbolId(33)]
-rebuilt        : ScopeId(8): [SymbolId(11), SymbolId(12)]
+rebuilt        : ScopeId(11): [SymbolId(13), SymbolId(14)]
 Scope flags mismatch:
 after transform: ScopeId(26): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(8): ScopeFlags(Function)
+rebuilt        : ScopeId(11): ScopeFlags(Function)
 Binding symbols mismatch:
 after transform: ScopeId(27): [SymbolId(23), SymbolId(34)]
-rebuilt        : ScopeId(9): [SymbolId(13), SymbolId(14)]
+rebuilt        : ScopeId(12): [SymbolId(15), SymbolId(16)]
 Scope flags mismatch:
 after transform: ScopeId(27): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(9): ScopeFlags(Function)
+rebuilt        : ScopeId(12): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(28): ["ModelType"]
-rebuilt        : ScopeId(10): []
+rebuilt        : ScopeId(13): []
 Symbol flags mismatch for "AbstractElementController":
 after transform: SymbolId(18): SymbolFlags(Export | Class)
-rebuilt        : SymbolId(6): SymbolFlags(Class)
+rebuilt        : SymbolId(8): SymbolFlags(Class)
 Symbol reference IDs mismatch for "AbstractElementController":
 after transform: SymbolId(18): []
-rebuilt        : SymbolId(6): [ReferenceId(2)]
+rebuilt        : SymbolId(8): [ReferenceId(2)]
 Symbol flags mismatch for "AbstractCompositeElementController":
 after transform: SymbolId(23): SymbolFlags(Export | Class)
-rebuilt        : SymbolId(14): SymbolFlags(Class)
+rebuilt        : SymbolId(16): SymbolFlags(Class)
 Symbol reference IDs mismatch for "AbstractCompositeElementController":
 after transform: SymbolId(23): []
-rebuilt        : SymbolId(14): [ReferenceId(15)]
+rebuilt        : SymbolId(16): [ReferenceId(15)]
 Reference symbol mismatch for "templa":
 after transform: <None>
 rebuilt        : SymbolId(0) "templa"
@@ -6500,31 +6497,31 @@ after transform: ScopeId(0): [SymbolId(0)]
 rebuilt        : ScopeId(0): [SymbolId(0)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
 Binding symbols mismatch:
 after transform: ScopeId(4): [SymbolId(3), SymbolId(8)]
-rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2)]
+rebuilt        : ScopeId(3): [SymbolId(2), SymbolId(3)]
 Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
+rebuilt        : ScopeId(3): ScopeFlags(Function)
 Binding symbols mismatch:
 after transform: ScopeId(5): [SymbolId(4), SymbolId(9)]
-rebuilt        : ScopeId(2): [SymbolId(3), SymbolId(4)]
+rebuilt        : ScopeId(4): [SymbolId(4), SymbolId(5)]
 Scope flags mismatch:
 after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
+rebuilt        : ScopeId(4): ScopeFlags(Function)
 Binding symbols mismatch:
 after transform: ScopeId(6): [SymbolId(5), SymbolId(10)]
-rebuilt        : ScopeId(3): [SymbolId(5), SymbolId(6)]
+rebuilt        : ScopeId(5): [SymbolId(6), SymbolId(7)]
 Scope flags mismatch:
 after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
+rebuilt        : ScopeId(5): ScopeFlags(Function)
 Symbol flags mismatch for "W":
 after transform: SymbolId(5): SymbolFlags(Export | Class)
-rebuilt        : SymbolId(6): SymbolFlags(Class)
+rebuilt        : SymbolId(7): SymbolFlags(Class)
 Symbol reference IDs mismatch for "W":
 after transform: SymbolId(5): []
-rebuilt        : SymbolId(6): [ReferenceId(1)]
+rebuilt        : SymbolId(7): [ReferenceId(1)]
 Unresolved references mismatch:
 after transform: ["A"]
 rebuilt        : []
@@ -7496,40 +7493,40 @@ after transform: ScopeId(0): [SymbolId(0)]
 rebuilt        : ScopeId(0): [SymbolId(0)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(5)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(4)]
 Binding symbols mismatch:
 after transform: ScopeId(5): [SymbolId(4), SymbolId(12)]
-rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2)]
+rebuilt        : ScopeId(4): [SymbolId(3), SymbolId(4)]
 Scope flags mismatch:
 after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
+rebuilt        : ScopeId(4): ScopeFlags(Function)
 Binding symbols mismatch:
 after transform: ScopeId(6): [SymbolId(5), SymbolId(13)]
-rebuilt        : ScopeId(2): [SymbolId(3), SymbolId(4)]
+rebuilt        : ScopeId(5): [SymbolId(5), SymbolId(6)]
 Scope flags mismatch:
 after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
+rebuilt        : ScopeId(5): ScopeFlags(Function)
 Binding symbols mismatch:
 after transform: ScopeId(7): [SymbolId(6), SymbolId(14)]
-rebuilt        : ScopeId(3): [SymbolId(5), SymbolId(6)]
+rebuilt        : ScopeId(6): [SymbolId(7), SymbolId(8)]
 Scope flags mismatch:
 after transform: ScopeId(7): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
+rebuilt        : ScopeId(6): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(8): ["A", "W", "_C2"]
-rebuilt        : ScopeId(4): ["W", "_C2"]
+rebuilt        : ScopeId(7): ["W", "_C2"]
 Scope flags mismatch:
 after transform: ScopeId(8): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
+rebuilt        : ScopeId(7): ScopeFlags(Function)
 Scope children mismatch:
 after transform: ScopeId(8): [ScopeId(9), ScopeId(10)]
-rebuilt        : ScopeId(4): [ScopeId(5)]
+rebuilt        : ScopeId(7): [ScopeId(8)]
 Symbol flags mismatch for "W":
 after transform: SymbolId(8): SymbolFlags(Export | Class)
-rebuilt        : SymbolId(8): SymbolFlags(Class)
+rebuilt        : SymbolId(10): SymbolFlags(Class)
 Symbol reference IDs mismatch for "W":
 after transform: SymbolId(8): []
-rebuilt        : SymbolId(8): [ReferenceId(1)]
+rebuilt        : SymbolId(10): [ReferenceId(1)]
 Unresolved references mismatch:
 after transform: ["X"]
 rebuilt        : []
@@ -7564,37 +7561,37 @@ after transform: ScopeId(0): [SymbolId(0)]
 rebuilt        : ScopeId(0): [SymbolId(0)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(5), ScopeId(10)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(9)]
 Binding symbols mismatch:
 after transform: ScopeId(5): [SymbolId(4), SymbolId(15)]
-rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2)]
+rebuilt        : ScopeId(4): [SymbolId(3), SymbolId(4)]
 Scope flags mismatch:
 after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
+rebuilt        : ScopeId(4): ScopeFlags(Function)
 Binding symbols mismatch:
 after transform: ScopeId(6): [SymbolId(5), SymbolId(16)]
-rebuilt        : ScopeId(2): [SymbolId(3), SymbolId(4)]
+rebuilt        : ScopeId(5): [SymbolId(5), SymbolId(6)]
 Scope flags mismatch:
 after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
+rebuilt        : ScopeId(5): ScopeFlags(Function)
 Binding symbols mismatch:
 after transform: ScopeId(7): [SymbolId(6), SymbolId(17)]
-rebuilt        : ScopeId(3): [SymbolId(5), SymbolId(6)]
+rebuilt        : ScopeId(6): [SymbolId(7), SymbolId(8)]
 Scope flags mismatch:
 after transform: ScopeId(7): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
+rebuilt        : ScopeId(6): ScopeFlags(Function)
 Binding symbols mismatch:
 after transform: ScopeId(8): [SymbolId(7), SymbolId(18)]
-rebuilt        : ScopeId(4): [SymbolId(7), SymbolId(8)]
+rebuilt        : ScopeId(7): [SymbolId(9), SymbolId(10)]
 Scope flags mismatch:
 after transform: ScopeId(8): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
+rebuilt        : ScopeId(7): ScopeFlags(Function)
 Symbol flags mismatch for "W":
 after transform: SymbolId(7): SymbolFlags(Export | Class)
-rebuilt        : SymbolId(8): SymbolFlags(Class)
+rebuilt        : SymbolId(10): SymbolFlags(Class)
 Symbol reference IDs mismatch for "W":
 after transform: SymbolId(7): []
-rebuilt        : SymbolId(8): [ReferenceId(1)]
+rebuilt        : SymbolId(10): [ReferenceId(1)]
 Unresolved references mismatch:
 after transform: ["A"]
 rebuilt        : []
@@ -7629,37 +7626,37 @@ after transform: ScopeId(0): [SymbolId(0)]
 rebuilt        : ScopeId(0): [SymbolId(0)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(5), ScopeId(10)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(9)]
 Binding symbols mismatch:
 after transform: ScopeId(5): [SymbolId(4), SymbolId(15)]
-rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2)]
+rebuilt        : ScopeId(4): [SymbolId(3), SymbolId(4)]
 Scope flags mismatch:
 after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
+rebuilt        : ScopeId(4): ScopeFlags(Function)
 Binding symbols mismatch:
 after transform: ScopeId(6): [SymbolId(5), SymbolId(16)]
-rebuilt        : ScopeId(2): [SymbolId(3), SymbolId(4)]
+rebuilt        : ScopeId(5): [SymbolId(5), SymbolId(6)]
 Scope flags mismatch:
 after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
+rebuilt        : ScopeId(5): ScopeFlags(Function)
 Binding symbols mismatch:
 after transform: ScopeId(7): [SymbolId(6), SymbolId(17)]
-rebuilt        : ScopeId(3): [SymbolId(5), SymbolId(6)]
+rebuilt        : ScopeId(6): [SymbolId(7), SymbolId(8)]
 Scope flags mismatch:
 after transform: ScopeId(7): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
+rebuilt        : ScopeId(6): ScopeFlags(Function)
 Binding symbols mismatch:
 after transform: ScopeId(8): [SymbolId(7), SymbolId(18)]
-rebuilt        : ScopeId(4): [SymbolId(7), SymbolId(8)]
+rebuilt        : ScopeId(7): [SymbolId(9), SymbolId(10)]
 Scope flags mismatch:
 after transform: ScopeId(8): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
+rebuilt        : ScopeId(7): ScopeFlags(Function)
 Symbol flags mismatch for "W":
 after transform: SymbolId(7): SymbolFlags(Export | Class)
-rebuilt        : SymbolId(8): SymbolFlags(Class)
+rebuilt        : SymbolId(10): SymbolFlags(Class)
 Symbol reference IDs mismatch for "W":
 after transform: SymbolId(7): []
-rebuilt        : SymbolId(8): [ReferenceId(1)]
+rebuilt        : SymbolId(10): [ReferenceId(1)]
 Unresolved references mismatch:
 after transform: ["X"]
 rebuilt        : []
@@ -8650,13 +8647,7 @@ rebuilt        : SymbolId(4): []
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitOfFuncspace.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
-Symbol flags mismatch for "ExpandoMerge":
-after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | NameSpaceModule)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol redeclarations mismatch for "ExpandoMerge":
-after transform: SymbolId(0): [Span { start: 71, end: 83 }]
-rebuilt        : SymbolId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitOptionalMethod.ts
 semantic error: Scope children mismatch:
@@ -9288,12 +9279,12 @@ after transform: SymbolId(3) "ab"
 rebuilt        : SymbolId(0) "ab"
 
 tasks/coverage/typescript/tests/cases/compiler/declareDottedModuleName.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["M", "T"]
-rebuilt        : ScopeId(0): []
+semantic error: Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(5)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(5)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(7)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(7)]
 
 tasks/coverage/typescript/tests/cases/compiler/declareExternalModuleWithExportAssignedFundule.ts
 semantic error: Bindings mismatch:
@@ -10688,12 +10679,12 @@ rebuilt        : ScopeId(0): ["a", "o"]
 
 tasks/coverage/typescript/tests/cases/compiler/duplicateVarAndImport.ts
 semantic error: Missing SymbolId: "a"
-Bindings mismatch:
-after transform: ScopeId(0): ["M", "a"]
-rebuilt        : ScopeId(0): ["a"]
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol flags mismatch for "a":
 after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | Import)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -11283,22 +11274,16 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 tasks/coverage/typescript/tests/cases/compiler/enumsWithMultipleDeclarations3.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Bindings mismatch:
 after transform: ScopeId(2): ["A", "E"]
-rebuilt        : ScopeId(1): ["E"]
+rebuilt        : ScopeId(2): ["E"]
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "E":
 after transform: SymbolId(0): SymbolFlags(RegularEnum | NameSpaceModule)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol span mismatch for "E":
-after transform: SymbolId(0): Span { start: 7, end: 8 }
-rebuilt        : SymbolId(0): Span { start: 19, end: 20 }
-Symbol redeclarations mismatch for "E":
-after transform: SymbolId(0): [Span { start: 19, end: 20 }]
-rebuilt        : SymbolId(0): []
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable | NameSpaceModule)
 
 tasks/coverage/typescript/tests/cases/compiler/errorConstructorSubtypes.ts
 semantic error: Bindings mismatch:
@@ -13162,12 +13147,12 @@ after transform: ["Point"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/es6ClassTest5.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C1T5", "C2T5", "bigClass"]
-rebuilt        : ScopeId(0): ["C1T5", "bigClass"]
+semantic error: Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(2), SymbolId(3)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(2), SymbolId(3)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
 
 tasks/coverage/typescript/tests/cases/compiler/es6ClassTest7.ts
 semantic error: Bindings mismatch:
@@ -14008,12 +13993,12 @@ after transform: ["Promise"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/exportDefaultForNonInstantiatedModule.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["m"]
-rebuilt        : ScopeId(0): []
+semantic error: Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/exportDefaultImportedType.ts
 semantic error: Bindings mismatch:
@@ -14088,13 +14073,7 @@ rebuilt        : SymbolId(0) "A"
 tasks/coverage/typescript/tests/cases/compiler/exportDefaultProperty2.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
-Symbol flags mismatch for "C":
-after transform: SymbolId(0): SymbolFlags(Class | NameSpaceModule)
-rebuilt        : SymbolId(0): SymbolFlags(Class)
-Symbol redeclarations mismatch for "C":
-after transform: SymbolId(0): [Span { start: 121, end: 122 }]
-rebuilt        : SymbolId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 
 tasks/coverage/typescript/tests/cases/compiler/exportDefaultVariable.ts
 semantic error: Bindings mismatch:
@@ -14279,15 +14258,18 @@ semantic error: `import lib = require(...);` is only supported when compiling mo
 Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/exportImportNonInstantiatedModule.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A", "B", "x"]
-rebuilt        : ScopeId(0): ["x"]
+semantic error: Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(2), SymbolId(4)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Unresolved references mismatch:
 after transform: ["A", "B"]
-rebuilt        : []
+rebuilt        : ["A"]
+Unresolved reference IDs mismatch for "A":
+after transform: [ReferenceId(0)]
+rebuilt        : [ReferenceId(0)]
 
 tasks/coverage/typescript/tests/cases/compiler/exportImportNonInstantiatedModule2.ts
 semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
@@ -15656,27 +15638,27 @@ Missing ReferenceId: "_bar"
 Missing ReferenceId: "Foo"
 Missing ReferenceId: "bar"
 Missing ReferenceId: "bar"
-Bindings mismatch:
-after transform: ScopeId(0): ["bar", "foo"]
-rebuilt        : ScopeId(0): ["bar"]
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(3)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Binding symbols mismatch:
 after transform: ScopeId(3): [SymbolId(4), SymbolId(7)]
-rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2)]
+rebuilt        : ScopeId(2): [SymbolId(2), SymbolId(3)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(4): ["T"]
-rebuilt        : ScopeId(2): []
+rebuilt        : ScopeId(3): []
 Symbol flags mismatch for "Foo":
 after transform: SymbolId(4): SymbolFlags(Export | Class)
-rebuilt        : SymbolId(2): SymbolFlags(Class)
+rebuilt        : SymbolId(3): SymbolFlags(Class)
 Symbol reference IDs mismatch for "Foo":
 after transform: SymbolId(4): []
-rebuilt        : SymbolId(2): [ReferenceId(1)]
+rebuilt        : SymbolId(3): [ReferenceId(1)]
 Unresolved references mismatch:
 after transform: ["foo"]
 rebuilt        : []
@@ -16090,34 +16072,34 @@ after transform: ScopeId(0): ["EndGate", "Number"]
 rebuilt        : ScopeId(0): ["EndGate"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(5), ScopeId(9)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(5)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(6)]
 Binding symbols mismatch:
 after transform: ScopeId(5): [SymbolId(3), SymbolId(11)]
-rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2)]
+rebuilt        : ScopeId(2): [SymbolId(1), SymbolId(2)]
 Scope flags mismatch:
 after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 Binding symbols mismatch:
 after transform: ScopeId(6): [SymbolId(4), SymbolId(12)]
-rebuilt        : ScopeId(2): [SymbolId(3), SymbolId(4)]
+rebuilt        : ScopeId(3): [SymbolId(3), SymbolId(4)]
 Scope flags mismatch:
 after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
+rebuilt        : ScopeId(3): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(7): ["T"]
-rebuilt        : ScopeId(3): []
+rebuilt        : ScopeId(4): []
 Binding symbols mismatch:
 after transform: ScopeId(9): [SymbolId(7), SymbolId(13)]
-rebuilt        : ScopeId(5): [SymbolId(6), SymbolId(7)]
+rebuilt        : ScopeId(6): [SymbolId(6), SymbolId(7)]
 Scope flags mismatch:
 after transform: ScopeId(9): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
+rebuilt        : ScopeId(6): ScopeFlags(Function)
 Binding symbols mismatch:
 after transform: ScopeId(10): [SymbolId(8), SymbolId(14)]
-rebuilt        : ScopeId(6): [SymbolId(8), SymbolId(9)]
+rebuilt        : ScopeId(7): [SymbolId(8), SymbolId(9)]
 Scope flags mismatch:
 after transform: ScopeId(10): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
+rebuilt        : ScopeId(7): ScopeFlags(Function)
 Symbol flags mismatch for "Tween":
 after transform: SymbolId(4): SymbolFlags(Export | Class)
 rebuilt        : SymbolId(4): SymbolFlags(Class)
@@ -17004,12 +16986,12 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/globalIsContextualKeyword.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["a", "b", "foo", "global", "obj"]
-rebuilt        : ScopeId(0): ["a", "b", "foo", "obj"]
+semantic error: Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(2), SymbolId(4), SymbolId(5), SymbolId(7)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(2), SymbolId(4), SymbolId(5), SymbolId(7)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5)]
 
 tasks/coverage/typescript/tests/cases/compiler/globalThisDeclarationEmit3.ts
 semantic error: Missing SymbolId: "mod"
@@ -19475,39 +19457,39 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/interfaceDeclaration2.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["I1", "I2", "I3", "I4"]
-rebuilt        : ScopeId(0): ["I2", "I3", "I4"]
+semantic error: Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 Symbol flags mismatch for "I2":
 after transform: SymbolId(1): SymbolFlags(Class | Interface)
-rebuilt        : SymbolId(0): SymbolFlags(Class)
+rebuilt        : SymbolId(1): SymbolFlags(Class)
 Symbol span mismatch for "I2":
 after transform: SymbolId(1): Span { start: 42, end: 44 }
-rebuilt        : SymbolId(0): Span { start: 55, end: 57 }
+rebuilt        : SymbolId(1): Span { start: 55, end: 57 }
 Symbol redeclarations mismatch for "I2":
 after transform: SymbolId(1): [Span { start: 55, end: 57 }]
-rebuilt        : SymbolId(0): []
+rebuilt        : SymbolId(1): []
 Symbol flags mismatch for "I3":
 after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable | Interface)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
 Symbol span mismatch for "I3":
 after transform: SymbolId(2): Span { start: 73, end: 75 }
-rebuilt        : SymbolId(1): Span { start: 89, end: 91 }
+rebuilt        : SymbolId(2): Span { start: 89, end: 91 }
 Symbol redeclarations mismatch for "I3":
 after transform: SymbolId(2): [Span { start: 89, end: 91 }]
-rebuilt        : SymbolId(1): []
+rebuilt        : SymbolId(2): []
 Symbol flags mismatch for "I4":
 after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable | Interface)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
 Symbol span mismatch for "I4":
 after transform: SymbolId(3): Span { start: 109, end: 111 }
-rebuilt        : SymbolId(2): Span { start: 120, end: 129 }
+rebuilt        : SymbolId(3): Span { start: 120, end: 129 }
 Symbol redeclarations mismatch for "I4":
 after transform: SymbolId(3): [Span { start: 120, end: 129 }]
-rebuilt        : SymbolId(2): []
+rebuilt        : SymbolId(3): []
 
 tasks/coverage/typescript/tests/cases/compiler/interfaceDeclaration5.ts
 semantic error: Bindings mismatch:
@@ -19548,16 +19530,16 @@ after transform: ScopeId(0): [SymbolId(0)]
 rebuilt        : ScopeId(0): [SymbolId(0)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Bindings mismatch:
 after transform: ScopeId(2): ["_m2", "f", "n"]
-rebuilt        : ScopeId(1): ["_m2", "n"]
+rebuilt        : ScopeId(2): ["_m2", "n"]
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 Scope children mismatch:
 after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(2): [ScopeId(3)]
 Symbol flags mismatch for "n":
 after transform: SymbolId(2): SymbolFlags(Export | Class)
 rebuilt        : SymbolId(2): SymbolFlags(Class)
@@ -20001,42 +19983,36 @@ tasks/coverage/typescript/tests/cases/compiler/internalImportInstantiatedModuleM
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/internalImportUnInstantiatedModuleMergedWithClassNotReferencingInstanceNoConflict.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A", "B"]
-rebuilt        : ScopeId(0): ["A"]
+semantic error: Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(2)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
-Symbol flags mismatch for "A":
-after transform: SymbolId(0): SymbolFlags(Class | NameSpaceModule)
-rebuilt        : SymbolId(0): SymbolFlags(Class)
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 Symbol reference IDs mismatch for "A":
 after transform: SymbolId(0): [ReferenceId(0)]
-rebuilt        : SymbolId(0): []
-Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 38, end: 39 }]
-rebuilt        : SymbolId(0): []
+rebuilt        : SymbolId(0): [ReferenceId(0)]
 
 tasks/coverage/typescript/tests/cases/compiler/internalImportUnInstantiatedModuleNotReferencingInstanceNoConflict.ts
 semantic error: Missing SymbolId: "B"
 Missing SymbolId: "_B"
 Missing ReferenceId: "B"
 Missing ReferenceId: "B"
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "B"]
-rebuilt        : ScopeId(0): ["B"]
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(2)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Bindings mismatch:
 after transform: ScopeId(3): ["A", "Y", "_B"]
-rebuilt        : ScopeId(1): ["A", "_B"]
+rebuilt        : ScopeId(2): ["A", "_B"]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol reference IDs mismatch for "A":
 after transform: SymbolId(3): [ReferenceId(0)]
-rebuilt        : SymbolId(2): []
+rebuilt        : SymbolId(3): []
 
 tasks/coverage/typescript/tests/cases/compiler/intersectionApparentTypeCaching.ts
 semantic error: Bindings mismatch:
@@ -20741,21 +20717,21 @@ rebuilt        : [ReferenceId(1)]
 tasks/coverage/typescript/tests/cases/compiler/jsxContainsOnlyTriviaWhiteSpacesNotCountedAsChild.tsx
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["JSX", "NoticeList", "Props", "_jsxFileName", "_reactJsxRuntime"]
-rebuilt        : ScopeId(0): ["NoticeList", "_jsxFileName", "_reactJsxRuntime"]
+rebuilt        : ScopeId(0): ["JSX", "NoticeList", "_jsxFileName", "_reactJsxRuntime"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 
 tasks/coverage/typescript/tests/cases/compiler/jsxElementClassTooManyParams.tsx
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["ElemClass", "JSX", "_jsxFileName", "_reactJsxRuntime", "elem"]
-rebuilt        : ScopeId(0): ["ElemClass", "_jsxFileName", "_reactJsxRuntime", "elem"]
+semantic error: Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(10), SymbolId(13), SymbolId(15), SymbolId(16)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(5)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(9)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Bindings mismatch:
 after transform: ScopeId(9): ["T"]
-rebuilt        : ScopeId(1): []
+rebuilt        : ScopeId(2): []
 Unresolved references mismatch:
 after transform: ["JSX", "require"]
 rebuilt        : ["require"]
@@ -20998,10 +20974,10 @@ rebuilt        : ["require"]
 tasks/coverage/typescript/tests/cases/compiler/jsxLibraryManagedAttributesUnusedGeneric.tsx
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["Comp", "React", "_jsxFileName", "jsx"]
-rebuilt        : ScopeId(0): ["React", "_jsxFileName"]
+rebuilt        : ScopeId(0): ["React", "_jsxFileName", "jsx"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol reference IDs mismatch for "React":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(6)]
 rebuilt        : SymbolId(0): [ReferenceId(0)]
@@ -21044,12 +21020,12 @@ tasks/coverage/typescript/tests/cases/compiler/jsxNamespaceImplicitImportJSXName
 semantic error: importSource cannot be set when runtime is classic.
 
 tasks/coverage/typescript/tests/cases/compiler/jsxNamespaceReexports.tsx
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["JSX", "createElement"]
-rebuilt        : ScopeId(0): ["createElement"]
+semantic error: Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(4)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(4)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Unresolved references mismatch:
 after transform: ["JSX", "Record"]
 rebuilt        : []
@@ -22347,10 +22323,10 @@ rebuilt        : ScopeId(0): []
 tasks/coverage/typescript/tests/cases/compiler/mixedExports.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["A", "M", "M1"]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): ["A"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(5), ScopeId(8)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/mixedTypeEnumComparison.ts
 semantic error: Missing ReferenceId: "E2"
@@ -22613,23 +22589,23 @@ after transform: ["Foo"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAndInterfaceSharingName.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["X", "z", "z2"]
-rebuilt        : ScopeId(0): ["z", "z2"]
+semantic error: Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(3), SymbolId(4)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(2), SymbolId(3)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1)]
 Unresolved references mismatch:
 after transform: ["X"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAndInterfaceSharingName3.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["X", "z", "z2"]
-rebuilt        : ScopeId(0): ["z", "z2"]
+semantic error: Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(4), SymbolId(5)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(2), SymbolId(3)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1)]
 Unresolved references mismatch:
 after transform: ["X"]
 rebuilt        : []
@@ -22775,20 +22751,20 @@ semantic error: Missing SymbolId: "I"
 Missing SymbolId: "C"
 Bindings mismatch:
 after transform: ScopeId(0): ["./f1", "A", "B", "C", "I", "N"]
-rebuilt        : ScopeId(0): ["A", "C", "I"]
+rebuilt        : ScopeId(0): ["A", "C", "I", "N"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(5)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationImportsAndExports5.ts
 semantic error: Missing SymbolId: "I"
 Missing SymbolId: "C"
 Bindings mismatch:
 after transform: ScopeId(0): ["./f1", "A", "B", "C", "I", "N"]
-rebuilt        : ScopeId(0): ["A", "C", "I"]
+rebuilt        : ScopeId(0): ["A", "C", "I", "N"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(5)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationImportsAndExports6.ts
 semantic error: Missing SymbolId: "I"
@@ -23135,13 +23111,7 @@ rebuilt        : ["dec"]
 tasks/coverage/typescript/tests/cases/compiler/moduleRedifinitionErrors.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
-Symbol flags mismatch for "A":
-after transform: SymbolId(0): SymbolFlags(Class | NameSpaceModule)
-rebuilt        : SymbolId(0): SymbolFlags(Class)
-Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 19, end: 20 }]
-rebuilt        : SymbolId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 
 tasks/coverage/typescript/tests/cases/compiler/moduleReopenedTypeOtherBlock.ts
 semantic error: Missing SymbolId: "M"
@@ -23727,12 +23697,12 @@ after transform: SymbolId(6): []
 rebuilt        : SymbolId(9): [ReferenceId(9)]
 
 tasks/coverage/typescript/tests/cases/compiler/moduleSymbolMerging.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A"]
-rebuilt        : ScopeId(0): []
+semantic error: Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/moduleUnassignedVariable.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -23930,12 +23900,12 @@ after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/namespaces1.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["X", "x", "x2"]
-rebuilt        : ScopeId(0): ["x", "x2"]
+semantic error: Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(3), SymbolId(4)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(2), SymbolId(3)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1)]
 Unresolved references mismatch:
 after transform: ["X"]
 rebuilt        : []
@@ -23982,12 +23952,12 @@ after transform: ["A"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/namespacesDeclaration1.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["M"]
-rebuilt        : ScopeId(0): []
+semantic error: Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/namespacesWithTypeAliasOnlyExportsMerge.ts
 semantic error: Bindings mismatch:
@@ -26150,12 +26120,12 @@ after transform: SymbolId(1): [ReferenceId(1), ReferenceId(3)]
 rebuilt        : SymbolId(0): [ReferenceId(0)]
 
 tasks/coverage/typescript/tests/cases/compiler/primitiveTypeAsmoduleName.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["string"]
-rebuilt        : ScopeId(0): []
+semantic error: Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/primitiveUnionDetection.ts
 semantic error: Bindings mismatch:
@@ -27738,10 +27708,10 @@ Missing ReferenceId: "m1"
 Missing ReferenceId: "m1"
 Bindings mismatch:
 after transform: ScopeId(0): ["C5_public", "C7_public", "glo_C3_public", "glo_i_public", "m1", "m3"]
-rebuilt        : ScopeId(0): ["C5_public", "m1"]
+rebuilt        : ScopeId(0): ["C5_public", "m1", "m3"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(23), ScopeId(25), ScopeId(30), ScopeId(41), ScopeId(43)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(5)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(5), ScopeId(7)]
 Bindings mismatch:
 after transform: ScopeId(1): ["C1_public", "C2_private", "C3_public", "C4_private", "_m"]
 rebuilt        : ScopeId(1): ["C1_public", "C2_private", "_m"]
@@ -27817,10 +27787,10 @@ Missing ReferenceId: "m2"
 Missing ReferenceId: "m2"
 Bindings mismatch:
 after transform: ScopeId(0): ["C5_public", "C6_private", "C7_public", "C8_private", "glo_C1_private", "glo_C2_private", "glo_C3_public", "glo_C4_public", "glo_C5_private", "glo_C6_public", "glo_i_private", "glo_i_public", "m1", "m2", "m3", "m4"]
-rebuilt        : ScopeId(0): ["C5_public", "C6_private", "m1", "m2"]
+rebuilt        : ScopeId(0): ["C5_public", "C6_private", "m1", "m2", "m4"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(23), ScopeId(45), ScopeId(47), ScopeId(48), ScopeId(57), ScopeId(66), ScopeId(77), ScopeId(88), ScopeId(90), ScopeId(92), ScopeId(93), ScopeId(94), ScopeId(95), ScopeId(96), ScopeId(97)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(5), ScopeId(9), ScopeId(11)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(5), ScopeId(9), ScopeId(11), ScopeId(12)]
 Bindings mismatch:
 after transform: ScopeId(1): ["C1_public", "C2_private", "C3_public", "C4_private", "_m"]
 rebuilt        : ScopeId(1): ["C1_public", "C2_private", "_m"]
@@ -27861,10 +27831,10 @@ rebuilt        : SymbolId(9): []
 tasks/coverage/typescript/tests/cases/compiler/privacyInterfaceExtendsClauseDeclFile.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["privateInterface", "privateInterfaceImplementingFromPrivateModuleInterface", "privateInterfaceImplementingPrivateInterfaceInModule", "privateInterfaceImplementingPublicInterface", "privateModule", "publicInterface", "publicInterfaceImplementingFromPrivateModuleInterface", "publicInterfaceImplementingPrivateInterface", "publicInterfaceImplementingPublicInterface", "publicModule"]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): ["privateModule"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(11), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(23), ScopeId(24), ScopeId(25), ScopeId(26), ScopeId(27)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1)]
 Unresolved references mismatch:
 after transform: ["privateModule"]
 rebuilt        : []
@@ -31118,16 +31088,7 @@ rebuilt        : ScopeId(0): []
 tasks/coverage/typescript/tests/cases/compiler/resolveNameWithNamspace.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
-Symbol flags mismatch for "myAssert":
-after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | NameSpaceModule)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol span mismatch for "myAssert":
-after transform: SymbolId(0): Span { start: 44, end: 52 }
-rebuilt        : SymbolId(0): Span { start: 91, end: 99 }
-Symbol redeclarations mismatch for "myAssert":
-after transform: SymbolId(0): [Span { start: 91, end: 99 }]
-rebuilt        : SymbolId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/resolveTypeAliasWithSameLetDeclarationName1.ts
 semantic error: Scope children mismatch:
@@ -34949,12 +34910,12 @@ after transform: []
 rebuilt        : ["decorator"]
 
 tasks/coverage/typescript/tests/cases/compiler/tsxAttributeQuickinfoTypesSameAsObjectLiteral.tsx
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Foo", "JSX", "_jsxFileName", "_reactJsxRuntime"]
-rebuilt        : ScopeId(0): ["Foo", "_jsxFileName", "_reactJsxRuntime"]
+semantic error: Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(3), SymbolId(6), SymbolId(7)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 
 tasks/coverage/typescript/tests/cases/compiler/tsxAttributesHasInferrableIndex.tsx
 semantic error: Bindings mismatch:
@@ -34962,13 +34923,7 @@ after transform: ScopeId(0): ["AttributeValue", "Attributes", "Button", "_jsxFil
 rebuilt        : ScopeId(0): ["Button", "_jsxFileName", "b", "createElement"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(7)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "createElement":
-after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | Function | NameSpaceModule | ValueModule)
-rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable | Function)
-Symbol redeclarations mismatch for "createElement":
-after transform: SymbolId(2): [Span { start: 243, end: 256 }]
-rebuilt        : SymbolId(1): []
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4)]
 Unresolved references mismatch:
 after transform: ["Date", "React"]
 rebuilt        : ["React"]
@@ -34987,10 +34942,10 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 tasks/coverage/typescript/tests/cases/compiler/tsxDiscriminantPropertyInference.tsx
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["DiscriminatorFalse", "DiscriminatorTrue", "JSX", "Props", "_jsxFileName", "_reactJsxRuntime"]
-rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime"]
+rebuilt        : ScopeId(0): ["JSX", "_jsxFileName", "_reactJsxRuntime"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
 Unresolved references mismatch:
 after transform: ["Comp", "JSX", "parseInt", "require", "true", "undefined"]
 rebuilt        : ["Comp", "parseInt", "require", "undefined"]
@@ -35009,13 +34964,13 @@ rebuilt        : ["React"]
 tasks/coverage/typescript/tests/cases/compiler/tsxInferenceShouldNotYieldAnyOnUnions.tsx
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["JSX", "Props", "PropsBase", "PropsWithConvert", "ShouldInferFromData", "_jsxFileName", "_reactJsxRuntime", "f1", "f2", "f3"]
-rebuilt        : ScopeId(0): ["ShouldInferFromData", "_jsxFileName", "_reactJsxRuntime", "f1", "f2", "f3"]
+rebuilt        : ScopeId(0): ["JSX", "ShouldInferFromData", "_jsxFileName", "_reactJsxRuntime", "f1", "f2", "f3"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6)]
 Bindings mismatch:
 after transform: ScopeId(6): ["T", "props"]
-rebuilt        : ScopeId(1): ["props"]
+rebuilt        : ScopeId(2): ["props"]
 Unresolved references mismatch:
 after transform: ["JSX", "require"]
 rebuilt        : ["require"]
@@ -35058,10 +35013,10 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 tasks/coverage/typescript/tests/cases/compiler/tsxUnionSpread.tsx
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["AnimalComponent", "AnimalInfo", "CatInfo", "DogInfo", "JSX", "_jsx", "_jsxFileName", "component", "component2", "getProps", "props", "props2"]
-rebuilt        : ScopeId(0): ["AnimalComponent", "_jsx", "_jsxFileName", "component", "component2", "getProps", "props", "props2"]
+rebuilt        : ScopeId(0): ["AnimalComponent", "JSX", "_jsx", "_jsxFileName", "component", "component2", "getProps", "props", "props2"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 Unresolved references mismatch:
 after transform: ["JSX", "undefined"]
 rebuilt        : ["undefined"]
@@ -37763,21 +37718,21 @@ semantic error: Missing SymbolId: "M2"
 Missing SymbolId: "_M2"
 Missing ReferenceId: "M2"
 Missing ReferenceId: "M2"
-Bindings mismatch:
-after transform: ScopeId(0): ["M", "M2"]
-rebuilt        : ScopeId(0): ["M2"]
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(4)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(6)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Bindings mismatch:
 after transform: ScopeId(6): ["E", "M", "_M2", "x"]
-rebuilt        : ScopeId(1): ["_M2"]
+rebuilt        : ScopeId(2): ["_M2"]
 Scope flags mismatch:
 after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 Scope children mismatch:
 after transform: ScopeId(6): [ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10)]
-rebuilt        : ScopeId(1): []
+rebuilt        : ScopeId(2): []
 
 tasks/coverage/typescript/tests/cases/conformance/ambient/ambientInsideNonAmbientExternalModule.ts
 semantic error: Bindings mismatch:
@@ -39094,12 +39049,12 @@ after transform: SymbolId(2): [ReferenceId(3)]
 rebuilt        : SymbolId(2): []
 
 tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/mergeClassInterfaceAndModule.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C1", "C2", "C3", "C4"]
-rebuilt        : ScopeId(0): []
+semantic error: Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 
 tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/mergedClassInterface.ts
 semantic error: Bindings mismatch:
@@ -47284,9 +47239,9 @@ after transform: ["A"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/cjsImportInES2015.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["SpecialError", "handleError"]
-rebuilt        : ScopeId(0): ["handleError"]
+semantic error: Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/exportDeclaration.ts
 semantic error: Symbol flags mismatch for "A":
@@ -47331,9 +47286,9 @@ after transform: ScopeId(0): ["from"]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/importDefaultNamedType3.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["from"]
-rebuilt        : ScopeId(0): []
+semantic error: Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/mergedWithLocalValue.ts
 semantic error: Bindings mismatch:
@@ -47625,12 +47580,12 @@ after transform: ScopeId(4): ["T"]
 rebuilt        : ScopeId(1): []
 
 tasks/coverage/typescript/tests/cases/conformance/interfaces/declarationMerging/genericAndNonGenericInterfaceWithTheSameName2.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["M", "M2", "N"]
-rebuilt        : ScopeId(0): []
+semantic error: Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(3), SymbolId(5)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 
 tasks/coverage/typescript/tests/cases/conformance/interfaces/declarationMerging/mergeThreeInterfaces.ts
 semantic error: Missing SymbolId: "M"
@@ -47857,10 +47812,10 @@ rebuilt        : ScopeId(6): []
 tasks/coverage/typescript/tests/cases/conformance/interfaces/declarationMerging/mergedInterfacesWithConflictingPropertyNames2.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["A", "M", "M2", "M3"]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): ["M", "M2", "M3"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(6), ScopeId(8), ScopeId(10), ScopeId(12)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
 
 tasks/coverage/typescript/tests/cases/conformance/interfaces/declarationMerging/mergedInterfacesWithIndexers.ts
 semantic error: Bindings mismatch:
@@ -48481,12 +48436,12 @@ after transform: ["A", "X"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/TwoInternalModulesThatMergeEachWithExportedAndNonExportedInterfacesOfTheSameName.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A", "X", "l", "p"]
-rebuilt        : ScopeId(0): ["l", "p"]
+semantic error: Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(3), SymbolId(4), SymbolId(11)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(7)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(7), ScopeId(8), ScopeId(13), ScopeId(17)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(6)]
 Unresolved references mismatch:
 after transform: ["A", "X"]
 rebuilt        : []
@@ -48495,12 +48450,12 @@ tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMer
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/TwoInternalModulesThatMergeEachWithExportedInterfacesOfTheSameName.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A", "X", "l", "p"]
-rebuilt        : ScopeId(0): ["l", "p"]
+semantic error: Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(3), SymbolId(4), SymbolId(11)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(7)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(14), ScopeId(18)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(6)]
 Unresolved references mismatch:
 after transform: ["A", "X"]
 rebuilt        : []
@@ -48770,12 +48725,12 @@ semantic error: Namespaces exporting non-const are not supported by Babel. Chang
 Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportInterfaceWithInaccessibleTypeInIndexerTypeAnnotations.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A"]
-rebuilt        : ScopeId(0): []
+semantic error: Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportInterfaceWithInaccessibleTypeInTypeParameterConstraint.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -49107,10 +49062,10 @@ rebuilt        : []
 tasks/coverage/typescript/tests/cases/conformance/jsdoc/seeTag1.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["Foo", "NS", "a", "b", "c"]
-rebuilt        : ScopeId(0): ["a", "b", "c"]
+rebuilt        : ScopeId(0): ["NS", "a", "b", "c"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsdoc/tsNoCheckForTypescript.ts
 semantic error: Bindings mismatch:
@@ -51156,12 +51111,12 @@ after transform: [ReferenceId(0), ReferenceId(1)]
 rebuilt        : [ReferenceId(0)]
 
 tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration12.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A"]
-rebuilt        : ScopeId(0): []
+semantic error: Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration2.ts
 semantic error: Bindings mismatch:
@@ -51172,44 +51127,44 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration4.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["M"]
-rebuilt        : ScopeId(0): []
+semantic error: Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration6.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["number"]
-rebuilt        : ScopeId(0): []
+semantic error: Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration7.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["number"]
-rebuilt        : ScopeId(0): []
+semantic error: Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration8.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["a"]
-rebuilt        : ScopeId(0): []
+semantic error: Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration9.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["a"]
-rebuilt        : ScopeId(0): []
+semantic error: Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/PropertyAssignments/parserFunctionPropertyAssignment4.ts
 semantic error: Bindings mismatch:

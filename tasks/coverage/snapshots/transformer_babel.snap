@@ -2,4 +2,10 @@ commit: d20b314c
 
 transformer_babel Summary:
 AST Parsed     : 2136/2136 (100.00%)
-Positive Passed: 2136/2136 (100.00%)
+Positive Passed: 2130/2136 (99.72%)
+Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/type-asi/input.ts
+Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/type-equals-require/input.ts
+Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-nested/input.ts
+Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head/input.ts
+Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export-namespace/input.ts
+Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-equals-var/input.ts

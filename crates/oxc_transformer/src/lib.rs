@@ -357,10 +357,10 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
     }
 
     fn enter_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
-        self.common.enter_statements(stmts, ctx);
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_statements(stmts, ctx);
         }
+        self.common.enter_statements(stmts, ctx);
     }
 
     fn exit_arrow_function_expression(

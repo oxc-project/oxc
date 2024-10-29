@@ -34,6 +34,7 @@ pub struct TypeScriptAnnotations<'a, 'ctx> {
     jsx_element_import_name: String,
     jsx_fragment_import_name: String,
     type_identifier_names: FxHashSet<Atom<'a>>,
+    some_modules_deleted: bool,
 }
 
 impl<'a, 'ctx> TypeScriptAnnotations<'a, 'ctx> {
@@ -60,6 +61,7 @@ impl<'a, 'ctx> TypeScriptAnnotations<'a, 'ctx> {
             jsx_element_import_name,
             jsx_fragment_import_name,
             type_identifier_names: FxHashSet::default(),
+            some_modules_deleted: false,
         }
     }
 }
@@ -67,7 +69,6 @@ impl<'a, 'ctx> TypeScriptAnnotations<'a, 'ctx> {
 impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         let mut no_modules_remaining = true;
-        let mut some_modules_deleted = false;
 
         program.body.retain_mut(|stmt| {
             let need_retain = match stmt {
@@ -141,7 +142,7 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
             if need_retain {
                 no_modules_remaining = false;
             } else {
-                some_modules_deleted = true;
+                self.some_modules_deleted = true;
             }
 
             need_retain
@@ -150,7 +151,7 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
         // Determine if we still have import/export statements, otherwise we
         // need to inject an empty statement (`export {}`) so that the file is
         // still considered a module
-        if no_modules_remaining && some_modules_deleted && self.ctx.module_imports.is_empty() {
+        if no_modules_remaining && self.some_modules_deleted && self.ctx.module_imports.is_empty() {
             let export_decl = ModuleDeclaration::ExportNamedDeclaration(
                 ctx.ast.plain_export_named_declaration(SPAN, ctx.ast.vec(), None),
             );
@@ -389,16 +390,44 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
         stmts: &mut ArenaVec<'a, Statement<'a>>,
         _ctx: &mut TraverseCtx<'a>,
     ) {
-        // Remove declare declaration
-        stmts.retain(
-            |stmt| {
-                if let Some(decl) = stmt.as_declaration() {
-                    !decl.declare()
-                } else {
-                    true
+        let check_declaration = |decl: &Declaration<'a>| match decl {
+            Declaration::TSTypeAliasDeclaration(_) | Declaration::TSInterfaceDeclaration(_) => {
+                false
+            }
+            Declaration::FunctionDeclaration(func) => !func.is_typescript_syntax(),
+            _ => !decl.declare(),
+        };
+        // Remove TS specific statements
+        stmts.retain(|stmt| match stmt {
+            // Remove declare declaration or function overload declaration
+            match_declaration!(Statement) => check_declaration(stmt.to_declaration()),
+            match_module_declaration!(Statement) => {
+                let retain = match stmt.to_module_declaration() {
+                    ModuleDeclaration::ExportNamedDeclaration(decl) => {
+                        decl.declaration.as_ref().map_or(true, check_declaration)
+                    }
+                    ModuleDeclaration::ExportDefaultDeclaration(decl) => match &decl.declaration {
+                        ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
+                            !func.declare && func.body.is_some()
+                        }
+                        ExportDefaultDeclarationKind::ClassDeclaration(class) => !class.declare,
+                        declaration => !declaration.is_typescript_syntax(),
+                    },
+                    ModuleDeclaration::TSExportAssignment(_) => {
+                        // Handle this in `exit_program`
+                        true
+                    }
+                    declaration => !declaration.is_typescript_syntax(),
+                };
+
+                if !retain {
+                    self.some_modules_deleted = true;
                 }
-            },
-        );
+
+                retain
+            }
+            _ => true,
+        });
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -420,22 +449,6 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
                 .map(|assignment| assignment.create_this_property_assignment(ctx)),
         );
         self.has_super_call = true;
-    }
-
-    fn exit_statements(
-        &mut self,
-        stmts: &mut ArenaVec<'a, Statement<'a>>,
-        _ctx: &mut TraverseCtx<'a>,
-    ) {
-        // Remove TS specific statements
-        stmts.retain(|stmt| match stmt {
-            Statement::ExpressionStatement(s) => !s.expression.is_typescript_syntax(),
-            // Any namespaces left after namespace transform are type only, so remove them
-            Statement::TSModuleDeclaration(_) => false,
-            match_declaration!(Statement) => !stmt.to_declaration().is_typescript_syntax(),
-            // Ignore ModuleDeclaration as it's handled in the program
-            _ => true,
-        });
     }
 
     /// Transform if statement's consequent and alternate to block statements if they are super calls

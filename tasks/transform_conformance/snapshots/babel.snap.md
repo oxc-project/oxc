@@ -2835,15 +2835,7 @@ after transform: ScopeId(1): [SymbolId(1), SymbolId(2)]
 rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2)]
 
 * namespace/export-type-only/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Platform"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["Platform"]
-rebuilt        : []
+x Output mismatch
 
 * namespace/module-nested/input.ts
 Missing SymbolId: "src"
