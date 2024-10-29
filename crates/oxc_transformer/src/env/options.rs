@@ -18,40 +18,40 @@ pub struct EnvOptions {
     #[serde(default = "default_as_true")]
     pub bugfixes: bool,
 
-    /// Unused.
+    #[deprecated = "Not Implemented"]
     pub spec: bool,
 
-    /// Unused.
+    #[deprecated = "Not Implemented"]
     pub loose: bool,
 
-    /// Unused.
+    #[deprecated = "Not Implemented"]
     pub modules: Option<Value>,
 
-    /// Unused.
+    #[deprecated = "Not Implemented"]
     pub debug: bool,
 
-    /// Unused.
+    #[deprecated = "Not Implemented"]
     pub include: Option<Value>,
 
-    /// Unused.
+    #[deprecated = "Not Implemented"]
     pub exclude: Option<Value>,
 
-    /// Unused.
+    #[deprecated = "Not Implemented"]
     pub use_built_ins: Option<Value>,
 
-    /// Unused.
+    #[deprecated = "Not Implemented"]
     pub corejs: Option<Value>,
 
-    /// Unused.
+    #[deprecated = "Not Implemented"]
     pub force_all_transforms: bool,
 
-    /// Unused.
+    #[deprecated = "Not Implemented"]
     pub config_path: Option<String>,
 
-    /// Unused.
+    #[deprecated = "Not Implemented"]
     pub ignore_browserslist_config: bool,
 
-    /// Unused.
+    #[deprecated = "Not Implemented"]
     pub shipped_proposals: bool,
 }
 
