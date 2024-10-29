@@ -11,7 +11,8 @@ use serde_json::Value;
 
 fn jsx_no_script_url_diagnostic(span: Span) -> OxcDiagnostic {
     // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn("A future version of React will block javascript: URLs as a security precaution. Use event handlers instead if you can. If you need to generate unsafe HTML, try using dangerouslySetInnerHTML instead.")
+    OxcDiagnostic::warn("A future version of React will block javascript: URLs as a security precaution.")
+        .with_help("Use event handlers instead if you can. If you need to generate unsafe HTML, try using dangerouslySetInnerHTML instead.")
         .with_label(span)
 }
 
@@ -41,7 +42,9 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// In React 16.9 any URLs starting with javascript: scheme log a warning. React considers the pattern as a dangerous attack surface, see details. In a future major release, React will throw an error if it encounters a javascript: URL.
+    /// URLs starting with javascript: are a dangerous attack surface because it’s easy to accidentally include unsanitized output in a tag like <a href> and create a security hole.
+    /// In React 16.9 any URLs starting with javascript: scheme log a warning.
+    /// In a future major release, React will throw an error if it encounters a javascript: URL.
     ///
     /// ### Examples
     ///
@@ -69,6 +72,19 @@ impl JsxNoScriptUrl {
         }
         ctx.settings().react.get_link_component_attrs(tag_name).is_some()
     }
+
+    fn check_is_link_attribute(&self, tag_name: &str, prop_value_literal: String, ctx: &LintContext) -> bool {
+        tag_name == "a"
+            || ctx
+            .settings()
+            .react
+            .get_link_component_attrs(tag_name)
+            .is_some_and(|link_component_attrs| {
+                link_component_attrs.contains(&CompactStr::from(
+                    prop_value_literal,
+                ))
+            })
+    }
 }
 
 impl Rule for JsxNoScriptUrl {
@@ -80,10 +96,10 @@ impl Rule for JsxNoScriptUrl {
             if let Some(link_props) = self.components.get(component_name.as_str()) {
                 for jsx_attribute in &element.attributes {
                     if let JSXAttributeItem::Attribute(attr) = jsx_attribute {
-                        let Some(literal) = &attr.value else {
+                        let Some(prop_value) = &attr.value else {
                             return;
                         };
-                        if literal.as_string_literal().is_some_and(|val| {
+                        if prop_value.as_string_literal().is_some_and(|val| {
                             let re = Regex::new(IS_JAVA_SCRIPT_PROTOCOL).unwrap();
                             link_props.contains(&attr.name.get_identifier().name.to_string())
                                 && re.captures(&val.value).is_some()
@@ -95,21 +111,12 @@ impl Rule for JsxNoScriptUrl {
             } else if self.check_is_link(component_name.as_str(), ctx) {
                 for jsx_attribute in &element.attributes {
                     if let JSXAttributeItem::Attribute(attr) = jsx_attribute {
-                        let Some(literal) = &attr.value else {
+                        let Some(prop_value) = &attr.value else {
                             return;
                         };
-                        if literal.as_string_literal().is_some_and(|val| {
+                        if prop_value.as_string_literal().is_some_and(|val| {
                             let re = Regex::new(IS_JAVA_SCRIPT_PROTOCOL).unwrap();
-                            (component_name.as_str() == "a"
-                                || ctx
-                                    .settings()
-                                    .react
-                                    .get_link_component_attrs(component_name.as_str())
-                                    .is_some_and(|link_component_attrs| {
-                                        link_component_attrs.contains(&CompactStr::from(
-                                            attr.name.get_identifier().name.to_string(),
-                                        ))
-                                    }))
+                            self.check_is_link_attribute(component_name.as_str(), attr.name.get_identifier().name.to_string(), ctx)
                                 && re.captures(&val.value).is_some()
                         }) {
                             ctx.diagnostic(jsx_no_script_url_diagnostic(attr.span()));
