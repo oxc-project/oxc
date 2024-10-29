@@ -14,7 +14,7 @@
 
 use std::cell::RefCell;
 
-use oxc_allocator::Vec;
+use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast::*;
 use oxc_data_structures::stack::SparseStack;
 use oxc_span::SPAN;
@@ -39,13 +39,17 @@ impl<'a, 'ctx> VarDeclarations<'a, 'ctx> {
 impl<'a, 'ctx> Traverse<'a> for VarDeclarations<'a, 'ctx> {
     fn enter_statements(
         &mut self,
-        _stmts: &mut Vec<'a, Statement<'a>>,
+        _stmts: &mut ArenaVec<'a, Statement<'a>>,
         _ctx: &mut TraverseCtx<'a>,
     ) {
         self.ctx.var_declarations.record_entering_statements();
     }
 
-    fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+    fn exit_statements(
+        &mut self,
+        stmts: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         self.ctx.var_declarations.insert_into_statements(stmts, ctx);
     }
 
@@ -56,7 +60,7 @@ impl<'a, 'ctx> Traverse<'a> for VarDeclarations<'a, 'ctx> {
 
 /// Store for `VariableDeclarator`s to be added to enclosing statement block.
 pub struct VarDeclarationsStore<'a> {
-    stack: RefCell<SparseStack<Vec<'a, VariableDeclarator<'a>>>>,
+    stack: RefCell<SparseStack<ArenaVec<'a, VariableDeclarator<'a>>>>,
 }
 
 // Public methods
@@ -107,7 +111,7 @@ impl<'a> VarDeclarationsStore<'a> {
 
     fn insert_into_statements(
         &self,
-        stmts: &mut Vec<'a, Statement<'a>>,
+        stmts: &mut ArenaVec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         if matches!(ctx.parent(), Ancestor::ProgramBody(_)) {

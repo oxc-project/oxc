@@ -70,7 +70,7 @@ use std::{borrow::Cow, cell::RefCell};
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
-use oxc_allocator::{String as ArenaString, Vec};
+use oxc_allocator::{String as ArenaString, Vec as ArenaVec};
 use oxc_ast::ast::{Argument, CallExpression, Expression, TSTypeParameterInstantiation};
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
 use oxc_span::{Atom, SPAN};
@@ -175,7 +175,7 @@ impl<'a> TransformCtx<'a> {
     pub fn helper_call(
         &self,
         helper: Helper,
-        arguments: Vec<'a, Argument<'a>>,
+        arguments: ArenaVec<'a, Argument<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> CallExpression<'a> {
         let callee = self.helper_load(helper, ctx);
@@ -192,7 +192,7 @@ impl<'a> TransformCtx<'a> {
     pub fn helper_call_expr(
         &self,
         helper: Helper,
-        arguments: Vec<'a, Argument<'a>>,
+        arguments: ArenaVec<'a, Argument<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let callee = self.helper_load(helper, ctx);

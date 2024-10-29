@@ -1,6 +1,6 @@
 use rustc_hash::FxHashSet;
 
-use oxc_allocator::{Box, Vec};
+use oxc_allocator::{Box, Vec as ArenaVec};
 use oxc_ast::{ast::*, NONE};
 use oxc_ecmascript::BoundNames;
 use oxc_span::{Atom, CompactStr, SPAN};
@@ -320,8 +320,8 @@ impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
     fn transform_namespace(
         arg_name: Atom<'a>,
         real_name: Atom<'a>,
-        stmts: Vec<'a, Statement<'a>>,
-        directives: Vec<'a, Directive<'a>>,
+        stmts: ArenaVec<'a, Statement<'a>>,
+        directives: ArenaVec<'a, Directive<'a>>,
         parent_export: Option<Expression<'a>>,
         scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
@@ -414,7 +414,7 @@ impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
         decl: Declaration<'a>,
         name: Atom<'a>,
         names: &mut FxHashSet<Atom<'a>>,
-        new_stmts: &mut Vec<'a, Statement<'a>>,
+        new_stmts: &mut ArenaVec<'a, Statement<'a>>,
         ctx: &TraverseCtx<'a>,
     ) {
         // This function is only called with a function, class, or enum declaration,
@@ -449,7 +449,7 @@ impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
         mut var_decl: Box<'a, VariableDeclaration<'a>>,
         name: Atom<'a>,
         ctx: &TraverseCtx<'a>,
-    ) -> Vec<'a, Statement<'a>> {
+    ) -> ArenaVec<'a, Statement<'a>> {
         let is_all_binding_identifier = var_decl
             .declarations
             .iter()

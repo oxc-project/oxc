@@ -32,7 +32,7 @@
 //! * Exponentiation operator TC39 proposal: <https://github.com/tc39/proposal-exponentiation-operator>
 //! * Exponentiation operator specification: <https://tc39.es/ecma262/#sec-exp-operator>
 
-use oxc_allocator::{CloneIn, Vec};
+use oxc_allocator::{CloneIn, Vec as ArenaVec};
 use oxc_ast::{ast::*, NONE};
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
 use oxc_span::SPAN;
@@ -149,7 +149,7 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
         // Left side of `Math.pow(pow_left, ...)`
         Expression<'a>,
         // Temporary var initializations
-        Vec<'a, Expression<'a>>,
+        ArenaVec<'a, Expression<'a>>,
     ) {
         let mut temp_var_inits = ctx.ast.vec();
 
@@ -232,7 +232,7 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
         // Left side of `Math.pow(pow_left, ...)`
         Expression<'a>,
         // Temporary var initializations
-        Vec<'a, Expression<'a>>,
+        ArenaVec<'a, Expression<'a>>,
     ) {
         // Object part of 2nd member expression
         // ```
@@ -326,7 +326,7 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
         // Left side of `Math.pow(pow_left, ...)`
         Expression<'a>,
         // Temporary var initializations
-        Vec<'a, Expression<'a>>,
+        ArenaVec<'a, Expression<'a>>,
     ) {
         // Object part of 2nd member expression
         // ```
@@ -408,7 +408,7 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
         // Left side of `Math.pow(pow_left, ...)`
         Expression<'a>,
         // Temporary var initializations
-        Vec<'a, Expression<'a>>,
+        ArenaVec<'a, Expression<'a>>,
     ) {
         // Object part of 2nd member expression
         // ```
@@ -482,7 +482,7 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
     fn get_second_member_expression_object(
         &mut self,
         obj: &mut Expression<'a>,
-        temp_var_inits: &mut Vec<'a, Expression<'a>>,
+        temp_var_inits: &mut ArenaVec<'a, Expression<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         // If the object reference that we need to save is locally declared, evaluating it multiple times
@@ -532,7 +532,7 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
     /// If needs temp var initializers, replace expression `expr` with `(temp1, temp2, expr)`.
     fn revise_expression(
         expr: &mut Expression<'a>,
-        mut temp_var_inits: Vec<'a, Expression<'a>>,
+        mut temp_var_inits: ArenaVec<'a, Expression<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         if !temp_var_inits.is_empty() {
@@ -566,7 +566,7 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
     fn create_temp_var(
         &mut self,
         expr: Expression<'a>,
-        temp_var_inits: &mut Vec<'a, Expression<'a>>,
+        temp_var_inits: &mut ArenaVec<'a, Expression<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> BoundIdentifier<'a> {
         let binding = ctx.generate_uid_in_current_scope_based_on_node(

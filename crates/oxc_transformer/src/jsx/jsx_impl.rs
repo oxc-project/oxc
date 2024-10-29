@@ -88,7 +88,7 @@
 //!
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/main/packages/babel-helper-builder-react-jsx>
 
-use oxc_allocator::Vec;
+use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::{ast::*, AstBuilder, NONE};
 use oxc_ecmascript::PropName;
 use oxc_span::{Atom, GetSpan, Span, SPAN};
@@ -999,7 +999,7 @@ impl<'a, 'b> JSXElementOrFragment<'a, 'b> {
         }
     }
 
-    fn children(&self) -> &'b Vec<'a, JSXChild<'a>> {
+    fn children(&self) -> &'b ArenaVec<'a, JSXChild<'a>> {
         match self {
             Self::Element(e) => &e.children,
             Self::Fragment(e) => &e.children,
