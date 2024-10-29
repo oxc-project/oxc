@@ -94,11 +94,11 @@ impl TransformOptions {
                 arrow_function: None,
             },
             es2016: ES2016Options { exponentiation_operator: true },
-            es2018: ES2018Options { object_rest_spread: Some(ObjectRestSpreadOptions::default()) },
             es2017: ES2017Options {
                 // Turned off because it is not ready.
                 async_to_generator: false,
             },
+            es2018: ES2018Options { object_rest_spread: Some(ObjectRestSpreadOptions::default()) },
             es2019: ES2019Options { optional_catch_binding: true },
             es2020: ES2020Options { nullish_coalescing_operator: true },
             es2021: ES2021Options { logical_assignment_operators: true },

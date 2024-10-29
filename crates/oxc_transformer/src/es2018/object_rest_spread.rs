@@ -1,6 +1,6 @@
 //! ES2018 object spread transformation.
 //!
-//! This plugin transforms object spread properties (`{ ...x }`) to a series of `_objectSpread` calls.
+//! This plugin transforms rest properties for object destructuring assignment and spread properties for object literals.
 //!
 //! > This plugin is included in `preset-env`, in ES2018
 //!
@@ -26,6 +26,8 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/main/packages/babel-plugin-transform-object-rest-spread>
 //! * Object rest/spread TC39 proposal: <https://github.com/tc39/proposal-object-rest-spread>
 
+use serde::Deserialize;
+
 use oxc_ast::{ast::*, NONE};
 use oxc_semantic::{ReferenceFlags, SymbolId};
 use oxc_span::SPAN;
@@ -33,20 +35,38 @@ use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::{common::helper_loader::Helper, TransformCtx};
 
-use super::ObjectRestSpreadOptions;
+#[derive(Debug, Default, Clone, Copy, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct ObjectRestSpreadOptions {
+    #[serde(alias = "loose")]
+    pub(crate) set_spread_properties: bool,
 
-pub struct ObjectSpread<'a, 'ctx> {
-    options: ObjectRestSpreadOptions,
-    ctx: &'ctx TransformCtx<'a>,
+    pub(crate) use_built_ins: bool,
 }
 
-impl<'a, 'ctx> ObjectSpread<'a, 'ctx> {
+pub struct ObjectRestSpread<'a, 'ctx> {
+    ctx: &'ctx TransformCtx<'a>,
+    options: ObjectRestSpreadOptions,
+}
+
+impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
     pub fn new(options: ObjectRestSpreadOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self { options, ctx }
+        Self { ctx, options }
     }
 }
-impl<'a, 'ctx> Traverse<'a> for ObjectSpread<'a, 'ctx> {
+
+impl<'a, 'ctx> Traverse<'a> for ObjectRestSpread<'a, 'ctx> {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.transform_object_expression(expr, ctx);
+    }
+}
+
+impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
+    fn transform_object_expression(
+        &mut self,
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         let Expression::ObjectExpression(obj_expr) = expr else {
             return;
         };
@@ -97,9 +117,7 @@ impl<'a, 'ctx> Traverse<'a> for ObjectSpread<'a, 'ctx> {
             *expr = ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);
         }
     }
-}
 
-impl<'a, 'ctx> ObjectSpread<'a, 'ctx> {
     #[expect(clippy::option_option)]
     fn get_object_symbol_id(&self, ctx: &mut TraverseCtx<'a>) -> Option<Option<SymbolId>> {
         if self.options.set_spread_properties {
@@ -118,7 +136,7 @@ impl<'a, 'ctx> ObjectSpread<'a, 'ctx> {
         if let Some(object_id) = object_id {
             Self::object_assign(object_id, ctx)
         } else {
-            self.babel_external_helper(ctx)
+            self.ctx.helper_load(Helper::ObjectSpread2, ctx)
         }
     }
 
@@ -127,11 +145,6 @@ impl<'a, 'ctx> ObjectSpread<'a, 'ctx> {
             ctx.create_reference_id(SPAN, Atom::from("Object"), symbol_id, ReferenceFlags::Read);
         let object = ctx.ast.expression_from_identifier_reference(ident);
         let property = ctx.ast.identifier_name(SPAN, Atom::from("assign"));
-
         Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false))
-    }
-
-    fn babel_external_helper(&self, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        self.ctx.helper_load(Helper::ObjectSpread2, ctx)
     }
 }
