@@ -7,8 +7,7 @@ use oxc_span::CompactStr;
 use rustc_hash::FxHashSet;
 
 use crate::{
-    config::{ESLintRule, OxlintRules},
-    options::LintPlugins,
+    config::{ESLintRule, LintPlugins, OxlintRules},
     rules::RULES,
     AllowWarnDeny, FixKind, FrameworkFlags, LintConfig, LintFilter, LintFilterKind, LintOptions,
     Linter, Oxlintrc, RuleCategory, RuleEnum, RuleWithSeverity,
@@ -35,8 +34,11 @@ impl LinterBuilder {
     /// You can think of this as `oxlint -A all`.
     pub fn empty() -> Self {
         let options = LintOptions::default();
-        let cache = RulesCache::new(options.plugins);
-        Self { rules: FxHashSet::default(), options, config: LintConfig::default(), cache }
+        let config = LintConfig::default();
+        let rules = FxHashSet::default();
+        let cache = RulesCache::new(config.plugins);
+
+        Self { rules, options, config, cache }
     }
 
     /// Warn on all rules in all plugins and categories, including those in `nursery`.
@@ -44,15 +46,16 @@ impl LinterBuilder {
     ///
     /// You can think of this as `oxlint -W all -W nursery`.
     pub fn all() -> Self {
-        let options = LintOptions { plugins: LintPlugins::all(), ..LintOptions::default() };
-        let cache = RulesCache::new(options.plugins);
+        let options = LintOptions::default();
+        let config = LintConfig { plugins: LintPlugins::all(), ..LintConfig::default() };
+        let cache = RulesCache::new(config.plugins);
         Self {
             rules: RULES
                 .iter()
                 .map(|rule| RuleWithSeverity { rule: rule.clone(), severity: AllowWarnDeny::Warn })
                 .collect(),
             options,
-            config: LintConfig::default(),
+            config,
             cache,
         }
     }
@@ -76,11 +79,11 @@ impl LinterBuilder {
         let Oxlintrc { plugins, settings, env, globals, categories, rules: oxlintrc_rules } =
             oxlintrc;
 
-        let config = LintConfig { settings, env, globals };
-        let options = LintOptions { plugins, ..Default::default() };
+        let config = LintConfig { plugins, settings, env, globals };
+        let options = LintOptions::default();
         let rules =
             if start_empty { FxHashSet::default() } else { Self::warn_correctness(plugins) };
-        let cache = RulesCache::new(options.plugins);
+        let cache = RulesCache::new(config.plugins);
         let mut builder = Self { rules, options, config, cache };
 
         if !categories.is_empty() {
@@ -128,7 +131,7 @@ impl LinterBuilder {
     /// [`and_plugins`]: LinterBuilder::and_plugins
     #[inline]
     pub fn with_plugins(mut self, plugins: LintPlugins) -> Self {
-        self.options.plugins = plugins;
+        self.config.plugins = plugins;
         self.cache.set_plugins(plugins);
         self
     }
@@ -139,14 +142,14 @@ impl LinterBuilder {
     /// rules.
     #[inline]
     pub fn and_plugins(mut self, plugins: LintPlugins, enabled: bool) -> Self {
-        self.options.plugins.set(plugins, enabled);
-        self.cache.set_plugins(self.options.plugins);
+        self.config.plugins.set(plugins, enabled);
+        self.cache.set_plugins(self.config.plugins);
         self
     }
 
     #[inline]
     pub fn plugins(&self) -> LintPlugins {
-        self.options.plugins
+        self.config.plugins
     }
 
     #[cfg(test)]

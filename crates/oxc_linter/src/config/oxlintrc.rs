@@ -5,11 +5,11 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::{
-    categories::OxlintCategories, env::OxlintEnv, globals::OxlintGlobals, rules::OxlintRules,
-    settings::OxlintSettings,
+    categories::OxlintCategories, env::OxlintEnv, globals::OxlintGlobals, plugins::LintPlugins,
+    rules::OxlintRules, settings::OxlintSettings,
 };
 
-use crate::{options::LintPlugins, utils::read_to_string};
+use crate::utils::read_to_string;
 
 /// Oxlint Configuration File
 ///
