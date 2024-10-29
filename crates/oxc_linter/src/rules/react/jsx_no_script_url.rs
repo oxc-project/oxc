@@ -62,6 +62,15 @@ declare_oxc_lint!(
     pending
 );
 
+fn check_is_link_attribute(tag_name: &str, prop_value_literal: String, ctx: &LintContext) -> bool {
+    tag_name == "a"
+        || ctx.settings().react.get_link_component_attrs(tag_name).is_some_and(
+            |link_component_attrs| {
+                link_component_attrs.contains(&CompactStr::from(prop_value_literal))
+            },
+        )
+}
+
 impl JsxNoScriptUrl {
     fn check_is_link(&self, tag_name: &str, ctx: &LintContext) -> bool {
         if !self.include_from_settings {
@@ -71,20 +80,6 @@ impl JsxNoScriptUrl {
             return true;
         }
         ctx.settings().react.get_link_component_attrs(tag_name).is_some()
-    }
-
-    fn check_is_link_attribute(
-        &self,
-        tag_name: &str,
-        prop_value_literal: String,
-        ctx: &LintContext,
-    ) -> bool {
-        tag_name == "a"
-            || ctx.settings().react.get_link_component_attrs(tag_name).is_some_and(
-                |link_component_attrs| {
-                    link_component_attrs.contains(&CompactStr::from(prop_value_literal))
-                },
-            )
     }
 }
 
@@ -117,7 +112,7 @@ impl Rule for JsxNoScriptUrl {
                         };
                         if prop_value.as_string_literal().is_some_and(|val| {
                             let re = Regex::new(IS_JAVA_SCRIPT_PROTOCOL).unwrap();
-                            self.check_is_link_attribute(
+                            check_is_link_attribute(
                                 component_name.as_str(),
                                 attr.name.get_identifier().name.to_string(),
                                 ctx,
