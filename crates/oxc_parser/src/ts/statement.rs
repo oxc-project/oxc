@@ -206,7 +206,12 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_ts_type_signature(&mut self) -> Result<Option<TSSignature<'a>>> {
         if self.is_at_ts_index_signature_member() {
-            return self.parse_ts_index_signature_member().map(Some);
+            let span = self.start_span();
+            let modifiers = self.parse_modifiers(false, false, false);
+            return self
+                .parse_index_signature_declaration(span, &modifiers)
+                .map(|sig| self.ast.ts_signature_from_ts_index_signature(sig))
+                .map(Some);
         }
 
         match self.cur_kind() {

@@ -1271,7 +1271,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         span: Span,
         modifiers: &Modifiers<'a>,
-    ) -> Result<Box<'a, TSIndexSignature<'a>>> {
+    ) -> Result<TSIndexSignature<'a>> {
         self.verify_modifiers(
             modifiers,
             ModifierFlags::READONLY | ModifierFlags::STATIC,
@@ -1284,7 +1284,7 @@ impl<'a> ParserImpl<'a> {
             return Err(self.unexpected());
         };
         self.parse_type_member_semicolon();
-        Ok(self.ast.alloc_ts_index_signature(
+        Ok(self.ast.ts_index_signature(
             self.end_span(span),
             parameters,
             type_annotation,
@@ -1301,35 +1301,6 @@ impl<'a> ParserImpl<'a> {
         }
         // Didn't have a comma.  We must have a (possible ASI) semicolon.
         self.bump(Kind::Semicolon);
-    }
-
-    pub(crate) fn parse_ts_index_signature_member(&mut self) -> Result<TSSignature<'a>> {
-        let span = self.start_span();
-
-        let modifiers = self.parse_class_element_modifiers(false);
-        self.verify_modifiers(
-            &modifiers,
-            ModifierFlags::READONLY | ModifierFlags::STATIC,
-            diagnostics::cannot_appear_on_an_index_signature,
-        );
-
-        self.bump(Kind::LBrack);
-        let index_name = self.parse_ts_index_signature_name()?;
-        let mut parameters = self.ast.vec();
-        parameters.push(index_name);
-        self.expect(Kind::RBrack)?;
-
-        let type_annotation = self.parse_ts_type_annotation()?;
-        let Some(type_annotation) = type_annotation else { return Err(self.unexpected()) };
-        self.bump(Kind::Comma);
-        self.bump(Kind::Semicolon);
-        Ok(self.ast.ts_signature_index_signature(
-            self.end_span(span),
-            parameters,
-            type_annotation,
-            modifiers.contains(ModifierKind::Readonly),
-            modifiers.contains(ModifierKind::Static),
-        ))
     }
 
     fn parse_ts_index_signature_name(&mut self) -> Result<TSIndexSignatureName<'a>> {

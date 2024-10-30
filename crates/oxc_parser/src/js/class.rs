@@ -231,7 +231,7 @@ impl<'a> ParserImpl<'a> {
         if self.is_at_ts_index_signature_member() {
             return self
                 .parse_index_signature_declaration(span, &modifiers)
-                .map(ClassElement::TSIndexSignature)
+                .map(|sig| self.ast.class_element_from_ts_index_signature(sig))
                 .map(Some);
         }
 
