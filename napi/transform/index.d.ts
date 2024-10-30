@@ -30,7 +30,6 @@ export interface IsolatedDeclarationsOptions {
    * See <https://www.typescriptlang.org/tsconfig/#stripInternal>
    */
   stripInternal?: boolean
-  sourcemap?: boolean
 }
 
 export interface IsolatedDeclarationsResult {

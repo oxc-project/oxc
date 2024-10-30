@@ -19,8 +19,6 @@ pub struct IsolatedDeclarationsOptions {
     ///
     /// See <https://www.typescriptlang.org/tsconfig/#stripInternal>
     pub strip_internal: Option<bool>,
-
-    pub sourcemap: Option<bool>,
 }
 
 impl From<IsolatedDeclarationsOptions> for oxc_isolated_declarations::IsolatedDeclarationsOptions {
