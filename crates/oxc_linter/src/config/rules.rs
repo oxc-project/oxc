@@ -112,10 +112,19 @@ impl OxlintRules {
                     if let Some(rule_config) =
                         rule_configs.iter().find(|r| r.severity.is_warn_deny())
                     {
+                        let config = rule_config.config.clone().unwrap_or_default();
+
                         if let Some(rule) = rules_for_override.iter().find(|r| r.name() == *name) {
-                            let config = rule_config.config.clone().unwrap_or_default();
                             rules_to_replace
                                 .push(RuleWithSeverity::new(rule.read_json(config), rule.severity));
+                        }
+                        // If the given rule is not found in the rule list (for example, if all rules are disabled),
+                        // then look it up in the entire rules list and add it.
+                        else if let Some(rule) = all_rules.iter().find(|r| r.name() == *name) {
+                            rules_to_replace.push(RuleWithSeverity::new(
+                                rule.read_json(config),
+                                rule_config.severity,
+                            ));
                         }
                     } else if rule_configs.iter().all(|r| r.severity.is_allow()) {
                         if let Some(rule) = rules_for_override.iter().find(|r| r.name() == *name) {
@@ -437,28 +446,29 @@ mod test {
     #[test]
     fn test_override_plugin_prefix_duplicates() {
         let configs = [
+            // FIXME: this should be valid
             // json!({ "@typescript-eslint/no-unused-vars": "error" }),
             json!({ "no-unused-vars": "off", "typescript/no-unused-vars": "error" }),
             json!({ "no-unused-vars": "off", "@typescript-eslint/no-unused-vars": "error" }),
         ];
 
-        for config in configs {
+        for config in &configs {
             let mut rules = RuleSet::default();
-            r#override(&mut rules, &config);
+            r#override(&mut rules, config);
 
-            // FIXME: this fails, meaning the behavior with two rules (in different plugins) does
-            // not match the behavior of a single rule in a oxlintrc.
-            // assert_eq!(rules.len(), 1, "{config:?}");
-            // let rule = rules.iter().next().unwrap();
-            // assert_eq!(rule.name(), "no-unused-vars", "{config:?}");
-            // assert_eq!(rule.severity, AllowWarnDeny::Deny, "{config:?}");
+            assert_eq!(rules.len(), 1, "{config:?}");
+            let rule = rules.iter().next().unwrap();
+            assert_eq!(rule.name(), "no-unused-vars", "{config:?}");
+            assert_eq!(rule.severity, AllowWarnDeny::Deny, "{config:?}");
+        }
 
-            // rules = RuleSet::default();
+        for config in &configs {
+            let mut rules = RuleSet::default();
             rules.insert(RuleWithSeverity {
                 rule: RuleEnum::NoUnusedVars(Default::default()),
                 severity: AllowWarnDeny::Warn,
             });
-            r#override(&mut rules, &config);
+            r#override(&mut rules, config);
 
             assert_eq!(rules.len(), 1, "{config:?}");
             let rule = rules.iter().next().unwrap();
