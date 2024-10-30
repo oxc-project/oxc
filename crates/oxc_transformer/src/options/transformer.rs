@@ -1,13 +1,11 @@
 use std::path::PathBuf;
 
-use serde_json::{json, Value};
-
 use oxc_diagnostics::{Error, OxcDiagnostic};
 
 use crate::{
     common::helper_loader::{HelperLoaderMode, HelperLoaderOptions},
     compiler_assumptions::CompilerAssumptions,
-    env::{can_enable_plugin, EnvOptions, Targets},
+    env::EnvOptions,
     es2015::{ArrowFunctionsOptions, ES2015Options},
     es2016::ES2016Options,
     es2017::options::ES2017Options,
@@ -115,85 +113,47 @@ impl TryFrom<&EnvOptions> for TransformOptions {
     type Error = Vec<Error>;
 
     /// If there are any errors in the `options.targets``, they will be returned as a list of errors.
-    fn try_from(options: &EnvOptions) -> Result<Self, Self::Error> {
-        let targets = Some(&options.targets);
-        let bugfixes = options.bugfixes;
+    fn try_from(o: &EnvOptions) -> Result<Self, Self::Error> {
         Ok(Self {
             regexp: RegExpOptions {
-                sticky_flag: can_enable_plugin("transform-sticky-regex", targets, bugfixes),
-                unicode_flag: can_enable_plugin("transform-unicode-regex", targets, bugfixes),
-                dot_all_flag: can_enable_plugin("transform-dotall-regex", targets, bugfixes),
-                look_behind_assertions: can_enable_plugin(
-                    "esbuild-regexp-lookbehind-assertions",
-                    targets,
-                    bugfixes,
-                ),
-                named_capture_groups: can_enable_plugin(
-                    "transform-named-capturing-groups-regex",
-                    targets,
-                    bugfixes,
-                ),
-                unicode_property_escapes: can_enable_plugin(
-                    "transform-unicode-property-regex",
-                    targets,
-                    bugfixes,
-                ),
-                match_indices: can_enable_plugin("esbuild-regexp-match-indices", targets, bugfixes),
-                set_notation: can_enable_plugin("transform-unicode-sets-regex", targets, bugfixes),
+                sticky_flag: o.can_enable_plugin("transform-sticky-regex"),
+                unicode_flag: o.can_enable_plugin("transform-unicode-regex"),
+                dot_all_flag: o.can_enable_plugin("transform-dotall-regex"),
+                look_behind_assertions: o.can_enable_plugin("esbuild-regexp-lookbehind-assertions"),
+                named_capture_groups: o.can_enable_plugin("transform-named-capturing-groups-regex"),
+                unicode_property_escapes: o.can_enable_plugin("transform-unicode-property-regex"),
+                match_indices: o.can_enable_plugin("esbuild-regexp-match-indices"),
+                set_notation: o.can_enable_plugin("transform-unicode-sets-regex"),
             },
             es2015: ES2015Options {
-                arrow_function: can_enable_plugin("transform-arrow-functions", targets, bugfixes)
+                arrow_function: o
+                    .can_enable_plugin("transform-arrow-functions")
                     .then(Default::default),
             },
             es2016: ES2016Options {
-                exponentiation_operator: can_enable_plugin(
-                    "transform-exponentiation-operator",
-                    targets,
-                    bugfixes,
-                ),
+                exponentiation_operator: o.can_enable_plugin("transform-exponentiation-operator"),
             },
             es2017: ES2017Options {
-                async_to_generator: can_enable_plugin(
-                    "transform-async-to-generator",
-                    targets,
-                    bugfixes,
-                ),
+                async_to_generator: o.can_enable_plugin("transform-async-to-generator"),
             },
             es2018: ES2018Options {
-                object_rest_spread: can_enable_plugin(
-                    "transform-object-rest-spread",
-                    targets,
-                    bugfixes,
-                )
-                .then(Default::default),
+                object_rest_spread: o
+                    .can_enable_plugin("transform-object-rest-spread")
+                    .then(Default::default),
             },
             es2019: ES2019Options {
-                optional_catch_binding: can_enable_plugin(
-                    "transform-optional-catch-binding",
-                    targets,
-                    bugfixes,
-                ),
+                optional_catch_binding: o.can_enable_plugin("transform-optional-catch-binding"),
             },
             es2020: ES2020Options {
-                nullish_coalescing_operator: can_enable_plugin(
-                    "transform-nullish-coalescing-operator",
-                    targets,
-                    bugfixes,
-                ),
+                nullish_coalescing_operator: o
+                    .can_enable_plugin("transform-nullish-coalescing-operator"),
             },
             es2021: ES2021Options {
-                logical_assignment_operators: can_enable_plugin(
-                    "transform-logical-assignment-operators",
-                    targets,
-                    bugfixes,
-                ),
+                logical_assignment_operators: o
+                    .can_enable_plugin("transform-logical-assignment-operators"),
             },
             es2022: ES2022Options {
-                class_static_block: can_enable_plugin(
-                    "transform-class-static-block",
-                    targets,
-                    bugfixes,
-                ),
+                class_static_block: o.can_enable_plugin("transform-class-static-block"),
             },
             ..Default::default()
         })
@@ -216,16 +176,25 @@ impl TryFrom<&BabelOptions> for TransformOptions {
         };
 
         let typescript = if options.has_preset("typescript") {
-            serde_json::from_value::<TypeScriptOptions>(
-                options.get_preset("typescript").flatten().unwrap_or_else(|| json!({})),
-            )
-            .inspect_err(|err| report_error("typescript", err, true, &mut errors))
+            options.get_preset("typescript").and_then(|options| {
+                options
+                    .map(|options| {
+                        serde_json::from_value::<TypeScriptOptions>(options)
+                            .inspect_err(|err| report_error("typescript", err, true, &mut errors))
+                            .ok()
+                    })
+                    .unwrap_or_default()
+            })
         } else {
-            serde_json::from_value::<TypeScriptOptions>(get_plugin_options(
-                "transform-typescript",
-                options,
-            ))
-            .inspect_err(|err| report_error("typescript", err, false, &mut errors))
+            options.get_plugin("transform-typescript").and_then(|options| {
+                options
+                    .map(|options| {
+                        serde_json::from_value::<TypeScriptOptions>(options)
+                            .inspect_err(|err| report_error("typescript", err, false, &mut errors))
+                            .ok()
+                    })
+                    .unwrap_or_default()
+            })
         }
         .unwrap_or_default();
 
@@ -238,11 +207,23 @@ impl TryFrom<&BabelOptions> for TransformOptions {
             let jsx_dev_name = "transform-react-jsx-development";
             let has_jsx_plugin = options.has_plugin(jsx_plugin_name);
             let mut react_options = if has_jsx_plugin {
-                serde_json::from_value::<JsxOptions>(get_plugin_options(jsx_plugin_name, options))
-                    .inspect_err(|err| report_error(jsx_plugin_name, err, false, &mut errors))
+                options.get_plugin(jsx_plugin_name).and_then(|options| {
+                    options.and_then(|options| {
+                        serde_json::from_value::<JsxOptions>(options)
+                            .inspect_err(|err| {
+                                report_error(jsx_plugin_name, err, false, &mut errors);
+                            })
+                            .ok()
+                    })
+                })
             } else {
-                serde_json::from_value::<JsxOptions>(get_plugin_options(jsx_dev_name, options))
-                    .inspect_err(|err| report_error(jsx_dev_name, err, false, &mut errors))
+                options.get_plugin(jsx_dev_name).and_then(|options| {
+                    options.and_then(|options| {
+                        serde_json::from_value::<JsxOptions>(options)
+                            .inspect_err(|err| report_error(jsx_dev_name, err, false, &mut errors))
+                            .ok()
+                    })
+                })
             }
             .unwrap_or_default();
             react_options.development = options.has_plugin(jsx_dev_name);
@@ -253,125 +234,109 @@ impl TryFrom<&BabelOptions> for TransformOptions {
             react_options
         };
 
-        let env = options.get_preset("env").flatten().and_then(|value| {
-            serde_json::from_value::<EnvOptions>(value)
-                .inspect_err(|err| report_error("env", err, true, &mut errors))
-                .ok()
-        });
-
-        let targets = env.as_ref().map(|env| &env.targets);
-
-        let bugfixes = env.as_ref().is_some_and(|o| o.bugfixes);
+        let env = options
+            .get_preset("env")
+            .flatten()
+            .and_then(|value| {
+                serde_json::from_value::<EnvOptions>(value)
+                    .inspect_err(|err| report_error("env", err, true, &mut errors))
+                    .ok()
+            })
+            .and_then(|env_options| Self::try_from(&env_options).ok())
+            .unwrap_or_default();
 
         let regexp = RegExpOptions {
-            sticky_flag: can_enable_plugin("transform-sticky-regex", targets, bugfixes)
-                || options.has_plugin("transform-sticky-regex"),
-            unicode_flag: can_enable_plugin("transform-unicode-regex", targets, bugfixes)
-                || options.has_plugin("transform-unicode-regex"),
-            dot_all_flag: can_enable_plugin("transform-dotall-regex", targets, bugfixes)
-                || options.has_plugin("transform-dotall-regex"),
-            look_behind_assertions: can_enable_plugin(
-                "esbuild-regexp-lookbehind-assertions",
-                targets,
-                bugfixes,
-            ),
-            named_capture_groups: can_enable_plugin(
-                "transform-named-capturing-groups-regex",
-                targets,
-                bugfixes,
-            ) || options.has_plugin("transform-named-capturing-groups-regex"),
-            unicode_property_escapes: can_enable_plugin(
-                "transform-unicode-property-regex",
-                targets,
-                bugfixes,
-            ) || options.has_plugin("transform-unicode-property-regex"),
-            match_indices: can_enable_plugin("esbuild-regexp-match-indices", targets, bugfixes),
-            set_notation: can_enable_plugin("transform-unicode-sets-regex", targets, bugfixes)
+            sticky_flag: env.regexp.sticky_flag || options.has_plugin("transform-sticky-regex"),
+            unicode_flag: env.regexp.unicode_flag || options.has_plugin("transform-unicode-regex"),
+            dot_all_flag: env.regexp.dot_all_flag || options.has_plugin("transform-dotall-regex"),
+            look_behind_assertions: env.regexp.look_behind_assertions,
+            named_capture_groups: env.regexp.named_capture_groups
+                || options.has_plugin("transform-named-capturing-groups-regex"),
+            unicode_property_escapes: env.regexp.unicode_property_escapes
+                || options.has_plugin("transform-unicode-property-regex"),
+            match_indices: env.regexp.match_indices,
+            set_notation: env.regexp.set_notation
                 || options.has_plugin("transform-unicode-sets-regex"),
         };
 
         let es2015 = ES2015Options {
             arrow_function: {
                 let plugin_name = "transform-arrow-functions";
-                get_enabled_plugin_options(plugin_name, options, targets, bugfixes).map(|options| {
-                    serde_json::from_value::<ArrowFunctionsOptions>(options)
-                        .inspect_err(|err| report_error(plugin_name, err, false, &mut errors))
+                options
+                    .get_plugin(plugin_name)
+                    .map(|o| {
+                        o.and_then(|options| {
+                            serde_json::from_value::<ArrowFunctionsOptions>(options)
+                                .inspect_err(|err| {
+                                    report_error(plugin_name, err, false, &mut errors);
+                                })
+                                .ok()
+                        })
                         .unwrap_or_default()
-                })
+                    })
+                    .or(env.es2015.arrow_function)
             },
         };
 
         let es2016 = ES2016Options {
-            exponentiation_operator: get_enabled_plugin_options(
-                "transform-exponentiation-operator",
-                options,
-                targets,
-                bugfixes,
-            )
-            .is_some(),
+            exponentiation_operator: {
+                let plugin_name = "transform-exponentiation-operator";
+                options.get_plugin(plugin_name).is_some() || env.es2016.exponentiation_operator
+            },
         };
 
         let es2017 = ES2017Options {
-            async_to_generator: get_enabled_plugin_options(
-                "transform-async-to-generator",
-                options,
-                targets,
-                bugfixes,
-            )
-            .is_some(),
+            async_to_generator: {
+                let plugin_name = "transform-async-to-generator";
+                options.get_plugin(plugin_name).is_some() || env.es2017.async_to_generator
+            },
         };
 
         let es2018 = ES2018Options {
             object_rest_spread: {
                 let plugin_name = "transform-object-rest-spread";
-                get_enabled_plugin_options(plugin_name, options, targets, bugfixes).map(|options| {
-                    serde_json::from_value::<ObjectRestSpreadOptions>(options)
-                        .inspect_err(|err| report_error(plugin_name, err, false, &mut errors))
+                options
+                    .get_plugin(plugin_name)
+                    .map(|o| {
+                        o.and_then(|options| {
+                            serde_json::from_value::<ObjectRestSpreadOptions>(options)
+                                .inspect_err(|err| {
+                                    report_error(plugin_name, err, false, &mut errors);
+                                })
+                                .ok()
+                        })
                         .unwrap_or_default()
-                })
+                    })
+                    .or(env.es2018.object_rest_spread)
             },
         };
 
         let es2019 = ES2019Options {
             optional_catch_binding: {
-                get_enabled_plugin_options(
-                    "transform-optional-catch-binding",
-                    options,
-                    targets,
-                    bugfixes,
-                )
-                .is_some()
+                let plugin_name = "transform-optional-catch-binding";
+                options.get_plugin(plugin_name).is_some() || env.es2019.optional_catch_binding
             },
         };
 
         let es2020 = ES2020Options {
-            nullish_coalescing_operator: get_enabled_plugin_options(
-                "transform-nullish-coalescing-operator",
-                options,
-                targets,
-                bugfixes,
-            )
-            .is_some(),
+            nullish_coalescing_operator: {
+                let plugin_name = "transform-nullish-coalescing-operator";
+                options.get_plugin(plugin_name).is_some() || env.es2020.nullish_coalescing_operator
+            },
         };
 
         let es2021 = ES2021Options {
-            logical_assignment_operators: get_enabled_plugin_options(
-                "transform-logical-assignment-operators",
-                options,
-                targets,
-                bugfixes,
-            )
-            .is_some(),
+            logical_assignment_operators: {
+                let plugin_name = "transform-logical-assignment-operators";
+                options.get_plugin(plugin_name).is_some() || env.es2021.logical_assignment_operators
+            },
         };
 
         let es2022 = ES2022Options {
-            class_static_block: get_enabled_plugin_options(
-                "transform-class-static-block",
-                options,
-                targets,
-                bugfixes,
-            )
-            .is_some(),
+            class_static_block: {
+                let plugin_name = "transform-class-static-block";
+                options.get_plugin(plugin_name).is_some() || env.es2022.class_static_block
+            },
         };
 
         if !errors.is_empty() {
@@ -403,26 +368,6 @@ impl TryFrom<&BabelOptions> for TransformOptions {
             es2022,
             helper_loader,
         })
-    }
-}
-
-fn get_plugin_options(name: &str, babel_options: &BabelOptions) -> Value {
-    babel_options.get_plugin(name).and_then(|options| options).unwrap_or_else(|| json!({}))
-}
-
-fn get_enabled_plugin_options(
-    plugin_name: &str,
-    babel_options: &BabelOptions,
-    targets: Option<&Targets>,
-    bugfixes: bool,
-) -> Option<Value> {
-    let can_enable =
-        can_enable_plugin(plugin_name, targets, bugfixes) || babel_options.has_plugin(plugin_name);
-
-    if can_enable {
-        get_plugin_options(plugin_name, babel_options).into()
-    } else {
-        None
     }
 }
 

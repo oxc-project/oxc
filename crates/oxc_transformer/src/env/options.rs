@@ -1,7 +1,6 @@
 use serde::Deserialize;
-use serde_json::Value;
 
-use crate::env::Targets;
+use crate::env::{bugfix_features, features, Targets};
 
 fn default_as_true() -> bool {
     true
@@ -23,22 +22,22 @@ pub struct EnvOptions {
     pub loose: bool,
 
     #[deprecated = "Not Implemented"]
-    pub modules: Option<Value>,
+    pub modules: Option<serde_json::Value>,
 
     #[deprecated = "Not Implemented"]
     pub debug: bool,
 
     #[deprecated = "Not Implemented"]
-    pub include: Option<Value>,
+    pub include: Option<serde_json::Value>,
 
     #[deprecated = "Not Implemented"]
-    pub exclude: Option<Value>,
+    pub exclude: Option<serde_json::Value>,
 
     #[deprecated = "Not Implemented"]
-    pub use_built_ins: Option<Value>,
+    pub use_built_ins: Option<serde_json::Value>,
 
     #[deprecated = "Not Implemented"]
-    pub corejs: Option<Value>,
+    pub corejs: Option<serde_json::Value>,
 
     #[deprecated = "Not Implemented"]
     pub force_all_transforms: bool,
@@ -51,4 +50,15 @@ pub struct EnvOptions {
 
     #[deprecated = "Not Implemented"]
     pub shipped_proposals: bool,
+}
+
+impl EnvOptions {
+    pub fn can_enable_plugin(&self, plugin_name: &str) -> bool {
+        let versions = if self.bugfixes {
+            bugfix_features().get(plugin_name).unwrap_or_else(|| &features()[plugin_name])
+        } else {
+            &features()[plugin_name]
+        };
+        self.targets.should_enable(versions)
+    }
 }

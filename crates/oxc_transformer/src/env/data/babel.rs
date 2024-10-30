@@ -5,7 +5,7 @@ use rustc_hash::FxHashMap;
 use crate::env::{Targets, Version};
 
 /// Reference: <https://github.com/swc-project/swc/blob/ea14fc8e5996dcd736b8deb4cc99262d07dfff44/crates/swc_ecma_preset_env/src/transform_data.rs#L194-L218>
-fn features() -> &'static FxHashMap<String, Targets> {
+pub fn features() -> &'static FxHashMap<String, Targets> {
     static FEATURES: OnceLock<FxHashMap<String, Targets>> = OnceLock::new();
     FEATURES.get_or_init(|| {
         let mut map: FxHashMap<String, FxHashMap<String, String>> =
@@ -39,7 +39,7 @@ fn features() -> &'static FxHashMap<String, Targets> {
 }
 
 /// Reference: <https://github.com/swc-project/swc/blob/ea14fc8e5996dcd736b8deb4cc99262d07dfff44/crates/swc_ecma_preset_env/src/transform_data.rs#L220-L237>
-fn bugfix_features() -> &'static FxHashMap<String, Targets> {
+pub fn bugfix_features() -> &'static FxHashMap<String, Targets> {
     static BUGFIX_FEATURES: OnceLock<FxHashMap<String, Targets>> = OnceLock::new();
     BUGFIX_FEATURES.get_or_init(|| {
         let map = serde_json::from_str::<FxHashMap<String, Targets>>(include_str!(
@@ -48,13 +48,4 @@ fn bugfix_features() -> &'static FxHashMap<String, Targets> {
         .unwrap();
         features().clone().into_iter().chain(map).collect()
     })
-}
-
-pub fn can_enable_plugin(name: &str, targets: Option<&Targets>, bugfixes: bool) -> bool {
-    let versions = if bugfixes {
-        bugfix_features().get(name).unwrap_or_else(|| &features()[name])
-    } else {
-        &features()[name]
-    };
-    targets.is_some_and(|v| v.should_enable(versions))
 }
