@@ -1,5 +1,6 @@
 use crate::context::ContextHost;
 use crate::{context::LintContext, rule::Rule, AstNode};
+use lazy_static::lazy_static;
 use oxc_ast::ast::JSXAttributeItem;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
@@ -16,7 +17,10 @@ fn jsx_no_script_url_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-const IS_JAVA_SCRIPT_PROTOCOL: &str = r"(j|J)[\r\n\t]*(a|A)[\r\n\t]*(v|V)[\r\n\t]*(a|A)[\r\n\t]*(s|S)[\r\n\t]*(c|C)[\r\n\t]*(r|R)[\r\n\t]*(i|I)[\r\n\t]*(p|P)[\r\n\t]*(t|T)[\r\n\t]*:";
+lazy_static! {
+    static ref JS_SCRIPT_REGEX: Regex =
+        Regex::new(r"(j|J)[\r\n\t]*(a|A)[\r\n\t]*(v|V)[\r\n\t]*(a|A)[\r\n\t]*(s|S)[\r\n\t]*(c|C)[\r\n\t]*(r|R)[\r\n\t]*(i|I)[\r\n\t]*(p|P)[\r\n\t]*(t|T)[\r\n\t]*:").unwrap();
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct JsxNoScriptUrl(Box<JsxNoScriptUrlConfig>);
@@ -62,7 +66,7 @@ declare_oxc_lint!(
     pending
 );
 
-fn check_is_link_attribute(tag_name: &str, prop_value_literal: String, ctx: &LintContext) -> bool {
+fn is_link_attribute(tag_name: &str, prop_value_literal: String, ctx: &LintContext) -> bool {
     tag_name == "a"
         || ctx.settings().react.get_link_component_attrs(tag_name).is_some_and(
             |link_component_attrs| {
@@ -72,7 +76,7 @@ fn check_is_link_attribute(tag_name: &str, prop_value_literal: String, ctx: &Lin
 }
 
 impl JsxNoScriptUrl {
-    fn check_is_link(&self, tag_name: &str, ctx: &LintContext) -> bool {
+    fn is_link_tag(&self, tag_name: &str, ctx: &LintContext) -> bool {
         if !self.include_from_settings {
             return tag_name == "a";
         }
@@ -96,27 +100,25 @@ impl Rule for JsxNoScriptUrl {
                             return;
                         };
                         if prop_value.as_string_literal().is_some_and(|val| {
-                            let re = Regex::new(IS_JAVA_SCRIPT_PROTOCOL).unwrap();
                             link_props.contains(&attr.name.get_identifier().name.to_string())
-                                && re.captures(&val.value).is_some()
+                                && JS_SCRIPT_REGEX.captures(&val.value).is_some()
                         }) {
                             ctx.diagnostic(jsx_no_script_url_diagnostic(attr.span()));
                         }
                     }
                 }
-            } else if self.check_is_link(component_name.as_str(), ctx) {
+            } else if self.is_link_tag(component_name.as_str(), ctx) {
                 for jsx_attribute in &element.attributes {
                     if let JSXAttributeItem::Attribute(attr) = jsx_attribute {
                         let Some(prop_value) = &attr.value else {
                             return;
                         };
                         if prop_value.as_string_literal().is_some_and(|val| {
-                            let re = Regex::new(IS_JAVA_SCRIPT_PROTOCOL).unwrap();
-                            check_is_link_attribute(
+                            is_link_attribute(
                                 component_name.as_str(),
                                 attr.name.get_identifier().name.to_string(),
                                 ctx,
-                            ) && re.captures(&val.value).is_some()
+                            ) && JS_SCRIPT_REGEX.captures(&val.value).is_some()
                         }) {
                             ctx.diagnostic(jsx_no_script_url_diagnostic(attr.span()));
                         }
