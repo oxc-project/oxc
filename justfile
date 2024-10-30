@@ -43,7 +43,10 @@ install-hook:
   chmod +x .git/hooks/pre-commit
 
 watch *args='':
-  watchexec {{args}}
+  watchexec --no-vcs-ignore {{args}}
+
+watch-check:
+  just watch "'cargo check; cargo clippy'"
 
 # Run the example in `parser`, `formatter`, `linter`
 example tool *args='':
