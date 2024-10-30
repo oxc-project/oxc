@@ -3,7 +3,7 @@ commit: d20b314c
 parser_babel Summary:
 AST Parsed     : 2126/2136 (99.53%)
 Positive Passed: 2116/2136 (99.06%)
-Negative Passed: 1385/1500 (92.33%)
+Negative Passed: 1387/1500 (92.47%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.1-sloppy-labeled-functions-if-body/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-if/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-loop/input.js
@@ -49,9 +49,7 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/invalid-modifiers-order/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/method-readonly/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-incompatible/input.ts
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-index-signatures/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-invalid-order/input.ts
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-override-errors/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-binding-patterns/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/private-fields-modifier-abstract/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/function/input.ts
@@ -10215,6 +10213,54 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │   constructor(private, public, static) {
    ·                                ──────
  3 │   }
+   ╰────
+
+  × TS(1071): 'abstract' modifier cannot appear on an index signature.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-index-signatures/input.ts:2:3]
+ 1 │ class C {
+ 2 │   abstract [key: string]: string;
+   ·   ────────
+ 3 │   declare [key: string]: string;
+   ╰────
+
+  × TS(1071): 'declare' modifier cannot appear on an index signature.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-index-signatures/input.ts:3:3]
+ 2 │   abstract [key: string]: string;
+ 3 │   declare [key: string]: string;
+   ·   ───────
+ 4 │   private [key: string]: string;
+   ╰────
+
+  × TS(1071): 'private' modifier cannot appear on an index signature.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-index-signatures/input.ts:4:3]
+ 3 │   declare [key: string]: string;
+ 4 │   private [key: string]: string;
+   ·   ───────
+ 5 │   public [key: string]: string;
+   ╰────
+
+  × TS(1071): 'public' modifier cannot appear on an index signature.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-index-signatures/input.ts:5:3]
+ 4 │   private [key: string]: string;
+ 5 │   public [key: string]: string;
+   ·   ──────
+ 6 │   protected [key: string]: string;
+   ╰────
+
+  × TS(1071): 'protected' modifier cannot appear on an index signature.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-index-signatures/input.ts:6:3]
+ 5 │   public [key: string]: string;
+ 6 │   protected [key: string]: string;
+   ·   ─────────
+ 7 │ }
+   ╰────
+
+  × TS(1071): 'override' modifier cannot appear on an index signature.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-override-errors/input.ts:3:3]
+ 2 │   override constructor() {}
+ 3 │   override [x: string]: any;
+   ·   ────────
+ 4 │ }
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none

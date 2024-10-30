@@ -1267,16 +1267,51 @@ impl<'a> ParserImpl<'a> {
         ))
     }
 
+    pub(crate) fn parse_index_signature_declaration(
+        &mut self,
+        span: Span,
+        modifiers: &Modifiers<'a>,
+    ) -> Result<Box<'a, TSIndexSignature<'a>>> {
+        self.verify_modifiers(
+            modifiers,
+            ModifierFlags::READONLY | ModifierFlags::STATIC,
+            diagnostics::cannot_appear_on_an_index_signature,
+        );
+        self.bump(Kind::LBrack);
+        let parameters = self.ast.vec1(self.parse_ts_index_signature_name()?);
+        self.expect(Kind::RBrack)?;
+        let Some(type_annotation) = self.parse_ts_type_annotation()? else {
+            return Err(self.unexpected());
+        };
+        self.parse_type_member_semicolon();
+        Ok(self.ast.alloc_ts_index_signature(
+            self.end_span(span),
+            parameters,
+            type_annotation,
+            modifiers.contains(ModifierKind::Readonly),
+            modifiers.contains(ModifierKind::Static),
+        ))
+    }
+
+    fn parse_type_member_semicolon(&mut self) {
+        // We allow type members to be separated by commas or (possibly ASI) semicolons.
+        // First check if it was a comma.  If so, we're done with the member.
+        if self.eat(Kind::Comma) {
+            return;
+        }
+        // Didn't have a comma.  We must have a (possible ASI) semicolon.
+        self.bump(Kind::Semicolon);
+    }
+
     pub(crate) fn parse_ts_index_signature_member(&mut self) -> Result<TSSignature<'a>> {
         let span = self.start_span();
 
         let modifiers = self.parse_class_element_modifiers(false);
         self.verify_modifiers(
             &modifiers,
-            ModifierFlags::READONLY,
+            ModifierFlags::READONLY | ModifierFlags::STATIC,
             diagnostics::cannot_appear_on_an_index_signature,
         );
-        let readonly = modifiers.contains(ModifierKind::Readonly);
 
         self.bump(Kind::LBrack);
         let index_name = self.parse_ts_index_signature_name()?;
@@ -1285,18 +1320,16 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::RBrack)?;
 
         let type_annotation = self.parse_ts_type_annotation()?;
-        if let Some(type_annotation) = type_annotation {
-            self.bump(Kind::Comma);
-            self.bump(Kind::Semicolon);
-            Ok(self.ast.ts_signature_index_signature(
-                self.end_span(span),
-                parameters,
-                type_annotation,
-                readonly,
-            ))
-        } else {
-            Err(self.unexpected())
-        }
+        let Some(type_annotation) = type_annotation else { return Err(self.unexpected()) };
+        self.bump(Kind::Comma);
+        self.bump(Kind::Semicolon);
+        Ok(self.ast.ts_signature_index_signature(
+            self.end_span(span),
+            parameters,
+            type_annotation,
+            modifiers.contains(ModifierKind::Readonly),
+            modifiers.contains(ModifierKind::Static),
+        ))
     }
 
     fn parse_ts_index_signature_name(&mut self) -> Result<TSIndexSignatureName<'a>> {

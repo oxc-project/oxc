@@ -984,6 +984,7 @@ pub struct TSIndexSignature<'a> {
     pub parameters: Vec<'a, TSIndexSignatureName<'a>>,
     pub type_annotation: Box<'a, TSTypeAnnotation<'a>>,
     pub readonly: bool,
+    pub r#static: bool,
 }
 
 #[ast(visit)]
