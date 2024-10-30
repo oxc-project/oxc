@@ -56,7 +56,7 @@ fn main() {
 
     let transform_options = if let Some(targets) = &targets {
         TransformOptions::try_from(&EnvOptions {
-            targets: Targets::from_query(targets),
+            targets: Targets::try_from_query(targets).unwrap(),
             ..EnvOptions::default()
         })
         .unwrap()

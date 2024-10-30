@@ -1,7 +1,7 @@
 use serde::Deserialize;
 use serde_json::Value;
 
-use super::targets::query::Targets;
+use crate::env::Targets;
 
 fn default_as_true() -> bool {
     true

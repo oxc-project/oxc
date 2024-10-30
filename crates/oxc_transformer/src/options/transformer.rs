@@ -7,7 +7,7 @@ use oxc_diagnostics::{Error, OxcDiagnostic};
 use crate::{
     common::helper_loader::{HelperLoaderMode, HelperLoaderOptions},
     compiler_assumptions::CompilerAssumptions,
-    env::{can_enable_plugin, EnvOptions, Versions},
+    env::{can_enable_plugin, EnvOptions, Targets},
     es2015::{ArrowFunctionsOptions, ES2015Options},
     es2016::ES2016Options,
     es2017::options::ES2017Options,
@@ -116,12 +116,8 @@ impl TryFrom<&EnvOptions> for TransformOptions {
 
     /// If there are any errors in the `options.targets``, they will be returned as a list of errors.
     fn try_from(options: &EnvOptions) -> Result<Self, Self::Error> {
-        let targets = match options.targets.clone().get_targets() {
-            Ok(targets) => Some(targets),
-            Err(err) => return Err(vec![err]),
-        };
+        let targets = Some(&options.targets);
         let bugfixes = options.bugfixes;
-        let targets = targets.as_ref();
         Ok(Self {
             regexp: RegExpOptions {
                 sticky_flag: can_enable_plugin("transform-sticky-regex", targets, bugfixes),
@@ -263,17 +259,9 @@ impl TryFrom<&BabelOptions> for TransformOptions {
                 .ok()
         });
 
-        let targets = env.as_ref().and_then(|env| {
-            env.targets
-                .clone()
-                .get_targets()
-                .inspect_err(|err| errors.push(OxcDiagnostic::error(err.to_string()).into()))
-                .ok()
-        });
+        let targets = env.as_ref().map(|env| &env.targets);
 
         let bugfixes = env.as_ref().is_some_and(|o| o.bugfixes);
-
-        let targets = targets.as_ref();
 
         let regexp = RegExpOptions {
             sticky_flag: can_enable_plugin("transform-sticky-regex", targets, bugfixes)
@@ -425,7 +413,7 @@ fn get_plugin_options(name: &str, babel_options: &BabelOptions) -> Value {
 fn get_enabled_plugin_options(
     plugin_name: &str,
     babel_options: &BabelOptions,
-    targets: Option<&Versions>,
+    targets: Option<&Targets>,
     bugfixes: bool,
 ) -> Option<Value> {
     let can_enable =

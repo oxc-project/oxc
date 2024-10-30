@@ -5,24 +5,27 @@
 //!
 //! This file is copied from <https://github.com/swc-project/swc/blob/ea14fc8e5996dcd736b8deb4cc99262d07dfff44/crates/preset_env_base/src/lib.rs>
 
-use std::ops::{Deref, DerefMut};
+use std::{ops::Deref, str::FromStr};
 
+use oxc_diagnostics::Error;
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
 pub mod query;
 pub mod version;
-pub use query::Targets;
-use version::Version;
+
+pub use query::Query;
+pub use version::Version;
 
 /// A map of browser names to data for feature support in browser.
 ///
 /// This type mainly stores `minimum version for each browsers with support for
 /// a feature`.
-#[derive(Debug, Clone, Default, Deserialize)]
-pub struct Versions(pub FxHashMap<String, Version>);
+#[derive(Debug, Default, Clone, Deserialize)]
+#[serde(try_from = "BabelTargets")] // https://github.com/serde-rs/serde/issues/642#issuecomment-683276351
+pub struct Targets(FxHashMap<String, Version>);
 
-impl Deref for Versions {
+impl Deref for Targets {
     type Target = FxHashMap<String, Version>;
 
     fn deref(&self) -> &Self::Target {
@@ -30,19 +33,24 @@ impl Deref for Versions {
     }
 }
 
-impl DerefMut for Versions {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
+impl Targets {
+    pub fn new(map: FxHashMap<String, Version>) -> Self {
+        Self(map)
     }
-}
 
-impl Versions {
+    /// # Errors
+    ///
+    /// * Query is invalid.
+    pub fn try_from_query(query: &str) -> Result<Self, oxc_diagnostics::Error> {
+        Query::Single(query.to_string()).exec().map(|v| v.0).map(Self)
+    }
+
     /// Returns true if all fields are [None].
     pub fn is_any_target(&self) -> bool {
         self.0.is_empty()
     }
 
-    /// Parses the value returned from `browserslist` as [Versions].
+    /// Parses the value returned from `browserslist`.
     pub fn parse_versions(distribs: Vec<browserslist::Distrib>) -> Self {
         fn remap(key: &str) -> &str {
             match key {
@@ -55,7 +63,7 @@ impl Versions {
             }
         }
 
-        let mut data: Versions = Versions::default();
+        let mut data = FxHashMap::default();
         for dist in distribs {
             let browser = dist.name();
             let browser = remap(browser);
@@ -78,11 +86,11 @@ impl Versions {
             }
         }
 
-        data
+        Self(data)
     }
 
-    pub fn should_enable(&self, feature: &Versions) -> bool {
-        self.iter().any(|(target_name, target_version)| {
+    pub fn should_enable(&self, feature: &Targets) -> bool {
+        self.0.iter().any(|(target_name, target_version)| {
             feature
                 .get(target_name)
                 .or_else(|| match target_name.as_str() {
@@ -97,16 +105,78 @@ impl Versions {
     }
 }
 
+/// <https://babel.dev/docs/babel-preset-env#targets>
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum BabelTargets {
+    String(String),
+    Array(Vec<String>),
+    /// For Deserializing
+    /// * `esmodules`: `boolean`
+    /// * `node`: `string | "current" | true`
+    /// * `safari`: `string | "tp"`
+    /// * `browsers`: `string | Array<string>.`
+    /// * `deno`: `string`
+    Map(FxHashMap<String, BabelTargetsValue>),
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum BabelTargetsValue {
+    String(String),
+    Array(Vec<String>),
+    Bool(bool),
+    Int(u32),
+    Float(f64),
+}
+
+impl TryFrom<BabelTargets> for Targets {
+    type Error = Error;
+    fn try_from(value: BabelTargets) -> Result<Self, Self::Error> {
+        match value {
+            BabelTargets::String(s) => Query::Single(s).exec().map(|v| v.0).map(Self),
+            BabelTargets::Array(v) => Query::Multiple(v).exec().map(|v| v.0).map(Self),
+            BabelTargets::Map(map) => {
+                let mut new_map = FxHashMap::default();
+                for (k, v) in map {
+                    // TODO: Implement these targets.
+                    if matches!(k.as_str(), "esmodules" | "node" | "safari" | "browsers" | "deno") {
+                        continue;
+                    }
+                    // TODO: Implement `Version::from_number`
+                    if matches!(v, BabelTargetsValue::Int(_) | BabelTargetsValue::Float(_)) {
+                        continue;
+                    };
+                    let BabelTargetsValue::String(v) = v else {
+                        return Err(Error::msg(format!("{v:?} is not a string for {k}.")));
+                    };
+                    match Version::from_str(&v) {
+                        Ok(v) => {
+                            new_map.insert(k, v);
+                        }
+                        Err(()) => {
+                            return Err(oxc_diagnostics::Error::msg(format!(
+                                "Failed to parse `{v}` for `{k}`"
+                            )))
+                        }
+                    }
+                }
+                Ok(Self(new_map))
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::env::{targets::version::Version, Versions};
+    use crate::env::{targets::version::Version, Targets};
 
     #[test]
     fn should_enable_android_falls_back_to_chrome() {
-        let mut targets = Versions::default();
-        targets.insert("android".to_string(), "51.0.0".parse::<Version>().unwrap());
-        let mut feature = Versions::default();
-        feature.insert("chrome".to_string(), "51.0.0".parse::<Version>().unwrap());
+        let mut targets = Targets::default();
+        targets.0.insert("android".to_string(), "51.0.0".parse::<Version>().unwrap());
+        let mut feature = Targets::default();
+        feature.0.insert("chrome".to_string(), "51.0.0".parse::<Version>().unwrap());
         assert!(!targets.should_enable(&feature));
     }
 }

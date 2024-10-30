@@ -1,6 +1,6 @@
 commit: d20b314c
 
-Passed: 357/1058
+Passed: 361/1058
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -12,7 +12,7 @@ Passed: 357/1058
 * babel-plugin-transform-react-jsx-source
 
 
-# babel-preset-env (110/585)
+# babel-preset-env (114/585)
 * .plugins-overlapping/chrome-49/input.js
 x Output mismatch
 
@@ -23,10 +23,10 @@ x Output mismatch
 x Output mismatch
 
 * bugfixes/_esmodules/input.js
-Targets: The `esmodules` is not supported
+x Output mismatch
 
 * bugfixes/_esmodules-no-bugfixes/input.js
-Targets: The `esmodules` is not supported
+x Output mismatch
 
 * bugfixes/edge-default-params-chrome-40/input.js
 x Output mismatch
@@ -170,7 +170,7 @@ x Output mismatch
 x Output mismatch
 
 * corejs2-babel-7/usage-browserslist-config-ignore/input.mjs
-Targets: The `esmodules` is not supported
+x Output mismatch
 
 * corejs2-babel-7/usage-destructuring-assignment/input.mjs
 x Output mismatch
@@ -401,7 +401,7 @@ x Output mismatch
 x Output mismatch
 
 * corejs3/usage-browserslist-config-ignore/input.mjs
-Targets: The `esmodules` is not supported
+x Output mismatch
 
 * corejs3/usage-determanated-instance-methods/input.mjs
 x Output mismatch
@@ -614,7 +614,7 @@ x Output mismatch
 x Output mismatch
 
 * corejs3-babel-7/usage-browserslist-config-ignore/input.mjs
-Targets: The `esmodules` is not supported
+x Output mismatch
 
 * corejs3-babel-7/usage-built-in-from-global-object/input.mjs
 x Output mismatch
@@ -1280,7 +1280,7 @@ x Output mismatch
 x Output mismatch
 
 * preset-options/browserslist-defaults-not-ie/input.mjs
-Targets: node `current` is not supported
+x Output mismatch
 
 * preset-options/deno-1_0/input.mjs
 x Output mismatch
@@ -1293,9 +1293,6 @@ x Output mismatch
 
 * preset-options/empty-options/input.mjs
 x Output mismatch
-
-* preset-options/esmodules-async-functions/input.mjs
-Targets: The `esmodules` is not supported
 
 * preset-options/include/input.mjs
 x Output mismatch
@@ -1324,9 +1321,6 @@ x Output mismatch
 * preset-options/safari-tagged-template-literals/input.js
 x Output mismatch
 
-* preset-options/safari-tp/input.js
-failed to resolve query: failed to parse the rest of input: ...''
-
 * preset-options/unicode-property-regex-chrome-49/input.js
 x Output mismatch
 
@@ -1343,7 +1337,7 @@ x Output mismatch
 x Output mismatch
 
 * preset-options-babel-7/browserslist-defaults-not-ie/input.mjs
-Targets: node `current` is not supported
+x Output mismatch
 
 * preset-options-babel-7/deno-1_0/input.mjs
 x Output mismatch
@@ -1358,7 +1352,7 @@ x Output mismatch
 x Output mismatch
 
 * preset-options-babel-7/esmodules-async-functions/input.mjs
-Targets: The `esmodules` is not supported
+x Output mismatch
 
 * preset-options-babel-7/include/input.mjs
 x Output mismatch
@@ -1399,9 +1393,6 @@ x Output mismatch
 * preset-options-babel-7/safari-tagged-template-literals/input.js
 x Output mismatch
 
-* preset-options-babel-7/safari-tp/input.js
-failed to resolve query: failed to parse the rest of input: ...''
-
 * preset-options-babel-7/shippedProposals/input.js
 x Output mismatch
 
@@ -1430,9 +1421,6 @@ x Output mismatch
 x Output mismatch
 
 * shipped-proposals/new-class-features-chrome-90/input.js
-x Output mismatch
-
-* shipped-proposals/new-class-features-chrome-94/input.js
 x Output mismatch
 
 * shipped-proposals/new-class-features-firefox-70/input.js
