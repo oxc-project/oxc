@@ -242,7 +242,7 @@ impl Oxc {
         }
 
         if run_options.transform.unwrap_or_default() {
-            if let Ok(options) = TransformOptions::from_preset_env(&EnvOptions {
+            if let Ok(options) = TransformOptions::try_from(&EnvOptions {
                 targets: Targets::from_query("chrome 51"),
                 ..EnvOptions::default()
             }) {

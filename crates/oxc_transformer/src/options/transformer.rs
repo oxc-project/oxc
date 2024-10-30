@@ -109,16 +109,18 @@ impl TransformOptions {
             },
         }
     }
+}
 
-    /// # Errors
-    ///
+impl TryFrom<&EnvOptions> for TransformOptions {
+    type Error = Vec<Error>;
+
     /// If there are any errors in the `options.targets``, they will be returned as a list of errors.
-    pub fn from_preset_env(env_options: &EnvOptions) -> Result<Self, Vec<Error>> {
-        let targets = match env_options.targets.clone().get_targets() {
+    fn try_from(options: &EnvOptions) -> Result<Self, Self::Error> {
+        let targets = match options.targets.clone().get_targets() {
             Ok(targets) => Some(targets),
             Err(err) => return Err(vec![err]),
         };
-        let bugfixes = env_options.bugfixes;
+        let bugfixes = options.bugfixes;
         let targets = targets.as_ref();
         Ok(Self {
             regexp: RegExpOptions {
@@ -200,11 +202,13 @@ impl TransformOptions {
             ..Default::default()
         })
     }
+}
 
-    /// # Errors
-    ///
+impl TryFrom<&BabelOptions> for TransformOptions {
+    type Error = Vec<Error>;
+
     /// If the `options` contains any unknown fields, they will be returned as a list of errors.
-    pub fn from_babel_options(options: &BabelOptions) -> Result<Self, Vec<Error>> {
+    fn try_from(options: &BabelOptions) -> Result<Self, Self::Error> {
         let mut errors = Vec::<Error>::new();
 
         let assumptions = if options.assumptions.is_null() {
@@ -447,7 +451,7 @@ fn test_deny_unknown_fields() {
         "sourceType": "module"
     });
     let babel_options = serde_json::from_value::<BabelOptions>(options).unwrap();
-    let result = TransformOptions::from_babel_options(&babel_options);
+    let result = TransformOptions::try_from(&babel_options);
     assert!(result.is_err());
     let err_message =
         result.err().unwrap().iter().map(ToString::to_string).collect::<Vec<_>>().join("\n");

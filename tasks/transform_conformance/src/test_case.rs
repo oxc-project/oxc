@@ -84,10 +84,6 @@ impl TestCaseKind {
     }
 }
 
-fn transform_options(options: &BabelOptions) -> Result<TransformOptions, Vec<Error>> {
-    TransformOptions::from_babel_options(options)
-}
-
 pub trait TestCase {
     fn new(cwd: &Path, path: &Path) -> Self;
 
@@ -197,7 +193,7 @@ impl TestCase for ConformanceTestCase {
     fn new(cwd: &Path, path: &Path) -> Self {
         let mut options = BabelOptions::from_test_path(path.parent().unwrap());
         options.cwd.replace(cwd.to_path_buf());
-        let transform_options = transform_options(&options);
+        let transform_options = TransformOptions::try_from(&options);
         Self { path: path.to_path_buf(), options, transform_options, errors: vec![] }
     }
 
@@ -416,7 +412,7 @@ impl TestCase for ExecTestCase {
     fn new(cwd: &Path, path: &Path) -> Self {
         let mut options = BabelOptions::from_test_path(path.parent().unwrap());
         options.cwd.replace(cwd.to_path_buf());
-        let transform_options = transform_options(&options);
+        let transform_options = TransformOptions::try_from(&options);
         Self { path: path.to_path_buf(), options, transform_options, errors: vec![] }
     }
 

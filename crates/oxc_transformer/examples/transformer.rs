@@ -55,7 +55,7 @@ fn main() {
     let (symbols, scopes) = ret.semantic.into_symbol_table_and_scope_tree();
 
     let transform_options = if let Some(targets) = &targets {
-        TransformOptions::from_preset_env(&EnvOptions {
+        TransformOptions::try_from(&EnvOptions {
             targets: Targets::from_query(targets),
             ..EnvOptions::default()
         })
