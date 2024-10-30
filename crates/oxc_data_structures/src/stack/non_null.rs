@@ -13,6 +13,7 @@ use std::{cmp::Ordering, ptr::NonNull as NativeNonNull};
 /// a lint warning when that happens.
 /// Then this module can be deleted, and all uses of this type can be switched to `std::ptr::NonNull`.
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct NonNull<T>(NativeNonNull<T>);
 
 #[cfg(clippy)]
