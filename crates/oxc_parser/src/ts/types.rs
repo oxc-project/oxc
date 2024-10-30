@@ -1137,8 +1137,7 @@ impl<'a> ParserImpl<'a> {
         let type_parameters = self.parse_ts_type_parameters()?;
         let (this_param, params) = self.parse_formal_parameters(FormalParameterKind::Signature)?;
         let return_type = self.parse_ts_return_type_annotation(Kind::Colon, false)?;
-        self.bump(Kind::Comma);
-        self.bump(Kind::Semicolon);
+        self.parse_type_member_semicolon();
         Ok(self.ast.ts_signature_call_signature_declaration(
             self.end_span(span),
             type_parameters,
@@ -1154,8 +1153,7 @@ impl<'a> ParserImpl<'a> {
         let (key, computed) = self.parse_property_name()?;
         let (this_param, params) = self.parse_formal_parameters(FormalParameterKind::Signature)?;
         let return_type = self.parse_ts_return_type_annotation(Kind::Colon, false)?;
-        self.bump(Kind::Comma);
-        self.bump(Kind::Semicolon);
+        self.parse_type_member_semicolon();
         Ok(self.ast.ts_signature_method_signature(
             self.end_span(span),
             key,
@@ -1175,8 +1173,7 @@ impl<'a> ParserImpl<'a> {
         let (key, computed) = self.parse_property_name()?;
         let (this_param, params) = self.parse_formal_parameters(FormalParameterKind::Signature)?;
         let return_type = self.parse_ts_return_type_annotation(Kind::Colon, false)?;
-        self.bump(Kind::Comma);
-        self.bump(Kind::Semicolon);
+        self.parse_type_member_semicolon();
         if let Some(return_type) = return_type.as_ref() {
             self.error(diagnostics::a_set_accessor_cannot_have_a_return_type_annotation(
                 return_type.span,
@@ -1214,8 +1211,7 @@ impl<'a> ParserImpl<'a> {
             else {
                 unreachable!()
             };
-            self.bump(Kind::Comma);
-            self.bump(Kind::Semicolon);
+            self.parse_type_member_semicolon();
             let call_signature = call_signature.unbox();
             Ok(self.ast.ts_signature_method_signature(
                 self.end_span(span),
@@ -1230,8 +1226,7 @@ impl<'a> ParserImpl<'a> {
             ))
         } else {
             let type_annotation = self.parse_ts_type_annotation()?;
-            self.bump(Kind::Comma);
-            self.bump(Kind::Semicolon);
+            self.parse_type_member_semicolon();
             Ok(self.ast.ts_signature_property_signature(
                 self.end_span(span),
                 computed,
@@ -1256,8 +1251,7 @@ impl<'a> ParserImpl<'a> {
         }
 
         let return_type = self.parse_ts_return_type_annotation(Kind::Colon, false)?;
-        self.bump(Kind::Comma);
-        self.bump(Kind::Semicolon);
+        self.parse_type_member_semicolon();
 
         Ok(self.ast.ts_signature_construct_signature_declaration(
             self.end_span(span),
