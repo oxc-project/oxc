@@ -1,9 +1,7 @@
 use serde::Deserialize;
 use serde_json::Value;
 
-use oxc_diagnostics::Error;
-
-use super::targets::{query::Targets, Versions};
+use super::targets::query::Targets;
 
 fn default_as_true() -> bool {
     true
@@ -53,12 +51,4 @@ pub struct EnvOptions {
 
     #[deprecated = "Not Implemented"]
     pub shipped_proposals: bool,
-}
-
-impl EnvOptions {
-    /// # Errors
-    ///
-    pub fn get_targets(&self) -> Result<Versions, Error> {
-        self.targets.clone().get_targets()
-    }
 }

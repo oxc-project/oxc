@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use serde_json::{from_value, json, Value};
+use serde_json::{json, Value};
 
 use oxc_diagnostics::{Error, OxcDiagnostic};
 
@@ -110,36 +110,95 @@ impl TransformOptions {
         }
     }
 
-    fn from_targets_and_bugfixes(targets: Option<&Versions>, bugfixes: bool) -> Self {
-        Self {
-            es2015: ES2015Options::from_targets_and_bugfixes(targets, bugfixes),
-            es2016: ES2016Options::from_targets_and_bugfixes(targets, bugfixes),
-            es2017: ES2017Options::from_targets_and_bugfixes(targets, bugfixes),
-            es2018: ES2018Options::from_targets_and_bugfixes(targets, bugfixes),
-            es2019: ES2019Options::from_targets_and_bugfixes(targets, bugfixes),
-            es2020: ES2020Options::from_targets_and_bugfixes(targets, bugfixes),
-            es2021: ES2021Options::from_targets_and_bugfixes(targets, bugfixes),
-            es2022: ES2022Options::from_targets_and_bugfixes(targets, bugfixes),
-            regexp: RegExpOptions::from_targets_and_bugfixes(targets, bugfixes),
-            ..Default::default()
-        }
-    }
-
     /// # Errors
     ///
     /// If there are any errors in the `options.targets``, they will be returned as a list of errors.
     pub fn from_preset_env(env_options: &EnvOptions) -> Result<Self, Vec<Error>> {
-        let mut errors = Vec::<Error>::new();
-
-        let targets = match env_options.get_targets() {
-            Ok(t) => Some(t),
-            Err(err) => {
-                errors.push(OxcDiagnostic::error(err.to_string()).into());
-                None
-            }
+        let targets = match env_options.targets.clone().get_targets() {
+            Ok(targets) => Some(targets),
+            Err(err) => return Err(vec![err]),
         };
         let bugfixes = env_options.bugfixes;
-        Ok(Self::from_targets_and_bugfixes(targets.as_ref(), bugfixes))
+        let targets = targets.as_ref();
+        Ok(Self {
+            regexp: RegExpOptions {
+                sticky_flag: can_enable_plugin("transform-sticky-regex", targets, bugfixes),
+                unicode_flag: can_enable_plugin("transform-unicode-regex", targets, bugfixes),
+                dot_all_flag: can_enable_plugin("transform-dotall-regex", targets, bugfixes),
+                look_behind_assertions: can_enable_plugin(
+                    "esbuild-regexp-lookbehind-assertions",
+                    targets,
+                    bugfixes,
+                ),
+                named_capture_groups: can_enable_plugin(
+                    "transform-named-capturing-groups-regex",
+                    targets,
+                    bugfixes,
+                ),
+                unicode_property_escapes: can_enable_plugin(
+                    "transform-unicode-property-regex",
+                    targets,
+                    bugfixes,
+                ),
+                match_indices: can_enable_plugin("esbuild-regexp-match-indices", targets, bugfixes),
+                set_notation: can_enable_plugin("transform-unicode-sets-regex", targets, bugfixes),
+            },
+            es2015: ES2015Options {
+                arrow_function: can_enable_plugin("transform-arrow-functions", targets, bugfixes)
+                    .then(Default::default),
+            },
+            es2016: ES2016Options {
+                exponentiation_operator: can_enable_plugin(
+                    "transform-exponentiation-operator",
+                    targets,
+                    bugfixes,
+                ),
+            },
+            es2017: ES2017Options {
+                async_to_generator: can_enable_plugin(
+                    "transform-async-to-generator",
+                    targets,
+                    bugfixes,
+                ),
+            },
+            es2018: ES2018Options {
+                object_rest_spread: can_enable_plugin(
+                    "transform-object-rest-spread",
+                    targets,
+                    bugfixes,
+                )
+                .then(Default::default),
+            },
+            es2019: ES2019Options {
+                optional_catch_binding: can_enable_plugin(
+                    "transform-optional-catch-binding",
+                    targets,
+                    bugfixes,
+                ),
+            },
+            es2020: ES2020Options {
+                nullish_coalescing_operator: can_enable_plugin(
+                    "transform-nullish-coalescing-operator",
+                    targets,
+                    bugfixes,
+                ),
+            },
+            es2021: ES2021Options {
+                logical_assignment_operators: can_enable_plugin(
+                    "transform-logical-assignment-operators",
+                    targets,
+                    bugfixes,
+                ),
+            },
+            es2022: ES2022Options {
+                class_static_block: can_enable_plugin(
+                    "transform-class-static-block",
+                    targets,
+                    bugfixes,
+                ),
+            },
+            ..Default::default()
+        })
     }
 
     /// # Errors
@@ -148,63 +207,45 @@ impl TransformOptions {
     pub fn from_babel_options(options: &BabelOptions) -> Result<Self, Vec<Error>> {
         let mut errors = Vec::<Error>::new();
 
-        let env_options = {
-            let preset_name = "env";
-            get_preset_options(preset_name, options).and_then(|value| {
-                match from_value::<EnvOptions>(value) {
-                    Ok(res) => Some(res),
-                    Err(err) => {
-                        report_error(preset_name, &err, true, &mut errors);
-                        None
-                    }
-                }
-            })
+        let assumptions = if options.assumptions.is_null() {
+            CompilerAssumptions::default()
+        } else {
+            serde_json::from_value::<CompilerAssumptions>(options.assumptions.clone())
+                .inspect_err(|err| errors.push(OxcDiagnostic::error(err.to_string()).into()))
+                .unwrap_or_default()
         };
 
-        let targets = env_options.as_ref().and_then(|env| match env.get_targets() {
-            Ok(res) => Some(res),
-            Err(err) => {
-                errors.push(OxcDiagnostic::error(err.to_string()).into());
-                None
-            }
-        });
-        let bugfixes = env_options.as_ref().is_some_and(|o| o.bugfixes);
-
-        let mut transformer_options = if env_options.is_some() {
-            TransformOptions::from_targets_and_bugfixes(targets.as_ref(), bugfixes)
+        let typescript = if options.has_preset("typescript") {
+            serde_json::from_value::<TypeScriptOptions>(
+                options.get_preset("typescript").flatten().unwrap_or_else(|| json!({})),
+            )
+            .inspect_err(|err| report_error("typescript", err, true, &mut errors))
         } else {
-            TransformOptions::default()
-        };
+            serde_json::from_value::<TypeScriptOptions>(get_plugin_options(
+                "transform-typescript",
+                options,
+            ))
+            .inspect_err(|err| report_error("typescript", err, false, &mut errors))
+        }
+        .unwrap_or_default();
 
-        let preset_name = "react";
-        transformer_options.jsx = if let Some(value) = get_preset_options(preset_name, options) {
-            match from_value::<JsxOptions>(value) {
-                Ok(res) => res,
-                Err(err) => {
-                    report_error(preset_name, &err, true, &mut errors);
-                    JsxOptions::default()
-                }
-            }
+        let jsx = if let Some(value) = options.get_preset("react").flatten() {
+            serde_json::from_value::<JsxOptions>(value)
+                .inspect_err(|err| report_error("react", err, true, &mut errors))
+                .unwrap_or_default()
         } else {
-            let has_jsx_plugin = options.has_plugin("transform-react-jsx");
-            let has_jsx_development_plugin = options.has_plugin("transform-react-jsx-development");
-            let mut react_options =
-                if has_jsx_plugin {
-                    let plugin_name = "transform-react-jsx";
-                    from_value::<JsxOptions>(get_plugin_options(plugin_name, options))
-                        .unwrap_or_else(|err| {
-                            report_error(plugin_name, &err, false, &mut errors);
-                            JsxOptions::default()
-                        })
-                } else {
-                    let plugin_name = "transform-react-jsx-development";
-                    from_value::<JsxOptions>(get_plugin_options(plugin_name, options))
-                        .unwrap_or_else(|err| {
-                            report_error(plugin_name, &err, false, &mut errors);
-                            JsxOptions::default()
-                        })
-                };
-            react_options.development = has_jsx_development_plugin;
+            let jsx_plugin_name = "transform-react-jsx";
+            let jsx_dev_name = "transform-react-jsx-development";
+            let has_jsx_plugin = options.has_plugin(jsx_plugin_name);
+            let mut react_options = if has_jsx_plugin {
+                serde_json::from_value::<JsxOptions>(get_plugin_options(jsx_plugin_name, options))
+                    .inspect_err(|err| report_error(jsx_plugin_name, err, false, &mut errors))
+            } else {
+                serde_json::from_value::<JsxOptions>(get_plugin_options(jsx_dev_name, options))
+                    .inspect_err(|err| report_error(jsx_dev_name, err, false, &mut errors))
+            }
+            .unwrap_or_default();
+            react_options.development = options.has_plugin(jsx_dev_name);
             react_options.jsx_plugin = has_jsx_plugin;
             react_options.display_name_plugin = options.has_plugin("transform-react-display-name");
             react_options.jsx_self_plugin = options.has_plugin("transform-react-jsx-self");
@@ -212,137 +253,169 @@ impl TransformOptions {
             react_options
         };
 
-        transformer_options.es2015.with_arrow_function({
-            let plugin_name = "transform-arrow-functions";
-            get_enabled_plugin_options(plugin_name, options, targets.as_ref(), bugfixes).map(
-                |options| {
-                    from_value::<ArrowFunctionsOptions>(options).unwrap_or_else(|err| {
-                        report_error(plugin_name, &err, false, &mut errors);
-                        ArrowFunctionsOptions::default()
-                    })
-                },
-            )
+        let env = options.get_preset("env").flatten().and_then(|value| {
+            serde_json::from_value::<EnvOptions>(value)
+                .inspect_err(|err| report_error("env", err, true, &mut errors))
+                .ok()
         });
 
-        transformer_options.es2016.with_exponentiation_operator({
-            let plugin_name = "transform-exponentiation-operator";
-            get_enabled_plugin_options(plugin_name, options, targets.as_ref(), bugfixes).is_some()
+        let targets = env.as_ref().and_then(|env| {
+            env.targets
+                .clone()
+                .get_targets()
+                .inspect_err(|err| errors.push(OxcDiagnostic::error(err.to_string()).into()))
+                .ok()
         });
 
-        transformer_options.es2017.with_async_to_generator({
-            let plugin_name = "transform-async-to-generator";
-            get_enabled_plugin_options(plugin_name, options, targets.as_ref(), bugfixes).is_some()
-        });
+        let bugfixes = env.as_ref().is_some_and(|o| o.bugfixes);
 
-        transformer_options.es2018.with_object_rest_spread({
-            let plugin_name = "transform-object-rest-spread";
-            get_enabled_plugin_options(plugin_name, options, targets.as_ref(), bugfixes).map(
-                |options| {
-                    from_value::<ObjectRestSpreadOptions>(options).unwrap_or_else(|err| {
-                        report_error(plugin_name, &err, false, &mut errors);
-                        ObjectRestSpreadOptions::default()
-                    })
-                },
-            )
-        });
+        let targets = targets.as_ref();
 
-        transformer_options.es2019.with_optional_catch_binding({
-            let plugin_name = "transform-optional-catch-binding";
-            get_enabled_plugin_options(plugin_name, options, targets.as_ref(), bugfixes).is_some()
-        });
+        let regexp = RegExpOptions {
+            sticky_flag: can_enable_plugin("transform-sticky-regex", targets, bugfixes)
+                || options.has_plugin("transform-sticky-regex"),
+            unicode_flag: can_enable_plugin("transform-unicode-regex", targets, bugfixes)
+                || options.has_plugin("transform-unicode-regex"),
+            dot_all_flag: can_enable_plugin("transform-dotall-regex", targets, bugfixes)
+                || options.has_plugin("transform-dotall-regex"),
+            look_behind_assertions: can_enable_plugin(
+                "esbuild-regexp-lookbehind-assertions",
+                targets,
+                bugfixes,
+            ),
+            named_capture_groups: can_enable_plugin(
+                "transform-named-capturing-groups-regex",
+                targets,
+                bugfixes,
+            ) || options.has_plugin("transform-named-capturing-groups-regex"),
+            unicode_property_escapes: can_enable_plugin(
+                "transform-unicode-property-regex",
+                targets,
+                bugfixes,
+            ) || options.has_plugin("transform-unicode-property-regex"),
+            match_indices: can_enable_plugin("esbuild-regexp-match-indices", targets, bugfixes),
+            set_notation: can_enable_plugin("transform-unicode-sets-regex", targets, bugfixes)
+                || options.has_plugin("transform-unicode-sets-regex"),
+        };
 
-        transformer_options.es2020.with_nullish_coalescing_operator({
-            let plugin_name = "transform-nullish-coalescing-operator";
-            get_enabled_plugin_options(plugin_name, options, targets.as_ref(), bugfixes).is_some()
-        });
-
-        transformer_options.es2021.with_logical_assignment_operators({
-            let plugin_name = "transform-logical-assignment-operators";
-            get_enabled_plugin_options(plugin_name, options, targets.as_ref(), bugfixes).is_some()
-        });
-
-        transformer_options.es2022.with_class_static_block({
-            let plugin_name = "transform-class-static-block";
-            get_enabled_plugin_options(plugin_name, options, targets.as_ref(), bugfixes).is_some()
-        });
-
-        transformer_options.typescript = {
-            let preset_name = "typescript";
-            if options.has_preset("typescript") {
-                from_value::<TypeScriptOptions>(
-                    get_preset_options("typescript", options).unwrap_or_else(|| json!({})),
-                )
-                .unwrap_or_else(|err| {
-                    report_error(preset_name, &err, true, &mut errors);
-                    TypeScriptOptions::default()
+        let es2015 = ES2015Options {
+            arrow_function: {
+                let plugin_name = "transform-arrow-functions";
+                get_enabled_plugin_options(plugin_name, options, targets, bugfixes).map(|options| {
+                    serde_json::from_value::<ArrowFunctionsOptions>(options)
+                        .inspect_err(|err| report_error(plugin_name, err, false, &mut errors))
+                        .unwrap_or_default()
                 })
-            } else {
-                let plugin_name = "transform-typescript";
-                from_value::<TypeScriptOptions>(get_plugin_options(plugin_name, options))
-                    .unwrap_or_else(|err| {
-                        report_error(plugin_name, &err, false, &mut errors);
-                        TypeScriptOptions::default()
-                    })
-            }
+            },
         };
 
-        let regexp = transformer_options.regexp;
-        if !regexp.sticky_flag {
-            transformer_options.regexp.sticky_flag = options.has_plugin("transform-sticky-regex");
-        }
-        if !regexp.unicode_flag {
-            transformer_options.regexp.unicode_flag = options.has_plugin("transform-unicode-regex");
-        }
-        if !regexp.dot_all_flag {
-            transformer_options.regexp.dot_all_flag = options.has_plugin("transform-dotall-regex");
-        }
-        if !regexp.named_capture_groups {
-            transformer_options.regexp.named_capture_groups =
-                options.has_plugin("transform-named-capturing-groups-regex");
-        }
-        if !regexp.unicode_property_escapes {
-            transformer_options.regexp.unicode_property_escapes =
-                options.has_plugin("transform-unicode-property-regex");
-        }
-        if !regexp.set_notation {
-            transformer_options.regexp.set_notation =
-                options.has_plugin("transform-unicode-sets-regex");
-        }
-
-        transformer_options.assumptions = if options.assumptions.is_null() {
-            CompilerAssumptions::default()
-        } else {
-            match serde_json::from_value::<CompilerAssumptions>(options.assumptions.clone()) {
-                Ok(value) => value,
-                Err(err) => {
-                    errors.push(OxcDiagnostic::error(err.to_string()).into());
-                    CompilerAssumptions::default()
-                }
-            }
+        let es2016 = ES2016Options {
+            exponentiation_operator: get_enabled_plugin_options(
+                "transform-exponentiation-operator",
+                options,
+                targets,
+                bugfixes,
+            )
+            .is_some(),
         };
 
-        if options.external_helpers {
-            transformer_options.helper_loader.mode = HelperLoaderMode::External;
-        }
+        let es2017 = ES2017Options {
+            async_to_generator: get_enabled_plugin_options(
+                "transform-async-to-generator",
+                options,
+                targets,
+                bugfixes,
+            )
+            .is_some(),
+        };
 
-        transformer_options.cwd = options.cwd.clone().unwrap_or_default();
+        let es2018 = ES2018Options {
+            object_rest_spread: {
+                let plugin_name = "transform-object-rest-spread";
+                get_enabled_plugin_options(plugin_name, options, targets, bugfixes).map(|options| {
+                    serde_json::from_value::<ObjectRestSpreadOptions>(options)
+                        .inspect_err(|err| report_error(plugin_name, err, false, &mut errors))
+                        .unwrap_or_default()
+                })
+            },
+        };
+
+        let es2019 = ES2019Options {
+            optional_catch_binding: {
+                get_enabled_plugin_options(
+                    "transform-optional-catch-binding",
+                    options,
+                    targets,
+                    bugfixes,
+                )
+                .is_some()
+            },
+        };
+
+        let es2020 = ES2020Options {
+            nullish_coalescing_operator: get_enabled_plugin_options(
+                "transform-nullish-coalescing-operator",
+                options,
+                targets,
+                bugfixes,
+            )
+            .is_some(),
+        };
+
+        let es2021 = ES2021Options {
+            logical_assignment_operators: get_enabled_plugin_options(
+                "transform-logical-assignment-operators",
+                options,
+                targets,
+                bugfixes,
+            )
+            .is_some(),
+        };
+
+        let es2022 = ES2022Options {
+            class_static_block: get_enabled_plugin_options(
+                "transform-class-static-block",
+                options,
+                targets,
+                bugfixes,
+            )
+            .is_some(),
+        };
 
         if !errors.is_empty() {
             return Err(errors);
         }
 
-        Ok(transformer_options)
+        let helper_loader = HelperLoaderOptions {
+            mode: if options.external_helpers {
+                HelperLoaderMode::External
+            } else {
+                HelperLoaderMode::default()
+            },
+            ..HelperLoaderOptions::default()
+        };
+
+        Ok(Self {
+            cwd: options.cwd.clone().unwrap_or_default(),
+            assumptions,
+            typescript,
+            jsx,
+            regexp,
+            es2015,
+            es2016,
+            es2017,
+            es2018,
+            es2019,
+            es2020,
+            es2021,
+            es2022,
+            helper_loader,
+        })
     }
 }
 
 fn get_plugin_options(name: &str, babel_options: &BabelOptions) -> Value {
-    let plugin = babel_options.get_plugin(name);
-    plugin.and_then(|options| options).unwrap_or_else(|| json!({}))
-}
-
-fn get_preset_options(name: &str, babel_options: &BabelOptions) -> Option<Value> {
-    let preset = babel_options.get_preset(name);
-    preset.and_then(|options| options)
+    babel_options.get_plugin(name).and_then(|options| options).unwrap_or_else(|| json!({}))
 }
 
 fn get_enabled_plugin_options(
