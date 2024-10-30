@@ -5,17 +5,16 @@
 //!
 //! This file is copied from <https://github.com/swc-project/swc/blob/ea14fc8e5996dcd736b8deb4cc99262d07dfff44/crates/preset_env_base/src/lib.rs>
 
-use std::{ops::Deref, str::FromStr};
+use std::ops::Deref;
 
 use oxc_diagnostics::Error;
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
 pub mod query;
-pub mod version;
 
+pub use browserslist::Version;
 pub use query::Query;
-pub use version::Version;
 
 /// A map of browser names to data for feature support in browser.
 ///
@@ -150,13 +149,13 @@ impl TryFrom<BabelTargets> for Targets {
                     let BabelTargetsValue::String(v) = v else {
                         return Err(Error::msg(format!("{v:?} is not a string for {k}.")));
                     };
-                    match Version::from_str(&v) {
+                    match Version::parse(&v) {
                         Ok(v) => {
                             new_map.insert(k, v);
                         }
-                        Err(()) => {
+                        Err(err) => {
                             return Err(oxc_diagnostics::Error::msg(format!(
-                                "Failed to parse `{v}` for `{k}`"
+                                "Failed to parse `{v}` for `{k}`\n{err:?}"
                             )))
                         }
                     }
@@ -169,7 +168,7 @@ impl TryFrom<BabelTargets> for Targets {
 
 #[cfg(test)]
 mod tests {
-    use crate::env::{targets::version::Version, Targets};
+    use crate::env::{targets::Version, Targets};
 
     #[test]
     fn should_enable_android_falls_back_to_chrome() {

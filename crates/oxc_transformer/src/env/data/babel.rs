@@ -2,7 +2,7 @@ use std::sync::OnceLock;
 
 use rustc_hash::FxHashMap;
 
-use crate::env::targets::{version::Version, Targets};
+use crate::env::{Targets, Version};
 
 /// Reference: <https://github.com/swc-project/swc/blob/ea14fc8e5996dcd736b8deb4cc99262d07dfff44/crates/swc_ecma_preset_env/src/transform_data.rs#L194-L218>
 fn features() -> &'static FxHashMap<String, Targets> {

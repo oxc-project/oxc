@@ -4,4 +4,4 @@ mod targets;
 
 pub use data::can_enable_plugin;
 pub use options::EnvOptions;
-pub use targets::Targets;
+pub use targets::{Targets, Version};
