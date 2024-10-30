@@ -3,26 +3,31 @@ import { assert, describe, it } from 'vitest';
 import oxc from './index.js';
 
 describe('transform', () => {
-  const code = 'class A<T> {}';
+  const code = 'export class A<T> {}';
 
   it('matches output', () => {
     const ret = oxc.transform('test.ts', code, { sourcemap: true });
     assert.deepEqual(ret, {
-      code: 'class A {}\n',
+      code: 'export class A {}\n',
       errors: [],
       map: {
-        mappings: 'AAAA,MAAM,EAAK,CAAE',
+        mappings: 'AAAA,OAAO,MAAM,EAAK,CAAE',
         names: [],
         sources: ['test.ts'],
-        sourcesContent: ['class A<T> {}'],
+        sourcesContent: ['export class A<T> {}'],
         version: 3,
       },
     });
   });
 
-  it('lang', () => {
+  it('uses the `lang` option', () => {
     const ret = oxc.transform('test.vue', code, { lang: 'ts' });
-    assert.equal(ret.code, 'class A {}\n');
+    assert.equal(ret.code, 'export class A {}\n');
+  });
+
+  it('uses the `declaration option`', () => {
+    const ret = oxc.transform('test.ts', code, { typescript: { declaration: true } });
+    assert.equal(ret.declaration, 'export declare class A<T> {}\n');
   });
 });
 
@@ -35,7 +40,6 @@ describe('react refresh plugin', () => {
 
   it('matches output', () => {
     const ret = oxc.transform('test.tsx', code, { jsx: { refresh: {} } });
-    console.log(ret.code);
     assert.equal(
       ret.code,
       `import { useState } from "react";
