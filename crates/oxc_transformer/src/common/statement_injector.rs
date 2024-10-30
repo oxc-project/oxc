@@ -55,9 +55,36 @@ struct AdjacentStatement<'a> {
     direction: Direction,
 }
 
+#[derive(Debug, Eq, PartialEq, Hash)]
+enum Action {
+    Insert,
+    Replace,
+    Delete,
+}
+
+#[derive(Debug, Eq, PartialEq, Hash)]
+struct ActionAddress {
+    action: Action,
+    address: Address,
+}
+
+impl ActionAddress {
+    fn insert(address: Address) -> Self {
+        Self { action: Action::Insert, address }
+    }
+
+    fn replace(address: Address) -> Self {
+        Self { action: Action::Replace, address }
+    }
+
+    fn delete(address: Address) -> Self {
+        Self { action: Action::Delete, address }
+    }
+}
+
 /// Store for statements to be added to the statements.
 pub struct StatementInjectorStore<'a> {
-    insertions: RefCell<FxHashMap<Address, Vec<AdjacentStatement<'a>>>>,
+    insertions: RefCell<FxHashMap<ActionAddress, Vec<AdjacentStatement<'a>>>>,
 }
 
 impl<'a> StatementInjectorStore<'a> {
@@ -83,7 +110,7 @@ impl<'a> StatementInjectorStore<'a> {
 
     fn insert_before_address(&self, target: Address, stmt: Statement<'a>) {
         let mut insertions = self.insertions.borrow_mut();
-        let adjacent_stmts = insertions.entry(target).or_default();
+        let adjacent_stmts = insertions.entry(ActionAddress::insert(target)).or_default();
         let index = adjacent_stmts
             .iter()
             .position(|s| matches!(s.direction, Direction::After))
@@ -99,7 +126,7 @@ impl<'a> StatementInjectorStore<'a> {
 
     fn insert_after_address(&self, target: Address, stmt: Statement<'a>) {
         let mut insertions = self.insertions.borrow_mut();
-        let adjacent_stmts = insertions.entry(target).or_default();
+        let adjacent_stmts = insertions.entry(ActionAddress::insert(target)).or_default();
         adjacent_stmts.push(AdjacentStatement { stmt, direction: Direction::After });
     }
 
@@ -119,7 +146,7 @@ impl<'a> StatementInjectorStore<'a> {
         S: IntoIterator<Item = Statement<'a>>,
     {
         let mut insertions = self.insertions.borrow_mut();
-        let adjacent_stmts = insertions.entry(target).or_default();
+        let adjacent_stmts = insertions.entry(ActionAddress::insert(target)).or_default();
         adjacent_stmts.splice(
             0..0,
             stmts.into_iter().map(|stmt| AdjacentStatement { stmt, direction: Direction::Before }),
@@ -141,7 +168,7 @@ impl<'a> StatementInjectorStore<'a> {
         S: IntoIterator<Item = Statement<'a>>,
     {
         let mut insertions = self.insertions.borrow_mut();
-        let adjacent_stmts = insertions.entry(target).or_default();
+        let adjacent_stmts = insertions.entry(ActionAddress::insert(target)).or_default();
         adjacent_stmts.extend(
             stmts.into_iter().map(|stmt| AdjacentStatement { stmt, direction: Direction::After }),
         );
@@ -160,7 +187,7 @@ impl<'a> StatementInjectorStore<'a> {
 
         let new_statement_count = statements
             .iter()
-            .filter_map(|s| insertions.get(&s.address()).map(Vec::len))
+            .filter_map(|s| insertions.get(&ActionAddress::insert(s.address())).map(Vec::len))
             .sum::<usize>();
         if new_statement_count == 0 {
             return;
@@ -169,7 +196,9 @@ impl<'a> StatementInjectorStore<'a> {
         let mut new_statements = ctx.ast.vec_with_capacity(statements.len() + new_statement_count);
 
         for stmt in statements.drain(..) {
-            if let Some(mut adjacent_stmts) = insertions.remove(&stmt.address()) {
+            if let Some(mut adjacent_stmts) =
+                insertions.remove(&ActionAddress::insert(stmt.address()))
+            {
                 let first_after_stmt_index = adjacent_stmts
                     .iter()
                     .position(|s| matches!(s.direction, Direction::After))
