@@ -1,6 +1,7 @@
 use std::{cmp::Ordering, ptr::NonNull as NativeNonNull};
 
-/// Wrapper around `NonNull<T>`, which adds methods `add`, `sub`, `offset_from` and `byte_offset_from`.
+/// Wrapper around `NonNull<T>`, which adds methods `add`, `sub`, `offset_from`, `byte_offset_from`,
+/// and `read`.
 /// These methods exist on `std::ptr::NonNull`, and became stable in Rust 1.80.0, but are not yet
 /// stable in our MSRV.
 ///
@@ -8,7 +9,7 @@ use std::{cmp::Ordering, ptr::NonNull as NativeNonNull};
 /// and make code using them easier to understand.
 ///
 /// Once we bump MSRV and these methods are natively supported, this type can be removed.
-/// `#[expect(clippy::incompatible_msrv)]` on `non_null_add_is_not_stable` below will trigger
+/// `#[expect(clippy::incompatible_msrv)]` on `_non_null_add_is_not_stable` below will trigger
 /// a lint warning when that happens.
 /// Then this module can be deleted, and all uses of this type can be switched to `std::ptr::NonNull`.
 #[derive(Debug)]
@@ -70,6 +71,11 @@ impl<T> NonNull<T> {
     #[inline]
     pub unsafe fn as_mut<'t>(mut self) -> &'t mut T {
         self.0.as_mut()
+    }
+
+    #[inline]
+    pub unsafe fn read(self) -> T {
+        self.0.as_ptr().read()
     }
 }
 

@@ -295,7 +295,7 @@ impl<T> NonEmptyStack<T> {
         debug_assert!(self.cursor < self.end);
         // SAFETY: All methods ensure `self.cursor` is always in bounds, is aligned for `T`,
         // and points to a valid initialized `T`
-        let value = self.cursor.as_ptr().read();
+        let value = self.cursor.read();
         // SAFETY: Caller guarantees there's at least 2 entries on stack, so subtracting 1
         // cannot be out of bounds
         self.cursor = self.cursor.sub(1);
