@@ -21,10 +21,7 @@ use crate::{
     ReactRefreshOptions,
 };
 
-pub use babel::{
-    env::{EnvOptions, Targets},
-    BabelOptions,
-};
+pub use babel::{env::EnvOptions, BabelOptions};
 
 /// <https://babel.dev/docs/options>
 #[derive(Debug, Default, Clone)]

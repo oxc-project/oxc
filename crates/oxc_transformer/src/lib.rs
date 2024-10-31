@@ -54,7 +54,7 @@ pub use crate::{
     compiler_assumptions::CompilerAssumptions,
     es2015::{ArrowFunctionsOptions, ES2015Options},
     jsx::{JsxOptions, JsxRuntime, ReactRefreshOptions},
-    options::{BabelOptions, EnvOptions, Targets, TransformOptions},
+    options::{BabelOptions, TransformOptions},
     plugins::*,
     typescript::{RewriteExtensionsMode, TypeScriptOptions},
 };
