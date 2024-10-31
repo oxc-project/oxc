@@ -1,6 +1,4 @@
 //! Module for `browserslist` queries.
-//!
-//! This file is copied from <https://github.com/swc-project/swc/blob/ea14fc8e5996dcd736b8deb4cc99262d07dfff44/crates/preset_env_base/src/query.rs>
 
 use std::sync::OnceLock;
 
@@ -27,44 +25,33 @@ fn cache() -> &'static DashMap<Query, Targets> {
 
 impl Query {
     pub fn exec(&self) -> QueryResult {
-        fn query<T>(s: &[T]) -> QueryResult
-        where
-            T: AsRef<str>,
-        {
-            match browserslist::resolve(
-                s,
-                &browserslist::Opts {
-                    mobile_to_desktop: true,
-                    ignore_unknown_versions: true,
-                    ..browserslist::Opts::default()
-                },
-            ) {
-                Ok(distribs) => {
-                    let versions = Targets::parse_versions(distribs);
-
-                    Ok(versions)
-                }
-                Err(err) => {
-                    let msg = format!("failed to resolve query: {err}");
-                    Err(OxcDiagnostic::error(msg).into())
-                }
-            }
-        }
-
         if let Some(v) = cache().get(self) {
             return Ok(v.clone());
         }
 
-        let result = match *self {
+        let options = browserslist::Opts {
+            mobile_to_desktop: true,
+            ignore_unknown_versions: true,
+            ..browserslist::Opts::default()
+        };
+
+        let result = match self {
             Query::Single(ref s) => {
                 if s.is_empty() {
-                    query(&["defaults"])
+                    browserslist::resolve(&["defaults"], &options)
                 } else {
-                    query(&[s])
+                    browserslist::resolve(&[s], &options)
                 }
             }
-            Query::Multiple(ref s) => query(s),
-        }?;
+            Query::Multiple(ref s) => browserslist::resolve(s, &options),
+        };
+
+        let result = match result {
+            Ok(distribs) => Targets::parse_versions(distribs),
+            Err(err) => {
+                return Err(OxcDiagnostic::error(format!("failed to resolve query: {err}")).into())
+            }
+        };
 
         cache().insert(self.clone(), result.clone());
 
