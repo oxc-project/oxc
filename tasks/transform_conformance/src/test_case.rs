@@ -18,7 +18,7 @@ use oxc_tasks_common::{normalize_path, print_diff_in_terminal, project_root};
 use crate::{
     constants::{PLUGINS_NOT_SUPPORTED_YET, SKIP_TESTS},
     driver::Driver,
-    fixture_root, packages_root, TestRunnerEnv,
+    fixture_root, oxc_test_root, packages_root, TestRunnerEnv,
 };
 
 #[derive(Debug)]
@@ -386,11 +386,14 @@ impl ExecTestCase {
 
     fn write_to_test_files(&self, content: &str) -> PathBuf {
         let allocator = Allocator::default();
+
+        let unprefixed_path = self
+            .path
+            .strip_prefix(packages_root())
+            .or_else(|_| self.path.strip_prefix(oxc_test_root()))
+            .unwrap();
         let new_file_name: String =
-            normalize_path(self.path.strip_prefix(packages_root()).unwrap())
-                .split('/')
-                .collect::<Vec<&str>>()
-                .join("-");
+            normalize_path(unprefixed_path).split('/').collect::<Vec<&str>>().join("-");
 
         let mut target_path = fixture_root().join(new_file_name);
         target_path.set_extension("test.js");
