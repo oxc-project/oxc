@@ -7,23 +7,28 @@ mod options;
 pub use arrow_functions::{ArrowFunctions, ArrowFunctionsOptions};
 pub use options::ES2015Options;
 
-pub struct ES2015<'a> {
+use crate::context::TransformCtx;
+
+pub struct ES2015<'a, 'ctx> {
     options: ES2015Options,
 
     // Plugins
-    arrow_functions: ArrowFunctions<'a>,
+    arrow_functions: ArrowFunctions<'a, 'ctx>,
 }
 
-impl<'a> ES2015<'a> {
-    pub fn new(options: ES2015Options) -> Self {
+impl<'a, 'ctx> ES2015<'a, 'ctx> {
+    pub fn new(options: ES2015Options, ctx: &'ctx TransformCtx<'a>) -> Self {
         Self {
-            arrow_functions: ArrowFunctions::new(options.arrow_function.unwrap_or_default()),
+            arrow_functions: ArrowFunctions::new(
+                options.arrow_function.clone().unwrap_or_default(),
+                ctx,
+            ),
             options,
         }
     }
 }
 
-impl<'a> Traverse<'a> for ES2015<'a> {
+impl<'a, 'ctx> Traverse<'a> for ES2015<'a, 'ctx> {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.arrow_function.is_some() {
             self.arrow_functions.exit_program(program, ctx);

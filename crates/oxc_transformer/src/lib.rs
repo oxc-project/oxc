@@ -106,7 +106,7 @@ impl<'a> Transformer<'a> {
             x2_es2018: ES2018::new(self.options.env.es2018, &self.ctx),
             x2_es2016: ES2016::new(self.options.env.es2016, &self.ctx),
             x2_es2017: ES2017::new(self.options.env.es2017, &self.ctx),
-            x3_es2015: ES2015::new(self.options.env.es2015),
+            x3_es2015: ES2015::new(self.options.env.es2015, &self.ctx),
             x4_regexp: RegExp::new(self.options.env.regexp, &self.ctx),
             common: Common::new(&self.ctx),
         };
@@ -127,7 +127,7 @@ struct TransformerImpl<'a, 'ctx> {
     x2_es2018: ES2018<'a, 'ctx>,
     x2_es2017: ES2017<'a, 'ctx>,
     x2_es2016: ES2016<'a, 'ctx>,
-    x3_es2015: ES2015<'a>,
+    x3_es2015: ES2015<'a, 'ctx>,
     x4_regexp: RegExp<'a, 'ctx>,
     common: Common<'a, 'ctx>,
 }

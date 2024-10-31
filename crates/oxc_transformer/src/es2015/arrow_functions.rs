@@ -128,13 +128,15 @@ use serde::Deserialize;
 
 use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
 use oxc_ast::ast::*;
-use oxc_data_structures::stack::SparseStack;
+use oxc_data_structures::stack::NonEmptyStack;
 use oxc_span::SPAN;
 use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolFlags,
 };
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
+
+use crate::context::TransformCtx;
 
 #[derive(Debug, Default, Clone, Copy, Deserialize)]
 pub struct ArrowFunctionsOptions {
@@ -146,37 +148,59 @@ pub struct ArrowFunctionsOptions {
     pub spec: bool,
 }
 
-pub struct ArrowFunctions<'a> {
-    _options: ArrowFunctionsOptions,
-    this_var_stack: SparseStack<BoundIdentifier<'a>>,
+/// Used to store scope_id which used to create the bound identifier,
+/// or the bound identifier itself which is created in the scope.
+enum ThisVar<'a> {
+    ScopeId(ScopeId),
+    BoundIdentifier(BoundIdentifier<'a>),
 }
 
-impl<'a> ArrowFunctions<'a> {
-    pub fn new(options: ArrowFunctionsOptions) -> Self {
-        // `SparseStack` is created with 1 empty entry, for `Program`
-        Self { _options: options, this_var_stack: SparseStack::new() }
+impl<'a> ThisVar<'a> {
+    pub fn to_bound_identifier(&self) -> Option<&BoundIdentifier<'a>> {
+        if let ThisVar::BoundIdentifier(ident) = self {
+            Some(ident)
+        } else {
+            None
+        }
     }
 }
 
-impl<'a> Traverse<'a> for ArrowFunctions<'a> {
+pub struct ArrowFunctions<'a, 'ctx> {
+    _options: ArrowFunctionsOptions,
+    this_var_stack: NonEmptyStack<ThisVar<'a>>,
+    ctx: &'ctx TransformCtx<'a>,
+}
+
+impl<'a, 'ctx> ArrowFunctions<'a, 'ctx> {
+    pub fn new(options: ArrowFunctionsOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
+        // `NonEmptyStack` is created with PROGRAM_SCOPE_ID as the first scope.
+        const PROGRAM_SCOPE_ID: ScopeId = ScopeId::new(0);
+        Self {
+            _options: options,
+            this_var_stack: NonEmptyStack::new(ThisVar::ScopeId(PROGRAM_SCOPE_ID)),
+            ctx,
+        }
+    }
+}
+
+impl<'a, 'ctx> Traverse<'a> for ArrowFunctions<'a, 'ctx> {
     // Note: No visitors for `TSModuleBlock` because `this` is not legal in TS module blocks.
     // <https://www.typescriptlang.org/play/?#code/HYQwtgpgzgDiDGEAEAxA9mpBvAsAKCSXjWCgBckANJAXiQAoBKWgPiTIAsBLKAbnwC++fGDQATAK4AbZACEQAJ2z5CxUhWp0mrdtz6D8QA>
 
     /// Insert `var _this = this;` for the global scope.
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Some(this_var) = self.this_var_stack.take_last() {
+        if let Some(this_var) = self.this_var_stack.last().to_bound_identifier() {
             self.insert_this_var_statement_at_the_top_of_statements(
                 &mut program.body,
-                &this_var,
+                this_var,
                 ctx,
             );
         }
         debug_assert!(self.this_var_stack.len() == 1);
-        debug_assert!(self.this_var_stack.last().is_none());
     }
 
-    fn enter_function(&mut self, _func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.this_var_stack.push(None);
+    fn enter_function(&mut self, func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
+        self.this_var_stack.push(ThisVar::ScopeId(func.scope_id.get().unwrap()));
     }
 
     /// ```ts
@@ -191,28 +215,24 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
     /// ```
     /// Insert the var _this = this; statement outside the arrow function
     fn exit_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Some(this_var) = self.this_var_stack.pop() {
+        if let Some(this_var) = self.this_var_stack.pop().to_bound_identifier() {
             let Some(body) = &mut func.body else { unreachable!() };
 
             self.insert_this_var_statement_at_the_top_of_statements(
                 &mut body.statements,
-                &this_var,
+                this_var,
                 ctx,
             );
         }
     }
 
-    fn enter_static_block(&mut self, _block: &mut StaticBlock<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.this_var_stack.push(None);
+    fn enter_static_block(&mut self, block: &mut StaticBlock<'a>, _ctx: &mut TraverseCtx<'a>) {
+        self.this_var_stack.push(ThisVar::ScopeId(block.scope_id.get().unwrap()));
     }
 
     fn exit_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Some(this_var) = self.this_var_stack.pop() {
-            self.insert_this_var_statement_at_the_top_of_statements(
-                &mut block.body,
-                &this_var,
-                ctx,
-            );
+        if let Some(this_var) = self.this_var_stack.pop().to_bound_identifier() {
+            self.insert_this_var_statement_at_the_top_of_statements(&mut block.body, this_var, ctx);
         }
     }
 
@@ -261,40 +281,44 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
     }
 }
 
-impl<'a> ArrowFunctions<'a> {
+impl<'a, 'ctx> ArrowFunctions<'a, 'ctx> {
     fn get_this_identifier(
         &mut self,
         span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<ArenaBox<'a, IdentifierReference<'a>>> {
-        // Find arrow function we are currently in (if we are)
-        let arrow_scope_id = Self::get_arrow_function_scope(ctx)?;
+        // If the `this` is not used in an arrow function, we don't need to transform it.
+        if !Self::is_in_arrow_function_scope(ctx) {
+            return None;
+        }
 
         // TODO(improve-on-babel): We create a new UID for every scope. This is pointless, as only one
         // `this` can be in scope at a time. We could create a single `_this` UID and reuse it in each
         // scope. But this does not match output for some of Babel's test cases.
         // <https://github.com/oxc-project/oxc/pull/5840>
-        let this_var = self.this_var_stack.last_or_init(|| {
-            let target_scope_id = ctx
-                .scopes()
-                .ancestors(arrow_scope_id)
-                // Skip arrow function scope
-                .skip(1)
-                .find(|&scope_id| {
-                    let scope_flags = ctx.scopes().get_flags(scope_id);
-                    scope_flags.intersects(
-                        ScopeFlags::Function | ScopeFlags::Top | ScopeFlags::ClassStaticBlock,
-                    ) && !scope_flags.contains(ScopeFlags::Arrow)
-                })
-                .unwrap();
-            ctx.generate_uid("this", target_scope_id, SymbolFlags::FunctionScopedVariable)
-        });
+        let this_var = self.this_var_stack.last_mut();
+        let this_var = match this_var {
+            // If it's a scope_id, create a new identifier in the scope
+            ThisVar::ScopeId(scope_id) => {
+                *this_var = ThisVar::BoundIdentifier(ctx.generate_uid(
+                    "this",
+                    *scope_id,
+                    SymbolFlags::FunctionScopedVariable,
+                ));
+                let ThisVar::BoundIdentifier(ident) = this_var else { unreachable!() };
+                ident
+            }
+            ThisVar::BoundIdentifier(ident) => ident,
+        };
         Some(ctx.ast.alloc(this_var.create_spanned_read_reference(span, ctx)))
     }
 
-    /// Find arrow function we are currently in, if it's between current node, and where `this` is bound.
-    /// Return its `ScopeId`.
-    fn get_arrow_function_scope(ctx: &mut TraverseCtx<'a>) -> Option<ScopeId> {
+    /// Check if we are in an arrow function.
+    fn is_in_arrow_function_scope(ctx: &mut TraverseCtx<'a>) -> bool {
+        // Early exit if we are in an arrow function
+        if ctx.current_scope_flags().contains(ScopeFlags::Arrow) {
+            return true;
+        }
         // `this` inside a class resolves to `this` *outside* the class in:
         // * `extends` clause
         // * Computed method key
@@ -348,13 +372,10 @@ impl<'a> ArrowFunctions<'a> {
                 // Class accessor property body
                 | Ancestor::AccessorPropertyValue(_)
                 // Class static block
-                | Ancestor::StaticBlockBody(_) => return None,
+                | Ancestor::StaticBlockBody(_) => return false,
                 // Arrow function
-                Ancestor::ArrowFunctionExpressionParams(func) => {
-                    return Some(func.scope_id().get().unwrap())
-                }
-                Ancestor::ArrowFunctionExpressionBody(func) => {
-                    return Some(func.scope_id().get().unwrap())
+                Ancestor::ArrowFunctionExpressionParams(_) | Ancestor::ArrowFunctionExpressionBody(_) => {
+                    return true
                 }
                 _ => {}
             }
@@ -402,10 +423,10 @@ impl<'a> ArrowFunctions<'a> {
     /// Insert `var _this = this;` at the top of the statements.
     #[expect(clippy::unused_self)]
     fn insert_this_var_statement_at_the_top_of_statements(
-        &mut self,
+        &self,
         statements: &mut ArenaVec<'a, Statement<'a>>,
         this_var: &BoundIdentifier<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         let variable_declarator = ctx.ast.variable_declarator(
             SPAN,
