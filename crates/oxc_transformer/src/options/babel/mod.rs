@@ -1,9 +1,11 @@
-pub mod env;
+mod env;
 
 use std::path::{Path, PathBuf};
 
 use serde::Deserialize;
 use serde_json::Value;
+
+pub use env::{BabelEnvOptions, Targets};
 
 /// Babel options
 ///

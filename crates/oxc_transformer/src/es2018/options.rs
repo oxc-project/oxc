@@ -7,6 +7,7 @@ use super::ObjectRestSpreadOptions;
 pub struct ES2018Options {
     #[serde(skip)]
     pub object_rest_spread: Option<ObjectRestSpreadOptions>,
+
     #[serde(skip)]
     pub async_generator_functions: bool,
 }

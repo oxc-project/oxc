@@ -7,5 +7,7 @@ use super::ClassPropertiesOptions;
 pub struct ES2022Options {
     #[serde(skip)]
     pub class_static_block: bool,
+
+    #[serde(skip)]
     pub class_properties: Option<ClassPropertiesOptions>,
 }

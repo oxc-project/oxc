@@ -2,7 +2,7 @@ commit: df9d1650
 
 semantic_typescript Summary:
 AST Parsed     : 6490/6490 (100.00%)
-Positive Passed: 2687/6490 (41.40%)
+Positive Passed: 2685/6490 (41.37%)
 tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 semantic error: Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -5672,8 +5672,8 @@ Reference symbol mismatch for "require":
 after transform: SymbolId(0) "require"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Error", "JSON"]
-rebuilt        : ["Error", "JSON", "require"]
+after transform: ["Error", "JSON", "RegExp"]
+rebuilt        : ["Error", "JSON", "RegExp", "require"]
 
 tasks/coverage/typescript/tests/cases/compiler/controlFlowUnionContainingTypeParameter1.ts
 semantic error: Bindings mismatch:
@@ -8324,7 +8324,7 @@ after transform: ["ReturnType", "globalThis"]
 rebuilt        : ["globalThis"]
 Unresolved reference IDs mismatch for "globalThis":
 after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(8), ReferenceId(9), ReferenceId(11), ReferenceId(12), ReferenceId(13), ReferenceId(14), ReferenceId(16), ReferenceId(17), ReferenceId(18), ReferenceId(21), ReferenceId(22), ReferenceId(24), ReferenceId(25), ReferenceId(32), ReferenceId(34), ReferenceId(35), ReferenceId(38), ReferenceId(40), ReferenceId(41), ReferenceId(43), ReferenceId(44), ReferenceId(47), ReferenceId(49), ReferenceId(56), ReferenceId(58), ReferenceId(59), ReferenceId(62), ReferenceId(64), ReferenceId(65), ReferenceId(67), ReferenceId(68), ReferenceId(71), ReferenceId(73), ReferenceId(80), ReferenceId(81), ReferenceId(84), ReferenceId(85), ReferenceId(86), ReferenceId(90), ReferenceId(91), ReferenceId(94), ReferenceId(95), ReferenceId(102), ReferenceId(104), ReferenceId(105), ReferenceId(108), ReferenceId(110), ReferenceId(111), ReferenceId(113), ReferenceId(114), ReferenceId(116), ReferenceId(117), ReferenceId(119), ReferenceId(120), ReferenceId(121), ReferenceId(122)]
-rebuilt        : [ReferenceId(4), ReferenceId(9), ReferenceId(14), ReferenceId(19), ReferenceId(24), ReferenceId(29), ReferenceId(37), ReferenceId(43)]
+rebuilt        : [ReferenceId(6), ReferenceId(13), ReferenceId(20), ReferenceId(27), ReferenceId(34), ReferenceId(41), ReferenceId(51), ReferenceId(59)]
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitHasTypesRefOnNamespaceUse.ts
 semantic error: Unresolved references mismatch:
@@ -10161,8 +10161,8 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 Bindings mismatch:
-after transform: ScopeId(2): ["MenuItemVariant", "data", "listItemVariant"]
-rebuilt        : ScopeId(1): ["data", "listItemVariant"]
+after transform: ScopeId(2): ["MenuItemVariant", "_data$menuItemsVarian", "data", "listItemVariant"]
+rebuilt        : ScopeId(1): ["_data$menuItemsVarian", "data", "listItemVariant"]
 Bindings mismatch:
 after transform: ScopeId(4): ["Avatar", "ListItemVariant", "OneLine"]
 rebuilt        : ScopeId(2): ["ListItemVariant"]
@@ -10171,10 +10171,10 @@ after transform: ScopeId(4): ScopeFlags(0x0)
 rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "ListItemVariant":
 after transform: SymbolId(7): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(5): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "ListItemVariant":
-after transform: SymbolId(7): [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(4), ReferenceId(8), ReferenceId(11), ReferenceId(12), ReferenceId(21)]
-rebuilt        : SymbolId(5): [ReferenceId(2), ReferenceId(12)]
+after transform: SymbolId(7): [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(4), ReferenceId(8), ReferenceId(11), ReferenceId(12), ReferenceId(24)]
+rebuilt        : SymbolId(6): [ReferenceId(5), ReferenceId(15)]
 
 tasks/coverage/typescript/tests/cases/compiler/discriminatedUnionWithIndexSignature.ts
 semantic error: Bindings mismatch:
@@ -11153,19 +11153,19 @@ after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "MyEnum":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(9), ReferenceId(11), ReferenceId(25)]
-rebuilt        : SymbolId(0): [ReferenceId(7), ReferenceId(19), ReferenceId(21), ReferenceId(23), ReferenceId(25)]
+rebuilt        : SymbolId(0): [ReferenceId(7), ReferenceId(21), ReferenceId(23), ReferenceId(27), ReferenceId(29)]
 Symbol flags mismatch for "MyStringEnum":
 after transform: SymbolId(4): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "MyStringEnum":
 after transform: SymbolId(4): [ReferenceId(12), ReferenceId(14), ReferenceId(30)]
-rebuilt        : SymbolId(2): [ReferenceId(12), ReferenceId(27)]
+rebuilt        : SymbolId(2): [ReferenceId(12), ReferenceId(31)]
 Symbol flags mismatch for "MyStringEnumWithEmpty":
 after transform: SymbolId(8): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "MyStringEnumWithEmpty":
 after transform: SymbolId(8): [ReferenceId(15), ReferenceId(17), ReferenceId(35)]
-rebuilt        : SymbolId(4): [ReferenceId(17), ReferenceId(29)]
+rebuilt        : SymbolId(4): [ReferenceId(17), ReferenceId(33)]
 
 tasks/coverage/typescript/tests/cases/compiler/enumNegativeLiteral1.ts
 semantic error: Bindings mismatch:
@@ -11669,8 +11669,8 @@ Reference symbol mismatch for "y":
 after transform: SymbolId(1) "y"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Promise"]
-rebuilt        : ["a", "x", "y", "z"]
+after transform: ["Math", "Promise"]
+rebuilt        : ["Math", "a", "x", "y", "z"]
 
 tasks/coverage/typescript/tests/cases/compiler/es5-asyncFunctionCallExpressions.ts
 semantic error: Bindings mismatch:
@@ -21355,8 +21355,8 @@ Reference symbol mismatch for "literalUnion":
 after transform: SymbolId(12) "literalUnion"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: []
-rebuilt        : ["literalUnion", "numLiteral"]
+after transform: ["Math"]
+rebuilt        : ["Math", "literalUnion", "numLiteral"]
 
 tasks/coverage/typescript/tests/cases/compiler/localAliasExportAssignment.ts
 semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
@@ -39200,7 +39200,7 @@ rebuilt        : SymbolId(1): []
 tasks/coverage/typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock17.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(9)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(7)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(6)]
 Symbol reference IDs mismatch for "A":
 after transform: SymbolId(1): [ReferenceId(0), ReferenceId(1), ReferenceId(7), ReferenceId(13)]
 rebuilt        : SymbolId(1): [ReferenceId(10)]
@@ -41704,10 +41704,16 @@ rebuilt        : SymbolId(0): [ReferenceId(0)]
 
 tasks/coverage/typescript/tests/cases/conformance/es2021/logicalAssignment/logicalAssignment1.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["a", "b", "c", "d", "e", "f", "g", "h", "i"]
-rebuilt        : ScopeId(0): []
+after transform: ScopeId(0): ["_c", "_f", "_i", "a", "b", "c", "d", "e", "f", "g", "h", "i"]
+rebuilt        : ScopeId(0): ["_c", "_f", "_i"]
 Reference symbol mismatch for "a":
 after transform: SymbolId(0) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "b":
+after transform: SymbolId(1) "b"
 rebuilt        : <None>
 Reference symbol mismatch for "b":
 after transform: SymbolId(1) "b"
@@ -41715,8 +41721,17 @@ rebuilt        : <None>
 Reference symbol mismatch for "c":
 after transform: SymbolId(2) "c"
 rebuilt        : <None>
+Reference symbol mismatch for "c":
+after transform: SymbolId(2) "c"
+rebuilt        : <None>
 Reference symbol mismatch for "d":
 after transform: SymbolId(3) "d"
+rebuilt        : <None>
+Reference symbol mismatch for "d":
+after transform: SymbolId(3) "d"
+rebuilt        : <None>
+Reference symbol mismatch for "e":
+after transform: SymbolId(4) "e"
 rebuilt        : <None>
 Reference symbol mismatch for "e":
 after transform: SymbolId(4) "e"
@@ -41724,11 +41739,23 @@ rebuilt        : <None>
 Reference symbol mismatch for "f":
 after transform: SymbolId(5) "f"
 rebuilt        : <None>
+Reference symbol mismatch for "f":
+after transform: SymbolId(5) "f"
+rebuilt        : <None>
+Reference symbol mismatch for "g":
+after transform: SymbolId(6) "g"
+rebuilt        : <None>
 Reference symbol mismatch for "g":
 after transform: SymbolId(6) "g"
 rebuilt        : <None>
 Reference symbol mismatch for "h":
 after transform: SymbolId(7) "h"
+rebuilt        : <None>
+Reference symbol mismatch for "h":
+after transform: SymbolId(7) "h"
+rebuilt        : <None>
+Reference symbol mismatch for "i":
+after transform: SymbolId(8) "i"
 rebuilt        : <None>
 Reference symbol mismatch for "i":
 after transform: SymbolId(8) "i"
@@ -41739,11 +41766,14 @@ rebuilt        : ["a", "b", "c", "d", "e", "f", "g", "h", "i"]
 
 tasks/coverage/typescript/tests/cases/conformance/es2021/logicalAssignment/logicalAssignment2.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A", "a", "b", "c", "result"]
-rebuilt        : ScopeId(0): []
+after transform: ScopeId(0): ["A", "_a$foo", "_a$foo$bar", "_b$foo", "_b$foo$bar", "_baz", "_baz2", "_baz3", "_c$baz", "_c$foo", "_c$foo$_baz", "_c$foo$bar", "_c$foo$bar$baz", "a", "b", "c", "result"]
+rebuilt        : ScopeId(0): ["_a$foo", "_a$foo$bar", "_b$foo", "_b$foo$bar", "_baz", "_baz2", "_baz3", "_c$baz", "_c$foo", "_c$foo$_baz", "_c$foo$bar", "_c$foo$bar$baz"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
+Reference symbol mismatch for "a":
+after transform: SymbolId(2) "a"
+rebuilt        : <None>
 Reference symbol mismatch for "a":
 after transform: SymbolId(2) "a"
 rebuilt        : <None>
@@ -41753,8 +41783,14 @@ rebuilt        : <None>
 Reference symbol mismatch for "b":
 after transform: SymbolId(3) "b"
 rebuilt        : <None>
+Reference symbol mismatch for "b":
+after transform: SymbolId(3) "b"
+rebuilt        : <None>
 Reference symbol mismatch for "result":
 after transform: SymbolId(1) "result"
+rebuilt        : <None>
+Reference symbol mismatch for "c":
+after transform: SymbolId(4) "c"
 rebuilt        : <None>
 Reference symbol mismatch for "c":
 after transform: SymbolId(4) "c"
@@ -41804,11 +41840,14 @@ rebuilt        : ["a", "b", "c", "result"]
 
 tasks/coverage/typescript/tests/cases/conformance/es2021/logicalAssignment/logicalAssignment3.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A", "a", "b", "c", "result"]
-rebuilt        : ScopeId(0): []
+after transform: ScopeId(0): ["A", "_c$baz", "a", "b", "c", "result"]
+rebuilt        : ScopeId(0): ["_c$baz"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
+Reference symbol mismatch for "a":
+after transform: SymbolId(2) "a"
+rebuilt        : <None>
 Reference symbol mismatch for "a":
 after transform: SymbolId(2) "a"
 rebuilt        : <None>
@@ -41818,8 +41857,14 @@ rebuilt        : <None>
 Reference symbol mismatch for "b":
 after transform: SymbolId(3) "b"
 rebuilt        : <None>
+Reference symbol mismatch for "b":
+after transform: SymbolId(3) "b"
+rebuilt        : <None>
 Reference symbol mismatch for "result":
 after transform: SymbolId(1) "result"
+rebuilt        : <None>
+Reference symbol mismatch for "c":
+after transform: SymbolId(4) "c"
 rebuilt        : <None>
 Reference symbol mismatch for "c":
 after transform: SymbolId(4) "c"
@@ -41833,8 +41878,14 @@ rebuilt        : ["a", "b", "c", "result"]
 
 tasks/coverage/typescript/tests/cases/conformance/es2021/logicalAssignment/logicalAssignment9.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["x"]
-rebuilt        : ScopeId(0): []
+after transform: ScopeId(0): ["_x$a", "x"]
+rebuilt        : ScopeId(0): ["_x$a"]
+Reference symbol mismatch for "x":
+after transform: SymbolId(0) "x"
+rebuilt        : <None>
+Reference symbol mismatch for "x":
+after transform: SymbolId(0) "x"
+rebuilt        : <None>
 Reference symbol mismatch for "x":
 after transform: SymbolId(0) "x"
 rebuilt        : <None>
@@ -42557,6 +42608,12 @@ rebuilt        : ScopeId(0): ["f1", "f2", "f3", "f4"]
 Reference symbol mismatch for "yadda":
 after transform: SymbolId(15) "yadda"
 rebuilt        : <None>
+Reference symbol mismatch for "yadda":
+after transform: SymbolId(15) "yadda"
+rebuilt        : <None>
+Reference symbol mismatch for "yadda":
+after transform: SymbolId(15) "yadda"
+rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["yadda"]
@@ -42592,6 +42649,12 @@ tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructurin
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["f1", "f2", "f3", "f4", "yadda"]
 rebuilt        : ScopeId(0): ["f1", "f2", "f3", "f4"]
+Reference symbol mismatch for "yadda":
+after transform: SymbolId(15) "yadda"
+rebuilt        : <None>
+Reference symbol mismatch for "yadda":
+after transform: SymbolId(15) "yadda"
+rebuilt        : <None>
 Reference symbol mismatch for "yadda":
 after transform: SymbolId(15) "yadda"
 rebuilt        : <None>
@@ -43047,7 +43110,7 @@ after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "E":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(11), ReferenceId(13), ReferenceId(15), ReferenceId(16), ReferenceId(17), ReferenceId(19), ReferenceId(21), ReferenceId(22), ReferenceId(28)]
-rebuilt        : SymbolId(0): [ReferenceId(5), ReferenceId(16), ReferenceId(18), ReferenceId(20), ReferenceId(21), ReferenceId(22), ReferenceId(24), ReferenceId(26), ReferenceId(27)]
+rebuilt        : SymbolId(0): [ReferenceId(5), ReferenceId(22), ReferenceId(25), ReferenceId(28), ReferenceId(29), ReferenceId(31), ReferenceId(34), ReferenceId(37), ReferenceId(39)]
 
 tasks/coverage/typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorWithEnumUnion.ts
 semantic error: Bindings mismatch:
@@ -43067,7 +43130,7 @@ after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "E":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(12), ReferenceId(14), ReferenceId(16), ReferenceId(17), ReferenceId(18), ReferenceId(20), ReferenceId(22), ReferenceId(23), ReferenceId(29)]
-rebuilt        : SymbolId(0): [ReferenceId(5), ReferenceId(22), ReferenceId(24), ReferenceId(26), ReferenceId(27), ReferenceId(28), ReferenceId(30), ReferenceId(32), ReferenceId(33)]
+rebuilt        : SymbolId(0): [ReferenceId(5), ReferenceId(28), ReferenceId(31), ReferenceId(34), ReferenceId(35), ReferenceId(37), ReferenceId(40), ReferenceId(43), ReferenceId(45)]
 Symbol flags mismatch for "F":
 after transform: SymbolId(3): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
@@ -43893,8 +43956,8 @@ rebuilt        : ["dec"]
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.1.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["dec", "x"]
-rebuilt        : ScopeId(0): ["x"]
+after transform: ScopeId(0): ["_x", "_x2", "dec", "x"]
+rebuilt        : ScopeId(0): ["_x", "_x2", "x"]
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -45614,6 +45677,17 @@ semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
+tasks/coverage/typescript/tests/cases/conformance/expressions/nullishCoalescingOperator/nullishCoalescingOperator12.ts
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["obj"]
+rebuilt        : ScopeId(0): ["_ref", "obj"]
+Bindings mismatch:
+after transform: ScopeId(1): ["_ref", "i"]
+rebuilt        : ScopeId(1): ["i"]
+Symbol scope ID mismatch for "_ref":
+after transform: SymbolId(2): ScopeId(1)
+rebuilt        : SymbolId(0): ScopeId(0)
+
 tasks/coverage/typescript/tests/cases/conformance/expressions/nullishCoalescingOperator/nullishCoalescingOperator2.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["a1", "a2", "a3", "a4", "a5", "a6", "a7", "a8", "a9", "aa1", "aa2", "aa3", "aa4", "aa5", "aa6", "aa7", "aa8", "aa9"]
@@ -45621,8 +45695,26 @@ rebuilt        : ScopeId(0): ["aa1", "aa2", "aa3", "aa4", "aa5", "aa6", "aa7", "
 Reference symbol mismatch for "a1":
 after transform: SymbolId(0) "a1"
 rebuilt        : <None>
+Reference symbol mismatch for "a1":
+after transform: SymbolId(0) "a1"
+rebuilt        : <None>
+Reference symbol mismatch for "a1":
+after transform: SymbolId(0) "a1"
+rebuilt        : <None>
 Reference symbol mismatch for "a2":
 after transform: SymbolId(1) "a2"
+rebuilt        : <None>
+Reference symbol mismatch for "a2":
+after transform: SymbolId(1) "a2"
+rebuilt        : <None>
+Reference symbol mismatch for "a2":
+after transform: SymbolId(1) "a2"
+rebuilt        : <None>
+Reference symbol mismatch for "a3":
+after transform: SymbolId(2) "a3"
+rebuilt        : <None>
+Reference symbol mismatch for "a3":
+after transform: SymbolId(2) "a3"
 rebuilt        : <None>
 Reference symbol mismatch for "a3":
 after transform: SymbolId(2) "a3"
@@ -45630,8 +45722,26 @@ rebuilt        : <None>
 Reference symbol mismatch for "a4":
 after transform: SymbolId(3) "a4"
 rebuilt        : <None>
+Reference symbol mismatch for "a4":
+after transform: SymbolId(3) "a4"
+rebuilt        : <None>
+Reference symbol mismatch for "a4":
+after transform: SymbolId(3) "a4"
+rebuilt        : <None>
 Reference symbol mismatch for "a5":
 after transform: SymbolId(4) "a5"
+rebuilt        : <None>
+Reference symbol mismatch for "a5":
+after transform: SymbolId(4) "a5"
+rebuilt        : <None>
+Reference symbol mismatch for "a5":
+after transform: SymbolId(4) "a5"
+rebuilt        : <None>
+Reference symbol mismatch for "a6":
+after transform: SymbolId(5) "a6"
+rebuilt        : <None>
+Reference symbol mismatch for "a6":
+after transform: SymbolId(5) "a6"
 rebuilt        : <None>
 Reference symbol mismatch for "a6":
 after transform: SymbolId(5) "a6"
@@ -45639,8 +45749,26 @@ rebuilt        : <None>
 Reference symbol mismatch for "a7":
 after transform: SymbolId(6) "a7"
 rebuilt        : <None>
+Reference symbol mismatch for "a7":
+after transform: SymbolId(6) "a7"
+rebuilt        : <None>
+Reference symbol mismatch for "a7":
+after transform: SymbolId(6) "a7"
+rebuilt        : <None>
 Reference symbol mismatch for "a8":
 after transform: SymbolId(7) "a8"
+rebuilt        : <None>
+Reference symbol mismatch for "a8":
+after transform: SymbolId(7) "a8"
+rebuilt        : <None>
+Reference symbol mismatch for "a8":
+after transform: SymbolId(7) "a8"
+rebuilt        : <None>
+Reference symbol mismatch for "a9":
+after transform: SymbolId(8) "a9"
+rebuilt        : <None>
+Reference symbol mismatch for "a9":
+after transform: SymbolId(8) "a9"
 rebuilt        : <None>
 Reference symbol mismatch for "a9":
 after transform: SymbolId(8) "a9"
@@ -45651,8 +45779,14 @@ rebuilt        : ["a1", "a2", "a3", "a4", "a5", "a6", "a7", "a8", "a9"]
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/nullishCoalescingOperator/nullishCoalescingOperator3.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["a1", "a2", "a3", "a4", "a5", "a6", "aa1"]
-rebuilt        : ScopeId(0): ["aa1"]
+after transform: ScopeId(0): ["_ref", "_ref2", "_ref3", "_ref4", "_ref5", "a1", "a2", "a3", "a4", "a5", "a6", "aa1"]
+rebuilt        : ScopeId(0): ["_ref", "_ref2", "_ref3", "_ref4", "_ref5", "aa1"]
+Reference symbol mismatch for "a1":
+after transform: SymbolId(0) "a1"
+rebuilt        : <None>
+Reference symbol mismatch for "a1":
+after transform: SymbolId(0) "a1"
+rebuilt        : <None>
 Reference symbol mismatch for "a1":
 after transform: SymbolId(0) "a1"
 rebuilt        : <None>
@@ -45688,8 +45822,32 @@ rebuilt        : <None>
 Reference symbol mismatch for "a":
 after transform: SymbolId(0) "a"
 rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : <None>
 Reference symbol mismatch for "b":
 after transform: SymbolId(1) "b"
+rebuilt        : <None>
+Reference symbol mismatch for "b":
+after transform: SymbolId(1) "b"
+rebuilt        : <None>
+Reference symbol mismatch for "b":
+after transform: SymbolId(1) "b"
+rebuilt        : <None>
+Reference symbol mismatch for "c":
+after transform: SymbolId(2) "c"
+rebuilt        : <None>
+Reference symbol mismatch for "c":
+after transform: SymbolId(2) "c"
 rebuilt        : <None>
 Reference symbol mismatch for "c":
 after transform: SymbolId(2) "c"
@@ -45697,8 +45855,26 @@ rebuilt        : <None>
 Reference symbol mismatch for "a":
 after transform: SymbolId(0) "a"
 rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : <None>
 Reference symbol mismatch for "b":
 after transform: SymbolId(1) "b"
+rebuilt        : <None>
+Reference symbol mismatch for "b":
+after transform: SymbolId(1) "b"
+rebuilt        : <None>
+Reference symbol mismatch for "b":
+after transform: SymbolId(1) "b"
+rebuilt        : <None>
+Reference symbol mismatch for "c":
+after transform: SymbolId(2) "c"
+rebuilt        : <None>
+Reference symbol mismatch for "c":
+after transform: SymbolId(2) "c"
 rebuilt        : <None>
 Reference symbol mismatch for "c":
 after transform: SymbolId(2) "c"
@@ -45709,8 +45885,8 @@ rebuilt        : ["a", "b", "c"]
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/nullishCoalescingOperator/nullishCoalescingOperator8.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["a", "b", "n1", "n2", "n3"]
-rebuilt        : ScopeId(0): ["n1", "n2", "n3"]
+after transform: ScopeId(0): ["_a$m", "_a$m2", "_a$p", "_ref", "_ref2", "a", "b", "n1", "n2", "n3"]
+rebuilt        : ScopeId(0): ["_a$m", "_a$m2", "_a$p", "_ref", "_ref2", "n1", "n2", "n3"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
@@ -45743,9 +45919,26 @@ rebuilt        : <None>
 Reference symbol mismatch for "f":
 after transform: SymbolId(0) "f"
 rebuilt        : <None>
+Reference symbol mismatch for "f":
+after transform: SymbolId(0) "f"
+rebuilt        : <None>
+Reference symbol mismatch for "f":
+after transform: SymbolId(0) "f"
+rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["f"]
+
+tasks/coverage/typescript/tests/cases/conformance/expressions/nullishCoalescingOperator/nullishCoalescingOperatorInParameterBindingPattern.ts
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["a"]
+rebuilt        : ScopeId(0): ["_a", "a"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_a", "c"]
+rebuilt        : ScopeId(2): ["c"]
+Symbol scope ID mismatch for "_a":
+after transform: SymbolId(2): ScopeId(2)
+rebuilt        : SymbolId(0): ScopeId(0)
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/nullishCoalescingOperator/nullishCoalescingOperator_es2020.ts
 semantic error: Bindings mismatch:
@@ -45754,8 +45947,26 @@ rebuilt        : ScopeId(0): ["aa1", "aa2", "aa3", "aa4", "aa5", "aa6", "aa7", "
 Reference symbol mismatch for "a1":
 after transform: SymbolId(0) "a1"
 rebuilt        : <None>
+Reference symbol mismatch for "a1":
+after transform: SymbolId(0) "a1"
+rebuilt        : <None>
+Reference symbol mismatch for "a1":
+after transform: SymbolId(0) "a1"
+rebuilt        : <None>
 Reference symbol mismatch for "a2":
 after transform: SymbolId(1) "a2"
+rebuilt        : <None>
+Reference symbol mismatch for "a2":
+after transform: SymbolId(1) "a2"
+rebuilt        : <None>
+Reference symbol mismatch for "a2":
+after transform: SymbolId(1) "a2"
+rebuilt        : <None>
+Reference symbol mismatch for "a3":
+after transform: SymbolId(2) "a3"
+rebuilt        : <None>
+Reference symbol mismatch for "a3":
+after transform: SymbolId(2) "a3"
 rebuilt        : <None>
 Reference symbol mismatch for "a3":
 after transform: SymbolId(2) "a3"
@@ -45763,8 +45974,26 @@ rebuilt        : <None>
 Reference symbol mismatch for "a4":
 after transform: SymbolId(3) "a4"
 rebuilt        : <None>
+Reference symbol mismatch for "a4":
+after transform: SymbolId(3) "a4"
+rebuilt        : <None>
+Reference symbol mismatch for "a4":
+after transform: SymbolId(3) "a4"
+rebuilt        : <None>
 Reference symbol mismatch for "a5":
 after transform: SymbolId(4) "a5"
+rebuilt        : <None>
+Reference symbol mismatch for "a5":
+after transform: SymbolId(4) "a5"
+rebuilt        : <None>
+Reference symbol mismatch for "a5":
+after transform: SymbolId(4) "a5"
+rebuilt        : <None>
+Reference symbol mismatch for "a6":
+after transform: SymbolId(5) "a6"
+rebuilt        : <None>
+Reference symbol mismatch for "a6":
+after transform: SymbolId(5) "a6"
 rebuilt        : <None>
 Reference symbol mismatch for "a6":
 after transform: SymbolId(5) "a6"
@@ -45772,8 +46001,26 @@ rebuilt        : <None>
 Reference symbol mismatch for "a7":
 after transform: SymbolId(6) "a7"
 rebuilt        : <None>
+Reference symbol mismatch for "a7":
+after transform: SymbolId(6) "a7"
+rebuilt        : <None>
+Reference symbol mismatch for "a7":
+after transform: SymbolId(6) "a7"
+rebuilt        : <None>
 Reference symbol mismatch for "a8":
 after transform: SymbolId(7) "a8"
+rebuilt        : <None>
+Reference symbol mismatch for "a8":
+after transform: SymbolId(7) "a8"
+rebuilt        : <None>
+Reference symbol mismatch for "a8":
+after transform: SymbolId(7) "a8"
+rebuilt        : <None>
+Reference symbol mismatch for "a9":
+after transform: SymbolId(8) "a9"
+rebuilt        : <None>
+Reference symbol mismatch for "a9":
+after transform: SymbolId(8) "a9"
 rebuilt        : <None>
 Reference symbol mismatch for "a9":
 after transform: SymbolId(8) "a9"
@@ -45781,20 +46028,8 @@ rebuilt        : <None>
 Reference symbol mismatch for "a":
 after transform: SymbolId(18) "a"
 rebuilt        : <None>
-Reference symbol mismatch for "b":
-after transform: SymbolId(19) "b"
-rebuilt        : <None>
-Reference symbol mismatch for "c":
-after transform: SymbolId(20) "c"
-rebuilt        : <None>
-Reference symbol mismatch for "c":
-after transform: SymbolId(20) "c"
-rebuilt        : <None>
 Reference symbol mismatch for "a":
 after transform: SymbolId(18) "a"
-rebuilt        : <None>
-Reference symbol mismatch for "b":
-after transform: SymbolId(19) "b"
 rebuilt        : <None>
 Reference symbol mismatch for "a":
 after transform: SymbolId(18) "a"
@@ -45811,8 +46046,20 @@ rebuilt        : <None>
 Reference symbol mismatch for "a":
 after transform: SymbolId(18) "a"
 rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(18) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(18) "a"
+rebuilt        : <None>
 Reference symbol mismatch for "b":
 after transform: SymbolId(19) "b"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(18) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(18) "a"
 rebuilt        : <None>
 Reference symbol mismatch for "a":
 after transform: SymbolId(18) "a"
@@ -45829,8 +46076,20 @@ rebuilt        : <None>
 Reference symbol mismatch for "a":
 after transform: SymbolId(18) "a"
 rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(18) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(18) "a"
+rebuilt        : <None>
 Reference symbol mismatch for "b":
 after transform: SymbolId(19) "b"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(18) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(18) "a"
 rebuilt        : <None>
 Reference symbol mismatch for "a":
 after transform: SymbolId(18) "a"
@@ -45847,8 +46106,20 @@ rebuilt        : <None>
 Reference symbol mismatch for "a":
 after transform: SymbolId(18) "a"
 rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(18) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(18) "a"
+rebuilt        : <None>
 Reference symbol mismatch for "b":
 after transform: SymbolId(19) "b"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(18) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(18) "a"
 rebuilt        : <None>
 Reference symbol mismatch for "a":
 after transform: SymbolId(18) "a"
@@ -45865,8 +46136,20 @@ rebuilt        : <None>
 Reference symbol mismatch for "a":
 after transform: SymbolId(18) "a"
 rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(18) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(18) "a"
+rebuilt        : <None>
 Reference symbol mismatch for "b":
 after transform: SymbolId(19) "b"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(18) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(18) "a"
 rebuilt        : <None>
 Reference symbol mismatch for "a":
 after transform: SymbolId(18) "a"
@@ -45879,6 +46162,42 @@ after transform: SymbolId(20) "c"
 rebuilt        : <None>
 Reference symbol mismatch for "c":
 after transform: SymbolId(20) "c"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(18) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(18) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(18) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "b":
+after transform: SymbolId(19) "b"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(18) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(18) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(18) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "b":
+after transform: SymbolId(19) "b"
+rebuilt        : <None>
+Reference symbol mismatch for "c":
+after transform: SymbolId(20) "c"
+rebuilt        : <None>
+Reference symbol mismatch for "c":
+after transform: SymbolId(20) "c"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(18) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(18) "a"
 rebuilt        : <None>
 Reference symbol mismatch for "a":
 after transform: SymbolId(18) "a"
@@ -45897,8 +46216,26 @@ rebuilt        : ScopeId(0): ["aa1", "aa2", "aa3", "aa4", "aa5", "aa6", "aa7", "
 Reference symbol mismatch for "a1":
 after transform: SymbolId(0) "a1"
 rebuilt        : <None>
+Reference symbol mismatch for "a1":
+after transform: SymbolId(0) "a1"
+rebuilt        : <None>
+Reference symbol mismatch for "a1":
+after transform: SymbolId(0) "a1"
+rebuilt        : <None>
 Reference symbol mismatch for "a2":
 after transform: SymbolId(1) "a2"
+rebuilt        : <None>
+Reference symbol mismatch for "a2":
+after transform: SymbolId(1) "a2"
+rebuilt        : <None>
+Reference symbol mismatch for "a2":
+after transform: SymbolId(1) "a2"
+rebuilt        : <None>
+Reference symbol mismatch for "a3":
+after transform: SymbolId(2) "a3"
+rebuilt        : <None>
+Reference symbol mismatch for "a3":
+after transform: SymbolId(2) "a3"
 rebuilt        : <None>
 Reference symbol mismatch for "a3":
 after transform: SymbolId(2) "a3"
@@ -45906,8 +46243,26 @@ rebuilt        : <None>
 Reference symbol mismatch for "a4":
 after transform: SymbolId(3) "a4"
 rebuilt        : <None>
+Reference symbol mismatch for "a4":
+after transform: SymbolId(3) "a4"
+rebuilt        : <None>
+Reference symbol mismatch for "a4":
+after transform: SymbolId(3) "a4"
+rebuilt        : <None>
 Reference symbol mismatch for "a5":
 after transform: SymbolId(4) "a5"
+rebuilt        : <None>
+Reference symbol mismatch for "a5":
+after transform: SymbolId(4) "a5"
+rebuilt        : <None>
+Reference symbol mismatch for "a5":
+after transform: SymbolId(4) "a5"
+rebuilt        : <None>
+Reference symbol mismatch for "a6":
+after transform: SymbolId(5) "a6"
+rebuilt        : <None>
+Reference symbol mismatch for "a6":
+after transform: SymbolId(5) "a6"
 rebuilt        : <None>
 Reference symbol mismatch for "a6":
 after transform: SymbolId(5) "a6"
@@ -45915,8 +46270,26 @@ rebuilt        : <None>
 Reference symbol mismatch for "a7":
 after transform: SymbolId(6) "a7"
 rebuilt        : <None>
+Reference symbol mismatch for "a7":
+after transform: SymbolId(6) "a7"
+rebuilt        : <None>
+Reference symbol mismatch for "a7":
+after transform: SymbolId(6) "a7"
+rebuilt        : <None>
 Reference symbol mismatch for "a8":
 after transform: SymbolId(7) "a8"
+rebuilt        : <None>
+Reference symbol mismatch for "a8":
+after transform: SymbolId(7) "a8"
+rebuilt        : <None>
+Reference symbol mismatch for "a8":
+after transform: SymbolId(7) "a8"
+rebuilt        : <None>
+Reference symbol mismatch for "a9":
+after transform: SymbolId(8) "a9"
+rebuilt        : <None>
+Reference symbol mismatch for "a9":
+after transform: SymbolId(8) "a9"
 rebuilt        : <None>
 Reference symbol mismatch for "a9":
 after transform: SymbolId(8) "a9"
@@ -46075,8 +46448,20 @@ rebuilt        : <None>
 Reference symbol mismatch for "o1":
 after transform: SymbolId(0) "o1"
 rebuilt        : <None>
+Reference symbol mismatch for "o1":
+after transform: SymbolId(0) "o1"
+rebuilt        : <None>
+Reference symbol mismatch for "o1":
+after transform: SymbolId(0) "o1"
+rebuilt        : <None>
 Reference symbol mismatch for "o2":
 after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o1":
+after transform: SymbolId(0) "o1"
+rebuilt        : <None>
+Reference symbol mismatch for "o1":
+after transform: SymbolId(0) "o1"
 rebuilt        : <None>
 Reference symbol mismatch for "o1":
 after transform: SymbolId(0) "o1"
@@ -46087,8 +46472,20 @@ rebuilt        : <None>
 Reference symbol mismatch for "o1":
 after transform: SymbolId(0) "o1"
 rebuilt        : <None>
+Reference symbol mismatch for "o1":
+after transform: SymbolId(0) "o1"
+rebuilt        : <None>
+Reference symbol mismatch for "o1":
+after transform: SymbolId(0) "o1"
+rebuilt        : <None>
 Reference symbol mismatch for "o4":
 after transform: SymbolId(3) "o4"
+rebuilt        : <None>
+Reference symbol mismatch for "o1":
+after transform: SymbolId(0) "o1"
+rebuilt        : <None>
+Reference symbol mismatch for "o1":
+after transform: SymbolId(0) "o1"
 rebuilt        : <None>
 Reference symbol mismatch for "o1":
 after transform: SymbolId(0) "o1"
@@ -51628,7 +52025,7 @@ Missing ReferenceId: "N"
 Missing ReferenceId: "N"
 Binding symbols mismatch:
 after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3), SymbolId(5), SymbolId(7), SymbolId(9), SymbolId(11), SymbolId(22), SymbolId(24), SymbolId(26), SymbolId(28), SymbolId(29), SymbolId(30), SymbolId(31), SymbolId(32), SymbolId(33), SymbolId(34), SymbolId(35), SymbolId(36), SymbolId(37), SymbolId(38), SymbolId(39), SymbolId(41), SymbolId(43)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3), SymbolId(5), SymbolId(7), SymbolId(9), SymbolId(11), SymbolId(22), SymbolId(24), SymbolId(26), SymbolId(29), SymbolId(30), SymbolId(31), SymbolId(32), SymbolId(33), SymbolId(34), SymbolId(35), SymbolId(36), SymbolId(37), SymbolId(38), SymbolId(39), SymbolId(40), SymbolId(42), SymbolId(44)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3), SymbolId(5), SymbolId(7), SymbolId(9), SymbolId(11), SymbolId(22), SymbolId(24), SymbolId(26), SymbolId(29), SymbolId(30), SymbolId(31), SymbolId(32), SymbolId(33), SymbolId(35), SymbolId(36), SymbolId(37), SymbolId(38), SymbolId(39), SymbolId(40), SymbolId(41), SymbolId(43), SymbolId(45)]
 Binding symbols mismatch:
 after transform: ScopeId(37): [SymbolId(27), SymbolId(44)]
 rebuilt        : ScopeId(37): [SymbolId(27), SymbolId(28)]
@@ -52721,8 +53118,8 @@ rebuilt        : ["g1", "g2", "g3", "g4", "g5", "g6", "g7", "g8", "undefined"]
 
 tasks/coverage/typescript/tests/cases/conformance/types/literal/literalTypesAndDestructuring.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Foo", "a1", "a2", "a3", "a4", "b1", "b2", "b3", "b4", "bar", "x"]
-rebuilt        : ScopeId(0): ["a1", "a2", "a3", "a4", "b1", "b2", "b3", "b4", "bar"]
+after transform: ScopeId(0): ["Foo", "_x$a", "_x$a2", "_x$a3", "a1", "a2", "a3", "a4", "b1", "b2", "b3", "b4", "bar", "x"]
+rebuilt        : ScopeId(0): ["_x$a", "_x$a2", "_x$a3", "a1", "a2", "a3", "a4", "b1", "b2", "b3", "b4", "bar"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []

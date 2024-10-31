@@ -54,7 +54,10 @@ pub use crate::{
     compiler_assumptions::CompilerAssumptions,
     es2015::{ArrowFunctionsOptions, ES2015Options},
     jsx::{JsxOptions, JsxRuntime, ReactRefreshOptions},
-    options::{BabelEnvOptions, BabelOptions, Targets, TransformOptions},
+    options::{
+        babel::{BabelEnvOptions, BabelOptions, Targets},
+        TransformOptions,
+    },
     plugins::*,
     typescript::{RewriteExtensionsMode, TypeScriptOptions},
 };
@@ -96,15 +99,15 @@ impl<'a> Transformer<'a> {
                 .is_typescript()
                 .then(|| TypeScript::new(&self.options.typescript, &self.ctx)),
             x1_jsx: Jsx::new(self.options.jsx, ast_builder, &self.ctx),
-            x2_es2022: ES2022::new(self.options.es2022, &self.ctx),
-            x2_es2021: ES2021::new(self.options.es2021, &self.ctx),
-            x2_es2020: ES2020::new(self.options.es2020, &self.ctx),
-            x2_es2019: ES2019::new(self.options.es2019),
-            x2_es2018: ES2018::new(self.options.es2018, &self.ctx),
-            x2_es2016: ES2016::new(self.options.es2016, &self.ctx),
-            x2_es2017: ES2017::new(self.options.es2017, &self.ctx),
-            x3_es2015: ES2015::new(self.options.es2015),
-            x4_regexp: RegExp::new(self.options.regexp, &self.ctx),
+            x2_es2022: ES2022::new(self.options.env.es2022, &self.ctx),
+            x2_es2021: ES2021::new(self.options.env.es2021, &self.ctx),
+            x2_es2020: ES2020::new(self.options.env.es2020, &self.ctx),
+            x2_es2019: ES2019::new(self.options.env.es2019),
+            x2_es2018: ES2018::new(self.options.env.es2018, &self.ctx),
+            x2_es2016: ES2016::new(self.options.env.es2016, &self.ctx),
+            x2_es2017: ES2017::new(self.options.env.es2017, &self.ctx),
+            x3_es2015: ES2015::new(self.options.env.es2015),
+            x4_regexp: RegExp::new(self.options.env.regexp, &self.ctx),
             common: Common::new(&self.ctx),
         };
 

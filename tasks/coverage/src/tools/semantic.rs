@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use oxc::{
     span::SourceType,
-    transformer::{ES2015Options, JsxOptions, JsxRuntime, TransformOptions, TypeScriptOptions},
+    transformer::{JsxOptions, JsxRuntime, TransformOptions},
 };
 
 use crate::{
@@ -16,15 +16,13 @@ use crate::{
 
 fn get_default_transformer_options() -> TransformOptions {
     TransformOptions {
-        typescript: TypeScriptOptions::default(),
-        es2015: ES2015Options { arrow_function: None },
         jsx: JsxOptions {
             jsx_plugin: true,
             jsx_self_plugin: true,
             jsx_source_plugin: true,
             ..Default::default()
         },
-        ..Default::default()
+        ..TransformOptions::enable_all()
     }
 }
 

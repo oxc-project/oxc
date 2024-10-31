@@ -6,7 +6,7 @@ use oxc_codegen::CodeGenerator;
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
-use oxc_transformer::{BabelEnvOptions, Targets, TransformOptions, Transformer};
+use oxc_transformer::{TransformOptions, Transformer};
 use pico_args::Arguments;
 
 // Instruction:
@@ -54,12 +54,14 @@ fn main() {
 
     let (symbols, scopes) = ret.semantic.into_symbol_table_and_scope_tree();
 
-    let transform_options = if let Some(targets) = &targets {
-        TransformOptions::try_from(&BabelEnvOptions {
-            targets: Targets::try_from_query(targets).unwrap(),
-            ..BabelEnvOptions::default()
-        })
-        .unwrap()
+    let transform_options = if let Some(_targets) = &targets {
+        // FIXME
+        TransformOptions::enable_all()
+        // TransformOptions::try_from(&BabelEnvOptions {
+        // targets: Targets::try_from_query(targets).unwrap(),
+        // ..BabelEnvOptions::default()
+        // })
+        // .unwrap()
     } else {
         TransformOptions::enable_all()
     };
