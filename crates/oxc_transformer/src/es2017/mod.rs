@@ -6,7 +6,6 @@ use oxc_ast::ast::{Expression, Statement};
 use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::{es2017::async_to_generator::AsyncToGenerator, TransformCtx};
-#[expect(unused_imports)]
 pub use async_to_generator::AsyncGeneratorExecutor;
 
 #[allow(dead_code)]

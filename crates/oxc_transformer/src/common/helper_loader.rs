@@ -137,15 +137,23 @@ fn default_as_module_name() -> Cow<'static, str> {
 /// Available helpers.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum Helper {
+    AwaitAsyncGenerator,
+    AsyncGeneratorDelegate,
+    AsyncIterator,
     AsyncToGenerator,
     ObjectSpread2,
+    WrapAsyncGenerator,
 }
 
 impl Helper {
     const fn name(self) -> &'static str {
         match self {
+            Self::AwaitAsyncGenerator => "awaitAsyncGenerator",
+            Self::AsyncGeneratorDelegate => "asyncGeneratorDelegate",
+            Self::AsyncIterator => "asyncIterator",
             Self::AsyncToGenerator => "asyncToGenerator",
             Self::ObjectSpread2 => "objectSpread2",
+            Self::WrapAsyncGenerator => "wrapAsyncGenerator",
         }
     }
 }

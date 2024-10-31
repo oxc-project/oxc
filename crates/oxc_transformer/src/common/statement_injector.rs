@@ -104,7 +104,6 @@ impl<'a> StatementInjectorStore<'a> {
     }
 
     /// Add multiple statements to be inserted immediately before the target statement.
-    #[expect(dead_code)]
     #[inline]
     pub fn insert_many_before<A, S>(&self, target: &A, stmts: S)
     where

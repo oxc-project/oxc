@@ -1,6 +1,6 @@
 commit: d20b314c
 
-Passed: 361/1058
+Passed: 376/1077
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -1447,6 +1447,20 @@ x Output mismatch
 x Output mismatch
 
 * nullish-coalescing/transform-loose/input.js
+x Output mismatch
+
+
+# babel-plugin-transform-async-generator-functions (15/19)
+* async-generators/class-method/input.js
+x Output mismatch
+
+* async-generators/object-method/input.js
+x Output mismatch
+
+* async-generators/static-method/input.js
+x Output mismatch
+
+* nested/arrows-in-declaration/input.js
 x Output mismatch
 
 

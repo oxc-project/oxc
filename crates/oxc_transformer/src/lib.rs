@@ -227,6 +227,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x1_jsx.exit_expression(expr, ctx);
+        self.x2_es2018.exit_expression(expr, ctx);
         self.x2_es2017.exit_expression(expr, ctx);
         self.x3_es2015.exit_expression(expr, ctx);
     }
@@ -262,6 +263,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
     }
 
     fn enter_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x2_es2018.enter_function(func, ctx);
         self.x3_es2015.enter_function(func, ctx);
     }
 
@@ -270,6 +272,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
             typescript.exit_function(func, ctx);
         }
         self.x1_jsx.exit_function(func, ctx);
+        self.x2_es2018.exit_function(func, ctx);
         self.x3_es2015.exit_function(func, ctx);
     }
 
@@ -326,6 +329,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.exit_method_definition(def, ctx);
         }
+        self.x2_es2018.exit_method_definition(def, ctx);
         self.x2_es2017.exit_method_definition(def, ctx);
     }
 
@@ -405,6 +409,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.exit_statement(stmt, ctx);
         }
+        self.x2_es2018.exit_statement(stmt, ctx);
         self.x2_es2017.exit_statement(stmt, ctx);
     }
 
@@ -422,6 +427,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_statement(stmt, ctx);
         }
+        self.x2_es2018.enter_statement(stmt, ctx);
     }
 
     fn enter_declaration(&mut self, decl: &mut Declaration<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -462,6 +468,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_for_of_statement(stmt, ctx);
         }
+        self.x2_es2018.enter_for_of_statement(stmt, ctx);
     }
 
     fn enter_for_in_statement(&mut self, stmt: &mut ForInStatement<'a>, ctx: &mut TraverseCtx<'a>) {

@@ -101,7 +101,11 @@ impl TransformOptions {
                 // Turned off because it is not ready.
                 async_to_generator: false,
             },
-            es2018: ES2018Options { object_rest_spread: Some(ObjectRestSpreadOptions::default()) },
+            es2018: ES2018Options {
+                object_rest_spread: Some(ObjectRestSpreadOptions::default()),
+                // Turned off because it is not ready.
+                async_generator_functions: false,
+            },
             es2019: ES2019Options { optional_catch_binding: true },
             es2020: ES2020Options { nullish_coalescing_operator: true },
             es2021: ES2021Options { logical_assignment_operators: true },
@@ -145,6 +149,8 @@ impl TryFrom<&EnvOptions> for TransformOptions {
                 object_rest_spread: o
                     .can_enable_plugin("transform-object-rest-spread")
                     .then(Default::default),
+                async_generator_functions: o
+                    .can_enable_plugin("transform-async-generator-functions"),
             },
             es2019: ES2019Options {
                 optional_catch_binding: o.can_enable_plugin("transform-optional-catch-binding"),
@@ -313,6 +319,10 @@ impl TryFrom<&BabelOptions> for TransformOptions {
                         .unwrap_or_default()
                     })
                     .or(env.es2018.object_rest_spread)
+            },
+            async_generator_functions: {
+                let plugin_name = "transform-async-generator-functions";
+                options.get_plugin(plugin_name).is_some() || env.es2018.async_generator_functions
             },
         };
 
