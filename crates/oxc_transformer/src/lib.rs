@@ -96,7 +96,7 @@ impl<'a> Transformer<'a> {
                 .is_typescript()
                 .then(|| TypeScript::new(&self.options.typescript, &self.ctx)),
             x1_jsx: Jsx::new(self.options.jsx, ast_builder, &self.ctx),
-            x2_es2022: ES2022::new(self.options.es2022),
+            x2_es2022: ES2022::new(self.options.es2022, &self.ctx),
             x2_es2021: ES2021::new(self.options.es2021, &self.ctx),
             x2_es2020: ES2020::new(self.options.es2020, &self.ctx),
             x2_es2019: ES2019::new(self.options.es2019),
@@ -117,7 +117,7 @@ struct TransformerImpl<'a, 'ctx> {
     // NOTE: all callbacks must run in order.
     x0_typescript: Option<TypeScript<'a, 'ctx>>,
     x1_jsx: Jsx<'a, 'ctx>,
-    x2_es2022: ES2022,
+    x2_es2022: ES2022<'a, 'ctx>,
     x2_es2021: ES2021<'a, 'ctx>,
     x2_es2020: ES2020<'a, 'ctx>,
     x2_es2019: ES2019,

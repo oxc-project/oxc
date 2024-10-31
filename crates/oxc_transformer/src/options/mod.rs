@@ -14,7 +14,7 @@ use crate::{
     es2019::ES2019Options,
     es2020::ES2020Options,
     es2021::ES2021Options,
-    es2022::ES2022Options,
+    es2022::{ClassPropertiesOptions, ES2022Options},
     jsx::JsxOptions,
     regexp::RegExpOptions,
     typescript::TypeScriptOptions,
@@ -109,7 +109,10 @@ impl TransformOptions {
             es2019: ES2019Options { optional_catch_binding: true },
             es2020: ES2020Options { nullish_coalescing_operator: true },
             es2021: ES2021Options { logical_assignment_operators: true },
-            es2022: ES2022Options { class_static_block: true },
+            es2022: ES2022Options {
+                class_static_block: true,
+                class_properties: Some(ClassPropertiesOptions::default()),
+            },
             helper_loader: HelperLoaderOptions {
                 mode: HelperLoaderMode::Runtime,
                 ..Default::default()
@@ -165,6 +168,9 @@ impl TryFrom<&EnvOptions> for TransformOptions {
             },
             es2022: ES2022Options {
                 class_static_block: o.can_enable_plugin("transform-class-static-block"),
+                class_properties: o
+                    .can_enable_plugin("transform-class-properties")
+                    .then(Default::default),
             },
             ..Default::default()
         })
@@ -351,6 +357,22 @@ impl TryFrom<&BabelOptions> for TransformOptions {
             class_static_block: {
                 let plugin_name = "transform-class-static-block";
                 options.get_plugin(plugin_name).is_some() || env.es2022.class_static_block
+            },
+            class_properties: {
+                let plugin_name = "transform-class-properties";
+                options
+                    .get_plugin(plugin_name)
+                    .map(|o| {
+                        o.and_then(|options| {
+                            serde_json::from_value::<ClassPropertiesOptions>(options)
+                                .inspect_err(|err| {
+                                    report_error(plugin_name, err, false, &mut errors);
+                                })
+                                .ok()
+                        })
+                        .unwrap_or_default()
+                    })
+                    .or(env.es2022.class_properties)
             },
         };
 
