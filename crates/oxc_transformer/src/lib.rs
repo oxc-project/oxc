@@ -19,8 +19,8 @@ mod common;
 mod compiler_assumptions;
 mod context;
 mod options;
+
 // Presets: <https://babel.dev/docs/presets>
-mod env;
 mod es2015;
 mod es2016;
 mod es2017;
@@ -52,10 +52,9 @@ use typescript::TypeScript;
 pub use crate::{
     common::helper_loader::HelperLoaderMode,
     compiler_assumptions::CompilerAssumptions,
-    env::{EnvOptions, Targets},
     es2015::{ArrowFunctionsOptions, ES2015Options},
     jsx::{JsxOptions, JsxRuntime, ReactRefreshOptions},
-    options::{BabelOptions, TransformOptions},
+    options::{BabelOptions, EnvOptions, Targets, TransformOptions},
     plugins::*,
     typescript::{RewriteExtensionsMode, TypeScriptOptions},
 };

@@ -168,7 +168,7 @@ impl TryFrom<BabelTargets> for Targets {
 
 #[cfg(test)]
 mod tests {
-    use crate::env::{targets::Version, Targets};
+    use super::{Targets, Version};
 
     #[test]
     fn should_enable_android_falls_back_to_chrome() {

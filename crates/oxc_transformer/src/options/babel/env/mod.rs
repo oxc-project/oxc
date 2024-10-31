@@ -1,6 +1,10 @@
-use serde::Deserialize;
+mod data;
+mod targets;
 
-use crate::env::{bugfix_features, features, Targets};
+pub use data::{bugfix_features, features};
+pub use targets::{Targets, Version};
+
+use serde::Deserialize;
 
 fn default_as_true() -> bool {
     true
