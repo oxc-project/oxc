@@ -12,7 +12,7 @@ fn default_as_true() -> bool {
 
 #[derive(Default, Debug, Clone, Deserialize)]
 #[serde(default, rename_all = "camelCase", deny_unknown_fields)]
-pub struct EnvOptions {
+pub struct BabelEnvOptions {
     #[serde(default)]
     pub targets: Targets,
 
@@ -56,7 +56,7 @@ pub struct EnvOptions {
     pub shipped_proposals: bool,
 }
 
-impl EnvOptions {
+impl BabelEnvOptions {
     pub fn can_enable_plugin(&self, plugin_name: &str) -> bool {
         let versions = if self.bugfixes {
             bugfix_features().get(plugin_name).unwrap_or_else(|| &features()[plugin_name])

@@ -21,7 +21,7 @@ use oxc::{
         ScopeFlags, ScopeId, ScopeTree, SemanticBuilder, SymbolTable,
     },
     span::SourceType,
-    transformer::{EnvOptions, Targets, TransformOptions, Transformer},
+    transformer::{BabelEnvOptions, Targets, TransformOptions, Transformer},
 };
 use oxc_index::Idx;
 use oxc_linter::Linter;
@@ -242,9 +242,9 @@ impl Oxc {
         }
 
         if run_options.transform.unwrap_or_default() {
-            if let Ok(options) = TransformOptions::try_from(&EnvOptions {
+            if let Ok(options) = TransformOptions::try_from(&BabelEnvOptions {
                 targets: Targets::try_from_query("chrome 51").unwrap_or_default(),
-                ..EnvOptions::default()
+                ..BabelEnvOptions::default()
             }) {
                 let result = Transformer::new(&allocator, &path, options)
                     .build_with_symbols_and_scopes(symbols, scopes, &mut program);

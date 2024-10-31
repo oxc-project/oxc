@@ -22,7 +22,7 @@ use crate::{
 };
 
 pub use babel::{
-    env::{EnvOptions, Targets},
+    env::{BabelEnvOptions, Targets},
     BabelOptions,
 };
 
@@ -121,11 +121,11 @@ impl TransformOptions {
     }
 }
 
-impl TryFrom<&EnvOptions> for TransformOptions {
+impl TryFrom<&BabelEnvOptions> for TransformOptions {
     type Error = Vec<Error>;
 
     /// If there are any errors in the `options.targets``, they will be returned as a list of errors.
-    fn try_from(o: &EnvOptions) -> Result<Self, Self::Error> {
+    fn try_from(o: &BabelEnvOptions) -> Result<Self, Self::Error> {
         Ok(Self {
             regexp: RegExpOptions {
                 sticky_flag: o.can_enable_plugin("transform-sticky-regex"),
@@ -255,7 +255,7 @@ impl TryFrom<&BabelOptions> for TransformOptions {
             .get_preset("env")
             .flatten()
             .and_then(|value| {
-                serde_json::from_value::<EnvOptions>(value)
+                serde_json::from_value::<BabelEnvOptions>(value)
                     .inspect_err(|err| report_error("env", err, true, &mut errors))
                     .ok()
             })
