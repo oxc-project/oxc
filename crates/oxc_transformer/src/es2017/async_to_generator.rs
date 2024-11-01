@@ -415,7 +415,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         if function_name.is_none() && !Self::is_function_length_affected(&params) {
             return self.create_async_to_generator_call(
                 params,
-                ctx.ast.alloc(body),
+                ctx.alloc(body),
                 generator_function_id,
                 ctx,
             );
@@ -448,7 +448,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
             let statement = self.create_async_to_generator_declaration(
                 &bound_ident,
                 params,
-                ctx.ast.alloc(body),
+                ctx.alloc(body),
                 generator_function_id,
                 ctx,
             );
