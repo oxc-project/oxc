@@ -270,8 +270,8 @@ impl<'a> ParserImpl<'a> {
         let constraint = self.try_parse(Self::try_parse_constraint_of_infer_type).unwrap_or(None);
         let span = self.end_span(span);
         let ts_type_parameter =
-            self.ast.ts_type_parameter(span, name, constraint, None, false, false, false);
-        Ok(self.ast.alloc(ts_type_parameter))
+            self.ast.alloc_ts_type_parameter(span, name, constraint, None, false, false, false);
+        Ok(ts_type_parameter)
     }
 
     fn parse_postfix_type_or_higher(&mut self) -> Result<TSType<'a>> {
@@ -380,7 +380,7 @@ impl<'a> ParserImpl<'a> {
                 if self.peek_at(Kind::Is) && !self.peek_token().is_on_new_line {
                     return self.parse_this_type_predicate(this_type);
                 }
-                Ok(TSType::TSThisType(self.ast.alloc(this_type)))
+                Ok(TSType::TSThisType(self.alloc(this_type)))
             }
             Kind::Typeof => {
                 if self.peek_at(Kind::Import) {
@@ -583,7 +583,7 @@ impl<'a> ParserImpl<'a> {
         let name = self.parse_binding_identifier()?;
         self.expect(Kind::In)?;
         let constraint = self.parse_ts_type()?;
-        let type_parameter = self.ast.alloc(self.ast.ts_type_parameter(
+        let type_parameter = self.alloc(self.ast.ts_type_parameter(
             self.end_span(type_parameter_span),
             name,
             Some(constraint),
@@ -758,8 +758,8 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_type_name(&mut self) -> Result<TSTypeName<'a>> {
         let span = self.start_span();
         let ident = self.parse_identifier_name()?;
-        let ident = self.ast.identifier_reference(ident.span, ident.name);
-        let mut left = TSTypeName::IdentifierReference(self.ast.alloc(ident));
+        let ident = self.ast.alloc_identifier_reference(ident.span, ident.name);
+        let mut left = TSTypeName::IdentifierReference(ident);
         while self.eat(Kind::Dot) {
             let right = self.parse_identifier_name()?;
             left = self.ast.ts_type_name_qualified_name(self.end_span(span), left, right);

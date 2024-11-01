@@ -382,7 +382,7 @@ impl<'a> ParserImpl<'a> {
         )
         .parse()
         {
-            Ok(regular_expression) => Some(self.ast.alloc(regular_expression)),
+            Ok(regular_expression) => Some(self.alloc(regular_expression)),
             Err(diagnostic) => {
                 self.error(diagnostic);
                 None

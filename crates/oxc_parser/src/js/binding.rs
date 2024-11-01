@@ -58,7 +58,7 @@ impl<'a> ParserImpl<'a> {
         Ok(self.ast.binding_pattern_kind_object_pattern(
             self.end_span(span),
             list,
-            rest.map(|r| self.ast.alloc(r)),
+            rest.map(|r| self.alloc(r)),
         ))
     }
 
@@ -75,7 +75,7 @@ impl<'a> ParserImpl<'a> {
         Ok(self.ast.binding_pattern_kind_array_pattern(
             self.end_span(span),
             list,
-            rest.map(|r| self.ast.alloc(r)),
+            rest.map(|r| self.alloc(r)),
         ))
     }
 

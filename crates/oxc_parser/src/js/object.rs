@@ -136,11 +136,11 @@ impl<'a> ParserImpl<'a> {
         let identifier = self.parse_identifier_reference()?;
         let key = self.ast.alloc_identifier_name(identifier.span, identifier.name.clone());
         // IdentifierReference ({ foo })
-        let value = Expression::Identifier(self.ast.alloc(identifier.clone()));
+        let value = Expression::Identifier(self.alloc(identifier.clone()));
         // CoverInitializedName ({ foo = bar })
         let init = if self.eat(Kind::Eq) {
             let right = self.parse_assignment_expression_or_higher()?;
-            let left = AssignmentTarget::AssignmentTargetIdentifier(self.ast.alloc(identifier));
+            let left = AssignmentTarget::AssignmentTargetIdentifier(self.alloc(identifier));
             Some(self.ast.expression_assignment(
                 self.end_span(span),
                 AssignmentOperator::Assign,
@@ -199,7 +199,7 @@ impl<'a> ParserImpl<'a> {
             }
             _ => {
                 let ident = self.parse_identifier_name()?;
-                PropertyKey::StaticIdentifier(self.ast.alloc(ident))
+                PropertyKey::StaticIdentifier(self.alloc(ident))
             }
         };
         Ok((key, computed))
