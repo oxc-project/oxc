@@ -1,8 +1,8 @@
 use serde::Deserialize;
 
-use super::{BabelEnvOptions, PluginPresetEntries};
+use super::PluginPresetEntries;
 
-use crate::{JsxOptions, TypeScriptOptions};
+use crate::{EnvOptions, JsxOptions, TypeScriptOptions};
 
 #[derive(Debug, Default, Clone, Deserialize)]
 #[serde(try_from = "PluginPresetEntries")]
@@ -10,7 +10,7 @@ pub struct BabelPresets {
     pub errors: Vec<String>,
     pub unsupported: Vec<String>,
 
-    pub env: Option<BabelEnvOptions>,
+    pub env: Option<EnvOptions>,
 
     pub jsx: Option<JsxOptions>,
 
@@ -25,7 +25,7 @@ impl TryFrom<PluginPresetEntries> for BabelPresets {
         for entry in entries.0 {
             match entry.name() {
                 "env" => {
-                    p.env = entry.value::<BabelEnvOptions>().map_err(|err| p.errors.push(err)).ok();
+                    p.env = entry.value::<EnvOptions>().map_err(|err| p.errors.push(err)).ok();
                 }
                 "typescript" => {
                     p.typescript =
