@@ -331,7 +331,7 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
         // var _name;
         let binding = ctx
             .generate_uid_in_current_scope_based_on_node(expr, SymbolFlags::FunctionScopedVariable);
-        self.ctx.var_declarations.insert(&binding, None, ctx);
+        self.ctx.var_declarations.insert_var(&binding, None, ctx);
 
         Some(binding)
     }

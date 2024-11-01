@@ -609,7 +609,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
         body.statements.insert(0, call_expression);
 
         // _s = refresh_sig();
-        self.ctx.var_declarations.insert(
+        self.ctx.var_declarations.insert_var(
             &binding,
             Some(ctx.ast.expression_call(
                 SPAN,

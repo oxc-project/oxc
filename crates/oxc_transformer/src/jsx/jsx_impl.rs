@@ -481,7 +481,7 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
             self.ctx.top_level_statements.insert_statement(stmt);
         } else {
             // Insert after imports - add to `var_declarations`, which are inserted after `require` statements
-            self.ctx.var_declarations.insert_declarator(declarator, ctx);
+            self.ctx.var_declarations.insert_var_declarator(declarator, ctx);
         }
     }
 

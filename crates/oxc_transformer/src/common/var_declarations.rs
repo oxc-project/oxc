@@ -1,15 +1,17 @@
-//! Utility transform to add `var` declarations to top of statement blocks.
+//! Utility transform to add `var` or `let` declarations to top of statement blocks.
 //!
-//! `VarDeclarationsStore` contains a stack of `Vec<VariableDeclarator>`s.
-//! It is stored on `TransformCtx`.
+//! `VarDeclarationsStore` contains a stack of `Declarators`s, each comprising
+//! 2 x `Vec<Declarator<'a>>` (1 for `var`s, 1 for `let`s).
+//! `VarDeclarationsStore` is stored on `TransformCtx`.
 //!
 //! `VarDeclarations` transform pushes an empty entry onto this stack when entering a statement block,
-//! and when exiting the block, writes a `var` statement to top of block containing the declarators.
+//! and when exiting the block, writes `var` / `let` statements to top of block.
 //!
 //! Other transforms can add declarators to the store by calling methods of `VarDeclarationsStore`:
 //!
 //! ```rs
-//! self.ctx.var_declarations.insert_declarator(name, symbol_id, None, ctx);
+//! self.ctx.var_declarations.insert_var(name, binding, None, ctx);
+//! self.ctx.var_declarations.insert_let(name2, binding2, None, ctx);
 //! ```
 
 use std::cell::RefCell;
@@ -60,7 +62,19 @@ impl<'a, 'ctx> Traverse<'a> for VarDeclarations<'a, 'ctx> {
 
 /// Store for `VariableDeclarator`s to be added to enclosing statement block.
 pub struct VarDeclarationsStore<'a> {
-    stack: RefCell<SparseStack<ArenaVec<'a, VariableDeclarator<'a>>>>,
+    stack: RefCell<SparseStack<Declarators<'a>>>,
+}
+
+/// Declarators to be inserted in a statement block.
+struct Declarators<'a> {
+    var_declarators: ArenaVec<'a, VariableDeclarator<'a>>,
+    let_declarators: ArenaVec<'a, VariableDeclarator<'a>>,
+}
+
+impl<'a> Declarators<'a> {
+    fn new(ctx: &TraverseCtx<'a>) -> Self {
+        Self { var_declarators: ctx.ast.vec(), let_declarators: ctx.ast.vec() }
+    }
 }
 
 // Public methods
@@ -70,21 +84,34 @@ impl<'a> VarDeclarationsStore<'a> {
         Self { stack: RefCell::new(SparseStack::new()) }
     }
 
-    /// Add a `VariableDeclarator` to be inserted at top of current enclosing statement block,
+    /// Add a `var` declaration to be inserted at top of current enclosing statement block,
     /// given a `BoundIdentifier`.
-    pub fn insert(
+    pub fn insert_var(
         &self,
         binding: &BoundIdentifier<'a>,
         init: Option<Expression<'a>>,
         ctx: &TraverseCtx<'a>,
     ) {
         let pattern = binding.create_binding_pattern(ctx);
-        self.insert_binding_pattern(pattern, init, ctx);
+        self.insert_var_binding_pattern(pattern, init, ctx);
     }
 
-    /// Add a `VariableDeclarator` to be inserted at top of current enclosing statement block,
+    /// Add a `let` declaration to be inserted at top of current enclosing statement block,
+    /// given a `BoundIdentifier`.
+    #[expect(dead_code)]
+    pub fn insert_let(
+        &self,
+        binding: &BoundIdentifier<'a>,
+        init: Option<Expression<'a>>,
+        ctx: &TraverseCtx<'a>,
+    ) {
+        let pattern = binding.create_binding_pattern(ctx);
+        self.insert_let_binding_pattern(pattern, init, ctx);
+    }
+
+    /// Add a `var` declaration to be inserted at top of current enclosing statement block,
     /// given a `BindingPattern`.
-    pub fn insert_binding_pattern(
+    pub fn insert_var_binding_pattern(
         &self,
         ident: BindingPattern<'a>,
         init: Option<Expression<'a>>,
@@ -92,13 +119,34 @@ impl<'a> VarDeclarationsStore<'a> {
     ) {
         let declarator =
             ctx.ast.variable_declarator(SPAN, VariableDeclarationKind::Var, ident, init, false);
-        self.insert_declarator(declarator, ctx);
+        self.insert_var_declarator(declarator, ctx);
     }
 
-    /// Add a `VariableDeclarator` to be inserted at top of current enclosing statement block.
-    pub fn insert_declarator(&self, declarator: VariableDeclarator<'a>, ctx: &TraverseCtx<'a>) {
+    /// Add a `let` declaration to be inserted at top of current enclosing statement block,
+    /// given a `BindingPattern`.
+    pub fn insert_let_binding_pattern(
+        &self,
+        ident: BindingPattern<'a>,
+        init: Option<Expression<'a>>,
+        ctx: &TraverseCtx<'a>,
+    ) {
+        let declarator =
+            ctx.ast.variable_declarator(SPAN, VariableDeclarationKind::Let, ident, init, false);
+        self.insert_let_declarator(declarator, ctx);
+    }
+
+    /// Add a `var` declaration to be inserted at top of current enclosing statement block.
+    pub fn insert_var_declarator(&self, declarator: VariableDeclarator<'a>, ctx: &TraverseCtx<'a>) {
         let mut stack = self.stack.borrow_mut();
-        stack.last_mut_or_init(|| ctx.ast.vec()).push(declarator);
+        let declarators = stack.last_mut_or_init(|| Declarators::new(ctx));
+        declarators.var_declarators.push(declarator);
+    }
+
+    /// Add a `let` declaration to be inserted at top of current enclosing statement block.
+    pub fn insert_let_declarator(&self, declarator: VariableDeclarator<'a>, ctx: &TraverseCtx<'a>) {
+        let mut stack = self.stack.borrow_mut();
+        let declarators = stack.last_mut_or_init(|| Declarators::new(ctx));
+        declarators.let_declarators.push(declarator);
     }
 }
 
@@ -119,15 +167,15 @@ impl<'a> VarDeclarationsStore<'a> {
             return;
         }
 
-        if let Some(stmt) = self.get_var_statement(ctx) {
-            stmts.insert(0, stmt);
+        if let Some(insert_stmts) = self.get_var_statement(ctx) {
+            stmts.splice(0..0, insert_stmts);
         }
     }
 
     fn insert_into_program(&self, transform_ctx: &TransformCtx<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Some(stmt) = self.get_var_statement(ctx) {
+        if let Some(insert_stmts) = self.get_var_statement(ctx) {
             // Delegate to `TopLevelStatements`
-            transform_ctx.top_level_statements.insert_statement(stmt);
+            transform_ctx.top_level_statements.insert_statements(insert_stmts);
         }
 
         // Check stack is emptied
@@ -136,17 +184,38 @@ impl<'a> VarDeclarationsStore<'a> {
         debug_assert!(stack.last().is_none());
     }
 
-    fn get_var_statement(&self, ctx: &mut TraverseCtx<'a>) -> Option<Statement<'a>> {
+    fn get_var_statement(&self, ctx: &mut TraverseCtx<'a>) -> Option<Vec<Statement<'a>>> {
         let mut stack = self.stack.borrow_mut();
-        let declarators = stack.pop()?;
-        debug_assert!(!declarators.is_empty());
+        let Declarators { var_declarators, let_declarators } = stack.pop()?;
 
-        let stmt = Statement::VariableDeclaration(ctx.ast.alloc_variable_declaration(
+        let mut stmts = Vec::with_capacity(2);
+        if !var_declarators.is_empty() {
+            stmts.push(Self::create_declaration(
+                VariableDeclarationKind::Var,
+                var_declarators,
+                ctx,
+            ));
+        }
+        if !let_declarators.is_empty() {
+            stmts.push(Self::create_declaration(
+                VariableDeclarationKind::Let,
+                let_declarators,
+                ctx,
+            ));
+        }
+        Some(stmts)
+    }
+
+    fn create_declaration(
+        kind: VariableDeclarationKind,
+        declarators: ArenaVec<'a, VariableDeclarator<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Statement<'a> {
+        Statement::VariableDeclaration(ctx.ast.alloc_variable_declaration(
             SPAN,
-            VariableDeclarationKind::Var,
+            kind,
             declarators,
             false,
-        ));
-        Some(stmt)
+        ))
     }
 }

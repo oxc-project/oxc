@@ -575,7 +575,7 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
         );
 
         // var _name;
-        self.ctx.var_declarations.insert(&binding, None, ctx);
+        self.ctx.var_declarations.insert_var(&binding, None, ctx);
 
         // Add new reference `_name = name` to `temp_var_inits`
         temp_var_inits.push(ctx.ast.expression_assignment(
