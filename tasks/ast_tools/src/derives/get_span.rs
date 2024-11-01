@@ -3,8 +3,7 @@ use quote::quote;
 use syn::Ident;
 
 use crate::{
-    codegen::LateCtx,
-    schema::{EnumDef, GetGenerics, StructDef, ToType, TypeDef},
+    schema::{EnumDef, GetGenerics, Schema, StructDef, ToType, TypeDef},
     util::{ToIdent, TypeWrapper},
 };
 
@@ -19,7 +18,7 @@ impl Derive for DeriveGetSpan {
         "GetSpan"
     }
 
-    fn derive(&mut self, def: &TypeDef, _: &LateCtx) -> TokenStream {
+    fn derive(&mut self, def: &TypeDef, _: &Schema) -> TokenStream {
         let self_type = quote!(&self);
         let result_type = quote!(Span);
         let result_expr = quote!(self.span);
@@ -57,7 +56,7 @@ impl Derive for DeriveGetSpanMut {
         "GetSpanMut"
     }
 
-    fn derive(&mut self, def: &TypeDef, _: &LateCtx) -> TokenStream {
+    fn derive(&mut self, def: &TypeDef, _: &Schema) -> TokenStream {
         let self_type = quote!(&mut self);
         let result_type = quote!(&mut Span);
         let result_expr = quote!(&mut self.span);

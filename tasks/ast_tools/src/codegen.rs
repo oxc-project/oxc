@@ -8,7 +8,7 @@ use crate::{
     output::{Output, RawOutput},
     passes::Pass,
     rust_ast::{AstRef, Module},
-    schema::{lower_ast_types, Schema, TypeDef},
+    schema::{lower_ast_types, Schema},
     Result, TypeId,
 };
 
@@ -16,12 +16,12 @@ use crate::{
 pub struct AstCodegen {
     files: Vec<PathBuf>,
     passes: Vec<Box<dyn Runner<Context = EarlyCtx>>>,
-    generators: Vec<Box<dyn Runner<Context = LateCtx>>>,
+    generators: Vec<Box<dyn Runner<Context = Schema>>>,
 }
 
 pub struct AstCodegenResult {
-    pub schema: Schema,
     pub outputs: Vec<RawOutput>,
+    pub schema: Schema,
 }
 
 pub trait Runner {
@@ -78,24 +78,8 @@ impl EarlyCtx {
         AstRef::clone(&self.ty_table[id])
     }
 
-    fn into_late_ctx(self) -> LateCtx {
-        let schema = lower_ast_types(&self);
-
-        LateCtx { schema }
-    }
-}
-
-pub struct LateCtx {
-    schema: Schema,
-}
-
-impl LateCtx {
-    pub fn schema(&self) -> &Schema {
-        &self.schema
-    }
-
-    pub fn type_def(&self, id: TypeId) -> Option<&TypeDef> {
-        self.schema.get(id)
+    fn into_schema(self) -> Schema {
+        lower_ast_types(&self)
     }
 }
 
@@ -121,7 +105,7 @@ impl AstCodegen {
     #[must_use]
     pub fn generate<G>(mut self, generator: G) -> Self
     where
-        G: Runner<Context = LateCtx> + 'static,
+        G: Runner<Context = Schema> + 'static,
     {
         self.generators.push(Box::new(generator));
         self
@@ -142,10 +126,10 @@ impl AstCodegen {
         let mut outputs = run_passes(&mut self.passes, &early_ctx)?;
 
         // Late passes
-        let late_ctx = early_ctx.into_late_ctx();
-        outputs.extend(run_passes(&mut self.generators, &late_ctx)?);
+        let schema = early_ctx.into_schema();
+        outputs.extend(run_passes(&mut self.generators, &schema)?);
 
-        Ok(AstCodegenResult { outputs, schema: late_ctx.schema })
+        Ok(AstCodegenResult { outputs, schema })
     }
 }
 

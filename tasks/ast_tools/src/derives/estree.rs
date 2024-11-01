@@ -3,11 +3,10 @@ use proc_macro2::TokenStream;
 use quote::quote;
 
 use crate::{
-    codegen::LateCtx,
     markers::ESTreeStructTagMode,
     schema::{
         serialize::{enum_variant_name, get_always_flatten_structs, get_type_tag},
-        EnumDef, GetGenerics, GetIdent, StructDef, TypeDef,
+        EnumDef, GetGenerics, GetIdent, Schema, StructDef, TypeDef,
     },
 };
 
@@ -26,7 +25,7 @@ impl Derive for DeriveESTree {
         "estree".to_string()
     }
 
-    fn derive(&mut self, def: &TypeDef, ctx: &LateCtx) -> TokenStream {
+    fn derive(&mut self, def: &TypeDef, schema: &Schema) -> TokenStream {
         if let TypeDef::Struct(def) = def {
             if def
                 .markers
@@ -41,7 +40,7 @@ impl Derive for DeriveESTree {
 
         let body = match def {
             TypeDef::Enum(def) => serialize_enum(def),
-            TypeDef::Struct(def) => serialize_struct(def, ctx),
+            TypeDef::Struct(def) => serialize_struct(def, schema),
         };
         let ident = def.ident();
 
@@ -65,7 +64,7 @@ impl Derive for DeriveESTree {
     }
 }
 
-fn serialize_struct(def: &StructDef, ctx: &LateCtx) -> TokenStream {
+fn serialize_struct(def: &StructDef, schema: &Schema) -> TokenStream {
     let ident = def.ident();
     // If type_tag is Some, we serialize it manually. If None, either one of
     // the fields is named r#type, or the struct does not need a "type" field.
@@ -90,7 +89,7 @@ fn serialize_struct(def: &StructDef, ctx: &LateCtx) -> TokenStream {
 
         let ident = field.ident().unwrap();
         let always_flatten = match field.typ.type_id() {
-            Some(id) => get_always_flatten_structs(ctx).contains(&id),
+            Some(id) => get_always_flatten_structs(schema).contains(&id),
             None => false,
         };
 

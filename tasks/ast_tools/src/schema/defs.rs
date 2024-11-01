@@ -20,13 +20,6 @@ pub enum TypeDef {
 }
 
 impl TypeDef {
-    pub fn id(&self) -> TypeId {
-        match self {
-            TypeDef::Struct(def) => def.id,
-            TypeDef::Enum(def) => def.id,
-        }
-    }
-
     pub fn name(&self) -> &str {
         match self {
             TypeDef::Struct(def) => &def.name,

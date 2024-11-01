@@ -1,7 +1,7 @@
 use convert_case::{Case, Casing};
 use rustc_hash::FxHashSet;
 
-use crate::{codegen::LateCtx, markers::ESTreeStructTagMode, schema::GetIdent, TypeId};
+use crate::{markers::ESTreeStructTagMode, schema::GetIdent, Schema, TypeId};
 
 use super::{EnumDef, StructDef, TypeDef, VariantDef};
 
@@ -36,9 +36,9 @@ pub fn get_type_tag(def: &StructDef) -> Option<String> {
 }
 
 /// Returns a HashSet of structs that have the #[estree(always_flatten)] attribute.
-pub fn get_always_flatten_structs(ctx: &LateCtx) -> FxHashSet<TypeId> {
+pub fn get_always_flatten_structs(schema: &Schema) -> FxHashSet<TypeId> {
     let mut set = FxHashSet::default();
-    for def in ctx.schema() {
+    for def in &schema.defs {
         if let TypeDef::Struct(def) = def {
             if def.markers.estree.as_ref().is_some_and(|e| e.always_flatten) {
                 set.insert(def.id);

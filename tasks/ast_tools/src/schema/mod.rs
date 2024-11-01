@@ -116,15 +116,6 @@ impl Schema {
     }
 }
 
-impl<'a> IntoIterator for &'a Schema {
-    type IntoIter = std::slice::Iter<'a, TypeDef>;
-    type Item = &'a TypeDef;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.defs.iter()
-    }
-}
-
 fn parse_struct_outer_markers(attrs: &Vec<Attribute>) -> Result<StructOuterMarkers> {
     Ok(StructOuterMarkers {
         scope: get_scope_attribute(attrs).transpose()?,

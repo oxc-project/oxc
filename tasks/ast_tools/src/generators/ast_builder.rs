@@ -7,10 +7,10 @@ use quote::{format_ident, quote, ToTokens};
 use syn::{parse_quote, Ident, Type};
 
 use crate::{
-    codegen::LateCtx,
     output::{output_path, Output},
     schema::{
-        EnumDef, FieldDef, GetIdent, InheritDef, StructDef, ToType, TypeDef, TypeName, VariantDef,
+        EnumDef, FieldDef, GetIdent, InheritDef, Schema, StructDef, ToType, TypeDef, TypeName,
+        VariantDef,
     },
     util::{TypeAnalysis, TypeWrapper},
     Generator,
@@ -23,12 +23,12 @@ pub struct AstBuilderGenerator;
 define_generator!(AstBuilderGenerator);
 
 impl Generator for AstBuilderGenerator {
-    fn generate(&mut self, ctx: &LateCtx) -> Output {
-        let fns = ctx
-            .schema()
-            .into_iter()
+    fn generate(&mut self, schema: &Schema) -> Output {
+        let fns = schema
+            .defs
+            .iter()
             .filter(|it| it.visitable())
-            .map(|it| generate_builder_fn(it, ctx))
+            .map(|it| generate_builder_fn(it, schema))
             .collect_vec();
 
         Output::Rust {
@@ -97,17 +97,19 @@ fn struct_builder_name(struct_: &StructDef) -> Ident {
     format_ident!("{ident}")
 }
 
-fn generate_builder_fn(def: &TypeDef, ctx: &LateCtx) -> TokenStream {
+fn generate_builder_fn(def: &TypeDef, schema: &Schema) -> TokenStream {
     match def {
-        TypeDef::Enum(def) => generate_enum_builder_fn(def, ctx),
-        TypeDef::Struct(def) => generate_struct_builder_fn(def, ctx),
+        TypeDef::Enum(def) => generate_enum_builder_fn(def, schema),
+        TypeDef::Struct(def) => generate_struct_builder_fn(def, schema),
     }
 }
 
-fn generate_enum_builder_fn(def: &EnumDef, ctx: &LateCtx) -> TokenStream {
-    let variants_fns = def.variants.iter().map(|it| generate_enum_variant_builder_fn(def, it, ctx));
+fn generate_enum_builder_fn(def: &EnumDef, schema: &Schema) -> TokenStream {
+    let variants_fns =
+        def.variants.iter().map(|it| generate_enum_variant_builder_fn(def, it, schema));
 
-    let inherits_fns = def.inherits.iter().map(|it| generate_enum_inherit_builder_fn(def, it, ctx));
+    let inherits_fns =
+        def.inherits.iter().map(|it| generate_enum_inherit_builder_fn(def, it, schema));
 
     variants_fns.chain(inherits_fns).collect()
 }
@@ -115,7 +117,7 @@ fn generate_enum_builder_fn(def: &EnumDef, ctx: &LateCtx) -> TokenStream {
 fn generate_enum_inherit_builder_fn(
     enum_: &EnumDef,
     inherit: &InheritDef,
-    _: &LateCtx,
+    _: &Schema,
 ) -> TokenStream {
     let enum_ident = enum_.ident();
     let enum_as_type = enum_.to_type();
@@ -142,7 +144,7 @@ fn generate_enum_inherit_builder_fn(
 fn generate_enum_variant_builder_fn(
     enum_: &EnumDef,
     variant: &VariantDef,
-    ctx: &LateCtx,
+    schema: &Schema,
 ) -> TokenStream {
     assert_eq!(variant.fields.len(), 1);
     let enum_ident = enum_.ident();
@@ -154,10 +156,10 @@ fn generate_enum_variant_builder_fn(
     let ty = var_type
         .type_id()
         .or_else(|| var_type.transparent_type_id())
-        .and_then(|id| ctx.type_def(id))
+        .and_then(|id| schema.get(id))
         .expect("type not found!");
     let (params, inner_builder) = match ty {
-        TypeDef::Struct(it) => (get_struct_params(it, ctx), struct_builder_name(it)),
+        TypeDef::Struct(it) => (get_struct_params(it, schema), struct_builder_name(it)),
         TypeDef::Enum(_) => panic!("Unsupported!"),
     };
 
@@ -172,7 +174,7 @@ fn generate_enum_variant_builder_fn(
         does_alloc = true;
     }
 
-    let from_variant_builder = generate_enum_from_variant_builder_fn(enum_, variant, ctx);
+    let from_variant_builder = generate_enum_from_variant_builder_fn(enum_, variant, schema);
     let article = article_for(enum_ident.to_string());
     let mut docs = DocComment::new(format!(" Build {article} [`{enum_ident}::{var_ident}`]"))
         .with_params(&params);
@@ -201,7 +203,7 @@ fn generate_enum_variant_builder_fn(
 fn generate_enum_from_variant_builder_fn(
     enum_: &EnumDef,
     variant: &VariantDef,
-    _: &LateCtx,
+    _: &Schema,
 ) -> TokenStream {
     assert_eq!(variant.fields.len(), 1);
     let enum_ident = enum_.ident();
@@ -248,13 +250,13 @@ fn default_init_field(field: &FieldDef) -> bool {
 ///
 /// 3. to create owned object with provided `ScopeId` / `SymbolId` / `ReferenceId`.
 /// 4. to create boxed object with provided `ScopeId` / `SymbolId` / `ReferenceId`.
-fn generate_struct_builder_fn(ty: &StructDef, ctx: &LateCtx) -> TokenStream {
+fn generate_struct_builder_fn(ty: &StructDef, schema: &Schema) -> TokenStream {
     let ident = ty.ident();
     let as_type = ty.to_type();
     let fn_name = struct_builder_name(ty);
     let alloc_fn_name = format_ident!("alloc_{fn_name}");
 
-    let params_incl_defaults = get_struct_params(ty, ctx);
+    let params_incl_defaults = get_struct_params(ty, schema);
     let (generic_params, where_clause) = get_generic_params(&params_incl_defaults);
 
     let mut has_default_fields = false;
@@ -585,7 +587,7 @@ fn get_generic_params(
 }
 
 // TODO: currently doesn't support multiple `Atom` or `&'a str` params.
-fn get_struct_params(struct_: &StructDef, ctx: &LateCtx) -> Vec<Param> {
+fn get_struct_params(struct_: &StructDef, schema: &Schema) -> Vec<Param> {
     // generic param postfix
     let mut t_count = 0;
     let mut t_param = move || {
@@ -594,7 +596,7 @@ fn get_struct_params(struct_: &StructDef, ctx: &LateCtx) -> Vec<Param> {
     };
     struct_.fields.iter().fold(Vec::new(), |mut acc, field| {
         let analysis = field.typ.analysis();
-        let type_def = field.typ.transparent_type_id().and_then(|id| ctx.type_def(id));
+        let type_def = field.typ.transparent_type_id().and_then(|id| schema.get(id));
         let (interface_typ, generic_typ) = match (&analysis.wrapper, type_def) {
             (TypeWrapper::Box, Some(def)) => {
                 let t = t_param();
