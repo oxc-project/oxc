@@ -50,8 +50,14 @@ impl<'a> Codegen<'a> {
     }
 
     fn is_legal_comment(&self, comment: &Comment) -> bool {
-        (self.options.comments || self.options.legal_comments.is_inline())
-            && comment.is_legal(self.source_text)
+        if self.options.comments {
+            if self.options.legal_comments.is_inline() || self.options.legal_comments.is_none() {
+                return comment.is_legal(self.source_text);
+            }
+        } else if self.options.legal_comments.is_inline() {
+            return comment.is_legal(self.source_text);
+        }
+        false
     }
 
     /// Weather to keep leading comments.
@@ -139,6 +145,18 @@ impl<'a> Codegen<'a> {
         } else {
             self.print_hard_newline();
             true
+        }
+    }
+
+    pub(crate) fn try_print_eof_legal_comments(&mut self, comments: &[Comment]) {
+        if !self.options.legal_comments.is_eof() {
+            return;
+        }
+        for c in comments {
+            if c.is_legal(self.source_text) {
+                self.print_comment(c);
+                self.print_hard_newline();
+            }
         }
     }
 

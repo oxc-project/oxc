@@ -183,8 +183,9 @@ impl<'a> Codegen<'a> {
         self
     }
 
-    /// Print a [`Program`] into a string of source code. A source map will be
-    /// generated if [`CodegenOptions::source_map_path`] is set.
+    /// Print a [`Program`] into a string of source code.
+    ///
+    /// A source map will be generated if [`CodegenOptions::source_map_path`] is set.
     #[must_use]
     pub fn build(mut self, program: &Program<'a>) -> CodegenReturn {
         self.quote = if self.options.single_quote { b'\'' } else { b'"' };
@@ -196,8 +197,8 @@ impl<'a> Codegen<'a> {
         if let Some(path) = &self.options.source_map_path {
             self.sourcemap_builder = Some(SourcemapBuilder::new(path, program.source_text));
         }
-
         program.print(&mut self, Context::default());
+        self.try_print_eof_legal_comments(&program.comments);
         let code = self.code.into_string();
         let map = self.sourcemap_builder.map(SourcemapBuilder::into_sourcemap);
         CodegenReturn { code, map }

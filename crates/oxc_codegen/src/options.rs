@@ -19,9 +19,19 @@ pub enum LegalComment {
 }
 
 impl LegalComment {
+    /// Is None.
+    pub fn is_none(self) -> bool {
+        self == Self::None
+    }
+
     /// Is inline mode.
     pub fn is_inline(self) -> bool {
         self == Self::Inline
+    }
+
+    /// Is EOF mode.
+    pub fn is_eof(self) -> bool {
+        self == Self::Eof
     }
 }
 
