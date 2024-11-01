@@ -76,7 +76,7 @@ impl<'a> Gen for Directive<'a> {
 
 impl<'a> Gen for Statement<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        p.print_leading_comments(self.span().start);
+        p.print_statement_comments(self.span().start);
         match self {
             Self::BlockStatement(stmt) => stmt.print(p, ctx),
             Self::BreakStatement(stmt) => stmt.print(p, ctx),
