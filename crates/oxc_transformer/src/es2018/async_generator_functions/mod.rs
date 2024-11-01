@@ -91,6 +91,10 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> Traverse<'a> for AsyncGeneratorFunctions<'a, 'ctx> {
+    fn enter_program(&mut self, _node: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
+        self.ctx.arrow_function_to_expression.enable_async_arrow_function();
+    }
+
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let new_expr = match expr {
             Expression::AwaitExpression(await_expr) => {
@@ -164,22 +168,23 @@ impl<'a, 'ctx> Traverse<'a> for AsyncGeneratorFunctions<'a, 'ctx> {
         }
     }
 
-    fn exit_method_definition(
-        &mut self,
-        node: &mut MethodDefinition<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        let function = &mut node.value;
-        if function.r#async && function.generator && !function.is_typescript_syntax() {
-            self.executor.transform_function_for_method_definition(function, ctx);
-        }
-    }
-
     fn enter_function(&mut self, func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
         self.stack.push(func.r#async && func.generator);
     }
 
-    fn exit_function(&mut self, _func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
+    fn exit_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
+        if func.r#async
+            && matches!(
+                ctx.parent(),
+                // `({ async *method() {} })`
+                Ancestor::ObjectPropertyValue(_) |
+                // `class A { async *method() {} }`
+                 Ancestor::MethodDefinitionValue(_)
+            )
+        {
+            self.executor.transform_function_for_method_definition(func, ctx);
+        }
+
         self.stack.pop();
     }
 }

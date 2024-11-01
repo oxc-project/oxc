@@ -9,6 +9,7 @@ use oxc_span::SourceType;
 
 use crate::{
     common::{
+        arrow_function_to_expression::ArrowFunctionToExpressionStore,
         helper_loader::HelperLoaderStore, module_imports::ModuleImportsStore,
         statement_injector::StatementInjectorStore, top_level_statements::TopLevelStatementsStore,
         var_declarations::VarDeclarationsStore,
@@ -40,6 +41,8 @@ pub struct TransformCtx<'a> {
     pub statement_injector: StatementInjectorStore<'a>,
     /// Manage inserting statements at top of program globally
     pub top_level_statements: TopLevelStatementsStore<'a>,
+    /// Manage converting arrow functions to expressions
+    pub arrow_function_to_expression: ArrowFunctionToExpressionStore,
 }
 
 impl<'a> TransformCtx<'a> {
@@ -63,6 +66,7 @@ impl<'a> TransformCtx<'a> {
             var_declarations: VarDeclarationsStore::new(),
             statement_injector: StatementInjectorStore::new(),
             top_level_statements: TopLevelStatementsStore::new(),
+            arrow_function_to_expression: ArrowFunctionToExpressionStore::new(),
         }
     }
 

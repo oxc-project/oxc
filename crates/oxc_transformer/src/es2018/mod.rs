@@ -2,7 +2,7 @@ mod async_generator_functions;
 mod object_rest_spread;
 mod options;
 
-use oxc_ast::ast::{Expression, ForOfStatement, Function, MethodDefinition, Statement};
+use oxc_ast::ast::*;
 use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::context::TransformCtx;
@@ -32,6 +32,12 @@ impl<'a, 'ctx> ES2018<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> Traverse<'a> for ES2018<'a, 'ctx> {
+    fn enter_program(&mut self, node: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.options.async_generator_functions {
+            self.async_generator_functions.enter_program(node, ctx);
+        }
+    }
+
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.object_rest_spread.is_some() {
             self.object_rest_spread.enter_expression(expr, ctx);
@@ -53,16 +59,6 @@ impl<'a, 'ctx> Traverse<'a> for ES2018<'a, 'ctx> {
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.async_generator_functions {
             self.async_generator_functions.exit_statement(stmt, ctx);
-        }
-    }
-
-    fn exit_method_definition(
-        &mut self,
-        node: &mut MethodDefinition<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if self.options.async_generator_functions {
-            self.async_generator_functions.exit_method_definition(node, ctx);
         }
     }
 

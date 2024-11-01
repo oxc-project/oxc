@@ -6,12 +6,14 @@ use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::TransformCtx;
 
+pub mod arrow_function_to_expression;
 pub mod helper_loader;
 pub mod module_imports;
 pub mod statement_injector;
 pub mod top_level_statements;
 pub mod var_declarations;
 
+use arrow_function_to_expression::ArrowFunctionToExpression;
 use module_imports::ModuleImports;
 use statement_injector::StatementInjector;
 use top_level_statements::TopLevelStatements;
@@ -22,6 +24,7 @@ pub struct Common<'a, 'ctx> {
     var_declarations: VarDeclarations<'a, 'ctx>,
     statement_injector: StatementInjector<'a, 'ctx>,
     top_level_statements: TopLevelStatements<'a, 'ctx>,
+    arrow_function_to_expression: ArrowFunctionToExpression<'a, 'ctx>,
 }
 
 impl<'a, 'ctx> Common<'a, 'ctx> {
@@ -31,6 +34,7 @@ impl<'a, 'ctx> Common<'a, 'ctx> {
             var_declarations: VarDeclarations::new(ctx),
             statement_injector: StatementInjector::new(ctx),
             top_level_statements: TopLevelStatements::new(ctx),
+            arrow_function_to_expression: ArrowFunctionToExpression::new(ctx),
         }
     }
 }
@@ -38,6 +42,7 @@ impl<'a, 'ctx> Common<'a, 'ctx> {
 impl<'a, 'ctx> Traverse<'a> for Common<'a, 'ctx> {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.module_imports.exit_program(program, ctx);
+        self.arrow_function_to_expression.exit_program(program, ctx);
         self.var_declarations.exit_program(program, ctx);
         self.top_level_statements.exit_program(program, ctx);
     }
@@ -57,5 +62,53 @@ impl<'a, 'ctx> Traverse<'a> for Common<'a, 'ctx> {
     ) {
         self.var_declarations.exit_statements(stmts, ctx);
         self.statement_injector.exit_statements(stmts, ctx);
+    }
+
+    fn enter_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.arrow_function_to_expression.enter_function(func, ctx);
+    }
+
+    fn exit_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.arrow_function_to_expression.exit_function(func, ctx);
+    }
+
+    fn exit_method_definition(
+        &mut self,
+        node: &mut MethodDefinition<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.arrow_function_to_expression.exit_method_definition(node, ctx);
+    }
+
+    fn enter_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.arrow_function_to_expression.enter_static_block(block, ctx);
+    }
+
+    fn exit_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.arrow_function_to_expression.exit_static_block(block, ctx);
+    }
+
+    fn enter_jsx_element_name(
+        &mut self,
+        element_name: &mut JSXElementName<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.arrow_function_to_expression.enter_jsx_element_name(element_name, ctx);
+    }
+
+    fn enter_jsx_member_expression_object(
+        &mut self,
+        object: &mut JSXMemberExpressionObject<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.arrow_function_to_expression.enter_jsx_member_expression_object(object, ctx);
+    }
+
+    fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.arrow_function_to_expression.enter_expression(expr, ctx);
+    }
+
+    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.arrow_function_to_expression.exit_expression(expr, ctx);
     }
 }

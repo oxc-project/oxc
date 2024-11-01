@@ -138,6 +138,9 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
             typescript.enter_program(program, ctx);
         }
         self.x1_jsx.enter_program(program, ctx);
+        self.x2_es2018.enter_program(program, ctx);
+        self.x2_es2017.enter_program(program, ctx);
+        self.x3_es2015.enter_program(program, ctx);
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -145,7 +148,6 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.exit_program(program, ctx);
         }
-        self.x3_es2015.exit_program(program, ctx);
         self.common.exit_program(program, ctx);
     }
 
@@ -198,11 +200,11 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
     }
 
     fn enter_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.x3_es2015.enter_static_block(block, ctx);
+        self.common.enter_static_block(block, ctx);
     }
 
     fn exit_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.x3_es2015.exit_static_block(block, ctx);
+        self.common.exit_static_block(block, ctx);
     }
 
     fn enter_ts_module_declaration(
@@ -220,19 +222,19 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_expression(expr, ctx);
         }
+        self.common.enter_expression(expr, ctx);
         self.x2_es2021.enter_expression(expr, ctx);
         self.x2_es2020.enter_expression(expr, ctx);
         self.x2_es2018.enter_expression(expr, ctx);
         self.x2_es2016.enter_expression(expr, ctx);
-        self.x3_es2015.enter_expression(expr, ctx);
         self.x4_regexp.enter_expression(expr, ctx);
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.common.exit_expression(expr, ctx);
         self.x1_jsx.exit_expression(expr, ctx);
         self.x2_es2018.exit_expression(expr, ctx);
         self.x2_es2017.exit_expression(expr, ctx);
-        self.x3_es2015.exit_expression(expr, ctx);
     }
 
     fn enter_simple_assignment_target(
@@ -267,7 +269,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
 
     fn enter_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x2_es2018.enter_function(func, ctx);
-        self.x3_es2015.enter_function(func, ctx);
+        self.common.enter_function(func, ctx);
     }
 
     fn exit_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -276,7 +278,8 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         }
         self.x1_jsx.exit_function(func, ctx);
         self.x2_es2018.exit_function(func, ctx);
-        self.x3_es2015.exit_function(func, ctx);
+        self.x2_es2017.exit_function(func, ctx);
+        self.common.exit_function(func, ctx);
     }
 
     fn enter_jsx_element(&mut self, node: &mut JSXElement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -286,7 +289,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
     }
 
     fn enter_jsx_element_name(&mut self, node: &mut JSXElementName<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.x3_es2015.enter_jsx_element_name(node, ctx);
+        self.common.enter_jsx_element_name(node, ctx);
     }
 
     fn enter_jsx_member_expression_object(
@@ -294,7 +297,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         node: &mut JSXMemberExpressionObject<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        self.x3_es2015.enter_jsx_member_expression_object(node, ctx);
+        self.common.enter_jsx_member_expression_object(node, ctx);
     }
 
     fn enter_jsx_fragment(&mut self, node: &mut JSXFragment<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -332,8 +335,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.exit_method_definition(def, ctx);
         }
-        self.x2_es2018.exit_method_definition(def, ctx);
-        self.x2_es2017.exit_method_definition(def, ctx);
+        self.common.exit_method_definition(def, ctx);
     }
 
     fn enter_new_expression(&mut self, expr: &mut NewExpression<'a>, ctx: &mut TraverseCtx<'a>) {
