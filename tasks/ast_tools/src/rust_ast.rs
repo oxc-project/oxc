@@ -272,7 +272,7 @@ const LOAD_ERROR: &str = "should be loaded by now!";
 
 #[derive(Debug)]
 pub struct Module {
-    pub file: PathBuf,
+    pub file_path: PathBuf,
     pub path: String,
     pub items: Vec<AstRef>,
     pub loaded: bool,
@@ -280,9 +280,9 @@ pub struct Module {
 
 impl Module {
     /// Expects a file path to a rust source file in the `crates` directory.
-    pub fn with_path(file: PathBuf) -> Self {
+    pub fn with_path(file_path: PathBuf) -> Self {
         let path = {
-            let no_ext = file.with_extension("");
+            let no_ext = file_path.with_extension("");
             let string = no_ext.to_string_lossy();
             let mut parts = string.split('/');
             assert_eq!(parts.next(), Some("crates"));
@@ -291,13 +291,13 @@ impl Module {
             let mut parts = [krate].into_iter().chain(parts);
             parts.join("::")
         };
-        Self { file, path, items: Vec::new(), loaded: false }
+        Self { file_path, path, items: Vec::new(), loaded: false }
     }
 
     pub fn load(mut self) -> Result<Self> {
         assert!(!self.loaded, "can't load twice!");
-        let mut file = std::fs::File::open(&self.file).normalize().map_err(|err| {
-            format!("Error reading file: {}, reason: {}", &self.file.to_string_lossy(), err)
+        let mut file = std::fs::File::open(&self.file_path).normalize().map_err(|err| {
+            format!("Error reading file: {}, reason: {}", &self.file_path.to_string_lossy(), err)
         })?;
         let mut content = String::new();
         file.read_to_string(&mut content).normalize()?;
@@ -460,10 +460,4 @@ pub fn analyze(ast_ref: &AstRef) -> Result<()> {
     }
 
     Ok(())
-}
-
-impl From<PathBuf> for Module {
-    fn from(path: PathBuf) -> Self {
-        Self::with_path(path)
-    }
 }

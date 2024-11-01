@@ -131,7 +131,7 @@ impl AstCodegen {
         let modules = self
             .files
             .into_iter()
-            .map(rust_ast::Module::from)
+            .map(rust_ast::Module::with_path)
             .map(rust_ast::Module::load)
             .map_ok(rust_ast::Module::expand)
             .map_ok(|it| it.map(rust_ast::Module::analyze))
