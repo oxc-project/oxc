@@ -90,10 +90,8 @@ pub struct EnumDef {
     pub has_lifetime: bool,
     pub size_64: usize,
     pub align_64: usize,
-    pub offsets_64: Option<Vec<usize>>,
     pub size_32: usize,
     pub align_32: usize,
-    pub offsets_32: Option<Vec<usize>>,
     pub generated_derives: Vec<String>,
     #[serde(skip)]
     pub module_path: String,

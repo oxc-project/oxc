@@ -157,12 +157,12 @@ fn lower_ast_type(ty: &rust::AstType, ctx: &EarlyCtx) -> TypeDef {
 }
 
 fn lower_ast_enum(it @ rust::Enum { item, meta }: &rust::Enum, ctx: &EarlyCtx) -> EnumDef {
-    let (size_64, align_64, offsets_64) = meta
+    let (size_64, align_64, ..) = meta
         .layout_64
         .clone()
         .layout()
         .map_or_else(|| panic!("Uncalculated layout on {}!", item.ident), KnownLayout::unpack);
-    let (size_32, align_32, offsets_32) = meta
+    let (size_32, align_32, ..) = meta
         .layout_32
         .clone()
         .layout()
@@ -179,14 +179,10 @@ fn lower_ast_enum(it @ rust::Enum { item, meta }: &rust::Enum, ctx: &EarlyCtx) -
             .collect(),
         inherits: meta.inherits.iter().map(|it| lower_inherit(it, ctx)).collect(),
         has_lifetime: item.generics.lifetimes().count() > 0,
-
         size_64,
         align_64,
-        offsets_64,
         size_32,
         align_32,
-        offsets_32,
-
         markers: parse_enum_outer_markers(&item.attrs).unwrap(),
         generated_derives: parse_generate_derive(&item.attrs),
 
