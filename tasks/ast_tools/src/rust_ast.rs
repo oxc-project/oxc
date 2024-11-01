@@ -1,5 +1,3 @@
-use proc_macro2::TokenStream;
-use quote::ToTokens;
 use syn::{
     braced,
     parse::{Parse, ParseBuffer},
@@ -149,16 +147,6 @@ pub enum AstType {
 
     // we need this to expand `inherit` macro calls.
     Macro(Macro),
-}
-
-impl ToTokens for AstType {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        match self {
-            Self::Enum(it) => it.item.to_tokens(tokens),
-            Self::Struct(it) => it.item.to_tokens(tokens),
-            Self::Macro(it) => it.item.to_tokens(tokens),
-        }
-    }
 }
 
 impl AstType {
