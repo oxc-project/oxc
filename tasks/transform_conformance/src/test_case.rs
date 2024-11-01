@@ -101,7 +101,10 @@ pub trait TestCase {
         let options = self.options();
 
         // Skip plugins we don't support yet
-        if PLUGINS_NOT_SUPPORTED_YET.iter().any(|plugin| options.get_plugin(plugin).is_some()) {
+        if PLUGINS_NOT_SUPPORTED_YET
+            .iter()
+            .any(|plugin| options.plugins.unsupported.iter().any(|p| plugin == p))
+        {
             return true;
         }
 
@@ -118,14 +121,13 @@ pub trait TestCase {
             }
         }
 
-        // Legacy decorators is not supported by the parser
+        // Legacy decorators is not supported
         if options
-            .get_plugin("syntax-decorators")
-            .flatten()
+            .plugins
+            .proposal_decorators
             .as_ref()
-            .and_then(|o| o.as_object())
-            .and_then(|o| o.get("version"))
-            .is_some_and(|s| s == "legacy")
+            .or(options.plugins.syntax_decorators.as_ref())
+            .is_some_and(|o| o.version == "legacy")
         {
             return true;
         }
@@ -171,8 +173,8 @@ pub trait TestCase {
         // Some babel test cases have a js extension, but contain typescript code.
         // Therefore, if the typescript plugin exists, enable typescript.
         let source_type = SourceType::from_path(path).unwrap().with_typescript(
-            self.options().get_plugin("transform-typescript").is_some()
-                || self.options().get_plugin("syntax-typescript").is_some(),
+            self.options().plugins.syntax_typescript.is_some()
+                || self.options().plugins.typescript.is_some(),
         );
 
         let driver =
@@ -228,7 +230,7 @@ impl TestCase for ConformanceTestCase {
             let mut source_type = SourceType::from_path(&self.path)
                 .unwrap()
                 .with_script(true)
-                .with_jsx(self.options.get_plugin("syntax-jsx").is_some());
+                .with_jsx(self.options.plugins.syntax_jsx);
 
             source_type = match self.options.source_type.as_deref() {
                 Some("unambiguous") => source_type.with_unambiguous(true),
@@ -239,8 +241,8 @@ impl TestCase for ConformanceTestCase {
             };
 
             source_type = source_type.with_typescript(
-                self.options.get_plugin("transform-typescript").is_some()
-                    || self.options.get_plugin("syntax-typescript").is_some(),
+                self.options.plugins.typescript.is_some()
+                    || self.options.plugins.syntax_typescript.is_some(),
             );
 
             source_type

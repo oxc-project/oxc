@@ -1,14 +1,8 @@
 use oxc_diagnostics::{Error, OxcDiagnostic};
 
 use crate::{
-    es2015::{ArrowFunctionsOptions, ES2015Options},
-    es2016::ES2016Options,
-    es2017::ES2017Options,
-    es2018::{ES2018Options, ObjectRestSpreadOptions},
-    es2019::ES2019Options,
-    es2020::ES2020Options,
-    es2021::ES2021Options,
-    es2022::{ClassPropertiesOptions, ES2022Options},
+    es2015::ES2015Options, es2016::ES2016Options, es2017::ES2017Options, es2018::ES2018Options,
+    es2019::ES2019Options, es2020::ES2020Options, es2021::ES2021Options, es2022::ES2022Options,
     regexp::RegExpOptions,
 };
 
@@ -146,117 +140,59 @@ impl TryFrom<&BabelOptions> for EnvOptions {
             .unwrap_or_default();
 
         let regexp = RegExpOptions {
-            sticky_flag: env.regexp.sticky_flag || options.has_plugin("transform-sticky-regex"),
-            unicode_flag: env.regexp.unicode_flag || options.has_plugin("transform-unicode-regex"),
-            dot_all_flag: env.regexp.dot_all_flag || options.has_plugin("transform-dotall-regex"),
-            look_behind_assertions: env.regexp.look_behind_assertions,
+            sticky_flag: env.regexp.sticky_flag || options.plugins.sticky_flag,
+            unicode_flag: env.regexp.unicode_flag || options.plugins.unicode_flag,
+            dot_all_flag: env.regexp.dot_all_flag || options.plugins.dot_all_flag,
+            look_behind_assertions: env.regexp.look_behind_assertions
+                || options.plugins.look_behind_assertions,
             named_capture_groups: env.regexp.named_capture_groups
-                || options.has_plugin("transform-named-capturing-groups-regex"),
+                || options.plugins.named_capture_groups,
             unicode_property_escapes: env.regexp.unicode_property_escapes
-                || options.has_plugin("transform-unicode-property-regex"),
+                || options.plugins.unicode_property_escapes,
             match_indices: env.regexp.match_indices,
-            set_notation: env.regexp.set_notation
-                || options.has_plugin("transform-unicode-sets-regex"),
+            set_notation: env.regexp.set_notation || options.plugins.set_notation,
         };
 
         let es2015 = ES2015Options {
-            arrow_function: {
-                let plugin_name = "transform-arrow-functions";
-                options
-                    .get_plugin(plugin_name)
-                    .map(|o| {
-                        o.and_then(|options| {
-                            serde_json::from_value::<ArrowFunctionsOptions>(options)
-                                .inspect_err(|err| {
-                                    report_error(plugin_name, err, false, &mut errors);
-                                })
-                                .ok()
-                        })
-                        .unwrap_or_default()
-                    })
-                    .or(env.es2015.arrow_function)
-            },
+            arrow_function: options.plugins.arrow_function.or(env.es2015.arrow_function),
         };
 
         let es2016 = ES2016Options {
-            exponentiation_operator: {
-                let plugin_name = "transform-exponentiation-operator";
-                options.get_plugin(plugin_name).is_some() || env.es2016.exponentiation_operator
-            },
+            exponentiation_operator: options.plugins.exponentiation_operator
+                || env.es2016.exponentiation_operator,
         };
 
         let es2017 = ES2017Options {
-            async_to_generator: {
-                let plugin_name = "transform-async-to-generator";
-                options.get_plugin(plugin_name).is_some() || env.es2017.async_to_generator
-            },
+            async_to_generator: options.plugins.async_to_generator || env.es2017.async_to_generator,
         };
 
         let es2018 = ES2018Options {
-            object_rest_spread: {
-                let plugin_name = "transform-object-rest-spread";
-                options
-                    .get_plugin(plugin_name)
-                    .map(|o| {
-                        o.and_then(|options| {
-                            serde_json::from_value::<ObjectRestSpreadOptions>(options)
-                                .inspect_err(|err| {
-                                    report_error(plugin_name, err, false, &mut errors);
-                                })
-                                .ok()
-                        })
-                        .unwrap_or_default()
-                    })
-                    .or(env.es2018.object_rest_spread)
-            },
-            async_generator_functions: {
-                let plugin_name = "transform-async-generator-functions";
-                options.get_plugin(plugin_name).is_some() || env.es2018.async_generator_functions
-            },
+            object_rest_spread: options
+                .plugins
+                .object_rest_spread
+                .or(env.es2018.object_rest_spread),
+            async_generator_functions: options.plugins.async_generator_functions
+                || env.es2018.async_generator_functions,
         };
 
         let es2019 = ES2019Options {
-            optional_catch_binding: {
-                let plugin_name = "transform-optional-catch-binding";
-                options.get_plugin(plugin_name).is_some() || env.es2019.optional_catch_binding
-            },
+            optional_catch_binding: options.plugins.optional_catch_binding
+                || env.es2019.optional_catch_binding,
         };
 
         let es2020 = ES2020Options {
-            nullish_coalescing_operator: {
-                let plugin_name = "transform-nullish-coalescing-operator";
-                options.get_plugin(plugin_name).is_some() || env.es2020.nullish_coalescing_operator
-            },
+            nullish_coalescing_operator: options.plugins.nullish_coalescing_operator
+                || env.es2020.nullish_coalescing_operator,
         };
 
         let es2021 = ES2021Options {
-            logical_assignment_operators: {
-                let plugin_name = "transform-logical-assignment-operators";
-                options.get_plugin(plugin_name).is_some() || env.es2021.logical_assignment_operators
-            },
+            logical_assignment_operators: options.plugins.logical_assignment_operators
+                || env.es2021.logical_assignment_operators,
         };
 
         let es2022 = ES2022Options {
-            class_static_block: {
-                let plugin_name = "transform-class-static-block";
-                options.get_plugin(plugin_name).is_some() || env.es2022.class_static_block
-            },
-            class_properties: {
-                let plugin_name = "transform-class-properties";
-                options
-                    .get_plugin(plugin_name)
-                    .map(|o| {
-                        o.and_then(|options| {
-                            serde_json::from_value::<ClassPropertiesOptions>(options)
-                                .inspect_err(|err| {
-                                    report_error(plugin_name, err, false, &mut errors);
-                                })
-                                .ok()
-                        })
-                        .unwrap_or_default()
-                    })
-                    .or(env.es2022.class_properties)
-            },
+            class_static_block: options.plugins.class_static_block || env.es2022.class_static_block,
+            class_properties: options.plugins.class_properties.or(env.es2022.class_properties),
         };
 
         if !errors.is_empty() {
