@@ -513,13 +513,7 @@ impl<'a> StaticMemberExpression<'a> {
     #[allow(missing_docs)]
     pub fn get_first_object(&self) -> &Expression<'a> {
         match &self.object {
-            Expression::StaticMemberExpression(member) => {
-                if let Expression::StaticMemberExpression(expr) = &member.object {
-                    expr.get_first_object()
-                } else {
-                    member.get_first_object()
-                }
-            }
+            Expression::StaticMemberExpression(member) => member.get_first_object(),
             Expression::ChainExpression(chain) => {
                 if let ChainElement::StaticMemberExpression(expr) = &chain.expression {
                     expr.get_first_object()
