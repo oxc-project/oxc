@@ -512,16 +512,23 @@ impl<'a> ComputedMemberExpression<'a> {
 impl<'a> StaticMemberExpression<'a> {
     #[allow(missing_docs)]
     pub fn get_first_object(&self) -> &Expression<'a> {
-        match &self.object {
-            Expression::StaticMemberExpression(member) => member.get_first_object(),
-            Expression::ChainExpression(chain) => {
-                if let ChainElement::StaticMemberExpression(expr) = &chain.expression {
-                    expr.get_first_object()
-                } else {
-                    &self.object
+        let mut object = &self.object;
+        loop {
+            match object {
+                Expression::StaticMemberExpression(member) => {
+                    object = &member.object;
+                    continue;
                 }
+                Expression::ChainExpression(chain) => {
+                    if let ChainElement::StaticMemberExpression(member) = &chain.expression {
+                        object = &member.object;
+                        continue;
+                    }
+                }
+                _ => {}
             }
-            _ => &self.object,
+
+            return object;
         }
     }
 }
