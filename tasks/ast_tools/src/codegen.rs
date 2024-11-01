@@ -7,7 +7,7 @@ use crate::{
     log, log_result,
     output::{Output, RawOutput},
     passes::Pass,
-    rust_ast::{self, AstRef},
+    rust_ast::{AstRef, Module},
     schema::{lower_ast_types, Schema, TypeDef},
     Result, TypeId,
 };
@@ -35,11 +35,11 @@ pub trait Runner {
 pub struct EarlyCtx {
     ty_table: Vec<AstRef>,
     ident_table: FxHashMap<String, TypeId>,
-    mods: RefCell<Vec<rust_ast::Module>>,
+    mods: RefCell<Vec<Module>>,
 }
 
 impl EarlyCtx {
-    fn new(mods: Vec<rust_ast::Module>) -> Self {
+    fn new(mods: Vec<Module>) -> Self {
         // worst case len
         let len = mods.iter().fold(0, |acc, it| acc + it.items.len());
         let adts = mods.iter().flat_map(|it| it.items.iter());
@@ -62,7 +62,7 @@ impl EarlyCtx {
         self.ident_table.iter().sorted_by_key(|it| it.1).map(|it| it.0)
     }
 
-    pub fn mods(&self) -> &RefCell<Vec<rust_ast::Module>> {
+    pub fn mods(&self) -> &RefCell<Vec<Module>> {
         &self.mods
     }
 
@@ -131,10 +131,10 @@ impl AstCodegen {
         let modules = self
             .files
             .into_iter()
-            .map(rust_ast::Module::with_path)
-            .map(rust_ast::Module::load)
-            .map_ok(rust_ast::Module::expand)
-            .map_ok(|it| it.map(rust_ast::Module::analyze))
+            .map(Module::with_path)
+            .map(Module::load)
+            .map_ok(Module::expand)
+            .map_ok(|it| it.map(Module::analyze))
             .collect::<Result<Result<Result<Vec<_>>>>>()???;
 
         // Early passes
