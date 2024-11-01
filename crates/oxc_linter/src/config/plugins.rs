@@ -40,12 +40,14 @@ bitflags! {
         const NODE = 1 << 12;
         /// Custom security rules made by the Oxc team
         const SECURITY = 1 << 13;
+        /// `eslint-plugin-tree-shaking`
+        const TREE_SHAKING = 1 << 14;
     }
 }
 impl Default for LintPlugins {
     #[inline]
     fn default() -> Self {
-        LintPlugins::REACT | LintPlugins::UNICORN | LintPlugins::TYPESCRIPT | LintPlugins::OXC
+        LintPlugins::REACT | LintPlugins::UNICORN | LintPlugins::TYPESCRIPT | LintPlugins::OXC | LintPlugins::TREE_SHAKING
     }
 }
 
@@ -66,6 +68,7 @@ impl From<LintPluginOptions> for LintPlugins {
         plugins.set(LintPlugins::PROMISE, options.promise);
         plugins.set(LintPlugins::NODE, options.node);
         plugins.set(LintPlugins::SECURITY, options.security);
+        plugins.set(LintPlugins::TREE_SHAKING, options.tree_shaking);
         plugins
     }
 }
@@ -116,6 +119,7 @@ impl From<&str> for LintPlugins {
             "promise" => LintPlugins::PROMISE,
             "node" => LintPlugins::NODE,
             "security" | "oxc-security" => LintPlugins::SECURITY,
+            "tree-shaking" | "tree_shaking" => LintPlugins::TREE_SHAKING,
             // "eslint" is not really a plugin, so it's 'empty'. This has the added benefit of
             // making it the default value.
             _ => LintPlugins::empty(),
@@ -140,6 +144,7 @@ impl From<LintPlugins> for &'static str {
             LintPlugins::PROMISE => "promise",
             LintPlugins::NODE => "node",
             LintPlugins::SECURITY => "security",
+            LintPlugins::TREE_SHAKING => "tree-shaking",
             _ => "",
         }
     }
@@ -230,6 +235,7 @@ pub struct LintPluginOptions {
     pub promise: bool,
     pub node: bool,
     pub security: bool,
+    pub tree_shaking: bool,
 }
 
 impl Default for LintPluginOptions {
@@ -249,6 +255,7 @@ impl Default for LintPluginOptions {
             promise: false,
             node: false,
             security: false,
+            tree_shaking: true,
         }
     }
 }
@@ -272,6 +279,7 @@ impl LintPluginOptions {
             promise: false,
             node: false,
             security: false,
+            tree_shaking: false,
         }
     }
 
@@ -293,6 +301,7 @@ impl LintPluginOptions {
             promise: true,
             node: true,
             security: true,
+            tree_shaking: true,
         }
     }
 }
@@ -317,6 +326,7 @@ impl<S: AsRef<str>> FromIterator<(S, bool)> for LintPluginOptions {
                 LintPlugins::PROMISE => options.promise = enabled,
                 LintPlugins::NODE => options.node = enabled,
                 LintPlugins::SECURITY => options.security = enabled,
+                LintPlugins::TREE_SHAKING => options.tree_shaking = enabled,
                 _ => {} // ignored
             }
         }
@@ -350,6 +360,7 @@ mod test {
                 && self.promise == other.promise
                 && self.node == other.node
                 && self.security == other.security
+                && self.tree_shaking == other.tree_shaking
         }
     }
 
@@ -390,6 +401,7 @@ mod test {
             promise: false,
             node: false,
             security: false,
+            tree_shaking: true,
         };
         assert_eq!(plugins, expected);
     }

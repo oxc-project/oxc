@@ -245,6 +245,14 @@ pub struct EnablePlugins {
     )]
     pub typescript_plugin: OverrideToggle,
 
+    /// Disable tree shaking plugin, which is turned on by default
+    #[bpaf(
+        long("disable-tree-shaking-plugin"),
+        flag(OverrideToggle::Disable, OverrideToggle::NotSet),
+        hide_usage
+    )]
+    pub tree_shaking_plugin: OverrideToggle,
+
     /// Enable the experimental import plugin and detect ESM problems.
     /// It is recommended to use along side with the `--tsconfig` option.
     #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
@@ -361,6 +369,7 @@ impl EnablePlugins {
         self.promise_plugin.inspect(|yes| plugins.set(LintPlugins::PROMISE, yes));
         self.node_plugin.inspect(|yes| plugins.set(LintPlugins::NODE, yes));
         self.security_plugin.inspect(|yes| plugins.set(LintPlugins::SECURITY, yes));
+        self.tree_shaking_plugin.inspect(|yes| plugins.set(LintPlugins::TREE_SHAKING, yes));
 
         // Without this, jest plugins adapted to vitest will not be enabled.
         if self.vitest_plugin.is_enabled() && self.jest_plugin.is_not_set() {
