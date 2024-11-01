@@ -1329,7 +1329,7 @@ impl<'a> GenExpr for CallExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         let is_export_default = p.start_of_default_export == p.code_len();
         let mut wrap = precedence >= Precedence::New || ctx.intersects(Context::FORBID_CALL);
-        if p.has_annotation_comment(self.span.start) && precedence >= Precedence::Postfix {
+        if precedence >= Precedence::Postfix && p.has_annotation_comment(self.span.start) {
             wrap = true;
         }
 
@@ -2040,7 +2040,7 @@ impl<'a> GenExpr for ChainExpression<'a> {
 impl<'a> GenExpr for NewExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         let mut wrap = precedence >= self.precedence();
-        if p.has_annotation_comment(self.span.start) && precedence >= Precedence::Postfix {
+        if precedence >= Precedence::Postfix && p.has_annotation_comment(self.span.start) {
             wrap = true;
         }
         p.wrap(wrap, |p| {

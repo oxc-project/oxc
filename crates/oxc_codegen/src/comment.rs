@@ -1,17 +1,9 @@
-use daachorse::DoubleArrayAhoCorasick;
-use once_cell::sync::Lazy;
 use rustc_hash::FxHashMap;
 
 use oxc_ast::{Comment, CommentKind};
 use oxc_syntax::identifier::is_line_terminator;
 
 use crate::{Codegen, LegalComment};
-
-static ANNOTATION_MATCHER: Lazy<DoubleArrayAhoCorasick<usize>> = Lazy::new(|| {
-    let patterns = vec!["#__NO_SIDE_EFFECTS__", "@__NO_SIDE_EFFECTS__", "@__PURE__", "#__PURE__"];
-
-    DoubleArrayAhoCorasick::new(patterns).unwrap()
-});
 
 pub(crate) type CommentsMap = FxHashMap</* attached_to */ u32, Vec<Comment>>;
 
@@ -36,17 +28,25 @@ impl<'a> Codegen<'a> {
     }
 
     pub(crate) fn has_non_annotation_comment(&self, start: u32) -> bool {
-        if !self.options.print_annotation_comments() {
-            return self.has_comment(start);
+        if self.options.print_annotation_comments() {
+            self.comments.get(&start).is_some_and(|comments| {
+                comments.iter().any(|comment| !self.is_annotation_comment(comment))
+            })
+        } else {
+            self.has_comment(start)
         }
-        self.comments.get(&start).is_some_and(|comments| {
-            comments.iter().any(|comment| !self.is_annotation_comment(comment))
-        })
     }
 
+    /// `#__PURE__` Notation Specification
+    ///
+    /// <https://github.com/javascript-compiler-hints/compiler-notations-spec/blob/main/pure-notation-spec.md>
     fn is_annotation_comment(&self, comment: &Comment) -> bool {
-        let comment_content = comment.span.source_text(self.source_text);
-        ANNOTATION_MATCHER.find_iter(comment_content).count() != 0
+        let s = comment.span.source_text(self.source_text).trim_start();
+        if let Some(s) = s.strip_prefix(['@', '#']) {
+            s.starts_with("__PURE__") || s.starts_with("__NO_SIDE_EFFECTS__")
+        } else {
+            false
+        }
     }
 
     /// Whether to keep leading comments.
