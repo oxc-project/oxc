@@ -1,3 +1,4 @@
+use oxc_ast::ast::Expression;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -62,10 +63,17 @@ impl Rule for NoArrayConstructor {
                 &new_expr.type_parameters,
                 false,
             ),
-            _ => return,
+            _ => {
+                return;
+            }
         };
 
-        if callee.is_specific_id("Array")
+        let Expression::Identifier(ident) = &callee else {
+            return;
+        };
+
+        if ctx.semantic().is_reference_to_global_variable(ident)
+            && callee.is_specific_id("Array")
             && arguments.len() != 1
             && type_parameters.is_none()
             && !optional
@@ -104,6 +112,7 @@ fn test() {
         ("Array?.<Foo>();", None),
         ("Array?.(0, 1, 2);", None),
         ("Array?.(x, y);", None),
+        ("var Array; new Array;", None),
     ];
 
     let fail = vec![
