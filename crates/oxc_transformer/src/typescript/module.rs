@@ -1,4 +1,3 @@
-use oxc_allocator::Box;
 use oxc_ast::{ast::*, NONE};
 use oxc_span::SPAN;
 use oxc_syntax::reference::ReferenceFlags;
@@ -51,7 +50,7 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptModule<'a, 'ctx> {
 impl<'a, 'ctx> TypeScriptModule<'a, 'ctx> {
     fn transform_ts_import_equals(
         &self,
-        decl: &mut Box<'a, TSImportEqualsDeclaration<'a>>,
+        decl: &mut TSImportEqualsDeclaration<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Declaration<'a> {
         let kind = VariableDeclarationKind::Var;

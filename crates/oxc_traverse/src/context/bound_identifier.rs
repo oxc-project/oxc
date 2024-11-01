@@ -34,7 +34,7 @@ use crate::TraverseCtx;
 /// * `BoundIdentifier` is `Clone` (unlike `BindingIdentifier`).
 /// * `BoundIdentifier` re-uses the same `Atom` for all `BindingIdentifier` / `IdentifierReference`s
 ///   created from it.
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct BoundIdentifier<'a> {
     pub name: Atom<'a>,
     pub symbol_id: SymbolId,

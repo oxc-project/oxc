@@ -60,7 +60,7 @@ impl Serialize for BoundaryAssertion {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "BoundaryAssertion")?;
-        map.serialize_entry("span", &self.span)?;
+        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
         map.serialize_entry("kind", &self.kind)?;
         map.end()
     }

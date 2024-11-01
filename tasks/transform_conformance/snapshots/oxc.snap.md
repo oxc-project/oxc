@@ -1,6 +1,6 @@
 commit: d20b314c
 
-Passed: 73/82
+Passed: 74/83
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -167,7 +167,7 @@ rebuilt        : SymbolId(2): []
 x Output mismatch
 
 
-# babel-plugin-transform-react-jsx (30/32)
+# babel-plugin-transform-react-jsx (31/33)
 * refresh/does-not-transform-it-because-it-is-not-used-in-the-AST/input.jsx
 x Output mismatch
 

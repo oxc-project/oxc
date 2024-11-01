@@ -34,7 +34,6 @@ use super::{inherit_variants, js::*, literal::*, ts::*};
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct JSXElement<'a> {
-    #[estree(flatten)]
     /// Node location in source code
     pub span: Span,
     /// Opening tag of the element.
@@ -65,7 +64,6 @@ pub struct JSXElement<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct JSXOpeningElement<'a> {
     /// Node location in source code
-    #[estree(flatten)]
     pub span: Span,
     /// Is this tag self-closing?
     ///
@@ -80,6 +78,7 @@ pub struct JSXOpeningElement<'a> {
     /// List of JSX attributes. In React-like applications, these become props.
     pub attributes: Vec<'a, JSXAttributeItem<'a>>,
     /// Type parameters for generic JSX elements.
+    #[ts]
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
@@ -99,7 +98,6 @@ pub struct JSXOpeningElement<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct JSXClosingElement<'a> {
     /// Node location in source code
-    #[estree(flatten)]
     pub span: Span,
     /// The tag name, e.g. `Foo` in `</Foo>`.
     pub name: JSXElementName<'a>,
@@ -118,7 +116,6 @@ pub struct JSXClosingElement<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct JSXFragment<'a> {
     /// Node location in source code
-    #[estree(flatten)]
     pub span: Span,
     /// `<>`
     pub opening_fragment: JSXOpeningFragment,
@@ -134,7 +131,6 @@ pub struct JSXFragment<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct JSXOpeningFragment {
     /// Node location in source code
-    #[estree(flatten)]
     pub span: Span,
 }
 
@@ -144,7 +140,6 @@ pub struct JSXOpeningFragment {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct JSXClosingFragment {
     /// Node location in source code
-    #[estree(flatten)]
     pub span: Span,
 }
 
@@ -177,7 +172,6 @@ pub enum JSXElementName<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct JSXNamespacedName<'a> {
     /// Node location in source code
-    #[estree(flatten)]
     pub span: Span,
     /// Namespace portion of the name, e.g. `Apple` in `<Apple:Orange />`
     pub namespace: JSXIdentifier<'a>,
@@ -205,7 +199,6 @@ pub struct JSXNamespacedName<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct JSXMemberExpression<'a> {
     /// Node location in source code
-    #[estree(flatten)]
     pub span: Span,
     /// The object being accessed. This is everything before the last `.`.
     pub object: JSXMemberExpressionObject<'a>,
@@ -259,7 +252,6 @@ pub enum JSXMemberExpressionObject<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct JSXExpressionContainer<'a> {
     /// Node location in source code
-    #[estree(flatten)]
     pub span: Span,
     /// The expression inside the container.
     pub expression: JSXExpression<'a>,
@@ -295,7 +287,6 @@ pub enum JSXExpression<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct JSXEmptyExpression {
     /// Node location in source code
-    #[estree(flatten)]
     pub span: Span,
 }
 
@@ -336,7 +327,6 @@ pub enum JSXAttributeItem<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct JSXAttribute<'a> {
     /// Node location in source code
-    #[estree(flatten)]
     pub span: Span,
     /// The name of the attribute. This is a prop in React-like applications.
     pub name: JSXAttributeName<'a>,
@@ -358,7 +348,6 @@ pub struct JSXAttribute<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct JSXSpreadAttribute<'a> {
     /// Node location in source code
-    #[estree(flatten)]
     pub span: Span,
     /// The expression being spread.
     pub argument: Expression<'a>,
@@ -431,7 +420,6 @@ pub enum JSXAttributeValue<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct JSXIdentifier<'a> {
     /// Node location in source code
-    #[estree(flatten)]
     pub span: Span,
     /// The name of the identifier.
     pub name: Atom<'a>,
@@ -466,7 +454,6 @@ pub enum JSXChild<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct JSXSpreadChild<'a> {
     /// Node location in source code
-    #[estree(flatten)]
     pub span: Span,
     /// The expression being spread.
     pub expression: Expression<'a>,
@@ -487,7 +474,6 @@ pub struct JSXSpreadChild<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct JSXText<'a> {
     /// Node location in source code
-    #[estree(flatten)]
     pub span: Span,
     /// The text content.
     pub value: Atom<'a>,

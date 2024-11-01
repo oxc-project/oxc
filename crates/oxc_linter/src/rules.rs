@@ -15,6 +15,7 @@ mod import {
     pub mod named;
     pub mod namespace;
     pub mod no_amd;
+    pub mod no_commonjs;
     pub mod no_cycle;
     pub mod no_default_export;
     pub mod no_duplicates;
@@ -261,6 +262,7 @@ mod react {
     pub mod require_render_return;
     pub mod rules_of_hooks;
     pub mod self_closing_comp;
+    pub mod style_prop_object;
     pub mod void_dom_elements_no_children;
 }
 
@@ -623,6 +625,7 @@ oxc_macros::declare_all_lint_rules! {
     import::named,
     import::namespace,
     import::no_amd,
+    import::no_commonjs,
     import::no_cycle,
     import::no_default_export,
     import::no_duplicates,
@@ -808,6 +811,7 @@ oxc_macros::declare_all_lint_rules! {
     react::require_render_return,
     react::rules_of_hooks,
     react::self_closing_comp,
+    react::style_prop_object,
     react::void_dom_elements_no_children,
     react_perf::jsx_no_jsx_as_prop,
     react_perf::jsx_no_new_array_as_prop,

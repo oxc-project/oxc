@@ -12722,6 +12722,7 @@ pub(crate) const OFFSET_TS_INDEX_SIGNATURE_PARAMETERS: usize =
 pub(crate) const OFFSET_TS_INDEX_SIGNATURE_TYPE_ANNOTATION: usize =
     offset_of!(TSIndexSignature, type_annotation);
 pub(crate) const OFFSET_TS_INDEX_SIGNATURE_READONLY: usize = offset_of!(TSIndexSignature, readonly);
+pub(crate) const OFFSET_TS_INDEX_SIGNATURE_STATIC: usize = offset_of!(TSIndexSignature, r#static);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -12747,6 +12748,11 @@ impl<'a, 't> TSIndexSignatureWithoutParameters<'a, 't> {
     #[inline]
     pub fn readonly(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_READONLY) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_STATIC) as *const bool) }
     }
 }
 
@@ -12781,6 +12787,11 @@ impl<'a, 't> TSIndexSignatureWithoutTypeAnnotation<'a, 't> {
     #[inline]
     pub fn readonly(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_READONLY) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_STATIC) as *const bool) }
     }
 }
 

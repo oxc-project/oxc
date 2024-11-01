@@ -7,7 +7,7 @@
 
 use std::path::Path;
 
-use oxc_allocator::{Allocator, Vec};
+use oxc_allocator::{Allocator, Vec as ArenaVec};
 use oxc_ast::{ast::*, AstBuilder};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{ScopeTree, SymbolTable};
@@ -19,8 +19,8 @@ mod common;
 mod compiler_assumptions;
 mod context;
 mod options;
+
 // Presets: <https://babel.dev/docs/presets>
-mod env;
 mod es2015;
 mod es2016;
 mod es2017;
@@ -52,10 +52,12 @@ use typescript::TypeScript;
 pub use crate::{
     common::helper_loader::HelperLoaderMode,
     compiler_assumptions::CompilerAssumptions,
-    env::{EnvOptions, Targets},
     es2015::{ArrowFunctionsOptions, ES2015Options},
     jsx::{JsxOptions, JsxRuntime, ReactRefreshOptions},
-    options::{BabelOptions, TransformOptions},
+    options::{
+        babel::{BabelEnvOptions, BabelOptions, Targets},
+        TransformOptions,
+    },
     plugins::*,
     typescript::{RewriteExtensionsMode, TypeScriptOptions},
 };
@@ -97,15 +99,15 @@ impl<'a> Transformer<'a> {
                 .is_typescript()
                 .then(|| TypeScript::new(&self.options.typescript, &self.ctx)),
             x1_jsx: Jsx::new(self.options.jsx, ast_builder, &self.ctx),
-            x2_es2022: ES2022::new(self.options.es2022),
-            x2_es2021: ES2021::new(self.options.es2021, &self.ctx),
-            x2_es2020: ES2020::new(self.options.es2020, &self.ctx),
-            x2_es2019: ES2019::new(self.options.es2019),
-            x2_es2018: ES2018::new(self.options.es2018, &self.ctx),
-            x2_es2016: ES2016::new(self.options.es2016, &self.ctx),
-            x2_es2017: ES2017::new(self.options.es2017, &self.ctx),
-            x3_es2015: ES2015::new(self.options.es2015),
-            x4_regexp: RegExp::new(self.options.regexp, &self.ctx),
+            x2_es2022: ES2022::new(self.options.env.es2022, &self.ctx),
+            x2_es2021: ES2021::new(self.options.env.es2021, &self.ctx),
+            x2_es2020: ES2020::new(self.options.env.es2020, &self.ctx),
+            x2_es2019: ES2019::new(self.options.env.es2019),
+            x2_es2018: ES2018::new(self.options.env.es2018, &self.ctx),
+            x2_es2016: ES2016::new(self.options.env.es2016, &self.ctx),
+            x2_es2017: ES2017::new(self.options.env.es2017, &self.ctx),
+            x3_es2015: ES2015::new(self.options.env.es2015),
+            x4_regexp: RegExp::new(self.options.env.regexp, &self.ctx),
             common: Common::new(&self.ctx),
         };
 
@@ -118,7 +120,7 @@ struct TransformerImpl<'a, 'ctx> {
     // NOTE: all callbacks must run in order.
     x0_typescript: Option<TypeScript<'a, 'ctx>>,
     x1_jsx: Jsx<'a, 'ctx>,
-    x2_es2022: ES2022,
+    x2_es2022: ES2022<'a, 'ctx>,
     x2_es2021: ES2021<'a, 'ctx>,
     x2_es2020: ES2020<'a, 'ctx>,
     x2_es2019: ES2019,
@@ -228,6 +230,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x1_jsx.exit_expression(expr, ctx);
+        self.x2_es2018.exit_expression(expr, ctx);
         self.x2_es2017.exit_expression(expr, ctx);
         self.x3_es2015.exit_expression(expr, ctx);
     }
@@ -263,6 +266,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
     }
 
     fn enter_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x2_es2018.enter_function(func, ctx);
         self.x3_es2015.enter_function(func, ctx);
     }
 
@@ -271,6 +275,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
             typescript.exit_function(func, ctx);
         }
         self.x1_jsx.exit_function(func, ctx);
+        self.x2_es2018.exit_function(func, ctx);
         self.x3_es2015.exit_function(func, ctx);
     }
 
@@ -327,6 +332,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.exit_method_definition(def, ctx);
         }
+        self.x2_es2018.exit_method_definition(def, ctx);
         self.x2_es2017.exit_method_definition(def, ctx);
     }
 
@@ -356,7 +362,11 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         }
     }
 
-    fn enter_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+    fn enter_statements(
+        &mut self,
+        stmts: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         self.common.enter_statements(stmts, ctx);
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_statements(stmts, ctx);
@@ -387,7 +397,11 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         }
     }
 
-    fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+    fn exit_statements(
+        &mut self,
+        stmts: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.exit_statements(stmts, ctx);
         }
@@ -398,6 +412,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.exit_statement(stmt, ctx);
         }
+        self.x2_es2018.exit_statement(stmt, ctx);
         self.x2_es2017.exit_statement(stmt, ctx);
     }
 
@@ -415,6 +430,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_statement(stmt, ctx);
         }
+        self.x2_es2018.enter_statement(stmt, ctx);
     }
 
     fn enter_declaration(&mut self, decl: &mut Declaration<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -455,6 +471,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_for_of_statement(stmt, ctx);
         }
+        self.x2_es2018.enter_for_of_statement(stmt, ctx);
     }
 
     fn enter_for_in_statement(&mut self, stmt: &mut ForInStatement<'a>, ctx: &mut TraverseCtx<'a>) {

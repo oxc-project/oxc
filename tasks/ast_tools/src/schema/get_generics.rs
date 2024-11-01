@@ -1,9 +1,6 @@
 use syn::{parse_quote, Generics};
 
-use super::{
-    defs::{EnumDef, StructDef, TypeDef},
-    with_either,
-};
+use super::defs::{EnumDef, StructDef, TypeDef};
 
 pub trait GetGenerics {
     fn has_lifetime(&self) -> bool {
@@ -21,7 +18,10 @@ pub trait GetGenerics {
 
 impl GetGenerics for TypeDef {
     fn has_lifetime(&self) -> bool {
-        with_either!(self, it => it.has_lifetime())
+        match self {
+            TypeDef::Struct(def) => def.has_lifetime(),
+            TypeDef::Enum(def) => def.has_lifetime(),
+        }
     }
 }
 

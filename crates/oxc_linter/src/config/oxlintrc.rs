@@ -5,11 +5,11 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::{
-    categories::OxlintCategories, env::OxlintEnv, globals::OxlintGlobals, rules::OxlintRules,
-    settings::OxlintSettings,
+    categories::OxlintCategories, env::OxlintEnv, globals::OxlintGlobals, plugins::LintPlugins,
+    rules::OxlintRules, settings::OxlintSettings,
 };
 
-use crate::{options::LintPlugins, utils::read_to_string};
+use crate::utils::read_to_string;
 
 /// Oxlint Configuration File
 ///
@@ -51,7 +51,23 @@ use crate::{options::LintPlugins, utils::read_to_string};
 pub struct Oxlintrc {
     pub plugins: LintPlugins,
     pub categories: OxlintCategories,
-    /// See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html).
+    /// Example
+    ///
+    /// `.oxlintrc.json`
+    ///
+    /// ```json
+    /// {
+    ///   "$schema": "./node_modules/oxlint/configuration_schema.json",
+    ///   "rules": {
+    ///     "eqeqeq": "warn",
+    ///     "import/no-cycle": "error",
+    ///     "prefer-const": ["error", { "ignoreReadBeforeAssign": true }]
+    ///   }
+    ///  }
+    /// ```
+    ///
+    /// See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html) for the list of
+    /// rules.
     pub rules: OxlintRules,
     pub settings: OxlintSettings,
     /// Environments enable and disable collections of global variables.

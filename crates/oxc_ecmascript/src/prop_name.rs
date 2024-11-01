@@ -1,6 +1,6 @@
 use oxc_ast::ast::{
     ClassElement, MethodDefinition, ObjectProperty, ObjectPropertyKind, PropertyDefinition,
-    PropertyKey, PropertyKind,
+    PropertyKey,
 };
 use oxc_span::Span;
 
@@ -20,7 +20,7 @@ impl<'a> PropName for ObjectPropertyKind<'a> {
 
 impl<'a> PropName for ObjectProperty<'a> {
     fn prop_name(&self) -> Option<(&str, Span)> {
-        if self.kind != PropertyKind::Init || self.method || self.shorthand || self.computed {
+        if self.shorthand || self.computed {
             return None;
         }
         self.key.prop_name()
@@ -63,5 +63,49 @@ impl<'a> PropName for PropertyDefinition<'a> {
             return None;
         }
         self.key.prop_name()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use oxc_allocator::Allocator;
+    use oxc_ast::{ast::ObjectExpression, Visit};
+    use oxc_parser::Parser;
+    use oxc_span::SourceType;
+
+    use crate::PropName;
+
+    #[test]
+    fn test_prop_name() {
+        #[derive(Debug, Default)]
+        struct TestVisitor;
+
+        impl<'a> Visit<'a> for TestVisitor {
+            fn visit_object_expression(&mut self, obj_expr: &ObjectExpression<'a>) {
+                assert_eq!("a", obj_expr.properties[0].prop_name().unwrap().0);
+                assert_eq!("b", obj_expr.properties[1].prop_name().unwrap().0);
+                assert_eq!("c", obj_expr.properties[2].prop_name().unwrap().0);
+                assert_eq!("d", obj_expr.properties[3].prop_name().unwrap().0);
+                assert_eq!(None, obj_expr.properties[4].prop_name());
+            }
+        }
+
+        let allocator = Allocator::default();
+        let source_type = SourceType::default();
+        let source = r"
+            const obj = {
+                a() {},
+                get b() {},
+                set c(_) {},
+                d: 1,
+                [e]() {},
+            }
+        ";
+        let ret = Parser::new(&allocator, source, source_type).parse();
+        assert!(!ret.program.is_empty());
+        assert!(ret.errors.is_empty());
+
+        let mut visitor = TestVisitor;
+        visitor.visit_program(&ret.program);
     }
 }

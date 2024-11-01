@@ -126,7 +126,7 @@
 
 use serde::Deserialize;
 
-use oxc_allocator::Vec;
+use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast::*;
 use oxc_data_structures::stack::SparseStack;
 use oxc_span::SPAN;
@@ -405,7 +405,7 @@ impl<'a> ArrowFunctions<'a> {
     #[expect(clippy::unused_self)]
     fn insert_this_var_statement_at_the_top_of_statements(
         &mut self,
-        statements: &mut Vec<'a, Statement<'a>>,
+        statements: &mut ArenaVec<'a, Statement<'a>>,
         this_var: &BoundIdentifier<'a>,
         ctx: &TraverseCtx<'a>,
     ) {

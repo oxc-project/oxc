@@ -1,10 +1,10 @@
 use std::{env, io::BufWriter, time::Instant};
 
 use ignore::gitignore::Gitignore;
-use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
+use oxc_diagnostics::{DiagnosticService, Error, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
     loader::LINT_PARTIAL_LOADER_EXT, AllowWarnDeny, InvalidFilterKind, LintFilter, LintService,
-    LintServiceOptions, Linter, LinterBuilder, Oxlintrc,
+    LintServiceOptions, Linter, LinterBuilder, LinterBuilderError, Oxlintrc,
 };
 use oxc_span::VALID_EXTENSIONS;
 
@@ -119,9 +119,24 @@ impl Runner for LintRunner {
 
         let oxlintrc_for_print =
             if misc_options.print_config { Some(oxlintrc.clone()) } else { None };
-        let builder = LinterBuilder::from_oxlintrc(false, oxlintrc)
-            .with_filters(filter)
-            .with_fix(fix_options.fix_kind());
+        let builder = LinterBuilder::from_oxlintrc(false, oxlintrc);
+        // Gracefully report any linter builder errors as CLI errors
+        let builder = match builder {
+            Ok(builder) => builder,
+            Err(err) => match err {
+                LinterBuilderError::UnknownRules { rules } => {
+                    let rules = rules.iter().map(|r| r.full_name()).collect::<Vec<_>>().join("\n");
+                    let error = Error::from(
+                        OxcDiagnostic::warn(format!(
+                        "The following rules do not match the currently supported rules:\n{rules}"
+                    ))
+                        .with_help("Check that the plugin that contains this rule is enabled."),
+                    );
+                    return CliRunResult::LintError { error: format!("{error:?}") };
+                }
+            },
+        };
+        let builder = builder.with_filters(filter).with_fix(fix_options.fix_kind());
 
         if let Some(basic_config_file) = oxlintrc_for_print {
             return CliRunResult::PrintConfigResult {
@@ -244,6 +259,9 @@ mod test {
         let options = lint_command().run_inner(new_args.as_slice()).unwrap();
         match LintRunner::new(options).run() {
             CliRunResult::LintResult(lint_result) => lint_result,
+            CliRunResult::LintError { error } => {
+                panic!("{error}")
+            }
             other => panic!("{other:?}"),
         }
     }
@@ -483,7 +501,12 @@ mod test {
         assert_eq!(result.number_of_errors, 0);
     }
 
+    // Previously, this test would pass and the unmatched rule would be ignored, but now we report that
+    // there was unmatched rule, because the typescript plugin has been disabled and we are trying to configure it.
     #[test]
+    #[should_panic(
+        expected = "The following rules do not match the currently supported rules:\n  | typescript/no-namespace"
+    )]
     fn typescript_eslint_off() {
         let args = &[
             "-c",
@@ -491,10 +514,7 @@ mod test {
             "--disable-typescript-plugin",
             "fixtures/typescript_eslint/test.ts",
         ];
-        let result = test(args);
-        assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 2);
-        assert_eq!(result.number_of_errors, 0);
+        test(args);
     }
 
     #[test]
@@ -543,17 +563,24 @@ mod test {
             .contains("oxc/tsconfig.json\" does not exist, Please provide a valid tsconfig file."));
     }
 
+    // Previously, we used to not report errors when enabling a rule that did not have the corresponding plugin enabled,
+    // but now this is reported as an unmatched rule.
     #[test]
-    fn test_enable_vitest_plugin() {
+    #[should_panic(
+        // FIXME: We should probably report the original rule name error, not the mapped jest rule name?
+        expected = "The following rules do not match the currently supported rules:\n  | jest/no-disabled-tests\n"
+    )]
+    fn test_enable_vitest_rule_without_plugin() {
         let args = &[
             "-c",
             "fixtures/eslintrc_vitest_replace/eslintrc.json",
             "fixtures/eslintrc_vitest_replace/foo.test.js",
         ];
-        let result = test(args);
-        assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_errors, 0);
+        test(args);
+    }
 
+    #[test]
+    fn test_enable_vitest_plugin() {
         let args = &[
             "--vitest-plugin",
             "-c",

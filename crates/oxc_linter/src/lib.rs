@@ -30,12 +30,12 @@ use oxc_semantic::{AstNode, Semantic};
 use utils::iter_possible_jest_call_node;
 
 pub use crate::{
-    builder::LinterBuilder,
-    config::Oxlintrc,
+    builder::{LinterBuilder, LinterBuilderError},
+    config::{ESLintRule, LintPlugins, Oxlintrc},
     context::LintContext,
     fixer::FixKind,
     frameworks::FrameworkFlags,
-    options::{AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind, LintPlugins},
+    options::{AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind},
     rule::{RuleCategory, RuleFixMeta, RuleMeta, RuleWithSeverity},
     service::{LintService, LintServiceOptions},
 };
@@ -115,7 +115,7 @@ impl Linter {
 
     pub fn run<'a>(&self, path: &Path, semantic: Rc<Semantic<'a>>) -> Vec<Message<'a>> {
         let ctx_host =
-            Rc::new(ContextHost::new(path, semantic, self.options).with_config(&self.config));
+            Rc::new(ContextHost::new(path, semantic, self.options, Arc::clone(&self.config)));
 
         let rules = self
             .rules
@@ -126,7 +126,7 @@ impl Linter {
         let semantic = ctx_host.semantic();
 
         let should_run_on_jest_node =
-            self.options.plugins.has_test() && ctx_host.frameworks().is_test();
+            self.config.plugins.has_test() && ctx_host.frameworks().is_test();
 
         // IMPORTANT: We have two branches here for performance reasons:
         //

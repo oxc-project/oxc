@@ -22,3 +22,9 @@ pub struct IsolatedDeclarationsOptions {
 
     pub sourcemap: Option<bool>,
 }
+
+impl From<IsolatedDeclarationsOptions> for oxc_isolated_declarations::IsolatedDeclarationsOptions {
+    fn from(options: IsolatedDeclarationsOptions) -> Self {
+        Self { strip_internal: options.strip_internal.unwrap_or_default() }
+    }
+}

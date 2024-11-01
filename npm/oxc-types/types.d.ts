@@ -1021,7 +1021,6 @@ export type ModuleExportName = IdentifierName | IdentifierReference | StringLite
 
 export interface TSThisParameter extends Span {
   type: 'TSThisParameter';
-  thisSpan: Span;
   typeAnnotation: TSTypeAnnotation | null;
 }
 
@@ -1394,6 +1393,7 @@ export interface TSIndexSignature extends Span {
   parameters: Array<TSIndexSignatureName>;
   typeAnnotation: TSTypeAnnotation;
   readonly: boolean;
+  static: boolean;
 }
 
 export interface TSCallSignatureDeclaration extends Span {
@@ -1844,9 +1844,8 @@ export type Term =
   | IndexedReference
   | NamedReference;
 
-export interface BoundaryAssertion {
+export interface BoundaryAssertion extends Span {
   type: 'BoundaryAssertion';
-  span: Span;
   kind: BoundaryAssertionKind;
 }
 

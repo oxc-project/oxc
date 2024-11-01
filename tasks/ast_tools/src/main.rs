@@ -1,5 +1,3 @@
-#![allow(clippy::disallowed_methods)]
-
 use std::{cell::RefCell, io::Read, path::PathBuf, rc::Rc};
 
 use bpaf::{Bpaf, Parser};
@@ -11,6 +9,7 @@ mod codegen;
 mod derives;
 mod generators;
 mod layout;
+mod logger;
 mod markers;
 mod output;
 mod passes;
@@ -26,8 +25,10 @@ use generators::{
     AssertLayouts, AstBuilderGenerator, AstKindGenerator, Generator, TypescriptGenerator,
     VisitGenerator, VisitMutGenerator,
 };
-use output::{write_all_to, Output, RawOutput};
+use logger::{log, log_failed, log_result, log_success};
+use output::{Output, RawOutput};
 use passes::{CalcLayout, Linker};
+use schema::Schema;
 use util::NormalizeError;
 
 static SOURCE_PATHS: &[&str] = &[
@@ -46,6 +47,7 @@ static SOURCE_PATHS: &[&str] = &[
 const AST_CRATE: &str = "crates/oxc_ast";
 const TYPESCRIPT_PACKAGE: &str = "npm/oxc-types";
 const GITHUB_WATCH_LIST_PATH: &str = ".github/.generated_ast_watch_list.yml";
+const SCHEMA_PATH: &str = "schema.json";
 
 type Result<R> = std::result::Result<R, String>;
 type TypeId = usize;
@@ -57,8 +59,8 @@ pub struct CliOptions {
     dry_run: bool,
     /// Prints no logs.
     quiet: bool,
-    /// Path of output `schema.json`.
-    schema: Option<std::path::PathBuf>,
+    /// Output JSON schema.
+    schema: bool,
 }
 
 fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
@@ -89,15 +91,14 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
 
     outputs.push(generate_ci_filter(&outputs));
 
+    if cli_options.schema {
+        outputs.push(generate_json_schema(&schema)?);
+    }
+
     if !cli_options.dry_run {
         for output in outputs {
             output.write_to_file()?;
         }
-    }
-
-    if let CliOptions { schema: Some(schema_path), dry_run: false, .. } = cli_options {
-        let schema = serde_json::to_string_pretty(&schema.defs).normalize()?;
-        write_all_to(schema.as_bytes(), schema_path)?;
     }
 
     Ok(())
@@ -122,57 +123,14 @@ fn generate_ci_filter(outputs: &[RawOutput]) -> RawOutput {
 
     log_success!();
 
-    Output::Yaml { path: GITHUB_WATCH_LIST_PATH.to_string(), code }.output(file!())
+    Output::Yaml { path: GITHUB_WATCH_LIST_PATH.to_string(), code }.into_raw(file!())
 }
 
-#[macro_use]
-mod logger {
-    use std::sync::OnceLock;
-
-    static LOG: OnceLock<bool> = OnceLock::new();
-
-    pub(super) fn quiet() -> Result<(), bool> {
-        LOG.set(false)
-    }
-
-    pub(super) fn __internal_log_enable() -> bool {
-        *LOG.get_or_init(|| true)
-    }
-
-    macro_rules! log {
-        ($fmt:literal $(, $args:expr)*) => {
-            if $crate::logger::__internal_log_enable() {
-                print!("{}", format!($fmt$(, $args)*));
-            }
-        }
-    }
-
-    macro_rules! log_success {
-        () => {
-            $crate::log!("Done!\n");
-        };
-    }
-
-    macro_rules! log_failed {
-        () => {
-            $crate::log!("FAILED\n");
-        };
-    }
-
-    macro_rules! log_result {
-        ($result:expr) => {
-            match &($result) {
-                Ok(_) => {
-                    $crate::log_success!();
-                }
-                Err(_) => {
-                    $crate::log_failed!();
-                }
-            }
-        };
-    }
-
-    pub(super) use {log, log_failed, log_result, log_success};
+fn generate_json_schema(schema: &Schema) -> Result<RawOutput> {
+    log!("Generate JSON schema... ");
+    let result = serde_json::to_string_pretty(&schema.defs).normalize();
+    log_result!(result);
+    let schema = result?;
+    let output = Output::Raw { path: SCHEMA_PATH.to_string(), code: schema }.into_raw(file!());
+    Ok(output)
 }
-
-pub(crate) use logger::{log, log_failed, log_result, log_success};

@@ -1841,6 +1841,7 @@ impl<'a> ContentHash for TSIndexSignature<'a> {
         ContentHash::content_hash(&self.parameters, state);
         ContentHash::content_hash(&self.type_annotation, state);
         ContentHash::content_hash(&self.readonly, state);
+        ContentHash::content_hash(&self.r#static, state);
     }
 }
 

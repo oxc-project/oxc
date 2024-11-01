@@ -3,22 +3,12 @@ use std::{
     process::{Command, Stdio},
 };
 
+use super::add_header;
+
 /// Format Javascript/Typescript code, and add header.
 pub fn print_javascript(code: &str, generator_path: &str) -> String {
-    let header = generate_header(generator_path);
-    let code = format!("{header}{code}");
+    let code = add_header(code, generator_path, "//");
     format(&code)
-}
-
-/// Creates a generated file warning + required information for a generated file.
-fn generate_header(generator_path: &str) -> String {
-    let generator_path = generator_path.replace('\\', "/");
-
-    // TODO: Add generation date, AST source hash, etc here.
-    format!(
-        "// Auto-generated code, DO NOT EDIT DIRECTLY!\n\
-        // To edit this generated file you have to edit `{generator_path}`\n\n"
-    )
 }
 
 /// Format JS/TS code with dprint.

@@ -7239,6 +7239,7 @@ impl<'a> AstBuilder<'a> {
     /// - parameters
     /// - type_annotation
     /// - readonly
+    /// - r#static
     #[inline]
     pub fn class_element_ts_index_signature<T1>(
         self,
@@ -7246,6 +7247,7 @@ impl<'a> AstBuilder<'a> {
         parameters: Vec<'a, TSIndexSignatureName<'a>>,
         type_annotation: T1,
         readonly: bool,
+        r#static: bool,
     ) -> ClassElement<'a>
     where
         T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
@@ -7255,6 +7257,7 @@ impl<'a> AstBuilder<'a> {
             parameters,
             type_annotation,
             readonly,
+            r#static,
         )))
     }
 
@@ -11824,6 +11827,7 @@ impl<'a> AstBuilder<'a> {
     /// - parameters
     /// - type_annotation
     /// - readonly
+    /// - r#static
     #[inline]
     pub fn ts_signature_index_signature<T1>(
         self,
@@ -11831,6 +11835,7 @@ impl<'a> AstBuilder<'a> {
         parameters: Vec<'a, TSIndexSignatureName<'a>>,
         type_annotation: T1,
         readonly: bool,
+        r#static: bool,
     ) -> TSSignature<'a>
     where
         T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
@@ -11840,6 +11845,7 @@ impl<'a> AstBuilder<'a> {
             parameters,
             type_annotation,
             readonly,
+            r#static,
         )))
     }
 
@@ -12040,6 +12046,7 @@ impl<'a> AstBuilder<'a> {
     /// - parameters
     /// - type_annotation
     /// - readonly
+    /// - r#static
     #[inline]
     pub fn ts_index_signature<T1>(
         self,
@@ -12047,6 +12054,7 @@ impl<'a> AstBuilder<'a> {
         parameters: Vec<'a, TSIndexSignatureName<'a>>,
         type_annotation: T1,
         readonly: bool,
+        r#static: bool,
     ) -> TSIndexSignature<'a>
     where
         T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
@@ -12056,6 +12064,7 @@ impl<'a> AstBuilder<'a> {
             parameters,
             type_annotation: type_annotation.into_in(self.allocator),
             readonly,
+            r#static,
         }
     }
 
@@ -12068,6 +12077,7 @@ impl<'a> AstBuilder<'a> {
     /// - parameters
     /// - type_annotation
     /// - readonly
+    /// - r#static
     #[inline]
     pub fn alloc_ts_index_signature<T1>(
         self,
@@ -12075,12 +12085,13 @@ impl<'a> AstBuilder<'a> {
         parameters: Vec<'a, TSIndexSignatureName<'a>>,
         type_annotation: T1,
         readonly: bool,
+        r#static: bool,
     ) -> Box<'a, TSIndexSignature<'a>>
     where
         T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
     {
         Box::new_in(
-            self.ts_index_signature(span, parameters, type_annotation, readonly),
+            self.ts_index_signature(span, parameters, type_annotation, readonly, r#static),
             self.allocator,
         )
     }

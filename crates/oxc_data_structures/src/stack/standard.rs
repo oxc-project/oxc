@@ -307,7 +307,7 @@ impl<T> Stack<T> {
         // SAFETY: All methods ensure `self.cursor` is always in bounds, is aligned for `T`,
         // and points to a valid initialized `T`, if stack is not empty.
         // Caller guarantees stack was not empty.
-        self.cursor.as_ptr().read()
+        self.cursor.read()
     }
 
     /// Get number of entries on stack.

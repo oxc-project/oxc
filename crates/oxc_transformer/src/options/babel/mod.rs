@@ -1,33 +1,55 @@
+mod env;
+
 use std::path::{Path, PathBuf};
 
 use serde::Deserialize;
 use serde_json::Value;
 
+pub use env::{BabelEnvOptions, Targets};
+
 /// Babel options
+///
+/// <https://babel.dev/docs/options#plugin-and-preset-options>
 #[derive(Debug, Default, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BabelOptions {
+    // Primary options
     pub cwd: Option<PathBuf>,
-    pub source_type: Option<String>,
+
+    // Config Loading options
+
+    // Plugin and Preset options
     #[serde(default)]
     pub plugins: Vec<Value>, // Can be a string or an array
+
     #[serde(default)]
     pub presets: Vec<Value>, // Can be a string or an array
+
+    // Misc options
+    pub source_type: Option<String>,
+
     #[serde(default)]
     pub assumptions: Value,
+
     // Test options
     pub throws: Option<String>,
+
     #[serde(rename = "BABEL_8_BREAKING")]
     pub babel_8_breaking: Option<bool>,
+
     /// Babel test helper for running tests on specific operating systems
     pub os: Option<Vec<TestOs>>,
+
     // Parser options for babel-parser
     #[serde(default)]
     pub allow_return_outside_function: bool,
+
     #[serde(default)]
     pub allow_await_outside_function: bool,
+
     #[serde(default)]
     pub allow_undeclared_exports: bool,
+
     #[serde(default = "default_as_true")]
     pub external_helpers: bool,
 }

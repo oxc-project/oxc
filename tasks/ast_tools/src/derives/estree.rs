@@ -4,9 +4,9 @@ use quote::quote;
 
 use crate::{
     codegen::LateCtx,
-    markers::ESTreeStructAttribute,
+    markers::ESTreeStructTagMode,
     schema::{
-        serialize::{enum_variant_name, get_type_tag},
+        serialize::{enum_variant_name, get_always_flatten_structs, get_type_tag},
         EnumDef, GetGenerics, GetIdent, StructDef, TypeDef,
     },
 };
@@ -26,13 +26,14 @@ impl Derive for DeriveESTree {
         "estree".to_string()
     }
 
-    fn derive(&mut self, def: &TypeDef, _: &LateCtx) -> TokenStream {
+    fn derive(&mut self, def: &TypeDef, ctx: &LateCtx) -> TokenStream {
         if let TypeDef::Struct(def) = def {
             if def
                 .markers
                 .estree
                 .as_ref()
-                .is_some_and(|e| e == &ESTreeStructAttribute::CustomSerialize)
+                .and_then(|e| e.tag_mode.as_ref())
+                .is_some_and(|e| e == &ESTreeStructTagMode::CustomSerialize)
             {
                 return TokenStream::new();
             }
@@ -40,7 +41,7 @@ impl Derive for DeriveESTree {
 
         let body = match def {
             TypeDef::Enum(def) => serialize_enum(def),
-            TypeDef::Struct(def) => serialize_struct(def),
+            TypeDef::Struct(def) => serialize_struct(def, ctx),
         };
         let ident = def.ident();
 
@@ -64,7 +65,7 @@ impl Derive for DeriveESTree {
     }
 }
 
-fn serialize_struct(def: &StructDef) -> TokenStream {
+fn serialize_struct(def: &StructDef, ctx: &LateCtx) -> TokenStream {
     let ident = def.ident();
     // If type_tag is Some, we serialize it manually. If None, either one of
     // the fields is named r#type, or the struct does not need a "type" field.
@@ -88,7 +89,12 @@ fn serialize_struct(def: &StructDef) -> TokenStream {
         );
 
         let ident = field.ident().unwrap();
-        if field.markers.derive_attributes.estree.flatten {
+        let always_flatten = match field.typ.type_id() {
+            Some(id) => get_always_flatten_structs(ctx).contains(&id),
+            None => false,
+        };
+
+        if always_flatten || field.markers.derive_attributes.estree.flatten {
             fields.push(quote! {
                 self.#ident.serialize(
                     serde::__private::ser::FlatMapSerializer(&mut map)

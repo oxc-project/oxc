@@ -217,7 +217,7 @@ impl LanguageServer for Backend {
 
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
         let run_level = { self.options.lock().await.get_lint_level() };
-        if run_level < SyntheticRunLevel::OnType {
+        if run_level <= SyntheticRunLevel::Disable {
             return;
         }
         if self.is_ignored(&params.text_document.uri).await {
@@ -359,6 +359,8 @@ impl Backend {
                     Oxlintrc::from_file(&config_path)
                         .expect("should have initialized linter with new options"),
                 )
+                // FIXME: Handle this error more gracefully and report it properly
+                .expect("failed to build linter from oxlint config")
                 .with_fix(FixKind::SafeFix)
                 .build(),
             );

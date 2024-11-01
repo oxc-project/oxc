@@ -1,6 +1,6 @@
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::Vec;
+use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::{ast::*, visit::walk_mut, VisitMut, NONE};
 use oxc_ecmascript::ToInt32;
 use oxc_span::{Atom, Span, SPAN};
@@ -181,10 +181,10 @@ impl<'a> TypeScriptEnum<'a> {
     #[allow(clippy::needless_pass_by_value)]
     fn transform_ts_enum_members(
         &mut self,
-        members: &mut Vec<'a, TSEnumMember<'a>>,
+        members: &mut ArenaVec<'a, TSEnumMember<'a>>,
         param: &BindingIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Vec<'a, Statement<'a>> {
+    ) -> ArenaVec<'a, Statement<'a>> {
         let create_identifier_reference = |ctx: &mut TraverseCtx<'a>| {
             let ident = ctx.create_bound_reference_id(
                 param.span,

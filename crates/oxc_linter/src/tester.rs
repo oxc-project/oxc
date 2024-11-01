@@ -10,7 +10,7 @@ use serde::Deserialize;
 use serde_json::Value;
 
 use crate::{
-    fixer::FixKind, options::LintPlugins, rules::RULES, AllowWarnDeny, Fixer, LintService,
+    fixer::FixKind, rules::RULES, AllowWarnDeny, Fixer, LintPlugins, LintService,
     LintServiceOptions, LinterBuilder, Oxlintrc, RuleEnum, RuleWithSeverity,
 };
 
@@ -356,17 +356,44 @@ impl Tester {
 
     fn test_pass(&mut self) {
         for TestCase { source, rule_config, eslint_config, path } in self.expect_pass.clone() {
-            let result = self.run(&source, rule_config, &eslint_config, path, ExpectFixKind::None);
+            let result =
+                self.run(&source, rule_config.clone(), &eslint_config, path, ExpectFixKind::None);
             let passed = result == TestResult::Passed;
-            assert!(passed, "expect test to pass: {source} {}", self.snapshot);
+            let config = rule_config.map_or_else(
+                || "\n\n------------------------\n".to_string(),
+                |v| {
+                    format!(
+                        "\n-------- rule config --------\n{}",
+                        serde_json::to_string_pretty(&v).unwrap()
+                    )
+                },
+            );
+            assert!(
+                passed,
+                "expected test to pass, but it failed:\n\n-------- source --------\n\n{source}\n\n-------- error --------\n{}{config}\n",
+                self.snapshot
+            );
         }
     }
 
     fn test_fail(&mut self) {
         for TestCase { source, rule_config, eslint_config, path } in self.expect_fail.clone() {
-            let result = self.run(&source, rule_config, &eslint_config, path, ExpectFixKind::None);
+            let result =
+                self.run(&source, rule_config.clone(), &eslint_config, path, ExpectFixKind::None);
             let failed = result == TestResult::Failed;
-            assert!(failed, "expect test to fail: {source}");
+            let config = rule_config.map_or_else(
+                || "\n\n------------------------".to_string(),
+                |v| {
+                    format!(
+                        "\n-------- rule config --------\n{}",
+                        serde_json::to_string_pretty(&v).unwrap()
+                    )
+                },
+            );
+            assert!(
+                failed,
+                "expected test to fail, but it passed:\n\n-------- source --------\n\n{source}{config}\n",
+            );
         }
     }
 
@@ -405,7 +432,7 @@ impl Tester {
         let linter = eslint_config
             .as_ref()
             .map_or_else(LinterBuilder::empty, |v| {
-                LinterBuilder::from_oxlintrc(true, Oxlintrc::deserialize(v).unwrap())
+                LinterBuilder::from_oxlintrc(true, Oxlintrc::deserialize(v).unwrap()).unwrap()
             })
             .with_fix(fix.into())
             .with_plugins(self.plugins)

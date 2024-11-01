@@ -2,7 +2,7 @@ commit: 06454619
 
 semantic_test262 Summary:
 AST Parsed     : 43851/43851 (100.00%)
-Positive Passed: 43671/43851 (99.59%)
+Positive Passed: 43663/43851 (99.57%)
 tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-block-scoping.js
 semantic error: Symbol scope ID mismatch for "f":
 after transform: SymbolId(3): ScopeId(4294967294)
@@ -1118,4 +1118,128 @@ tasks/coverage/test262/test/annexB/language/global-code/if-stmt-else-decl-global
 semantic error: Symbol scope ID mismatch for "f":
 after transform: SymbolId(0): ScopeId(4294967294)
 rebuilt        : SymbolId(0): ScopeId(4294967294)
+
+tasks/coverage/test262/test/language/expressions/class/cpn-class-expr-accessors-computed-property-name-from-assignment-expression-coalesce.js
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["C", "_x10", "_x11", "_x12", "_x5", "_x6", "_x7", "_x8", "_x9", "c", "x"]
+rebuilt        : ScopeId(0): ["C", "_x", "_x10", "_x11", "_x12", "_x2", "_x3", "_x4", "_x5", "_x6", "_x7", "_x8", "_x9", "c", "x"]
+Bindings mismatch:
+after transform: ScopeId(1): ["_x", "_x2", "_x3", "_x4"]
+rebuilt        : ScopeId(1): []
+Symbol scope ID mismatch for "_x":
+after transform: SymbolId(5): ScopeId(1)
+rebuilt        : SymbolId(0): ScopeId(0)
+Symbol scope ID mismatch for "_x2":
+after transform: SymbolId(6): ScopeId(1)
+rebuilt        : SymbolId(1): ScopeId(0)
+Symbol scope ID mismatch for "_x3":
+after transform: SymbolId(7): ScopeId(1)
+rebuilt        : SymbolId(2): ScopeId(0)
+Symbol scope ID mismatch for "_x4":
+after transform: SymbolId(8): ScopeId(1)
+rebuilt        : SymbolId(3): ScopeId(0)
+
+tasks/coverage/test262/test/language/expressions/class/cpn-class-expr-computed-property-name-from-assignment-expression-coalesce.js
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["C", "_x3", "_x4", "_x5", "_x6", "c", "x"]
+rebuilt        : ScopeId(0): ["C", "_x", "_x2", "_x3", "_x4", "_x5", "_x6", "c", "x"]
+Bindings mismatch:
+after transform: ScopeId(1): ["_x", "_x2"]
+rebuilt        : ScopeId(1): []
+Symbol scope ID mismatch for "_x":
+after transform: SymbolId(3): ScopeId(1)
+rebuilt        : SymbolId(0): ScopeId(0)
+Symbol scope ID mismatch for "_x2":
+after transform: SymbolId(4): ScopeId(1)
+rebuilt        : SymbolId(1): ScopeId(0)
+
+tasks/coverage/test262/test/language/expressions/class/cpn-class-expr-fields-computed-property-name-from-assignment-expression-coalesce.js
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["C", "_x3", "_x4", "_x5", "_x6", "c", "x"]
+rebuilt        : ScopeId(0): ["C", "_x", "_x2", "_x3", "_x4", "_x5", "_x6", "c", "x"]
+Bindings mismatch:
+after transform: ScopeId(1): ["_x", "_x2"]
+rebuilt        : ScopeId(1): []
+Symbol scope ID mismatch for "_x":
+after transform: SymbolId(3): ScopeId(1)
+rebuilt        : SymbolId(0): ScopeId(0)
+Symbol scope ID mismatch for "_x2":
+after transform: SymbolId(4): ScopeId(1)
+rebuilt        : SymbolId(1): ScopeId(0)
+
+tasks/coverage/test262/test/language/expressions/class/cpn-class-expr-fields-methods-computed-property-name-from-assignment-expression-coalesce.js
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["C", "_x3", "_x4", "_x5", "_x6", "c", "x"]
+rebuilt        : ScopeId(0): ["C", "_x", "_x2", "_x3", "_x4", "_x5", "_x6", "c", "x"]
+Bindings mismatch:
+after transform: ScopeId(1): ["_x", "_x2"]
+rebuilt        : ScopeId(1): []
+Symbol scope ID mismatch for "_x":
+after transform: SymbolId(3): ScopeId(1)
+rebuilt        : SymbolId(0): ScopeId(0)
+Symbol scope ID mismatch for "_x2":
+after transform: SymbolId(4): ScopeId(1)
+rebuilt        : SymbolId(1): ScopeId(0)
+
+tasks/coverage/test262/test/language/statements/class/cpn-class-decl-accessors-computed-property-name-from-assignment-expression-coalesce.js
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["C", "_x10", "_x11", "_x12", "_x5", "_x6", "_x7", "_x8", "_x9", "c", "x"]
+rebuilt        : ScopeId(0): ["C", "_x", "_x10", "_x11", "_x12", "_x2", "_x3", "_x4", "_x5", "_x6", "_x7", "_x8", "_x9", "c", "x"]
+Bindings mismatch:
+after transform: ScopeId(1): ["_x", "_x2", "_x3", "_x4"]
+rebuilt        : ScopeId(1): []
+Symbol scope ID mismatch for "_x":
+after transform: SymbolId(5): ScopeId(1)
+rebuilt        : SymbolId(0): ScopeId(0)
+Symbol scope ID mismatch for "_x2":
+after transform: SymbolId(6): ScopeId(1)
+rebuilt        : SymbolId(1): ScopeId(0)
+Symbol scope ID mismatch for "_x3":
+after transform: SymbolId(7): ScopeId(1)
+rebuilt        : SymbolId(2): ScopeId(0)
+Symbol scope ID mismatch for "_x4":
+after transform: SymbolId(8): ScopeId(1)
+rebuilt        : SymbolId(3): ScopeId(0)
+
+tasks/coverage/test262/test/language/statements/class/cpn-class-decl-computed-property-name-from-assignment-expression-coalesce.js
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["C", "_x3", "_x4", "_x5", "_x6", "c", "x"]
+rebuilt        : ScopeId(0): ["C", "_x", "_x2", "_x3", "_x4", "_x5", "_x6", "c", "x"]
+Bindings mismatch:
+after transform: ScopeId(1): ["_x", "_x2"]
+rebuilt        : ScopeId(1): []
+Symbol scope ID mismatch for "_x":
+after transform: SymbolId(3): ScopeId(1)
+rebuilt        : SymbolId(0): ScopeId(0)
+Symbol scope ID mismatch for "_x2":
+after transform: SymbolId(4): ScopeId(1)
+rebuilt        : SymbolId(1): ScopeId(0)
+
+tasks/coverage/test262/test/language/statements/class/cpn-class-decl-fields-computed-property-name-from-assignment-expression-coalesce.js
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["C", "_x3", "_x4", "_x5", "_x6", "c", "x"]
+rebuilt        : ScopeId(0): ["C", "_x", "_x2", "_x3", "_x4", "_x5", "_x6", "c", "x"]
+Bindings mismatch:
+after transform: ScopeId(1): ["_x", "_x2"]
+rebuilt        : ScopeId(1): []
+Symbol scope ID mismatch for "_x":
+after transform: SymbolId(3): ScopeId(1)
+rebuilt        : SymbolId(0): ScopeId(0)
+Symbol scope ID mismatch for "_x2":
+after transform: SymbolId(4): ScopeId(1)
+rebuilt        : SymbolId(1): ScopeId(0)
+
+tasks/coverage/test262/test/language/statements/class/cpn-class-decl-fields-methods-computed-property-name-from-assignment-expression-coalesce.js
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["C", "_x3", "_x4", "_x5", "_x6", "c", "x"]
+rebuilt        : ScopeId(0): ["C", "_x", "_x2", "_x3", "_x4", "_x5", "_x6", "c", "x"]
+Bindings mismatch:
+after transform: ScopeId(1): ["_x", "_x2"]
+rebuilt        : ScopeId(1): []
+Symbol scope ID mismatch for "_x":
+after transform: SymbolId(3): ScopeId(1)
+rebuilt        : SymbolId(0): ScopeId(0)
+Symbol scope ID mismatch for "_x2":
+after transform: SymbolId(4): ScopeId(1)
+rebuilt        : SymbolId(1): ScopeId(0)
 

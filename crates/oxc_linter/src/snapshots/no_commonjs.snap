@@ -1,0 +1,128 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-import(no-commonjs): Expected export instead of exports
+   ╭─[index.js:1:1]
+ 1 │ module.exports = {}
+   · ──────────────
+   ╰────
+  help: Do not use CommonJS `require` calls and `module.exports` or `exports.*`
+
+  ⚠ eslint-plugin-import(no-commonjs): Expected export instead of exports
+   ╭─[index.js:1:1]
+ 1 │ module.exports = {}
+   · ──────────────
+   ╰────
+  help: Do not use CommonJS `require` calls and `module.exports` or `exports.*`
+
+  ⚠ eslint-plugin-import(no-commonjs): Expected import instead of require
+   ╭─[index.js:1:9]
+ 1 │ var x = require("x")
+   ·         ────────────
+   ╰────
+  help: Do not use CommonJS `require` calls and `module.exports` or `exports.*`
+
+  ⚠ eslint-plugin-import(no-commonjs): Expected import instead of require
+   ╭─[index.js:1:1]
+ 1 │ require("x")
+   · ────────────
+   ╰────
+  help: Do not use CommonJS `require` calls and `module.exports` or `exports.*`
+
+  ⚠ eslint-plugin-import(no-commonjs): Expected import instead of require
+   ╭─[index.js:1:1]
+ 1 │ require(`x`)
+   · ────────────
+   ╰────
+  help: Do not use CommonJS `require` calls and `module.exports` or `exports.*`
+
+  ⚠ eslint-plugin-import(no-commonjs): Expected import instead of require
+   ╭─[index.js:1:36]
+ 1 │ if (typeof window !== "undefined") require("x")
+   ·                                    ────────────
+   ╰────
+  help: Do not use CommonJS `require` calls and `module.exports` or `exports.*`
+
+  ⚠ eslint-plugin-import(no-commonjs): Expected import instead of require
+   ╭─[index.js:1:38]
+ 1 │ if (typeof window !== "undefined") { require("x") }
+   ·                                      ────────────
+   ╰────
+  help: Do not use CommonJS `require` calls and `module.exports` or `exports.*`
+
+  ⚠ eslint-plugin-import(no-commonjs): Expected import instead of require
+   ╭─[index.js:1:7]
+ 1 │ try { require("x") } catch (error) {}
+   ·       ────────────
+   ╰────
+  help: Do not use CommonJS `require` calls and `module.exports` or `exports.*`
+
+  ⚠ eslint-plugin-import(no-commonjs): Expected export instead of face
+   ╭─[index.js:1:1]
+ 1 │ exports.face = "palm"
+   · ────────────
+   ╰────
+  help: Do not use CommonJS `require` calls and `module.exports` or `exports.*`
+
+  ⚠ eslint-plugin-import(no-commonjs): Expected export instead of exports
+   ╭─[index.js:1:1]
+ 1 │ module.exports.face = "palm"
+   · ──────────────
+   ╰────
+  help: Do not use CommonJS `require` calls and `module.exports` or `exports.*`
+
+  ⚠ eslint-plugin-import(no-commonjs): Expected export instead of exports
+   ╭─[index.js:1:1]
+ 1 │ module.exports.face = "palm"
+   · ──────────────
+   ╰────
+  help: Do not use CommonJS `require` calls and `module.exports` or `exports.*`
+
+  ⚠ eslint-plugin-import(no-commonjs): Expected export instead of exports
+   ╭─[index.js:1:1]
+ 1 │ module.exports = face
+   · ──────────────
+   ╰────
+  help: Do not use CommonJS `require` calls and `module.exports` or `exports.*`
+
+  ⚠ eslint-plugin-import(no-commonjs): Expected export instead of exports
+   ╭─[index.js:1:11]
+ 1 │ exports = module.exports = {}
+   ·           ──────────────
+   ╰────
+  help: Do not use CommonJS `require` calls and `module.exports` or `exports.*`
+
+  ⚠ eslint-plugin-import(no-commonjs): Expected export instead of exports
+   ╭─[index.js:1:11]
+ 1 │ exports = module.exports = {}
+   ·           ──────────────
+   ╰────
+  help: Do not use CommonJS `require` calls and `module.exports` or `exports.*`
+
+  ⚠ eslint-plugin-import(no-commonjs): Expected export instead of exports
+   ╭─[index.js:1:9]
+ 1 │ var x = module.exports = {}
+   ·         ──────────────
+   ╰────
+  help: Do not use CommonJS `require` calls and `module.exports` or `exports.*`
+
+  ⚠ eslint-plugin-import(no-commonjs): Expected export instead of exports
+   ╭─[index.js:1:9]
+ 1 │ var x = module.exports = {}
+   ·         ──────────────
+   ╰────
+  help: Do not use CommonJS `require` calls and `module.exports` or `exports.*`
+
+  ⚠ eslint-plugin-import(no-commonjs): Expected export instead of exports
+   ╭─[index.js:1:1]
+ 1 │ module.exports = {}
+   · ──────────────
+   ╰────
+  help: Do not use CommonJS `require` calls and `module.exports` or `exports.*`
+
+  ⚠ eslint-plugin-import(no-commonjs): Expected export instead of exports
+   ╭─[index.js:1:9]
+ 1 │ var x = module.exports
+   ·         ──────────────
+   ╰────
+  help: Do not use CommonJS `require` calls and `module.exports` or `exports.*`

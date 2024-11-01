@@ -229,9 +229,10 @@ impl<'a> ParserImpl<'a> {
         }
 
         if self.is_at_ts_index_signature_member() {
-            if let TSSignature::TSIndexSignature(sig) = self.parse_ts_index_signature_member()? {
-                return Ok(Some(ClassElement::TSIndexSignature(sig)));
-            }
+            return self
+                .parse_index_signature_declaration(span, &modifiers)
+                .map(|sig| self.ast.class_element_from_ts_index_signature(sig))
+                .map(Some);
         }
 
         // * ...

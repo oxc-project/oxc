@@ -2,10 +2,7 @@ use syn::Ident;
 
 use crate::util::ToIdent;
 
-use super::{
-    defs::{EnumDef, StructDef, TypeDef},
-    with_either,
-};
+use super::defs::{EnumDef, StructDef, TypeDef};
 
 pub trait GetIdent {
     fn ident(&self) -> Ident;
@@ -13,7 +10,10 @@ pub trait GetIdent {
 
 impl GetIdent for TypeDef {
     fn ident(&self) -> Ident {
-        with_either!(self, it => it.ident())
+        match self {
+            TypeDef::Struct(def) => def.ident(),
+            TypeDef::Enum(def) => def.ident(),
+        }
     }
 }
 
