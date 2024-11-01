@@ -1,0 +1,42 @@
+---
+source: crates/oxc_codegen/tests/integration/main.rs
+---
+########## 0
+/* @license */
+/* @license */
+foo;bar;
+----------
+/* @license */
+/* @license */
+foo;
+bar;
+
+########## 1
+/* @license */
+/* @preserve */
+foo;bar;
+----------
+/* @license */
+/* @preserve */
+foo;
+bar;
+
+########## 2
+/* @license */
+//! KEEP
+foo;bar;
+----------
+/* @license */
+//! KEEP
+foo;
+bar;
+
+########## 3
+/* @license */
+/*! KEEP */
+foo;bar;
+----------
+/* @license */
+/*! KEEP */
+foo;
+bar;

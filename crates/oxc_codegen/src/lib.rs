@@ -33,7 +33,7 @@ use crate::{
 pub use crate::{
     context::Context,
     gen::{Gen, GenExpr},
-    options::CodegenOptions,
+    options::{CodegenOptions, LegalComment},
 };
 
 /// Code generator without whitespace removal.
@@ -190,7 +190,7 @@ impl<'a> Codegen<'a> {
         self.quote = if self.options.single_quote { b'\'' } else { b'"' };
         self.source_text = program.source_text;
         self.code.reserve(program.source_text.len());
-        if self.options.print_annotation_comments() {
+        if self.options.print_comments() {
             self.build_comments(&program.comments);
         }
         if let Some(path) = &self.options.source_map_path {
