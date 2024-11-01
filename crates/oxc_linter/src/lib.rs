@@ -30,8 +30,8 @@ use oxc_semantic::{AstNode, Semantic};
 use utils::iter_possible_jest_call_node;
 
 pub use crate::{
-    builder::LinterBuilder,
-    config::{LintPlugins, Oxlintrc},
+    builder::{LinterBuilder, LinterBuilderError},
+    config::{ESLintRule, LintPlugins, Oxlintrc},
     context::LintContext,
     fixer::FixKind,
     frameworks::FrameworkFlags,

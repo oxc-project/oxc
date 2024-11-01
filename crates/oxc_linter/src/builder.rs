@@ -74,9 +74,18 @@ impl LinterBuilder {
     /// // you can use `From` as a shorthand for `from_oxlintrc(false, oxlintrc)`
     /// let linter = LinterBuilder::from(oxlintrc).build();
     /// ```
-    pub fn from_oxlintrc(start_empty: bool, oxlintrc: Oxlintrc) -> Self {
+    ///
+    /// # Errors
+    ///
+    /// Will return a [`LinterBuilderError::UnknownRules`] if there are unknown rules in the
+    /// config. This can happen if the plugin for a rule is not enabled, or the rule name doesn't
+    /// match any recognized rules.
+    pub fn from_oxlintrc(
+        start_empty: bool,
+        oxlintrc: Oxlintrc,
+    ) -> Result<Self, LinterBuilderError> {
         // TODO: monorepo config merging, plugin-based extends, etc.
-        let Oxlintrc { plugins, settings, env, globals, categories, rules: oxlintrc_rules } =
+        let Oxlintrc { plugins, settings, env, globals, categories, rules: mut oxlintrc_rules } =
             oxlintrc;
 
         let config = LintConfig { plugins, settings, env, globals };
@@ -95,7 +104,13 @@ impl LinterBuilder {
             oxlintrc_rules.override_rules(&mut builder.rules, all_rules.as_slice());
         }
 
-        builder
+        if !oxlintrc_rules.unknown_rules.is_empty() {
+            return Err(LinterBuilderError::UnknownRules {
+                rules: std::mem::take(&mut oxlintrc_rules.unknown_rules),
+            });
+        }
+
+        Ok(builder)
     }
 
     #[inline]
@@ -258,6 +273,7 @@ impl LinterBuilder {
         let previous_rules = std::mem::take(&mut oxlintrc.rules);
 
         let rule_name_to_rule = previous_rules
+            .rules
             .into_iter()
             .map(|r| (get_name(&r.plugin_name, &r.rule_name), r))
             .collect::<rustc_hash::FxHashMap<_, _>>();
@@ -290,9 +306,11 @@ fn get_name(plugin_name: &str, rule_name: &str) -> CompactStr {
     }
 }
 
-impl From<Oxlintrc> for LinterBuilder {
+impl TryFrom<Oxlintrc> for LinterBuilder {
+    type Error = LinterBuilderError;
+
     #[inline]
-    fn from(oxlintrc: Oxlintrc) -> Self {
+    fn try_from(oxlintrc: Oxlintrc) -> Result<Self, Self::Error> {
         Self::from_oxlintrc(false, oxlintrc)
     }
 }
@@ -306,6 +324,29 @@ impl fmt::Debug for LinterBuilder {
             .finish_non_exhaustive()
     }
 }
+
+/// An error that can occur while building a [`Linter`] from an [`Oxlintrc`].
+#[derive(Debug, Clone)]
+pub enum LinterBuilderError {
+    /// There were unknown rules that could not be matched to any known plugins/rules.
+    UnknownRules { rules: Vec<ESLintRule> },
+}
+
+impl std::fmt::Display for LinterBuilderError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            LinterBuilderError::UnknownRules { rules } => {
+                write!(f, "unknown rules: ")?;
+                for rule in rules {
+                    write!(f, "{}", rule.full_name())?;
+                }
+                Ok(())
+            }
+        }
+    }
+}
+
+impl std::error::Error for LinterBuilderError {}
 
 struct RulesCache {
     all_rules: RefCell<Option<Vec<RuleEnum>>>,
@@ -602,7 +643,7 @@ mod test {
         "#,
         )
         .unwrap();
-        let builder = LinterBuilder::from_oxlintrc(false, oxlintrc);
+        let builder = LinterBuilder::from_oxlintrc(false, oxlintrc).unwrap();
         for rule in &builder.rules {
             let name = rule.name();
             let plugin = rule.plugin_name();

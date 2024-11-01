@@ -1,4 +1,4 @@
-use std::{borrow::Cow, fmt, ops::Deref};
+use std::{borrow::Cow, fmt};
 
 use oxc_diagnostics::{Error, OxcDiagnostic};
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -24,50 +24,53 @@ type RuleSet = FxHashSet<RuleWithSeverity>;
 // Note: when update document comment, also update `DummyRuleMap`'s description in this file.
 #[derive(Debug, Clone, Default)]
 #[cfg_attr(test, derive(PartialEq))]
-pub struct OxlintRules(Vec<ESLintRule>);
+pub struct OxlintRules {
+    /// List of all configured rules
+    pub(crate) rules: Vec<ESLintRule>,
+    /// List of rules that didn't match any known rules
+    pub unknown_rules: Vec<ESLintRule>,
+}
 
 impl OxlintRules {
     pub fn new(rules: Vec<ESLintRule>) -> Self {
-        Self(rules)
+        Self { rules, unknown_rules: Vec::new() }
+    }
+
+    /// Returns `true` if there are no rules.
+    pub fn is_empty(&self) -> bool {
+        self.rules.is_empty()
     }
 }
 
+/// A fully qualified rule name, e.g. `eslint/no-console` or `react/rule-of-hooks`.
+/// Includes the plugin name, the rule name, and the configuration for the rule (if any).
+/// This does not imply the rule is known to the linter as that, only that it is configured.
 #[derive(Debug, Clone)]
 #[cfg_attr(test, derive(PartialEq))]
 pub struct ESLintRule {
+    /// Name of the plugin: `eslint`, `react`, etc.
     pub plugin_name: String,
+    /// Name of the rule: `no-console`, `prefer-const`, etc.
     pub rule_name: String,
+    /// Severity of the rule: `off`, `warn`, `error`, etc.
     pub severity: AllowWarnDeny,
+    /// JSON configuration for the rule, if any.
     pub config: Option<serde_json::Value>,
-}
-
-impl Deref for OxlintRules {
-    type Target = Vec<ESLintRule>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl IntoIterator for OxlintRules {
-    type Item = ESLintRule;
-    type IntoIter = <Vec<ESLintRule> as IntoIterator>::IntoIter;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.0.into_iter()
-    }
 }
 
 impl OxlintRules {
     #[allow(clippy::option_if_let_else, clippy::print_stderr)]
-    pub(crate) fn override_rules(&self, rules_for_override: &mut RuleSet, all_rules: &[RuleEnum]) {
+    pub(crate) fn override_rules(
+        &mut self,
+        rules_for_override: &mut RuleSet,
+        all_rules: &[RuleEnum],
+    ) {
         use itertools::Itertools;
         let mut rules_to_replace: Vec<RuleWithSeverity> = vec![];
         let mut rules_to_remove: Vec<RuleWithSeverity> = vec![];
-        let mut rules_not_matched: Vec<&str> = vec![];
 
         // Rules can have the same name but different plugin names
-        let lookup = self.iter().into_group_map_by(|r| r.rule_name.as_str());
+        let lookup = self.rules.iter().into_group_map_by(|r| r.rule_name.as_str());
 
         for (name, rule_configs) in &lookup {
             match rule_configs.len() {
@@ -89,7 +92,12 @@ impl OxlintRules {
                                 let rule = rule.read_json(config);
                                 rules_to_replace.push(RuleWithSeverity::new(rule, severity));
                             } else {
-                                rules_not_matched.push(rule_name);
+                                self.unknown_rules.push(ESLintRule {
+                                    plugin_name: plugin_name.to_string(),
+                                    rule_name: rule_name.to_string(),
+                                    severity,
+                                    config: rule_config.config.clone(),
+                                });
                             }
                         }
                         AllowWarnDeny::Allow => {
@@ -99,8 +107,23 @@ impl OxlintRules {
                             {
                                 let rule = rule.clone();
                                 rules_to_remove.push(rule);
+                            }
+                            // If the given rule is not found in the rule list (for example, if all rules are disabled),
+                            // then look it up in the entire rules list and add it.
+                            else if let Some(rule) = all_rules
+                                .iter()
+                                .find(|r| r.name() == rule_name && r.plugin_name() == plugin_name)
+                            {
+                                let config = rule_config.config.clone().unwrap_or_default();
+                                let rule = rule.read_json(config);
+                                rules_to_remove.push(RuleWithSeverity::new(rule, severity));
                             } else {
-                                rules_not_matched.push(rule_name);
+                                self.unknown_rules.push(ESLintRule {
+                                    plugin_name: plugin_name.to_string(),
+                                    rule_name: rule_name.to_string(),
+                                    severity,
+                                    config: rule_config.config.clone(),
+                                });
                             }
                         }
                     }
@@ -140,14 +163,6 @@ impl OxlintRules {
         }
         for rule in rules_to_replace {
             rules_for_override.replace(rule);
-        }
-
-        if !rules_not_matched.is_empty() {
-            let rules = rules_not_matched.join("\n");
-            let error = Error::from(OxcDiagnostic::warn(format!(
-                "The following rules do not match the currently supported rules:\n{rules}"
-            )));
-            eprintln!("{error:?}");
         }
     }
 }
@@ -197,9 +212,9 @@ impl Serialize for OxlintRules {
     where
         S: serde::Serializer,
     {
-        let mut rules = s.serialize_map(Some(self.len()))?;
+        let mut rules = s.serialize_map(Some(self.rules.len()))?;
 
-        for rule in &self.0 {
+        for rule in &self.rules {
             let key = rule.full_name();
             match rule.config.as_ref() {
                 // e.g. unicorn/some-rule: ["warn", { foo: "bar" }]
@@ -247,7 +262,7 @@ impl<'de> Deserialize<'de> for OxlintRules {
                     rules.push(ESLintRule { plugin_name, rule_name, severity, config });
                 }
 
-                Ok(OxlintRules(rules))
+                Ok(OxlintRules { rules, unknown_rules: Vec::new() })
             }
         }
 
@@ -328,8 +343,9 @@ fn failed_to_parse_rule_value(value: &str, err: &str) -> OxcDiagnostic {
 
 impl ESLintRule {
     /// Returns `<plugin_name>/<rule_name>` for non-eslint rules. For eslint rules, returns
-    /// `<rule_name>`. This is effectively the inverse operation for [`parse_rule_key`].
-    fn full_name(&self) -> Cow<'_, str> {
+    /// `<rule_name>`.
+    // This is effectively the inverse operation for `parse_rule_key`.
+    pub fn full_name(&self) -> Cow<'_, str> {
         if self.plugin_name == "eslint" {
             Cow::Borrowed(self.rule_name.as_str())
         } else {
@@ -359,7 +375,7 @@ mod test {
             "@next/next/noop": 2,
         }))
         .unwrap();
-        let mut rules = rules.iter();
+        let mut rules = rules.rules.iter();
 
         let r1 = rules.next().unwrap();
         assert_eq!(r1.rule_name, "no-console");
@@ -387,13 +403,41 @@ mod test {
     }
 
     #[test]
+    fn test_parse_unknown_rules() {
+        let config = json!({
+            "no-console": "off",
+            "foo/no-unused-vars": [1],
+            "dummy": ["error", "arg1", "args2"],
+        });
+        let mut rules = OxlintRules::deserialize(&config).unwrap();
+        let mut rule_set = RuleSet::default();
+
+        rules.override_rules(&mut rule_set, &RULES);
+
+        rules.unknown_rules.sort_by(|a, b| a.rule_name.cmp(&b.rule_name));
+        let mut rules = rules.unknown_rules.iter();
+
+        let r = rules.next().unwrap();
+        assert_eq!(r.rule_name, "dummy");
+        assert_eq!(r.plugin_name, "unknown_plugin");
+        assert!(r.severity.is_warn_deny());
+        assert_eq!(r.config, Some(serde_json::json!(["arg1", "args2"])));
+
+        let r = rules.next().unwrap();
+        assert_eq!(r.rule_name, "no-unused-vars");
+        assert_eq!(r.plugin_name, "foo");
+        assert!(r.severity.is_warn_deny());
+        assert!(r.config.is_none());
+    }
+
+    #[test]
     fn test_parse_rules_default() {
         let rules = OxlintRules::default();
         assert!(rules.is_empty());
     }
 
     fn r#override(rules: &mut RuleSet, rules_rc: &Value) {
-        let rules_config = OxlintRules::deserialize(rules_rc).unwrap();
+        let mut rules_config = OxlintRules::deserialize(rules_rc).unwrap();
         rules_config.override_rules(rules, &RULES);
     }
 
