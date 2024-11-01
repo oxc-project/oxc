@@ -410,8 +410,9 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         let params = ctx.alloc(ctx.ast.move_formal_parameters(&mut arrow.params));
         let generator_function_id = arrow.scope_id.get().unwrap();
         ctx.scopes_mut().get_flags_mut(generator_function_id).remove(ScopeFlags::Arrow);
+        let function_name = Self::get_function_name_from_parent_variable_declarator(ctx);
 
-        if !Self::is_function_length_affected(&params) {
+        if function_name.is_none() && !Self::is_function_length_affected(&params) {
             return self.create_async_to_generator_call(
                 params,
                 ctx.ast.alloc(body),
@@ -421,6 +422,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         }
 
         let wrapper_scope_id = ctx.create_child_scope(ctx.current_scope_id(), ScopeFlags::Function);
+
         // The generator function will move to inside wrapper, so we need
         // to change the parent scope of the generator function to the wrapper function.
         ctx.scopes_mut().change_parent_id(generator_function_id, Some(wrapper_scope_id));
@@ -432,7 +434,10 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
             let params = Self::create_placeholder_params(&params, scope_id, ctx);
             let statements = ctx.ast.vec1(Self::create_apply_call_statement(&bound_ident, ctx));
             let body = ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), statements);
-            let id = Self::infer_function_id_from_variable_declarator(wrapper_scope_id, ctx);
+            let id = function_name.map(|name| {
+                ctx.generate_binding(name, wrapper_scope_id, SymbolFlags::FunctionScopedVariable)
+                    .create_binding_identifier(ctx)
+            });
             let function = Self::create_function(id, params, body, scope_id, ctx);
             let argument = Some(ctx.ast.expression_from_function(function));
             ctx.ast.statement_return(SPAN, argument)
@@ -464,14 +469,20 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<BindingIdentifier<'a>> {
+        let name = Self::get_function_name_from_parent_variable_declarator(ctx)?;
+        Some(
+            ctx.generate_binding(name, scope_id, SymbolFlags::FunctionScopedVariable)
+                .create_binding_identifier(ctx),
+        )
+    }
+
+    fn get_function_name_from_parent_variable_declarator(
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Atom<'a>> {
         let Ancestor::VariableDeclaratorInit(declarator) = ctx.parent() else {
             return None;
         };
-        let Some(id) = declarator.id().get_binding_identifier() else { unreachable!() };
-        Some(
-            ctx.generate_binding(id.name.clone(), scope_id, SymbolFlags::FunctionScopedVariable)
-                .create_binding_identifier(ctx),
-        )
+        declarator.id().get_binding_identifier().map(|id| id.name.clone())
     }
 
     /// Creates a [`Function`] with the specified params, body and scope_id.
