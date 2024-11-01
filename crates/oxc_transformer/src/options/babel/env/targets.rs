@@ -11,10 +11,9 @@ use oxc_diagnostics::Error;
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
-pub mod query;
-
 pub use browserslist::Version;
-pub use query::Query;
+
+use super::query::Query;
 
 /// A map of browser names to data for feature support in browser.
 ///

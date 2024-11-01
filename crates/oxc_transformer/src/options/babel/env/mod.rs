@@ -1,4 +1,5 @@
 mod data;
+mod query;
 mod targets;
 
 pub use data::{bugfix_features, features};
