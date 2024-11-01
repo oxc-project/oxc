@@ -1,4 +1,4 @@
-use oxc_diagnostics::{Error, OxcDiagnostic};
+use oxc_diagnostics::Error;
 
 use crate::{
     es2015::ES2015Options, es2016::ES2016Options, es2017::ES2017Options, es2018::ES2018Options,
@@ -126,17 +126,11 @@ impl TryFrom<&BabelOptions> for EnvOptions {
 
     /// If the `options` contains any unknown fields, they will be returned as a list of errors.
     fn try_from(options: &BabelOptions) -> Result<Self, Self::Error> {
-        let mut errors = Vec::<Error>::new();
-
         let env = options
-            .get_preset("env")
-            .flatten()
-            .and_then(|value| {
-                serde_json::from_value::<BabelEnvOptions>(value)
-                    .inspect_err(|err| report_error("env", err, true, &mut errors))
-                    .ok()
-            })
-            .and_then(|env_options| EnvOptions::try_from(&env_options).ok())
+            .presets
+            .env
+            .as_ref()
+            .and_then(|env_options| EnvOptions::try_from(env_options).ok())
             .unwrap_or_default();
 
         let regexp = RegExpOptions {
@@ -195,16 +189,6 @@ impl TryFrom<&BabelOptions> for EnvOptions {
             class_properties: options.plugins.class_properties.or(env.es2022.class_properties),
         };
 
-        if !errors.is_empty() {
-            return Err(errors);
-        }
-
         Ok(Self { regexp, es2015, es2016, es2017, es2018, es2019, es2020, es2021, es2022 })
     }
-}
-
-fn report_error(name: &str, err: &serde_json::Error, is_preset: bool, errors: &mut Vec<Error>) {
-    let message =
-        if is_preset { format!("preset-{name}: {err}",) } else { format!("{name}: {err}",) };
-    errors.push(OxcDiagnostic::error(message).into());
 }

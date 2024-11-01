@@ -4,7 +4,7 @@ mod env;
 use std::path::PathBuf;
 
 use env::EnvOptions;
-use oxc_diagnostics::{Error, OxcDiagnostic};
+use oxc_diagnostics::Error;
 
 use crate::{
     common::helper_loader::{HelperLoaderMode, HelperLoaderOptions},
@@ -73,34 +73,25 @@ impl TryFrom<&BabelOptions> for TransformOptions {
     fn try_from(options: &BabelOptions) -> Result<Self, Self::Error> {
         let mut errors = Vec::<Error>::new();
         errors.extend(options.plugins.errors.iter().map(|err| Error::msg(err.clone())));
+        errors.extend(options.presets.errors.iter().map(|err| Error::msg(err.clone())));
 
         let assumptions = if options.assumptions.is_null() {
             CompilerAssumptions::default()
         } else {
             serde_json::from_value::<CompilerAssumptions>(options.assumptions.clone())
-                .inspect_err(|err| errors.push(OxcDiagnostic::error(err.to_string()).into()))
+                .map_err(|err| errors.push(Error::msg(err)))
                 .unwrap_or_default()
         };
 
-        let typescript = if options.has_preset("typescript") {
-            options.get_preset("typescript").and_then(|options| {
-                options
-                    .map(|options| {
-                        serde_json::from_value::<TypeScriptOptions>(options)
-                            .inspect_err(|err| report_error("typescript", err, true, &mut errors))
-                            .ok()
-                    })
-                    .unwrap_or_default()
-            })
-        } else {
-            options.plugins.typescript.clone()
-        }
-        .unwrap_or_default();
+        let typescript = options
+            .presets
+            .typescript
+            .clone()
+            .or_else(|| options.plugins.typescript.clone())
+            .unwrap_or_default();
 
-        let jsx = if let Some(value) = options.get_preset("react").flatten() {
-            serde_json::from_value::<JsxOptions>(value)
-                .inspect_err(|err| report_error("react", err, true, &mut errors))
-                .unwrap_or_default()
+        let jsx = if let Some(options) = &options.presets.jsx {
+            options.clone()
         } else {
             let mut jsx_options = if let Some(options) = &options.plugins.react_jsx_dev {
                 options.clone()
@@ -147,10 +138,4 @@ impl TryFrom<&BabelOptions> for TransformOptions {
             helper_loader,
         })
     }
-}
-
-fn report_error(name: &str, err: &serde_json::Error, is_preset: bool, errors: &mut Vec<Error>) {
-    let message =
-        if is_preset { format!("preset-{name}: {err}",) } else { format!("{name}: {err}",) };
-    errors.push(OxcDiagnostic::error(message).into());
 }
