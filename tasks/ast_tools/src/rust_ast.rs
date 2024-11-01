@@ -1,5 +1,5 @@
 use proc_macro2::TokenStream;
-use quote::{ToTokens, TokenStreamExt};
+use quote::ToTokens;
 use syn::{
     braced,
     parse::{Parse, ParseBuffer},
@@ -269,21 +269,13 @@ impl AstType {
 }
 
 const LOAD_ERROR: &str = "should be loaded by now!";
+
 #[derive(Debug)]
 pub struct Module {
     pub file: PathBuf,
     pub path: String,
-    pub shebang: Option<String>,
-    pub attrs: Vec<Attribute>,
     pub items: Vec<AstRef>,
     pub loaded: bool,
-}
-
-impl ToTokens for Module {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        tokens.append_all(self.attrs.clone());
-        self.items.iter().for_each(|it| it.borrow().to_tokens(tokens));
-    }
 }
 
 impl Module {
@@ -299,7 +291,7 @@ impl Module {
             let mut parts = [krate].into_iter().chain(parts);
             parts.join("::")
         };
-        Self { file, path, shebang: None, attrs: Vec::new(), items: Vec::new(), loaded: false }
+        Self { file, path, items: Vec::new(), loaded: false }
     }
 
     pub fn load(mut self) -> Result<Self> {
@@ -310,8 +302,6 @@ impl Module {
         let mut content = String::new();
         file.read_to_string(&mut content).normalize()?;
         let file = parse_file(content.as_str()).normalize()?;
-        self.shebang = file.shebang;
-        self.attrs = file.attrs;
         self.items = file
             .items
             .into_iter()
