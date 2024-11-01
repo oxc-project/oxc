@@ -567,7 +567,8 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
                     Some(ctx.ast.expression_array(SPAN, custom_hooks_in_scope, None)),
                 )),
             );
-            let function = ctx.ast.function(
+            let scope_id = ctx.create_child_scope_of_current(ScopeFlags::Function);
+            let function = Argument::FunctionExpression(ctx.ast.alloc_function_with_scope_id(
                 FunctionType::FunctionExpression,
                 SPAN,
                 None,
@@ -579,10 +580,9 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
                 formal_parameters,
                 NONE,
                 Some(function_body),
-            );
-            let scope_id = ctx.create_child_scope_of_current(ScopeFlags::Function);
-            function.scope_id.set(Some(scope_id));
-            arguments.push(ctx.ast.argument_expression(ctx.ast.expression_from_function(function)));
+                scope_id,
+            ));
+            arguments.push(function);
         }
 
         // TODO: Handle var hoisted in ctx API

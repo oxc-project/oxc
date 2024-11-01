@@ -383,7 +383,7 @@ impl<'a> ArrowFunctions<'a> {
         let flags = ctx.scopes_mut().get_flags_mut(scope_id);
         *flags &= !ScopeFlags::Arrow;
 
-        let new_function = ctx.ast.function(
+        Expression::FunctionExpression(ctx.ast.alloc_function_with_scope_id(
             FunctionType::FunctionExpression,
             arrow_function_expr.span,
             None,
@@ -395,10 +395,8 @@ impl<'a> ArrowFunctions<'a> {
             arrow_function_expr.params,
             arrow_function_expr.return_type,
             Some(body),
-        );
-        new_function.scope_id.set(Some(scope_id));
-
-        Expression::FunctionExpression(ctx.ast.alloc(new_function))
+            scope_id,
+        ))
     }
 
     /// Insert `var _this = this;` at the top of the statements.

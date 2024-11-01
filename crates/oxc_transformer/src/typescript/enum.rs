@@ -101,7 +101,7 @@ impl<'a> TypeScriptEnum<'a> {
 
         let statements = self.transform_ts_enum_members(&mut decl.members, &ident, ctx);
         let body = ast.alloc_function_body(decl.span, ast.vec(), statements);
-        let function = ctx.ast.function(
+        let callee = Expression::FunctionExpression(ctx.ast.alloc_function_with_scope_id(
             FunctionType::FunctionExpression,
             SPAN,
             None,
@@ -113,9 +113,8 @@ impl<'a> TypeScriptEnum<'a> {
             params,
             None::<TSTypeAnnotation>,
             Some(body),
-        );
-        function.scope_id.set(Some(func_scope_id));
-        let callee = ctx.ast.expression_from_function(function);
+            func_scope_id,
+        ));
 
         let var_symbol_id = decl.id.symbol_id.get().unwrap();
         let arguments = if (is_export || is_not_top_scope) && !is_already_declared {

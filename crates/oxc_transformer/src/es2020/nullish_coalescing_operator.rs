@@ -117,10 +117,18 @@ impl<'a, 'ctx> Traverse<'a> for NullishCoalescingOperator<'a, 'ctx> {
                 ctx.ast.vec(),
                 ctx.ast.vec1(ctx.ast.statement_expression(SPAN, new_expr)),
             );
-            let arrow_function =
-                ctx.ast.arrow_function_expression(SPAN, true, false, NONE, params, NONE, body);
-            arrow_function.scope_id.set(Some(current_scope_id));
-            let arrow_function = ctx.ast.expression_from_arrow_function(arrow_function);
+            let arrow_function = Expression::ArrowFunctionExpression(
+                ctx.ast.alloc_arrow_function_expression_with_scope_id(
+                    SPAN,
+                    true,
+                    false,
+                    NONE,
+                    params,
+                    NONE,
+                    body,
+                    current_scope_id,
+                ),
+            );
             // `(x) => x;` -> `((x) => x)();`
             new_expr = ctx.ast.expression_call(SPAN, arrow_function, NONE, ctx.ast.vec(), false);
         } else {
