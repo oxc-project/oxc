@@ -75,14 +75,6 @@ impl TryFrom<&BabelOptions> for TransformOptions {
         errors.extend(options.plugins.errors.iter().map(|err| Error::msg(err.clone())));
         errors.extend(options.presets.errors.iter().map(|err| Error::msg(err.clone())));
 
-        let assumptions = if options.assumptions.is_null() {
-            CompilerAssumptions::default()
-        } else {
-            serde_json::from_value::<CompilerAssumptions>(options.assumptions.clone())
-                .map_err(|err| errors.push(Error::msg(err)))
-                .unwrap_or_default()
-        };
-
         let typescript = options
             .presets
             .typescript
@@ -131,7 +123,7 @@ impl TryFrom<&BabelOptions> for TransformOptions {
 
         Ok(Self {
             cwd: options.cwd.clone().unwrap_or_default(),
-            assumptions,
+            assumptions: options.assumptions,
             typescript,
             jsx,
             env: env.unwrap_or_default(),

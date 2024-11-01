@@ -5,10 +5,10 @@ mod presets;
 use std::path::{Path, PathBuf};
 
 use serde::{de::DeserializeOwned, Deserialize};
-use serde_json::Value;
 
-pub use env::{BabelEnvOptions, Targets};
+use crate::CompilerAssumptions;
 
+pub use self::env::{BabelEnvOptions, Targets};
 use self::{plugins::BabelPlugins, presets::BabelPresets};
 
 /// Babel options
@@ -33,7 +33,7 @@ pub struct BabelOptions {
     pub source_type: Option<String>,
 
     #[serde(default)]
-    pub assumptions: Value,
+    pub assumptions: CompilerAssumptions,
 
     // Test options
     pub throws: Option<String>,
