@@ -116,15 +116,6 @@ export {};
 
   x TS9014: Computed properties must be number or string literals, variables
   | or dotted expressions with --isolatedDeclarations.
-    ,-[declarationComputedPropertyNames.d.ts:12:6]
- 11 |     [Symbol.iterator]: number,
- 12 |     [globalThis.Symbol.toStringTag]: number,
-    :      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 13 |     [(globalThis.Symbol).unscopables]: number,
-    `----
-
-  x TS9014: Computed properties must be number or string literals, variables
-  | or dotted expressions with --isolatedDeclarations.
     ,-[declarationComputedPropertyNames.d.ts:13:6]
  12 |     [globalThis.Symbol.toStringTag]: number,
  13 |     [(globalThis.Symbol).unscopables]: number,
@@ -148,15 +139,6 @@ export {};
  18 |     [Math.random() > 0.5 ? "f1" : "f2"]: number,
     :      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  19 | };
-    `----
-
-  x TS9014: Computed properties must be number or string literals, variables
-  | or dotted expressions with --isolatedDeclarations.
-    ,-[declarationComputedPropertyNames.d.ts:26:6]
- 25 |     [Symbol.iterator]: number,
- 26 |     [globalThis.Symbol.toStringTag]: number,
-    :      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 27 |     [(globalThis.Symbol).unscopables]: number,
     `----
 
   x TS9014: Computed properties must be number or string literals, variables
