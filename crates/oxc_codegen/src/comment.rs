@@ -5,7 +5,7 @@ use rustc_hash::FxHashMap;
 use oxc_ast::{Comment, CommentKind};
 use oxc_syntax::identifier::is_line_terminator;
 
-use crate::Codegen;
+use crate::{Codegen, LegalComment};
 
 static ANNOTATION_MATCHER: Lazy<DoubleArrayAhoCorasick<usize>> = Lazy::new(|| {
     let patterns = vec!["#__NO_SIDE_EFFECTS__", "@__NO_SIDE_EFFECTS__", "@__PURE__", "#__PURE__"];
@@ -49,18 +49,7 @@ impl<'a> Codegen<'a> {
         ANNOTATION_MATCHER.find_iter(comment_content).count() != 0
     }
 
-    fn is_legal_comment(&self, comment: &Comment) -> bool {
-        if self.options.comments {
-            if self.options.legal_comments.is_inline() || self.options.legal_comments.is_none() {
-                return comment.is_legal(self.source_text);
-            }
-        } else if self.options.legal_comments.is_inline() {
-            return comment.is_legal(self.source_text);
-        }
-        false
-    }
-
-    /// Weather to keep leading comments.
+    /// Whether to keep leading comments.
     fn is_leading_comments(&self, comment: &Comment) -> bool {
         comment.preceded_by_newline
             && (comment.is_jsdoc(self.source_text)
@@ -89,11 +78,36 @@ impl<'a> Codegen<'a> {
         let Some(comments) = self.comments.remove(&start) else {
             return;
         };
-        let (comments, unused_comments): (Vec<_>, Vec<_>) =
-            comments.into_iter().partition(|comment| {
-                self.is_leading_comments(comment) || self.is_legal_comment(comment)
-            });
-        self.print_comments(start, &comments, unused_comments);
+
+        let mut leading_comments = vec![];
+        let mut unused_comments = vec![];
+
+        for comment in comments {
+            if self.is_leading_comments(&comment) {
+                leading_comments.push(comment);
+                continue;
+            }
+            if comment.is_legal(self.source_text) {
+                match &self.options.legal_comments {
+                    LegalComment::None if self.options.comments => {
+                        leading_comments.push(comment);
+                        continue;
+                    }
+                    LegalComment::Inline => {
+                        leading_comments.push(comment);
+                        continue;
+                    }
+                    LegalComment::Eof | LegalComment::Linked(_) | LegalComment::External => {
+                        self.legal_comments.push(comment);
+                        continue;
+                    }
+                    LegalComment::None => {}
+                }
+            }
+            unused_comments.push(comment);
+        }
+
+        self.print_comments(start, &leading_comments, unused_comments);
     }
 
     pub(crate) fn print_annotation_comments(&mut self, node_start: u32) {
@@ -148,15 +162,21 @@ impl<'a> Codegen<'a> {
         }
     }
 
-    pub(crate) fn try_print_eof_legal_comments(&mut self, comments: &[Comment]) {
-        if !self.options.legal_comments.is_eof() {
-            return;
-        }
-        for c in comments {
-            if c.is_legal(self.source_text) {
-                self.print_comment(c);
-                self.print_hard_newline();
+    pub(crate) fn try_print_eof_legal_comments(&mut self) {
+        match self.options.legal_comments.clone() {
+            LegalComment::Eof => {
+                let comments = self.legal_comments.drain(..).collect::<Vec<_>>();
+                for c in comments {
+                    self.print_comment(&c);
+                    self.print_hard_newline();
+                }
             }
+            LegalComment::Linked(path) => {
+                self.print_str("/*! For license information please see ");
+                self.print_str(&path);
+                self.print_str(" */");
+            }
+            _ => {}
         }
     }
 

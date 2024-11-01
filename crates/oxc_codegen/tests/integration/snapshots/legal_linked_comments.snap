@@ -1,0 +1,35 @@
+---
+source: crates/oxc_codegen/tests/integration/main.rs
+---
+########## 0
+/* @license */
+/* @license */
+foo;bar;
+----------
+foo;
+bar;
+/*! For license information please see test.js */
+########## 1
+/* @license */
+/* @preserve */
+foo;bar;
+----------
+foo;
+bar;
+/*! For license information please see test.js */
+########## 2
+/* @license */
+//! KEEP
+foo;bar;
+----------
+foo;
+bar;
+/*! For license information please see test.js */
+########## 3
+/* @license */
+/*! KEEP */
+foo;bar;
+----------
+foo;
+bar;
+/*! For license information please see test.js */

@@ -3,7 +3,7 @@ use std::path::PathBuf;
 /// Legal comment
 ///
 /// <https://esbuild.github.io/api/#legal-comments>
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Default)]
+#[derive(Debug, Clone, Eq, PartialEq, Default)]
 pub enum LegalComment {
     /// Do not preserve any legal comments (default).
     #[default]
@@ -12,8 +12,8 @@ pub enum LegalComment {
     Inline,
     /// Move all legal comments to the end of the file.
     Eof,
-    /// Return all legal comments and link then to them with a comment to the provided path.
-    Linked(PathBuf),
+    /// Return all legal comments and link then to them with a comment to the provided string.
+    Linked(String),
     /// Move all legal comments to a .LEGAL.txt file but to not link to them.
     External,
 }
