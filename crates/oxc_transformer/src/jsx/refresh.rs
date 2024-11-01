@@ -63,20 +63,26 @@ impl<'a> RefreshIdentifierResolver<'a> {
     pub fn to_expression(&self, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         match self {
             Self::Identifier(ident) => {
-                let ident = ident.clone();
                 let reference_id =
                     ctx.create_unbound_reference(ident.name.to_compact_str(), ReferenceFlags::Read);
-                ident.reference_id.set(Some(reference_id));
-                ctx.ast.expression_from_identifier_reference(ident)
+                Expression::Identifier(ctx.ast.alloc_identifier_reference_with_reference_id(
+                    ident.span,
+                    ident.name.clone(),
+                    reference_id,
+                ))
             }
             Self::Member((ident, property)) => {
-                let ident = ident.clone();
                 let reference_id =
                     ctx.create_unbound_reference(ident.name.to_compact_str(), ReferenceFlags::Read);
-                ident.reference_id.set(Some(reference_id));
+                let ident =
+                    Expression::Identifier(ctx.ast.alloc_identifier_reference_with_reference_id(
+                        ident.span,
+                        ident.name.clone(),
+                        reference_id,
+                    ));
                 Expression::from(ctx.ast.member_expression_static(
                     SPAN,
-                    ctx.ast.expression_from_identifier_reference(ident),
+                    ident,
                     property.clone(),
                     false,
                 ))
