@@ -9,8 +9,7 @@ use syn::{parse_quote, Ident, Type};
 use crate::{
     output::{output_path, Output},
     schema::{
-        EnumDef, FieldDef, GetIdent, InheritDef, Schema, StructDef, ToType, TypeDef, TypeName,
-        VariantDef,
+        EnumDef, FieldDef, GetIdent, Schema, StructDef, ToType, TypeDef, TypeName, VariantDef,
     },
     util::{TypeAnalysis, TypeWrapper},
     Generator,
@@ -105,39 +104,7 @@ fn generate_builder_fn(def: &TypeDef, schema: &Schema) -> TokenStream {
 }
 
 fn generate_enum_builder_fn(def: &EnumDef, schema: &Schema) -> TokenStream {
-    let variants_fns =
-        def.variants.iter().map(|it| generate_enum_variant_builder_fn(def, it, schema));
-
-    let inherits_fns =
-        def.inherits.iter().map(|it| generate_enum_inherit_builder_fn(def, it, schema));
-
-    variants_fns.chain(inherits_fns).collect()
-}
-
-fn generate_enum_inherit_builder_fn(
-    enum_: &EnumDef,
-    inherit: &InheritDef,
-    _: &Schema,
-) -> TokenStream {
-    let enum_ident = enum_.ident();
-    let enum_as_type = enum_.to_type();
-    let super_type = inherit.super_.to_type();
-    let fn_name =
-        enum_builder_name(enum_ident.to_string(), inherit.super_.name().inner_name().to_string());
-
-    let docs = DocComment::new(format!(
-        "Convert a [`{}`] into the corresponding variant of [`{}`] without copying or re-allocating memory.",
-        inherit.super_.name(),
-        enum_ident
-    ));
-    quote! {
-        ///@@line_break
-        #docs
-        #[inline]
-        pub fn #fn_name(self, inner: #super_type) -> #enum_as_type {
-            #enum_ident::from(inner)
-        }
-    }
+    def.variants.iter().map(|it| generate_enum_variant_builder_fn(def, it, schema)).collect()
 }
 
 /// Create a builder function for an enum variant (e.g. for `Expression::Binary`)
@@ -174,7 +141,6 @@ fn generate_enum_variant_builder_fn(
         does_alloc = true;
     }
 
-    let from_variant_builder = generate_enum_from_variant_builder_fn(enum_, variant, schema);
     let article = article_for(enum_ident.to_string());
     let mut docs = DocComment::new(format!(" Build {article} [`{enum_ident}::{var_ident}`]"))
         .with_params(&params);
@@ -192,40 +158,6 @@ fn generate_enum_variant_builder_fn(
         #[inline]
         pub fn #fn_name #generic_params (self, #(#params),*) -> #enum_type #where_clause {
             #enum_ident::#var_ident(#inner)
-        }
-
-        #from_variant_builder
-    }
-}
-
-/// Generate a conversion function that takes some struct and creates an enum
-/// variant containing that struct using the `IntoIn` trait.
-fn generate_enum_from_variant_builder_fn(
-    enum_: &EnumDef,
-    variant: &VariantDef,
-    _: &Schema,
-) -> TokenStream {
-    assert_eq!(variant.fields.len(), 1);
-    let enum_ident = enum_.ident();
-    let enum_type = &enum_.to_type();
-    let var_ident = &variant.ident();
-    let var_type_ref = &variant.fields.first().expect("we have already asserted this one!").typ;
-    let var_type_name = var_type_ref.name().inner_name();
-    let var_type = var_type_ref.to_type();
-    let fn_name = enum_builder_name(enum_ident.to_string(), format!("From{var_type_name}"));
-
-    let from_article = article_for(var_type_name);
-    let to_article = article_for(enum_ident.to_string());
-
-    let docs = DocComment::new(format!(
-        " Convert {from_article} [`{var_type_name}`] into {to_article} [`{enum_ident}::{var_ident}`]",
-    ));
-    quote! {
-        ///@@line_break
-        #docs
-        #[inline]
-        pub fn #fn_name<T>(self, inner: T) -> #enum_type where T: IntoIn<'a, #var_type> {
-            #enum_ident::#var_ident(inner.into_in(self.allocator))
         }
     }
 }
