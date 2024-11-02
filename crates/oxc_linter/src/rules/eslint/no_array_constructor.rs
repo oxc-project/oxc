@@ -68,12 +68,7 @@ impl Rule for NoArrayConstructor {
             }
         };
 
-        let Expression::Identifier(ident) = &callee else {
-            return;
-        };
-
-        if ctx.semantic().is_reference_to_global_variable(ident)
-            && callee.is_specific_id("Array")
+        if callee.is_global_reference_name("Array", ctx.symbols())
             && arguments.len() != 1
             && type_parameters.is_none()
             && !optional
