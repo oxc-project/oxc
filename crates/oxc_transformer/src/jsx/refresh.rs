@@ -166,7 +166,7 @@ impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
             let callee = self.refresh_reg.to_expression(ctx);
             let mut arguments = ctx.ast.vec_with_capacity(2);
             arguments.push(Argument::from(binding.create_read_expression(ctx)));
-            arguments.push(ctx.ast.argument_expression(
+            arguments.push(Argument::from(
                 ctx.ast.expression_string_literal(SPAN, ctx.ast.atom(&persistent_id)),
             ));
             new_statements.push(ctx.ast.statement_expression(
@@ -345,7 +345,7 @@ impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
                                 symbol_id,
                                 ReferenceFlags::Read,
                             );
-                            let mut expr = ctx.ast.expression_from_identifier_reference(ident);
+                            let mut expr = Expression::Identifier(ctx.alloc(ident));
 
                             if is_member_expression {
                                 // binding_name.hook_name
@@ -505,7 +505,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
             id.symbol_id.get().unwrap(),
             ReferenceFlags::Read,
         );
-        let right = ctx.ast.expression_from_identifier_reference(right);
+        let right = Expression::Identifier(ctx.alloc(right));
         let expr = ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, left, right);
         ctx.ast.statement_expression(SPAN, expr)
     }
@@ -538,23 +538,16 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
         let callee_list = self.non_builtin_hooks_callee.remove(&scope_id).unwrap_or_default();
         let callee_len = callee_list.len();
         let custom_hooks_in_scope = ctx.ast.vec_from_iter(
-            callee_list
-                .into_iter()
-                .filter_map(|e| e.map(|e| ctx.ast.array_expression_element_expression(e))),
+            callee_list.into_iter().filter_map(|e| e.map(ArrayExpressionElement::from)),
         );
 
         let force_reset = custom_hooks_in_scope.len() != callee_len;
 
         let mut arguments = ctx.ast.vec();
-        arguments.push(
-            ctx.ast
-                .argument_expression(ctx.ast.expression_string_literal(SPAN, ctx.ast.atom(&key))),
-        );
+        arguments.push(Argument::from(ctx.ast.expression_string_literal(SPAN, ctx.ast.atom(&key))));
 
         if force_reset || !custom_hooks_in_scope.is_empty() {
-            arguments.push(
-                ctx.ast.argument_expression(ctx.ast.expression_boolean_literal(SPAN, force_reset)),
-            );
+            arguments.push(Argument::from(ctx.ast.expression_boolean_literal(SPAN, force_reset)));
         }
 
         if !custom_hooks_in_scope.is_empty() {

@@ -142,8 +142,8 @@ impl<'a, 'ctx> Traverse<'a> for NullishCoalescingOperator<'a, 'ctx> {
 impl<'a, 'ctx> NullishCoalescingOperator<'a, 'ctx> {
     fn clone_expression(expr: &Expression<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         match expr {
-            Expression::Identifier(ident) => ctx.ast.expression_from_identifier_reference(
-                ctx.clone_identifier_reference(ident, ReferenceFlags::Read),
+            Expression::Identifier(ident) => Expression::Identifier(
+                ctx.ast.alloc(ctx.clone_identifier_reference(ident, ReferenceFlags::Read)),
             ),
             _ => expr.clone_in(ctx.ast.allocator),
         }

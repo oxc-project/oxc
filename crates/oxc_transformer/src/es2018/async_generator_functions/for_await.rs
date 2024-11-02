@@ -18,7 +18,7 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
         let step_key =
             ctx.generate_uid("step", ctx.current_scope_id(), SymbolFlags::FunctionScopedVariable);
         // step.value
-        let step_value = ctx.ast.expression_member(ctx.ast.member_expression_static(
+        let step_value = Expression::from(ctx.ast.member_expression_static(
             SPAN,
             step_key.create_read_expression(ctx),
             ctx.ast.identifier_name(SPAN, "value"),
@@ -30,14 +30,12 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
                 // for await (let i of test)
                 let mut declarator = variable.declarations.pop().unwrap();
                 declarator.init = Some(step_value);
-                let variable = ctx.ast.variable_declaration(
+                Statement::VariableDeclaration(ctx.ast.alloc_variable_declaration(
                     SPAN,
                     declarator.kind,
                     ctx.ast.vec1(declarator),
                     false,
-                );
-                let declaration = ctx.ast.declaration_from_variable(variable);
-                Statement::from(declaration)
+                ))
             }
             left @ match_assignment_target!(ForStatementLeft) => {
                 // for await (i of test), for await ({ i } of test)
@@ -131,7 +129,7 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
             ctx.generate_uid("iteratorError", scope_id, SymbolFlags::FunctionScopedVariable);
 
         let mut items = ctx.ast.vec_with_capacity(4);
-        items.push(ctx.ast.statement_declaration(ctx.ast.declaration_variable(
+        items.push(Statement::from(ctx.ast.declaration_variable(
             SPAN,
             VariableDeclarationKind::Var,
             ctx.ast.vec1(ctx.ast.variable_declarator(
@@ -143,7 +141,7 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
             )),
             false,
         )));
-        items.push(ctx.ast.statement_declaration(ctx.ast.declaration_variable(
+        items.push(Statement::from(ctx.ast.declaration_variable(
             SPAN,
             VariableDeclarationKind::Var,
             ctx.ast.vec1(ctx.ast.variable_declarator(
@@ -155,7 +153,7 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
             )),
             false,
         )));
-        items.push(ctx.ast.statement_declaration(ctx.ast.declaration_variable(
+        items.push(Statement::from(ctx.ast.declaration_variable(
             SPAN,
             VariableDeclarationKind::Var,
             ctx.ast.vec1(ctx.ast.variable_declarator(
@@ -176,7 +174,7 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
                 ctx.create_child_scope(block_scope_id, ScopeFlags::empty());
             ctx.scopes_mut().change_parent_id(for_of_scope_id, Some(block_scope_id));
 
-            let for_statement = ctx.ast.for_statement_with_scope_id(
+            let for_statement = Statement::ForStatement(ctx.ast.alloc_for_statement_with_scope_id(
                 SPAN,
                 Some(ctx.ast.for_statement_init_variable_declaration(
                     SPAN,
@@ -191,7 +189,7 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
                                 SPAN,
                                 get_identifier,
                                 NONE,
-                                ctx.ast.vec1(ctx.ast.argument_expression(object)),
+                                ctx.ast.vec1(Argument::from(object)),
                                 false,
                             )),
                             false,
@@ -214,7 +212,7 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
                     ctx.ast.expression_unary(
                         SPAN,
                         UnaryOperator::LogicalNot,
-                        ctx.ast.expression_member(ctx.ast.member_expression_static(
+                        Expression::from(ctx.ast.member_expression_static(
                             SPAN,
                             ctx.ast.expression_parenthesized(
                                 SPAN,
@@ -226,14 +224,12 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
                                         SPAN,
                                         ctx.ast.expression_call(
                                             SPAN,
-                                            ctx.ast.expression_member(
-                                                ctx.ast.member_expression_static(
-                                                    SPAN,
-                                                    iterator_key.create_read_expression(ctx),
-                                                    ctx.ast.identifier_name(SPAN, "next"),
-                                                    false,
-                                                ),
-                                            ),
+                                            Expression::from(ctx.ast.member_expression_static(
+                                                SPAN,
+                                                iterator_key.create_read_expression(ctx),
+                                                ctx.ast.identifier_name(SPAN, "next"),
+                                                false,
+                                            )),
                                             NONE,
                                             ctx.ast.vec(),
                                             false,
@@ -268,16 +264,15 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
                         );
                     }
 
-                    ctx.ast.statement_from_block(ctx.ast.block_statement_with_scope_id(
+                    Statement::BlockStatement(ctx.ast.alloc_block_statement_with_scope_id(
                         SPAN,
                         body,
                         for_statement_body_scope_id,
                     ))
                 },
                 for_statement_scope_id,
-            );
-            let statement = ctx.ast.statement_from_for(for_statement);
-            ctx.ast.block_statement_with_scope_id(SPAN, ctx.ast.vec1(statement), block_scope_id)
+            ));
+            ctx.ast.block_statement_with_scope_id(SPAN, ctx.ast.vec1(for_statement), block_scope_id)
         };
 
         let catch_clause = {
@@ -339,7 +334,7 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
                             LogicalOperator::And,
                             ctx.ast.expression_binary(
                                 SPAN,
-                                ctx.ast.expression_member(ctx.ast.member_expression_static(
+                                Expression::from(ctx.ast.member_expression_static(
                                     SPAN,
                                     iterator_key.create_read_expression(ctx),
                                     ctx.ast.identifier_name(SPAN, "return"),
@@ -349,7 +344,7 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
                                 ctx.ast.expression_null_literal(SPAN),
                             ),
                         ),
-                        ctx.ast.statement_from_block(ctx.ast.block_statement_with_scope_id(
+                        Statement::BlockStatement(ctx.ast.alloc_block_statement_with_scope_id(
                             SPAN,
                             ctx.ast.vec1(ctx.ast.statement_expression(
                                 SPAN,
@@ -357,14 +352,12 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
                                     SPAN,
                                     ctx.ast.expression_call(
                                         SPAN,
-                                        ctx.ast.expression_member(
-                                            ctx.ast.member_expression_static(
-                                                SPAN,
-                                                iterator_key.create_read_expression(ctx),
-                                                ctx.ast.identifier_name(SPAN, "return"),
-                                                false,
-                                            ),
-                                        ),
+                                        Expression::from(ctx.ast.member_expression_static(
+                                            SPAN,
+                                            iterator_key.create_read_expression(ctx),
+                                            ctx.ast.identifier_name(SPAN, "return"),
+                                            false,
+                                        )),
                                         NONE,
                                         ctx.ast.vec(),
                                         false,
@@ -390,7 +383,7 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
                         ctx.ast.statement_if(
                             SPAN,
                             iterator_had_error_key.create_read_expression(ctx),
-                            ctx.ast.statement_from_block(ctx.ast.block_statement_with_scope_id(
+                            Statement::BlockStatement(ctx.ast.alloc_block_statement_with_scope_id(
                                 SPAN,
                                 ctx.ast.vec1(ctx.ast.statement_throw(
                                     SPAN,

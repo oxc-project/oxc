@@ -151,10 +151,10 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
         // need to inject an empty statement (`export {}`) so that the file is
         // still considered a module
         if no_modules_remaining && some_modules_deleted && self.ctx.module_imports.is_empty() {
-            let export_decl = ModuleDeclaration::ExportNamedDeclaration(
+            let export_decl = Statement::ExportNamedDeclaration(
                 ctx.ast.plain_export_named_declaration(SPAN, ctx.ast.vec(), None),
             );
-            program.body.push(ctx.ast.statement_module_declaration(export_decl));
+            program.body.push(export_decl);
         }
     }
 
@@ -629,15 +629,14 @@ impl<'a> Assignment<'a> {
             ctx.ast.expression_assignment(
                 SPAN,
                 AssignmentOperator::Assign,
-                ctx.ast
-                    .simple_assignment_target_member_expression(ctx.ast.member_expression_static(
-                        SPAN,
-                        ctx.ast.expression_this(SPAN),
-                        ctx.ast.identifier_name(self.span, &self.name),
-                        false,
-                    ))
-                    .into(),
-                ctx.ast.expression_from_identifier_reference(id),
+                SimpleAssignmentTarget::from(ctx.ast.member_expression_static(
+                    SPAN,
+                    ctx.ast.expression_this(SPAN),
+                    ctx.ast.identifier_name(self.span, &self.name),
+                    false,
+                ))
+                .into(),
+                Expression::Identifier(ctx.alloc(id)),
             ),
         )
     }

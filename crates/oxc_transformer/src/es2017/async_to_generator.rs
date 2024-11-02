@@ -299,17 +299,16 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
                     id.symbol_id.get().unwrap(),
                     ReferenceFlags::Read,
                 );
-                let statement = Statement::from(ctx.ast.declaration_from_function(caller_function));
+                let statement = Statement::FunctionDeclaration(caller_function);
                 statements.push(statement);
-                let argument = Some(ctx.ast.expression_from_identifier_reference(reference));
+                let argument = Some(Expression::Identifier(ctx.alloc(reference)));
                 statements.push(ctx.ast.statement_return(SPAN, argument));
             } else {
                 // If the function doesn't have an id, then we need to return the function itself.
                 // `function() { ... }` -> `return function() { ... };`
-                let statement_return = ctx.ast.statement_return(
-                    SPAN,
-                    Some(ctx.ast.expression_from_function(caller_function)),
-                );
+                let statement_return = ctx
+                    .ast
+                    .statement_return(SPAN, Some(Expression::FunctionExpression(caller_function)));
                 statements.push(statement_return);
             }
             debug_assert!(wrapper_function.body.is_none());
@@ -323,7 +322,8 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         }
 
         // Construct the IIFE
-        let callee = ctx.ast.expression_from_function(ctx.ast.move_function(wrapper_function));
+        let callee =
+            Expression::FunctionExpression(ctx.alloc(ctx.ast.move_function(wrapper_function)));
         ctx.ast.expression_call(SPAN, callee, NONE, ctx.ast.vec(), false)
     }
 
@@ -385,7 +385,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
             let params = Self::create_empty_params(ctx);
             let id = Some(bound_ident.create_binding_identifier(ctx));
             let caller_function = Self::create_function(id, params, body, scope_id, ctx);
-            Statement::from(ctx.ast.declaration_from_function(caller_function))
+            Statement::FunctionDeclaration(caller_function)
         }
     }
 
@@ -439,7 +439,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
                     .create_binding_identifier(ctx)
             });
             let function = Self::create_function(id, params, body, scope_id, ctx);
-            let argument = Some(ctx.ast.expression_from_function(function));
+            let argument = Some(Expression::FunctionExpression(function));
             ctx.ast.statement_return(SPAN, argument)
         };
 
@@ -459,7 +459,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
             let params = Self::create_empty_params(ctx);
             let wrapper_function = Self::create_function(None, params, body, wrapper_scope_id, ctx);
             // Construct the IIFE
-            let callee = ctx.ast.expression_from_function(wrapper_function);
+            let callee = Expression::FunctionExpression(wrapper_function);
             ctx.ast.expression_call(SPAN, callee, NONE, ctx.ast.vec(), false)
         }
     }
@@ -493,13 +493,13 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         body: ArenaBox<'a, FunctionBody<'a>>,
         scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Function<'a> {
+    ) -> ArenaBox<'a, Function<'a>> {
         let r#type = if id.is_some() {
             FunctionType::FunctionDeclaration
         } else {
             FunctionType::FunctionExpression
         };
-        ctx.ast.function_with_scope_id(
+        ctx.ast.alloc_function_with_scope_id(
             r#type,
             SPAN,
             id,
@@ -528,14 +528,14 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         let symbol_id = ctx.scopes().find_binding(ctx.current_scope_id(), "arguments");
         let arguments_ident =
             ctx.create_reference_id(SPAN, Atom::from("arguments"), symbol_id, ReferenceFlags::Read);
-        let arguments_ident = ctx.ast.expression_from_identifier_reference(arguments_ident);
+        let arguments_ident = Argument::Identifier(ctx.alloc(arguments_ident));
 
         // (this, arguments)
         let mut arguments = ctx.ast.vec_with_capacity(2);
-        arguments.push(ctx.ast.argument_expression(ctx.ast.expression_this(SPAN)));
-        arguments.push(ctx.ast.argument_expression(arguments_ident));
+        arguments.push(Argument::from(ctx.ast.expression_this(SPAN)));
+        arguments.push(arguments_ident);
         // _ref.apply
-        let callee = ctx.ast.expression_member(ctx.ast.member_expression_static(
+        let callee = Expression::from(ctx.ast.member_expression_static(
             SPAN,
             bound_ident.create_read_expression(ctx),
             ctx.ast.identifier_name(SPAN, "apply"),
@@ -565,9 +565,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
     ) -> Expression<'a> {
         let mut function = Self::create_function(None, params, body, scope_id, ctx);
         function.generator = true;
-        let function_expression = ctx.ast.expression_from_function(function);
-        let argument = ctx.ast.argument_expression(function_expression);
-        let arguments = ctx.ast.vec1(argument);
+        let arguments = ctx.ast.vec1(Argument::FunctionExpression(function));
         self.ctx.helper_call_expr(self.helper, arguments, ctx)
     }
 
@@ -595,7 +593,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
             Some(init),
             false,
         ));
-        ctx.ast.statement_declaration(ctx.ast.declaration_variable(
+        Statement::from(ctx.ast.declaration_variable(
             SPAN,
             VariableDeclarationKind::Var,
             declarations,

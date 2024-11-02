@@ -274,7 +274,7 @@ impl<'a> HelperLoaderStore<'a> {
         let symbol_id = ctx.scopes().find_binding(ctx.current_scope_id(), HELPER_VAR);
         let ident =
             ctx.create_reference_id(SPAN, Atom::from(HELPER_VAR), symbol_id, ReferenceFlags::Read);
-        let object = ctx.ast.expression_from_identifier_reference(ident);
+        let object = Expression::Identifier(ctx.alloc(ident));
         let property = ctx.ast.identifier_name(SPAN, Atom::from(helper.name()));
         Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false))
     }

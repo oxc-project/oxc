@@ -126,7 +126,7 @@
 
 use serde::Deserialize;
 
-use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_data_structures::stack::SparseStack;
 use oxc_span::SPAN;
@@ -223,7 +223,7 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
     ) {
         if let JSXElementName::ThisExpression(this) = element_name {
             if let Some(ident) = self.get_this_identifier(this.span, ctx) {
-                *element_name = ctx.ast.jsx_element_name_from_identifier_reference(ident);
+                *element_name = JSXElementName::IdentifierReference(ident);
             }
         };
     }
@@ -235,7 +235,7 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
     ) {
         if let JSXMemberExpressionObject::ThisExpression(this) = object {
             if let Some(ident) = self.get_this_identifier(this.span, ctx) {
-                *object = ctx.ast.jsx_member_expression_object_from_identifier_reference(ident);
+                *object = JSXMemberExpressionObject::IdentifierReference(ident);
             }
         }
     }
@@ -243,7 +243,7 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Expression::ThisExpression(this) = expr {
             if let Some(ident) = self.get_this_identifier(this.span, ctx) {
-                *expr = ctx.ast.expression_from_identifier_reference(ident);
+                *expr = Expression::Identifier(ident);
             }
         }
     }
@@ -266,7 +266,7 @@ impl<'a> ArrowFunctions<'a> {
         &mut self,
         span: Span,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Option<IdentifierReference<'a>> {
+    ) -> Option<ArenaBox<'a, IdentifierReference<'a>>> {
         // Find arrow function we are currently in (if we are)
         let arrow_scope_id = Self::get_arrow_function_scope(ctx)?;
 
@@ -289,7 +289,7 @@ impl<'a> ArrowFunctions<'a> {
                 .unwrap();
             ctx.generate_uid("this", target_scope_id, SymbolFlags::FunctionScopedVariable)
         });
-        Some(this_var.create_spanned_read_reference(span, ctx))
+        Some(ctx.ast.alloc(this_var.create_spanned_read_reference(span, ctx)))
     }
 
     /// Find arrow function we are currently in, if it's between current node, and where `this` is bound.
