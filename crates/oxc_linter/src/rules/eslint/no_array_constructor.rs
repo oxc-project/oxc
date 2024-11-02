@@ -2,6 +2,7 @@ use oxc_ast::ast::Expression;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::IsGlobalReference;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -68,7 +69,11 @@ impl Rule for NoArrayConstructor {
             }
         };
 
-        if callee.is_global_reference_name("Array", ctx.symbols())
+        let Expression::Identifier(ident) = &callee else {
+            return;
+        };
+
+        if ident.is_global_reference_name("Array", ctx.symbols())
             && arguments.len() != 1
             && type_parameters.is_none()
             && !optional
