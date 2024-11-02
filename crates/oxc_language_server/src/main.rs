@@ -17,9 +17,9 @@ use tower_lsp::{
         CodeActionProviderCapability, CodeActionResponse, ConfigurationItem, Diagnostic,
         DidChangeConfigurationParams, DidChangeTextDocumentParams, DidCloseTextDocumentParams,
         DidOpenTextDocumentParams, DidSaveTextDocumentParams, InitializeParams, InitializeResult,
-        InitializedParams, OneOf, ServerCapabilities, ServerInfo, TextDocumentSyncCapability,
-        TextDocumentSyncKind, TextEdit, Url, WorkDoneProgressOptions, WorkspaceEdit,
-        WorkspaceFoldersServerCapabilities, WorkspaceServerCapabilities,
+        InitializedParams, MessageType, OneOf, ServerCapabilities, ServerInfo,
+        TextDocumentSyncCapability, TextDocumentSyncKind, TextEdit, Url, WorkDoneProgressOptions,
+        WorkspaceEdit, WorkspaceFoldersServerCapabilities, WorkspaceServerCapabilities,
     },
     Client, LanguageServer, LspService, Server,
 };
@@ -352,18 +352,17 @@ impl Backend {
             config_path = Some(config);
         }
         if let Some(config_path) = config_path {
-            let mut linter = self.server_linter.write().await;
-            *linter = ServerLinter::new_with_linter(
-                LinterBuilder::from_oxlintrc(
-                    true,
-                    Oxlintrc::from_file(&config_path)
-                        .expect("should have initialized linter with new options"),
-                )
-                // FIXME: Handle this error more gracefully and report it properly
-                .expect("failed to build linter from oxlint config")
-                .with_fix(FixKind::SafeFix)
-                .build(),
+            let (linter_builder, errors) = LinterBuilder::from_oxlintrc(
+                true,
+                Oxlintrc::from_file(&config_path)
+                    .expect("should have initialized linter with new options"),
             );
+            if let Some(errors) = errors {
+                self.client.show_message(MessageType::WARNING, errors).await;
+            }
+            let mut linter = self.server_linter.write().await;
+            *linter =
+                ServerLinter::new_with_linter(linter_builder.with_fix(FixKind::SafeFix).build());
         }
     }
 

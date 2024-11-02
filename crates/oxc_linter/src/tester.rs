@@ -432,7 +432,7 @@ impl Tester {
         let linter = eslint_config
             .as_ref()
             .map_or_else(LinterBuilder::empty, |v| {
-                LinterBuilder::from_oxlintrc(true, Oxlintrc::deserialize(v).unwrap()).unwrap()
+                LinterBuilder::from_oxlintrc(true, Oxlintrc::deserialize(v).unwrap()).0
             })
             .with_fix(fix.into())
             .with_plugins(self.plugins)

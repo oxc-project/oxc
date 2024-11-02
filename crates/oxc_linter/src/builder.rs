@@ -83,7 +83,7 @@ impl LinterBuilder {
     pub fn from_oxlintrc(
         start_empty: bool,
         oxlintrc: Oxlintrc,
-    ) -> Result<Self, LinterBuilderError> {
+    ) -> (Self, Option<LinterBuilderError>) {
         // TODO: monorepo config merging, plugin-based extends, etc.
         let Oxlintrc { plugins, settings, env, globals, categories, rules: mut oxlintrc_rules } =
             oxlintrc;
@@ -105,12 +105,13 @@ impl LinterBuilder {
         }
 
         if !oxlintrc_rules.unknown_rules.is_empty() {
-            return Err(LinterBuilderError::UnknownRules {
+            let error = LinterBuilderError::UnknownRules {
                 rules: std::mem::take(&mut oxlintrc_rules.unknown_rules),
-            });
+            };
+            return (builder, Some(error));
         }
 
-        Ok(builder)
+        (builder, None)
     }
 
     #[inline]
@@ -311,7 +312,11 @@ impl TryFrom<Oxlintrc> for LinterBuilder {
 
     #[inline]
     fn try_from(oxlintrc: Oxlintrc) -> Result<Self, Self::Error> {
-        Self::from_oxlintrc(false, oxlintrc)
+        let (builder, error) = Self::from_oxlintrc(false, oxlintrc);
+        if let Some(error) = error {
+            return Err(error);
+        }
+        Ok(builder)
     }
 }
 
@@ -338,7 +343,7 @@ impl std::fmt::Display for LinterBuilderError {
             LinterBuilderError::UnknownRules { rules } => {
                 write!(f, "unknown rules: ")?;
                 for rule in rules {
-                    write!(f, "{}", rule.full_name())?;
+                    writeln!(f, "{}", rule.full_name())?;
                 }
                 Ok(())
             }
@@ -643,7 +648,7 @@ mod test {
         "#,
         )
         .unwrap();
-        let builder = LinterBuilder::from_oxlintrc(false, oxlintrc).unwrap();
+        let (builder, _) = LinterBuilder::from_oxlintrc(false, oxlintrc);
         for rule in &builder.rules {
             let name = rule.name();
             let plugin = rule.plugin_name();

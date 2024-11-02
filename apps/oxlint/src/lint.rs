@@ -119,20 +119,20 @@ impl Runner for LintRunner {
 
         let oxlintrc_for_print =
             if misc_options.print_config { Some(oxlintrc.clone()) } else { None };
-        let builder = LinterBuilder::from_oxlintrc(false, oxlintrc);
+        let (builder, builder_error) = LinterBuilder::from_oxlintrc(false, oxlintrc);
         // Gracefully report any linter builder errors as CLI errors
-        let builder = match builder {
-            Ok(builder) => builder,
-            Err(err) => match err {
+        if let Some(builder_error) = builder_error {
+            return match builder_error {
                 LinterBuilderError::UnknownRules { rules } => {
                     let rules = rules.iter().map(|r| r.full_name()).collect::<Vec<_>>().join("\n");
                     let error = Error::from(OxcDiagnostic::warn(format!(
                         "The following rules do not match the currently supported rules:\n{rules}"
                     )));
-                    return CliRunResult::LintError { error: format!("{error:?}") };
+                    CliRunResult::LintError { error: format!("{error:?}") }
                 }
-            },
-        };
+            };
+        }
+
         let builder = builder.with_filters(filter).with_fix(fix_options.fix_kind());
 
         if let Some(basic_config_file) = oxlintrc_for_print {
