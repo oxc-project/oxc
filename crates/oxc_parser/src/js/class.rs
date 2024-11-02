@@ -55,7 +55,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_class_expression(&mut self) -> Result<Expression<'a>> {
         let class =
             self.parse_class(self.start_span(), ClassType::ClassExpression, &Modifiers::empty())?;
-        Ok(self.ast.expression_from_class(class))
+        Ok(Expression::ClassExpression(class))
     }
 
     fn parse_class(
@@ -231,8 +231,7 @@ impl<'a> ParserImpl<'a> {
         if self.is_at_ts_index_signature_member() {
             return self
                 .parse_index_signature_declaration(span, &modifiers)
-                .map(|sig| self.ast.class_element_from_ts_index_signature(sig))
-                .map(Some);
+                .map(|sig| Some(ClassElement::TSIndexSignature(self.alloc(sig))));
         }
 
         // * ...

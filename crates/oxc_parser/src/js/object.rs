@@ -106,7 +106,7 @@ impl<'a> ParserImpl<'a> {
                         self.end_span(span),
                         PropertyKind::Init,
                         key,
-                        self.ast.expression_from_function(method),
+                        Expression::FunctionExpression(method),
                         /* init */ None,
                         /* method */ true,
                         /* shorthand */ false,
@@ -227,7 +227,7 @@ impl<'a> ParserImpl<'a> {
         let generator = self.eat(Kind::Star);
         let (key, computed) = self.parse_property_name()?;
         let method = self.parse_method(r#async, generator)?;
-        let value = self.ast.expression_from_function(method);
+        let value = Expression::FunctionExpression(method);
         Ok(self.ast.alloc_object_property(
             self.end_span(span),
             PropertyKind::Init,
@@ -247,7 +247,7 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::Get)?;
         let (key, computed) = self.parse_property_name()?;
         let method = self.parse_method(false, false)?;
-        let value = self.ast.expression_from_function(method);
+        let value = Expression::FunctionExpression(method);
         Ok(self.ast.alloc_object_property(
             self.end_span(span),
             PropertyKind::Get,
@@ -272,7 +272,7 @@ impl<'a> ParserImpl<'a> {
             self.end_span(span),
             PropertyKind::Set,
             key,
-            self.ast.expression_from_function(method),
+            Expression::FunctionExpression(method),
             /* init */ None,
             /* method */ false,
             /* shorthand */ false,

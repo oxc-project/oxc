@@ -37,7 +37,7 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_binding_pattern_identifier(&mut self) -> Result<BindingPatternKind<'a>> {
         let ident = self.parse_binding_identifier()?;
-        Ok(self.ast.binding_pattern_kind_from_binding_identifier(ident))
+        Ok(BindingPatternKind::BindingIdentifier(self.alloc(ident)))
     }
 
     /// Section 14.3.3 Object Binding Pattern

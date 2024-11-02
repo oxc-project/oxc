@@ -639,7 +639,7 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         self.bump_any(); // `bump `typeof`
         let entity_name = self.parse_ts_type_name()?; // TODO: parseEntityName
-        let entity_name = self.ast.ts_type_query_expr_name_type_name(entity_name);
+        let entity_name = TSTypeQueryExprName::from(entity_name);
         let type_arguments =
             if self.cur_token().is_on_new_line { None } else { self.try_parse_type_arguments()? };
         Ok(self.ast.ts_type_type_query(self.end_span(span), entity_name, type_arguments))
@@ -722,10 +722,10 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         self.bump_any(); // bump `asserts`
         let parameter_name = if self.at(Kind::This) {
-            self.ast.ts_type_predicate_name_from_ts_this_type(self.parse_this_type_node())
+            TSTypePredicateName::This(self.parse_this_type_node())
         } else {
-            let node = self.parse_identifier_name()?;
-            self.ast.ts_type_predicate_name_from_identifier_name(node)
+            let ident_name = self.parse_identifier_name()?;
+            TSTypePredicateName::Identifier(self.alloc(ident_name))
         };
         let mut type_annotation = None;
         if self.eat(Kind::Is) {
@@ -1107,7 +1107,7 @@ impl<'a> ParserImpl<'a> {
         let ty = self.parse_ts_type()?;
         if let Some(id) = type_predicate_variable {
             let type_annotation = Some(self.ast.ts_type_annotation(self.end_span(type_span), ty));
-            let parameter_name = self.ast.ts_type_predicate_name_from_identifier_name(id);
+            let parameter_name = TSTypePredicateName::Identifier(self.alloc(id));
             return Ok(self.ast.ts_type_type_predicate(
                 self.end_span(span),
                 parameter_name,
