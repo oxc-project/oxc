@@ -3,7 +3,7 @@ use std::path::PathBuf;
 /// Legal comment
 ///
 /// <https://esbuild.github.io/api/#legal-comments>
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Default)]
+#[derive(Debug, Clone, Eq, PartialEq, Default)]
 pub enum LegalComment {
     /// Do not preserve any legal comments (default).
     #[default]
@@ -12,26 +12,26 @@ pub enum LegalComment {
     Inline,
     /// Move all legal comments to the end of the file.
     Eof,
-    /// Move all legal comments to a .LEGAL.txt file and link to them with a comment.
-    Linked,
+    /// Return all legal comments and link then to them with a comment to the provided string.
+    Linked(String),
     /// Move all legal comments to a .LEGAL.txt file but to not link to them.
     External,
 }
 
 impl LegalComment {
     /// Is None.
-    pub fn is_none(self) -> bool {
-        self == Self::None
+    pub fn is_none(&self) -> bool {
+        *self == Self::None
     }
 
     /// Is inline mode.
-    pub fn is_inline(self) -> bool {
-        self == Self::Inline
+    pub fn is_inline(&self) -> bool {
+        *self == Self::Inline
     }
 
     /// Is EOF mode.
-    pub fn is_eof(self) -> bool {
-        self == Self::Eof
+    pub fn is_eof(&self) -> bool {
+        *self == Self::Eof
     }
 }
 
