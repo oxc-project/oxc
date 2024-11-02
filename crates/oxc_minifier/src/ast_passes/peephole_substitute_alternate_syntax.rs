@@ -121,8 +121,7 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
             }
             Expression::TemplateLiteral(_) => {
                 if let Some(val) = expr.to_js_string() {
-                    let new_expr = ctx.ast.string_literal(expr.span(), val);
-                    *expr = ctx.ast.expression_from_string_literal(new_expr);
+                    *expr = ctx.ast.expression_string_literal(expr.span(), val);
                     self.changed = true;
                 }
             }
@@ -273,15 +272,11 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
         let Some((_void_exp, id_ref)) = pair else {
             return;
         };
-        let argument = ctx.ast.expression_from_identifier_reference(id_ref);
-        let left = ctx.ast.unary_expression(SPAN, UnaryOperator::Typeof, argument);
-        let right = ctx.ast.string_literal(SPAN, "u");
-        let binary_expr = ctx.ast.binary_expression(
-            expr.span,
-            ctx.ast.expression_from_unary(left),
-            BinaryOperator::GreaterThan,
-            ctx.ast.expression_from_string_literal(right),
-        );
+        let argument = Expression::Identifier(ctx.alloc(id_ref));
+        let left = ctx.ast.expression_unary(SPAN, UnaryOperator::Typeof, argument);
+        let right = ctx.ast.expression_string_literal(SPAN, "u");
+        let binary_expr =
+            ctx.ast.binary_expression(expr.span, left, BinaryOperator::GreaterThan, right);
         *expr = binary_expr;
         self.changed = true;
     }
@@ -406,8 +401,7 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
                 // `new Array(literal)` -> `[literal]`
                 else if arg.is_literal() || matches!(arg, Expression::ArrayExpression(_)) {
                     let mut elements = ctx.ast.vec();
-                    let element =
-                        ctx.ast.array_expression_element_expression(ctx.ast.move_expression(arg));
+                    let element = ArrayExpressionElement::from(ctx.ast.move_expression(arg));
                     elements.push(element);
                     Some(Self::array_literal(elements, ctx))
                 }
@@ -421,12 +415,11 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
             } else {
                 // `new Array(1, 2, 3)` -> `[1, 2, 3]`
                 let elements = ctx.ast.vec_from_iter(
-                    new_expr.arguments.iter_mut().filter_map(|arg| arg.as_expression_mut()).map(
-                        |arg| {
-                            ctx.ast
-                                .array_expression_element_expression(ctx.ast.move_expression(arg))
-                        },
-                    ),
+                    new_expr
+                        .arguments
+                        .iter_mut()
+                        .filter_map(|arg| arg.as_expression_mut())
+                        .map(|arg| ArrayExpressionElement::from(ctx.ast.move_expression(arg))),
                 );
                 Some(Self::array_literal(elements, ctx))
             }
@@ -465,8 +458,7 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
                 // `Array(literal)` -> `[literal]`
                 else if arg.is_literal() || matches!(arg, Expression::ArrayExpression(_)) {
                     let mut elements = ctx.ast.vec();
-                    let element =
-                        ctx.ast.array_expression_element_expression(ctx.ast.move_expression(arg));
+                    let element = ArrayExpressionElement::from(ctx.ast.move_expression(arg));
                     elements.push(element);
                     Some(Self::array_literal(elements, ctx))
                 } else {
@@ -475,12 +467,11 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
             } else {
                 // `Array(1, 2, 3)` -> `[1, 2, 3]`
                 let elements = ctx.ast.vec_from_iter(
-                    call_expr.arguments.iter_mut().filter_map(|arg| arg.as_expression_mut()).map(
-                        |arg| {
-                            ctx.ast
-                                .array_expression_element_expression(ctx.ast.move_expression(arg))
-                        },
-                    ),
+                    call_expr
+                        .arguments
+                        .iter_mut()
+                        .filter_map(|arg| arg.as_expression_mut())
+                        .map(|arg| ArrayExpressionElement::from(ctx.ast.move_expression(arg))),
                 );
                 Some(Self::array_literal(elements, ctx))
             }
@@ -510,17 +501,17 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
                 }
             }
 
-            Some(ctx.ast.expression_from_unary(ctx.ast.unary_expression(
+            Some(ctx.ast.expression_unary(
                 call_expr.span,
                 UnaryOperator::LogicalNot,
-                ctx.ast.expression_from_unary(ctx.ast.unary_expression(
+                ctx.ast.expression_unary(
                     call_expr.span,
                     UnaryOperator::LogicalNot,
                     ctx.ast.move_expression(
                         call_expr.arguments.get_mut(0).and_then(|arg| arg.as_expression_mut())?,
                     ),
-                )),
-            )))
+                ),
+            ))
         } else if call_expr.callee.is_global_reference_name("String", ctx.symbols()) {
             // `String(a)` -> `'' + (a)`
             let arg = call_expr.arguments.get_mut(0).and_then(|arg| arg.as_expression_mut())?;
@@ -533,7 +524,7 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
 
             Some(ctx.ast.expression_binary(
                 call_expr.span,
-                ctx.ast.expression_from_string_literal(ctx.ast.string_literal(SPAN, "")),
+                ctx.ast.expression_string_literal(SPAN, ""),
                 BinaryOperator::Addition,
                 ctx.ast.move_expression(arg),
             ))

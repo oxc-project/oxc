@@ -46,27 +46,20 @@ impl PeepholeReplaceKnownMethods {
         let Expression::StaticMemberExpression(member) = &call_expr.callee else { return };
         if let Expression::StringLiteral(string_lit) = &member.object {
             let replacement = match member.property.name.as_str() {
-                "toLowerCase" | "toUpperCase" | "trim" => {
-                    let transformed_value =
-                        match member.property.name.as_str() {
-                            "toLowerCase" => Some(ctx.ast.string_literal(
-                                call_expr.span,
-                                string_lit.value.cow_to_lowercase(),
-                            )),
-                            "toUpperCase" => Some(ctx.ast.string_literal(
-                                call_expr.span,
-                                string_lit.value.cow_to_uppercase(),
-                            )),
-                            "trim" => Some(
-                                ctx.ast.string_literal(call_expr.span, string_lit.value.trim()),
-                            ),
-                            _ => None,
-                        };
-
-                    transformed_value.map(|transformed_value| {
-                        ctx.ast.expression_from_string_literal(transformed_value)
-                    })
-                }
+                "toLowerCase" | "toUpperCase" | "trim" => match member.property.name.as_str() {
+                    "toLowerCase" => Some(ctx.ast.expression_string_literal(
+                        call_expr.span,
+                        string_lit.value.cow_to_lowercase(),
+                    )),
+                    "toUpperCase" => Some(ctx.ast.expression_string_literal(
+                        call_expr.span,
+                        string_lit.value.cow_to_uppercase(),
+                    )),
+                    "trim" => Some(
+                        ctx.ast.expression_string_literal(call_expr.span, string_lit.value.trim()),
+                    ),
+                    _ => None,
+                },
                 "indexOf" | "lastIndexOf" => Self::try_fold_string_index_of(
                     call_expr.span,
                     call_expr,
@@ -131,12 +124,12 @@ impl PeepholeReplaceKnownMethods {
         };
 
         #[expect(clippy::cast_precision_loss)]
-        return Some(ctx.ast.expression_from_numeric_literal(ctx.ast.numeric_literal(
+        return Some(ctx.ast.expression_numeric_literal(
             span,
             result as f64,
             result.to_string(),
             NumberBase::Decimal,
-        )));
+        ));
     }
 
     fn try_fold_string_substring_or_slice<'a>(
@@ -181,8 +174,9 @@ impl PeepholeReplaceKnownMethods {
             }
         };
 
-        return Some(ctx.ast.expression_from_string_literal(
-            ctx.ast.string_literal(span, string_lit.value.as_str().substring(start_idx, end_idx)),
+        return Some(ctx.ast.expression_string_literal(
+            span,
+            string_lit.value.as_str().substring(start_idx, end_idx),
         ));
     }
 
@@ -216,7 +210,7 @@ impl PeepholeReplaceKnownMethods {
             .char_at(char_at_index)
             .map_or(String::new(), |v| v.to_string());
 
-        return Some(ctx.ast.expression_from_string_literal(ctx.ast.string_literal(span, result)));
+        return Some(ctx.ast.expression_string_literal(span, result));
     }
 
     fn try_fold_string_char_code_at<'a>(
@@ -240,12 +234,12 @@ impl PeepholeReplaceKnownMethods {
         let result = string_lit.value.as_str().char_code_at(char_at_index)?;
 
         #[expect(clippy::cast_lossless)]
-        Some(ctx.ast.expression_from_numeric_literal(ctx.ast.numeric_literal(
+        Some(ctx.ast.expression_numeric_literal(
             span,
             result as f64,
             result.to_string(),
             NumberBase::Decimal,
-        )))
+        ))
     }
     fn try_fold_string_replace_or_string_replace_all<'a>(
         span: Span,
@@ -287,7 +281,7 @@ impl PeepholeReplaceKnownMethods {
             _ => unreachable!(),
         };
 
-        Some(ctx.ast.expression_from_string_literal(ctx.ast.string_literal(span, result)))
+        Some(ctx.ast.expression_string_literal(span, result))
     }
 }
 

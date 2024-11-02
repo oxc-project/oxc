@@ -138,9 +138,7 @@ impl<'a> StatementFusion {
                     init.as_expression_mut().unwrap()
                 } else {
                     for_stmt.init =
-                        Some(ctx.ast.for_statement_init_expression(
-                            ctx.ast.expression_sequence(SPAN, exprs),
-                        ));
+                        Some(ForStatementInit::from(ctx.ast.expression_sequence(SPAN, exprs)));
                     return;
                 }
             }
