@@ -57,6 +57,9 @@ pub struct TransformOptions {
 
 impl TransformOptions {
     /// Explicitly enable all plugins that are ready, mainly for testing purposes.
+    ///
+    /// NOTE: for internal use only
+    #[doc(hidden)]
     pub fn enable_all() -> Self {
         Self {
             cwd: PathBuf::new(),
@@ -67,7 +70,7 @@ impl TransformOptions {
                 refresh: Some(ReactRefreshOptions::default()),
                 ..JsxOptions::default()
             },
-            env: EnvOptions::enable_all(),
+            env: EnvOptions::enable_all(/* include_unfinished_plugins */ false),
             helper_loader: HelperLoaderOptions {
                 mode: HelperLoaderMode::Runtime,
                 ..Default::default()

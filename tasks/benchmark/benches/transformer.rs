@@ -6,7 +6,7 @@ use oxc_parser::{Parser, ParserReturn};
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use oxc_tasks_common::TestFiles;
-use oxc_transformer::{TransformOptions, Transformer};
+use oxc_transformer::{EnvOptions, TransformOptions, Transformer};
 
 fn bench_transformer(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("transformer");
@@ -35,7 +35,10 @@ fn bench_transformer(criterion: &mut Criterion) {
                     .semantic
                     .into_symbol_table_and_scope_tree();
 
-                let options = TransformOptions::enable_all();
+                let mut options = TransformOptions::enable_all();
+                // Even the plugins are unfinished, we still want to enable all of them
+                // to track the performance changes during the development.
+                options.env = EnvOptions::enable_all(/* include_unfinished_plugins */ true);
 
                 runner.run(|| {
                     let ret = Transformer::new(&allocator, Path::new(&file.file_name), options)

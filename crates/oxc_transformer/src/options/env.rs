@@ -1,8 +1,14 @@
 use serde::Deserialize;
 
 use crate::{
-    es2015::ES2015Options, es2016::ES2016Options, es2017::ES2017Options, es2018::ES2018Options,
-    es2019::ES2019Options, es2020::ES2020Options, es2021::ES2021Options, es2022::ES2022Options,
+    es2015::{ArrowFunctionsOptions, ES2015Options},
+    es2016::ES2016Options,
+    es2017::ES2017Options,
+    es2018::{ES2018Options, ObjectRestSpreadOptions},
+    es2019::ES2019Options,
+    es2020::ES2020Options,
+    es2021::ES2021Options,
+    es2022::{ClassPropertiesOptions, ES2022Options},
     regexp::RegExpOptions,
 };
 
@@ -32,7 +38,10 @@ pub struct EnvOptions {
 
 impl EnvOptions {
     /// Explicitly enable all plugins that are ready, mainly for testing purposes.
-    pub fn enable_all() -> Self {
+    ///
+    /// NOTE: for internal use only
+    #[doc(hidden)]
+    pub fn enable_all(include_unfinished_plugins: bool) -> Self {
         Self {
             regexp: RegExpOptions {
                 sticky_flag: true,
@@ -46,23 +55,38 @@ impl EnvOptions {
             },
             es2015: ES2015Options {
                 // Turned off because it is not ready.
-                arrow_function: None,
+                arrow_function: if include_unfinished_plugins {
+                    Some(ArrowFunctionsOptions::default())
+                } else {
+                    None
+                },
             },
             es2016: ES2016Options { exponentiation_operator: true },
             es2017: ES2017Options {
                 // Turned off because it is not ready.
-                async_to_generator: false,
+                async_to_generator: include_unfinished_plugins,
             },
             es2018: ES2018Options {
                 // Turned off because it is not ready.
-                object_rest_spread: None,
+                object_rest_spread: if include_unfinished_plugins {
+                    Some(ObjectRestSpreadOptions::default())
+                } else {
+                    None
+                },
                 // Turned off because it is not ready.
-                async_generator_functions: false,
+                async_generator_functions: include_unfinished_plugins,
             },
             es2019: ES2019Options { optional_catch_binding: true },
             es2020: ES2020Options { nullish_coalescing_operator: true },
             es2021: ES2021Options { logical_assignment_operators: true },
-            es2022: ES2022Options { class_static_block: true, class_properties: None },
+            es2022: ES2022Options {
+                class_static_block: true,
+                class_properties: if include_unfinished_plugins {
+                    Some(ClassPropertiesOptions::default())
+                } else {
+                    None
+                },
+            },
         }
     }
 }
