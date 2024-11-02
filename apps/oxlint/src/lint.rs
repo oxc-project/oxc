@@ -126,12 +126,9 @@ impl Runner for LintRunner {
             Err(err) => match err {
                 LinterBuilderError::UnknownRules { rules } => {
                     let rules = rules.iter().map(|r| r.full_name()).collect::<Vec<_>>().join("\n");
-                    let error = Error::from(
-                        OxcDiagnostic::warn(format!(
+                    let error = Error::from(OxcDiagnostic::warn(format!(
                         "The following rules do not match the currently supported rules:\n{rules}"
-                    ))
-                        .with_help("Check that the plugin that contains this rule is enabled."),
-                    );
+                    )));
                     return CliRunResult::LintError { error: format!("{error:?}") };
                 }
             },
