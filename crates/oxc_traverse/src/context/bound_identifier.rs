@@ -1,5 +1,8 @@
 use oxc_ast::{
-    ast::{AssignmentTarget, BindingIdentifier, BindingPattern, Expression, IdentifierReference},
+    ast::{
+        AssignmentTarget, BindingIdentifier, BindingPattern, BindingPatternKind, Expression,
+        IdentifierReference,
+    },
     NONE,
 };
 use oxc_span::{Atom, Span, SPAN};
@@ -60,7 +63,7 @@ impl<'a> BoundIdentifier<'a> {
     /// Create `BindingPattern` for this binding
     pub fn create_binding_pattern(&self, ctx: &TraverseCtx<'a>) -> BindingPattern<'a> {
         let ident = self.create_binding_identifier(ctx);
-        let binding_pattern_kind = ctx.ast.binding_pattern_kind_from_binding_identifier(ident);
+        let binding_pattern_kind = BindingPatternKind::BindingIdentifier(ctx.alloc(ident));
         ctx.ast.binding_pattern(binding_pattern_kind, NONE, false)
     }
 
@@ -238,7 +241,7 @@ impl<'a> BoundIdentifier<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let ident = self.create_spanned_reference(span, flags, ctx);
-        ctx.ast.expression_from_identifier_reference(ident)
+        Expression::Identifier(ctx.alloc(ident))
     }
 
     /// Create `Expression::Identifier` referencing this binding, with specified `Span` and `ReferenceFlags`
@@ -249,6 +252,6 @@ impl<'a> BoundIdentifier<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> AssignmentTarget<'a> {
         let ident = self.create_spanned_reference(span, flags, ctx);
-        AssignmentTarget::from(ctx.ast.simple_assignment_target_from_identifier_reference(ident))
+        AssignmentTarget::AssignmentTargetIdentifier(ctx.alloc(ident))
     }
 }
