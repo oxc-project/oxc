@@ -51,6 +51,7 @@ pub mod ast;
 mod ast_builder_impl;
 mod ast_impl;
 mod ast_kind_impl;
+mod custom_ser;
 pub mod precedence;
 mod trivia;
 
