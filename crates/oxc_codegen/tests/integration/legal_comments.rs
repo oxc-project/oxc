@@ -8,6 +8,7 @@ fn cases() -> Vec<&'static str> {
         "/* @license */\n/* @preserve */\nfoo;bar;",
         "/* @license */\n//! KEEP\nfoo;bar;",
         "/* @license */\n/*! KEEP */\nfoo;bar;",
+        "/* @license *//*! KEEP */\nfoo;bar;",
     ]
 }
 

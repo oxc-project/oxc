@@ -190,9 +190,13 @@ impl<'a> Codegen<'a> {
         }
 
         for (i, comment) in comments.iter().enumerate() {
-            if i >= 1 && comment.preceded_by_newline {
-                self.print_hard_newline();
-                self.print_indent();
+            if i >= 1 {
+                if comment.preceded_by_newline {
+                    self.print_hard_newline();
+                    self.print_indent();
+                } else if comment.is_legal(self.source_text) {
+                    self.print_hard_newline();
+                }
             }
 
             self.print_comment(comment);

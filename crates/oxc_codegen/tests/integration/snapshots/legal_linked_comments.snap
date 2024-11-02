@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_codegen/tests/integration/main.rs
+snapshot_kind: text
 ---
 ########## 0
 /* @license */
@@ -28,6 +29,13 @@ bar;
 ########## 3
 /* @license */
 /*! KEEP */
+foo;bar;
+----------
+foo;
+bar;
+/*! For license information please see test.js */
+########## 4
+/* @license *//*! KEEP */
 foo;bar;
 ----------
 foo;
