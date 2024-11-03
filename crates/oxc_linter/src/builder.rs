@@ -3,6 +3,7 @@ use std::{
     fmt,
 };
 
+use oxc_diagnostics::{Error, OxcDiagnostic};
 use oxc_span::CompactStr;
 use rustc_hash::FxHashSet;
 
@@ -80,10 +81,7 @@ impl LinterBuilder {
     /// Will return a [`LinterBuilderError::UnknownRules`] if there are unknown rules in the
     /// config. This can happen if the plugin for a rule is not enabled, or the rule name doesn't
     /// match any recognized rules.
-    pub fn from_oxlintrc(
-        start_empty: bool,
-        oxlintrc: Oxlintrc,
-    ) -> Result<Self, LinterBuilderError> {
+    pub fn from_oxlintrc(start_empty: bool, oxlintrc: Oxlintrc) -> Self {
         // TODO: monorepo config merging, plugin-based extends, etc.
         let Oxlintrc { plugins, settings, env, globals, categories, rules: mut oxlintrc_rules } =
             oxlintrc;
@@ -104,13 +102,21 @@ impl LinterBuilder {
             oxlintrc_rules.override_rules(&mut builder.rules, all_rules.as_slice());
         }
 
+        #[expect(clippy::print_stderr)]
         if !oxlintrc_rules.unknown_rules.is_empty() {
-            return Err(LinterBuilderError::UnknownRules {
-                rules: std::mem::take(&mut oxlintrc_rules.unknown_rules),
-            });
+            let rules = oxlintrc_rules
+                .unknown_rules
+                .iter()
+                .map(|r| r.full_name())
+                .collect::<Vec<_>>()
+                .join("\n");
+            let error = Error::from(OxcDiagnostic::warn(format!(
+                "The following rules do not match the currently supported rules:\n{rules}"
+            )));
+            eprintln!("{error:?}");
         }
 
-        Ok(builder)
+        builder
     }
 
     #[inline]
@@ -311,7 +317,7 @@ impl TryFrom<Oxlintrc> for LinterBuilder {
 
     #[inline]
     fn try_from(oxlintrc: Oxlintrc) -> Result<Self, Self::Error> {
-        Self::from_oxlintrc(false, oxlintrc)
+        Ok(Self::from_oxlintrc(false, oxlintrc))
     }
 }
 
@@ -643,7 +649,7 @@ mod test {
         "#,
         )
         .unwrap();
-        let builder = LinterBuilder::from_oxlintrc(false, oxlintrc).unwrap();
+        let builder = LinterBuilder::from_oxlintrc(false, oxlintrc);
         for rule in &builder.rules {
             let name = rule.name();
             let plugin = rule.plugin_name();
