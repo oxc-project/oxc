@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
 use cow_utils::CowUtils;
+use oxc_diagnostics::Error;
 use serde::Deserialize;
 
 use crate::{
@@ -13,6 +14,7 @@ use crate::{
     es2021::ES2021Options,
     es2022::{ClassPropertiesOptions, ES2022Options},
     regexp::RegExpOptions,
+    Targets,
 };
 
 use super::babel::BabelEnvOptions;
@@ -130,6 +132,20 @@ impl EnvOptions {
                 },
             },
         }
+    }
+
+    /// # Errors
+    ///
+    /// * When the query failed to parse.
+    pub fn from_browerslist_query(query: &str) -> Result<Self, Error> {
+        Self::try_from(BabelEnvOptions {
+            targets: Targets::try_from_query(query)?,
+            // This option will be enabled by default in Babel 8.
+            // <https://babel.dev/docs/babel-preset-env#bugfixes>
+            bugfixes: true,
+            ..BabelEnvOptions::default()
+        })
+        .map_err(|err| Error::msg(err))
     }
 }
 

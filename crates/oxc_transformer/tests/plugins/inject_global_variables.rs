@@ -9,7 +9,7 @@ use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use oxc_transformer::{InjectGlobalVariables, InjectGlobalVariablesConfig, InjectImport};
 
-use crate::run;
+use crate::codegen;
 
 pub(crate) fn test(source_text: &str, expected: &str, config: InjectGlobalVariablesConfig) {
     let source_type = SourceType::default();
@@ -23,7 +23,7 @@ pub(crate) fn test(source_text: &str, expected: &str, config: InjectGlobalVariab
         .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
         .build(&program)
         .code;
-    let expected = run(expected, source_type);
+    let expected = codegen(expected, source_type);
     assert_eq!(result, expected, "for source {source_text}");
 }
 

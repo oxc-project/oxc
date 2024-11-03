@@ -39,7 +39,7 @@ impl Targets {
     /// # Errors
     ///
     /// * Query is invalid.
-    pub fn try_from_query(query: &str) -> Result<Self, oxc_diagnostics::Error> {
+    pub fn try_from_query(query: &str) -> Result<Self, Error> {
         Query::Single(query.to_string()).exec().map(|v| v.0).map(Self)
     }
 
