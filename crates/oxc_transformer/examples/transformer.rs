@@ -57,7 +57,7 @@ fn main() {
 
     let transform_options = if let Some(query) = &targets {
         TransformOptions {
-            env: EnvOptions::from_browerslist_query(query).unwrap(),
+            env: EnvOptions::from_browserslist_query(query).unwrap(),
             ..TransformOptions::default()
         }
     } else if let Some(target) = &target {

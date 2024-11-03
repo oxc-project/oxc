@@ -18,7 +18,7 @@ fn targets() {
     // Test no transformation for default targets.
     for case in cases {
         let options = TransformOptions {
-            env: EnvOptions::from_browerslist_query("defaults").unwrap(),
+            env: EnvOptions::from_browserslist_query("defaults").unwrap(),
             ..TransformOptions::default()
         };
         assert_eq!(codegen(case, SourceType::mjs()), test(case, options));
@@ -28,7 +28,7 @@ fn targets() {
     for case in cases {
         let options = TransformOptions::from(ESTarget::ES5);
         let options_node = TransformOptions {
-            env: EnvOptions::from_browerslist_query("node 0.10").unwrap(),
+            env: EnvOptions::from_browserslist_query("node 0.10").unwrap(),
             ..TransformOptions::default()
         };
         assert_eq!(test(case, options), test(case, options_node));

@@ -137,7 +137,7 @@ impl EnvOptions {
     /// # Errors
     ///
     /// * When the query failed to parse.
-    pub fn from_browerslist_query(query: &str) -> Result<Self, Error> {
+    pub fn from_browserslist_query(query: &str) -> Result<Self, Error> {
         Self::try_from(BabelEnvOptions {
             targets: Targets::try_from_query(query)?,
             // This option will be enabled by default in Babel 8.
