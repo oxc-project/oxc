@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.11.0] - 2024-11-03
+
+- 1f2a6c6 linter: [**BREAKING**] Report unmatched rules with error exit code (#7027) (camchenry)
+
+### Features
+
+- 2184588 linter: Do not bail for unmatched rules yet (#7093) (Boshen)
+
+### Bug Fixes
+
+- 38d1f78 linter: Remove confusing help text for now (#7081) (Cam McHenry)
+
+### Refactor
+
+- a8dc75d linter: Remove unused CLI result types (#7088) (camchenry)
+
 ## [0.10.3] - 2024-10-26
 
 ### Features
