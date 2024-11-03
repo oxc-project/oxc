@@ -44,6 +44,7 @@ export interface ImportSpecifier {
    * * If this import keyword is a dynamic import, this is the start value.
    * * If this import keyword is a static import, this is -1.
    * * If this import keyword is an import.meta expression, this is -2.
+   * * If this import is an `export *`, this is -3.
    */
   d: number
   /**

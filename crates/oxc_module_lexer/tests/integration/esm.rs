@@ -64,8 +64,21 @@ fn named_imports() {
     let source = "import { a, b, c } from 'foo'";
     let imports = &parse(source).imports;
     assert_eq!(imports.len(), 1);
-    // assert_eq!(source.slice(impt.ss, impt.se), r#"import(("asdf"))"#);
-    // assert_eq!(source.slice(impt.s, impt.e), r#"("asdf")"#);
+    let impt = &parse(source).imports[0];
+    assert_eq!(source.slice(impt.ss, impt.se), source);
+    assert_eq!(source.slice(impt.s, impt.e), "foo");
+}
+
+#[test]
+fn export_star_from() {
+    let source = "export * from 'foo'";
+    let imports = &parse(source).imports;
+    assert_eq!(imports.len(), 1);
+    let impt = &parse(source).imports[0];
+    assert_eq!(source.slice(impt.ss, impt.se), source);
+    assert_eq!(source.slice(impt.s, impt.e), "foo");
+    assert_eq!(impt.n.as_deref(), Some("foo"));
+    assert_eq!(impt.d, ImportType::ExportStar);
 }
 
 /* Suite Lexer */
