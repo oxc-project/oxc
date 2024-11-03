@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.11.0] - 2024-11-03
+
+### Features
+
+- 6b619da editor: Listen to config file changes and trigger a didChangeConfiguration update (#6964) (Nicholas Rayburn)
+- 7872927 editor/vscode: Support window/showMessage event (#7085) (Nicholas Rayburn)
+
+### Bug Fixes
+
+- ebf3753 editor: Fix onConfigChange to send the correct config for didChangeConfiguration notification (#6962) (Nicholas Rayburn)
+
 ## [0.10.1] - 2024-10-21
 
 ### Bug Fixes
