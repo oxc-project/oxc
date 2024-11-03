@@ -1,5 +1,5 @@
 ---
-source: crates/oxc_transformer/tests/es_target/mod.rs
+source: crates/oxc_transformer/tests/integrations/es_target.rs
 snapshot_kind: text
 ---
 ########## 0 es5
