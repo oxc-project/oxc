@@ -22,7 +22,7 @@
     "oxc"
   ],
   "engines": {
-    "vscode": "^1.90.0"
+    "vscode": "^1.95.0"
   },
   "sponsor": {
     "url": "https://github.com/sponsors/boshen"
