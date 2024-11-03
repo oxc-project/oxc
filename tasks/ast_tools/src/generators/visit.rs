@@ -149,7 +149,7 @@ impl<'a> VisitBuilder<'a> {
             .schema
             .defs
             .iter()
-            .filter(|it| it.visitable())
+            .filter(|it| it.is_visitable())
             .find(|it| it.name() == "Program")
             .expect("Couldn't find the `Program` type!");
 
@@ -179,7 +179,7 @@ impl<'a> VisitBuilder<'a> {
     fn get_visitor(&mut self, def: &TypeDef, collection: bool) -> Cow<'a, Ident> {
         let cache_ix = usize::from(collection);
         let (ident, as_type) = {
-            debug_assert!(def.visitable(), "{def:?}");
+            debug_assert!(def.is_visitable(), "{def:?}");
 
             let ident = def.ident();
             let as_type = def.to_type();
@@ -305,8 +305,8 @@ impl<'a> VisitBuilder<'a> {
                 let variant_name = &var.ident();
                 let type_id = typ.transparent_type_id()?;
                 let def = self.schema.get(type_id)?;
-                let visitable = def.visitable();
-                if visitable {
+                let is_visitable = def.is_visitable();
+                if is_visitable {
                     let visit = self.get_visitor(def, false);
                     let (args_def, args) = var
                         .markers
@@ -337,7 +337,7 @@ impl<'a> VisitBuilder<'a> {
             let super_ = &it.super_;
             let type_name = super_.name().as_name().unwrap().to_string();
             let def = super_.type_id().and_then(|id| self.schema.get(id))?;
-            if def.visitable() {
+            if def.is_visitable() {
                 let snake_name = type_name.to_case(Case::Snake);
                 let match_macro = format_ident!("match_{snake_name}");
                 let match_macro = quote!(#match_macro!(#ident));
@@ -429,7 +429,7 @@ impl<'a> VisitBuilder<'a> {
             .filter_map(|(ix, field)| {
                 let analysis = field.typ.analysis();
                 let def = field.typ.transparent_type_id().and_then(|id| self.schema.get(id))?;
-                if !def.visitable() {
+                if !def.is_visitable() {
                     return None;
                 }
                 let typ_wrapper = &analysis.wrapper;

@@ -85,7 +85,7 @@ impl Generator for AstKindGenerator {
             .defs
             .iter()
             .filter(|def| {
-                let is_visitable = def.visitable();
+                let is_visitable = def.is_visitable();
                 let is_blacklisted = BLACK_LIST.contains(&def.name());
                 is_visitable && !is_blacklisted
             })

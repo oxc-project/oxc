@@ -27,10 +27,10 @@ impl TypeDef {
         }
     }
 
-    pub fn visitable(&self) -> bool {
+    pub fn is_visitable(&self) -> bool {
         match self {
-            TypeDef::Struct(def) => def.visitable,
-            TypeDef::Enum(def) => def.visitable,
+            TypeDef::Struct(def) => def.is_visitable,
+            TypeDef::Enum(def) => def.is_visitable,
         }
     }
 
@@ -60,7 +60,7 @@ pub struct StructDef {
     pub id: TypeId,
     pub name: String,
     #[serde(skip)]
-    pub visitable: bool,
+    pub is_visitable: bool,
     pub fields: Vec<FieldDef>,
     #[serde(skip)]
     pub has_lifetime: bool,
@@ -83,7 +83,7 @@ pub struct StructDef {
 pub struct EnumDef {
     pub id: TypeId,
     pub name: String,
-    pub visitable: bool,
+    pub is_visitable: bool,
     pub variants: Vec<VariantDef>,
     /// For `@inherits` inherited enum variants
     pub inherits: Vec<InheritDef>,

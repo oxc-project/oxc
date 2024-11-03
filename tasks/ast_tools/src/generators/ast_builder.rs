@@ -26,7 +26,7 @@ impl Generator for AstBuilderGenerator {
         let fns = schema
             .defs
             .iter()
-            .filter(|it| it.visitable())
+            .filter(|it| it.is_visitable())
             .map(|it| generate_builder_fn(it, schema))
             .collect_vec();
 

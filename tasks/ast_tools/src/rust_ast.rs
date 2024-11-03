@@ -33,7 +33,7 @@ pub struct EnumMeta {
     pub inherits: Vec<Inherit>,
     pub layout_32: Layout,
     pub layout_64: Layout,
-    pub visitable: bool,
+    pub is_visitable: bool,
     pub ast: bool,
     pub module_path: String,
 }
@@ -44,7 +44,7 @@ impl EnumMeta {
             inherits: Vec::default(),
             layout_32: Layout::default(),
             layout_64: Layout::default(),
-            visitable: false,
+            is_visitable: false,
             ast: false,
             module_path,
         }
@@ -78,7 +78,7 @@ impl Enum {
 pub struct StructMeta {
     pub layout_32: Layout,
     pub layout_64: Layout,
-    pub visitable: bool,
+    pub is_visitable: bool,
     pub ast: bool,
     pub module_path: String,
 }
@@ -88,7 +88,7 @@ impl StructMeta {
         Self {
             layout_32: Layout::default(),
             layout_64: Layout::default(),
-            visitable: false,
+            is_visitable: false,
             ast: false,
             module_path,
         }
@@ -180,10 +180,10 @@ impl AstType {
     }
 
     #[expect(unused)]
-    pub fn visitable(&self) -> bool {
+    pub fn is_visitable(&self) -> bool {
         match self {
-            AstType::Enum(it) => it.meta.visitable,
-            AstType::Struct(it) => it.meta.visitable,
+            AstType::Enum(it) => it.meta.is_visitable,
+            AstType::Struct(it) => it.meta.is_visitable,
             AstType::Macro(_) => false,
         }
     }
@@ -192,11 +192,11 @@ impl AstType {
         match self {
             AstType::Enum(enum_) => {
                 debug_assert!(enum_.meta.ast, "only AST types can be visitable!");
-                enum_.meta.visitable = value;
+                enum_.meta.is_visitable = value;
             }
             AstType::Struct(struct_) => {
                 debug_assert!(struct_.meta.ast, "only AST types can be visitable!");
-                struct_.meta.visitable = value;
+                struct_.meta.is_visitable = value;
             }
             AstType::Macro(macro_) => return Err(unexpanded_macro_err(&macro_.item)),
         };
