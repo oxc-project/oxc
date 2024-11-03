@@ -2022,6 +2022,7 @@ dependencies = [
  "cow-utils",
  "dashmap 6.1.0",
  "indexmap",
+ "insta",
  "itoa",
  "oxc-browserslist",
  "oxc_allocator",

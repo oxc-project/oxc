@@ -1,26 +1,27 @@
 #![allow(clippy::print_stdout)]
-use std::{env, path::Path};
+use std::{path::Path, str::FromStr};
 
 use oxc_allocator::Allocator;
 use oxc_codegen::CodeGenerator;
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
-use oxc_transformer::{TransformOptions, Transformer};
+use oxc_transformer::{ESTarget, TransformOptions, Transformer};
 use pico_args::Arguments;
 
 // Instruction:
-// create a `test.tsx`,
-// run `cargo run -p oxc_transformer --example transformer`
-// or `just watch "run -p oxc_transformer --example transformer"`
+// create a `test.js`,
+// run `just example transformer` or `just watch-example transformer`
 
 fn main() {
     let mut args = Arguments::from_env();
-    let name = env::args().nth(1).unwrap_or_else(|| "test.js".to_string());
     let targets: Option<String> = args.opt_value_from_str("--targets").unwrap_or(None);
+    let target: Option<String> = args.opt_value_from_str("--target").unwrap_or(None);
+    let name = args.free_from_str().unwrap_or_else(|_| "test.js".to_string());
 
     let path = Path::new(&name);
-    let source_text = std::fs::read_to_string(path).expect("{name} not found");
+    let source_text =
+        std::fs::read_to_string(path).unwrap_or_else(|err| panic!("{name} not found.\n{err}"));
     let allocator = Allocator::default();
     let source_type = SourceType::from_path(path).unwrap();
 
@@ -62,6 +63,8 @@ fn main() {
         // ..BabelEnvOptions::default()
         // })
         // .unwrap()
+    } else if let Some(target) = &target {
+        TransformOptions::from(ESTarget::from_str(target).unwrap())
     } else {
         TransformOptions::enable_all()
     };

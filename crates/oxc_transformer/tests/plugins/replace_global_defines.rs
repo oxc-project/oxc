@@ -5,7 +5,7 @@ use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use oxc_transformer::{ReplaceGlobalDefines, ReplaceGlobalDefinesConfig};
 
-use super::run;
+use crate::run;
 
 pub(crate) fn test(source_text: &str, expected: &str, config: ReplaceGlobalDefinesConfig) {
     let source_type = SourceType::default();

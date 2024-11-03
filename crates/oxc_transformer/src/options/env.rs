@@ -1,3 +1,6 @@
+use std::str::FromStr;
+
+use cow_utils::CowUtils;
 use serde::Deserialize;
 
 use crate::{
@@ -13,6 +16,45 @@ use crate::{
 };
 
 use super::babel::BabelEnvOptions;
+
+#[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Ord, PartialOrd)]
+pub enum ESTarget {
+    ES5,
+    ES2015,
+    ES2016,
+    ES2017,
+    ES2018,
+    ES2019,
+    ES2020,
+    ES2021,
+    ES2022,
+    ES2023,
+    ES2024,
+    #[default]
+    ESNext,
+}
+
+impl FromStr for ESTarget {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.cow_to_lowercase().as_ref() {
+            "es5" => Ok(Self::ES5),
+            "es2015" => Ok(Self::ES2015),
+            "es2016" => Ok(Self::ES2016),
+            "es2017" => Ok(Self::ES2017),
+            "es2018" => Ok(Self::ES2018),
+            "es2019" => Ok(Self::ES2019),
+            "es2020" => Ok(Self::ES2020),
+            "es2021" => Ok(Self::ES2021),
+            "es2022" => Ok(Self::ES2022),
+            "es2023" => Ok(Self::ES2023),
+            "es2024" => Ok(Self::ES2024),
+            "esnext" => Ok(Self::ESNext),
+            _ => Err(format!("Invalid target \"{s}\".")),
+        }
+    }
+}
 
 #[derive(Debug, Default, Clone, Deserialize)]
 #[serde(try_from = "BabelEnvOptions")]
@@ -46,10 +88,10 @@ impl EnvOptions {
             regexp: RegExpOptions {
                 sticky_flag: true,
                 unicode_flag: true,
-                dot_all_flag: true,
-                look_behind_assertions: true,
-                named_capture_groups: true,
                 unicode_property_escapes: true,
+                dot_all_flag: true,
+                named_capture_groups: true,
+                look_behind_assertions: true,
                 match_indices: true,
                 set_notation: true,
             },
@@ -91,6 +133,40 @@ impl EnvOptions {
     }
 }
 
+impl From<ESTarget> for EnvOptions {
+    fn from(target: ESTarget) -> Self {
+        Self {
+            regexp: RegExpOptions {
+                sticky_flag: target < ESTarget::ES2015,
+                unicode_flag: target < ESTarget::ES2015,
+                unicode_property_escapes: target < ESTarget::ES2018,
+                dot_all_flag: target < ESTarget::ES2015,
+                named_capture_groups: target < ESTarget::ES2018,
+                look_behind_assertions: target < ESTarget::ES2018,
+                match_indices: target < ESTarget::ES2022,
+                set_notation: target < ESTarget::ES2024,
+            },
+            es2015: ES2015Options {
+                arrow_function: (target < ESTarget::ES2015).then(ArrowFunctionsOptions::default),
+            },
+            es2016: ES2016Options { exponentiation_operator: target < ESTarget::ES2016 },
+            es2017: ES2017Options { async_to_generator: target < ESTarget::ES2017 },
+            es2018: ES2018Options {
+                object_rest_spread: (target < ESTarget::ES2018)
+                    .then(ObjectRestSpreadOptions::default),
+                async_generator_functions: target < ESTarget::ES2018,
+            },
+            es2019: ES2019Options { optional_catch_binding: target < ESTarget::ES2019 },
+            es2020: ES2020Options { nullish_coalescing_operator: target < ESTarget::ES2020 },
+            es2021: ES2021Options { logical_assignment_operators: target < ESTarget::ES2021 },
+            es2022: ES2022Options {
+                class_static_block: target < ESTarget::ES2022,
+                class_properties: (target < ESTarget::ES2022).then(ClassPropertiesOptions::default),
+            },
+        }
+    }
+}
+
 impl TryFrom<BabelEnvOptions> for EnvOptions {
     type Error = String;
 
@@ -100,10 +176,10 @@ impl TryFrom<BabelEnvOptions> for EnvOptions {
             regexp: RegExpOptions {
                 sticky_flag: o.can_enable_plugin("transform-sticky-regex"),
                 unicode_flag: o.can_enable_plugin("transform-unicode-regex"),
-                dot_all_flag: o.can_enable_plugin("transform-dotall-regex"),
-                look_behind_assertions: o.can_enable_plugin("esbuild-regexp-lookbehind-assertions"),
-                named_capture_groups: o.can_enable_plugin("transform-named-capturing-groups-regex"),
                 unicode_property_escapes: o.can_enable_plugin("transform-unicode-property-regex"),
+                dot_all_flag: o.can_enable_plugin("transform-dotall-regex"),
+                named_capture_groups: o.can_enable_plugin("transform-named-capturing-groups-regex"),
+                look_behind_assertions: o.can_enable_plugin("esbuild-regexp-lookbehind-assertions"),
                 match_indices: o.can_enable_plugin("esbuild-regexp-match-indices"),
                 set_notation: o.can_enable_plugin("transform-unicode-sets-regex"),
             },

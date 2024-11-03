@@ -9,7 +9,7 @@ use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use oxc_transformer::{InjectGlobalVariables, InjectGlobalVariablesConfig, InjectImport};
 
-use super::run;
+use crate::run;
 
 pub(crate) fn test(source_text: &str, expected: &str, config: InjectGlobalVariablesConfig) {
     let source_type = SourceType::default();

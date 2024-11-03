@@ -5,8 +5,6 @@ use std::path::PathBuf;
 
 use oxc_diagnostics::Error;
 
-pub use env::EnvOptions;
-
 use crate::{
     common::helper_loader::{HelperLoaderMode, HelperLoaderOptions},
     compiler_assumptions::CompilerAssumptions,
@@ -23,6 +21,8 @@ use crate::{
     typescript::TypeScriptOptions,
     ReactRefreshOptions,
 };
+
+pub use env::{ESTarget, EnvOptions};
 
 use babel::BabelOptions;
 
@@ -76,6 +76,12 @@ impl TransformOptions {
                 ..Default::default()
             },
         }
+    }
+}
+
+impl From<ESTarget> for TransformOptions {
+    fn from(target: ESTarget) -> Self {
+        Self { env: EnvOptions::from(target), ..Self::default() }
     }
 }
 

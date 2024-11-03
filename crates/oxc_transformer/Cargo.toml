@@ -46,6 +46,7 @@ serde_json = { workspace = true }
 sha1 = { workspace = true }
 
 [dev-dependencies]
+insta = { workspace = true }
 oxc_codegen = { workspace = true }
 oxc_parser = { workspace = true }
 pico-args = { workspace = true }
