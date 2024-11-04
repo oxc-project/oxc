@@ -255,7 +255,7 @@ fn create_diagnostic_jsx(
                 .get_binding_identifier()
                 .expect("`binding identifier` should be set");
 
-            // search for references to the function and remove the argument
+            // search for references to the function and remove the property
             for reference in ctx
                 .semantic()
                 .symbol_references(property_id.symbol_id.get().expect("symbol should be set"))
