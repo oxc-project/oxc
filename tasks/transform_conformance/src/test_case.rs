@@ -11,7 +11,7 @@ use oxc::{
     diagnostics::{Error, NamedSource, OxcDiagnostic},
     parser::Parser,
     span::{SourceType, VALID_EXTENSIONS},
-    transformer::{BabelOptions, TransformOptions},
+    transformer::{BabelOptions, HelperLoaderMode, TransformOptions},
 };
 use oxc_tasks_common::{normalize_path, print_diff_in_terminal, project_root};
 
@@ -175,8 +175,9 @@ pub trait TestCase {
                 || self.options().plugins.typescript.is_some(),
         );
 
-        let driver =
-            Driver::new(false, transform_options.clone()).execute(&source_text, source_type, path);
+        let mut options = transform_options.clone();
+        options.helper_loader.mode = HelperLoaderMode::Runtime;
+        let driver = Driver::new(false, options).execute(&source_text, source_type, path);
         Ok(driver)
     }
 }

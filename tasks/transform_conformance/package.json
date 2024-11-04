@@ -1,0 +1,7 @@
+{
+  "name": "transform_conformance",
+  "private": true,
+  "devDependencies": {
+    "@babel/runtime": "^7.26.0"
+  }
+}

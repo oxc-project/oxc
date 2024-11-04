@@ -204,9 +204,25 @@ struct TestRunnerEnv;
 
 impl TestRunnerEnv {
     fn template(code: &str) -> String {
+        // Move all the import statements to top level.
+        let mut codes = vec![];
+        let mut imports = vec![];
+
+        for line in code.lines() {
+            if line.trim_start().starts_with("import ") {
+                imports.push(line);
+            } else {
+                codes.push(line);
+            }
+        }
+
+        let code = codes.join("\n");
+        let imports = imports.join("\n");
+
         format!(
             r#"
                 import {{expect, test}} from 'bun:test';
+                {imports}
                 test("exec", () => {{
                     {code}
                 }})

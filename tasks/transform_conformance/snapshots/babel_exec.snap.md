@@ -1,12 +1,14 @@
 commit: d20b314c
 
-Passed: 45/99
+Passed: 83/99
 
 # All Passed:
 * babel-plugin-transform-class-static-block
 * babel-plugin-transform-logical-assignment-operators
 * babel-plugin-transform-nullish-coalescing-operator
 * babel-plugin-transform-optional-catch-binding
+* babel-plugin-transform-async-generator-functions
+* babel-plugin-transform-async-to-generator
 * babel-plugin-transform-exponentiation-operator
 
 
@@ -24,87 +26,7 @@ exec failed
 exec failed
 
 
-# babel-plugin-transform-async-generator-functions (0/26)
-* async-generators/declaration-exec/exec.js
-exec failed
-
-* async-generators/yield-exec/exec.js
-exec failed
-
-* for-await/async-generator-exec/exec.js
-exec failed
-
-* for-await/create-async-from-sync-iterator/exec.js
-exec failed
-
-* for-await/lhs-member-expression/exec.js
-exec failed
-
-* for-await/re-declare-var-in-init-body/exec.js
-exec failed
-
-* for-await/step-single-tick/exec.js
-exec failed
-
-* for-await/step-value-is-promise/exec.js
-exec failed
-
-* for-await/step-value-not-accessed-when-done/exec.js
-exec failed
-
-* regression/test262-fn-length/exec.js
-exec failed
-
-* yield-star/create-async-from-sync-iterator/exec.js
-exec failed
-
-* yield-star/ecma262-pr-2819/exec.js
-exec failed
-
-* yield-star/issue-9905/exec.js
-exec failed
-
-* yield-star/return-method/exec.js
-exec failed
-
-* yield-star/return-method-with-finally/exec.js
-exec failed
-
-* yield-star/return-method-with-finally-multiple-parallel/exec.js
-exec failed
-
-* yield-star/return-method-with-finally-multiple-serial/exec.js
-exec failed
-
-* yield-star/throw-method-with-catch/exec.js
-exec failed
-
-* yield-star/throw-method-with-finally/exec.js
-exec failed
-
-* yield-star-polyfill-corejs3/issue-9905/exec.js
-exec failed
-
-* yield-star-polyfill-corejs3/return-method/exec.js
-exec failed
-
-* yield-star-polyfill-corejs3/return-method-with-finally/exec.js
-exec failed
-
-* yield-star-polyfill-corejs3/return-method-with-finally-multiple-parallel/exec.js
-exec failed
-
-* yield-star-polyfill-corejs3/return-method-with-finally-multiple-serial/exec.js
-exec failed
-
-* yield-star-polyfill-corejs3/throw-method-with-catch/exec.js
-exec failed
-
-* yield-star-polyfill-corejs3/throw-method-with-finally/exec.js
-exec failed
-
-
-# babel-plugin-transform-object-rest-spread (15/31)
+# babel-plugin-transform-object-rest-spread (22/31)
 * assumption-objectRestNoSymbols/rest-ignore-symbols/exec.js
 exec failed
 
@@ -114,19 +36,7 @@ exec failed
 * assumption-pureGetters/spread-single-call/exec.js
 exec failed
 
-* assumption-setSpreadProperties/expression/exec.js
-exec failed
-
-* assumption-setSpreadProperties/no-getOwnPropertyDescriptors/exec.js
-exec failed
-
 * assumption-setSpreadProperties/no-object-assign-exec/exec.js
-exec failed
-
-* assumption-setSpreadProperties-with-useBuiltIns/expression/exec.js
-exec failed
-
-* assumption-setSpreadProperties-with-useBuiltIns/no-getOwnPropertyDescriptors/exec.js
 exec failed
 
 * assumption-setSpreadProperties-with-useBuiltIns/no-object-assign-exec/exec.js
@@ -138,36 +48,10 @@ exec failed
 * object-spread/expression/exec.js
 exec failed
 
-* object-spread/no-getOwnPropertyDescriptors/exec.js
-exec failed
-
-* object-spread/no-object-assign-exec/exec.js
-exec failed
-
-* object-spread/side-effect/exec.js
-exec failed
-
 * object-spread-loose/side-effect/exec.js
 exec failed
 
 * object-spread-loose-builtins/side-effect/exec.js
-exec failed
-
-
-# babel-plugin-transform-async-to-generator (1/6)
-* regression/15978/exec.js
-exec failed
-
-* regression/8783/exec.js
-exec failed
-
-* regression/T6882/exec.js
-exec failed
-
-* regression/fn-name/exec.js
-exec failed
-
-* regression/test262-fn-length/exec.js
 exec failed
 
 
