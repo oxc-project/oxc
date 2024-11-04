@@ -1,7 +1,6 @@
 use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
-use oxc_ecmascript::PropName;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -15,6 +14,15 @@ type Extends<'a> =
     Vec<'a, (Expression<'a>, Option<Box<'a, TSTypeParameterInstantiation<'a>>>, Span)>;
 
 type Implements<'a> = Vec<'a, TSClassImplements<'a>>;
+
+fn prop_name<'a>(key: &'a PropertyKey<'a>) -> Option<(&'a str, Span)> {
+    match key {
+        PropertyKey::StaticIdentifier(ident) => Some((&ident.name, ident.span)),
+        PropertyKey::Identifier(ident) => Some((&ident.name, ident.span)),
+        PropertyKey::StringLiteral(lit) => Some((&lit.value, lit.span)),
+        _ => None,
+    }
+}
 
 /// Section 15.7 Class Definitions
 impl<'a> ParserImpl<'a> {
@@ -309,6 +317,24 @@ impl<'a> ParserImpl<'a> {
             )
             .map(Some)
         } else if self.at(Kind::LParen) || self.at(Kind::LAngle) || r#async || generator {
+            if !computed {
+                if let Some((name, span)) = prop_name(&key) {
+                    if r#static && name == "prototype" && !self.ctx.has_ambient() {
+                        self.error(diagnostics::static_prototype(span));
+                    }
+                    if !r#static && name == "constructor" {
+                        if kind == MethodDefinitionKind::Get || kind == MethodDefinitionKind::Set {
+                            self.error(diagnostics::constructor_getter_setter(span));
+                        }
+                        if r#async {
+                            self.error(diagnostics::constructor_async(span));
+                        }
+                        if generator {
+                            self.error(diagnostics::constructor_generator(span));
+                        }
+                    }
+                }
+            }
             // LAngle for start of type parameters `foo<T>`
             //                                         ^
             let definition = self.parse_class_method_definition(
@@ -324,27 +350,21 @@ impl<'a> ParserImpl<'a> {
                 accessibility,
                 optional,
             )?;
-            if let Some((name, span)) = definition.prop_name() {
-                if r#static && name == "prototype" && !self.ctx.has_ambient() {
-                    self.error(diagnostics::static_prototype(span));
-                }
-                if !r#static && name == "constructor" {
-                    if kind == MethodDefinitionKind::Get || kind == MethodDefinitionKind::Set {
-                        self.error(diagnostics::constructor_getter_setter(span));
-                    }
-                    if r#async {
-                        self.error(diagnostics::constructor_async(span));
-                    }
-                    if generator {
-                        self.error(diagnostics::constructor_generator(span));
-                    }
-                }
-            }
             Ok(Some(definition))
         } else {
             // getter and setter has no ts type annotation
             if !kind.is_method() {
                 return Err(self.unexpected());
+            }
+            if !computed {
+                if let Some((name, span)) = prop_name(&key) {
+                    if name == "constructor" {
+                        self.error(diagnostics::field_constructor(span));
+                    }
+                    if r#static && name == "prototype" && !self.ctx.has_ambient() {
+                        self.error(diagnostics::static_prototype(span));
+                    }
+                }
             }
             let definition = self.parse_class_property_definition(
                 span,
@@ -359,14 +379,6 @@ impl<'a> ParserImpl<'a> {
                 optional,
                 definite,
             )?;
-            if let Some((name, span)) = definition.prop_name() {
-                if name == "constructor" {
-                    self.error(diagnostics::field_constructor(span));
-                }
-                if r#static && name == "prototype" && !self.ctx.has_ambient() {
-                    self.error(diagnostics::static_prototype(span));
-                }
-            }
             Ok(Some(definition))
         }
     }
@@ -398,7 +410,7 @@ impl<'a> ParserImpl<'a> {
     ) -> Result<ClassElement<'a>> {
         let kind = if !r#static
             && !computed
-            && key.prop_name().map_or(false, |(name, _)| name == "constructor")
+            && prop_name(&key).map_or(false, |(name, _)| name == "constructor")
         {
             MethodDefinitionKind::Constructor
         } else {
