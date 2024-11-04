@@ -363,23 +363,21 @@ fn is_property_only_used_in_recursion_jsx(
         return false;
     }
 
-    // let has_spread_attribute = references.any(|reference| {
-    // })
-
     let function_symbol_id = function_ident.symbol_id.get().expect("`symbol_id` should be set");
 
     for reference in references {
-        // 1. Reference is inside JSXExpressionContainer
-        // 2. JSXElement is calling recursive function itself
-        // 3. reference is in JSXAttribute and attribute name has same name
+        // Conditions:
+        // 1. The reference is inside a JSXExpressionContainer.
+        // 2. The JSXElement calls the recursive function itself.
+        // 3. The reference is in a JSXAttribute, and the attribute name has the same name as the function.
         let Some(may_jsx_expr_container) = ctx.nodes().parent_node(reference.node_id()) else {
             return false;
         };
         let AstKind::JSXExpressionContainer(_) = may_jsx_expr_container.kind() else {
-            // In this case, we symply ignore the references inside JSXExpressionContainer are not single-node expression.
+            // In this case, we simply ignore the references inside JSXExpressionContainer that are not single-node expression.
             //   e.g. <Increment count={count+1} />
             //
-            // To support that case, we need to check whether expression contains side-effect like ++val
+            // To support this case, we need to check whether expression contains side-effect like ++val
             return false;
         };
 
