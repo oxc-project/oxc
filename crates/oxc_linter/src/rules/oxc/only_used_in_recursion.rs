@@ -250,10 +250,11 @@ fn create_diagnostic_jsx(
                     .unwrap_or(property.span.end);
 
             fix.push(Fix::delete(Span::new(span_start, span_end)));
-            let Some(property_id) = get_binding_identifier(property) else {
-                // never happen
-                return fix;
-            };
+
+            let property_id = property
+                .value
+                .get_binding_identifier()
+                .expect("`binding identifier` should be set");
 
             // search for references to the function and remove the argument
             for reference in ctx
