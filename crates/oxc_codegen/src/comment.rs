@@ -162,34 +162,21 @@ impl<'a> Codegen<'a> {
         }
     }
 
-    pub(crate) fn try_print_eof_legal_comments(&mut self) {
-        match self.options.legal_comments.clone() {
-            LegalComment::Eof => {
-                let comments = self.legal_comments.drain(..).collect::<Vec<_>>();
-                for c in comments {
-                    self.print_comment(&c);
-                    self.print_hard_newline();
+    fn print_comments(&mut self, start: u32, comments: &[Comment], unused_comments: Vec<Comment>) {
+        for (i, comment) in comments.iter().enumerate() {
+            if i == 0 && comment.preceded_by_newline {
+                // Skip printing newline if this comment is already on a newline.
+                if let Some(b) = self.last_byte() {
+                    match b {
+                        b'\n' => self.print_indent(),
+                        b'\t' => { /* noop */ }
+                        _ => {
+                            self.print_hard_newline();
+                            self.print_indent();
+                        }
+                    }
                 }
             }
-            LegalComment::Linked(path) => {
-                self.print_str("/*! For license information please see ");
-                self.print_str(&path);
-                self.print_str(" */");
-            }
-            _ => {}
-        }
-    }
-
-    fn print_comments(&mut self, start: u32, comments: &[Comment], unused_comments: Vec<Comment>) {
-        if comments.first().is_some_and(|c| c.preceded_by_newline) {
-            // Skip printing newline if this comment is already on a newline.
-            if self.last_byte().is_some_and(|b| b != b'\n' && b != b'\t') {
-                self.print_hard_newline();
-                self.print_indent();
-            }
-        }
-
-        for (i, comment) in comments.iter().enumerate() {
             if i >= 1 {
                 if comment.preceded_by_newline {
                     self.print_hard_newline();
@@ -198,13 +185,10 @@ impl<'a> Codegen<'a> {
                     self.print_hard_newline();
                 }
             }
-
             self.print_comment(comment);
-        }
-
-        if comments.last().is_some_and(|c| c.is_line() || c.followed_by_newline) {
-            self.print_hard_newline();
-            self.print_indent();
+            if i == comments.len() - 1 && (comment.is_line() || comment.followed_by_newline) {
+                self.print_hard_newline();
+            }
         }
 
         if !unused_comments.is_empty() {
@@ -231,6 +215,24 @@ impl<'a> Codegen<'a> {
                     }
                 }
             }
+        }
+    }
+
+    pub(crate) fn try_print_eof_legal_comments(&mut self) {
+        match self.options.legal_comments.clone() {
+            LegalComment::Eof => {
+                let comments = self.legal_comments.drain(..).collect::<Vec<_>>();
+                for c in comments {
+                    self.print_comment(&c);
+                    self.print_hard_newline();
+                }
+            }
+            LegalComment::Linked(path) => {
+                self.print_str("/*! For license information please see ");
+                self.print_str(&path);
+                self.print_str(" */");
+            }
+            _ => {}
         }
     }
 }

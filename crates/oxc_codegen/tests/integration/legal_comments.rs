@@ -9,6 +9,13 @@ fn cases() -> Vec<&'static str> {
         "/* @license */\n//! KEEP\nfoo;bar;",
         "/* @license */\n/*! KEEP */\nfoo;bar;",
         "/* @license *//*! KEEP */\nfoo;bar;",
+        "function () {
+    /*
+    * @license
+    * Copyright notice 2
+    */
+    bar;
+}",
     ]
 }
 

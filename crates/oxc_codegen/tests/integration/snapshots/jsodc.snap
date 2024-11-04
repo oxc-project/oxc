@@ -163,8 +163,8 @@ exports.button = function() {};
 /** Unbutton the shirt. */
 exports.unbutton = function() {};
 this.Book = function(title) {
-/** The title of the book. */
-		this.title = title;
+	/** The title of the book. */
+	this.title = title;
 };
 export enum DefinitionKind {
 	/**
