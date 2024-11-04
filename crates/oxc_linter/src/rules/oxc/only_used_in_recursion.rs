@@ -608,6 +608,15 @@ fn test() {
                 return <Test1 />;
             }
         ",
+        // allowed case: The parameter 'depth' is used outside of the recursive call.
+        // it is logged and reassigned, so the linter does not flag it as only used in recursion.
+        "
+            function Listitem({ depth }) {
+                 console.log(depth);
+                 depth = depth + 1;
+                 return <Listitem depth={depth}/>;
+             }
+        ",
         "
             function Listitem({ depth }) {
                 console.log(depth);
