@@ -333,7 +333,6 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.exit_method_definition(def, ctx);
         }
-        self.x2_es2018.exit_method_definition(def, ctx);
     }
 
     fn enter_new_expression(&mut self, expr: &mut NewExpression<'a>, ctx: &mut TraverseCtx<'a>) {
