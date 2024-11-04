@@ -32,7 +32,10 @@ fn es_target() {
         w
     });
 
-    insta::with_settings!({ prepend_module_to_snapshot => false, snapshot_suffix => "", omit_expression => true }, {
-        insta::assert_snapshot!("es_target", snapshot);
-    });
+    #[cfg(not(miri))]
+    {
+        insta::with_settings!({ prepend_module_to_snapshot => false, snapshot_suffix => "", omit_expression => true }, {
+            insta::assert_snapshot!("es_target", snapshot);
+        });
+    }
 }
