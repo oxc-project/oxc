@@ -227,10 +227,9 @@ fn create_diagnostic_jsx(
     let has_spread_attribute = references.any(|x| used_with_spread_attribute(x.node_id(), ctx));
 
     if has_spread_attribute {
-        return ctx.diagnostic(only_used_in_recursion_diagnostic(
-            property.span(),
-            get_property_name(property).unwrap(),
-        ));
+        // If the JSXElement has a spread attribute, we cannot apply a fix safely,
+        // as the same property name could be exist within the spread attribute.
+        return ctx.diagnostic(only_used_in_recursion_diagnostic(property.span(), property_name));
     }
 
     let Some(property_name) = property.key.static_name() else {
