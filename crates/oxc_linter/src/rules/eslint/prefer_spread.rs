@@ -1,16 +1,25 @@
 use cow_utils::CowUtils;
 use oxc_ast::{
-    ast::{match_member_expression, Expression},
+    ast::{match_member_expression, CallExpression, ChainElement, Expression, MemberExpression},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{cmp::ContentEq, GetSpan, Span};
 use phf::phf_set;
 
-use crate::{ast_util, context::LintContext, rule::Rule, AstNode};
+use crate::{
+    ast_util::{self, is_method_call},
+    context::LintContext,
+    rule::Rule,
+    AstNode,
+};
 
-fn prefer_spread_diagnostic(span: Span, bad_method: &str) -> OxcDiagnostic {
+fn eslint_prefer_spread_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Require spread operators instead of .apply()").with_label(span)
+}
+
+fn unicorn_prefer_spread_diagnostic(span: Span, bad_method: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Prefer the spread operator (`...`) over {bad_method}"))
         .with_help("The spread operator (`...`) is more concise and readable.")
         .with_label(span)
@@ -20,6 +29,57 @@ fn prefer_spread_diagnostic(span: Span, bad_method: &str) -> OxcDiagnostic {
 pub struct PreferSpread;
 
 declare_oxc_lint!(
+    /// This rule is combined 2 rules from `eslint:prefer-spread` and `unicorn:prefer-spread`.
+    ///
+    /// ## original eslint:prefer-spread
+    ///
+    /// ### What it does
+    ///
+    /// Require spread operators instead of .apply()
+    ///
+    /// ### Why is this bad?
+    ///
+    /// Before ES2015, one must use Function.prototype.apply() to call variadic functions.
+    /// ```javascript
+    /// var args = [1, 2, 3, 4];
+    /// Math.max.apply(Math, args);
+    /// ```
+    ///
+    /// In ES2015, one can use spread syntax to call variadic functions.
+    /// ```javascript
+    /// var args = [1, 2, 3, 4];
+    /// Math.max(...args);
+    /// ```
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// foo.apply(undefined, args);
+    /// foo.apply(null, args);
+    /// obj.foo.apply(obj, args);
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// // Using spread syntax
+    /// foo(...args);
+    /// obj.foo(...args);
+    ///
+    /// // The `this` binding is different.
+    /// foo.apply(obj, args);
+    /// obj.foo.apply(null, args);
+    /// obj.foo.apply(otherObj, args);
+    ///
+    /// // The argument list is not variadic.
+    /// // Those are warned by the `no-useless-call` rule.
+    /// foo.apply(undefined, [1, 2, 3]);
+    /// foo.apply(null, [1, 2, 3]);
+    /// obj.foo.apply(obj, [1, 2, 3]);
+    /// ```
+    ///
+    /// ## unicorn:prefer-spread
+    ///
     /// ### What it does
     ///
     /// Enforces the use of [the spread operator (`...`)](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax) over outdated patterns.
@@ -52,129 +112,199 @@ impl Rule for PreferSpread {
             return;
         };
 
-        let Some(member_expr) = call_expr.callee.without_parentheses().as_member_expression()
-        else {
+        check_eslint_prefer_spread(call_expr, ctx);
+        check_unicorn_prefer_spread(call_expr, ctx);
+    }
+}
+
+fn check_eslint_prefer_spread(call_expr: &CallExpression, ctx: &LintContext) {
+    if !is_method_call(call_expr, None, Some(&["apply"]), Some(2), Some(2)) {
+        return;
+    }
+
+    let callee = call_expr.callee.without_parentheses();
+    let callee = match callee {
+        match_member_expression!(Expression) => callee.to_member_expression(),
+        Expression::ChainExpression(chain) => match chain.expression {
+            match_member_expression!(ChainElement) => chain.expression.to_member_expression(),
+            ChainElement::CallExpression(_) => return,
+        },
+        _ => return,
+    };
+
+    let args = &call_expr.arguments;
+    let Some(args0) = args[0].as_expression() else {
+        return;
+    };
+
+    if args[1].is_spread() {
+        return;
+    }
+    if let Some(Expression::ArrayExpression(_)) = args[1].as_expression() {
+        return;
+    }
+
+    let applied = callee.object().without_parentheses();
+
+    if args0.is_null_or_undefined() {
+        if !matches!(applied, Expression::Identifier(_)) {
             return;
-        };
-
-        let Some(static_property_name) = member_expr.static_property_name() else {
-            return;
-        };
-
-        match static_property_name {
-            // `Array.from()`
-            "from" => {
-                if call_expr.arguments.len() != 1 || member_expr.is_computed() {
-                    return;
-                }
-
-                let Some(expr) = call_expr.arguments[0].as_expression() else {
-                    return;
-                };
-                if matches!(expr.without_parentheses(), Expression::ObjectExpression(_)) {
-                    return;
-                }
-
-                let Expression::Identifier(ident) = member_expr.object().without_parentheses()
-                else {
-                    return;
-                };
-
-                if ident.name != "Array" {
-                    return;
-                }
-
-                ctx.diagnostic(prefer_spread_diagnostic(call_expr.span, "Array.from()"));
-            }
-            // `array.concat()`
-            "concat" => {
-                if is_not_array(member_expr.object().without_parentheses(), ctx) {
-                    return;
-                }
-
-                ctx.diagnostic(prefer_spread_diagnostic(call_expr.span, "array.concat()"));
-            }
-            // `array.slice()`
-            "slice" => {
-                if call_expr.arguments.len() > 1 {
-                    return;
-                }
-
-                let member_expr_obj = member_expr.object().without_parentheses();
-
-                if matches!(
-                    member_expr_obj,
-                    Expression::ArrayExpression(_) | Expression::ThisExpression(_)
-                ) {
-                    return;
-                }
-
-                if let Expression::Identifier(ident) = member_expr_obj {
-                    if IGNORED_SLICE_CALLEE.contains(ident.name.as_str()) {
-                        return;
-                    }
-                }
-
-                if let Some(first_arg) = call_expr.arguments.first() {
-                    let Some(first_arg) = first_arg.as_expression() else {
-                        return;
-                    };
-                    if let Expression::NumericLiteral(num_lit) = first_arg.without_parentheses() {
-                        if num_lit.value != 0.0 {
-                            return;
-                        }
-                    } else {
-                        return;
-                    }
-                }
-
-                ctx.diagnostic(prefer_spread_diagnostic(call_expr.span, "array.slice()"));
-            }
-            // `array.toSpliced()`
-            "toSpliced" => {
-                if call_expr.arguments.len() != 0 {
-                    return;
-                }
-
-                if matches!(
-                    member_expr.object().without_parentheses(),
-                    Expression::ArrayExpression(_)
-                ) {
-                    return;
-                }
-
-                ctx.diagnostic(prefer_spread_diagnostic(call_expr.span, "array.toSpliced()"));
-            }
-            // `string.split()`
-            "split" => {
-                if call_expr.arguments.len() != 1 {
-                    return;
-                }
-
-                let Some(expr) = call_expr.arguments[0].as_expression() else {
-                    return;
-                };
-                let Expression::StringLiteral(string_lit) = expr.without_parentheses() else {
-                    return;
-                };
-
-                if string_lit.value != "" {
-                    return;
-                }
-
-                ctx.diagnostic_with_fix(
-                    prefer_spread_diagnostic(call_expr.span, "string.split()"),
-                    |fixer| {
-                        let callee_obj = member_expr.object().without_parentheses();
-                        fixer.replace(
-                            call_expr.span,
-                            format!("[...{}]", callee_obj.span().source_text(ctx.source_text())),
-                        )
-                    },
-                );
-            }
-            _ => {}
         }
+    } else if let Some(applied) = as_member_expression_without_chain_expression(applied) {
+        let applied_object = applied.object().without_parentheses();
+
+        if let Some(args0) = as_member_expression_without_chain_expression(args0) {
+            let Some(applied_object) =
+                as_member_expression_without_chain_expression(applied_object)
+            else {
+                return;
+            };
+
+            if applied_object.content_ne(args0) {
+                return;
+            }
+        } else if applied_object.content_ne(args0) {
+            return;
+        }
+    } else {
+        return;
+    }
+
+    ctx.diagnostic(eslint_prefer_spread_diagnostic(call_expr.span));
+}
+
+fn as_member_expression_without_chain_expression<'a>(
+    expr: &'a Expression,
+) -> Option<&'a MemberExpression<'a>> {
+    match expr {
+        Expression::ChainExpression(chain_expr) => match chain_expr.expression {
+            match_member_expression!(ChainElement) => chain_expr.expression.as_member_expression(),
+            ChainElement::CallExpression(_) => None,
+        },
+        match_member_expression!(Expression) => expr.as_member_expression(),
+        _ => None,
+    }
+}
+
+fn check_unicorn_prefer_spread(call_expr: &CallExpression, ctx: &LintContext) {
+    let Some(member_expr) = call_expr.callee.without_parentheses().as_member_expression() else {
+        return;
+    };
+
+    let Some(static_property_name) = member_expr.static_property_name() else {
+        return;
+    };
+
+    match static_property_name {
+        // `Array.from()`
+        "from" => {
+            if call_expr.arguments.len() != 1 || member_expr.is_computed() {
+                return;
+            }
+
+            let Some(expr) = call_expr.arguments[0].as_expression() else {
+                return;
+            };
+            if matches!(expr.without_parentheses(), Expression::ObjectExpression(_)) {
+                return;
+            }
+
+            let Expression::Identifier(ident) = member_expr.object().without_parentheses() else {
+                return;
+            };
+
+            if ident.name != "Array" {
+                return;
+            }
+
+            ctx.diagnostic(unicorn_prefer_spread_diagnostic(call_expr.span, "Array.from()"));
+        }
+        // `array.concat()`
+        "concat" => {
+            if is_not_array(member_expr.object().without_parentheses(), ctx) {
+                return;
+            }
+
+            ctx.diagnostic(unicorn_prefer_spread_diagnostic(call_expr.span, "array.concat()"));
+        }
+        // `array.slice()`
+        "slice" => {
+            if call_expr.arguments.len() > 1 {
+                return;
+            }
+
+            let member_expr_obj = member_expr.object().without_parentheses();
+
+            if matches!(
+                member_expr_obj,
+                Expression::ArrayExpression(_) | Expression::ThisExpression(_)
+            ) {
+                return;
+            }
+
+            if let Expression::Identifier(ident) = member_expr_obj {
+                if IGNORED_SLICE_CALLEE.contains(ident.name.as_str()) {
+                    return;
+                }
+            }
+
+            if let Some(first_arg) = call_expr.arguments.first() {
+                let Some(first_arg) = first_arg.as_expression() else {
+                    return;
+                };
+                if let Expression::NumericLiteral(num_lit) = first_arg.without_parentheses() {
+                    if num_lit.value != 0.0 {
+                        return;
+                    }
+                } else {
+                    return;
+                }
+            }
+
+            ctx.diagnostic(unicorn_prefer_spread_diagnostic(call_expr.span, "array.slice()"));
+        }
+        // `array.toSpliced()`
+        "toSpliced" => {
+            if call_expr.arguments.len() != 0 {
+                return;
+            }
+
+            if matches!(member_expr.object().without_parentheses(), Expression::ArrayExpression(_))
+            {
+                return;
+            }
+
+            ctx.diagnostic(unicorn_prefer_spread_diagnostic(call_expr.span, "array.toSpliced()"));
+        }
+        // `string.split()`
+        "split" => {
+            if call_expr.arguments.len() != 1 {
+                return;
+            }
+
+            let Some(expr) = call_expr.arguments[0].as_expression() else {
+                return;
+            };
+            let Expression::StringLiteral(string_lit) = expr.without_parentheses() else {
+                return;
+            };
+
+            if string_lit.value != "" {
+                return;
+            }
+
+            ctx.diagnostic_with_fix(
+                unicorn_prefer_spread_diagnostic(call_expr.span, "string.split()"),
+                |fixer| {
+                    let callee_obj = member_expr.object().without_parentheses();
+                    fixer.replace(
+                        call_expr.span,
+                        format!("[...{}]", callee_obj.span().source_text(ctx.source_text())),
+                    )
+                },
+            );
+        }
+        _ => {}
     }
 }
 
@@ -246,6 +376,23 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        /* Test cases for original eslint:prefer-spread */
+        "foo.apply(obj, args);",
+        "obj.foo.apply(null, args);",
+        "obj.foo.apply(otherObj, args);",
+        "a.b(x, y).c.foo.apply(a.b(x, z).c, args);",
+        "a.b.foo.apply(a.b.c, args);",
+        "foo.apply(undefined, [1, 2]);",
+        "foo.apply(null, [1, 2]);",
+        "obj.foo.apply(obj, [1, 2]);",
+        "var apply; foo[apply](null, args);",
+        "foo.apply();",
+        "obj.foo.apply();",
+        "obj.foo.apply(obj, ...args)",
+        "(a?.b).c.foo.apply(a?.b.c, args);",
+        "a?.b.c.foo.apply((a?.b).c, args);",
+        "class C { #apply; foo() { foo.#apply(undefined, args); } }",
+        /* Test cases for unicorn:prefer-spread */
         r"[...set].map(() => {});",
         r"Int8Array.from(set);",
         r"Uint8Array.from(set);",
@@ -349,6 +496,28 @@ fn test() {
     ];
 
     let fail = vec![
+        /* Test cases for original eslint:prefer-spread */
+        "foo.apply(undefined, args);",
+        "foo.apply(void 0, args);",
+        "foo.apply(null, args);",
+        "obj.foo.apply(obj, args);",
+        "a.b.c.foo.apply(a.b.c, args);",
+        "a.b(x, y).c.foo.apply(a.b(x, y).c, args);",
+        "[].concat.apply([ ], args);",
+        "[].concat.apply([
+			/*empty*/
+			], args);",
+        "foo.apply?.(undefined, args);",
+        "foo?.apply(undefined, args);",
+        "foo?.apply?.(undefined, args);",
+        "(foo?.apply)(undefined, args);",
+        "(foo?.apply)?.(undefined, args);",
+        "(obj?.foo).apply(obj, args);",
+        "a?.b.c.foo.apply(a?.b.c, args);",
+        "(a?.b.c).foo.apply(a?.b.c, args);",
+        "(a?.b).c.foo.apply((a?.b).c, args);",
+        "class C { #foo; foo() { obj.#foo.apply(obj, args); } }",
+        /* Test cases for unicorn:prefer-spread */
         r"const x = Array.from(set);",
         r"Array.from(set).map(() => {});",
         r"Array.from(new Set([1, 2])).map(() => {});",
@@ -457,6 +626,7 @@ fn test() {
     ];
 
     let expect_fix = vec![
+        /* Test cases for unicorn:prefer-spread */
         // `Array.from()`
         // `array.slice()`
         // `array.toSpliced()`
