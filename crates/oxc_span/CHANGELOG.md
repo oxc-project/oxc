@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.35.0] - 2024-11-04
+
+### Features
+
+- 9725e3c ast_tools: Add #[estree(always_flatten)] to Span (#6935) (ottomated)
+- 169fa22 ast_tools: Default enums to rename_all = "camelCase" (#6933) (ottomated)
+
 ## [0.34.0] - 2024-10-26
 
 ### Features

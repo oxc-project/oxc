@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.35.0] - 2024-11-04
+
+### Bug Fixes
+
+- caaf00e parser: Fix incorrect parsed `TSIndexSignature` (#7016) (Boshen)
+
+### Performance
+
+- fa9a4ec parser: Check `.` before `[` in `parse_member_expression_rest` (#6979) (Boshen)
+
+### Refactor
+
+- 953b051 parser: Remove `oxc_ecmascript` crate (#7109) (Boshen)
+- fdd480d parser: Do not use `AstBuilder::*_from_*` methods (#7068) (overlookmotel)
+- 9e85b10 parser: Add `ParserImpl::alloc` method (#7063) (overlookmotel)
+- 17a938e parser: Use function `parse_type_member_semicolon` (#7018) (Boshen)
+- aa1b29c parser: Remove `parse_ts_index_signature_member` function (#7017) (Boshen)
+
 ## [0.34.0] - 2024-10-26
 
 ### Refactor
