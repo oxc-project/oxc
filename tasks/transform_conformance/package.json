@@ -1,6 +1,10 @@
 {
   "name": "transform_conformance",
+  "version": "0.0.0",
   "private": true,
+  "scripts": {
+    "vitest": "vitest"
+  },
   "devDependencies": {
     "@babel/runtime": "^7.26.0"
   }

@@ -68,7 +68,11 @@ importers:
 
   npm/oxc-types: {}
 
-  npm/oxc-wasm: {}
+  npm/oxc-wasm:
+    dependencies:
+      '@oxc-project/types':
+        specifier: workspace:^
+        version: link:../oxc-types
 
   npm/oxlint: {}
 
