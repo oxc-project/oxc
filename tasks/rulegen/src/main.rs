@@ -23,6 +23,7 @@ use ureq::Response;
 
 mod json;
 mod template;
+mod util;
 
 const ESLINT_TEST_PATH: &str =
     "https://raw.githubusercontent.com/eslint/eslint/main/tests/lib/rules";
@@ -175,34 +176,12 @@ fn format_code_snippet(code: &str) -> String {
     format!("r#\"{}\"#", code.replace("\\\"", "\""))
 }
 
-fn dedent(s: &str) -> String {
-    let lines: Vec<&str> = s.lines().collect();
-    if lines.is_empty() {
-        return String::new();
-    }
-    // find the min whitespace count
-    let min_indent = lines
-        .iter()
-        .filter(|line| !line.trim().is_empty())
-        .map(|line| line.chars().take_while(|c| c.is_whitespace()).count())
-        .min()
-        .unwrap_or_default();
-
-    lines
-        .iter()
-        .map(|line| if line.len() >= min_indent { &line[min_indent..] } else { line })
-        .collect::<Vec<&str>>()
-        .join("\n")
-}
-
 // TODO: handle `noFormat`(in typescript-eslint)
-fn format_tagged_template_expression(
-    tag_expr: &oxc_allocator::Box<TaggedTemplateExpression>,
-) -> Option<String> {
+fn format_tagged_template_expression(tag_expr: &TaggedTemplateExpression) -> Option<String> {
     if tag_expr.tag.is_specific_member_access("String", "raw") {
         tag_expr.quasi.quasis.first().map(|quasi| format!("r#\"{}\"#", quasi.value.raw))
     } else if tag_expr.tag.is_specific_id("dedent") || tag_expr.tag.is_specific_id("outdent") {
-        tag_expr.quasi.quasis.first().map(|quasi| dedent(&quasi.value.raw).to_string())
+        tag_expr.quasi.quasis.first().map(|quasi| util::dedent(&quasi.value.raw).to_string())
     } else {
         tag_expr.quasi.quasi().map(|quasi| quasi.to_string())
     }
@@ -337,14 +316,7 @@ impl<'a> Visit<'a> for TestCase {
     }
 
     fn visit_tagged_template_expression(&mut self, expr: &TaggedTemplateExpression<'a>) {
-        self.code = if expr.tag.is_specific_member_access("String", "raw") {
-            expr.quasi.quasis.first().map(|quasi| format!("r#\"{}\"#", quasi.value.raw))
-        } else if expr.tag.is_specific_id("dedent") || expr.tag.is_specific_id("outdent") {
-            expr.quasi.quasis.first().map(|quasi| dedent(&quasi.value.raw).to_string())
-        } else {
-            expr.quasi.quasi().map(|quasi| quasi.to_string())
-        };
-
+        self.code = format_tagged_template_expression(expr);
         self.config = None;
     }
 }
