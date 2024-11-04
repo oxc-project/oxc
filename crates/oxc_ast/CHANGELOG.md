@@ -4,6 +4,39 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.35.0] - 2024-11-04
+
+- f543a8d ast: [**BREAKING**] Remove `AstBuilder::*_from_*` methods (#7073) (overlookmotel)
+
+### Features
+
+- 854870e ast: Label AST fields with #[ts] (#6987) (ottomated)
+- ce5b609 ast: Remove explicit untagged marker on enums (#6915) (ottomated)
+- 9725e3c ast_tools: Add #[estree(always_flatten)] to Span (#6935) (ottomated)
+- fbc297e ast_tools: Move tsify custom types to estree attribute macro (#6934) (ottomated)
+- 169fa22 ast_tools: Default enums to rename_all = "camelCase" (#6933) (ottomated)
+- 6516f9e codegen: Print inline legal comments (#7054) (Boshen)
+- 1e2f012 linter: Add `oxc/no-map-spread` (#6751) (DonIsaac)
+
+### Bug Fixes
+
+- 0601271 ast: Fix `StaticMemberExpression.get_first_object` (#6969) (tomoya yanagibashi)
+- f5a7134 linter/no-unused-vars: False positive for discarded reads within sequences (#6907) (DonIsaac)
+- caaf00e parser: Fix incorrect parsed `TSIndexSignature` (#7016) (Boshen)
+
+### Performance
+
+- 6ca01b9 ast: Reduce size of `Comment` (#6921) (overlookmotel)
+
+### Refactor
+
+- b0211a1 ast: `StaticMemberExpression::get_first_object` use loop instead of recursion (#7065) (overlookmotel)
+- fc07458 ast: Move custom types `.d.ts` file (#6931) (overlookmotel)
+- c41c013 ast: Rename lifetime (#6922) (overlookmotel)
+- 4cf0085 ast_tools: Reorder imports in generated code (#6926) (overlookmotel)
+- 4688a06 transformer: Use `*_with_scope_id` builder methods where possible (#7055) (overlookmotel)
+- df3b089 transformer/react-refresh: Use `StatementInjector` to insert statements (#6881) (Dunqing)
+
 ## [0.34.0] - 2024-10-26
 
 ### Features
