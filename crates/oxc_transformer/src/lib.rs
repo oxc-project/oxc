@@ -94,6 +94,7 @@ impl<'a> Transformer<'a> {
         jsx::update_options_with_comments(&program.comments, &mut self.options, &self.ctx);
 
         let mut transformer = TransformerImpl {
+            common: Common::new(&self.options, &self.ctx),
             x0_typescript: program
                 .source_type
                 .is_typescript()
@@ -106,9 +107,8 @@ impl<'a> Transformer<'a> {
             x2_es2018: ES2018::new(self.options.env.es2018, &self.ctx),
             x2_es2016: ES2016::new(self.options.env.es2016, &self.ctx),
             x2_es2017: ES2017::new(self.options.env.es2017, &self.ctx),
-            x3_es2015: ES2015::new(self.options.env.es2015),
+            x3_es2015: ES2015::new(self.options.env.es2015, &self.ctx),
             x4_regexp: RegExp::new(self.options.env.regexp, &self.ctx),
-            common: Common::new(&self.ctx),
         };
 
         let (symbols, scopes) = traverse_mut(&mut transformer, allocator, program, symbols, scopes);
@@ -127,7 +127,8 @@ struct TransformerImpl<'a, 'ctx> {
     x2_es2018: ES2018<'a, 'ctx>,
     x2_es2017: ES2017<'a, 'ctx>,
     x2_es2016: ES2016<'a, 'ctx>,
-    x3_es2015: ES2015<'a>,
+    #[expect(unused)]
+    x3_es2015: ES2015<'a, 'ctx>,
     x4_regexp: RegExp<'a, 'ctx>,
     common: Common<'a, 'ctx>,
 }
@@ -145,7 +146,6 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.exit_program(program, ctx);
         }
-        self.x3_es2015.exit_program(program, ctx);
         self.common.exit_program(program, ctx);
     }
 
@@ -198,11 +198,11 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
     }
 
     fn enter_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.x3_es2015.enter_static_block(block, ctx);
+        self.common.enter_static_block(block, ctx);
     }
 
     fn exit_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.x3_es2015.exit_static_block(block, ctx);
+        self.common.exit_static_block(block, ctx);
     }
 
     fn enter_ts_module_declaration(
@@ -224,15 +224,15 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         self.x2_es2020.enter_expression(expr, ctx);
         self.x2_es2018.enter_expression(expr, ctx);
         self.x2_es2016.enter_expression(expr, ctx);
-        self.x3_es2015.enter_expression(expr, ctx);
         self.x4_regexp.enter_expression(expr, ctx);
+        self.common.enter_expression(expr, ctx);
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x1_jsx.exit_expression(expr, ctx);
         self.x2_es2018.exit_expression(expr, ctx);
         self.x2_es2017.exit_expression(expr, ctx);
-        self.x3_es2015.exit_expression(expr, ctx);
+        self.common.exit_expression(expr, ctx);
     }
 
     fn enter_simple_assignment_target(
@@ -267,7 +267,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
 
     fn enter_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x2_es2018.enter_function(func, ctx);
-        self.x3_es2015.enter_function(func, ctx);
+        self.common.enter_function(func, ctx);
     }
 
     fn exit_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -277,7 +277,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         self.x1_jsx.exit_function(func, ctx);
         self.x2_es2018.exit_function(func, ctx);
         self.x2_es2017.exit_function(func, ctx);
-        self.x3_es2015.exit_function(func, ctx);
+        self.common.exit_function(func, ctx);
     }
 
     fn enter_jsx_element(&mut self, node: &mut JSXElement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -287,7 +287,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
     }
 
     fn enter_jsx_element_name(&mut self, node: &mut JSXElementName<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.x3_es2015.enter_jsx_element_name(node, ctx);
+        self.common.enter_jsx_element_name(node, ctx);
     }
 
     fn enter_jsx_member_expression_object(
@@ -295,7 +295,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         node: &mut JSXMemberExpressionObject<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        self.x3_es2015.enter_jsx_member_expression_object(node, ctx);
+        self.common.enter_jsx_member_expression_object(node, ctx);
     }
 
     fn enter_jsx_fragment(&mut self, node: &mut JSXFragment<'a>, ctx: &mut TraverseCtx<'a>) {
