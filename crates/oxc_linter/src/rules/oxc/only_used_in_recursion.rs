@@ -263,19 +263,11 @@ fn create_diagnostic_jsx(
             {
                 let mut ancestors = ctx.nodes().ancestors(reference.node_id());
 
-                let Some((node_id, attr)) =
+                let Some(attr) =
                     ancestors.find_map(|node| match ctx.nodes().get_node(node).kind() {
-                        AstKind::JSXAttributeItem(attr) => Some((node, attr)),
+                        AstKind::JSXAttributeItem(attr) => Some(attr),
                         _ => None,
                     })
-                else {
-                    continue;
-                };
-
-                // if JSXElement has spread attribute, we cannot operate fix safely.
-                // because
-                let Some(AstKind::JSXOpeningElement(opening_elem)) =
-                    ctx.nodes().parent_kind(node_id)
                 else {
                     continue;
                 };
