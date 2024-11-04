@@ -177,6 +177,11 @@ fn test() {
         (r#"<Foo href="javascript:"></Foo>"#, None, None),
         ("<a href />", None, None),
         (
+            r#"<Foo other="javascript:"></Foo>"#,
+            Some(serde_json::json!([        [{ "name": "Foo", "props": ["to", "href"] }],      ])),
+            None,
+        ),
+        (
             r#"<Foo href="javascript:"></Foo>"#,
             None,
             Some(
