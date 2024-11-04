@@ -130,14 +130,9 @@ impl<'a, 'ctx> Traverse<'a> for AsyncToGenerator<'a, 'ctx> {
         }
     }
 
-    fn exit_method_definition(
-        &mut self,
-        node: &mut MethodDefinition<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        let function = &mut node.value;
-        if function.r#async && !function.generator && !function.is_typescript_syntax() {
-            self.executor.transform_function_for_method_definition(function, ctx);
+    fn exit_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
+        if func.r#async && ctx.parent().is_method_definition() {
+            self.executor.transform_function_for_method_definition(func, ctx);
         }
     }
 }

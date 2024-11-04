@@ -1672,7 +1672,15 @@ x Output mismatch
 x Output mismatch
 
 * regression/regression-2765/input.js
-x Output mismatch
+Bindings mismatch:
+after transform: ScopeId(10): []
+rebuilt        : ScopeId(6): ["_this2"]
+Bindings mismatch:
+after transform: ScopeId(4): ["_this2", "c"]
+rebuilt        : ScopeId(7): ["c"]
+Symbol scope ID mismatch for "_this2":
+after transform: SymbolId(8): ScopeId(4)
+rebuilt        : SymbolId(6): ScopeId(6)
 
 
 # babel-plugin-transform-exponentiation-operator (3/4)
