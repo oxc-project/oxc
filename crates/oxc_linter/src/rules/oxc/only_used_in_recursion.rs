@@ -298,7 +298,10 @@ fn used_with_spread_attribute(node_id: NodeId, ctx: &LintContext) -> bool {
         })
         .expect("should be safe");
 
-    opening_element.attributes.iter().any(|attr| matches!(attr, JSXAttributeItem::SpreadAttribute(_)))
+    opening_element
+        .attributes
+        .iter()
+        .any(|attr| matches!(attr, JSXAttributeItem::SpreadAttribute(_)))
 }
 
 fn is_argument_only_used_in_recursion<'a>(
