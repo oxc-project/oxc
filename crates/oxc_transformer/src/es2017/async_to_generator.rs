@@ -131,7 +131,7 @@ impl<'a, 'ctx> Traverse<'a> for AsyncToGenerator<'a, 'ctx> {
     }
 
     fn exit_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
-        if func.r#async && ctx.parent().is_method_definition() {
+        if func.r#async && matches!(ctx.parent(), Ancestor::MethodDefinitionValue(_)) {
             self.executor.transform_function_for_method_definition(func, ctx);
         }
     }
