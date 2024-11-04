@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_codegen/tests/integration/main.rs
+snapshot_kind: text
 ---
 ########## 0
 /* @license */
@@ -65,4 +66,12 @@ function() {
 	* Copyright notice 2
 	*/
 	bar;
+}
+
+########## 6
+function bar() { var foo; /*! #__NO_SIDE_EFFECTS__ */ function () { } }
+----------
+function bar() {
+	var foo;
+	/*! #__NO_SIDE_EFFECTS__ */ function() {}
 }
