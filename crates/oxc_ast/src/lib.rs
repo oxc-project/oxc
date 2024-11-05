@@ -67,6 +67,7 @@ mod generated {
     pub mod derive_estree;
     pub mod derive_get_span;
     pub mod derive_get_span_mut;
+    pub mod get_id;
     pub mod visit;
     pub mod visit_mut;
 }

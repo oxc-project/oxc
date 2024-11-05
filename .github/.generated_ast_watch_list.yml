@@ -30,6 +30,7 @@ src:
   - 'crates/oxc_ast/src/generated/assert_layouts.rs'
   - 'crates/oxc_ast/src/generated/ast_kind.rs'
   - 'crates/oxc_ast/src/generated/ast_builder.rs'
+  - 'crates/oxc_ast/src/generated/get_id.rs'
   - 'crates/oxc_ast/src/generated/visit.rs'
   - 'crates/oxc_ast/src/generated/visit_mut.rs'
   - 'npm/oxc-types/types.d.ts'

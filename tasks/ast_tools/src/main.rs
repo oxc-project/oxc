@@ -22,8 +22,8 @@ use derives::{
     DeriveGetSpanMut,
 };
 use generators::{
-    AssertLayouts, AstBuilderGenerator, AstKindGenerator, Generator, TypescriptGenerator,
-    VisitGenerator, VisitMutGenerator,
+    AssertLayouts, AstBuilderGenerator, AstKindGenerator, Generator, GetIdGenerator,
+    TypescriptGenerator, VisitGenerator, VisitMutGenerator,
 };
 use logger::{log, log_failed, log_result, log_success};
 use output::{Output, RawOutput};
@@ -84,6 +84,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         .generate(AssertLayouts)
         .generate(AstKindGenerator)
         .generate(AstBuilderGenerator)
+        .generate(GetIdGenerator)
         .generate(VisitGenerator)
         .generate(VisitMutGenerator)
         .generate(TypescriptGenerator)

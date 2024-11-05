@@ -4,9 +4,7 @@ use std::{borrow::Cow, fmt};
 
 use oxc_allocator::{Address, Box, FromIn, GetAddress, Vec};
 use oxc_span::{Atom, GetSpan, Span};
-use oxc_syntax::{
-    operator::UnaryOperator, reference::ReferenceId, scope::ScopeFlags, symbol::SymbolId,
-};
+use oxc_syntax::{operator::UnaryOperator, scope::ScopeFlags, symbol::SymbolId};
 
 use crate::ast::*;
 
@@ -290,19 +288,6 @@ impl<'a> fmt::Display for IdentifierName<'a> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.name.fmt(f)
-    }
-}
-
-impl<'a> IdentifierReference<'a> {
-    /// Get `ReferenceId` of `IdentifierReference`.
-    ///
-    /// Only use this method on a post-semantic AST where `ReferenceId`s are always defined.
-    ///
-    /// # Panics
-    /// Panics if `reference_id` is `None`.
-    #[inline]
-    pub fn reference_id(&self) -> ReferenceId {
-        self.reference_id.get().unwrap()
     }
 }
 
