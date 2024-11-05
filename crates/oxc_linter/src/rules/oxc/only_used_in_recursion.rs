@@ -1,8 +1,7 @@
 use oxc_ast::{
     ast::{
         BindingIdentifier, BindingPatternKind, BindingProperty, CallExpression, Expression,
-        FormalParameters, IdentifierReference, JSXAttributeItem, JSXElementName,
-        JSXMemberExpression, JSXMemberExpressionObject, PropertyKey,
+        FormalParameters, JSXAttributeItem, JSXElementName,
     },
     AstKind,
 };
