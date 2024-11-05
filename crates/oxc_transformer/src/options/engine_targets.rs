@@ -3,7 +3,7 @@ use serde::Deserialize;
 
 use oxc_diagnostics::Error;
 
-use super::babel::{BabelTargets, Query};
+use super::{babel::BabelTargets, BrowserslistQuery};
 
 /// A map of engine names to minimum supported versions.
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize)]
@@ -27,7 +27,7 @@ impl EngineTargets {
     ///
     /// * Query is invalid.
     pub fn try_from_query(query: &str) -> Result<Self, Error> {
-        Query::Single(query.to_string()).exec()
+        BrowserslistQuery::Single(query.to_string()).exec()
     }
 
     /// Returns true if all fields are [None].

@@ -5,8 +5,7 @@ use oxc_diagnostics::Error;
 
 pub use browserslist::Version;
 
-use super::query::Query;
-use crate::options::EngineTargets;
+use crate::options::{BrowserslistQuery, EngineTargets};
 
 /// <https://babel.dev/docs/babel-preset-env#targets>
 #[derive(Debug, Deserialize)]
@@ -37,8 +36,8 @@ impl TryFrom<BabelTargets> for EngineTargets {
     type Error = Error;
     fn try_from(value: BabelTargets) -> Result<Self, Self::Error> {
         match value {
-            BabelTargets::String(s) => Query::Single(s).exec(),
-            BabelTargets::Array(v) => Query::Multiple(v).exec(),
+            BabelTargets::String(s) => BrowserslistQuery::Single(s).exec(),
+            BabelTargets::Array(v) => BrowserslistQuery::Multiple(v).exec(),
             BabelTargets::Map(map) => {
                 let mut targets = Self::default();
                 for (key, value) in map {

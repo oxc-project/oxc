@@ -9,17 +9,17 @@ use super::EngineTargets;
 
 #[derive(Debug, Clone, Deserialize, Eq, PartialEq, PartialOrd, Ord, Hash)]
 #[serde(untagged)]
-pub enum Query {
+pub enum BrowserslistQuery {
     Single(String),
     Multiple(Vec<String>),
 }
 
-fn cache() -> &'static DashMap<Query, EngineTargets> {
-    static CACHE: OnceLock<DashMap<Query, EngineTargets>> = OnceLock::new();
+fn cache() -> &'static DashMap<BrowserslistQuery, EngineTargets> {
+    static CACHE: OnceLock<DashMap<BrowserslistQuery, EngineTargets>> = OnceLock::new();
     CACHE.get_or_init(DashMap::new)
 }
 
-impl Query {
+impl BrowserslistQuery {
     pub fn exec(&self) -> Result<EngineTargets, Error> {
         if let Some(v) = cache().get(self) {
             return Ok(v.clone());
@@ -32,14 +32,14 @@ impl Query {
         };
 
         let result = match self {
-            Query::Single(ref s) => {
+            BrowserslistQuery::Single(ref s) => {
                 if s.is_empty() {
                     browserslist::resolve(&["defaults"], &options)
                 } else {
                     browserslist::resolve(&[s], &options)
                 }
             }
-            Query::Multiple(ref s) => browserslist::resolve(s, &options),
+            BrowserslistQuery::Multiple(ref s) => browserslist::resolve(s, &options),
         };
 
         let result = match result {
@@ -63,11 +63,11 @@ impl Query {
 
 #[cfg(test)]
 mod tests {
-    use super::Query;
+    use super::BrowserslistQuery;
 
     #[test]
     fn test_empty() {
-        let res = Query::Single(String::new()).exec().unwrap();
+        let res = BrowserslistQuery::Single(String::new()).exec().unwrap();
         assert!(!res.is_any_target(), "empty query should return non-empty result");
     }
 }

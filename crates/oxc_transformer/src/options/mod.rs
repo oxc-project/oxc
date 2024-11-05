@@ -1,4 +1,6 @@
 pub mod babel;
+
+mod browserslist_query;
 mod engine_targets;
 mod env;
 
@@ -24,6 +26,7 @@ use crate::{
 };
 
 pub use self::{
+    browserslist_query::BrowserslistQuery,
     engine_targets::EngineTargets,
     env::{ESTarget, EnvOptions},
 };

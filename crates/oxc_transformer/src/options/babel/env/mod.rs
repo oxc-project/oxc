@@ -1,12 +1,10 @@
 mod data;
-mod query;
 mod targets;
 
 use serde::Deserialize;
 
 pub use self::{
     data::{bugfix_features, features},
-    query::Query,
     targets::BabelTargets,
 };
 
