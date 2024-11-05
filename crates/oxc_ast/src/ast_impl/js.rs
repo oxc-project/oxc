@@ -294,10 +294,15 @@ impl<'a> fmt::Display for IdentifierName<'a> {
 }
 
 impl<'a> IdentifierReference<'a> {
+    /// Get `ReferenceId` of `IdentifierReference`.
+    ///
+    /// Only use this method on a post-semantic AST where `ReferenceId`s are always defined.
+    ///
+    /// # Panics
+    /// Panics if `reference_id` is `None`.
     #[inline]
-    #[allow(missing_docs)]
-    pub fn reference_id(&self) -> Option<ReferenceId> {
-        self.reference_id.get()
+    pub fn reference_id(&self) -> ReferenceId {
+        self.reference_id.get().unwrap()
     }
 }
 

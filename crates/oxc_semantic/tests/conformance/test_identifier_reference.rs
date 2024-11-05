@@ -63,7 +63,7 @@ impl ConformanceTest for IdentifierReferenceTest {
         let AstKind::IdentifierReference(id) = node.kind() else {
             return TestResult::Pass;
         };
-        let Some(reference_id) = id.reference_id() else {
+        let Some(reference_id) = id.reference_id.get() else {
             return missing_reference_id(id);
         };
 

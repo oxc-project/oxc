@@ -154,7 +154,7 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
         let mut temp_var_inits = ctx.ast.vec();
 
         // Make sure side-effects of evaluating `left` only happen once
-        let reference = ctx.scoping.symbols_mut().get_reference_mut(ident.reference_id().unwrap());
+        let reference = ctx.scoping.symbols_mut().get_reference_mut(ident.reference_id());
         let pow_left =
             if let Some(symbol_id) = reference.symbol_id() {
                 // This variable is declared in scope so evaluating it multiple times can't trigger a getter.
@@ -492,8 +492,7 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
         match obj {
             Expression::Super(super_) => return ctx.ast.expression_super(super_.span),
             Expression::Identifier(ident) => {
-                let symbol_id =
-                    ctx.symbols().get_reference(ident.reference_id().unwrap()).symbol_id();
+                let symbol_id = ctx.symbols().get_reference(ident.reference_id()).symbol_id();
                 if let Some(symbol_id) = symbol_id {
                     // This variable is declared in scope so evaluating it multiple times can't trigger a getter.
                     // No need for a temp var.

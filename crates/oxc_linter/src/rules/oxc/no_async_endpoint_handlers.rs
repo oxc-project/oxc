@@ -211,9 +211,8 @@ impl NoAsyncEndpointHandlers {
         match arg {
             Expression::Identifier(handler) => {
                 // Unresolved reference? Nothing we can do.
-                let Some(symbol_id) = handler
-                    .reference_id()
-                    .and_then(|id| ctx.symbols().get_reference(id).symbol_id())
+                let Some(symbol_id) =
+                    ctx.symbols().get_reference(handler.reference_id()).symbol_id()
                 else {
                     return;
                 };

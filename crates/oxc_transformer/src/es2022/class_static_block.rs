@@ -213,7 +213,7 @@ struct ReferenceFlagsSetter<'s> {
 
 impl<'a, 's> Visit<'a> for ReferenceFlagsSetter<'s> {
     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
-        let reference_id = ident.reference_id().unwrap();
+        let reference_id = ident.reference_id();
         let reference = self.symbols.get_reference_mut(reference_id);
         *reference.flags_mut() |= ReferenceFlags::Read;
     }
