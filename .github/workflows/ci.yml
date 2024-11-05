@@ -142,7 +142,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@v1
-      - uses: crate-ci/typos@v1.26.8
+      - uses: crate-ci/typos@v1.27.0
         with:
           files: .
 
@@ -178,10 +178,10 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: clippy
           components: clippy
-          tools: ast-grep
       - run: cargo lint -- -D warnings
       - name: Check Char and Byte Offset
         run: |
+          npm i @ast-grep/cli -g
           output=$(sg -p '$A.chars().enumerate()' -r '$A.char_indices()' -l rs)
           echo "Output: $output"
           if [ -n "$output" ]; then

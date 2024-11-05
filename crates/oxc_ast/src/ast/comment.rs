@@ -125,4 +125,19 @@ impl Comment {
     pub fn is_jsdoc(&self, source_text: &str) -> bool {
         self.is_leading() && self.is_block() && self.span.source_text(source_text).starts_with('*')
     }
+
+    /// Legal comments
+    ///
+    /// A "legal comment" is considered to be any statement-level comment
+    /// that contains `@license` or `@preserve` or that starts with `//!` or `/*!`.
+    /// <https://esbuild.github.io/api/#legal-comments>
+    pub fn is_legal(&self, source_text: &str) -> bool {
+        if !self.is_leading() {
+            return false;
+        }
+        let source_text = self.span.source_text(source_text);
+        source_text.starts_with('!')
+            || source_text.contains("@license")
+            || source_text.contains("@preserve")
+    }
 }

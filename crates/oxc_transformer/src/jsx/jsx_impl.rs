@@ -363,7 +363,7 @@ impl<'a> Pragma<'a> {
         if let Some(property) = self.property.as_ref() {
             create_static_member_expression(object, property.clone(), ctx)
         } else {
-            ctx.ast.expression_from_identifier_reference(object)
+            Expression::Identifier(ctx.alloc(object))
         }
     }
 }
@@ -722,7 +722,7 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
                 ctx.ast.expression_string_literal(ident.span, ident.name.clone())
             }
             JSXElementName::IdentifierReference(ident) => {
-                ctx.ast.expression_from_identifier_reference(ident.as_ref().clone())
+                Expression::Identifier(ctx.alloc(ident.as_ref().clone()))
             }
             JSXElementName::MemberExpression(member_expr) => {
                 Self::transform_jsx_member_expression(member_expr, ctx)
@@ -747,7 +747,7 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
             }
             Bindings::AutomaticModule(bindings) => {
                 let ident = bindings.import_fragment(ctx);
-                ctx.ast.expression_from_identifier_reference(ident)
+                Expression::Identifier(ctx.alloc(ident))
             }
         }
     }
@@ -783,7 +783,7 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
                 } else {
                     bindings.import_jsx(ctx)
                 };
-                ctx.ast.expression_from_identifier_reference(ident)
+                Expression::Identifier(ctx.alloc(ident))
             }
         }
     }
@@ -794,7 +794,7 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
     ) -> Expression<'a> {
         let object = match &expr.object {
             JSXMemberExpressionObject::IdentifierReference(ident) => {
-                ctx.ast.expression_from_identifier_reference(ident.as_ref().clone())
+                Expression::Identifier(ctx.alloc(ident.as_ref().clone()))
             }
             JSXMemberExpressionObject::MemberExpression(expr) => {
                 Self::transform_jsx_member_expression(expr, ctx)
@@ -866,16 +866,14 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
             JSXAttributeName::Identifier(ident) => {
                 let name = ident.name.clone();
                 if ident.name.contains('-') {
-                    let expr = ctx.ast.expression_string_literal(ident.span, name);
-                    ctx.ast.property_key_expression(expr)
+                    PropertyKey::from(ctx.ast.expression_string_literal(ident.span, name))
                 } else {
                     ctx.ast.property_key_identifier_name(ident.span, name)
                 }
             }
             JSXAttributeName::NamespacedName(namespaced) => {
                 let name = ctx.ast.atom(&namespaced.to_string());
-                let expr = ctx.ast.expression_string_literal(namespaced.span, name);
-                ctx.ast.property_key_expression(expr)
+                PropertyKey::from(ctx.ast.expression_string_literal(namespaced.span, name))
             }
         }
     }
@@ -1042,7 +1040,7 @@ fn create_static_member_expression<'a>(
     property_name: Atom<'a>,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let object = ctx.ast.expression_from_identifier_reference(object_ident);
+    let object = Expression::Identifier(ctx.alloc(object_ident));
     let property = ctx.ast.identifier_name(SPAN, property_name);
     ctx.ast.member_expression_static(SPAN, object, property, false).into()
 }

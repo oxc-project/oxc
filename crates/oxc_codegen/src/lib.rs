@@ -16,7 +16,7 @@ mod sourcemap_builder;
 use std::borrow::Cow;
 
 use oxc_ast::ast::{
-    BindingIdentifier, BlockStatement, Expression, IdentifierReference, Program, Statement,
+    BindingIdentifier, BlockStatement, Comment, Expression, IdentifierReference, Program, Statement,
 };
 use oxc_mangler::Mangler;
 use oxc_span::{GetSpan, Span};
@@ -33,13 +33,14 @@ use crate::{
 pub use crate::{
     context::Context,
     gen::{Gen, GenExpr},
-    options::CodegenOptions,
+    options::{CodegenOptions, LegalComment},
 };
 
 /// Code generator without whitespace removal.
 pub type CodeGenerator<'a> = Codegen<'a>;
 
 /// Output from [`Codegen::build`]
+#[non_exhaustive]
 pub struct CodegenReturn {
     /// The generated source code.
     pub code: String,
@@ -48,6 +49,9 @@ pub struct CodegenReturn {
     ///
     /// You must set [`CodegenOptions::source_map_path`] for this to be [`Some`].
     pub map: Option<oxc_sourcemap::SourceMap>,
+
+    /// All the legal comments returned from [LegalComment::Linked] or [LegalComment::External].
+    pub legal_comments: Vec<Comment>,
 }
 
 /// A code generator for printing JavaScript and TypeScript code.
@@ -74,8 +78,6 @@ pub struct Codegen<'a> {
     /// Original source code of the AST
     source_text: &'a str,
 
-    comments: CommentsMap,
-
     mangler: Option<Mangler>,
 
     /// Output Code
@@ -96,6 +98,17 @@ pub struct Codegen<'a> {
     start_of_stmt: usize,
     start_of_arrow_expr: usize,
     start_of_default_export: usize,
+
+    /// Track the current indentation level
+    indent: u32,
+
+    /// Fast path for [CodegenOptions::single_quote]
+    quote: u8,
+
+    // Builders
+    comments: CommentsMap,
+
+    legal_comments: Vec<Comment>,
     /// Start of comment that needs to be moved to the before VariableDeclarator
     ///
     /// For example:
@@ -110,13 +123,6 @@ pub struct Codegen<'a> {
     /// ```
     start_of_annotation_comment: Option<u32>,
 
-    /// Track the current indentation level
-    indent: u32,
-
-    /// Fast path for [CodegenOptions::single_quote]
-    quote: u8,
-
-    // Builders
     sourcemap_builder: Option<SourcemapBuilder>,
 }
 
@@ -148,8 +154,6 @@ impl<'a> Codegen<'a> {
         Self {
             options: CodegenOptions::default(),
             source_text: "",
-            comments: CommentsMap::default(),
-            start_of_annotation_comment: None,
             mangler: None,
             code: CodeBuffer::default(),
             needs_semicolon: false,
@@ -164,6 +168,9 @@ impl<'a> Codegen<'a> {
             start_of_default_export: 0,
             indent: 0,
             quote: b'"',
+            comments: CommentsMap::default(),
+            start_of_annotation_comment: None,
+            legal_comments: vec![],
             sourcemap_builder: None,
         }
     }
@@ -183,24 +190,25 @@ impl<'a> Codegen<'a> {
         self
     }
 
-    /// Print a [`Program`] into a string of source code. A source map will be
-    /// generated if [`CodegenOptions::source_map_path`] is set.
+    /// Print a [`Program`] into a string of source code.
+    ///
+    /// A source map will be generated if [`CodegenOptions::source_map_path`] is set.
     #[must_use]
     pub fn build(mut self, program: &Program<'a>) -> CodegenReturn {
         self.quote = if self.options.single_quote { b'\'' } else { b'"' };
         self.source_text = program.source_text;
         self.code.reserve(program.source_text.len());
-        if self.options.print_annotation_comments() {
+        if self.options.print_comments() {
             self.build_comments(&program.comments);
         }
         if let Some(path) = &self.options.source_map_path {
             self.sourcemap_builder = Some(SourcemapBuilder::new(path, program.source_text));
         }
-
         program.print(&mut self, Context::default());
+        self.try_print_eof_legal_comments();
         let code = self.code.into_string();
         let map = self.sourcemap_builder.map(SourcemapBuilder::into_sourcemap);
-        CodegenReturn { code, map }
+        CodegenReturn { code, map, legal_comments: self.legal_comments }
     }
 
     /// Turn what's been built so far into a string. Like [`build`],

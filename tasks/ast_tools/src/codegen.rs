@@ -7,8 +7,8 @@ use crate::{
     log, log_result,
     output::{Output, RawOutput},
     passes::Pass,
-    rust_ast::{self, AstRef},
-    schema::{lower_ast_types, Schema, TypeDef},
+    rust_ast::{AstRef, Module},
+    schema::{lower_ast_types, Schema},
     Result, TypeId,
 };
 
@@ -16,12 +16,12 @@ use crate::{
 pub struct AstCodegen {
     files: Vec<PathBuf>,
     passes: Vec<Box<dyn Runner<Context = EarlyCtx>>>,
-    generators: Vec<Box<dyn Runner<Context = LateCtx>>>,
+    generators: Vec<Box<dyn Runner<Context = Schema>>>,
 }
 
 pub struct AstCodegenResult {
-    pub schema: Schema,
     pub outputs: Vec<RawOutput>,
+    pub schema: Schema,
 }
 
 pub trait Runner {
@@ -35,11 +35,11 @@ pub trait Runner {
 pub struct EarlyCtx {
     ty_table: Vec<AstRef>,
     ident_table: FxHashMap<String, TypeId>,
-    mods: RefCell<Vec<rust_ast::Module>>,
+    mods: RefCell<Vec<Module>>,
 }
 
 impl EarlyCtx {
-    fn new(mods: Vec<rust_ast::Module>) -> Self {
+    fn new(mods: Vec<Module>) -> Self {
         // worst case len
         let len = mods.iter().fold(0, |acc, it| acc + it.items.len());
         let adts = mods.iter().flat_map(|it| it.items.iter());
@@ -62,7 +62,7 @@ impl EarlyCtx {
         self.ident_table.iter().sorted_by_key(|it| it.1).map(|it| it.0)
     }
 
-    pub fn mods(&self) -> &RefCell<Vec<rust_ast::Module>> {
+    pub fn mods(&self) -> &RefCell<Vec<Module>> {
         &self.mods
     }
 
@@ -78,24 +78,8 @@ impl EarlyCtx {
         AstRef::clone(&self.ty_table[id])
     }
 
-    fn into_late_ctx(self) -> LateCtx {
-        let schema = lower_ast_types(&self);
-
-        LateCtx { schema }
-    }
-}
-
-pub struct LateCtx {
-    schema: Schema,
-}
-
-impl LateCtx {
-    pub fn schema(&self) -> &Schema {
-        &self.schema
-    }
-
-    pub fn type_def(&self, id: TypeId) -> Option<&TypeDef> {
-        self.schema.get(id)
+    fn into_schema(self) -> Schema {
+        lower_ast_types(&self)
     }
 }
 
@@ -121,7 +105,7 @@ impl AstCodegen {
     #[must_use]
     pub fn generate<G>(mut self, generator: G) -> Self
     where
-        G: Runner<Context = LateCtx> + 'static,
+        G: Runner<Context = Schema> + 'static,
     {
         self.generators.push(Box::new(generator));
         self
@@ -131,10 +115,10 @@ impl AstCodegen {
         let modules = self
             .files
             .into_iter()
-            .map(rust_ast::Module::from)
-            .map(rust_ast::Module::load)
-            .map_ok(rust_ast::Module::expand)
-            .map_ok(|it| it.map(rust_ast::Module::analyze))
+            .map(Module::with_path)
+            .map(Module::load)
+            .map_ok(Module::expand)
+            .map_ok(|it| it.map(Module::analyze))
             .collect::<Result<Result<Result<Vec<_>>>>>()???;
 
         // Early passes
@@ -142,10 +126,10 @@ impl AstCodegen {
         let mut outputs = run_passes(&mut self.passes, &early_ctx)?;
 
         // Late passes
-        let late_ctx = early_ctx.into_late_ctx();
-        outputs.extend(run_passes(&mut self.generators, &late_ctx)?);
+        let schema = early_ctx.into_schema();
+        outputs.extend(run_passes(&mut self.generators, &schema)?);
 
-        Ok(AstCodegenResult { outputs, schema: late_ctx.schema })
+        Ok(AstCodegenResult { outputs, schema })
     }
 }
 

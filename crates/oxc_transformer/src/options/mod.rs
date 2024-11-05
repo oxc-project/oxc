@@ -1,11 +1,12 @@
 pub mod babel;
+
+mod browserslist_query;
+mod engine_targets;
 mod env;
 
 use std::path::PathBuf;
 
 use oxc_diagnostics::Error;
-
-pub use env::EnvOptions;
 
 use crate::{
     common::helper_loader::{HelperLoaderMode, HelperLoaderOptions},
@@ -24,7 +25,13 @@ use crate::{
     ReactRefreshOptions,
 };
 
-use babel::BabelOptions;
+pub use self::{
+    browserslist_query::BrowserslistQuery,
+    engine_targets::EngineTargets,
+    env::{ESTarget, EnvOptions},
+};
+
+use self::babel::BabelOptions;
 
 /// <https://babel.dev/docs/options>
 #[derive(Debug, Default, Clone)]
@@ -57,6 +64,9 @@ pub struct TransformOptions {
 
 impl TransformOptions {
     /// Explicitly enable all plugins that are ready, mainly for testing purposes.
+    ///
+    /// NOTE: for internal use only
+    #[doc(hidden)]
     pub fn enable_all() -> Self {
         Self {
             cwd: PathBuf::new(),
@@ -67,12 +77,18 @@ impl TransformOptions {
                 refresh: Some(ReactRefreshOptions::default()),
                 ..JsxOptions::default()
             },
-            env: EnvOptions::enable_all(),
+            env: EnvOptions::enable_all(/* include_unfinished_plugins */ false),
             helper_loader: HelperLoaderOptions {
                 mode: HelperLoaderMode::Runtime,
                 ..Default::default()
             },
         }
+    }
+}
+
+impl From<ESTarget> for TransformOptions {
+    fn from(target: ESTarget) -> Self {
+        Self { env: EnvOptions::from(target), ..Self::default() }
     }
 }
 

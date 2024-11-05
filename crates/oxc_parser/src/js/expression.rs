@@ -57,7 +57,7 @@ impl<'a> ParserImpl<'a> {
     /// `PrimaryExpression`: Identifier Reference
     pub(crate) fn parse_identifier_expression(&mut self) -> Result<Expression<'a>> {
         let ident = self.parse_identifier_reference()?;
-        Ok(self.ast.expression_from_identifier_reference(ident))
+        Ok(Expression::Identifier(self.alloc(ident)))
     }
 
     pub(crate) fn parse_identifier_reference(&mut self) -> Result<IdentifierReference<'a>> {
@@ -198,7 +198,7 @@ impl<'a> ParserImpl<'a> {
             Kind::LParen => self.parse_parenthesized_expression(span),
             Kind::Slash | Kind::SlashEq => self
                 .parse_literal_regexp()
-                .map(|literal| self.ast.expression_from_reg_exp_literal(literal)),
+                .map(|literal| Expression::RegExpLiteral(self.alloc(literal))),
             // JSXElement, JSXFragment
             Kind::LAngle if self.source_type.is_jsx() => self.parse_jsx_expression(),
             _ => self.parse_identifier_expression(),
@@ -253,21 +253,21 @@ impl<'a> ParserImpl<'a> {
         match self.cur_kind() {
             Kind::Str => self
                 .parse_literal_string()
-                .map(|literal| self.ast.expression_from_string_literal(literal)),
+                .map(|literal| Expression::StringLiteral(self.alloc(literal))),
             Kind::True | Kind::False => self
                 .parse_literal_boolean()
-                .map(|literal| self.ast.expression_from_boolean_literal(literal)),
+                .map(|literal| Expression::BooleanLiteral(self.alloc(literal))),
             Kind::Null => {
                 let literal = self.parse_literal_null();
-                Ok(self.ast.expression_from_null_literal(literal))
+                Ok(Expression::NullLiteral(self.alloc(literal)))
             }
             kind if kind.is_number() => {
                 if self.cur_src().ends_with('n') {
                     self.parse_literal_bigint()
-                        .map(|literal| self.ast.expression_from_big_int_literal(literal))
+                        .map(|literal| Expression::BigIntLiteral(self.alloc(literal)))
                 } else {
                     self.parse_literal_number()
-                        .map(|literal| self.ast.expression_from_numeric_literal(literal))
+                        .map(|literal| Expression::NumericLiteral(self.alloc(literal)))
                 }
             }
             _ => Err(self.unexpected()),
@@ -382,7 +382,7 @@ impl<'a> ParserImpl<'a> {
         )
         .parse()
         {
-            Ok(regular_expression) => Some(self.ast.alloc(regular_expression)),
+            Ok(regular_expression) => Some(self.alloc(regular_expression)),
             Err(diagnostic) => {
                 self.error(diagnostic);
                 None
@@ -488,7 +488,7 @@ impl<'a> ParserImpl<'a> {
         tagged: bool,
     ) -> Result<Expression<'a>> {
         self.parse_template_literal(tagged)
-            .map(|template_literal| self.ast.expression_from_template_literal(template_literal))
+            .map(|template_literal| Expression::TemplateLiteral(self.alloc(template_literal)))
     }
 
     fn parse_tagged_template(

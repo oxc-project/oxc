@@ -147,10 +147,7 @@ impl NoThrowLiteral {
                     || Self::could_be_error(ctx, &expr.alternate)
             }
             Expression::Identifier(ident) => {
-                let Some(ref_id) = ident.reference_id() else {
-                    return true;
-                };
-                let reference = ctx.symbols().get_reference(ref_id);
+                let reference = ctx.symbols().get_reference(ident.reference_id());
                 let Some(symbol_id) = reference.symbol_id() else {
                     return true;
                 };

@@ -3,11 +3,10 @@ use itertools::Itertools;
 use rustc_hash::FxHashSet;
 
 use crate::{
-    codegen::LateCtx,
     output::Output,
     schema::{
         serialize::{enum_variant_name, get_always_flatten_structs, get_type_tag},
-        EnumDef, GetIdent, StructDef, TypeDef, TypeName,
+        EnumDef, GetIdent, Schema, StructDef, TypeDef, TypeName,
     },
     Generator, TypeId,
 };
@@ -21,12 +20,12 @@ pub struct TypescriptGenerator;
 define_generator!(TypescriptGenerator);
 
 impl Generator for TypescriptGenerator {
-    fn generate(&mut self, ctx: &LateCtx) -> Output {
+    fn generate(&mut self, schema: &Schema) -> Output {
         let mut code = String::new();
 
-        let always_flatten_structs = get_always_flatten_structs(ctx);
+        let always_flatten_structs = get_always_flatten_structs(schema);
 
-        for def in ctx.schema() {
+        for def in &schema.defs {
             if !def.generates_derive("ESTree") {
                 continue;
             }

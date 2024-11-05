@@ -31,6 +31,7 @@ pub struct ImportSpecifier {
     /// * If this import keyword is a dynamic import, this is the start value.
     /// * If this import keyword is a static import, this is -1.
     /// * If this import keyword is an import.meta expression, this is -2.
+    /// * If this import is an `export *`, this is -3.
     pub d: i64,
 
     /// If this import has an import assertion, this is the start value
@@ -72,6 +73,7 @@ impl<'a> From<oxc_module_lexer::ImportSpecifier<'a>> for ImportSpecifier {
                 ImportType::DynamicImport(start) => start as i64,
                 ImportType::StaticImport => -1,
                 ImportType::ImportMeta => -2,
+                ImportType::ExportStar => -3,
             },
             a: i.a.map_or(-1, |a| a as i64),
         }

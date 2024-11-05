@@ -63,15 +63,24 @@ $RefreshReg$(_c, "App");
 });
 
 describe('define plugin', () => {
-  const code = 'if (process.env.NODE_ENV === "production") { foo; }';
-
   it('matches output', () => {
+    const code = 'if (process.env.NODE_ENV === "production") { foo; }';
     const ret = oxc.transform('test.tsx', code, {
       define: {
         'process.env.NODE_ENV': '"development"',
       },
     });
     assert.equal(ret.code, '');
+  });
+
+  it('handles typescript declare global', () => {
+    const code = 'declare let __TEST_DEFINE__: string; console.log({ __TEST_DEFINE__ });';
+    const ret = oxc.transform('test.ts', code, {
+      define: {
+        '__TEST_DEFINE__': '"replaced"',
+      },
+    });
+    assert.equal(ret.code, 'console.log({ __TEST_DEFINE__: "replaced" });\n');
   });
 });
 

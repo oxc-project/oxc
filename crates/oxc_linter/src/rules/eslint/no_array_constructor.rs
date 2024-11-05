@@ -1,6 +1,8 @@
+use oxc_ast::ast::Expression;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::IsGlobalReference;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -62,10 +64,16 @@ impl Rule for NoArrayConstructor {
                 &new_expr.type_parameters,
                 false,
             ),
-            _ => return,
+            _ => {
+                return;
+            }
         };
 
-        if callee.is_specific_id("Array")
+        let Expression::Identifier(ident) = &callee else {
+            return;
+        };
+
+        if ident.is_global_reference_name("Array", ctx.symbols())
             && arguments.len() != 1
             && type_parameters.is_none()
             && !optional
@@ -104,6 +112,7 @@ fn test() {
         ("Array?.<Foo>();", None),
         ("Array?.(0, 1, 2);", None),
         ("Array?.(x, y);", None),
+        ("var Array; new Array;", None),
     ];
 
     let fail = vec![

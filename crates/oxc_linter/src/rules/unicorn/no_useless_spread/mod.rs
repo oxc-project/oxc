@@ -421,7 +421,7 @@ fn check_useless_clone<'a>(
 
 fn diagnostic_name<'a>(ctx: &LintContext<'a>, expr: &Expression<'a>) -> Option<&'a str> {
     fn pretty_snippet(snippet: &str) -> Option<&str> {
-        // unweildy snippets don't get included in diagnostic messages
+        // unwieldy snippets don't get included in diagnostic messages
         if snippet.len() > 50 || snippet.contains('\n') {
             None
         } else {

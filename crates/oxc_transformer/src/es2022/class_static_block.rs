@@ -138,7 +138,7 @@ impl ClassStaticBlock {
         block: &mut StaticBlock<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let scope_id = block.scope_id.get().unwrap();
+        let scope_id = block.scope_id();
 
         // If block contains only a single `ExpressionStatement`, no need to wrap in an IIFE.
         // `static { foo }` -> `foo`
@@ -213,7 +213,7 @@ struct ReferenceFlagsSetter<'s> {
 
 impl<'a, 's> Visit<'a> for ReferenceFlagsSetter<'s> {
     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
-        let reference_id = ident.reference_id().unwrap();
+        let reference_id = ident.reference_id();
         let reference = self.symbols.get_reference_mut(reference_id);
         *reference.flags_mut() |= ReferenceFlags::Read;
     }

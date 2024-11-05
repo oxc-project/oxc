@@ -1,4 +1,4 @@
-use oxc_semantic::{Reference, ReferenceId, ScopeId, SymbolId};
+use oxc_semantic::{ReferenceId, ScopeId, SymbolId};
 use serde::{Deserialize, Serialize};
 use std::ops::Deref;
 
@@ -354,10 +354,10 @@ impl Rule for NoMapSpread {
 
         match leftmost_identifier_reference(&call_expr.callee) {
             Ok(ident) => {
-                if let Some(ref_id) = ident.reference_id() {
-                    if self.is_ignored_map_call(ctx, ident.name.as_str(), ref_id, call_expr.span) {
-                        return;
-                    }
+                let reference_id = ident.reference_id();
+                if self.is_ignored_map_call(ctx, ident.name.as_str(), reference_id, call_expr.span)
+                {
+                    return;
                 }
             }
             // Mapped class properties likely have their elements spread to
@@ -675,10 +675,8 @@ where
             // check if identifier is a reference to a spread-initialized
             // variable declared within the map callback.
             Expression::Identifier(ident) => {
-                let Some(symbol_id) = ident
-                    .reference_id()
-                    .map(|id| self.ctx.symbols().get_reference(id))
-                    .and_then(Reference::symbol_id)
+                let Some(symbol_id) =
+                    self.ctx.symbols().get_reference(ident.reference_id()).symbol_id()
                 else {
                     return;
                 };

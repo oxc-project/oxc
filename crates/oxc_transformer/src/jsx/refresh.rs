@@ -63,20 +63,26 @@ impl<'a> RefreshIdentifierResolver<'a> {
     pub fn to_expression(&self, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         match self {
             Self::Identifier(ident) => {
-                let ident = ident.clone();
                 let reference_id =
                     ctx.create_unbound_reference(ident.name.to_compact_str(), ReferenceFlags::Read);
-                ident.reference_id.set(Some(reference_id));
-                ctx.ast.expression_from_identifier_reference(ident)
+                Expression::Identifier(ctx.ast.alloc_identifier_reference_with_reference_id(
+                    ident.span,
+                    ident.name.clone(),
+                    reference_id,
+                ))
             }
             Self::Member((ident, property)) => {
-                let ident = ident.clone();
                 let reference_id =
                     ctx.create_unbound_reference(ident.name.to_compact_str(), ReferenceFlags::Read);
-                ident.reference_id.set(Some(reference_id));
+                let ident =
+                    Expression::Identifier(ctx.ast.alloc_identifier_reference_with_reference_id(
+                        ident.span,
+                        ident.name.clone(),
+                        reference_id,
+                    ));
                 Expression::from(ctx.ast.member_expression_static(
                     SPAN,
-                    ctx.ast.expression_from_identifier_reference(ident),
+                    ident,
                     property.clone(),
                     false,
                 ))
@@ -160,7 +166,7 @@ impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
             let callee = self.refresh_reg.to_expression(ctx);
             let mut arguments = ctx.ast.vec_with_capacity(2);
             arguments.push(Argument::from(binding.create_read_expression(ctx)));
-            arguments.push(ctx.ast.argument_expression(
+            arguments.push(Argument::from(
                 ctx.ast.expression_string_literal(SPAN, ctx.ast.atom(&persistent_id)),
             ));
             new_statements.push(ctx.ast.statement_expression(
@@ -180,16 +186,13 @@ impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let signature = match expr {
             Expression::FunctionExpression(func) => self.create_signature_call_expression(
-                func.scope_id.get().unwrap(),
+                func.scope_id(),
                 func.body.as_mut().unwrap(),
                 ctx,
             ),
             Expression::ArrowFunctionExpression(arrow) => {
-                let call_fn = self.create_signature_call_expression(
-                    arrow.scope_id.get().unwrap(),
-                    &mut arrow.body,
-                    ctx,
-                );
+                let call_fn =
+                    self.create_signature_call_expression(arrow.scope_id(), &mut arrow.body, ctx);
 
                 // If the signature is found, we will push a new statement to the arrow function body. So it's not an expression anymore.
                 if call_fn.is_some() {
@@ -257,7 +260,7 @@ impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
         }
 
         let Some((binding_identifier, mut arguments)) = self.create_signature_call_expression(
-            func.scope_id.get().unwrap(),
+            func.scope_id(),
             func.body.as_mut().unwrap(),
             ctx,
         ) else {
@@ -339,7 +342,7 @@ impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
                                 symbol_id,
                                 ReferenceFlags::Read,
                             );
-                            let mut expr = ctx.ast.expression_from_identifier_reference(ident);
+                            let mut expr = Expression::Identifier(ctx.alloc(ident));
 
                             if is_member_expression {
                                 // binding_name.hook_name
@@ -496,10 +499,10 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
         let right = ctx.create_bound_reference_id(
             SPAN,
             id.name.clone(),
-            id.symbol_id.get().unwrap(),
+            id.symbol_id(),
             ReferenceFlags::Read,
         );
-        let right = ctx.ast.expression_from_identifier_reference(right);
+        let right = Expression::Identifier(ctx.alloc(right));
         let expr = ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, left, right);
         ctx.ast.statement_expression(SPAN, expr)
     }
@@ -532,23 +535,16 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
         let callee_list = self.non_builtin_hooks_callee.remove(&scope_id).unwrap_or_default();
         let callee_len = callee_list.len();
         let custom_hooks_in_scope = ctx.ast.vec_from_iter(
-            callee_list
-                .into_iter()
-                .filter_map(|e| e.map(|e| ctx.ast.array_expression_element_expression(e))),
+            callee_list.into_iter().filter_map(|e| e.map(ArrayExpressionElement::from)),
         );
 
         let force_reset = custom_hooks_in_scope.len() != callee_len;
 
         let mut arguments = ctx.ast.vec();
-        arguments.push(
-            ctx.ast
-                .argument_expression(ctx.ast.expression_string_literal(SPAN, ctx.ast.atom(&key))),
-        );
+        arguments.push(Argument::from(ctx.ast.expression_string_literal(SPAN, ctx.ast.atom(&key))));
 
         if force_reset || !custom_hooks_in_scope.is_empty() {
-            arguments.push(
-                ctx.ast.argument_expression(ctx.ast.expression_boolean_literal(SPAN, force_reset)),
-            );
+            arguments.push(Argument::from(ctx.ast.expression_boolean_literal(SPAN, force_reset)));
         }
 
         if !custom_hooks_in_scope.is_empty() {
@@ -567,7 +563,8 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
                     Some(ctx.ast.expression_array(SPAN, custom_hooks_in_scope, None)),
                 )),
             );
-            let function = ctx.ast.function(
+            let scope_id = ctx.create_child_scope_of_current(ScopeFlags::Function);
+            let function = Argument::FunctionExpression(ctx.ast.alloc_function_with_scope_id(
                 FunctionType::FunctionExpression,
                 SPAN,
                 None,
@@ -579,10 +576,9 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
                 formal_parameters,
                 NONE,
                 Some(function_body),
-            );
-            let scope_id = ctx.create_child_scope_of_current(ScopeFlags::Function);
-            function.scope_id.set(Some(scope_id));
-            arguments.push(ctx.ast.argument_expression(ctx.ast.expression_from_function(function)));
+                scope_id,
+            ));
+            arguments.push(function);
         }
 
         // TODO: Handle var hoisted in ctx API
@@ -725,7 +721,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
         let declarator = decl.declarations.first_mut().unwrap_or_else(|| unreachable!());
         let init = declarator.init.as_mut()?;
         let id = declarator.id.get_binding_identifier()?;
-        let symbol_id = id.symbol_id.get().unwrap();
+        let symbol_id = id.symbol_id();
 
         if !is_componentish_name(&id.name) {
             return None;

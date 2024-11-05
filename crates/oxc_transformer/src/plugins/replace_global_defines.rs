@@ -258,9 +258,9 @@ impl<'a> ReplaceGlobalDefines<'a> {
                         return;
                     }
                 }
-                for meta_proeperty_define in &self.config.0.meta_property {
-                    if Self::is_meta_property_define(meta_proeperty_define, member) {
-                        let value = self.parse_value(&meta_proeperty_define.value);
+                for meta_property_define in &self.config.0.meta_property {
+                    if Self::is_meta_property_define(meta_property_define, member) {
+                        let value = self.parse_value(&meta_property_define.value);
                         *expr = value;
                         return;
                     }

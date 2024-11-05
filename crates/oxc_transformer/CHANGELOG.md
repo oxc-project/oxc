@@ -4,6 +4,62 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.35.0] - 2024-11-04
+
+- b8daab3 transformer: [**BREAKING**] API to `TryFrom<&EnvOptions> for TransformOptions` and `TryFrom<&BabelOptions> TransformOptions` (#7020) (Boshen)
+
+### Features
+
+- bfdbcf1 transformer: Add `EnvOptions::from_browerslist_query` API (#7098) (Boshen)
+- 21b8e49 transformer: Add `ESTarget` (#7091) (Boshen)
+- fcaba4a transformer: Add `TransformerOptions::env` with `EnvOptions` (#7037) (Boshen)
+- 1d906c6 transformer: Class properties transform skeleton (#7038) (overlookmotel)
+- 934cb5e transformer: Add `async_generator_functions` plugin (#6573) (Dunqing)
+
+### Bug Fixes
+
+- a2244ff transformer/async-to-generator: Output is incorrect when arrow function without params (#7052) (Dunqing)
+
+### Refactor
+
+- 7f1d1fe transform: Deserialize `BabelPreests::env` directly (#7051) (Boshen)
+- 76947e2 transform: Refactor Babel Targets (#7026) (Boshen)
+- d03e622 transformer: Do not use `AstBuilder::*_from_*` methods (#7070) (overlookmotel)
+- 9d384ad transformer: Use `identifier_reference_with_reference_id` builder method (#7056) (overlookmotel)
+- 4688a06 transformer: Use `*_with_scope_id` builder methods where possible (#7055) (overlookmotel)
+- 7122e00 transformer: Use `ctx.alloc` over `ctx.ast.alloc` where possible (#7066) (overlookmotel)
+- a3b68b4 transformer: Flatten dir structure of options/babel/env (#7049) (Boshen)
+- 6d92f36 transformer: Deserialize `BabelOptions::compiler_assumptions` (#7048) (Boshen)
+- f83a760 transformer: Deserialize `BabelOptions::presets` (#7047) (Boshen)
+- 52c20d6 transformer: Deserialize `BabelOptions::plugins` (#7045) (Boshen)
+- e921df6 transformer: Rename `EnvOptions` to `BabelEnvOptions` (#7036) (Boshen)
+- af5140f transformer: Isolate babel options logic (#7034) (Boshen)
+- 12aa910 transformer: Clean up `env/targets/query.rs` (#7033) (Boshen)
+- 3d174bb transformer: Clean up `BabelOptions` (#7029) (Boshen)
+- 6284f84 transformer: Use `Browserslist::Version` (#7028) (Boshen)
+- 5b11cdf transformer: Clean up TransformerOptions (#7005) (Boshen)
+- f0c87d4 transformer: Mark all EnvOptions as not implemented (#7004) (Boshen)
+- d9edef6 transformer: Combine ObjectRestSpread into a single file (#7002) (Boshen)
+- c945fe7 transformer: Import `oxc_allocator::Box` as `ArenaBox` (#6999) (overlookmotel)
+- fc1af2e transformer: Import `oxc_allocator::Vec` as `ArenaVec` (#6998) (overlookmotel)
+- 63e8bfe transformer: Rename `AString` to `ArenaString` (#6997) (overlookmotel)
+- 562bb9a transformer/async-to-generator: Move transform methods to `AsyncGeneratorExecutor` and make it public (#6992) (Dunqing)
+- e23f7e6 transformer/common: `VarDeclarations` insert either `var` or `let` statements (#7043) (overlookmotel)
+- e5ecbb9 transformer/jsx: Return `&mut T` not `&mut ArenaBox<T>` (#7001) (overlookmotel)
+- 9e66c29 transformer/react-refresh: Small refactor (#6973) (overlookmotel)
+- 1ca8cd2 transformer/react-refresh: Avoid panic for `init` of `VariableDeclarator` isn't a `BindingIdentifier` (#6937) (Dunqing)
+- 5f153ac transformer/react-refresh: Use `VarDeclarations` to insert declarators (#6884) (Dunqing)
+- df3b089 transformer/react-refresh: Use `StatementInjector` to insert statements (#6881) (Dunqing)
+- ae22671 transformer/typescript: Pass `&mut T` not `&mut ArenaBox<T>` (#7000) (overlookmotel)
+
+### Styling
+
+- 86ab091 transformer/common: Split up `StatementInjectorStore` methods into blocks (#7042) (overlookmotel)
+
+### Testing
+
+- 6133a50 transformer: Use a single integration test for faster compilation (#7099) (Boshen)
+
 ## [0.34.0] - 2024-10-26
 
 - 4618aa2 transformer: [**BREAKING**] Rename `TransformerOptions::react` to `jsx` (#6888) (Boshen)

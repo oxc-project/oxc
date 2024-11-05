@@ -1,7 +1,5 @@
 #![allow(clippy::unused_self)]
 
-use std::cell::Cell;
-
 use rustc_hash::FxHashSet;
 
 use oxc_allocator::Vec as ArenaVec;
@@ -87,9 +85,7 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
                                 || self.type_identifier_names.contains(&specifier.exported.name())
                                 || matches!(
                                     &specifier.local, ModuleExportName::IdentifierReference(ident)
-                                    if ident.reference_id.get().is_some_and(|reference_id| {
-                                        ctx.symbols().get_reference(reference_id).is_type()
-                                    })
+                                    if ctx.symbols().get_reference(ident.reference_id()).is_type()
                                 ))
                         });
                         // Keep the export declaration if there are still specifiers after removing type exports
@@ -151,10 +147,10 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
         // need to inject an empty statement (`export {}`) so that the file is
         // still considered a module
         if no_modules_remaining && some_modules_deleted && self.ctx.module_imports.is_empty() {
-            let export_decl = ModuleDeclaration::ExportNamedDeclaration(
+            let export_decl = Statement::ExportNamedDeclaration(
                 ctx.ast.plain_export_named_declaration(SPAN, ctx.ast.vec(), None),
             );
-            program.body.push(ctx.ast.statement_module_declaration(export_decl));
+            program.body.push(export_decl);
         }
     }
 
@@ -303,7 +299,7 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
                         self.assignments.push(Assignment {
                             span: id.span,
                             name: id.name.clone(),
-                            symbol_id: id.symbol_id.get().unwrap(),
+                            symbol_id: id.symbol_id(),
                         });
                     }
                 }
@@ -481,27 +477,18 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
     }
 
     fn enter_for_statement(&mut self, stmt: &mut ForStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-        Self::replace_for_statement_body_with_empty_block_if_ts(
-            &mut stmt.body,
-            &stmt.scope_id,
-            ctx,
-        );
+        let scope_id = stmt.scope_id();
+        Self::replace_for_statement_body_with_empty_block_if_ts(&mut stmt.body, scope_id, ctx);
     }
 
     fn enter_for_in_statement(&mut self, stmt: &mut ForInStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-        Self::replace_for_statement_body_with_empty_block_if_ts(
-            &mut stmt.body,
-            &stmt.scope_id,
-            ctx,
-        );
+        let scope_id = stmt.scope_id();
+        Self::replace_for_statement_body_with_empty_block_if_ts(&mut stmt.body, scope_id, ctx);
     }
 
     fn enter_for_of_statement(&mut self, stmt: &mut ForOfStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-        Self::replace_for_statement_body_with_empty_block_if_ts(
-            &mut stmt.body,
-            &stmt.scope_id,
-            ctx,
-        );
+        let scope_id = stmt.scope_id();
+        Self::replace_for_statement_body_with_empty_block_if_ts(&mut stmt.body, scope_id, ctx);
     }
 
     fn enter_while_statement(&mut self, stmt: &mut WhileStatement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -564,11 +551,10 @@ impl<'a, 'ctx> TypeScriptAnnotations<'a, 'ctx> {
 
     fn replace_for_statement_body_with_empty_block_if_ts(
         body: &mut Statement<'a>,
-        scope_id: &Cell<Option<ScopeId>>,
+        parent_scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let scope_id = scope_id.get().unwrap_or(ctx.current_scope_id());
-        Self::replace_with_empty_block_if_ts(body, scope_id, ctx);
+        Self::replace_with_empty_block_if_ts(body, parent_scope_id, ctx);
     }
 
     fn replace_with_empty_block_if_ts(
@@ -629,15 +615,14 @@ impl<'a> Assignment<'a> {
             ctx.ast.expression_assignment(
                 SPAN,
                 AssignmentOperator::Assign,
-                ctx.ast
-                    .simple_assignment_target_member_expression(ctx.ast.member_expression_static(
-                        SPAN,
-                        ctx.ast.expression_this(SPAN),
-                        ctx.ast.identifier_name(self.span, &self.name),
-                        false,
-                    ))
-                    .into(),
-                ctx.ast.expression_from_identifier_reference(id),
+                SimpleAssignmentTarget::from(ctx.ast.member_expression_static(
+                    SPAN,
+                    ctx.ast.expression_this(SPAN),
+                    ctx.ast.identifier_name(self.span, &self.name),
+                    false,
+                ))
+                .into(),
+                Expression::Identifier(ctx.alloc(id)),
             ),
         )
     }

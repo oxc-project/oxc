@@ -250,8 +250,7 @@ impl<'a> ParserImpl<'a> {
         let id = self.parse_function_id(func_kind, r#async, generator)?;
         let function =
             self.parse_function(span, id, r#async, generator, func_kind, &Modifiers::empty())?;
-
-        Ok(self.ast.expression_from_function(function))
+        Ok(Expression::FunctionExpression(function))
     }
 
     /// Section 15.4 Method Definitions

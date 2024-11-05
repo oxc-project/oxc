@@ -1,5 +1,5 @@
-mod esm;
-use esm::ModuleLexer;
+use super::ModuleLexer;
+
 use oxc_allocator::Allocator;
 use oxc_parser::Parser;
 use oxc_span::SourceType;

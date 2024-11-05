@@ -90,13 +90,12 @@ impl TestRunner {
                 Self::glob_files(root, self.options.filter.as_ref());
             self.generate_snapshot(root, SnapshotOption::new(transform_paths, snapshot));
 
-            if self.options.exec {
+            if self.options.exec && !exec_files.is_empty() {
                 let fixture_root = fixture_root();
-                if !fixture_root.exists() {
-                    fs::create_dir(&fixture_root).unwrap();
-                }
+                let _ = fs::remove_dir_all(&fixture_root);
+                let _ = fs::create_dir(&fixture_root);
                 self.generate_snapshot(root, SnapshotOption::new(exec_files, exec_snapshot));
-                let _ = fs::remove_dir_all(fixture_root);
+                self.run_vitest(&SnapshotOption::new(IndexMap::default(), exec_snapshot));
             }
         }
     }
@@ -198,34 +197,29 @@ impl TestRunner {
             self.snapshot.save(&dest, &snapshot);
         }
     }
-}
 
-struct TestRunnerEnv;
-
-impl TestRunnerEnv {
-    fn template(code: &str) -> String {
-        format!(
-            r#"
-                import {{expect, test}} from 'bun:test';
-                test("exec", () => {{
-                    {code}
-                }})
-            "#
-        )
-    }
-
-    fn get_test_result(path: &Path) -> String {
-        let output = Command::new("bun")
-            .current_dir(path.parent().unwrap())
-            .args(["test", path.file_name().unwrap().to_string_lossy().as_ref()])
+    fn run_vitest(&self, option: &SnapshotOption) {
+        let version = String::from("node: ")
+            + &String::from_utf8(Command::new("node").arg("--version").output().unwrap().stdout)
+                .unwrap();
+        let output = Command::new("node")
+            .current_dir(conformance_root())
+            .env("NO_COLOR", "1")
+            .args([
+                "--run",
+                "vitest",
+                "--",
+                "run",
+                "--reporter=basic",
+                "--exclude=\"\"",
+                "--no-color",
+                "./fixtures",
+            ])
             .output()
-            .expect("Try install bun: https://bun.sh/docs/installation");
-
-        let content = if output.stderr.is_empty() { &output.stdout } else { &output.stderr };
-        String::from_utf8_lossy(content).to_string()
-    }
-
-    fn run_test(path: &Path) -> bool {
-        Self::get_test_result(path).contains("1 pass")
+            .unwrap();
+        let content = if output.stderr.is_empty() { output.stdout } else { output.stderr };
+        let output = String::from_utf8(content).unwrap();
+        let output = version + &output;
+        self.snapshot.save(&option.dest, &output);
     }
 }

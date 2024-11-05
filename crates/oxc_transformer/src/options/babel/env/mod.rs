@@ -1,11 +1,14 @@
 mod data;
-mod query;
 mod targets;
 
-pub use data::{bugfix_features, features};
-pub use targets::{Targets, Version};
-
 use serde::Deserialize;
+
+pub use self::{
+    data::{bugfix_features, features},
+    targets::BabelTargets,
+};
+
+use crate::options::EngineTargets;
 
 fn default_as_true() -> bool {
     true
@@ -15,7 +18,7 @@ fn default_as_true() -> bool {
 #[serde(default, rename_all = "camelCase", deny_unknown_fields)]
 pub struct BabelEnvOptions {
     #[serde(default)]
-    pub targets: Targets,
+    pub targets: EngineTargets,
 
     #[serde(default = "default_as_true")]
     pub bugfixes: bool,

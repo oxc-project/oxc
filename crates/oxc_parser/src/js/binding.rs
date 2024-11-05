@@ -37,7 +37,7 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_binding_pattern_identifier(&mut self) -> Result<BindingPatternKind<'a>> {
         let ident = self.parse_binding_identifier()?;
-        Ok(self.ast.binding_pattern_kind_from_binding_identifier(ident))
+        Ok(BindingPatternKind::BindingIdentifier(self.alloc(ident)))
     }
 
     /// Section 14.3.3 Object Binding Pattern
@@ -58,7 +58,7 @@ impl<'a> ParserImpl<'a> {
         Ok(self.ast.binding_pattern_kind_object_pattern(
             self.end_span(span),
             list,
-            rest.map(|r| self.ast.alloc(r)),
+            rest.map(|r| self.alloc(r)),
         ))
     }
 
@@ -75,7 +75,7 @@ impl<'a> ParserImpl<'a> {
         Ok(self.ast.binding_pattern_kind_array_pattern(
             self.end_span(span),
             list,
-            rest.map(|r| self.ast.alloc(r)),
+            rest.map(|r| self.alloc(r)),
         ))
     }
 

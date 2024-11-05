@@ -275,7 +275,7 @@ struct ReferencesFinder {
 
 impl<'a> Visit<'a> for ReferencesFinder {
     fn visit_identifier_reference(&mut self, it: &oxc_ast::ast::IdentifierReference<'a>) {
-        self.references.push(it.reference_id().unwrap());
+        self.references.push(it.reference_id());
     }
 
     fn visit_jsx_element_name(&mut self, _it: &oxc_ast::ast::JSXElementName<'a>) {

@@ -6,9 +6,8 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use syn::{parse_str, ItemUse};
 
 use crate::{
-    codegen::LateCtx,
     output::{output_path, Output},
-    schema::TypeDef,
+    schema::{Schema, TypeDef},
     Result,
 };
 
@@ -33,7 +32,7 @@ pub trait Derive {
         Self::trait_name().to_case(Case::Snake)
     }
 
-    fn derive(&mut self, def: &TypeDef, ctx: &LateCtx) -> TokenStream;
+    fn derive(&mut self, def: &TypeDef, schema: &Schema) -> TokenStream;
 
     fn prelude() -> TokenStream {
         TokenStream::default()
@@ -69,14 +68,14 @@ pub trait Derive {
         }
     }
 
-    fn output(&mut self, ctx: &LateCtx) -> Result<Vec<Output>> {
+    fn output(&mut self, schema: &Schema) -> Result<Vec<Output>> {
         let trait_name = Self::trait_name();
         let filename = format!("derive_{}.rs", Self::snake_name());
-        let output = ctx
-            .schema()
-            .into_iter()
+        let output = schema
+            .defs
+            .iter()
             .filter(|def| def.generates_derive(trait_name))
-            .map(|def| (def, self.derive(def, ctx)))
+            .map(|def| (def, self.derive(def, schema)))
             .fold(
                 FxHashMap::<&str, (FxHashSet<&str>, Vec<TokenStream>)>::default(),
                 |mut acc, (def, stream)| {
@@ -119,13 +118,14 @@ macro_rules! define_derive {
     ($ident:ident $($lifetime:lifetime)?) => {
         const _: () = {
             use $crate::{
-                codegen::{LateCtx, Runner},
+                codegen::Runner,
                 output::Output,
+                schema::Schema,
                 Result,
             };
 
             impl $($lifetime)? Runner for $ident $($lifetime)? {
-                type Context = LateCtx;
+                type Context = Schema;
 
                 fn verb(&self) -> &'static str {
                     "Derive"
@@ -139,8 +139,8 @@ macro_rules! define_derive {
                     file!()
                 }
 
-                fn run(&mut self, ctx: &LateCtx) -> Result<Vec<Output>> {
-                    self.output(ctx)
+                fn run(&mut self, schema: &Schema) -> Result<Vec<Output>> {
+                    self.output(schema)
                 }
             }
         };

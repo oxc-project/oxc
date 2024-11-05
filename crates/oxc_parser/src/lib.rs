@@ -85,7 +85,7 @@ mod lexer;
 pub mod lexer;
 
 use context::{Context, StatementContext};
-use oxc_allocator::Allocator;
+use oxc_allocator::{Allocator, Box as ArenaBox};
 use oxc_ast::{
     ast::{Expression, Program},
     AstBuilder,
@@ -534,6 +534,11 @@ impl<'a> ParserImpl<'a> {
         if self.source_type.is_unambiguous() {
             self.source_type = self.source_type.with_script(true);
         }
+    }
+
+    #[inline]
+    fn alloc<T>(&self, value: T) -> ArenaBox<'a, T> {
+        self.ast.alloc(value)
     }
 }
 

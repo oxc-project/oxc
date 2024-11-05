@@ -186,17 +186,14 @@ impl<'a, 'ctx> Traverse<'a> for RegExp<'a, 'ctx> {
                 symbol_id,
                 ReferenceFlags::read(),
             );
-            ctx.ast.expression_from_identifier_reference(ident)
+            Expression::Identifier(ctx.alloc(ident))
         };
 
         let mut arguments = ctx.ast.vec_with_capacity(2);
-        arguments.push(
-            ctx.ast.argument_expression(ctx.ast.expression_string_literal(SPAN, pattern_source)),
-        );
+        arguments.push(Argument::from(ctx.ast.expression_string_literal(SPAN, pattern_source)));
 
         let flags_str = flags.to_string();
-        let flags_str =
-            ctx.ast.argument_expression(ctx.ast.expression_string_literal(SPAN, flags_str));
+        let flags_str = Argument::from(ctx.ast.expression_string_literal(SPAN, flags_str));
         arguments.push(flags_str);
 
         *expr = ctx.ast.expression_new(regexp.span, callee, arguments, NONE);

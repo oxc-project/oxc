@@ -336,12 +336,17 @@ impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
                 let items = ctx.ast.vec1(ctx.ast.plain_formal_parameter(SPAN, pattern));
                 ctx.ast.formal_parameters(SPAN, FormalParameterKind::FormalParameter, items, NONE)
             };
-            let function =
-                ctx.ast.plain_function(FunctionType::FunctionExpression, SPAN, None, params, body);
-            function.scope_id.set(Some(scope_id));
+            let function_expr =
+                Expression::FunctionExpression(ctx.ast.alloc_plain_function_with_scope_id(
+                    FunctionType::FunctionExpression,
+                    SPAN,
+                    None,
+                    params,
+                    body,
+                    scope_id,
+                ));
             *ctx.scopes_mut().get_flags_mut(scope_id) =
                 ScopeFlags::Function | ScopeFlags::StrictMode;
-            let function_expr = ctx.ast.expression_from_function(function);
             ctx.ast.expression_parenthesized(SPAN, function_expr)
         };
 
@@ -358,27 +363,24 @@ impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
                 // SAFETY: `ast.copy` is unsound! We need to fix.
                 let parent_export = unsafe { ctx.ast.copy(&parent_export) };
                 let assign_left = if let Some(parent_export) = parent_export {
-                    ctx.ast.simple_assignment_target_member_expression(
-                        ctx.ast.member_expression_static(
-                            SPAN,
-                            parent_export,
-                            ctx.ast.identifier_name(SPAN, real_name.clone()),
-                            false,
-                        ),
-                    )
+                    AssignmentTarget::from(ctx.ast.member_expression_static(
+                        SPAN,
+                        parent_export,
+                        ctx.ast.identifier_name(SPAN, real_name.clone()),
+                        false,
+                    ))
                 } else {
                     // _N
-                    ctx.ast.simple_assignment_target_identifier_reference(SPAN, real_name.clone())
+                    AssignmentTarget::from(
+                        ctx.ast
+                            .simple_assignment_target_identifier_reference(SPAN, real_name.clone()),
+                    )
                 };
 
                 let assign_right = ctx.ast.expression_object(SPAN, ctx.ast.vec(), None);
                 let op = AssignmentOperator::Assign;
-                let assign_expr = ctx.ast.expression_assignment(
-                    SPAN,
-                    op,
-                    ctx.ast.assignment_target_simple(assign_left),
-                    assign_right,
-                );
+                let assign_expr =
+                    ctx.ast.expression_assignment(SPAN, op, assign_left, assign_right);
                 ctx.ast.expression_parenthesized(SPAN, assign_expr)
             };
 
@@ -399,9 +401,9 @@ impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
                 logical_right = ctx.ast.expression_parenthesized(SPAN, logical_right);
             }
 
-            let op = LogicalOperator::Or;
-            let expr = ctx.ast.expression_logical(SPAN, logical_left, op, logical_right);
-            ctx.ast.vec1(ctx.ast.argument_expression(expr))
+            let expr =
+                ctx.ast.expression_logical(SPAN, logical_left, LogicalOperator::Or, logical_right);
+            ctx.ast.vec1(Argument::from(expr))
         };
 
         let expr = ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);
@@ -467,16 +469,13 @@ impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
                         ctx.ast.expression_assignment(
                             SPAN,
                             AssignmentOperator::Assign,
-                            ctx.ast
-                                .simple_assignment_target_member_expression(
-                                    ctx.ast.member_expression_static(
-                                        SPAN,
-                                        ctx.ast.expression_identifier_reference(SPAN, &name),
-                                        ctx.ast.identifier_name(SPAN, property_name),
-                                        false,
-                                    ),
-                                )
-                                .into(),
+                            SimpleAssignmentTarget::from(ctx.ast.member_expression_static(
+                                SPAN,
+                                ctx.ast.expression_identifier_reference(SPAN, &name),
+                                ctx.ast.identifier_name(SPAN, property_name),
+                                false,
+                            ))
+                            .into(),
                             ctx.ast.move_expression(init),
                         ),
                     );

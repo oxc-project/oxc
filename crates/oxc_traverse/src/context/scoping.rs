@@ -347,10 +347,8 @@ impl TraverseScoping {
     }
 
     /// Delete reference for an `IdentifierReference`.
-    #[allow(clippy::missing_panics_doc)]
     pub fn delete_reference_for_identifier(&mut self, ident: &IdentifierReference) {
-        // `unwrap` should never panic as `IdentifierReference`s should always have a `ReferenceId`
-        self.delete_reference(ident.reference_id().unwrap(), &ident.name);
+        self.delete_reference(ident.reference_id(), &ident.name);
     }
 
     /// Determine whether evaluating the specific input `node` is a consequenceless reference.
@@ -371,13 +369,13 @@ impl TraverseScoping {
     pub fn is_static(&self, expr: &Expression) -> bool {
         match expr {
             Expression::ThisExpression(_) | Expression::Super(_) => true,
-            Expression::Identifier(ident) => self
-                .symbols
-                .get_reference(ident.reference_id.get().unwrap())
-                .symbol_id()
-                .is_some_and(|symbol_id| {
-                    self.symbols.get_resolved_references(symbol_id).all(|r| !r.is_write())
-                }),
+            Expression::Identifier(ident) => {
+                self.symbols.get_reference(ident.reference_id()).symbol_id().is_some_and(
+                    |symbol_id| {
+                        self.symbols.get_resolved_references(symbol_id).all(|r| !r.is_write())
+                    },
+                )
+            }
             _ => false,
         }
     }

@@ -3,8 +3,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 
 use crate::{
-    codegen::LateCtx,
-    schema::{EnumDef, GetGenerics, StructDef, ToType, TypeDef},
+    schema::{EnumDef, GetGenerics, Schema, StructDef, ToType, TypeDef},
     util::ToIdent,
 };
 
@@ -26,7 +25,7 @@ impl Derive for DeriveContentHash {
         "ContentHash"
     }
 
-    fn derive(&mut self, def: &TypeDef, _: &LateCtx) -> TokenStream {
+    fn derive(&mut self, def: &TypeDef, _: &Schema) -> TokenStream {
         let (hasher, body) = match &def {
             TypeDef::Enum(it) => derive_enum(it),
             TypeDef::Struct(it) => derive_struct(it),

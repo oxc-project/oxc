@@ -2,6 +2,8 @@ import { promises as fsPromises } from 'node:fs';
 
 import { commands, ExtensionContext, StatusBarAlignment, StatusBarItem, ThemeColor, window, workspace } from 'vscode';
 
+import { MessageType, ShowMessageNotification } from 'vscode-languageclient';
+
 import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
 
 import { join } from 'node:path';
@@ -171,6 +173,25 @@ export async function activate(context: ExtensionContext) {
     serverOptions,
     clientOptions,
   );
+  client.onNotification(ShowMessageNotification.type, (params) => {
+    switch (params.type) {
+      case MessageType.Log:
+      case MessageType.Debug:
+        outputChannel.appendLine(params.message);
+        break;
+      case MessageType.Info:
+        window.showInformationMessage(params.message);
+        break;
+      case MessageType.Warning:
+        window.showWarningMessage(params.message);
+        break;
+      case MessageType.Error:
+        window.showErrorMessage(params.message);
+        break;
+      default:
+        outputChannel.appendLine(params.message);
+    }
+  });
 
   workspace.onDidDeleteFiles((event) => {
     event.files.forEach((fileUri) => {
