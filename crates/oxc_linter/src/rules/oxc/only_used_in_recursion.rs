@@ -453,7 +453,7 @@ fn get_jsx_element_symbol_id<'a>(
         | JSXElementName::ThisExpression(_) => None,
     }?;
 
-    node.reference_id().and_then(|id| ctx.symbols().get_reference(id).symbol_id())
+    ctx.symbols().get_reference(node.reference_id()).symbol_id()
 }
 
 enum Direction {
