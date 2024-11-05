@@ -55,8 +55,8 @@ pub use crate::{
     es2015::{ArrowFunctionsOptions, ES2015Options},
     jsx::{JsxOptions, JsxRuntime, ReactRefreshOptions},
     options::{
-        babel::{BabelEnvOptions, BabelOptions, Targets},
-        ESTarget, EnvOptions, TransformOptions,
+        babel::{BabelEnvOptions, BabelOptions},
+        ESTarget, EngineTargets, EnvOptions, TransformOptions,
     },
     plugins::*,
     typescript::{RewriteExtensionsMode, TypeScriptOptions},

@@ -1,4 +1,5 @@
 pub mod babel;
+mod engine_targets;
 mod env;
 
 use std::path::PathBuf;
@@ -22,9 +23,12 @@ use crate::{
     ReactRefreshOptions,
 };
 
-pub use env::{ESTarget, EnvOptions};
+pub use self::{
+    engine_targets::EngineTargets,
+    env::{ESTarget, EnvOptions},
+};
 
-use babel::BabelOptions;
+use self::babel::BabelOptions;
 
 /// <https://babel.dev/docs/options>
 #[derive(Debug, Default, Clone)]

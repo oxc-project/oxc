@@ -5,7 +5,7 @@ use serde::Deserialize;
 
 use oxc_diagnostics::{Error, OxcDiagnostic};
 
-use super::Targets;
+use super::EngineTargets;
 
 #[derive(Debug, Clone, Deserialize, Eq, PartialEq, PartialOrd, Ord, Hash)]
 #[serde(untagged)]
@@ -14,13 +14,13 @@ pub enum Query {
     Multiple(Vec<String>),
 }
 
-fn cache() -> &'static DashMap<Query, Targets> {
-    static CACHE: OnceLock<DashMap<Query, Targets>> = OnceLock::new();
+fn cache() -> &'static DashMap<Query, EngineTargets> {
+    static CACHE: OnceLock<DashMap<Query, EngineTargets>> = OnceLock::new();
     CACHE.get_or_init(DashMap::new)
 }
 
 impl Query {
-    pub fn exec(&self) -> Result<Targets, Error> {
+    pub fn exec(&self) -> Result<EngineTargets, Error> {
         if let Some(v) = cache().get(self) {
             return Ok(v.clone());
         }
@@ -48,7 +48,7 @@ impl Query {
                     .into_iter()
                     .map(|d| (d.name().to_string(), d.version().to_string()))
                     .collect::<Vec<_>>();
-                Targets::parse_versions(versions)
+                EngineTargets::parse_versions(versions)
             }
             Err(err) => {
                 return Err(OxcDiagnostic::error(format!("failed to resolve query: {err}")).into())

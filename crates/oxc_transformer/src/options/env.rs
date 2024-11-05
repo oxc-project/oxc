@@ -14,7 +14,7 @@ use crate::{
     es2021::ES2021Options,
     es2022::{ClassPropertiesOptions, ES2022Options},
     regexp::RegExpOptions,
-    Targets,
+    EngineTargets,
 };
 
 use super::babel::BabelEnvOptions;
@@ -139,7 +139,7 @@ impl EnvOptions {
     /// * When the query failed to parse.
     pub fn from_browserslist_query(query: &str) -> Result<Self, Error> {
         Self::try_from(BabelEnvOptions {
-            targets: Targets::try_from_query(query)?,
+            targets: EngineTargets::try_from_query(query)?,
             // This option will be enabled by default in Babel 8.
             // <https://babel.dev/docs/babel-preset-env#bugfixes>
             bugfixes: true,
