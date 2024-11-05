@@ -3,7 +3,7 @@ mod query;
 mod targets;
 
 pub use data::{bugfix_features, features};
-pub use targets::{Targets, Version};
+pub use targets::Targets;
 
 use serde::Deserialize;
 

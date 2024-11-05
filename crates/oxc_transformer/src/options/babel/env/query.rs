@@ -1,5 +1,3 @@
-//! Module for `browserslist` queries.
-
 use std::sync::OnceLock;
 
 use dashmap::DashMap;
@@ -16,15 +14,13 @@ pub enum Query {
     Multiple(Vec<String>),
 }
 
-type QueryResult = Result<Targets, Error>;
-
 fn cache() -> &'static DashMap<Query, Targets> {
     static CACHE: OnceLock<DashMap<Query, Targets>> = OnceLock::new();
     CACHE.get_or_init(DashMap::new)
 }
 
 impl Query {
-    pub fn exec(&self) -> QueryResult {
+    pub fn exec(&self) -> Result<Targets, Error> {
         if let Some(v) = cache().get(self) {
             return Ok(v.clone());
         }
@@ -47,7 +43,13 @@ impl Query {
         };
 
         let result = match result {
-            Ok(distribs) => Targets::parse_versions(distribs),
+            Ok(distribs) => {
+                let versions = distribs
+                    .into_iter()
+                    .map(|d| (d.name().to_string(), d.version().to_string()))
+                    .collect::<Vec<_>>();
+                Targets::parse_versions(versions)
+            }
             Err(err) => {
                 return Err(OxcDiagnostic::error(format!("failed to resolve query: {err}")).into())
             }
