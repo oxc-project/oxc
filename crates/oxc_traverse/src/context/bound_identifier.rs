@@ -50,9 +50,8 @@ impl<'a> BoundIdentifier<'a> {
     }
 
     /// Create `BoundIdentifier` from a `BindingIdentifier`
-    #[expect(clippy::missing_panics_doc)]
     pub fn from_binding_ident(ident: &BindingIdentifier<'a>) -> Self {
-        Self { name: ident.name.clone(), symbol_id: ident.symbol_id.get().unwrap() }
+        Self { name: ident.name.clone(), symbol_id: ident.symbol_id() }
     }
 
     /// Create `BindingIdentifier` for this binding
