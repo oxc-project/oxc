@@ -60,12 +60,9 @@ impl TryFrom<BabelTargets> for EngineTargets {
                     if key == "safari" && v == "tp" {
                         continue;
                     }
-                    // TODO: Some keys are not implemented yet.
-                    // <https://babel.dev/docs/options#targets>:
-                    // Supported environments: android, chrome, deno, edge, electron, firefox, ie, ios, node, opera, rhino, safari, samsung.
-                    let Ok(target) = targets.get_version_mut(&key) else {
-                        continue;
-                    };
+                    let target = targets.get_version_mut(&key).map_err(|()| {
+                        oxc_diagnostics::Error::msg(format!("target {key} is not implemented yet."))
+                    })?;
                     match Version::parse(&v) {
                         Ok(version) => {
                             target.replace(version);
