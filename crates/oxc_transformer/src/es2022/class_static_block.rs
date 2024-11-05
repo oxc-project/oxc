@@ -138,7 +138,7 @@ impl ClassStaticBlock {
         block: &mut StaticBlock<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let scope_id = block.scope_id.get().unwrap();
+        let scope_id = block.scope_id();
 
         // If block contains only a single `ExpressionStatement`, no need to wrap in an IIFE.
         // `static { foo }` -> `foo`

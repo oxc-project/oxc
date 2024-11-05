@@ -378,6 +378,10 @@ impl<'a> ArrowFunctionConverter<'a> {
         arrow_function_expr: ArrowFunctionExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
+        let scope_id = arrow_function_expr.scope_id();
+        let flags = ctx.scopes_mut().get_flags_mut(scope_id);
+        *flags &= !ScopeFlags::Arrow;
+
         let mut body = arrow_function_expr.body;
 
         if arrow_function_expr.expression {
@@ -388,10 +392,6 @@ impl<'a> ArrowFunctionConverter<'a> {
             let return_statement = ctx.ast.statement_return(stmt.span, Some(stmt.expression));
             body.statements.push(return_statement);
         }
-
-        let scope_id = arrow_function_expr.scope_id.get().unwrap();
-        let flags = ctx.scopes_mut().get_flags_mut(scope_id);
-        *flags &= !ScopeFlags::Arrow;
 
         Expression::FunctionExpression(ctx.ast.alloc_function_with_scope_id(
             FunctionType::FunctionExpression,

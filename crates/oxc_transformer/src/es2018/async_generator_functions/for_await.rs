@@ -58,7 +58,7 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
                 if block.body.is_empty() {
                     // If the block is empty, we don’t need to add it to the body;
                     // instead, we need to remove the useless scope.
-                    ctx.scopes_mut().delete_scope(block.scope_id.get().unwrap());
+                    ctx.scopes_mut().delete_scope(block.scope_id());
                 } else {
                     statements.push(ctx.ast.move_statement(stmt_body));
                 }
@@ -71,7 +71,7 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
             ctx.ast.move_expression(&mut stmt.right),
             &step_key,
             body,
-            stmt.scope_id.get().unwrap(),
+            stmt.scope_id(),
             ctx,
         )
     }

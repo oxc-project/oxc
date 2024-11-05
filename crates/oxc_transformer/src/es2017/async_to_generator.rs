@@ -254,7 +254,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
             // so we need to move the id to the new scope.
             if let Some(id) = id.as_ref() {
                 Self::move_binding_identifier_to_target_scope(wrapper_scope_id, id, ctx);
-                let symbol_id = id.symbol_id.get().unwrap();
+                let symbol_id = id.symbol_id();
                 *ctx.symbols_mut().get_flags_mut(symbol_id) = SymbolFlags::FunctionScopedVariable;
             }
             (scope_id, wrapper_scope_id)
@@ -291,7 +291,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
                 let reference = ctx.create_bound_reference_id(
                     SPAN,
                     id.name.clone(),
-                    id.symbol_id.get().unwrap(),
+                    id.symbol_id(),
                     ReferenceFlags::Read,
                 );
                 let statement = Statement::FunctionDeclaration(caller_function);
@@ -403,7 +403,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         }
 
         let params = ctx.alloc(ctx.ast.move_formal_parameters(&mut arrow.params));
-        let generator_function_id = arrow.scope_id.get().unwrap();
+        let generator_function_id = arrow.scope_id();
         ctx.scopes_mut().get_flags_mut(generator_function_id).remove(ScopeFlags::Arrow);
         let function_name = Self::get_function_name_from_parent_variable_declarator(ctx);
 
@@ -727,7 +727,7 @@ impl<'a, 'ctx> Visit<'a> for BindingMover<'a, 'ctx> {
     /// Visits a binding identifier and moves it to the target scope.
     fn visit_binding_identifier(&mut self, ident: &BindingIdentifier<'a>) {
         let symbols = self.ctx.symbols();
-        let symbol_id = ident.symbol_id.get().unwrap();
+        let symbol_id = ident.symbol_id();
         let current_scope_id = symbols.get_scope_id(symbol_id);
         let scopes = self.ctx.scopes_mut();
         scopes.move_binding(current_scope_id, self.target_scope_id, ident.name.as_str());

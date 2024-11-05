@@ -93,8 +93,7 @@ impl<'a, 'ctx> TypeScriptModule<'a, 'ctx> {
         match type_name {
             TSTypeName::IdentifierReference(ident) => {
                 let ident = ident.clone();
-                let reference_id = ident.reference_id.get().unwrap();
-                let reference = ctx.symbols_mut().get_reference_mut(reference_id);
+                let reference = ctx.symbols_mut().get_reference_mut(ident.reference_id());
                 *reference.flags_mut() = ReferenceFlags::Read;
                 Expression::Identifier(ctx.alloc(ident))
             }

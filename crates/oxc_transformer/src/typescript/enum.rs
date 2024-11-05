@@ -75,7 +75,7 @@ impl<'a> TypeScriptEnum<'a> {
         let is_not_top_scope = !ctx.scopes().get_flags(ctx.current_scope_id()).is_top();
 
         let enum_name = decl.id.name.clone();
-        let func_scope_id = decl.scope_id.get().unwrap();
+        let func_scope_id = decl.scope_id();
         let param_binding = ctx.generate_binding(
             enum_name.clone(),
             func_scope_id,
@@ -114,7 +114,7 @@ impl<'a> TypeScriptEnum<'a> {
             func_scope_id,
         ));
 
-        let var_symbol_id = decl.id.symbol_id.get().unwrap();
+        let var_symbol_id = decl.id.symbol_id();
         let arguments = if (is_export || is_not_top_scope) && !is_already_declared {
             // }({});
             let object_expr = ast.expression_object(SPAN, ast.vec(), None);

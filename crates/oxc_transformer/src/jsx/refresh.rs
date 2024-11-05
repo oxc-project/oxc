@@ -186,16 +186,13 @@ impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let signature = match expr {
             Expression::FunctionExpression(func) => self.create_signature_call_expression(
-                func.scope_id.get().unwrap(),
+                func.scope_id(),
                 func.body.as_mut().unwrap(),
                 ctx,
             ),
             Expression::ArrowFunctionExpression(arrow) => {
-                let call_fn = self.create_signature_call_expression(
-                    arrow.scope_id.get().unwrap(),
-                    &mut arrow.body,
-                    ctx,
-                );
+                let call_fn =
+                    self.create_signature_call_expression(arrow.scope_id(), &mut arrow.body, ctx);
 
                 // If the signature is found, we will push a new statement to the arrow function body. So it's not an expression anymore.
                 if call_fn.is_some() {
@@ -263,7 +260,7 @@ impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
         }
 
         let Some((binding_identifier, mut arguments)) = self.create_signature_call_expression(
-            func.scope_id.get().unwrap(),
+            func.scope_id(),
             func.body.as_mut().unwrap(),
             ctx,
         ) else {
@@ -502,7 +499,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
         let right = ctx.create_bound_reference_id(
             SPAN,
             id.name.clone(),
-            id.symbol_id.get().unwrap(),
+            id.symbol_id(),
             ReferenceFlags::Read,
         );
         let right = Expression::Identifier(ctx.alloc(right));
@@ -724,7 +721,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
         let declarator = decl.declarations.first_mut().unwrap_or_else(|| unreachable!());
         let init = declarator.init.as_mut()?;
         let id = declarator.id.get_binding_identifier()?;
-        let symbol_id = id.symbol_id.get().unwrap();
+        let symbol_id = id.symbol_id();
 
         if !is_componentish_name(&id.name) {
             return None;
