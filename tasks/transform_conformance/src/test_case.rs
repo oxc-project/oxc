@@ -18,7 +18,7 @@ use oxc_tasks_common::{normalize_path, print_diff_in_terminal, project_root};
 use crate::{
     constants::{PLUGINS_NOT_SUPPORTED_YET, SKIP_TESTS},
     driver::Driver,
-    fixture_root, oxc_test_root, packages_root, TestRunnerEnv,
+    fixture_root, oxc_test_root, packages_root,
 };
 
 #[derive(Debug)]
@@ -381,13 +381,7 @@ pub struct ExecTestCase {
 }
 
 impl ExecTestCase {
-    fn run_test(path: &Path) -> bool {
-        TestRunnerEnv::run_test(path)
-    }
-
-    fn write_to_test_files(&self, content: &str) -> PathBuf {
-        let allocator = Allocator::default();
-
+    fn write_to_test_files(&self, content: &str) {
         let unprefixed_path = self
             .path
             .strip_prefix(packages_root())
@@ -398,17 +392,33 @@ impl ExecTestCase {
 
         let mut target_path = fixture_root().join(new_file_name);
         target_path.set_extension("test.js");
-        let content = TestRunnerEnv::template(content);
+        let content = Self::template(content);
         fs::write(&target_path, content).unwrap();
-        let source_text = fs::read_to_string(&target_path).unwrap();
-        let source_type = SourceType::from_path(&target_path).unwrap();
-        let transformed_ret = Parser::new(&allocator, &source_text, source_type).parse();
-        let result = CodeGenerator::new()
-            .with_options(CodegenOptions { comments: false, ..CodegenOptions::default() })
-            .build(&transformed_ret.program)
-            .code;
-        fs::write(&target_path, result).unwrap();
-        target_path
+    }
+
+    fn template(code: &str) -> String {
+        // Move all the import statements to top level.
+        let mut codes = vec![];
+        let mut imports = vec![];
+
+        for line in code.lines() {
+            if line.trim_start().starts_with("import ") {
+                imports.push(line);
+            } else {
+                codes.push(String::from("\t") + line);
+            }
+        }
+
+        let code = codes.join("\n");
+        let imports = imports.join("\n");
+
+        format!(
+            r#"import {{expect, test}} from 'vitest';
+{imports}
+test("exec", () => {{
+{code}
+}})"#
+        )
     }
 }
 
@@ -451,17 +461,7 @@ impl TestCase for ExecTestCase {
                 return;
             }
         };
-        let target_path = self.write_to_test_files(&result);
-        let passed = Self::run_test(&target_path);
-
-        if filtered {
-            println!("Transformed:\n{result}\n");
-            println!("Test Result:\n{}\n", TestRunnerEnv::get_test_result(&target_path));
-        }
-
-        if !passed {
-            self.errors.push(OxcDiagnostic::error("exec failed"));
-        }
+        self.write_to_test_files(&result);
     }
 }
 
