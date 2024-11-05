@@ -970,10 +970,10 @@ impl<'a> Function<'a> {
 
     /// Get the [`SymbolId`] this [`Function`] is bound to.
     ///
-    /// Returns [`None`] for anonymous functions, or if semantic analysis was skipped.
+    /// Returns [`None`] for anonymous functions.
     #[inline]
     pub fn symbol_id(&self) -> Option<SymbolId> {
-        self.id.as_ref().and_then(|id| id.symbol_id.get())
+        self.id.as_ref().map(BindingIdentifier::symbol_id)
     }
 
     /// `true` for overload signatures and `declare function` statements.
