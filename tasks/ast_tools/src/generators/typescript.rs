@@ -101,17 +101,23 @@ fn typescript_struct(def: &StructDef, always_flatten_structs: &FxHashSet<TypeId>
 
     let extends_union = extends.iter().any(|it| it.contains('|'));
 
+    let body = if let Some(extra_ts) = def.markers.estree.as_ref().and_then(|e| e.add_ts.as_ref()) {
+        format!("{{{fields}\n\t{extra_ts}\n}}")
+    } else {
+        format!("{{{fields}\n}}")
+    };
+
     if extends_union {
         let extends =
             if extends.is_empty() { String::new() } else { format!(" & {}", extends.join(" & ")) };
-        format!("export type {ident} = ({{{fields}\n}}){extends};")
+        format!("export type {ident} = ({body}){extends};")
     } else {
         let extends = if extends.is_empty() {
             String::new()
         } else {
             format!(" extends {}", extends.join(", "))
         };
-        format!("export interface {ident}{extends} {{{fields}\n}}")
+        format!("export interface {ident}{extends} {body}")
     }
 }
 

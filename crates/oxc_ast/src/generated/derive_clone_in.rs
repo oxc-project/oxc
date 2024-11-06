@@ -60,8 +60,8 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for RegExpLiteral<'old_alloc> {
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         RegExpLiteral {
             span: CloneIn::clone_in(&self.span, allocator),
-            value: CloneIn::clone_in(&self.value, allocator),
             regex: CloneIn::clone_in(&self.regex, allocator),
+            raw: CloneIn::clone_in(&self.raw, allocator),
         }
     }
 }
@@ -84,13 +84,6 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for RegExpPattern<'old_alloc> {
             Self::Invalid(it) => RegExpPattern::Invalid(CloneIn::clone_in(it, allocator)),
             Self::Pattern(it) => RegExpPattern::Pattern(CloneIn::clone_in(it, allocator)),
         }
-    }
-}
-
-impl<'alloc> CloneIn<'alloc> for EmptyObject {
-    type Cloned = EmptyObject;
-    fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
-        EmptyObject
     }
 }
 

@@ -2,29 +2,35 @@
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/typescript.rs`
 
 export interface BooleanLiteral extends Span {
-  type: 'BooleanLiteral';
+  type: 'Literal';
   value: boolean;
+  raw: string;
 }
 
 export interface NullLiteral extends Span {
-  type: 'NullLiteral';
+  type: 'Literal';
+  value: null;
+  raw: 'null';
 }
 
 export interface NumericLiteral extends Span {
-  type: 'NumericLiteral';
+  type: 'Literal';
   value: number;
   raw: string;
 }
 
 export interface BigIntLiteral extends Span {
-  type: 'BigIntLiteral';
+  type: 'Literal';
   raw: string;
+  value: null;
+  bigint: string;
 }
 
 export interface RegExpLiteral extends Span {
-  type: 'RegExpLiteral';
-  value: EmptyObject;
-  regex: RegExp;
+  type: 'Literal';
+  raw: string;
+  value: {} | null;
+  regex: { pattern: string; flags: string };
 }
 
 export interface RegExp {
@@ -33,9 +39,6 @@ export interface RegExp {
 }
 
 export type RegExpPattern = string | string | Pattern;
-
-export interface EmptyObject {
-}
 
 export interface StringLiteral extends Span {
   type: 'StringLiteral';

@@ -44,8 +44,8 @@ impl<'a> ContentEq for BigIntLiteral<'a> {
 
 impl<'a> ContentEq for RegExpLiteral<'a> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.value, &other.value)
-            && ContentEq::content_eq(&self.regex, &other.regex)
+        ContentEq::content_eq(&self.regex, &other.regex)
+            && ContentEq::content_eq(&self.raw, &other.raw)
     }
 }
 
@@ -72,12 +72,6 @@ impl<'a> ContentEq for RegExpPattern<'a> {
                 _ => false,
             },
         }
-    }
-}
-
-impl ContentEq for EmptyObject {
-    fn content_eq(&self, _: &Self) -> bool {
-        true
     }
 }
 

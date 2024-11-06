@@ -66,6 +66,13 @@ impl Derive for DeriveESTree {
 }
 
 fn serialize_struct(def: &StructDef, schema: &Schema) -> TokenStream {
+    if let Some(via) = &def.markers.estree.as_ref().and_then(|e| e.via.as_ref()) {
+        let via: TokenStream = via.parse().unwrap();
+        return quote! {
+            #via::from(self).serialize(serializer)
+        };
+    }
+
     let ident = def.ident();
     // If type_tag is Some, we serialize it manually. If None, either one of
     // the fields is named r#type, or the struct does not need a "type" field.

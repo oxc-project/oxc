@@ -1,4 +1,5 @@
 use proc_macro2::TokenStream;
+use quote::ToTokens;
 use serde::Serialize;
 use syn::{
     ext::IdentExt,
@@ -7,7 +8,7 @@ use syn::{
     parse2,
     punctuated::{self, Punctuated},
     spanned::Spanned,
-    token, Attribute, Expr, Ident, LitStr, Meta, MetaNameValue, Token,
+    token, Attribute, Expr, Ident, LitStr, Meta, MetaNameValue, Path, Token,
 };
 
 use crate::util::NormalizeError;
@@ -99,6 +100,8 @@ impl From<&Ident> for CloneInAttribute {
 pub struct ESTreeStructAttribute {
     pub tag_mode: Option<ESTreeStructTagMode>,
     pub always_flatten: bool,
+    pub via: Option<String>,
+    pub add_ts: Option<String>,
 }
 
 #[derive(Debug, Serialize, PartialEq, Eq)]
@@ -112,6 +115,8 @@ impl Parse for ESTreeStructAttribute {
     fn parse(input: ParseStream) -> Result<Self, syn::Error> {
         let mut tag_mode = None;
         let mut always_flatten = false;
+        let mut via = None;
+        let mut add_ts = None;
 
         loop {
             let is_type = input.peek(Token![type]);
@@ -149,6 +154,16 @@ impl Parse for ESTreeStructAttribute {
                         "Duplicate tag mode in #[estree(...)]"
                     );
                 }
+                "via" => {
+                    input.parse::<Token![=]>()?;
+                    let value = input.parse::<Path>()?.to_token_stream().to_string();
+                    assert!(via.replace(value).is_none(), "Duplicate estree(via)");
+                }
+                "add_ts" => {
+                    input.parse::<Token![=]>()?;
+                    let value = input.parse::<LitStr>()?.value();
+                    assert!(add_ts.replace(value).is_none(), "Duplicate estree(add_ts)");
+                }
                 arg => panic!("Unsupported #[estree(...)] argument: {arg}"),
             }
             let comma = input.peek(Token![,]);
@@ -158,7 +173,7 @@ impl Parse for ESTreeStructAttribute {
                 break;
             }
         }
-        Ok(Self { tag_mode, always_flatten })
+        Ok(Self { tag_mode, always_flatten, via, add_ts })
     }
 }
 

@@ -350,6 +350,7 @@ impl<'a> ParserImpl<'a> {
         let pattern_text = &self.source_text[pattern_start as usize..pattern_end as usize];
         let flags_start = pattern_end + 1; // +1 to include right `/`
         let flags_text = &self.source_text[flags_start as usize..self.cur_token().end as usize];
+        let raw = self.cur_src();
         self.bump_any();
         // Parse pattern if options is enabled and also flags are valid
         let pattern = (self.options.parse_regular_expression && !flags_error)
@@ -363,7 +364,7 @@ impl<'a> ParserImpl<'a> {
                     pat.map_or_else(|| RegExpPattern::Invalid(pattern_text), RegExpPattern::Pattern)
                 },
             );
-        Ok(self.ast.reg_exp_literal(self.end_span(span), EmptyObject, RegExp { pattern, flags }))
+        Ok(self.ast.reg_exp_literal(self.end_span(span), RegExp { pattern, flags }, raw))
     }
 
     fn parse_regex_pattern(

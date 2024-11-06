@@ -1470,7 +1470,9 @@ name = "oxc_ast"
 version = "0.35.0"
 dependencies = [
  "bitflags 2.6.0",
+ "cow-utils",
  "num-bigint",
+ "num-traits",
  "oxc_allocator",
  "oxc_ast_macros",
  "oxc_estree",
