@@ -386,14 +386,14 @@ impl<'a> ArrowFunctionConverter<'a> {
                         None
                     } else {
                         Some(func.scope_id().get().unwrap())
-                    }
+                    };
                 }
                 Ancestor::ArrowFunctionExpressionBody(func) => {
                     return if self.is_async_only() && !*func.r#async() {
                         None
                     } else {
                         Some(func.scope_id().get().unwrap())
-                    }
+                    };
                 }
                 // Function body
                 Ancestor::FunctionBody(func) => {
@@ -405,7 +405,7 @@ impl<'a> ArrowFunctionConverter<'a> {
                         Some(func.scope_id().get().unwrap())
                     } else {
                         None
-                    }
+                    };
                 }
                 _ => {}
             }
