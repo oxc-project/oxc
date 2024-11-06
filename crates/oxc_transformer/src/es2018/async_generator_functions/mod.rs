@@ -177,7 +177,6 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
     }
 
     /// Transform `yield * argument` expression to `yield asyncGeneratorDelegate(asyncIterator(argument))`.
-    #[allow(clippy::unused_self)]
     fn transform_yield_expression(
         &self,
         expr: &mut YieldExpression<'a>,
@@ -199,7 +198,6 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
 
     /// Transforms `await expr` expression to `yield awaitAsyncGenerator(expr)`.
     /// Ignores top-level await expression.
-    #[allow(clippy::unused_self)]
     fn transform_await_expression(
         &self,
         expr: &mut AwaitExpression<'a>,
