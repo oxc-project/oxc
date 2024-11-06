@@ -226,7 +226,7 @@ pub fn has_pure_notation(span: Span, ctx: &LintContext) -> bool {
     let Some(comment) = ctx.semantic().comments_range(..span.start).next_back() else {
         return false;
     };
-    let raw = comment.content_span().source_text(ctx.source_text());
+    let raw = ctx.source_range(comment.content_span());
     raw.contains("@__PURE__") || raw.contains("#__PURE__")
 }
 

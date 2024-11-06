@@ -36,7 +36,7 @@ impl Rule for BanTslintComment {
         let comments = ctx.semantic().comments();
         let source_text_len = ctx.semantic().source_text().len();
         for comment in comments {
-            let raw = comment.content_span().source_text(ctx.source_text());
+            let raw = ctx.source_range(comment.content_span());
             if is_tslint_comment_directive(raw) {
                 let comment_span = get_full_comment(source_text_len, comment.span);
                 ctx.diagnostic_with_fix(

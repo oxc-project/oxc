@@ -51,7 +51,7 @@ impl Rule for PreferTsExpectError {
         let comments = ctx.semantic().comments();
 
         for comment in comments {
-            let raw = comment.content_span().source_text(ctx.source_text());
+            let raw = ctx.source_range(comment.content_span());
 
             if !is_valid_ts_ignore_present(*comment, raw) {
                 continue;

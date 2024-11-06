@@ -382,7 +382,7 @@ impl NoFallthrough {
         let is_fallthrough_comment_in_range = |range: Range<u32>| {
             let comment = semantic
                 .comments_range(range)
-                .map(|comment| comment.content_span().source_text(semantic.source_text()))
+                .map(|comment| ctx.source_range(comment.content_span()))
                 .last()
                 .map(str::trim);
 
