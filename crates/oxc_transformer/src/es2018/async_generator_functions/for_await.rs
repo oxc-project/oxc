@@ -1,6 +1,6 @@
 //! This module is responsible for transforming `for await` to `for` statement
 
-use oxc_allocator::Vec;
+use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::{ast::*, NONE};
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::SPAN;
@@ -95,7 +95,7 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
         stmt: &mut ForOfStatement<'a>,
         parent_scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Vec<'a, Statement<'a>> {
+    ) -> ArenaVec<'a, Statement<'a>> {
         let step_key =
             ctx.generate_uid("step", ctx.current_scope_id(), SymbolFlags::FunctionScopedVariable);
         // step.value
@@ -192,11 +192,11 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
     fn build_for_await(
         iterator: Expression<'a>,
         step_key: &BoundIdentifier<'a>,
-        body: Vec<'a, Statement<'a>>,
+        body: ArenaVec<'a, Statement<'a>>,
         for_of_scope_id: ScopeId,
         parent_scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Vec<'a, Statement<'a>> {
+    ) -> ArenaVec<'a, Statement<'a>> {
         let var_scope_id = ctx.current_scope_id();
 
         let iterator_had_error_key =
