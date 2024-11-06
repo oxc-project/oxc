@@ -146,6 +146,7 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
         if let Some(this_var) = self.this_var_stack.take_last() {
             self.insert_this_var_statement_at_the_top_of_statements(
                 &mut program.body,
+                program.scope_id.get().unwrap(),
                 &this_var,
                 ctx,
             );
@@ -183,6 +184,7 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
 
             self.insert_this_var_statement_at_the_top_of_statements(
                 &mut body.statements,
+                func.scope_id.get().unwrap(),
                 &this_var,
                 ctx,
             );
@@ -205,6 +207,7 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
         if let Some(this_var) = self.this_var_stack.pop() {
             self.insert_this_var_statement_at_the_top_of_statements(
                 &mut block.body,
+                block.scope_id.get().unwrap(),
                 &this_var,
                 ctx,
             );
@@ -448,9 +451,19 @@ impl<'a> ArrowFunctionConverter<'a> {
     fn insert_this_var_statement_at_the_top_of_statements(
         &mut self,
         statements: &mut ArenaVec<'a, Statement<'a>>,
+        target_scope_id: ScopeId,
         this_var: &BoundIdentifier<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
+        let symbol_id = this_var.symbol_id;
+        let scope_id = ctx.symbols().get_scope_id(symbol_id);
+        // Because scope can be moved or deleted, we need to check the scope id again,
+        // if it's different, we need to move the binding to the target scope.
+        if target_scope_id != scope_id {
+            ctx.scopes_mut().move_binding(scope_id, target_scope_id, &this_var.name);
+            ctx.symbols_mut().set_scope_id(symbol_id, target_scope_id);
+        }
+
         let variable_declarator = ctx.ast.variable_declarator(
             SPAN,
             VariableDeclarationKind::Var,
