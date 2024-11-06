@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
@@ -5,7 +7,7 @@ use oxc_diagnostics::Error;
 
 pub use browserslist::Version;
 
-use crate::options::{BrowserslistQuery, EngineTargets};
+use crate::options::{engine_targets::Engine, BrowserslistQuery, EngineTargets};
 
 /// <https://babel.dev/docs/babel-preset-env#targets>
 #[derive(Debug, Deserialize)]
@@ -39,7 +41,7 @@ impl TryFrom<BabelTargets> for EngineTargets {
             BabelTargets::String(s) => BrowserslistQuery::Single(s).exec(),
             BabelTargets::Array(v) => BrowserslistQuery::Multiple(v).exec(),
             BabelTargets::Map(map) => {
-                let mut targets = Self::default();
+                let mut engine_targets = Self::default();
                 for (key, value) in map {
                     // TODO: Implement these targets.
                     if matches!(key.as_str(), "esmodules" | "browsers") {
@@ -63,12 +65,12 @@ impl TryFrom<BabelTargets> for EngineTargets {
                     // TODO: Some keys are not implemented yet.
                     // <https://babel.dev/docs/options#targets>:
                     // Supported environments: android, chrome, deno, edge, electron, firefox, ie, ios, node, opera, rhino, safari, samsung.
-                    let Ok(target) = targets.get_version_mut(&key) else {
-                        continue;
+                    let Ok(engine) = Engine::from_str(&key) else {
+                        return Err(Error::msg(format!("engine '{key}' is not supported.")));
                     };
                     match Version::parse(&v) {
                         Ok(version) => {
-                            target.replace(version);
+                            engine_targets.targets.insert(engine, version);
                         }
                         Err(err) => {
                             return Err(oxc_diagnostics::Error::msg(format!(
@@ -77,7 +79,7 @@ impl TryFrom<BabelTargets> for EngineTargets {
                         }
                     }
                 }
-                Ok(targets)
+                Ok(engine_targets)
             }
         }
     }

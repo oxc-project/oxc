@@ -1,25 +1,63 @@
+use std::str::FromStr;
+
 use browserslist::Version;
+use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
 use oxc_diagnostics::Error;
 
 use super::{babel::BabelTargets, BrowserslistQuery};
 
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Engine {
+    Chrome,
+    Deno,
+    Edge,
+    Firefox,
+    Hermes,
+    Ie,
+    Ios,
+    Node,
+    Opera,
+    Rhino,
+    Safari,
+    Samsung,
+    // TODO: electron to chromium
+    Electron,
+    // TODO: how to handle? There is a `op_mob` key below.
+    OperaMobile,
+}
+
+impl FromStr for Engine {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "chrome" | "and_chr" => Ok(Self::Chrome),
+            "deno" => Ok(Self::Deno),
+            "edge" => Ok(Self::Edge),
+            "firefox" | "and_ff" => Ok(Self::Firefox),
+            "hermes" => Ok(Self::Hermes),
+            "ie" | "ie_mob" => Ok(Self::Ie),
+            "ios" | "ios_saf" => Ok(Self::Ios),
+            "node" => Ok(Self::Node),
+            "opera" | "op_mob" => Ok(Self::Opera),
+            "rhino" => Ok(Self::Rhino),
+            "safari" => Ok(Self::Safari),
+            "samsung" => Ok(Self::Samsung),
+            "electron" => Ok(Self::Electron),
+            "opera_mobile" => Ok(Self::OperaMobile),
+            _ => Err(()),
+        }
+    }
+}
+
 /// A map of engine names to minimum supported versions.
-#[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize)]
+#[derive(Debug, Default, Clone, Deserialize)]
 #[serde(try_from = "BabelTargets")]
 pub struct EngineTargets {
-    chrome: Option<Version>,
-    deno: Option<Version>,
-    edge: Option<Version>,
-    firefox: Option<Version>,
-    hermes: Option<Version>,
-    ie: Option<Version>,
-    ios: Option<Version>,
-    node: Option<Version>,
-    opera: Option<Version>,
-    rhino: Option<Version>,
-    safari: Option<Version>,
+    pub(crate) targets: FxHashMap<Engine, Version>,
 }
 
 impl EngineTargets {
@@ -32,77 +70,40 @@ impl EngineTargets {
 
     /// Returns true if all fields are [None].
     pub fn is_any_target(&self) -> bool {
-        *self == Self::default()
+        self.targets.is_empty()
     }
 
-    pub fn should_enable(&self, targets: &EngineTargets) -> bool {
-        if let (Some(v1), Some(v2)) = (&self.chrome, &targets.chrome) {
-            return v1 < v2;
-        }
-        if let (Some(v1), Some(v2)) = (&self.deno, &targets.deno) {
-            return v1 < v2;
-        }
-        if let (Some(v1), Some(v2)) = (&self.edge, &targets.edge) {
-            return v1 < v2;
-        }
-        if let (Some(v1), Some(v2)) = (&self.firefox, &targets.firefox) {
-            return v1 < v2;
-        }
-        if let (Some(v1), Some(v2)) = (&self.hermes, &targets.hermes) {
-            return v1 < v2;
-        }
-        if let (Some(v1), Some(v2)) = (&self.ie, &targets.ie) {
-            return v1 < v2;
-        }
-        if let (Some(v1), Some(v2)) = (&self.ios, &targets.ios) {
-            return v1 < v2;
-        }
-        if let (Some(v1), Some(v2)) = (&self.node, &targets.node) {
-            return v1 < v2;
-        }
-        if let (Some(v1), Some(v2)) = (&self.opera, &targets.opera) {
-            return v1 < v2;
-        }
-        if let (Some(v1), Some(v2)) = (&self.rhino, &targets.rhino) {
-            return v1 < v2;
-        }
-        if let (Some(v1), Some(v2)) = (&self.safari, &targets.safari) {
-            return v1 < v2;
+    pub fn should_enable(&self, engine_targets: &EngineTargets) -> bool {
+        for (engine, version) in &engine_targets.targets {
+            if let Some(v) = self.targets.get(engine) {
+                if v < version {
+                    return true;
+                }
+            }
         }
         false
     }
 
     /// Parses the value returned from `browserslist`.
     pub fn parse_versions(versions: Vec<(String, String)>) -> Self {
-        let mut targets = Self::default();
-        for (name, version) in versions {
-            let Ok(browser) = targets.get_version_mut(&name) else {
+        let mut engine_targets = Self::default();
+        for (engine, version) in versions {
+            let Ok(engine) = Engine::from_str(&engine) else {
                 continue;
             };
-            let Ok(version) = version.parse::<Version>() else {
+            let Ok(version) = Version::from_str(&version) else {
                 continue;
             };
-            if browser.is_none() || browser.is_some_and(|v| version < v) {
-                browser.replace(version);
-            }
+            engine_targets
+                .targets
+                .entry(engine)
+                .and_modify(|v| {
+                    if version < *v {
+                        *v = version;
+                    }
+                })
+                .or_insert(version);
         }
-        targets
-    }
-
-    pub(crate) fn get_version_mut(&mut self, key: &str) -> Result<&mut Option<Version>, ()> {
-        match key {
-            "chrome" | "and_chr" => Ok(&mut self.chrome),
-            "deno" => Ok(&mut self.deno),
-            "edge" => Ok(&mut self.edge),
-            "firefox" | "and_ff" => Ok(&mut self.firefox),
-            "hermes" => Ok(&mut self.hermes),
-            "ie" | "ie_mob" => Ok(&mut self.ie),
-            "ios" | "ios_saf" => Ok(&mut self.ios),
-            "node" => Ok(&mut self.node),
-            "opera" | "op_mob" => Ok(&mut self.opera),
-            "rhino" => Ok(&mut self.rhino),
-            "safari" => Ok(&mut self.safari),
-            _ => Err(()),
-        }
+        engine_targets
     }
 }
