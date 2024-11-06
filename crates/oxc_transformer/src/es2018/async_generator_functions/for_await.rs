@@ -1,6 +1,6 @@
 //! This module is responsible for transforming `for await` to `for` statement
 
-use oxc_allocator::{CloneIn, Vec};
+use oxc_allocator::Vec;
 use oxc_ast::{ast::*, NONE};
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::SPAN;
@@ -71,7 +71,7 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
             let for_statement = try_statement_block_body.pop().unwrap();
             try_statement_block_body.push(ctx.ast.statement_labeled(
                 SPAN,
-                label.clone_in(ctx.ast.allocator),
+                label.clone(),
                 for_statement,
             ));
         }
