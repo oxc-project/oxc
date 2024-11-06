@@ -97,6 +97,8 @@ use oxc_syntax::{
 };
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
 
+use crate::TransformOptions;
+
 /// Mode for arrow function conversion
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ArrowFunctionConverterMode {
@@ -107,12 +109,7 @@ pub enum ArrowFunctionConverterMode {
     Enabled,
 
     /// Only convert async arrow functions
-    #[expect(unused)]
     AsyncOnly,
-}
-
-pub struct ArrowFunctionConverterOptions {
-    pub mode: ArrowFunctionConverterMode,
 }
 
 pub struct ArrowFunctionConverter<'a> {
@@ -121,9 +118,18 @@ pub struct ArrowFunctionConverter<'a> {
 }
 
 impl<'a> ArrowFunctionConverter<'a> {
-    pub fn new(options: &ArrowFunctionConverterOptions) -> Self {
+    pub fn new(options: &TransformOptions) -> Self {
+        let mode = if options.env.es2015.arrow_function.is_some() {
+            ArrowFunctionConverterMode::Enabled
+        } else if options.env.es2017.async_to_generator
+            || options.env.es2018.async_generator_functions
+        {
+            ArrowFunctionConverterMode::AsyncOnly
+        } else {
+            ArrowFunctionConverterMode::Disabled
+        };
         // `SparseStack` is created with 1 empty entry, for `Program`
-        Self { mode: options.mode, this_var_stack: SparseStack::new() }
+        Self { mode, this_var_stack: SparseStack::new() }
     }
 }
 
@@ -254,7 +260,11 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
             return;
         }
 
-        if let Expression::ArrowFunctionExpression(_) = expr {
+        if let Expression::ArrowFunctionExpression(arrow_function_expr) = expr {
+            if self.is_async_only() && !arrow_function_expr.r#async {
+                return;
+            }
+
             let Expression::ArrowFunctionExpression(arrow_function_expr) =
                 ctx.ast.move_expression(expr)
             else {
@@ -272,13 +282,18 @@ impl<'a> ArrowFunctionConverter<'a> {
         self.mode == ArrowFunctionConverterMode::Disabled
     }
 
+    /// Check if arrow function conversion has enabled for transform async arrow functions
+    fn is_async_only(&self) -> bool {
+        self.mode == ArrowFunctionConverterMode::AsyncOnly
+    }
+
     fn get_this_identifier(
         &mut self,
         span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<ArenaBox<'a, IdentifierReference<'a>>> {
         // Find arrow function we are currently in (if we are)
-        let arrow_scope_id = Self::get_arrow_function_scope(ctx)?;
+        let arrow_scope_id = self.get_arrow_function_scope(ctx)?;
 
         // TODO(improve-on-babel): We create a new UID for every scope. This is pointless, as only one
         // `this` can be in scope at a time. We could create a single `_this` UID and reuse it in each
@@ -304,7 +319,7 @@ impl<'a> ArrowFunctionConverter<'a> {
 
     /// Find arrow function we are currently in, if it's between current node, and where `this` is bound.
     /// Return its `ScopeId`.
-    fn get_arrow_function_scope(ctx: &mut TraverseCtx<'a>) -> Option<ScopeId> {
+    fn get_arrow_function_scope(&self, ctx: &mut TraverseCtx<'a>) -> Option<ScopeId> {
         // `this` inside a class resolves to `this` *outside* the class in:
         // * `extends` clause
         // * Computed method key
@@ -346,13 +361,13 @@ impl<'a> ArrowFunctionConverter<'a> {
         // ```
         //
         // So in this loop, we only exit when we encounter one of the above.
-        for ancestor in ctx.ancestors() {
+        let mut ancestors = ctx.ancestors();
+        while let Some(ancestor) = ancestors.next() {
             match ancestor {
                 // Top level
                 Ancestor::ProgramBody(_)
                 // Function (includes class method body)
                 | Ancestor::FunctionParams(_)
-                | Ancestor::FunctionBody(_)
                 // Class property body
                 | Ancestor::PropertyDefinitionValue(_)
                 // Class accessor property body
@@ -361,10 +376,29 @@ impl<'a> ArrowFunctionConverter<'a> {
                 | Ancestor::StaticBlockBody(_) => return None,
                 // Arrow function
                 Ancestor::ArrowFunctionExpressionParams(func) => {
-                    return Some(func.scope_id().get().unwrap())
+                    return if self.is_async_only() && !*func.r#async() {
+                        None
+                    } else {
+                        Some(func.scope_id().get().unwrap())
+                    }
                 }
                 Ancestor::ArrowFunctionExpressionBody(func) => {
-                    return Some(func.scope_id().get().unwrap())
+                    return if self.is_async_only() && !*func.r#async() {
+                        None
+                    } else {
+                        Some(func.scope_id().get().unwrap())
+                    }
+                }
+                Ancestor::FunctionBody(func) => {
+                    return if self.is_async_only() && *func.r#async()
+                    && matches!(
+                        ancestors.next().unwrap(),
+                        Ancestor::MethodDefinitionValue(_) | Ancestor::ObjectPropertyValue(_)
+                    ) {
+                        Some(func.scope_id().get().unwrap())
+                    } else {
+                        None
+                    }
                 }
                 _ => {}
             }

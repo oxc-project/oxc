@@ -234,33 +234,3 @@ AssertionError: expected false to be true // Object.is equality
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/14]⎯
 
-
-⎯⎯⎯⎯ Unhandled Rejection ⎯⎯⎯⎯⎯
-AssertionError: expected [Function Object] to be [Function Bar] // Object.is equality
-
-- Expected
-+ Received
-
-- [Function Bar]
-+ [Function Object]
-
- ❯ fixtures/babel-preset-env-test-fixtures-plugins-integration-regression-7064-exec.test.js:13:30
-     11|    }).call(this);
-     12|    _asyncToGenerator(function* () {
-     13|     expect(this.constructor).toBe(Bar);
-       |                              ^
-     14|    })();
-     15|    _asyncToGenerator(function* () {
- ❯ asyncGeneratorStep ../../node_modules/.pnpm/@babel+runtime@7.26.0/node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17
- ❯ _next ../../node_modules/.pnpm/@babel+runtime@7.26.0/node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9
- ❯ ../../node_modules/.pnpm/@babel+runtime@7.26.0/node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
- ❯ ../../node_modules/.pnpm/@babel+runtime@7.26.0/node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12
- ❯ Bar.test fixtures/babel-preset-env-test-fixtures-plugins-integration-regression-7064-exec.test.js:14:6
- ❯ fixtures/babel-preset-env-test-fixtures-plugins-integration-regression-7064-exec.test.js:20:12
- ❯ ../../node_modules/.pnpm/@vitest+runner@2.1.2/node_modules/@vitest/runner/dist/index.js:146:14
-
-This error originated in "fixtures/babel-preset-env-test-fixtures-plugins-integration-regression-7064-exec.test.js" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
-The latest test that might've caused the error is "fixtures/babel-preset-env-test-fixtures-plugins-integration-regression-7064-exec.test.js". It might mean one of the following:
-- The error was thrown, while Vitest was running this test.
-- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
-

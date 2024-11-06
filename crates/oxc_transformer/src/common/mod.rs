@@ -1,8 +1,6 @@
 //! Utility transforms which are in common between other transforms.
 
-use arrow_function_converter::{
-    ArrowFunctionConverter, ArrowFunctionConverterMode, ArrowFunctionConverterOptions,
-};
+use arrow_function_converter::ArrowFunctionConverter;
 use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast::*;
 use oxc_traverse::{Traverse, TraverseCtx};
@@ -31,23 +29,12 @@ pub struct Common<'a, 'ctx> {
 
 impl<'a, 'ctx> Common<'a, 'ctx> {
     pub fn new(options: &TransformOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
-        let arrow_function_converter_options = {
-            let mode = if options.env.es2015.arrow_function.is_some() {
-                ArrowFunctionConverterMode::Enabled
-            } else {
-                ArrowFunctionConverterMode::Disabled
-            };
-            ArrowFunctionConverterOptions { mode }
-        };
-
         Self {
             module_imports: ModuleImports::new(ctx),
             var_declarations: VarDeclarations::new(ctx),
             statement_injector: StatementInjector::new(ctx),
             top_level_statements: TopLevelStatements::new(ctx),
-            arrow_function_converter: ArrowFunctionConverter::new(
-                &arrow_function_converter_options,
-            ),
+            arrow_function_converter: ArrowFunctionConverter::new(options),
         }
     }
 }

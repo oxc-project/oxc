@@ -1452,13 +1452,37 @@ x Output mismatch
 
 # babel-plugin-transform-async-generator-functions (15/19)
 * async-generators/class-method/input.js
-x Output mismatch
+Bindings mismatch:
+after transform: ScopeId(0): ["C", "_this"]
+rebuilt        : ScopeId(0): ["C"]
+Bindings mismatch:
+after transform: ScopeId(3): []
+rebuilt        : ScopeId(2): ["_this"]
+Symbol scope ID mismatch for "_this":
+after transform: SymbolId(1): ScopeId(0)
+rebuilt        : SymbolId(1): ScopeId(2)
 
 * async-generators/object-method/input.js
-x Output mismatch
+Bindings mismatch:
+after transform: ScopeId(0): ["_this"]
+rebuilt        : ScopeId(0): []
+Bindings mismatch:
+after transform: ScopeId(2): []
+rebuilt        : ScopeId(1): ["_this"]
+Symbol scope ID mismatch for "_this":
+after transform: SymbolId(0): ScopeId(0)
+rebuilt        : SymbolId(0): ScopeId(1)
 
 * async-generators/static-method/input.js
-x Output mismatch
+Bindings mismatch:
+after transform: ScopeId(0): ["C", "_this"]
+rebuilt        : ScopeId(0): ["C"]
+Bindings mismatch:
+after transform: ScopeId(3): []
+rebuilt        : ScopeId(2): ["_this"]
+Symbol scope ID mismatch for "_this":
+after transform: SymbolId(1): ScopeId(0)
+rebuilt        : SymbolId(1): ScopeId(2)
 
 * nested/arrows-in-declaration/input.js
 x Output mismatch

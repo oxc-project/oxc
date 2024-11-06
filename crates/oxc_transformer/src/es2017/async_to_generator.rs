@@ -131,7 +131,14 @@ impl<'a, 'ctx> Traverse<'a> for AsyncToGenerator<'a, 'ctx> {
     }
 
     fn exit_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
-        if func.r#async && matches!(ctx.parent(), Ancestor::MethodDefinitionValue(_)) {
+        if func.r#async
+            && !func.is_typescript_syntax()
+            && matches!(
+                ctx.parent(),
+                // `class A { async foo() {} }` | `({ async foo() {} })`
+                Ancestor::MethodDefinitionValue(_) | Ancestor::PropertyDefinitionValue(_)
+            )
+        {
             self.executor.transform_function_for_method_definition(func, ctx);
         }
     }
