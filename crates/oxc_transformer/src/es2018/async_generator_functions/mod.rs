@@ -200,7 +200,7 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
         expr: &mut YieldExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        if !expr.delegate {
+        if !expr.delegate || !Self::is_inside_async_generator_function(ctx) {
             return None;
         }
 
