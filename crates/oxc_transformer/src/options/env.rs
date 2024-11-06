@@ -136,9 +136,6 @@ impl EnvOptions {
     pub fn from_browserslist_query(query: &str) -> Result<Self, Error> {
         Self::try_from(BabelEnvOptions {
             targets: EngineTargets::try_from_query(query)?,
-            // This option will be enabled by default in Babel 8.
-            // <https://babel.dev/docs/babel-preset-env#bugfixes>
-            bugfixes: true,
             ..BabelEnvOptions::default()
         })
         .map_err(|err| Error::msg(err))

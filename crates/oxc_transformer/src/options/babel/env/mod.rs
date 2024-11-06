@@ -3,10 +3,7 @@ mod targets;
 
 use serde::Deserialize;
 
-pub use self::{
-    data::{bugfix_features, features},
-    targets::BabelTargets,
-};
+pub use self::{data::features, targets::BabelTargets};
 
 use crate::options::EngineTargets;
 
@@ -20,6 +17,7 @@ pub struct BabelEnvOptions {
     #[serde(default)]
     pub targets: EngineTargets,
 
+    #[deprecated = "Not Implemented"]
     #[serde(default = "default_as_true")]
     pub bugfixes: bool,
 
@@ -62,11 +60,6 @@ pub struct BabelEnvOptions {
 
 impl BabelEnvOptions {
     pub fn can_enable_plugin(&self, plugin_name: &str) -> bool {
-        let versions = if self.bugfixes {
-            bugfix_features().get(plugin_name).unwrap_or_else(|| &features()[plugin_name])
-        } else {
-            &features()[plugin_name]
-        };
-        self.targets.should_enable(versions)
+        self.targets.should_enable(&features()[plugin_name])
     }
 }

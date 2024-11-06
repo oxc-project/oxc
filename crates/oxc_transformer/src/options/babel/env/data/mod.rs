@@ -30,15 +30,3 @@ pub fn features() -> &'static FxHashMap<String, EngineTargets> {
             .collect()
     })
 }
-
-/// Reference: <https://github.com/swc-project/swc/blob/ea14fc8e5996dcd736b8deb4cc99262d07dfff44/crates/swc_ecma_preset_env/src/transform_data.rs#L220-L237>
-pub fn bugfix_features() -> &'static FxHashMap<String, EngineTargets> {
-    static BUGFIX_FEATURES: OnceLock<FxHashMap<String, EngineTargets>> = OnceLock::new();
-    BUGFIX_FEATURES.get_or_init(|| {
-        let map = serde_json::from_str::<FxHashMap<String, EngineTargets>>(include_str!(
-            "./@babel/compat_data/data/plugin_bugfixes.json"
-        ))
-        .unwrap();
-        features().clone().into_iter().chain(map).collect()
-    })
-}
