@@ -30,6 +30,7 @@ mod es2020;
 mod es2021;
 mod es2022;
 mod jsx;
+mod module;
 mod regexp;
 mod typescript;
 
