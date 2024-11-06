@@ -157,32 +157,13 @@ impl<'a, 'ctx> Traverse<'a> for AsyncGeneratorFunctions<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
-    /// Check whether the current node is inside an async generator function.
-    fn is_inside_async_generator_function(ctx: &mut TraverseCtx<'a>) -> bool {
-        // Early return if current scope is top because we don't need to transform top-level await expression.
-        if ctx.current_scope_flags().is_top() {
-            return false;
-        }
-
-        for ancestor in ctx.ancestors() {
-            match ancestor {
-                Ancestor::FunctionBody(func) => return *func.r#async() && *func.generator(),
-                Ancestor::ArrowFunctionExpressionBody(_) => {
-                    return false;
-                }
-                _ => {}
-            }
-        }
-        false
-    }
-
     /// Transform `yield * argument` expression to `yield asyncGeneratorDelegate(asyncIterator(argument))`.
     fn transform_yield_expression(
         &self,
         expr: &mut YieldExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        if !expr.delegate || !Self::is_inside_async_generator_function(ctx) {
+        if !expr.delegate || !Self::yield_is_inside_async_generator_function(ctx) {
             return None;
         }
 
@@ -196,6 +177,19 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
         })
     }
 
+    /// Check whether `yield` is inside an async generator function.
+    fn yield_is_inside_async_generator_function(ctx: &TraverseCtx<'a>) -> bool {
+        for ancestor in ctx.ancestors() {
+            // Note: `yield` cannot appear within function params.
+            // Also cannot appear in arrow functions because no such thing as a generator arrow function.
+            if let Ancestor::FunctionBody(func) = ancestor {
+                return *func.r#async();
+            }
+        }
+        // `yield` can only appear in a function
+        unreachable!();
+    }
+
     /// Transforms `await expr` expression to `yield awaitAsyncGenerator(expr)`.
     /// Ignores top-level await expression.
     fn transform_await_expression(
@@ -203,7 +197,7 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
         expr: &mut AwaitExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        if !Self::is_inside_async_generator_function(ctx) {
+        if !Self::async_is_inside_async_generator_function(ctx) {
             return None;
         }
 
@@ -212,5 +206,24 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
         argument = self.ctx.helper_call_expr(Helper::AwaitAsyncGenerator, arguments, ctx);
 
         Some(ctx.ast.expression_yield(SPAN, false, Some(argument)))
+    }
+
+    /// Check whether `await` is inside an async generator function.
+    fn async_is_inside_async_generator_function(ctx: &TraverseCtx<'a>) -> bool {
+        for ancestor in ctx.ancestors() {
+            match ancestor {
+                // Note: `await` cannot appear within function params
+                Ancestor::FunctionBody(func) => {
+                    return *func.generator();
+                }
+                Ancestor::ArrowFunctionExpressionBody(_) => {
+                    // Arrow functions can't be generator functions
+                    return false;
+                }
+                _ => {}
+            }
+        }
+        // Top level await
+        false
     }
 }
