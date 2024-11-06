@@ -1,11 +1,12 @@
 commit: d20b314c
 
-Passed: 381/1078
+Passed: 382/1078
 
 # All Passed:
 * babel-plugin-transform-class-static-block
 * babel-plugin-transform-logical-assignment-operators
 * babel-plugin-transform-optional-catch-binding
+* babel-plugin-transform-async-generator-functions
 * babel-preset-react
 * babel-plugin-transform-react-display-name
 * babel-plugin-transform-react-jsx-self
@@ -1447,11 +1448,6 @@ x Output mismatch
 x Output mismatch
 
 * nullish-coalescing/transform-loose/input.js
-x Output mismatch
-
-
-# babel-plugin-transform-async-generator-functions (18/19)
-* nested/arrows-in-declaration/input.js
 x Output mismatch
 
 

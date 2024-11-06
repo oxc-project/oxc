@@ -68,7 +68,6 @@ mod for_await;
 
 use oxc_allocator::GetAddress;
 use oxc_ast::ast::*;
-use oxc_data_structures::stack::Stack;
 use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
@@ -76,17 +75,12 @@ use crate::{common::helper_loader::Helper, context::TransformCtx, es2017::AsyncG
 
 pub struct AsyncGeneratorFunctions<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,
-    stack: Stack<bool>,
     executor: AsyncGeneratorExecutor<'a, 'ctx>,
 }
 
 impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
     pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self {
-            ctx,
-            executor: AsyncGeneratorExecutor::new(Helper::WrapAsyncGenerator, ctx),
-            stack: Stack::new(),
-        }
+        Self { ctx, executor: AsyncGeneratorExecutor::new(Helper::WrapAsyncGenerator, ctx) }
     }
 }
 
@@ -164,10 +158,6 @@ impl<'a, 'ctx> Traverse<'a> for AsyncGeneratorFunctions<'a, 'ctx> {
         }
     }
 
-    fn enter_function(&mut self, func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.stack.push(func.r#async && func.generator);
-    }
-
     fn exit_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
         if func.r#async
             && func.generator
@@ -180,11 +170,29 @@ impl<'a, 'ctx> Traverse<'a> for AsyncGeneratorFunctions<'a, 'ctx> {
         {
             self.executor.transform_function_for_method_definition(func, ctx);
         }
-        self.stack.pop();
     }
 }
 
 impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
+    /// Check whether the current node is inside an async generator function.
+    fn is_inside_async_generator_function(ctx: &mut TraverseCtx<'a>) -> bool {
+        // Early return if current scope is top because we don't need to transform top-level await expression.
+        if ctx.current_scope_flags().is_top() {
+            return false;
+        }
+
+        for ancestor in ctx.ancestors() {
+            match ancestor {
+                Ancestor::FunctionBody(func) => return *func.r#async() && *func.generator(),
+                Ancestor::ArrowFunctionExpressionBody(_) => {
+                    return false;
+                }
+                _ => {}
+            }
+        }
+        false
+    }
+
     /// Transform `yield * argument` expression to `yield asyncGeneratorDelegate(asyncIterator(argument))`.
     #[allow(clippy::unused_self)]
     fn transform_yield_expression(
@@ -214,11 +222,7 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
         expr: &mut AwaitExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        // We don't need to handle top-level await.
-        if ctx.parent().is_program() ||
-        // Check the function is async generator function
-        !self.stack.last().copied().unwrap_or(false)
-        {
+        if !Self::is_inside_async_generator_function(ctx) {
             return None;
         }
 

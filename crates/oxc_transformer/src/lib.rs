@@ -266,7 +266,6 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
     }
 
     fn enter_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.x2_es2018.enter_function(func, ctx);
         self.common.enter_function(func, ctx);
     }
 

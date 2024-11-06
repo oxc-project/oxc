@@ -62,12 +62,6 @@ impl<'a, 'ctx> Traverse<'a> for ES2018<'a, 'ctx> {
         }
     }
 
-    fn enter_function(&mut self, node: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.options.async_generator_functions {
-            self.async_generator_functions.enter_function(node, ctx);
-        }
-    }
-
     fn exit_function(&mut self, node: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.async_generator_functions {
             self.async_generator_functions.exit_function(node, ctx);
