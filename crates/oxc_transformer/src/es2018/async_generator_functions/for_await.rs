@@ -1,6 +1,6 @@
 //! This module is responsible for transforming `for await` to `for` statement
 
-use oxc_allocator::Vec;
+use oxc_allocator::{CloneIn, GetAddress, Vec};
 use oxc_ast::{ast::*, NONE};
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::SPAN;
@@ -10,7 +10,57 @@ use super::AsyncGeneratorFunctions;
 use crate::{common::helper_loader::Helper, es2017::AsyncGeneratorExecutor};
 
 impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
-    pub(crate) fn transform_for_of_statement(
+    pub(crate) fn transform_statement(
+        &mut self,
+        stmt: &mut Statement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let (for_of, label) = match stmt {
+            Statement::LabeledStatement(labeled) => {
+                let LabeledStatement { label, body, .. } = labeled.as_mut();
+                if let Statement::ForOfStatement(for_of) = body {
+                    (for_of, Some(label))
+                } else {
+                    return;
+                }
+            }
+            Statement::ForOfStatement(for_of) => (for_of, None),
+            _ => return,
+        };
+
+        if !for_of.r#await {
+            return;
+        }
+
+        // We need to replace the current statement with new statements,
+        // but we don't have a such method to do it, so we leverage the statement injector.
+        //
+        // Now, we use below steps to workaround it:
+        // 1. Use the last statement as the new statement.
+        // 2. insert the rest of the statements before the current statement.
+        // TODO: Once we have a method to replace the current statement, we can simplify this logic.
+        let mut statements = self.transform_for_of_statement(for_of, ctx);
+        let mut last_statement = statements.pop().unwrap();
+
+        // If it's a labeled statement, we need to wrap the ForStatement with a labeled statement.
+        if let Some(label) = label {
+            let Statement::TryStatement(try_statement) = &mut last_statement else {
+                unreachable!("The last statement should be a try statement, please see the `build_for_await` function");
+            };
+            let try_statement_block_body = &mut try_statement.block.body;
+            let for_statement = try_statement_block_body.pop().unwrap();
+            try_statement_block_body.push(ctx.ast.statement_labeled(
+                SPAN,
+                label.clone_in(ctx.ast.allocator),
+                for_statement,
+            ));
+        }
+
+        *stmt = last_statement;
+        self.ctx.statement_injector.insert_many_before(&stmt.address(), statements);
+    }
+
+    pub(self) fn transform_for_of_statement(
         &mut self,
         stmt: &mut ForOfStatement<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -66,14 +116,14 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
             statements
         };
 
-        Self::build_for_await(
-            self.ctx.helper_load(Helper::AsyncIterator, ctx),
-            ctx.ast.move_expression(&mut stmt.right),
-            &step_key,
-            body,
-            stmt.scope_id(),
+        let iterator = ctx.ast.move_expression(&mut stmt.right);
+        let iterator = self.ctx.helper_call_expr(
+            Helper::AsyncIterator,
+            ctx.ast.vec1(Argument::from(iterator)),
             ctx,
-        )
+        );
+        let scope_id = stmt.scope_id();
+        Self::build_for_await(iterator, &step_key, body, scope_id, ctx)
     }
 
     /// Build a `for` statement used to replace the `for await` statement.
@@ -110,8 +160,7 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
     /// Based on Babel's implementation:
     /// <https://github.com/babel/babel/blob/d20b314c14533ab86351ecf6ca6b7296b66a57b3/packages/babel-plugin-transform-async-generator-functions/src/for-await.ts#L3-L30>
     fn build_for_await(
-        get_identifier: Expression<'a>,
-        object: Expression<'a>,
+        iterator: Expression<'a>,
         step_key: &BoundIdentifier<'a>,
         body: Vec<'a, Statement<'a>>,
         for_of_scope_id: ScopeId,
@@ -185,13 +234,7 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
                             SPAN,
                             VariableDeclarationKind::Var,
                             iterator_key.create_binding_pattern(ctx),
-                            Some(ctx.ast.expression_call(
-                                SPAN,
-                                get_identifier,
-                                NONE,
-                                ctx.ast.vec1(Argument::from(object)),
-                                false,
-                            )),
+                            Some(iterator),
                             false,
                         ));
                         items.push(ctx.ast.variable_declarator(
@@ -272,6 +315,12 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
                 },
                 for_statement_scope_id,
             ));
+
+            // // If has a label, we need to wrap the for statement with a labeled statement.
+            // // e.g. `label: for await (let i of test) {}` to `label: { for (let i of test) {} }`
+            // if let Some(label) = label {
+            //     statement = ctx.ast.statement_labeled(SPAN, label, statement);
+            // }
             ctx.ast.block_statement_with_scope_id(SPAN, ctx.ast.vec1(for_statement), block_scope_id)
         };
 

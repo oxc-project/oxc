@@ -66,7 +66,6 @@
 
 mod for_await;
 
-use oxc_allocator::GetAddress;
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
@@ -109,23 +108,7 @@ impl<'a, 'ctx> Traverse<'a> for AsyncGeneratorFunctions<'a, 'ctx> {
     }
 
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Statement::ForOfStatement(for_of) = stmt {
-            if !for_of.r#await {
-                return;
-            }
-
-            // We need to replace the current statement with new statements,
-            // but we don't have a such method to do it, so we leverage the statement injector.
-            //
-            // Now, we use below steps to workaround it:
-            // 1. Use the last statement as the new statement.
-            // 2. insert the rest of the statements before the current statement.
-            // TODO: Once we have a method to replace the current statement, we can simplify this logic.
-            let mut statements = self.transform_for_of_statement(for_of, ctx);
-            let last_statement = statements.pop().unwrap();
-            *stmt = last_statement;
-            self.ctx.statement_injector.insert_many_before(&stmt.address(), statements);
-        }
+        self.transform_statement(stmt, ctx);
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
