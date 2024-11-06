@@ -369,7 +369,7 @@ impl<'a> ArrowFunctionConverter<'a> {
             match ancestor {
                 // Top level
                 Ancestor::ProgramBody(_)
-                // Function (includes class method body)
+                // Function params
                 | Ancestor::FunctionParams(_)
                 // Class property body
                 | Ancestor::PropertyDefinitionValue(_)
@@ -392,6 +392,7 @@ impl<'a> ArrowFunctionConverter<'a> {
                         Some(func.scope_id().get().unwrap())
                     }
                 }
+                // Function body
                 Ancestor::FunctionBody(func) => {
                     return if self.is_async_only() && *func.r#async()
                     && matches!(
