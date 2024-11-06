@@ -106,10 +106,7 @@ impl EnvOptions {
                 },
             },
             es2016: ES2016Options { exponentiation_operator: true },
-            es2017: ES2017Options {
-                // Turned off because it is not ready.
-                async_to_generator: include_unfinished_plugins,
-            },
+            es2017: ES2017Options { async_to_generator: true },
             es2018: ES2018Options {
                 // Turned off because it is not ready.
                 object_rest_spread: if include_unfinished_plugins {
@@ -117,8 +114,7 @@ impl EnvOptions {
                 } else {
                     None
                 },
-                // Turned off because it is not ready.
-                async_generator_functions: include_unfinished_plugins,
+                async_generator_functions: true,
             },
             es2019: ES2019Options { optional_catch_binding: true },
             es2020: ES2020Options { nullish_coalescing_operator: true },
