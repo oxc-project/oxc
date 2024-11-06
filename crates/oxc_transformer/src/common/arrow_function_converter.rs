@@ -145,7 +145,7 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
 
         if let Some(this_var) = self.this_var_stack.take_last() {
             let target_scope_id = program.scope_id();
-            self.insert_this_var_statement_at_the_top_of_statements(
+            Self::insert_this_var_statement_at_the_top_of_statements(
                 &mut program.body,
                 target_scope_id,
                 &this_var,
@@ -184,7 +184,7 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
             let target_scope_id = func.scope_id();
             let Some(body) = &mut func.body else { unreachable!() };
 
-            self.insert_this_var_statement_at_the_top_of_statements(
+            Self::insert_this_var_statement_at_the_top_of_statements(
                 &mut body.statements,
                 target_scope_id,
                 &this_var,
@@ -208,7 +208,7 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
 
         if let Some(this_var) = self.this_var_stack.pop() {
             let target_scope_id = block.scope_id();
-            self.insert_this_var_statement_at_the_top_of_statements(
+            Self::insert_this_var_statement_at_the_top_of_statements(
                 &mut block.body,
                 target_scope_id,
                 &this_var,
@@ -277,7 +277,7 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
                 unreachable!()
             };
 
-            *expr = self.transform_arrow_function_expression(arrow_function_expr.unbox(), ctx);
+            *expr = Self::transform_arrow_function_expression(arrow_function_expr.unbox(), ctx);
         }
     }
 }
@@ -413,9 +413,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         unreachable!();
     }
 
-    #[expect(clippy::unused_self)]
     fn transform_arrow_function_expression(
-        &mut self,
         arrow_function_expr: ArrowFunctionExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
@@ -451,9 +449,7 @@ impl<'a> ArrowFunctionConverter<'a> {
     }
 
     /// Insert `var _this = this;` at the top of the statements.
-    #[expect(clippy::unused_self)]
     fn insert_this_var_statement_at_the_top_of_statements(
-        &mut self,
         statements: &mut ArenaVec<'a, Statement<'a>>,
         target_scope_id: ScopeId,
         this_var: &BoundIdentifier<'a>,
