@@ -76,7 +76,7 @@ impl<'a, 'ctx> Traverse<'a> for AsyncToGenerator<'a, 'ctx> {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let new_expr = match expr {
             Expression::AwaitExpression(await_expr) => {
-                self.transform_await_expression(await_expr, ctx)
+                Self::transform_await_expression(await_expr, ctx)
             }
             Expression::FunctionExpression(func) => {
                 if func.r#async && !func.generator && !func.is_typescript_syntax() {
@@ -166,9 +166,7 @@ impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
 
     /// Transforms `await` expressions to `yield` expressions.
     /// Ignores top-level await expressions.
-    #[allow(clippy::unused_self)]
     fn transform_await_expression(
-        &self,
         expr: &mut AwaitExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
