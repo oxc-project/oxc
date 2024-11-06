@@ -145,6 +145,25 @@ impl<'a, 'ctx> Traverse<'a> for AsyncToGenerator<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
+    /// Check whether the current node is inside an async function.
+    fn is_inside_async_function(ctx: &mut TraverseCtx<'a>) -> bool {
+        // Early return if current scope is top because we don't need to transform top-level await expression.
+        if ctx.current_scope_flags().is_top() {
+            return false;
+        }
+
+        for ancestor in ctx.ancestors() {
+            match ancestor {
+                Ancestor::FunctionBody(func) => return *func.r#async(),
+                Ancestor::ArrowFunctionExpressionBody(func) => {
+                    return *func.r#async();
+                }
+                _ => {}
+            }
+        }
+        false
+    }
+
     /// Transforms `await` expressions to `yield` expressions.
     /// Ignores top-level await expressions.
     #[allow(clippy::unused_self)]
@@ -154,14 +173,14 @@ impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         // We don't need to handle top-level await.
-        if ctx.parent().is_program() {
-            None
-        } else {
+        if Self::is_inside_async_function(ctx) {
             Some(ctx.ast.expression_yield(
                 SPAN,
                 false,
                 Some(ctx.ast.move_expression(&mut expr.argument)),
             ))
+        } else {
+            None
         }
     }
 }
