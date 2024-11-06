@@ -103,14 +103,11 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
                 }
             }
             Expression::CallExpression(call_expr) => {
-                if let Some(call_expr) =
+                if let Some(new_expr) =
                     Self::try_fold_literal_constructor_call_expression(call_expr, ctx)
+                        .or_else(|| Self::try_fold_simple_function_call(call_expr, ctx))
                 {
-                    *expr = call_expr;
-                    self.changed = true;
-                } else if let Some(call_expr) = Self::try_fold_simple_function_call(call_expr, ctx)
-                {
-                    *expr = call_expr;
+                    *expr = new_expr;
                     self.changed = true;
                 }
             }
