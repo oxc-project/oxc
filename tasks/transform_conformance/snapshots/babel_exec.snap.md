@@ -8,8 +8,8 @@ Error: 'eval' and 'arguments' cannot be used as a binding identifier in strict m
  ❯ getRollupError ../../node_modules/.pnpm/rollup@4.24.0/node_modules/rollup/dist/es/shared/parseAst.js:395:41
  ❯ convertProgram ../../node_modules/.pnpm/rollup@4.24.0/node_modules/rollup/dist/es/shared/parseAst.js:1083:26
  ❯ parseAstAsync ../../node_modules/.pnpm/rollup@4.24.0/node_modules/rollup/dist/es/shared/parseAst.js:2069:106
- ❯ ssrTransformScript ../../node_modules/.pnpm/vite@5.4.8_@types+node@22.8.4/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:52319:11
- ❯ loadAndTransform ../../node_modules/.pnpm/vite@5.4.8_@types+node@22.8.4/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:51917:72
+ ❯ ssrTransformScript ../../node_modules/.pnpm/vite@5.4.8_@types+node@22.9.0/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:52319:11
+ ❯ loadAndTransform ../../node_modules/.pnpm/vite@5.4.8_@types+node@22.9.0/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:51917:72
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯
 
