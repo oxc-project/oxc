@@ -84,7 +84,8 @@ fn find_jsx_pragma<'a>(
     // Strip whitespace and `*`s from start of comment, and find leading `@`.
     // Slice from start of comment to end of file, not end of comment.
     // This allows `find_at_sign` functions to search in chunks of 8 bytes without hitting end of string.
-    let comment_str = &source_text[comment.span.start as usize..];
+    let comment_span = comment.content_span();
+    let comment_str = &source_text[comment_span.start as usize..];
     let comment_str = match comment.kind {
         CommentKind::Line => find_at_sign_in_line_comment(comment_str)?,
         CommentKind::Block => find_at_sign_in_block_comment(comment_str)?,
@@ -103,11 +104,11 @@ fn find_jsx_pragma<'a>(
 
     // Slice off after end of comment
     let remainder_start = source_text.len() - remainder.len();
-    if remainder_start >= comment.span.end as usize {
+    if remainder_start >= comment_span.end as usize {
         // Space was after end of comment
         return None;
     }
-    let len = comment.span.end as usize - remainder_start;
+    let len = comment_span.end as usize - remainder_start;
     let remainder = &remainder[..len];
     // Trim excess whitespace/line breaks from end
     let remainder = trim_end(remainder);
@@ -346,19 +347,16 @@ mod tests {
     }
 
     fn create_comment(comment_str: &str, before: &str, after: &str) -> (Comment, String) {
-        let (kind, end_bytes) = if comment_str.starts_with("//") {
-            (CommentKind::Line, 0)
+        let kind = if comment_str.starts_with("//") {
+            CommentKind::Line
         } else {
             assert!(comment_str.starts_with("/*") && comment_str.ends_with("*/"));
-            (CommentKind::Block, 2)
+            CommentKind::Block
         };
 
         let source_text = format!("{before}{comment_str}{after}");
         #[expect(clippy::cast_possible_truncation)]
-        let span = Span::new(
-            (before.len() + 2) as u32,
-            (before.len() + comment_str.len() - end_bytes) as u32,
-        );
+        let span = Span::new(before.len() as u32, (before.len() + comment_str.len()) as u32);
         let comment = Comment {
             span,
             kind,

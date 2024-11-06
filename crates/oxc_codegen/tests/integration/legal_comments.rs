@@ -46,6 +46,6 @@ fn legal_external_comment() {
     let code = "/* @license */\n/* @preserve */\nfoo;\n";
     let ret = codegen_options(code, &options);
     assert_eq!(ret.code, "foo;\n");
-    assert_eq!(ret.legal_comments[0].span.source_text(code), " @license ");
-    assert_eq!(ret.legal_comments[1].span.source_text(code), " @preserve ");
+    assert_eq!(ret.legal_comments[0].content_span().source_text(code), " @license ");
+    assert_eq!(ret.legal_comments[1].content_span().source_text(code), " @preserve ");
 }

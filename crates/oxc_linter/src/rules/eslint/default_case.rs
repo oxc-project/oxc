@@ -79,7 +79,7 @@ impl Rule for DefaultCase {
                 .comments_range(last_case.span.start..switch.span.end)
                 .last()
                 .is_some_and(|comment| {
-                    let raw = comment.span.source_text(ctx.semantic().source_text()).trim();
+                    let raw = comment.content_span().source_text(ctx.source_text()).trim();
                     match &self.comment_pattern {
                         Some(comment_pattern) => comment_pattern.is_match(raw),
                         None => raw.eq_ignore_ascii_case("no default"),

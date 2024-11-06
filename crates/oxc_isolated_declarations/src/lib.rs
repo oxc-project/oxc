@@ -111,7 +111,8 @@ impl<'a> IsolatedDeclarations<'a> {
     fn build_internal_annotations(program: &Program<'a>) -> FxHashSet<u32> {
         let mut set = FxHashSet::default();
         for comment in &program.comments {
-            let has_internal = comment.span.source_text(program.source_text).contains("@internal");
+            let has_internal =
+                comment.content_span().source_text(program.source_text).contains("@internal");
             // Use the first jsdoc comment if there are multiple jsdoc comments for the same node.
             if has_internal && !set.contains(&comment.attached_to) {
                 set.insert(comment.attached_to);

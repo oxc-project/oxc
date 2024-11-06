@@ -401,7 +401,7 @@ impl Oxc {
                     CommentKind::Line => CommentType::Line,
                     CommentKind::Block => CommentType::Block,
                 },
-                value: comment.span.source_text(source_text).to_string(),
+                value: comment.content_span().source_text(source_text).to_string(),
                 start: comment.span.start,
                 end: comment.span.end,
             })

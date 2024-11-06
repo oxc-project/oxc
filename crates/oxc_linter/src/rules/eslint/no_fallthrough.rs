@@ -367,7 +367,7 @@ fn possible_fallthrough_comment_span(case: &SwitchCase) -> (u32, Option<u32>) {
 
 impl NoFallthrough {
     fn has_blanks_between(ctx: &LintContext, range: Range<u32>) -> bool {
-        let in_between = &ctx.semantic().source_text()[range.start as usize..range.end as usize];
+        let in_between = &ctx.source_text()[range.start as usize..range.end as usize];
         // check for at least 2 new lines, we allow the first new line for formatting.
         in_between.bytes().filter(|it| *it == b'\n').nth(1).is_some()
     }
@@ -382,9 +382,7 @@ impl NoFallthrough {
         let is_fallthrough_comment_in_range = |range: Range<u32>| {
             let comment = semantic
                 .comments_range(range)
-                .map(|comment| {
-                    &semantic.source_text()[comment.span.start as usize..comment.span.end as usize]
-                })
+                .map(|comment| comment.content_span().source_text(semantic.source_text()))
                 .last()
                 .map(str::trim);
 

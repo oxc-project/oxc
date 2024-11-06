@@ -157,7 +157,7 @@ impl Rule for BanTsComment {
     fn run_once(&self, ctx: &LintContext) {
         let comments = ctx.semantic().comments();
         for comm in comments {
-            let raw = ctx.source_range(comm.span);
+            let raw = ctx.source_range(comm.content_span());
             if let Some(captures) = find_ts_comment_directive(raw, comm.is_line()) {
                 // safe to unwrap, if capture success, it can always capture one of the four directives
                 let (directive, description) = (captures.0, captures.1);
@@ -178,16 +178,16 @@ impl Rule for BanTsComment {
                         if *on {
                             if directive == "ignore" {
                                 ctx.diagnostic_with_fix(
-                                    ignore_instead_of_expect_error(comm.span),
+                                    ignore_instead_of_expect_error(comm.content_span()),
                                     |fixer| {
                                         fixer.replace(
-                                            comm.span,
+                                            comm.content_span(),
                                             raw.cow_replace("@ts-ignore", "@ts-expect-error"),
                                         )
                                     },
                                 );
                             } else {
-                                ctx.diagnostic(comment(directive, comm.span));
+                                ctx.diagnostic(comment(directive, comm.content_span()));
                             }
                         }
                     }
@@ -197,7 +197,7 @@ impl Rule for BanTsComment {
                             ctx.diagnostic(comment_requires_description(
                                 directive,
                                 self.minimum_description_length,
-                                comm.span,
+                                comm.content_span(),
                             ));
                         }
 
@@ -206,7 +206,7 @@ impl Rule for BanTsComment {
                                 ctx.diagnostic(comment_description_not_match_pattern(
                                     directive,
                                     re.as_str(),
-                                    comm.span,
+                                    comm.content_span(),
                                 ));
                             }
                         }

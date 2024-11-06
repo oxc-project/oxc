@@ -41,7 +41,7 @@ impl<'a> Codegen<'a> {
     ///
     /// <https://github.com/javascript-compiler-hints/compiler-notations-spec/blob/main/pure-notation-spec.md>
     fn is_annotation_comment(&self, comment: &Comment) -> bool {
-        let s = comment.span.source_text(self.source_text).trim_start();
+        let s = comment.content_span().source_text(self.source_text).trim_start();
         if let Some(s) = s.strip_prefix(['@', '#']) {
             s.starts_with("__PURE__") || s.starts_with("__NO_SIDE_EFFECTS__")
         } else {
@@ -54,7 +54,7 @@ impl<'a> Codegen<'a> {
         comment.preceded_by_newline
             && (comment.is_jsdoc(self.source_text)
                 || (comment.is_line() && self.is_annotation_comment(comment)))
-            && !comment.span.source_text(self.source_text).chars().all(|c| c == '*')
+            && !comment.content_span().source_text(self.source_text).chars().all(|c| c == '*')
         // webpack comment `/*****/`
     }
 
@@ -126,10 +126,10 @@ impl<'a> Codegen<'a> {
             }
             if comment.is_line() {
                 self.print_str("/*");
-                self.print_str(comment.span.source_text(self.source_text));
+                self.print_str(comment.content_span().source_text(self.source_text));
                 self.print_str("*/");
             } else {
-                self.print_str(comment.real_span().source_text(self.source_text));
+                self.print_str(comment.span.source_text(self.source_text));
             }
             self.print_hard_space();
         }
@@ -205,7 +205,7 @@ impl<'a> Codegen<'a> {
     }
 
     fn print_comment(&mut self, comment: &Comment) {
-        let comment_source = comment.real_span().source_text(self.source_text);
+        let comment_source = comment.span.source_text(self.source_text);
         match comment.kind {
             CommentKind::Line => {
                 self.print_str(comment_source);

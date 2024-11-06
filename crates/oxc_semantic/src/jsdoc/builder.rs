@@ -119,8 +119,9 @@ impl<'a> JSDocBuilder<'a> {
     }
 
     fn parse_jsdoc_comment(comment: &Comment, source_text: &'a str) -> JSDoc<'a> {
+        let span = comment.content_span();
         // Remove the very first `*`
-        let jsdoc_span = Span::new(comment.span.start + 1, comment.span.end);
+        let jsdoc_span = Span::new(span.start + 1, span.end);
         let comment_content = jsdoc_span.source_text(source_text);
         JSDoc::new(comment_content, jsdoc_span)
     }
