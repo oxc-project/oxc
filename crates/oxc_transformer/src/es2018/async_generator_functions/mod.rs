@@ -222,35 +222,10 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
             return None;
         }
 
-        let mut is_function = false;
-        let mut function_in_params = false;
-        for ancestor in ctx.ancestors() {
-            match ancestor {
-                Ancestor::FunctionBody(_) if !is_function => {
-                    is_function = true;
-                }
-                // x = async function() { await 1 }
-                Ancestor::AssignmentPatternRight(_) | Ancestor::BindingPatternKind(_) => {
-                    continue;
-                }
-                Ancestor::FormalParameterPattern(_) => {
-                    function_in_params = true;
-                    break;
-                }
-                _ => {
-                    if is_function {
-                        break;
-                    }
-                }
-            }
-        }
         let mut argument = ctx.ast.move_expression(&mut expr.argument);
-        // When a async function is used as parameter, we don't need to wrap its await expression with awaitAsyncGenerator helper.
-        // `function example(a = async function b() { await 1 }) {}`
-        if !function_in_params {
-            let arguments = ctx.ast.vec1(Argument::from(argument));
-            argument = self.ctx.helper_call_expr(Helper::AwaitAsyncGenerator, arguments, ctx);
-        }
+        let arguments = ctx.ast.vec1(Argument::from(argument));
+        argument = self.ctx.helper_call_expr(Helper::AwaitAsyncGenerator, arguments, ctx);
+
         Some(ctx.ast.expression_yield(SPAN, false, Some(argument)))
     }
 }
