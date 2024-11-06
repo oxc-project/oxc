@@ -277,7 +277,7 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
                 unreachable!()
             };
 
-            *expr = Self::transform_arrow_function_expression(arrow_function_expr.unbox(), ctx);
+            *expr = Self::transform_arrow_function_expression(arrow_function_expr, ctx);
         }
     }
 }
@@ -414,9 +414,10 @@ impl<'a> ArrowFunctionConverter<'a> {
     }
 
     fn transform_arrow_function_expression(
-        arrow_function_expr: ArrowFunctionExpression<'a>,
+        arrow_function_expr: ArenaBox<'a, ArrowFunctionExpression<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
+        let arrow_function_expr = arrow_function_expr.unbox();
         let scope_id = arrow_function_expr.scope_id();
         let flags = ctx.scopes_mut().get_flags_mut(scope_id);
         *flags &= !ScopeFlags::Arrow;
