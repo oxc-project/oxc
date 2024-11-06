@@ -610,7 +610,7 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
 
         // React.createElement's second argument
         if !is_fragment && is_classic {
-            if self.options.jsx_self_plugin && self.jsx_self.can_add_self_attribute(ctx) {
+            if self.options.jsx_self_plugin && JsxSelf::can_add_self_attribute(ctx) {
                 if let Some(span) = self_attr_span {
                     self.jsx_self.report_error(span);
                 } else {
@@ -689,7 +689,7 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
                 }
 
                 // this
-                if self.options.jsx_self_plugin && self.jsx_self.can_add_self_attribute(ctx) {
+                if self.options.jsx_self_plugin && JsxSelf::can_add_self_attribute(ctx) {
                     if let Some(span) = self_attr_span {
                         self.jsx_self.report_error(span);
                     } else {
