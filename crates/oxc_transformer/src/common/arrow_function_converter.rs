@@ -144,9 +144,10 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
         }
 
         if let Some(this_var) = self.this_var_stack.take_last() {
+            let target_scope_id = program.scope_id();
             self.insert_this_var_statement_at_the_top_of_statements(
                 &mut program.body,
-                program.scope_id.get().unwrap(),
+                target_scope_id,
                 &this_var,
                 ctx,
             );
@@ -180,11 +181,12 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
         }
 
         if let Some(this_var) = self.this_var_stack.pop() {
+            let target_scope_id = func.scope_id();
             let Some(body) = &mut func.body else { unreachable!() };
 
             self.insert_this_var_statement_at_the_top_of_statements(
                 &mut body.statements,
-                func.scope_id.get().unwrap(),
+                target_scope_id,
                 &this_var,
                 ctx,
             );
@@ -205,9 +207,10 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
         }
 
         if let Some(this_var) = self.this_var_stack.pop() {
+            let target_scope_id = block.scope_id();
             self.insert_this_var_statement_at_the_top_of_statements(
                 &mut block.body,
-                block.scope_id.get().unwrap(),
+                target_scope_id,
                 &this_var,
                 ctx,
             );
