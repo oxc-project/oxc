@@ -211,6 +211,7 @@ pub struct ESTreeFieldAttribute {
     pub skip: bool,
     pub rename: Option<String>,
     pub typescript_type: Option<String>,
+    pub append_to: Option<String>,
 }
 
 impl Parse for ESTreeFieldAttribute {
@@ -219,6 +220,7 @@ impl Parse for ESTreeFieldAttribute {
         let mut skip = false;
         let mut rename = None;
         let mut typescript_type = None;
+        let mut append_to = None;
 
         loop {
             let is_type = input.peek(Token![type]);
@@ -257,6 +259,13 @@ impl Parse for ESTreeFieldAttribute {
                         "Duplicate estree(type)"
                     );
                 }
+                "append_to" => {
+                    input.parse::<Token![=]>()?;
+                    assert!(
+                        append_to.replace(input.parse::<LitStr>()?.value()).is_none(),
+                        "Duplicate estree(append_to)"
+                    );
+                }
                 arg => panic!("Unsupported #[estree(...)] argument: {arg}"),
             }
             let comma = input.peek(Token![,]);
@@ -266,7 +275,7 @@ impl Parse for ESTreeFieldAttribute {
                 break;
             }
         }
-        Ok(Self { flatten, skip, rename, typescript_type })
+        Ok(Self { flatten, skip, rename, typescript_type, append_to })
     }
 }
 

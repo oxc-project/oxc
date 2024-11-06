@@ -6,11 +6,9 @@ use serde::{
 };
 
 use crate::ast::{
-    ArrayAssignmentTarget, ArrayPattern, AssignmentTargetMaybeDefault, AssignmentTargetProperty,
-    AssignmentTargetRest, BindingPattern, BindingPatternKind, BindingProperty, BindingRestElement,
-    Directive, Elision, FormalParameter, FormalParameterKind, FormalParameters, JSXElementName,
-    JSXIdentifier, JSXMemberExpressionObject, ObjectAssignmentTarget, ObjectPattern, Program,
-    RegExpFlags, Statement, StringLiteral, TSModuleBlock, TSTypeAnnotation,
+    BindingPatternKind, Directive, Elision, FormalParameter, FormalParameterKind, FormalParameters,
+    JSXElementName, JSXIdentifier, JSXMemberExpressionObject, Program, RegExpFlags, Statement,
+    StringLiteral, TSModuleBlock, TSTypeAnnotation,
 };
 
 pub struct EcmaFormatter;
@@ -59,82 +57,6 @@ impl Serialize for Elision {
     {
         serializer.serialize_none()
     }
-}
-
-/// Serialize `ArrayAssignmentTarget`, `ObjectAssignmentTarget`, `ObjectPattern`, `ArrayPattern`
-/// to be estree compatible, with `elements`/`properties` and `rest` fields combined.
-
-impl<'a> Serialize for ArrayAssignmentTarget<'a> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let converted = SerArrayAssignmentTarget {
-            span: self.span,
-            elements: ElementsAndRest::new(&self.elements, &self.rest),
-        };
-        converted.serialize(serializer)
-    }
-}
-
-#[derive(Serialize)]
-#[serde(tag = "type", rename = "ArrayAssignmentTarget", rename_all = "camelCase")]
-struct SerArrayAssignmentTarget<'a, 'b> {
-    #[serde(flatten)]
-    span: Span,
-    elements:
-        ElementsAndRest<'b, Option<AssignmentTargetMaybeDefault<'a>>, AssignmentTargetRest<'a>>,
-}
-
-impl<'a> Serialize for ObjectAssignmentTarget<'a> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let converted = SerObjectAssignmentTarget {
-            span: self.span,
-            properties: ElementsAndRest::new(&self.properties, &self.rest),
-        };
-        converted.serialize(serializer)
-    }
-}
-
-#[derive(Serialize)]
-#[serde(tag = "type", rename = "ObjectAssignmentTarget")]
-struct SerObjectAssignmentTarget<'a, 'b> {
-    #[serde(flatten)]
-    span: Span,
-    properties: ElementsAndRest<'b, AssignmentTargetProperty<'a>, AssignmentTargetRest<'a>>,
-}
-
-impl<'a> Serialize for ObjectPattern<'a> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let converted = SerObjectPattern {
-            span: self.span,
-            properties: ElementsAndRest::new(&self.properties, &self.rest),
-        };
-        converted.serialize(serializer)
-    }
-}
-
-#[derive(Serialize)]
-#[serde(tag = "type", rename = "ObjectPattern")]
-struct SerObjectPattern<'a, 'b> {
-    #[serde(flatten)]
-    span: Span,
-    properties: ElementsAndRest<'b, BindingProperty<'a>, Box<'a, BindingRestElement<'a>>>,
-}
-
-impl<'a> Serialize for ArrayPattern<'a> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let converted = SerArrayPattern {
-            span: self.span,
-            elements: ElementsAndRest::new(&self.elements, &self.rest),
-        };
-        converted.serialize(serializer)
-    }
-}
-
-#[derive(Serialize)]
-#[serde(tag = "type", rename = "ArrayPattern")]
-struct SerArrayPattern<'a, 'b> {
-    #[serde(flatten)]
-    span: Span,
-    elements: ElementsAndRest<'b, Option<BindingPattern<'a>>, Box<'a, BindingRestElement<'a>>>,
 }
 
 /// Serialize `FormalParameters`, to be estree compatible, with `items` and `rest` fields combined

@@ -42,4 +42,5 @@ serialize = [
   "oxc_span/serialize",
   "oxc_syntax/serialize",
   "oxc_syntax/to_js_string",
+  "oxc_estree/serialize",
 ]

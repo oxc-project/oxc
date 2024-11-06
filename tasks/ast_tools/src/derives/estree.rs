@@ -1,12 +1,13 @@
 use convert_case::{Case, Casing};
 use proc_macro2::TokenStream;
 use quote::quote;
+use rustc_hash::FxHashMap;
 
 use crate::{
     markers::ESTreeStructTagMode,
     schema::{
         serialize::{enum_variant_name, get_always_flatten_structs, get_type_tag},
-        EnumDef, GetGenerics, GetIdent, Schema, StructDef, TypeDef,
+        EnumDef, FieldDef, GetGenerics, GetIdent, Schema, StructDef, TypeDef,
     },
 };
 
@@ -74,10 +75,27 @@ fn serialize_struct(def: &StructDef, schema: &Schema) -> TokenStream {
     if let Some(ty) = &type_tag {
         fields.push(quote! { map.serialize_entry("type", #ty)?; });
     }
+
+    let mut append_to: FxHashMap<String, &FieldDef> = FxHashMap::default();
+
+    // Scan through to find all append_to fields
     for field in &def.fields {
-        if field.markers.derive_attributes.estree.skip {
+        let Some(parent) = field.markers.derive_attributes.estree.append_to.as_ref() else {
+            continue;
+        };
+        assert!(
+            append_to.insert(parent.clone(), field).is_none(),
+            "Duplicate append_to target (on {ident})"
+        );
+    }
+
+    for field in &def.fields {
+        if field.markers.derive_attributes.estree.skip
+            || field.markers.derive_attributes.estree.append_to.is_some()
+        {
             continue;
         }
+        let ident = field.ident().unwrap();
         let name = match &field.markers.derive_attributes.estree.rename {
             Some(rename) => rename.to_string(),
             None => field.name.clone().unwrap().to_case(Case::Camel),
@@ -93,10 +111,24 @@ fn serialize_struct(def: &StructDef, schema: &Schema) -> TokenStream {
             None => false,
         };
 
+        let append_child = append_to.get(&ident.to_string());
+
         if always_flatten || field.markers.derive_attributes.estree.flatten {
+            assert!(
+                append_child.is_none(),
+                "Cannot flatten and append to the same field (on {ident})"
+            );
             fields.push(quote! {
                 self.#ident.serialize(
                     serde::__private::ser::FlatMapSerializer(&mut map)
+                )?;
+            });
+        } else if let Some(append_child) = append_child {
+            let child_ident = append_child.ident().unwrap();
+            fields.push(quote! {
+                map.serialize_entry(
+                    #name,
+                    &oxc_estree::AppendTo(&self.#ident, &self.#child_ident)
                 )?;
             });
         } else {

@@ -32,5 +32,5 @@ serde = { workspace = true, features = ["derive"], optional = true }
 
 [features]
 default = []
-serialize = ["compact_str/serde", "dep:serde"]
+serialize = ["compact_str/serde", "dep:serde", "oxc_estree/serialize"]
 schemars = ["dep:schemars"]

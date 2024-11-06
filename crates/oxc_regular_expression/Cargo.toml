@@ -34,4 +34,9 @@ serde = { workspace = true, optional = true }
 
 [features]
 default = []
-serialize = ["dep:serde", "oxc_allocator/serialize", "oxc_span/serialize"]
+serialize = [
+  "dep:serde",
+  "oxc_allocator/serialize",
+  "oxc_span/serialize",
+  "oxc_estree/serialize",
+]

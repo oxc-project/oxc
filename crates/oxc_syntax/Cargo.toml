@@ -41,7 +41,13 @@ wasm-bindgen = { workspace = true, optional = true }
 [features]
 default = []
 to_js_string = ["dep:ryu-js"]
-serialize = ["bitflags/serde", "dep:serde", "dep:wasm-bindgen", "oxc_index/serialize"]
+serialize = [
+  "bitflags/serde",
+  "dep:serde",
+  "dep:wasm-bindgen",
+  "oxc_index/serialize",
+  "oxc_estree/serialize",
+]
 
 [package.metadata.cargo-shear]
 # We use `oxc_ast_macros::CloneIn` which expands to use `oxc_allocator`.
