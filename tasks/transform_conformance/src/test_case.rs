@@ -132,13 +132,21 @@ pub trait TestCase {
             return true;
         }
 
-        // babel skip test cases that in a directory starting with a dot
-        // https://github.com/babel/babel/blob/0effd92d886b7135469d23612ceba6414c721673/packages/babel-helper-fixtures/src/index.ts#L223
-        let dir = self.path().parent().unwrap();
-        if dir.file_name().is_some_and(|n| n.to_string_lossy().starts_with('.')) {
-            return true;
+        // Skip some Babel tests.
+        if let Ok(path) = self.path().strip_prefix(packages_root()) {
+            // babel skip test cases that in a directory starting with a dot
+            // https://github.com/babel/babel/blob/0effd92d886b7135469d23612ceba6414c721673/packages/babel-helper-fixtures/src/index.ts#L223
+            if path.components().any(|c| c.as_os_str().to_str().unwrap().starts_with('.')) {
+                return true;
+            }
+            // Skip tests that are known to fail
+            let full_path = path.to_string_lossy();
+            if SKIP_TESTS.iter().any(|path| full_path.starts_with(path)) {
+                return true;
+            }
         }
 
+        let dir = self.path().parent().unwrap();
         // Skip custom plugin.js
         if dir.join("plugin.js").exists() {
             return true;
@@ -146,12 +154,6 @@ pub trait TestCase {
 
         // Skip custom preset and flow
         if options.presets.unsupported.iter().any(|s| s.starts_with("./") || s == "flow") {
-            return true;
-        }
-
-        // Skip tests that are known to fail
-        let full_path = self.path().to_string_lossy();
-        if SKIP_TESTS.iter().any(|path| full_path.ends_with(path)) {
             return true;
         }
 
