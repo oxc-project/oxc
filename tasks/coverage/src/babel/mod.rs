@@ -35,7 +35,6 @@ impl<T: Case> Suite<T> for BabelSuite<T> {
     fn skip_test_path(&self, path: &Path) -> bool {
         let not_supported_directory = [
             "experimental",
-            "es2022",
             "record-and-tuple",
             "es-record",
             "es-tuple",
