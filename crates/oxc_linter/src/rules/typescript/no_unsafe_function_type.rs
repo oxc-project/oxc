@@ -5,6 +5,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::IsGlobalReference;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -59,18 +60,18 @@ impl Rule for NoUnsafeFunctionType {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::TSTypeReference(reference) => {
-                if let TSTypeName::IdentifierReference(iden_ref) = &reference.type_name {
-                    handle_function_type(iden_ref, ctx);
+                if let TSTypeName::IdentifierReference(ident_ref) = &reference.type_name {
+                    handle_function_type(ident_ref, ctx);
                 }
             }
             AstKind::TSClassImplements(implements) => {
-                if let TSTypeName::IdentifierReference(iden_ref) = &implements.expression {
-                    handle_function_type(iden_ref, ctx);
+                if let TSTypeName::IdentifierReference(ident_ref) = &implements.expression {
+                    handle_function_type(ident_ref, ctx);
                 }
             }
             AstKind::TSInterfaceHeritage(heritage) => {
-                if let Expression::Identifier(iden) = &heritage.expression {
-                    handle_function_type(iden, ctx);
+                if let Expression::Identifier(ident) = &heritage.expression {
+                    handle_function_type(ident, ctx);
                 }
             }
             _ => (),
@@ -79,14 +80,7 @@ impl Rule for NoUnsafeFunctionType {
 }
 
 fn handle_function_type<'a>(identifier: &Box<'a, IdentifierReference<'a>>, ctx: &LintContext<'a>) {
-    if identifier.name == "Function" {
-        // If the reference doesn't have a symbol_id, then it indicates that it's the global Function type
-        if let Some(ref_id) = identifier.reference_id() {
-            let reference = ctx.semantic().symbols().get_reference(ref_id);
-            if let Some(_symbol_id) = reference.symbol_id() {
-                return;
-            }
-        }
+    if identifier.name == "Function" && identifier.is_global_reference(ctx.symbols()) {
         ctx.diagnostic(no_unsafe_function_type_diagnostic(identifier.span));
     }
 }
