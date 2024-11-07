@@ -81,7 +81,7 @@ fn parse_with_return<'a>(source_text: &'a str, options: &ParserOptions) -> Parse
                 CommentKind::Line => "Line",
                 CommentKind::Block => "Block",
             },
-            value: comment.span.source_text(source_text).to_string(),
+            value: comment.content_span().source_text(source_text).to_string(),
             start: comment.span.start,
             end: comment.span.end,
         })

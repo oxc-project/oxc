@@ -4,6 +4,46 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.35.0] - 2024-11-04
+
+### Bug Fixes
+
+- caaf00e parser: Fix incorrect parsed `TSIndexSignature` (#7016) (Boshen)
+
+### Performance
+
+- fa9a4ec parser: Check `.` before `[` in `parse_member_expression_rest` (#6979) (Boshen)
+
+### Refactor
+
+- 953b051 parser: Remove `oxc_ecmascript` crate (#7109) (Boshen)
+- fdd480d parser: Do not use `AstBuilder::*_from_*` methods (#7068) (overlookmotel)
+- 9e85b10 parser: Add `ParserImpl::alloc` method (#7063) (overlookmotel)
+- 17a938e parser: Use function `parse_type_member_semicolon` (#7018) (Boshen)
+- aa1b29c parser: Remove `parse_ts_index_signature_member` function (#7017) (Boshen)
+
+## [0.34.0] - 2024-10-26
+
+### Refactor
+
+- 423d54c rust: Remove the annoying `clippy::wildcard_imports` (#6860) (Boshen)
+
+## [0.33.0] - 2024-10-24
+
+- a1ca964 ast, parser: [**BREAKING**] Remove `NumericLiteral::new` method (#6787) (overlookmotel)
+
+- aeaa27a ast, parser, transformer, traverse: [**BREAKING**] Remove `BindingIdentifier::new` methods (#6786) (overlookmotel)
+
+- ecc9151 ast, parser, transformer, traverse: [**BREAKING**] Remove `IdentifierReference::new` methods (#6785) (overlookmotel)
+
+- 8032813 regular_expression: [**BREAKING**] Migrate to new regexp parser API (#6741) (leaysgur)
+
+### Bug Fixes
+
+
+### Refactor
+
+
 ## [0.32.0] - 2024-10-19
 
 - 5200960 oxc: [**BREAKING**] Remove passing `Trivias` around (#6446) (Boshen)

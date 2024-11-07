@@ -7,7 +7,6 @@ use std::{hash::Hasher, mem::discriminant};
 
 use oxc_span::hash::ContentHash;
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::*;
 
 impl<'a> ContentHash for Pattern<'a> {

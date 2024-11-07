@@ -1,5 +1,3 @@
-#![allow(clippy::wildcard_imports)]
-
 //! ECMAScript Minifier
 
 mod ast_passes;
@@ -7,7 +5,6 @@ mod compressor;
 mod keep_var;
 mod node_util;
 mod options;
-mod tri;
 
 #[cfg(test)]
 mod tester;

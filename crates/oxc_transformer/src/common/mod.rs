@@ -1,11 +1,13 @@
 //! Utility transforms which are in common between other transforms.
 
-use oxc_allocator::Vec;
+use arrow_function_converter::ArrowFunctionConverter;
+use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast::*;
 use oxc_traverse::{Traverse, TraverseCtx};
 
-use crate::TransformCtx;
+use crate::{TransformCtx, TransformOptions};
 
+pub mod arrow_function_converter;
 pub mod helper_loader;
 pub mod module_imports;
 pub mod statement_injector;
@@ -22,15 +24,17 @@ pub struct Common<'a, 'ctx> {
     var_declarations: VarDeclarations<'a, 'ctx>,
     statement_injector: StatementInjector<'a, 'ctx>,
     top_level_statements: TopLevelStatements<'a, 'ctx>,
+    arrow_function_converter: ArrowFunctionConverter<'a>,
 }
 
 impl<'a, 'ctx> Common<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(options: &TransformOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
         Self {
             module_imports: ModuleImports::new(ctx),
             var_declarations: VarDeclarations::new(ctx),
             statement_injector: StatementInjector::new(ctx),
             top_level_statements: TopLevelStatements::new(ctx),
+            arrow_function_converter: ArrowFunctionConverter::new(options),
         }
     }
 }
@@ -40,14 +44,63 @@ impl<'a, 'ctx> Traverse<'a> for Common<'a, 'ctx> {
         self.module_imports.exit_program(program, ctx);
         self.var_declarations.exit_program(program, ctx);
         self.top_level_statements.exit_program(program, ctx);
+        self.arrow_function_converter.exit_program(program, ctx);
     }
 
-    fn enter_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+    fn enter_statements(
+        &mut self,
+        stmts: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         self.var_declarations.enter_statements(stmts, ctx);
     }
 
-    fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+    fn exit_statements(
+        &mut self,
+        stmts: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         self.var_declarations.exit_statements(stmts, ctx);
         self.statement_injector.exit_statements(stmts, ctx);
+    }
+
+    fn enter_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.arrow_function_converter.enter_function(func, ctx);
+    }
+
+    fn exit_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.arrow_function_converter.exit_function(func, ctx);
+    }
+
+    fn enter_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.arrow_function_converter.enter_static_block(block, ctx);
+    }
+
+    fn exit_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.arrow_function_converter.exit_static_block(block, ctx);
+    }
+
+    fn enter_jsx_element_name(
+        &mut self,
+        element_name: &mut JSXElementName<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.arrow_function_converter.enter_jsx_element_name(element_name, ctx);
+    }
+
+    fn enter_jsx_member_expression_object(
+        &mut self,
+        object: &mut JSXMemberExpressionObject<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.arrow_function_converter.enter_jsx_member_expression_object(object, ctx);
+    }
+
+    fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.arrow_function_converter.enter_expression(expr, ctx);
+    }
+
+    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.arrow_function_converter.exit_expression(expr, ctx);
     }
 }

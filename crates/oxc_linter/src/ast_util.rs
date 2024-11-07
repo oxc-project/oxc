@@ -4,7 +4,6 @@ use oxc_semantic::{AstNode, IsGlobalReference, NodeId, Semantic, SymbolId};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};
 
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 
 /// Test if an AST node is a boolean value that never changes. Specifically we
@@ -254,6 +253,7 @@ pub fn nth_outermost_paren_parent<'a, 'b>(
         .filter(|parent| !matches!(parent.kind(), AstKind::ParenthesizedExpression(_)))
         .nth(n)
 }
+
 /// Iterate over parents of `node`, skipping nodes that are also ignored by
 /// [`Expression::get_inner_expression`].
 pub fn iter_outer_expressions<'a, 's>(
@@ -332,8 +332,14 @@ pub fn is_method_call<'a>(
         }
     }
 
-    let Some(member_expr) = call_expr.callee.without_parentheses().as_member_expression() else {
-        return false;
+    let callee_without_parentheses = call_expr.callee.without_parentheses();
+    let member_expr = match callee_without_parentheses {
+        match_member_expression!(Expression) => callee_without_parentheses.to_member_expression(),
+        Expression::ChainExpression(chain) => match chain.expression {
+            match_member_expression!(ChainElement) => chain.expression.to_member_expression(),
+            ChainElement::CallExpression(_) => return false,
+        },
+        _ => return false,
     };
 
     if let Some(objects) = objects {
@@ -424,4 +430,35 @@ pub fn get_function_like_declaration<'b>(
     let decl = parent.kind().as_variable_declarator()?;
 
     decl.id.get_binding_identifier()
+}
+
+/// Get the first identifier reference within a member expression chain or
+/// standalone reference.
+///
+/// For example, when called on the right-hand side of this [`AssignmentExpression`]:
+/// ```ts
+/// let x = a
+/// //      ^
+/// let y = a.b.c
+/// //      ^
+/// ```
+///
+/// As this function walks down the member expression chain, if no identifier
+/// reference is found, it returns [`Err`] with the leftmost expression.
+/// ```ts
+/// let x = 1 + 1
+/// //      ^^^^^ Err(BinaryExpression)
+/// let y = this.foo.bar
+/// //      ^^^^ Err(ThisExpression)
+/// ```
+pub fn leftmost_identifier_reference<'a, 'b: 'a>(
+    expr: &'b Expression<'a>,
+) -> Result<&'a IdentifierReference<'a>, &'b Expression<'a>> {
+    match expr {
+        Expression::Identifier(ident) => Ok(ident.as_ref()),
+        Expression::StaticMemberExpression(mem) => leftmost_identifier_reference(&mem.object),
+        Expression::ComputedMemberExpression(mem) => leftmost_identifier_reference(&mem.object),
+        Expression::PrivateFieldExpression(mem) => leftmost_identifier_reference(&mem.object),
+        _ => Err(expr),
+    }
 }

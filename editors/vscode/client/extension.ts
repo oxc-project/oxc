@@ -2,12 +2,13 @@ import { promises as fsPromises } from 'node:fs';
 
 import { commands, ExtensionContext, StatusBarAlignment, StatusBarItem, ThemeColor, window, workspace } from 'vscode';
 
+import { MessageType, ShowMessageNotification } from 'vscode-languageclient';
+
 import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
 
 import { join } from 'node:path';
 import { ConfigService } from './config';
 
-const languageClientId = 'oxc-vscode';
 const languageClientName = 'oxc';
 const outputChannelName = 'Oxc';
 const traceOutputChannelName = 'Oxc (Trace)';
@@ -150,8 +151,12 @@ export async function activate(context: ExtensionContext) {
       scheme: 'file',
     })),
     synchronize: {
-      // Notify the server about file changes to '.clientrc files contained in the workspace
-      fileEvents: workspace.createFileSystemWatcher('**/.clientrc'),
+      // Notify the server about file config changes in the workspace
+      fileEvents: [
+        workspace.createFileSystemWatcher('**/.eslintr{c,c.json}'),
+        workspace.createFileSystemWatcher('**/.oxlint{.json,rc.json,rc}'),
+        workspace.createFileSystemWatcher('**/oxlint{.json,rc.json}'),
+      ],
     },
     initializationOptions: {
       settings: config.toLanguageServerConfig(),
@@ -162,11 +167,29 @@ export async function activate(context: ExtensionContext) {
 
   // Create the language client and start the client.
   client = new LanguageClient(
-    languageClientId,
     languageClientName,
     serverOptions,
     clientOptions,
   );
+  client.onNotification(ShowMessageNotification.type, (params) => {
+    switch (params.type) {
+      case MessageType.Log:
+      case MessageType.Debug:
+        outputChannel.appendLine(params.message);
+        break;
+      case MessageType.Info:
+        window.showInformationMessage(params.message);
+        break;
+      case MessageType.Warning:
+        window.showWarningMessage(params.message);
+        break;
+      case MessageType.Error:
+        window.showErrorMessage(params.message);
+        break;
+      default:
+        outputChannel.appendLine(params.message);
+    }
+  });
 
   workspace.onDidDeleteFiles((event) => {
     event.files.forEach((fileUri) => {
@@ -175,7 +198,7 @@ export async function activate(context: ExtensionContext) {
   });
 
   config.onConfigChange = function onConfigChange() {
-    let settings: any = JSON.parse(JSON.stringify(this));
+    let settings = this.toLanguageServerConfig();
     updateStatsBar(settings.enable);
     client.sendNotification('workspace/didChangeConfiguration', { settings });
   };

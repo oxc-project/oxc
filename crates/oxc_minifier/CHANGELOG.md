@@ -4,6 +4,54 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.35.0] - 2024-11-04
+
+### Refactor
+
+- 97caae1 minifier: Do not use `AstBuilder::*_from_*` methods (#7072) (overlookmotel)
+- 2c7ac29 minifier: Remove `Tri`, use `Option<bool>` instead (#6912) (Boshen)
+
+## [0.34.0] - 2024-10-26
+
+### Features
+
+- 4429754 ecmascript: Constant eval `null` to number (#6879) (Boshen)
+- fd57e00 ecmascript: Add abstract_relational_comparison to dce (#6846) (Boshen)
+- 8bcaf59 minifier: Late peeophole optimization (#6882) (Boshen)
+- 860cbca minifier: Implement folding simple arrow fns (#6875) (camc314)
+- c26020e minifier: Implement folding String.prototype.replaceAll (#6871) (camc314)
+- 50744f3 minifier: Implement folding String.prototype.replace (#6870) (camc314)
+- fccf82e minifier: Implement folding `substring` string fns (#6869) (camc314)
+- e6a5a1b minifier: Implement folding `charCodeAt` string fns (#6475) (camc314)
+
+### Bug Fixes
+
+- a47c70e minifier: Fix remaining runtime bugs (#6855) (Boshen)
+- 686727f minifier: Reference read has side effect (#6851) (Boshen)
+- c658d93 minifier: Keep template literals with expressions (#6849) (Boshen)
+
+### Refactor
+
+- 423d54c rust: Remove the annoying `clippy::wildcard_imports` (#6860) (Boshen)
+
+## [0.33.0] - 2024-10-24
+
+### Features
+
+- b4bc300 minifier: Improve folding block stmts (#6793) (camc314)
+- 34fe7c0 minifier: Dce meaningless labeled statements (#6688) (7086cmd)
+
+### Bug Fixes
+
+- 2f6ad42 codegen: Print negative bigint `1n- -1n` correctly after constant folding (#6798) (Boshen)
+- ca79993 minifier: Do not dce object literals yet (#6839) (Boshen)
+- ec5a19b minifier: Do not remove binary expressions (#6829) (Boshen)
+- 22355f7 minifier: Do not remove `undefined` for destructuring patterns (#6828) (Boshen)
+
+### Refactor
+
+- 8b25131 minifier: Binary operations use `ConstantEvaluation` (#6700) (Boshen)
+
 ## [0.32.0] - 2024-10-19
 
 ### Features

@@ -4,6 +4,37 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.35.0] - 2024-11-04
+
+### Bug Fixes
+
+- da199c7 ecmascript: Allow getting PropName for object methods (#6967) (camchenry)
+
+## [0.34.0] - 2024-10-26
+
+### Features
+
+- 4429754 ecmascript: Constant eval `null` to number (#6879) (Boshen)
+- fd57e00 ecmascript: Add abstract_relational_comparison to dce (#6846) (Boshen)
+- 8bcaf59 minifier: Late peeophole optimization (#6882) (Boshen)
+- fccf82e minifier: Implement folding `substring` string fns (#6869) (camc314)
+- e6a5a1b minifier: Implement folding `charCodeAt` string fns (#6475) (camc314)
+
+### Bug Fixes
+
+- a47c70e minifier: Fix remaining runtime bugs (#6855) (Boshen)
+- 686727f minifier: Reference read has side effect (#6851) (Boshen)
+
+### Refactor
+
+- 423d54c rust: Remove the annoying `clippy::wildcard_imports` (#6860) (Boshen)
+
+## [0.33.0] - 2024-10-24
+
+### Refactor
+
+- 8b25131 minifier: Binary operations use `ConstantEvaluation` (#6700) (Boshen)
+
 ## [0.32.0] - 2024-10-19
 
 ### Features

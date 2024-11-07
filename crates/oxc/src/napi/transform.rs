@@ -80,9 +80,6 @@ pub struct TransformOptions {
     /// Configure how TSX and JSX are transformed.
     pub jsx: Option<JsxOptions>,
 
-    /// Enable ES2015 transformations.
-    pub es2015: Option<Es2015Options>,
-
     /// Define Plugin
     #[napi(ts_type = "Record<string, string>")]
     pub define: Option<FxHashMap<String, String>>,
@@ -96,9 +93,11 @@ impl From<TransformOptions> for oxc_transformer::TransformOptions {
     fn from(options: TransformOptions) -> Self {
         Self {
             cwd: options.cwd.map(PathBuf::from).unwrap_or_default(),
-            typescript: options.typescript.map(Into::into).unwrap_or_default(),
-            react: options.jsx.map(Into::into).unwrap_or_default(),
-            es2015: options.es2015.map(Into::into).unwrap_or_default(),
+            typescript: options
+                .typescript
+                .map(oxc_transformer::TypeScriptOptions::from)
+                .unwrap_or_default(),
+            jsx: options.jsx.map(Into::into).unwrap_or_default(),
             ..Self::default()
         }
     }

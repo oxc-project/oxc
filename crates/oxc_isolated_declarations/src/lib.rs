@@ -23,7 +23,6 @@ use std::{cell::RefCell, mem};
 
 use diagnostics::function_with_assigning_properties;
 use oxc_allocator::{Allocator, CloneIn};
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstBuilder, Visit, NONE};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Atom, GetSpan, SourceType, SPAN};
@@ -112,7 +111,8 @@ impl<'a> IsolatedDeclarations<'a> {
     fn build_internal_annotations(program: &Program<'a>) -> FxHashSet<u32> {
         let mut set = FxHashSet::default();
         for comment in &program.comments {
-            let has_internal = comment.span.source_text(program.source_text).contains("@internal");
+            let has_internal =
+                comment.content_span().source_text(program.source_text).contains("@internal");
             // Use the first jsdoc comment if there are multiple jsdoc comments for the same node.
             if has_internal && !set.contains(&comment.attached_to) {
                 set.insert(comment.attached_to);
@@ -333,7 +333,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         );
                         transformed_stmts.insert(
                             declaration.span,
-                            Statement::from(self.ast.declaration_from_variable(decl)),
+                            Statement::VariableDeclaration(self.ast.alloc(decl)),
                         );
                         transformed_spans.insert(declaration.span);
                     }
@@ -379,9 +379,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     if decl.specifiers.is_none() {
                         new_stm.push(stmt.clone_in(self.ast.allocator));
                     } else if let Some(new_decl) = self.transform_import_declaration(decl) {
-                        new_stm.push(Statement::from(
-                            self.ast.module_declaration_from_import_declaration(new_decl),
-                        ));
+                        new_stm.push(Statement::ImportDeclaration(new_decl));
                     }
                 }
                 Statement::VariableDeclaration(decl) => {
@@ -392,14 +390,14 @@ impl<'a> IsolatedDeclarations<'a> {
                                 transformed_variable_declarator.remove(&declarator.span)
                             }),
                         );
-                        new_stm.push(Statement::from(self.ast.declaration_from_variable(
-                            self.ast.variable_declaration(
+                        new_stm.push(Statement::VariableDeclaration(
+                            self.ast.alloc_variable_declaration(
                                 decl.span,
                                 decl.kind,
                                 declarations,
                                 self.is_declare(),
                             ),
-                        )));
+                        ));
                     }
                 }
                 _ => {}

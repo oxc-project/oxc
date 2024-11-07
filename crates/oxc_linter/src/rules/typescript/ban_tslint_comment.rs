@@ -35,18 +35,10 @@ impl Rule for BanTslintComment {
     fn run_once(&self, ctx: &LintContext) {
         let comments = ctx.semantic().comments();
         let source_text_len = ctx.semantic().source_text().len();
-
         for comment in comments {
-            let raw = comment.span.source_text(ctx.semantic().source_text());
-
+            let raw = ctx.source_range(comment.content_span());
             if is_tslint_comment_directive(raw) {
-                let comment_span = get_full_comment(
-                    source_text_len,
-                    comment.span.start,
-                    comment.span.end,
-                    comment.is_block(),
-                );
-
+                let comment_span = get_full_comment(source_text_len, comment.span);
                 ctx.diagnostic_with_fix(
                     ban_tslint_comment_diagnostic(raw.trim(), comment_span),
                     |fixer| fixer.delete_range(comment_span),
@@ -65,16 +57,13 @@ fn is_tslint_comment_directive(raw: &str) -> bool {
     ENABLE_DISABLE_REGEX.is_match(raw)
 }
 
-fn get_full_comment(source_text_len: usize, start: u32, end: u32, is_multi_line: bool) -> Span {
-    let comment_start = start - 2;
-    let mut comment_end = if is_multi_line { end + 2 } else { end };
-
+fn get_full_comment(source_text_len: usize, span: Span) -> Span {
+    let mut span = span;
     // Take into account new line at the end of the comment
-    if source_text_len > comment_end as usize {
-        comment_end += 1;
+    if source_text_len > span.end as usize {
+        span.end += 1;
     }
-
-    Span::new(comment_start, comment_end)
+    span
 }
 
 #[test]

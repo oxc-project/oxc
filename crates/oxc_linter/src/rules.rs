@@ -15,6 +15,7 @@ mod import {
     pub mod named;
     pub mod namespace;
     pub mod no_amd;
+    pub mod no_commonjs;
     pub mod no_cycle;
     pub mod no_default_export;
     pub mod no_duplicates;
@@ -129,6 +130,7 @@ mod eslint {
     pub mod no_with;
     pub mod prefer_exponentiation_operator;
     pub mod prefer_numeric_literals;
+    pub mod prefer_object_has_own;
     pub mod radix;
     pub mod require_await;
     pub mod require_yield;
@@ -260,6 +262,7 @@ mod react {
     pub mod require_render_return;
     pub mod rules_of_hooks;
     pub mod self_closing_comp;
+    pub mod style_prop_object;
     pub mod void_dom_elements_no_children;
 }
 
@@ -410,6 +413,7 @@ mod oxc {
     pub mod no_async_endpoint_handlers;
     pub mod no_barrel_file;
     pub mod no_const_enum;
+    pub mod no_map_spread;
     pub mod no_optional_chaining;
     pub mod no_rest_spread_properties;
     pub mod number_arg_out_of_range;
@@ -604,6 +608,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_with,
     eslint::prefer_exponentiation_operator,
     eslint::prefer_numeric_literals,
+    eslint::prefer_object_has_own,
     eslint::radix,
     eslint::require_await,
     eslint::require_yield,
@@ -620,6 +625,7 @@ oxc_macros::declare_all_lint_rules! {
     import::named,
     import::namespace,
     import::no_amd,
+    import::no_commonjs,
     import::no_cycle,
     import::no_default_export,
     import::no_duplicates,
@@ -761,6 +767,7 @@ oxc_macros::declare_all_lint_rules! {
     oxc::no_async_endpoint_handlers,
     oxc::no_barrel_file,
     oxc::no_const_enum,
+    oxc::no_map_spread,
     oxc::no_optional_chaining,
     oxc::no_rest_spread_properties,
     oxc::number_arg_out_of_range,
@@ -804,6 +811,7 @@ oxc_macros::declare_all_lint_rules! {
     react::require_render_return,
     react::rules_of_hooks,
     react::self_closing_comp,
+    react::style_prop_object,
     react::void_dom_elements_no_children,
     react_perf::jsx_no_jsx_as_prop,
     react_perf::jsx_no_new_array_as_prop,

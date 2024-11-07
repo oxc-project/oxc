@@ -22,7 +22,7 @@ importers:
         version: 3.0.0-alpha.61(@emnapi/runtime@1.2.0)
       vitest:
         specifier: 'catalog:'
-        version: 2.1.2(@types/node@22.7.7)
+        version: 2.1.2(@types/node@22.9.0)
 
   editors/vscode:
     dependencies:
@@ -32,13 +32,13 @@ importers:
     devDependencies:
       '@types/node':
         specifier: ^22.0.0
-        version: 22.7.7
+        version: 22.9.0
       '@types/vscode':
-        specifier: 1.80.0
-        version: 1.80.0
+        specifier: 1.95.0
+        version: 1.95.0
       '@vscode/vsce':
         specifier: ^3.0.0
-        version: 3.2.0
+        version: 3.2.1
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
@@ -58,6 +58,30 @@ importers:
 
   napi/transform: {}
 
+  npm/oxc-parser:
+    dependencies:
+      '@oxc-project/types':
+        specifier: workspace:^
+        version: link:../oxc-types
+
+  npm/oxc-transform: {}
+
+  npm/oxc-types: {}
+
+  npm/oxc-wasm:
+    dependencies:
+      '@oxc-project/types':
+        specifier: workspace:^
+        version: link:../oxc-types
+
+  npm/oxlint: {}
+
+  npm/parser-wasm:
+    dependencies:
+      '@oxc-project/types':
+        specifier: workspace:^
+        version: link:../oxc-types
+
   tasks/benchmark/codspeed:
     devDependencies:
       axios:
@@ -70,7 +94,23 @@ importers:
         specifier: ^7.2.0
         version: 7.4.3
 
-  wasm/parser: {}
+  tasks/compat_data:
+    devDependencies:
+      degit:
+        specifier: 2.8.4
+        version: 2.8.4
+
+  tasks/transform_conformance:
+    devDependencies:
+      '@babel/runtime':
+        specifier: ^7.26.0
+        version: 7.26.0
+
+  wasm/parser:
+    dependencies:
+      '@oxc-project/types':
+        specifier: workspace:^
+        version: link:../../npm/oxc-types
 
 packages:
 
@@ -117,6 +157,10 @@ packages:
   '@azure/msal-node@2.15.0':
     resolution: {integrity: sha512-gVPW8YLz92ZeCibQH2QUw96odJoiM3k/ZPH3f2HxptozmH6+OnyyvKXo/Egg39HAM230akarQKHf0W74UHlh0Q==}
     engines: {node: '>=16'}
+
+  '@babel/runtime@7.26.0':
+    resolution: {integrity: sha512-FDSOghenHTiToteC/QRlv2q3DhPZ/oOXTBoirfWNx1Cx3TMVcGWQtMMmQcSvb/JjpNeGzx8Pq/b4fKEJuWm1sw==}
+    engines: {node: '>=6.9.0'}
 
   '@emnapi/core@1.2.0':
     resolution: {integrity: sha512-E7Vgw78I93we4ZWdYCb4DGAwRROGkMIXk7/y87UmANR+J6qsWusmC3gLt0H+O0KOt5e6O38U8oJamgbudrES/w==}
@@ -927,11 +971,11 @@ packages:
   '@types/mute-stream@0.0.4':
     resolution: {integrity: sha512-CPM9nzrCPPJHQNA9keH9CVkVI+WR5kMa+7XEs5jcGQ0VoAGnLv242w8lIVgwAEfmE4oufJRaTc9PNLQl0ioAow==}
 
-  '@types/node@22.7.7':
-    resolution: {integrity: sha512-SRxCrrg9CL/y54aiMCG3edPKdprgMVGDXjA3gB8UmmBW5TcXzRUYAh8EWzTnSJFAd1rgImPELza+A3bJ+qxz8Q==}
+  '@types/node@22.9.0':
+    resolution: {integrity: sha512-vuyHg81vvWA1Z1ELfvLko2c8f34gyA0zaic0+Rllc5lbCnbSyuvb2Oxpm6TAUAC/2xZN3QGqxBNggD1nNR2AfQ==}
 
-  '@types/vscode@1.80.0':
-    resolution: {integrity: sha512-qK/CmOdS2o7ry3k6YqU4zD3R2AYlJfbwBoSbKpBoP+GpXNE+0NEgJOli4n0bm0diK5kfBnchgCEj4igQz/44Hg==}
+  '@types/vscode@1.95.0':
+    resolution: {integrity: sha512-0LBD8TEiNbet3NvWsmn59zLzOFu/txSlGxnv5yAFHCrhG9WvAnR3IvfHzMOs2aeWqgvNjq9pO99IUw8d3n+unw==}
 
   '@types/wrap-ansi@3.0.0':
     resolution: {integrity: sha512-ltIpx+kM7g/MLRZfkbL7EsCEjfzCcScLpkg37eXEtx5kmrAKBkTJwd1GIAjDSL8wTpM6Hzn5YO4pSb91BEwu1g==}
@@ -1011,11 +1055,11 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@vscode/vsce-sign@2.0.4':
-    resolution: {integrity: sha512-0uL32egStKYfy60IqnynAChMTbL0oqpqk0Ew0YHiIb+fayuGZWADuIPHWUcY1GCnAA+VgchOPDMxnc2R3XGWEA==}
+  '@vscode/vsce-sign@2.0.5':
+    resolution: {integrity: sha512-GfYWrsT/vypTMDMgWDm75iDmAOMe7F71sZECJ+Ws6/xyIfmB3ELVnVN+LwMFAvmXY+e6eWhR2EzNGF/zAhWY3Q==}
 
-  '@vscode/vsce@3.2.0':
-    resolution: {integrity: sha512-c/AId5Lp50HTszCBDfXfD/Go2djm6qO/WfedP2Y3BpRP+V+ttr8T0mTvZ8WEyTiBp2EfrYnzYUCx0ocB9mHy4Q==}
+  '@vscode/vsce@3.2.1':
+    resolution: {integrity: sha512-AY9vBjwExakK1c0cI/3NN2Ey0EgiKLBye/fxl/ue+o4q6RZ7N+xzd1jAD6eI6eBeMVANi617+V2rxIAkDPco2Q==}
     engines: {node: '>= 20'}
     hasBin: true
 
@@ -1259,6 +1303,11 @@ packages:
   define-lazy-prop@2.0.0:
     resolution: {integrity: sha512-Ds09qNh8yw3khSjiJjiUInaGX9xlqZDY7JVryGxdxV7NPeuqQfplOpQ66yJFZut3jLa5zOwkXw1g9EI2uKh4Og==}
     engines: {node: '>=8'}
+
+  degit@2.8.4:
+    resolution: {integrity: sha512-vqYuzmSA5I50J882jd+AbAhQtgK6bdKUJIex1JNfEUPENCgYsxugzKVZlFyMwV4i06MmnV47/Iqi5Io86zf3Ng==}
+    engines: {node: '>=8.0.0'}
+    hasBin: true
 
   delayed-stream@1.0.0:
     resolution: {integrity: sha512-ZySD7Nf91aLB0RxL4KGrKHBXl7Eds1DAmEdcoVawXnLD7SDhpNgtuII2aAkg7a7QS41jxPSZ17p4VdGnMHk3MQ==}
@@ -1821,6 +1870,9 @@ packages:
     resolution: {integrity: sha512-9u/sniCrY3D5WdsERHzHE4G2YCXqoG5FTHUiCC4SIbr6XcLZBY05ya9EKjYek9O5xOAwjGq+1JdGBAS7Q9ScoA==}
     engines: {node: '>= 6'}
 
+  regenerator-runtime@0.14.1:
+    resolution: {integrity: sha512-dYnhHh0nJoMfnkZs6GmmhFknAGRrLznOu5nc9ML+EJxGvrx6H7teuevqVqCuPcPK//3eDrrjQhehXVx9cnkGdw==}
+
   rimraf@5.0.10:
     resolution: {integrity: sha512-l0OE8wL34P4nJH/H2ffoaniAokM2qSmrtXHmlpvYr5AVVX8msAyW0l8NVJFDxlSK4u3Uh/f41cQheDVdnYijwQ==}
     hasBin: true
@@ -2272,6 +2324,10 @@ snapshots:
       jsonwebtoken: 9.0.2
       uuid: 8.3.2
 
+  '@babel/runtime@7.26.0':
+    dependencies:
+      regenerator-runtime: 0.14.1
+
   '@emnapi/core@1.2.0':
     dependencies:
       '@emnapi/wasi-threads': 1.0.1
@@ -2447,7 +2503,7 @@ snapshots:
       '@inquirer/figures': 1.0.5
       '@inquirer/type': 1.5.3
       '@types/mute-stream': 0.0.4
-      '@types/node': 22.7.7
+      '@types/node': 22.9.0
       '@types/wrap-ansi': 3.0.0
       ansi-escapes: 4.3.2
       cli-spinners: 2.9.2
@@ -2890,13 +2946,13 @@ snapshots:
 
   '@types/mute-stream@0.0.4':
     dependencies:
-      '@types/node': 22.7.7
+      '@types/node': 22.9.0
 
-  '@types/node@22.7.7':
+  '@types/node@22.9.0':
     dependencies:
       undici-types: 6.19.8
 
-  '@types/vscode@1.80.0': {}
+  '@types/vscode@1.95.0': {}
 
   '@types/wrap-ansi@3.0.0': {}
 
@@ -2907,13 +2963,13 @@ snapshots:
       chai: 5.1.1
       tinyrainbow: 1.2.0
 
-  '@vitest/mocker@2.1.2(@vitest/spy@2.1.2)(vite@5.4.8(@types/node@22.7.7))':
+  '@vitest/mocker@2.1.2(@vitest/spy@2.1.2)(vite@5.4.8(@types/node@22.9.0))':
     dependencies:
       '@vitest/spy': 2.1.2
       estree-walker: 3.0.3
       magic-string: 0.30.11
     optionalDependencies:
-      vite: 5.4.8(@types/node@22.7.7)
+      vite: 5.4.8(@types/node@22.9.0)
 
   '@vitest/pretty-format@2.1.2':
     dependencies:
@@ -2967,7 +3023,7 @@ snapshots:
   '@vscode/vsce-sign-win32-x64@2.0.2':
     optional: true
 
-  '@vscode/vsce-sign@2.0.4':
+  '@vscode/vsce-sign@2.0.5':
     optionalDependencies:
       '@vscode/vsce-sign-alpine-arm64': 2.0.2
       '@vscode/vsce-sign-alpine-x64': 2.0.2
@@ -2979,10 +3035,10 @@ snapshots:
       '@vscode/vsce-sign-win32-arm64': 2.0.2
       '@vscode/vsce-sign-win32-x64': 2.0.2
 
-  '@vscode/vsce@3.2.0':
+  '@vscode/vsce@3.2.1':
     dependencies:
       '@azure/identity': 4.5.0
-      '@vscode/vsce-sign': 2.0.4
+      '@vscode/vsce-sign': 2.0.5
       azure-devops-node-api: 12.5.0
       chalk: 2.4.2
       cheerio: 1.0.0
@@ -3259,6 +3315,8 @@ snapshots:
       gopd: 1.0.1
 
   define-lazy-prop@2.0.0: {}
+
+  degit@2.8.4: {}
 
   delayed-stream@1.0.0: {}
 
@@ -3798,7 +3856,7 @@ snapshots:
 
   ovsx@0.10.0:
     dependencies:
-      '@vscode/vsce': 3.2.0
+      '@vscode/vsce': 3.2.1
       commander: 6.2.1
       follow-redirects: 1.15.9
       is-ci: 2.0.0
@@ -3921,6 +3979,8 @@ snapshots:
       string_decoder: 1.3.0
       util-deprecate: 1.0.2
     optional: true
+
+  regenerator-runtime@0.14.1: {}
 
   rimraf@5.0.10:
     dependencies:
@@ -4166,12 +4226,12 @@ snapshots:
 
   vary@1.1.2: {}
 
-  vite-node@2.1.2(@types/node@22.7.7):
+  vite-node@2.1.2(@types/node@22.9.0):
     dependencies:
       cac: 6.7.14
       debug: 4.3.7
       pathe: 1.1.2
-      vite: 5.4.8(@types/node@22.7.7)
+      vite: 5.4.8(@types/node@22.9.0)
     transitivePeerDependencies:
       - '@types/node'
       - less
@@ -4183,19 +4243,19 @@ snapshots:
       - supports-color
       - terser
 
-  vite@5.4.8(@types/node@22.7.7):
+  vite@5.4.8(@types/node@22.9.0):
     dependencies:
       esbuild: 0.21.5
       postcss: 8.4.47
       rollup: 4.24.0
     optionalDependencies:
-      '@types/node': 22.7.7
+      '@types/node': 22.9.0
       fsevents: 2.3.3
 
-  vitest@2.1.2(@types/node@22.7.7):
+  vitest@2.1.2(@types/node@22.9.0):
     dependencies:
       '@vitest/expect': 2.1.2
-      '@vitest/mocker': 2.1.2(@vitest/spy@2.1.2)(vite@5.4.8(@types/node@22.7.7))
+      '@vitest/mocker': 2.1.2(@vitest/spy@2.1.2)(vite@5.4.8(@types/node@22.9.0))
       '@vitest/pretty-format': 2.1.2
       '@vitest/runner': 2.1.2
       '@vitest/snapshot': 2.1.2
@@ -4210,11 +4270,11 @@ snapshots:
       tinyexec: 0.3.0
       tinypool: 1.0.1
       tinyrainbow: 1.2.0
-      vite: 5.4.8(@types/node@22.7.7)
-      vite-node: 2.1.2(@types/node@22.7.7)
+      vite: 5.4.8(@types/node@22.9.0)
+      vite-node: 2.1.2(@types/node@22.9.0)
       why-is-node-running: 2.3.0
     optionalDependencies:
-      '@types/node': 22.7.7
+      '@types/node': 22.9.0
     transitivePeerDependencies:
       - less
       - lightningcss

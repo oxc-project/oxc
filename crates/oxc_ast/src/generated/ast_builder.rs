@@ -1,20 +1,19 @@
-//! AST node factories
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/ast_builder.rs`
+
+//! AST node factories
 
 #![allow(
     clippy::default_trait_access,
     clippy::too_many_arguments,
     clippy::fn_params_excessive_bools
 )]
-#![warn(missing_docs)]
 
 use std::cell::Cell;
 
 use oxc_allocator::{Allocator, Box, IntoIn, Vec};
 use oxc_syntax::{reference::ReferenceId, scope::ScopeId, symbol::SymbolId};
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::*;
 
 /// AST builder for creating AST nodes
@@ -160,16 +159,14 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: Node location in source code
-    /// - value: Placeholder for printing.
     /// - regex: The parsed regular expression. See [`oxc_regular_expression`] for more
+    /// - raw: The regular expression as it appears in source code
     #[inline]
-    pub fn reg_exp_literal(
-        self,
-        span: Span,
-        value: EmptyObject,
-        regex: RegExp<'a>,
-    ) -> RegExpLiteral<'a> {
-        RegExpLiteral { span, value, regex }
+    pub fn reg_exp_literal<S>(self, span: Span, regex: RegExp<'a>, raw: S) -> RegExpLiteral<'a>
+    where
+        S: IntoIn<'a, &'a str>,
+    {
+        RegExpLiteral { span, regex, raw: raw.into_in(self.allocator) }
     }
 
     /// Build a [`RegExpLiteral`], and store it in the memory arena.
@@ -178,16 +175,19 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: Node location in source code
-    /// - value: Placeholder for printing.
     /// - regex: The parsed regular expression. See [`oxc_regular_expression`] for more
+    /// - raw: The regular expression as it appears in source code
     #[inline]
-    pub fn alloc_reg_exp_literal(
+    pub fn alloc_reg_exp_literal<S>(
         self,
         span: Span,
-        value: EmptyObject,
         regex: RegExp<'a>,
-    ) -> Box<'a, RegExpLiteral<'a>> {
-        Box::new_in(self.reg_exp_literal(span, value, regex), self.allocator)
+        raw: S,
+    ) -> Box<'a, RegExpLiteral<'a>>
+    where
+        S: IntoIn<'a, &'a str>,
+    {
+        Box::new_in(self.reg_exp_literal(span, regex, raw), self.allocator)
     }
 
     /// Build a [`StringLiteral`].
@@ -385,15 +385,6 @@ impl<'a> AstBuilder<'a> {
         Expression::BooleanLiteral(self.alloc(self.boolean_literal(span, value)))
     }
 
-    /// Convert a [`BooleanLiteral`] into an [`Expression::BooleanLiteral`]
-    #[inline]
-    pub fn expression_from_boolean_literal<T>(self, inner: T) -> Expression<'a>
-    where
-        T: IntoIn<'a, Box<'a, BooleanLiteral>>,
-    {
-        Expression::BooleanLiteral(inner.into_in(self.allocator))
-    }
-
     /// Build an [`Expression::NullLiteral`]
     ///
     /// This node contains a [`NullLiteral`] that will be stored in the memory arena.
@@ -403,15 +394,6 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn expression_null_literal(self, span: Span) -> Expression<'a> {
         Expression::NullLiteral(self.alloc(self.null_literal(span)))
-    }
-
-    /// Convert a [`NullLiteral`] into an [`Expression::NullLiteral`]
-    #[inline]
-    pub fn expression_from_null_literal<T>(self, inner: T) -> Expression<'a>
-    where
-        T: IntoIn<'a, Box<'a, NullLiteral>>,
-    {
-        Expression::NullLiteral(inner.into_in(self.allocator))
     }
 
     /// Build an [`Expression::NumericLiteral`]
@@ -437,15 +419,6 @@ impl<'a> AstBuilder<'a> {
         Expression::NumericLiteral(self.alloc(self.numeric_literal(span, value, raw, base)))
     }
 
-    /// Convert a [`NumericLiteral`] into an [`Expression::NumericLiteral`]
-    #[inline]
-    pub fn expression_from_numeric_literal<T>(self, inner: T) -> Expression<'a>
-    where
-        T: IntoIn<'a, Box<'a, NumericLiteral<'a>>>,
-    {
-        Expression::NumericLiteral(inner.into_in(self.allocator))
-    }
-
     /// Build an [`Expression::BigIntLiteral`]
     ///
     /// This node contains a [`BigIntLiteral`] that will be stored in the memory arena.
@@ -467,40 +440,25 @@ impl<'a> AstBuilder<'a> {
         Expression::BigIntLiteral(self.alloc(self.big_int_literal(span, raw, base)))
     }
 
-    /// Convert a [`BigIntLiteral`] into an [`Expression::BigIntLiteral`]
-    #[inline]
-    pub fn expression_from_big_int_literal<T>(self, inner: T) -> Expression<'a>
-    where
-        T: IntoIn<'a, Box<'a, BigIntLiteral<'a>>>,
-    {
-        Expression::BigIntLiteral(inner.into_in(self.allocator))
-    }
-
     /// Build an [`Expression::RegExpLiteral`]
     ///
     /// This node contains a [`RegExpLiteral`] that will be stored in the memory arena.
     ///
     /// ## Parameters
     /// - span: Node location in source code
-    /// - value: Placeholder for printing.
     /// - regex: The parsed regular expression. See [`oxc_regular_expression`] for more
+    /// - raw: The regular expression as it appears in source code
     #[inline]
-    pub fn expression_reg_exp_literal(
+    pub fn expression_reg_exp_literal<S>(
         self,
         span: Span,
-        value: EmptyObject,
         regex: RegExp<'a>,
-    ) -> Expression<'a> {
-        Expression::RegExpLiteral(self.alloc(self.reg_exp_literal(span, value, regex)))
-    }
-
-    /// Convert a [`RegExpLiteral`] into an [`Expression::RegExpLiteral`]
-    #[inline]
-    pub fn expression_from_reg_exp_literal<T>(self, inner: T) -> Expression<'a>
+        raw: S,
+    ) -> Expression<'a>
     where
-        T: IntoIn<'a, Box<'a, RegExpLiteral<'a>>>,
+        S: IntoIn<'a, &'a str>,
     {
-        Expression::RegExpLiteral(inner.into_in(self.allocator))
+        Expression::RegExpLiteral(self.alloc(self.reg_exp_literal(span, regex, raw)))
     }
 
     /// Build an [`Expression::StringLiteral`]
@@ -516,15 +474,6 @@ impl<'a> AstBuilder<'a> {
         A: IntoIn<'a, Atom<'a>>,
     {
         Expression::StringLiteral(self.alloc(self.string_literal(span, value)))
-    }
-
-    /// Convert a [`StringLiteral`] into an [`Expression::StringLiteral`]
-    #[inline]
-    pub fn expression_from_string_literal<T>(self, inner: T) -> Expression<'a>
-    where
-        T: IntoIn<'a, Box<'a, StringLiteral<'a>>>,
-    {
-        Expression::StringLiteral(inner.into_in(self.allocator))
     }
 
     /// Build an [`Expression::TemplateLiteral`]
@@ -545,15 +494,6 @@ impl<'a> AstBuilder<'a> {
         Expression::TemplateLiteral(self.alloc(self.template_literal(span, quasis, expressions)))
     }
 
-    /// Convert a [`TemplateLiteral`] into an [`Expression::TemplateLiteral`]
-    #[inline]
-    pub fn expression_from_template_literal<T>(self, inner: T) -> Expression<'a>
-    where
-        T: IntoIn<'a, Box<'a, TemplateLiteral<'a>>>,
-    {
-        Expression::TemplateLiteral(inner.into_in(self.allocator))
-    }
-
     /// Build an [`Expression::Identifier`]
     ///
     /// This node contains an [`IdentifierReference`] that will be stored in the memory arena.
@@ -567,15 +507,6 @@ impl<'a> AstBuilder<'a> {
         A: IntoIn<'a, Atom<'a>>,
     {
         Expression::Identifier(self.alloc(self.identifier_reference(span, name)))
-    }
-
-    /// Convert an [`IdentifierReference`] into an [`Expression::Identifier`]
-    #[inline]
-    pub fn expression_from_identifier_reference<T>(self, inner: T) -> Expression<'a>
-    where
-        T: IntoIn<'a, Box<'a, IdentifierReference<'a>>>,
-    {
-        Expression::Identifier(inner.into_in(self.allocator))
     }
 
     /// Build an [`Expression::MetaProperty`]
@@ -596,15 +527,6 @@ impl<'a> AstBuilder<'a> {
         Expression::MetaProperty(self.alloc(self.meta_property(span, meta, property)))
     }
 
-    /// Convert a [`MetaProperty`] into an [`Expression::MetaProperty`]
-    #[inline]
-    pub fn expression_from_meta_property<T>(self, inner: T) -> Expression<'a>
-    where
-        T: IntoIn<'a, Box<'a, MetaProperty<'a>>>,
-    {
-        Expression::MetaProperty(inner.into_in(self.allocator))
-    }
-
     /// Build an [`Expression::Super`]
     ///
     /// This node contains a [`Super`] that will be stored in the memory arena.
@@ -614,15 +536,6 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn expression_super(self, span: Span) -> Expression<'a> {
         Expression::Super(self.alloc(self.super_(span)))
-    }
-
-    /// Convert a [`Super`] into an [`Expression::Super`]
-    #[inline]
-    pub fn expression_from_super<T>(self, inner: T) -> Expression<'a>
-    where
-        T: IntoIn<'a, Box<'a, Super>>,
-    {
-        Expression::Super(inner.into_in(self.allocator))
     }
 
     /// Build an [`Expression::ArrayExpression`]
@@ -645,15 +558,6 @@ impl<'a> AstBuilder<'a> {
             elements,
             trailing_comma,
         )))
-    }
-
-    /// Convert an [`ArrayExpression`] into an [`Expression::ArrayExpression`]
-    #[inline]
-    pub fn expression_from_array<T>(self, inner: T) -> Expression<'a>
-    where
-        T: IntoIn<'a, Box<'a, ArrayExpression<'a>>>,
-    {
-        Expression::ArrayExpression(inner.into_in(self.allocator))
     }
 
     /// Build an [`Expression::ArrowFunctionExpression`]
@@ -696,15 +600,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert an [`ArrowFunctionExpression`] into an [`Expression::ArrowFunctionExpression`]
-    #[inline]
-    pub fn expression_from_arrow_function<T>(self, inner: T) -> Expression<'a>
-    where
-        T: IntoIn<'a, Box<'a, ArrowFunctionExpression<'a>>>,
-    {
-        Expression::ArrowFunctionExpression(inner.into_in(self.allocator))
-    }
-
     /// Build an [`Expression::AssignmentExpression`]
     ///
     /// This node contains an [`AssignmentExpression`] that will be stored in the memory arena.
@@ -727,15 +622,6 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Convert an [`AssignmentExpression`] into an [`Expression::AssignmentExpression`]
-    #[inline]
-    pub fn expression_from_assignment<T>(self, inner: T) -> Expression<'a>
-    where
-        T: IntoIn<'a, Box<'a, AssignmentExpression<'a>>>,
-    {
-        Expression::AssignmentExpression(inner.into_in(self.allocator))
-    }
-
     /// Build an [`Expression::AwaitExpression`]
     ///
     /// This node contains an [`AwaitExpression`] that will be stored in the memory arena.
@@ -746,15 +632,6 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn expression_await(self, span: Span, argument: Expression<'a>) -> Expression<'a> {
         Expression::AwaitExpression(self.alloc(self.await_expression(span, argument)))
-    }
-
-    /// Convert an [`AwaitExpression`] into an [`Expression::AwaitExpression`]
-    #[inline]
-    pub fn expression_from_await<T>(self, inner: T) -> Expression<'a>
-    where
-        T: IntoIn<'a, Box<'a, AwaitExpression<'a>>>,
-    {
-        Expression::AwaitExpression(inner.into_in(self.allocator))
     }
 
     /// Build an [`Expression::BinaryExpression`]
@@ -777,15 +654,6 @@ impl<'a> AstBuilder<'a> {
         Expression::BinaryExpression(
             self.alloc(self.binary_expression(span, left, operator, right)),
         )
-    }
-
-    /// Convert a [`BinaryExpression`] into an [`Expression::BinaryExpression`]
-    #[inline]
-    pub fn expression_from_binary<T>(self, inner: T) -> Expression<'a>
-    where
-        T: IntoIn<'a, Box<'a, BinaryExpression<'a>>>,
-    {
-        Expression::BinaryExpression(inner.into_in(self.allocator))
     }
 
     /// Build an [`Expression::CallExpression`]
@@ -819,15 +687,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert a [`CallExpression`] into an [`Expression::CallExpression`]
-    #[inline]
-    pub fn expression_from_call<T>(self, inner: T) -> Expression<'a>
-    where
-        T: IntoIn<'a, Box<'a, CallExpression<'a>>>,
-    {
-        Expression::CallExpression(inner.into_in(self.allocator))
-    }
-
     /// Build an [`Expression::ChainExpression`]
     ///
     /// This node contains a [`ChainExpression`] that will be stored in the memory arena.
@@ -838,15 +697,6 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn expression_chain(self, span: Span, expression: ChainElement<'a>) -> Expression<'a> {
         Expression::ChainExpression(self.alloc(self.chain_expression(span, expression)))
-    }
-
-    /// Convert a [`ChainExpression`] into an [`Expression::ChainExpression`]
-    #[inline]
-    pub fn expression_from_chain<T>(self, inner: T) -> Expression<'a>
-    where
-        T: IntoIn<'a, Box<'a, ChainExpression<'a>>>,
-    {
-        Expression::ChainExpression(inner.into_in(self.allocator))
     }
 
     /// Build an [`Expression::ClassExpression`]
@@ -900,15 +750,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert a [`Class`] into an [`Expression::ClassExpression`]
-    #[inline]
-    pub fn expression_from_class<T>(self, inner: T) -> Expression<'a>
-    where
-        T: IntoIn<'a, Box<'a, Class<'a>>>,
-    {
-        Expression::ClassExpression(inner.into_in(self.allocator))
-    }
-
     /// Build an [`Expression::ConditionalExpression`]
     ///
     /// This node contains a [`ConditionalExpression`] that will be stored in the memory arena.
@@ -929,15 +770,6 @@ impl<'a> AstBuilder<'a> {
         Expression::ConditionalExpression(
             self.alloc(self.conditional_expression(span, test, consequent, alternate)),
         )
-    }
-
-    /// Convert a [`ConditionalExpression`] into an [`Expression::ConditionalExpression`]
-    #[inline]
-    pub fn expression_from_conditional<T>(self, inner: T) -> Expression<'a>
-    where
-        T: IntoIn<'a, Box<'a, ConditionalExpression<'a>>>,
-    {
-        Expression::ConditionalExpression(inner.into_in(self.allocator))
     }
 
     /// Build an [`Expression::FunctionExpression`]
@@ -993,15 +825,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert a [`Function`] into an [`Expression::FunctionExpression`]
-    #[inline]
-    pub fn expression_from_function<T>(self, inner: T) -> Expression<'a>
-    where
-        T: IntoIn<'a, Box<'a, Function<'a>>>,
-    {
-        Expression::FunctionExpression(inner.into_in(self.allocator))
-    }
-
     /// Build an [`Expression::ImportExpression`]
     ///
     /// This node contains an [`ImportExpression`] that will be stored in the memory arena.
@@ -1018,15 +841,6 @@ impl<'a> AstBuilder<'a> {
         arguments: Vec<'a, Expression<'a>>,
     ) -> Expression<'a> {
         Expression::ImportExpression(self.alloc(self.import_expression(span, source, arguments)))
-    }
-
-    /// Convert an [`ImportExpression`] into an [`Expression::ImportExpression`]
-    #[inline]
-    pub fn expression_from_import<T>(self, inner: T) -> Expression<'a>
-    where
-        T: IntoIn<'a, Box<'a, ImportExpression<'a>>>,
-    {
-        Expression::ImportExpression(inner.into_in(self.allocator))
     }
 
     /// Build an [`Expression::LogicalExpression`]
@@ -1049,15 +863,6 @@ impl<'a> AstBuilder<'a> {
         Expression::LogicalExpression(
             self.alloc(self.logical_expression(span, left, operator, right)),
         )
-    }
-
-    /// Convert a [`LogicalExpression`] into an [`Expression::LogicalExpression`]
-    #[inline]
-    pub fn expression_from_logical<T>(self, inner: T) -> Expression<'a>
-    where
-        T: IntoIn<'a, Box<'a, LogicalExpression<'a>>>,
-    {
-        Expression::LogicalExpression(inner.into_in(self.allocator))
     }
 
     /// Build an [`Expression::NewExpression`]
@@ -1088,15 +893,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert a [`NewExpression`] into an [`Expression::NewExpression`]
-    #[inline]
-    pub fn expression_from_new<T>(self, inner: T) -> Expression<'a>
-    where
-        T: IntoIn<'a, Box<'a, NewExpression<'a>>>,
-    {
-        Expression::NewExpression(inner.into_in(self.allocator))
-    }
-
     /// Build an [`Expression::ObjectExpression`]
     ///
     /// This node contains an [`ObjectExpression`] that will be stored in the memory arena.
@@ -1119,15 +915,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert an [`ObjectExpression`] into an [`Expression::ObjectExpression`]
-    #[inline]
-    pub fn expression_from_object<T>(self, inner: T) -> Expression<'a>
-    where
-        T: IntoIn<'a, Box<'a, ObjectExpression<'a>>>,
-    {
-        Expression::ObjectExpression(inner.into_in(self.allocator))
-    }
-
     /// Build an [`Expression::ParenthesizedExpression`]
     ///
     /// This node contains a [`ParenthesizedExpression`] that will be stored in the memory arena.
@@ -1146,15 +933,6 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Convert a [`ParenthesizedExpression`] into an [`Expression::ParenthesizedExpression`]
-    #[inline]
-    pub fn expression_from_parenthesized<T>(self, inner: T) -> Expression<'a>
-    where
-        T: IntoIn<'a, Box<'a, ParenthesizedExpression<'a>>>,
-    {
-        Expression::ParenthesizedExpression(inner.into_in(self.allocator))
-    }
-
     /// Build an [`Expression::SequenceExpression`]
     ///
     /// This node contains a [`SequenceExpression`] that will be stored in the memory arena.
@@ -1169,15 +947,6 @@ impl<'a> AstBuilder<'a> {
         expressions: Vec<'a, Expression<'a>>,
     ) -> Expression<'a> {
         Expression::SequenceExpression(self.alloc(self.sequence_expression(span, expressions)))
-    }
-
-    /// Convert a [`SequenceExpression`] into an [`Expression::SequenceExpression`]
-    #[inline]
-    pub fn expression_from_sequence<T>(self, inner: T) -> Expression<'a>
-    where
-        T: IntoIn<'a, Box<'a, SequenceExpression<'a>>>,
-    {
-        Expression::SequenceExpression(inner.into_in(self.allocator))
     }
 
     /// Build an [`Expression::TaggedTemplateExpression`]
@@ -1208,15 +977,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert a [`TaggedTemplateExpression`] into an [`Expression::TaggedTemplateExpression`]
-    #[inline]
-    pub fn expression_from_tagged_template<T>(self, inner: T) -> Expression<'a>
-    where
-        T: IntoIn<'a, Box<'a, TaggedTemplateExpression<'a>>>,
-    {
-        Expression::TaggedTemplateExpression(inner.into_in(self.allocator))
-    }
-
     /// Build an [`Expression::ThisExpression`]
     ///
     /// This node contains a [`ThisExpression`] that will be stored in the memory arena.
@@ -1226,15 +986,6 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn expression_this(self, span: Span) -> Expression<'a> {
         Expression::ThisExpression(self.alloc(self.this_expression(span)))
-    }
-
-    /// Convert a [`ThisExpression`] into an [`Expression::ThisExpression`]
-    #[inline]
-    pub fn expression_from_this<T>(self, inner: T) -> Expression<'a>
-    where
-        T: IntoIn<'a, Box<'a, ThisExpression>>,
-    {
-        Expression::ThisExpression(inner.into_in(self.allocator))
     }
 
     /// Build an [`Expression::UnaryExpression`]
@@ -1253,15 +1004,6 @@ impl<'a> AstBuilder<'a> {
         argument: Expression<'a>,
     ) -> Expression<'a> {
         Expression::UnaryExpression(self.alloc(self.unary_expression(span, operator, argument)))
-    }
-
-    /// Convert an [`UnaryExpression`] into an [`Expression::UnaryExpression`]
-    #[inline]
-    pub fn expression_from_unary<T>(self, inner: T) -> Expression<'a>
-    where
-        T: IntoIn<'a, Box<'a, UnaryExpression<'a>>>,
-    {
-        Expression::UnaryExpression(inner.into_in(self.allocator))
     }
 
     /// Build an [`Expression::UpdateExpression`]
@@ -1286,15 +1028,6 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Convert an [`UpdateExpression`] into an [`Expression::UpdateExpression`]
-    #[inline]
-    pub fn expression_from_update<T>(self, inner: T) -> Expression<'a>
-    where
-        T: IntoIn<'a, Box<'a, UpdateExpression<'a>>>,
-    {
-        Expression::UpdateExpression(inner.into_in(self.allocator))
-    }
-
     /// Build an [`Expression::YieldExpression`]
     ///
     /// This node contains a [`YieldExpression`] that will be stored in the memory arena.
@@ -1311,15 +1044,6 @@ impl<'a> AstBuilder<'a> {
         argument: Option<Expression<'a>>,
     ) -> Expression<'a> {
         Expression::YieldExpression(self.alloc(self.yield_expression(span, delegate, argument)))
-    }
-
-    /// Convert a [`YieldExpression`] into an [`Expression::YieldExpression`]
-    #[inline]
-    pub fn expression_from_yield<T>(self, inner: T) -> Expression<'a>
-    where
-        T: IntoIn<'a, Box<'a, YieldExpression<'a>>>,
-    {
-        Expression::YieldExpression(inner.into_in(self.allocator))
     }
 
     /// Build an [`Expression::PrivateInExpression`]
@@ -1342,15 +1066,6 @@ impl<'a> AstBuilder<'a> {
         Expression::PrivateInExpression(
             self.alloc(self.private_in_expression(span, left, operator, right)),
         )
-    }
-
-    /// Convert a [`PrivateInExpression`] into an [`Expression::PrivateInExpression`]
-    #[inline]
-    pub fn expression_from_private_in<T>(self, inner: T) -> Expression<'a>
-    where
-        T: IntoIn<'a, Box<'a, PrivateInExpression<'a>>>,
-    {
-        Expression::PrivateInExpression(inner.into_in(self.allocator))
     }
 
     /// Build an [`Expression::JSXElement`]
@@ -1382,15 +1097,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert a [`JSXElement`] into an [`Expression::JSXElement`]
-    #[inline]
-    pub fn expression_from_jsx_element<T>(self, inner: T) -> Expression<'a>
-    where
-        T: IntoIn<'a, Box<'a, JSXElement<'a>>>,
-    {
-        Expression::JSXElement(inner.into_in(self.allocator))
-    }
-
     /// Build an [`Expression::JSXFragment`]
     ///
     /// This node contains a [`JSXFragment`] that will be stored in the memory arena.
@@ -1416,15 +1122,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert a [`JSXFragment`] into an [`Expression::JSXFragment`]
-    #[inline]
-    pub fn expression_from_jsx_fragment<T>(self, inner: T) -> Expression<'a>
-    where
-        T: IntoIn<'a, Box<'a, JSXFragment<'a>>>,
-    {
-        Expression::JSXFragment(inner.into_in(self.allocator))
-    }
-
     /// Build an [`Expression::TSAsExpression`]
     ///
     /// This node contains a [`TSAsExpression`] that will be stored in the memory arena.
@@ -1445,15 +1142,6 @@ impl<'a> AstBuilder<'a> {
             expression,
             type_annotation,
         )))
-    }
-
-    /// Convert a [`TSAsExpression`] into an [`Expression::TSAsExpression`]
-    #[inline]
-    pub fn expression_from_ts_as<T>(self, inner: T) -> Expression<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSAsExpression<'a>>>,
-    {
-        Expression::TSAsExpression(inner.into_in(self.allocator))
     }
 
     /// Build an [`Expression::TSSatisfiesExpression`]
@@ -1478,15 +1166,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert a [`TSSatisfiesExpression`] into an [`Expression::TSSatisfiesExpression`]
-    #[inline]
-    pub fn expression_from_ts_satisfies<T>(self, inner: T) -> Expression<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSSatisfiesExpression<'a>>>,
-    {
-        Expression::TSSatisfiesExpression(inner.into_in(self.allocator))
-    }
-
     /// Build an [`Expression::TSTypeAssertion`]
     ///
     /// This node contains a [`TSTypeAssertion`] that will be stored in the memory arena.
@@ -1509,15 +1188,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert a [`TSTypeAssertion`] into an [`Expression::TSTypeAssertion`]
-    #[inline]
-    pub fn expression_from_ts_type_assertion<T>(self, inner: T) -> Expression<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSTypeAssertion<'a>>>,
-    {
-        Expression::TSTypeAssertion(inner.into_in(self.allocator))
-    }
-
     /// Build an [`Expression::TSNonNullExpression`]
     ///
     /// This node contains a [`TSNonNullExpression`] that will be stored in the memory arena.
@@ -1528,15 +1198,6 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn expression_ts_non_null(self, span: Span, expression: Expression<'a>) -> Expression<'a> {
         Expression::TSNonNullExpression(self.alloc(self.ts_non_null_expression(span, expression)))
-    }
-
-    /// Convert a [`TSNonNullExpression`] into an [`Expression::TSNonNullExpression`]
-    #[inline]
-    pub fn expression_from_ts_non_null<T>(self, inner: T) -> Expression<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSNonNullExpression<'a>>>,
-    {
-        Expression::TSNonNullExpression(inner.into_in(self.allocator))
     }
 
     /// Build an [`Expression::TSInstantiationExpression`]
@@ -1562,21 +1223,6 @@ impl<'a> AstBuilder<'a> {
             expression,
             type_parameters,
         )))
-    }
-
-    /// Convert a [`TSInstantiationExpression`] into an [`Expression::TSInstantiationExpression`]
-    #[inline]
-    pub fn expression_from_ts_instantiation<T>(self, inner: T) -> Expression<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSInstantiationExpression<'a>>>,
-    {
-        Expression::TSInstantiationExpression(inner.into_in(self.allocator))
-    }
-
-    /// Convert a [`MemberExpression`] into the corresponding variant of [`Expression`] without copying or re-allocating memory.
-    #[inline]
-    pub fn expression_member(self, inner: MemberExpression<'a>) -> Expression<'a> {
-        Expression::from(inner)
     }
 
     /// Build an [`IdentifierName`].
@@ -1880,18 +1526,6 @@ impl<'a> AstBuilder<'a> {
         ArrayExpressionElement::SpreadElement(self.alloc(self.spread_element(span, argument)))
     }
 
-    /// Convert a [`SpreadElement`] into an [`ArrayExpressionElement::SpreadElement`]
-    #[inline]
-    pub fn array_expression_element_from_spread_element<T>(
-        self,
-        inner: T,
-    ) -> ArrayExpressionElement<'a>
-    where
-        T: IntoIn<'a, Box<'a, SpreadElement<'a>>>,
-    {
-        ArrayExpressionElement::SpreadElement(inner.into_in(self.allocator))
-    }
-
     /// Build an [`ArrayExpressionElement::Elision`]
     ///
     /// ## Parameters
@@ -1899,24 +1533,6 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn array_expression_element_elision(self, span: Span) -> ArrayExpressionElement<'a> {
         ArrayExpressionElement::Elision(self.elision(span))
-    }
-
-    /// Convert an [`Elision`] into an [`ArrayExpressionElement::Elision`]
-    #[inline]
-    pub fn array_expression_element_from_elision<T>(self, inner: T) -> ArrayExpressionElement<'a>
-    where
-        T: IntoIn<'a, Elision>,
-    {
-        ArrayExpressionElement::Elision(inner.into_in(self.allocator))
-    }
-
-    /// Convert a [`Expression`] into the corresponding variant of [`ArrayExpressionElement`] without copying or re-allocating memory.
-    #[inline]
-    pub fn array_expression_element_expression(
-        self,
-        inner: Expression<'a>,
-    ) -> ArrayExpressionElement<'a> {
-        ArrayExpressionElement::from(inner)
     }
 
     /// Build an [`Elision`].
@@ -2009,15 +1625,6 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Convert an [`ObjectProperty`] into an [`ObjectPropertyKind::ObjectProperty`]
-    #[inline]
-    pub fn object_property_kind_from_object_property<T>(self, inner: T) -> ObjectPropertyKind<'a>
-    where
-        T: IntoIn<'a, Box<'a, ObjectProperty<'a>>>,
-    {
-        ObjectPropertyKind::ObjectProperty(inner.into_in(self.allocator))
-    }
-
     /// Build an [`ObjectPropertyKind::SpreadProperty`]
     ///
     /// This node contains a [`SpreadElement`] that will be stored in the memory arena.
@@ -2032,15 +1639,6 @@ impl<'a> AstBuilder<'a> {
         argument: Expression<'a>,
     ) -> ObjectPropertyKind<'a> {
         ObjectPropertyKind::SpreadProperty(self.alloc(self.spread_element(span, argument)))
-    }
-
-    /// Convert a [`SpreadElement`] into an [`ObjectPropertyKind::SpreadProperty`]
-    #[inline]
-    pub fn object_property_kind_from_spread_element<T>(self, inner: T) -> ObjectPropertyKind<'a>
-    where
-        T: IntoIn<'a, Box<'a, SpreadElement<'a>>>,
-    {
-        ObjectPropertyKind::SpreadProperty(inner.into_in(self.allocator))
     }
 
     /// Build an [`ObjectProperty`].
@@ -2117,15 +1715,6 @@ impl<'a> AstBuilder<'a> {
         PropertyKey::StaticIdentifier(self.alloc(self.identifier_name(span, name)))
     }
 
-    /// Convert an [`IdentifierName`] into a [`PropertyKey::StaticIdentifier`]
-    #[inline]
-    pub fn property_key_from_identifier_name<T>(self, inner: T) -> PropertyKey<'a>
-    where
-        T: IntoIn<'a, Box<'a, IdentifierName<'a>>>,
-    {
-        PropertyKey::StaticIdentifier(inner.into_in(self.allocator))
-    }
-
     /// Build a [`PropertyKey::PrivateIdentifier`]
     ///
     /// This node contains a [`PrivateIdentifier`] that will be stored in the memory arena.
@@ -2139,21 +1728,6 @@ impl<'a> AstBuilder<'a> {
         A: IntoIn<'a, Atom<'a>>,
     {
         PropertyKey::PrivateIdentifier(self.alloc(self.private_identifier(span, name)))
-    }
-
-    /// Convert a [`PrivateIdentifier`] into a [`PropertyKey::PrivateIdentifier`]
-    #[inline]
-    pub fn property_key_from_private_identifier<T>(self, inner: T) -> PropertyKey<'a>
-    where
-        T: IntoIn<'a, Box<'a, PrivateIdentifier<'a>>>,
-    {
-        PropertyKey::PrivateIdentifier(inner.into_in(self.allocator))
-    }
-
-    /// Convert a [`Expression`] into the corresponding variant of [`PropertyKey`] without copying or re-allocating memory.
-    #[inline]
-    pub fn property_key_expression(self, inner: Expression<'a>) -> PropertyKey<'a> {
-        PropertyKey::from(inner)
     }
 
     /// Build a [`TemplateLiteral`].
@@ -2304,15 +1878,6 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Convert a [`ComputedMemberExpression`] into a [`MemberExpression::ComputedMemberExpression`]
-    #[inline]
-    pub fn member_expression_from_computed<T>(self, inner: T) -> MemberExpression<'a>
-    where
-        T: IntoIn<'a, Box<'a, ComputedMemberExpression<'a>>>,
-    {
-        MemberExpression::ComputedMemberExpression(inner.into_in(self.allocator))
-    }
-
     /// Build a [`MemberExpression::StaticMemberExpression`]
     ///
     /// This node contains a [`StaticMemberExpression`] that will be stored in the memory arena.
@@ -2335,15 +1900,6 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Convert a [`StaticMemberExpression`] into a [`MemberExpression::StaticMemberExpression`]
-    #[inline]
-    pub fn member_expression_from_static<T>(self, inner: T) -> MemberExpression<'a>
-    where
-        T: IntoIn<'a, Box<'a, StaticMemberExpression<'a>>>,
-    {
-        MemberExpression::StaticMemberExpression(inner.into_in(self.allocator))
-    }
-
     /// Build a [`MemberExpression::PrivateFieldExpression`]
     ///
     /// This node contains a [`PrivateFieldExpression`] that will be stored in the memory arena.
@@ -2364,18 +1920,6 @@ impl<'a> AstBuilder<'a> {
         MemberExpression::PrivateFieldExpression(
             self.alloc(self.private_field_expression(span, object, field, optional)),
         )
-    }
-
-    /// Convert a [`PrivateFieldExpression`] into a [`MemberExpression::PrivateFieldExpression`]
-    #[inline]
-    pub fn member_expression_from_private_field_expression<T>(
-        self,
-        inner: T,
-    ) -> MemberExpression<'a>
-    where
-        T: IntoIn<'a, Box<'a, PrivateFieldExpression<'a>>>,
-    {
-        MemberExpression::PrivateFieldExpression(inner.into_in(self.allocator))
     }
 
     /// Build a [`ComputedMemberExpression`].
@@ -2687,21 +2231,6 @@ impl<'a> AstBuilder<'a> {
         Argument::SpreadElement(self.alloc(self.spread_element(span, argument)))
     }
 
-    /// Convert a [`SpreadElement`] into an [`Argument::SpreadElement`]
-    #[inline]
-    pub fn argument_from_spread_element<T>(self, inner: T) -> Argument<'a>
-    where
-        T: IntoIn<'a, Box<'a, SpreadElement<'a>>>,
-    {
-        Argument::SpreadElement(inner.into_in(self.allocator))
-    }
-
-    /// Convert a [`Expression`] into the corresponding variant of [`Argument`] without copying or re-allocating memory.
-    #[inline]
-    pub fn argument_expression(self, inner: Expression<'a>) -> Argument<'a> {
-        Argument::from(inner)
-    }
-
     /// Build an [`UpdateExpression`].
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_update_expression`] instead.
@@ -2978,24 +2507,6 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(self.assignment_expression(span, operator, left, right), self.allocator)
     }
 
-    /// Convert a [`SimpleAssignmentTarget`] into the corresponding variant of [`AssignmentTarget`] without copying or re-allocating memory.
-    #[inline]
-    pub fn assignment_target_simple(
-        self,
-        inner: SimpleAssignmentTarget<'a>,
-    ) -> AssignmentTarget<'a> {
-        AssignmentTarget::from(inner)
-    }
-
-    /// Convert a [`AssignmentTargetPattern`] into the corresponding variant of [`AssignmentTarget`] without copying or re-allocating memory.
-    #[inline]
-    pub fn assignment_target_assignment_target_pattern(
-        self,
-        inner: AssignmentTargetPattern<'a>,
-    ) -> AssignmentTarget<'a> {
-        AssignmentTarget::from(inner)
-    }
-
     /// Build a [`SimpleAssignmentTarget::AssignmentTargetIdentifier`]
     ///
     /// This node contains an [`IdentifierReference`] that will be stored in the memory arena.
@@ -3015,18 +2526,6 @@ impl<'a> AstBuilder<'a> {
         SimpleAssignmentTarget::AssignmentTargetIdentifier(
             self.alloc(self.identifier_reference(span, name)),
         )
-    }
-
-    /// Convert an [`IdentifierReference`] into a [`SimpleAssignmentTarget::AssignmentTargetIdentifier`]
-    #[inline]
-    pub fn simple_assignment_target_from_identifier_reference<T>(
-        self,
-        inner: T,
-    ) -> SimpleAssignmentTarget<'a>
-    where
-        T: IntoIn<'a, Box<'a, IdentifierReference<'a>>>,
-    {
-        SimpleAssignmentTarget::AssignmentTargetIdentifier(inner.into_in(self.allocator))
     }
 
     /// Build a [`SimpleAssignmentTarget::TSAsExpression`]
@@ -3051,18 +2550,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert a [`TSAsExpression`] into a [`SimpleAssignmentTarget::TSAsExpression`]
-    #[inline]
-    pub fn simple_assignment_target_from_ts_as_expression<T>(
-        self,
-        inner: T,
-    ) -> SimpleAssignmentTarget<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSAsExpression<'a>>>,
-    {
-        SimpleAssignmentTarget::TSAsExpression(inner.into_in(self.allocator))
-    }
-
     /// Build a [`SimpleAssignmentTarget::TSSatisfiesExpression`]
     ///
     /// This node contains a [`TSSatisfiesExpression`] that will be stored in the memory arena.
@@ -3085,18 +2572,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert a [`TSSatisfiesExpression`] into a [`SimpleAssignmentTarget::TSSatisfiesExpression`]
-    #[inline]
-    pub fn simple_assignment_target_from_ts_satisfies_expression<T>(
-        self,
-        inner: T,
-    ) -> SimpleAssignmentTarget<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSSatisfiesExpression<'a>>>,
-    {
-        SimpleAssignmentTarget::TSSatisfiesExpression(inner.into_in(self.allocator))
-    }
-
     /// Build a [`SimpleAssignmentTarget::TSNonNullExpression`]
     ///
     /// This node contains a [`TSNonNullExpression`] that will be stored in the memory arena.
@@ -3113,18 +2588,6 @@ impl<'a> AstBuilder<'a> {
         SimpleAssignmentTarget::TSNonNullExpression(
             self.alloc(self.ts_non_null_expression(span, expression)),
         )
-    }
-
-    /// Convert a [`TSNonNullExpression`] into a [`SimpleAssignmentTarget::TSNonNullExpression`]
-    #[inline]
-    pub fn simple_assignment_target_from_ts_non_null_expression<T>(
-        self,
-        inner: T,
-    ) -> SimpleAssignmentTarget<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSNonNullExpression<'a>>>,
-    {
-        SimpleAssignmentTarget::TSNonNullExpression(inner.into_in(self.allocator))
     }
 
     /// Build a [`SimpleAssignmentTarget::TSTypeAssertion`]
@@ -3149,18 +2612,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert a [`TSTypeAssertion`] into a [`SimpleAssignmentTarget::TSTypeAssertion`]
-    #[inline]
-    pub fn simple_assignment_target_from_ts_type_assertion<T>(
-        self,
-        inner: T,
-    ) -> SimpleAssignmentTarget<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSTypeAssertion<'a>>>,
-    {
-        SimpleAssignmentTarget::TSTypeAssertion(inner.into_in(self.allocator))
-    }
-
     /// Build a [`SimpleAssignmentTarget::TSInstantiationExpression`]
     ///
     /// This node contains a [`TSInstantiationExpression`] that will be stored in the memory arena.
@@ -3182,27 +2633,6 @@ impl<'a> AstBuilder<'a> {
         SimpleAssignmentTarget::TSInstantiationExpression(
             self.alloc(self.ts_instantiation_expression(span, expression, type_parameters)),
         )
-    }
-
-    /// Convert a [`TSInstantiationExpression`] into a [`SimpleAssignmentTarget::TSInstantiationExpression`]
-    #[inline]
-    pub fn simple_assignment_target_from_ts_instantiation_expression<T>(
-        self,
-        inner: T,
-    ) -> SimpleAssignmentTarget<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSInstantiationExpression<'a>>>,
-    {
-        SimpleAssignmentTarget::TSInstantiationExpression(inner.into_in(self.allocator))
-    }
-
-    /// Convert a [`MemberExpression`] into the corresponding variant of [`SimpleAssignmentTarget`] without copying or re-allocating memory.
-    #[inline]
-    pub fn simple_assignment_target_member_expression(
-        self,
-        inner: MemberExpression<'a>,
-    ) -> SimpleAssignmentTarget<'a> {
-        SimpleAssignmentTarget::from(inner)
     }
 
     /// Build an [`AssignmentTargetPattern::ArrayAssignmentTarget`]
@@ -3230,18 +2660,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert an [`ArrayAssignmentTarget`] into an [`AssignmentTargetPattern::ArrayAssignmentTarget`]
-    #[inline]
-    pub fn assignment_target_pattern_from_array_assignment_target<T>(
-        self,
-        inner: T,
-    ) -> AssignmentTargetPattern<'a>
-    where
-        T: IntoIn<'a, Box<'a, ArrayAssignmentTarget<'a>>>,
-    {
-        AssignmentTargetPattern::ArrayAssignmentTarget(inner.into_in(self.allocator))
-    }
-
     /// Build an [`AssignmentTargetPattern::ObjectAssignmentTarget`]
     ///
     /// This node contains an [`ObjectAssignmentTarget`] that will be stored in the memory arena.
@@ -3260,18 +2678,6 @@ impl<'a> AstBuilder<'a> {
         AssignmentTargetPattern::ObjectAssignmentTarget(
             self.alloc(self.object_assignment_target(span, properties, rest)),
         )
-    }
-
-    /// Convert an [`ObjectAssignmentTarget`] into an [`AssignmentTargetPattern::ObjectAssignmentTarget`]
-    #[inline]
-    pub fn assignment_target_pattern_from_object_assignment_target<T>(
-        self,
-        inner: T,
-    ) -> AssignmentTargetPattern<'a>
-    where
-        T: IntoIn<'a, Box<'a, ObjectAssignmentTarget<'a>>>,
-    {
-        AssignmentTargetPattern::ObjectAssignmentTarget(inner.into_in(self.allocator))
     }
 
     /// Build an [`ArrayAssignmentTarget`].
@@ -3405,27 +2811,6 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Convert an [`AssignmentTargetWithDefault`] into an [`AssignmentTargetMaybeDefault::AssignmentTargetWithDefault`]
-    #[inline]
-    pub fn assignment_target_maybe_default_from_assignment_target_with_default<T>(
-        self,
-        inner: T,
-    ) -> AssignmentTargetMaybeDefault<'a>
-    where
-        T: IntoIn<'a, Box<'a, AssignmentTargetWithDefault<'a>>>,
-    {
-        AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(inner.into_in(self.allocator))
-    }
-
-    /// Convert a [`AssignmentTarget`] into the corresponding variant of [`AssignmentTargetMaybeDefault`] without copying or re-allocating memory.
-    #[inline]
-    pub fn assignment_target_maybe_default_assignment_target(
-        self,
-        inner: AssignmentTarget<'a>,
-    ) -> AssignmentTargetMaybeDefault<'a> {
-        AssignmentTargetMaybeDefault::from(inner)
-    }
-
     /// Build an [`AssignmentTargetWithDefault`].
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_assignment_target_with_default`] instead.
@@ -3482,18 +2867,6 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Convert an [`AssignmentTargetPropertyIdentifier`] into an [`AssignmentTargetProperty::AssignmentTargetPropertyIdentifier`]
-    #[inline]
-    pub fn assignment_target_property_from_assignment_target_property_identifier<T>(
-        self,
-        inner: T,
-    ) -> AssignmentTargetProperty<'a>
-    where
-        T: IntoIn<'a, Box<'a, AssignmentTargetPropertyIdentifier<'a>>>,
-    {
-        AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(inner.into_in(self.allocator))
-    }
-
     /// Build an [`AssignmentTargetProperty::AssignmentTargetPropertyProperty`]
     ///
     /// This node contains an [`AssignmentTargetPropertyProperty`] that will be stored in the memory arena.
@@ -3512,18 +2885,6 @@ impl<'a> AstBuilder<'a> {
         AssignmentTargetProperty::AssignmentTargetPropertyProperty(
             self.alloc(self.assignment_target_property_property(span, name, binding)),
         )
-    }
-
-    /// Convert an [`AssignmentTargetPropertyProperty`] into an [`AssignmentTargetProperty::AssignmentTargetPropertyProperty`]
-    #[inline]
-    pub fn assignment_target_property_from_assignment_target_property_property<T>(
-        self,
-        inner: T,
-    ) -> AssignmentTargetProperty<'a>
-    where
-        T: IntoIn<'a, Box<'a, AssignmentTargetPropertyProperty<'a>>>,
-    {
-        AssignmentTargetProperty::AssignmentTargetPropertyProperty(inner.into_in(self.allocator))
     }
 
     /// Build an [`AssignmentTargetPropertyIdentifier`].
@@ -3739,21 +3100,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert a [`CallExpression`] into a [`ChainElement::CallExpression`]
-    #[inline]
-    pub fn chain_element_from_call_expression<T>(self, inner: T) -> ChainElement<'a>
-    where
-        T: IntoIn<'a, Box<'a, CallExpression<'a>>>,
-    {
-        ChainElement::CallExpression(inner.into_in(self.allocator))
-    }
-
-    /// Convert a [`MemberExpression`] into the corresponding variant of [`ChainElement`] without copying or re-allocating memory.
-    #[inline]
-    pub fn chain_element_member_expression(self, inner: MemberExpression<'a>) -> ChainElement<'a> {
-        ChainElement::from(inner)
-    }
-
     /// Build a [`ParenthesizedExpression`].
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_parenthesized_expression`] instead.
@@ -3798,15 +3144,6 @@ impl<'a> AstBuilder<'a> {
         Statement::BlockStatement(self.alloc(self.block_statement(span, body)))
     }
 
-    /// Convert a [`BlockStatement`] into a [`Statement::BlockStatement`]
-    #[inline]
-    pub fn statement_from_block<T>(self, inner: T) -> Statement<'a>
-    where
-        T: IntoIn<'a, Box<'a, BlockStatement<'a>>>,
-    {
-        Statement::BlockStatement(inner.into_in(self.allocator))
-    }
-
     /// Build a [`Statement::BreakStatement`]
     ///
     /// This node contains a [`BreakStatement`] that will be stored in the memory arena.
@@ -3817,15 +3154,6 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn statement_break(self, span: Span, label: Option<LabelIdentifier<'a>>) -> Statement<'a> {
         Statement::BreakStatement(self.alloc(self.break_statement(span, label)))
-    }
-
-    /// Convert a [`BreakStatement`] into a [`Statement::BreakStatement`]
-    #[inline]
-    pub fn statement_from_break<T>(self, inner: T) -> Statement<'a>
-    where
-        T: IntoIn<'a, Box<'a, BreakStatement<'a>>>,
-    {
-        Statement::BreakStatement(inner.into_in(self.allocator))
     }
 
     /// Build a [`Statement::ContinueStatement`]
@@ -3844,15 +3172,6 @@ impl<'a> AstBuilder<'a> {
         Statement::ContinueStatement(self.alloc(self.continue_statement(span, label)))
     }
 
-    /// Convert a [`ContinueStatement`] into a [`Statement::ContinueStatement`]
-    #[inline]
-    pub fn statement_from_continue<T>(self, inner: T) -> Statement<'a>
-    where
-        T: IntoIn<'a, Box<'a, ContinueStatement<'a>>>,
-    {
-        Statement::ContinueStatement(inner.into_in(self.allocator))
-    }
-
     /// Build a [`Statement::DebuggerStatement`]
     ///
     /// This node contains a [`DebuggerStatement`] that will be stored in the memory arena.
@@ -3862,15 +3181,6 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn statement_debugger(self, span: Span) -> Statement<'a> {
         Statement::DebuggerStatement(self.alloc(self.debugger_statement(span)))
-    }
-
-    /// Convert a [`DebuggerStatement`] into a [`Statement::DebuggerStatement`]
-    #[inline]
-    pub fn statement_from_debugger<T>(self, inner: T) -> Statement<'a>
-    where
-        T: IntoIn<'a, Box<'a, DebuggerStatement>>,
-    {
-        Statement::DebuggerStatement(inner.into_in(self.allocator))
     }
 
     /// Build a [`Statement::DoWhileStatement`]
@@ -3891,15 +3201,6 @@ impl<'a> AstBuilder<'a> {
         Statement::DoWhileStatement(self.alloc(self.do_while_statement(span, body, test)))
     }
 
-    /// Convert a [`DoWhileStatement`] into a [`Statement::DoWhileStatement`]
-    #[inline]
-    pub fn statement_from_do_while<T>(self, inner: T) -> Statement<'a>
-    where
-        T: IntoIn<'a, Box<'a, DoWhileStatement<'a>>>,
-    {
-        Statement::DoWhileStatement(inner.into_in(self.allocator))
-    }
-
     /// Build a [`Statement::EmptyStatement`]
     ///
     /// This node contains an [`EmptyStatement`] that will be stored in the memory arena.
@@ -3909,15 +3210,6 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn statement_empty(self, span: Span) -> Statement<'a> {
         Statement::EmptyStatement(self.alloc(self.empty_statement(span)))
-    }
-
-    /// Convert an [`EmptyStatement`] into a [`Statement::EmptyStatement`]
-    #[inline]
-    pub fn statement_from_empty<T>(self, inner: T) -> Statement<'a>
-    where
-        T: IntoIn<'a, Box<'a, EmptyStatement>>,
-    {
-        Statement::EmptyStatement(inner.into_in(self.allocator))
     }
 
     /// Build a [`Statement::ExpressionStatement`]
@@ -3930,15 +3222,6 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn statement_expression(self, span: Span, expression: Expression<'a>) -> Statement<'a> {
         Statement::ExpressionStatement(self.alloc(self.expression_statement(span, expression)))
-    }
-
-    /// Convert an [`ExpressionStatement`] into a [`Statement::ExpressionStatement`]
-    #[inline]
-    pub fn statement_from_expression<T>(self, inner: T) -> Statement<'a>
-    where
-        T: IntoIn<'a, Box<'a, ExpressionStatement<'a>>>,
-    {
-        Statement::ExpressionStatement(inner.into_in(self.allocator))
     }
 
     /// Build a [`Statement::ForInStatement`]
@@ -3959,15 +3242,6 @@ impl<'a> AstBuilder<'a> {
         body: Statement<'a>,
     ) -> Statement<'a> {
         Statement::ForInStatement(self.alloc(self.for_in_statement(span, left, right, body)))
-    }
-
-    /// Convert a [`ForInStatement`] into a [`Statement::ForInStatement`]
-    #[inline]
-    pub fn statement_from_for_in<T>(self, inner: T) -> Statement<'a>
-    where
-        T: IntoIn<'a, Box<'a, ForInStatement<'a>>>,
-    {
-        Statement::ForInStatement(inner.into_in(self.allocator))
     }
 
     /// Build a [`Statement::ForOfStatement`]
@@ -3994,15 +3268,6 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Convert a [`ForOfStatement`] into a [`Statement::ForOfStatement`]
-    #[inline]
-    pub fn statement_from_for_of<T>(self, inner: T) -> Statement<'a>
-    where
-        T: IntoIn<'a, Box<'a, ForOfStatement<'a>>>,
-    {
-        Statement::ForOfStatement(inner.into_in(self.allocator))
-    }
-
     /// Build a [`Statement::ForStatement`]
     ///
     /// This node contains a [`ForStatement`] that will be stored in the memory arena.
@@ -4025,15 +3290,6 @@ impl<'a> AstBuilder<'a> {
         Statement::ForStatement(self.alloc(self.for_statement(span, init, test, update, body)))
     }
 
-    /// Convert a [`ForStatement`] into a [`Statement::ForStatement`]
-    #[inline]
-    pub fn statement_from_for<T>(self, inner: T) -> Statement<'a>
-    where
-        T: IntoIn<'a, Box<'a, ForStatement<'a>>>,
-    {
-        Statement::ForStatement(inner.into_in(self.allocator))
-    }
-
     /// Build a [`Statement::IfStatement`]
     ///
     /// This node contains an [`IfStatement`] that will be stored in the memory arena.
@@ -4054,15 +3310,6 @@ impl<'a> AstBuilder<'a> {
         Statement::IfStatement(self.alloc(self.if_statement(span, test, consequent, alternate)))
     }
 
-    /// Convert an [`IfStatement`] into a [`Statement::IfStatement`]
-    #[inline]
-    pub fn statement_from_if<T>(self, inner: T) -> Statement<'a>
-    where
-        T: IntoIn<'a, Box<'a, IfStatement<'a>>>,
-    {
-        Statement::IfStatement(inner.into_in(self.allocator))
-    }
-
     /// Build a [`Statement::LabeledStatement`]
     ///
     /// This node contains a [`LabeledStatement`] that will be stored in the memory arena.
@@ -4081,15 +3328,6 @@ impl<'a> AstBuilder<'a> {
         Statement::LabeledStatement(self.alloc(self.labeled_statement(span, label, body)))
     }
 
-    /// Convert a [`LabeledStatement`] into a [`Statement::LabeledStatement`]
-    #[inline]
-    pub fn statement_from_labeled<T>(self, inner: T) -> Statement<'a>
-    where
-        T: IntoIn<'a, Box<'a, LabeledStatement<'a>>>,
-    {
-        Statement::LabeledStatement(inner.into_in(self.allocator))
-    }
-
     /// Build a [`Statement::ReturnStatement`]
     ///
     /// This node contains a [`ReturnStatement`] that will be stored in the memory arena.
@@ -4100,15 +3338,6 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn statement_return(self, span: Span, argument: Option<Expression<'a>>) -> Statement<'a> {
         Statement::ReturnStatement(self.alloc(self.return_statement(span, argument)))
-    }
-
-    /// Convert a [`ReturnStatement`] into a [`Statement::ReturnStatement`]
-    #[inline]
-    pub fn statement_from_return<T>(self, inner: T) -> Statement<'a>
-    where
-        T: IntoIn<'a, Box<'a, ReturnStatement<'a>>>,
-    {
-        Statement::ReturnStatement(inner.into_in(self.allocator))
     }
 
     /// Build a [`Statement::SwitchStatement`]
@@ -4129,15 +3358,6 @@ impl<'a> AstBuilder<'a> {
         Statement::SwitchStatement(self.alloc(self.switch_statement(span, discriminant, cases)))
     }
 
-    /// Convert a [`SwitchStatement`] into a [`Statement::SwitchStatement`]
-    #[inline]
-    pub fn statement_from_switch<T>(self, inner: T) -> Statement<'a>
-    where
-        T: IntoIn<'a, Box<'a, SwitchStatement<'a>>>,
-    {
-        Statement::SwitchStatement(inner.into_in(self.allocator))
-    }
-
     /// Build a [`Statement::ThrowStatement`]
     ///
     /// This node contains a [`ThrowStatement`] that will be stored in the memory arena.
@@ -4148,15 +3368,6 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn statement_throw(self, span: Span, argument: Expression<'a>) -> Statement<'a> {
         Statement::ThrowStatement(self.alloc(self.throw_statement(span, argument)))
-    }
-
-    /// Convert a [`ThrowStatement`] into a [`Statement::ThrowStatement`]
-    #[inline]
-    pub fn statement_from_throw<T>(self, inner: T) -> Statement<'a>
-    where
-        T: IntoIn<'a, Box<'a, ThrowStatement<'a>>>,
-    {
-        Statement::ThrowStatement(inner.into_in(self.allocator))
     }
 
     /// Build a [`Statement::TryStatement`]
@@ -4184,15 +3395,6 @@ impl<'a> AstBuilder<'a> {
         Statement::TryStatement(self.alloc(self.try_statement(span, block, handler, finalizer)))
     }
 
-    /// Convert a [`TryStatement`] into a [`Statement::TryStatement`]
-    #[inline]
-    pub fn statement_from_try<T>(self, inner: T) -> Statement<'a>
-    where
-        T: IntoIn<'a, Box<'a, TryStatement<'a>>>,
-    {
-        Statement::TryStatement(inner.into_in(self.allocator))
-    }
-
     /// Build a [`Statement::WhileStatement`]
     ///
     /// This node contains a [`WhileStatement`] that will be stored in the memory arena.
@@ -4211,15 +3413,6 @@ impl<'a> AstBuilder<'a> {
         Statement::WhileStatement(self.alloc(self.while_statement(span, test, body)))
     }
 
-    /// Convert a [`WhileStatement`] into a [`Statement::WhileStatement`]
-    #[inline]
-    pub fn statement_from_while<T>(self, inner: T) -> Statement<'a>
-    where
-        T: IntoIn<'a, Box<'a, WhileStatement<'a>>>,
-    {
-        Statement::WhileStatement(inner.into_in(self.allocator))
-    }
-
     /// Build a [`Statement::WithStatement`]
     ///
     /// This node contains a [`WithStatement`] that will be stored in the memory arena.
@@ -4236,27 +3429,6 @@ impl<'a> AstBuilder<'a> {
         body: Statement<'a>,
     ) -> Statement<'a> {
         Statement::WithStatement(self.alloc(self.with_statement(span, object, body)))
-    }
-
-    /// Convert a [`WithStatement`] into a [`Statement::WithStatement`]
-    #[inline]
-    pub fn statement_from_with<T>(self, inner: T) -> Statement<'a>
-    where
-        T: IntoIn<'a, Box<'a, WithStatement<'a>>>,
-    {
-        Statement::WithStatement(inner.into_in(self.allocator))
-    }
-
-    /// Convert a [`Declaration`] into the corresponding variant of [`Statement`] without copying or re-allocating memory.
-    #[inline]
-    pub fn statement_declaration(self, inner: Declaration<'a>) -> Statement<'a> {
-        Statement::from(inner)
-    }
-
-    /// Convert a [`ModuleDeclaration`] into the corresponding variant of [`Statement`] without copying or re-allocating memory.
-    #[inline]
-    pub fn statement_module_declaration(self, inner: ModuleDeclaration<'a>) -> Statement<'a> {
-        Statement::from(inner)
     }
 
     /// Build a [`Directive`].
@@ -4420,15 +3592,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert a [`VariableDeclaration`] into a [`Declaration::VariableDeclaration`]
-    #[inline]
-    pub fn declaration_from_variable<T>(self, inner: T) -> Declaration<'a>
-    where
-        T: IntoIn<'a, Box<'a, VariableDeclaration<'a>>>,
-    {
-        Declaration::VariableDeclaration(inner.into_in(self.allocator))
-    }
-
     /// Build a [`Declaration::FunctionDeclaration`]
     ///
     /// This node contains a [`Function`] that will be stored in the memory arena.
@@ -4482,15 +3645,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert a [`Function`] into a [`Declaration::FunctionDeclaration`]
-    #[inline]
-    pub fn declaration_from_function<T>(self, inner: T) -> Declaration<'a>
-    where
-        T: IntoIn<'a, Box<'a, Function<'a>>>,
-    {
-        Declaration::FunctionDeclaration(inner.into_in(self.allocator))
-    }
-
     /// Build a [`Declaration::ClassDeclaration`]
     ///
     /// This node contains a [`Class`] that will be stored in the memory arena.
@@ -4542,15 +3696,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert a [`Class`] into a [`Declaration::ClassDeclaration`]
-    #[inline]
-    pub fn declaration_from_class<T>(self, inner: T) -> Declaration<'a>
-    where
-        T: IntoIn<'a, Box<'a, Class<'a>>>,
-    {
-        Declaration::ClassDeclaration(inner.into_in(self.allocator))
-    }
-
     /// Build a [`Declaration::TSTypeAliasDeclaration`]
     ///
     /// This node contains a [`TSTypeAliasDeclaration`] that will be stored in the memory arena.
@@ -4580,15 +3725,6 @@ impl<'a> AstBuilder<'a> {
             type_annotation,
             declare,
         )))
-    }
-
-    /// Convert a [`TSTypeAliasDeclaration`] into a [`Declaration::TSTypeAliasDeclaration`]
-    #[inline]
-    pub fn declaration_from_ts_type_alias<T>(self, inner: T) -> Declaration<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSTypeAliasDeclaration<'a>>>,
-    {
-        Declaration::TSTypeAliasDeclaration(inner.into_in(self.allocator))
     }
 
     /// Build a [`Declaration::TSInterfaceDeclaration`]
@@ -4626,15 +3762,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert a [`TSInterfaceDeclaration`] into a [`Declaration::TSInterfaceDeclaration`]
-    #[inline]
-    pub fn declaration_from_ts_interface<T>(self, inner: T) -> Declaration<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSInterfaceDeclaration<'a>>>,
-    {
-        Declaration::TSInterfaceDeclaration(inner.into_in(self.allocator))
-    }
-
     /// Build a [`Declaration::TSEnumDeclaration`]
     ///
     /// This node contains a [`TSEnumDeclaration`] that will be stored in the memory arena.
@@ -4657,15 +3784,6 @@ impl<'a> AstBuilder<'a> {
         Declaration::TSEnumDeclaration(
             self.alloc(self.ts_enum_declaration(span, id, members, r#const, declare)),
         )
-    }
-
-    /// Convert a [`TSEnumDeclaration`] into a [`Declaration::TSEnumDeclaration`]
-    #[inline]
-    pub fn declaration_from_ts_enum<T>(self, inner: T) -> Declaration<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSEnumDeclaration<'a>>>,
-    {
-        Declaration::TSEnumDeclaration(inner.into_in(self.allocator))
     }
 
     /// Build a [`Declaration::TSModuleDeclaration`]
@@ -4692,15 +3810,6 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Convert a [`TSModuleDeclaration`] into a [`Declaration::TSModuleDeclaration`]
-    #[inline]
-    pub fn declaration_from_ts_module<T>(self, inner: T) -> Declaration<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSModuleDeclaration<'a>>>,
-    {
-        Declaration::TSModuleDeclaration(inner.into_in(self.allocator))
-    }
-
     /// Build a [`Declaration::TSImportEqualsDeclaration`]
     ///
     /// This node contains a [`TSImportEqualsDeclaration`] that will be stored in the memory arena.
@@ -4724,15 +3833,6 @@ impl<'a> AstBuilder<'a> {
             module_reference,
             import_kind,
         )))
-    }
-
-    /// Convert a [`TSImportEqualsDeclaration`] into a [`Declaration::TSImportEqualsDeclaration`]
-    #[inline]
-    pub fn declaration_from_ts_import_equals<T>(self, inner: T) -> Declaration<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSImportEqualsDeclaration<'a>>>,
-    {
-        Declaration::TSImportEqualsDeclaration(inner.into_in(self.allocator))
     }
 
     /// Build a [`VariableDeclaration`].
@@ -5105,21 +4205,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert a [`VariableDeclaration`] into a [`ForStatementInit::VariableDeclaration`]
-    #[inline]
-    pub fn for_statement_init_from_variable_declaration<T>(self, inner: T) -> ForStatementInit<'a>
-    where
-        T: IntoIn<'a, Box<'a, VariableDeclaration<'a>>>,
-    {
-        ForStatementInit::VariableDeclaration(inner.into_in(self.allocator))
-    }
-
-    /// Convert a [`Expression`] into the corresponding variant of [`ForStatementInit`] without copying or re-allocating memory.
-    #[inline]
-    pub fn for_statement_init_expression(self, inner: Expression<'a>) -> ForStatementInit<'a> {
-        ForStatementInit::from(inner)
-    }
-
     /// Build a [`ForInStatement`].
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_for_in_statement`] instead.
@@ -5230,24 +4315,6 @@ impl<'a> AstBuilder<'a> {
             declarations,
             declare,
         )))
-    }
-
-    /// Convert a [`VariableDeclaration`] into a [`ForStatementLeft::VariableDeclaration`]
-    #[inline]
-    pub fn for_statement_left_from_variable_declaration<T>(self, inner: T) -> ForStatementLeft<'a>
-    where
-        T: IntoIn<'a, Box<'a, VariableDeclaration<'a>>>,
-    {
-        ForStatementLeft::VariableDeclaration(inner.into_in(self.allocator))
-    }
-
-    /// Convert a [`AssignmentTarget`] into the corresponding variant of [`ForStatementLeft`] without copying or re-allocating memory.
-    #[inline]
-    pub fn for_statement_left_assignment_target(
-        self,
-        inner: AssignmentTarget<'a>,
-    ) -> ForStatementLeft<'a> {
-        ForStatementLeft::from(inner)
     }
 
     /// Build a [`ForOfStatement`].
@@ -5920,15 +4987,6 @@ impl<'a> AstBuilder<'a> {
         BindingPatternKind::BindingIdentifier(self.alloc(self.binding_identifier(span, name)))
     }
 
-    /// Convert a [`BindingIdentifier`] into a [`BindingPatternKind::BindingIdentifier`]
-    #[inline]
-    pub fn binding_pattern_kind_from_binding_identifier<T>(self, inner: T) -> BindingPatternKind<'a>
-    where
-        T: IntoIn<'a, Box<'a, BindingIdentifier<'a>>>,
-    {
-        BindingPatternKind::BindingIdentifier(inner.into_in(self.allocator))
-    }
-
     /// Build a [`BindingPatternKind::ObjectPattern`]
     ///
     /// This node contains an [`ObjectPattern`] that will be stored in the memory arena.
@@ -5948,15 +5006,6 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a>>>>,
     {
         BindingPatternKind::ObjectPattern(self.alloc(self.object_pattern(span, properties, rest)))
-    }
-
-    /// Convert an [`ObjectPattern`] into a [`BindingPatternKind::ObjectPattern`]
-    #[inline]
-    pub fn binding_pattern_kind_from_object_pattern<T>(self, inner: T) -> BindingPatternKind<'a>
-    where
-        T: IntoIn<'a, Box<'a, ObjectPattern<'a>>>,
-    {
-        BindingPatternKind::ObjectPattern(inner.into_in(self.allocator))
     }
 
     /// Build a [`BindingPatternKind::ArrayPattern`]
@@ -5980,15 +5029,6 @@ impl<'a> AstBuilder<'a> {
         BindingPatternKind::ArrayPattern(self.alloc(self.array_pattern(span, elements, rest)))
     }
 
-    /// Convert an [`ArrayPattern`] into a [`BindingPatternKind::ArrayPattern`]
-    #[inline]
-    pub fn binding_pattern_kind_from_array_pattern<T>(self, inner: T) -> BindingPatternKind<'a>
-    where
-        T: IntoIn<'a, Box<'a, ArrayPattern<'a>>>,
-    {
-        BindingPatternKind::ArrayPattern(inner.into_in(self.allocator))
-    }
-
     /// Build a [`BindingPatternKind::AssignmentPattern`]
     ///
     /// This node contains an [`AssignmentPattern`] that will be stored in the memory arena.
@@ -6007,15 +5047,6 @@ impl<'a> AstBuilder<'a> {
         BindingPatternKind::AssignmentPattern(
             self.alloc(self.assignment_pattern(span, left, right)),
         )
-    }
-
-    /// Convert an [`AssignmentPattern`] into a [`BindingPatternKind::AssignmentPattern`]
-    #[inline]
-    pub fn binding_pattern_kind_from_assignment_pattern<T>(self, inner: T) -> BindingPatternKind<'a>
-    where
-        T: IntoIn<'a, Box<'a, AssignmentPattern<'a>>>,
-    {
-        BindingPatternKind::AssignmentPattern(inner.into_in(self.allocator))
     }
 
     /// Build an [`AssignmentPattern`].
@@ -7042,15 +6073,6 @@ impl<'a> AstBuilder<'a> {
         ClassElement::StaticBlock(self.alloc(self.static_block(span, body)))
     }
 
-    /// Convert a [`StaticBlock`] into a [`ClassElement::StaticBlock`]
-    #[inline]
-    pub fn class_element_from_static_block<T>(self, inner: T) -> ClassElement<'a>
-    where
-        T: IntoIn<'a, Box<'a, StaticBlock<'a>>>,
-    {
-        ClassElement::StaticBlock(inner.into_in(self.allocator))
-    }
-
     /// Build a [`ClassElement::MethodDefinition`]
     ///
     /// This node contains a [`MethodDefinition`] that will be stored in the memory arena.
@@ -7098,15 +6120,6 @@ impl<'a> AstBuilder<'a> {
             optional,
             accessibility,
         )))
-    }
-
-    /// Convert a [`MethodDefinition`] into a [`ClassElement::MethodDefinition`]
-    #[inline]
-    pub fn class_element_from_method_definition<T>(self, inner: T) -> ClassElement<'a>
-    where
-        T: IntoIn<'a, Box<'a, MethodDefinition<'a>>>,
-    {
-        ClassElement::MethodDefinition(inner.into_in(self.allocator))
     }
 
     /// Build a [`ClassElement::PropertyDefinition`]
@@ -7167,15 +6180,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert a [`PropertyDefinition`] into a [`ClassElement::PropertyDefinition`]
-    #[inline]
-    pub fn class_element_from_property_definition<T>(self, inner: T) -> ClassElement<'a>
-    where
-        T: IntoIn<'a, Box<'a, PropertyDefinition<'a>>>,
-    {
-        ClassElement::PropertyDefinition(inner.into_in(self.allocator))
-    }
-
     /// Build a [`ClassElement::AccessorProperty`]
     ///
     /// This node contains an [`AccessorProperty`] that will be stored in the memory arena.
@@ -7222,15 +6226,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert an [`AccessorProperty`] into a [`ClassElement::AccessorProperty`]
-    #[inline]
-    pub fn class_element_from_accessor_property<T>(self, inner: T) -> ClassElement<'a>
-    where
-        T: IntoIn<'a, Box<'a, AccessorProperty<'a>>>,
-    {
-        ClassElement::AccessorProperty(inner.into_in(self.allocator))
-    }
-
     /// Build a [`ClassElement::TSIndexSignature`]
     ///
     /// This node contains a [`TSIndexSignature`] that will be stored in the memory arena.
@@ -7240,6 +6235,7 @@ impl<'a> AstBuilder<'a> {
     /// - parameters
     /// - type_annotation
     /// - readonly
+    /// - r#static
     #[inline]
     pub fn class_element_ts_index_signature<T1>(
         self,
@@ -7247,6 +6243,7 @@ impl<'a> AstBuilder<'a> {
         parameters: Vec<'a, TSIndexSignatureName<'a>>,
         type_annotation: T1,
         readonly: bool,
+        r#static: bool,
     ) -> ClassElement<'a>
     where
         T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
@@ -7256,16 +6253,8 @@ impl<'a> AstBuilder<'a> {
             parameters,
             type_annotation,
             readonly,
+            r#static,
         )))
-    }
-
-    /// Convert a [`TSIndexSignature`] into a [`ClassElement::TSIndexSignature`]
-    #[inline]
-    pub fn class_element_from_ts_index_signature<T>(self, inner: T) -> ClassElement<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSIndexSignature<'a>>>,
-    {
-        ClassElement::TSIndexSignature(inner.into_in(self.allocator))
     }
 
     /// Build a [`MethodDefinition`].
@@ -7613,15 +6602,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert an [`ImportDeclaration`] into a [`ModuleDeclaration::ImportDeclaration`]
-    #[inline]
-    pub fn module_declaration_from_import_declaration<T>(self, inner: T) -> ModuleDeclaration<'a>
-    where
-        T: IntoIn<'a, Box<'a, ImportDeclaration<'a>>>,
-    {
-        ModuleDeclaration::ImportDeclaration(inner.into_in(self.allocator))
-    }
-
     /// Build a [`ModuleDeclaration::ExportAllDeclaration`]
     ///
     /// This node contains an [`ExportAllDeclaration`] that will be stored in the memory arena.
@@ -7653,18 +6633,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert an [`ExportAllDeclaration`] into a [`ModuleDeclaration::ExportAllDeclaration`]
-    #[inline]
-    pub fn module_declaration_from_export_all_declaration<T>(
-        self,
-        inner: T,
-    ) -> ModuleDeclaration<'a>
-    where
-        T: IntoIn<'a, Box<'a, ExportAllDeclaration<'a>>>,
-    {
-        ModuleDeclaration::ExportAllDeclaration(inner.into_in(self.allocator))
-    }
-
     /// Build a [`ModuleDeclaration::ExportDefaultDeclaration`]
     ///
     /// This node contains an [`ExportDefaultDeclaration`] that will be stored in the memory arena.
@@ -7685,18 +6653,6 @@ impl<'a> AstBuilder<'a> {
             declaration,
             exported,
         )))
-    }
-
-    /// Convert an [`ExportDefaultDeclaration`] into a [`ModuleDeclaration::ExportDefaultDeclaration`]
-    #[inline]
-    pub fn module_declaration_from_export_default_declaration<T>(
-        self,
-        inner: T,
-    ) -> ModuleDeclaration<'a>
-    where
-        T: IntoIn<'a, Box<'a, ExportDefaultDeclaration<'a>>>,
-    {
-        ModuleDeclaration::ExportDefaultDeclaration(inner.into_in(self.allocator))
     }
 
     /// Build a [`ModuleDeclaration::ExportNamedDeclaration`]
@@ -7733,18 +6689,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert an [`ExportNamedDeclaration`] into a [`ModuleDeclaration::ExportNamedDeclaration`]
-    #[inline]
-    pub fn module_declaration_from_export_named_declaration<T>(
-        self,
-        inner: T,
-    ) -> ModuleDeclaration<'a>
-    where
-        T: IntoIn<'a, Box<'a, ExportNamedDeclaration<'a>>>,
-    {
-        ModuleDeclaration::ExportNamedDeclaration(inner.into_in(self.allocator))
-    }
-
     /// Build a [`ModuleDeclaration::TSExportAssignment`]
     ///
     /// This node contains a [`TSExportAssignment`] that will be stored in the memory arena.
@@ -7763,15 +6707,6 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Convert a [`TSExportAssignment`] into a [`ModuleDeclaration::TSExportAssignment`]
-    #[inline]
-    pub fn module_declaration_from_ts_export_assignment<T>(self, inner: T) -> ModuleDeclaration<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSExportAssignment<'a>>>,
-    {
-        ModuleDeclaration::TSExportAssignment(inner.into_in(self.allocator))
-    }
-
     /// Build a [`ModuleDeclaration::TSNamespaceExportDeclaration`]
     ///
     /// This node contains a [`TSNamespaceExportDeclaration`] that will be stored in the memory arena.
@@ -7788,18 +6723,6 @@ impl<'a> AstBuilder<'a> {
         ModuleDeclaration::TSNamespaceExportDeclaration(
             self.alloc(self.ts_namespace_export_declaration(span, id)),
         )
-    }
-
-    /// Convert a [`TSNamespaceExportDeclaration`] into a [`ModuleDeclaration::TSNamespaceExportDeclaration`]
-    #[inline]
-    pub fn module_declaration_from_ts_namespace_export_declaration<T>(
-        self,
-        inner: T,
-    ) -> ModuleDeclaration<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSNamespaceExportDeclaration<'a>>>,
-    {
-        ModuleDeclaration::TSNamespaceExportDeclaration(inner.into_in(self.allocator))
     }
 
     /// Build an [`AccessorProperty`].
@@ -8017,18 +6940,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert an [`ImportSpecifier`] into an [`ImportDeclarationSpecifier::ImportSpecifier`]
-    #[inline]
-    pub fn import_declaration_specifier_from_import_specifier<T>(
-        self,
-        inner: T,
-    ) -> ImportDeclarationSpecifier<'a>
-    where
-        T: IntoIn<'a, Box<'a, ImportSpecifier<'a>>>,
-    {
-        ImportDeclarationSpecifier::ImportSpecifier(inner.into_in(self.allocator))
-    }
-
     /// Build an [`ImportDeclarationSpecifier::ImportDefaultSpecifier`]
     ///
     /// This node contains an [`ImportDefaultSpecifier`] that will be stored in the memory arena.
@@ -8047,18 +6958,6 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Convert an [`ImportDefaultSpecifier`] into an [`ImportDeclarationSpecifier::ImportDefaultSpecifier`]
-    #[inline]
-    pub fn import_declaration_specifier_from_import_default_specifier<T>(
-        self,
-        inner: T,
-    ) -> ImportDeclarationSpecifier<'a>
-    where
-        T: IntoIn<'a, Box<'a, ImportDefaultSpecifier<'a>>>,
-    {
-        ImportDeclarationSpecifier::ImportDefaultSpecifier(inner.into_in(self.allocator))
-    }
-
     /// Build an [`ImportDeclarationSpecifier::ImportNamespaceSpecifier`]
     ///
     /// This node contains an [`ImportNamespaceSpecifier`] that will be stored in the memory arena.
@@ -8075,18 +6974,6 @@ impl<'a> AstBuilder<'a> {
         ImportDeclarationSpecifier::ImportNamespaceSpecifier(
             self.alloc(self.import_namespace_specifier(span, local)),
         )
-    }
-
-    /// Convert an [`ImportNamespaceSpecifier`] into an [`ImportDeclarationSpecifier::ImportNamespaceSpecifier`]
-    #[inline]
-    pub fn import_declaration_specifier_from_import_namespace_specifier<T>(
-        self,
-        inner: T,
-    ) -> ImportDeclarationSpecifier<'a>
-    where
-        T: IntoIn<'a, Box<'a, ImportNamespaceSpecifier<'a>>>,
-    {
-        ImportDeclarationSpecifier::ImportNamespaceSpecifier(inner.into_in(self.allocator))
     }
 
     /// Build an [`ImportSpecifier`].
@@ -8282,15 +7169,6 @@ impl<'a> AstBuilder<'a> {
         ImportAttributeKey::Identifier(self.identifier_name(span, name))
     }
 
-    /// Convert an [`IdentifierName`] into an [`ImportAttributeKey::Identifier`]
-    #[inline]
-    pub fn import_attribute_key_from_identifier_name<T>(self, inner: T) -> ImportAttributeKey<'a>
-    where
-        T: IntoIn<'a, IdentifierName<'a>>,
-    {
-        ImportAttributeKey::Identifier(inner.into_in(self.allocator))
-    }
-
     /// Build an [`ImportAttributeKey::StringLiteral`]
     ///
     /// ## Parameters
@@ -8306,15 +7184,6 @@ impl<'a> AstBuilder<'a> {
         A: IntoIn<'a, Atom<'a>>,
     {
         ImportAttributeKey::StringLiteral(self.string_literal(span, value))
-    }
-
-    /// Convert a [`StringLiteral`] into an [`ImportAttributeKey::StringLiteral`]
-    #[inline]
-    pub fn import_attribute_key_from_string_literal<T>(self, inner: T) -> ImportAttributeKey<'a>
-    where
-        T: IntoIn<'a, StringLiteral<'a>>,
-    {
-        ImportAttributeKey::StringLiteral(inner.into_in(self.allocator))
     }
 
     /// Build an [`ExportNamedDeclaration`].
@@ -8576,18 +7445,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert a [`Function`] into an [`ExportDefaultDeclarationKind::FunctionDeclaration`]
-    #[inline]
-    pub fn export_default_declaration_kind_from_function<T>(
-        self,
-        inner: T,
-    ) -> ExportDefaultDeclarationKind<'a>
-    where
-        T: IntoIn<'a, Box<'a, Function<'a>>>,
-    {
-        ExportDefaultDeclarationKind::FunctionDeclaration(inner.into_in(self.allocator))
-    }
-
     /// Build an [`ExportDefaultDeclarationKind::ClassDeclaration`]
     ///
     /// This node contains a [`Class`] that will be stored in the memory arena.
@@ -8639,18 +7496,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert a [`Class`] into an [`ExportDefaultDeclarationKind::ClassDeclaration`]
-    #[inline]
-    pub fn export_default_declaration_kind_from_class<T>(
-        self,
-        inner: T,
-    ) -> ExportDefaultDeclarationKind<'a>
-    where
-        T: IntoIn<'a, Box<'a, Class<'a>>>,
-    {
-        ExportDefaultDeclarationKind::ClassDeclaration(inner.into_in(self.allocator))
-    }
-
     /// Build an [`ExportDefaultDeclarationKind::TSInterfaceDeclaration`]
     ///
     /// This node contains a [`TSInterfaceDeclaration`] that will be stored in the memory arena.
@@ -8681,27 +7526,6 @@ impl<'a> AstBuilder<'a> {
         ))
     }
 
-    /// Convert a [`TSInterfaceDeclaration`] into an [`ExportDefaultDeclarationKind::TSInterfaceDeclaration`]
-    #[inline]
-    pub fn export_default_declaration_kind_from_ts_interface_declaration<T>(
-        self,
-        inner: T,
-    ) -> ExportDefaultDeclarationKind<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSInterfaceDeclaration<'a>>>,
-    {
-        ExportDefaultDeclarationKind::TSInterfaceDeclaration(inner.into_in(self.allocator))
-    }
-
-    /// Convert a [`Expression`] into the corresponding variant of [`ExportDefaultDeclarationKind`] without copying or re-allocating memory.
-    #[inline]
-    pub fn export_default_declaration_kind_expression(
-        self,
-        inner: Expression<'a>,
-    ) -> ExportDefaultDeclarationKind<'a> {
-        ExportDefaultDeclarationKind::from(inner)
-    }
-
     /// Build a [`ModuleExportName::IdentifierName`]
     ///
     /// ## Parameters
@@ -8713,15 +7537,6 @@ impl<'a> AstBuilder<'a> {
         A: IntoIn<'a, Atom<'a>>,
     {
         ModuleExportName::IdentifierName(self.identifier_name(span, name))
-    }
-
-    /// Convert an [`IdentifierName`] into a [`ModuleExportName::IdentifierName`]
-    #[inline]
-    pub fn module_export_name_from_identifier_name<T>(self, inner: T) -> ModuleExportName<'a>
-    where
-        T: IntoIn<'a, IdentifierName<'a>>,
-    {
-        ModuleExportName::IdentifierName(inner.into_in(self.allocator))
     }
 
     /// Build a [`ModuleExportName::IdentifierReference`]
@@ -8741,15 +7556,6 @@ impl<'a> AstBuilder<'a> {
         ModuleExportName::IdentifierReference(self.identifier_reference(span, name))
     }
 
-    /// Convert an [`IdentifierReference`] into a [`ModuleExportName::IdentifierReference`]
-    #[inline]
-    pub fn module_export_name_from_identifier_reference<T>(self, inner: T) -> ModuleExportName<'a>
-    where
-        T: IntoIn<'a, IdentifierReference<'a>>,
-    {
-        ModuleExportName::IdentifierReference(inner.into_in(self.allocator))
-    }
-
     /// Build a [`ModuleExportName::StringLiteral`]
     ///
     /// ## Parameters
@@ -8761,15 +7567,6 @@ impl<'a> AstBuilder<'a> {
         A: IntoIn<'a, Atom<'a>>,
     {
         ModuleExportName::StringLiteral(self.string_literal(span, value))
-    }
-
-    /// Convert a [`StringLiteral`] into a [`ModuleExportName::StringLiteral`]
-    #[inline]
-    pub fn module_export_name_from_string_literal<T>(self, inner: T) -> ModuleExportName<'a>
-    where
-        T: IntoIn<'a, StringLiteral<'a>>,
-    {
-        ModuleExportName::StringLiteral(inner.into_in(self.allocator))
     }
 
     /// Build a [`TSThisParameter`].
@@ -8971,15 +7768,6 @@ impl<'a> AstBuilder<'a> {
         TSEnumMemberName::StaticIdentifier(self.alloc(self.identifier_name(span, name)))
     }
 
-    /// Convert an [`IdentifierName`] into a [`TSEnumMemberName::StaticIdentifier`]
-    #[inline]
-    pub fn ts_enum_member_name_from_identifier_name<T>(self, inner: T) -> TSEnumMemberName<'a>
-    where
-        T: IntoIn<'a, Box<'a, IdentifierName<'a>>>,
-    {
-        TSEnumMemberName::StaticIdentifier(inner.into_in(self.allocator))
-    }
-
     /// Build a [`TSEnumMemberName::StaticStringLiteral`]
     ///
     /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
@@ -8993,15 +7781,6 @@ impl<'a> AstBuilder<'a> {
         A: IntoIn<'a, Atom<'a>>,
     {
         TSEnumMemberName::StaticStringLiteral(self.alloc(self.string_literal(span, value)))
-    }
-
-    /// Convert a [`StringLiteral`] into a [`TSEnumMemberName::StaticStringLiteral`]
-    #[inline]
-    pub fn ts_enum_member_name_from_string_literal<T>(self, inner: T) -> TSEnumMemberName<'a>
-    where
-        T: IntoIn<'a, Box<'a, StringLiteral<'a>>>,
-    {
-        TSEnumMemberName::StaticStringLiteral(inner.into_in(self.allocator))
     }
 
     /// Build a [`TSEnumMemberName::StaticTemplateLiteral`]
@@ -9024,15 +7803,6 @@ impl<'a> AstBuilder<'a> {
             quasis,
             expressions,
         )))
-    }
-
-    /// Convert a [`TemplateLiteral`] into a [`TSEnumMemberName::StaticTemplateLiteral`]
-    #[inline]
-    pub fn ts_enum_member_name_from_template_literal<T>(self, inner: T) -> TSEnumMemberName<'a>
-    where
-        T: IntoIn<'a, Box<'a, TemplateLiteral<'a>>>,
-    {
-        TSEnumMemberName::StaticTemplateLiteral(inner.into_in(self.allocator))
     }
 
     /// Build a [`TSEnumMemberName::StaticNumericLiteral`]
@@ -9058,21 +7828,6 @@ impl<'a> AstBuilder<'a> {
         TSEnumMemberName::StaticNumericLiteral(
             self.alloc(self.numeric_literal(span, value, raw, base)),
         )
-    }
-
-    /// Convert a [`NumericLiteral`] into a [`TSEnumMemberName::StaticNumericLiteral`]
-    #[inline]
-    pub fn ts_enum_member_name_from_numeric_literal<T>(self, inner: T) -> TSEnumMemberName<'a>
-    where
-        T: IntoIn<'a, Box<'a, NumericLiteral<'a>>>,
-    {
-        TSEnumMemberName::StaticNumericLiteral(inner.into_in(self.allocator))
-    }
-
-    /// Convert a [`Expression`] into the corresponding variant of [`TSEnumMemberName`] without copying or re-allocating memory.
-    #[inline]
-    pub fn ts_enum_member_name_expression(self, inner: Expression<'a>) -> TSEnumMemberName<'a> {
-        TSEnumMemberName::from(inner)
     }
 
     /// Build a [`TSTypeAnnotation`].
@@ -9147,15 +7902,6 @@ impl<'a> AstBuilder<'a> {
         TSLiteral::BooleanLiteral(self.alloc(self.boolean_literal(span, value)))
     }
 
-    /// Convert a [`BooleanLiteral`] into a [`TSLiteral::BooleanLiteral`]
-    #[inline]
-    pub fn ts_literal_from_boolean_literal<T>(self, inner: T) -> TSLiteral<'a>
-    where
-        T: IntoIn<'a, Box<'a, BooleanLiteral>>,
-    {
-        TSLiteral::BooleanLiteral(inner.into_in(self.allocator))
-    }
-
     /// Build a [`TSLiteral::NullLiteral`]
     ///
     /// This node contains a [`NullLiteral`] that will be stored in the memory arena.
@@ -9165,15 +7911,6 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn ts_literal_null_literal(self, span: Span) -> TSLiteral<'a> {
         TSLiteral::NullLiteral(self.alloc(self.null_literal(span)))
-    }
-
-    /// Convert a [`NullLiteral`] into a [`TSLiteral::NullLiteral`]
-    #[inline]
-    pub fn ts_literal_from_null_literal<T>(self, inner: T) -> TSLiteral<'a>
-    where
-        T: IntoIn<'a, Box<'a, NullLiteral>>,
-    {
-        TSLiteral::NullLiteral(inner.into_in(self.allocator))
     }
 
     /// Build a [`TSLiteral::NumericLiteral`]
@@ -9199,15 +7936,6 @@ impl<'a> AstBuilder<'a> {
         TSLiteral::NumericLiteral(self.alloc(self.numeric_literal(span, value, raw, base)))
     }
 
-    /// Convert a [`NumericLiteral`] into a [`TSLiteral::NumericLiteral`]
-    #[inline]
-    pub fn ts_literal_from_numeric_literal<T>(self, inner: T) -> TSLiteral<'a>
-    where
-        T: IntoIn<'a, Box<'a, NumericLiteral<'a>>>,
-    {
-        TSLiteral::NumericLiteral(inner.into_in(self.allocator))
-    }
-
     /// Build a [`TSLiteral::BigIntLiteral`]
     ///
     /// This node contains a [`BigIntLiteral`] that will be stored in the memory arena.
@@ -9229,40 +7957,25 @@ impl<'a> AstBuilder<'a> {
         TSLiteral::BigIntLiteral(self.alloc(self.big_int_literal(span, raw, base)))
     }
 
-    /// Convert a [`BigIntLiteral`] into a [`TSLiteral::BigIntLiteral`]
-    #[inline]
-    pub fn ts_literal_from_big_int_literal<T>(self, inner: T) -> TSLiteral<'a>
-    where
-        T: IntoIn<'a, Box<'a, BigIntLiteral<'a>>>,
-    {
-        TSLiteral::BigIntLiteral(inner.into_in(self.allocator))
-    }
-
     /// Build a [`TSLiteral::RegExpLiteral`]
     ///
     /// This node contains a [`RegExpLiteral`] that will be stored in the memory arena.
     ///
     /// ## Parameters
     /// - span: Node location in source code
-    /// - value: Placeholder for printing.
     /// - regex: The parsed regular expression. See [`oxc_regular_expression`] for more
+    /// - raw: The regular expression as it appears in source code
     #[inline]
-    pub fn ts_literal_reg_exp_literal(
+    pub fn ts_literal_reg_exp_literal<S>(
         self,
         span: Span,
-        value: EmptyObject,
         regex: RegExp<'a>,
-    ) -> TSLiteral<'a> {
-        TSLiteral::RegExpLiteral(self.alloc(self.reg_exp_literal(span, value, regex)))
-    }
-
-    /// Convert a [`RegExpLiteral`] into a [`TSLiteral::RegExpLiteral`]
-    #[inline]
-    pub fn ts_literal_from_reg_exp_literal<T>(self, inner: T) -> TSLiteral<'a>
+        raw: S,
+    ) -> TSLiteral<'a>
     where
-        T: IntoIn<'a, Box<'a, RegExpLiteral<'a>>>,
+        S: IntoIn<'a, &'a str>,
     {
-        TSLiteral::RegExpLiteral(inner.into_in(self.allocator))
+        TSLiteral::RegExpLiteral(self.alloc(self.reg_exp_literal(span, regex, raw)))
     }
 
     /// Build a [`TSLiteral::StringLiteral`]
@@ -9278,15 +7991,6 @@ impl<'a> AstBuilder<'a> {
         A: IntoIn<'a, Atom<'a>>,
     {
         TSLiteral::StringLiteral(self.alloc(self.string_literal(span, value)))
-    }
-
-    /// Convert a [`StringLiteral`] into a [`TSLiteral::StringLiteral`]
-    #[inline]
-    pub fn ts_literal_from_string_literal<T>(self, inner: T) -> TSLiteral<'a>
-    where
-        T: IntoIn<'a, Box<'a, StringLiteral<'a>>>,
-    {
-        TSLiteral::StringLiteral(inner.into_in(self.allocator))
     }
 
     /// Build a [`TSLiteral::TemplateLiteral`]
@@ -9307,15 +8011,6 @@ impl<'a> AstBuilder<'a> {
         TSLiteral::TemplateLiteral(self.alloc(self.template_literal(span, quasis, expressions)))
     }
 
-    /// Convert a [`TemplateLiteral`] into a [`TSLiteral::TemplateLiteral`]
-    #[inline]
-    pub fn ts_literal_from_template_literal<T>(self, inner: T) -> TSLiteral<'a>
-    where
-        T: IntoIn<'a, Box<'a, TemplateLiteral<'a>>>,
-    {
-        TSLiteral::TemplateLiteral(inner.into_in(self.allocator))
-    }
-
     /// Build a [`TSLiteral::UnaryExpression`]
     ///
     /// This node contains an [`UnaryExpression`] that will be stored in the memory arena.
@@ -9334,15 +8029,6 @@ impl<'a> AstBuilder<'a> {
         TSLiteral::UnaryExpression(self.alloc(self.unary_expression(span, operator, argument)))
     }
 
-    /// Convert an [`UnaryExpression`] into a [`TSLiteral::UnaryExpression`]
-    #[inline]
-    pub fn ts_literal_from_unary_expression<T>(self, inner: T) -> TSLiteral<'a>
-    where
-        T: IntoIn<'a, Box<'a, UnaryExpression<'a>>>,
-    {
-        TSLiteral::UnaryExpression(inner.into_in(self.allocator))
-    }
-
     /// Build a [`TSType::TSAnyKeyword`]
     ///
     /// This node contains a [`TSAnyKeyword`] that will be stored in the memory arena.
@@ -9352,15 +8038,6 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn ts_type_any_keyword(self, span: Span) -> TSType<'a> {
         TSType::TSAnyKeyword(self.alloc(self.ts_any_keyword(span)))
-    }
-
-    /// Convert a [`TSAnyKeyword`] into a [`TSType::TSAnyKeyword`]
-    #[inline]
-    pub fn ts_type_from_ts_any_keyword<T>(self, inner: T) -> TSType<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSAnyKeyword>>,
-    {
-        TSType::TSAnyKeyword(inner.into_in(self.allocator))
     }
 
     /// Build a [`TSType::TSBigIntKeyword`]
@@ -9374,15 +8051,6 @@ impl<'a> AstBuilder<'a> {
         TSType::TSBigIntKeyword(self.alloc(self.ts_big_int_keyword(span)))
     }
 
-    /// Convert a [`TSBigIntKeyword`] into a [`TSType::TSBigIntKeyword`]
-    #[inline]
-    pub fn ts_type_from_ts_big_int_keyword<T>(self, inner: T) -> TSType<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSBigIntKeyword>>,
-    {
-        TSType::TSBigIntKeyword(inner.into_in(self.allocator))
-    }
-
     /// Build a [`TSType::TSBooleanKeyword`]
     ///
     /// This node contains a [`TSBooleanKeyword`] that will be stored in the memory arena.
@@ -9392,15 +8060,6 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn ts_type_boolean_keyword(self, span: Span) -> TSType<'a> {
         TSType::TSBooleanKeyword(self.alloc(self.ts_boolean_keyword(span)))
-    }
-
-    /// Convert a [`TSBooleanKeyword`] into a [`TSType::TSBooleanKeyword`]
-    #[inline]
-    pub fn ts_type_from_ts_boolean_keyword<T>(self, inner: T) -> TSType<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSBooleanKeyword>>,
-    {
-        TSType::TSBooleanKeyword(inner.into_in(self.allocator))
     }
 
     /// Build a [`TSType::TSIntrinsicKeyword`]
@@ -9414,15 +8073,6 @@ impl<'a> AstBuilder<'a> {
         TSType::TSIntrinsicKeyword(self.alloc(self.ts_intrinsic_keyword(span)))
     }
 
-    /// Convert a [`TSIntrinsicKeyword`] into a [`TSType::TSIntrinsicKeyword`]
-    #[inline]
-    pub fn ts_type_from_ts_intrinsic_keyword<T>(self, inner: T) -> TSType<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSIntrinsicKeyword>>,
-    {
-        TSType::TSIntrinsicKeyword(inner.into_in(self.allocator))
-    }
-
     /// Build a [`TSType::TSNeverKeyword`]
     ///
     /// This node contains a [`TSNeverKeyword`] that will be stored in the memory arena.
@@ -9432,15 +8082,6 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn ts_type_never_keyword(self, span: Span) -> TSType<'a> {
         TSType::TSNeverKeyword(self.alloc(self.ts_never_keyword(span)))
-    }
-
-    /// Convert a [`TSNeverKeyword`] into a [`TSType::TSNeverKeyword`]
-    #[inline]
-    pub fn ts_type_from_ts_never_keyword<T>(self, inner: T) -> TSType<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSNeverKeyword>>,
-    {
-        TSType::TSNeverKeyword(inner.into_in(self.allocator))
     }
 
     /// Build a [`TSType::TSNullKeyword`]
@@ -9454,15 +8095,6 @@ impl<'a> AstBuilder<'a> {
         TSType::TSNullKeyword(self.alloc(self.ts_null_keyword(span)))
     }
 
-    /// Convert a [`TSNullKeyword`] into a [`TSType::TSNullKeyword`]
-    #[inline]
-    pub fn ts_type_from_ts_null_keyword<T>(self, inner: T) -> TSType<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSNullKeyword>>,
-    {
-        TSType::TSNullKeyword(inner.into_in(self.allocator))
-    }
-
     /// Build a [`TSType::TSNumberKeyword`]
     ///
     /// This node contains a [`TSNumberKeyword`] that will be stored in the memory arena.
@@ -9472,15 +8104,6 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn ts_type_number_keyword(self, span: Span) -> TSType<'a> {
         TSType::TSNumberKeyword(self.alloc(self.ts_number_keyword(span)))
-    }
-
-    /// Convert a [`TSNumberKeyword`] into a [`TSType::TSNumberKeyword`]
-    #[inline]
-    pub fn ts_type_from_ts_number_keyword<T>(self, inner: T) -> TSType<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSNumberKeyword>>,
-    {
-        TSType::TSNumberKeyword(inner.into_in(self.allocator))
     }
 
     /// Build a [`TSType::TSObjectKeyword`]
@@ -9494,15 +8117,6 @@ impl<'a> AstBuilder<'a> {
         TSType::TSObjectKeyword(self.alloc(self.ts_object_keyword(span)))
     }
 
-    /// Convert a [`TSObjectKeyword`] into a [`TSType::TSObjectKeyword`]
-    #[inline]
-    pub fn ts_type_from_ts_object_keyword<T>(self, inner: T) -> TSType<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSObjectKeyword>>,
-    {
-        TSType::TSObjectKeyword(inner.into_in(self.allocator))
-    }
-
     /// Build a [`TSType::TSStringKeyword`]
     ///
     /// This node contains a [`TSStringKeyword`] that will be stored in the memory arena.
@@ -9512,15 +8126,6 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn ts_type_string_keyword(self, span: Span) -> TSType<'a> {
         TSType::TSStringKeyword(self.alloc(self.ts_string_keyword(span)))
-    }
-
-    /// Convert a [`TSStringKeyword`] into a [`TSType::TSStringKeyword`]
-    #[inline]
-    pub fn ts_type_from_ts_string_keyword<T>(self, inner: T) -> TSType<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSStringKeyword>>,
-    {
-        TSType::TSStringKeyword(inner.into_in(self.allocator))
     }
 
     /// Build a [`TSType::TSSymbolKeyword`]
@@ -9534,15 +8139,6 @@ impl<'a> AstBuilder<'a> {
         TSType::TSSymbolKeyword(self.alloc(self.ts_symbol_keyword(span)))
     }
 
-    /// Convert a [`TSSymbolKeyword`] into a [`TSType::TSSymbolKeyword`]
-    #[inline]
-    pub fn ts_type_from_ts_symbol_keyword<T>(self, inner: T) -> TSType<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSSymbolKeyword>>,
-    {
-        TSType::TSSymbolKeyword(inner.into_in(self.allocator))
-    }
-
     /// Build a [`TSType::TSUndefinedKeyword`]
     ///
     /// This node contains a [`TSUndefinedKeyword`] that will be stored in the memory arena.
@@ -9552,15 +8148,6 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn ts_type_undefined_keyword(self, span: Span) -> TSType<'a> {
         TSType::TSUndefinedKeyword(self.alloc(self.ts_undefined_keyword(span)))
-    }
-
-    /// Convert a [`TSUndefinedKeyword`] into a [`TSType::TSUndefinedKeyword`]
-    #[inline]
-    pub fn ts_type_from_ts_undefined_keyword<T>(self, inner: T) -> TSType<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSUndefinedKeyword>>,
-    {
-        TSType::TSUndefinedKeyword(inner.into_in(self.allocator))
     }
 
     /// Build a [`TSType::TSUnknownKeyword`]
@@ -9574,15 +8161,6 @@ impl<'a> AstBuilder<'a> {
         TSType::TSUnknownKeyword(self.alloc(self.ts_unknown_keyword(span)))
     }
 
-    /// Convert a [`TSUnknownKeyword`] into a [`TSType::TSUnknownKeyword`]
-    #[inline]
-    pub fn ts_type_from_ts_unknown_keyword<T>(self, inner: T) -> TSType<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSUnknownKeyword>>,
-    {
-        TSType::TSUnknownKeyword(inner.into_in(self.allocator))
-    }
-
     /// Build a [`TSType::TSVoidKeyword`]
     ///
     /// This node contains a [`TSVoidKeyword`] that will be stored in the memory arena.
@@ -9592,15 +8170,6 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn ts_type_void_keyword(self, span: Span) -> TSType<'a> {
         TSType::TSVoidKeyword(self.alloc(self.ts_void_keyword(span)))
-    }
-
-    /// Convert a [`TSVoidKeyword`] into a [`TSType::TSVoidKeyword`]
-    #[inline]
-    pub fn ts_type_from_ts_void_keyword<T>(self, inner: T) -> TSType<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSVoidKeyword>>,
-    {
-        TSType::TSVoidKeyword(inner.into_in(self.allocator))
     }
 
     /// Build a [`TSType::TSArrayType`]
@@ -9613,15 +8182,6 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn ts_type_array_type(self, span: Span, element_type: TSType<'a>) -> TSType<'a> {
         TSType::TSArrayType(self.alloc(self.ts_array_type(span, element_type)))
-    }
-
-    /// Convert a [`TSArrayType`] into a [`TSType::TSArrayType`]
-    #[inline]
-    pub fn ts_type_from_ts_array_type<T>(self, inner: T) -> TSType<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSArrayType<'a>>>,
-    {
-        TSType::TSArrayType(inner.into_in(self.allocator))
     }
 
     /// Build a [`TSType::TSConditionalType`]
@@ -9650,15 +8210,6 @@ impl<'a> AstBuilder<'a> {
             true_type,
             false_type,
         )))
-    }
-
-    /// Convert a [`TSConditionalType`] into a [`TSType::TSConditionalType`]
-    #[inline]
-    pub fn ts_type_from_ts_conditional_type<T>(self, inner: T) -> TSType<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSConditionalType<'a>>>,
-    {
-        TSType::TSConditionalType(inner.into_in(self.allocator))
     }
 
     /// Build a [`TSType::TSConstructorType`]
@@ -9694,15 +8245,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert a [`TSConstructorType`] into a [`TSType::TSConstructorType`]
-    #[inline]
-    pub fn ts_type_from_ts_constructor_type<T>(self, inner: T) -> TSType<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSConstructorType<'a>>>,
-    {
-        TSType::TSConstructorType(inner.into_in(self.allocator))
-    }
-
     /// Build a [`TSType::TSFunctionType`]
     ///
     /// This node contains a [`TSFunctionType`] that will be stored in the memory arena.
@@ -9735,15 +8277,6 @@ impl<'a> AstBuilder<'a> {
             params,
             return_type,
         )))
-    }
-
-    /// Convert a [`TSFunctionType`] into a [`TSType::TSFunctionType`]
-    #[inline]
-    pub fn ts_type_from_ts_function_type<T>(self, inner: T) -> TSType<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSFunctionType<'a>>>,
-    {
-        TSType::TSFunctionType(inner.into_in(self.allocator))
     }
 
     /// Build a [`TSType::TSImportType`]
@@ -9781,15 +8314,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert a [`TSImportType`] into a [`TSType::TSImportType`]
-    #[inline]
-    pub fn ts_type_from_ts_import_type<T>(self, inner: T) -> TSType<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSImportType<'a>>>,
-    {
-        TSType::TSImportType(inner.into_in(self.allocator))
-    }
-
     /// Build a [`TSType::TSIndexedAccessType`]
     ///
     /// This node contains a [`TSIndexedAccessType`] that will be stored in the memory arena.
@@ -9812,15 +8336,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert a [`TSIndexedAccessType`] into a [`TSType::TSIndexedAccessType`]
-    #[inline]
-    pub fn ts_type_from_ts_indexed_access_type<T>(self, inner: T) -> TSType<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSIndexedAccessType<'a>>>,
-    {
-        TSType::TSIndexedAccessType(inner.into_in(self.allocator))
-    }
-
     /// Build a [`TSType::TSInferType`]
     ///
     /// This node contains a [`TSInferType`] that will be stored in the memory arena.
@@ -9836,15 +8351,6 @@ impl<'a> AstBuilder<'a> {
         TSType::TSInferType(self.alloc(self.ts_infer_type(span, type_parameter)))
     }
 
-    /// Convert a [`TSInferType`] into a [`TSType::TSInferType`]
-    #[inline]
-    pub fn ts_type_from_ts_infer_type<T>(self, inner: T) -> TSType<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSInferType<'a>>>,
-    {
-        TSType::TSInferType(inner.into_in(self.allocator))
-    }
-
     /// Build a [`TSType::TSIntersectionType`]
     ///
     /// This node contains a [`TSIntersectionType`] that will be stored in the memory arena.
@@ -9857,15 +8363,6 @@ impl<'a> AstBuilder<'a> {
         TSType::TSIntersectionType(self.alloc(self.ts_intersection_type(span, types)))
     }
 
-    /// Convert a [`TSIntersectionType`] into a [`TSType::TSIntersectionType`]
-    #[inline]
-    pub fn ts_type_from_ts_intersection_type<T>(self, inner: T) -> TSType<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSIntersectionType<'a>>>,
-    {
-        TSType::TSIntersectionType(inner.into_in(self.allocator))
-    }
-
     /// Build a [`TSType::TSLiteralType`]
     ///
     /// This node contains a [`TSLiteralType`] that will be stored in the memory arena.
@@ -9876,15 +8373,6 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn ts_type_literal_type(self, span: Span, literal: TSLiteral<'a>) -> TSType<'a> {
         TSType::TSLiteralType(self.alloc(self.ts_literal_type(span, literal)))
-    }
-
-    /// Convert a [`TSLiteralType`] into a [`TSType::TSLiteralType`]
-    #[inline]
-    pub fn ts_type_from_ts_literal_type<T>(self, inner: T) -> TSType<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSLiteralType<'a>>>,
-    {
-        TSType::TSLiteralType(inner.into_in(self.allocator))
     }
 
     /// Build a [`TSType::TSMappedType`]
@@ -9921,15 +8409,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert a [`TSMappedType`] into a [`TSType::TSMappedType`]
-    #[inline]
-    pub fn ts_type_from_ts_mapped_type<T>(self, inner: T) -> TSType<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSMappedType<'a>>>,
-    {
-        TSType::TSMappedType(inner.into_in(self.allocator))
-    }
-
     /// Build a [`TSType::TSNamedTupleMember`]
     ///
     /// This node contains a [`TSNamedTupleMember`] that will be stored in the memory arena.
@@ -9955,15 +8434,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert a [`TSNamedTupleMember`] into a [`TSType::TSNamedTupleMember`]
-    #[inline]
-    pub fn ts_type_from_ts_named_tuple_member<T>(self, inner: T) -> TSType<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSNamedTupleMember<'a>>>,
-    {
-        TSType::TSNamedTupleMember(inner.into_in(self.allocator))
-    }
-
     /// Build a [`TSType::TSQualifiedName`]
     ///
     /// This node contains a [`TSQualifiedName`] that will be stored in the memory arena.
@@ -9980,15 +8450,6 @@ impl<'a> AstBuilder<'a> {
         right: IdentifierName<'a>,
     ) -> TSType<'a> {
         TSType::TSQualifiedName(self.alloc(self.ts_qualified_name(span, left, right)))
-    }
-
-    /// Convert a [`TSQualifiedName`] into a [`TSType::TSQualifiedName`]
-    #[inline]
-    pub fn ts_type_from_ts_qualified_name<T>(self, inner: T) -> TSType<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSQualifiedName<'a>>>,
-    {
-        TSType::TSQualifiedName(inner.into_in(self.allocator))
     }
 
     /// Build a [`TSType::TSTemplateLiteralType`]
@@ -10011,15 +8472,6 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Convert a [`TSTemplateLiteralType`] into a [`TSType::TSTemplateLiteralType`]
-    #[inline]
-    pub fn ts_type_from_ts_template_literal_type<T>(self, inner: T) -> TSType<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSTemplateLiteralType<'a>>>,
-    {
-        TSType::TSTemplateLiteralType(inner.into_in(self.allocator))
-    }
-
     /// Build a [`TSType::TSThisType`]
     ///
     /// This node contains a [`TSThisType`] that will be stored in the memory arena.
@@ -10029,15 +8481,6 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn ts_type_this_type(self, span: Span) -> TSType<'a> {
         TSType::TSThisType(self.alloc(self.ts_this_type(span)))
-    }
-
-    /// Convert a [`TSThisType`] into a [`TSType::TSThisType`]
-    #[inline]
-    pub fn ts_type_from_ts_this_type<T>(self, inner: T) -> TSType<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSThisType>>,
-    {
-        TSType::TSThisType(inner.into_in(self.allocator))
     }
 
     /// Build a [`TSType::TSTupleType`]
@@ -10056,15 +8499,6 @@ impl<'a> AstBuilder<'a> {
         TSType::TSTupleType(self.alloc(self.ts_tuple_type(span, element_types)))
     }
 
-    /// Convert a [`TSTupleType`] into a [`TSType::TSTupleType`]
-    #[inline]
-    pub fn ts_type_from_ts_tuple_type<T>(self, inner: T) -> TSType<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSTupleType<'a>>>,
-    {
-        TSType::TSTupleType(inner.into_in(self.allocator))
-    }
-
     /// Build a [`TSType::TSTypeLiteral`]
     ///
     /// This node contains a [`TSTypeLiteral`] that will be stored in the memory arena.
@@ -10075,15 +8509,6 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn ts_type_type_literal(self, span: Span, members: Vec<'a, TSSignature<'a>>) -> TSType<'a> {
         TSType::TSTypeLiteral(self.alloc(self.ts_type_literal(span, members)))
-    }
-
-    /// Convert a [`TSTypeLiteral`] into a [`TSType::TSTypeLiteral`]
-    #[inline]
-    pub fn ts_type_from_ts_type_literal<T>(self, inner: T) -> TSType<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSTypeLiteral<'a>>>,
-    {
-        TSType::TSTypeLiteral(inner.into_in(self.allocator))
     }
 
     /// Build a [`TSType::TSTypeOperatorType`]
@@ -10106,15 +8531,6 @@ impl<'a> AstBuilder<'a> {
             operator,
             type_annotation,
         )))
-    }
-
-    /// Convert a [`TSTypeOperator`] into a [`TSType::TSTypeOperatorType`]
-    #[inline]
-    pub fn ts_type_from_ts_type_operator<T>(self, inner: T) -> TSType<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSTypeOperator<'a>>>,
-    {
-        TSType::TSTypeOperatorType(inner.into_in(self.allocator))
     }
 
     /// Build a [`TSType::TSTypePredicate`]
@@ -10145,15 +8561,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert a [`TSTypePredicate`] into a [`TSType::TSTypePredicate`]
-    #[inline]
-    pub fn ts_type_from_ts_type_predicate<T>(self, inner: T) -> TSType<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSTypePredicate<'a>>>,
-    {
-        TSType::TSTypePredicate(inner.into_in(self.allocator))
-    }
-
     /// Build a [`TSType::TSTypeQuery`]
     ///
     /// This node contains a [`TSTypeQuery`] that will be stored in the memory arena.
@@ -10173,15 +8580,6 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         TSType::TSTypeQuery(self.alloc(self.ts_type_query(span, expr_name, type_parameters)))
-    }
-
-    /// Convert a [`TSTypeQuery`] into a [`TSType::TSTypeQuery`]
-    #[inline]
-    pub fn ts_type_from_ts_type_query<T>(self, inner: T) -> TSType<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSTypeQuery<'a>>>,
-    {
-        TSType::TSTypeQuery(inner.into_in(self.allocator))
     }
 
     /// Build a [`TSType::TSTypeReference`]
@@ -10209,15 +8607,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert a [`TSTypeReference`] into a [`TSType::TSTypeReference`]
-    #[inline]
-    pub fn ts_type_from_ts_type_reference<T>(self, inner: T) -> TSType<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSTypeReference<'a>>>,
-    {
-        TSType::TSTypeReference(inner.into_in(self.allocator))
-    }
-
     /// Build a [`TSType::TSUnionType`]
     ///
     /// This node contains a [`TSUnionType`] that will be stored in the memory arena.
@@ -10230,15 +8619,6 @@ impl<'a> AstBuilder<'a> {
         TSType::TSUnionType(self.alloc(self.ts_union_type(span, types)))
     }
 
-    /// Convert a [`TSUnionType`] into a [`TSType::TSUnionType`]
-    #[inline]
-    pub fn ts_type_from_ts_union_type<T>(self, inner: T) -> TSType<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSUnionType<'a>>>,
-    {
-        TSType::TSUnionType(inner.into_in(self.allocator))
-    }
-
     /// Build a [`TSType::TSParenthesizedType`]
     ///
     /// This node contains a [`TSParenthesizedType`] that will be stored in the memory arena.
@@ -10249,15 +8629,6 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn ts_type_parenthesized_type(self, span: Span, type_annotation: TSType<'a>) -> TSType<'a> {
         TSType::TSParenthesizedType(self.alloc(self.ts_parenthesized_type(span, type_annotation)))
-    }
-
-    /// Convert a [`TSParenthesizedType`] into a [`TSType::TSParenthesizedType`]
-    #[inline]
-    pub fn ts_type_from_ts_parenthesized_type<T>(self, inner: T) -> TSType<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSParenthesizedType<'a>>>,
-    {
-        TSType::TSParenthesizedType(inner.into_in(self.allocator))
     }
 
     /// Build a [`TSType::JSDocNullableType`]
@@ -10282,15 +8653,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert a [`JSDocNullableType`] into a [`TSType::JSDocNullableType`]
-    #[inline]
-    pub fn ts_type_from_js_doc_nullable_type<T>(self, inner: T) -> TSType<'a>
-    where
-        T: IntoIn<'a, Box<'a, JSDocNullableType<'a>>>,
-    {
-        TSType::JSDocNullableType(inner.into_in(self.allocator))
-    }
-
     /// Build a [`TSType::JSDocNonNullableType`]
     ///
     /// This node contains a [`JSDocNonNullableType`] that will be stored in the memory arena.
@@ -10313,15 +8675,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert a [`JSDocNonNullableType`] into a [`TSType::JSDocNonNullableType`]
-    #[inline]
-    pub fn ts_type_from_js_doc_non_nullable_type<T>(self, inner: T) -> TSType<'a>
-    where
-        T: IntoIn<'a, Box<'a, JSDocNonNullableType<'a>>>,
-    {
-        TSType::JSDocNonNullableType(inner.into_in(self.allocator))
-    }
-
     /// Build a [`TSType::JSDocUnknownType`]
     ///
     /// This node contains a [`JSDocUnknownType`] that will be stored in the memory arena.
@@ -10331,15 +8684,6 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn ts_type_js_doc_unknown_type(self, span: Span) -> TSType<'a> {
         TSType::JSDocUnknownType(self.alloc(self.js_doc_unknown_type(span)))
-    }
-
-    /// Convert a [`JSDocUnknownType`] into a [`TSType::JSDocUnknownType`]
-    #[inline]
-    pub fn ts_type_from_js_doc_unknown_type<T>(self, inner: T) -> TSType<'a>
-    where
-        T: IntoIn<'a, Box<'a, JSDocUnknownType>>,
-    {
-        TSType::JSDocUnknownType(inner.into_in(self.allocator))
     }
 
     /// Build a [`TSConditionalType`].
@@ -10797,15 +9141,6 @@ impl<'a> AstBuilder<'a> {
         TSTupleElement::TSOptionalType(self.alloc(self.ts_optional_type(span, type_annotation)))
     }
 
-    /// Convert a [`TSOptionalType`] into a [`TSTupleElement::TSOptionalType`]
-    #[inline]
-    pub fn ts_tuple_element_from_ts_optional_type<T>(self, inner: T) -> TSTupleElement<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSOptionalType<'a>>>,
-    {
-        TSTupleElement::TSOptionalType(inner.into_in(self.allocator))
-    }
-
     /// Build a [`TSTupleElement::TSRestType`]
     ///
     /// This node contains a [`TSRestType`] that will be stored in the memory arena.
@@ -10820,21 +9155,6 @@ impl<'a> AstBuilder<'a> {
         type_annotation: TSType<'a>,
     ) -> TSTupleElement<'a> {
         TSTupleElement::TSRestType(self.alloc(self.ts_rest_type(span, type_annotation)))
-    }
-
-    /// Convert a [`TSRestType`] into a [`TSTupleElement::TSRestType`]
-    #[inline]
-    pub fn ts_tuple_element_from_ts_rest_type<T>(self, inner: T) -> TSTupleElement<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSRestType<'a>>>,
-    {
-        TSTupleElement::TSRestType(inner.into_in(self.allocator))
-    }
-
-    /// Convert a [`TSType`] into the corresponding variant of [`TSTupleElement`] without copying or re-allocating memory.
-    #[inline]
-    pub fn ts_tuple_element_type(self, inner: TSType<'a>) -> TSTupleElement<'a> {
-        TSTupleElement::from(inner)
     }
 
     /// Build a [`TSAnyKeyword`].
@@ -11206,15 +9526,6 @@ impl<'a> AstBuilder<'a> {
         TSTypeName::IdentifierReference(self.alloc(self.identifier_reference(span, name)))
     }
 
-    /// Convert an [`IdentifierReference`] into a [`TSTypeName::IdentifierReference`]
-    #[inline]
-    pub fn ts_type_name_from_identifier_reference<T>(self, inner: T) -> TSTypeName<'a>
-    where
-        T: IntoIn<'a, Box<'a, IdentifierReference<'a>>>,
-    {
-        TSTypeName::IdentifierReference(inner.into_in(self.allocator))
-    }
-
     /// Build a [`TSTypeName::QualifiedName`]
     ///
     /// This node contains a [`TSQualifiedName`] that will be stored in the memory arena.
@@ -11231,15 +9542,6 @@ impl<'a> AstBuilder<'a> {
         right: IdentifierName<'a>,
     ) -> TSTypeName<'a> {
         TSTypeName::QualifiedName(self.alloc(self.ts_qualified_name(span, left, right)))
-    }
-
-    /// Convert a [`TSQualifiedName`] into a [`TSTypeName::QualifiedName`]
-    #[inline]
-    pub fn ts_type_name_from_ts_qualified_name<T>(self, inner: T) -> TSTypeName<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSQualifiedName<'a>>>,
-    {
-        TSTypeName::QualifiedName(inner.into_in(self.allocator))
     }
 
     /// Build a [`TSQualifiedName`].
@@ -11825,6 +10127,7 @@ impl<'a> AstBuilder<'a> {
     /// - parameters
     /// - type_annotation
     /// - readonly
+    /// - r#static
     #[inline]
     pub fn ts_signature_index_signature<T1>(
         self,
@@ -11832,6 +10135,7 @@ impl<'a> AstBuilder<'a> {
         parameters: Vec<'a, TSIndexSignatureName<'a>>,
         type_annotation: T1,
         readonly: bool,
+        r#static: bool,
     ) -> TSSignature<'a>
     where
         T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
@@ -11841,16 +10145,8 @@ impl<'a> AstBuilder<'a> {
             parameters,
             type_annotation,
             readonly,
+            r#static,
         )))
-    }
-
-    /// Convert a [`TSIndexSignature`] into a [`TSSignature::TSIndexSignature`]
-    #[inline]
-    pub fn ts_signature_from_ts_index_signature<T>(self, inner: T) -> TSSignature<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSIndexSignature<'a>>>,
-    {
-        TSSignature::TSIndexSignature(inner.into_in(self.allocator))
     }
 
     /// Build a [`TSSignature::TSPropertySignature`]
@@ -11887,15 +10183,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert a [`TSPropertySignature`] into a [`TSSignature::TSPropertySignature`]
-    #[inline]
-    pub fn ts_signature_from_ts_property_signature<T>(self, inner: T) -> TSSignature<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSPropertySignature<'a>>>,
-    {
-        TSSignature::TSPropertySignature(inner.into_in(self.allocator))
-    }
-
     /// Build a [`TSSignature::TSCallSignatureDeclaration`]
     ///
     /// This node contains a [`TSCallSignatureDeclaration`] that will be stored in the memory arena.
@@ -11929,15 +10216,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert a [`TSCallSignatureDeclaration`] into a [`TSSignature::TSCallSignatureDeclaration`]
-    #[inline]
-    pub fn ts_signature_from_ts_call_signature_declaration<T>(self, inner: T) -> TSSignature<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSCallSignatureDeclaration<'a>>>,
-    {
-        TSSignature::TSCallSignatureDeclaration(inner.into_in(self.allocator))
-    }
-
     /// Build a [`TSSignature::TSConstructSignatureDeclaration`]
     ///
     /// This node contains a [`TSConstructSignatureDeclaration`] that will be stored in the memory arena.
@@ -11963,18 +10241,6 @@ impl<'a> AstBuilder<'a> {
         TSSignature::TSConstructSignatureDeclaration(self.alloc(
             self.ts_construct_signature_declaration(span, type_parameters, params, return_type),
         ))
-    }
-
-    /// Convert a [`TSConstructSignatureDeclaration`] into a [`TSSignature::TSConstructSignatureDeclaration`]
-    #[inline]
-    pub fn ts_signature_from_ts_construct_signature_declaration<T>(
-        self,
-        inner: T,
-    ) -> TSSignature<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSConstructSignatureDeclaration<'a>>>,
-    {
-        TSSignature::TSConstructSignatureDeclaration(inner.into_in(self.allocator))
     }
 
     /// Build a [`TSSignature::TSMethodSignature`]
@@ -12023,15 +10289,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert a [`TSMethodSignature`] into a [`TSSignature::TSMethodSignature`]
-    #[inline]
-    pub fn ts_signature_from_ts_method_signature<T>(self, inner: T) -> TSSignature<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSMethodSignature<'a>>>,
-    {
-        TSSignature::TSMethodSignature(inner.into_in(self.allocator))
-    }
-
     /// Build a [`TSIndexSignature`].
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_index_signature`] instead.
@@ -12041,6 +10298,7 @@ impl<'a> AstBuilder<'a> {
     /// - parameters
     /// - type_annotation
     /// - readonly
+    /// - r#static
     #[inline]
     pub fn ts_index_signature<T1>(
         self,
@@ -12048,6 +10306,7 @@ impl<'a> AstBuilder<'a> {
         parameters: Vec<'a, TSIndexSignatureName<'a>>,
         type_annotation: T1,
         readonly: bool,
+        r#static: bool,
     ) -> TSIndexSignature<'a>
     where
         T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
@@ -12057,6 +10316,7 @@ impl<'a> AstBuilder<'a> {
             parameters,
             type_annotation: type_annotation.into_in(self.allocator),
             readonly,
+            r#static,
         }
     }
 
@@ -12069,6 +10329,7 @@ impl<'a> AstBuilder<'a> {
     /// - parameters
     /// - type_annotation
     /// - readonly
+    /// - r#static
     #[inline]
     pub fn alloc_ts_index_signature<T1>(
         self,
@@ -12076,12 +10337,13 @@ impl<'a> AstBuilder<'a> {
         parameters: Vec<'a, TSIndexSignatureName<'a>>,
         type_annotation: T1,
         readonly: bool,
+        r#static: bool,
     ) -> Box<'a, TSIndexSignature<'a>>
     where
         T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
     {
         Box::new_in(
-            self.ts_index_signature(span, parameters, type_annotation, readonly),
+            self.ts_index_signature(span, parameters, type_annotation, readonly, r#static),
             self.allocator,
         )
     }
@@ -12647,15 +10909,6 @@ impl<'a> AstBuilder<'a> {
         TSTypePredicateName::Identifier(self.alloc(self.identifier_name(span, name)))
     }
 
-    /// Convert an [`IdentifierName`] into a [`TSTypePredicateName::Identifier`]
-    #[inline]
-    pub fn ts_type_predicate_name_from_identifier_name<T>(self, inner: T) -> TSTypePredicateName<'a>
-    where
-        T: IntoIn<'a, Box<'a, IdentifierName<'a>>>,
-    {
-        TSTypePredicateName::Identifier(inner.into_in(self.allocator))
-    }
-
     /// Build a [`TSTypePredicateName::This`]
     ///
     /// ## Parameters
@@ -12663,15 +10916,6 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn ts_type_predicate_name_this_type(self, span: Span) -> TSTypePredicateName<'a> {
         TSTypePredicateName::This(self.ts_this_type(span))
-    }
-
-    /// Convert a [`TSThisType`] into a [`TSTypePredicateName::This`]
-    #[inline]
-    pub fn ts_type_predicate_name_from_ts_this_type<T>(self, inner: T) -> TSTypePredicateName<'a>
-    where
-        T: IntoIn<'a, TSThisType>,
-    {
-        TSTypePredicateName::This(inner.into_in(self.allocator))
     }
 
     /// Build a [`TSModuleDeclaration`].
@@ -12786,18 +11030,6 @@ impl<'a> AstBuilder<'a> {
         TSModuleDeclarationName::Identifier(self.binding_identifier(span, name))
     }
 
-    /// Convert a [`BindingIdentifier`] into a [`TSModuleDeclarationName::Identifier`]
-    #[inline]
-    pub fn ts_module_declaration_name_from_binding_identifier<T>(
-        self,
-        inner: T,
-    ) -> TSModuleDeclarationName<'a>
-    where
-        T: IntoIn<'a, BindingIdentifier<'a>>,
-    {
-        TSModuleDeclarationName::Identifier(inner.into_in(self.allocator))
-    }
-
     /// Build a [`TSModuleDeclarationName::StringLiteral`]
     ///
     /// ## Parameters
@@ -12813,18 +11045,6 @@ impl<'a> AstBuilder<'a> {
         A: IntoIn<'a, Atom<'a>>,
     {
         TSModuleDeclarationName::StringLiteral(self.string_literal(span, value))
-    }
-
-    /// Convert a [`StringLiteral`] into a [`TSModuleDeclarationName::StringLiteral`]
-    #[inline]
-    pub fn ts_module_declaration_name_from_string_literal<T>(
-        self,
-        inner: T,
-    ) -> TSModuleDeclarationName<'a>
-    where
-        T: IntoIn<'a, StringLiteral<'a>>,
-    {
-        TSModuleDeclarationName::StringLiteral(inner.into_in(self.allocator))
     }
 
     /// Build a [`TSModuleDeclarationBody::TSModuleDeclaration`]
@@ -12851,18 +11071,6 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Convert a [`TSModuleDeclaration`] into a [`TSModuleDeclarationBody::TSModuleDeclaration`]
-    #[inline]
-    pub fn ts_module_declaration_body_from_ts_module_declaration<T>(
-        self,
-        inner: T,
-    ) -> TSModuleDeclarationBody<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSModuleDeclaration<'a>>>,
-    {
-        TSModuleDeclarationBody::TSModuleDeclaration(inner.into_in(self.allocator))
-    }
-
     /// Build a [`TSModuleDeclarationBody::TSModuleBlock`]
     ///
     /// This node contains a [`TSModuleBlock`] that will be stored in the memory arena.
@@ -12881,18 +11089,6 @@ impl<'a> AstBuilder<'a> {
         TSModuleDeclarationBody::TSModuleBlock(
             self.alloc(self.ts_module_block(span, directives, body)),
         )
-    }
-
-    /// Convert a [`TSModuleBlock`] into a [`TSModuleDeclarationBody::TSModuleBlock`]
-    #[inline]
-    pub fn ts_module_declaration_body_from_ts_module_block<T>(
-        self,
-        inner: T,
-    ) -> TSModuleDeclarationBody<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSModuleBlock<'a>>>,
-    {
-        TSModuleDeclarationBody::TSModuleBlock(inner.into_in(self.allocator))
     }
 
     /// Build a [`TSModuleBlock`].
@@ -13070,24 +11266,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert a [`TSImportType`] into a [`TSTypeQueryExprName::TSImportType`]
-    #[inline]
-    pub fn ts_type_query_expr_name_from_ts_import_type<T>(self, inner: T) -> TSTypeQueryExprName<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSImportType<'a>>>,
-    {
-        TSTypeQueryExprName::TSImportType(inner.into_in(self.allocator))
-    }
-
-    /// Convert a [`TSTypeName`] into the corresponding variant of [`TSTypeQueryExprName`] without copying or re-allocating memory.
-    #[inline]
-    pub fn ts_type_query_expr_name_type_name(
-        self,
-        inner: TSTypeName<'a>,
-    ) -> TSTypeQueryExprName<'a> {
-        TSTypeQueryExprName::from(inner)
-    }
-
     /// Build a [`TSImportType`].
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_import_type`] instead.
@@ -13250,18 +11428,6 @@ impl<'a> AstBuilder<'a> {
         TSImportAttributeName::Identifier(self.identifier_name(span, name))
     }
 
-    /// Convert an [`IdentifierName`] into a [`TSImportAttributeName::Identifier`]
-    #[inline]
-    pub fn ts_import_attribute_name_from_identifier_name<T>(
-        self,
-        inner: T,
-    ) -> TSImportAttributeName<'a>
-    where
-        T: IntoIn<'a, IdentifierName<'a>>,
-    {
-        TSImportAttributeName::Identifier(inner.into_in(self.allocator))
-    }
-
     /// Build a [`TSImportAttributeName::StringLiteral`]
     ///
     /// ## Parameters
@@ -13277,18 +11443,6 @@ impl<'a> AstBuilder<'a> {
         A: IntoIn<'a, Atom<'a>>,
     {
         TSImportAttributeName::StringLiteral(self.string_literal(span, value))
-    }
-
-    /// Convert a [`StringLiteral`] into a [`TSImportAttributeName::StringLiteral`]
-    #[inline]
-    pub fn ts_import_attribute_name_from_string_literal<T>(
-        self,
-        inner: T,
-    ) -> TSImportAttributeName<'a>
-    where
-        T: IntoIn<'a, StringLiteral<'a>>,
-    {
-        TSImportAttributeName::StringLiteral(inner.into_in(self.allocator))
     }
 
     /// Build a [`TSFunctionType`].
@@ -13771,24 +11925,6 @@ impl<'a> AstBuilder<'a> {
         TSModuleReference::ExternalModuleReference(
             self.alloc(self.ts_external_module_reference(span, expression)),
         )
-    }
-
-    /// Convert a [`TSExternalModuleReference`] into a [`TSModuleReference::ExternalModuleReference`]
-    #[inline]
-    pub fn ts_module_reference_from_ts_external_module_reference<T>(
-        self,
-        inner: T,
-    ) -> TSModuleReference<'a>
-    where
-        T: IntoIn<'a, Box<'a, TSExternalModuleReference<'a>>>,
-    {
-        TSModuleReference::ExternalModuleReference(inner.into_in(self.allocator))
-    }
-
-    /// Convert a [`TSTypeName`] into the corresponding variant of [`TSModuleReference`] without copying or re-allocating memory.
-    #[inline]
-    pub fn ts_module_reference_type_name(self, inner: TSTypeName<'a>) -> TSModuleReference<'a> {
-        TSModuleReference::from(inner)
     }
 
     /// Build a [`TSExternalModuleReference`].
@@ -14291,15 +12427,6 @@ impl<'a> AstBuilder<'a> {
         JSXElementName::Identifier(self.alloc(self.jsx_identifier(span, name)))
     }
 
-    /// Convert a [`JSXIdentifier`] into a [`JSXElementName::Identifier`]
-    #[inline]
-    pub fn jsx_element_name_from_jsx_identifier<T>(self, inner: T) -> JSXElementName<'a>
-    where
-        T: IntoIn<'a, Box<'a, JSXIdentifier<'a>>>,
-    {
-        JSXElementName::Identifier(inner.into_in(self.allocator))
-    }
-
     /// Build a [`JSXElementName::IdentifierReference`]
     ///
     /// This node contains an [`IdentifierReference`] that will be stored in the memory arena.
@@ -14313,15 +12440,6 @@ impl<'a> AstBuilder<'a> {
         A: IntoIn<'a, Atom<'a>>,
     {
         JSXElementName::IdentifierReference(self.alloc(self.identifier_reference(span, name)))
-    }
-
-    /// Convert an [`IdentifierReference`] into a [`JSXElementName::IdentifierReference`]
-    #[inline]
-    pub fn jsx_element_name_from_identifier_reference<T>(self, inner: T) -> JSXElementName<'a>
-    where
-        T: IntoIn<'a, Box<'a, IdentifierReference<'a>>>,
-    {
-        JSXElementName::IdentifierReference(inner.into_in(self.allocator))
     }
 
     /// Build a [`JSXElementName::NamespacedName`]
@@ -14344,15 +12462,6 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Convert a [`JSXNamespacedName`] into a [`JSXElementName::NamespacedName`]
-    #[inline]
-    pub fn jsx_element_name_from_jsx_namespaced_name<T>(self, inner: T) -> JSXElementName<'a>
-    where
-        T: IntoIn<'a, Box<'a, JSXNamespacedName<'a>>>,
-    {
-        JSXElementName::NamespacedName(inner.into_in(self.allocator))
-    }
-
     /// Build a [`JSXElementName::MemberExpression`]
     ///
     /// This node contains a [`JSXMemberExpression`] that will be stored in the memory arena.
@@ -14373,15 +12482,6 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Convert a [`JSXMemberExpression`] into a [`JSXElementName::MemberExpression`]
-    #[inline]
-    pub fn jsx_element_name_from_jsx_member_expression<T>(self, inner: T) -> JSXElementName<'a>
-    where
-        T: IntoIn<'a, Box<'a, JSXMemberExpression<'a>>>,
-    {
-        JSXElementName::MemberExpression(inner.into_in(self.allocator))
-    }
-
     /// Build a [`JSXElementName::ThisExpression`]
     ///
     /// This node contains a [`ThisExpression`] that will be stored in the memory arena.
@@ -14391,15 +12491,6 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn jsx_element_name_this_expression(self, span: Span) -> JSXElementName<'a> {
         JSXElementName::ThisExpression(self.alloc(self.this_expression(span)))
-    }
-
-    /// Convert a [`ThisExpression`] into a [`JSXElementName::ThisExpression`]
-    #[inline]
-    pub fn jsx_element_name_from_this_expression<T>(self, inner: T) -> JSXElementName<'a>
-    where
-        T: IntoIn<'a, Box<'a, ThisExpression>>,
-    {
-        JSXElementName::ThisExpression(inner.into_in(self.allocator))
     }
 
     /// Build a [`JSXNamespacedName`].
@@ -14495,18 +12586,6 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Convert an [`IdentifierReference`] into a [`JSXMemberExpressionObject::IdentifierReference`]
-    #[inline]
-    pub fn jsx_member_expression_object_from_identifier_reference<T>(
-        self,
-        inner: T,
-    ) -> JSXMemberExpressionObject<'a>
-    where
-        T: IntoIn<'a, Box<'a, IdentifierReference<'a>>>,
-    {
-        JSXMemberExpressionObject::IdentifierReference(inner.into_in(self.allocator))
-    }
-
     /// Build a [`JSXMemberExpressionObject::MemberExpression`]
     ///
     /// This node contains a [`JSXMemberExpression`] that will be stored in the memory arena.
@@ -14527,18 +12606,6 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Convert a [`JSXMemberExpression`] into a [`JSXMemberExpressionObject::MemberExpression`]
-    #[inline]
-    pub fn jsx_member_expression_object_from_jsx_member_expression<T>(
-        self,
-        inner: T,
-    ) -> JSXMemberExpressionObject<'a>
-    where
-        T: IntoIn<'a, Box<'a, JSXMemberExpression<'a>>>,
-    {
-        JSXMemberExpressionObject::MemberExpression(inner.into_in(self.allocator))
-    }
-
     /// Build a [`JSXMemberExpressionObject::ThisExpression`]
     ///
     /// This node contains a [`ThisExpression`] that will be stored in the memory arena.
@@ -14551,18 +12618,6 @@ impl<'a> AstBuilder<'a> {
         span: Span,
     ) -> JSXMemberExpressionObject<'a> {
         JSXMemberExpressionObject::ThisExpression(self.alloc(self.this_expression(span)))
-    }
-
-    /// Convert a [`ThisExpression`] into a [`JSXMemberExpressionObject::ThisExpression`]
-    #[inline]
-    pub fn jsx_member_expression_object_from_this_expression<T>(
-        self,
-        inner: T,
-    ) -> JSXMemberExpressionObject<'a>
-    where
-        T: IntoIn<'a, Box<'a, ThisExpression>>,
-    {
-        JSXMemberExpressionObject::ThisExpression(inner.into_in(self.allocator))
     }
 
     /// Build a [`JSXExpressionContainer`].
@@ -14606,21 +12661,6 @@ impl<'a> AstBuilder<'a> {
         JSXExpression::EmptyExpression(self.jsx_empty_expression(span))
     }
 
-    /// Convert a [`JSXEmptyExpression`] into a [`JSXExpression::EmptyExpression`]
-    #[inline]
-    pub fn jsx_expression_from_jsx_empty_expression<T>(self, inner: T) -> JSXExpression<'a>
-    where
-        T: IntoIn<'a, JSXEmptyExpression>,
-    {
-        JSXExpression::EmptyExpression(inner.into_in(self.allocator))
-    }
-
-    /// Convert a [`Expression`] into the corresponding variant of [`JSXExpression`] without copying or re-allocating memory.
-    #[inline]
-    pub fn jsx_expression_expression(self, inner: Expression<'a>) -> JSXExpression<'a> {
-        JSXExpression::from(inner)
-    }
-
     /// Build a [`JSXEmptyExpression`].
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_empty_expression`] instead.
@@ -14661,15 +12701,6 @@ impl<'a> AstBuilder<'a> {
         JSXAttributeItem::Attribute(self.alloc(self.jsx_attribute(span, name, value)))
     }
 
-    /// Convert a [`JSXAttribute`] into a [`JSXAttributeItem::Attribute`]
-    #[inline]
-    pub fn jsx_attribute_item_from_jsx_attribute<T>(self, inner: T) -> JSXAttributeItem<'a>
-    where
-        T: IntoIn<'a, Box<'a, JSXAttribute<'a>>>,
-    {
-        JSXAttributeItem::Attribute(inner.into_in(self.allocator))
-    }
-
     /// Build a [`JSXAttributeItem::SpreadAttribute`]
     ///
     /// This node contains a [`JSXSpreadAttribute`] that will be stored in the memory arena.
@@ -14684,15 +12715,6 @@ impl<'a> AstBuilder<'a> {
         argument: Expression<'a>,
     ) -> JSXAttributeItem<'a> {
         JSXAttributeItem::SpreadAttribute(self.alloc(self.jsx_spread_attribute(span, argument)))
-    }
-
-    /// Convert a [`JSXSpreadAttribute`] into a [`JSXAttributeItem::SpreadAttribute`]
-    #[inline]
-    pub fn jsx_attribute_item_from_jsx_spread_attribute<T>(self, inner: T) -> JSXAttributeItem<'a>
-    where
-        T: IntoIn<'a, Box<'a, JSXSpreadAttribute<'a>>>,
-    {
-        JSXAttributeItem::SpreadAttribute(inner.into_in(self.allocator))
     }
 
     /// Build a [`JSXAttribute`].
@@ -14778,15 +12800,6 @@ impl<'a> AstBuilder<'a> {
         JSXAttributeName::Identifier(self.alloc(self.jsx_identifier(span, name)))
     }
 
-    /// Convert a [`JSXIdentifier`] into a [`JSXAttributeName::Identifier`]
-    #[inline]
-    pub fn jsx_attribute_name_from_jsx_identifier<T>(self, inner: T) -> JSXAttributeName<'a>
-    where
-        T: IntoIn<'a, Box<'a, JSXIdentifier<'a>>>,
-    {
-        JSXAttributeName::Identifier(inner.into_in(self.allocator))
-    }
-
     /// Build a [`JSXAttributeName::NamespacedName`]
     ///
     /// This node contains a [`JSXNamespacedName`] that will be stored in the memory arena.
@@ -14805,15 +12818,6 @@ impl<'a> AstBuilder<'a> {
         JSXAttributeName::NamespacedName(
             self.alloc(self.jsx_namespaced_name(span, namespace, property)),
         )
-    }
-
-    /// Convert a [`JSXNamespacedName`] into a [`JSXAttributeName::NamespacedName`]
-    #[inline]
-    pub fn jsx_attribute_name_from_jsx_namespaced_name<T>(self, inner: T) -> JSXAttributeName<'a>
-    where
-        T: IntoIn<'a, Box<'a, JSXNamespacedName<'a>>>,
-    {
-        JSXAttributeName::NamespacedName(inner.into_in(self.allocator))
     }
 
     /// Build a [`JSXAttributeValue::StringLiteral`]
@@ -14835,15 +12839,6 @@ impl<'a> AstBuilder<'a> {
         JSXAttributeValue::StringLiteral(self.alloc(self.string_literal(span, value)))
     }
 
-    /// Convert a [`StringLiteral`] into a [`JSXAttributeValue::StringLiteral`]
-    #[inline]
-    pub fn jsx_attribute_value_from_string_literal<T>(self, inner: T) -> JSXAttributeValue<'a>
-    where
-        T: IntoIn<'a, Box<'a, StringLiteral<'a>>>,
-    {
-        JSXAttributeValue::StringLiteral(inner.into_in(self.allocator))
-    }
-
     /// Build a [`JSXAttributeValue::ExpressionContainer`]
     ///
     /// This node contains a [`JSXExpressionContainer`] that will be stored in the memory arena.
@@ -14860,18 +12855,6 @@ impl<'a> AstBuilder<'a> {
         JSXAttributeValue::ExpressionContainer(
             self.alloc(self.jsx_expression_container(span, expression)),
         )
-    }
-
-    /// Convert a [`JSXExpressionContainer`] into a [`JSXAttributeValue::ExpressionContainer`]
-    #[inline]
-    pub fn jsx_attribute_value_from_jsx_expression_container<T>(
-        self,
-        inner: T,
-    ) -> JSXAttributeValue<'a>
-    where
-        T: IntoIn<'a, Box<'a, JSXExpressionContainer<'a>>>,
-    {
-        JSXAttributeValue::ExpressionContainer(inner.into_in(self.allocator))
     }
 
     /// Build a [`JSXAttributeValue::Element`]
@@ -14903,15 +12886,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert a [`JSXElement`] into a [`JSXAttributeValue::Element`]
-    #[inline]
-    pub fn jsx_attribute_value_from_jsx_element<T>(self, inner: T) -> JSXAttributeValue<'a>
-    where
-        T: IntoIn<'a, Box<'a, JSXElement<'a>>>,
-    {
-        JSXAttributeValue::Element(inner.into_in(self.allocator))
-    }
-
     /// Build a [`JSXAttributeValue::Fragment`]
     ///
     /// This node contains a [`JSXFragment`] that will be stored in the memory arena.
@@ -14935,15 +12909,6 @@ impl<'a> AstBuilder<'a> {
             closing_fragment,
             children,
         )))
-    }
-
-    /// Convert a [`JSXFragment`] into a [`JSXAttributeValue::Fragment`]
-    #[inline]
-    pub fn jsx_attribute_value_from_jsx_fragment<T>(self, inner: T) -> JSXAttributeValue<'a>
-    where
-        T: IntoIn<'a, Box<'a, JSXFragment<'a>>>,
-    {
-        JSXAttributeValue::Fragment(inner.into_in(self.allocator))
     }
 
     /// Build a [`JSXIdentifier`].
@@ -14991,15 +12956,6 @@ impl<'a> AstBuilder<'a> {
         JSXChild::Text(self.alloc(self.jsx_text(span, value)))
     }
 
-    /// Convert a [`JSXText`] into a [`JSXChild::Text`]
-    #[inline]
-    pub fn jsx_child_from_jsx_text<T>(self, inner: T) -> JSXChild<'a>
-    where
-        T: IntoIn<'a, Box<'a, JSXText<'a>>>,
-    {
-        JSXChild::Text(inner.into_in(self.allocator))
-    }
-
     /// Build a [`JSXChild::Element`]
     ///
     /// This node contains a [`JSXElement`] that will be stored in the memory arena.
@@ -15029,15 +12985,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert a [`JSXElement`] into a [`JSXChild::Element`]
-    #[inline]
-    pub fn jsx_child_from_jsx_element<T>(self, inner: T) -> JSXChild<'a>
-    where
-        T: IntoIn<'a, Box<'a, JSXElement<'a>>>,
-    {
-        JSXChild::Element(inner.into_in(self.allocator))
-    }
-
     /// Build a [`JSXChild::Fragment`]
     ///
     /// This node contains a [`JSXFragment`] that will be stored in the memory arena.
@@ -15063,15 +13010,6 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
-    /// Convert a [`JSXFragment`] into a [`JSXChild::Fragment`]
-    #[inline]
-    pub fn jsx_child_from_jsx_fragment<T>(self, inner: T) -> JSXChild<'a>
-    where
-        T: IntoIn<'a, Box<'a, JSXFragment<'a>>>,
-    {
-        JSXChild::Fragment(inner.into_in(self.allocator))
-    }
-
     /// Build a [`JSXChild::ExpressionContainer`]
     ///
     /// This node contains a [`JSXExpressionContainer`] that will be stored in the memory arena.
@@ -15088,15 +13026,6 @@ impl<'a> AstBuilder<'a> {
         JSXChild::ExpressionContainer(self.alloc(self.jsx_expression_container(span, expression)))
     }
 
-    /// Convert a [`JSXExpressionContainer`] into a [`JSXChild::ExpressionContainer`]
-    #[inline]
-    pub fn jsx_child_from_jsx_expression_container<T>(self, inner: T) -> JSXChild<'a>
-    where
-        T: IntoIn<'a, Box<'a, JSXExpressionContainer<'a>>>,
-    {
-        JSXChild::ExpressionContainer(inner.into_in(self.allocator))
-    }
-
     /// Build a [`JSXChild::Spread`]
     ///
     /// This node contains a [`JSXSpreadChild`] that will be stored in the memory arena.
@@ -15111,15 +13040,6 @@ impl<'a> AstBuilder<'a> {
         expression: Expression<'a>,
     ) -> JSXChild<'a> {
         JSXChild::Spread(self.alloc(self.jsx_spread_child(span, expression)))
-    }
-
-    /// Convert a [`JSXSpreadChild`] into a [`JSXChild::Spread`]
-    #[inline]
-    pub fn jsx_child_from_jsx_spread_child<T>(self, inner: T) -> JSXChild<'a>
-    where
-        T: IntoIn<'a, Box<'a, JSXSpreadChild<'a>>>,
-    {
-        JSXChild::Spread(inner.into_in(self.allocator))
     }
 
     /// Build a [`JSXSpreadChild`].

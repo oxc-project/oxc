@@ -117,14 +117,22 @@ impl<'a, 'ctx> Traverse<'a> for NullishCoalescingOperator<'a, 'ctx> {
                 ctx.ast.vec(),
                 ctx.ast.vec1(ctx.ast.statement_expression(SPAN, new_expr)),
             );
-            let arrow_function =
-                ctx.ast.arrow_function_expression(SPAN, true, false, NONE, params, NONE, body);
-            arrow_function.scope_id.set(Some(current_scope_id));
-            let arrow_function = ctx.ast.expression_from_arrow_function(arrow_function);
+            let arrow_function = Expression::ArrowFunctionExpression(
+                ctx.ast.alloc_arrow_function_expression_with_scope_id(
+                    SPAN,
+                    true,
+                    false,
+                    NONE,
+                    params,
+                    NONE,
+                    body,
+                    current_scope_id,
+                ),
+            );
             // `(x) => x;` -> `((x) => x)();`
             new_expr = ctx.ast.expression_call(SPAN, arrow_function, NONE, ctx.ast.vec(), false);
         } else {
-            self.ctx.var_declarations.insert(&binding, None, ctx);
+            self.ctx.var_declarations.insert_var(&binding, None, ctx);
         }
 
         *expr = new_expr;
@@ -134,8 +142,8 @@ impl<'a, 'ctx> Traverse<'a> for NullishCoalescingOperator<'a, 'ctx> {
 impl<'a, 'ctx> NullishCoalescingOperator<'a, 'ctx> {
     fn clone_expression(expr: &Expression<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         match expr {
-            Expression::Identifier(ident) => ctx.ast.expression_from_identifier_reference(
-                ctx.clone_identifier_reference(ident, ReferenceFlags::Read),
+            Expression::Identifier(ident) => Expression::Identifier(
+                ctx.ast.alloc(ctx.clone_identifier_reference(ident, ReferenceFlags::Read)),
             ),
             _ => expr.clone_in(ctx.ast.allocator),
         }

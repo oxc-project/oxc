@@ -5,7 +5,6 @@
 
 use oxc_span::cmp::ContentEq;
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::*;
 
 impl<'a> ContentEq for Pattern<'a> {

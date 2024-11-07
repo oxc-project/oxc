@@ -1,11 +1,13 @@
 commit: d20b314c
 
-Passed: 66/75
+Passed: 78/87
 
 # All Passed:
 * babel-plugin-transform-class-static-block
 * babel-plugin-transform-nullish-coalescing-operator
 * babel-plugin-transform-optional-catch-binding
+* babel-plugin-transform-async-generator-functions
+* babel-plugin-transform-async-to-generator
 * babel-plugin-transform-exponentiation-operator
 * babel-plugin-transform-arrow-functions
 * babel-preset-typescript
@@ -13,7 +15,7 @@ Passed: 66/75
 * regexp
 
 
-# babel-plugin-transform-typescript (1/8)
+# babel-plugin-transform-typescript (2/9)
 * class-property-definition/input.ts
 Unresolved references mismatch:
 after transform: ["const"]
@@ -166,11 +168,11 @@ rebuilt        : SymbolId(2): []
 x Output mismatch
 
 
-# babel-plugin-transform-react-jsx (30/32)
+# babel-plugin-transform-react-jsx (31/33)
 * refresh/does-not-transform-it-because-it-is-not-used-in-the-AST/input.jsx
 x Output mismatch
 
-* refresh/supports-typescript-namespace-syntax/input.tsx
+* refresh/react-refresh/supports-typescript-namespace-syntax/input.tsx
 x Output mismatch
 
 

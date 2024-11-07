@@ -228,8 +228,7 @@ fn is_recursive_call(
     ctx: &LintContext,
 ) -> bool {
     if let Expression::Identifier(identifier) = &call_expr.callee {
-        if let Some(symbol_id) =
-            identifier.reference_id().and_then(|id| ctx.symbols().get_reference(id).symbol_id())
+        if let Some(symbol_id) = ctx.symbols().get_reference(identifier.reference_id()).symbol_id()
         {
             return symbol_id == function_symbol_id;
         }

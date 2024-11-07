@@ -6,7 +6,7 @@ use oxc_parser::{Parser, ParserReturn};
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use oxc_tasks_common::TestFiles;
-use oxc_transformer::{ArrowFunctionsOptions, TransformOptions, Transformer};
+use oxc_transformer::{EnvOptions, TransformOptions, Transformer};
 
 fn bench_transformer(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("transformer");
@@ -35,11 +35,10 @@ fn bench_transformer(criterion: &mut Criterion) {
                     .semantic
                     .into_symbol_table_and_scope_tree();
 
-                // `enable_all` enables all transforms except arrow functions transform
-                // and async-to-generator
                 let mut options = TransformOptions::enable_all();
-                options.es2015.arrow_function = Some(ArrowFunctionsOptions { spec: true });
-                options.es2017.async_to_generator = true;
+                // Even the plugins are unfinished, we still want to enable all of them
+                // to track the performance changes during the development.
+                options.env = EnvOptions::enable_all(/* include_unfinished_plugins */ true);
 
                 runner.run(|| {
                     let ret = Transformer::new(&allocator, Path::new(&file.file_name), options)

@@ -137,7 +137,7 @@ impl Rule for SortKeys {
 
             let mut property_groups: Vec<Vec<String>> = vec![vec![]];
 
-            let source_text = ctx.semantic().source_text();
+            let source_text = ctx.source_text();
 
             for (i, prop) in dec.properties.iter().enumerate() {
                 match prop {

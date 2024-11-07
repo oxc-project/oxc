@@ -1,8 +1,6 @@
 mod doc_page;
 mod html;
 mod table;
-#[cfg(test)]
-mod test;
 
 use std::{
     borrow::Cow,

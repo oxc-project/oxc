@@ -7,6 +7,8 @@ target/
 /website/node_modules/
 /benchmark/node_modules/
 /tasks/benchmark/codspeed/node_modules/
+/tasks/transform_conformance/node_modules/
+/tasks/compat_data/node_modules/
 
 # vscode
 /editors/vscode/node_modules/

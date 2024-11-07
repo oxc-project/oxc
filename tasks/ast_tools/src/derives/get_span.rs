@@ -2,23 +2,23 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::Ident;
 
-use super::{define_derive, Derive, DeriveOutput};
 use crate::{
-    codegen::LateCtx,
-    schema::{EnumDef, GetGenerics, StructDef, ToType, TypeDef},
+    schema::{EnumDef, GetGenerics, Schema, StructDef, ToType, TypeDef},
     util::{ToIdent, TypeWrapper},
 };
 
-define_derive! {
-    pub struct DeriveGetSpan;
-}
+use super::{define_derive, Derive};
+
+pub struct DeriveGetSpan;
+
+define_derive!(DeriveGetSpan);
 
 impl Derive for DeriveGetSpan {
     fn trait_name() -> &'static str {
         "GetSpan"
     }
 
-    fn derive(&mut self, def: &TypeDef, _: &LateCtx) -> TokenStream {
+    fn derive(&mut self, def: &TypeDef, _: &Schema) -> TokenStream {
         let self_type = quote!(&self);
         let result_type = quote!(Span);
         let result_expr = quote!(self.span);
@@ -47,16 +47,16 @@ impl Derive for DeriveGetSpan {
     }
 }
 
-define_derive! {
-    pub struct DeriveGetSpanMut;
-}
+pub struct DeriveGetSpanMut;
+
+define_derive!(DeriveGetSpanMut);
 
 impl Derive for DeriveGetSpanMut {
     fn trait_name() -> &'static str {
         "GetSpanMut"
     }
 
-    fn derive(&mut self, def: &TypeDef, _: &LateCtx) -> TokenStream {
+    fn derive(&mut self, def: &TypeDef, _: &Schema) -> TokenStream {
         let self_type = quote!(&mut self);
         let result_type = quote!(&mut Span);
         let result_expr = quote!(&mut self.span);

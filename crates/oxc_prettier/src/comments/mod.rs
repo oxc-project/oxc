@@ -14,10 +14,9 @@ pub struct Comment {
 
 impl Comment {
     pub fn new(comment: oxc_ast::Comment) -> Self {
-        let span = comment.real_span();
         Self {
-            start: span.start,
-            end: span.end,
+            start: comment.span.start,
+            end: comment.span.end,
             is_block: comment.is_block(),
             has_line_suffix: false,
         }

@@ -2,50 +2,45 @@ use std::{borrow::Cow, stringify};
 
 use convert_case::{Case, Casing};
 use itertools::Itertools;
-use lazy_static::lazy_static;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens};
-use rustc_hash::FxHashMap;
 use syn::{parse_quote, Ident, Type};
 
-use super::define_generator;
 use crate::{
-    codegen::{generated_header, LateCtx},
-    output,
+    output::{output_path, Output},
     schema::{
-        EnumDef, FieldDef, GetIdent, InheritDef, StructDef, ToType, TypeDef, TypeName, VariantDef,
+        EnumDef, FieldDef, GetIdent, Schema, StructDef, ToType, TypeDef, TypeName, VariantDef,
     },
     util::{TypeAnalysis, TypeWrapper},
-    Generator, GeneratorOutput,
+    Generator,
 };
 
-define_generator! {
-    pub struct AstBuilderGenerator;
-}
+use super::define_generator;
+
+pub struct AstBuilderGenerator;
+
+define_generator!(AstBuilderGenerator);
 
 impl Generator for AstBuilderGenerator {
-    fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
-        let fns = ctx
-            .schema()
-            .into_iter()
-            .filter(|it| it.visitable())
-            .map(|it| generate_builder_fn(it, ctx))
+    fn generate(&mut self, schema: &Schema) -> Output {
+        let fns = schema
+            .defs
+            .iter()
+            .filter(|it| it.is_visitable())
+            .map(|it| generate_builder_fn(it, schema))
             .collect_vec();
 
-        let header = generated_header!();
-
-        GeneratorOutput::Rust {
-            path: output(crate::AST_CRATE, "ast_builder.rs"),
+        Output::Rust {
+            path: output_path(crate::AST_CRATE, "ast_builder.rs"),
             tokens: quote! {
                 //! AST node factories
-                #header
 
+                //!@@line_break
                 #![allow(
                     clippy::default_trait_access,
                     clippy::too_many_arguments,
                     clippy::fn_params_excessive_bools,
                 )]
-                #![warn(missing_docs)]
 
                 ///@@line_break
                 use std::cell::Cell;
@@ -55,7 +50,6 @@ impl Generator for AstBuilderGenerator {
                 use oxc_syntax::{scope::ScopeId, symbol::SymbolId, reference::ReferenceId};
 
                 ///@@line_break
-                #[allow(clippy::wildcard_imports)]
                 use crate::ast::*;
 
                 ///@@line_break
@@ -102,52 +96,22 @@ fn struct_builder_name(struct_: &StructDef) -> Ident {
     format_ident!("{ident}")
 }
 
-fn generate_builder_fn(def: &TypeDef, ctx: &LateCtx) -> TokenStream {
+fn generate_builder_fn(def: &TypeDef, schema: &Schema) -> TokenStream {
     match def {
-        TypeDef::Enum(def) => generate_enum_builder_fn(def, ctx),
-        TypeDef::Struct(def) => generate_struct_builder_fn(def, ctx),
+        TypeDef::Enum(def) => generate_enum_builder_fn(def, schema),
+        TypeDef::Struct(def) => generate_struct_builder_fn(def, schema),
     }
 }
 
-fn generate_enum_builder_fn(def: &EnumDef, ctx: &LateCtx) -> TokenStream {
-    let variants_fns = def.variants.iter().map(|it| generate_enum_variant_builder_fn(def, it, ctx));
-
-    let inherits_fns = def.inherits.iter().map(|it| generate_enum_inherit_builder_fn(def, it, ctx));
-
-    variants_fns.chain(inherits_fns).collect()
-}
-
-fn generate_enum_inherit_builder_fn(
-    enum_: &EnumDef,
-    inherit: &InheritDef,
-    _: &LateCtx,
-) -> TokenStream {
-    let enum_ident = enum_.ident();
-    let enum_as_type = enum_.to_type();
-    let super_type = inherit.super_.to_type();
-    let fn_name =
-        enum_builder_name(enum_ident.to_string(), inherit.super_.name().inner_name().to_string());
-
-    let docs = DocComment::new(format!(
-        "Convert a [`{}`] into the corresponding variant of [`{}`] without copying or re-allocating memory.",
-        inherit.super_.name(),
-        enum_ident
-    ));
-    quote! {
-        ///@@line_break
-        #docs
-        #[inline]
-        pub fn #fn_name(self, inner: #super_type) -> #enum_as_type {
-            #enum_ident::from(inner)
-        }
-    }
+fn generate_enum_builder_fn(def: &EnumDef, schema: &Schema) -> TokenStream {
+    def.variants.iter().map(|it| generate_enum_variant_builder_fn(def, it, schema)).collect()
 }
 
 /// Create a builder function for an enum variant (e.g. for `Expression::Binary`)
 fn generate_enum_variant_builder_fn(
     enum_: &EnumDef,
     variant: &VariantDef,
-    ctx: &LateCtx,
+    schema: &Schema,
 ) -> TokenStream {
     assert_eq!(variant.fields.len(), 1);
     let enum_ident = enum_.ident();
@@ -159,10 +123,10 @@ fn generate_enum_variant_builder_fn(
     let ty = var_type
         .type_id()
         .or_else(|| var_type.transparent_type_id())
-        .and_then(|id| ctx.type_def(id))
+        .and_then(|id| schema.get(id))
         .expect("type not found!");
     let (params, inner_builder) = match ty {
-        TypeDef::Struct(it) => (get_struct_params(it, ctx), struct_builder_name(it)),
+        TypeDef::Struct(it) => (get_struct_params(it, schema), struct_builder_name(it)),
         TypeDef::Enum(_) => panic!("Unsupported!"),
     };
 
@@ -177,7 +141,6 @@ fn generate_enum_variant_builder_fn(
         does_alloc = true;
     }
 
-    let from_variant_builder = generate_enum_from_variant_builder_fn(enum_, variant, ctx);
     let article = article_for(enum_ident.to_string());
     let mut docs = DocComment::new(format!(" Build {article} [`{enum_ident}::{var_ident}`]"))
         .with_params(&params);
@@ -196,63 +159,17 @@ fn generate_enum_variant_builder_fn(
         pub fn #fn_name #generic_params (self, #(#params),*) -> #enum_type #where_clause {
             #enum_ident::#var_ident(#inner)
         }
-
-        #from_variant_builder
-    }
-}
-
-/// Generate a conversion function that takes some struct and creates an enum
-/// variant containing that struct using the `IntoIn` trait.
-fn generate_enum_from_variant_builder_fn(
-    enum_: &EnumDef,
-    variant: &VariantDef,
-    _: &LateCtx,
-) -> TokenStream {
-    assert_eq!(variant.fields.len(), 1);
-    let enum_ident = enum_.ident();
-    let enum_type = &enum_.to_type();
-    let var_ident = &variant.ident();
-    let var_type_ref = &variant.fields.first().expect("we have already asserted this one!").typ;
-    let var_type_name = var_type_ref.name().inner_name();
-    let var_type = var_type_ref.to_type();
-    let fn_name = enum_builder_name(enum_ident.to_string(), format!("From{var_type_name}"));
-
-    let from_article = article_for(var_type_name);
-    let to_article = article_for(enum_ident.to_string());
-
-    let docs = DocComment::new(format!(
-        " Convert {from_article} [`{var_type_name}`] into {to_article} [`{enum_ident}::{var_ident}`]",
-    ));
-    quote! {
-        ///@@line_break
-        #docs
-        #[inline]
-        pub fn #fn_name<T>(self, inner: T) -> #enum_type where T: IntoIn<'a, #var_type> {
-            #enum_ident::#var_ident(inner.into_in(self.allocator))
-        }
     }
 }
 
 fn default_init_field(field: &FieldDef) -> bool {
-    macro_rules! field {
-        ($ident:ident: $ty:ty) => {
-            (stringify!($ident), stringify!($ty))
-        };
-    }
-    lazy_static! {
-        static ref DEFAULT_FIELDS: FxHashMap<&'static str, &'static str> = FxHashMap::from_iter([
-            field!(scope_id: Cell<Option<ScopeId>>),
-            field!(symbol_id: Cell<Option<SymbolId>>),
-            field!(reference_id: Cell<Option<ReferenceId>>),
-        ]);
-    }
-
     let ident = field.ident().expect("expected named field");
-    if let Some(&default_type) = DEFAULT_FIELDS.get(ident.to_string().as_str()) {
-        default_type == field.typ.raw()
-    } else {
-        false
-    }
+    matches!(
+        (ident.to_string().as_str(), field.typ.raw()),
+        ("scope_id", "Cell<Option<ScopeId>>")
+            | ("symbol_id", "Cell<Option<SymbolId>>")
+            | ("reference_id", "Cell<Option<ReferenceId>>")
+    )
 }
 
 /// Generate builder function for struct.
@@ -265,13 +182,13 @@ fn default_init_field(field: &FieldDef) -> bool {
 ///
 /// 3. to create owned object with provided `ScopeId` / `SymbolId` / `ReferenceId`.
 /// 4. to create boxed object with provided `ScopeId` / `SymbolId` / `ReferenceId`.
-fn generate_struct_builder_fn(ty: &StructDef, ctx: &LateCtx) -> TokenStream {
+fn generate_struct_builder_fn(ty: &StructDef, schema: &Schema) -> TokenStream {
     let ident = ty.ident();
     let as_type = ty.to_type();
     let fn_name = struct_builder_name(ty);
     let alloc_fn_name = format_ident!("alloc_{fn_name}");
 
-    let params_incl_defaults = get_struct_params(ty, ctx);
+    let params_incl_defaults = get_struct_params(ty, schema);
     let (generic_params, where_clause) = get_generic_params(&params_incl_defaults);
 
     let mut has_default_fields = false;
@@ -546,25 +463,19 @@ fn article_for<S: AsRef<str>>(word: S) -> &'static str {
 
 impl ToTokens for DocComment<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        macro_rules! newline {
-            () => {
-                tokens.extend(quote!( #[doc = ""]));
-            };
-        }
-
         let summary = &self.summary;
         tokens.extend(quote!( #[doc = #summary]));
 
         // print description
         for line in &self.description {
             // extra newline needed to create a new paragraph
-            newline!();
+            tokens.extend(quote!( #[doc = ""]));
             tokens.extend(quote!( #[doc = #line]));
         }
 
         // print docs for function parameters
         if !self.params.is_empty() {
-            newline!();
+            tokens.extend(quote!( #[doc = ""]));
             tokens.extend(quote!( #[doc = " ## Parameters"]));
             for param in self.params {
                 let docs = param.docs.first();
@@ -608,7 +519,7 @@ fn get_generic_params(
 }
 
 // TODO: currently doesn't support multiple `Atom` or `&'a str` params.
-fn get_struct_params(struct_: &StructDef, ctx: &LateCtx) -> Vec<Param> {
+fn get_struct_params(struct_: &StructDef, schema: &Schema) -> Vec<Param> {
     // generic param postfix
     let mut t_count = 0;
     let mut t_param = move || {
@@ -617,7 +528,7 @@ fn get_struct_params(struct_: &StructDef, ctx: &LateCtx) -> Vec<Param> {
     };
     struct_.fields.iter().fold(Vec::new(), |mut acc, field| {
         let analysis = field.typ.analysis();
-        let type_def = field.typ.transparent_type_id().and_then(|id| ctx.type_def(id));
+        let type_def = field.typ.transparent_type_id().and_then(|id| schema.get(id));
         let (interface_typ, generic_typ) = match (&analysis.wrapper, type_def) {
             (TypeWrapper::Box, Some(def)) => {
                 let t = t_param();

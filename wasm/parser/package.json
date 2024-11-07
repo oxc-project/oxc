@@ -1,8 +1,7 @@
 {
   "name": "@oxc-parser/wasm",
-  "version": "0.32.0",
+  "version": "0.35.0",
   "description": "Wasm target for the oxc parser.",
-  "packageManager": "pnpm@9.12.1",
   "keywords": [
     "JavaScript",
     "TypeScript",
@@ -26,6 +25,9 @@
     "node",
     "web"
   ],
+  "dependencies": {
+    "@oxc-project/types": "workspace:^"
+  },
   "scripts": {
     "build": "pnpm run build-node && pnpm run build-web && pnpm run copy-files && pnpm run clean-files",
     "build-node": "pnpm run build-base --target nodejs --out-dir ../../npm/parser-wasm/node .",

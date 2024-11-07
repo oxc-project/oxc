@@ -4,9 +4,7 @@ use std::{borrow::Cow, fmt};
 
 use oxc_allocator::{Address, Box, FromIn, GetAddress, Vec};
 use oxc_span::{Atom, GetSpan, Span};
-use oxc_syntax::{
-    operator::UnaryOperator, reference::ReferenceId, scope::ScopeFlags, symbol::SymbolId,
-};
+use oxc_syntax::{operator::UnaryOperator, scope::ScopeFlags, symbol::SymbolId};
 
 use crate::ast::*;
 
@@ -272,24 +270,6 @@ impl<'a> Expression<'a> {
     }
 
     #[allow(missing_docs)]
-    pub fn is_immutable_value(&self) -> bool {
-        match self {
-            Self::BooleanLiteral(_)
-            | Self::NullLiteral(_)
-            | Self::NumericLiteral(_)
-            | Self::BigIntLiteral(_)
-            | Self::RegExpLiteral(_)
-            | Self::StringLiteral(_) => true,
-            Self::TemplateLiteral(lit) if lit.is_no_substitution_template() => true,
-            Self::UnaryExpression(unary_expr) => unary_expr.argument.is_immutable_value(),
-            Self::Identifier(ident) => {
-                matches!(ident.name.as_str(), "undefined" | "Infinity" | "NaN")
-            }
-            _ => false,
-        }
-    }
-
-    #[allow(missing_docs)]
     pub fn is_require_call(&self) -> bool {
         if let Self::CallExpression(call_expr) = self {
             call_expr.is_require_call()
@@ -297,20 +277,17 @@ impl<'a> Expression<'a> {
             false
         }
     }
+
+    /// Returns `true` if this is an [assignment expression](AssignmentExpression).
+    pub fn is_assignment(&self) -> bool {
+        matches!(self, Expression::AssignmentExpression(_))
+    }
 }
 
 impl<'a> fmt::Display for IdentifierName<'a> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.name.fmt(f)
-    }
-}
-
-impl<'a> IdentifierReference<'a> {
-    #[inline]
-    #[allow(missing_docs)]
-    pub fn reference_id(&self) -> Option<ReferenceId> {
-        self.reference_id.get()
     }
 }
 
@@ -331,6 +308,14 @@ impl<'a> ArrayExpressionElement<'a> {
     #[allow(missing_docs)]
     pub fn is_elision(&self) -> bool {
         matches!(self, Self::Elision(_))
+    }
+}
+
+impl<'a> ObjectPropertyKind<'a> {
+    /// Returns `true` if this object property is a [spread](SpreadElement).
+    #[inline]
+    pub fn is_spread(&self) -> bool {
+        matches!(self, Self::SpreadProperty(_))
     }
 }
 
@@ -517,22 +502,23 @@ impl<'a> ComputedMemberExpression<'a> {
 impl<'a> StaticMemberExpression<'a> {
     #[allow(missing_docs)]
     pub fn get_first_object(&self) -> &Expression<'a> {
-        match &self.object {
-            Expression::StaticMemberExpression(member) => {
-                if let Expression::StaticMemberExpression(expr) = &member.object {
-                    expr.get_first_object()
-                } else {
-                    &self.object
+        let mut object = &self.object;
+        loop {
+            match object {
+                Expression::StaticMemberExpression(member) => {
+                    object = &member.object;
+                    continue;
                 }
-            }
-            Expression::ChainExpression(chain) => {
-                if let ChainElement::StaticMemberExpression(expr) = &chain.expression {
-                    expr.get_first_object()
-                } else {
-                    &self.object
+                Expression::ChainExpression(chain) => {
+                    if let ChainElement::StaticMemberExpression(member) = &chain.expression {
+                        object = &member.object;
+                        continue;
+                    }
                 }
+                _ => {}
             }
-            _ => &self.object,
+
+            return object;
         }
     }
 }
@@ -984,10 +970,10 @@ impl<'a> Function<'a> {
 
     /// Get the [`SymbolId`] this [`Function`] is bound to.
     ///
-    /// Returns [`None`] for anonymous functions, or if semantic analysis was skipped.
+    /// Returns [`None`] for anonymous functions.
     #[inline]
     pub fn symbol_id(&self) -> Option<SymbolId> {
-        self.id.as_ref().and_then(|id| id.symbol_id.get())
+        self.id.as_ref().map(BindingIdentifier::symbol_id)
     }
 
     /// `true` for overload signatures and `declare function` statements.
@@ -1022,6 +1008,16 @@ impl<'a> Function<'a> {
     /// `true` if this function's body has a `"use strict"` directive.
     pub fn is_strict(&self) -> bool {
         self.body.as_ref().is_some_and(|body| body.has_use_strict_directive())
+    }
+}
+
+// FIXME: This is a workaround for we can't get current address by `TraverseCtx`,
+// we will remove this once we support `TraverseCtx::current_address`.
+// See: <https://github.com/oxc-project/oxc/pull/6881#discussion_r1816560516>
+impl GetAddress for Function<'_> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self)
     }
 }
 

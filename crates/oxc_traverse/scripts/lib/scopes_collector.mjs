@@ -20,7 +20,6 @@ export default function generateScopesCollectorCode(types) {
   return `
     use std::cell::Cell;
 
-    #[allow(clippy::wildcard_imports)]
     use oxc_ast::{ast::*, visit::Visit};
     use oxc_syntax::scope::{ScopeFlags, ScopeId};
 

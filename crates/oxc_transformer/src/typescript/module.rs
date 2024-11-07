@@ -1,4 +1,3 @@
-use oxc_allocator::Box;
 use oxc_ast::{ast::*, NONE};
 use oxc_span::SPAN;
 use oxc_syntax::reference::ReferenceFlags;
@@ -51,7 +50,7 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptModule<'a, 'ctx> {
 impl<'a, 'ctx> TypeScriptModule<'a, 'ctx> {
     fn transform_ts_import_equals(
         &self,
-        decl: &mut Box<'a, TSImportEqualsDeclaration<'a>>,
+        decl: &mut TSImportEqualsDeclaration<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Declaration<'a> {
         let kind = VariableDeclarationKind::Var;
@@ -73,9 +72,9 @@ impl<'a, 'ctx> TypeScriptModule<'a, 'ctx> {
                     }
 
                     let callee = ctx.ast.expression_identifier_reference(SPAN, "require");
-                    let arguments = ctx.ast.vec1(Argument::from(
-                        ctx.ast.expression_from_string_literal(reference.expression.clone()),
-                    ));
+                    let arguments = ctx
+                        .ast
+                        .vec1(Argument::StringLiteral(ctx.alloc(reference.expression.clone())));
                     ctx.ast.expression_call(SPAN, callee, NONE, arguments, false)
                 }
             };
@@ -94,10 +93,9 @@ impl<'a, 'ctx> TypeScriptModule<'a, 'ctx> {
         match type_name {
             TSTypeName::IdentifierReference(ident) => {
                 let ident = ident.clone();
-                let reference_id = ident.reference_id.get().unwrap();
-                let reference = ctx.symbols_mut().get_reference_mut(reference_id);
+                let reference = ctx.symbols_mut().get_reference_mut(ident.reference_id());
                 *reference.flags_mut() = ReferenceFlags::Read;
-                ctx.ast.expression_from_identifier_reference(ident)
+                Expression::Identifier(ctx.alloc(ident))
             }
             TSTypeName::QualifiedName(qualified_name) => ctx
                 .ast

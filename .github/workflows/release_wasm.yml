@@ -56,7 +56,6 @@ jobs:
         working-directory: wasm/parser
         run: |
           rustup target add wasm32-unknown-unknown
-          pnpm install
           pnpm run build
           pnpm run test
 
@@ -64,4 +63,4 @@ jobs:
         working-directory: npm/parser-wasm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: pnpm publish --provenance --access public
+        run: pnpm publish --provenance --access public --no-git-checks

@@ -3,11 +3,9 @@
 
 use std::mem::{align_of, offset_of, size_of};
 
-#[allow(clippy::wildcard_imports)]
-use crate::ast::*;
-
-#[allow(clippy::wildcard_imports)]
 use oxc_regular_expression::ast::*;
+
+use crate::ast::*;
 
 #[cfg(target_pointer_width = "64")]
 const _: () = {
@@ -33,11 +31,11 @@ const _: () = {
     assert!(offset_of!(BigIntLiteral, raw) == 8usize);
     assert!(offset_of!(BigIntLiteral, base) == 24usize);
 
-    assert!(size_of::<RegExpLiteral>() == 40usize);
+    assert!(size_of::<RegExpLiteral>() == 56usize);
     assert!(align_of::<RegExpLiteral>() == 8usize);
     assert!(offset_of!(RegExpLiteral, span) == 0usize);
-    assert!(offset_of!(RegExpLiteral, value) == 8usize);
     assert!(offset_of!(RegExpLiteral, regex) == 8usize);
+    assert!(offset_of!(RegExpLiteral, raw) == 40usize);
 
     assert!(size_of::<RegExp>() == 32usize);
     assert!(align_of::<RegExp>() == 8usize);
@@ -46,9 +44,6 @@ const _: () = {
 
     assert!(size_of::<RegExpPattern>() == 24usize);
     assert!(align_of::<RegExpPattern>() == 8usize);
-
-    assert!(size_of::<EmptyObject>() == 0usize);
-    assert!(align_of::<EmptyObject>() == 1usize);
 
     assert!(size_of::<StringLiteral>() == 24usize);
     assert!(align_of::<StringLiteral>() == 8usize);
@@ -1038,6 +1033,7 @@ const _: () = {
     assert!(offset_of!(TSIndexSignature, parameters) == 8usize);
     assert!(offset_of!(TSIndexSignature, type_annotation) == 40usize);
     assert!(offset_of!(TSIndexSignature, readonly) == 48usize);
+    assert!(offset_of!(TSIndexSignature, r#static) == 49usize);
 
     assert!(size_of::<TSCallSignatureDeclaration>() == 64usize);
     assert!(align_of::<TSCallSignatureDeclaration>() == 8usize);
@@ -1382,14 +1378,14 @@ const _: () = {
     assert!(size_of::<CommentPosition>() == 1usize);
     assert!(align_of::<CommentPosition>() == 1usize);
 
-    assert!(size_of::<Comment>() == 20usize);
+    assert!(size_of::<Comment>() == 16usize);
     assert!(align_of::<Comment>() == 4usize);
     assert!(offset_of!(Comment, span) == 0usize);
-    assert!(offset_of!(Comment, kind) == 8usize);
-    assert!(offset_of!(Comment, position) == 9usize);
-    assert!(offset_of!(Comment, attached_to) == 12usize);
-    assert!(offset_of!(Comment, preceded_by_newline) == 16usize);
-    assert!(offset_of!(Comment, followed_by_newline) == 17usize);
+    assert!(offset_of!(Comment, attached_to) == 8usize);
+    assert!(offset_of!(Comment, kind) == 12usize);
+    assert!(offset_of!(Comment, position) == 13usize);
+    assert!(offset_of!(Comment, preceded_by_newline) == 14usize);
+    assert!(offset_of!(Comment, followed_by_newline) == 15usize);
 
     assert!(size_of::<NumberBase>() == 1usize);
     assert!(align_of::<NumberBase>() == 1usize);
@@ -1592,11 +1588,11 @@ const _: () = {
     assert!(offset_of!(BigIntLiteral, raw) == 8usize);
     assert!(offset_of!(BigIntLiteral, base) == 16usize);
 
-    assert!(size_of::<RegExpLiteral>() == 24usize);
+    assert!(size_of::<RegExpLiteral>() == 32usize);
     assert!(align_of::<RegExpLiteral>() == 4usize);
     assert!(offset_of!(RegExpLiteral, span) == 0usize);
-    assert!(offset_of!(RegExpLiteral, value) == 8usize);
     assert!(offset_of!(RegExpLiteral, regex) == 8usize);
+    assert!(offset_of!(RegExpLiteral, raw) == 24usize);
 
     assert!(size_of::<RegExp>() == 16usize);
     assert!(align_of::<RegExp>() == 4usize);
@@ -1605,9 +1601,6 @@ const _: () = {
 
     assert!(size_of::<RegExpPattern>() == 12usize);
     assert!(align_of::<RegExpPattern>() == 4usize);
-
-    assert!(size_of::<EmptyObject>() == 0usize);
-    assert!(align_of::<EmptyObject>() == 1usize);
 
     assert!(size_of::<StringLiteral>() == 16usize);
     assert!(align_of::<StringLiteral>() == 4usize);
@@ -2597,6 +2590,7 @@ const _: () = {
     assert!(offset_of!(TSIndexSignature, parameters) == 8usize);
     assert!(offset_of!(TSIndexSignature, type_annotation) == 24usize);
     assert!(offset_of!(TSIndexSignature, readonly) == 28usize);
+    assert!(offset_of!(TSIndexSignature, r#static) == 29usize);
 
     assert!(size_of::<TSCallSignatureDeclaration>() == 44usize);
     assert!(align_of::<TSCallSignatureDeclaration>() == 4usize);
@@ -2941,14 +2935,14 @@ const _: () = {
     assert!(size_of::<CommentPosition>() == 1usize);
     assert!(align_of::<CommentPosition>() == 1usize);
 
-    assert!(size_of::<Comment>() == 20usize);
+    assert!(size_of::<Comment>() == 16usize);
     assert!(align_of::<Comment>() == 4usize);
     assert!(offset_of!(Comment, span) == 0usize);
-    assert!(offset_of!(Comment, kind) == 8usize);
-    assert!(offset_of!(Comment, position) == 9usize);
-    assert!(offset_of!(Comment, attached_to) == 12usize);
-    assert!(offset_of!(Comment, preceded_by_newline) == 16usize);
-    assert!(offset_of!(Comment, followed_by_newline) == 17usize);
+    assert!(offset_of!(Comment, attached_to) == 8usize);
+    assert!(offset_of!(Comment, kind) == 12usize);
+    assert!(offset_of!(Comment, position) == 13usize);
+    assert!(offset_of!(Comment, preceded_by_newline) == 14usize);
+    assert!(offset_of!(Comment, followed_by_newline) == 15usize);
 
     assert!(size_of::<NumberBase>() == 1usize);
     assert!(align_of::<NumberBase>() == 1usize);

@@ -1,7 +1,3 @@
-#![allow(clippy::unused_self)]
-
-use std::cell::Cell;
-
 use rustc_hash::FxHashSet;
 
 use oxc_allocator::Vec as ArenaVec;
@@ -71,31 +67,27 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
 
         program.body.retain_mut(|stmt| {
             let need_retain = match stmt {
+                Statement::ExportNamedDeclaration(decl) if decl.declaration.is_some() => {
+                    decl.declaration.as_ref().is_some_and(|decl| !decl.is_typescript_syntax())
+                }
                 Statement::ExportNamedDeclaration(decl) => {
                     if decl.export_kind.is_type() {
                         false
+                    } else if decl.specifiers.is_empty() {
+                        // `export {}` or `export {} from 'mod'`
+                        // Keep the export declaration if there are no export specifiers
+                        true
                     } else {
                         decl.specifiers.retain(|specifier| {
                             !(specifier.export_kind.is_type()
                                 || self.type_identifier_names.contains(&specifier.exported.name())
-                                || {
-                                    if let ModuleExportName::IdentifierReference(ident) =
-                                        &specifier.local
-                                    {
-                                        ident.reference_id.get().is_some_and(|id| {
-                                            ctx.symbols().get_reference(id).is_type()
-                                        })
-                                    } else {
-                                        false
-                                    }
-                                })
+                                || matches!(
+                                    &specifier.local, ModuleExportName::IdentifierReference(ident)
+                                    if ctx.symbols().get_reference(ident.reference_id()).is_type()
+                                ))
                         });
-
+                        // Keep the export declaration if there are still specifiers after removing type exports
                         !decl.specifiers.is_empty()
-                            || decl
-                                .declaration
-                                .as_ref()
-                                .is_some_and(|decl| !decl.is_typescript_syntax())
                     }
                 }
                 Statement::ExportAllDeclaration(decl) => !decl.export_kind.is_type(),
@@ -153,10 +145,10 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
         // need to inject an empty statement (`export {}`) so that the file is
         // still considered a module
         if no_modules_remaining && some_modules_deleted && self.ctx.module_imports.is_empty() {
-            let export_decl = ModuleDeclaration::ExportNamedDeclaration(
+            let export_decl = Statement::ExportNamedDeclaration(
                 ctx.ast.plain_export_named_declaration(SPAN, ctx.ast.vec(), None),
             );
-            program.body.push(ctx.ast.statement_module_declaration(export_decl));
+            program.body.push(export_decl);
         }
     }
 
@@ -305,7 +297,7 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
                         self.assignments.push(Assignment {
                             span: id.span,
                             name: id.name.clone(),
-                            symbol_id: id.symbol_id.get().unwrap(),
+                            symbol_id: id.symbol_id(),
                         });
                     }
                 }
@@ -403,10 +395,31 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
         );
     }
 
+    fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        // Add assignments after super calls
+        if self.assignments.is_empty() {
+            return;
+        }
+
+        let has_super_call = matches!(stmt, Statement::ExpressionStatement(stmt) if stmt.expression.is_super_call_expression());
+        if !has_super_call {
+            return;
+        }
+
+        // Add assignments after super calls
+        self.ctx.statement_injector.insert_many_after(
+            stmt,
+            self.assignments
+                .iter()
+                .map(|assignment| assignment.create_this_property_assignment(ctx)),
+        );
+        self.has_super_call = true;
+    }
+
     fn exit_statements(
         &mut self,
         stmts: &mut ArenaVec<'a, Statement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
+        _ctx: &mut TraverseCtx<'a>,
     ) {
         // Remove TS specific statements
         stmts.retain(|stmt| match stmt {
@@ -417,29 +430,6 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
             // Ignore ModuleDeclaration as it's handled in the program
             _ => true,
         });
-
-        // Add assignments after super calls
-        if !self.assignments.is_empty() {
-            let has_super_call = stmts.iter().any(|stmt| {
-                matches!(stmt, Statement::ExpressionStatement(stmt) if stmt.expression.is_super_call_expression())
-            });
-            if has_super_call {
-                let mut new_stmts = ctx.ast.vec();
-                for stmt in stmts.drain(..) {
-                    let is_super_call = matches!(stmt, Statement::ExpressionStatement(ref stmt) if stmt.expression.is_super_call_expression());
-                    new_stmts.push(stmt);
-                    if is_super_call {
-                        new_stmts.extend(
-                            self.assignments
-                                .iter()
-                                .map(|assignment| assignment.create_this_property_assignment(ctx)),
-                        );
-                    }
-                }
-                self.has_super_call = true;
-                *stmts = new_stmts;
-            }
-        }
     }
 
     /// Transform if statement's consequent and alternate to block statements if they are super calls
@@ -485,27 +475,18 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
     }
 
     fn enter_for_statement(&mut self, stmt: &mut ForStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-        Self::replace_for_statement_body_with_empty_block_if_ts(
-            &mut stmt.body,
-            &stmt.scope_id,
-            ctx,
-        );
+        let scope_id = stmt.scope_id();
+        Self::replace_for_statement_body_with_empty_block_if_ts(&mut stmt.body, scope_id, ctx);
     }
 
     fn enter_for_in_statement(&mut self, stmt: &mut ForInStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-        Self::replace_for_statement_body_with_empty_block_if_ts(
-            &mut stmt.body,
-            &stmt.scope_id,
-            ctx,
-        );
+        let scope_id = stmt.scope_id();
+        Self::replace_for_statement_body_with_empty_block_if_ts(&mut stmt.body, scope_id, ctx);
     }
 
     fn enter_for_of_statement(&mut self, stmt: &mut ForOfStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-        Self::replace_for_statement_body_with_empty_block_if_ts(
-            &mut stmt.body,
-            &stmt.scope_id,
-            ctx,
-        );
+        let scope_id = stmt.scope_id();
+        Self::replace_for_statement_body_with_empty_block_if_ts(&mut stmt.body, scope_id, ctx);
     }
 
     fn enter_while_statement(&mut self, stmt: &mut WhileStatement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -568,11 +549,10 @@ impl<'a, 'ctx> TypeScriptAnnotations<'a, 'ctx> {
 
     fn replace_for_statement_body_with_empty_block_if_ts(
         body: &mut Statement<'a>,
-        scope_id: &Cell<Option<ScopeId>>,
+        parent_scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let scope_id = scope_id.get().unwrap_or(ctx.current_scope_id());
-        Self::replace_with_empty_block_if_ts(body, scope_id, ctx);
+        Self::replace_with_empty_block_if_ts(body, parent_scope_id, ctx);
     }
 
     fn replace_with_empty_block_if_ts(
@@ -633,15 +613,14 @@ impl<'a> Assignment<'a> {
             ctx.ast.expression_assignment(
                 SPAN,
                 AssignmentOperator::Assign,
-                ctx.ast
-                    .simple_assignment_target_member_expression(ctx.ast.member_expression_static(
-                        SPAN,
-                        ctx.ast.expression_this(SPAN),
-                        ctx.ast.identifier_name(self.span, &self.name),
-                        false,
-                    ))
-                    .into(),
-                ctx.ast.expression_from_identifier_reference(id),
+                SimpleAssignmentTarget::from(ctx.ast.member_expression_static(
+                    SPAN,
+                    ctx.ast.expression_this(SPAN),
+                    ctx.ast.identifier_name(self.span, &self.name),
+                    false,
+                ))
+                .into(),
+                Expression::Identifier(ctx.alloc(id)),
             ),
         )
     }

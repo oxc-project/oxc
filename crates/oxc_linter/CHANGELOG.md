@@ -4,6 +4,69 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.11.0] - 2024-11-03
+
+- 1f2a6c6 linter: [**BREAKING**] Report unmatched rules with error exit code (#7027) (camchenry)
+
+- 9fd9f4f linter: [**BREAKING**] Sync sindresorhus/globals; removed Object.prototype properties from builtin and es* globals (#6991) (Boshen)
+
+- 9a6a2f9 semantic: [**BREAKING**] Remove `SymbolTable::get_symbol_id_from_span` API (#6955) (Boshen)
+
+### Features
+
+- 2184588 linter: Do not bail for unmatched rules yet (#7093) (Boshen)
+- a6fcd81 linter: Add `import/no-commonjs` rule (#6978) (Dmitry Zakharov)
+- 1691cab linter: Support user-configurable secrets for `oxc-security/api-keys` (#5938) (DonIsaac)
+- 610621c linter: Implement `react/style-prop-object` (#6342) (Albert Kaaman)
+- 1e2f012 linter: Add `oxc/no-map-spread` (#6751) (DonIsaac)
+- 1c66473 linter: Implement `eslint/prefer-object-has-own` (#6905) (tomoya yanagibashi)
+
+### Bug Fixes
+
+- 79bf74a linter: Check is_reference_to_global_variable in `no-array-constructor` (#7067) (Naoya Yoshizawa)
+- 147e2e4 linter: Allow replacing rule when none are enabled yet (#7014) (camchenry)
+- 7aa496a linter: Remove unsafe fixer of `no-useless-spread` (#6655) (dalaoshu)
+- f5a7134 linter/no-unused-vars: False positive for discarded reads within sequences (#6907) (DonIsaac)
+
+### Documentation
+
+- 4551baa linter: Document `rules` (#6983) (Boshen)
+
+### Refactor
+
+- 8f1460e linter: Move `LintPlugins` from `LintOptions` to `LintConfig` (#6932) (DonIsaac)
+
+### Testing
+
+- c35d3f2 linter: Improve test failure output (#6975) (camchenry)
+
+## [0.10.3] - 2024-10-26
+
+- 90c786c regular_expression: [**BREAKING**] Support ES2025 Duplicated named capture groups (#6847) (leaysgur)
+
+- 8032813 regular_expression: [**BREAKING**] Migrate to new regexp parser API (#6741) (leaysgur)
+
+### Features
+
+- a73c5af linter: Add fixer for `jsx-a11y/no-access-key` rule (#6781) (Tapan Prakash)
+- 2aa763c linter: Warn unmatched rule names (#6782) (Tapan Prakash)
+- 0acca58 linter: Support `--print-config all` to print config file for project (#6579) (mysteryven)
+
+### Bug Fixes
+
+- f49b3e2 linter: `react/iframe-missing-sandbox` ignores vanilla JS APIs (#6872) (DonIsaac)
+- 54a5032 linter: Correct false positive in `no-duplicates` (#6748) (dalaoshu)
+- a47c70e minifier: Fix remaining runtime bugs (#6855) (Boshen)
+
+### Documentation
+
+- 3923e63 linter: Add schema to config examples (#6838) (Dmitry Zakharov)
+
+### Refactor
+
+- a148023 linter: Dereference IDs as soon as possible (#6821) (overlookmotel)
+- 423d54c rust: Remove the annoying `clippy::wildcard_imports` (#6860) (Boshen)
+
 ## [0.10.2] - 2024-10-22
 
 - 1248557 ast: [**BREAKING**] Remove `AstKind::FinallyClause` (#6744) (Boshen)

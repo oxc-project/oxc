@@ -304,31 +304,28 @@ impl<'a> TraverseCtx<'a> {
     /// Generate binding.
     ///
     /// Creates a symbol with the provided name and flags and adds it to the specified scope.
+    ///
+    /// This is a shortcut for `ctx.scoping.generate_binding`.
     pub fn generate_binding(
         &mut self,
-        name: CompactStr,
+        name: Atom<'a>,
         scope_id: ScopeId,
         flags: SymbolFlags,
     ) -> BoundIdentifier<'a> {
-        let name_atom = self.ast.atom(&name);
-
-        // Add binding to scope
-        let symbol_id =
-            self.symbols_mut().create_symbol(SPAN, name.clone(), flags, scope_id, NodeId::DUMMY);
-        self.scopes_mut().add_binding(scope_id, name, symbol_id);
-
-        BoundIdentifier::new(name_atom, symbol_id)
+        self.scoping.generate_binding(name, scope_id, flags)
     }
 
     /// Generate binding in current scope.
     ///
     /// Creates a symbol with the provided name and flags and adds it to the current scope.
-    pub fn generate_in_current_scope(
+    ///
+    /// This is a shortcut for `ctx.scoping.generate_binding_in_current_scope`.
+    pub fn generate_binding_in_current_scope(
         &mut self,
-        name: CompactStr,
+        name: Atom<'a>,
         flags: SymbolFlags,
     ) -> BoundIdentifier<'a> {
-        self.generate_binding(name, self.current_scope_id(), flags)
+        self.scoping.generate_binding_in_current_scope(name, flags)
     }
 
     /// Generate UID var name.
@@ -356,7 +353,14 @@ impl<'a> TraverseCtx<'a> {
     ) -> BoundIdentifier<'a> {
         // Get name for UID
         let name = self.generate_uid_name(name);
-        self.generate_binding(name, scope_id, flags)
+        let name_atom = self.ast.atom(&name);
+
+        // Add binding to scope
+        let symbol_id =
+            self.symbols_mut().create_symbol(SPAN, name.clone(), flags, scope_id, NodeId::DUMMY);
+        self.scopes_mut().add_binding(scope_id, name, symbol_id);
+
+        BoundIdentifier::new(name_atom, symbol_id)
     }
 
     /// Generate UID in current scope.
@@ -534,10 +538,7 @@ impl<'a> TraverseCtx<'a> {
         ident: &IdentifierReference<'a>,
         flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
-        let reference =
-            self.symbols().get_reference(ident.reference_id.get().unwrap_or_else(|| {
-                unreachable!("IdentifierReference must have a reference_id");
-            }));
+        let reference = self.symbols().get_reference(ident.reference_id());
         let symbol_id = reference.symbol_id();
         self.create_reference_id(ident.span, ident.name.clone(), symbol_id, flags)
     }

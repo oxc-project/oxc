@@ -41,7 +41,7 @@
 
 use itoa::Buffer as ItoaBuffer;
 
-use oxc_allocator::String as AString;
+use oxc_allocator::String as ArenaString;
 use oxc_ast::{ast::*, Visit, NONE};
 use oxc_semantic::SymbolTable;
 use oxc_span::SPAN;
@@ -138,7 +138,7 @@ impl ClassStaticBlock {
         block: &mut StaticBlock<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let scope_id = block.scope_id.get().unwrap();
+        let scope_id = block.scope_id();
 
         // If block contains only a single `ExpressionStatement`, no need to wrap in an IIFE.
         // `static { foo }` -> `foo`
@@ -213,7 +213,7 @@ struct ReferenceFlagsSetter<'s> {
 
 impl<'a, 's> Visit<'a> for ReferenceFlagsSetter<'s> {
     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
-        let reference_id = ident.reference_id().unwrap();
+        let reference_id = ident.reference_id();
         let reference = self.symbols.get_reference_mut(reference_id);
         *reference.flags_mut() |= ReferenceFlags::Read;
     }
@@ -295,7 +295,7 @@ impl<'a> Keys<'a> {
             i += 1;
         }
 
-        let mut key = AString::with_capacity_in(num_str.len() + 1, ctx.ast.allocator);
+        let mut key = ArenaString::with_capacity_in(num_str.len() + 1, ctx.ast.allocator);
         key.push('_');
         key.push_str(num_str);
         let key = Atom::from(key.into_bump_str());

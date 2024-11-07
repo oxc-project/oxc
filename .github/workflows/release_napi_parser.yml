@@ -203,7 +203,7 @@ jobs:
           # publish subpackages first
           for package in npm/oxc-parser-*
           do
-            pnpm publish $package/ --provenance --access public --tag latest --no-git-checks
+            pnpm publish $package/ --provenance --access public --no-git-checks
           done
           # publish root package last
-          pnpm publish npm/oxc-parser/ --provenance --access public --tag latest --no-git-checks
+          pnpm publish npm/oxc-parser/ --provenance --access public --no-git-checks

@@ -5,19 +5,14 @@
 
 use oxc_span::cmp::ContentEq;
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::comment::*;
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::js::*;
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::jsx::*;
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::literal::*;
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::ts::*;
 
 impl ContentEq for BooleanLiteral {
@@ -49,8 +44,8 @@ impl<'a> ContentEq for BigIntLiteral<'a> {
 
 impl<'a> ContentEq for RegExpLiteral<'a> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.value, &other.value)
-            && ContentEq::content_eq(&self.regex, &other.regex)
+        ContentEq::content_eq(&self.regex, &other.regex)
+            && ContentEq::content_eq(&self.raw, &other.raw)
     }
 }
 
@@ -77,12 +72,6 @@ impl<'a> ContentEq for RegExpPattern<'a> {
                 _ => false,
             },
         }
-    }
-}
-
-impl ContentEq for EmptyObject {
-    fn content_eq(&self, _: &Self) -> bool {
-        true
     }
 }
 
@@ -3455,6 +3444,7 @@ impl<'a> ContentEq for TSIndexSignature<'a> {
         ContentEq::content_eq(&self.parameters, &other.parameters)
             && ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
             && ContentEq::content_eq(&self.readonly, &other.readonly)
+            && ContentEq::content_eq(&self.r#static, &other.r#static)
     }
 }
 
@@ -4231,9 +4221,9 @@ impl ContentEq for CommentPosition {
 
 impl ContentEq for Comment {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.kind, &other.kind)
+        ContentEq::content_eq(&self.attached_to, &other.attached_to)
+            && ContentEq::content_eq(&self.kind, &other.kind)
             && ContentEq::content_eq(&self.position, &other.position)
-            && ContentEq::content_eq(&self.attached_to, &other.attached_to)
             && ContentEq::content_eq(&self.preceded_by_newline, &other.preceded_by_newline)
             && ContentEq::content_eq(&self.followed_by_newline, &other.followed_by_newline)
     }

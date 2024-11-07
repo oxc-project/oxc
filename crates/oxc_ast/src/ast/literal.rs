@@ -1,5 +1,4 @@
 //! Literals
-#![warn(missing_docs)]
 
 // NB: `#[span]`, `#[scope(...)]`,`#[visit(...)]` and `#[generate_derive(...)]` do NOT do anything to the code.
 // They are purely markers for codegen used in `tasks/ast_tools` and `crates/oxc_traverse/scripts`. See docs in those crates.
@@ -21,9 +20,9 @@ use oxc_syntax::number::{BigintBase, NumberBase};
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
+#[estree(type = "Literal", via = crate::serialize::ESTreeLiteral, add_ts = "raw: string")]
 pub struct BooleanLiteral {
     /// Node location in source code
-    #[estree(flatten)]
     pub span: Span,
     /// The boolean value itself
     pub value: bool,
@@ -35,9 +34,9 @@ pub struct BooleanLiteral {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(type = "Literal", via = crate::serialize::ESTreeLiteral, add_ts = "value: null, raw: \"null\"")]
 pub struct NullLiteral {
     /// Node location in source code
-    #[estree(flatten)]
     pub span: Span,
 }
 
@@ -47,9 +46,9 @@ pub struct NullLiteral {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(type = "Literal", via = crate::serialize::ESTreeLiteral)]
 pub struct NumericLiteral<'a> {
     /// Node location in source code
-    #[estree(flatten)]
     pub span: Span,
     /// The value of the number, converted into base 10
     pub value: f64,
@@ -64,9 +63,9 @@ pub struct NumericLiteral<'a> {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
+#[estree(type = "Literal", via = crate::serialize::ESTreeLiteral, add_ts = "value: null, bigint: string")]
 pub struct BigIntLiteral<'a> {
     /// Node location in source code
-    #[estree(flatten)]
     pub span: Span,
     /// The bigint as it appears in source code
     pub raw: Atom<'a>,
@@ -81,19 +80,20 @@ pub struct BigIntLiteral<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
+#[estree(
+	type = "Literal",
+	via = crate::serialize::ESTreeLiteral,
+	add_ts = "value: {} | null, regex: { pattern: string, flags: string }"
+)]
 pub struct RegExpLiteral<'a> {
     /// Node location in source code
-    #[estree(flatten)]
     pub span: Span,
-    /// Placeholder for printing.
-    ///
-    /// Valid regular expressions are printed as `{}`, while invalid ones are
-    /// printed as `null`. Note that invalid regular expressions are not yet
-    /// printed properly.
-    pub value: EmptyObject,
     /// The parsed regular expression. See [`oxc_regular_expression`] for more
     /// details.
+    #[estree(skip)]
     pub regex: RegExp<'a>,
+    /// The regular expression as it appears in source code
+    pub raw: &'a str,
 }
 
 /// A regular expression
@@ -116,7 +116,6 @@ pub struct RegExp<'a> {
 #[ast]
 #[derive(Debug)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[estree(untagged)]
 pub enum RegExpPattern<'a> {
     /// Unparsed pattern. Contains string slice of the pattern.
     /// Pattern was not parsed, so may be valid or invalid.
@@ -129,13 +128,6 @@ pub enum RegExpPattern<'a> {
     Pattern(Box<'a, Pattern<'a>>) = 2,
 }
 
-/// An empty object literal (`{}`)
-#[ast]
-#[derive(Debug, Clone)]
-#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[estree(no_type)]
-pub struct EmptyObject;
-
 /// String literal
 ///
 /// <https://tc39.es/ecma262/#sec-literals-string-literals>
@@ -144,7 +136,6 @@ pub struct EmptyObject;
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct StringLiteral<'a> {
     /// Node location in source code
-    #[estree(flatten)]
     pub span: Span,
     /// The string as it appears in source code
     pub value: Atom<'a>,
@@ -191,26 +182,3 @@ bitflags! {
         const V = 1 << 7;
     }
 }
-
-#[cfg(feature = "serialize")]
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = r#"
-export type RegExpFlags = {
-    /** Global flag */
-    G: 1,
-    /** Ignore case flag */
-    I: 2,
-    /** Multiline flag */
-    M: 4,
-    /** DotAll flag */
-    S: 8,
-    /** Unicode flag */
-    U: 16,
-    /** Sticky flag */
-    Y: 32,
-    /** Indices flag */
-    D: 64,
-    /** Unicode sets flag */
-    V: 128
-};
-"#;

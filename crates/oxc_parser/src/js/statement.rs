@@ -325,11 +325,11 @@ impl<'a> ParserImpl<'a> {
         }
 
         if matches!(self.cur_kind(), Kind::In | Kind::Of) {
-            let init = ForStatementLeft::VariableDeclaration(self.ast.alloc(using_decl));
+            let init = ForStatementLeft::VariableDeclaration(self.alloc(using_decl));
             return self.parse_for_in_or_of_loop(span, r#await, init);
         }
 
-        let init = Some(ForStatementInit::VariableDeclaration(self.ast.alloc(using_decl)));
+        let init = Some(ForStatementInit::VariableDeclaration(self.alloc(using_decl)));
         self.parse_for_loop(span, init, r#await)
     }
 

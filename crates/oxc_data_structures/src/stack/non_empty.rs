@@ -263,8 +263,22 @@ impl<T> NonEmptyStack<T> {
     /// Panics if the stack has only 1 entry on it.
     #[inline]
     pub fn pop(&mut self) -> T {
-        // Panic if trying to remove last entry from stack
-        assert!(self.cursor != self.start, "Cannot pop all entries");
+        // Panic if trying to remove last entry from stack.
+        //
+        // Putting the panic in an `#[inline(never)]` + `#[cold]` function removes a 6-byte `lea`
+        // instruction vs `assert!(self.cursor != self.start, "Cannot pop all entries")`.
+        // This reduces this function on x86_64 from 32 bytes to 26 bytes.
+        // This function is commonly used, and we want it to be inlined, so every byte counts.
+        // https://godbolt.org/z/5587z99rM
+        #[inline(never)]
+        #[cold]
+        fn error() -> ! {
+            panic!("Cannot pop all entries");
+        }
+
+        if self.cursor == self.start {
+            error();
+        }
 
         // SAFETY: Assertion above ensures stack has at least 2 entries
         unsafe { self.pop_unchecked() }
@@ -281,7 +295,7 @@ impl<T> NonEmptyStack<T> {
         debug_assert!(self.cursor < self.end);
         // SAFETY: All methods ensure `self.cursor` is always in bounds, is aligned for `T`,
         // and points to a valid initialized `T`
-        let value = self.cursor.as_ptr().read();
+        let value = self.cursor.read();
         // SAFETY: Caller guarantees there's at least 2 entries on stack, so subtracting 1
         // cannot be out of bounds
         self.cursor = self.cursor.sub(1);

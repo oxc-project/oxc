@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use crate::{codegen::EarlyCtx, rust_ast::AstType, Result};
+use crate::{codegen::EarlyCtx, output::Output, rust_ast::AstType, Result};
 
 mod calc_layout;
 mod linker;
@@ -8,24 +8,17 @@ pub use calc_layout::CalcLayout;
 pub use linker::Linker;
 
 pub trait Pass {
-    /// Returns false if can't resolve
-    fn once(&mut self, _ctx: &EarlyCtx) -> Result<bool> {
-        Ok(true)
-    }
+    // Methods defined by implementer
 
-    /// Returns false if can't resolve
-    fn each(&mut self, _ty: &mut AstType, _ctx: &EarlyCtx) -> Result<bool> {
-        Ok(true)
-    }
+    /// Run on each type.
+    /// Returns `false` if can't resolve.
+    fn each(&mut self, ty: &mut AstType, ctx: &EarlyCtx) -> Result<bool>;
 
-    fn call(&mut self, ctx: &EarlyCtx) -> Result<bool> {
-        // call once
-        if !self.once(ctx)? {
-            return Ok(false);
-        }
+    // Standard methods
 
-        // call each
-        // we sort by `TypeId` so we always have the same ordering as how it is written in the rust.
+    /// Run pass.
+    fn output(&mut self, ctx: &EarlyCtx) -> Result<Vec<Output>> {
+        // We sort by `TypeId`, so we have the same ordering as it's written in Rust source
         let mut unresolved = ctx.chronological_idents().collect::<VecDeque<_>>();
 
         while let Some(next) = unresolved.pop_back() {
@@ -38,24 +31,39 @@ pub trait Pass {
                 unresolved.push_front(next);
             }
         }
-        Ok(unresolved.is_empty())
+        Ok(vec![])
     }
 }
 
 macro_rules! define_pass {
-    ($vis:vis struct $ident:ident $($lifetime:lifetime)? $($rest:tt)*) => {
-        $vis struct $ident $($lifetime)? $($rest)*
-        impl $($lifetime)? $crate::codegen::Runner for $ident $($lifetime)? {
-            type Context = $crate::codegen::EarlyCtx;
-            type Output = ();
-            fn name(&self) -> &'static str {
-                stringify!($ident)
-            }
+    ($ident:ident $($lifetime:lifetime)?) => {
+        const _: () = {
+            use $crate::{
+                codegen::{EarlyCtx, Runner},
+                output::Output,
+                Result,
+            };
 
-            fn run(&mut self, ctx: &Self::Context) -> $crate::Result<Self::Output> {
-                self.call(ctx).map(|_| ())
+            impl $($lifetime)? Runner for $ident $($lifetime)? {
+                type Context = EarlyCtx;
+
+                fn verb(&self) -> &'static str {
+                    "Run pass"
+                }
+
+                fn name(&self) -> &'static str {
+                    stringify!($ident)
+                }
+
+                fn file_path(&self) -> &'static str {
+                    file!()
+                }
+
+                fn run(&mut self, ctx: &Self::Context) -> Result<Vec<Output>> {
+                    self.output(ctx)
+                }
             }
-        }
+        };
     };
 }
 

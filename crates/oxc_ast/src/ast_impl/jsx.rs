@@ -1,17 +1,9 @@
 //! [JSX](https://facebook.github.io/jsx)
-#![warn(missing_docs)]
 use std::fmt;
 
 use oxc_span::Atom;
 
 use crate::ast::*;
-
-#[cfg(feature = "serialize")]
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = r#"
-export type JSXElementName = JSXIdentifier | JSXNamespacedName | JSXMemberExpression;
-export type JSXMemberExpressionObject = JSXIdentifier | JSXMemberExpression;
-"#;
 
 // 1.2 JSX Elements
 

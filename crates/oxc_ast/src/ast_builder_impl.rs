@@ -10,9 +10,8 @@ use std::mem;
 
 use oxc_allocator::{Allocator, Box, FromIn, String, Vec};
 use oxc_span::{Atom, GetSpan, Span};
-use oxc_syntax::{number::NumberBase, operator::UnaryOperator};
+use oxc_syntax::{number::NumberBase, operator::UnaryOperator, scope::ScopeId};
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::*;
 use crate::AstBuilder;
 
@@ -147,6 +146,45 @@ impl<'a> AstBuilder<'a> {
         mem::replace(decl, empty_decl)
     }
 
+    /// Move a formal parameters out by replacing it with an empty [`FormalParameters`].
+    #[inline]
+    pub fn move_formal_parameters(self, params: &mut FormalParameters<'a>) -> FormalParameters<'a> {
+        let empty_params = self.formal_parameters(Span::default(), params.kind, self.vec(), NONE);
+        mem::replace(params, empty_params)
+    }
+
+    /// Move a function body out by replacing it with an empty [`FunctionBody`].
+    #[inline]
+    pub fn move_function_body(self, body: &mut FunctionBody<'a>) -> FunctionBody<'a> {
+        let empty_body = self.function_body(Span::default(), self.vec(), self.vec());
+        mem::replace(body, empty_body)
+    }
+
+    /// Move a function out by replacing it with an empty [`Function`]
+    #[inline]
+    pub fn move_function(self, function: &mut Function<'a>) -> Function<'a> {
+        let params = self.formal_parameters(
+            Span::default(),
+            FormalParameterKind::FormalParameter,
+            self.vec(),
+            NONE,
+        );
+        let empty_function = self.function(
+            FunctionType::FunctionDeclaration,
+            Span::default(),
+            None,
+            false,
+            false,
+            false,
+            NONE,
+            NONE,
+            params,
+            NONE,
+            NONE,
+        );
+        mem::replace(function, empty_function)
+    }
+
     /// Move an array element out by replacing it with an
     /// [elision](ArrayExpressionElement::Elision).
     pub fn move_array_expression_element(
@@ -196,18 +234,19 @@ impl<'a> AstBuilder<'a> {
         self.formal_parameter(span, self.vec(), pattern, None, false, false)
     }
 
-    /// Create a [`Function`] with no "extras", i.e. decorators, type
-    /// annotations, accessibility modifiers, etc.
+    /// Create a [`Function`] with no "extras".
+    /// i.e. no decorators, type annotations, accessibility modifiers, etc.
     #[inline]
-    pub fn plain_function(
+    pub fn alloc_plain_function_with_scope_id(
         self,
         r#type: FunctionType,
         span: Span,
         id: Option<BindingIdentifier<'a>>,
         params: FormalParameters<'a>,
         body: FunctionBody<'a>,
+        scope_id: ScopeId,
     ) -> Box<'a, Function<'a>> {
-        self.alloc(self.function(
+        self.alloc_function_with_scope_id(
             r#type,
             span,
             id,
@@ -219,7 +258,8 @@ impl<'a> AstBuilder<'a> {
             params,
             NONE,
             Some(body),
-        ))
+            scope_id,
+        )
     }
 
     /* ---------- Modules ---------- */

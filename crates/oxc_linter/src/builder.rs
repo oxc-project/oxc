@@ -3,12 +3,12 @@ use std::{
     fmt,
 };
 
+use oxc_diagnostics::{Error, OxcDiagnostic};
 use oxc_span::CompactStr;
 use rustc_hash::FxHashSet;
 
 use crate::{
-    config::{ESLintRule, OxlintRules},
-    options::LintPlugins,
+    config::{ESLintRule, LintPlugins, OxlintRules},
     rules::RULES,
     AllowWarnDeny, FixKind, FrameworkFlags, LintConfig, LintFilter, LintFilterKind, LintOptions,
     Linter, Oxlintrc, RuleCategory, RuleEnum, RuleWithSeverity,
@@ -35,8 +35,11 @@ impl LinterBuilder {
     /// You can think of this as `oxlint -A all`.
     pub fn empty() -> Self {
         let options = LintOptions::default();
-        let cache = RulesCache::new(options.plugins);
-        Self { rules: FxHashSet::default(), options, config: LintConfig::default(), cache }
+        let config = LintConfig::default();
+        let rules = FxHashSet::default();
+        let cache = RulesCache::new(config.plugins);
+
+        Self { rules, options, config, cache }
     }
 
     /// Warn on all rules in all plugins and categories, including those in `nursery`.
@@ -44,15 +47,16 @@ impl LinterBuilder {
     ///
     /// You can think of this as `oxlint -W all -W nursery`.
     pub fn all() -> Self {
-        let options = LintOptions { plugins: LintPlugins::all(), ..LintOptions::default() };
-        let cache = RulesCache::new(options.plugins);
+        let options = LintOptions::default();
+        let config = LintConfig { plugins: LintPlugins::all(), ..LintConfig::default() };
+        let cache = RulesCache::new(config.plugins);
         Self {
             rules: RULES
                 .iter()
                 .map(|rule| RuleWithSeverity { rule: rule.clone(), severity: AllowWarnDeny::Warn })
                 .collect(),
             options,
-            config: LintConfig::default(),
+            config,
             cache,
         }
     }
@@ -71,16 +75,22 @@ impl LinterBuilder {
     /// // you can use `From` as a shorthand for `from_oxlintrc(false, oxlintrc)`
     /// let linter = LinterBuilder::from(oxlintrc).build();
     /// ```
+    ///
+    /// # Errors
+    ///
+    /// Will return a [`LinterBuilderError::UnknownRules`] if there are unknown rules in the
+    /// config. This can happen if the plugin for a rule is not enabled, or the rule name doesn't
+    /// match any recognized rules.
     pub fn from_oxlintrc(start_empty: bool, oxlintrc: Oxlintrc) -> Self {
         // TODO: monorepo config merging, plugin-based extends, etc.
-        let Oxlintrc { plugins, settings, env, globals, categories, rules: oxlintrc_rules } =
+        let Oxlintrc { plugins, settings, env, globals, categories, rules: mut oxlintrc_rules } =
             oxlintrc;
 
-        let config = LintConfig { settings, env, globals };
-        let options = LintOptions { plugins, ..Default::default() };
+        let config = LintConfig { plugins, settings, env, globals };
+        let options = LintOptions::default();
         let rules =
             if start_empty { FxHashSet::default() } else { Self::warn_correctness(plugins) };
-        let cache = RulesCache::new(options.plugins);
+        let cache = RulesCache::new(config.plugins);
         let mut builder = Self { rules, options, config, cache };
 
         if !categories.is_empty() {
@@ -90,6 +100,20 @@ impl LinterBuilder {
         {
             let all_rules = builder.cache.borrow();
             oxlintrc_rules.override_rules(&mut builder.rules, all_rules.as_slice());
+        }
+
+        #[expect(clippy::print_stderr)]
+        if !oxlintrc_rules.unknown_rules.is_empty() {
+            let rules = oxlintrc_rules
+                .unknown_rules
+                .iter()
+                .map(|r| r.full_name())
+                .collect::<Vec<_>>()
+                .join("\n");
+            let error = Error::from(OxcDiagnostic::warn(format!(
+                "The following rules do not match the currently supported rules:\n{rules}"
+            )));
+            eprintln!("{error:?}");
         }
 
         builder
@@ -128,7 +152,7 @@ impl LinterBuilder {
     /// [`and_plugins`]: LinterBuilder::and_plugins
     #[inline]
     pub fn with_plugins(mut self, plugins: LintPlugins) -> Self {
-        self.options.plugins = plugins;
+        self.config.plugins = plugins;
         self.cache.set_plugins(plugins);
         self
     }
@@ -139,14 +163,14 @@ impl LinterBuilder {
     /// rules.
     #[inline]
     pub fn and_plugins(mut self, plugins: LintPlugins, enabled: bool) -> Self {
-        self.options.plugins.set(plugins, enabled);
-        self.cache.set_plugins(self.options.plugins);
+        self.config.plugins.set(plugins, enabled);
+        self.cache.set_plugins(self.config.plugins);
         self
     }
 
     #[inline]
     pub fn plugins(&self) -> LintPlugins {
-        self.options.plugins
+        self.config.plugins
     }
 
     #[cfg(test)]
@@ -255,6 +279,7 @@ impl LinterBuilder {
         let previous_rules = std::mem::take(&mut oxlintrc.rules);
 
         let rule_name_to_rule = previous_rules
+            .rules
             .into_iter()
             .map(|r| (get_name(&r.plugin_name, &r.rule_name), r))
             .collect::<rustc_hash::FxHashMap<_, _>>();
@@ -287,10 +312,12 @@ fn get_name(plugin_name: &str, rule_name: &str) -> CompactStr {
     }
 }
 
-impl From<Oxlintrc> for LinterBuilder {
+impl TryFrom<Oxlintrc> for LinterBuilder {
+    type Error = LinterBuilderError;
+
     #[inline]
-    fn from(oxlintrc: Oxlintrc) -> Self {
-        Self::from_oxlintrc(false, oxlintrc)
+    fn try_from(oxlintrc: Oxlintrc) -> Result<Self, Self::Error> {
+        Ok(Self::from_oxlintrc(false, oxlintrc))
     }
 }
 
@@ -303,6 +330,29 @@ impl fmt::Debug for LinterBuilder {
             .finish_non_exhaustive()
     }
 }
+
+/// An error that can occur while building a [`Linter`] from an [`Oxlintrc`].
+#[derive(Debug, Clone)]
+pub enum LinterBuilderError {
+    /// There were unknown rules that could not be matched to any known plugins/rules.
+    UnknownRules { rules: Vec<ESLintRule> },
+}
+
+impl std::fmt::Display for LinterBuilderError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            LinterBuilderError::UnknownRules { rules } => {
+                write!(f, "unknown rules: ")?;
+                for rule in rules {
+                    write!(f, "{}", rule.full_name())?;
+                }
+                Ok(())
+            }
+        }
+    }
+}
+
+impl std::error::Error for LinterBuilderError {}
 
 struct RulesCache {
     all_rules: RefCell<Option<Vec<RuleEnum>>>,

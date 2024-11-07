@@ -3,17 +3,17 @@ use itertools::Itertools;
 use quote::{format_ident, quote};
 use syn::{parse_quote, Arm, ImplItemFn, Variant};
 
-use super::define_generator;
 use crate::{
-    codegen::{generated_header, LateCtx},
-    output,
-    schema::{GetIdent, ToType},
-    Generator, GeneratorOutput,
+    output::{output_path, Output},
+    schema::{GetIdent, Schema, ToType},
+    Generator,
 };
 
-define_generator! {
-    pub struct AstKindGenerator;
-}
+use super::define_generator;
+
+pub struct AstKindGenerator;
+
+define_generator!(AstKindGenerator);
 
 pub const BLACK_LIST: [&str; 61] = [
     "Expression",
@@ -80,12 +80,12 @@ pub const BLACK_LIST: [&str; 61] = [
 ];
 
 impl Generator for AstKindGenerator {
-    fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
-        let have_kinds = ctx
-            .schema()
-            .into_iter()
+    fn generate(&mut self, schema: &Schema) -> Output {
+        let have_kinds = schema
+            .defs
+            .iter()
             .filter(|def| {
-                let is_visitable = def.visitable();
+                let is_visitable = def.is_visitable();
                 let is_blacklisted = BLACK_LIST.contains(&def.name());
                 is_visitable && !is_blacklisted
             })
@@ -125,17 +125,15 @@ impl Generator for AstKindGenerator {
             })
             .collect_vec();
 
-        let header = generated_header!();
-
-        GeneratorOutput::Rust {
-            path: output(crate::AST_CRATE, "ast_kind.rs"),
+        Output::Rust {
+            path: output_path(crate::AST_CRATE, "ast_kind.rs"),
             tokens: quote! {
-                #header
+                #![allow(missing_docs)] ///@ FIXME (in ast_tools/src/generators/ast_kind.rs)
 
+                ///@@line_break
                 use oxc_span::{GetSpan, Span};
 
                 ///@@line_break
-                #[allow(clippy::wildcard_imports)]
                 use crate::ast::*;
 
                 ///@@line_break

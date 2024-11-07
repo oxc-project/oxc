@@ -4,6 +4,112 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.35.0] - 2024-11-04
+
+- f543a8d ast: [**BREAKING**] Remove `AstBuilder::*_from_*` methods (#7073) (overlookmotel)
+
+### Features
+
+- 854870e ast: Label AST fields with #[ts] (#6987) (ottomated)
+- ce5b609 ast: Remove explicit untagged marker on enums (#6915) (ottomated)
+- 9725e3c ast_tools: Add #[estree(always_flatten)] to Span (#6935) (ottomated)
+- fbc297e ast_tools: Move tsify custom types to estree attribute macro (#6934) (ottomated)
+- 169fa22 ast_tools: Default enums to rename_all = "camelCase" (#6933) (ottomated)
+- 6516f9e codegen: Print inline legal comments (#7054) (Boshen)
+- 1e2f012 linter: Add `oxc/no-map-spread` (#6751) (DonIsaac)
+
+### Bug Fixes
+
+- 0601271 ast: Fix `StaticMemberExpression.get_first_object` (#6969) (tomoya yanagibashi)
+- f5a7134 linter/no-unused-vars: False positive for discarded reads within sequences (#6907) (DonIsaac)
+- caaf00e parser: Fix incorrect parsed `TSIndexSignature` (#7016) (Boshen)
+
+### Performance
+
+- 6ca01b9 ast: Reduce size of `Comment` (#6921) (overlookmotel)
+
+### Refactor
+
+- b0211a1 ast: `StaticMemberExpression::get_first_object` use loop instead of recursion (#7065) (overlookmotel)
+- fc07458 ast: Move custom types `.d.ts` file (#6931) (overlookmotel)
+- c41c013 ast: Rename lifetime (#6922) (overlookmotel)
+- 4cf0085 ast_tools: Reorder imports in generated code (#6926) (overlookmotel)
+- 4688a06 transformer: Use `*_with_scope_id` builder methods where possible (#7055) (overlookmotel)
+- df3b089 transformer/react-refresh: Use `StatementInjector` to insert statements (#6881) (Dunqing)
+
+## [0.34.0] - 2024-10-26
+
+### Features
+
+- 1145341 ast_tools: Output typescript to a separate package (#6755) (ottomated)
+- 0d0bb17 transformer: Complete the async-to-generator plugin (#6658) (Dunqing)
+
+### Bug Fixes
+
+- a47c70e minifier: Fix remaining runtime bugs (#6855) (Boshen)
+
+### Documentation
+
+- 6eeb0e6 ast: Mention typescript-eslint, field ordering and shape (#6863) (Boshen)
+
+### Refactor
+
+- 3e7507f ast_tools: Reduce macro usage (#6895) (overlookmotel)
+- 423d54c rust: Remove the annoying `clippy::wildcard_imports` (#6860) (Boshen)
+
+### Styling
+
+- 262b2ed ast: Move crate doc comment to top of file (#6890) (overlookmotel)
+
+## [0.33.0] - 2024-10-24
+
+- 718ccde ast: [**BREAKING**] Remove unused `new` methods (#6789) (overlookmotel)
+
+- 4d2d214 ast, transformer: [**BREAKING**] Remove `StringLiteral::new` method (#6788) (overlookmotel)
+
+- a1ca964 ast, parser: [**BREAKING**] Remove `NumericLiteral::new` method (#6787) (overlookmotel)
+
+- aeaa27a ast, parser, transformer, traverse: [**BREAKING**] Remove `BindingIdentifier::new` methods (#6786) (overlookmotel)
+
+- ecc9151 ast, parser, transformer, traverse: [**BREAKING**] Remove `IdentifierReference::new` methods (#6785) (overlookmotel)
+
+- c91ffbc ast, transformer: [**BREAKING**] Remove `IdentifierName::new` method (#6784) (overlookmotel)
+
+- 2bee4e2 ast, transformer: [**BREAKING**] Remove `BlockStatement::new` methods (#6783) (overlookmotel)
+
+- 1248557 ast: [**BREAKING**] Remove `AstKind::FinallyClause` (#6744) (Boshen)
+
+- 202c7f6 ast: [**BREAKING**] Remove `AstKind::ExpressionArrayElement` and `AstKind::ClassHeritage` (#6740) (Boshen)
+
+### Features
+
+- 78fee6e ast: Add `AstBuilder::*_with_scope_id` etc methods (#6760) (overlookmotel)
+- b2f3040 ast: Add `GetAddress` trait (#6652) (Dunqing)
+
+### Bug Fixes
+
+- 53049fe wasm: Remove type defs for `ArrayExpressionElement` and `Elision` (#6683) (overlookmotel)
+
+### Documentation
+
+- 63ce9be ast: Enable crate-wide warnings on missing doc comments (#6716) (DonIsaac)
+- 91651e0 ast: Fix comment for `ClassElement::r#static` (#6771) (overlookmotel)
+- c916505 ast: Fix comment of `ClassElement::r#static` (#6731) (_Kerman)
+- 46720be ast: Improve formatting of `AstBuilder` doc comments (#6756) (overlookmotel)
+- a7dd5aa ast: Enforce doc comments on AST node methods (#6714) (DonIsaac)
+- 8d27e2d ast: Enforce doc comments on generated ASTBuilder methods (#6713) (DonIsaac)
+- bad8770 ast: Enforce doc comments on JSX nodes, literal nodes, and comments (#6712) (DonIsaac)
+
+### Refactor
+
+- ab8aa2f allocator: Move `GetAddress` trait into `oxc_allocator` (#6738) (overlookmotel)
+- b66ae2e ast: Move `impl GetAddress for Statement` (#6742) (overlookmotel)
+- 0e9b695 ast: Change `plain_function` to accept `FunctionBody` as a required parameter (#6709) (Dunqing)
+- 85e69a1 ast_tools: Add line breaks to generated code for `ESTree` derive (#6680) (overlookmotel)
+- ad8e293 ast_tools: Shorten generated code for `impl Serialize` (#6684) (overlookmotel)
+- 9ba2b0e ast_tools: Move `#[allow]` attrs to top of generated files (#6679) (overlookmotel)
+- 11458a5 ast_tools: Shorten generated code by avoiding `ref` in matches (#6675) (overlookmotel)
+
 ## [0.32.0] - 2024-10-19
 
 - 5200960 oxc: [**BREAKING**] Remove passing `Trivias` around (#6446) (Boshen)

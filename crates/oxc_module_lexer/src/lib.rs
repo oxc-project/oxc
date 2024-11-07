@@ -2,12 +2,7 @@
 //!
 //! * <https://github.com/guybedford/es-module-lexer>
 
-use oxc_ast::visit::walk::{
-    walk_export_all_declaration, walk_export_named_declaration, walk_import_declaration,
-    walk_import_expression, walk_meta_property, walk_module_declaration, walk_statement,
-};
-#[allow(clippy::wildcard_imports)]
-use oxc_ast::{ast::*, Visit};
+use oxc_ast::{ast::*, visit::walk, Visit};
 use oxc_ecmascript::BoundNames;
 use oxc_span::{Atom, GetSpan};
 
@@ -68,11 +63,13 @@ pub struct ExportSpecifier<'a> {
 
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
 pub enum ImportType {
-    /// If this import keyword is a dynamic import, this is the start value.
-    DynamicImport(u32),
     /// If this import keyword is a static import
     #[default]
     StaticImport,
+    /// If this import is an `export *`
+    ExportStar,
+    /// If this import keyword is a dynamic import, this is the start value.
+    DynamicImport(u32),
     /// If this import keyword is an import.meta expression
     ImportMeta,
 }
@@ -81,7 +78,7 @@ impl ImportType {
     pub fn as_dynamic_import(&self) -> Option<u32> {
         match self {
             Self::DynamicImport(start) => Some(*start),
-            Self::StaticImport | Self::ImportMeta => None,
+            Self::StaticImport | Self::ExportStar | Self::ImportMeta => None,
         }
     }
 }
@@ -124,15 +121,14 @@ impl<'a> Visit<'a> for ModuleLexer<'a> {
         if self.facade && !stmt.is_module_declaration() && !stmt.is_declaration() {
             self.facade = false;
         }
-
-        walk_statement(self, stmt);
+        walk::walk_statement(self, stmt);
     }
 
     fn visit_module_declaration(&mut self, decl: &ModuleDeclaration<'a>) {
         if !self.has_module_syntax {
             self.has_module_syntax = true;
         }
-        walk_module_declaration(self, decl);
+        walk::walk_module_declaration(self, decl);
     }
 
     // import.meta
@@ -152,7 +148,7 @@ impl<'a> Visit<'a> for ModuleLexer<'a> {
                 t: false,
             });
         }
-        walk_meta_property(self, prop);
+        walk::walk_meta_property(self, prop);
     }
 
     // import("foo")
@@ -174,7 +170,7 @@ impl<'a> Visit<'a> for ModuleLexer<'a> {
             a: expr.arguments.first().map(|e| e.span().start),
             t: false,
         });
-        walk_import_expression(self, expr);
+        walk::walk_import_expression(self, expr);
     }
 
     fn visit_ts_import_type(&mut self, impt: &TSImportType<'a>) {
@@ -214,7 +210,7 @@ impl<'a> Visit<'a> for ModuleLexer<'a> {
             a: assertions,
             t: decl.import_kind.is_type(),
         });
-        walk_import_declaration(self, decl);
+        walk::walk_import_declaration(self, decl);
     }
 
     fn visit_export_named_declaration(&mut self, decl: &ExportNamedDeclaration<'a>) {
@@ -268,7 +264,7 @@ impl<'a> Visit<'a> for ModuleLexer<'a> {
                 t: decl.export_kind.is_type(),
             }
         }));
-        walk_export_named_declaration(self, decl);
+        walk::walk_export_named_declaration(self, decl);
     }
 
     // export default foo
@@ -317,7 +313,19 @@ impl<'a> Visit<'a> for ModuleLexer<'a> {
                 a: None,
                 t: decl.export_kind.is_type(),
             });
+        } else {
+            // export * from 'foo'
+            self.imports.push(ImportSpecifier {
+                n: Some(decl.source.value.clone()),
+                s: decl.source.span.start + 1, // +- 1 for removing string quotes
+                e: decl.source.span.end - 1,
+                ss: decl.span.start,
+                se: decl.span.end,
+                d: ImportType::ExportStar,
+                a: None,
+                t: decl.export_kind.is_type(),
+            });
         }
-        walk_export_all_declaration(self, decl);
+        walk::walk_export_all_declaration(self, decl);
     }
 }

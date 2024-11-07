@@ -32,7 +32,7 @@
 //! * Exponentiation operator TC39 proposal: <https://github.com/tc39/proposal-exponentiation-operator>
 //! * Exponentiation operator specification: <https://tc39.es/ecma262/#sec-exp-operator>
 
-use oxc_allocator::{CloneIn, Vec};
+use oxc_allocator::{CloneIn, Vec as ArenaVec};
 use oxc_ast::{ast::*, NONE};
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
 use oxc_span::SPAN;
@@ -149,36 +149,37 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
         // Left side of `Math.pow(pow_left, ...)`
         Expression<'a>,
         // Temporary var initializations
-        Vec<'a, Expression<'a>>,
+        ArenaVec<'a, Expression<'a>>,
     ) {
         let mut temp_var_inits = ctx.ast.vec();
 
         // Make sure side-effects of evaluating `left` only happen once
-        let reference = ctx.scoping.symbols_mut().get_reference_mut(ident.reference_id().unwrap());
-        let pow_left = if let Some(symbol_id) = reference.symbol_id() {
-            // This variable is declared in scope so evaluating it multiple times can't trigger a getter.
-            // No need for a temp var.
-            // `left **= right` is being transformed to `left = Math.pow(left, right)`,
-            // so if `left` is no longer being read from, update its `ReferenceFlags`.
-            if matches!(ctx.ancestry.parent(), Ancestor::ExpressionStatementExpression(_)) {
-                *reference.flags_mut() = ReferenceFlags::Write;
-            }
+        let reference = ctx.scoping.symbols_mut().get_reference_mut(ident.reference_id());
+        let pow_left =
+            if let Some(symbol_id) = reference.symbol_id() {
+                // This variable is declared in scope so evaluating it multiple times can't trigger a getter.
+                // No need for a temp var.
+                // `left **= right` is being transformed to `left = Math.pow(left, right)`,
+                // so if `left` is no longer being read from, update its `ReferenceFlags`.
+                if matches!(ctx.ancestry.parent(), Ancestor::ExpressionStatementExpression(_)) {
+                    *reference.flags_mut() = ReferenceFlags::Write;
+                }
 
-            ctx.ast.expression_from_identifier_reference(ctx.create_bound_reference_id(
-                SPAN,
-                ident.name.clone(),
-                symbol_id,
-                ReferenceFlags::Read,
-            ))
-        } else {
-            // Unbound reference. Could possibly trigger a getter so we need to only evaluate it once.
-            // Assign to a temp var.
-            let reference = ctx.ast.expression_from_identifier_reference(
-                ctx.create_unbound_reference_id(SPAN, ident.name.clone(), ReferenceFlags::Read),
-            );
-            let binding = self.create_temp_var(reference, &mut temp_var_inits, ctx);
-            binding.create_read_expression(ctx)
-        };
+                Expression::Identifier(ctx.ast.alloc(ctx.create_bound_reference_id(
+                    SPAN,
+                    ident.name.clone(),
+                    symbol_id,
+                    ReferenceFlags::Read,
+                )))
+            } else {
+                // Unbound reference. Could possibly trigger a getter so we need to only evaluate it once.
+                // Assign to a temp var.
+                let reference = Expression::Identifier(ctx.ast.alloc(
+                    ctx.create_unbound_reference_id(SPAN, ident.name.clone(), ReferenceFlags::Read),
+                ));
+                let binding = self.create_temp_var(reference, &mut temp_var_inits, ctx);
+                binding.create_read_expression(ctx)
+            };
 
         (pow_left, temp_var_inits)
     }
@@ -232,7 +233,7 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
         // Left side of `Math.pow(pow_left, ...)`
         Expression<'a>,
         // Temporary var initializations
-        Vec<'a, Expression<'a>>,
+        ArenaVec<'a, Expression<'a>>,
     ) {
         // Object part of 2nd member expression
         // ```
@@ -326,7 +327,7 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
         // Left side of `Math.pow(pow_left, ...)`
         Expression<'a>,
         // Temporary var initializations
-        Vec<'a, Expression<'a>>,
+        ArenaVec<'a, Expression<'a>>,
     ) {
         // Object part of 2nd member expression
         // ```
@@ -408,7 +409,7 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
         // Left side of `Math.pow(pow_left, ...)`
         Expression<'a>,
         // Temporary var initializations
-        Vec<'a, Expression<'a>>,
+        ArenaVec<'a, Expression<'a>>,
     ) {
         // Object part of 2nd member expression
         // ```
@@ -482,7 +483,7 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
     fn get_second_member_expression_object(
         &mut self,
         obj: &mut Expression<'a>,
-        temp_var_inits: &mut Vec<'a, Expression<'a>>,
+        temp_var_inits: &mut ArenaVec<'a, Expression<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         // If the object reference that we need to save is locally declared, evaluating it multiple times
@@ -491,19 +492,16 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
         match obj {
             Expression::Super(super_) => return ctx.ast.expression_super(super_.span),
             Expression::Identifier(ident) => {
-                let symbol_id =
-                    ctx.symbols().get_reference(ident.reference_id().unwrap()).symbol_id();
+                let symbol_id = ctx.symbols().get_reference(ident.reference_id()).symbol_id();
                 if let Some(symbol_id) = symbol_id {
                     // This variable is declared in scope so evaluating it multiple times can't trigger a getter.
                     // No need for a temp var.
-                    return ctx.ast.expression_from_identifier_reference(
-                        ctx.create_bound_reference_id(
-                            SPAN,
-                            ident.name.clone(),
-                            symbol_id,
-                            ReferenceFlags::Read,
-                        ),
-                    );
+                    return Expression::Identifier(ctx.ast.alloc(ctx.create_bound_reference_id(
+                        SPAN,
+                        ident.name.clone(),
+                        symbol_id,
+                        ReferenceFlags::Read,
+                    )));
                 }
                 // Unbound reference. Could possibly trigger a getter so we need to only evaluate it once.
                 // Assign to a temp var.
@@ -532,7 +530,7 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
     /// If needs temp var initializers, replace expression `expr` with `(temp1, temp2, expr)`.
     fn revise_expression(
         expr: &mut Expression<'a>,
-        mut temp_var_inits: Vec<'a, Expression<'a>>,
+        mut temp_var_inits: ArenaVec<'a, Expression<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         if !temp_var_inits.is_empty() {
@@ -551,7 +549,7 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
         let math_symbol_id = ctx.scopes().find_binding(ctx.current_scope_id(), "Math");
         let ident_math =
             ctx.create_reference_id(SPAN, Atom::from("Math"), math_symbol_id, ReferenceFlags::Read);
-        let object = ctx.ast.expression_from_identifier_reference(ident_math);
+        let object = Expression::Identifier(ctx.alloc(ident_math));
         let property = ctx.ast.identifier_name(SPAN, "pow");
         let callee =
             Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false));
@@ -566,7 +564,7 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
     fn create_temp_var(
         &mut self,
         expr: Expression<'a>,
-        temp_var_inits: &mut Vec<'a, Expression<'a>>,
+        temp_var_inits: &mut ArenaVec<'a, Expression<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> BoundIdentifier<'a> {
         let binding = ctx.generate_uid_in_current_scope_based_on_node(
@@ -575,7 +573,7 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
         );
 
         // var _name;
-        self.ctx.var_declarations.insert(&binding, None, ctx);
+        self.ctx.var_declarations.insert_var(&binding, None, ctx);
 
         // Add new reference `_name = name` to `temp_var_inits`
         temp_var_inits.push(ctx.ast.expression_assignment(

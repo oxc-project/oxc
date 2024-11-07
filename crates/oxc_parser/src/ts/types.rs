@@ -270,8 +270,8 @@ impl<'a> ParserImpl<'a> {
         let constraint = self.try_parse(Self::try_parse_constraint_of_infer_type).unwrap_or(None);
         let span = self.end_span(span);
         let ts_type_parameter =
-            self.ast.ts_type_parameter(span, name, constraint, None, false, false, false);
-        Ok(self.ast.alloc(ts_type_parameter))
+            self.ast.alloc_ts_type_parameter(span, name, constraint, None, false, false, false);
+        Ok(ts_type_parameter)
     }
 
     fn parse_postfix_type_or_higher(&mut self) -> Result<TSType<'a>> {
@@ -380,7 +380,7 @@ impl<'a> ParserImpl<'a> {
                 if self.peek_at(Kind::Is) && !self.peek_token().is_on_new_line {
                     return self.parse_this_type_predicate(this_type);
                 }
-                Ok(TSType::TSThisType(self.ast.alloc(this_type)))
+                Ok(TSType::TSThisType(self.alloc(this_type)))
             }
             Kind::Typeof => {
                 if self.peek_at(Kind::Import) {
@@ -583,7 +583,7 @@ impl<'a> ParserImpl<'a> {
         let name = self.parse_binding_identifier()?;
         self.expect(Kind::In)?;
         let constraint = self.parse_ts_type()?;
-        let type_parameter = self.ast.alloc(self.ast.ts_type_parameter(
+        let type_parameter = self.alloc(self.ast.ts_type_parameter(
             self.end_span(type_parameter_span),
             name,
             Some(constraint),
@@ -639,7 +639,7 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         self.bump_any(); // `bump `typeof`
         let entity_name = self.parse_ts_type_name()?; // TODO: parseEntityName
-        let entity_name = self.ast.ts_type_query_expr_name_type_name(entity_name);
+        let entity_name = TSTypeQueryExprName::from(entity_name);
         let type_arguments =
             if self.cur_token().is_on_new_line { None } else { self.try_parse_type_arguments()? };
         Ok(self.ast.ts_type_type_query(self.end_span(span), entity_name, type_arguments))
@@ -722,10 +722,10 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         self.bump_any(); // bump `asserts`
         let parameter_name = if self.at(Kind::This) {
-            self.ast.ts_type_predicate_name_from_ts_this_type(self.parse_this_type_node())
+            TSTypePredicateName::This(self.parse_this_type_node())
         } else {
-            let node = self.parse_identifier_name()?;
-            self.ast.ts_type_predicate_name_from_identifier_name(node)
+            let ident_name = self.parse_identifier_name()?;
+            TSTypePredicateName::Identifier(self.alloc(ident_name))
         };
         let mut type_annotation = None;
         if self.eat(Kind::Is) {
@@ -758,8 +758,8 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_type_name(&mut self) -> Result<TSTypeName<'a>> {
         let span = self.start_span();
         let ident = self.parse_identifier_name()?;
-        let ident = self.ast.identifier_reference(ident.span, ident.name);
-        let mut left = TSTypeName::IdentifierReference(self.ast.alloc(ident));
+        let ident = self.ast.alloc_identifier_reference(ident.span, ident.name);
+        let mut left = TSTypeName::IdentifierReference(ident);
         while self.eat(Kind::Dot) {
             let right = self.parse_identifier_name()?;
             left = self.ast.ts_type_name_qualified_name(self.end_span(span), left, right);
@@ -1107,7 +1107,7 @@ impl<'a> ParserImpl<'a> {
         let ty = self.parse_ts_type()?;
         if let Some(id) = type_predicate_variable {
             let type_annotation = Some(self.ast.ts_type_annotation(self.end_span(type_span), ty));
-            let parameter_name = self.ast.ts_type_predicate_name_from_identifier_name(id);
+            let parameter_name = TSTypePredicateName::Identifier(self.alloc(id));
             return Ok(self.ast.ts_type_type_predicate(
                 self.end_span(span),
                 parameter_name,
@@ -1137,8 +1137,7 @@ impl<'a> ParserImpl<'a> {
         let type_parameters = self.parse_ts_type_parameters()?;
         let (this_param, params) = self.parse_formal_parameters(FormalParameterKind::Signature)?;
         let return_type = self.parse_ts_return_type_annotation(Kind::Colon, false)?;
-        self.bump(Kind::Comma);
-        self.bump(Kind::Semicolon);
+        self.parse_type_member_semicolon();
         Ok(self.ast.ts_signature_call_signature_declaration(
             self.end_span(span),
             type_parameters,
@@ -1154,8 +1153,7 @@ impl<'a> ParserImpl<'a> {
         let (key, computed) = self.parse_property_name()?;
         let (this_param, params) = self.parse_formal_parameters(FormalParameterKind::Signature)?;
         let return_type = self.parse_ts_return_type_annotation(Kind::Colon, false)?;
-        self.bump(Kind::Comma);
-        self.bump(Kind::Semicolon);
+        self.parse_type_member_semicolon();
         Ok(self.ast.ts_signature_method_signature(
             self.end_span(span),
             key,
@@ -1175,8 +1173,7 @@ impl<'a> ParserImpl<'a> {
         let (key, computed) = self.parse_property_name()?;
         let (this_param, params) = self.parse_formal_parameters(FormalParameterKind::Signature)?;
         let return_type = self.parse_ts_return_type_annotation(Kind::Colon, false)?;
-        self.bump(Kind::Comma);
-        self.bump(Kind::Semicolon);
+        self.parse_type_member_semicolon();
         if let Some(return_type) = return_type.as_ref() {
             self.error(diagnostics::a_set_accessor_cannot_have_a_return_type_annotation(
                 return_type.span,
@@ -1214,8 +1211,7 @@ impl<'a> ParserImpl<'a> {
             else {
                 unreachable!()
             };
-            self.bump(Kind::Comma);
-            self.bump(Kind::Semicolon);
+            self.parse_type_member_semicolon();
             let call_signature = call_signature.unbox();
             Ok(self.ast.ts_signature_method_signature(
                 self.end_span(span),
@@ -1230,8 +1226,7 @@ impl<'a> ParserImpl<'a> {
             ))
         } else {
             let type_annotation = self.parse_ts_type_annotation()?;
-            self.bump(Kind::Comma);
-            self.bump(Kind::Semicolon);
+            self.parse_type_member_semicolon();
             Ok(self.ast.ts_signature_property_signature(
                 self.end_span(span),
                 computed,
@@ -1256,8 +1251,7 @@ impl<'a> ParserImpl<'a> {
         }
 
         let return_type = self.parse_ts_return_type_annotation(Kind::Colon, false)?;
-        self.bump(Kind::Comma);
-        self.bump(Kind::Semicolon);
+        self.parse_type_member_semicolon();
 
         Ok(self.ast.ts_signature_construct_signature_declaration(
             self.end_span(span),
@@ -1267,36 +1261,40 @@ impl<'a> ParserImpl<'a> {
         ))
     }
 
-    pub(crate) fn parse_ts_index_signature_member(&mut self) -> Result<TSSignature<'a>> {
-        let span = self.start_span();
-
-        let modifiers = self.parse_class_element_modifiers(false);
+    pub(crate) fn parse_index_signature_declaration(
+        &mut self,
+        span: Span,
+        modifiers: &Modifiers<'a>,
+    ) -> Result<TSIndexSignature<'a>> {
         self.verify_modifiers(
-            &modifiers,
-            ModifierFlags::READONLY,
+            modifiers,
+            ModifierFlags::READONLY | ModifierFlags::STATIC,
             diagnostics::cannot_appear_on_an_index_signature,
         );
-        let readonly = modifiers.contains(ModifierKind::Readonly);
-
         self.bump(Kind::LBrack);
-        let index_name = self.parse_ts_index_signature_name()?;
-        let mut parameters = self.ast.vec();
-        parameters.push(index_name);
+        let parameters = self.ast.vec1(self.parse_ts_index_signature_name()?);
         self.expect(Kind::RBrack)?;
+        let Some(type_annotation) = self.parse_ts_type_annotation()? else {
+            return Err(self.unexpected());
+        };
+        self.parse_type_member_semicolon();
+        Ok(self.ast.ts_index_signature(
+            self.end_span(span),
+            parameters,
+            type_annotation,
+            modifiers.contains(ModifierKind::Readonly),
+            modifiers.contains(ModifierKind::Static),
+        ))
+    }
 
-        let type_annotation = self.parse_ts_type_annotation()?;
-        if let Some(type_annotation) = type_annotation {
-            self.bump(Kind::Comma);
-            self.bump(Kind::Semicolon);
-            Ok(self.ast.ts_signature_index_signature(
-                self.end_span(span),
-                parameters,
-                type_annotation,
-                readonly,
-            ))
-        } else {
-            Err(self.unexpected())
+    fn parse_type_member_semicolon(&mut self) {
+        // We allow type members to be separated by commas or (possibly ASI) semicolons.
+        // First check if it was a comma.  If so, we're done with the member.
+        if self.eat(Kind::Comma) {
+            return;
         }
+        // Didn't have a comma.  We must have a (possible ASI) semicolon.
+        self.bump(Kind::Semicolon);
     }
 
     fn parse_ts_index_signature_name(&mut self) -> Result<TSIndexSignatureName<'a>> {

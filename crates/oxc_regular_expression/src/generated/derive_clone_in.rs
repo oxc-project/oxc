@@ -5,7 +5,6 @@
 
 use oxc_allocator::{Allocator, CloneIn};
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::*;
 
 impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for Pattern<'old_alloc> {

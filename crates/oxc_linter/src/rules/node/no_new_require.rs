@@ -37,7 +37,8 @@ declare_oxc_lint!(
     /// var appHeader = new AppHeader();
     /// ```
     NoNewRequire,
-    restriction);
+    restriction
+);
 
 impl Rule for NoNewRequire {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

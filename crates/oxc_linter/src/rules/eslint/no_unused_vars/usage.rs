@@ -1,7 +1,6 @@
 //! This module contains logic for checking if any [`Reference`]s to a
 //! [`Symbol`] are considered a usage.
 
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind};
 use oxc_semantic::{AstNode, NodeId, Reference, ScopeId, SymbolFlags, SymbolId};
 use oxc_span::{GetSpan, Span};
@@ -559,6 +558,23 @@ impl<'s, 'a> Symbol<'s, 'a> {
                     if cond.test.span().contains_inclusive(ref_span()) {
                         return false;
                     }
+                }
+                // x && (a = x)
+                (AstKind::LogicalExpression(expr), _) => {
+                    if expr.left.span().contains_inclusive(ref_span())
+                        && expr.right.get_inner_expression().is_assignment()
+                    {
+                        return false;
+                    }
+                }
+                // x instanceof Foo && (a = x)
+                (AstKind::BinaryExpression(expr), _) if expr.operator.is_relational() => {
+                    if expr.left.span().contains_inclusive(ref_span())
+                        && expr.right.get_inner_expression().is_assignment()
+                    {
+                        return false;
+                    }
+                    continue;
                 }
                 (parent, AstKind::SequenceExpression(seq)) => {
                     debug_assert!(

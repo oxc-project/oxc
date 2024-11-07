@@ -5,19 +5,14 @@
 
 use oxc_allocator::{Allocator, CloneIn};
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::comment::*;
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::js::*;
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::jsx::*;
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::literal::*;
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::ts::*;
 
 impl<'alloc> CloneIn<'alloc> for BooleanLiteral {
@@ -65,8 +60,8 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for RegExpLiteral<'old_alloc> {
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         RegExpLiteral {
             span: CloneIn::clone_in(&self.span, allocator),
-            value: CloneIn::clone_in(&self.value, allocator),
             regex: CloneIn::clone_in(&self.regex, allocator),
+            raw: CloneIn::clone_in(&self.raw, allocator),
         }
     }
 }
@@ -89,13 +84,6 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for RegExpPattern<'old_alloc> {
             Self::Invalid(it) => RegExpPattern::Invalid(CloneIn::clone_in(it, allocator)),
             Self::Pattern(it) => RegExpPattern::Pattern(CloneIn::clone_in(it, allocator)),
         }
-    }
-}
-
-impl<'alloc> CloneIn<'alloc> for EmptyObject {
-    type Cloned = EmptyObject;
-    fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
-        EmptyObject
     }
 }
 
@@ -3374,6 +3362,7 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for TSIndexSignature<'old_alloc
             parameters: CloneIn::clone_in(&self.parameters, allocator),
             type_annotation: CloneIn::clone_in(&self.type_annotation, allocator),
             readonly: CloneIn::clone_in(&self.readonly, allocator),
+            r#static: CloneIn::clone_in(&self.r#static, allocator),
         }
     }
 }
@@ -4261,9 +4250,9 @@ impl<'alloc> CloneIn<'alloc> for Comment {
     fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
         Comment {
             span: CloneIn::clone_in(&self.span, allocator),
+            attached_to: CloneIn::clone_in(&self.attached_to, allocator),
             kind: CloneIn::clone_in(&self.kind, allocator),
             position: CloneIn::clone_in(&self.position, allocator),
-            attached_to: CloneIn::clone_in(&self.attached_to, allocator),
             preceded_by_newline: CloneIn::clone_in(&self.preceded_by_newline, allocator),
             followed_by_newline: CloneIn::clone_in(&self.followed_by_newline, allocator),
         }

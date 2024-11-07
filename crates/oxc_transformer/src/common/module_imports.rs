@@ -211,14 +211,13 @@ impl<'a> ModuleImportsStore<'a> {
             ),
         }));
 
-        let import_stmt = ctx.ast.module_declaration_import_declaration(
+        Statement::from(ctx.ast.module_declaration_import_declaration(
             SPAN,
             Some(specifiers),
             ctx.ast.string_literal(SPAN, source),
             NONE,
             ImportOrExportKind::Value,
-        );
-        ctx.ast.statement_module_declaration(import_stmt)
+        ))
     }
 
     fn get_require(
@@ -234,7 +233,7 @@ impl<'a> ModuleImportsStore<'a> {
             require_symbol_id,
             ReferenceFlags::read(),
         );
-        let callee = ctx.ast.expression_from_identifier_reference(ident);
+        let callee = Expression::Identifier(ctx.alloc(ident));
 
         let args = {
             let arg = Argument::from(ctx.ast.expression_string_literal(SPAN, source));
@@ -247,7 +246,6 @@ impl<'a> ModuleImportsStore<'a> {
             let decl = ctx.ast.variable_declarator(SPAN, var_kind, id, Some(init), false);
             ctx.ast.vec1(decl)
         };
-        let var_decl = ctx.ast.declaration_variable(SPAN, var_kind, decl, false);
-        ctx.ast.statement_declaration(var_decl)
+        Statement::from(ctx.ast.declaration_variable(SPAN, var_kind, decl, false))
     }
 }

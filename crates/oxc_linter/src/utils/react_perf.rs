@@ -94,9 +94,7 @@ where
         let Expression::Identifier(ident) = expr else {
             return;
         };
-        let Some(symbol_id) =
-            ident.reference_id().and_then(|id| ctx.symbols().get_reference(id).symbol_id())
-        else {
+        let Some(symbol_id) = ctx.symbols().get_reference(ident.reference_id()).symbol_id() else {
             return;
         };
         // Symbols declared at the root scope won't (or, at least, shouldn't) be

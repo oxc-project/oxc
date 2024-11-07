@@ -45,7 +45,6 @@ pub enum Language {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[generate_derive(ESTree)]
-#[estree(rename_all = "camelCase")]
 pub enum ModuleKind {
     /// Regular JS script or CommonJS file
     Script = 0,
@@ -66,7 +65,6 @@ pub enum ModuleKind {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[generate_derive(ESTree)]
-#[estree(rename_all = "camelCase")]
 pub enum LanguageVariant {
     /// Standard JavaScript or TypeScript without any language extensions. Stage
     /// 3 proposals do not count as language extensions.

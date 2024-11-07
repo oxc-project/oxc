@@ -303,7 +303,7 @@ pub fn is_equality_matcher(matcher: &KnownMemberExpressionProperty) -> bool {
 
 #[cfg(test)]
 mod test {
-    use std::rc::Rc;
+    use std::{rc::Rc, sync::Arc};
 
     use oxc_allocator::Allocator;
     use oxc_parser::Parser;
@@ -322,8 +322,13 @@ mod test {
         let semantic_ret = Rc::new(semantic_ret);
 
         let build_ctx = |path: &'static str| {
-            Rc::new(ContextHost::new(path, Rc::clone(&semantic_ret), LintOptions::default()))
-                .spawn_for_test()
+            Rc::new(ContextHost::new(
+                path,
+                Rc::clone(&semantic_ret),
+                LintOptions::default(),
+                Arc::default(),
+            ))
+            .spawn_for_test()
         };
 
         let ctx = build_ctx("foo.js");

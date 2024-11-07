@@ -2,46 +2,40 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::Type;
 
-use super::define_generator;
 use crate::{
-    codegen::{generated_header, LateCtx},
-    output,
-    schema::{FieldDef, ToType, TypeDef},
+    output::{output_path, Output},
+    schema::{FieldDef, Schema, ToType, TypeDef},
     util::ToIdent,
-    Generator, GeneratorOutput,
+    Generator,
 };
 
-define_generator! {
-    pub struct AssertLayouts;
-}
+use super::define_generator;
+
+pub struct AssertLayouts;
+
+define_generator!(AssertLayouts);
 
 impl Generator for AssertLayouts {
-    fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
-        let (assertions_64, assertions_32) = ctx
-            .schema()
-            .into_iter()
+    fn generate(&mut self, schema: &Schema) -> Output {
+        let (assertions_64, assertions_32) = schema
+            .defs
+            .iter()
             .map(|def| {
                 let typ = def.to_type_elide();
                 assert_type(&typ, def)
             })
             .collect::<(Vec<TokenStream>, Vec<TokenStream>)>();
 
-        let header = generated_header!();
-
-        GeneratorOutput::Rust {
-            path: output(crate::AST_CRATE, "assert_layouts.rs"),
+        Output::Rust {
+            path: output_path(crate::AST_CRATE, "assert_layouts.rs"),
             tokens: quote! {
-                #header
-
                 use std::mem::{align_of, offset_of, size_of};
 
                 ///@@line_break
-                #[allow(clippy::wildcard_imports)]
-                use crate::ast::*;
+                use oxc_regular_expression::ast::*;
 
                 ///@@line_break
-                #[allow(clippy::wildcard_imports)]
-                use oxc_regular_expression::ast::*;
+                use crate::ast::*;
 
                 ///@@line_break
                 #[cfg(target_pointer_width = "64")]

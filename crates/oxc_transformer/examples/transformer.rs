@@ -1,26 +1,27 @@
 #![allow(clippy::print_stdout)]
-use std::{env, path::Path};
+use std::{path::Path, str::FromStr};
 
 use oxc_allocator::Allocator;
 use oxc_codegen::CodeGenerator;
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
-use oxc_transformer::{EnvOptions, Targets, TransformOptions, Transformer};
+use oxc_transformer::{ESTarget, EnvOptions, TransformOptions, Transformer};
 use pico_args::Arguments;
 
 // Instruction:
-// create a `test.tsx`,
-// run `cargo run -p oxc_transformer --example transformer`
-// or `just watch "run -p oxc_transformer --example transformer"`
+// create a `test.js`,
+// run `just example transformer` or `just watch-example transformer`
 
 fn main() {
     let mut args = Arguments::from_env();
-    let name = env::args().nth(1).unwrap_or_else(|| "test.js".to_string());
     let targets: Option<String> = args.opt_value_from_str("--targets").unwrap_or(None);
+    let target: Option<String> = args.opt_value_from_str("--target").unwrap_or(None);
+    let name = args.free_from_str().unwrap_or_else(|_| "test.js".to_string());
 
     let path = Path::new(&name);
-    let source_text = std::fs::read_to_string(path).expect("{name} not found");
+    let source_text =
+        std::fs::read_to_string(path).unwrap_or_else(|err| panic!("{name} not found.\n{err}"));
     let allocator = Allocator::default();
     let source_type = SourceType::from_path(path).unwrap();
 
@@ -54,12 +55,13 @@ fn main() {
 
     let (symbols, scopes) = ret.semantic.into_symbol_table_and_scope_tree();
 
-    let transform_options = if let Some(targets) = &targets {
-        TransformOptions::from_preset_env(&EnvOptions {
-            targets: Targets::from_query(targets),
-            ..EnvOptions::default()
-        })
-        .unwrap()
+    let transform_options = if let Some(query) = &targets {
+        TransformOptions {
+            env: EnvOptions::from_browserslist_query(query).unwrap(),
+            ..TransformOptions::default()
+        }
+    } else if let Some(target) = &target {
+        TransformOptions::from(ESTarget::from_str(target).unwrap())
     } else {
         TransformOptions::enable_all()
     };

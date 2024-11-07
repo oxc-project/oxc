@@ -48,8 +48,6 @@
 //! service.run();
 //! ```
 
-mod graphic_reporter;
-mod graphical_theme;
 mod reporter;
 mod service;
 
@@ -59,11 +57,7 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-pub use crate::{
-    graphic_reporter::GraphicalReportHandler,
-    graphical_theme::GraphicalTheme,
-    service::{DiagnosticSender, DiagnosticService, DiagnosticTuple},
-};
+pub use crate::service::{DiagnosticSender, DiagnosticService, DiagnosticTuple};
 
 pub type Error = miette::Error;
 pub type Severity = miette::Severity;
@@ -71,12 +65,12 @@ pub type Severity = miette::Severity;
 pub type Result<T> = std::result::Result<T, OxcDiagnostic>;
 
 use miette::{Diagnostic, SourceCode};
-pub use miette::{LabeledSpan, NamedSource};
+pub use miette::{GraphicalReportHandler, GraphicalTheme, LabeledSpan, NamedSource};
 
 /// Describes an error or warning that occurred.
 ///
 /// Used by all oxc tools.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 #[must_use]
 pub struct OxcDiagnostic {
     // `Box` the data to make `OxcDiagnostic` 8 bytes so that `Result` is small.
@@ -98,7 +92,7 @@ impl DerefMut for OxcDiagnostic {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Eq, PartialEq)]
 pub struct OxcCode {
     pub scope: Option<Cow<'static, str>>,
     pub number: Option<Cow<'static, str>>,
@@ -120,7 +114,7 @@ impl fmt::Display for OxcCode {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct OxcDiagnosticInner {
     pub message: Cow<'static, str>,
     pub labels: Option<Vec<LabeledSpan>>,

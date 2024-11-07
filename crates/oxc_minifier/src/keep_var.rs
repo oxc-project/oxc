@@ -1,3 +1,4 @@
+use oxc_allocator::Box as ArenaBox;
 use oxc_ast::{ast::*, AstBuilder, Visit, NONE};
 use oxc_ecmascript::BoundNames;
 use oxc_span::{Atom, Span, SPAN};
@@ -60,7 +61,7 @@ impl<'a> KeepVar<'a> {
         self.all_hoisted
     }
 
-    pub fn get_variable_declaration(self) -> Option<VariableDeclaration<'a>> {
+    pub fn get_variable_declaration(self) -> Option<ArenaBox<'a, VariableDeclaration<'a>>> {
         if self.vars.is_empty() {
             return None;
         }
@@ -72,14 +73,11 @@ impl<'a> KeepVar<'a> {
             self.ast.variable_declarator(span, kind, id, None, false)
         }));
 
-        let decl = self.ast.variable_declaration(SPAN, kind, decls, false);
+        let decl = self.ast.alloc_variable_declaration(SPAN, kind, decls, false);
         Some(decl)
     }
 
     pub fn get_variable_declaration_statement(self) -> Option<Statement<'a>> {
-        let stmt = self.ast.statement_declaration(
-            self.ast.declaration_from_variable(self.get_variable_declaration()?),
-        );
-        Some(stmt)
+        self.get_variable_declaration().map(Statement::VariableDeclaration)
     }
 }

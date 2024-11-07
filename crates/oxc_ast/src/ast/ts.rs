@@ -2,6 +2,7 @@
 //!
 //! - [AST Spec](https://github.com/typescript-eslint/typescript-eslint/tree/main/packages/ast-spec)
 //! - [Archived TypeScript spec](https://github.com/microsoft/TypeScript/blob/3c99d50da5a579d9fa92d02664b1b66d4ff55944/doc/spec-ARCHIVED.md)
+#![allow(missing_docs)] // FIXME
 
 // NB: `#[span]`, `#[scope(...)]`,`#[visit(...)]` and `#[generate_derive(...)]` do NOT do anything to the code.
 // They are purely markers for codegen used in `tasks/ast_tools` and `crates/oxc_traverse/scripts`. See docs in those crates.
@@ -31,8 +32,8 @@ use super::{inherit_variants, js::*, jsx::*, literal::*};
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSThisParameter<'a> {
-    #[estree(flatten)]
     pub span: Span,
+    #[estree(skip)]
     pub this_span: Span,
     /// Type type the `this` keyword will have in the function
     pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
@@ -63,7 +64,6 @@ pub struct TSThisParameter<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSEnumDeclaration<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub id: BindingIdentifier<'a>,
     #[scope(enter_before)]
@@ -97,7 +97,6 @@ pub struct TSEnumDeclaration<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSEnumMember<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub id: TSEnumMemberName<'a>,
     pub initializer: Option<Expression<'a>>,
@@ -113,7 +112,6 @@ inherit_variants! {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(untagged)]
 pub enum TSEnumMemberName<'a> {
     StaticIdentifier(Box<'a, IdentifierName<'a>>) = 64,
     StaticStringLiteral(Box<'a, StringLiteral<'a>>) = 65,
@@ -142,7 +140,6 @@ pub enum TSEnumMemberName<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSTypeAnnotation<'a> {
-    #[estree(flatten)]
     /// starts at the `:` token and ends at the end of the type annotation
     pub span: Span,
     /// The actual type in the annotation
@@ -167,7 +164,6 @@ pub struct TSTypeAnnotation<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSLiteralType<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub literal: TSLiteral<'a>,
 }
@@ -176,7 +172,6 @@ pub struct TSLiteralType<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(untagged)]
 pub enum TSLiteral<'a> {
     BooleanLiteral(Box<'a, BooleanLiteral>) = 0,
     NullLiteral(Box<'a, NullLiteral>) = 1,
@@ -202,7 +197,6 @@ pub enum TSLiteral<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(untagged)]
 pub enum TSType<'a> {
     // Keyword
     TSAnyKeyword(Box<'a, TSAnyKeyword>) = 0,
@@ -311,7 +305,6 @@ pub use match_ts_type;
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSConditionalType<'a> {
-    #[estree(flatten)]
     pub span: Span,
     /// The type before `extends` in the test expression.
     pub check_type: TSType<'a>,
@@ -341,7 +334,6 @@ pub struct TSConditionalType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSUnionType<'a> {
-    #[estree(flatten)]
     pub span: Span,
     /// The types in the union.
     pub types: Vec<'a, TSType<'a>>,
@@ -364,7 +356,6 @@ pub struct TSUnionType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSIntersectionType<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub types: Vec<'a, TSType<'a>>,
 }
@@ -382,7 +373,6 @@ pub struct TSIntersectionType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSParenthesizedType<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub type_annotation: TSType<'a>,
 }
@@ -400,7 +390,6 @@ pub struct TSParenthesizedType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSTypeOperator<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub operator: TSTypeOperatorOperator,
     /// The type being operated on
@@ -411,7 +400,6 @@ pub struct TSTypeOperator<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[estree(rename_all = "camelCase")]
 pub enum TSTypeOperatorOperator {
     Keyof = 0,
     Unique = 1,
@@ -433,7 +421,6 @@ pub enum TSTypeOperatorOperator {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSArrayType<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub element_type: TSType<'a>,
 }
@@ -453,7 +440,6 @@ pub struct TSArrayType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSIndexedAccessType<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub object_type: TSType<'a>,
     pub index_type: TSType<'a>,
@@ -472,7 +458,6 @@ pub struct TSIndexedAccessType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSTupleType<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub element_types: Vec<'a, TSTupleElement<'a>>,
 }
@@ -491,7 +476,6 @@ pub struct TSTupleType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSNamedTupleMember<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub element_type: TSTupleElement<'a>,
     pub label: IdentifierName<'a>,
@@ -511,7 +495,6 @@ pub struct TSNamedTupleMember<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSOptionalType<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub type_annotation: TSType<'a>,
 }
@@ -528,7 +511,6 @@ pub struct TSOptionalType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSRestType<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub type_annotation: TSType<'a>,
 }
@@ -544,7 +526,6 @@ inherit_variants! {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(untagged)]
 pub enum TSTupleElement<'a> {
     // Discriminants start at 64, so that `TSTupleElement::is_ts_type` is a single
     // bitwise AND operation on the discriminant (`discriminant & 63 != 0`).
@@ -568,7 +549,6 @@ pub enum TSTupleElement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSAnyKeyword {
-    #[estree(flatten)]
     pub span: Span,
 }
 
@@ -585,7 +565,6 @@ pub struct TSAnyKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSStringKeyword {
-    #[estree(flatten)]
     pub span: Span,
 }
 
@@ -602,7 +581,6 @@ pub struct TSStringKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSBooleanKeyword {
-    #[estree(flatten)]
     pub span: Span,
 }
 
@@ -619,7 +597,6 @@ pub struct TSBooleanKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSNumberKeyword {
-    #[estree(flatten)]
     pub span: Span,
 }
 
@@ -637,7 +614,6 @@ pub struct TSNumberKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSNeverKeyword {
-    #[estree(flatten)]
     pub span: Span,
 }
 
@@ -655,7 +631,6 @@ pub struct TSNeverKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSIntrinsicKeyword {
-    #[estree(flatten)]
     pub span: Span,
 }
 
@@ -674,7 +649,6 @@ pub struct TSIntrinsicKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSUnknownKeyword {
-    #[estree(flatten)]
     pub span: Span,
 }
 
@@ -692,7 +666,6 @@ pub struct TSUnknownKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSNullKeyword {
-    #[estree(flatten)]
     pub span: Span,
 }
 
@@ -712,7 +685,6 @@ pub struct TSNullKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSUndefinedKeyword {
-    #[estree(flatten)]
     pub span: Span,
 }
 
@@ -720,7 +692,6 @@ pub struct TSUndefinedKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSVoidKeyword {
-    #[estree(flatten)]
     pub span: Span,
 }
 
@@ -728,7 +699,6 @@ pub struct TSVoidKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSSymbolKeyword {
-    #[estree(flatten)]
     pub span: Span,
 }
 
@@ -736,7 +706,6 @@ pub struct TSSymbolKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSThisType {
-    #[estree(flatten)]
     pub span: Span,
 }
 
@@ -744,7 +713,6 @@ pub struct TSThisType {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSObjectKeyword {
-    #[estree(flatten)]
     pub span: Span,
 }
 
@@ -752,7 +720,6 @@ pub struct TSObjectKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSBigIntKeyword {
-    #[estree(flatten)]
     pub span: Span,
 }
 
@@ -768,7 +735,6 @@ pub struct TSBigIntKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSTypeReference<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub type_name: TSTypeName<'a>,
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
@@ -780,7 +746,6 @@ pub struct TSTypeReference<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(untagged)]
 pub enum TSTypeName<'a> {
     IdentifierReference(Box<'a, IdentifierReference<'a>>) = 0,
     QualifiedName(Box<'a, TSQualifiedName<'a>>) = 1,
@@ -807,7 +772,6 @@ pub use match_ts_type_name;
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSQualifiedName<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub left: TSTypeName<'a>,
     pub right: IdentifierName<'a>,
@@ -817,7 +781,6 @@ pub struct TSQualifiedName<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSTypeParameterInstantiation<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub params: Vec<'a, TSType<'a>>,
 }
@@ -843,7 +806,6 @@ pub struct TSTypeParameterInstantiation<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSTypeParameter<'a> {
-    #[estree(flatten)]
     pub span: Span,
     /// The name of the parameter, e.g. `T` in `type Foo<T> = ...`.
     pub name: BindingIdentifier<'a>,
@@ -863,7 +825,6 @@ pub struct TSTypeParameter<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSTypeParameterDeclaration<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub params: Vec<'a, TSTypeParameter<'a>>,
 }
@@ -881,7 +842,6 @@ pub struct TSTypeParameterDeclaration<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSTypeAliasDeclaration<'a> {
-    #[estree(flatten)]
     pub span: Span,
     /// Type alias's identifier, e.g. `Foo` in `type Foo = number`.
     pub id: BindingIdentifier<'a>,
@@ -897,7 +857,6 @@ pub struct TSTypeAliasDeclaration<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[estree(rename_all = "camelCase")]
 pub enum TSAccessibility {
     Private = 0,
     Protected = 1,
@@ -918,7 +877,6 @@ pub enum TSAccessibility {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSClassImplements<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub expression: TSTypeName<'a>,
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
@@ -944,7 +902,6 @@ pub struct TSClassImplements<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSInterfaceDeclaration<'a> {
-    #[estree(flatten)]
     pub span: Span,
     /// The identifier (name) of the interface.
     pub id: BindingIdentifier<'a>,
@@ -966,7 +923,6 @@ pub struct TSInterfaceDeclaration<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSInterfaceBody<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub body: Vec<'a, TSSignature<'a>>,
 }
@@ -990,7 +946,6 @@ pub struct TSInterfaceBody<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSPropertySignature<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub computed: bool,
     pub optional: bool,
@@ -1002,7 +957,6 @@ pub struct TSPropertySignature<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(untagged)]
 pub enum TSSignature<'a> {
     TSIndexSignature(Box<'a, TSIndexSignature<'a>>) = 0,
     TSPropertySignature(Box<'a, TSPropertySignature<'a>>) = 1,
@@ -1026,18 +980,17 @@ pub enum TSSignature<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSIndexSignature<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub parameters: Vec<'a, TSIndexSignatureName<'a>>,
     pub type_annotation: Box<'a, TSTypeAnnotation<'a>>,
     pub readonly: bool,
+    pub r#static: bool,
 }
 
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSCallSignatureDeclaration<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub this_param: Option<TSThisParameter<'a>>,
@@ -1048,7 +1001,6 @@ pub struct TSCallSignatureDeclaration<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[estree(rename_all = "camelCase")]
 pub enum TSMethodSignatureKind {
     Method = 0,
     Get = 1,
@@ -1071,7 +1023,6 @@ pub enum TSMethodSignatureKind {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSMethodSignature<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub key: PropertyKey<'a>,
     pub computed: bool,
@@ -1092,7 +1043,6 @@ pub struct TSMethodSignature<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSConstructSignatureDeclaration<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub params: Box<'a, FormalParameters<'a>>,
@@ -1107,7 +1057,6 @@ pub struct TSConstructSignatureDeclaration<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 #[estree(type = "Identifier")]
 pub struct TSIndexSignatureName<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub name: Atom<'a>,
     pub type_annotation: Box<'a, TSTypeAnnotation<'a>>,
@@ -1117,7 +1066,6 @@ pub struct TSIndexSignatureName<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSInterfaceHeritage<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub expression: Expression<'a>,
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
@@ -1147,7 +1095,6 @@ pub struct TSInterfaceHeritage<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSTypePredicate<'a> {
-    #[estree(flatten)]
     pub span: Span,
     /// The identifier the predicate operates on
     pub parameter_name: TSTypePredicateName<'a>,
@@ -1164,7 +1111,6 @@ pub struct TSTypePredicate<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(untagged)]
 pub enum TSTypePredicateName<'a> {
     Identifier(Box<'a, IdentifierName<'a>>) = 0,
     This(TSThisType) = 1,
@@ -1204,7 +1150,6 @@ pub enum TSTypePredicateName<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSModuleDeclaration<'a> {
-    #[estree(flatten)]
     pub span: Span,
     /// The name of the module/namespace being declared.
     ///
@@ -1235,7 +1180,6 @@ pub struct TSModuleDeclaration<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[estree(rename_all = "camelCase")]
 pub enum TSModuleDeclarationKind {
     /// `declare global {}`
     Global = 0,
@@ -1268,7 +1212,6 @@ pub enum TSModuleDeclarationKind {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(untagged)]
 pub enum TSModuleDeclarationName<'a> {
     Identifier(BindingIdentifier<'a>) = 0,
     StringLiteral(StringLiteral<'a>) = 1,
@@ -1277,7 +1220,6 @@ pub enum TSModuleDeclarationName<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(untagged)]
 pub enum TSModuleDeclarationBody<'a> {
     TSModuleDeclaration(Box<'a, TSModuleDeclaration<'a>>) = 0,
     TSModuleBlock(Box<'a, TSModuleBlock<'a>>) = 1,
@@ -1289,7 +1231,6 @@ pub enum TSModuleDeclarationBody<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 #[estree(custom_serialize)]
 pub struct TSModuleBlock<'a> {
-    #[estree(flatten)]
     pub span: Span,
     #[estree(skip)]
     pub directives: Vec<'a, Directive<'a>>,
@@ -1300,7 +1241,6 @@ pub struct TSModuleBlock<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSTypeLiteral<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub members: Vec<'a, TSSignature<'a>>,
 }
@@ -1322,7 +1262,6 @@ pub struct TSTypeLiteral<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSInferType<'a> {
-    #[estree(flatten)]
     pub span: Span,
     /// The type bound when the
     pub type_parameter: Box<'a, TSTypeParameter<'a>>,
@@ -1341,7 +1280,6 @@ pub struct TSInferType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSTypeQuery<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub expr_name: TSTypeQueryExprName<'a>,
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
@@ -1356,7 +1294,6 @@ inherit_variants! {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(untagged)]
 pub enum TSTypeQueryExprName<'a> {
     TSImportType(Box<'a, TSImportType<'a>>) = 2,
     // `TSTypeName` variants added here by `inherit_variants!` macro
@@ -1368,7 +1305,6 @@ pub enum TSTypeQueryExprName<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSImportType<'a> {
-    #[estree(flatten)]
     pub span: Span,
     /// `true` for `typeof import("foo")`
     pub is_type_of: bool,
@@ -1382,7 +1318,6 @@ pub struct TSImportType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSImportAttributes<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub attributes_keyword: IdentifierName<'a>, // `with` or `assert`
     pub elements: Vec<'a, TSImportAttribute<'a>>,
@@ -1392,7 +1327,6 @@ pub struct TSImportAttributes<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSImportAttribute<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub name: TSImportAttributeName<'a>,
     pub value: Expression<'a>,
@@ -1401,7 +1335,6 @@ pub struct TSImportAttribute<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(untagged)]
 pub enum TSImportAttributeName<'a> {
     Identifier(IdentifierName<'a>) = 0,
     StringLiteral(StringLiteral<'a>) = 1,
@@ -1419,7 +1352,6 @@ pub enum TSImportAttributeName<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSFunctionType<'a> {
-    #[estree(flatten)]
     pub span: Span,
     /// Generic type parameters
     ///
@@ -1449,7 +1381,6 @@ pub struct TSFunctionType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSConstructorType<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub r#abstract: bool,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
@@ -1483,7 +1414,6 @@ pub struct TSConstructorType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSMappedType<'a> {
-    #[estree(flatten)]
     pub span: Span,
     /// Key type parameter, e.g. `P` in `[P in keyof T]`.
     pub type_parameter: Box<'a, TSTypeParameter<'a>>,
@@ -1521,7 +1451,6 @@ pub struct TSMappedType<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[estree(rename_all = "camelCase")]
 pub enum TSMappedTypeModifierOperator {
     /// e.g. `?` in `{ [P in K]?: T }`
     True = 0,
@@ -1550,7 +1479,6 @@ pub enum TSMappedTypeModifierOperator {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSTemplateLiteralType<'a> {
-    #[estree(flatten)]
     pub span: Span,
     /// The string parts of the template literal.
     pub quasis: Vec<'a, TemplateElement<'a>>,
@@ -1562,7 +1490,6 @@ pub struct TSTemplateLiteralType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSAsExpression<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub expression: Expression<'a>,
     pub type_annotation: TSType<'a>,
@@ -1584,7 +1511,6 @@ pub struct TSAsExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSSatisfiesExpression<'a> {
-    #[estree(flatten)]
     pub span: Span,
     /// The value expression being constrained.
     pub expression: Expression<'a>,
@@ -1596,7 +1522,6 @@ pub struct TSSatisfiesExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSTypeAssertion<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub expression: Expression<'a>,
     pub type_annotation: TSType<'a>,
@@ -1606,7 +1531,6 @@ pub struct TSTypeAssertion<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSImportEqualsDeclaration<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub id: BindingIdentifier<'a>,
     pub module_reference: TSModuleReference<'a>,
@@ -1622,7 +1546,6 @@ inherit_variants! {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(untagged)]
 pub enum TSModuleReference<'a> {
     ExternalModuleReference(Box<'a, TSExternalModuleReference<'a>>) = 2,
     // `TSTypeName` variants added here by `inherit_variants!` macro
@@ -1634,7 +1557,6 @@ pub enum TSModuleReference<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSExternalModuleReference<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub expression: StringLiteral<'a>,
 }
@@ -1643,7 +1565,6 @@ pub struct TSExternalModuleReference<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSNonNullExpression<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub expression: Expression<'a>,
 }
@@ -1676,7 +1597,6 @@ pub struct TSNonNullExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct Decorator<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub expression: Expression<'a>,
 }
@@ -1688,7 +1608,6 @@ pub struct Decorator<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSExportAssignment<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub expression: Expression<'a>,
 }
@@ -1700,7 +1619,6 @@ pub struct TSExportAssignment<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSNamespaceExportDeclaration<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub id: IdentifierName<'a>,
 }
@@ -1709,7 +1627,6 @@ pub struct TSNamespaceExportDeclaration<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct TSInstantiationExpression<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub expression: Expression<'a>,
     pub type_parameters: Box<'a, TSTypeParameterInstantiation<'a>>,
@@ -1719,7 +1636,6 @@ pub struct TSInstantiationExpression<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[estree(rename_all = "camelCase")]
 pub enum ImportOrExportKind {
     /// `import { foo } from './foo'`;
     Value = 0,
@@ -1734,7 +1650,6 @@ pub enum ImportOrExportKind {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct JSDocNullableType<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub type_annotation: TSType<'a>,
     /// Was `?` after the type annotation?
@@ -1746,7 +1661,6 @@ pub struct JSDocNullableType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct JSDocNonNullableType<'a> {
-    #[estree(flatten)]
     pub span: Span,
     pub type_annotation: TSType<'a>,
     pub postfix: bool,
@@ -1756,6 +1670,5 @@ pub struct JSDocNonNullableType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct JSDocUnknownType {
-    #[estree(flatten)]
     pub span: Span,
 }

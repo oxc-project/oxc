@@ -41,13 +41,11 @@ impl TriviaBuilder {
     }
 
     pub fn add_line_comment(&mut self, start: u32, end: u32) {
-        // skip leading `//`
-        self.add_comment(Comment::new(start + 2, end, CommentKind::Line));
+        self.add_comment(Comment::new(start, end, CommentKind::Line));
     }
 
     pub fn add_block_comment(&mut self, start: u32, end: u32) {
-        // skip leading `/*` and trailing `*/`
-        self.add_comment(Comment::new(start + 2, end - 2, CommentKind::Block));
+        self.add_comment(Comment::new(start, end, CommentKind::Block));
     }
 
     // For block comments only. This function is not called after line comments because the lexer skips
@@ -157,7 +155,7 @@ mod test {
         let comments = get_comments(source_text);
         let expected = [
             Comment {
-                span: Span::new(11, 22),
+                span: Span::new(9, 24),
                 kind: CommentKind::Block,
                 position: CommentPosition::Leading,
                 attached_to: 70,
@@ -165,7 +163,7 @@ mod test {
                 followed_by_newline: true,
             },
             Comment {
-                span: Span::new(35, 45),
+                span: Span::new(33, 45),
                 kind: CommentKind::Line,
                 position: CommentPosition::Leading,
                 attached_to: 70,
@@ -173,7 +171,7 @@ mod test {
                 followed_by_newline: true,
             },
             Comment {
-                span: Span::new(56, 67),
+                span: Span::new(54, 69),
                 kind: CommentKind::Block,
                 position: CommentPosition::Leading,
                 attached_to: 70,
@@ -181,7 +179,7 @@ mod test {
                 followed_by_newline: false,
             },
             Comment {
-                span: Span::new(78, 90),
+                span: Span::new(76, 92),
                 kind: CommentKind::Block,
                 position: CommentPosition::Trailing,
                 attached_to: 0,
@@ -189,7 +187,7 @@ mod test {
                 followed_by_newline: false,
             },
             Comment {
-                span: Span::new(95, 106),
+                span: Span::new(93, 106),
                 kind: CommentKind::Line,
                 position: CommentPosition::Trailing,
                 attached_to: 0,
@@ -197,7 +195,7 @@ mod test {
                 followed_by_newline: true,
             },
             Comment {
-                span: Span::new(117, 138),
+                span: Span::new(115, 138),
                 kind: CommentKind::Line,
                 position: CommentPosition::Leading,
                 attached_to: 147,
@@ -208,7 +206,7 @@ mod test {
 
         assert_eq!(comments.len(), expected.len());
         for (comment, expected) in comments.iter().copied().zip(expected) {
-            assert_eq!(comment, expected, "{}", comment.real_span().source_text(source_text));
+            assert_eq!(comment, expected, "{}", comment.content_span().source_text(source_text));
         }
     }
 
@@ -221,7 +219,7 @@ token /* Trailing 1 */
         let comments = get_comments(source_text);
         let expected = vec![
             Comment {
-                span: Span::new(22, 33),
+                span: Span::new(20, 35),
                 kind: CommentKind::Block,
                 position: CommentPosition::Leading,
                 attached_to: 36,
@@ -229,7 +227,7 @@ token /* Trailing 1 */
                 followed_by_newline: true,
             },
             Comment {
-                span: Span::new(44, 56),
+                span: Span::new(42, 58),
                 kind: CommentKind::Block,
                 position: CommentPosition::Trailing,
                 attached_to: 0,
@@ -254,7 +252,7 @@ token /* Trailing 1 */
         let comments = get_comments(source_text);
         let expected = vec![
             Comment {
-                span: Span::new(3, 12),
+                span: Span::new(1, 14),
                 kind: CommentKind::Block,
                 position: CommentPosition::Leading,
                 attached_to: 30,
@@ -262,7 +260,7 @@ token /* Trailing 1 */
                 followed_by_newline: true,
             },
             Comment {
-                span: Span::new(17, 26),
+                span: Span::new(15, 28),
                 kind: CommentKind::Block,
                 position: CommentPosition::Leading,
                 attached_to: 30,
@@ -285,7 +283,7 @@ token /* Trailing 1 */
         let comments = get_comments(source_text);
         let expected = vec![
             Comment {
-                span: Span::new(26, 44),
+                span: Span::new(24, 44),
                 kind: CommentKind::Line,
                 position: CommentPosition::Leading,
                 attached_to: 57,
@@ -293,7 +291,7 @@ token /* Trailing 1 */
                 followed_by_newline: true,
             },
             Comment {
-                span: Span::new(98, 116),
+                span: Span::new(96, 116),
                 kind: CommentKind::Line,
                 position: CommentPosition::Leading,
                 attached_to: 129,
@@ -315,7 +313,7 @@ token /* Trailing 1 */
         let comments = get_comments(source_text);
         let expected = vec![
             Comment {
-                span: Span::new(20, 38),
+                span: Span::new(18, 38),
                 kind: CommentKind::Line,
                 position: CommentPosition::Leading,
                 attached_to: 55,
@@ -323,7 +321,7 @@ token /* Trailing 1 */
                 followed_by_newline: true,
             },
             Comment {
-                span: Span::new(81, 99),
+                span: Span::new(79, 99),
                 kind: CommentKind::Line,
                 position: CommentPosition::Leading,
                 attached_to: 116,

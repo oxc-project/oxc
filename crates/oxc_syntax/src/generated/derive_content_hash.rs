@@ -7,10 +7,8 @@ use std::{hash::Hasher, mem::discriminant};
 
 use oxc_span::hash::ContentHash;
 
-#[allow(clippy::wildcard_imports)]
 use crate::number::*;
 
-#[allow(clippy::wildcard_imports)]
 use crate::operator::*;
 
 impl ContentHash for NumberBase {

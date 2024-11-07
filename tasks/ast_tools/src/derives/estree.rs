@@ -1,21 +1,21 @@
 use convert_case::{Case, Casing};
-use itertools::Itertools;
 use proc_macro2::TokenStream;
 use quote::quote;
+use rustc_hash::FxHashMap;
 
-use super::{define_derive, Derive, DeriveOutput};
 use crate::{
-    codegen::LateCtx,
-    markers::ESTreeStructAttribute,
+    markers::ESTreeStructTagMode,
     schema::{
-        serialize::{enum_variant_name, get_type_tag},
-        EnumDef, GetGenerics, GetIdent, StructDef, TypeDef, TypeName,
+        serialize::{enum_variant_name, get_always_flatten_structs, get_type_tag},
+        EnumDef, FieldDef, GetGenerics, GetIdent, Schema, StructDef, TypeDef,
     },
 };
 
-define_derive! {
-    pub struct DeriveESTree;
-}
+use super::{define_derive, Derive};
+
+pub struct DeriveESTree;
+
+define_derive!(DeriveESTree);
 
 impl Derive for DeriveESTree {
     fn trait_name() -> &'static str {
@@ -26,34 +26,22 @@ impl Derive for DeriveESTree {
         "estree".to_string()
     }
 
-    fn derive(&mut self, def: &TypeDef, _: &LateCtx) -> TokenStream {
-        let ts_type_def = match def {
-            TypeDef::Enum(def) => typescript_enum(def),
-            TypeDef::Struct(def) => Some(typescript_struct(def)),
-        };
-        let ts_type_def = if let Some(ts_type_def) = ts_type_def {
-            quote! {
-                #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-                const TS_APPEND_CONTENT: &'static str = #ts_type_def;
-            }
-        } else {
-            TokenStream::new()
-        };
-
+    fn derive(&mut self, def: &TypeDef, schema: &Schema) -> TokenStream {
         if let TypeDef::Struct(def) = def {
             if def
                 .markers
                 .estree
                 .as_ref()
-                .is_some_and(|e| e == &ESTreeStructAttribute::CustomSerialize)
+                .and_then(|e| e.tag_mode.as_ref())
+                .is_some_and(|e| e == &ESTreeStructTagMode::CustomSerialize)
             {
-                return ts_type_def;
+                return TokenStream::new();
             }
         }
 
         let body = match def {
             TypeDef::Enum(def) => serialize_enum(def),
-            TypeDef::Struct(def) => serialize_struct(def),
+            TypeDef::Struct(def) => serialize_struct(def, schema),
         };
         let ident = def.ident();
 
@@ -64,9 +52,6 @@ impl Derive for DeriveESTree {
                     #body
                 }
             }
-
-            ///@@line_break
-            #ts_type_def
         }
     }
 
@@ -80,7 +65,14 @@ impl Derive for DeriveESTree {
     }
 }
 
-fn serialize_struct(def: &StructDef) -> TokenStream {
+fn serialize_struct(def: &StructDef, schema: &Schema) -> TokenStream {
+    if let Some(via) = &def.markers.estree.as_ref().and_then(|e| e.via.as_ref()) {
+        let via: TokenStream = via.parse().unwrap();
+        return quote! {
+            #via::from(self).serialize(serializer)
+        };
+    }
+
     let ident = def.ident();
     // If type_tag is Some, we serialize it manually. If None, either one of
     // the fields is named r#type, or the struct does not need a "type" field.
@@ -90,10 +82,27 @@ fn serialize_struct(def: &StructDef) -> TokenStream {
     if let Some(ty) = &type_tag {
         fields.push(quote! { map.serialize_entry("type", #ty)?; });
     }
+
+    let mut append_to: FxHashMap<String, &FieldDef> = FxHashMap::default();
+
+    // Scan through to find all append_to fields
     for field in &def.fields {
-        if field.markers.derive_attributes.estree.skip {
+        let Some(parent) = field.markers.derive_attributes.estree.append_to.as_ref() else {
+            continue;
+        };
+        assert!(
+            append_to.insert(parent.clone(), field).is_none(),
+            "Duplicate append_to target (on {ident})"
+        );
+    }
+
+    for field in &def.fields {
+        if field.markers.derive_attributes.estree.skip
+            || field.markers.derive_attributes.estree.append_to.is_some()
+        {
             continue;
         }
+        let ident = field.ident().unwrap();
         let name = match &field.markers.derive_attributes.estree.rename {
             Some(rename) => rename.to_string(),
             None => field.name.clone().unwrap().to_case(Case::Camel),
@@ -104,10 +113,29 @@ fn serialize_struct(def: &StructDef) -> TokenStream {
         );
 
         let ident = field.ident().unwrap();
-        if field.markers.derive_attributes.estree.flatten {
+        let always_flatten = match field.typ.type_id() {
+            Some(id) => get_always_flatten_structs(schema).contains(&id),
+            None => false,
+        };
+
+        let append_child = append_to.get(&ident.to_string());
+
+        if always_flatten || field.markers.derive_attributes.estree.flatten {
+            assert!(
+                append_child.is_none(),
+                "Cannot flatten and append to the same field (on {ident})"
+            );
             fields.push(quote! {
                 self.#ident.serialize(
                     serde::__private::ser::FlatMapSerializer(&mut map)
+                )?;
+            });
+        } else if let Some(append_child) = append_child {
+            let child_ident = append_child.ident().unwrap();
+            fields.push(quote! {
+                map.serialize_entry(
+                    #name,
+                    &oxc_estree::AppendTo(&self.#ident, &self.#child_ident)
                 )?;
             });
         } else {
@@ -133,10 +161,12 @@ fn serialize_struct(def: &StructDef) -> TokenStream {
 //  3. All other enums, which are camelCased.
 fn serialize_enum(def: &EnumDef) -> TokenStream {
     let ident = def.ident();
-    if def.markers.estree.untagged {
+
+    let is_untagged = def.all_variants().all(|var| var.fields.len() == 1);
+
+    if is_untagged {
         let match_branches = def.all_variants().map(|var| {
             let var_ident = var.ident();
-            assert!(var.fields.len() == 1, "Each variant of an untagged enum must have exactly one inner field (on {ident}::{var_ident})");
             quote! {
                 #ident::#var_ident(x) => {
                     Serialize::serialize(x, serializer)
@@ -169,74 +199,5 @@ fn serialize_enum(def: &EnumDef) -> TokenStream {
                 #(#match_branches),*
             }
         }
-    }
-}
-
-// Untagged enums: "type Expression = BooleanLiteral | NullLiteral"
-// Tagged enums: "type PropertyKind = 'init' | 'get' | 'set'"
-fn typescript_enum(def: &EnumDef) -> Option<String> {
-    if def.markers.estree.custom_ts_def {
-        return None;
-    }
-
-    let union = if def.markers.estree.untagged {
-        def.all_variants().map(|var| type_to_string(var.fields[0].typ.name())).join(" | ")
-    } else {
-        def.all_variants().map(|var| format!("'{}'", enum_variant_name(var, def))).join(" | ")
-    };
-    let ident = def.ident();
-    Some(format!("export type {ident} = {union};"))
-}
-
-fn typescript_struct(def: &StructDef) -> String {
-    let ident = def.ident();
-    let mut fields = String::new();
-    let mut extends = vec![];
-
-    if let Some(type_tag) = get_type_tag(def) {
-        fields.push_str(&format!("\n\ttype: '{type_tag}';"));
-    }
-
-    for field in &def.fields {
-        if field.markers.derive_attributes.estree.skip {
-            continue;
-        }
-        let ty = match &field.markers.derive_attributes.tsify_type {
-            Some(ty) => ty.clone(),
-            None => type_to_string(field.typ.name()),
-        };
-
-        if field.markers.derive_attributes.estree.flatten {
-            extends.push(ty);
-            continue;
-        }
-
-        let name = match &field.markers.derive_attributes.estree.rename {
-            Some(rename) => rename.to_string(),
-            None => field.name.clone().unwrap().to_case(Case::Camel),
-        };
-
-        fields.push_str(&format!("\n\t{name}: {ty};"));
-    }
-    let extends =
-        if extends.is_empty() { String::new() } else { format!(" & {}", extends.join(" & ")) };
-    format!("export type {ident} = ({{{fields}\n}}){extends};")
-}
-
-fn type_to_string(ty: &TypeName) -> String {
-    match ty {
-        TypeName::Ident(ident) => match ident.as_str() {
-            "f64" | "f32" | "usize" | "u64" | "u32" | "u16" | "u8" | "i64" | "i32" | "i16"
-            | "i8" => "number",
-            "bool" => "boolean",
-            "str" | "String" | "Atom" | "CompactStr" => "string",
-            ty => ty,
-        }
-        .to_string(),
-        TypeName::Vec(type_name) => format!("Array<{}>", type_to_string(type_name)),
-        TypeName::Box(type_name) | TypeName::Ref(type_name) | TypeName::Complex(type_name) => {
-            type_to_string(type_name)
-        }
-        TypeName::Opt(type_name) => format!("({}) | null", type_to_string(type_name)),
     }
 }

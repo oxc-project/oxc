@@ -21,7 +21,7 @@ use oxc::{
         ScopeFlags, ScopeId, ScopeTree, SemanticBuilder, SymbolTable,
     },
     span::SourceType,
-    transformer::{EnvOptions, Targets, TransformOptions, Transformer},
+    transformer::{TransformOptions, Transformer},
 };
 use oxc_index::Idx;
 use oxc_linter::Linter;
@@ -31,6 +31,12 @@ use tsify::Tsify;
 use wasm_bindgen::prelude::*;
 
 use crate::options::{OxcOptions, OxcRunOptions};
+
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = r#"
+import type { Program, Span } from "@oxc-project/types";
+export * from "@oxc-project/types";
+"#;
 
 #[wasm_bindgen(getter_with_clone)]
 #[derive(Default, Tsify)]
@@ -236,17 +242,13 @@ impl Oxc {
         }
 
         if run_options.transform.unwrap_or_default() {
-            if let Ok(options) = TransformOptions::from_preset_env(&EnvOptions {
-                targets: Targets::from_query("chrome 51"),
-                ..EnvOptions::default()
-            }) {
-                let result = Transformer::new(&allocator, &path, options)
-                    .build_with_symbols_and_scopes(symbols, scopes, &mut program);
-                if !result.errors.is_empty() {
-                    self.save_diagnostics(
-                        result.errors.into_iter().map(Error::from).collect::<Vec<_>>(),
-                    );
-                }
+            let options = TransformOptions::enable_all();
+            let result = Transformer::new(&allocator, &path, options)
+                .build_with_symbols_and_scopes(symbols, scopes, &mut program);
+            if !result.errors.is_empty() {
+                self.save_diagnostics(
+                    result.errors.into_iter().map(Error::from).collect::<Vec<_>>(),
+                );
             }
         }
 
@@ -258,13 +260,8 @@ impl Oxc {
                 mangle: minifier_options.mangle.unwrap_or_default(),
                 compress: if minifier_options.compress.unwrap_or_default() {
                     CompressOptions {
-                        booleans: compress_options.booleans,
                         drop_console: compress_options.drop_console,
                         drop_debugger: compress_options.drop_debugger,
-                        evaluate: compress_options.evaluate,
-                        join_vars: compress_options.join_vars,
-                        loops: compress_options.loops,
-                        typeofs: compress_options.typeofs,
                         ..CompressOptions::default()
                     }
                 } else {
@@ -404,7 +401,7 @@ impl Oxc {
                     CommentKind::Line => CommentType::Line,
                     CommentKind::Block => CommentType::Block,
                 },
-                value: comment.span.source_text(source_text).to_string(),
+                value: comment.content_span().source_text(source_text).to_string(),
                 start: comment.span.start,
                 end: comment.span.end,
             })
