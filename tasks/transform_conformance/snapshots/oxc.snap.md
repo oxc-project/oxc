@@ -1,6 +1,6 @@
 commit: d20b314c
 
-Passed: 78/87
+Passed: 77/87
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -12,7 +12,6 @@ Passed: 78/87
 * babel-plugin-transform-arrow-functions
 * babel-preset-typescript
 * babel-plugin-transform-react-jsx-source
-* regexp
 
 
 # babel-plugin-transform-typescript (2/9)
@@ -173,6 +172,11 @@ x Output mismatch
 x Output mismatch
 
 * refresh/react-refresh/supports-typescript-namespace-syntax/input.tsx
+x Output mismatch
+
+
+# regexp (7/8)
+* all-regex-plugins-enabled-by-targets/input.js
 x Output mismatch
 
 

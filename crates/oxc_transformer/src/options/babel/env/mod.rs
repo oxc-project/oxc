@@ -1,11 +1,13 @@
-mod data;
 mod targets;
 
 use serde::Deserialize;
 
-pub use self::{data::features, targets::BabelTargets};
+pub use self::targets::BabelTargets;
 
-use crate::options::EngineTargets;
+use crate::options::{
+    es_features::{features, ESFeature},
+    EngineTargets,
+};
 
 fn default_as_true() -> bool {
     true
@@ -59,7 +61,7 @@ pub struct BabelEnvOptions {
 }
 
 impl BabelEnvOptions {
-    pub fn can_enable_plugin(&self, plugin_name: &str) -> bool {
-        self.targets.should_enable(&features()[plugin_name])
+    pub fn can_enable(&self, feature: ESFeature) -> bool {
+        self.targets.should_enable(&features()[&feature])
     }
 }

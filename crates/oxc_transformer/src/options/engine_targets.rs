@@ -1,4 +1,8 @@
-use std::str::FromStr;
+use std::{
+    fmt::Debug,
+    ops::{Deref, DerefMut},
+    str::FromStr,
+};
 
 use browserslist::Version;
 use rustc_hash::FxHashMap;
@@ -27,6 +31,8 @@ pub enum Engine {
     Electron,
     // TODO: how to handle? There is a `op_mob` key below.
     OperaMobile,
+    // TODO:
+    Android,
 }
 
 impl FromStr for Engine {
@@ -48,6 +54,7 @@ impl FromStr for Engine {
             "samsung" => Ok(Self::Samsung),
             "electron" => Ok(Self::Electron),
             "opera_mobile" => Ok(Self::OperaMobile),
+            "android" => Ok(Self::Android),
             _ => Err(()),
         }
     }
@@ -56,11 +63,25 @@ impl FromStr for Engine {
 /// A map of engine names to minimum supported versions.
 #[derive(Debug, Default, Clone, Deserialize)]
 #[serde(try_from = "BabelTargets")]
-pub struct EngineTargets {
-    pub(crate) targets: FxHashMap<Engine, Version>,
+pub struct EngineTargets(FxHashMap<Engine, Version>);
+
+impl Deref for EngineTargets {
+    type Target = FxHashMap<Engine, Version>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for EngineTargets {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
 }
 
 impl EngineTargets {
+    pub fn new(map: FxHashMap<Engine, Version>) -> Self {
+        Self(map)
+    }
     /// # Errors
     ///
     /// * Query is invalid.
@@ -70,12 +91,12 @@ impl EngineTargets {
 
     /// Returns true if all fields are [None].
     pub fn is_any_target(&self) -> bool {
-        self.targets.is_empty()
+        self.0.is_empty()
     }
 
     pub fn should_enable(&self, engine_targets: &EngineTargets) -> bool {
-        for (engine, version) in &engine_targets.targets {
-            if let Some(v) = self.targets.get(engine) {
+        for (engine, version) in &engine_targets.0 {
+            if let Some(v) = self.0.get(engine) {
                 if v < version {
                     return true;
                 }
@@ -95,7 +116,7 @@ impl EngineTargets {
                 continue;
             };
             engine_targets
-                .targets
+                .0
                 .entry(engine)
                 .and_modify(|v| {
                     if version < *v {

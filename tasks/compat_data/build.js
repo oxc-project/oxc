@@ -7,6 +7,7 @@ const parseEnvsVersions = require('./compat-table/build-utils/parse-envs-version
 const interpolateAllResults = require('./compat-table/build-utils/interpolate-all-results');
 const compareVersions = require('./compat-table/build-utils/compare-versions');
 const { addElectronSupportFromChromium } = require('./chromium-to-electron');
+const esFeatures = require(`./es-features`);
 
 const environments = [
   'chrome',
@@ -95,78 +96,24 @@ const expandFeatures = features =>
       .filter(name => name === feat || name.startsWith(feat + ' / '));
   });
 
-const generateData = (environments, features) => {
-  const data = {};
-
-  const normalized = {};
-  for (const [key, options] of Object.entries(features)) {
-    if (options.overwrite) {
-      if (!options.replaces || options.features) {
-        throw new Error(
-          `.overwrite is only supported when using .replace and not defining .features (${key})`,
-        );
-      }
-      options.features = features[options.replaces].features;
-    }
-    if (!options.features) {
-      normalized[key] = {
-        features: expandFeatures([options]),
-      };
-    } else {
-      normalized[key] = {
-        ...options,
-        features: expandFeatures(options.features),
-      };
-    }
-  }
-
-  const overlapping = {};
-
-  // Apply bugfixes
-  for (
-    const [key, { features, replaces, overwrite }] of Object.entries(
-      normalized,
-    )
-  ) {
-    if (replaces) {
-      if (normalized[replaces].replaces) {
-        throw new Error(`Transitive replacement is not supported (${key})`);
-      }
-
-      if (overwrite) {
-        normalized[key] = {
-          features: normalized[replaces].features,
-          overwrite,
-        };
-      } else {
-        normalized[replaces].features = normalized[replaces].features.filter(
-          feat => !features.includes(feat),
-        );
-      }
-
-      if (!overlapping[replaces]) overlapping[replaces] = [];
-      overlapping[replaces].push(key);
-    }
-  }
-
-  // eslint-disable-next-line prefer-const
-  for (let [key, options] of Object.entries(normalized)) {
-    const plugin = {};
-
+const generateData = (environments, items) => {
+  for (const item of items) {
+    const targets = {};
     environments.forEach(env => {
-      const version = getLowestImplementedVersion(options, env);
-      if (version) plugin[env] = version;
+      const version = getLowestImplementedVersion({
+        features: expandFeatures(item.features),
+      }, env);
+      if (version) targets[env] = version;
     });
-    addElectronSupportFromChromium(plugin);
+    addElectronSupportFromChromium(targets);
 
-    if (options.overwrite) Object.assign(plugin, options.overwrite);
-
-    data[key] = plugin;
+    item.targets = targets;
   }
 
-  return { data, overlapping };
+  console.log(items);
+  return items;
 };
 
-const { data } = generateData(environments, require(`./plugin-features`));
+const items = generateData(environments, esFeatures);
 
-fs.writeFileSync('./data.json', JSON.stringify(data, null, 2));
+fs.writeFileSync('./data.json', JSON.stringify(items, null, 2));

@@ -70,7 +70,7 @@ impl TryFrom<BabelTargets> for EngineTargets {
                     };
                     match Version::parse(&v) {
                         Ok(version) => {
-                            engine_targets.targets.insert(engine, version);
+                            engine_targets.insert(engine, version);
                         }
                         Err(err) => {
                             return Err(oxc_diagnostics::Error::msg(format!(

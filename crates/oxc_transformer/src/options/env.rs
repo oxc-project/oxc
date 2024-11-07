@@ -17,7 +17,7 @@ use crate::{
     EngineTargets,
 };
 
-use super::babel::BabelEnvOptions;
+use super::{babel::BabelEnvOptions, ESFeature};
 
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Ord, PartialOrd)]
 pub enum ESTarget {
@@ -179,53 +179,46 @@ impl From<ESTarget> for EnvOptions {
 impl TryFrom<BabelEnvOptions> for EnvOptions {
     type Error = String;
 
+    #[allow(clippy::enum_glob_use)]
     /// If there are any errors in the `options.targets``, they will be returned as a list of errors.
     fn try_from(o: BabelEnvOptions) -> Result<Self, Self::Error> {
+        use ESFeature::*;
         Ok(Self {
             regexp: RegExpOptions {
-                sticky_flag: o.can_enable_plugin("transform-sticky-regex"),
-                unicode_flag: o.can_enable_plugin("transform-unicode-regex"),
-                unicode_property_escapes: o.can_enable_plugin("transform-unicode-property-regex"),
-                dot_all_flag: o.can_enable_plugin("transform-dotall-regex"),
-                named_capture_groups: o.can_enable_plugin("transform-named-capturing-groups-regex"),
-                look_behind_assertions: o.can_enable_plugin("esbuild-regexp-lookbehind-assertions"),
-                match_indices: o.can_enable_plugin("esbuild-regexp-match-indices"),
-                set_notation: o.can_enable_plugin("transform-unicode-sets-regex"),
+                sticky_flag: o.can_enable(ES2015StickyRegex),
+                unicode_flag: o.can_enable(ES2015UnicodeRegex),
+                unicode_property_escapes: o.can_enable(ES2018UnicodePropertyRegex),
+                dot_all_flag: o.can_enable(ES2018DotallRegex),
+                named_capture_groups: o.can_enable(ES2018NamedCapturingGroupsRegex),
+                // FIXME
+                look_behind_assertions: false, // o.can_enable("esbuild-regexp-lookbehind-assertions"),
+                // FIXME
+                match_indices: false, // o.can_enable("esbuild-regexp-match-indices"),
+                set_notation: o.can_enable(ES2024UnicodeSetsRegex),
             },
             es2015: ES2015Options {
-                arrow_function: o
-                    .can_enable_plugin("transform-arrow-functions")
-                    .then(Default::default),
+                arrow_function: o.can_enable(ES2015ArrowFunctions).then(Default::default),
             },
             es2016: ES2016Options {
-                exponentiation_operator: o.can_enable_plugin("transform-exponentiation-operator"),
+                exponentiation_operator: o.can_enable(ES2016ExponentiationOperator),
             },
-            es2017: ES2017Options {
-                async_to_generator: o.can_enable_plugin("transform-async-to-generator"),
-            },
+            es2017: ES2017Options { async_to_generator: o.can_enable(ES2017AsyncToGenerator) },
             es2018: ES2018Options {
-                object_rest_spread: o
-                    .can_enable_plugin("transform-object-rest-spread")
-                    .then(Default::default),
-                async_generator_functions: o
-                    .can_enable_plugin("transform-async-generator-functions"),
+                object_rest_spread: o.can_enable(ES2018ObjectRestSpread).then(Default::default),
+                async_generator_functions: o.can_enable(ES2018AsyncGeneratorFunctions),
             },
             es2019: ES2019Options {
-                optional_catch_binding: o.can_enable_plugin("transform-optional-catch-binding"),
+                optional_catch_binding: o.can_enable(ES2018OptionalCatchBinding),
             },
             es2020: ES2020Options {
-                nullish_coalescing_operator: o
-                    .can_enable_plugin("transform-nullish-coalescing-operator"),
+                nullish_coalescing_operator: o.can_enable(ES2020NullishCoalescingOperator),
             },
             es2021: ES2021Options {
-                logical_assignment_operators: o
-                    .can_enable_plugin("transform-logical-assignment-operators"),
+                logical_assignment_operators: o.can_enable(ES2020LogicalAssignmentOperators),
             },
             es2022: ES2022Options {
-                class_static_block: o.can_enable_plugin("transform-class-static-block"),
-                class_properties: o
-                    .can_enable_plugin("transform-class-properties")
-                    .then(Default::default),
+                class_static_block: o.can_enable(ES2022ClassStaticBlock),
+                class_properties: o.can_enable(ES2022ClassProperties).then(Default::default),
             },
         })
     }

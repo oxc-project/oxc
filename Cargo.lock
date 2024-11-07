@@ -1570,6 +1570,16 @@ dependencies = [
 [[package]]
 name = "oxc_compat_data"
 version = "0.0.0"
+dependencies = [
+ "oxc_tasks_common",
+ "oxc_transformer",
+ "prettyplease",
+ "proc-macro2",
+ "quote",
+ "serde",
+ "serde_json",
+ "syn",
+]
 
 [[package]]
 name = "oxc_coverage"
