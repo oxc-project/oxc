@@ -202,6 +202,11 @@ const es2018 = [
     features: ['s (dotAll) flag for regular expressions'],
   },
   {
+    name: 'LookbehindRegex',
+    babel: null,
+    features: ['RegExp Lookbehind Assertions'],
+  },
+  {
     name: 'ObjectRestSpread',
     babel: 'transform-object-rest-spread',
     features: ['object rest/spread properties'],
@@ -278,6 +283,14 @@ const es2022 = [
     name: 'ClassStaticBlock',
     babel: 'transform-class-static-block',
     features: ['Class static initialization blocks'],
+  },
+  {
+    name: 'MatchIndicesRegex',
+    babel: null,
+    features: [
+      'RegExp Match Indices (`hasIndices` / `d` flag) / constructor supports it',
+      // ignore "shows up in flags"
+    ],
   },
 ].map(f('ES2022'));
 

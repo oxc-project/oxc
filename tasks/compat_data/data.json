@@ -653,6 +653,27 @@
     }
   },
   {
+    "name": "LookbehindRegex",
+    "babel": null,
+    "features": [
+      "RegExp Lookbehind Assertions"
+    ],
+    "es": "ES2018",
+    "targets": {
+      "chrome": "62",
+      "opera": "49",
+      "edge": "79",
+      "firefox": "78",
+      "safari": "16.4",
+      "node": "8.10",
+      "deno": "1",
+      "ios": "16.4",
+      "samsung": "8",
+      "opera_mobile": "46",
+      "electron": "3.0"
+    }
+  },
+  {
     "name": "ObjectRestSpread",
     "babel": "transform-object-rest-spread",
     "features": [
@@ -908,6 +929,27 @@
       "samsung": "17",
       "opera_mobile": "66",
       "electron": "15.0"
+    }
+  },
+  {
+    "name": "MatchIndicesRegex",
+    "babel": null,
+    "features": [
+      "RegExp Match Indices (`hasIndices` / `d` flag) / constructor supports it"
+    ],
+    "es": "ES2022",
+    "targets": {
+      "chrome": "90",
+      "opera": "76",
+      "edge": "90",
+      "firefox": "91",
+      "safari": "15",
+      "node": "16",
+      "deno": "1.8",
+      "ios": "15",
+      "samsung": "15",
+      "opera_mobile": "64",
+      "electron": "13.0"
     }
   },
   {

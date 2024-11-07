@@ -190,10 +190,8 @@ impl TryFrom<BabelEnvOptions> for EnvOptions {
                 unicode_property_escapes: o.can_enable(ES2018UnicodePropertyRegex),
                 dot_all_flag: o.can_enable(ES2018DotallRegex),
                 named_capture_groups: o.can_enable(ES2018NamedCapturingGroupsRegex),
-                // FIXME
-                look_behind_assertions: false, // o.can_enable("esbuild-regexp-lookbehind-assertions"),
-                // FIXME
-                match_indices: false, // o.can_enable("esbuild-regexp-match-indices"),
+                look_behind_assertions: o.can_enable(ES2018LookbehindRegex),
+                match_indices: o.can_enable(ES2022MatchIndicesRegex),
                 set_notation: o.can_enable(ES2024UnicodeSetsRegex),
             },
             es2015: ES2015Options {

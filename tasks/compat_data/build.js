@@ -59,7 +59,6 @@ const getLowestImplementedVersion = (
     ok &&= !exclude(test.name);
     return ok;
   });
-
   const envTests = tests.map(({ res }) => {
     const versions = envsVersions[env];
     let i = versions.length - 1;
@@ -110,7 +109,6 @@ const generateData = (environments, items) => {
     item.targets = targets;
   }
 
-  console.log(items);
   return items;
 };
 
