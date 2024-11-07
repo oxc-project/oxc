@@ -74,7 +74,7 @@ impl Rule for NoUnsafeFunctionType {
                     handle_function_type(ident, ctx);
                 }
             }
-            _ => (),
+            _ => {}
         }
     }
 }
