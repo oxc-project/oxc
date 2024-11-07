@@ -279,21 +279,13 @@ fn create_diagnostic_jsx(
 }
 
 fn used_with_spread_attribute(node_id: NodeId, ctx: &LintContext) -> bool {
-    ctx
-        .nodes()
-        .iter_parents(node_id)
-        .any(|node| match node.kind() {
-            AstKind::JSXOpeningElement(opening_element) => {
-              opening_element
-                .attributes
-                .iter()
-                .any(|attr| matches!(attr, JSXAttributeItem::SpreadAttribute(_)))
-            },
-            _ => false,
-        })
-
-
-    
+    ctx.nodes().iter_parents(node_id).any(|node| match node.kind() {
+        AstKind::JSXOpeningElement(opening_element) => opening_element
+            .attributes
+            .iter()
+            .any(|attr| matches!(attr, JSXAttributeItem::SpreadAttribute(_))),
+        _ => false,
+    })
 }
 
 fn is_argument_only_used_in_recursion<'a>(
