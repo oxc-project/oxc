@@ -365,8 +365,8 @@ fn is_property_only_used_in_recursion_jsx(
             return false;
         };
 
-        let Some(attr) = ctx.nodes().ancestors(may_jsx_expr_container.id()).find_map(|node| {
-            if let AstKind::JSXAttributeItem(attr) = ctx.nodes().get_node(node).kind() {
+        let Some(attr) = ctx.nodes().iter_parents(may_jsx_expr_container.id()).find_map(|node| {
+            if let AstKind::JSXAttributeItem(attr) = node.kind() {
                 Some(attr)
             } else {
                 None
