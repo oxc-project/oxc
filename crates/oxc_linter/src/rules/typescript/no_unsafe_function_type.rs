@@ -1,4 +1,3 @@
-use oxc_allocator::Box;
 use oxc_ast::{
     ast::{Expression, IdentifierReference, TSTypeName},
     AstKind,
@@ -79,7 +78,7 @@ impl Rule for NoUnsafeFunctionType {
     }
 }
 
-fn handle_function_type<'a>(identifier: &Box<'a, IdentifierReference<'a>>, ctx: &LintContext<'a>) {
+fn handle_function_type<'a>(identifier: &'a IdentifierReference<'a>, ctx: &LintContext<'a>) {
     if identifier.name == "Function" && identifier.is_global_reference(ctx.symbols()) {
         ctx.diagnostic(no_unsafe_function_type_diagnostic(identifier.span));
     }
