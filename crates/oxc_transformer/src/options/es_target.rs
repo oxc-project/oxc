@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{fmt, str::FromStr};
 
 use cow_utils::CowUtils;
 
@@ -38,5 +38,25 @@ impl FromStr for ESTarget {
             "esnext" => Ok(Self::ESNext),
             _ => Err(format!("Invalid target \"{s}\".")),
         }
+    }
+}
+
+impl fmt::Display for ESTarget {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            Self::ES5 => "es5",
+            Self::ES2015 => "es2015",
+            Self::ES2016 => "es2016",
+            Self::ES2017 => "es2017",
+            Self::ES2018 => "es2018",
+            Self::ES2019 => "es2019",
+            Self::ES2020 => "es2020",
+            Self::ES2021 => "es2021",
+            Self::ES2022 => "es2022",
+            Self::ES2023 => "es2023",
+            Self::ES2024 => "es2024",
+            Self::ESNext => "esnext",
+        };
+        write!(f, "{s}",)
     }
 }

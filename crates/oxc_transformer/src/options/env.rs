@@ -148,45 +148,53 @@ impl From<ESTarget> for EnvOptions {
 impl TryFrom<BabelEnvOptions> for EnvOptions {
     type Error = String;
 
+    fn try_from(o: BabelEnvOptions) -> Result<Self, Self::Error> {
+        Self::try_from(o.targets)
+    }
+}
+
+impl TryFrom<EngineTargets> for EnvOptions {
+    type Error = String;
+
     #[allow(clippy::enum_glob_use)]
     /// If there are any errors in the `options.targets``, they will be returned as a list of errors.
-    fn try_from(o: BabelEnvOptions) -> Result<Self, Self::Error> {
+    fn try_from(o: EngineTargets) -> Result<Self, Self::Error> {
         use ESFeature::*;
         Ok(Self {
             regexp: RegExpOptions {
-                sticky_flag: o.can_enable(ES2015StickyRegex),
-                unicode_flag: o.can_enable(ES2015UnicodeRegex),
-                unicode_property_escapes: o.can_enable(ES2018UnicodePropertyRegex),
-                dot_all_flag: o.can_enable(ES2018DotallRegex),
-                named_capture_groups: o.can_enable(ES2018NamedCapturingGroupsRegex),
-                look_behind_assertions: o.can_enable(ES2018LookbehindRegex),
-                match_indices: o.can_enable(ES2022MatchIndicesRegex),
-                set_notation: o.can_enable(ES2024UnicodeSetsRegex),
+                sticky_flag: o.has_feature(ES2015StickyRegex),
+                unicode_flag: o.has_feature(ES2015UnicodeRegex),
+                unicode_property_escapes: o.has_feature(ES2018UnicodePropertyRegex),
+                dot_all_flag: o.has_feature(ES2018DotallRegex),
+                named_capture_groups: o.has_feature(ES2018NamedCapturingGroupsRegex),
+                look_behind_assertions: o.has_feature(ES2018LookbehindRegex),
+                match_indices: o.has_feature(ES2022MatchIndicesRegex),
+                set_notation: o.has_feature(ES2024UnicodeSetsRegex),
             },
             es2015: ES2015Options {
-                arrow_function: o.can_enable(ES2015ArrowFunctions).then(Default::default),
+                arrow_function: o.has_feature(ES2015ArrowFunctions).then(Default::default),
             },
             es2016: ES2016Options {
-                exponentiation_operator: o.can_enable(ES2016ExponentiationOperator),
+                exponentiation_operator: o.has_feature(ES2016ExponentiationOperator),
             },
-            es2017: ES2017Options { async_to_generator: o.can_enable(ES2017AsyncToGenerator) },
+            es2017: ES2017Options { async_to_generator: o.has_feature(ES2017AsyncToGenerator) },
             es2018: ES2018Options {
-                object_rest_spread: o.can_enable(ES2018ObjectRestSpread).then(Default::default),
-                async_generator_functions: o.can_enable(ES2018AsyncGeneratorFunctions),
+                object_rest_spread: o.has_feature(ES2018ObjectRestSpread).then(Default::default),
+                async_generator_functions: o.has_feature(ES2018AsyncGeneratorFunctions),
             },
             es2019: ES2019Options {
-                optional_catch_binding: o.can_enable(ES2018OptionalCatchBinding),
+                optional_catch_binding: o.has_feature(ES2018OptionalCatchBinding),
             },
             es2020: ES2020Options {
-                nullish_coalescing_operator: o.can_enable(ES2020NullishCoalescingOperator),
-                big_int: o.can_enable(ES2020BigInt),
+                nullish_coalescing_operator: o.has_feature(ES2020NullishCoalescingOperator),
+                big_int: o.has_feature(ES2020BigInt),
             },
             es2021: ES2021Options {
-                logical_assignment_operators: o.can_enable(ES2020LogicalAssignmentOperators),
+                logical_assignment_operators: o.has_feature(ES2020LogicalAssignmentOperators),
             },
             es2022: ES2022Options {
-                class_static_block: o.can_enable(ES2022ClassStaticBlock),
-                class_properties: o.can_enable(ES2022ClassProperties).then(Default::default),
+                class_static_block: o.has_feature(ES2022ClassStaticBlock),
+                class_properties: o.has_feature(ES2022ClassProperties).then(Default::default),
             },
         })
     }

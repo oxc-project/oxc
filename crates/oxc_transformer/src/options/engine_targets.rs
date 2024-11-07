@@ -10,7 +10,11 @@ use serde::Deserialize;
 
 use oxc_diagnostics::Error;
 
-use super::{babel::BabelTargets, BrowserslistQuery};
+use super::{
+    babel::BabelTargets,
+    es_features::{features, ESFeature},
+    BrowserslistQuery,
+};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -92,6 +96,10 @@ impl EngineTargets {
     /// Returns true if all fields are [None].
     pub fn is_any_target(&self) -> bool {
         self.0.is_empty()
+    }
+
+    pub fn has_feature(&self, feature: ESFeature) -> bool {
+        self.should_enable(&features()[&feature])
     }
 
     pub fn should_enable(&self, engine_targets: &EngineTargets) -> bool {

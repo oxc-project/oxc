@@ -4,10 +4,7 @@ use serde::Deserialize;
 
 pub use self::targets::BabelTargets;
 
-use crate::options::{
-    es_features::{features, ESFeature},
-    EngineTargets,
-};
+use crate::options::EngineTargets;
 
 fn default_as_true() -> bool {
     true
@@ -58,10 +55,4 @@ pub struct BabelEnvOptions {
 
     #[deprecated = "Not Implemented"]
     pub shipped_proposals: bool,
-}
-
-impl BabelEnvOptions {
-    pub fn can_enable(&self, feature: ESFeature) -> bool {
-        self.targets.should_enable(&features()[&feature])
-    }
 }
