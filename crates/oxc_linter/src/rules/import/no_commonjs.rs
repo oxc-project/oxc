@@ -128,7 +128,7 @@ fn is_conditional(parent_node: &AstNode, ctx: &LintContext) -> bool {
         is_conditional(parent, ctx)
     }
 }
-/// <https://github.com/import-js/eslint-plugin-import/blob/main/src/rules/no-commonjs.js>
+/// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/no-commonjs.md>
 impl Rule for NoCommonjs {
     fn from_configuration(value: serde_json::Value) -> Self {
         let obj = value.get(0);
