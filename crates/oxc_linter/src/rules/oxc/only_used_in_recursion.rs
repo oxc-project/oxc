@@ -206,22 +206,17 @@ fn create_diagnostic_jsx(
     function_id: &BindingIdentifier,
     property: &BindingProperty,
 ) {
-    let is_exported = ctx
-        .semantic()
-        .symbols()
-        .get_flags(function_id.symbol_id.get().expect("`symbol_id` should be set"))
-        .is_export();
+    let Some(function_symbol_id) = function_id.symbol_id.get() else { return };
+    let is_exported = ctx.semantic().symbols().get_flags(function_symbol_id).is_export();
 
-    let property_name = &property.key.static_name().unwrap();
+    let Some(property_name) = &property.key.static_name() else { return };
     if is_exported {
         return ctx.diagnostic(only_used_in_recursion_diagnostic(property.span(), property_name));
     }
 
-    let property_ident =
-        property.value.get_binding_identifier().expect("`bind_identifier` should be set");
-    let mut references = ctx
-        .semantic()
-        .symbol_references(property_ident.symbol_id.get().expect("symbol should be set"));
+    let Some(property_ident) = property.value.get_binding_identifier() else { return };
+    let Some(property_symbol_id) = property_ident.symbol_id.get() else { return };
+    let mut references = ctx.semantic().symbol_references(property_symbol_id);
 
     let has_spread_attribute = references.any(|x| used_with_spread_attribute(x.node_id(), ctx));
 
@@ -249,16 +244,8 @@ fn create_diagnostic_jsx(
 
             fix.push(Fix::delete(Span::new(span_start, span_end)));
 
-            let property_id = property
-                .value
-                .get_binding_identifier()
-                .expect("`binding identifier` should be set");
-
             // search for references to the function and remove the property
-            for reference in ctx
-                .semantic()
-                .symbol_references(property_id.symbol_id.get().expect("symbol should be set"))
-            {
+            for reference in ctx.semantic().symbol_references(property_symbol_id) {
                 let mut ancestors = ctx.nodes().ancestors(reference.node_id());
 
                 let Some(attr) =
@@ -338,16 +325,14 @@ fn is_property_only_used_in_recursion_jsx(
     function_ident: &BindingIdentifier,
     ctx: &LintContext,
 ) -> bool {
-    let mut references = ctx
-        .semantic()
-        .symbol_references(ident.symbol_id.get().expect("`symbol_id` should be set"))
-        .peekable();
+    let Some(ident_symbol_id) = ident.symbol_id.get() else { return false };
+    let mut references = ctx.semantic().symbol_references(ident_symbol_id).peekable();
 
     if references.peek().is_none() {
         return false;
     }
 
-    let function_symbol_id = function_ident.symbol_id.get().expect("`symbol_id` should be set");
+    let Some(function_symbol_id) = function_ident.symbol_id.get() else { return false };
 
     for reference in references {
         // Conditions:
