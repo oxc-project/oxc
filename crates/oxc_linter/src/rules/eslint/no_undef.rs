@@ -31,8 +31,37 @@ declare_oxc_lint!(
     /// var bar = a + 1;
     /// ```
     NoUndef,
-    nursery
+    correctness,
+    pending
 );
+
+const TS_UTILITY_TYPES: [&str; 25] = [
+    "Record",
+    "Omit",
+    "Pick",
+    "Partial",
+    "Required",
+    "Readonly",
+    "Return",
+    "InstanceType",
+    "NonNullable",
+    "Parameters",
+    "ConstructorParameters",
+    "ReturnType",
+    "ThisParameterType",
+    "OmitThisParameter",
+    "ThisType",
+    "Uppercase",
+    "Lowercase",
+    "Capitalize",
+    "Uncapitalize",
+    "Extract",
+    "Exclude",
+    "Awaited",
+    "ObjectUtils",
+    "PropertyKey",
+    "NodeListOf",
+];
 
 impl Rule for NoUndef {
     fn from_configuration(value: serde_json::Value) -> Self {
@@ -57,6 +86,10 @@ impl Rule for NoUndef {
                 }
 
                 if ctx.globals().is_enabled(name) {
+                    continue;
+                }
+
+                if TS_UTILITY_TYPES.contains(&name) {
                     continue;
                 }
 
@@ -153,7 +186,10 @@ fn test() {
         "class C { static { function a() {} a; } }",
         "class C { static { a; function a() {} } }",
         "String;Array;Boolean;",
-        "function resolve<T>(path: string): T { return { path } as T; }"
+        "function resolve<T>(path: string): T { return { path } as T; }",
+        "const a: Record<string, string> = {};",
+        "const a: Awaited<Promise<string>> = await Promise.resolve('foo');",
+        "type OxlintConfigCategories = Record<string, unknown>;"
     ];
 
     let fail = vec![
