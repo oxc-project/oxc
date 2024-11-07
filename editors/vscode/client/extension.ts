@@ -9,7 +9,6 @@ import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from
 import { join } from 'node:path';
 import { ConfigService } from './config';
 
-const languageClientId = 'oxc-vscode';
 const languageClientName = 'oxc';
 const outputChannelName = 'Oxc';
 const traceOutputChannelName = 'Oxc (Trace)';
@@ -168,7 +167,6 @@ export async function activate(context: ExtensionContext) {
 
   // Create the language client and start the client.
   client = new LanguageClient(
-    languageClientId,
     languageClientName,
     serverOptions,
     clientOptions,
