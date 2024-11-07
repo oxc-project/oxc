@@ -4,6 +4,7 @@ mod browserslist_query;
 mod engine_targets;
 mod env;
 mod es_features;
+mod es_target;
 
 use std::path::PathBuf;
 
@@ -29,8 +30,9 @@ use crate::{
 pub use self::{
     browserslist_query::BrowserslistQuery,
     engine_targets::{Engine, EngineTargets},
-    env::{ESTarget, EnvOptions},
+    env::EnvOptions,
     es_features::ESFeature,
+    es_target::ESTarget,
 };
 
 use self::babel::BabelOptions;
