@@ -117,7 +117,11 @@ impl EnvOptions {
                 async_generator_functions: true,
             },
             es2019: ES2019Options { optional_catch_binding: true },
-            es2020: ES2020Options { nullish_coalescing_operator: true },
+            es2020: ES2020Options {
+                nullish_coalescing_operator: true,
+                // Turn this on would throw error for all bigints.
+                big_int: false,
+            },
             es2021: ES2021Options { logical_assignment_operators: true },
             es2022: ES2022Options {
                 class_static_block: true,
@@ -166,7 +170,10 @@ impl From<ESTarget> for EnvOptions {
                 async_generator_functions: target < ESTarget::ES2018,
             },
             es2019: ES2019Options { optional_catch_binding: target < ESTarget::ES2019 },
-            es2020: ES2020Options { nullish_coalescing_operator: target < ESTarget::ES2020 },
+            es2020: ES2020Options {
+                nullish_coalescing_operator: target < ESTarget::ES2020,
+                big_int: target < ESTarget::ES2020,
+            },
             es2021: ES2021Options { logical_assignment_operators: target < ESTarget::ES2021 },
             es2022: ES2022Options {
                 class_static_block: target < ESTarget::ES2022,
@@ -210,6 +217,7 @@ impl TryFrom<BabelEnvOptions> for EnvOptions {
             },
             es2020: ES2020Options {
                 nullish_coalescing_operator: o.can_enable(ES2020NullishCoalescingOperator),
+                big_int: o.can_enable(ES2020BigInt),
             },
             es2021: ES2021Options {
                 logical_assignment_operators: o.can_enable(ES2020LogicalAssignmentOperators),

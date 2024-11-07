@@ -822,6 +822,28 @@
     }
   },
   {
+    "name": "BigInt",
+    "babel": null,
+    "features": [
+      "BigInt / basic functionality"
+    ],
+    "es": "ES2020",
+    "targets": {
+      "chrome": "67",
+      "opera": "54",
+      "edge": "79",
+      "firefox": "68",
+      "safari": "14",
+      "node": "10.4",
+      "deno": "1",
+      "ios": "14",
+      "samsung": "9",
+      "rhino": "1.7.14",
+      "opera_mobile": "48",
+      "electron": "4.0"
+    }
+  },
+  {
     "name": "NumericSeparator",
     "babel": "transform-numeric-separator",
     "features": [

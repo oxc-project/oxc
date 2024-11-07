@@ -171,6 +171,10 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         }
     }
 
+    fn enter_big_int_literal(&mut self, node: &mut BigIntLiteral<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x2_es2020.enter_big_int_literal(node, ctx);
+    }
+
     fn enter_binding_pattern(&mut self, pat: &mut BindingPattern<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_binding_pattern(pat, ctx);

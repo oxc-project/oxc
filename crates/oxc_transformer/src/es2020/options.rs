@@ -5,4 +5,7 @@ use serde::Deserialize;
 pub struct ES2020Options {
     #[serde(skip)]
     pub nullish_coalescing_operator: bool,
+
+    #[serde(skip)]
+    pub big_int: bool,
 }

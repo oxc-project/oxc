@@ -16,21 +16,30 @@ fn es_target() {
         ("es2018", "try {} catch {}"),
         ("es2019", "a ?? b"),
         ("es2020", "a ||= b"),
+        ("es2019", "1n ** 2n"), // test target error
         ("es2021", "class foo { static {} }"),
     ];
 
     // Test no transformation for esnext.
     for (_, case) in cases {
         let options = TransformOptions::from(ESTarget::from_str("esnext").unwrap());
-        assert_eq!(codegen(case, SourceType::mjs()), test(case, options));
+        assert_eq!(Ok(codegen(case, SourceType::mjs())), test(case, options));
     }
 
-    let snapshot = cases.iter().enumerate().fold(String::new(), |mut w, (i, (target, case))| {
-        let options = TransformOptions::from(ESTarget::from_str(target).unwrap());
-        let result = test(case, options);
-        write!(w, "########## {i} {target}\n{case}\n----------\n{result}\n").unwrap();
-        w
-    });
+    let snapshot =
+        cases.into_iter().enumerate().fold(String::new(), |mut w, (i, (target, case))| {
+            let options = TransformOptions::from(ESTarget::from_str(target).unwrap());
+            let result = match test(case, options) {
+                Ok(code) => code,
+                Err(errors) => errors
+                    .into_iter()
+                    .map(|err| format!("{:?}", err.with_source_code(case.to_string())))
+                    .collect::<Vec<_>>()
+                    .join("\n"),
+            };
+            write!(w, "########## {i} {target}\n{case}\n----------\n{result}\n").unwrap();
+            w
+        });
 
     #[cfg(not(miri))]
     {

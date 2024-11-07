@@ -247,6 +247,11 @@ const es2020 = [
     babel: 'transform-logical-assignment-operators',
     features: ['Logical Assignment'],
   },
+  {
+    name: 'BigInt',
+    babel: null,
+    features: ['BigInt / basic functionality'],
+  },
 ].map(f('ES2020'));
 
 const es2021 = [

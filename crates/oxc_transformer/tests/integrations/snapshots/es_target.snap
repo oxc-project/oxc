@@ -46,7 +46,26 @@ a ||= b
 ----------
 a || (a = b);
 
-########## 7 es2021
+########## 7 es2019
+1n ** 2n
+----------
+
+  ! Big integer literals are not available in the configured target
+  | environment.
+   ,----
+ 1 | 1n ** 2n
+   : ^^
+   `----
+
+
+  ! Big integer literals are not available in the configured target
+  | environment.
+   ,----
+ 1 | 1n ** 2n
+   :       ^^
+   `----
+
+########## 8 es2021
 class foo { static {} }
 ----------
 class foo {

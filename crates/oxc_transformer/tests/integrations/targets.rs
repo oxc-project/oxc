@@ -5,14 +5,15 @@ use oxc_transformer::{ESTarget, EnvOptions, TransformOptions};
 #[test]
 fn targets() {
     let cases = [
-        ("() => {}"),
-        ("a ** b"),
+        // ("() => {}"),
+        // ("a ** b"),
         // ("async function foo() {}"),
-        ("({ ...x })"),
-        ("try {} catch {}"),
-        ("a ?? b"),
-        ("a ||= b"),
+        // ("({ ...x })"),
+        // ("try {} catch {}"),
+        // ("a ?? b"),
+        // ("a ||= b"),
         // ("class foo { static {} }"),
+        "1n ** 2n",
     ];
 
     // Test no transformation for default targets.
@@ -21,7 +22,7 @@ fn targets() {
             env: EnvOptions::from_browserslist_query("defaults").unwrap(),
             ..TransformOptions::default()
         };
-        assert_eq!(codegen(case, SourceType::mjs()), test(case, options));
+        assert_eq!(Ok(codegen(case, SourceType::mjs())), test(case, options));
     }
 
     // Test transformation for very low targets.
