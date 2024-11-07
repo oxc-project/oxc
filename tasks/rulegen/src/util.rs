@@ -30,7 +30,7 @@ mod tests {
     fn test_dedent_with_interpolation() {
         let line = "line";
         let second = "second";
-        let input = format!("\t\tfirst {}\n\t\t {}\n\t\t third", line, second);
+        let input = format!("\t\tfirst {line}\n\t\t {second}\n\t\t third");
         let expected = "first line\n second\n third";
         let result = dedent(&input);
         assert_eq!(result, expected);
