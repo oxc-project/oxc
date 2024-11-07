@@ -1,0 +1,16 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-import(unambiguous): This module could be mistakenly parsed as script instead of module
+   ╭─[index.ts:1:1]
+ 1 │ function x() {}
+   · ▲
+   ╰────
+  help: Add at least one import or export statement to unambiguously mark this file as a module
+
+  ⚠ eslint-plugin-import(unambiguous): This module could be mistakenly parsed as script instead of module
+   ╭─[index.ts:1:1]
+ 1 │ (function x() { return 42 })()
+   · ▲
+   ╰────
+  help: Add at least one import or export statement to unambiguously mark this file as a module
