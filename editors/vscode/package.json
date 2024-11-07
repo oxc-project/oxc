@@ -52,11 +52,6 @@
         "command": "oxc.showOutputChannel",
         "title": "Show Output Channel",
         "category": "Oxc"
-      },
-      {
-        "command": "oxc.showTraceOutputChannel",
-        "title": "Show Trace Output Channel",
-        "category": "Oxc"
       }
     ],
     "configuration": {

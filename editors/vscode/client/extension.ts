@@ -11,14 +11,12 @@ import { ConfigService } from './config';
 
 const languageClientName = 'oxc';
 const outputChannelName = 'Oxc';
-const traceOutputChannelName = 'Oxc (Trace)';
 const commandPrefix = 'oxc';
 
 const enum OxcCommands {
   RestartServer = `${commandPrefix}.restartServer`,
   ApplyAllFixes = `${commandPrefix}.applyAllFixes`,
   ShowOutputChannel = `${commandPrefix}.showOutputChannel`,
-  ShowTraceOutputChannel = `${commandPrefix}.showTraceOutputChannel`,
   ToggleEnable = `${commandPrefix}.toggleEnable`,
 }
 
@@ -57,13 +55,6 @@ export async function activate(context: ExtensionContext) {
     },
   );
 
-  const showTraceOutputCommand = commands.registerCommand(
-    OxcCommands.ShowTraceOutputChannel,
-    () => {
-      client?.traceOutputChannel?.show();
-    },
-  );
-
   const toggleEnable = commands.registerCommand(
     OxcCommands.ToggleEnable,
     () => {
@@ -74,13 +65,11 @@ export async function activate(context: ExtensionContext) {
   context.subscriptions.push(
     restartCommand,
     showOutputCommand,
-    showTraceOutputCommand,
     toggleEnable,
     config,
   );
 
-  const outputChannel = window.createOutputChannel(outputChannelName);
-  const traceOutputChannel = window.createOutputChannel(traceOutputChannelName);
+  const outputChannel = window.createOutputChannel(outputChannelName, { log: true });
 
   async function findBinary(): Promise<string> {
     let bin = config.binPath;
@@ -162,7 +151,7 @@ export async function activate(context: ExtensionContext) {
       settings: config.toLanguageServerConfig(),
     },
     outputChannel,
-    traceOutputChannel,
+    traceOutputChannel: outputChannel,
   };
 
   // Create the language client and start the client.
@@ -173,9 +162,11 @@ export async function activate(context: ExtensionContext) {
   );
   client.onNotification(ShowMessageNotification.type, (params) => {
     switch (params.type) {
-      case MessageType.Log:
       case MessageType.Debug:
-        outputChannel.appendLine(params.message);
+        outputChannel.debug(params.message);
+        break;
+      case MessageType.Log:
+        outputChannel.info(params.message);
         break;
       case MessageType.Info:
         window.showInformationMessage(params.message);
@@ -187,7 +178,7 @@ export async function activate(context: ExtensionContext) {
         window.showErrorMessage(params.message);
         break;
       default:
-        outputChannel.appendLine(params.message);
+        outputChannel.info(params.message);
     }
   });
 
