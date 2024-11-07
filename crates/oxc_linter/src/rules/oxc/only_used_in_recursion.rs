@@ -279,19 +279,21 @@ fn create_diagnostic_jsx(
 }
 
 fn used_with_spread_attribute(node_id: NodeId, ctx: &LintContext) -> bool {
-    let opening_element = ctx
+    ctx
         .nodes()
-        .ancestors(node_id)
-        .find_map(|node| match ctx.nodes().kind(node) {
-            AstKind::JSXOpeningElement(opening_element) => Some(opening_element),
-            _ => None,
+        .iter_parents(node_id)
+        .any(|node| match node.kind() {
+            AstKind::JSXOpeningElement(opening_element) => {
+              opening_element
+                .attributes
+                .iter()
+                .any(|attr| matches!(attr, JSXAttributeItem::SpreadAttribute(_)))
+            },
+            _ => false,
         })
-        .expect("should be safe");
 
-    opening_element
-        .attributes
-        .iter()
-        .any(|attr| matches!(attr, JSXAttributeItem::SpreadAttribute(_)))
+
+    
 }
 
 fn is_argument_only_used_in_recursion<'a>(
@@ -467,7 +469,7 @@ enum Direction {
 fn skip_to_next_char(s: &str, start: u32, direction: &Direction) -> Option<u32> {
     // span is a half-open interval: [start, end)
     // so we should return in that way.
-    let start = start.try_into().expect("converting u32 to usize should be safe");
+    let start = start as usize;
     match direction {
         Direction::Forward => s
             .char_indices()
