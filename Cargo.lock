@@ -1568,6 +1568,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_compat_data"
+version = "0.0.0"
+
+[[package]]
 name = "oxc_coverage"
 version = "0.0.0"
 dependencies = [
