@@ -107,6 +107,7 @@ impl<'a> From<&InjectImport> for DotDefineState<'a> {
 pub struct InjectGlobalVariablesReturn {
     pub symbols: SymbolTable,
     pub scopes: ScopeTree,
+    pub changed: bool,
 }
 
 /// Injects import statements for global variables.
@@ -125,6 +126,8 @@ pub struct InjectGlobalVariables<'a> {
     /// Identifiers for which dot define replaced a member expression.
     replaced_dot_defines:
         Vec<(/* identifier of member expression */ CompactStr, /* local */ CompactStr)>,
+    /// If there are any semantic info changed.
+    changed: bool,
 }
 
 impl<'a> Traverse<'a> for InjectGlobalVariables<'a> {
@@ -140,6 +143,7 @@ impl<'a> InjectGlobalVariables<'a> {
             config,
             dot_defines: vec![],
             replaced_dot_defines: vec![],
+            changed: false,
         }
     }
 
@@ -184,12 +188,13 @@ impl<'a> InjectGlobalVariables<'a> {
             .collect::<Vec<_>>();
 
         if injects.is_empty() {
-            return InjectGlobalVariablesReturn { symbols, scopes };
+            return InjectGlobalVariablesReturn { symbols, scopes, changed: self.changed };
         }
 
         self.inject_imports(&injects, program);
+        self.changed = !injects.is_empty();
 
-        InjectGlobalVariablesReturn { symbols, scopes }
+        InjectGlobalVariablesReturn { symbols, scopes, changed: self.changed }
     }
 
     fn inject_imports(&self, injects: &[InjectImport], program: &mut Program<'a>) {
@@ -245,6 +250,7 @@ impl<'a> InjectGlobalVariables<'a> {
 
                     let value = self.ast.expression_identifier_reference(SPAN, value_atom);
                     *expr = value;
+                    self.changed = true;
                     break;
                 }
             }

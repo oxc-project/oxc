@@ -190,6 +190,7 @@ impl ReplaceGlobalDefinesConfig {
 pub struct ReplaceGlobalDefinesReturn {
     pub symbols: SymbolTable,
     pub scopes: ScopeTree,
+    pub changed: bool,
 }
 
 /// Replace Global Defines.
@@ -202,6 +203,8 @@ pub struct ReplaceGlobalDefinesReturn {
 pub struct ReplaceGlobalDefines<'a> {
     allocator: &'a Allocator,
     config: ReplaceGlobalDefinesConfig,
+    /// If there are any semantic info changed.
+    changed: bool,
 }
 
 impl<'a> Traverse<'a> for ReplaceGlobalDefines<'a> {
@@ -213,7 +216,7 @@ impl<'a> Traverse<'a> for ReplaceGlobalDefines<'a> {
 
 impl<'a> ReplaceGlobalDefines<'a> {
     pub fn new(allocator: &'a Allocator, config: ReplaceGlobalDefinesConfig) -> Self {
-        Self { allocator, config }
+        Self { allocator, config, changed: false }
     }
 
     pub fn build(
@@ -223,7 +226,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
         program: &mut Program<'a>,
     ) -> ReplaceGlobalDefinesReturn {
         let (symbols, scopes) = traverse_mut(self, self.allocator, program, symbols, scopes);
-        ReplaceGlobalDefinesReturn { symbols, scopes }
+        ReplaceGlobalDefinesReturn { symbols, scopes, changed: self.changed }
     }
 
     // Construct a new expression because we don't have ast clone right now.
@@ -234,7 +237,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
         Parser::new(self.allocator, source_text, SourceType::default()).parse_expression().unwrap()
     }
 
-    fn replace_identifier_defines(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn replace_identifier_defines(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::Identifier(ident) = expr else { return };
         if !ident.is_global_reference(ctx.symbols()) {
             return;
@@ -243,6 +246,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
             if ident.name.as_str() == key {
                 let value = self.parse_value(value);
                 *expr = value;
+                self.changed = true;
                 break;
             }
         }
@@ -255,6 +259,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
                     if Self::is_dot_define(ctx.symbols(), dot_define, member) {
                         let value = self.parse_value(&dot_define.value);
                         *expr = value;
+                        self.changed = true;
                         return;
                     }
                 }
@@ -262,6 +267,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
                     if Self::is_meta_property_define(meta_property_define, member) {
                         let value = self.parse_value(&meta_property_define.value);
                         *expr = value;
+                        self.changed = true;
                         return;
                     }
                 }
@@ -272,6 +278,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
                     {
                         let value = self.parse_value(replacement);
                         *expr = value;
+                        self.changed = true;
                     }
                 }
             }
