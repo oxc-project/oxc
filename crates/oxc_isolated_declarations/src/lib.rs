@@ -135,15 +135,7 @@ impl<'a> IsolatedDeclarations<'a> {
         &mut self,
         program: &Program<'a>,
     ) -> oxc_allocator::Vec<'a, Statement<'a>> {
-        let has_import_or_export = program.body.iter().any(|stmt| {
-            matches!(
-                stmt,
-                Statement::ImportDeclaration(_)
-                    | Statement::ExportAllDeclaration(_)
-                    | Statement::ExportDefaultDeclaration(_)
-                    | Statement::ExportNamedDeclaration(_)
-            )
-        });
+        let has_import_or_export = program.body.iter().any(Statement::is_module_declaration);
 
         if has_import_or_export {
             self.transform_statements_on_demand(&program.body)
@@ -195,7 +187,9 @@ impl<'a> IsolatedDeclarations<'a> {
         let mut transformed_stmts: FxHashMap<Span, Statement<'a>> = FxHashMap::default();
         let mut transformed_variable_declarator: FxHashMap<Span, VariableDeclarator<'a>> =
             FxHashMap::default();
-        let mut export_default_var = None;
+        // When transforming `export default` with expression or `export = expression`,
+        // we will emit an extra variable declaration to store the inferred type of expression
+        let mut extra_export_var_statement = None;
 
         // 1. Collect all declarations, module declarations
         // 2. Transform export declarations
@@ -233,25 +227,35 @@ impl<'a> IsolatedDeclarations<'a> {
                 }
                 match_module_declaration!(Statement) => {
                     match stmt.to_module_declaration() {
+                        ModuleDeclaration::TSExportAssignment(decl) => {
+                            transformed_spans.insert(decl.span);
+                            if let Some((var_decl, new_decl)) =
+                                self.transform_ts_export_assignment(decl)
+                            {
+                                if let Some(var_decl) = var_decl {
+                                    self.scope.visit_statement(&var_decl);
+                                    extra_export_var_statement = Some(var_decl);
+                                }
+
+                                self.scope.visit_statement(&new_decl);
+                                transformed_stmts.insert(decl.span, new_decl);
+                            } else {
+                                self.scope.visit_ts_export_assignment(decl);
+                            }
+                            need_empty_export_marker = false;
+                        }
                         ModuleDeclaration::ExportDefaultDeclaration(decl) => {
                             transformed_spans.insert(decl.span);
                             if let Some((var_decl, new_decl)) =
                                 self.transform_export_default_declaration(decl)
                             {
                                 if let Some(var_decl) = var_decl {
-                                    self.scope.visit_variable_declaration(&var_decl);
-                                    export_default_var = Some(Statement::VariableDeclaration(
-                                        self.ast.alloc(var_decl),
-                                    ));
+                                    self.scope.visit_statement(&var_decl);
+                                    extra_export_var_statement = Some(var_decl);
                                 }
 
-                                self.scope.visit_export_default_declaration(&new_decl);
-                                transformed_stmts.insert(
-                                    decl.span,
-                                    Statement::from(ModuleDeclaration::ExportDefaultDeclaration(
-                                        self.ast.alloc(new_decl),
-                                    )),
-                                );
+                                self.scope.visit_statement(&new_decl);
+                                transformed_stmts.insert(decl.span, new_decl);
                             } else {
                                 self.scope.visit_export_default_declaration(decl);
                             }
@@ -358,16 +362,20 @@ impl<'a> IsolatedDeclarations<'a> {
         }
 
         // 6. Transform variable/using declarations, import statements, remove unused imports
-        let mut new_stm =
-            self.ast.vec_with_capacity(stmts.len() + usize::from(export_default_var.is_some()));
+        let mut new_stm = self
+            .ast
+            .vec_with_capacity(stmts.len() + usize::from(extra_export_var_statement.is_some()));
         stmts.iter().for_each(|stmt| {
             if transformed_spans.contains(&stmt.span()) {
                 let new_stmt = transformed_stmts
                     .remove(&stmt.span())
                     .unwrap_or_else(|| stmt.clone_in(self.ast.allocator));
-                if matches!(new_stmt, Statement::ExportDefaultDeclaration(_)) {
-                    if let Some(export_default_var) = export_default_var.take() {
-                        new_stm.push(export_default_var);
+                if matches!(
+                    new_stmt,
+                    Statement::ExportDefaultDeclaration(_) | Statement::TSExportAssignment(_)
+                ) {
+                    if let Some(export_external_var_statement) = extra_export_var_statement.take() {
+                        new_stm.push(export_external_var_statement);
                     }
                 }
                 new_stm.push(new_stmt);
