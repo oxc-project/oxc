@@ -3814,12 +3814,12 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/test262/test/language/eval-code/direct/async-meth-a-preceding-parameter-is-named-arguments-declare-arguments-and-assign.js
 semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(7): SymbolFlags(Import)
+after transform: SymbolId(5): SymbolFlags(Import)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/test262/test/language/eval-code/direct/async-meth-a-preceding-parameter-is-named-arguments-declare-arguments.js
 semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(7): SymbolFlags(Import)
+after transform: SymbolId(5): SymbolFlags(Import)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/test262/test/language/eval-code/direct/async-meth-fn-body-cntns-arguments-func-decl-declare-arguments-and-assign.js
@@ -20368,7 +20368,16 @@ after transform: SymbolId(12): SymbolFlags(Import)
 rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/test262/test/language/expressions/object/method-definition/async-meth-dflt-params-abrupt.js
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
+semantic error: Scope children mismatch:
+after transform: ScopeId(6): [ScopeId(1)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(1))
+rebuilt        : ScopeId(2): Some(ScopeId(1))
+Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(3): []
+Symbol flags mismatch for "_asyncToGenerator":
 after transform: SymbolId(5): SymbolFlags(Import)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
@@ -20389,7 +20398,7 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/test262/test/language/expressions/object/method-definition/async-meth-dflt-params-ref-prior.js
 semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(9): SymbolFlags(Import)
+after transform: SymbolId(7): SymbolFlags(Import)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/test262/test/language/expressions/object/method-definition/async-meth-dflt-params-ref-self.js
@@ -20399,7 +20408,7 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/test262/test/language/expressions/object/method-definition/async-meth-dflt-params-trailing-comma.js
 semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(7): SymbolFlags(Import)
+after transform: SymbolId(5): SymbolFlags(Import)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/test262/test/language/expressions/object/method-definition/async-meth-eval-var-scope-syntax-err.js
@@ -20409,12 +20418,12 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/test262/test/language/expressions/object/method-definition/async-meth-params-trailing-comma-multiple.js
 semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(8): SymbolFlags(Import)
+after transform: SymbolId(5): SymbolFlags(Import)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/test262/test/language/expressions/object/method-definition/async-meth-params-trailing-comma-single.js
 semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(6): SymbolFlags(Import)
+after transform: SymbolId(4): SymbolFlags(Import)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/test262/test/language/expressions/object/method-definition/async-returns-async-arrow-returns-arguments-from-parent-function.js

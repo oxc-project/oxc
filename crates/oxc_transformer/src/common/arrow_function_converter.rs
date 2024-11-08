@@ -397,10 +397,10 @@ impl<'a> ArrowFunctionConverter<'a> {
                 }
                 // Function body
                 Ancestor::FunctionBody(func) => {
-                    return if self.is_async_only() && *func.r#async()
-                    && matches!(
-                        ancestors.next().unwrap(),
-                        Ancestor::MethodDefinitionValue(_) | Ancestor::ObjectPropertyValue(_)
+                    return if self.is_async_only()
+                    && *func.r#async()
+                    && Self::is_class_method_like_ancestor(
+                        ancestors.next().unwrap()
                     ) {
                         Some(func.scope_id().get().unwrap())
                     } else {
@@ -447,6 +447,18 @@ impl<'a> ArrowFunctionConverter<'a> {
             Some(body),
             scope_id,
         ))
+    }
+
+    /// Check whether the given [`Ancestor`] is a class method-like node.
+    fn is_class_method_like_ancestor(ancestor: Ancestor) -> bool {
+        match ancestor {
+            // `class A { async foo() {} }`
+            Ancestor::MethodDefinitionValue(_) => true,
+            // Only `({ async foo() {} })` does not include non-method like `({ async foo: function() {} })`,
+            // because it's just a property with a function value
+            Ancestor::ObjectPropertyValue(property) => *property.method(),
+            _ => false,
+        }
     }
 
     /// Insert `var _this = this;` at the top of the statements.
