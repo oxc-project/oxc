@@ -322,7 +322,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<ArenaBox<'a, IdentifierReference<'a>>> {
         // Find arrow function we are currently in (if we are)
-        let arrow_scope_id = self.get_arrow_function_scope(ctx)?;
+        let arrow_scope_id = self.get_scope_id_from_this_affected_block(ctx)?;
 
         // TODO(improve-on-babel): We create a new UID for every scope. This is pointless, as only one
         // `this` can be in scope at a time. We could create a single `_this` UID and reuse it in each
@@ -346,9 +346,9 @@ impl<'a> ArrowFunctionConverter<'a> {
         Some(ctx.ast.alloc(this_var.create_spanned_read_reference(span, ctx)))
     }
 
-    /// Find arrow function we are currently in, if it's between current node, and where `this` is bound.
-    /// Return its `ScopeId`.
-    fn get_arrow_function_scope(&self, ctx: &mut TraverseCtx<'a>) -> Option<ScopeId> {
+    /// Traverses upward through ancestor nodes to find the `ScopeId` of the block
+    /// that potential affects the `this` expression.
+    fn get_scope_id_from_this_affected_block(&self, ctx: &mut TraverseCtx<'a>) -> Option<ScopeId> {
         // `this` inside a class resolves to `this` *outside* the class in:
         // * `extends` clause
         // * Computed method key
@@ -420,8 +420,14 @@ impl<'a> ArrowFunctionConverter<'a> {
                         Some(func.scope_id().get().unwrap())
                     };
                 }
-                // Function body
+                // Function body (includes class method or object method)
                 Ancestor::FunctionBody(func) => {
+                    // If we're inside a class async method or an object async method, and `is_async_only` is true,
+                    // the `AsyncToGenerator` or `AsyncGeneratorFunctions` plugin will move the body
+                    // of the method into a new generator function. This transformation can cause `this`
+                    // to point to the wrong context.
+                    // To prevent this issue, we replace `this` with `_this`, treating it similarly
+                    // to how we handle arrow functions. Therefore, we return the `ScopeId` of the function.
                     return if self.is_async_only()
                     && *func.r#async()
                     && Self::is_class_method_like_ancestor(
