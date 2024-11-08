@@ -38180,12 +38180,12 @@ rebuilt        : ["arguments", "mp", "p", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/async/es2017/asyncMethodWithSuperConflict_es6.ts
 semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(11): SymbolFlags(Import)
+after transform: SymbolId(15): SymbolFlags(Import)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/conformance/async/es2017/asyncMethodWithSuper_es2017.ts
 semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(7): SymbolFlags(Import)
+after transform: SymbolId(11): SymbolFlags(Import)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/conformance/async/es2017/asyncUseStrict_es2017.ts
@@ -38566,8 +38566,8 @@ rebuilt        : ["arguments", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/async/es5/asyncArrowFunction/asyncArrowFunction11_es5.ts
 semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(3): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+after transform: SymbolId(4): SymbolFlags(Import)
+rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/conformance/async/es5/asyncArrowFunction/asyncArrowFunction1_es5.ts
 semantic error: Symbol flags mismatch for "_asyncToGenerator":
@@ -38658,7 +38658,7 @@ rebuilt        : ScopeId(1): []
 
 tasks/coverage/typescript/tests/cases/conformance/async/es5/asyncMethodWithSuper_es5.ts
 semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(7): SymbolFlags(Import)
+after transform: SymbolId(11): SymbolFlags(Import)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/conformance/async/es5/asyncMultiFile_es5.ts
@@ -39173,10 +39173,10 @@ rebuilt        : ["arguments", "mp", "p", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/async/es6/asyncMethodWithSuper_es6.ts
 semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(21): SymbolFlags(Import)
+after transform: SymbolId(25): SymbolFlags(Import)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol flags mismatch for "_wrapAsyncGenerator":
-after transform: SymbolId(22): SymbolFlags(Import)
+after transform: SymbolId(48): SymbolFlags(Import)
 rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/conformance/async/es6/asyncMultiFile_es6.ts
@@ -47284,7 +47284,7 @@ rebuilt        : ["o1", "o2", "o3", "o4"]
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/callChain/superMethodCall.ts
 semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(2): SymbolFlags(Import)
+after transform: SymbolId(3): SymbolFlags(Import)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/elementAccessChain/elementAccessChain.2.ts

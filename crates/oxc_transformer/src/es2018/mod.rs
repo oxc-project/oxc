@@ -1,4 +1,4 @@
-mod async_generator_functions;
+pub(crate) mod async_generator_functions;
 mod object_rest_spread;
 mod options;
 

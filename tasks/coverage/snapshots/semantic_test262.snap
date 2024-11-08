@@ -20458,13 +20458,22 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/test262/test/language/expressions/object/method-definition/async-super-call-body.js
 semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(3): SymbolFlags(Import)
+after transform: SymbolId(5): SymbolFlags(Import)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/test262/test/language/expressions/object/method-definition/async-super-call-param.js
 semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(4): SymbolFlags(Import)
+after transform: SymbolId(5): SymbolFlags(Import)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+Symbol reference IDs mismatch for "_superprop_getMethod":
+after transform: SymbolId(4): [ReferenceId(9)]
+rebuilt        : SymbolId(4): []
+Reference symbol mismatch for "_superprop_getMethod":
+after transform: SymbolId(4) "_superprop_getMethod"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["$DONE", "Object", "assert", "require"]
+rebuilt        : ["$DONE", "Object", "_superprop_getMethod", "assert", "require"]
 
 tasks/coverage/test262/test/language/expressions/object/method-definition/forbidden-ext/b1/async-gen-meth-forbidden-ext-direct-access-prop-arguments.js
 semantic error: Symbol flags mismatch for "_wrapAsyncGenerator":
@@ -24611,6 +24620,15 @@ tasks/coverage/test262/test/language/statements/class/definition/methods-async-s
 semantic error: Symbol flags mismatch for "_asyncToGenerator":
 after transform: SymbolId(4): SymbolFlags(Import)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+Symbol reference IDs mismatch for "_superprop_getMethod":
+after transform: SymbolId(5): [ReferenceId(8)]
+rebuilt        : SymbolId(4): []
+Reference symbol mismatch for "_superprop_getMethod":
+after transform: SymbolId(5) "_superprop_getMethod"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["$DONE", "assert", "require"]
+rebuilt        : ["$DONE", "_superprop_getMethod", "assert", "require"]
 
 tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-init-iter-close.js
 semantic error: Symbol flags mismatch for "_wrapAsyncGenerator":

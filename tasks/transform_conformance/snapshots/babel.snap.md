@@ -1,6 +1,6 @@
 commit: d20b314c
 
-Passed: 314/626
+Passed: 316/626
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -13,7 +13,7 @@ Passed: 314/626
 * babel-plugin-transform-react-jsx-source
 
 
-# babel-preset-env (40/127)
+# babel-preset-env (41/127)
 * dynamic-import/auto-esm-unsupported-import-unsupported/input.mjs
 x Output mismatch
 
@@ -105,9 +105,6 @@ x Output mismatch
 x Output mismatch
 
 * plugins-integration/issue-7527/input.mjs
-x Output mismatch
-
-* plugins-integration/issue-9935/input.js
 x Output mismatch
 
 * plugins-integration/regression-2892/input.mjs
@@ -463,7 +460,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-async-to-generator (10/24)
+# babel-plugin-transform-async-to-generator (11/24)
 * assumption-ignoreFunctionLength-true/basic/input.mjs
 x Output mismatch
 
@@ -474,9 +471,6 @@ x Output mismatch
 x Output mismatch
 
 * async-to-generator/async-iife-with-regenerator-spec/input.js
-x Output mismatch
-
-* async-to-generator/object-method-with-super/input.js
 x Output mismatch
 
 * bluebird-coroutines/arrow-function/input.js
