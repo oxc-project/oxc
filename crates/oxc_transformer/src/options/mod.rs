@@ -92,7 +92,9 @@ impl TransformOptions {
 
 impl From<ESTarget> for TransformOptions {
     fn from(target: ESTarget) -> Self {
-        Self { env: EnvOptions::from(target), ..Self::default() }
+        let mut engine_targets = EngineTargets::default();
+        engine_targets.insert(Engine::Es, target.version());
+        Self { env: EnvOptions::from(engine_targets), ..Self::default() }
     }
 }
 

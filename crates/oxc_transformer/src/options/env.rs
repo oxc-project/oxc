@@ -14,7 +14,7 @@ use crate::{
     EngineTargets,
 };
 
-use super::{babel::BabelEnvOptions, ESFeature, ESTarget};
+use super::{babel::BabelEnvOptions, ESFeature};
 
 #[derive(Debug, Default, Clone, Deserialize)]
 #[serde(try_from = "BabelEnvOptions")]
@@ -100,67 +100,21 @@ impl EnvOptions {
     ///
     /// [browserslist]: <https://github.com/browserslist/browserslist>
     pub fn from_browserslist_query(query: &str) -> Result<Self, Error> {
-        Self::try_from(BabelEnvOptions {
-            targets: EngineTargets::try_from_query(query)?,
-            ..BabelEnvOptions::default()
-        })
-        .map_err(|err| Error::msg(err))
+        EngineTargets::try_from_query(query).map(Self::from)
     }
 }
 
-impl From<ESTarget> for EnvOptions {
-    fn from(target: ESTarget) -> Self {
-        Self {
-            regexp: RegExpOptions {
-                sticky_flag: target < ESTarget::ES2015,
-                unicode_flag: target < ESTarget::ES2015,
-                unicode_property_escapes: target < ESTarget::ES2018,
-                dot_all_flag: target < ESTarget::ES2015,
-                named_capture_groups: target < ESTarget::ES2018,
-                look_behind_assertions: target < ESTarget::ES2018,
-                match_indices: target < ESTarget::ES2022,
-                set_notation: target < ESTarget::ES2024,
-            },
-            es2015: ES2015Options {
-                arrow_function: (target < ESTarget::ES2015).then(ArrowFunctionsOptions::default),
-            },
-            es2016: ES2016Options { exponentiation_operator: target < ESTarget::ES2016 },
-            es2017: ES2017Options { async_to_generator: target < ESTarget::ES2017 },
-            es2018: ES2018Options {
-                object_rest_spread: (target < ESTarget::ES2018)
-                    .then(ObjectRestSpreadOptions::default),
-                async_generator_functions: target < ESTarget::ES2018,
-            },
-            es2019: ES2019Options { optional_catch_binding: target < ESTarget::ES2019 },
-            es2020: ES2020Options {
-                nullish_coalescing_operator: target < ESTarget::ES2020,
-                big_int: target < ESTarget::ES2020,
-            },
-            es2021: ES2021Options { logical_assignment_operators: target < ESTarget::ES2021 },
-            es2022: ES2022Options {
-                class_static_block: target < ESTarget::ES2022,
-                class_properties: (target < ESTarget::ES2022).then(ClassPropertiesOptions::default),
-            },
-        }
+impl From<BabelEnvOptions> for EnvOptions {
+    fn from(o: BabelEnvOptions) -> Self {
+        Self::from(o.targets)
     }
 }
 
-impl TryFrom<BabelEnvOptions> for EnvOptions {
-    type Error = String;
-
-    fn try_from(o: BabelEnvOptions) -> Result<Self, Self::Error> {
-        Self::try_from(o.targets)
-    }
-}
-
-impl TryFrom<EngineTargets> for EnvOptions {
-    type Error = String;
-
+impl From<EngineTargets> for EnvOptions {
     #[allow(clippy::enum_glob_use)]
-    /// If there are any errors in the `options.targets``, they will be returned as a list of errors.
-    fn try_from(o: EngineTargets) -> Result<Self, Self::Error> {
+    fn from(o: EngineTargets) -> Self {
         use ESFeature::*;
-        Ok(Self {
+        Self {
             regexp: RegExpOptions {
                 sticky_flag: o.has_feature(ES2015StickyRegex),
                 unicode_flag: o.has_feature(ES2015UnicodeRegex),
@@ -196,6 +150,6 @@ impl TryFrom<EngineTargets> for EnvOptions {
                 class_static_block: o.has_feature(ES2022ClassStaticBlock),
                 class_properties: o.has_feature(ES2022ClassProperties).then(Default::default),
             },
-        })
+        }
     }
 }

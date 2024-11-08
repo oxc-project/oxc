@@ -37,6 +37,8 @@ pub enum Engine {
     OperaMobile,
     // TODO:
     Android,
+    // Special Value for ESXXXX target.
+    Es,
 }
 
 impl FromStr for Engine {
@@ -105,6 +107,9 @@ impl EngineTargets {
     pub fn should_enable(&self, engine_targets: &EngineTargets) -> bool {
         for (engine, version) in &engine_targets.0 {
             if let Some(v) = self.0.get(engine) {
+                if *engine == Engine::Es && v <= version {
+                    return true;
+                }
                 if v < version {
                     return true;
                 }

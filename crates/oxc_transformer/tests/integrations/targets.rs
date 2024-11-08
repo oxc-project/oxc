@@ -5,14 +5,13 @@ use oxc_transformer::{ESTarget, EnvOptions, TransformOptions};
 #[test]
 fn targets() {
     let cases = [
-        // ("() => {}"),
-        // ("a ** b"),
-        // ("async function foo() {}"),
-        // ("({ ...x })"),
-        // ("try {} catch {}"),
-        // ("a ?? b"),
-        // ("a ||= b"),
-        // ("class foo { static {} }"),
+        ("() => {}"),
+        ("a ** b"),
+        ("async function foo() {}"),
+        ("({ ...x })"),
+        ("try {} catch {}"),
+        ("a ?? b"),
+        ("a ||= b"),
         "1n ** 2n",
     ];
 
