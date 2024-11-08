@@ -7,28 +7,38 @@ use oxc_codegen::{CodeGenerator, CodegenOptions};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
-use oxc_transformer::{InjectGlobalVariables, InjectGlobalVariablesConfig, InjectImport};
+use oxc_transformer::{
+    InjectGlobalVariables, InjectGlobalVariablesConfig, InjectGlobalVariablesReturn, InjectImport,
+};
 
 use crate::codegen;
 
-pub(crate) fn test(source_text: &str, expected: &str, config: InjectGlobalVariablesConfig) {
+/// `semantic_info_changed` is used to assert that the semantic information has changed.
+pub(crate) fn test(
+    source_text: &str,
+    expected: &str,
+    config: InjectGlobalVariablesConfig,
+    semantic_info_changed: bool,
+) {
     let source_type = SourceType::default();
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let mut program = ret.program;
     let (symbols, scopes) =
         SemanticBuilder::new().build(&program).semantic.into_symbol_table_and_scope_tree();
-    let _ = InjectGlobalVariables::new(&allocator, config).build(symbols, scopes, &mut program);
+    let InjectGlobalVariablesReturn { changed, .. } =
+        InjectGlobalVariables::new(&allocator, config).build(symbols, scopes, &mut program);
     let result = CodeGenerator::new()
         .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
         .build(&program)
         .code;
     let expected = codegen(expected, source_type);
     assert_eq!(result, expected, "for source {source_text}");
+    assert_eq!(semantic_info_changed, changed, "for source {source_text}");
 }
 
 fn test_same(source_text: &str, config: InjectGlobalVariablesConfig) {
-    test(source_text, source_text, config);
+    test(source_text, source_text, config, false);
 }
 
 #[test]
@@ -48,6 +58,7 @@ fn default() {
         });
         ",
         config,
+        true,
     );
 }
 
@@ -69,6 +80,7 @@ fn basic() {
         });
         ",
         config,
+        true,
     );
     // inserts a default import statement
     let config =
@@ -86,6 +98,7 @@ fn basic() {
         });
         "#,
         config,
+        true,
     );
 }
 
@@ -104,6 +117,7 @@ fn named() {
         Promise.all([thisThing, thatThing]).then(() => someOtherThing);
         ",
         config,
+        true,
     );
 }
 
@@ -128,6 +142,7 @@ fn keypaths() {
         export default clone;
         ",
         config,
+        true
     );
 }
 
@@ -191,6 +206,7 @@ polyfills.Promise.resolve().then(() => 'it works');
 polyfills.Promise.resolve().then(() => 'it works');
         ",
         config,
+        true,
     );
 }
 
@@ -253,6 +269,7 @@ fn shorthand_func_fallback() {
         foo();
         ",
         config,
+        true,
     );
 }
 
@@ -270,6 +287,7 @@ fn redundant_keys() {
         $inject_Buffer_isBuffer('foo');
         ",
         config.clone(),
+        true,
     );
 
     // not found
@@ -292,6 +310,7 @@ fn import_namespace() {
         console.log(foo.baz);
         ",
         config,
+        true,
     );
 }
 
@@ -318,18 +337,7 @@ fn is_reference() {
     // ignores check isReference is false
     let config =
         InjectGlobalVariablesConfig::new(vec![InjectImport::named_specifier("path", None, "bar")]);
-    test(
-        "
-        import { bar as foo } from 'path';
-        console.log({ bar: foo });
-        class Foo {
-          bar() {
-            console.log(this);
-          }
-        }
-        export { Foo };
-        export { foo as bar };
-        ",
+    test_same(
         "
         import { bar as foo } from 'path';
         console.log({ bar: foo });
