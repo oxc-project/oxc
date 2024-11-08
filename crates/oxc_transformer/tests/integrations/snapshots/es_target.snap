@@ -30,7 +30,7 @@ function _foo() {
 import _objectSpread from '@babel/runtime/helpers/objectSpread2';
 _objectSpread({}, x);
 
-########## 4 es2018
+########## 4 es2017
 try {} catch {}
 ----------
 try {} catch (_unused) {}
@@ -41,7 +41,7 @@ a ?? b
 var _a;
 (_a = a) !== null && _a !== void 0 ? _a : b;
 
-########## 6 es2020
+########## 6 es2019
 a ||= b
 ----------
 a || (a = b);

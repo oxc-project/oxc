@@ -7,7 +7,7 @@ use oxc_diagnostics::Error;
 
 pub use browserslist::Version;
 
-use crate::options::{engine_targets::Engine, BrowserslistQuery, EngineTargets};
+use crate::options::{BrowserslistQuery, Engine, EngineTargets};
 
 /// <https://babel.dev/docs/babel-preset-env#targets>
 #[derive(Debug, Deserialize)]

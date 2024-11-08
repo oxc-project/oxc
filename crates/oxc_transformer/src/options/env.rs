@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use oxc_diagnostics::Error;
 use serde::Deserialize;
 
@@ -14,7 +16,7 @@ use crate::{
     EngineTargets,
 };
 
-use super::{babel::BabelEnvOptions, ESFeature};
+use super::{babel::BabelEnvOptions, ESFeature, ESTarget, Engine};
 
 #[derive(Debug, Default, Clone, Deserialize)]
 #[serde(try_from = "BabelEnvOptions")]
@@ -101,6 +103,38 @@ impl EnvOptions {
     /// [browserslist]: <https://github.com/browserslist/browserslist>
     pub fn from_browserslist_query(query: &str) -> Result<Self, Error> {
         EngineTargets::try_from_query(query).map(Self::from)
+    }
+
+    pub(crate) fn from_target(s: &str) -> Result<Self, Error> {
+        if s.contains(',') {
+            Self::from_target_list(&s.split(',').collect::<Vec<_>>())
+        } else {
+            Self::from_target_list(&[s])
+        }
+    }
+
+    pub(crate) fn from_target_list<S: AsRef<str>>(list: &[S]) -> Result<Self, Error> {
+        let mut es_target = None;
+        let mut engine_targets = EngineTargets::default();
+
+        for s in list {
+            let s = s.as_ref();
+            // Parse `esXXXX`.
+            if let Ok(target) = ESTarget::from_str(s) {
+                if let Some(target) = es_target {
+                    return Err(Error::msg(format!("'{target}' is already specified.")));
+                }
+                es_target = Some(target);
+            } else {
+                // Parse `chromeXX`, `edgeXX` etc.
+                let (engine, version) = Engine::parse_name_and_version(s)?;
+                if engine_targets.insert(engine, version).is_some() {
+                    return Err(Error::msg(format!("'{s}' is already specified.")));
+                }
+            }
+        }
+        engine_targets.insert(Engine::Es, es_target.unwrap_or(ESTarget::default()).version());
+        Ok(EnvOptions::from(engine_targets))
     }
 }
 

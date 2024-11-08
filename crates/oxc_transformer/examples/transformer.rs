@@ -1,12 +1,12 @@
 #![allow(clippy::print_stdout)]
-use std::{path::Path, str::FromStr};
+use std::path::Path;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::CodeGenerator;
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
-use oxc_transformer::{ESTarget, EnvOptions, TransformOptions, Transformer};
+use oxc_transformer::{EnvOptions, TransformOptions, Transformer};
 use pico_args::Arguments;
 
 // Instruction:
@@ -61,7 +61,7 @@ fn main() {
             ..TransformOptions::default()
         }
     } else if let Some(target) = &target {
-        TransformOptions::from(ESTarget::from_str(target).unwrap())
+        TransformOptions::from_target(target).unwrap()
     } else {
         TransformOptions::enable_all()
     };

@@ -12,59 +12,10 @@ use oxc_diagnostics::Error;
 
 use super::{
     babel::BabelTargets,
+    engine::Engine,
     es_features::{features, ESFeature},
     BrowserslistQuery,
 };
-
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum Engine {
-    Chrome,
-    Deno,
-    Edge,
-    Firefox,
-    Hermes,
-    Ie,
-    Ios,
-    Node,
-    Opera,
-    Rhino,
-    Safari,
-    Samsung,
-    // TODO: electron to chromium
-    Electron,
-    // TODO: how to handle? There is a `op_mob` key below.
-    OperaMobile,
-    // TODO:
-    Android,
-    // Special Value for ESXXXX target.
-    Es,
-}
-
-impl FromStr for Engine {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "chrome" | "and_chr" => Ok(Self::Chrome),
-            "deno" => Ok(Self::Deno),
-            "edge" => Ok(Self::Edge),
-            "firefox" | "and_ff" => Ok(Self::Firefox),
-            "hermes" => Ok(Self::Hermes),
-            "ie" | "ie_mob" => Ok(Self::Ie),
-            "ios" | "ios_saf" => Ok(Self::Ios),
-            "node" => Ok(Self::Node),
-            "opera" | "op_mob" => Ok(Self::Opera),
-            "rhino" => Ok(Self::Rhino),
-            "safari" => Ok(Self::Safari),
-            "samsung" => Ok(Self::Samsung),
-            "electron" => Ok(Self::Electron),
-            "opera_mobile" => Ok(Self::OperaMobile),
-            "android" => Ok(Self::Android),
-            _ => Err(()),
-        }
-    }
-}
 
 /// A map of engine names to minimum supported versions.
 #[derive(Debug, Default, Clone, Deserialize)]
@@ -101,16 +52,13 @@ impl EngineTargets {
     }
 
     pub fn has_feature(&self, feature: ESFeature) -> bool {
-        self.should_enable(&features()[&feature])
-    }
-
-    pub fn should_enable(&self, engine_targets: &EngineTargets) -> bool {
-        for (engine, version) in &engine_targets.0 {
-            if let Some(v) = self.0.get(engine) {
-                if *engine == Engine::Es && v <= version {
-                    return true;
+        let feature_engine_targets = &features()[&feature];
+        for (engine, feature_version) in feature_engine_targets.iter() {
+            if let Some(target_version) = self.get(engine) {
+                if *engine == Engine::Es {
+                    return target_version.0 < feature_version.0;
                 }
-                if v < version {
+                if target_version < feature_version {
                     return true;
                 }
             }
