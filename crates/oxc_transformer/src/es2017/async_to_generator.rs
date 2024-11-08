@@ -133,11 +133,7 @@ impl<'a, 'ctx> Traverse<'a> for AsyncToGenerator<'a, 'ctx> {
     fn exit_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
         if func.r#async
             && !func.is_typescript_syntax()
-            && matches!(
-                ctx.parent(),
-                // `class A { async foo() {} }` | `({ async foo() {} })`
-                Ancestor::MethodDefinitionValue(_) | Ancestor::PropertyDefinitionValue(_)
-            )
+            && AsyncGeneratorExecutor::is_class_method_like_ancestor(ctx.parent())
         {
             self.executor.transform_function_for_method_definition(func, ctx);
         }
@@ -696,6 +692,18 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
             scope_id,
             SymbolFlags::FunctionScopedVariable,
         )
+    }
+
+    /// Check whether the given [`Ancestor`] is a class method-like node.
+    pub(crate) fn is_class_method_like_ancestor(ancestor: Ancestor) -> bool {
+        match ancestor {
+            // `class A { async foo() {} }`
+            Ancestor::MethodDefinitionValue(_) => true,
+            // Only `({ async foo() {} })` does not include non-method like `({ async foo: function() {} })`,
+            // because it's just a property with a function value
+            Ancestor::ObjectPropertyValue(property) => *property.method(),
+            _ => false,
+        }
     }
 
     /// Checks if the function length is affected by the parameters.

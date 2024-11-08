@@ -1,4 +1,4 @@
-use std::fs;
+use std::{fs, str::FromStr};
 
 use oxc_tasks_common::project_root;
 use oxc_transformer::EngineTargets;
@@ -27,24 +27,31 @@ pub fn generate() {
     let content = fs::read_to_string(path).unwrap();
     let items = serde_json::from_str::<Vec<Item>>(&content).unwrap();
 
-    let es_features = items.iter().map(Item::es_name);
+    let es_features = items.iter().map(Item::es_name).collect::<Vec<_>>();
+
+    // let es_targets = items.iter().map(|item| quote::format_ident!("{}", item.es));
 
     let features = items.iter().map(|item| {
         let key = item.es_name();
-        let targets = item.targets.iter().map(|(engine, version)| {
-            let engine = quote::format_ident!("{engine:?}");
-            let (a, b, c) = (version.0, version.1, version.2);
-            quote! {
-                (#engine, Version(#a, #b, #c))
-            }
-        });
+        let es_version = u32::from_str(item.es.trim_start_matches("ES")).unwrap();
+        let targets = item
+            .targets
+            .iter()
+            .map(|(engine, version)| {
+                let engine = quote::format_ident!("{engine:?}");
+                let (a, b, c) = (version.0, version.1, version.2);
+                quote! {
+                    (#engine, Version(#a, #b, #c))
+                }
+            })
+            .chain([quote! { (Es, Version(#es_version, 0, 0)) }]);
         quote! {
             (#key, EngineTargets::new(FxHashMap::from_iter([#(#targets),*])))
         }
     });
 
     let code = quote! {
-        #![allow(clippy::enum_glob_use)]
+        #![allow(clippy::enum_glob_use, clippy::match_same_arms)]
 
         use browserslist::Version;
         use rustc_hash::FxHashMap;
@@ -56,6 +63,16 @@ pub fn generate() {
         pub enum ESFeature {
             #(#es_features,)*
         }
+
+        // use ESTarget::*;
+
+        // impl ESFeature {
+            // pub fn es_target(&self) -> ESTarget {
+                // match self {
+                    // #(#es_features => #es_targets,)*
+                // }
+            // }
+        // }
 
         pub fn features() -> &'static FxHashMap<ESFeature, EngineTargets> {
             use ESFeature::*;

@@ -5338,8 +5338,8 @@ semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["LoadCallback", "_asyncToGenerator", "cb1", "cb2", "cb3", "fn1"]
 rebuilt        : ScopeId(0): ["_asyncToGenerator", "cb1", "cb2", "cb3", "fn1"]
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(8), ScopeId(12), ScopeId(14), ScopeId(16)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(9), ScopeId(12)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(7), ScopeId(8), ScopeId(12), ScopeId(14), ScopeId(15), ScopeId(17)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(6), ScopeId(10), ScopeId(13)]
 Symbol flags mismatch for "_asyncToGenerator":
 after transform: SymbolId(10): SymbolFlags(Import)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -10255,7 +10255,7 @@ after transform: ["AsyncGenerator", "AsyncIterable", "IteratorResult", "Promise"
 rebuilt        : ["Promise", "Symbol", "arguments", "require", "undefined"]
 Unresolved reference IDs mismatch for "Promise":
 after transform: [ReferenceId(0), ReferenceId(20), ReferenceId(34), ReferenceId(54)]
-rebuilt        : [ReferenceId(43)]
+rebuilt        : [ReferenceId(39)]
 
 tasks/coverage/typescript/tests/cases/compiler/discriminateWithOptionalProperty3.ts
 semantic error: Bindings mismatch:
@@ -11447,18 +11447,9 @@ after transform: ["Error", "Function", "Object", "RangeError"]
 rebuilt        : ["Error", "RangeError", "x"]
 
 tasks/coverage/typescript/tests/cases/compiler/es2017basicAsync.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(22): []
-rebuilt        : ScopeId(19): ["namedFunc"]
-Bindings mismatch:
-after transform: ScopeId(10): ["namedFunc"]
-rebuilt        : ScopeId(20): []
-Symbol flags mismatch for "_asyncToGenerator":
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
 after transform: SymbolId(6): SymbolFlags(Import)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol scope ID mismatch for "namedFunc":
-after transform: SymbolId(5): ScopeId(10)
-rebuilt        : SymbolId(11): ScopeId(19)
 Unresolved references mismatch:
 after transform: ["Promise", "arguments", "require"]
 rebuilt        : ["arguments", "require"]
@@ -38148,20 +38139,20 @@ Bindings mismatch:
 after transform: ScopeId(0): ["C", "M", "MyPromise", "_asyncToGenerator", "_f", "_f2", "_f3", "_f5", "f0", "f1", "f10", "f11", "f12", "f13", "f14", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "mp", "o", "p"]
 rebuilt        : ScopeId(0): ["C", "M", "_asyncToGenerator", "_f", "_f2", "_f3", "_f5", "f0", "f1", "f10", "f11", "f12", "f13", "f14", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "o"]
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(25), ScopeId(29), ScopeId(30), ScopeId(31), ScopeId(32), ScopeId(33), ScopeId(34), ScopeId(35), ScopeId(37), ScopeId(39), ScopeId(41), ScopeId(43), ScopeId(45), ScopeId(47), ScopeId(57), ScopeId(58)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(8), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(16), ScopeId(19), ScopeId(22), ScopeId(25), ScopeId(28), ScopeId(31), ScopeId(34), ScopeId(35), ScopeId(36), ScopeId(37), ScopeId(50), ScopeId(54), ScopeId(55)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(18), ScopeId(25), ScopeId(29), ScopeId(30), ScopeId(31), ScopeId(32), ScopeId(33), ScopeId(34), ScopeId(35), ScopeId(37), ScopeId(39), ScopeId(41), ScopeId(43), ScopeId(45), ScopeId(47), ScopeId(49), ScopeId(50), ScopeId(51), ScopeId(60), ScopeId(61)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(8), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(16), ScopeId(19), ScopeId(22), ScopeId(25), ScopeId(28), ScopeId(31), ScopeId(34), ScopeId(36), ScopeId(38), ScopeId(40), ScopeId(53), ScopeId(57), ScopeId(58)]
 Binding symbols mismatch:
 after transform: ScopeId(25): [SymbolId(20), SymbolId(22), SymbolId(41)]
-rebuilt        : ScopeId(50): [SymbolId(34), SymbolId(35), SymbolId(36)]
+rebuilt        : ScopeId(53): [SymbolId(34), SymbolId(35), SymbolId(36)]
 Scope flags mismatch:
 after transform: ScopeId(25): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(50): ScopeFlags(Function)
+rebuilt        : ScopeId(53): ScopeFlags(Function)
 Scope flags mismatch:
-after transform: ScopeId(55): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(51): ScopeFlags(Function)
+after transform: ScopeId(58): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(54): ScopeFlags(Function)
 Scope flags mismatch:
-after transform: ScopeId(56): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(52): ScopeFlags(Function)
+after transform: ScopeId(59): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(55): ScopeFlags(Function)
 Symbol flags mismatch for "_asyncToGenerator":
 after transform: SymbolId(24): SymbolFlags(Import)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -38621,20 +38612,20 @@ Bindings mismatch:
 after transform: ScopeId(0): ["C", "M", "MyPromise", "_asyncToGenerator", "_f", "_f2", "_f3", "_f5", "f0", "f1", "f10", "f11", "f12", "f13", "f14", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "mp", "o", "p"]
 rebuilt        : ScopeId(0): ["C", "M", "_asyncToGenerator", "_f", "_f2", "_f3", "_f5", "f0", "f1", "f10", "f11", "f12", "f13", "f14", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "o"]
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(25), ScopeId(29), ScopeId(30), ScopeId(31), ScopeId(32), ScopeId(33), ScopeId(34), ScopeId(35), ScopeId(37), ScopeId(39), ScopeId(41), ScopeId(43), ScopeId(45), ScopeId(47), ScopeId(57), ScopeId(58)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(8), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(16), ScopeId(19), ScopeId(22), ScopeId(25), ScopeId(28), ScopeId(31), ScopeId(34), ScopeId(35), ScopeId(36), ScopeId(37), ScopeId(50), ScopeId(54), ScopeId(55)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(18), ScopeId(25), ScopeId(29), ScopeId(30), ScopeId(31), ScopeId(32), ScopeId(33), ScopeId(34), ScopeId(35), ScopeId(37), ScopeId(39), ScopeId(41), ScopeId(43), ScopeId(45), ScopeId(47), ScopeId(49), ScopeId(50), ScopeId(51), ScopeId(60), ScopeId(61)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(8), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(16), ScopeId(19), ScopeId(22), ScopeId(25), ScopeId(28), ScopeId(31), ScopeId(34), ScopeId(36), ScopeId(38), ScopeId(40), ScopeId(53), ScopeId(57), ScopeId(58)]
 Binding symbols mismatch:
 after transform: ScopeId(25): [SymbolId(20), SymbolId(22), SymbolId(41)]
-rebuilt        : ScopeId(50): [SymbolId(34), SymbolId(35), SymbolId(36)]
+rebuilt        : ScopeId(53): [SymbolId(34), SymbolId(35), SymbolId(36)]
 Scope flags mismatch:
 after transform: ScopeId(25): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(50): ScopeFlags(Function)
+rebuilt        : ScopeId(53): ScopeFlags(Function)
 Scope flags mismatch:
-after transform: ScopeId(55): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(51): ScopeFlags(Function)
+after transform: ScopeId(58): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(54): ScopeFlags(Function)
 Scope flags mismatch:
-after transform: ScopeId(56): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(52): ScopeFlags(Function)
+after transform: ScopeId(59): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(55): ScopeFlags(Function)
 Symbol flags mismatch for "_asyncToGenerator":
 after transform: SymbolId(24): SymbolFlags(Import)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -39141,20 +39132,20 @@ Bindings mismatch:
 after transform: ScopeId(0): ["C", "M", "MyPromise", "_asyncToGenerator", "_f", "_f2", "_f3", "_f5", "f0", "f1", "f10", "f11", "f12", "f13", "f14", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "mp", "o", "p"]
 rebuilt        : ScopeId(0): ["C", "M", "_asyncToGenerator", "_f", "_f2", "_f3", "_f5", "f0", "f1", "f10", "f11", "f12", "f13", "f14", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "o"]
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(25), ScopeId(29), ScopeId(30), ScopeId(31), ScopeId(32), ScopeId(33), ScopeId(34), ScopeId(35), ScopeId(37), ScopeId(39), ScopeId(41), ScopeId(43), ScopeId(45), ScopeId(47), ScopeId(57), ScopeId(58)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(8), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(16), ScopeId(19), ScopeId(22), ScopeId(25), ScopeId(28), ScopeId(31), ScopeId(34), ScopeId(35), ScopeId(36), ScopeId(37), ScopeId(50), ScopeId(54), ScopeId(55)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(18), ScopeId(25), ScopeId(29), ScopeId(30), ScopeId(31), ScopeId(32), ScopeId(33), ScopeId(34), ScopeId(35), ScopeId(37), ScopeId(39), ScopeId(41), ScopeId(43), ScopeId(45), ScopeId(47), ScopeId(49), ScopeId(50), ScopeId(51), ScopeId(60), ScopeId(61)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(8), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(16), ScopeId(19), ScopeId(22), ScopeId(25), ScopeId(28), ScopeId(31), ScopeId(34), ScopeId(36), ScopeId(38), ScopeId(40), ScopeId(53), ScopeId(57), ScopeId(58)]
 Binding symbols mismatch:
 after transform: ScopeId(25): [SymbolId(20), SymbolId(22), SymbolId(41)]
-rebuilt        : ScopeId(50): [SymbolId(34), SymbolId(35), SymbolId(36)]
+rebuilt        : ScopeId(53): [SymbolId(34), SymbolId(35), SymbolId(36)]
 Scope flags mismatch:
 after transform: ScopeId(25): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(50): ScopeFlags(Function)
+rebuilt        : ScopeId(53): ScopeFlags(Function)
 Scope flags mismatch:
-after transform: ScopeId(55): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(51): ScopeFlags(Function)
+after transform: ScopeId(58): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(54): ScopeFlags(Function)
 Scope flags mismatch:
-after transform: ScopeId(56): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(52): ScopeFlags(Function)
+after transform: ScopeId(59): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(55): ScopeFlags(Function)
 Symbol flags mismatch for "_asyncToGenerator":
 after transform: SymbolId(24): SymbolFlags(Import)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -52872,20 +52863,17 @@ semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
 rebuilt        : ScopeId(3): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "d1"]
 Scope children mismatch:
-after transform: ScopeId(7): [ScopeId(2)]
-rebuilt        : ScopeId(5): [ScopeId(6), ScopeId(7), ScopeId(8)]
-Scope parent mismatch:
-after transform: ScopeId(3): Some(ScopeId(2))
-rebuilt        : ScopeId(6): Some(ScopeId(5))
+after transform: ScopeId(7): [ScopeId(2), ScopeId(15)]
+rebuilt        : ScopeId(5): [ScopeId(6), ScopeId(8), ScopeId(9)]
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(2))
-rebuilt        : ScopeId(7): Some(ScopeId(5))
+rebuilt        : ScopeId(8): Some(ScopeId(5))
 Bindings mismatch:
 after transform: ScopeId(2): ["d1"]
-rebuilt        : ScopeId(8): []
+rebuilt        : ScopeId(9): []
 Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(8): []
+after transform: ScopeId(2): [ScopeId(4)]
+rebuilt        : ScopeId(9): []
 Symbol flags mismatch for "_asyncIterator":
 after transform: SymbolId(3): SymbolFlags(Import)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -52929,7 +52917,7 @@ semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["R1", "R2", "_asyncToGenerator", "r1", "r2"]
 rebuilt        : ScopeId(0): ["_asyncToGenerator", "r1", "r2"]
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Symbol reference IDs mismatch for "r1":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -60403,11 +60391,11 @@ semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["C", "C0", "C1", "Context", "I", "L", "N", "_asyncFuncReturnConstCall", "_asyncFuncReturnLetCall", "_asyncFuncReturnVarCall", "_asyncGenFuncYieldConstCall", "_asyncGenFuncYieldLetCall", "_asyncGenFuncYieldVarCall", "_asyncToGenerator", "_wrapAsyncGenerator", "arrayOfConstCall", "asyncFuncReturnConstCall", "asyncFuncReturnLetCall", "asyncFuncReturnVarCall", "asyncGenFuncYieldConstCall", "asyncGenFuncYieldLetCall", "asyncGenFuncYieldVarCall", "c", "ce0", "constCall", "constInitToCReadonlyCall", "constInitToCReadonlyCallWithIndexedAccess", "constInitToCReadonlyCallWithTypeQuery", "constInitToCReadonlyStaticCall", "constInitToCReadonlyStaticCallWithTypeQuery", "constInitToCReadonlyStaticType", "constInitToCReadonlyStaticTypeAndCall", "constInitToCReadonlyStaticTypeAndCallWithTypeQuery", "constInitToCReadonlyStaticTypeWithTypeQuery", "constInitToCReadwriteCall", "constInitToCReadwriteCallWithIndexedAccess", "constInitToCReadwriteCallWithTypeQuery", "constInitToCReadwriteStaticCall", "constInitToCReadwriteStaticCallWithTypeQuery", "constInitToConstCall", "constInitToConstCallWithTypeQuery", "constInitToConstDeclAmbient", "constInitToConstDeclAmbientWithTypeQuery", "constInitToIReadonlyType", "constInitToIReadonlyTypeWithIndexedAccess", "constInitToIReadonlyTypeWithTypeQuery", "constInitToLReadonlyNestedType", "constInitToLReadonlyNestedTypeWithIndexedAccess", "constInitToLReadonlyNestedTypeWithTypeQuery", "constInitToLReadonlyType", "constInitToLReadonlyTypeWithIndexedAccess", "constInitToLReadonlyTypeWithTypeQuery", "constInitToLetCall", "constInitToVarCall", "constType", "constTypeAndCall", "fromAny", "funcInferredReturnType", "funcReturnConstCall", "funcReturnConstCallWithTypeQuery", "funcReturnLetCall", "funcReturnVarCall", "genFuncYieldConstCall", "genFuncYieldConstCallWithTypeQuery", "genFuncYieldLetCall", "genFuncYieldVarCall", "i", "l", "letCall", "letInitToConstCall", "letInitToConstDeclAmbient", "letInitToLetCall", "letInitToVarCall", "o", "o2", "o3", "o4", "promiseForConstCall", "s", "varCall", "varInitToConstCall", "varInitToConstDeclAmbient", "varInitToLetCall", "varInitToVarCall"]
 rebuilt        : ScopeId(0): ["C", "C0", "C1", "_asyncFuncReturnConstCall", "_asyncFuncReturnLetCall", "_asyncFuncReturnVarCall", "_asyncGenFuncYieldConstCall", "_asyncGenFuncYieldLetCall", "_asyncGenFuncYieldVarCall", "_asyncToGenerator", "_wrapAsyncGenerator", "arrayOfConstCall", "asyncFuncReturnConstCall", "asyncFuncReturnLetCall", "asyncFuncReturnVarCall", "asyncGenFuncYieldConstCall", "asyncGenFuncYieldLetCall", "asyncGenFuncYieldVarCall", "ce0", "constCall", "constInitToCReadonlyCall", "constInitToCReadonlyCallWithIndexedAccess", "constInitToCReadonlyCallWithTypeQuery", "constInitToCReadonlyStaticCall", "constInitToCReadonlyStaticCallWithTypeQuery", "constInitToCReadonlyStaticType", "constInitToCReadonlyStaticTypeAndCall", "constInitToCReadonlyStaticTypeAndCallWithTypeQuery", "constInitToCReadonlyStaticTypeWithTypeQuery", "constInitToCReadwriteCall", "constInitToCReadwriteCallWithIndexedAccess", "constInitToCReadwriteCallWithTypeQuery", "constInitToCReadwriteStaticCall", "constInitToCReadwriteStaticCallWithTypeQuery", "constInitToConstCall", "constInitToConstCallWithTypeQuery", "constInitToConstDeclAmbient", "constInitToConstDeclAmbientWithTypeQuery", "constInitToIReadonlyType", "constInitToIReadonlyTypeWithIndexedAccess", "constInitToIReadonlyTypeWithTypeQuery", "constInitToLReadonlyNestedType", "constInitToLReadonlyNestedTypeWithIndexedAccess", "constInitToLReadonlyNestedTypeWithTypeQuery", "constInitToLReadonlyType", "constInitToLReadonlyTypeWithIndexedAccess", "constInitToLReadonlyTypeWithTypeQuery", "constInitToLetCall", "constInitToVarCall", "constTypeAndCall", "fromAny", "funcInferredReturnType", "funcReturnConstCall", "funcReturnConstCallWithTypeQuery", "funcReturnLetCall", "funcReturnVarCall", "genFuncYieldConstCall", "genFuncYieldConstCallWithTypeQuery", "genFuncYieldLetCall", "genFuncYieldVarCall", "letCall", "letInitToConstCall", "letInitToConstDeclAmbient", "letInitToLetCall", "letInitToVarCall", "o2", "o3", "o4", "promiseForConstCall", "varCall", "varInitToConstCall", "varInitToConstDeclAmbient", "varInitToLetCall", "varInitToVarCall"]
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(23), ScopeId(25), ScopeId(26), ScopeId(27), ScopeId(33), ScopeId(34), ScopeId(40), ScopeId(41), ScopeId(43), ScopeId(44), ScopeId(45), ScopeId(46), ScopeId(47), ScopeId(50), ScopeId(52), ScopeId(53), ScopeId(54), ScopeId(55), ScopeId(56), ScopeId(57), ScopeId(58), ScopeId(59), ScopeId(60), ScopeId(61), ScopeId(62), ScopeId(63), ScopeId(64), ScopeId(67)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(12), ScopeId(13), ScopeId(15), ScopeId(16), ScopeId(18), ScopeId(19), ScopeId(21), ScopeId(22), ScopeId(24), ScopeId(25), ScopeId(27), ScopeId(28), ScopeId(29), ScopeId(30), ScopeId(32), ScopeId(33), ScopeId(34), ScopeId(42), ScopeId(43), ScopeId(44), ScopeId(45), ScopeId(47), ScopeId(48), ScopeId(49), ScopeId(50), ScopeId(51), ScopeId(54)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(25), ScopeId(26), ScopeId(27), ScopeId(33), ScopeId(34), ScopeId(40), ScopeId(43), ScopeId(44), ScopeId(45), ScopeId(46), ScopeId(47), ScopeId(50), ScopeId(52), ScopeId(53), ScopeId(54), ScopeId(55), ScopeId(56), ScopeId(57), ScopeId(58), ScopeId(59), ScopeId(60), ScopeId(61), ScopeId(62), ScopeId(63), ScopeId(64), ScopeId(65), ScopeId(68), ScopeId(69)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(12), ScopeId(13), ScopeId(15), ScopeId(16), ScopeId(18), ScopeId(19), ScopeId(21), ScopeId(22), ScopeId(24), ScopeId(25), ScopeId(27), ScopeId(28), ScopeId(29), ScopeId(31), ScopeId(33), ScopeId(34), ScopeId(35), ScopeId(43), ScopeId(44), ScopeId(45), ScopeId(47), ScopeId(49), ScopeId(50), ScopeId(51), ScopeId(52), ScopeId(53), ScopeId(56)]
 Scope children mismatch:
 after transform: ScopeId(50): [ScopeId(51)]
-rebuilt        : ScopeId(54): []
+rebuilt        : ScopeId(56): []
 Symbol flags mismatch for "_asyncToGenerator":
 after transform: SymbolId(90): SymbolFlags(Import)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -60591,8 +60579,8 @@ semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["C", "C0", "C1", "Context", "I", "L", "N", "_asyncFuncReturnConstCall", "_asyncFuncReturnLetCall", "_asyncFuncReturnVarCall", "_asyncGenFuncYieldConstCall", "_asyncGenFuncYieldLetCall", "_asyncGenFuncYieldVarCall", "_asyncToGenerator", "_wrapAsyncGenerator", "arrayOfConstCall", "asyncFuncReturnConstCall", "asyncFuncReturnLetCall", "asyncFuncReturnVarCall", "asyncGenFuncYieldConstCall", "asyncGenFuncYieldLetCall", "asyncGenFuncYieldVarCall", "c", "constCall", "constInitToCReadonlyCall", "constInitToCReadonlyCallWithIndexedAccess", "constInitToCReadonlyCallWithTypeQuery", "constInitToCReadonlyStaticCall", "constInitToCReadonlyStaticCallWithTypeQuery", "constInitToCReadonlyStaticType", "constInitToCReadonlyStaticTypeAndCall", "constInitToCReadonlyStaticTypeAndCallWithTypeQuery", "constInitToCReadonlyStaticTypeWithTypeQuery", "constInitToCReadwriteCall", "constInitToCReadwriteCallWithIndexedAccess", "constInitToCReadwriteCallWithTypeQuery", "constInitToCReadwriteStaticCall", "constInitToCReadwriteStaticCallWithTypeQuery", "constInitToConstCall", "constInitToConstCallWithTypeQuery", "constInitToConstDeclAmbient", "constInitToConstDeclAmbientWithTypeQuery", "constInitToIReadonlyType", "constInitToIReadonlyTypeWithIndexedAccess", "constInitToIReadonlyTypeWithTypeQuery", "constInitToLReadonlyNestedType", "constInitToLReadonlyNestedTypeWithIndexedAccess", "constInitToLReadonlyNestedTypeWithTypeQuery", "constInitToLReadonlyType", "constInitToLReadonlyTypeWithIndexedAccess", "constInitToLReadonlyTypeWithTypeQuery", "constInitToLetCall", "constInitToVarCall", "constType", "constTypeAndCall", "funcReturnConstCall", "funcReturnConstCallWithTypeQuery", "funcReturnLetCall", "funcReturnVarCall", "genFuncYieldConstCall", "genFuncYieldConstCallWithTypeQuery", "genFuncYieldLetCall", "genFuncYieldVarCall", "i", "l", "letCall", "letInitToConstCall", "letInitToConstDeclAmbient", "letInitToLetCall", "letInitToVarCall", "o", "o2", "o4", "promiseForConstCall", "s", "varCall", "varInitToConstCall", "varInitToConstDeclAmbient", "varInitToLetCall", "varInitToVarCall"]
 rebuilt        : ScopeId(0): ["C", "C0", "C1", "_asyncFuncReturnConstCall", "_asyncFuncReturnLetCall", "_asyncFuncReturnVarCall", "_asyncGenFuncYieldConstCall", "_asyncGenFuncYieldLetCall", "_asyncGenFuncYieldVarCall", "_asyncToGenerator", "_wrapAsyncGenerator", "arrayOfConstCall", "asyncFuncReturnConstCall", "asyncFuncReturnLetCall", "asyncFuncReturnVarCall", "asyncGenFuncYieldConstCall", "asyncGenFuncYieldLetCall", "asyncGenFuncYieldVarCall", "constCall", "constInitToCReadonlyCall", "constInitToCReadonlyCallWithIndexedAccess", "constInitToCReadonlyCallWithTypeQuery", "constInitToCReadonlyStaticCall", "constInitToCReadonlyStaticCallWithTypeQuery", "constInitToCReadonlyStaticType", "constInitToCReadonlyStaticTypeAndCall", "constInitToCReadonlyStaticTypeAndCallWithTypeQuery", "constInitToCReadonlyStaticTypeWithTypeQuery", "constInitToCReadwriteCall", "constInitToCReadwriteCallWithIndexedAccess", "constInitToCReadwriteCallWithTypeQuery", "constInitToCReadwriteStaticCall", "constInitToCReadwriteStaticCallWithTypeQuery", "constInitToConstCall", "constInitToConstCallWithTypeQuery", "constInitToConstDeclAmbient", "constInitToConstDeclAmbientWithTypeQuery", "constInitToIReadonlyType", "constInitToIReadonlyTypeWithIndexedAccess", "constInitToIReadonlyTypeWithTypeQuery", "constInitToLReadonlyNestedType", "constInitToLReadonlyNestedTypeWithIndexedAccess", "constInitToLReadonlyNestedTypeWithTypeQuery", "constInitToLReadonlyType", "constInitToLReadonlyTypeWithIndexedAccess", "constInitToLReadonlyTypeWithTypeQuery", "constInitToLetCall", "constInitToVarCall", "constTypeAndCall", "funcReturnConstCall", "funcReturnConstCallWithTypeQuery", "funcReturnLetCall", "funcReturnVarCall", "genFuncYieldConstCall", "genFuncYieldConstCallWithTypeQuery", "genFuncYieldLetCall", "genFuncYieldVarCall", "letCall", "letInitToConstCall", "letInitToConstDeclAmbient", "letInitToLetCall", "letInitToVarCall", "o2", "o4", "promiseForConstCall", "varCall", "varInitToConstCall", "varInitToConstDeclAmbient", "varInitToLetCall", "varInitToVarCall"]
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(23), ScopeId(25), ScopeId(26), ScopeId(27), ScopeId(33), ScopeId(34), ScopeId(40), ScopeId(41), ScopeId(43), ScopeId(44), ScopeId(45), ScopeId(46), ScopeId(47), ScopeId(48), ScopeId(49), ScopeId(50), ScopeId(51), ScopeId(52), ScopeId(53), ScopeId(54), ScopeId(55), ScopeId(56), ScopeId(57), ScopeId(60)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(12), ScopeId(13), ScopeId(15), ScopeId(16), ScopeId(18), ScopeId(19), ScopeId(21), ScopeId(22), ScopeId(24), ScopeId(25), ScopeId(27), ScopeId(28), ScopeId(29), ScopeId(30), ScopeId(32), ScopeId(33), ScopeId(34), ScopeId(42), ScopeId(43), ScopeId(44), ScopeId(45), ScopeId(47), ScopeId(48)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(25), ScopeId(26), ScopeId(27), ScopeId(33), ScopeId(34), ScopeId(40), ScopeId(43), ScopeId(44), ScopeId(45), ScopeId(46), ScopeId(47), ScopeId(48), ScopeId(49), ScopeId(50), ScopeId(51), ScopeId(52), ScopeId(53), ScopeId(54), ScopeId(55), ScopeId(56), ScopeId(57), ScopeId(58), ScopeId(61), ScopeId(62)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(12), ScopeId(13), ScopeId(15), ScopeId(16), ScopeId(18), ScopeId(19), ScopeId(21), ScopeId(22), ScopeId(24), ScopeId(25), ScopeId(27), ScopeId(28), ScopeId(29), ScopeId(31), ScopeId(33), ScopeId(34), ScopeId(35), ScopeId(43), ScopeId(44), ScopeId(45), ScopeId(47), ScopeId(49), ScopeId(50)]
 Symbol flags mismatch for "_asyncToGenerator":
 after transform: SymbolId(81): SymbolFlags(Import)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
