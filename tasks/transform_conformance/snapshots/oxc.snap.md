@@ -1,6 +1,6 @@
 commit: d20b314c
 
-Passed: 79/88
+Passed: 80/89
 
 # All Passed:
 * babel-plugin-transform-class-static-block

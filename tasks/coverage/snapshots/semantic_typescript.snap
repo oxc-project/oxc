@@ -825,7 +825,7 @@ Bindings mismatch:
 after transform: ScopeId(22): ["T", "value"]
 rebuilt        : ScopeId(29): ["value"]
 Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(26): SymbolFlags(Import)
+after transform: SymbolId(27): SymbolFlags(Import)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Unresolved references mismatch:
 after transform: ["Promise", "arguments", "require"]
@@ -5338,17 +5338,17 @@ semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["LoadCallback", "_asyncToGenerator", "cb1", "cb2", "cb3", "fn1"]
 rebuilt        : ScopeId(0): ["_asyncToGenerator", "cb1", "cb2", "cb3", "fn1"]
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(7), ScopeId(8), ScopeId(12), ScopeId(14), ScopeId(15), ScopeId(17)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(6), ScopeId(10), ScopeId(13)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(5), ScopeId(7), ScopeId(8), ScopeId(12), ScopeId(14), ScopeId(16), ScopeId(17), ScopeId(19)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(6), ScopeId(8), ScopeId(12), ScopeId(15)]
 Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(10): SymbolFlags(Import)
+after transform: SymbolId(12): SymbolFlags(Import)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Unresolved references mismatch:
 after transform: ["Promise", "Record", "StateMachine", "arguments", "createMachine", "load", "require"]
 rebuilt        : ["Promise", "arguments", "createMachine", "load", "require"]
 Unresolved reference IDs mismatch for "Promise":
 after transform: [ReferenceId(2), ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(11), ReferenceId(12), ReferenceId(13)]
-rebuilt        : [ReferenceId(3), ReferenceId(5), ReferenceId(7)]
+rebuilt        : [ReferenceId(3), ReferenceId(7), ReferenceId(9)]
 
 tasks/coverage/typescript/tests/cases/compiler/contextuallyTypeGeneratorReturnTypeFromUnion.ts
 semantic error: Bindings mismatch:
@@ -55663,7 +55663,7 @@ semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(10): SymbolFlags(Import)
+after transform: SymbolId(11): SymbolFlags(Import)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/conformance/types/rest/objectRestParameter.ts
