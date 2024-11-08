@@ -145,11 +145,7 @@ impl<'a, 'ctx> Traverse<'a> for AsyncGeneratorFunctions<'a, 'ctx> {
         if func.r#async
             && func.generator
             && !func.is_typescript_syntax()
-            && matches!(
-                ctx.parent(),
-                // `class A { async foo() {} }` | `({ async foo() {} })`
-                Ancestor::MethodDefinitionValue(_) | Ancestor::ObjectPropertyValue(_)
-            )
+            && AsyncGeneratorExecutor::is_class_method_like_ancestor(ctx.parent())
         {
             self.executor.transform_function_for_method_definition(func, ctx);
         }
