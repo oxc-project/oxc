@@ -1,12 +1,12 @@
 use convert_case::{Case, Casing};
 use itertools::Itertools;
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
     output::Output,
     schema::{
         serialize::{enum_variant_name, get_always_flatten_structs, get_type_tag},
-        EnumDef, GetIdent, Schema, StructDef, TypeDef, TypeName,
+        EnumDef, FieldDef, GetIdent, Schema, StructDef, TypeDef, TypeName,
     },
     Generator, TypeId,
 };
@@ -72,11 +72,26 @@ fn typescript_struct(def: &StructDef, always_flatten_structs: &FxHashSet<TypeId>
         fields.push_str(&format!("\n\ttype: '{type_tag}';"));
     }
 
+    let mut append_to: FxHashMap<String, &FieldDef> = FxHashMap::default();
+
+    // Scan through to find all append_to fields
     for field in &def.fields {
-        if field.markers.derive_attributes.estree.skip {
+        let Some(parent) = field.markers.derive_attributes.estree.append_to.as_ref() else {
+            continue;
+        };
+        assert!(
+            append_to.insert(parent.clone(), field).is_none(),
+            "Duplicate append_to target (on {ident})"
+        );
+    }
+
+    for field in &def.fields {
+        if field.markers.derive_attributes.estree.skip
+            || field.markers.derive_attributes.estree.append_to.is_some()
+        {
             continue;
         }
-        let ty = match &field.markers.derive_attributes.estree.typescript_type {
+        let mut ty = match &field.markers.derive_attributes.estree.typescript_type {
             Some(ty) => ty.clone(),
             None => type_to_string(field.typ.name()),
         };
@@ -89,6 +104,26 @@ fn typescript_struct(def: &StructDef, always_flatten_structs: &FxHashSet<TypeId>
         if always_flatten || field.markers.derive_attributes.estree.flatten {
             extends.push(ty);
             continue;
+        }
+
+        let ident = field.ident().unwrap();
+        if let Some(append_after) = append_to.get(&ident.to_string()) {
+            let after_type = match &append_after.markers.derive_attributes.estree.typescript_type {
+                Some(ty) => ty.clone(),
+                None => {
+                    let typ = append_after.typ.name();
+                    if let TypeName::Opt(inner) = typ {
+                        type_to_string(inner)
+                    } else {
+                        panic!("expected field labeled with append_to to be Option<...>, but found {typ}");
+                    }
+                }
+            };
+            if let Some(inner) = ty.strip_prefix("Array<") {
+                ty = format!("Array<{after_type} | {inner}");
+            } else {
+                panic!("expected append_to target to be a Vec, but found {ty}");
+            }
         }
 
         let name = match &field.markers.derive_attributes.estree.rename {

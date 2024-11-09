@@ -118,11 +118,11 @@ fn serialize_struct(def: &StructDef, schema: &Schema) -> TokenStream {
             None => false,
         };
 
-        let append_child = append_to.get(&ident.to_string());
+        let append_after = append_to.get(&ident.to_string());
 
         if always_flatten || field.markers.derive_attributes.estree.flatten {
             assert!(
-                append_child.is_none(),
+                append_after.is_none(),
                 "Cannot flatten and append to the same field (on {ident})"
             );
             fields.push(quote! {
@@ -130,12 +130,15 @@ fn serialize_struct(def: &StructDef, schema: &Schema) -> TokenStream {
                     serde::__private::ser::FlatMapSerializer(&mut map)
                 )?;
             });
-        } else if let Some(append_child) = append_child {
-            let child_ident = append_child.ident().unwrap();
+        } else if let Some(append_after) = append_after {
+            let after_ident = append_after.ident().unwrap();
             fields.push(quote! {
                 map.serialize_entry(
                     #name,
-                    &oxc_estree::AppendTo(&self.#ident, &self.#child_ident)
+                    &oxc_estree::ser::AppendTo {
+                        array: &self.#ident,
+                        after: &self.#after_ident
+                    }
                 )?;
             });
         } else {

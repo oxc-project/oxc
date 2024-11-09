@@ -684,7 +684,10 @@ impl<'a> Serialize for ArrayAssignmentTarget<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ArrayAssignmentTarget")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("elements", &oxc_estree::AppendTo(&self.elements, &self.rest))?;
+        map.serialize_entry(
+            "elements",
+            &oxc_estree::ser::AppendTo { array: &self.elements, after: &self.rest },
+        )?;
         map.end()
     }
 }
@@ -694,7 +697,10 @@ impl<'a> Serialize for ObjectAssignmentTarget<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ObjectAssignmentTarget")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("properties", &oxc_estree::AppendTo(&self.properties, &self.rest))?;
+        map.serialize_entry(
+            "properties",
+            &oxc_estree::ser::AppendTo { array: &self.properties, after: &self.rest },
+        )?;
         map.end()
     }
 }
@@ -1308,7 +1314,10 @@ impl<'a> Serialize for ObjectPattern<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ObjectPattern")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("properties", &oxc_estree::AppendTo(&self.properties, &self.rest))?;
+        map.serialize_entry(
+            "properties",
+            &oxc_estree::ser::AppendTo { array: &self.properties, after: &self.rest },
+        )?;
         map.end()
     }
 }
@@ -1331,7 +1340,10 @@ impl<'a> Serialize for ArrayPattern<'a> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ArrayPattern")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("elements", &oxc_estree::AppendTo(&self.elements, &self.rest))?;
+        map.serialize_entry(
+            "elements",
+            &oxc_estree::ser::AppendTo { array: &self.elements, after: &self.rest },
+        )?;
         map.end()
     }
 }

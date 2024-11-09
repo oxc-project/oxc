@@ -386,14 +386,12 @@ export type AssignmentTargetPattern = ArrayAssignmentTarget | ObjectAssignmentTa
 
 export interface ArrayAssignmentTarget extends Span {
   type: 'ArrayAssignmentTarget';
-  elements: Array<AssignmentTargetMaybeDefault | AssignmentTargetRest | null>;
-  rest: AssignmentTargetRest | null;
+  elements: Array<AssignmentTargetRest | AssignmentTargetMaybeDefault | null>;
 }
 
 export interface ObjectAssignmentTarget extends Span {
   type: 'ObjectAssignmentTarget';
-  properties: Array<AssignmentTargetProperty | AssignmentTargetRest>;
-  rest: AssignmentTargetRest | null;
+  properties: Array<AssignmentTargetRest | AssignmentTargetProperty>;
 }
 
 export interface AssignmentTargetRest extends Span {
@@ -730,8 +728,7 @@ export interface AssignmentPattern extends Span {
 
 export interface ObjectPattern extends Span {
   type: 'ObjectPattern';
-  properties: Array<BindingProperty | BindingRestElement>;
-  rest: BindingRestElement | null;
+  properties: Array<BindingRestElement | BindingProperty>;
 }
 
 export interface BindingProperty extends Span {
@@ -744,8 +741,7 @@ export interface BindingProperty extends Span {
 
 export interface ArrayPattern extends Span {
   type: 'ArrayPattern';
-  elements: Array<BindingPattern | BindingRestElement | null>;
-  rest: BindingRestElement | null;
+  elements: Array<BindingRestElement | BindingPattern | null>;
 }
 
 export interface BindingRestElement extends Span {
