@@ -29,7 +29,6 @@ pub struct TransformCtx<'a> {
 
     pub source_text: &'a str,
 
-    #[expect(unused)]
     pub module: Module,
 
     // Helpers

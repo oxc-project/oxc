@@ -12,30 +12,22 @@ after transform: SymbolId(1): [ReferenceId(0)]
 rebuilt        : SymbolId(1): []
 
 tasks/coverage/typescript/tests/cases/compiler/APILibCheck.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
-`import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
-`import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
-`import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+Import assignment cannot be used when targeting ECMAScript modules.
+Import assignment cannot be used when targeting ECMAScript modules.
+Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/APISample_Watch.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/APISample_WatchWithDefaults.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/APISample_WatchWithOwnWatchHost.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/APISample_compile.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/APISample_jsdoc.ts
 semantic error: Bindings mismatch:
@@ -72,8 +64,7 @@ after transform: []
 rebuilt        : ["console", "process", "readFileSync"]
 
 tasks/coverage/typescript/tests/cases/compiler/APISample_parseConfig.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/APISample_transform.ts
 semantic error: Bindings mismatch:
@@ -249,42 +240,32 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), Sc
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/aliasUsageInAccessorsOfClass.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/aliasUsageInArray.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/aliasUsageInFunctionExpression.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/aliasUsageInGenericFunction.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/aliasUsageInIndexerOfClass.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/aliasUsageInObjectLiteral.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/aliasUsageInTypeArgumentOfExtendsClause.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/aliasUsageInVarAssignment.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/aliasUsedAsNameValue.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
-`import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/allowJsCrossMonorepoPackage.ts
 semantic error: Bindings mismatch:
@@ -509,8 +490,7 @@ after transform: SymbolId(0): SymbolFlags(Export | ConstEnum)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Export)
 
 tasks/coverage/typescript/tests/cases/compiler/amdModuleName1.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/anonClassDeclarationEmitIsAnon.ts
 semantic error: Bindings mismatch:
@@ -732,8 +712,7 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), Sc
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 
 tasks/coverage/typescript/tests/cases/compiler/arrayOfExportedClass.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/arrayToLocaleStringES2015.ts
 semantic error: Unresolved references mismatch:
@@ -1167,21 +1146,17 @@ rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals3.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-`export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals3_1.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals4.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-`export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals4_1.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals5.ts
 semantic error: Bindings mismatch:
@@ -1193,12 +1168,10 @@ rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals6.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-`export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals6_1.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/augmentedTypeBracketNamedPropertyAccess.ts
 semantic error: Bindings mismatch:
@@ -1775,8 +1748,7 @@ after transform: ["JQueryEventObjectTest"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/checkJsTypeDefNoUnusedLocalMarked.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/checkSuperCallBeforeThisAccessing7.ts
 semantic error: Symbol reference IDs mismatch for "Base":
@@ -2275,8 +2247,7 @@ after transform: ["m1"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/clinterfaces.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/cloduleAcrossModuleDefinitions.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -3727,8 +3698,7 @@ after transform: SymbolId(13): []
 rebuilt        : SymbolId(11): [ReferenceId(7)]
 
 tasks/coverage/typescript/tests/cases/compiler/commonJsImportClassExpression.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/comparabilityTypeParametersRelatedByUnion.ts
 semantic error: Bindings mismatch:
@@ -3800,8 +3770,7 @@ after transform: ScopeId(2): ["R", "func"]
 rebuilt        : ScopeId(2): ["func"]
 
 tasks/coverage/typescript/tests/cases/compiler/compositeWithNodeModulesSourceFile.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/compoundVarDecl1.ts
 semantic error: Missing SymbolId: "Foo"
@@ -4199,28 +4168,22 @@ after transform: SymbolId(4): SymbolFlags(ConstEnum)
 rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/constEnumExternalModule.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/constEnumMergingWithValues1.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/constEnumMergingWithValues2.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/constEnumMergingWithValues3.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/constEnumMergingWithValues4.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/constEnumMergingWithValues5.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/constEnumNamespaceReferenceCausesNoImport.ts
 semantic error: Bindings mismatch:
@@ -6036,8 +5999,7 @@ after transform: SymbolId(5): [ReferenceId(4), ReferenceId(5)]
 rebuilt        : SymbolId(3): [ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/declFileAliasUseBeforeDeclaration.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/declFileAliasUseBeforeDeclaration2.ts
 semantic error: Bindings mismatch:
@@ -6136,20 +6098,16 @@ rebuilt        : SymbolId(8): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/declFileExportAssignmentImportInternalModule.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-`export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/declFileExportAssignmentOfGenericInterface.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/declFileExportImportChain.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/declFileExportImportChain2.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/declFileForClassWithMultipleBaseClasses.ts
 semantic error: Bindings mismatch:
@@ -6171,8 +6129,7 @@ after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(1): [ScopeId(2)]
 
 tasks/coverage/typescript/tests/cases/compiler/declFileForExportedImport.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/declFileForFunctionTypeAsTypeParameter.ts
 semantic error: Bindings mismatch:
@@ -6503,12 +6460,10 @@ after transform: ["IElementController", "mvc", "templa"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/declFileImportChainInExportAssignment.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/declFileImportModuleWithExportAssignment.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/declFileImportedTypeUseInTypeArgPosition.ts
 semantic error: Bindings mismatch:
@@ -8489,8 +8444,7 @@ rebuilt        : ["dual"]
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitImportInExportAssignmentModule.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-`export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitIndexTypeArray.ts
 semantic error: Bindings mismatch:
@@ -8498,8 +8452,7 @@ after transform: ScopeId(1): ["T", "keys"]
 rebuilt        : ScopeId(1): ["keys"]
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitInferredDefaultExportType2.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitInferredTypeAlias4.ts
 semantic error: Bindings mismatch:
@@ -8640,8 +8593,7 @@ after transform: ScopeId(0): ["PluginConfig"]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitNameConflicts.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitNameConflicts2.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -9167,10 +9119,8 @@ after transform: ["this"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitUnnessesaryTypeReferenceNotAdded.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
-`import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitUsingAlternativeContainingModules1.ts
 semantic error: Bindings mismatch:
@@ -9289,12 +9239,10 @@ after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable | 
 rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable | ConstVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/declarationImportTypeAliasInferredAndEmittable.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/declarationMaps.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/declarationMerging1.ts
 semantic error: Bindings mismatch:
@@ -9413,12 +9361,10 @@ after transform: ["Function", "RegExp", "express"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/declareFileExportAssignment.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/declareFileExportAssignmentWithVarFromVariableStatement.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/declareModifierOnTypeAlias.ts
 semantic error: Bindings mismatch:
@@ -9563,8 +9509,7 @@ after transform: ScopeId(0): ["Database", "MyClass", "someDecorator"]
 rebuilt        : ScopeId(0): ["MyClass", "someDecorator"]
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataWithImportDeclarationNameCollision3.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataWithImportDeclarationNameCollision5.ts
 semantic error: Bindings mismatch:
@@ -9577,8 +9522,7 @@ after transform: ScopeId(0): ["MyClass", "database", "someDecorator"]
 rebuilt        : ScopeId(0): ["MyClass", "someDecorator"]
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataWithImportDeclarationNameCollision8.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorReferenceOnOtherProperty.ts
 semantic error: Bindings mismatch:
@@ -9966,10 +9910,8 @@ after transform: ["Partial"]
 rebuilt        : ["a", "b", "f", "g"]
 
 tasks/coverage/typescript/tests/cases/compiler/dependencyViaImportAlias.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
-`export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/destructureOfVariableSameAsShorthand.ts
 semantic error: Bindings mismatch:
@@ -10863,10 +10805,8 @@ tasks/coverage/typescript/tests/cases/compiler/elidedEmbeddedStatementsReplacedW
 semantic error: 'with' statements are not allowed
 
 tasks/coverage/typescript/tests/cases/compiler/elidingImportNames.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
-`import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/emitClassExpressionInDeclarationFile.ts
 semantic error: Bindings mismatch:
@@ -13292,8 +13232,7 @@ after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
 rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
 
 tasks/coverage/typescript/tests/cases/compiler/es5-umd4.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/es5ExportDefaultClassDeclaration4.ts
 semantic error: Bindings mismatch:
@@ -13320,8 +13259,7 @@ after transform: ["func"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/es5ExportEqualsDts.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/es6ClassTest2.ts
 semantic error: Bindings mismatch:
@@ -13467,8 +13405,7 @@ after transform: ScopeId(0): ["nameSpaceBinding", "nameSpaceBinding2", "x"]
 rebuilt        : ScopeId(0): ["nameSpaceBinding", "x"]
 
 tasks/coverage/typescript/tests/cases/compiler/es6ImportNameSpaceImportNoNamedExports.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/es6ImportNamedImport.ts
 semantic error: Bindings mismatch:
@@ -13491,8 +13428,7 @@ after transform: ScopeId(0): ["a", "a1", "a11", "aaaa", "b", "bbbb", "m", "x", "
 rebuilt        : ScopeId(0): ["a", "a1", "a11", "b", "m", "x", "x1", "x11", "xxxx", "y", "z", "z1", "z111", "z2", "z3"]
 
 tasks/coverage/typescript/tests/cases/compiler/es6ImportNamedImportInExportAssignment.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/es6ImportNamedImportInIndirectExportAssignment.ts
 semantic error: Missing SymbolId: "a"
@@ -14082,42 +14018,33 @@ after transform: SymbolId(0): [ReferenceId(1)]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignClassAndModule.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignValueAndType.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignedTypeAsTypeAnnotation.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentClass.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentEnum.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentError.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-`export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentFunction.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentInterface.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentInternalModule.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-`export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentMembersVisibleInAugmentation.ts
 semantic error: Bindings mismatch:
@@ -14131,25 +14058,20 @@ after transform: ["T"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentOfGenericType1.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentVariable.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentWithImportStatementPrivacyError.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-`export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentWithPrivacyError.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentWithoutIdentifier1.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/exportClassExtendingIntersection.ts
 semantic error: Bindings mismatch:
@@ -14304,28 +14226,22 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/exportEqualCallable.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/exportEqualNamespaces.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/exportEqualsAmd.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/exportEqualsClassNoRedeclarationError.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/exportEqualsCommonJs.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/exportEqualsDefaultProperty.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/exportEqualsOfModule.ts
 semantic error: Bindings mismatch:
@@ -14339,20 +14255,16 @@ after transform: ["proxy"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/exportEqualsProperty.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/exportEqualsProperty2.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/exportEqualsUmd.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/exportImport.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/exportImportAndClodule.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -14474,8 +14386,7 @@ after transform: ["Dialogs", "MsPortalFx", "console"]
 rebuilt        : ["DialogButtons", "ReExportedEnum", "console"]
 
 tasks/coverage/typescript/tests/cases/compiler/exportImportMultipleFiles.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/exportImportNonInstantiatedModule.ts
 semantic error: Bindings mismatch:
@@ -14489,12 +14400,10 @@ after transform: ["A", "B"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/exportImportNonInstantiatedModule2.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/exportNamespaceDeclarationRetainsVisibility.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/exportPrivateType.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -14757,8 +14666,7 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(4)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/extendingClassFromAliasAndUsageInIndexer.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/externFunc.ts
 semantic error: Scope children mismatch:
@@ -14777,8 +14685,7 @@ after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3)
 rebuilt        : [ReferenceId(0)]
 
 tasks/coverage/typescript/tests/cases/compiler/externalModuleAssignToVar.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/externalModuleQualification.ts
 semantic error: Bindings mismatch:
@@ -14800,18 +14707,15 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/externalModuleReferenceOfImportDeclarationWithExportModifier.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/externalModuleResolution.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-`export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/externalModuleResolution2.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-`export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/externalModuleWithoutCompilerFlag1.ts
 semantic error: Bindings mismatch:
@@ -17555,8 +17459,7 @@ after transform: ["x"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/importDeclarationUsedAsTypeQuery.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/importElisionEnum.ts
 semantic error: Bindings mismatch:
@@ -17651,8 +17554,7 @@ after transform: []
 rebuilt        : ["React", "o"]
 
 tasks/coverage/typescript/tests/cases/compiler/importHelpersVerbatimModuleSyntax.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/importHelpersWithLocalCollisions.ts
 semantic error: Bindings mismatch:
@@ -17682,8 +17584,7 @@ after transform: ScopeId(0): ["NotFound"]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/importShadowsGlobalName.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/importTypeGenericArrowTypeParenthesized.ts
 semantic error: Bindings mismatch:
@@ -17700,8 +17601,7 @@ after transform: ScopeId(2): ["T", "x"]
 rebuilt        : ScopeId(2): ["x"]
 
 tasks/coverage/typescript/tests/cases/compiler/importUsedInExtendsList1.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/importUsedInGenericImportResolves.ts
 semantic error: Unresolved references mismatch:
@@ -17709,8 +17609,7 @@ after transform: ["T", "theme"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/import_reference-exported-alias.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/import_reference-to-type-alias.ts
 semantic error: Missing SymbolId: "App"
@@ -17750,8 +17649,7 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/import_var-referencing-an-imported-module-alias.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/importedAliasedConditionalTypeInstantiation.ts
 semantic error: Bindings mismatch:
@@ -19257,8 +19155,7 @@ after transform: [ReferenceId(4), ReferenceId(5), ReferenceId(7), ReferenceId(32
 rebuilt        : [ReferenceId(3), ReferenceId(21)]
 
 tasks/coverage/typescript/tests/cases/compiler/instanceOfInExternalModules.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/instanceSubtypeCheck1.ts
 semantic error: Bindings mismatch:
@@ -20820,10 +20717,8 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/isolatedModulesReExportAlias.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
-`export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/isolatedModulesShadowGlobalTypeNotValue.ts
 semantic error: Bindings mismatch:
@@ -20842,8 +20737,7 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/isolatedModules_resolveJsonModule.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/isolatedModules_resolveJsonModule_strict_outDir_commonJs.ts
 semantic error: Bindings mismatch:
@@ -21191,8 +21085,7 @@ after transform: [ReferenceId(2), ReferenceId(4), ReferenceId(7)]
 rebuilt        : [ReferenceId(1), ReferenceId(2)]
 
 tasks/coverage/typescript/tests/cases/compiler/jsxInferenceProducesLiteralAsExpected.tsx
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/jsxIntrinsicElementsCompatability.tsx
 semantic error: Bindings mismatch:
@@ -21580,8 +21473,7 @@ after transform: ["Math"]
 rebuilt        : ["Math", "literalUnion", "numLiteral"]
 
 tasks/coverage/typescript/tests/cases/compiler/localAliasExportAssignment.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/localClassesInLoop.ts
 semantic error: Scope children mismatch:
@@ -22753,8 +22645,7 @@ after transform: SymbolId(12): SymbolFlags(Import)
 rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAliasAsFunctionArgument.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAliasInterface.ts
 semantic error: Missing SymbolId: "_modes"
@@ -23340,8 +23231,7 @@ after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/moduleNodeImportRequireEmit.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/moduleOuterQualification.ts
 semantic error: Bindings mismatch:
@@ -23355,12 +23245,10 @@ after transform: ["outer"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/modulePreserve1.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/modulePreserve2.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/modulePreserve5.ts
 semantic error: Bindings mismatch:
@@ -23489,8 +23377,7 @@ after transform: ScopeId(0): ["a2"]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/moduleResolutionNoResolve.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/moduleResolutionPackageIdWithRelativeAndAbsolutePath.ts
 semantic error: Bindings mismatch:
@@ -24022,8 +23909,7 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/module_augmentUninstantiatedModule2.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/moduledecl.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -24048,8 +23934,7 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/multiImportExport.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/multiModuleClodule1.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -24396,12 +24281,10 @@ after transform: SymbolId(1): [ReferenceId(2), ReferenceId(7), ReferenceId(9)]
 rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(5)]
 
 tasks/coverage/typescript/tests/cases/compiler/narrowedImports.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/narrowedImports_assumeInitialized.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/narrowingAssignmentReadonlyRespectsAssertion.ts
 semantic error: Bindings mismatch:
@@ -24918,8 +24801,7 @@ after transform: ScopeId(0): ["C"]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/noCircularDefinitionOnExportOfPrivateInMergedNamespace.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/noCollisionThisExpressionAndLocalVarInFunction.ts
 semantic error: Scope children mismatch:
@@ -25089,36 +24971,28 @@ after transform: []
 rebuilt        : ["enhancePrisma"]
 
 tasks/coverage/typescript/tests/cases/compiler/nodeResolution1.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/nodeResolution2.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/nodeResolution3.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/nodeResolution4.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/nodeResolution5.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/nodeResolution6.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/nodeResolution7.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/nodeResolution8.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/nonConflictingRecursiveBaseTypeMembers.ts
 semantic error: Bindings mismatch:
@@ -26700,17 +26574,14 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/privacyCheckExportAssignmentOnExportedGenericInterface1.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/privacyCheckExportAssignmentOnExportedGenericInterface2.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-`export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/privacyCheckExternalModuleExportAssignmentOfGenericClass.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/privacyCheckOnTypeParameterReferenceInConstructorParameter.ts
 semantic error: Bindings mismatch:
@@ -30320,8 +30191,7 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/reactHOCSpreadprops.tsx
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/reactNamespaceImportPresevation.tsx
 semantic error: Bindings mismatch:
@@ -30671,10 +30541,8 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/recursiveExportAssignmentAndFindAliasedType7.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
-`export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/recursiveFieldSetting.ts
 semantic error: Symbol reference IDs mismatch for "Recursive1":
@@ -31085,8 +30953,7 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(4), R
 rebuilt        : SymbolId(0): [ReferenceId(7), ReferenceId(8)]
 
 tasks/coverage/typescript/tests/cases/compiler/reexportMissingDefault8.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/reexportNameAliasedAndHoisted.ts
 semantic error: Scope children mismatch:
@@ -31181,52 +31048,35 @@ after transform: SymbolId(1): []
 rebuilt        : SymbolId(2): [ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFile.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
-`import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileNonRelative.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
-`import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileNonRelativeWithoutExtensionResolvesToTs.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileTypes.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
-`import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
-`import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
-`import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
-`import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
-`import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+Import assignment cannot be used when targeting ECMAScript modules.
+Import assignment cannot be used when targeting ECMAScript modules.
+Import assignment cannot be used when targeting ECMAScript modules.
+Import assignment cannot be used when targeting ECMAScript modules.
+Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithAlwaysStrictWithoutErrors.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
-`import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithDeclaration.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
-`import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithEmptyObject.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
-`import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithModuleEmitUndefined.ts
 semantic error: Bindings mismatch:
@@ -31259,22 +31109,16 @@ after transform: ScopeId(0): ["b"]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithSourceMap.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
-`import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithTraillingComma.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
-`import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithoutAllowJs.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
-`import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithoutEsModuleInterop.ts
 semantic error: Bindings mismatch:
@@ -31282,16 +31126,12 @@ after transform: ScopeId(0): ["test"]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithoutExtensionResolvesToTs.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
-`import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithoutOutDir.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
-`import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFile_PathMapping.ts
 semantic error: Bindings mismatch:
@@ -33511,12 +33351,10 @@ after transform: []
 rebuilt        : ["console"]
 
 tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationExportAssignment.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationExportAssignmentCommonjs.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationImport.ts
 semantic error: Missing SymbolId: "m"
@@ -34576,8 +34414,7 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/systemModule18.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/systemModule7.ts
 semantic error: Missing SymbolId: "M"
@@ -35550,8 +35387,7 @@ after transform: ScopeId(2): ["T", "a", "f", "x"]
 rebuilt        : ScopeId(2): ["a", "f", "x"]
 
 tasks/coverage/typescript/tests/cases/compiler/typeCheckObjectCreationExpressionWithUndefinedCallResolutionData.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/typeConstraintsWithConstructSignatures.ts
 semantic error: Bindings mismatch:
@@ -35859,20 +35695,7 @@ after transform: ScopeId(2): ["T", "obj"]
 rebuilt        : ScopeId(1): ["obj"]
 
 tasks/coverage/typescript/tests/cases/compiler/typeInferenceWithExcessPropertiesJsx.tsx
-semantic error: Missing SymbolId: "React"
-Missing ReferenceId: "require"
-Bindings mismatch:
-after transform: ScopeId(0): ["React", "TProps", "TranslationEntry", "Translations", "_jsxFileName", "_reactJsxRuntime"]
-rebuilt        : ScopeId(0): ["React", "_jsxFileName", "_reactJsxRuntime"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(6)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
-Unresolved references mismatch:
-after transform: ["JSX", "T", "require"]
-rebuilt        : ["T", "require"]
-Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(13)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/typeInferenceWithTypeAnnotation.ts
 semantic error: Scope children mismatch:
@@ -37215,28 +37038,22 @@ tasks/coverage/typescript/tests/cases/compiler/unusedClassesinNamespace3.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/unusedImportDeclaration.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/unusedImports11.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/unusedImports13.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/unusedImports14.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/unusedImports15.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/unusedImports16.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/unusedInterfaceinNamespace4.ts
 semantic error: Missing SymbolId: "Validation"
@@ -37831,10 +37648,8 @@ tasks/coverage/typescript/tests/cases/compiler/visSyntax.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/visibilityOfCrossModuleTypeUsage.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
-`import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/visibilityOfTypeParameters.ts
 semantic error: Bindings mismatch:
@@ -37978,8 +37793,7 @@ after transform: SymbolId(17) "m1"
 rebuilt        : SymbolId(13) "m1"
 
 tasks/coverage/typescript/tests/cases/compiler/withImportDecl.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/withStatementInternalComments.ts
 semantic error: 'with' statements are not allowed
@@ -38045,8 +37859,7 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/ambient/ambientExternalModuleMerging.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/ambient/ambientInsideNonAmbient.ts
 semantic error: Missing SymbolId: "M2"
@@ -38078,8 +37891,7 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/ambient/ambientShorthand.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/ambient/ambientShorthand_declarationEmit.ts
 semantic error: Bindings mismatch:
@@ -39769,8 +39581,7 @@ after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(3): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/classes/classExpressions/extendClassExpressionFromModule.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/classes/classExpressions/genericClassExpressionInFunction.ts
 semantic error: Bindings mismatch:
@@ -41639,16 +41450,13 @@ after transform: ["arguments"]
 rebuilt        : ["arguments", "console"]
 
 tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInExportEqualsAMD.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInExportEqualsCJS.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInExportEqualsUMD.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInScriptContext1.ts
 semantic error: Cannot assign to 'arguments' in strict mode
@@ -43568,16 +43376,13 @@ tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports3
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports4-amd.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports4-es6.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports4.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports5.ts
 semantic error: Bindings mismatch:
@@ -45070,8 +44875,7 @@ after transform: []
 rebuilt        : ["dec"]
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.9.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/esDecorators-contextualTypes.2.ts
 semantic error: Bindings mismatch:
@@ -47970,8 +47774,7 @@ after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/commonJSImportAsPrimaryExpression.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/commonJSImportNotAsPrimaryExpression.ts
 semantic error: Bindings mismatch:
@@ -48296,69 +48099,53 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignDottedName.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
-`export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignImportedIdentifier.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
-`export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignTypes.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentCircularModules.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-`import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
-`export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+Import assignment cannot be used when targeting ECMAScript modules.
+Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentGenericType.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentMergedInterface.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentMergedModule.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-`export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentTopLevelClodule.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-`export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentTopLevelEnumdule.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-`export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentTopLevelFundule.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-`export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentTopLevelIdentifier.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-`export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportDeclaredModule.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportNonVisibleType.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportTypeMergedWithExportStarAsNamespace.ts
 semantic error: Bindings mismatch:
@@ -48377,8 +48164,7 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/importImportOnlyModule.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/moduleResolutionWithExtensions.ts
 semantic error: Bindings mismatch:
@@ -48386,31 +48172,24 @@ after transform: ScopeId(0): ["a"]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/moduleScoping.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/nameDelimitedBySlashes.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/nameWithFileExtension.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/nameWithRelativePaths.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/reexportClassDefinition.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/relativePathToDeclarationFile.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
-`import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
-`import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+Import assignment cannot be used when targeting ECMAScript modules.
+Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/rewriteRelativeImportExtensions/nodeModulesTsFiles.ts
 semantic error: Bindings mismatch:
@@ -48449,10 +48228,8 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelFileModule.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
-`import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/typeAndNamespaceExportMerge.ts
 semantic error: Bindings mismatch:
@@ -50352,20 +50129,7 @@ after transform: ScopeId(4): ["T", "U", "ab"]
 rebuilt        : ScopeId(2): ["ab"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty1.tsx
-semantic error: Missing SymbolId: "React"
-Missing ReferenceId: "require"
-Bindings mismatch:
-after transform: ScopeId(0): ["Comp", "Prop", "React", "_jsxFileName", "_reactJsxRuntime", "k", "k1", "k2"]
-rebuilt        : ScopeId(0): ["Comp", "React", "_jsxFileName", "_reactJsxRuntime", "k", "k1", "k2"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
-Unresolved references mismatch:
-after transform: ["JSX", "require"]
-rebuilt        : ["require"]
-Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(18)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty10.tsx
 semantic error: Bindings mismatch:
@@ -50384,97 +50148,22 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(5), ScopeId(7)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty12.tsx
-semantic error: Missing SymbolId: "React"
-Missing ReferenceId: "require"
-Bindings mismatch:
-after transform: ScopeId(0): ["Button", "ButtonProp", "InnerButton", "InnerButtonProp", "React", "_jsxFileName", "_reactJsxRuntime"]
-rebuilt        : ScopeId(0): ["Button", "InnerButton", "React", "_jsxFileName", "_reactJsxRuntime"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(6), ScopeId(7)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(5)]
-Symbol reference IDs mismatch for "Button":
-after transform: SymbolId(2): [ReferenceId(0)]
-rebuilt        : SymbolId(3): []
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
-Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(17)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty16.tsx
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty3.tsx
-semantic error: Missing SymbolId: "React"
-Missing ReferenceId: "require"
-Bindings mismatch:
-after transform: ScopeId(0): ["FetchUser", "IFetchUserProps", "IUser", "React", "UserName0", "UserName1", "_jsxFileName", "_reactJsxRuntime"]
-rebuilt        : ScopeId(0): ["FetchUser", "React", "UserName0", "UserName1", "_jsxFileName", "_reactJsxRuntime"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(7)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5)]
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
-Unresolved references mismatch:
-after transform: ["JSX", "require"]
-rebuilt        : ["require"]
-Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(18)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty6.tsx
-semantic error: Missing SymbolId: "React"
-Missing ReferenceId: "require"
-Bindings mismatch:
-after transform: ScopeId(0): ["AnotherButton", "Button", "Comp", "Prop", "React", "_jsxFileName", "_reactJsxRuntime", "k1", "k2", "k3", "k4"]
-rebuilt        : ScopeId(0): ["AnotherButton", "Button", "Comp", "React", "_jsxFileName", "_reactJsxRuntime", "k1", "k2", "k3", "k4"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
-Unresolved references mismatch:
-after transform: ["JSX", "require"]
-rebuilt        : ["require"]
-Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(48)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty8.tsx
-semantic error: Missing SymbolId: "React"
-Missing ReferenceId: "require"
-Bindings mismatch:
-after transform: ScopeId(0): ["AnotherButton", "Button", "Comp", "Prop", "React", "_jsxFileName", "_reactJsxRuntime", "k1", "k2", "k3", "k4"]
-rebuilt        : ScopeId(0): ["AnotherButton", "Button", "Comp", "React", "_jsxFileName", "_reactJsxRuntime", "k1", "k2", "k3", "k4"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
-Unresolved references mismatch:
-after transform: ["JSX", "require"]
-rebuilt        : ["require"]
-Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(48)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty9.tsx
-semantic error: Missing SymbolId: "React"
-Missing ReferenceId: "require"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(4), SymbolId(5), SymbolId(6)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(6)]
-Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(15)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxIntersectionElementPropsType.tsx
 semantic error: Bindings mismatch:
@@ -50519,14 +50208,7 @@ after transform: ["console", "true"]
 rebuilt        : ["console"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/commentEmittingInPreserveJsx1.tsx
-semantic error: Missing SymbolId: "React"
-Missing ReferenceId: "require"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(8)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/inline/inlineJsxAndJsxFragPragmaOverridesCompilerOptions.tsx
 semantic error: Bindings mismatch:
@@ -50658,8 +50340,7 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxAttributeResolution16.tsx
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxAttributeResolution8.tsx
 semantic error: Bindings mismatch:
@@ -50687,39 +50368,10 @@ after transform: [ReferenceId(2)]
 rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDefaultAttributesResolution1.tsx
-semantic error: Missing SymbolId: "React"
-Missing ReferenceId: "require"
-Bindings mismatch:
-after transform: ScopeId(0): ["Poisoned", "Prop", "React", "_jsxFileName", "_reactJsxRuntime", "p"]
-rebuilt        : ScopeId(0): ["Poisoned", "React", "_jsxFileName", "_reactJsxRuntime", "p"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
-Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(7)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDefaultAttributesResolution2.tsx
-semantic error: Missing SymbolId: "React"
-Missing ReferenceId: "require"
-Bindings mismatch:
-after transform: ScopeId(0): ["Poisoned", "Prop", "React", "_jsxFileName", "_reactJsxRuntime", "p"]
-rebuilt        : ScopeId(0): ["Poisoned", "React", "_jsxFileName", "_reactJsxRuntime", "p"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
-Unresolved references mismatch:
-after transform: ["require", "true"]
-rebuilt        : ["require"]
-Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(8)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDynamicTagName4.tsx
 semantic error: Bindings mismatch:
@@ -50983,172 +50635,31 @@ after transform: []
 rebuilt        : ["React"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType1.tsx
-semantic error: Missing SymbolId: "React"
-Missing ReferenceId: "require"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(5), SymbolId(9), SymbolId(14), SymbolId(15)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(6), SymbolId(9)]
-Bindings mismatch:
-after transform: ScopeId(1): ["Component", "T"]
-rebuilt        : ScopeId(1): ["Component"]
-Bindings mismatch:
-after transform: ScopeId(3): ["Component", "T"]
-rebuilt        : ScopeId(3): ["Component"]
-Bindings mismatch:
-after transform: ScopeId(5): ["Component", "T", "U"]
-rebuilt        : ScopeId(5): ["Component"]
-Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(27)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType2.tsx
-semantic error: Missing SymbolId: "React"
-Missing ReferenceId: "require"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(5), SymbolId(6)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
-Bindings mismatch:
-after transform: ScopeId(1): ["Component", "T"]
-rebuilt        : ScopeId(1): ["Component"]
-Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(9)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType3.tsx
-semantic error: Missing SymbolId: "React"
-Missing ReferenceId: "require"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3), SymbolId(5), SymbolId(6)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4)]
-Bindings mismatch:
-after transform: ScopeId(1): ["T"]
-rebuilt        : ScopeId(1): []
-Bindings mismatch:
-after transform: ScopeId(3): ["U"]
-rebuilt        : ScopeId(3): []
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
-Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(9)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType4.tsx
-semantic error: Missing SymbolId: "React"
-Missing ReferenceId: "require"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3), SymbolId(5), SymbolId(6)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4)]
-Bindings mismatch:
-after transform: ScopeId(1): ["T"]
-rebuilt        : ScopeId(1): []
-Bindings mismatch:
-after transform: ScopeId(3): ["U"]
-rebuilt        : ScopeId(3): []
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
-Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(9)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType5.tsx
-semantic error: Missing SymbolId: "React"
-Missing ReferenceId: "require"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3), SymbolId(5), SymbolId(6)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4)]
-Bindings mismatch:
-after transform: ScopeId(1): ["T"]
-rebuilt        : ScopeId(1): []
-Bindings mismatch:
-after transform: ScopeId(3): ["U"]
-rebuilt        : ScopeId(3): []
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
-Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(10)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType6.tsx
-semantic error: Missing SymbolId: "React"
-Missing ReferenceId: "require"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3), SymbolId(5), SymbolId(6)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4)]
-Bindings mismatch:
-after transform: ScopeId(1): ["T"]
-rebuilt        : ScopeId(1): []
-Bindings mismatch:
-after transform: ScopeId(3): ["U"]
-rebuilt        : ScopeId(3): []
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
-Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(10)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType7.tsx
-semantic error: Missing SymbolId: "React"
-Missing ReferenceId: "require"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(3), SymbolId(6), SymbolId(9), SymbolId(10)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(5)]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Bindings mismatch:
-after transform: ScopeId(2): ["U", "props"]
-rebuilt        : ScopeId(1): ["props"]
-Bindings mismatch:
-after transform: ScopeId(3): ["U", "props"]
-rebuilt        : ScopeId(2): ["props"]
-Unresolved references mismatch:
-after transform: ["Component", "JSX", "require"]
-rebuilt        : ["Component", "require"]
-Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(12)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType8.tsx
-semantic error: Missing SymbolId: "React"
-Missing ReferenceId: "require"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(3), SymbolId(6), SymbolId(9), SymbolId(10)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(5)]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Bindings mismatch:
-after transform: ScopeId(2): ["U", "props"]
-rebuilt        : ScopeId(1): ["props"]
-Bindings mismatch:
-after transform: ScopeId(3): ["U", "props"]
-rebuilt        : ScopeId(2): ["props"]
-Unresolved references mismatch:
-after transform: ["Component", "JSX", "require"]
-rebuilt        : ["Component", "require"]
-Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(12)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType9.tsx
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxInArrowFunction.tsx
 semantic error: Bindings mismatch:
@@ -51198,10 +50709,8 @@ rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxPreserveEmit1.tsx
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-`import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
-`import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+Import assignment cannot be used when targeting ECMAScript modules.
+Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxPreserveEmit3.tsx
 semantic error: Bindings mismatch:
@@ -51212,30 +50721,10 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactComponentWithDefaultTypeParameter1.tsx
-semantic error: Missing SymbolId: "React"
-Missing ReferenceId: "require"
-Bindings mismatch:
-after transform: ScopeId(0): ["Prop", "React", "_jsxFileName", "_reactJsxRuntime", "x"]
-rebuilt        : ScopeId(0): ["React", "_jsxFileName", "_reactJsxRuntime", "x"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): []
-Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(7)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactComponentWithDefaultTypeParameter2.tsx
-semantic error: Missing SymbolId: "React"
-Missing ReferenceId: "require"
-Bindings mismatch:
-after transform: ScopeId(0): ["Prop", "React", "_jsxFileName", "_reactJsxRuntime", "x", "x1"]
-rebuilt        : ScopeId(0): ["React", "_jsxFileName", "_reactJsxRuntime", "x", "x1"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): []
-Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(10)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmit1.tsx
 semantic error: Bindings mismatch:
@@ -51522,131 +51011,34 @@ after transform: []
 rebuilt        : ["React"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSfcReturnNull.tsx
-semantic error: Missing SymbolId: "React"
-Missing ReferenceId: "require"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3), SymbolId(5), SymbolId(6), SymbolId(7), SymbolId(8)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(5), SymbolId(7), SymbolId(8)]
-Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(6)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSfcReturnNullStrictNullChecks.tsx
-semantic error: Missing SymbolId: "React"
-Missing ReferenceId: "require"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3), SymbolId(5), SymbolId(6), SymbolId(7), SymbolId(8)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(5), SymbolId(7), SymbolId(8)]
-Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(6)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution1.tsx
-semantic error: Missing SymbolId: "React"
-Missing ReferenceId: "require"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6)]
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
-Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(10)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution11.tsx
-semantic error: Missing SymbolId: "React"
-Missing ReferenceId: "require"
-Bindings mismatch:
-after transform: ScopeId(0): ["OverWriteAttr", "Prop", "React", "_jsxFileName", "_reactJsxRuntime", "anyobj", "obj", "obj1", "obj3", "x", "x1", "x2", "x3", "x4", "x5"]
-rebuilt        : ScopeId(0): ["OverWriteAttr", "React", "_jsxFileName", "_reactJsxRuntime", "anyobj", "obj", "obj1", "obj3", "x", "x1", "x2", "x3", "x4", "x5"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
-Unresolved references mismatch:
-after transform: ["require", "true"]
-rebuilt        : ["require"]
-Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(31)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution13.tsx
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution15.tsx
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution3.tsx
-semantic error: Missing SymbolId: "React"
-Missing ReferenceId: "require"
-Bindings mismatch:
-after transform: ScopeId(0): ["Poisoned", "PoisonedProp", "React", "_jsxFileName", "_reactJsxRuntime", "obj", "p", "y"]
-rebuilt        : ScopeId(0): ["Poisoned", "React", "_jsxFileName", "_reactJsxRuntime", "obj", "p", "y"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
-Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(11)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution7.tsx
-semantic error: Missing SymbolId: "React"
-Missing ReferenceId: "require"
-Bindings mismatch:
-after transform: ScopeId(0): ["React", "TextComponent", "TextProps", "_jsxFileName", "_reactJsxRuntime", "textPropsFalse", "textPropsTrue", "y1", "y2"]
-rebuilt        : ScopeId(0): ["React", "TextComponent", "_jsxFileName", "_reactJsxRuntime", "textPropsFalse", "textPropsTrue", "y1", "y2"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
-Unresolved references mismatch:
-after transform: ["require", "true"]
-rebuilt        : ["require"]
-Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(15)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution8.tsx
-semantic error: Missing SymbolId: "React"
-Missing ReferenceId: "require"
-Bindings mismatch:
-after transform: ScopeId(0): ["OverWriteAttr", "Prop", "React", "_jsxFileName", "_reactJsxRuntime", "obj", "obj1", "obj3", "x", "x1"]
-rebuilt        : ScopeId(0): ["OverWriteAttr", "React", "_jsxFileName", "_reactJsxRuntime", "obj", "obj1", "obj3", "x", "x1"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
-Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(14)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution9.tsx
-semantic error: Missing SymbolId: "React"
-Missing ReferenceId: "require"
-Bindings mismatch:
-after transform: ScopeId(0): ["Opt", "OptionProp", "React", "_jsxFileName", "_reactJsxRuntime", "obj", "obj1", "p", "y", "y1", "y2", "y3"]
-rebuilt        : ScopeId(0): ["Opt", "React", "_jsxFileName", "_reactJsxRuntime", "obj", "obj1", "p", "y", "y1", "y2", "y3"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
-Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(24)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadChildren.tsx
 semantic error: Spread children are not supported in React.
@@ -51656,20 +51048,7 @@ semantic error: Spread children are not supported in React.
 Spread children are not supported in React.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentOverload2.tsx
-semantic error: Missing SymbolId: "React"
-Missing ReferenceId: "require"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7), SymbolId(8), SymbolId(9), SymbolId(10), SymbolId(11), SymbolId(12), SymbolId(13), SymbolId(14), SymbolId(15), SymbolId(16), SymbolId(17)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7), SymbolId(8), SymbolId(9), SymbolId(10), SymbolId(11), SymbolId(12), SymbolId(13), SymbolId(14), SymbolId(15), SymbolId(16)]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["JSX", "OneThing", "require"]
-rebuilt        : ["OneThing", "require"]
-Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(40)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentOverload3.tsx
 semantic error: Bindings mismatch:
@@ -51683,118 +51062,31 @@ after transform: ["JSX", "ThreeThing", "ZeroThingOrTwoThing", "require"]
 rebuilt        : ["ThreeThing", "ZeroThingOrTwoThing", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentOverload6.tsx
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentWithDefaultTypeParameter1.tsx
-semantic error: Missing SymbolId: "React"
-Missing ReferenceId: "require"
-Bindings mismatch:
-after transform: ScopeId(0): ["MyComponent", "MyComponentProp", "React", "_jsxFileName", "_reactJsxRuntime", "i", "i1"]
-rebuilt        : ScopeId(0): ["MyComponent", "React", "_jsxFileName", "_reactJsxRuntime", "i", "i1"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
-Bindings mismatch:
-after transform: ScopeId(2): ["T", "attr"]
-rebuilt        : ScopeId(1): ["attr"]
-Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(10)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponents3.tsx
-semantic error: Missing SymbolId: "React"
-Missing ReferenceId: "require"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3), SymbolId(4), SymbolId(6), SymbolId(8), SymbolId(9)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(5), SymbolId(6), SymbolId(8)]
-Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(16)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentsWithTypeArguments1.tsx
-semantic error: Missing SymbolId: "React"
-Missing ReferenceId: "require"
-Bindings mismatch:
-after transform: ScopeId(0): ["Baz", "InferParamProp", "React", "_jsxFileName", "_react", "_reactJsxRuntime", "createLink", "createLink1", "i"]
-rebuilt        : ScopeId(0): ["Baz", "React", "_jsxFileName", "_react", "_reactJsxRuntime", "createLink", "createLink1", "i"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
-Bindings mismatch:
-after transform: ScopeId(2): ["T", "U", "a0", "a1", "key1", "value"]
-rebuilt        : ScopeId(1): ["a0", "a1", "key1", "value"]
-Unresolved references mismatch:
-after transform: ["Array", "ComponentWithTwoAttributes", "InferParamComponent", "JSX", "Link", "require"]
-rebuilt        : ["ComponentWithTwoAttributes", "InferParamComponent", "Link", "require"]
-Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(34), ReferenceId(35)]
-rebuilt        : [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentsWithTypeArguments3.tsx
-semantic error: Missing SymbolId: "React"
-Missing ReferenceId: "require"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(7), SymbolId(23), SymbolId(29), SymbolId(30)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(13)]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Bindings mismatch:
-after transform: ScopeId(4): ["T", "U", "a0", "a1", "a2", "a3", "a4", "a5", "a6", "arg1", "arg2"]
-rebuilt        : ScopeId(1): ["a0", "a1", "a2", "a3", "a4", "a5", "a6", "arg1", "arg2"]
-Unresolved references mismatch:
-after transform: ["JSX", "Link", "OverloadComponent", "require"]
-rebuilt        : ["Link", "OverloadComponent", "require"]
-Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(48)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentsWithTypeArguments5.tsx
-semantic error: Missing SymbolId: "React"
-Missing ReferenceId: "require"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(3), SymbolId(12), SymbolId(19), SymbolId(20)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(7)]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Bindings mismatch:
-after transform: ScopeId(2): ["T", "a1", "a2", "arg"]
-rebuilt        : ScopeId(1): ["a1", "a2", "arg"]
-Bindings mismatch:
-after transform: ScopeId(5): ["T", "a1", "a2", "a3", "a4", "arg"]
-rebuilt        : ScopeId(2): ["a1", "a2", "a3", "a4", "arg"]
-Unresolved references mismatch:
-after transform: ["Component", "ComponentSpecific", "ComponentSpecific1", "JSX", "require"]
-rebuilt        : ["Component", "ComponentSpecific", "ComponentSpecific1", "require"]
-Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(32)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxTypeArgumentsJsxPreserveOutput.tsx
-semantic error: Missing SymbolId: "React"
-Missing ReferenceId: "require"
-Bindings mismatch:
-after transform: ScopeId(0): ["Foo", "InterfaceProps", "React", "TypeProps", "_jsxFileName", "_reactJsxRuntime"]
-rebuilt        : ScopeId(0): ["Foo", "React", "_jsxFileName", "_reactJsxRuntime"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
-Bindings mismatch:
-after transform: ScopeId(3): ["T"]
-rebuilt        : ScopeId(1): []
-Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(76)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxUnionElementType5.tsx
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxUnionTypeComponent1.tsx
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/moduleResolution/allowImportingTypesDtsExtension.ts
 semantic error: Bindings mismatch:
@@ -51822,12 +51114,9 @@ after transform: ScopeId(0): ["a", "dir"]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/moduleResolution/packageJsonMain.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
-`import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
-`import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+Import assignment cannot be used when targeting ECMAScript modules.
+Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/moduleResolution/resolutionModeImportType1.ts
 semantic error: Bindings mismatch:
@@ -51895,10 +51184,8 @@ after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
 rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
 
 tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesImportAssignments.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
-`import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesImportAttributesTypeModeDeclarationEmit.ts
 semantic error: Bindings mismatch:
@@ -52697,8 +51984,7 @@ after transform: ["Partial"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportAlias.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/salsa/plainJSRedeclare3.ts
 semantic error: Identifier `orbitol` has already been declared
@@ -52970,8 +52256,7 @@ after transform: ["Symbol"]
 rebuilt        : ["Symbol", "dec"]
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsTopLevelOfModule.2.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithESClassDecorators.1.ts
 semantic error: Bindings mismatch:
@@ -53743,12 +53028,10 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/types/import/importTypeGenericTypes.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/types/import/importTypeLocal.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/types/intersection/intersectionMemberOfUnionNarrowsCorrectly.ts
 semantic error: Bindings mismatch:
