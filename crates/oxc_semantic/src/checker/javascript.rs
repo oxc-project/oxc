@@ -171,7 +171,7 @@ pub fn check_binding_identifier<'a>(
     // LexicalDeclaration : LetOrConst BindingList ;
     // * It is a Syntax Error if the BoundNames of BindingList contains "let".
     if !strict_mode && ident.name == "let" {
-        for node_id in ctx.nodes.ancestors(node.id()).skip(1) {
+        for node_id in ctx.nodes.ancestor_ids(node.id()).skip(1) {
             match ctx.nodes.kind(node_id) {
                 AstKind::VariableDeclaration(decl) if decl.kind.is_lexical() => {
                     return ctx.error(invalid_let_declaration(decl.kind.as_str(), ident.span));
@@ -197,7 +197,7 @@ pub fn check_identifier_reference<'a>(
     //  Static Semantics: AssignmentTargetType
     //  1. If this IdentifierReference is contained in strict mode code and StringValue of Identifier is "eval" or "arguments", return invalid.
     if ctx.strict_mode() && matches!(ident.name.as_str(), "arguments" | "eval") {
-        for node_id in ctx.nodes.ancestors(node.id()).skip(1) {
+        for node_id in ctx.nodes.ancestor_ids(node.id()).skip(1) {
             match ctx.nodes.kind(node_id) {
                 AstKind::AssignmentTarget(_) | AstKind::SimpleAssignmentTarget(_) => {
                     return ctx.error(unexpected_identifier_assign(&ident.name, ident.span));
@@ -214,7 +214,7 @@ pub fn check_identifier_reference<'a>(
     //   It is a Syntax Error if ContainsArguments of ClassStaticBlockStatementList is true.
 
     if ident.name == "arguments" {
-        for node_id in ctx.nodes.ancestors(node.id()).skip(1) {
+        for node_id in ctx.nodes.ancestor_ids(node.id()).skip(1) {
             match ctx.nodes.kind(node_id) {
                 AstKind::Function(_) => break,
                 AstKind::PropertyDefinition(_) => {
@@ -567,7 +567,7 @@ pub fn check_break_statement<'a>(
     ctx: &SemanticBuilder<'a>,
 ) {
     // It is a Syntax Error if this BreakStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement or a SwitchStatement.
-    for node_id in ctx.nodes.ancestors(node.id()).skip(1) {
+    for node_id in ctx.nodes.ancestor_ids(node.id()).skip(1) {
         match ctx.nodes.kind(node_id) {
             AstKind::Program(_) => {
                 return stmt.label.as_ref().map_or_else(
@@ -613,7 +613,7 @@ pub fn check_continue_statement<'a>(
     ctx: &SemanticBuilder<'a>,
 ) {
     // It is a Syntax Error if this ContinueStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement.
-    for node_id in ctx.nodes.ancestors(node.id()).skip(1) {
+    for node_id in ctx.nodes.ancestor_ids(node.id()).skip(1) {
         match ctx.nodes.kind(node_id) {
             AstKind::Program(_) => {
                 return stmt.label.as_ref().map_or_else(
@@ -666,7 +666,7 @@ pub fn check_labeled_statement<'a>(
     node: &AstNode<'a>,
     ctx: &SemanticBuilder<'a>,
 ) {
-    for node_id in ctx.nodes.ancestors(node.id()).skip(1) {
+    for node_id in ctx.nodes.ancestor_ids(node.id()).skip(1) {
         match ctx.nodes.kind(node_id) {
             // label cannot cross boundary on function or static block
             AstKind::Function(_) | AstKind::StaticBlock(_) | AstKind::Program(_) => break,
@@ -863,7 +863,7 @@ pub fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &SemanticBuilder<'a
 
     // skip(1) is the self `Super`
     // skip(2) is the parent `CallExpression` or `NewExpression`
-    for node_id in ctx.nodes.ancestors(node.id()).skip(2) {
+    for node_id in ctx.nodes.ancestor_ids(node.id()).skip(2) {
         match ctx.nodes.kind(node_id) {
             AstKind::MethodDefinition(def) => {
                 // ClassElement : MethodDefinition
@@ -1094,7 +1094,7 @@ pub fn check_unary_expression<'a>(
 }
 
 fn is_in_formal_parameters<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) -> bool {
-    for node_id in ctx.nodes.ancestors(node.id()).skip(1) {
+    for node_id in ctx.nodes.ancestor_ids(node.id()).skip(1) {
         match ctx.nodes.kind(node_id) {
             AstKind::FormalParameter(_) => return true,
             AstKind::Program(_) | AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
