@@ -36,12 +36,12 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           issue-number: ${{ needs.prepare.outputs.pull-request-number }}
-          body: Triggering Ecosystem CI https://github.com/oxc-project/oxlint-ecosystem-ci/actions/workflows/ecosystem-ci.yml
+          body: Triggering Ecosystem CI https://github.com/oxc-project/oxlint-ecosystem-ci/actions/workflows/ci.yml
 
       - uses: benc-uk/workflow-dispatch@v1
         with:
           repo: oxc-project/oxlint-ecosystem-ci
-          workflow: ecosystem-ci.yml
+          workflow: ci.yml
           token: ${{ secrets.OXC_BOT_PAT }}
           ref: main
           inputs: '{ "issue-number": "${{ needs.prepare.outputs.pull-request-number }}", "comment-id": "${{ steps.comment.outputs.comment-id }}" }'
