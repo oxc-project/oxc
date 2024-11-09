@@ -1,10 +1,13 @@
 use oxc_ast::{
-    ast::{BindingIdentifier, BindingPatternKind, CallExpression, Expression, FormalParameters},
+    ast::{
+        BindingIdentifier, BindingPatternKind, BindingProperty, CallExpression, Expression,
+        FormalParameters, JSXAttributeItem, JSXElementName,
+    },
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::SymbolId;
+use oxc_semantic::{NodeId, SymbolId};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -92,19 +95,34 @@ impl Rule for OnlyUsedInRecursion {
         }
 
         for (arg_index, formal_parameter) in function_parameters.items.iter().enumerate() {
-            let BindingPatternKind::BindingIdentifier(arg) = &formal_parameter.pattern.kind else {
-                continue;
-            };
+            match &formal_parameter.pattern.kind {
+                BindingPatternKind::BindingIdentifier(arg) => {
+                    if is_argument_only_used_in_recursion(function_id, arg, arg_index, ctx) {
+                        create_diagnostic(
+                            ctx,
+                            function_id,
+                            function_parameters,
+                            arg,
+                            arg_index,
+                            function_span,
+                        );
+                    }
+                }
+                BindingPatternKind::ObjectPattern(pattern) => {
+                    for property in &pattern.properties {
+                        let Some(ident) = property.value.get_binding_identifier() else {
+                            continue;
+                        };
 
-            if is_argument_only_used_in_recursion(function_id, arg, arg_index, ctx) {
-                create_diagnostic(
-                    ctx,
-                    function_id,
-                    function_parameters,
-                    arg,
-                    arg_index,
-                    function_span,
-                );
+                        let Some(name) = property.key.name() else {
+                            continue;
+                        };
+                        if is_property_only_used_in_recursion_jsx(ident, &name, function_id, ctx) {
+                            create_diagnostic_jsx(ctx, function_id, property);
+                        }
+                    }
+                }
+                _ => continue,
             }
         }
     }
@@ -168,7 +186,12 @@ fn create_diagnostic(
                     let arg_to_delete = call_expr.arguments[arg_index].span();
                     fix.push(Fix::delete(Span::new(
                         arg_to_delete.start,
-                        skip_to_next_char(ctx.source_text(), arg_to_delete.end),
+                        skip_to_next_char(
+                            ctx.source_text(),
+                            arg_to_delete.end,
+                            &Direction::Forward,
+                        )
+                        .unwrap_or(arg_to_delete.end),
                     )));
                 }
             }
@@ -176,6 +199,80 @@ fn create_diagnostic(
             fix
         },
     );
+}
+
+fn create_diagnostic_jsx(
+    ctx: &LintContext,
+    function_id: &BindingIdentifier,
+    property: &BindingProperty,
+) {
+    let Some(function_symbol_id) = function_id.symbol_id.get() else { return };
+    let is_exported = ctx.semantic().symbols().get_flags(function_symbol_id).is_export();
+
+    let Some(property_name) = &property.key.static_name() else { return };
+    if is_exported {
+        return ctx.diagnostic(only_used_in_recursion_diagnostic(property.span(), property_name));
+    }
+
+    let Some(property_ident) = property.value.get_binding_identifier() else { return };
+    let Some(property_symbol_id) = property_ident.symbol_id.get() else { return };
+    let mut references = ctx.semantic().symbol_references(property_symbol_id);
+
+    let has_spread_attribute = references.any(|x| used_with_spread_attribute(x.node_id(), ctx));
+
+    if has_spread_attribute {
+        // If the JSXElement has a spread attribute, we cannot apply a fix safely,
+        // as the same property name could be exist within the spread attribute.
+        return ctx.diagnostic(only_used_in_recursion_diagnostic(property.span(), property_name));
+    }
+
+    let Some(property_name) = property.key.static_name() else {
+        return;
+    };
+
+    ctx.diagnostic_with_dangerous_fix(
+        only_used_in_recursion_diagnostic(property.span, &property_name),
+        |fixer| {
+            let mut fix = fixer.new_fix_with_capacity(references.count() + 1);
+
+            let source = ctx.source_text();
+            let span_start = skip_to_next_char(source, property.span.start, &Direction::Backward)
+                .unwrap_or(property.span.start);
+            let span_end =
+                skip_to_next_char(ctx.source_text(), property.span.end, &Direction::Forward)
+                    .unwrap_or(property.span.end);
+
+            fix.push(Fix::delete(Span::new(span_start, span_end)));
+
+            // search for references to the function and remove the property
+            for reference in ctx.semantic().symbol_references(property_symbol_id) {
+                let mut ancestor_ids = ctx.nodes().ancestor_ids(reference.node_id());
+
+                let Some(attr) =
+                    ancestor_ids.find_map(|node| match ctx.nodes().get_node(node).kind() {
+                        AstKind::JSXAttributeItem(attr) => Some(attr),
+                        _ => None,
+                    })
+                else {
+                    continue;
+                };
+
+                fix.push(Fix::delete(attr.span()));
+            }
+
+            fix
+        },
+    );
+}
+
+fn used_with_spread_attribute(node_id: NodeId, ctx: &LintContext) -> bool {
+    ctx.nodes().ancestor_kinds(node_id).any(|kind| match kind {
+        AstKind::JSXOpeningElement(opening_element) => opening_element
+            .attributes
+            .iter()
+            .any(|attr| matches!(attr, JSXAttributeItem::SpreadAttribute(_))),
+        _ => false,
+    })
 }
 
 fn is_argument_only_used_in_recursion<'a>(
@@ -222,6 +319,81 @@ fn is_argument_only_used_in_recursion<'a>(
     true
 }
 
+fn is_property_only_used_in_recursion_jsx(
+    ident: &BindingIdentifier,
+    property_name: &str,
+    function_ident: &BindingIdentifier,
+    ctx: &LintContext,
+) -> bool {
+    let Some(ident_symbol_id) = ident.symbol_id.get() else { return false };
+    let mut references = ctx.semantic().symbol_references(ident_symbol_id).peekable();
+
+    if references.peek().is_none() {
+        return false;
+    }
+
+    let Some(function_symbol_id) = function_ident.symbol_id.get() else { return false };
+
+    for reference in references {
+        // Conditions:
+        // 1. The reference is inside a JSXExpressionContainer.
+        // 2. The JSXElement calls the recursive function itself.
+        // 3. The reference is in a JSXAttribute, and the attribute name has the same name as the function.
+        let Some(may_jsx_expr_container) = ctx.nodes().parent_node(reference.node_id()) else {
+            return false;
+        };
+        let AstKind::JSXExpressionContainer(_) = may_jsx_expr_container.kind() else {
+            // In this case, we simply ignore the references inside JSXExpressionContainer that are not single-node expression.
+            //   e.g. <Increment count={count+1} />
+            //
+            // To support this case, we need to check whether expression contains side-effect like ++val
+            return false;
+        };
+
+        let Some(attr) = ctx.nodes().ancestors(may_jsx_expr_container.id()).find_map(|node| {
+            if let AstKind::JSXAttributeItem(attr) = node.kind() {
+                Some(attr)
+            } else {
+                None
+            }
+        }) else {
+            return false;
+        };
+
+        let JSXAttributeItem::Attribute(jsx_attr_name) = attr else {
+            return false;
+        };
+        let Some(attr_name) = jsx_attr_name.name.as_identifier() else {
+            return false;
+        };
+        if attr_name.name != property_name {
+            return false;
+        }
+
+        let Some(opening_element) =
+            ctx.nodes().ancestor_ids(reference.node_id()).find_map(|node| {
+                if let AstKind::JSXOpeningElement(elem) = ctx.nodes().get_node(node).kind() {
+                    Some(elem)
+                } else {
+                    None
+                }
+            })
+        else {
+            return false;
+        };
+
+        let Some(jsx_ident_symbol_id) = get_jsx_element_symbol_id(&opening_element.name, ctx)
+        else {
+            return false;
+        };
+        if jsx_ident_symbol_id != function_symbol_id {
+            return false;
+        }
+    }
+
+    true
+}
+
 fn is_recursive_call(
     call_expr: &CallExpression,
     function_symbol_id: SymbolId,
@@ -250,16 +422,48 @@ fn is_function_maybe_reassigned<'a>(
         })
 }
 
-// skipping whitespace, commas, finds the next character (exclusive)
-#[allow(clippy::cast_possible_truncation)]
-fn skip_to_next_char(s: &str, start: u32) -> u32 {
-    for (i, c) in s.char_indices().skip(start as usize) {
-        if !c.is_whitespace() && c != ',' {
-            return i as u32;
-        }
-    }
+fn get_jsx_element_symbol_id<'a>(
+    node: &'a JSXElementName<'a>,
+    ctx: &'a LintContext<'_>,
+) -> Option<SymbolId> {
+    let node = match node {
+        JSXElementName::IdentifierReference(ident) => Some(ident.as_ref()),
+        JSXElementName::MemberExpression(expr) => expr.get_identifier(),
+        JSXElementName::Identifier(_)
+        | JSXElementName::NamespacedName(_)
+        | JSXElementName::ThisExpression(_) => None,
+    }?;
 
-    s.len() as u32
+    ctx.symbols().get_reference(node.reference_id()).symbol_id()
+}
+
+enum Direction {
+    Forward,
+    Backward,
+}
+
+// Skips whitespace and commas in a given direction and
+// returns the next character if found.
+#[allow(clippy::cast_possible_truncation)]
+fn skip_to_next_char(s: &str, start: u32, direction: &Direction) -> Option<u32> {
+    // span is a half-open interval: [start, end)
+    // so we should return in that way.
+    let start = start as usize;
+    match direction {
+        Direction::Forward => s
+            .char_indices()
+            .skip(start)
+            .find(|&(_, c)| !c.is_whitespace() && c != ',')
+            .map(|(i, _)| i as u32),
+
+        Direction::Backward => s
+            .char_indices()
+            .rev()
+            .skip(s.len() - start)
+            .take_while(|&(_, c)| c.is_whitespace() || c == ',')
+            .map(|(i, _)| i as u32)
+            .last(),
+    }
 }
 
 #[test]
@@ -273,10 +477,21 @@ fn test() {
                 // some code
             }
         ",
+        "
+            function test(arg0) {
+                test(arg0+1)
+            }
+        ",
         // unused arg, no recursion
         "
             function test(arg0) {
                 // arg0 not used
+            }
+        ",
+        // no recursion, assignment pattern
+        r"
+            function test({ arg0 = 10 }) {
+                return arg0;
             }
         ",
         "
@@ -326,13 +541,13 @@ fn test() {
                 test(arg1, arg0)
             }
         ",
-        // Arguments Swapped in Recursion
+        // arguments swapped in recursion
         r"
             function test(arg0, arg1) {
                 test(arg1, arg0);
             }
         ",
-        // Arguments Swapped in Recursion (arrow)
+        // arguments swapped in recursion (arrow)
         r"
             const test = (arg0, arg1) => {
                 test(arg1, arg0);
@@ -366,6 +581,89 @@ fn test() {
         };
         validator()
         "#,
+        // no params, no recursion
+        "
+           function Test() {
+                return <Test1 />;
+            }
+        ",
+        // allowed case: The parameter 'depth' is used outside of the recursive call.
+        // it is logged and reassigned, so the linter does not flag it as only used in recursion.
+        "
+            function Listitem({ depth }) {
+                 console.log(depth);
+                 depth = depth + 1;
+                 return <Listitem depth={depth}/>;
+             }
+        ",
+        "
+            function Listitem({ depth }) {
+                console.log(depth);
+                return <Listitem depth={depth}/>;
+            }
+        ",
+        // allowed case
+        // multi-node expressions are not supported for now
+        "
+            function Listitem({ depth }) {
+                return <Listitem depth={depth + 1} />
+            }
+        ",
+        // conditional recursion
+        "
+            function Listitem({ depth }) {
+                if (depth < 10) {
+                    return <Listitem depth={depth + 1} />;
+                }
+                return null;
+            }
+        ",
+        // conditional recursion (shorthand)
+        "
+            function Listitem({ depth }) {
+                return depth > 5 ? <Listitem depth={depth + 1} /> : null;
+            }
+        ",
+        // reference inside jsx expression but not attribute
+        "
+            function List({item}) {
+                return (
+                    <List>
+                        {item}
+                    </List>
+                )
+            }
+        ",
+        // create_diagnostic_jsx - JSX element without property match
+        r"
+            function Listitem({ depth }) {
+                return <Listitem level={depth} />;
+            }
+        ",
+        // JSX attribute not referencing function name
+        r"
+            function TestComponent({ body }) {
+                return <AnotherComponent body={body} />;
+            }
+        ",
+        // property not used in recursion
+        r"
+            function test({prop1, prop2}) {
+                return (<></>)
+            }
+        ",
+        // property swapped in recursion
+        r"
+            function Test({prop1, prop2}) {
+                return (<Test prop1={prop2} prop2={prop1} />)
+            }
+        ",
+        // arguments swapped in recursion (arrow)
+        r"
+           const Test = ({prop1, prop2}) => {
+                return (<Test prop1={prop2} prop2={prop1} />)
+            }
+        ",
     ];
 
     let fail = vec![
@@ -420,6 +718,33 @@ fn test() {
         ",
         "//¿
 function writeChunks(a,callac){writeChunks(m,callac)}writeChunks(i,{})",
+        "
+            function ListItem({ depth }) {
+                return <ListItem depth={depth} />
+            }
+        ",
+        "
+            function ListItem({ depth: listDepth }) {
+                return <ListItem depth={listDepth} />;
+            }
+        ",
+        "
+            function ListItem({depth = 0}) {
+                return <ListItem depth={depth} />
+            }
+        ",
+        "
+            function ListItem({depth, ...otherProps}) {
+                            return <ListItem depth={depth} />
+            }
+        ",
+        r"
+            function Test({a, b}) {
+                return (
+                    <Test a={a} b={b}/>
+                )
+            }
+        ",
     ];
 
     let fix = vec![
@@ -484,6 +809,59 @@ function writeChunks(a,callac){writeChunks(m,callac)}writeChunks(i,{})",
                   test(a)
               }
               export default test;
+            ",
+        ),
+        (
+            r"function Test({a, b}) {
+                  a++;
+                  return (
+                      <Test a={a} b={b}/>
+                  )
+              }
+              export default test;
+            ",
+            r"function Test({a}) {
+                  a++;
+                  return (
+                      <Test a={a} />
+                  )
+              }
+              export default test;
+            ",
+        ),
+        (
+            r"function Test({a, b}) {
+                console.log(b)
+                return (<Test a={a} b={b} />)
+            }
+            ",
+            r"function Test({b}) {
+                console.log(b)
+                return (<Test  b={b} />)
+            }
+            ",
+        ),
+        (
+            r"function Test({a, b}) {
+                b++;
+                return (<Test a={a} b={b}/>)
+            }
+            ",
+            r"function Test({b}) {
+                b++;
+                return (<Test  b={b}/>)
+            }
+            ",
+        ),
+        // Expecting no fix: function is exported
+        (
+            r"function ListItem({depth, ...otherProps}) {
+                return <ListItem depth={depth} {...otherProps}/>
+            }
+            ",
+            r"function ListItem({depth, ...otherProps}) {
+                return <ListItem depth={depth} {...otherProps}/>
+            }
             ",
         ),
     ];
