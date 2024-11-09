@@ -1,6 +1,7 @@
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, Visit};
 use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, IsLiteralValue};
+use oxc_ecmascript::side_effects::MayHaveSideEffects;
 use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
@@ -177,6 +178,11 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
 
         match ctx.get_boolean_value(&if_stmt.test) {
             Some(true) => {
+                // FIXME we should eliminate the statement, but need to prevent removing side effect statements.
+                // so firstly I just avoid removing the statement if it has side effects.
+                if if_stmt.test.may_have_side_effects() {
+                    return None;
+                }
                 // self.changed = true;
                 Some(ctx.ast.move_statement(&mut if_stmt.consequent))
             }
@@ -554,5 +560,11 @@ mod test {
         fold("([foo(), ...c, bar()])", "(foo(), [...c], bar())");
         fold("([...a, b, ...c])", "([...a, ...c])");
         fold_same("([...b, ...c])"); // It would also be fine if the spreads were split apart.
+    }
+
+    #[test]
+    fn test_issue_7209() {
+        // TODO
+        fold_same("if (((() => console.log('effect'))(), true)) {}");
     }
 }
