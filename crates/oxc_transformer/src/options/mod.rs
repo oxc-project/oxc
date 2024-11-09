@@ -6,6 +6,7 @@ mod engine_targets;
 mod env;
 mod es_features;
 mod es_target;
+mod module;
 
 use std::path::PathBuf;
 
@@ -30,7 +31,7 @@ use crate::{
 
 pub use self::{
     browserslist_query::BrowserslistQuery, engine::Engine, engine_targets::EngineTargets,
-    env::EnvOptions, es_features::ESFeature, es_target::ESTarget,
+    env::EnvOptions, es_features::ESFeature, es_target::ESTarget, module::Module,
 };
 
 use self::babel::BabelOptions;
@@ -163,6 +164,8 @@ impl TryFrom<&BabelOptions> for TransformOptions {
 
         let env = options.presets.env.unwrap_or_default();
 
+        let module = options.presets.env.as_ref().map(|env| env.module).unwrap_or_default();
+
         let regexp = RegExpOptions {
             sticky_flag: env.regexp.sticky_flag || options.plugins.sticky_flag,
             unicode_flag: env.regexp.unicode_flag || options.plugins.unicode_flag,
@@ -239,6 +242,7 @@ impl TryFrom<&BabelOptions> for TransformOptions {
             typescript,
             jsx,
             env: EnvOptions {
+                module,
                 regexp,
                 es2015,
                 es2016,

@@ -16,11 +16,14 @@ use crate::{
     EngineTargets,
 };
 
-use super::{babel::BabelEnvOptions, ESFeature, ESTarget, Engine};
+use super::{babel::BabelEnvOptions, ESFeature, ESTarget, Engine, Module};
 
 #[derive(Debug, Default, Clone, Copy, Deserialize)]
 #[serde(try_from = "BabelEnvOptions")]
 pub struct EnvOptions {
+    /// Specify what module code is generated.
+    pub module: Module,
+
     pub regexp: RegExpOptions,
 
     pub es2015: ES2015Options,
@@ -47,6 +50,7 @@ impl EnvOptions {
     #[doc(hidden)]
     pub fn enable_all(include_unfinished_plugins: bool) -> Self {
         Self {
+            module: Module::default(),
             regexp: RegExpOptions {
                 sticky_flag: true,
                 unicode_flag: true,
@@ -149,6 +153,7 @@ impl From<EngineTargets> for EnvOptions {
     fn from(o: EngineTargets) -> Self {
         use ESFeature::*;
         Self {
+            module: Module::default(),
             regexp: RegExpOptions {
                 sticky_flag: o.has_feature(ES2015StickyRegex),
                 unicode_flag: o.has_feature(ES2015UnicodeRegex),
