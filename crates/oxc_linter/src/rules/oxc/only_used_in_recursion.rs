@@ -266,7 +266,7 @@ fn create_diagnostic_jsx(
 }
 
 fn used_with_spread_attribute(node_id: NodeId, ctx: &LintContext) -> bool {
-    ctx.nodes().ancestors(node_id).any(|node| match node.kind() {
+    ctx.nodes().ancestor_kinds(node_id).any(|kind| match kind {
         AstKind::JSXOpeningElement(opening_element) => opening_element
             .attributes
             .iter()
