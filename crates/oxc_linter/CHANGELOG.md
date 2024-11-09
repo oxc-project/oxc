@@ -4,6 +4,32 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.11.1] - 2024-11-09
+
+- 0e4adc1 ast: [**BREAKING**] Remove invalid expressions from `TSEnumMemberName` (#7219) (Boshen)
+
+- d1d1874 ast: [**BREAKING**] Change `comment.span` to real position that contain `//` and `/*` (#7154) (Boshen)
+
+- 843bce4 ast: [**BREAKING**] `IdentifierReference::reference_id` return `ReferenceId` (#7126) (overlookmotel)
+
+### Features
+
+- 1fcd709 linter: Add jsx support for only-used-in-recursion (#7120) (no-yan)
+- 4d577cf linter: Add `import/first` rule (#7180) (Dmitry Zakharov)
+- 9b8973f linter: Add `import/unambiguous` rule (#7187) (Dmitry Zakharov)
+- 5ab1ff6 linter: Implement @typescript-eslint/no-unsafe-function-type (#6989) (Orenbek)
+
+### Bug Fixes
+
+- b73cfd9 linter: Fix `is_method_call` with parentheses and chain expression (#7095) (tbashiyy)
+
+### Refactor
+
+- 8c0a362 linter: Use `ctx.source_range(comment.content_span())` API (#7155) (Boshen)
+- c5485ae semantic: Add `ancestor_kinds` iterator function (#7217) (camchenry)
+- abf1602 semantic: Rename `iter_parents` to `ancestors` (#7216) (camchenry)
+- 42171eb semantic: Rename `ancestors` to `ancestor_ids` (#7215) (camchenry)
+
 ## [0.11.0] - 2024-11-03
 
 - 1f2a6c6 linter: [**BREAKING**] Report unmatched rules with error exit code (#7027) (camchenry)
