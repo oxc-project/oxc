@@ -180,14 +180,14 @@ impl Rule for NoNull {
         };
 
         let mut parents = iter_outer_expressions(ctx, node.id());
-        let Some(parent_kind) = parents.next().map(AstNode::kind) else {
+        let Some(parent_kind) = parents.next() else {
             ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
                 fix_null(fixer, null_literal)
             });
             return;
         };
 
-        let grandparent_kind = parents.next().map(AstNode::kind);
+        let grandparent_kind = parents.next();
         match (parent_kind, grandparent_kind) {
             (AstKind::Argument(_), Some(AstKind::CallExpression(call_expr)))
                 if match_call_expression_pass_case(null_literal, call_expr) =>

@@ -92,8 +92,8 @@ impl Rule for NoExportsAssign {
             };
         }
 
-        let parent = ctx.nodes().parent_node(node.id());
-        if let Some(AstKind::AssignmentExpression(assign_expr)) = parent.map(AstNode::kind) {
+        if let Some(AstKind::AssignmentExpression(assign_expr)) = ctx.nodes().parent_kind(node.id())
+        {
             if is_module_exports(assign_expr.left.as_member_expression(), ctx) {
                 return;
             }

@@ -187,9 +187,7 @@ impl Rule for AltText {
         // <object>
         if let Some(custom_tags) = &self.object {
             if name == "object" || custom_tags.iter().any(|i| i == name) {
-                let maybe_parent =
-                    ctx.nodes().parent_node(node.id()).map(oxc_semantic::AstNode::kind);
-                if let Some(AstKind::JSXElement(parent)) = maybe_parent {
+                if let Some(AstKind::JSXElement(parent)) = ctx.nodes().parent_kind(node.id()) {
                     object_rule(jsx_el, parent, ctx);
                     return;
                 }
