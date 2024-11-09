@@ -4,6 +4,79 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.36.0] - 2024-11-09
+
+- b11ed2c ast: [**BREAKING**] Remove useless `ObjectProperty::init` field (#7220) (Boshen)
+
+- 0e4adc1 ast: [**BREAKING**] Remove invalid expressions from `TSEnumMemberName` (#7219) (Boshen)
+
+- 846711c transformer: [**BREAKING**] Change API to take a `&TransformOptions` instead of `TransformOptions` (#7213) (Boshen)
+
+- d1d1874 ast: [**BREAKING**] Change `comment.span` to real position that contain `//` and `/*` (#7154) (Boshen)
+
+- 843bce4 ast: [**BREAKING**] `IdentifierReference::reference_id` return `ReferenceId` (#7126) (overlookmotel)
+
+### Features
+
+- ad3a2f5 tasks/compat_data: Generate our own compat table (#7176) (Boshen)
+- b4258ee transformer: Add defaulted `Module::Preserve` option (#7225) (Boshen)
+- 324c3fe transformer: Add `TransformOptions::module` option (#7188) (Boshen)
+- a166a4a transformer: Add esbuild comma separated target API `--target=es2020,chrome58` (#7210) (Boshen)
+- 3a20b90 transformer: Add es target to `engineTargets` (#7193) (Boshen)
+- 22898c8 transformer: Warn BigInt when targeting < ES2020 (#7184) (Boshen)
+- a579011 transformer: Add features `ES2018NamedCapturingGroupsRegex` and `ES2018LookbehindRegex` (#7182) (Boshen)
+- 8573f79 transformer: Turn on async_to_generator and async_generator_functions plugins in enable_all (#7135) (Dunqing)
+- df77241 transformer: Enable `ArrowFunctionConverter` in `async-to-generator` and `async-generator-functions` plugins (#7113) (Dunqing)
+- b6a5750 transformer/arrow-function-converter: Move scope to changed scope for `this_var` if scope have changed (#7125) (Dunqing)
+- 1910227 transformer/async-to-generator: Support inferring the function name from the ObjectPropertyValue's key (#7201) (Dunqing)
+- ffa8604 transformer/async-to-generator: Do not transform await expression if is not inside async function (#7138) (Dunqing)
+- e536d47 transformer/babel: Add support for trying to get the `Module` from `BabelPlugins` (#7218) (Dunqing)
+- 5cfdc05 transformer/typescript: Support transform `export =` and `import = require(...)` when module is commonjs (#7206) (Dunqing)
+
+### Bug Fixes
+
+- c82b273 transformer/async-generator-functions: Only transform object method in exit_function (#7200) (Dunqing)
+- b2a888d transformer/async-generator-functions: Incorrect transformation for `for await` if it's not placed in a block (#7148) (Dunqing)
+- 19892ed transformer/async-generator-functions: Transform incorrectly for `for await` if it's in LabeledStatement (#7147) (Dunqing)
+- ede10dc transformer/async-to-generator: Incorrect transform when super expression is inside async method (#7171) (Dunqing)
+- 293d072 transformer/async-to-generator: Only transform object method in exit_function (#7199) (Dunqing)
+- ae692d7 transformer/async_to_generator: Fix checking if function is class method (#7117) (overlookmotel)
+- eea4ab8 transformer/helper-loader: Incorrect `SymbolFlags` for default import when `SourceType` is script (#7226) (Dunqing)
+
+### Refactor
+
+- de56083 transformer: Add `impl TryFrom<EngineTargets> for EnvOptions` (#7191) (Boshen)
+- 0a43c64 transformer: Move `ESTarget` to its own file (#7189) (Boshen)
+- 0e1f12c transformer: Remove unimplemented `EnvOptions::bugfixes` (#7162) (Boshen)
+- a981caf transformer: Add `Engine` enum for `EngineTargets` (#7161) (Boshen)
+- 8340243 transformer: Rename `Query` to `BrowserslistQuery` (#7143) (Boshen)
+- 481f7e6 transformer: Change `Targets` to `EngineTargets` (#7142) (Boshen)
+- 55e6989 transformer: Deserialize engine target strings to specific keys (#7139) (Boshen)
+- fdfd9a4 transformer: Use `scope_id` etc methods (#7128) (overlookmotel)
+- ff8bd50 transformer: Move implementation of ArrowFunction to common/ArrowFunctionConverter (#7107) (Dunqing)
+- 4a515be transformer/arrow-function-coverter: Rename function name and add some comments to explain confusing parts. (#7203) (Dunqing)
+- c307e1b transformer/arrow-functions: Pass `ArenaBox` as function param (#7169) (overlookmotel)
+- 217d433 transformer/arrow-functions: Remove unused `&mut self` function param (#7165) (overlookmotel)
+- 426df71 transformer/arrow-functions: Use `scope_id` method (#7164) (overlookmotel)
+- 11c5e12 transformer/arrow-functions: Correct comments (#7163) (overlookmotel)
+- 1238506 transformer/async-generator-function: Remove inactive `#[allow(clippy::unused_self)]` attrs (#7167) (overlookmotel)
+- 84ee581 transformer/async-generator-functions: Simplify identifying whether within an async generator function (#7170) (overlookmotel)
+- 1b12328 transformer/async-generator-functions: Use `clone` not `clone_in` on `LabelIdentifier` (#7172) (overlookmotel)
+- cd1006f transformer/async-generator-functions: Do not transform yield expression where inside generator function (#7134) (Dunqing)
+- 2c5734d transformer/async-generator-functions: Do not transform await expression where inside ArrowFunctionExpression (#7132) (Dunqing)
+- 5ce83bd transformer/async-generator-functions: Remove dead code for handle await expression (#7131) (Dunqing)
+- e04ee97 transformer/async-generator-functions: Move handling of `MethodDefinition`'s value to `exit_function` (#7106) (Dunqing)
+- b57d5a5 transformer/async-to-generator: Remove unused `&self` function param (#7166) (overlookmotel)
+- f80085c transformer/async-to-generator: Move handling of `MethodDefinition`'s value to `exit_function` (#7105) (Dunqing)
+- e2241e6 transformer/jsx-self: Remove unused `&self` function params (#7159) (overlookmotel)
+- 1dfd241 transformer/optional-catch-binding: Remove inactive `#[allow(clippy::unused_self)]` attr (#7158) (overlookmotel)
+- fd9b44c transformer/typescript: Remove inactive `#[allow(clippy::unused_self)]` attr (#7160) (overlookmotel)
+
+### Styling
+
+- 38a6df6 transformer/arrow-functions: Semicolon after return statements (#7168) (overlookmotel)
+- 64b7e3a transformer/async-generator-functions: Import `oxc_allocator::Vec` as `ArenaVec` (#7173) (overlookmotel)
+
 ## [0.35.0] - 2024-11-04
 
 - b8daab3 transformer: [**BREAKING**] API to `TryFrom<&EnvOptions> for TransformOptions` and `TryFrom<&BabelOptions> TransformOptions` (#7020) (Boshen)
