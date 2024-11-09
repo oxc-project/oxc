@@ -4,7 +4,7 @@ use serde::Deserialize;
 
 pub use self::targets::BabelTargets;
 
-use crate::options::EngineTargets;
+use crate::{options::EngineTargets, Module};
 
 fn default_as_true() -> bool {
     true
@@ -26,8 +26,7 @@ pub struct BabelEnvOptions {
     #[deprecated = "Not Implemented"]
     pub loose: bool,
 
-    #[deprecated = "Not Implemented"]
-    pub modules: Option<serde_json::Value>,
+    pub modules: Module,
 
     #[deprecated = "Not Implemented"]
     pub debug: bool,
@@ -55,4 +54,21 @@ pub struct BabelEnvOptions {
 
     #[deprecated = "Not Implemented"]
     pub shipped_proposals: bool,
+}
+
+#[derive(Default, Debug, Clone, Deserialize)]
+pub enum BabelModule {
+    #[default]
+    #[serde(rename = "auto")]
+    Auto,
+    #[serde(rename = "amd")]
+    Amd,
+    #[serde(rename = "umd")]
+    Umd,
+    #[serde(rename = "systemjs")]
+    Systemjs,
+    #[serde(rename = "commonjs", alias = "cjs")]
+    Commonjs,
+    #[serde(untagged)]
+    Boolean(bool),
 }

@@ -124,8 +124,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
     {
         let parents_iter = self
             .nodes()
-            .ancestors(node_id)
-            .map(AstNode::kind)
+            .ancestor_kinds(node_id)
             // no skip
             .filter(|kind| Self::is_relevant_kind(*kind));
 

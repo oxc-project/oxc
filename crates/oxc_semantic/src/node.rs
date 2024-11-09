@@ -127,13 +127,25 @@ impl<'a> AstNodes<'a> {
         self.nodes.is_empty()
     }
 
-    /// Walk up the AST, iterating over each parent node.
+    /// Walk up the AST, iterating over each parent [`AstNode`].
     ///
     /// The first node produced by this iterator is the first parent of the node
     /// pointed to by `node_id`. The last node will usually be a `Program`.
     #[inline]
     pub fn ancestors(&self, node_id: NodeId) -> impl Iterator<Item = &AstNode<'a>> + Clone + '_ {
         AstNodeParentIter { current_node_id: Some(node_id), nodes: self }
+    }
+
+    /// Walk up the AST, iterating over each parent [`AstKind`].
+    ///
+    /// The first node produced by this iterator is the first parent of the node
+    /// pointed to by `node_id`. The last node will is a [`AstKind::Program`].
+    #[inline]
+    pub fn ancestor_kinds(
+        &self,
+        node_id: NodeId,
+    ) -> impl Iterator<Item = AstKind<'a>> + Clone + '_ {
+        self.ancestors(node_id).map(AstNode::kind)
     }
 
     /// Access the underlying struct from [`oxc_ast`].
@@ -214,7 +226,7 @@ impl<'a> AstNodes<'a> {
         self.root().map(|id| self.get_node_mut(id))
     }
 
-    /// Walk up the AST, iterating over each parent node.
+    /// Walk up the AST, iterating over each parent [`NodeId`].
     ///
     /// The first node produced by this iterator is the first parent of the node
     /// pointed to by `node_id`. The last node will always be a [`Program`].

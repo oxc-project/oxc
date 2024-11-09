@@ -259,10 +259,10 @@ pub fn nth_outermost_paren_parent<'a, 'b>(
 pub fn iter_outer_expressions<'a, 's>(
     semantic: &'s Semantic<'a>,
     node_id: NodeId,
-) -> impl Iterator<Item = &'s AstNode<'a>> + 's {
-    semantic.nodes().ancestors(node_id).skip(1).filter(|parent| {
+) -> impl Iterator<Item = AstKind<'a>> + 's {
+    semantic.nodes().ancestor_kinds(node_id).skip(1).filter(|parent| {
         !matches!(
-            parent.kind(),
+            parent,
             AstKind::ParenthesizedExpression(_)
                 | AstKind::TSAsExpression(_)
                 | AstKind::TSSatisfiesExpression(_)

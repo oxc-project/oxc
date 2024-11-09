@@ -479,7 +479,7 @@ impl Rule for FuncNames {
 }
 
 fn guess_function_name<'a>(ctx: &LintContext<'a>, parent_id: NodeId) -> Option<Cow<'a, str>> {
-    for parent_kind in ctx.nodes().ancestors(parent_id).map(AstNode::kind) {
+    for parent_kind in ctx.nodes().ancestor_kinds(parent_id) {
         match parent_kind {
             AstKind::ParenthesizedExpression(_)
             | AstKind::TSAsExpression(_)

@@ -13,7 +13,7 @@ use crate::{
         statement_injector::StatementInjectorStore, top_level_statements::TopLevelStatementsStore,
         var_declarations::VarDeclarationsStore,
     },
-    TransformOptions,
+    Module, TransformOptions,
 };
 
 pub struct TransformCtx<'a> {
@@ -28,6 +28,9 @@ pub struct TransformCtx<'a> {
     pub source_type: SourceType,
 
     pub source_text: &'a str,
+
+    #[expect(unused)]
+    pub module: Module,
 
     // Helpers
     /// Manage helper loading
@@ -58,6 +61,7 @@ impl<'a> TransformCtx<'a> {
             source_path,
             source_type: SourceType::default(),
             source_text: "",
+            module: options.env.module,
             helper_loader: HelperLoaderStore::new(&options.helper_loader),
             module_imports: ModuleImportsStore::new(),
             var_declarations: VarDeclarationsStore::new(),

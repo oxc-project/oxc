@@ -18,31 +18,31 @@ Passed: 316/626
 x Output mismatch
 
 * dynamic-import/modules-amd/input.js
-x Output mismatch
+env: Amd module is not implemented.
 
 * dynamic-import/modules-cjs/input.mjs
 x Output mismatch
 
 * dynamic-import/modules-systemjs/input.mjs
-x Output mismatch
+env: Systemjs module is not implemented.
 
 * dynamic-import/modules-umd/input.mjs
-x Output mismatch
+env: Umd module is not implemented.
 
 * dynamic-import-babel-7/auto-esm-unsupported-import-unsupported/input.mjs
 x Output mismatch
 
 * dynamic-import-babel-7/modules-amd/input.js
-x Output mismatch
+env: Amd module is not implemented.
 
 * dynamic-import-babel-7/modules-cjs/input.mjs
 x Output mismatch
 
 * dynamic-import-babel-7/modules-systemjs/input.mjs
-x Output mismatch
+env: Systemjs module is not implemented.
 
 * dynamic-import-babel-7/modules-umd/input.mjs
-x Output mismatch
+env: Umd module is not implemented.
 
 * export-namespace-from/auto-esm-not-supported/input.mjs
 x Output mismatch
@@ -69,10 +69,10 @@ x Output mismatch
 x Output mismatch
 
 * modules/modules-systemjs/input.mjs
-x Output mismatch
+env: Systemjs module is not implemented.
 
 * modules/modules-umd/input.mjs
-x Output mismatch
+env: Umd module is not implemented.
 
 * plugins-integration/block-scoping-inside-generator/input.js
 x Output mismatch
@@ -90,7 +90,7 @@ x Output mismatch
 x Output mismatch
 
 * plugins-integration/issue-10662/input.mjs
-x Output mismatch
+env: Umd module is not implemented.
 
 * plugins-integration/issue-11278/input.mjs
 x Output mismatch

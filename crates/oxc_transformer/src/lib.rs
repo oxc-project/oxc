@@ -56,7 +56,7 @@ pub use crate::{
     jsx::{JsxOptions, JsxRuntime, ReactRefreshOptions},
     options::{
         babel::{BabelEnvOptions, BabelOptions},
-        ESTarget, Engine, EngineTargets, EnvOptions, TransformOptions,
+        ESTarget, Engine, EngineTargets, EnvOptions, Module, TransformOptions,
     },
     plugins::*,
     typescript::{RewriteExtensionsMode, TypeScriptOptions},
