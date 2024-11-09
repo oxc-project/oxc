@@ -142,7 +142,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@v1
-      - uses: crate-ci/typos@v1.27.0
+      - uses: crate-ci/typos@v1.27.3
         with:
           files: .
 
