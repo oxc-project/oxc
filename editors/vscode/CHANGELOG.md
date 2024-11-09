@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.11.1] - 2024-11-09
+
+### Features
+
+- 4dd9b60 editor/vscode: Replace existing output channel and trace output channel with a single LogOutputChannel (#7196) (Nicholas Rayburn)
+
+### Bug Fixes
+
+- eea8879 editor/vscode: Update language client id to fix the resolution of the oxc.trace.server setting (#7181) (Nicholas Rayburn)
+
 ## [0.11.0] - 2024-11-03
 
 ### Features
