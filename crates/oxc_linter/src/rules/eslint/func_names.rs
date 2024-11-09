@@ -401,8 +401,8 @@ impl Rule for FuncNames {
                         }
 
                         // a function which is calling itself inside is always valid
-                        let ast_span = ctx.nodes().iter_parents(node.id()).skip(1).find_map(|p| {
-                            match p.kind() {
+                        let ast_span =
+                            ctx.nodes().ancestors(node.id()).skip(1).find_map(|p| match p.kind() {
                                 AstKind::Function(func) => {
                                     let func_name = func.name()?;
 
@@ -413,8 +413,7 @@ impl Rule for FuncNames {
                                     None
                                 }
                                 _ => None,
-                            }
-                        });
+                            });
 
                         // we found a recursive function, remove it from the invalid list
                         if let Some(span) = ast_span {
@@ -480,7 +479,7 @@ impl Rule for FuncNames {
 }
 
 fn guess_function_name<'a>(ctx: &LintContext<'a>, parent_id: NodeId) -> Option<Cow<'a, str>> {
-    for parent_kind in ctx.nodes().iter_parents(parent_id).map(AstNode::kind) {
+    for parent_kind in ctx.nodes().ancestors(parent_id).map(AstNode::kind) {
         match parent_kind {
             AstKind::ParenthesizedExpression(_)
             | AstKind::TSAsExpression(_)

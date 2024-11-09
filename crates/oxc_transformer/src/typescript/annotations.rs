@@ -1,5 +1,3 @@
-#![allow(clippy::unused_self)]
-
 use rustc_hash::FxHashSet;
 
 use oxc_allocator::Vec as ArenaVec;

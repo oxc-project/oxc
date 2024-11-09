@@ -15,52 +15,31 @@ use crate::ast::ts::*;
 
 impl Serialize for BooleanLiteral {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "BooleanLiteral")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("value", &self.value)?;
-        map.end()
+        crate::serialize::ESTreeLiteral::from(self).serialize(serializer)
     }
 }
 
 impl Serialize for NullLiteral {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "NullLiteral")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.end()
+        crate::serialize::ESTreeLiteral::from(self).serialize(serializer)
     }
 }
 
 impl<'a> Serialize for NumericLiteral<'a> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "NumericLiteral")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("value", &self.value)?;
-        map.serialize_entry("raw", &self.raw)?;
-        map.end()
+        crate::serialize::ESTreeLiteral::from(self).serialize(serializer)
     }
 }
 
 impl<'a> Serialize for BigIntLiteral<'a> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "BigIntLiteral")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("raw", &self.raw)?;
-        map.end()
+        crate::serialize::ESTreeLiteral::from(self).serialize(serializer)
     }
 }
 
 impl<'a> Serialize for RegExpLiteral<'a> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "RegExpLiteral")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("value", &self.value)?;
-        map.serialize_entry("regex", &self.regex)?;
-        map.end()
+        crate::serialize::ESTreeLiteral::from(self).serialize(serializer)
     }
 }
 
@@ -80,13 +59,6 @@ impl<'a> Serialize for RegExpPattern<'a> {
             RegExpPattern::Invalid(x) => Serialize::serialize(x, serializer),
             RegExpPattern::Pattern(x) => Serialize::serialize(x, serializer),
         }
-    }
-}
-
-impl Serialize for EmptyObject {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.end()
     }
 }
 
@@ -707,6 +679,32 @@ impl<'a> Serialize for AssignmentTargetPattern<'a> {
     }
 }
 
+impl<'a> Serialize for ArrayAssignmentTarget<'a> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "ArrayAssignmentTarget")?;
+        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry(
+            "elements",
+            &oxc_estree::ser::AppendTo { array: &self.elements, after: &self.rest },
+        )?;
+        map.end()
+    }
+}
+
+impl<'a> Serialize for ObjectAssignmentTarget<'a> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "ObjectAssignmentTarget")?;
+        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry(
+            "properties",
+            &oxc_estree::ser::AppendTo { array: &self.properties, after: &self.rest },
+        )?;
+        map.end()
+    }
+}
+
 impl<'a> Serialize for AssignmentTargetRest<'a> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
@@ -1311,6 +1309,19 @@ impl<'a> Serialize for AssignmentPattern<'a> {
     }
 }
 
+impl<'a> Serialize for ObjectPattern<'a> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "ObjectPattern")?;
+        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry(
+            "properties",
+            &oxc_estree::ser::AppendTo { array: &self.properties, after: &self.rest },
+        )?;
+        map.end()
+    }
+}
+
 impl<'a> Serialize for BindingProperty<'a> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
@@ -1320,6 +1331,19 @@ impl<'a> Serialize for BindingProperty<'a> {
         map.serialize_entry("value", &self.value)?;
         map.serialize_entry("shorthand", &self.shorthand)?;
         map.serialize_entry("computed", &self.computed)?;
+        map.end()
+    }
+}
+
+impl<'a> Serialize for ArrayPattern<'a> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "ArrayPattern")?;
+        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry(
+            "elements",
+            &oxc_estree::ser::AppendTo { array: &self.elements, after: &self.rest },
+        )?;
         map.end()
     }
 }

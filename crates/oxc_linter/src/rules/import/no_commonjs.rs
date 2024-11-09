@@ -128,7 +128,7 @@ fn is_conditional(parent_node: &AstNode, ctx: &LintContext) -> bool {
         is_conditional(parent, ctx)
     }
 }
-/// <https://github.com/import-js/eslint-plugin-import/blob/main/src/rules/no-commonjs.js>
+/// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/no-commonjs.md>
 impl Rule for NoCommonjs {
     fn from_configuration(value: serde_json::Value) -> Self {
         let obj = value.get(0);
@@ -157,7 +157,7 @@ impl Rule for NoCommonjs {
                 };
 
                 if member_expr.object().is_specific_id("module") && property_name == "exports" {
-                    let Some(parent_node) = ctx.nodes().iter_parents(node.id()).nth(3) else {
+                    let Some(parent_node) = ctx.nodes().ancestors(node.id()).nth(3) else {
                         return;
                     };
 

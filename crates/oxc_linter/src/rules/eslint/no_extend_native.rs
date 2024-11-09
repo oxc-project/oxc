@@ -142,7 +142,7 @@ fn get_define_property_call<'a>(
     ctx: &'a LintContext,
     node: &AstNode<'a>,
 ) -> Option<&'a AstNode<'a>> {
-    for parent in ctx.nodes().iter_parents(node.id()).skip(1) {
+    for parent in ctx.nodes().ancestors(node.id()).skip(1) {
         if let AstKind::CallExpression(call_expr) = parent.kind() {
             if is_define_property_call(call_expr) {
                 return Some(parent);
@@ -179,7 +179,7 @@ fn get_property_assignment<'a>(
     ctx: &'a LintContext,
     node: &AstNode<'a>,
 ) -> Option<&'a AstNode<'a>> {
-    for parent in ctx.nodes().iter_parents(node.id()).skip(1) {
+    for parent in ctx.nodes().ancestors(node.id()).skip(1) {
         match parent.kind() {
             AstKind::AssignmentExpression(_) => return Some(parent),
             AstKind::MemberExpression(MemberExpression::ComputedMemberExpression(computed)) => {

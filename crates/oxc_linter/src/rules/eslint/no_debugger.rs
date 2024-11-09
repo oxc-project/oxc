@@ -40,7 +40,7 @@ impl Rule for NoDebugger {
             ctx.diagnostic_with_fix(no_debugger_diagnostic(stmt.span), |fixer| {
                 let Some(parent) = ctx
                     .nodes()
-                    .iter_parents(node.id())
+                    .ancestors(node.id())
                     .skip(1)
                     .find(|p| !matches!(p.kind(), AstKind::ParenthesizedExpression(_)))
                 else {

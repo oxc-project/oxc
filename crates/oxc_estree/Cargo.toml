@@ -13,6 +13,11 @@ rust-version.workspace = true
 description.workspace = true
 
 [dependencies]
+serde = { workspace = true, optional = true }
 
 [lints]
 workspace = true
+
+[features]
+default = []
+serialize = ["dep:serde"]

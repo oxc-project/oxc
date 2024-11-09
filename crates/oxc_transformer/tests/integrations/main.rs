@@ -6,6 +6,7 @@ use std::path::Path;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{CodeGenerator, CodegenOptions};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
@@ -20,20 +21,27 @@ pub fn codegen(source_text: &str, source_type: SourceType) -> String {
         .code
 }
 
-pub(crate) fn test(source_text: &str, options: TransformOptions) -> String {
+pub(crate) fn test(
+    source_text: &str,
+    options: &TransformOptions,
+) -> Result<String, Vec<OxcDiagnostic>> {
     let source_type = SourceType::default();
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let mut program = ret.program;
     let (symbols, scopes) =
         SemanticBuilder::new().build(&program).semantic.into_symbol_table_and_scope_tree();
-    Transformer::new(&allocator, Path::new(""), options).build_with_symbols_and_scopes(
+    let ret = Transformer::new(&allocator, Path::new(""), options).build_with_symbols_and_scopes(
         symbols,
         scopes,
         &mut program,
     );
-    CodeGenerator::new()
+    if !ret.errors.is_empty() {
+        return Err(ret.errors);
+    }
+    let code = CodeGenerator::new()
         .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
         .build(&program)
-        .code
+        .code;
+    Ok(code)
 }

@@ -132,7 +132,7 @@ impl<'a> AstNodes<'a> {
     /// The first node produced by this iterator is the first parent of the node
     /// pointed to by `node_id`. The last node will usually be a `Program`.
     #[inline]
-    pub fn iter_parents(&self, node_id: NodeId) -> impl Iterator<Item = &AstNode<'a>> + Clone + '_ {
+    pub fn ancestors(&self, node_id: NodeId) -> impl Iterator<Item = &AstNode<'a>> + Clone + '_ {
         AstNodeParentIter { current_node_id: Some(node_id), nodes: self }
     }
 
@@ -220,7 +220,7 @@ impl<'a> AstNodes<'a> {
     /// pointed to by `node_id`. The last node will always be a [`Program`].
     ///
     /// [`Program`]: oxc_ast::ast::Program
-    pub fn ancestors(&self, node_id: NodeId) -> impl Iterator<Item = NodeId> + '_ {
+    pub fn ancestor_ids(&self, node_id: NodeId) -> impl Iterator<Item = NodeId> + '_ {
         let parent_ids = &self.parent_ids;
         std::iter::successors(Some(node_id), |&node_id| parent_ids[node_id])
     }

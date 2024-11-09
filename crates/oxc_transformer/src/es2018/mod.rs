@@ -1,4 +1,4 @@
-mod async_generator_functions;
+pub(crate) mod async_generator_functions;
 mod object_rest_spread;
 mod options;
 
@@ -59,12 +59,6 @@ impl<'a, 'ctx> Traverse<'a> for ES2018<'a, 'ctx> {
     fn enter_for_of_statement(&mut self, node: &mut ForOfStatement<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.async_generator_functions {
             self.async_generator_functions.enter_for_of_statement(node, ctx);
-        }
-    }
-
-    fn enter_function(&mut self, node: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.options.async_generator_functions {
-            self.async_generator_functions.enter_function(node, ctx);
         }
     }
 

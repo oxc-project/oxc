@@ -1,8 +1,8 @@
 commit: d20b314c
 
 semantic_babel Summary:
-AST Parsed     : 2136/2136 (100.00%)
-Positive Passed: 1778/2136 (83.24%)
+AST Parsed     : 2210/2210 (100.00%)
+Positive Passed: 1783/2210 (80.68%)
 tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body/input.js
 semantic error: Symbol scope ID mismatch for "f":
 after transform: SymbolId(0): ScopeId(4294967294)
@@ -10,6 +10,31 @@ rebuilt        : SymbolId(0): ScopeId(4294967294)
 Symbol scope ID mismatch for "g":
 after transform: SymbolId(1): ScopeId(4294967294)
 rebuilt        : SymbolId(1): ScopeId(4294967294)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basic/async-arrow-function/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(1): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basic/async-function/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(2): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basic/class-method-async-generator/input.js
+semantic error: Symbol flags mismatch for "_wrapAsyncGenerator":
+after transform: SymbolId(2): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basic/object-method-async-generator/input.js
+semantic error: Symbol flags mismatch for "_wrapAsyncGenerator":
+after transform: SymbolId(1): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/core/create-parenthesized-expressions/valid-parenthesized-await-before-exponential/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(0): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/core/opts/allowNewTargetOutsideFunction-true/input.js
 semantic error: Unexpected new.target expression
@@ -25,6 +50,346 @@ semantic error: A 'return' statement can only be used within a function body.
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/core/uncategorised/328/input.js
 semantic error: A 'return' statement can only be used within a function body.
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/regression/6864/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(6): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/uncategorised/385/input.js
+semantic error: Symbol flags mismatch for "_foo":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2016/exponentiation-operator/valid-parenthesized-await-before-exponential/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(0): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2016/simple-parameter-list/async-arrow-function-concise-body/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(4): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-arrow/parenthesized-assign-object/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(4): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-arrow/parenthesized-lhs-in-async-call-in-param/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(1): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/1/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(0): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/12/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(4): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/13/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(3): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/14/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(5): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/15/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(2): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/16/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(2): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/17/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(3): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/18/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(3): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/25/input.js
+semantic error: Symbol flags mismatch for "_foo":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/26/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(5): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/31/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(5): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/32/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(5): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/33/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(5): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/34/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(5): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/async-shorthand-method/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(0): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/await-async-function-declaration-name/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(2): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/await-following-arrow-inside-params/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(2): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/await-function-expression-name-inside-async-function/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(3): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/await-identifier-class-binding-inside-params-of-function-inside-params-of-async-function/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(4): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/await-identifier-inside-async-call-inside-parameters-of-async-arrow/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(1): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/await-identifier-inside-parameters-of-nested-function/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(4): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/await-inside-arguments-of-async-function-call/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(2): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/await-inside-async-call-inside-parameters-of-function-inside-async-function/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(4): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/await-inside-async-function-body-inside-parameters-of-function/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(2): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/await-inside-class-methods/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(0): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/await-inside-computed-class-property/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(0): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/await-inside-concise-body-of-async-arrow-inside-parameters-of-function/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(2): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/await-inside-params-of-arrow-inside-arguments-of-async-call/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(4): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/await-inside-parenthesized-assign/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(2): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/await-object-key-inside-arrow-params-inside-async-arrow-params copy/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(2): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/context-division-after-expression/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(2): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/context-regex-after-statement/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(2): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/export/input.js
+semantic error: Symbol flags mismatch for "_foo":
+after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
+Symbol flags mismatch for "_bar":
+after transform: SymbolId(4): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(4): SymbolFlags(BlockScopedVariable | Function)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/object-default-params/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(5): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/valid-await-expr-using-in/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(2): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/valid-await-expr-using-instanceof/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(2): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2018/async-generators/class-method/input.js
+semantic error: Symbol flags mismatch for "_awaitAsyncGenerator":
+after transform: SymbolId(4): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+Symbol flags mismatch for "_wrapAsyncGenerator":
+after transform: SymbolId(5): SymbolFlags(Import)
+rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2018/async-generators/class-method-2/input.js
+semantic error: Symbol flags mismatch for "_wrapAsyncGenerator":
+after transform: SymbolId(1): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2018/async-generators/for-await/input.js
+semantic error: Symbol flags mismatch for "_asyncIterator":
+after transform: SymbolId(3): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(10): SymbolFlags(Import)
+rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2018/async-generators/for-await-async-of/input.js
+semantic error: Symbol flags mismatch for "_asyncIterator":
+after transform: SymbolId(2): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(9): SymbolFlags(Import)
+rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2018/async-generators/object-method/input.js
+semantic error: Symbol flags mismatch for "_awaitAsyncGenerator":
+after transform: SymbolId(4): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+Symbol flags mismatch for "_wrapAsyncGenerator":
+after transform: SymbolId(5): SymbolFlags(Import)
+rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2020/bigint/decimal-as-property-name/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(1): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2021/for-async-of/for-statement/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(3): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-methods/async/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(1): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-methods/async-generator/input.js
+semantic error: Symbol flags mismatch for "_awaitAsyncGenerator":
+after transform: SymbolId(3): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+Symbol flags mismatch for "_wrapAsyncGenerator":
+after transform: SymbolId(4): SymbolFlags(Import)
+rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-in-async-in-private-property/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(1): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-in-private-property-in-async/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(1): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-in-private-property-in-params-of-async-arrow/input.js
+semantic error: Expected a semicolon or an implicit semicolon after a statement, but found none
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/arguments-in-key/input.js
+semantic error: 'arguments' is not allowed in class field initializer
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-identifier-in-computed-property-inside-params-of-function-inside-params-of-async-function/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(3): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-in-async-in-class-property/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(1): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-in-class-property-in-async/input.js
+semantic error: Symbol flags mismatch for "_asyncToGenerator":
+after transform: SymbolId(1): SymbolFlags(Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-in-property-in-params-of-async-arrow/input.js
+semantic error: Expected a semicolon or an implicit semicolon after a statement, but found none
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/new-target/input.js
+semantic error: Unexpected new.target expression
+Unexpected new.target expression
+Unexpected new.target expression
+Unexpected new.target expression
+Unexpected new.target expression
+Unexpected new.target expression
+Unexpected new.target expression
+Unexpected new.target expression
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-static-block/await-binding-in-function-in-static-block/input.js
+semantic error: Symbol flags mismatch for "f":
+after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | Function)
+rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
+Symbol flags mismatch for "f":
+after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
+rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
+Symbol flags mismatch for "f":
+after transform: SymbolId(4): SymbolFlags(BlockScopedVariable | Function)
+rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
+Symbol flags mismatch for "f":
+after transform: SymbolId(6): SymbolFlags(BlockScopedVariable | Function)
+rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-static-block/await-binding-in-initializer-in-static-block/input.js
+semantic error: Unexpected token
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-static-block/duplicate-function-var-name/input.js
+semantic error: Identifier `x` has already been declared
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/top-level-await-unambiguous/module/input.js
+semantic error: `await` is only allowed within async functions and at the top levels of modules
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/statement-if/migrated_0003/input.js
 semantic error: Symbol scope ID mismatch for "a":
@@ -101,8 +466,8 @@ semantic error: Expected `<` but found `EOF`
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/arrow-function-with-newline/input.ts
 semantic error: Unresolved references mismatch:
-after transform: ["t"]
-rebuilt        : []
+after transform: ["arguments", "t"]
+rebuilt        : ["arguments"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/arrow-like-in-conditional-3/input.ts
 semantic error: Unresolved references mismatch:
@@ -142,12 +507,12 @@ rebuilt        : ["async"]
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/async-generic-tokens-true/input.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["T", "a"]
-rebuilt        : ScopeId(1): ["a"]
+rebuilt        : ScopeId(2): ["a"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/async-generic-tokens-true-babel-7/input.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["T", "a"]
-rebuilt        : ScopeId(1): ["a"]
+rebuilt        : ScopeId(2): ["a"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/destructuring-with-annotation-newline/input.ts
 semantic error: Unresolved references mismatch:
@@ -482,8 +847,8 @@ rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), Sc
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-methods-async/input.ts
 semantic error: Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8)]
-rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6)]
+after transform: ScopeId(1): [ScopeId(2), ScopeId(4), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(4), ScopeId(6), ScopeId(8), ScopeId(10)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-override/input.ts
 semantic error: Identifier `show` has already been declared

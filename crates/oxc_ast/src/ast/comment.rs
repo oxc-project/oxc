@@ -43,7 +43,7 @@ pub enum CommentPosition {
 #[generate_derive(CloneIn, ContentEq, ContentHash)]
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
 pub struct Comment {
-    /// The span of the comment text (without leading/trailing delimiters).
+    /// The span of the comment text, with leading and trailing delimiters.
     pub span: Span,
 
     /// Start of token this leading comment is attached to.
@@ -101,29 +101,12 @@ impl Comment {
         self.position == CommentPosition::Trailing
     }
 
-    #[allow(missing_docs)]
-    pub fn real_span(&self) -> Span {
-        Span::new(self.real_span_start(), self.real_span_end())
-    }
-
-    #[allow(missing_docs)]
-    pub fn real_span_end(&self) -> u32 {
-        match self.kind {
-            CommentKind::Line => self.span.end,
-            // length of `*/`
-            CommentKind::Block => self.span.end + 2,
-        }
-    }
-
-    #[allow(missing_docs)]
-    pub fn real_span_start(&self) -> u32 {
-        self.span.start - 2
-    }
-
     /// Returns `true` if this comment is a JSDoc comment. Implies `is_leading`
     /// and `is_block`.
     pub fn is_jsdoc(&self, source_text: &str) -> bool {
-        self.is_leading() && self.is_block() && self.span.source_text(source_text).starts_with('*')
+        self.is_leading()
+            && self.is_block()
+            && self.content_span().source_text(source_text).starts_with('*')
     }
 
     /// Legal comments
@@ -135,9 +118,17 @@ impl Comment {
         if !self.is_leading() {
             return false;
         }
-        let source_text = self.span.source_text(source_text);
+        let source_text = self.content_span().source_text(source_text);
         source_text.starts_with('!')
             || source_text.contains("@license")
             || source_text.contains("@preserve")
+    }
+
+    /// Gets the span of the comment content.
+    pub fn content_span(&self) -> Span {
+        match self.kind {
+            CommentKind::Line => Span::new(self.span.start + 2, self.span.end),
+            CommentKind::Block => Span::new(self.span.start + 2, self.span.end - 2),
+        }
     }
 }

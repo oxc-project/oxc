@@ -69,7 +69,7 @@ impl Rule for NoUnsafeFinally {
 
         let nodes = ctx.nodes();
         let mut label_inside = false;
-        for node_id in nodes.ancestors(node.id()) {
+        for node_id in nodes.ancestor_ids(node.id()) {
             let ast_kind = nodes.kind(node_id);
 
             if sentinel_node_type.test(ast_kind) {

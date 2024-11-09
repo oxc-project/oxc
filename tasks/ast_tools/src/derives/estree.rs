@@ -1,12 +1,13 @@
 use convert_case::{Case, Casing};
 use proc_macro2::TokenStream;
 use quote::quote;
+use rustc_hash::FxHashMap;
 
 use crate::{
     markers::ESTreeStructTagMode,
     schema::{
         serialize::{enum_variant_name, get_always_flatten_structs, get_type_tag},
-        EnumDef, GetGenerics, GetIdent, Schema, StructDef, TypeDef,
+        EnumDef, FieldDef, GetGenerics, GetIdent, Schema, StructDef, TypeDef,
     },
 };
 
@@ -65,6 +66,13 @@ impl Derive for DeriveESTree {
 }
 
 fn serialize_struct(def: &StructDef, schema: &Schema) -> TokenStream {
+    if let Some(via) = &def.markers.estree.as_ref().and_then(|e| e.via.as_ref()) {
+        let via: TokenStream = via.parse().unwrap();
+        return quote! {
+            #via::from(self).serialize(serializer)
+        };
+    }
+
     let ident = def.ident();
     // If type_tag is Some, we serialize it manually. If None, either one of
     // the fields is named r#type, or the struct does not need a "type" field.
@@ -74,10 +82,27 @@ fn serialize_struct(def: &StructDef, schema: &Schema) -> TokenStream {
     if let Some(ty) = &type_tag {
         fields.push(quote! { map.serialize_entry("type", #ty)?; });
     }
+
+    let mut append_to: FxHashMap<String, &FieldDef> = FxHashMap::default();
+
+    // Scan through to find all append_to fields
     for field in &def.fields {
-        if field.markers.derive_attributes.estree.skip {
+        let Some(parent) = field.markers.derive_attributes.estree.append_to.as_ref() else {
+            continue;
+        };
+        assert!(
+            append_to.insert(parent.clone(), field).is_none(),
+            "Duplicate append_to target (on {ident})"
+        );
+    }
+
+    for field in &def.fields {
+        if field.markers.derive_attributes.estree.skip
+            || field.markers.derive_attributes.estree.append_to.is_some()
+        {
             continue;
         }
+        let ident = field.ident().unwrap();
         let name = match &field.markers.derive_attributes.estree.rename {
             Some(rename) => rename.to_string(),
             None => field.name.clone().unwrap().to_case(Case::Camel),
@@ -93,10 +118,27 @@ fn serialize_struct(def: &StructDef, schema: &Schema) -> TokenStream {
             None => false,
         };
 
+        let append_after = append_to.get(&ident.to_string());
+
         if always_flatten || field.markers.derive_attributes.estree.flatten {
+            assert!(
+                append_after.is_none(),
+                "Cannot flatten and append to the same field (on {ident})"
+            );
             fields.push(quote! {
                 self.#ident.serialize(
                     serde::__private::ser::FlatMapSerializer(&mut map)
+                )?;
+            });
+        } else if let Some(append_after) = append_after {
+            let after_ident = append_after.ident().unwrap();
+            fields.push(quote! {
+                map.serialize_entry(
+                    #name,
+                    &oxc_estree::ser::AppendTo {
+                        array: &self.#ident,
+                        after: &self.#after_ident
+                    }
                 )?;
             });
         } else {

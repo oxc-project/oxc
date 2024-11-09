@@ -60,7 +60,7 @@ impl Rule for NoIsMounted {
             return;
         }
 
-        for ancestor in ctx.nodes().ancestors(node.id()).skip(1) {
+        for ancestor in ctx.nodes().ancestor_ids(node.id()).skip(1) {
             if matches!(
                 ctx.nodes().kind(ancestor),
                 AstKind::ObjectProperty(_) | AstKind::MethodDefinition(_)

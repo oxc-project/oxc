@@ -1470,7 +1470,9 @@ name = "oxc_ast"
 version = "0.35.0"
 dependencies = [
  "bitflags 2.6.0",
+ "cow-utils",
  "num-bigint",
+ "num-traits",
  "oxc_allocator",
  "oxc_ast_macros",
  "oxc_estree",
@@ -1566,6 +1568,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_compat_data"
+version = "0.0.0"
+dependencies = [
+ "oxc_tasks_common",
+ "oxc_transformer",
+ "prettyplease",
+ "proc-macro2",
+ "quote",
+ "serde",
+ "serde_json",
+ "syn",
+]
+
+[[package]]
 name = "oxc_coverage"
 version = "0.0.0"
 dependencies = [
@@ -1621,6 +1637,9 @@ dependencies = [
 [[package]]
 name = "oxc_estree"
 version = "0.35.0"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "oxc_index"

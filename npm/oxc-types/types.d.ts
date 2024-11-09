@@ -2,29 +2,35 @@
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/typescript.rs`
 
 export interface BooleanLiteral extends Span {
-  type: 'BooleanLiteral';
+  type: 'Literal';
   value: boolean;
+  raw: string;
 }
 
 export interface NullLiteral extends Span {
-  type: 'NullLiteral';
+  type: 'Literal';
+  value: null;
+  raw: 'null';
 }
 
 export interface NumericLiteral extends Span {
-  type: 'NumericLiteral';
+  type: 'Literal';
   value: number;
   raw: string;
 }
 
 export interface BigIntLiteral extends Span {
-  type: 'BigIntLiteral';
+  type: 'Literal';
   raw: string;
+  value: null;
+  bigint: string;
 }
 
 export interface RegExpLiteral extends Span {
-  type: 'RegExpLiteral';
-  value: EmptyObject;
-  regex: RegExp;
+  type: 'Literal';
+  raw: string;
+  value: {} | null;
+  regex: { pattern: string; flags: string };
 }
 
 export interface RegExp {
@@ -33,9 +39,6 @@ export interface RegExp {
 }
 
 export type RegExpPattern = string | string | Pattern;
-
-export interface EmptyObject {
-}
 
 export interface StringLiteral extends Span {
   type: 'StringLiteral';
@@ -383,12 +386,12 @@ export type AssignmentTargetPattern = ArrayAssignmentTarget | ObjectAssignmentTa
 
 export interface ArrayAssignmentTarget extends Span {
   type: 'ArrayAssignmentTarget';
-  elements: Array<AssignmentTargetMaybeDefault | AssignmentTargetRest | null>;
+  elements: Array<AssignmentTargetRest | AssignmentTargetMaybeDefault | null>;
 }
 
 export interface ObjectAssignmentTarget extends Span {
   type: 'ObjectAssignmentTarget';
-  properties: Array<AssignmentTargetProperty | AssignmentTargetRest>;
+  properties: Array<AssignmentTargetRest | AssignmentTargetProperty>;
 }
 
 export interface AssignmentTargetRest extends Span {
@@ -725,7 +728,7 @@ export interface AssignmentPattern extends Span {
 
 export interface ObjectPattern extends Span {
   type: 'ObjectPattern';
-  properties: Array<BindingProperty | BindingRestElement>;
+  properties: Array<BindingRestElement | BindingProperty>;
 }
 
 export interface BindingProperty extends Span {
@@ -738,7 +741,7 @@ export interface BindingProperty extends Span {
 
 export interface ArrayPattern extends Span {
   type: 'ArrayPattern';
-  elements: Array<BindingPattern | BindingRestElement | null>;
+  elements: Array<BindingRestElement | BindingPattern | null>;
 }
 
 export interface BindingRestElement extends Span {

@@ -159,16 +159,14 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: Node location in source code
-    /// - value: Placeholder for printing.
     /// - regex: The parsed regular expression. See [`oxc_regular_expression`] for more
+    /// - raw: The regular expression as it appears in source code
     #[inline]
-    pub fn reg_exp_literal(
-        self,
-        span: Span,
-        value: EmptyObject,
-        regex: RegExp<'a>,
-    ) -> RegExpLiteral<'a> {
-        RegExpLiteral { span, value, regex }
+    pub fn reg_exp_literal<S>(self, span: Span, regex: RegExp<'a>, raw: S) -> RegExpLiteral<'a>
+    where
+        S: IntoIn<'a, &'a str>,
+    {
+        RegExpLiteral { span, regex, raw: raw.into_in(self.allocator) }
     }
 
     /// Build a [`RegExpLiteral`], and store it in the memory arena.
@@ -177,16 +175,19 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: Node location in source code
-    /// - value: Placeholder for printing.
     /// - regex: The parsed regular expression. See [`oxc_regular_expression`] for more
+    /// - raw: The regular expression as it appears in source code
     #[inline]
-    pub fn alloc_reg_exp_literal(
+    pub fn alloc_reg_exp_literal<S>(
         self,
         span: Span,
-        value: EmptyObject,
         regex: RegExp<'a>,
-    ) -> Box<'a, RegExpLiteral<'a>> {
-        Box::new_in(self.reg_exp_literal(span, value, regex), self.allocator)
+        raw: S,
+    ) -> Box<'a, RegExpLiteral<'a>>
+    where
+        S: IntoIn<'a, &'a str>,
+    {
+        Box::new_in(self.reg_exp_literal(span, regex, raw), self.allocator)
     }
 
     /// Build a [`StringLiteral`].
@@ -445,16 +446,19 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: Node location in source code
-    /// - value: Placeholder for printing.
     /// - regex: The parsed regular expression. See [`oxc_regular_expression`] for more
+    /// - raw: The regular expression as it appears in source code
     #[inline]
-    pub fn expression_reg_exp_literal(
+    pub fn expression_reg_exp_literal<S>(
         self,
         span: Span,
-        value: EmptyObject,
         regex: RegExp<'a>,
-    ) -> Expression<'a> {
-        Expression::RegExpLiteral(self.alloc(self.reg_exp_literal(span, value, regex)))
+        raw: S,
+    ) -> Expression<'a>
+    where
+        S: IntoIn<'a, &'a str>,
+    {
+        Expression::RegExpLiteral(self.alloc(self.reg_exp_literal(span, regex, raw)))
     }
 
     /// Build an [`Expression::StringLiteral`]
@@ -7959,16 +7963,19 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: Node location in source code
-    /// - value: Placeholder for printing.
     /// - regex: The parsed regular expression. See [`oxc_regular_expression`] for more
+    /// - raw: The regular expression as it appears in source code
     #[inline]
-    pub fn ts_literal_reg_exp_literal(
+    pub fn ts_literal_reg_exp_literal<S>(
         self,
         span: Span,
-        value: EmptyObject,
         regex: RegExp<'a>,
-    ) -> TSLiteral<'a> {
-        TSLiteral::RegExpLiteral(self.alloc(self.reg_exp_literal(span, value, regex)))
+        raw: S,
+    ) -> TSLiteral<'a>
+    where
+        S: IntoIn<'a, &'a str>,
+    {
+        TSLiteral::RegExpLiteral(self.alloc(self.reg_exp_literal(span, regex, raw)))
     }
 
     /// Build a [`TSLiteral::StringLiteral`]

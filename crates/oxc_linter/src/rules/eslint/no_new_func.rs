@@ -63,7 +63,7 @@ impl Rule for NoNewFunc {
             }
             AstKind::MemberExpression(mem_expr) => {
                 let parent: Option<&AstNode<'a>> =
-                    ctx.nodes().iter_parents(node.id()).skip(1).find(|node| {
+                    ctx.nodes().ancestors(node.id()).skip(1).find(|node| {
                         !matches!(
                             node.kind(),
                             AstKind::ChainExpression(_) | AstKind::ParenthesizedExpression(_)

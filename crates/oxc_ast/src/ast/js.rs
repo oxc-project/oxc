@@ -805,12 +805,10 @@ pub use match_assignment_target_pattern;
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(custom_serialize)]
 pub struct ArrayAssignmentTarget<'a> {
     pub span: Span,
-    #[estree(type = "Array<AssignmentTargetMaybeDefault | AssignmentTargetRest | null>")]
     pub elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
-    #[estree(skip)]
+    #[estree(append_to = "elements")]
     pub rest: Option<AssignmentTargetRest<'a>>,
     #[estree(skip)]
     pub trailing_comma: Option<Span>,
@@ -822,12 +820,10 @@ pub struct ArrayAssignmentTarget<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(custom_serialize)]
 pub struct ObjectAssignmentTarget<'a> {
     pub span: Span,
-    #[estree(type = "Array<AssignmentTargetProperty | AssignmentTargetRest>")]
     pub properties: Vec<'a, AssignmentTargetProperty<'a>>,
-    #[estree(skip)]
+    #[estree(append_to = "properties")]
     pub rest: Option<AssignmentTargetRest<'a>>,
 }
 
@@ -1482,12 +1478,10 @@ pub struct AssignmentPattern<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(custom_serialize)]
 pub struct ObjectPattern<'a> {
     pub span: Span,
-    #[estree(type = "Array<BindingProperty | BindingRestElement>")]
     pub properties: Vec<'a, BindingProperty<'a>>,
-    #[estree(skip)]
+    #[estree(append_to = "properties")]
     pub rest: Option<Box<'a, BindingRestElement<'a>>>,
 }
 
@@ -1506,12 +1500,10 @@ pub struct BindingProperty<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(custom_serialize)]
 pub struct ArrayPattern<'a> {
     pub span: Span,
-    #[estree(type = "Array<BindingPattern | BindingRestElement | null>")]
     pub elements: Vec<'a, Option<BindingPattern<'a>>>,
-    #[estree(skip)]
+    #[estree(append_to = "elements")]
     pub rest: Option<Box<'a, BindingRestElement<'a>>>,
 }
 

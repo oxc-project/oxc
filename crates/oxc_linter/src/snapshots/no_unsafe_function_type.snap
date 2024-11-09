@@ -1,0 +1,41 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ typescript-eslint(no-unsafe-function-type): The `Function` type accepts any function-like value.
+   ╭─[no_unsafe_function_type.tsx:1:12]
+ 1 │ let value: Function;
+   ·            ────────
+   ╰────
+  help: Prefer explicitly defining any function parameters and return type.
+
+  ⚠ typescript-eslint(no-unsafe-function-type): The `Function` type accepts any function-like value.
+   ╭─[no_unsafe_function_type.tsx:1:12]
+ 1 │ let value: Function[];
+   ·            ────────
+   ╰────
+  help: Prefer explicitly defining any function parameters and return type.
+
+  ⚠ typescript-eslint(no-unsafe-function-type): The `Function` type accepts any function-like value.
+   ╭─[no_unsafe_function_type.tsx:1:12]
+ 1 │ let value: Function | number;
+   ·            ────────
+   ╰────
+  help: Prefer explicitly defining any function parameters and return type.
+
+  ⚠ typescript-eslint(no-unsafe-function-type): The `Function` type accepts any function-like value.
+   ╭─[no_unsafe_function_type.tsx:2:35]
+ 1 │ 
+ 2 │                     class Weird implements Function {
+   ·                                            ────────
+ 3 │                       // ...
+   ╰────
+  help: Prefer explicitly defining any function parameters and return type.
+
+  ⚠ typescript-eslint(no-unsafe-function-type): The `Function` type accepts any function-like value.
+   ╭─[no_unsafe_function_type.tsx:2:36]
+ 1 │ 
+ 2 │                     interface Weird extends Function {
+   ·                                             ────────
+ 3 │                       // ...
+   ╰────
+  help: Prefer explicitly defining any function parameters and return type.

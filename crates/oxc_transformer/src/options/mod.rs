@@ -1,8 +1,11 @@
 pub mod babel;
 
 mod browserslist_query;
+mod engine;
 mod engine_targets;
 mod env;
+mod es_features;
+mod es_target;
 
 use std::path::PathBuf;
 
@@ -26,9 +29,8 @@ use crate::{
 };
 
 pub use self::{
-    browserslist_query::BrowserslistQuery,
-    engine_targets::EngineTargets,
-    env::{ESTarget, EnvOptions},
+    browserslist_query::BrowserslistQuery, engine::Engine, engine_targets::EngineTargets,
+    env::EnvOptions, es_features::ESFeature, es_target::ESTarget,
 };
 
 use self::babel::BabelOptions;
@@ -84,11 +86,44 @@ impl TransformOptions {
             },
         }
     }
+
+    /// Initialize from a comma separated list of `target`s and `environmens`s.
+    ///
+    /// e.g. `es2022,chrome58,edge16`.
+    ///
+    /// # Errors
+    ///
+    /// * Same targets specified multiple times.
+    /// * No matching target.
+    /// * Invalid version.
+    pub fn from_target(s: &str) -> Result<Self, Error> {
+        EnvOptions::from_target(s).map(|env| Self { env, ..Self::default() })
+    }
+
+    /// Initialize from a list of `target`s and `environmens`s.
+    ///
+    /// e.g. `["es2020", "chrome58", "edge16", "firefox57", "node12", "safari11"]`.
+    ///
+    /// `target`: `es5`, `es2015` ... `es2024`, `esnext`.
+    /// `environment`: `chrome`, `deno`, `edge`, `firefox`, `hermes`, `ie`, `ios`, `node`, `opera`, `rhino`, `safari`
+    ///
+    /// <https://esbuild.github.io/api/#target>
+    ///
+    /// # Errors
+    ///
+    /// * Same targets specified multiple times.
+    /// * No matching target.
+    /// * Invalid version.
+    pub fn from_target_list<S: AsRef<str>>(list: &[S]) -> Result<Self, Error> {
+        EnvOptions::from_target_list(list).map(|env| Self { env, ..Self::default() })
+    }
 }
 
 impl From<ESTarget> for TransformOptions {
     fn from(target: ESTarget) -> Self {
-        Self { env: EnvOptions::from(target), ..Self::default() }
+        let mut engine_targets = EngineTargets::default();
+        engine_targets.insert(Engine::Es, target.version());
+        Self { env: EnvOptions::from(engine_targets), ..Self::default() }
     }
 }
 
@@ -126,7 +161,7 @@ impl TryFrom<&BabelOptions> for TransformOptions {
             jsx_options
         };
 
-        let env = options.presets.env.clone().unwrap_or_default();
+        let env = options.presets.env.unwrap_or_default();
 
         let regexp = RegExpOptions {
             sticky_flag: env.regexp.sticky_flag || options.plugins.sticky_flag,
@@ -172,6 +207,7 @@ impl TryFrom<&BabelOptions> for TransformOptions {
         let es2020 = ES2020Options {
             nullish_coalescing_operator: options.plugins.nullish_coalescing_operator
                 || env.es2020.nullish_coalescing_operator,
+            big_int: env.es2020.big_int,
         };
 
         let es2021 = ES2021Options {

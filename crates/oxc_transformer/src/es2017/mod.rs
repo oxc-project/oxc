@@ -1,4 +1,4 @@
-mod async_to_generator;
+pub(crate) mod async_to_generator;
 mod options;
 
 use oxc_ast::ast::{Expression, Function, Statement};

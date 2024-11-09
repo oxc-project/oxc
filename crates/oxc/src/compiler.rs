@@ -65,8 +65,8 @@ pub trait CompilerInterface {
         None
     }
 
-    fn transform_options(&self) -> Option<TransformOptions> {
-        Some(TransformOptions::default())
+    fn transform_options(&self) -> Option<&TransformOptions> {
+        None
     }
 
     fn define_options(&self) -> Option<ReplaceGlobalDefinesConfig> {
@@ -267,7 +267,7 @@ pub trait CompilerInterface {
     #[allow(clippy::too_many_arguments)]
     fn transform<'a>(
         &self,
-        options: TransformOptions,
+        options: &TransformOptions,
         allocator: &'a Allocator,
         program: &mut Program<'a>,
         source_path: &Path,

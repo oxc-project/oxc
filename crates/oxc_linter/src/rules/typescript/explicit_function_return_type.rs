@@ -618,7 +618,7 @@ fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bo
         return false;
     }
 
-    for ancestor in ctx.nodes().ancestors(node.id()).skip(1) {
+    for ancestor in ctx.nodes().ancestor_ids(node.id()).skip(1) {
         match ctx.nodes().kind(ancestor) {
             AstKind::ArrowFunctionExpression(func) => {
                 if func.return_type.is_some() {

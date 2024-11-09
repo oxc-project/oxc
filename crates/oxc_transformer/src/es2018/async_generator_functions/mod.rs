@@ -66,9 +66,7 @@
 
 mod for_await;
 
-use oxc_allocator::GetAddress;
 use oxc_ast::ast::*;
-use oxc_data_structures::stack::Stack;
 use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
@@ -76,17 +74,12 @@ use crate::{common::helper_loader::Helper, context::TransformCtx, es2017::AsyncG
 
 pub struct AsyncGeneratorFunctions<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,
-    stack: Stack<bool>,
     executor: AsyncGeneratorExecutor<'a, 'ctx>,
 }
 
 impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
     pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self {
-            ctx,
-            executor: AsyncGeneratorExecutor::new(Helper::WrapAsyncGenerator, ctx),
-            stack: Stack::new(),
-        }
+        Self { ctx, executor: AsyncGeneratorExecutor::new(Helper::WrapAsyncGenerator, ctx) }
     }
 }
 
@@ -115,23 +108,7 @@ impl<'a, 'ctx> Traverse<'a> for AsyncGeneratorFunctions<'a, 'ctx> {
     }
 
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Statement::ForOfStatement(for_of) = stmt {
-            if !for_of.r#await {
-                return;
-            }
-
-            // We need to replace the current statement with new statements,
-            // but we don't have a such method to do it, so we leverage the statement injector.
-            //
-            // Now, we use below steps to workaround it:
-            // 1. Use the last statement as the new statement.
-            // 2. insert the rest of the statements before the current statement.
-            // TODO: Once we have a method to replace the current statement, we can simplify this logic.
-            let mut statements = self.transform_for_of_statement(for_of, ctx);
-            let last_statement = statements.pop().unwrap();
-            *stmt = last_statement;
-            self.ctx.statement_injector.insert_many_before(&stmt.address(), statements);
-        }
+        self.transform_statement(stmt, ctx);
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -164,31 +141,25 @@ impl<'a, 'ctx> Traverse<'a> for AsyncGeneratorFunctions<'a, 'ctx> {
         }
     }
 
-    fn enter_function(&mut self, func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.stack.push(func.r#async && func.generator);
-    }
-
     fn exit_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
         if func.r#async
             && func.generator
             && !func.is_typescript_syntax()
-            && matches!(ctx.parent(), Ancestor::MethodDefinitionValue(_))
+            && AsyncGeneratorExecutor::is_class_method_like_ancestor(ctx.parent())
         {
             self.executor.transform_function_for_method_definition(func, ctx);
         }
-        self.stack.pop();
     }
 }
 
 impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
     /// Transform `yield * argument` expression to `yield asyncGeneratorDelegate(asyncIterator(argument))`.
-    #[allow(clippy::unused_self)]
     fn transform_yield_expression(
         &self,
         expr: &mut YieldExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        if !expr.delegate {
+        if !expr.delegate || !Self::yield_is_inside_async_generator_function(ctx) {
             return None;
         }
 
@@ -202,51 +173,53 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
         })
     }
 
+    /// Check whether `yield` is inside an async generator function.
+    fn yield_is_inside_async_generator_function(ctx: &TraverseCtx<'a>) -> bool {
+        for ancestor in ctx.ancestors() {
+            // Note: `yield` cannot appear within function params.
+            // Also cannot appear in arrow functions because no such thing as a generator arrow function.
+            if let Ancestor::FunctionBody(func) = ancestor {
+                return *func.r#async();
+            }
+        }
+        // `yield` can only appear in a function
+        unreachable!();
+    }
+
     /// Transforms `await expr` expression to `yield awaitAsyncGenerator(expr)`.
     /// Ignores top-level await expression.
-    #[allow(clippy::unused_self)]
     fn transform_await_expression(
         &self,
         expr: &mut AwaitExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        // We don't need to handle top-level await.
-        if ctx.parent().is_program() ||
-        // Check the function is async generator function
-        !self.stack.last().copied().unwrap_or(false)
-        {
+        if !Self::async_is_inside_async_generator_function(ctx) {
             return None;
         }
 
-        let mut is_function = false;
-        let mut function_in_params = false;
+        let mut argument = ctx.ast.move_expression(&mut expr.argument);
+        let arguments = ctx.ast.vec1(Argument::from(argument));
+        argument = self.ctx.helper_call_expr(Helper::AwaitAsyncGenerator, arguments, ctx);
+
+        Some(ctx.ast.expression_yield(SPAN, false, Some(argument)))
+    }
+
+    /// Check whether `await` is inside an async generator function.
+    fn async_is_inside_async_generator_function(ctx: &TraverseCtx<'a>) -> bool {
         for ancestor in ctx.ancestors() {
             match ancestor {
-                Ancestor::FunctionBody(_) if !is_function => {
-                    is_function = true;
+                // Note: `await` cannot appear within function params
+                Ancestor::FunctionBody(func) => {
+                    return *func.generator();
                 }
-                // x = async function() { await 1 }
-                Ancestor::AssignmentPatternRight(_) | Ancestor::BindingPatternKind(_) => {
-                    continue;
+                Ancestor::ArrowFunctionExpressionBody(_) => {
+                    // Arrow functions can't be generator functions
+                    return false;
                 }
-                Ancestor::FormalParameterPattern(_) => {
-                    function_in_params = true;
-                    break;
-                }
-                _ => {
-                    if is_function {
-                        break;
-                    }
-                }
+                _ => {}
             }
         }
-        let mut argument = ctx.ast.move_expression(&mut expr.argument);
-        // When a async function is used as parameter, we don't need to wrap its await expression with awaitAsyncGenerator helper.
-        // `function example(a = async function b() { await 1 }) {}`
-        if !function_in_params {
-            let arguments = ctx.ast.vec1(Argument::from(argument));
-            argument = self.ctx.helper_call_expr(Helper::AwaitAsyncGenerator, arguments, ctx);
-        }
-        Some(ctx.ast.expression_yield(SPAN, false, Some(argument)))
+        // Top level await
+        false
     }
 }

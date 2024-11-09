@@ -31,11 +31,11 @@ const _: () = {
     assert!(offset_of!(BigIntLiteral, raw) == 8usize);
     assert!(offset_of!(BigIntLiteral, base) == 24usize);
 
-    assert!(size_of::<RegExpLiteral>() == 40usize);
+    assert!(size_of::<RegExpLiteral>() == 56usize);
     assert!(align_of::<RegExpLiteral>() == 8usize);
     assert!(offset_of!(RegExpLiteral, span) == 0usize);
-    assert!(offset_of!(RegExpLiteral, value) == 8usize);
     assert!(offset_of!(RegExpLiteral, regex) == 8usize);
+    assert!(offset_of!(RegExpLiteral, raw) == 40usize);
 
     assert!(size_of::<RegExp>() == 32usize);
     assert!(align_of::<RegExp>() == 8usize);
@@ -44,9 +44,6 @@ const _: () = {
 
     assert!(size_of::<RegExpPattern>() == 24usize);
     assert!(align_of::<RegExpPattern>() == 8usize);
-
-    assert!(size_of::<EmptyObject>() == 0usize);
-    assert!(align_of::<EmptyObject>() == 1usize);
 
     assert!(size_of::<StringLiteral>() == 24usize);
     assert!(align_of::<StringLiteral>() == 8usize);
@@ -1591,11 +1588,11 @@ const _: () = {
     assert!(offset_of!(BigIntLiteral, raw) == 8usize);
     assert!(offset_of!(BigIntLiteral, base) == 16usize);
 
-    assert!(size_of::<RegExpLiteral>() == 24usize);
+    assert!(size_of::<RegExpLiteral>() == 32usize);
     assert!(align_of::<RegExpLiteral>() == 4usize);
     assert!(offset_of!(RegExpLiteral, span) == 0usize);
-    assert!(offset_of!(RegExpLiteral, value) == 8usize);
     assert!(offset_of!(RegExpLiteral, regex) == 8usize);
+    assert!(offset_of!(RegExpLiteral, raw) == 24usize);
 
     assert!(size_of::<RegExp>() == 16usize);
     assert!(align_of::<RegExp>() == 4usize);
@@ -1604,9 +1601,6 @@ const _: () = {
 
     assert!(size_of::<RegExpPattern>() == 12usize);
     assert!(align_of::<RegExpPattern>() == 4usize);
-
-    assert!(size_of::<EmptyObject>() == 0usize);
-    assert!(align_of::<EmptyObject>() == 1usize);
 
     assert!(size_of::<StringLiteral>() == 16usize);
     assert!(align_of::<StringLiteral>() == 4usize);

@@ -32,8 +32,8 @@ impl<'a> ContentHash for BigIntLiteral<'a> {
 
 impl<'a> ContentHash for RegExpLiteral<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
-        ContentHash::content_hash(&self.value, state);
         ContentHash::content_hash(&self.regex, state);
+        ContentHash::content_hash(&self.raw, state);
     }
 }
 
@@ -53,10 +53,6 @@ impl<'a> ContentHash for RegExpPattern<'a> {
             Self::Pattern(it) => ContentHash::content_hash(it, state),
         }
     }
-}
-
-impl ContentHash for EmptyObject {
-    fn content_hash<H: Hasher>(&self, _: &mut H) {}
 }
 
 impl<'a> ContentHash for StringLiteral<'a> {
