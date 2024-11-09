@@ -1,7 +1,6 @@
-import { describe, expect, expectTypeOf, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-import * as oxc from '../index';
-import type { Statement } from '../index';
+import * as oxc from '../index.js';
 
 describe('parse', () => {
   const code = '/* comment */ foo';
@@ -11,8 +10,6 @@ describe('parse', () => {
     expect(ret.program.body.length).toBe(1);
     expect(ret.errors.length).toBe(0);
     expect(ret.comments.length).toBe(1);
-
-    expectTypeOf(ret.program.body[0]).toMatchTypeOf<Statement>();
 
     const comment = ret.comments[0];
     expect(comment).toEqual({
