@@ -2,7 +2,7 @@ import { assert, describe, it } from 'vitest';
 
 import oxc from './index';
 
-describe('transform', () => {
+describe('simple', () => {
   const code = 'export class A<T> {}';
 
   it('matches output', () => {
@@ -28,6 +28,25 @@ describe('transform', () => {
   it('uses the `declaration option`', () => {
     const ret = oxc.transform('test.ts', code, { typescript: { declaration: true } });
     assert.equal(ret.declaration, 'export declare class A<T> {}\n');
+  });
+});
+
+describe('transform', () => {
+  it('should not transform by default', () => {
+    const cases = [
+      '() => {};',
+      'a ** b;',
+      'async function foo() {}',
+      '({ ...x });',
+      'try {} catch {}',
+      'a ?? b;',
+      'a ||= b;',
+      'class foo {\n\tstatic {}\n}',
+    ];
+    for (const code of cases) {
+      const ret = oxc.transform('test.ts', code);
+      assert.equal(ret.code.trim(), code);
+    }
   });
 });
 
