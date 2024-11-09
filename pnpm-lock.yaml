@@ -60,7 +60,11 @@ importers:
 
   napi/minify: {}
 
-  napi/parser: {}
+  napi/parser:
+    dependencies:
+      '@oxc-project/types':
+        specifier: workspace:^
+        version: link:../../npm/oxc-types
 
   napi/transform: {}
 

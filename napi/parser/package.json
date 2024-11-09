@@ -5,9 +5,6 @@
     "build": "napi build --platform --release --js bindings.js",
     "test": "vitest --typecheck run ./test"
   },
-  "engines": {
-    "node": ">=14.*"
-  },
   "napi": {
     "binaryName": "parser",
     "targets": [
@@ -21,5 +18,8 @@
       "aarch64-apple-darwin"
     ],
     "dtsHeaderFile": "header.js"
+  },
+  "dependencies": {
+    "@oxc-project/types": "workspace:^"
   }
 }
