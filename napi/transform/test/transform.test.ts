@@ -1,6 +1,6 @@
 import { assert, describe, it } from 'vitest';
 
-import oxc from './index.js';
+import oxc from './index';
 
 describe('transform', () => {
   const code = 'export class A<T> {}';
