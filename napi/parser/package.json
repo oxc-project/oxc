@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "build": "napi build --platform --release --js bindings.js",
-    "test": "vitest run ./test"
+    "test": "vitest run --typecheck ./test"
   },
   "engines": {
     "node": ">=14.*"
@@ -19,6 +19,7 @@
       "aarch64-unknown-linux-musl",
       "x86_64-apple-darwin",
       "aarch64-apple-darwin"
-    ]
+    ],
+    "dtsHeader": "export * from \"@oxc-project/types\";\n"
   }
 }

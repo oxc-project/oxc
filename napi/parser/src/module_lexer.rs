@@ -7,7 +7,7 @@ use oxc_module_lexer::ImportType;
 use crate::{parse, ParserOptions};
 
 #[napi(object)]
-pub struct ImportSpecifier {
+pub struct ModuleLexerImportSpecifier {
     /// Module name
     ///
     /// To handle escape sequences in specifier strings, the .n field of imported specifiers will be provided where possible.
@@ -40,7 +40,7 @@ pub struct ImportSpecifier {
 }
 
 #[napi(object)]
-pub struct ExportSpecifier {
+pub struct ModuleLexerExportSpecifier {
     /// Exported name
     pub n: String,
 
@@ -60,7 +60,7 @@ pub struct ExportSpecifier {
     pub le: Option<u32>,
 }
 
-impl<'a> From<oxc_module_lexer::ImportSpecifier<'a>> for ImportSpecifier {
+impl<'a> From<oxc_module_lexer::ImportSpecifier<'a>> for ModuleLexerImportSpecifier {
     #[allow(clippy::cast_lossless)]
     fn from(i: oxc_module_lexer::ImportSpecifier) -> Self {
         Self {
@@ -80,7 +80,7 @@ impl<'a> From<oxc_module_lexer::ImportSpecifier<'a>> for ImportSpecifier {
     }
 }
 
-impl<'a> From<oxc_module_lexer::ExportSpecifier<'a>> for ExportSpecifier {
+impl<'a> From<oxc_module_lexer::ExportSpecifier<'a>> for ModuleLexerExportSpecifier {
     fn from(e: oxc_module_lexer::ExportSpecifier) -> Self {
         Self {
             n: e.n.to_string(),
@@ -95,9 +95,9 @@ impl<'a> From<oxc_module_lexer::ExportSpecifier<'a>> for ExportSpecifier {
 
 #[napi(object)]
 pub struct ModuleLexer {
-    pub imports: Vec<ImportSpecifier>,
+    pub imports: Vec<ModuleLexerImportSpecifier>,
 
-    pub exports: Vec<ExportSpecifier>,
+    pub exports: Vec<ModuleLexerExportSpecifier>,
 
     /// ESM syntax detection
     ///
@@ -113,8 +113,8 @@ fn module_lexer(source_text: &str, options: &ParserOptions) -> ModuleLexer {
     let allocator = Allocator::default();
     let ret = parse(&allocator, source_text, options);
     let module_lexer = oxc_module_lexer::ModuleLexer::new().build(&ret.program);
-    let imports = module_lexer.imports.into_iter().map(ImportSpecifier::from).collect();
-    let exports = module_lexer.exports.into_iter().map(ExportSpecifier::from).collect();
+    let imports = module_lexer.imports.into_iter().map(ModuleLexerImportSpecifier::from).collect();
+    let exports = module_lexer.exports.into_iter().map(ModuleLexerExportSpecifier::from).collect();
     ModuleLexer {
         imports,
         exports,
