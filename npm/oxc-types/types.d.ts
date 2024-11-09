@@ -1041,53 +1041,7 @@ export interface TSEnumMember extends Span {
   initializer: Expression | null;
 }
 
-export type TSEnumMemberName =
-  | IdentifierName
-  | StringLiteral
-  | TemplateLiteral
-  | NumericLiteral
-  | BooleanLiteral
-  | NullLiteral
-  | NumericLiteral
-  | BigIntLiteral
-  | RegExpLiteral
-  | StringLiteral
-  | TemplateLiteral
-  | IdentifierReference
-  | MetaProperty
-  | Super
-  | ArrayExpression
-  | ArrowFunctionExpression
-  | AssignmentExpression
-  | AwaitExpression
-  | BinaryExpression
-  | CallExpression
-  | ChainExpression
-  | Class
-  | ConditionalExpression
-  | Function
-  | ImportExpression
-  | LogicalExpression
-  | NewExpression
-  | ObjectExpression
-  | ParenthesizedExpression
-  | SequenceExpression
-  | TaggedTemplateExpression
-  | ThisExpression
-  | UnaryExpression
-  | UpdateExpression
-  | YieldExpression
-  | PrivateInExpression
-  | JSXElement
-  | JSXFragment
-  | TSAsExpression
-  | TSSatisfiesExpression
-  | TSTypeAssertion
-  | TSNonNullExpression
-  | TSInstantiationExpression
-  | ComputedMemberExpression
-  | StaticMemberExpression
-  | PrivateFieldExpression;
+export type TSEnumMemberName = IdentifierName | StringLiteral;
 
 export interface TSTypeAnnotation extends Span {
   type: 'TSTypeAnnotation';

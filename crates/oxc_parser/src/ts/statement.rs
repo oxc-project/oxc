@@ -52,62 +52,45 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_enum_member(&mut self) -> Result<TSEnumMember<'a>> {
         let span = self.start_span();
         let id = self.parse_ts_enum_member_name()?;
-
         let initializer = if self.eat(Kind::Eq) {
             Some(self.parse_assignment_expression_or_higher()?)
         } else {
             None
         };
-
-        let span = self.end_span(span);
-        if initializer.is_some() && matches!(id, TSEnumMemberName::StaticTemplateLiteral(_)) {
-            self.error(diagnostics::invalid_assignment(span));
-        }
-
-        Ok(self.ast.ts_enum_member(span, id, initializer))
+        Ok(self.ast.ts_enum_member(self.end_span(span), id, initializer))
     }
 
     fn parse_ts_enum_member_name(&mut self) -> Result<TSEnumMemberName<'a>> {
         match self.cur_kind() {
-            Kind::LBrack => {
-                let node = self.parse_computed_property_name()?;
-                self.check_invalid_ts_enum_computed_property(&node);
-                Ok(TSEnumMemberName::from(node))
-            }
             Kind::Str => {
                 let literal = self.parse_literal_string()?;
                 Ok(TSEnumMemberName::StaticStringLiteral(self.alloc(literal)))
             }
-            Kind::NoSubstitutionTemplate | Kind::TemplateHead => {
-                let literal = self.parse_template_literal(false)?;
-                if !literal.expressions.is_empty() {
-                    self.error(diagnostics::computed_property_names_not_allowed_in_enums(
-                        literal.span(),
-                    ));
+            Kind::LBrack => match self.parse_computed_property_name()? {
+                Expression::StringLiteral(literal) => {
+                    Ok(TSEnumMemberName::StaticStringLiteral(literal))
                 }
-                Ok(TSEnumMemberName::StaticTemplateLiteral(self.alloc(literal)))
-            }
+                Expression::TemplateLiteral(template) if template.is_no_substitution_template() => {
+                    Ok(self.ast.ts_enum_member_name_string_literal(
+                        template.span,
+                        template.quasi().unwrap(),
+                    ))
+                }
+                Expression::NumericLiteral(literal) => {
+                    Err(diagnostics::enum_member_cannot_have_numeric_name(literal.span()))
+                }
+                expr => Err(diagnostics::computed_property_names_not_allowed_in_enums(expr.span())),
+            },
+            Kind::NoSubstitutionTemplate | Kind::TemplateHead => Err(
+                diagnostics::computed_property_names_not_allowed_in_enums(self.cur_token().span()),
+            ),
             kind if kind.is_number() => {
-                let literal = self.parse_literal_number()?;
-                self.error(diagnostics::enum_member_cannot_have_numeric_name(literal.span()));
-                Ok(TSEnumMemberName::StaticNumericLiteral(self.alloc(literal)))
+                Err(diagnostics::enum_member_cannot_have_numeric_name(self.cur_token().span()))
             }
             _ => {
                 let ident_name = self.parse_identifier_name()?;
                 Ok(TSEnumMemberName::StaticIdentifier(self.alloc(ident_name)))
             }
-        }
-    }
-
-    fn check_invalid_ts_enum_computed_property(&mut self, property: &Expression<'a>) {
-        match property {
-            Expression::StringLiteral(_) => {}
-            Expression::TemplateLiteral(template) if template.expressions.is_empty() => {}
-            Expression::NumericLiteral(_) => {
-                self.error(diagnostics::enum_member_cannot_have_numeric_name(property.span()));
-            }
-            _ => self
-                .error(diagnostics::computed_property_names_not_allowed_in_enums(property.span())),
         }
     }
 

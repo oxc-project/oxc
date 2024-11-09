@@ -102,15 +102,27 @@ after transform: [ReferenceId(36), ReferenceId(39), ReferenceId(82), ReferenceId
 rebuilt        : [ReferenceId(281)]
 
 tasks/coverage/misc/pass/oxc-4449.ts
-semantic error: Scope flags mismatch:
+semantic error: Bindings mismatch:
+after transform: ScopeId(1): ["A", "baz"]
+rebuilt        : ScopeId(1): ["A"]
+Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+Bindings mismatch:
+after transform: ScopeId(2): ["B", "baz"]
+rebuilt        : ScopeId(2): ["B"]
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+Bindings mismatch:
+after transform: ScopeId(3): ["C", "baz"]
+rebuilt        : ScopeId(3): ["C"]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
+Bindings mismatch:
+after transform: ScopeId(4): ["D", "baz"]
+rebuilt        : ScopeId(4): ["D"]
 Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(4): ScopeFlags(StrictMode | Function)
@@ -142,25 +154,25 @@ Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol flags mismatch for "B":
-after transform: SymbolId(1): SymbolFlags(RegularEnum)
+after transform: SymbolId(2): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
 Symbol flags mismatch for "C":
-after transform: SymbolId(2): SymbolFlags(RegularEnum)
+after transform: SymbolId(4): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
 Symbol flags mismatch for "D":
-after transform: SymbolId(3): SymbolFlags(RegularEnum)
+after transform: SymbolId(6): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
 Symbol flags mismatch for "E":
-after transform: SymbolId(4): SymbolFlags(RegularEnum)
+after transform: SymbolId(8): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(8): SymbolFlags(FunctionScopedVariable)
 Symbol flags mismatch for "F":
-after transform: SymbolId(6): SymbolFlags(RegularEnum)
+after transform: SymbolId(10): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(10): SymbolFlags(FunctionScopedVariable)
 Symbol flags mismatch for "G":
-after transform: SymbolId(8): SymbolFlags(RegularEnum)
+after transform: SymbolId(12): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(12): SymbolFlags(FunctionScopedVariable)
 Symbol flags mismatch for "H":
-after transform: SymbolId(10): SymbolFlags(RegularEnum)
+after transform: SymbolId(14): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(14): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/misc/pass/oxc-5177.ts

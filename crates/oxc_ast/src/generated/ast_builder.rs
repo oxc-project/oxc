@@ -7783,53 +7783,6 @@ impl<'a> AstBuilder<'a> {
         TSEnumMemberName::StaticStringLiteral(self.alloc(self.string_literal(span, value)))
     }
 
-    /// Build a [`TSEnumMemberName::StaticTemplateLiteral`]
-    ///
-    /// This node contains a [`TemplateLiteral`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// - span: The [`Span`] covering this node
-    /// - quasis
-    /// - expressions
-    #[inline]
-    pub fn ts_enum_member_name_template_literal(
-        self,
-        span: Span,
-        quasis: Vec<'a, TemplateElement<'a>>,
-        expressions: Vec<'a, Expression<'a>>,
-    ) -> TSEnumMemberName<'a> {
-        TSEnumMemberName::StaticTemplateLiteral(self.alloc(self.template_literal(
-            span,
-            quasis,
-            expressions,
-        )))
-    }
-
-    /// Build a [`TSEnumMemberName::StaticNumericLiteral`]
-    ///
-    /// This node contains a [`NumericLiteral`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// - span: Node location in source code
-    /// - value: The value of the number, converted into base 10
-    /// - raw: The number as it appears in source code
-    /// - base: The base representation used by the literal in source code
-    #[inline]
-    pub fn ts_enum_member_name_numeric_literal<S>(
-        self,
-        span: Span,
-        value: f64,
-        raw: S,
-        base: NumberBase,
-    ) -> TSEnumMemberName<'a>
-    where
-        S: IntoIn<'a, &'a str>,
-    {
-        TSEnumMemberName::StaticNumericLiteral(
-            self.alloc(self.numeric_literal(span, value, raw, base)),
-        )
-    }
-
     /// Build a [`TSTypeAnnotation`].
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_type_annotation`] instead.

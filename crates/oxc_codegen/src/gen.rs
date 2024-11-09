@@ -3592,15 +3592,6 @@ impl<'a> Gen for TSEnumMember<'a> {
         match &self.id {
             TSEnumMemberName::StaticIdentifier(decl) => decl.print(p, ctx),
             TSEnumMemberName::StaticStringLiteral(decl) => decl.print(p, ctx),
-            TSEnumMemberName::StaticTemplateLiteral(decl) => decl.print(p, ctx),
-            TSEnumMemberName::StaticNumericLiteral(decl) => {
-                decl.print_expr(p, Precedence::Lowest, ctx);
-            }
-            decl @ match_expression!(TSEnumMemberName) => {
-                p.print_str("[");
-                decl.to_expression().print_expr(p, Precedence::Lowest, ctx);
-                p.print_str("]");
-            }
         }
         if let Some(init) = &self.initializer {
             p.print_soft_space();

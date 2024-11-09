@@ -194,17 +194,7 @@ impl<'a> TypeScriptEnum<'a> {
         for member in members.iter_mut() {
             let member_name: &Atom<'_> = match &member.id {
                 TSEnumMemberName::StaticIdentifier(id) => &id.name,
-                TSEnumMemberName::StaticStringLiteral(str)
-                | TSEnumMemberName::StringLiteral(str) => &str.value,
-                TSEnumMemberName::StaticTemplateLiteral(template)
-                | TSEnumMemberName::TemplateLiteral(template) => {
-                    &template.quasi().expect("Template enum members cannot have substitutions.")
-                }
-                // parse error, but better than a panic
-                TSEnumMemberName::StaticNumericLiteral(n) => &Atom::from(n.raw),
-                match_expression!(TSEnumMemberName) => {
-                    unreachable!()
-                }
+                TSEnumMemberName::StaticStringLiteral(str) => &str.value,
             };
 
             let init = if let Some(initializer) = &mut member.initializer {

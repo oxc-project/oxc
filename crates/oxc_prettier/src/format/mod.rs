@@ -1258,8 +1258,6 @@ impl<'a> Format<'a> for TSEnumMemberName<'a> {
         match self {
             TSEnumMemberName::StaticIdentifier(identifier) => identifier.format(p),
             TSEnumMemberName::StaticStringLiteral(string_literal) => string_literal.format(p),
-            TSEnumMemberName::StaticTemplateLiteral(template_literal) => template_literal.format(p),
-            name => array!(p, ss!("["), name.as_expression().unwrap().format(p), ss!("]")),
         }
     }
 }

@@ -16,7 +16,7 @@ use oxc_estree::ESTree;
 use oxc_span::{cmp::ContentEq, hash::ContentHash, Atom, GetSpan, GetSpanMut, Span};
 use oxc_syntax::scope::ScopeId;
 
-use super::{inherit_variants, js::*, jsx::*, literal::*};
+use super::{inherit_variants, js::*, literal::*};
 
 /// TypeScript `this` parameter
 ///
@@ -115,12 +115,6 @@ inherit_variants! {
 pub enum TSEnumMemberName<'a> {
     StaticIdentifier(Box<'a, IdentifierName<'a>>) = 64,
     StaticStringLiteral(Box<'a, StringLiteral<'a>>) = 65,
-    StaticTemplateLiteral(Box<'a, TemplateLiteral<'a>>) = 66,
-    // Invalid Grammar `enum E { 1 }`
-    StaticNumericLiteral(Box<'a, NumericLiteral<'a>>) = 67,
-    // Invalid Grammar `enum E { [computed] }`
-    // `Expression` variants added here by `inherit_variants!` macro
-    @inherit Expression
 }
 }
 
