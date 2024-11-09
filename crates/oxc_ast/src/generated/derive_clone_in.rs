@@ -463,7 +463,6 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for ObjectProperty<'old_alloc> 
             kind: CloneIn::clone_in(&self.kind, allocator),
             key: CloneIn::clone_in(&self.key, allocator),
             value: CloneIn::clone_in(&self.value, allocator),
-            init: CloneIn::clone_in(&self.init, allocator),
             method: CloneIn::clone_in(&self.method, allocator),
             shorthand: CloneIn::clone_in(&self.shorthand, allocator),
             computed: CloneIn::clone_in(&self.computed, allocator),

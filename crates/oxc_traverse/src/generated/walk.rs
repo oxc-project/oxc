@@ -373,12 +373,6 @@ pub(crate) unsafe fn walk_object_property<'a, Tr: Traverse<'a>>(
         (node as *mut u8).add(ancestor::OFFSET_OBJECT_PROPERTY_VALUE) as *mut Expression,
         ctx,
     );
-    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_OBJECT_PROPERTY_INIT)
-        as *mut Option<Expression>)
-    {
-        ctx.retag_stack(AncestorType::ObjectPropertyInit);
-        walk_expression(traverser, field as *mut _, ctx);
-    }
     ctx.pop_stack(pop_token);
     traverser.exit_object_property(&mut *node, ctx);
 }

@@ -138,7 +138,6 @@ export interface ObjectProperty extends Span {
   kind: PropertyKind;
   key: PropertyKey;
   value: Expression;
-  init: Expression | null;
   method: boolean;
   shorthand: boolean;
   computed: boolean;

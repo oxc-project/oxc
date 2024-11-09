@@ -518,7 +518,6 @@ impl<'a> ContentEq for ObjectProperty<'a> {
         ContentEq::content_eq(&self.kind, &other.kind)
             && ContentEq::content_eq(&self.key, &other.key)
             && ContentEq::content_eq(&self.value, &other.value)
-            && ContentEq::content_eq(&self.init, &other.init)
             && ContentEq::content_eq(&self.method, &other.method)
             && ContentEq::content_eq(&self.shorthand, &other.shorthand)
             && ContentEq::content_eq(&self.computed, &other.computed)

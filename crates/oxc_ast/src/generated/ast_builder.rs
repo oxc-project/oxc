@@ -1602,7 +1602,6 @@ impl<'a> AstBuilder<'a> {
     /// - kind
     /// - key
     /// - value
-    /// - init
     /// - method
     /// - shorthand
     /// - computed
@@ -1613,15 +1612,12 @@ impl<'a> AstBuilder<'a> {
         kind: PropertyKind,
         key: PropertyKey<'a>,
         value: Expression<'a>,
-        init: Option<Expression<'a>>,
         method: bool,
         shorthand: bool,
         computed: bool,
     ) -> ObjectPropertyKind<'a> {
         ObjectPropertyKind::ObjectProperty(
-            self.alloc(
-                self.object_property(span, kind, key, value, init, method, shorthand, computed),
-            ),
+            self.alloc(self.object_property(span, kind, key, value, method, shorthand, computed)),
         )
     }
 
@@ -1650,7 +1646,6 @@ impl<'a> AstBuilder<'a> {
     /// - kind
     /// - key
     /// - value
-    /// - init
     /// - method
     /// - shorthand
     /// - computed
@@ -1661,12 +1656,11 @@ impl<'a> AstBuilder<'a> {
         kind: PropertyKind,
         key: PropertyKey<'a>,
         value: Expression<'a>,
-        init: Option<Expression<'a>>,
         method: bool,
         shorthand: bool,
         computed: bool,
     ) -> ObjectProperty<'a> {
-        ObjectProperty { span, kind, key, value, init, method, shorthand, computed }
+        ObjectProperty { span, kind, key, value, method, shorthand, computed }
     }
 
     /// Build an [`ObjectProperty`], and store it in the memory arena.
@@ -1678,7 +1672,6 @@ impl<'a> AstBuilder<'a> {
     /// - kind
     /// - key
     /// - value
-    /// - init
     /// - method
     /// - shorthand
     /// - computed
@@ -1689,13 +1682,12 @@ impl<'a> AstBuilder<'a> {
         kind: PropertyKind,
         key: PropertyKey<'a>,
         value: Expression<'a>,
-        init: Option<Expression<'a>>,
         method: bool,
         shorthand: bool,
         computed: bool,
     ) -> Box<'a, ObjectProperty<'a>> {
         Box::new_in(
-            self.object_property(span, kind, key, value, init, method, shorthand, computed),
+            self.object_property(span, kind, key, value, method, shorthand, computed),
             self.allocator,
         )
     }

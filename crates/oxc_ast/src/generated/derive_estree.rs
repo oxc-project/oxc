@@ -285,7 +285,6 @@ impl<'a> Serialize for ObjectProperty<'a> {
         map.serialize_entry("kind", &self.kind)?;
         map.serialize_entry("key", &self.key)?;
         map.serialize_entry("value", &self.value)?;
-        map.serialize_entry("init", &self.init)?;
         map.serialize_entry("method", &self.method)?;
         map.serialize_entry("shorthand", &self.shorthand)?;
         map.serialize_entry("computed", &self.computed)?;

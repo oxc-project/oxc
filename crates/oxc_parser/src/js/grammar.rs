@@ -157,12 +157,7 @@ impl<'a> CoverGrammar<'a, ObjectProperty<'a>> for AssignmentTargetProperty<'a> {
                 _ => return Err(p.unexpected()),
             };
             // convert `CoverInitializedName`
-            let init = match property.init {
-                Some(Expression::AssignmentExpression(assignment_expr)) => {
-                    Some(assignment_expr.unbox().right)
-                }
-                _ => None,
-            };
+            let init = p.state.cover_initialized_name.remove(&property.span.start).map(|e| e.right);
             Ok(p.ast.assignment_target_property_assignment_target_property_identifier(
                 property.span,
                 binding,

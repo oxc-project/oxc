@@ -365,7 +365,6 @@ pub struct ObjectProperty<'a> {
     pub kind: PropertyKind,
     pub key: PropertyKey<'a>,
     pub value: Expression<'a>,
-    pub init: Option<Expression<'a>>, // for `CoverInitializedName`
     pub method: bool,
     pub shorthand: bool,
     pub computed: bool,

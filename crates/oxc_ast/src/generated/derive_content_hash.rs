@@ -233,7 +233,6 @@ impl<'a> ContentHash for ObjectProperty<'a> {
         ContentHash::content_hash(&self.kind, state);
         ContentHash::content_hash(&self.key, state);
         ContentHash::content_hash(&self.value, state);
-        ContentHash::content_hash(&self.init, state);
         ContentHash::content_hash(&self.method, state);
         ContentHash::content_hash(&self.shorthand, state);
         ContentHash::content_hash(&self.computed, state);

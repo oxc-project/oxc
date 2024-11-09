@@ -107,7 +107,6 @@ impl<'a> ParserImpl<'a> {
                         PropertyKind::Init,
                         key,
                         Expression::FunctionExpression(method),
-                        /* init */ None,
                         /* method */ true,
                         /* shorthand */ false,
                         /* computed */ computed,
@@ -138,24 +137,22 @@ impl<'a> ParserImpl<'a> {
         // IdentifierReference ({ foo })
         let value = Expression::Identifier(self.alloc(identifier.clone()));
         // CoverInitializedName ({ foo = bar })
-        let init = if self.eat(Kind::Eq) {
+        if self.eat(Kind::Eq) {
             let right = self.parse_assignment_expression_or_higher()?;
             let left = AssignmentTarget::AssignmentTargetIdentifier(self.alloc(identifier));
-            Some(self.ast.expression_assignment(
+            let expr = self.ast.assignment_expression(
                 self.end_span(span),
                 AssignmentOperator::Assign,
                 left,
                 right,
-            ))
-        } else {
-            None
-        };
+            );
+            self.state.cover_initialized_name.insert(span.start, expr);
+        }
         Ok(self.ast.alloc_object_property(
             self.end_span(span),
             PropertyKind::Init,
             PropertyKey::StaticIdentifier(key),
             value,
-            init,
             /* method */ false,
             /* shorthand */ true,
             /* computed */ false,
@@ -177,7 +174,6 @@ impl<'a> ParserImpl<'a> {
             PropertyKind::Init,
             key,
             value,
-            None,
             /* method */ false,
             /* shorthand */ false,
             /* computed */ computed,
@@ -233,7 +229,6 @@ impl<'a> ParserImpl<'a> {
             PropertyKind::Init,
             key,
             value,
-            /* init */ None,
             /* method */ true,
             /* shorthand */ false,
             /* computed */ computed,
@@ -253,7 +248,6 @@ impl<'a> ParserImpl<'a> {
             PropertyKind::Get,
             key,
             value,
-            /* init */ None,
             /* method */ false,
             /* shorthand */ false,
             /* computed */ computed,
@@ -273,7 +267,6 @@ impl<'a> ParserImpl<'a> {
             PropertyKind::Set,
             key,
             Expression::FunctionExpression(method),
-            /* init */ None,
             /* method */ false,
             /* shorthand */ false,
             /* computed */ computed,

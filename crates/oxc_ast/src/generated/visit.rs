@@ -3157,9 +3157,6 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_property_key(&it.key);
         visitor.visit_expression(&it.value);
-        if let Some(init) = &it.init {
-            visitor.visit_expression(init);
-        }
         visitor.leave_node(kind);
     }
 

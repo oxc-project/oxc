@@ -3306,9 +3306,6 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         visitor.visit_property_key(&mut it.key);
         visitor.visit_expression(&mut it.value);
-        if let Some(init) = &mut it.init {
-            visitor.visit_expression(init);
-        }
         visitor.leave_node(kind);
     }
 

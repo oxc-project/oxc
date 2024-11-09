@@ -913,19 +913,7 @@ pub fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &SemanticBuilder<'a
     }
 }
 
-fn cover_initialized_name(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Invalid assignment in object literal")
-.with_help("Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.")
-.with_label(span)
-}
-
 pub fn check_object_property(prop: &ObjectProperty, ctx: &SemanticBuilder<'_>) {
-    // PropertyDefinition : cover_initialized_name
-    // It is a Syntax Error if any source text is matched by this production.
-    if let Some(expr) = &prop.init {
-        ctx.error(cover_initialized_name(expr.span()));
-    }
-
     if let Expression::FunctionExpression(function) = &prop.value {
         match prop.kind {
             PropertyKind::Set => check_setter(function, ctx),

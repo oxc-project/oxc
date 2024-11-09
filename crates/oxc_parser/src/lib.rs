@@ -413,6 +413,8 @@ impl<'a> ParserImpl<'a> {
                 (program, true)
             }
         };
+
+        self.check_unfinished_errors();
         let mut errors = vec![];
         // only check for `@flow` if the file failed to parse.
         if !self.lexer.errors.is_empty() || !self.errors.is_empty() {
@@ -434,6 +436,7 @@ impl<'a> ParserImpl<'a> {
         // initialize cur_token and prev_token by moving onto the first token
         self.bump_any();
         let expr = self.parse_expr().map_err(|diagnostic| vec![diagnostic])?;
+        self.check_unfinished_errors();
         let errors = self.lexer.errors.into_iter().chain(self.errors).collect::<Vec<_>>();
         if !errors.is_empty() {
             return Err(errors);
@@ -489,6 +492,15 @@ impl<'a> ParserImpl<'a> {
             Some(diagnostics::flow(span))
         } else {
             None
+        }
+    }
+
+    fn check_unfinished_errors(&mut self) {
+        use oxc_span::GetSpan;
+        // PropertyDefinition : cover_initialized_name
+        // It is a Syntax Error if any source text is matched by this production.
+        for expr in self.state.cover_initialized_name.values() {
+            self.errors.push(diagnostics::cover_initialized_name(expr.span()));
         }
     }
 

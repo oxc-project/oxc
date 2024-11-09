@@ -536,7 +536,7 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
                         let key = Self::get_attribute_name(&attr.name, ctx);
                         let value = self.transform_jsx_attribute_value(attr.value.as_ref(), ctx);
                         let object_property = ctx.ast.object_property_kind_object_property(
-                            attr.span, kind, key, value, None, false, false, false,
+                            attr.span, kind, key, value, false, false, false,
                         );
                         properties.push(object_property);
                     }
@@ -600,7 +600,6 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
                     PropertyKind::Init,
                     ctx.ast.property_key_identifier_name(SPAN, "children"),
                     value,
-                    None,
                     false,
                     false,
                     false,
