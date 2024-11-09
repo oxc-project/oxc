@@ -2,7 +2,7 @@ commit: df9d1650
 
 semantic_typescript Summary:
 AST Parsed     : 6490/6490 (100.00%)
-Positive Passed: 2603/6490 (40.11%)
+Positive Passed: 2621/6490 (40.39%)
 tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 semantic error: Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -12,22 +12,201 @@ after transform: SymbolId(1): [ReferenceId(0)]
 rebuilt        : SymbolId(1): []
 
 tasks/coverage/typescript/tests/cases/compiler/APILibCheck.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
-Import assignment cannot be used when targeting ECMAScript modules.
-Import assignment cannot be used when targeting ECMAScript modules.
-Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "ts"
+Missing ReferenceId: "require"
+Missing SymbolId: "tsInternal"
+Missing ReferenceId: "require"
+Missing SymbolId: "tsserverlibrary"
+Missing ReferenceId: "require"
+Missing SymbolId: "tsserverlibraryInternal"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/APISample_Watch.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "ts"
+Missing ReferenceId: "require"
+Bindings mismatch:
+after transform: ScopeId(0): ["console", "formatHost", "os", "process", "reportDiagnostic", "reportWatchStatusChanged", "ts", "watchMain"]
+rebuilt        : ScopeId(0): ["formatHost", "reportDiagnostic", "reportWatchStatusChanged", "ts", "watchMain"]
+Reference symbol mismatch for "ts":
+after transform: SymbolId(3) "ts"
+rebuilt        : SymbolId(0) "ts"
+Reference symbol mismatch for "ts":
+after transform: SymbolId(3) "ts"
+rebuilt        : SymbolId(0) "ts"
+Reference symbol mismatch for "ts":
+after transform: SymbolId(3) "ts"
+rebuilt        : SymbolId(0) "ts"
+Reference symbol mismatch for "ts":
+after transform: SymbolId(3) "ts"
+rebuilt        : SymbolId(0) "ts"
+Reference symbol mismatch for "ts":
+after transform: SymbolId(3) "ts"
+rebuilt        : SymbolId(0) "ts"
+Reference symbol mismatch for "ts":
+after transform: SymbolId(3) "ts"
+rebuilt        : SymbolId(0) "ts"
+Reference symbol mismatch for "ts":
+after transform: SymbolId(3) "ts"
+rebuilt        : SymbolId(0) "ts"
+Reference symbol mismatch for "console":
+after transform: SymbolId(1) "console"
+rebuilt        : <None>
+Reference symbol mismatch for "console":
+after transform: SymbolId(1) "console"
+rebuilt        : <None>
+Reference symbol mismatch for "ts":
+after transform: SymbolId(3) "ts"
+rebuilt        : SymbolId(0) "ts"
+Reference symbol mismatch for "console":
+after transform: SymbolId(1) "console"
+rebuilt        : <None>
+Reference symbol mismatch for "ts":
+after transform: SymbolId(3) "ts"
+rebuilt        : SymbolId(0) "ts"
+Reference symbol mismatch for "console":
+after transform: SymbolId(1) "console"
+rebuilt        : <None>
+Reference symbol mismatch for "ts":
+after transform: SymbolId(3) "ts"
+rebuilt        : SymbolId(0) "ts"
+Unresolved references mismatch:
+after transform: ["Error", "ReadonlyArray"]
+rebuilt        : ["Error", "console", "require"]
 
 tasks/coverage/typescript/tests/cases/compiler/APISample_WatchWithDefaults.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "ts"
+Missing ReferenceId: "require"
+Bindings mismatch:
+after transform: ScopeId(0): ["console", "ts", "watchMain"]
+rebuilt        : ScopeId(0): ["ts", "watchMain"]
+Reference symbol mismatch for "ts":
+after transform: SymbolId(1) "ts"
+rebuilt        : SymbolId(0) "ts"
+Reference symbol mismatch for "ts":
+after transform: SymbolId(1) "ts"
+rebuilt        : SymbolId(0) "ts"
+Reference symbol mismatch for "ts":
+after transform: SymbolId(1) "ts"
+rebuilt        : SymbolId(0) "ts"
+Reference symbol mismatch for "ts":
+after transform: SymbolId(1) "ts"
+rebuilt        : SymbolId(0) "ts"
+Reference symbol mismatch for "console":
+after transform: SymbolId(0) "console"
+rebuilt        : <None>
+Reference symbol mismatch for "console":
+after transform: SymbolId(0) "console"
+rebuilt        : <None>
+Reference symbol mismatch for "ts":
+after transform: SymbolId(1) "ts"
+rebuilt        : SymbolId(0) "ts"
+Unresolved references mismatch:
+after transform: ["Error"]
+rebuilt        : ["Error", "console", "require"]
 
 tasks/coverage/typescript/tests/cases/compiler/APISample_WatchWithOwnWatchHost.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "ts"
+Missing ReferenceId: "require"
+Bindings mismatch:
+after transform: ScopeId(0): ["console", "ts", "watchMain"]
+rebuilt        : ScopeId(0): ["ts", "watchMain"]
+Reference symbol mismatch for "ts":
+after transform: SymbolId(1) "ts"
+rebuilt        : SymbolId(0) "ts"
+Reference symbol mismatch for "ts":
+after transform: SymbolId(1) "ts"
+rebuilt        : SymbolId(0) "ts"
+Reference symbol mismatch for "ts":
+after transform: SymbolId(1) "ts"
+rebuilt        : SymbolId(0) "ts"
+Reference symbol mismatch for "ts":
+after transform: SymbolId(1) "ts"
+rebuilt        : SymbolId(0) "ts"
+Reference symbol mismatch for "ts":
+after transform: SymbolId(1) "ts"
+rebuilt        : SymbolId(0) "ts"
+Reference symbol mismatch for "ts":
+after transform: SymbolId(1) "ts"
+rebuilt        : SymbolId(0) "ts"
+Reference symbol mismatch for "ts":
+after transform: SymbolId(1) "ts"
+rebuilt        : SymbolId(0) "ts"
+Reference symbol mismatch for "ts":
+after transform: SymbolId(1) "ts"
+rebuilt        : SymbolId(0) "ts"
+Reference symbol mismatch for "ts":
+after transform: SymbolId(1) "ts"
+rebuilt        : SymbolId(0) "ts"
+Reference symbol mismatch for "ts":
+after transform: SymbolId(1) "ts"
+rebuilt        : SymbolId(0) "ts"
+Reference symbol mismatch for "ts":
+after transform: SymbolId(1) "ts"
+rebuilt        : SymbolId(0) "ts"
+Reference symbol mismatch for "ts":
+after transform: SymbolId(1) "ts"
+rebuilt        : SymbolId(0) "ts"
+Reference symbol mismatch for "ts":
+after transform: SymbolId(1) "ts"
+rebuilt        : SymbolId(0) "ts"
+Reference symbol mismatch for "console":
+after transform: SymbolId(0) "console"
+rebuilt        : <None>
+Reference symbol mismatch for "console":
+after transform: SymbolId(0) "console"
+rebuilt        : <None>
+Reference symbol mismatch for "ts":
+after transform: SymbolId(1) "ts"
+rebuilt        : SymbolId(0) "ts"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["console", "require"]
 
 tasks/coverage/typescript/tests/cases/compiler/APISample_compile.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "ts"
+Missing ReferenceId: "require"
+Bindings mismatch:
+after transform: ScopeId(0): ["compile", "console", "os", "process", "ts"]
+rebuilt        : ScopeId(0): ["compile", "ts"]
+Reference symbol mismatch for "ts":
+after transform: SymbolId(3) "ts"
+rebuilt        : SymbolId(0) "ts"
+Reference symbol mismatch for "ts":
+after transform: SymbolId(3) "ts"
+rebuilt        : SymbolId(0) "ts"
+Reference symbol mismatch for "ts":
+after transform: SymbolId(3) "ts"
+rebuilt        : SymbolId(0) "ts"
+Reference symbol mismatch for "console":
+after transform: SymbolId(1) "console"
+rebuilt        : <None>
+Reference symbol mismatch for "console":
+after transform: SymbolId(1) "console"
+rebuilt        : <None>
+Reference symbol mismatch for "console":
+after transform: SymbolId(1) "console"
+rebuilt        : <None>
+Reference symbol mismatch for "process":
+after transform: SymbolId(0) "process"
+rebuilt        : <None>
+Reference symbol mismatch for "process":
+after transform: SymbolId(0) "process"
+rebuilt        : <None>
+Reference symbol mismatch for "ts":
+after transform: SymbolId(3) "ts"
+rebuilt        : SymbolId(0) "ts"
+Reference symbol mismatch for "ts":
+after transform: SymbolId(3) "ts"
+rebuilt        : SymbolId(0) "ts"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["console", "process", "require"]
 
 tasks/coverage/typescript/tests/cases/compiler/APISample_jsdoc.ts
 semantic error: Bindings mismatch:
@@ -64,7 +243,29 @@ after transform: []
 rebuilt        : ["console", "process", "readFileSync"]
 
 tasks/coverage/typescript/tests/cases/compiler/APISample_parseConfig.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "ts"
+Missing ReferenceId: "require"
+Bindings mismatch:
+after transform: ScopeId(0): ["console", "createProgram", "os", "printError", "process", "ts"]
+rebuilt        : ScopeId(0): ["createProgram", "printError", "ts"]
+Reference symbol mismatch for "console":
+after transform: SymbolId(1) "console"
+rebuilt        : <None>
+Reference symbol mismatch for "ts":
+after transform: SymbolId(3) "ts"
+rebuilt        : SymbolId(0) "ts"
+Reference symbol mismatch for "process":
+after transform: SymbolId(0) "process"
+rebuilt        : <None>
+Reference symbol mismatch for "ts":
+after transform: SymbolId(3) "ts"
+rebuilt        : SymbolId(0) "ts"
+Reference symbol mismatch for "ts":
+after transform: SymbolId(3) "ts"
+rebuilt        : SymbolId(0) "ts"
+Unresolved references mismatch:
+after transform: ["undefined"]
+rebuilt        : ["console", "process", "require", "undefined"]
 
 tasks/coverage/typescript/tests/cases/compiler/APISample_transform.ts
 semantic error: Bindings mismatch:
@@ -240,32 +441,126 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), Sc
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/aliasUsageInAccessorsOfClass.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "Backbone"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
+Reference symbol mismatch for "Backbone":
+after transform: SymbolId(0) "Backbone"
+rebuilt        : SymbolId(0) "Backbone"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/aliasUsageInArray.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "Backbone"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
+Reference symbol mismatch for "Backbone":
+after transform: SymbolId(0) "Backbone"
+rebuilt        : SymbolId(0) "Backbone"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/aliasUsageInFunctionExpression.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "Backbone"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
+Reference symbol mismatch for "Backbone":
+after transform: SymbolId(0) "Backbone"
+rebuilt        : SymbolId(0) "Backbone"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/aliasUsageInGenericFunction.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "Backbone"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
+Reference symbol mismatch for "Backbone":
+after transform: SymbolId(0) "Backbone"
+rebuilt        : SymbolId(0) "Backbone"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/aliasUsageInIndexerOfClass.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "Backbone"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
+Reference symbol mismatch for "Backbone":
+after transform: SymbolId(0) "Backbone"
+rebuilt        : SymbolId(0) "Backbone"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/aliasUsageInObjectLiteral.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "Backbone"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
+Reference symbol mismatch for "Backbone":
+after transform: SymbolId(0) "Backbone"
+rebuilt        : SymbolId(0) "Backbone"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/aliasUsageInTypeArgumentOfExtendsClause.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "Backbone"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
+Reference symbol mismatch for "Backbone":
+after transform: SymbolId(0) "Backbone"
+rebuilt        : SymbolId(0) "Backbone"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/aliasUsageInVarAssignment.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "Backbone"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
+Reference symbol mismatch for "Backbone":
+after transform: SymbolId(0) "Backbone"
+rebuilt        : SymbolId(0) "Backbone"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/aliasUsedAsNameValue.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
-Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "mod"
+Missing ReferenceId: "require"
+Missing SymbolId: "b"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+Reference symbol mismatch for "b":
+after transform: SymbolId(1) "b"
+rebuilt        : SymbolId(1) "b"
+Reference symbol mismatch for "mod":
+after transform: SymbolId(0) "mod"
+rebuilt        : SymbolId(0) "mod"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/allowJsCrossMonorepoPackage.ts
 semantic error: Bindings mismatch:
@@ -489,9 +784,6 @@ Symbol flags mismatch for "CharCode":
 after transform: SymbolId(0): SymbolFlags(Export | ConstEnum)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Export)
 
-tasks/coverage/typescript/tests/cases/compiler/amdModuleName1.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
-
 tasks/coverage/typescript/tests/cases/compiler/anonClassDeclarationEmitIsAnon.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["Constructor", "Timestamped", "wrapClass"]
@@ -712,7 +1004,14 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), Sc
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 
 tasks/coverage/typescript/tests/cases/compiler/arrayOfExportedClass.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "Car"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
+Unresolved references mismatch:
+after transform: ["module"]
+rebuilt        : ["module", "require"]
 
 tasks/coverage/typescript/tests/cases/compiler/arrayToLocaleStringES2015.ts
 semantic error: Unresolved references mismatch:
@@ -1146,17 +1445,41 @@ rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals3.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals3_1.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "x"
+Missing ReferenceId: "require"
+Bindings mismatch:
+after transform: ScopeId(0): ["file1", "x"]
+rebuilt        : ScopeId(0): ["x"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
+Reference symbol mismatch for "x":
+after transform: SymbolId(0) "x"
+rebuilt        : SymbolId(0) "x"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals4.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals4_1.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "x"
+Missing ReferenceId: "require"
+Bindings mismatch:
+after transform: ScopeId(0): ["file1", "x"]
+rebuilt        : ScopeId(0): ["x"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
+Reference symbol mismatch for "x":
+after transform: SymbolId(0) "x"
+rebuilt        : SymbolId(0) "x"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals5.ts
 semantic error: Bindings mismatch:
@@ -1168,10 +1491,19 @@ rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals6.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals6_1.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "x"
+Missing ReferenceId: "require"
+Bindings mismatch:
+after transform: ScopeId(0): ["file1", "x"]
+rebuilt        : ScopeId(0): ["x"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/augmentedTypeBracketNamedPropertyAccess.ts
 semantic error: Bindings mismatch:
@@ -1748,7 +2080,9 @@ after transform: ["JQueryEventObjectTest"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/checkJsTypeDefNoUnusedLocalMarked.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/checkSuperCallBeforeThisAccessing7.ts
 semantic error: Symbol reference IDs mismatch for "Base":
@@ -2247,7 +2581,58 @@ after transform: ["m1"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/clinterfaces.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "M"
+Missing SymbolId: "_M"
+Missing ReferenceId: "M"
+Missing ReferenceId: "M"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(3), SymbolId(6)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(4), SymbolId(5)]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(5)]
+Binding symbols mismatch:
+after transform: ScopeId(1): [SymbolId(1), SymbolId(2), SymbolId(9)]
+rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2), SymbolId(3)]
+Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
+Bindings mismatch:
+after transform: ScopeId(7): ["T"]
+rebuilt        : ScopeId(4): []
+Bindings mismatch:
+after transform: ScopeId(8): ["T"]
+rebuilt        : ScopeId(5): []
+Symbol flags mismatch for "C":
+after transform: SymbolId(1): SymbolFlags(Class | Interface)
+rebuilt        : SymbolId(2): SymbolFlags(Class)
+Symbol redeclarations mismatch for "C":
+after transform: SymbolId(1): [Span { start: 41, end: 42 }]
+rebuilt        : SymbolId(2): []
+Symbol flags mismatch for "D":
+after transform: SymbolId(2): SymbolFlags(Class | Interface)
+rebuilt        : SymbolId(3): SymbolFlags(Class)
+Symbol span mismatch for "D":
+after transform: SymbolId(2): Span { start: 61, end: 62 }
+rebuilt        : SymbolId(3): Span { start: 77, end: 78 }
+Symbol redeclarations mismatch for "D":
+after transform: SymbolId(2): [Span { start: 77, end: 78 }]
+rebuilt        : SymbolId(3): []
+Symbol flags mismatch for "Foo":
+after transform: SymbolId(3): SymbolFlags(Class | Interface)
+rebuilt        : SymbolId(4): SymbolFlags(Class)
+Symbol span mismatch for "Foo":
+after transform: SymbolId(3): Span { start: 96, end: 99 }
+rebuilt        : SymbolId(4): Span { start: 129, end: 132 }
+Symbol redeclarations mismatch for "Foo":
+after transform: SymbolId(3): [Span { start: 129, end: 132 }]
+rebuilt        : SymbolId(4): []
+Symbol flags mismatch for "Bar":
+after transform: SymbolId(6): SymbolFlags(Class | Interface)
+rebuilt        : SymbolId(5): SymbolFlags(Class)
+Symbol redeclarations mismatch for "Bar":
+after transform: SymbolId(6): [Span { start: 197, end: 200 }]
+rebuilt        : SymbolId(5): []
 
 tasks/coverage/typescript/tests/cases/compiler/cloduleAcrossModuleDefinitions.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -3698,7 +4083,17 @@ after transform: SymbolId(13): []
 rebuilt        : SymbolId(11): [ReferenceId(7)]
 
 tasks/coverage/typescript/tests/cases/compiler/commonJsImportClassExpression.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "Chunk"
+Missing ReferenceId: "require"
+Bindings mismatch:
+after transform: ScopeId(0): ["Chunk", "c"]
+rebuilt        : ScopeId(0): ["Chunk"]
+Reference symbol mismatch for "c":
+after transform: SymbolId(1) "c"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["c", "require"]
 
 tasks/coverage/typescript/tests/cases/compiler/comparabilityTypeParametersRelatedByUnion.ts
 semantic error: Bindings mismatch:
@@ -3770,7 +4165,17 @@ after transform: ScopeId(2): ["R", "func"]
 rebuilt        : ScopeId(2): ["func"]
 
 tasks/coverage/typescript/tests/cases/compiler/compositeWithNodeModulesSourceFile.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "myModule"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Reference symbol mismatch for "myModule":
+after transform: SymbolId(0) "myModule"
+rebuilt        : SymbolId(0) "myModule"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/compoundVarDecl1.ts
 semantic error: Missing SymbolId: "Foo"
@@ -4168,22 +4573,153 @@ after transform: SymbolId(4): SymbolFlags(ConstEnum)
 rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/constEnumExternalModule.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Bindings mismatch:
+after transform: ScopeId(1): ["E", "V"]
+rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+Symbol flags mismatch for "E":
+after transform: SymbolId(0): SymbolFlags(ConstEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/constEnumMergingWithValues1.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "_foo"
+Missing ReferenceId: "foo"
+Missing ReferenceId: "foo"
+Binding symbols mismatch:
+after transform: ScopeId(2): [SymbolId(1), SymbolId(3)]
+rebuilt        : ScopeId(2): [SymbolId(1), SymbolId(2)]
+Bindings mismatch:
+after transform: ScopeId(3): ["E", "X"]
+rebuilt        : ScopeId(3): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
+Symbol flags mismatch for "foo":
+after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Function | NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Function)
+Symbol reference IDs mismatch for "foo":
+after transform: SymbolId(0): [ReferenceId(0)]
+rebuilt        : SymbolId(0): [ReferenceId(3), ReferenceId(4), ReferenceId(6)]
+Symbol redeclarations mismatch for "foo":
+after transform: SymbolId(0): [Span { start: 25, end: 28 }]
+rebuilt        : SymbolId(0): []
+Symbol flags mismatch for "E":
+after transform: SymbolId(1): SymbolFlags(ConstEnum)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/constEnumMergingWithValues2.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "_foo"
+Missing ReferenceId: "foo"
+Missing ReferenceId: "foo"
+Binding symbols mismatch:
+after transform: ScopeId(2): [SymbolId(1), SymbolId(3)]
+rebuilt        : ScopeId(2): [SymbolId(1), SymbolId(2)]
+Bindings mismatch:
+after transform: ScopeId(3): ["E", "X"]
+rebuilt        : ScopeId(3): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
+Symbol flags mismatch for "foo":
+after transform: SymbolId(0): SymbolFlags(Class | NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(0): SymbolFlags(Class)
+Symbol reference IDs mismatch for "foo":
+after transform: SymbolId(0): [ReferenceId(0)]
+rebuilt        : SymbolId(0): [ReferenceId(3), ReferenceId(4), ReferenceId(6)]
+Symbol redeclarations mismatch for "foo":
+after transform: SymbolId(0): [Span { start: 20, end: 23 }]
+rebuilt        : SymbolId(0): []
+Symbol flags mismatch for "E":
+after transform: SymbolId(1): SymbolFlags(ConstEnum)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/constEnumMergingWithValues3.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "_foo"
+Missing ReferenceId: "foo"
+Missing ReferenceId: "foo"
+Bindings mismatch:
+after transform: ScopeId(1): ["A", "foo"]
+rebuilt        : ScopeId(1): ["foo"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+Binding symbols mismatch:
+after transform: ScopeId(2): [SymbolId(2), SymbolId(4)]
+rebuilt        : ScopeId(2): [SymbolId(2), SymbolId(3)]
+Bindings mismatch:
+after transform: ScopeId(3): ["E", "X"]
+rebuilt        : ScopeId(3): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
+Symbol flags mismatch for "foo":
+after transform: SymbolId(0): SymbolFlags(RegularEnum | NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+Symbol reference IDs mismatch for "foo":
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(4)]
+rebuilt        : SymbolId(0): [ReferenceId(3), ReferenceId(7), ReferenceId(8), ReferenceId(10)]
+Symbol redeclarations mismatch for "foo":
+after transform: SymbolId(0): [Span { start: 22, end: 25 }]
+rebuilt        : SymbolId(0): []
+Symbol flags mismatch for "E":
+after transform: SymbolId(2): SymbolFlags(ConstEnum)
+rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/constEnumMergingWithValues4.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "foo"
+Missing SymbolId: "_foo"
+Missing ReferenceId: "foo"
+Missing ReferenceId: "foo"
+Missing SymbolId: "_foo2"
+Missing ReferenceId: "foo"
+Missing ReferenceId: "foo"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Binding symbols mismatch:
+after transform: ScopeId(1): [SymbolId(1), SymbolId(4)]
+rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2)]
+Bindings mismatch:
+after transform: ScopeId(2): ["E", "X"]
+rebuilt        : ScopeId(2): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+Binding symbols mismatch:
+after transform: ScopeId(3): [SymbolId(3), SymbolId(5)]
+rebuilt        : ScopeId(3): [SymbolId(4), SymbolId(5)]
+Symbol flags mismatch for "E":
+after transform: SymbolId(1): SymbolFlags(ConstEnum)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
+Reference symbol mismatch for "foo":
+after transform: SymbolId(0) "foo"
+rebuilt        : SymbolId(0) "foo"
 
 tasks/coverage/typescript/tests/cases/compiler/constEnumMergingWithValues5.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "foo"
+Missing SymbolId: "_foo"
+Missing ReferenceId: "foo"
+Missing ReferenceId: "foo"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Binding symbols mismatch:
+after transform: ScopeId(1): [SymbolId(1), SymbolId(3)]
+rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2)]
+Bindings mismatch:
+after transform: ScopeId(2): ["E", "X"]
+rebuilt        : ScopeId(2): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+Symbol flags mismatch for "E":
+after transform: SymbolId(1): SymbolFlags(ConstEnum)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
+Reference symbol mismatch for "foo":
+after transform: SymbolId(0) "foo"
+rebuilt        : SymbolId(0) "foo"
 
 tasks/coverage/typescript/tests/cases/compiler/constEnumNamespaceReferenceCausesNoImport.ts
 semantic error: Bindings mismatch:
@@ -5999,7 +6535,14 @@ after transform: SymbolId(5): [ReferenceId(4), ReferenceId(5)]
 rebuilt        : SymbolId(3): [ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/declFileAliasUseBeforeDeclaration.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "foo"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(2)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(2)]
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/declFileAliasUseBeforeDeclaration2.ts
 semantic error: Bindings mismatch:
@@ -6098,16 +6641,87 @@ rebuilt        : SymbolId(8): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/declFileExportAssignmentImportInternalModule.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/declFileExportAssignmentOfGenericInterface.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["Foo"]
+rebuilt        : ScopeId(0): []
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
+Reference symbol mismatch for "Foo":
+after transform: SymbolId(0) "Foo"
+rebuilt        : <None>
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(0): ReferenceFlags(Type)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read)
+Unresolved references mismatch:
+after transform: ["module"]
+rebuilt        : ["Foo", "module"]
 
 tasks/coverage/typescript/tests/cases/compiler/declFileExportImportChain.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "m1"
+Missing SymbolId: "_m"
+Missing SymbolId: "m2"
+Missing SymbolId: "_m2"
+Missing ReferenceId: "_m2"
+Missing ReferenceId: "c1"
+Missing ReferenceId: "m2"
+Missing ReferenceId: "m2"
+Missing ReferenceId: "_m"
+Missing ReferenceId: "_m"
+Missing ReferenceId: "m1"
+Missing ReferenceId: "m1"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Binding symbols mismatch:
+after transform: ScopeId(1): [SymbolId(1), SymbolId(3)]
+rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2)]
+Binding symbols mismatch:
+after transform: ScopeId(2): [SymbolId(2), SymbolId(4)]
+rebuilt        : ScopeId(2): [SymbolId(3), SymbolId(4)]
+Symbol flags mismatch for "c1":
+after transform: SymbolId(2): SymbolFlags(Export | Class)
+rebuilt        : SymbolId(4): SymbolFlags(Class)
+Symbol reference IDs mismatch for "c1":
+after transform: SymbolId(2): []
+rebuilt        : SymbolId(4): [ReferenceId(1)]
+Reference symbol mismatch for "m1":
+after transform: SymbolId(0) "m1"
+rebuilt        : SymbolId(0) "m1"
 
 tasks/coverage/typescript/tests/cases/compiler/declFileExportImportChain2.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "m1"
+Missing SymbolId: "_m"
+Missing SymbolId: "m2"
+Missing SymbolId: "_m2"
+Missing ReferenceId: "_m2"
+Missing ReferenceId: "c1"
+Missing ReferenceId: "m2"
+Missing ReferenceId: "m2"
+Missing ReferenceId: "_m"
+Missing ReferenceId: "_m"
+Missing ReferenceId: "m1"
+Missing ReferenceId: "m1"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Binding symbols mismatch:
+after transform: ScopeId(1): [SymbolId(1), SymbolId(3)]
+rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2)]
+Binding symbols mismatch:
+after transform: ScopeId(2): [SymbolId(2), SymbolId(4)]
+rebuilt        : ScopeId(2): [SymbolId(3), SymbolId(4)]
+Symbol flags mismatch for "c1":
+after transform: SymbolId(2): SymbolFlags(Export | Class)
+rebuilt        : SymbolId(4): SymbolFlags(Class)
+Symbol reference IDs mismatch for "c1":
+after transform: SymbolId(2): []
+rebuilt        : SymbolId(4): [ReferenceId(1)]
+Reference symbol mismatch for "m1":
+after transform: SymbolId(0) "m1"
+rebuilt        : SymbolId(0) "m1"
 
 tasks/coverage/typescript/tests/cases/compiler/declFileForClassWithMultipleBaseClasses.ts
 semantic error: Bindings mismatch:
@@ -6129,7 +6743,24 @@ after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(1): [ScopeId(2)]
 
 tasks/coverage/typescript/tests/cases/compiler/declFileForExportedImport.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "a"
+Missing ReferenceId: "require"
+Missing SymbolId: "b"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : SymbolId(0) "a"
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : SymbolId(0) "a"
+Reference symbol mismatch for "b":
+after transform: SymbolId(2) "b"
+rebuilt        : SymbolId(2) "b"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/declFileForFunctionTypeAsTypeParameter.ts
 semantic error: Bindings mismatch:
@@ -6460,10 +7091,61 @@ after transform: ["IElementController", "mvc", "templa"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/declFileImportChainInExportAssignment.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "m"
+Missing SymbolId: "_m"
+Missing SymbolId: "c"
+Missing SymbolId: "_c"
+Missing ReferenceId: "_c"
+Missing ReferenceId: "c"
+Missing ReferenceId: "c"
+Missing ReferenceId: "c"
+Missing ReferenceId: "_m"
+Missing ReferenceId: "_m"
+Missing ReferenceId: "m"
+Missing ReferenceId: "m"
+Missing SymbolId: "a"
+Missing SymbolId: "b"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(3), SymbolId(4)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(5), SymbolId(6)]
+Binding symbols mismatch:
+after transform: ScopeId(1): [SymbolId(1), SymbolId(5)]
+rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2)]
+Binding symbols mismatch:
+after transform: ScopeId(2): [SymbolId(2), SymbolId(6)]
+rebuilt        : ScopeId(2): [SymbolId(3), SymbolId(4)]
+Symbol flags mismatch for "c":
+after transform: SymbolId(2): SymbolFlags(Export | Class)
+rebuilt        : SymbolId(4): SymbolFlags(Class)
+Symbol reference IDs mismatch for "c":
+after transform: SymbolId(2): []
+rebuilt        : SymbolId(4): [ReferenceId(1)]
+Reference symbol mismatch for "m":
+after transform: SymbolId(0) "m"
+rebuilt        : SymbolId(0) "m"
+Reference symbol mismatch for "a":
+after transform: SymbolId(3) "a"
+rebuilt        : SymbolId(5) "a"
+Reference symbol mismatch for "b":
+after transform: SymbolId(4) "b"
+rebuilt        : SymbolId(6) "b"
 
 tasks/coverage/typescript/tests/cases/compiler/declFileImportModuleWithExportAssignment.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(4)]
+rebuilt        : ScopeId(0): []
+Symbol flags mismatch for "m2":
+after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | NameSpaceModule)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+Symbol span mismatch for "m2":
+after transform: SymbolId(0): Span { start: 7, end: 9 }
+rebuilt        : SymbolId(0): Span { start: 229, end: 322 }
+Symbol redeclarations mismatch for "m2":
+after transform: SymbolId(0): [Span { start: 229, end: 322 }]
+rebuilt        : SymbolId(0): []
+Unresolved references mismatch:
+after transform: ["m2", "module"]
+rebuilt        : ["module"]
 
 tasks/coverage/typescript/tests/cases/compiler/declFileImportedTypeUseInTypeArgPosition.ts
 semantic error: Bindings mismatch:
@@ -8444,15 +9126,11 @@ rebuilt        : ["dual"]
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitImportInExportAssignmentModule.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitIndexTypeArray.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["T", "keys"]
 rebuilt        : ScopeId(1): ["keys"]
-
-tasks/coverage/typescript/tests/cases/compiler/declarationEmitInferredDefaultExportType2.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitInferredTypeAlias4.ts
 semantic error: Bindings mismatch:
@@ -8593,7 +9271,27 @@ after transform: ScopeId(0): ["PluginConfig"]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitNameConflicts.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "f"
+Missing SymbolId: "_f"
+Missing ReferenceId: "_f"
+Missing ReferenceId: "c"
+Missing ReferenceId: "f"
+Missing ReferenceId: "f"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Binding symbols mismatch:
+after transform: ScopeId(1): [SymbolId(1), SymbolId(2)]
+rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2)]
+Symbol flags mismatch for "c":
+after transform: SymbolId(1): SymbolFlags(Export | Class)
+rebuilt        : SymbolId(2): SymbolFlags(Class)
+Symbol reference IDs mismatch for "c":
+after transform: SymbolId(1): []
+rebuilt        : SymbolId(2): [ReferenceId(1)]
+Reference symbol mismatch for "f":
+after transform: SymbolId(0) "f"
+rebuilt        : SymbolId(0) "f"
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitNameConflicts2.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -9119,8 +9817,22 @@ after transform: ["this"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitUnnessesaryTypeReferenceNotAdded.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
-Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "minimist"
+Missing ReferenceId: "require"
+Missing SymbolId: "process"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+Reference symbol mismatch for "minimist":
+after transform: SymbolId(0) "minimist"
+rebuilt        : SymbolId(0) "minimist"
+Reference symbol mismatch for "process":
+after transform: SymbolId(1) "process"
+rebuilt        : SymbolId(1) "process"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitUsingAlternativeContainingModules1.ts
 semantic error: Bindings mismatch:
@@ -9239,10 +9951,35 @@ after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable | 
 rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable | ConstVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/declarationImportTypeAliasInferredAndEmittable.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["Conn", "Wrap", "x"]
+rebuilt        : ScopeId(0): ["Wrap"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Reference symbol mismatch for "x":
+after transform: SymbolId(1) "x"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["x"]
 
 tasks/coverage/typescript/tests/cases/compiler/declarationMaps.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(4)]
+rebuilt        : ScopeId(0): []
+Symbol flags mismatch for "m2":
+after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | NameSpaceModule)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+Symbol span mismatch for "m2":
+after transform: SymbolId(0): Span { start: 7, end: 9 }
+rebuilt        : SymbolId(0): Span { start: 230, end: 323 }
+Symbol redeclarations mismatch for "m2":
+after transform: SymbolId(0): [Span { start: 230, end: 323 }]
+rebuilt        : SymbolId(0): []
+Unresolved references mismatch:
+after transform: ["m2", "module"]
+rebuilt        : ["module"]
 
 tasks/coverage/typescript/tests/cases/compiler/declarationMerging1.ts
 semantic error: Bindings mismatch:
@@ -9361,10 +10098,38 @@ after transform: ["Function", "RegExp", "express"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/declareFileExportAssignment.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(4)]
+rebuilt        : ScopeId(0): []
+Symbol flags mismatch for "m2":
+after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | NameSpaceModule)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+Symbol span mismatch for "m2":
+after transform: SymbolId(0): Span { start: 7, end: 9 }
+rebuilt        : SymbolId(0): Span { start: 230, end: 323 }
+Symbol redeclarations mismatch for "m2":
+after transform: SymbolId(0): [Span { start: 230, end: 323 }]
+rebuilt        : SymbolId(0): []
+Unresolved references mismatch:
+after transform: ["m2", "module"]
+rebuilt        : ["module"]
 
 tasks/coverage/typescript/tests/cases/compiler/declareFileExportAssignmentWithVarFromVariableStatement.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(4)]
+rebuilt        : ScopeId(0): []
+Symbol flags mismatch for "m2":
+after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | NameSpaceModule)
+rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
+Symbol span mismatch for "m2":
+after transform: SymbolId(0): Span { start: 7, end: 9 }
+rebuilt        : SymbolId(1): Span { start: 238, end: 331 }
+Symbol redeclarations mismatch for "m2":
+after transform: SymbolId(0): [Span { start: 238, end: 331 }]
+rebuilt        : SymbolId(1): []
+Unresolved references mismatch:
+after transform: ["m2", "module"]
+rebuilt        : ["module"]
 
 tasks/coverage/typescript/tests/cases/compiler/declareModifierOnTypeAlias.ts
 semantic error: Bindings mismatch:
@@ -9509,7 +10274,14 @@ after transform: ScopeId(0): ["Database", "MyClass", "someDecorator"]
 rebuilt        : ScopeId(0): ["MyClass", "someDecorator"]
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataWithImportDeclarationNameCollision3.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "db"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3)]
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataWithImportDeclarationNameCollision5.ts
 semantic error: Bindings mismatch:
@@ -9522,7 +10294,14 @@ after transform: ScopeId(0): ["MyClass", "database", "someDecorator"]
 rebuilt        : ScopeId(0): ["MyClass", "someDecorator"]
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataWithImportDeclarationNameCollision8.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "database"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3)]
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorReferenceOnOtherProperty.ts
 semantic error: Bindings mismatch:
@@ -9910,8 +10689,21 @@ after transform: ["Partial"]
 rebuilt        : ["a", "b", "f", "g"]
 
 tasks/coverage/typescript/tests/cases/compiler/dependencyViaImportAlias.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
-Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "a"
+Missing ReferenceId: "require"
+Missing SymbolId: "A"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : SymbolId(0) "a"
+Reference symbol mismatch for "A":
+after transform: SymbolId(1) "A"
+rebuilt        : SymbolId(1) "A"
+Unresolved references mismatch:
+after transform: ["module"]
+rebuilt        : ["module", "require"]
 
 tasks/coverage/typescript/tests/cases/compiler/destructureOfVariableSameAsShorthand.ts
 semantic error: Bindings mismatch:
@@ -10805,8 +11597,22 @@ tasks/coverage/typescript/tests/cases/compiler/elidedEmbeddedStatementsReplacedW
 semantic error: 'with' statements are not allowed
 
 tasks/coverage/typescript/tests/cases/compiler/elidingImportNames.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
-Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "a"
+Missing ReferenceId: "require"
+Missing SymbolId: "a2"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4)]
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : SymbolId(0) "a"
+Reference symbol mismatch for "a2":
+after transform: SymbolId(3) "a2"
+rebuilt        : SymbolId(3) "a2"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/emitClassExpressionInDeclarationFile.ts
 semantic error: Bindings mismatch:
@@ -13231,9 +14037,6 @@ semantic error: Symbol flags mismatch for "_foo":
 after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
 rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
 
-tasks/coverage/typescript/tests/cases/compiler/es5-umd4.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
-
 tasks/coverage/typescript/tests/cases/compiler/es5ExportDefaultClassDeclaration4.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["foo"]
@@ -13259,7 +14062,18 @@ after transform: ["func"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/es5ExportEqualsDts.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol flags mismatch for "A":
+after transform: SymbolId(0): SymbolFlags(Class | NameSpaceModule)
+rebuilt        : SymbolId(0): SymbolFlags(Class)
+Symbol reference IDs mismatch for "A":
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2)]
+rebuilt        : SymbolId(0): [ReferenceId(2)]
+Symbol redeclarations mismatch for "A":
+after transform: SymbolId(0): [Span { start: 82, end: 83 }]
+rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/es6ClassTest2.ts
 semantic error: Bindings mismatch:
@@ -13405,7 +14219,9 @@ after transform: ScopeId(0): ["nameSpaceBinding", "nameSpaceBinding2", "x"]
 rebuilt        : ScopeId(0): ["nameSpaceBinding", "x"]
 
 tasks/coverage/typescript/tests/cases/compiler/es6ImportNameSpaceImportNoNamedExports.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["nameSpaceBinding"]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/es6ImportNamedImport.ts
 semantic error: Bindings mismatch:
@@ -13426,9 +14242,6 @@ tasks/coverage/typescript/tests/cases/compiler/es6ImportNamedImportInEs5.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["a", "a1", "a11", "aaaa", "b", "bbbb", "m", "x", "x1", "x11", "xxxx", "y", "z", "z1", "z111", "z2", "z3"]
 rebuilt        : ScopeId(0): ["a", "a1", "a11", "b", "m", "x", "x1", "x11", "xxxx", "y", "z", "z1", "z111", "z2", "z3"]
-
-tasks/coverage/typescript/tests/cases/compiler/es6ImportNamedImportInExportAssignment.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/es6ImportNamedImportInIndirectExportAssignment.ts
 semantic error: Missing SymbolId: "a"
@@ -14018,33 +14831,118 @@ after transform: SymbolId(0): [ReferenceId(1)]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignClassAndModule.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol flags mismatch for "Foo":
+after transform: SymbolId(0): SymbolFlags(Class | NameSpaceModule)
+rebuilt        : SymbolId(0): SymbolFlags(Class)
+Symbol reference IDs mismatch for "Foo":
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
+rebuilt        : SymbolId(0): [ReferenceId(1)]
+Symbol redeclarations mismatch for "Foo":
+after transform: SymbolId(0): [Span { start: 37, end: 40 }]
+rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignValueAndType.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["http", "server", "x"]
+rebuilt        : ScopeId(0): ["server", "x"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
+rebuilt        : ScopeId(0): []
+Symbol flags mismatch for "server":
+after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable | Interface)
+rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
+Symbol span mismatch for "server":
+after transform: SymbolId(2): Span { start: 82, end: 88 }
+rebuilt        : SymbolId(1): Span { start: 152, end: 158 }
+Symbol redeclarations mismatch for "server":
+after transform: SymbolId(2): [Span { start: 152, end: 158 }]
+rebuilt        : SymbolId(1): []
+Unresolved references mismatch:
+after transform: ["Date", "http", "module"]
+rebuilt        : ["Date", "module"]
+Unresolved reference IDs mismatch for "Date":
+after transform: [ReferenceId(1), ReferenceId(2)]
+rebuilt        : [ReferenceId(0)]
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignedTypeAsTypeAnnotation.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["x"]
+rebuilt        : ScopeId(0): []
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
+Reference symbol mismatch for "x":
+after transform: SymbolId(0) "x"
+rebuilt        : <None>
+Reference flags mismatch for "x":
+after transform: ReferenceId(1): ReferenceFlags(Type)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read)
+Unresolved references mismatch:
+after transform: ["Date", "module"]
+rebuilt        : ["module", "x"]
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentClass.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "D"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+Reference symbol mismatch for "D":
+after transform: SymbolId(0) "D"
+rebuilt        : SymbolId(0) "D"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentEnum.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Bindings mismatch:
+after transform: ScopeId(1): ["A", "B", "C", "E"]
+rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+Symbol flags mismatch for "E":
+after transform: SymbolId(0): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentError.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentFunction.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "fooFunc"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
+Reference symbol mismatch for "fooFunc":
+after transform: SymbolId(0) "fooFunc"
+rebuilt        : SymbolId(0) "fooFunc"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentInterface.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["A"]
+rebuilt        : ScopeId(0): []
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
+Reference symbol mismatch for "A":
+after transform: SymbolId(0) "A"
+rebuilt        : <None>
+Reference flags mismatch for "A":
+after transform: ReferenceId(0): ReferenceFlags(Type)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read)
+Unresolved references mismatch:
+after transform: ["module"]
+rebuilt        : ["A", "module"]
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentInternalModule.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentMembersVisibleInAugmentation.ts
 semantic error: Bindings mismatch:
@@ -14058,20 +14956,33 @@ after transform: ["T"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentOfGenericType1.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Bindings mismatch:
+after transform: ScopeId(1): ["X"]
+rebuilt        : ScopeId(1): []
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentVariable.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "y"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
+Reference symbol mismatch for "y":
+after transform: SymbolId(0) "y"
+rebuilt        : SymbolId(0) "y"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentWithImportStatementPrivacyError.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentWithPrivacyError.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
-
-tasks/coverage/typescript/tests/cases/compiler/exportAssignmentWithoutIdentifier1.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["connectexport", "connectmodule", "server"]
+rebuilt        : ScopeId(0): ["server"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/exportClassExtendingIntersection.ts
 semantic error: Bindings mismatch:
@@ -14226,22 +15137,40 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/exportEqualCallable.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "connect"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Reference symbol mismatch for "connect":
+after transform: SymbolId(0) "connect"
+rebuilt        : SymbolId(0) "connect"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/exportEqualNamespaces.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
-
-tasks/coverage/typescript/tests/cases/compiler/exportEqualsAmd.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
-
-tasks/coverage/typescript/tests/cases/compiler/exportEqualsClassNoRedeclarationError.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
-
-tasks/coverage/typescript/tests/cases/compiler/exportEqualsCommonJs.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
-
-tasks/coverage/typescript/tests/cases/compiler/exportEqualsDefaultProperty.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
+rebuilt        : ScopeId(0): []
+Symbol flags mismatch for "server":
+after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | Interface | NameSpaceModule | Ambient)
+rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
+Symbol span mismatch for "server":
+after transform: SymbolId(0): Span { start: 15, end: 21 }
+rebuilt        : SymbolId(1): Span { start: 149, end: 155 }
+Symbol reference IDs mismatch for "server":
+after transform: SymbolId(0): [ReferenceId(1), ReferenceId(4)]
+rebuilt        : SymbolId(1): [ReferenceId(2)]
+Symbol redeclarations mismatch for "server":
+after transform: SymbolId(0): [Span { start: 77, end: 83 }, Span { start: 149, end: 155 }]
+rebuilt        : SymbolId(1): []
+Unresolved references mismatch:
+after transform: ["Date", "Object", "module"]
+rebuilt        : ["Date", "module"]
+Unresolved reference IDs mismatch for "Date":
+after transform: [ReferenceId(2), ReferenceId(3)]
+rebuilt        : [ReferenceId(0)]
 
 tasks/coverage/typescript/tests/cases/compiler/exportEqualsOfModule.ts
 semantic error: Bindings mismatch:
@@ -14255,16 +15184,63 @@ after transform: ["proxy"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/exportEqualsProperty.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "A"
+Missing SymbolId: "_A"
+Missing ReferenceId: "_A"
+Missing ReferenceId: "B"
+Missing SymbolId: "_B"
+Missing ReferenceId: "_B"
+Missing ReferenceId: "B"
+Missing ReferenceId: "B"
+Missing ReferenceId: "_A"
+Missing ReferenceId: "_A"
+Missing ReferenceId: "A"
+Missing ReferenceId: "A"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Binding symbols mismatch:
+after transform: ScopeId(1): [SymbolId(1), SymbolId(4)]
+rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2)]
+Binding symbols mismatch:
+after transform: ScopeId(4): [SymbolId(3), SymbolId(5)]
+rebuilt        : ScopeId(4): [SymbolId(4), SymbolId(5)]
+Symbol flags mismatch for "B":
+after transform: SymbolId(1): SymbolFlags(Export | Class | NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(2): SymbolFlags(Class)
+Symbol reference IDs mismatch for "B":
+after transform: SymbolId(1): []
+rebuilt        : SymbolId(2): [ReferenceId(1), ReferenceId(3), ReferenceId(4)]
+Symbol redeclarations mismatch for "B":
+after transform: SymbolId(1): [Span { start: 84, end: 85 }]
+rebuilt        : SymbolId(2): []
+Symbol flags mismatch for "b":
+after transform: SymbolId(3): SymbolFlags(BlockScopedVariable | ConstVariable | Export)
+rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable | ConstVariable)
+Reference symbol mismatch for "A":
+after transform: SymbolId(0) "A"
+rebuilt        : SymbolId(0) "A"
 
 tasks/coverage/typescript/tests/cases/compiler/exportEqualsProperty2.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
-
-tasks/coverage/typescript/tests/cases/compiler/exportEqualsUmd.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol flags mismatch for "C":
+after transform: SymbolId(0): SymbolFlags(Class | NameSpaceModule)
+rebuilt        : SymbolId(0): SymbolFlags(Class)
+Symbol redeclarations mismatch for "C":
+after transform: SymbolId(0): [Span { start: 116, end: 117 }]
+rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/exportImport.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "w"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/exportImportAndClodule.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -14386,7 +15362,17 @@ after transform: ["Dialogs", "MsPortalFx", "console"]
 rebuilt        : ["DialogButtons", "ReExportedEnum", "console"]
 
 tasks/coverage/typescript/tests/cases/compiler/exportImportMultipleFiles.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "math"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Reference symbol mismatch for "math":
+after transform: SymbolId(0) "math"
+rebuilt        : SymbolId(0) "math"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/exportImportNonInstantiatedModule.ts
 semantic error: Bindings mismatch:
@@ -14400,10 +15386,32 @@ after transform: ["A", "B"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/exportImportNonInstantiatedModule2.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["Widget1"]
+rebuilt        : ScopeId(0): []
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
+Reference symbol mismatch for "Widget1":
+after transform: SymbolId(0) "Widget1"
+rebuilt        : <None>
+Reference flags mismatch for "Widget1":
+after transform: ReferenceId(0): ReferenceFlags(Type)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read)
+Unresolved references mismatch:
+after transform: ["module"]
+rebuilt        : ["Widget1", "module"]
 
 tasks/coverage/typescript/tests/cases/compiler/exportNamespaceDeclarationRetainsVisibility.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["X"]
+rebuilt        : ScopeId(0): []
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
+Reference flags mismatch for "X":
+after transform: ReferenceId(2): ReferenceFlags(Read | Type)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read)
 
 tasks/coverage/typescript/tests/cases/compiler/exportPrivateType.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -14666,7 +15674,17 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(4)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/extendingClassFromAliasAndUsageInIndexer.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "Backbone"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
+Reference symbol mismatch for "Backbone":
+after transform: SymbolId(0) "Backbone"
+rebuilt        : SymbolId(0) "Backbone"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/externFunc.ts
 semantic error: Scope children mismatch:
@@ -14685,7 +15703,36 @@ after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3)
 rebuilt        : [ReferenceId(0)]
 
 tasks/coverage/typescript/tests/cases/compiler/externalModuleAssignToVar.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "ext"
+Missing ReferenceId: "require"
+Missing SymbolId: "ext2"
+Missing ReferenceId: "require"
+Missing SymbolId: "ext3"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5)]
+Reference symbol mismatch for "ext":
+after transform: SymbolId(0) "ext"
+rebuilt        : SymbolId(0) "ext"
+Reference symbol mismatch for "ext":
+after transform: SymbolId(0) "ext"
+rebuilt        : SymbolId(0) "ext"
+Reference symbol mismatch for "ext2":
+after transform: SymbolId(2) "ext2"
+rebuilt        : SymbolId(2) "ext2"
+Reference symbol mismatch for "ext2":
+after transform: SymbolId(2) "ext2"
+rebuilt        : SymbolId(2) "ext2"
+Reference symbol mismatch for "ext3":
+after transform: SymbolId(4) "ext3"
+rebuilt        : SymbolId(4) "ext3"
+Reference symbol mismatch for "ext3":
+after transform: SymbolId(4) "ext3"
+rebuilt        : SymbolId(4) "ext3"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/externalModuleQualification.ts
 semantic error: Bindings mismatch:
@@ -14707,15 +15754,23 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/externalModuleReferenceOfImportDeclarationWithExportModifier.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "file1"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Reference symbol mismatch for "file1":
+after transform: SymbolId(0) "file1"
+rebuilt        : SymbolId(0) "file1"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/externalModuleResolution.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/externalModuleResolution2.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/externalModuleWithoutCompilerFlag1.ts
 semantic error: Bindings mismatch:
@@ -17459,7 +18514,14 @@ after transform: ["x"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/importDeclarationUsedAsTypeQuery.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "a"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/importElisionEnum.ts
 semantic error: Bindings mismatch:
@@ -17553,9 +18615,6 @@ Unresolved references mismatch:
 after transform: []
 rebuilt        : ["React", "o"]
 
-tasks/coverage/typescript/tests/cases/compiler/importHelpersVerbatimModuleSyntax.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
-
 tasks/coverage/typescript/tests/cases/compiler/importHelpersWithLocalCollisions.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["A", "__decorate", "dec", "o", "y"]
@@ -17584,7 +18643,17 @@ after transform: ScopeId(0): ["NotFound"]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/importShadowsGlobalName.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "Error"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
+Reference symbol mismatch for "Error":
+after transform: SymbolId(0) "Error"
+rebuilt        : SymbolId(0) "Error"
+Unresolved references mismatch:
+after transform: ["module"]
+rebuilt        : ["module", "require"]
 
 tasks/coverage/typescript/tests/cases/compiler/importTypeGenericArrowTypeParenthesized.ts
 semantic error: Bindings mismatch:
@@ -17601,7 +18670,20 @@ after transform: ScopeId(2): ["T", "x"]
 rebuilt        : ScopeId(2): ["x"]
 
 tasks/coverage/typescript/tests/cases/compiler/importUsedInExtendsList1.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "foo"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
+Symbol reference IDs mismatch for "Sub":
+after transform: SymbolId(1): [ReferenceId(1)]
+rebuilt        : SymbolId(1): []
+Reference symbol mismatch for "foo":
+after transform: SymbolId(0) "foo"
+rebuilt        : SymbolId(0) "foo"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/importUsedInGenericImportResolves.ts
 semantic error: Unresolved references mismatch:
@@ -17609,7 +18691,40 @@ after transform: ["T", "theme"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/import_reference-exported-alias.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "App"
+Missing SymbolId: "_App"
+Missing SymbolId: "Services"
+Missing SymbolId: "_Services"
+Missing ReferenceId: "_Services"
+Missing ReferenceId: "UserServices"
+Missing ReferenceId: "Services"
+Missing ReferenceId: "Services"
+Missing ReferenceId: "_App"
+Missing ReferenceId: "_App"
+Missing ReferenceId: "App"
+Missing ReferenceId: "App"
+Missing SymbolId: "Mod"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(3)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(5)]
+Binding symbols mismatch:
+after transform: ScopeId(1): [SymbolId(1), SymbolId(4)]
+rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2)]
+Binding symbols mismatch:
+after transform: ScopeId(2): [SymbolId(2), SymbolId(5)]
+rebuilt        : ScopeId(2): [SymbolId(3), SymbolId(4)]
+Symbol flags mismatch for "UserServices":
+after transform: SymbolId(2): SymbolFlags(Export | Class)
+rebuilt        : SymbolId(4): SymbolFlags(Class)
+Symbol reference IDs mismatch for "UserServices":
+after transform: SymbolId(2): []
+rebuilt        : SymbolId(4): [ReferenceId(1)]
+Reference symbol mismatch for "App":
+after transform: SymbolId(0) "App"
+rebuilt        : SymbolId(0) "App"
+Reference symbol mismatch for "Mod":
+after transform: SymbolId(3) "Mod"
+rebuilt        : SymbolId(5) "Mod"
 
 tasks/coverage/typescript/tests/cases/compiler/import_reference-to-type-alias.ts
 semantic error: Missing SymbolId: "App"
@@ -17649,7 +18764,17 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/import_var-referencing-an-imported-module-alias.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "host"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+Reference symbol mismatch for "host":
+after transform: SymbolId(0) "host"
+rebuilt        : SymbolId(0) "host"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/importedAliasedConditionalTypeInstantiation.ts
 semantic error: Bindings mismatch:
@@ -19155,7 +20280,17 @@ after transform: [ReferenceId(4), ReferenceId(5), ReferenceId(7), ReferenceId(32
 rebuilt        : [ReferenceId(3), ReferenceId(21)]
 
 tasks/coverage/typescript/tests/cases/compiler/instanceOfInExternalModules.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "Bar"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
+Reference symbol mismatch for "Bar":
+after transform: SymbolId(0) "Bar"
+rebuilt        : SymbolId(0) "Bar"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/instanceSubtypeCheck1.ts
 semantic error: Bindings mismatch:
@@ -20717,8 +21852,17 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/isolatedModulesReExportAlias.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
-Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "events"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Reference symbol mismatch for "events":
+after transform: SymbolId(0) "events"
+rebuilt        : SymbolId(0) "events"
+Unresolved references mismatch:
+after transform: ["module"]
+rebuilt        : ["module", "require"]
 
 tasks/coverage/typescript/tests/cases/compiler/isolatedModulesShadowGlobalTypeNotValue.ts
 semantic error: Bindings mismatch:
@@ -20737,7 +21881,14 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/isolatedModules_resolveJsonModule.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "j"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/isolatedModules_resolveJsonModule_strict_outDir_commonJs.ts
 semantic error: Bindings mismatch:
@@ -21085,7 +22236,35 @@ after transform: [ReferenceId(2), ReferenceId(4), ReferenceId(7)]
 rebuilt        : [ReferenceId(1), ReferenceId(2)]
 
 tasks/coverage/typescript/tests/cases/compiler/jsxInferenceProducesLiteralAsExpected.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Bindings mismatch:
+after transform: ScopeId(0): ["FunctionPropertyNames", "React", "Test", "TestObject", "TestProps", "_jsxFileName", "el1", "el2", "model"]
+rebuilt        : ScopeId(0): ["React", "Test", "TestObject", "_jsxFileName", "el1", "el2", "model"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(6), ScopeId(7)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
+Bindings mismatch:
+after transform: ScopeId(7): ["T", "props"]
+rebuilt        : ScopeId(3): ["props"]
+Symbol reference IDs mismatch for "TestObject":
+after transform: SymbolId(4): [ReferenceId(11), ReferenceId(16)]
+rebuilt        : SymbolId(2): [ReferenceId(3)]
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(1) "React"
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(1) "React"
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(1) "React"
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(1) "React"
+Unresolved references mismatch:
+after transform: ["Function"]
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/jsxIntrinsicElementsCompatability.tsx
 semantic error: Bindings mismatch:
@@ -21473,7 +22652,17 @@ after transform: ["Math"]
 rebuilt        : ["Math", "literalUnion", "numLiteral"]
 
 tasks/coverage/typescript/tests/cases/compiler/localAliasExportAssignment.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "connect"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Reference symbol mismatch for "connect":
+after transform: SymbolId(0) "connect"
+rebuilt        : SymbolId(0) "connect"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/localClassesInLoop.ts
 semantic error: Scope children mismatch:
@@ -22645,7 +23834,20 @@ after transform: SymbolId(12): SymbolFlags(Import)
 rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAliasAsFunctionArgument.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "a"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : SymbolId(0) "a"
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : SymbolId(0) "a"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAliasInterface.ts
 semantic error: Missing SymbolId: "_modes"
@@ -23231,7 +24433,17 @@ after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/moduleNodeImportRequireEmit.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "foo"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Reference symbol mismatch for "foo":
+after transform: SymbolId(0) "foo"
+rebuilt        : SymbolId(0) "foo"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/moduleOuterQualification.ts
 semantic error: Bindings mismatch:
@@ -23245,10 +24457,27 @@ after transform: ["outer"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/modulePreserve1.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "B"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
+Reference symbol mismatch for "B":
+after transform: SymbolId(1) "B"
+rebuilt        : SymbolId(1) "B"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/modulePreserve2.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "cjs"
+Missing ReferenceId: "require"
+Bindings mismatch:
+after transform: ScopeId(0): ["cjs", "esm"]
+rebuilt        : ScopeId(0): ["cjs"]
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/modulePreserve5.ts
 semantic error: Bindings mismatch:
@@ -23377,7 +24606,14 @@ after transform: ScopeId(0): ["a2"]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/moduleResolutionNoResolve.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "a"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/moduleResolutionPackageIdWithRelativeAndAbsolutePath.ts
 semantic error: Bindings mismatch:
@@ -23909,7 +25145,18 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/module_augmentUninstantiatedModule2.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["ng"]
+rebuilt        : ScopeId(0): []
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
+Reference symbol mismatch for "ng":
+after transform: SymbolId(0) "ng"
+rebuilt        : <None>
+Unresolved reference IDs mismatch for "ng":
+after transform: [ReferenceId(0)]
+rebuilt        : [ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/moduledecl.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -23934,7 +25181,17 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/multiImportExport.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "Drawing"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
+Reference symbol mismatch for "Drawing":
+after transform: SymbolId(0) "Drawing"
+rebuilt        : SymbolId(0) "Drawing"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/multiModuleClodule1.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -24281,10 +25538,33 @@ after transform: SymbolId(1): [ReferenceId(2), ReferenceId(7), ReferenceId(9)]
 rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(5)]
 
 tasks/coverage/typescript/tests/cases/compiler/narrowedImports.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "b1"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5)]
+Reference symbol mismatch for "b1":
+after transform: SymbolId(4) "b1"
+rebuilt        : SymbolId(4) "b1"
+Reference symbol mismatch for "b1":
+after transform: SymbolId(4) "b1"
+rebuilt        : SymbolId(4) "b1"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/narrowedImports_assumeInitialized.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "a"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : SymbolId(0) "a"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/narrowingAssignmentReadonlyRespectsAssertion.ts
 semantic error: Bindings mismatch:
@@ -24801,7 +26081,18 @@ after transform: ScopeId(0): ["C"]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/noCircularDefinitionOnExportOfPrivateInMergedNamespace.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol flags mismatch for "Foo":
+after transform: SymbolId(1): SymbolFlags(Class | NameSpaceModule | Ambient)
+rebuilt        : SymbolId(1): SymbolFlags(Class)
+Symbol redeclarations mismatch for "Foo":
+after transform: SymbolId(1): [Span { start: 61, end: 64 }]
+rebuilt        : SymbolId(1): []
+Unresolved references mismatch:
+after transform: ["cat", "module"]
+rebuilt        : ["module"]
 
 tasks/coverage/typescript/tests/cases/compiler/noCollisionThisExpressionAndLocalVarInFunction.ts
 semantic error: Scope children mismatch:
@@ -24971,28 +26262,84 @@ after transform: []
 rebuilt        : ["enhancePrisma"]
 
 tasks/coverage/typescript/tests/cases/compiler/nodeResolution1.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "y"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/nodeResolution2.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "y"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/nodeResolution3.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "y"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/nodeResolution4.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "y"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/nodeResolution5.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "y"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/nodeResolution6.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "y"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/nodeResolution7.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "y"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/nodeResolution8.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "y"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/nonConflictingRecursiveBaseTypeMembers.ts
 semantic error: Bindings mismatch:
@@ -26574,14 +27921,29 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/privacyCheckExportAssignmentOnExportedGenericInterface1.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
+rebuilt        : ScopeId(0): []
+Symbol flags mismatch for "Foo":
+after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | Interface | NameSpaceModule)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+Symbol span mismatch for "Foo":
+after transform: SymbolId(0): Span { start: 7, end: 10 }
+rebuilt        : SymbolId(0): Span { start: 74, end: 107 }
+Symbol reference IDs mismatch for "Foo":
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
+rebuilt        : SymbolId(0): [ReferenceId(1)]
+Symbol redeclarations mismatch for "Foo":
+after transform: SymbolId(0): [Span { start: 59, end: 62 }, Span { start: 74, end: 107 }]
+rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/privacyCheckExportAssignmentOnExportedGenericInterface2.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/compiler/privacyCheckExternalModuleExportAssignmentOfGenericClass.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Bindings mismatch:
+after transform: ScopeId(1): ["A"]
+rebuilt        : ScopeId(1): []
 
 tasks/coverage/typescript/tests/cases/compiler/privacyCheckOnTypeParameterReferenceInConstructorParameter.ts
 semantic error: Bindings mismatch:
@@ -30191,7 +31553,23 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/reactHOCSpreadprops.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(5)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+Bindings mismatch:
+after transform: ScopeId(1): ["App", "C", "P"]
+rebuilt        : ScopeId(1): ["App", "C"]
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(1) "React"
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(1) "React"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/reactNamespaceImportPresevation.tsx
 semantic error: Bindings mismatch:
@@ -30541,8 +31919,17 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/recursiveExportAssignmentAndFindAliasedType7.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
-Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "self"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
+Reference symbol mismatch for "self":
+after transform: SymbolId(0) "self"
+rebuilt        : SymbolId(0) "self"
+Unresolved references mismatch:
+after transform: ["module"]
+rebuilt        : ["module", "require"]
 
 tasks/coverage/typescript/tests/cases/compiler/recursiveFieldSetting.ts
 semantic error: Symbol reference IDs mismatch for "Recursive1":
@@ -30952,9 +32339,6 @@ Symbol reference IDs mismatch for "Type":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(10), ReferenceId(14), ReferenceId(33)]
 rebuilt        : SymbolId(0): [ReferenceId(7), ReferenceId(8)]
 
-tasks/coverage/typescript/tests/cases/compiler/reexportMissingDefault8.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
-
 tasks/coverage/typescript/tests/cases/compiler/reexportNameAliasedAndHoisted.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
@@ -31048,35 +32432,166 @@ after transform: SymbolId(1): []
 rebuilt        : SymbolId(2): [ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFile.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
-Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "b1"
+Missing ReferenceId: "require"
+Missing SymbolId: "b2"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+Reference symbol mismatch for "b1":
+after transform: SymbolId(0) "b1"
+rebuilt        : SymbolId(0) "b1"
+Reference symbol mismatch for "b2":
+after transform: SymbolId(2) "b2"
+rebuilt        : SymbolId(2) "b2"
+Reference symbol mismatch for "b1":
+after transform: SymbolId(0) "b1"
+rebuilt        : SymbolId(0) "b1"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileNonRelative.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
-Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "b1"
+Missing ReferenceId: "require"
+Missing SymbolId: "b2"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+Reference symbol mismatch for "b1":
+after transform: SymbolId(0) "b1"
+rebuilt        : SymbolId(0) "b1"
+Reference symbol mismatch for "b2":
+after transform: SymbolId(2) "b2"
+rebuilt        : SymbolId(2) "b2"
+Reference symbol mismatch for "b1":
+after transform: SymbolId(0) "b1"
+rebuilt        : SymbolId(0) "b1"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileNonRelativeWithoutExtensionResolvesToTs.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "f"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
+Reference symbol mismatch for "f":
+after transform: SymbolId(0) "f"
+rebuilt        : SymbolId(0) "f"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileTypes.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
-Import assignment cannot be used when targeting ECMAScript modules.
-Import assignment cannot be used when targeting ECMAScript modules.
-Import assignment cannot be used when targeting ECMAScript modules.
-Import assignment cannot be used when targeting ECMAScript modules.
-Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "b"
+Missing ReferenceId: "require"
+Missing SymbolId: "c"
+Missing ReferenceId: "require"
+Missing SymbolId: "d"
+Missing ReferenceId: "require"
+Missing SymbolId: "e"
+Missing ReferenceId: "require"
+Missing SymbolId: "f"
+Missing ReferenceId: "require"
+Missing SymbolId: "g"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7), SymbolId(8), SymbolId(9), SymbolId(10)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7), SymbolId(8), SymbolId(9), SymbolId(10)]
+Reference symbol mismatch for "b":
+after transform: SymbolId(0) "b"
+rebuilt        : SymbolId(0) "b"
+Reference symbol mismatch for "b":
+after transform: SymbolId(0) "b"
+rebuilt        : SymbolId(0) "b"
+Reference symbol mismatch for "b":
+after transform: SymbolId(0) "b"
+rebuilt        : SymbolId(0) "b"
+Reference symbol mismatch for "b":
+after transform: SymbolId(0) "b"
+rebuilt        : SymbolId(0) "b"
+Reference symbol mismatch for "c":
+after transform: SymbolId(1) "c"
+rebuilt        : SymbolId(1) "c"
+Reference symbol mismatch for "d":
+after transform: SymbolId(2) "d"
+rebuilt        : SymbolId(2) "d"
+Reference symbol mismatch for "e":
+after transform: SymbolId(3) "e"
+rebuilt        : SymbolId(3) "e"
+Reference symbol mismatch for "f":
+after transform: SymbolId(4) "f"
+rebuilt        : SymbolId(4) "f"
+Reference symbol mismatch for "g":
+after transform: SymbolId(5) "g"
+rebuilt        : SymbolId(5) "g"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithAlwaysStrictWithoutErrors.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
-Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "b1"
+Missing ReferenceId: "require"
+Missing SymbolId: "b2"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+Reference symbol mismatch for "b1":
+after transform: SymbolId(0) "b1"
+rebuilt        : SymbolId(0) "b1"
+Reference symbol mismatch for "b2":
+after transform: SymbolId(2) "b2"
+rebuilt        : SymbolId(2) "b2"
+Reference symbol mismatch for "b1":
+after transform: SymbolId(0) "b1"
+rebuilt        : SymbolId(0) "b1"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithDeclaration.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
-Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "b1"
+Missing ReferenceId: "require"
+Missing SymbolId: "b2"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+Reference symbol mismatch for "b1":
+after transform: SymbolId(0) "b1"
+rebuilt        : SymbolId(0) "b1"
+Reference symbol mismatch for "b2":
+after transform: SymbolId(2) "b2"
+rebuilt        : SymbolId(2) "b2"
+Reference symbol mismatch for "b1":
+after transform: SymbolId(0) "b1"
+rebuilt        : SymbolId(0) "b1"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithEmptyObject.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
-Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "b1"
+Missing ReferenceId: "require"
+Missing SymbolId: "b2"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+Reference symbol mismatch for "b1":
+after transform: SymbolId(0) "b1"
+rebuilt        : SymbolId(0) "b1"
+Reference symbol mismatch for "b2":
+after transform: SymbolId(2) "b2"
+rebuilt        : SymbolId(2) "b2"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithModuleEmitUndefined.ts
 semantic error: Bindings mismatch:
@@ -31109,16 +32624,67 @@ after transform: ScopeId(0): ["b"]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithSourceMap.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
-Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "b1"
+Missing ReferenceId: "require"
+Missing SymbolId: "b2"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+Reference symbol mismatch for "b1":
+after transform: SymbolId(0) "b1"
+rebuilt        : SymbolId(0) "b1"
+Reference symbol mismatch for "b2":
+after transform: SymbolId(2) "b2"
+rebuilt        : SymbolId(2) "b2"
+Reference symbol mismatch for "b1":
+after transform: SymbolId(0) "b1"
+rebuilt        : SymbolId(0) "b1"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithTraillingComma.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
-Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "b1"
+Missing ReferenceId: "require"
+Missing SymbolId: "b2"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+Reference symbol mismatch for "b1":
+after transform: SymbolId(0) "b1"
+rebuilt        : SymbolId(0) "b1"
+Reference symbol mismatch for "b2":
+after transform: SymbolId(2) "b2"
+rebuilt        : SymbolId(2) "b2"
+Reference symbol mismatch for "b1":
+after transform: SymbolId(0) "b1"
+rebuilt        : SymbolId(0) "b1"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithoutAllowJs.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
-Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "b1"
+Missing ReferenceId: "require"
+Missing SymbolId: "b2"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+Reference symbol mismatch for "b1":
+after transform: SymbolId(0) "b1"
+rebuilt        : SymbolId(0) "b1"
+Reference symbol mismatch for "b2":
+after transform: SymbolId(2) "b2"
+rebuilt        : SymbolId(2) "b2"
+Reference symbol mismatch for "b1":
+after transform: SymbolId(0) "b1"
+rebuilt        : SymbolId(0) "b1"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithoutEsModuleInterop.ts
 semantic error: Bindings mismatch:
@@ -31126,12 +32692,46 @@ after transform: ScopeId(0): ["test"]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithoutExtensionResolvesToTs.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
-Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "c1"
+Missing ReferenceId: "require"
+Missing SymbolId: "c2"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+Reference symbol mismatch for "c1":
+after transform: SymbolId(0) "c1"
+rebuilt        : SymbolId(0) "c1"
+Reference symbol mismatch for "c2":
+after transform: SymbolId(2) "c2"
+rebuilt        : SymbolId(2) "c2"
+Reference symbol mismatch for "c1":
+after transform: SymbolId(0) "c1"
+rebuilt        : SymbolId(0) "c1"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithoutOutDir.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
-Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "b1"
+Missing ReferenceId: "require"
+Missing SymbolId: "b2"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+Reference symbol mismatch for "b1":
+after transform: SymbolId(0) "b1"
+rebuilt        : SymbolId(0) "b1"
+Reference symbol mismatch for "b2":
+after transform: SymbolId(2) "b2"
+rebuilt        : SymbolId(2) "b2"
+Reference symbol mismatch for "b1":
+after transform: SymbolId(0) "b1"
+rebuilt        : SymbolId(0) "b1"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFile_PathMapping.ts
 semantic error: Bindings mismatch:
@@ -33350,12 +34950,6 @@ Unresolved references mismatch:
 after transform: []
 rebuilt        : ["console"]
 
-tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationExportAssignment.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
-
-tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationExportAssignmentCommonjs.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
-
 tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationImport.ts
 semantic error: Missing SymbolId: "m"
 Missing SymbolId: "_m"
@@ -34414,7 +36008,14 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/systemModule18.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/systemModule7.ts
 semantic error: Missing SymbolId: "M"
@@ -35387,7 +36988,17 @@ after transform: ScopeId(2): ["T", "a", "f", "x"]
 rebuilt        : ScopeId(2): ["a", "f", "x"]
 
 tasks/coverage/typescript/tests/cases/compiler/typeCheckObjectCreationExpressionWithUndefinedCallResolutionData.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "f"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Reference symbol mismatch for "f":
+after transform: SymbolId(0) "f"
+rebuilt        : SymbolId(0) "f"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/typeConstraintsWithConstructSignatures.ts
 semantic error: Bindings mismatch:
@@ -35695,7 +37306,20 @@ after transform: ScopeId(2): ["T", "obj"]
 rebuilt        : ScopeId(1): ["obj"]
 
 tasks/coverage/typescript/tests/cases/compiler/typeInferenceWithExcessPropertiesJsx.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Bindings mismatch:
+after transform: ScopeId(0): ["React", "TProps", "TranslationEntry", "Translations", "_jsxFileName", "_reactJsxRuntime"]
+rebuilt        : ScopeId(0): ["React", "_jsxFileName", "_reactJsxRuntime"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(6)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Unresolved references mismatch:
+after transform: ["JSX", "T", "require"]
+rebuilt        : ["T", "require"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(13)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/typeInferenceWithTypeAnnotation.ts
 semantic error: Scope children mismatch:
@@ -37038,22 +38662,73 @@ tasks/coverage/typescript/tests/cases/compiler/unusedClassesinNamespace3.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/unusedImportDeclaration.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "B"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
+Unresolved references mismatch:
+after transform: ["foo"]
+rebuilt        : ["foo", "require"]
 
 tasks/coverage/typescript/tests/cases/compiler/unusedImports11.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "r"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4)]
+Reference symbol mismatch for "r":
+after transform: SymbolId(4) "r"
+rebuilt        : SymbolId(4) "r"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/unusedImports13.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/unusedImports14.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(1) "React"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/unusedImports15.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "Element"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/unusedImports16.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "Element"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+Unresolved references mismatch:
+after transform: ["React"]
+rebuilt        : ["React", "require"]
 
 tasks/coverage/typescript/tests/cases/compiler/unusedInterfaceinNamespace4.ts
 semantic error: Missing SymbolId: "Validation"
@@ -37648,8 +39323,19 @@ tasks/coverage/typescript/tests/cases/compiler/visSyntax.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/visibilityOfCrossModuleTypeUsage.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
-Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "fs"
+Missing ReferenceId: "require"
+Missing SymbolId: "server"
+Missing ReferenceId: "require"
+Bindings mismatch:
+after transform: ScopeId(0): ["IConfiguration", "fs", "server"]
+rebuilt        : ScopeId(0): ["fs", "server"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/visibilityOfTypeParameters.ts
 semantic error: Bindings mismatch:
@@ -37793,7 +39479,32 @@ after transform: SymbolId(17) "m1"
 rebuilt        : SymbolId(13) "m1"
 
 tasks/coverage/typescript/tests/cases/compiler/withImportDecl.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "m1"
+Missing SymbolId: "_m"
+Missing ReferenceId: "_m"
+Missing ReferenceId: "foo"
+Missing ReferenceId: "m1"
+Missing ReferenceId: "m1"
+Missing SymbolId: "m3"
+Missing ReferenceId: "require"
+Bindings mismatch:
+after transform: ScopeId(0): ["anotherVar", "arrayVar", "b", "deckareVarWithType", "declareVar2", "declaredVar", "m1", "m3", "simpleFunction", "simpleVar", "varWithArrayType", "varWithInitialValue", "varWithSimpleType", "withComplicatedValue"]
+rebuilt        : ScopeId(0): ["anotherVar", "arrayVar", "b", "m1", "m3", "simpleFunction", "simpleVar", "varWithArrayType", "varWithInitialValue", "varWithSimpleType", "withComplicatedValue"]
+Binding symbols mismatch:
+after transform: ScopeId(2): [SymbolId(12), SymbolId(15)]
+rebuilt        : ScopeId(2): [SymbolId(9), SymbolId(10)]
+Symbol flags mismatch for "foo":
+after transform: SymbolId(12): SymbolFlags(BlockScopedVariable | Export | Function)
+rebuilt        : SymbolId(10): SymbolFlags(FunctionScopedVariable)
+Symbol reference IDs mismatch for "foo":
+after transform: SymbolId(12): []
+rebuilt        : SymbolId(10): [ReferenceId(1)]
+Reference symbol mismatch for "m3":
+after transform: SymbolId(13) "m3"
+rebuilt        : SymbolId(11) "m3"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/withStatementInternalComments.ts
 semantic error: 'with' statements are not allowed
@@ -37859,7 +39570,20 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/ambient/ambientExternalModuleMerging.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "M"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+Reference symbol mismatch for "M":
+after transform: SymbolId(0) "M"
+rebuilt        : SymbolId(0) "M"
+Reference symbol mismatch for "M":
+after transform: SymbolId(0) "M"
+rebuilt        : SymbolId(0) "M"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/conformance/ambient/ambientInsideNonAmbient.ts
 semantic error: Missing SymbolId: "M2"
@@ -37891,7 +39615,17 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/ambient/ambientShorthand.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "boom"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
+Reference symbol mismatch for "boom":
+after transform: SymbolId(3) "boom"
+rebuilt        : SymbolId(3) "boom"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/conformance/ambient/ambientShorthand_declarationEmit.ts
 semantic error: Bindings mismatch:
@@ -39581,7 +41315,17 @@ after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(3): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/classes/classExpressions/extendClassExpressionFromModule.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "foo1"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+Reference symbol mismatch for "foo1":
+after transform: SymbolId(0) "foo1"
+rebuilt        : SymbolId(0) "foo1"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/conformance/classes/classExpressions/genericClassExpressionInFunction.ts
 semantic error: Bindings mismatch:
@@ -41448,15 +43192,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["arguments"]
 rebuilt        : ["arguments", "console"]
-
-tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInExportEqualsAMD.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
-
-tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInExportEqualsCJS.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
-
-tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInExportEqualsUMD.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInScriptContext1.ts
 semantic error: Cannot assign to 'arguments' in strict mode
@@ -43376,13 +45111,43 @@ tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports3
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports4-amd.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "a"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7)]
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : SymbolId(0) "a"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports4-es6.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "a"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7)]
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : SymbolId(0) "a"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports4.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "a"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7)]
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : SymbolId(0) "a"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports5.ts
 semantic error: Bindings mismatch:
@@ -44875,7 +46640,15 @@ after transform: []
 rebuilt        : ["dec"]
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.9.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["dec"]
+rebuilt        : ScopeId(0): []
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["module"]
+rebuilt        : ["dec", "module"]
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/esDecorators-contextualTypes.2.ts
 semantic error: Bindings mismatch:
@@ -47774,7 +49547,17 @@ after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/commonJSImportAsPrimaryExpression.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "foo"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Reference symbol mismatch for "foo":
+after transform: SymbolId(0) "foo"
+rebuilt        : SymbolId(0) "foo"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/commonJSImportNotAsPrimaryExpression.ts
 semantic error: Bindings mismatch:
@@ -48099,53 +49882,95 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignDottedName.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
-Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "foo1"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Reference symbol mismatch for "foo1":
+after transform: SymbolId(0) "foo1"
+rebuilt        : SymbolId(0) "foo1"
+Unresolved references mismatch:
+after transform: ["module"]
+rebuilt        : ["module", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignImportedIdentifier.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
-Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "foo1"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
+Reference symbol mismatch for "foo1":
+after transform: SymbolId(0) "foo1"
+rebuilt        : SymbolId(0) "foo1"
+Unresolved references mismatch:
+after transform: ["module"]
+rebuilt        : ["module", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignTypes.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Bindings mismatch:
+after transform: ScopeId(1): ["T", "a"]
+rebuilt        : ScopeId(1): ["a"]
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentCircularModules.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Import assignment cannot be used when targeting ECMAScript modules.
-Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentGenericType.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Bindings mismatch:
+after transform: ScopeId(1): ["T"]
+rebuilt        : ScopeId(1): []
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentMergedInterface.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["Foo"]
+rebuilt        : ScopeId(0): []
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): []
+Reference symbol mismatch for "Foo":
+after transform: SymbolId(0) "Foo"
+rebuilt        : <None>
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(0): ReferenceFlags(Type)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read)
+Unresolved references mismatch:
+after transform: ["module"]
+rebuilt        : ["Foo", "module"]
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentMergedModule.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentTopLevelClodule.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentTopLevelEnumdule.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentTopLevelFundule.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentTopLevelIdentifier.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportDeclaredModule.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["M1"]
+rebuilt        : ScopeId(0): []
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
+Reference flags mismatch for "M1":
+after transform: ReferenceId(0): ReferenceFlags(Read | Type)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read)
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportNonVisibleType.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["I1", "x"]
+rebuilt        : ScopeId(0): ["x"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportTypeMergedWithExportStarAsNamespace.ts
 semantic error: Bindings mismatch:
@@ -48164,7 +49989,14 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/importImportOnlyModule.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "c1"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/moduleResolutionWithExtensions.ts
 semantic error: Bindings mismatch:
@@ -48172,24 +50004,82 @@ after transform: ScopeId(0): ["a"]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/moduleScoping.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "file3"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4)]
+Reference symbol mismatch for "file3":
+after transform: SymbolId(0) "file3"
+rebuilt        : SymbolId(0) "file3"
+Unresolved references mismatch:
+after transform: ["NaN", "v1", "v2"]
+rebuilt        : ["NaN", "require", "v1", "v2"]
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/nameDelimitedBySlashes.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "foo"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
+Reference symbol mismatch for "foo":
+after transform: SymbolId(0) "foo"
+rebuilt        : SymbolId(0) "foo"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/nameWithFileExtension.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "foo"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
+Reference symbol mismatch for "foo":
+after transform: SymbolId(0) "foo"
+rebuilt        : SymbolId(0) "foo"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/nameWithRelativePaths.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/reexportClassDefinition.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "foo1"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Reference symbol mismatch for "foo1":
+after transform: SymbolId(0) "foo1"
+rebuilt        : SymbolId(0) "foo1"
+Unresolved references mismatch:
+after transform: ["module"]
+rebuilt        : ["module", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/relativePathToDeclarationFile.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
-Import assignment cannot be used when targeting ECMAScript modules.
-Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "foo"
+Missing ReferenceId: "require"
+Missing SymbolId: "other"
+Missing ReferenceId: "require"
+Missing SymbolId: "relMod"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
+Reference symbol mismatch for "foo":
+after transform: SymbolId(0) "foo"
+rebuilt        : SymbolId(0) "foo"
+Reference symbol mismatch for "relMod":
+after transform: SymbolId(2) "relMod"
+rebuilt        : SymbolId(2) "relMod"
+Reference symbol mismatch for "other":
+after transform: SymbolId(1) "other"
+rebuilt        : SymbolId(1) "other"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/rewriteRelativeImportExtensions/nodeModulesTsFiles.ts
 semantic error: Bindings mismatch:
@@ -48228,8 +50118,22 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelFileModule.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
-Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "foo"
+Missing ReferenceId: "require"
+Missing SymbolId: "fum"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+Reference symbol mismatch for "foo":
+after transform: SymbolId(0) "foo"
+rebuilt        : SymbolId(0) "foo"
+Reference symbol mismatch for "fum":
+after transform: SymbolId(1) "fum"
+rebuilt        : SymbolId(1) "fum"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/typeAndNamespaceExportMerge.ts
 semantic error: Bindings mismatch:
@@ -50129,7 +52033,20 @@ after transform: ScopeId(4): ["T", "U", "ab"]
 rebuilt        : ScopeId(2): ["ab"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty1.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Bindings mismatch:
+after transform: ScopeId(0): ["Comp", "Prop", "React", "_jsxFileName", "_reactJsxRuntime", "k", "k1", "k2"]
+rebuilt        : ScopeId(0): ["Comp", "React", "_jsxFileName", "_reactJsxRuntime", "k", "k1", "k2"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Unresolved references mismatch:
+after transform: ["JSX", "require"]
+rebuilt        : ["require"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(18)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty10.tsx
 semantic error: Bindings mismatch:
@@ -50148,22 +52065,106 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(5), ScopeId(7)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty12.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Bindings mismatch:
+after transform: ScopeId(0): ["Button", "ButtonProp", "InnerButton", "InnerButtonProp", "React", "_jsxFileName", "_reactJsxRuntime"]
+rebuilt        : ScopeId(0): ["Button", "InnerButton", "React", "_jsxFileName", "_reactJsxRuntime"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(6), ScopeId(7)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(5)]
+Symbol reference IDs mismatch for "Button":
+after transform: SymbolId(2): [ReferenceId(0)]
+rebuilt        : SymbolId(3): []
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(2) "React"
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(2) "React"
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(17)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty16.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Bindings mismatch:
+after transform: ScopeId(0): ["Props", "React", "Test", "_Fragment", "_jsx", "_jsxFileName", "_jsxs"]
+rebuilt        : ScopeId(0): ["React", "Test", "_Fragment", "_jsx", "_jsxFileName", "_jsxs"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Unresolved references mismatch:
+after transform: ["Foo", "JSX", "true"]
+rebuilt        : ["Foo", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty3.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Bindings mismatch:
+after transform: ScopeId(0): ["FetchUser", "IFetchUserProps", "IUser", "React", "UserName0", "UserName1", "_jsxFileName", "_reactJsxRuntime"]
+rebuilt        : ScopeId(0): ["FetchUser", "React", "UserName0", "UserName1", "_jsxFileName", "_reactJsxRuntime"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(7)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5)]
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(2) "React"
+Unresolved references mismatch:
+after transform: ["JSX", "require"]
+rebuilt        : ["require"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(18)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty6.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Bindings mismatch:
+after transform: ScopeId(0): ["AnotherButton", "Button", "Comp", "Prop", "React", "_jsxFileName", "_reactJsxRuntime", "k1", "k2", "k3", "k4"]
+rebuilt        : ScopeId(0): ["AnotherButton", "Button", "Comp", "React", "_jsxFileName", "_reactJsxRuntime", "k1", "k2", "k3", "k4"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(2) "React"
+Unresolved references mismatch:
+after transform: ["JSX", "require"]
+rebuilt        : ["require"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(48)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty8.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Bindings mismatch:
+after transform: ScopeId(0): ["AnotherButton", "Button", "Comp", "Prop", "React", "_jsxFileName", "_reactJsxRuntime", "k1", "k2", "k3", "k4"]
+rebuilt        : ScopeId(0): ["AnotherButton", "Button", "Comp", "React", "_jsxFileName", "_reactJsxRuntime", "k1", "k2", "k3", "k4"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(2) "React"
+Unresolved references mismatch:
+after transform: ["JSX", "require"]
+rebuilt        : ["require"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(48)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty9.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(4), SymbolId(5), SymbolId(6)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(6)]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(15)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxIntersectionElementPropsType.tsx
 semantic error: Bindings mismatch:
@@ -50208,7 +52209,14 @@ after transform: ["console", "true"]
 rebuilt        : ["console"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/commentEmittingInPreserveJsx1.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(8)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/inline/inlineJsxAndJsxFragPragmaOverridesCompilerOptions.tsx
 semantic error: Bindings mismatch:
@@ -50340,7 +52348,20 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxAttributeResolution16.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Bindings mismatch:
+after transform: ScopeId(0): ["Address", "AddressComp", "AmericanAddress", "CanadianAddress", "Properties", "React", "_jsx", "_jsxFileName", "a"]
+rebuilt        : ScopeId(0): ["AddressComp", "React", "_jsx", "_jsxFileName", "a"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(2) "React"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxAttributeResolution8.tsx
 semantic error: Bindings mismatch:
@@ -50368,10 +52389,39 @@ after transform: [ReferenceId(2)]
 rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDefaultAttributesResolution1.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Bindings mismatch:
+after transform: ScopeId(0): ["Poisoned", "Prop", "React", "_jsxFileName", "_reactJsxRuntime", "p"]
+rebuilt        : ScopeId(0): ["Poisoned", "React", "_jsxFileName", "_reactJsxRuntime", "p"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(2) "React"
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(7)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDefaultAttributesResolution2.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Bindings mismatch:
+after transform: ScopeId(0): ["Poisoned", "Prop", "React", "_jsxFileName", "_reactJsxRuntime", "p"]
+rebuilt        : ScopeId(0): ["Poisoned", "React", "_jsxFileName", "_reactJsxRuntime", "p"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(2) "React"
+Unresolved references mismatch:
+after transform: ["require", "true"]
+rebuilt        : ["require"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(8)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDynamicTagName4.tsx
 semantic error: Bindings mismatch:
@@ -50635,31 +52685,184 @@ after transform: []
 rebuilt        : ["React"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType1.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(5), SymbolId(9), SymbolId(14), SymbolId(15)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(6), SymbolId(9)]
+Bindings mismatch:
+after transform: ScopeId(1): ["Component", "T"]
+rebuilt        : ScopeId(1): ["Component"]
+Bindings mismatch:
+after transform: ScopeId(3): ["Component", "T"]
+rebuilt        : ScopeId(3): ["Component"]
+Bindings mismatch:
+after transform: ScopeId(5): ["Component", "T", "U"]
+rebuilt        : ScopeId(5): ["Component"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(27)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType2.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(5), SymbolId(6)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
+Bindings mismatch:
+after transform: ScopeId(1): ["Component", "T"]
+rebuilt        : ScopeId(1): ["Component"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(9)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType3.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3), SymbolId(5), SymbolId(6)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4)]
+Bindings mismatch:
+after transform: ScopeId(1): ["T"]
+rebuilt        : ScopeId(1): []
+Bindings mismatch:
+after transform: ScopeId(3): ["U"]
+rebuilt        : ScopeId(3): []
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(2) "React"
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(2) "React"
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(9)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType4.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3), SymbolId(5), SymbolId(6)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4)]
+Bindings mismatch:
+after transform: ScopeId(1): ["T"]
+rebuilt        : ScopeId(1): []
+Bindings mismatch:
+after transform: ScopeId(3): ["U"]
+rebuilt        : ScopeId(3): []
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(2) "React"
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(2) "React"
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(9)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType5.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3), SymbolId(5), SymbolId(6)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4)]
+Bindings mismatch:
+after transform: ScopeId(1): ["T"]
+rebuilt        : ScopeId(1): []
+Bindings mismatch:
+after transform: ScopeId(3): ["U"]
+rebuilt        : ScopeId(3): []
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(2) "React"
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(2) "React"
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(10)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType6.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3), SymbolId(5), SymbolId(6)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4)]
+Bindings mismatch:
+after transform: ScopeId(1): ["T"]
+rebuilt        : ScopeId(1): []
+Bindings mismatch:
+after transform: ScopeId(3): ["U"]
+rebuilt        : ScopeId(3): []
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(2) "React"
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(2) "React"
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(10)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType7.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(3), SymbolId(6), SymbolId(9), SymbolId(10)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(5)]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Bindings mismatch:
+after transform: ScopeId(2): ["U", "props"]
+rebuilt        : ScopeId(1): ["props"]
+Bindings mismatch:
+after transform: ScopeId(3): ["U", "props"]
+rebuilt        : ScopeId(2): ["props"]
+Unresolved references mismatch:
+after transform: ["Component", "JSX", "require"]
+rebuilt        : ["Component", "require"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(12)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType8.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(3), SymbolId(6), SymbolId(9), SymbolId(10)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(5)]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Bindings mismatch:
+after transform: ScopeId(2): ["U", "props"]
+rebuilt        : ScopeId(1): ["props"]
+Bindings mismatch:
+after transform: ScopeId(3): ["U", "props"]
+rebuilt        : ScopeId(2): ["props"]
+Unresolved references mismatch:
+after transform: ["Component", "JSX", "require"]
+rebuilt        : ["Component", "require"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(12)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType9.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(4), SymbolId(5)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
+Bindings mismatch:
+after transform: ScopeId(1): ["Ctor", "P"]
+rebuilt        : ScopeId(1): ["Ctor"]
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(2) "React"
+Unresolved references mismatch:
+after transform: ["JSX"]
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxInArrowFunction.tsx
 semantic error: Bindings mismatch:
@@ -50709,8 +52912,6 @@ rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxPreserveEmit1.tsx
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Import assignment cannot be used when targeting ECMAScript modules.
-Import assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxPreserveEmit3.tsx
 semantic error: Bindings mismatch:
@@ -50721,10 +52922,30 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactComponentWithDefaultTypeParameter1.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Bindings mismatch:
+after transform: ScopeId(0): ["Prop", "React", "_jsxFileName", "_reactJsxRuntime", "x"]
+rebuilt        : ScopeId(0): ["React", "_jsxFileName", "_reactJsxRuntime", "x"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): []
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(7)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactComponentWithDefaultTypeParameter2.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Bindings mismatch:
+after transform: ScopeId(0): ["Prop", "React", "_jsxFileName", "_reactJsxRuntime", "x", "x1"]
+rebuilt        : ScopeId(0): ["React", "_jsxFileName", "_reactJsxRuntime", "x", "x1"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): []
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(10)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmit1.tsx
 semantic error: Bindings mismatch:
@@ -51011,34 +53232,149 @@ after transform: []
 rebuilt        : ["React"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSfcReturnNull.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3), SymbolId(5), SymbolId(6), SymbolId(7), SymbolId(8)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(5), SymbolId(7), SymbolId(8)]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(6)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSfcReturnNullStrictNullChecks.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3), SymbolId(5), SymbolId(6), SymbolId(7), SymbolId(8)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(5), SymbolId(7), SymbolId(8)]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(6)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution1.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6)]
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(2) "React"
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(10)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution11.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Bindings mismatch:
+after transform: ScopeId(0): ["OverWriteAttr", "Prop", "React", "_jsxFileName", "_reactJsxRuntime", "anyobj", "obj", "obj1", "obj3", "x", "x1", "x2", "x3", "x4", "x5"]
+rebuilt        : ScopeId(0): ["OverWriteAttr", "React", "_jsxFileName", "_reactJsxRuntime", "anyobj", "obj", "obj1", "obj3", "x", "x1", "x2", "x3", "x4", "x5"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(2) "React"
+Unresolved references mismatch:
+after transform: ["require", "true"]
+rebuilt        : ["require"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(31)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution13.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Bindings mismatch:
+after transform: ScopeId(0): ["AnotherComponentProps", "ChildComponent", "Component", "ComponentProps", "React", "_jsx", "_jsxFileName"]
+rebuilt        : ScopeId(0): ["ChildComponent", "Component", "React", "_jsx", "_jsxFileName"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(5), ScopeId(6)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(4)]
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution15.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Bindings mismatch:
+after transform: ScopeId(0): ["AnotherComponent", "AnotherComponentProps", "Component", "ComponentProps", "React", "_jsx", "_jsxFileName"]
+rebuilt        : ScopeId(0): ["AnotherComponent", "Component", "React", "_jsx", "_jsxFileName"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution3.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Bindings mismatch:
+after transform: ScopeId(0): ["Poisoned", "PoisonedProp", "React", "_jsxFileName", "_reactJsxRuntime", "obj", "p", "y"]
+rebuilt        : ScopeId(0): ["Poisoned", "React", "_jsxFileName", "_reactJsxRuntime", "obj", "p", "y"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(2) "React"
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(11)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution7.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Bindings mismatch:
+after transform: ScopeId(0): ["React", "TextComponent", "TextProps", "_jsxFileName", "_reactJsxRuntime", "textPropsFalse", "textPropsTrue", "y1", "y2"]
+rebuilt        : ScopeId(0): ["React", "TextComponent", "_jsxFileName", "_reactJsxRuntime", "textPropsFalse", "textPropsTrue", "y1", "y2"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(2) "React"
+Unresolved references mismatch:
+after transform: ["require", "true"]
+rebuilt        : ["require"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(15)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution8.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Bindings mismatch:
+after transform: ScopeId(0): ["OverWriteAttr", "Prop", "React", "_jsxFileName", "_reactJsxRuntime", "obj", "obj1", "obj3", "x", "x1"]
+rebuilt        : ScopeId(0): ["OverWriteAttr", "React", "_jsxFileName", "_reactJsxRuntime", "obj", "obj1", "obj3", "x", "x1"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(2) "React"
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(14)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution9.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Bindings mismatch:
+after transform: ScopeId(0): ["Opt", "OptionProp", "React", "_jsxFileName", "_reactJsxRuntime", "obj", "obj1", "p", "y", "y1", "y2", "y3"]
+rebuilt        : ScopeId(0): ["Opt", "React", "_jsxFileName", "_reactJsxRuntime", "obj", "obj1", "p", "y", "y1", "y2", "y3"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(2) "React"
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(24)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadChildren.tsx
 semantic error: Spread children are not supported in React.
@@ -51048,7 +53384,20 @@ semantic error: Spread children are not supported in React.
 Spread children are not supported in React.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentOverload2.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7), SymbolId(8), SymbolId(9), SymbolId(10), SymbolId(11), SymbolId(12), SymbolId(13), SymbolId(14), SymbolId(15), SymbolId(16), SymbolId(17)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7), SymbolId(8), SymbolId(9), SymbolId(10), SymbolId(11), SymbolId(12), SymbolId(13), SymbolId(14), SymbolId(15), SymbolId(16)]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): []
+Unresolved references mismatch:
+after transform: ["JSX", "OneThing", "require"]
+rebuilt        : ["OneThing", "require"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(40)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentOverload3.tsx
 semantic error: Bindings mismatch:
@@ -51062,31 +53411,178 @@ after transform: ["JSX", "ThreeThing", "ZeroThingOrTwoThing", "require"]
 rebuilt        : ["ThreeThing", "ZeroThingOrTwoThing", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentOverload6.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Bindings mismatch:
+after transform: ScopeId(0): ["ButtonProps", "ClickableProps", "HyphenProps", "LinkProps", "MainButton", "React", "_jsx", "_jsxFileName", "b0", "b1", "b10", "b11", "b12", "b2", "b3", "b4", "b5", "b6", "b7", "b8", "b9", "obj", "obj1", "obj2"]
+rebuilt        : ScopeId(0): ["MainButton", "React", "_jsx", "_jsxFileName", "b0", "b1", "b10", "b11", "b12", "b2", "b3", "b4", "b5", "b6", "b7", "b8", "b9", "obj", "obj1", "obj2"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
+Unresolved references mismatch:
+after transform: ["JSX", "console"]
+rebuilt        : ["console", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentWithDefaultTypeParameter1.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Bindings mismatch:
+after transform: ScopeId(0): ["MyComponent", "MyComponentProp", "React", "_jsxFileName", "_reactJsxRuntime", "i", "i1"]
+rebuilt        : ScopeId(0): ["MyComponent", "React", "_jsxFileName", "_reactJsxRuntime", "i", "i1"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Bindings mismatch:
+after transform: ScopeId(2): ["T", "attr"]
+rebuilt        : ScopeId(1): ["attr"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(10)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponents3.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3), SymbolId(4), SymbolId(6), SymbolId(8), SymbolId(9)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(5), SymbolId(6), SymbolId(8)]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(16)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentsWithTypeArguments1.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Bindings mismatch:
+after transform: ScopeId(0): ["Baz", "InferParamProp", "React", "_jsxFileName", "_react", "_reactJsxRuntime", "createLink", "createLink1", "i"]
+rebuilt        : ScopeId(0): ["Baz", "React", "_jsxFileName", "_react", "_reactJsxRuntime", "createLink", "createLink1", "i"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
+Bindings mismatch:
+after transform: ScopeId(2): ["T", "U", "a0", "a1", "key1", "value"]
+rebuilt        : ScopeId(1): ["a0", "a1", "key1", "value"]
+Unresolved references mismatch:
+after transform: ["Array", "ComponentWithTwoAttributes", "InferParamComponent", "JSX", "Link", "require"]
+rebuilt        : ["ComponentWithTwoAttributes", "InferParamComponent", "Link", "require"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(34), ReferenceId(35)]
+rebuilt        : [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentsWithTypeArguments3.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(7), SymbolId(23), SymbolId(29), SymbolId(30)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(13)]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Bindings mismatch:
+after transform: ScopeId(4): ["T", "U", "a0", "a1", "a2", "a3", "a4", "a5", "a6", "arg1", "arg2"]
+rebuilt        : ScopeId(1): ["a0", "a1", "a2", "a3", "a4", "a5", "a6", "arg1", "arg2"]
+Unresolved references mismatch:
+after transform: ["JSX", "Link", "OverloadComponent", "require"]
+rebuilt        : ["Link", "OverloadComponent", "require"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(48)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentsWithTypeArguments5.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(3), SymbolId(12), SymbolId(19), SymbolId(20)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(7)]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Bindings mismatch:
+after transform: ScopeId(2): ["T", "a1", "a2", "arg"]
+rebuilt        : ScopeId(1): ["a1", "a2", "arg"]
+Bindings mismatch:
+after transform: ScopeId(5): ["T", "a1", "a2", "a3", "a4", "arg"]
+rebuilt        : ScopeId(2): ["a1", "a2", "a3", "a4", "arg"]
+Unresolved references mismatch:
+after transform: ["Component", "ComponentSpecific", "ComponentSpecific1", "JSX", "require"]
+rebuilt        : ["Component", "ComponentSpecific", "ComponentSpecific1", "require"]
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(32)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxTypeArgumentsJsxPreserveOutput.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Bindings mismatch:
+after transform: ScopeId(0): ["Foo", "InterfaceProps", "React", "TypeProps", "_jsxFileName", "_reactJsxRuntime"]
+rebuilt        : ScopeId(0): ["Foo", "React", "_jsxFileName", "_reactJsxRuntime"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Bindings mismatch:
+after transform: ScopeId(3): ["T"]
+rebuilt        : ScopeId(1): []
+Unresolved reference IDs mismatch for "require":
+after transform: [ReferenceId(76)]
+rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxUnionElementType5.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(5), SymbolId(6), SymbolId(7), SymbolId(8), SymbolId(9), SymbolId(10)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(6), SymbolId(7), SymbolId(8), SymbolId(9), SymbolId(10)]
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(1) "React"
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(1) "React"
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(1) "React"
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(1) "React"
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(1) "React"
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(1) "React"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxUnionTypeComponent1.tsx
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "React"
+Missing ReferenceId: "require"
+Bindings mismatch:
+after transform: ScopeId(0): ["ComponentProps", "MyButtonComponent", "MyComponent", "React", "_jsxFileName"]
+rebuilt        : ScopeId(0): ["MyButtonComponent", "MyComponent", "React", "_jsxFileName"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(1) "React"
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(1) "React"
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(1) "React"
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(1) "React"
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(1) "React"
+Reference symbol mismatch for "React":
+after transform: SymbolId(0) "React"
+rebuilt        : SymbolId(1) "React"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/conformance/moduleResolution/allowImportingTypesDtsExtension.ts
 semantic error: Bindings mismatch:
@@ -51114,9 +53610,27 @@ after transform: ScopeId(0): ["a", "dir"]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/moduleResolution/packageJsonMain.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
-Import assignment cannot be used when targeting ECMAScript modules.
-Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "foo"
+Missing ReferenceId: "require"
+Missing SymbolId: "bar"
+Missing ReferenceId: "require"
+Missing SymbolId: "baz"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+Reference symbol mismatch for "foo":
+after transform: SymbolId(0) "foo"
+rebuilt        : SymbolId(0) "foo"
+Reference symbol mismatch for "bar":
+after transform: SymbolId(1) "bar"
+rebuilt        : SymbolId(1) "bar"
+Reference symbol mismatch for "baz":
+after transform: SymbolId(2) "baz"
+rebuilt        : SymbolId(2) "baz"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/conformance/moduleResolution/resolutionModeImportType1.ts
 semantic error: Bindings mismatch:
@@ -51184,8 +53698,19 @@ after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
 rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
 
 tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesImportAssignments.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
-Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "fs"
+Missing ReferenceId: "require"
+Missing SymbolId: "fs2"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
+Reference symbol mismatch for "fs":
+after transform: SymbolId(0) "fs"
+rebuilt        : SymbolId(0) "fs"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesImportAttributesTypeModeDeclarationEmit.ts
 semantic error: Bindings mismatch:
@@ -51984,7 +54509,74 @@ after transform: ["Partial"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportAlias.ts
-semantic error: Import assignment cannot be used when targeting ECMAScript modules.
+semantic error: Missing SymbolId: "b"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Reference symbol mismatch for "b":
+after transform: SymbolId(0) "b"
+rebuilt        : SymbolId(0) "b"
+Reference symbol mismatch for "b":
+after transform: SymbolId(0) "b"
+rebuilt        : SymbolId(0) "b"
+Reference symbol mismatch for "b":
+after transform: SymbolId(0) "b"
+rebuilt        : SymbolId(0) "b"
+Reference symbol mismatch for "b":
+after transform: SymbolId(0) "b"
+rebuilt        : SymbolId(0) "b"
+Reference symbol mismatch for "b":
+after transform: SymbolId(0) "b"
+rebuilt        : SymbolId(0) "b"
+Reference symbol mismatch for "b":
+after transform: SymbolId(0) "b"
+rebuilt        : SymbolId(0) "b"
+Reference symbol mismatch for "b":
+after transform: SymbolId(0) "b"
+rebuilt        : SymbolId(0) "b"
+Reference symbol mismatch for "b":
+after transform: SymbolId(0) "b"
+rebuilt        : SymbolId(0) "b"
+Reference symbol mismatch for "b":
+after transform: SymbolId(0) "b"
+rebuilt        : SymbolId(0) "b"
+Reference symbol mismatch for "b":
+after transform: SymbolId(0) "b"
+rebuilt        : SymbolId(0) "b"
+Reference symbol mismatch for "b":
+after transform: SymbolId(0) "b"
+rebuilt        : SymbolId(0) "b"
+Reference symbol mismatch for "b":
+after transform: SymbolId(0) "b"
+rebuilt        : SymbolId(0) "b"
+Reference symbol mismatch for "b":
+after transform: SymbolId(0) "b"
+rebuilt        : SymbolId(0) "b"
+Reference symbol mismatch for "b":
+after transform: SymbolId(0) "b"
+rebuilt        : SymbolId(0) "b"
+Reference symbol mismatch for "b":
+after transform: SymbolId(0) "b"
+rebuilt        : SymbolId(0) "b"
+Reference symbol mismatch for "b":
+after transform: SymbolId(0) "b"
+rebuilt        : SymbolId(0) "b"
+Reference symbol mismatch for "b":
+after transform: SymbolId(0) "b"
+rebuilt        : SymbolId(0) "b"
+Reference symbol mismatch for "b":
+after transform: SymbolId(0) "b"
+rebuilt        : SymbolId(0) "b"
+Reference symbol mismatch for "b":
+after transform: SymbolId(0) "b"
+rebuilt        : SymbolId(0) "b"
+Reference symbol mismatch for "b":
+after transform: SymbolId(0) "b"
+rebuilt        : SymbolId(0) "b"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/conformance/salsa/plainJSRedeclare3.ts
 semantic error: Identifier `orbitol` has already been declared
@@ -52254,9 +54846,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Symbol"]
 rebuilt        : ["Symbol", "dec"]
-
-tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsTopLevelOfModule.2.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithESClassDecorators.1.ts
 semantic error: Bindings mismatch:
@@ -53028,10 +55617,38 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/types/import/importTypeGenericTypes.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["Point"]
+rebuilt        : ScopeId(0): []
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
+Reference symbol mismatch for "Point":
+after transform: SymbolId(0) "Point"
+rebuilt        : <None>
+Reference flags mismatch for "Point":
+after transform: ReferenceId(1): ReferenceFlags(Type)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read)
+Unresolved references mismatch:
+after transform: ["module"]
+rebuilt        : ["Point", "module"]
 
 tasks/coverage/typescript/tests/cases/conformance/types/import/importTypeLocal.ts
-semantic error: Export assignment cannot be used when targeting ECMAScript modules.
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["Point"]
+rebuilt        : ScopeId(0): []
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
+Reference symbol mismatch for "Point":
+after transform: SymbolId(0) "Point"
+rebuilt        : <None>
+Reference flags mismatch for "Point":
+after transform: ReferenceId(0): ReferenceFlags(Type)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read)
+Unresolved references mismatch:
+after transform: ["module"]
+rebuilt        : ["Point", "module"]
 
 tasks/coverage/typescript/tests/cases/conformance/types/intersection/intersectionMemberOfUnionNarrowsCorrectly.ts
 semantic error: Bindings mismatch:

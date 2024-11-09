@@ -15,6 +15,7 @@ use crate::options::babel::BabelModule;
 #[non_exhaustive]
 pub enum Module {
     #[default]
+    Preserve,
     ESM,
     CommonJS,
 }
@@ -36,7 +37,7 @@ impl TryFrom<BabelModule> for Module {
     fn try_from(value: BabelModule) -> Result<Self, Self::Error> {
         match value {
             BabelModule::Commonjs => Ok(Self::CommonJS),
-            BabelModule::Auto | BabelModule::Boolean(false) => Ok(Self::ESM),
+            BabelModule::Auto | BabelModule::Boolean(false) => Ok(Self::Preserve),
             _ => Err(Error::msg(format!("{value:?} module is not implemented."))),
         }
     }

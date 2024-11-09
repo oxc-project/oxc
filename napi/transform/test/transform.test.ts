@@ -31,6 +31,25 @@ describe('transform', () => {
   });
 });
 
+describe('modules', () => {
+  it('should transform export = and import ', () => {
+    const code = `
+export = function foo (): void {}
+import bar = require('bar')
+`;
+    const ret = oxc.transform('test.ts', code, {
+      typescript: {
+        declaration: true,
+      },
+    });
+    assert.deepEqual(ret, {
+      code: 'module.exports = function foo() {};\nconst bar = require("bar");\n',
+      declaration: 'declare const _default: () => void;\nexport = _default;\n',
+      errors: [],
+    });
+  });
+});
+
 describe('react refresh plugin', () => {
   const code = `import { useState } from "react";
   export const App = () => {

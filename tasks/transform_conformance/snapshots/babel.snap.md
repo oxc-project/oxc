@@ -1,6 +1,6 @@
 commit: d20b314c
 
-Passed: 317/633
+Passed: 319/633
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -572,7 +572,7 @@ rebuilt        : ScopeId(1): []
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (41/155)
+# babel-plugin-transform-typescript (43/155)
 * cast/as-expression/input.ts
 Unresolved references mismatch:
 after transform: ["T", "x"]
@@ -943,17 +943,6 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
-* exports/export=/input.ts
-
-  ! TS(1203): Export assignment cannot be used when targeting ECMAScript
-  | modules.
-   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/exports/export=/input.ts:1:1]
- 1 | export = 0;
-   : ^^^^^^^^^^^
-   `----
-  help: Consider using 'export default' or another module format instead.
-
-
 * exports/imported-types/input.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["A", "B", "C"]
@@ -1139,20 +1128,6 @@ rebuilt        : SymbolId(1): []
 Bindings mismatch:
 after transform: ScopeId(0): ["A", "B"]
 rebuilt        : ScopeId(0): []
-
-* imports/import=-module/input.ts
-
-  ! TS(1202): Import assignment cannot be used when targeting ECMAScript
-  | modules.
-   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/imports/import=-module/input.ts:1:1]
- 1 | import lib = require("lib");
-   : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 2 | lib();
-   `----
-  help: Consider using 'import * as ns from "mod"',
-                 'import {a} from "mod"', 'import d from "mod"', or another
-        module format instead.
-
 
 * imports/import=-module-to-cjs/input.ts
 Missing SymbolId: "lib"
