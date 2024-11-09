@@ -13,9 +13,9 @@ pub enum AstType {
     BooleanLiteral,
     NullLiteral,
     NumericLiteral,
+    StringLiteral,
     BigIntLiteral,
     RegExpLiteral,
-    StringLiteral,
     Program,
     IdentifierName,
     IdentifierReference,
@@ -183,9 +183,9 @@ pub enum AstKind<'a> {
     BooleanLiteral(&'a BooleanLiteral),
     NullLiteral(&'a NullLiteral),
     NumericLiteral(&'a NumericLiteral<'a>),
+    StringLiteral(&'a StringLiteral<'a>),
     BigIntLiteral(&'a BigIntLiteral<'a>),
     RegExpLiteral(&'a RegExpLiteral<'a>),
-    StringLiteral(&'a StringLiteral<'a>),
     Program(&'a Program<'a>),
     IdentifierName(&'a IdentifierName<'a>),
     IdentifierReference(&'a IdentifierReference<'a>),
@@ -354,9 +354,9 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::BooleanLiteral(it) => it.span(),
             Self::NullLiteral(it) => it.span(),
             Self::NumericLiteral(it) => it.span(),
+            Self::StringLiteral(it) => it.span(),
             Self::BigIntLiteral(it) => it.span(),
             Self::RegExpLiteral(it) => it.span(),
-            Self::StringLiteral(it) => it.span(),
             Self::Program(it) => it.span(),
             Self::IdentifierName(it) => it.span(),
             Self::IdentifierReference(it) => it.span(),
@@ -549,6 +549,15 @@ impl<'a> AstKind<'a> {
     }
 
     #[inline]
+    pub fn as_string_literal(&self) -> Option<&'a StringLiteral<'a>> {
+        if let Self::StringLiteral(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
     pub fn as_big_int_literal(&self) -> Option<&'a BigIntLiteral<'a>> {
         if let Self::BigIntLiteral(v) = self {
             Some(*v)
@@ -560,15 +569,6 @@ impl<'a> AstKind<'a> {
     #[inline]
     pub fn as_reg_exp_literal(&self) -> Option<&'a RegExpLiteral<'a>> {
         if let Self::RegExpLiteral(v) = self {
-            Some(*v)
-        } else {
-            None
-        }
-    }
-
-    #[inline]
-    pub fn as_string_literal(&self) -> Option<&'a StringLiteral<'a>> {
-        if let Self::StringLiteral(v) = self {
             Some(*v)
         } else {
             None

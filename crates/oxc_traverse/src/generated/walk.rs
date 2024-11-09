@@ -3612,6 +3612,15 @@ pub(crate) unsafe fn walk_numeric_literal<'a, Tr: Traverse<'a>>(
     traverser.exit_numeric_literal(&mut *node, ctx);
 }
 
+pub(crate) unsafe fn walk_string_literal<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut StringLiteral<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_string_literal(&mut *node, ctx);
+    traverser.exit_string_literal(&mut *node, ctx);
+}
+
 pub(crate) unsafe fn walk_big_int_literal<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut BigIntLiteral<'a>,
@@ -3628,15 +3637,6 @@ pub(crate) unsafe fn walk_reg_exp_literal<'a, Tr: Traverse<'a>>(
 ) {
     traverser.enter_reg_exp_literal(&mut *node, ctx);
     traverser.exit_reg_exp_literal(&mut *node, ctx);
-}
-
-pub(crate) unsafe fn walk_string_literal<'a, Tr: Traverse<'a>>(
-    traverser: &mut Tr,
-    node: *mut StringLiteral<'a>,
-    ctx: &mut TraverseCtx<'a>,
-) {
-    traverser.enter_string_literal(&mut *node, ctx);
-    traverser.exit_string_literal(&mut *node, ctx);
 }
 
 pub(crate) unsafe fn walk_ts_this_parameter<'a, Tr: Traverse<'a>>(

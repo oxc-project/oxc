@@ -53,6 +53,12 @@ impl<'a> From<&'a NumericLiteral<'a>> for ESTreeLiteral<'a, f64> {
     }
 }
 
+impl<'a> From<&'a StringLiteral<'a>> for ESTreeLiteral<'a, &'a str> {
+    fn from(value: &'a StringLiteral) -> Self {
+        Self { span: value.span, value: &value.value, raw: value.raw, bigint: None, regex: None }
+    }
+}
+
 impl<'a> From<&'a BigIntLiteral<'a>> for ESTreeLiteral<'a, ()> {
     fn from(value: &'a BigIntLiteral) -> Self {
         let src = &value.raw.strip_suffix('n').unwrap().cow_replace('_', "");

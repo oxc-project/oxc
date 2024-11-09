@@ -116,6 +116,49 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(self.numeric_literal(span, value, raw, base), self.allocator)
     }
 
+    /// Build a [`StringLiteral`].
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_string_literal`] instead.
+    ///
+    /// ## Parameters
+    /// - span: Node location in source code
+    /// - value: The value of the string
+    /// - raw: The string as it appears in source code, including quotes
+    #[inline]
+    pub fn string_literal<A, S>(self, span: Span, value: A, raw: S) -> StringLiteral<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+        S: IntoIn<'a, &'a str>,
+    {
+        StringLiteral {
+            span,
+            value: value.into_in(self.allocator),
+            raw: raw.into_in(self.allocator),
+        }
+    }
+
+    /// Build a [`StringLiteral`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::string_literal`] instead.
+    ///
+    /// ## Parameters
+    /// - span: Node location in source code
+    /// - value: The value of the string
+    /// - raw: The string as it appears in source code, including quotes
+    #[inline]
+    pub fn alloc_string_literal<A, S>(
+        self,
+        span: Span,
+        value: A,
+        raw: S,
+    ) -> Box<'a, StringLiteral<'a>>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+        S: IntoIn<'a, &'a str>,
+    {
+        Box::new_in(self.string_literal(span, value, raw), self.allocator)
+    }
+
     /// Build a [`BigIntLiteral`].
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_big_int_literal`] instead.
@@ -188,36 +231,6 @@ impl<'a> AstBuilder<'a> {
         S: IntoIn<'a, &'a str>,
     {
         Box::new_in(self.reg_exp_literal(span, regex, raw), self.allocator)
-    }
-
-    /// Build a [`StringLiteral`].
-    ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_string_literal`] instead.
-    ///
-    /// ## Parameters
-    /// - span: Node location in source code
-    /// - value: The string as it appears in source code
-    #[inline]
-    pub fn string_literal<A>(self, span: Span, value: A) -> StringLiteral<'a>
-    where
-        A: IntoIn<'a, Atom<'a>>,
-    {
-        StringLiteral { span, value: value.into_in(self.allocator) }
-    }
-
-    /// Build a [`StringLiteral`], and store it in the memory arena.
-    ///
-    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::string_literal`] instead.
-    ///
-    /// ## Parameters
-    /// - span: Node location in source code
-    /// - value: The string as it appears in source code
-    #[inline]
-    pub fn alloc_string_literal<A>(self, span: Span, value: A) -> Box<'a, StringLiteral<'a>>
-    where
-        A: IntoIn<'a, Atom<'a>>,
-    {
-        Box::new_in(self.string_literal(span, value), self.allocator)
     }
 
     /// Build a [`Program`].
@@ -467,13 +480,15 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: Node location in source code
-    /// - value: The string as it appears in source code
+    /// - value: The value of the string
+    /// - raw: The string as it appears in source code, including quotes
     #[inline]
-    pub fn expression_string_literal<A>(self, span: Span, value: A) -> Expression<'a>
+    pub fn expression_string_literal<A, S>(self, span: Span, value: A, raw: S) -> Expression<'a>
     where
         A: IntoIn<'a, Atom<'a>>,
+        S: IntoIn<'a, &'a str>,
     {
-        Expression::StringLiteral(self.alloc(self.string_literal(span, value)))
+        Expression::StringLiteral(self.alloc(self.string_literal(span, value, raw)))
     }
 
     /// Build an [`Expression::TemplateLiteral`]
@@ -7173,17 +7188,20 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: Node location in source code
-    /// - value: The string as it appears in source code
+    /// - value: The value of the string
+    /// - raw: The string as it appears in source code, including quotes
     #[inline]
-    pub fn import_attribute_key_string_literal<A>(
+    pub fn import_attribute_key_string_literal<A, S>(
         self,
         span: Span,
         value: A,
+        raw: S,
     ) -> ImportAttributeKey<'a>
     where
         A: IntoIn<'a, Atom<'a>>,
+        S: IntoIn<'a, &'a str>,
     {
-        ImportAttributeKey::StringLiteral(self.string_literal(span, value))
+        ImportAttributeKey::StringLiteral(self.string_literal(span, value, raw))
     }
 
     /// Build an [`ExportNamedDeclaration`].
@@ -7560,13 +7578,20 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: Node location in source code
-    /// - value: The string as it appears in source code
+    /// - value: The value of the string
+    /// - raw: The string as it appears in source code, including quotes
     #[inline]
-    pub fn module_export_name_string_literal<A>(self, span: Span, value: A) -> ModuleExportName<'a>
+    pub fn module_export_name_string_literal<A, S>(
+        self,
+        span: Span,
+        value: A,
+        raw: S,
+    ) -> ModuleExportName<'a>
     where
         A: IntoIn<'a, Atom<'a>>,
+        S: IntoIn<'a, &'a str>,
     {
-        ModuleExportName::StringLiteral(self.string_literal(span, value))
+        ModuleExportName::StringLiteral(self.string_literal(span, value, raw))
     }
 
     /// Build a [`TSThisParameter`].
@@ -7774,13 +7799,20 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: Node location in source code
-    /// - value: The string as it appears in source code
+    /// - value: The value of the string
+    /// - raw: The string as it appears in source code, including quotes
     #[inline]
-    pub fn ts_enum_member_name_string_literal<A>(self, span: Span, value: A) -> TSEnumMemberName<'a>
+    pub fn ts_enum_member_name_string_literal<A, S>(
+        self,
+        span: Span,
+        value: A,
+        raw: S,
+    ) -> TSEnumMemberName<'a>
     where
         A: IntoIn<'a, Atom<'a>>,
+        S: IntoIn<'a, &'a str>,
     {
-        TSEnumMemberName::StaticStringLiteral(self.alloc(self.string_literal(span, value)))
+        TSEnumMemberName::StaticStringLiteral(self.alloc(self.string_literal(span, value, raw)))
     }
 
     /// Build a [`TSEnumMemberName::StaticTemplateLiteral`]
@@ -7984,13 +8016,15 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: Node location in source code
-    /// - value: The string as it appears in source code
+    /// - value: The value of the string
+    /// - raw: The string as it appears in source code, including quotes
     #[inline]
-    pub fn ts_literal_string_literal<A>(self, span: Span, value: A) -> TSLiteral<'a>
+    pub fn ts_literal_string_literal<A, S>(self, span: Span, value: A, raw: S) -> TSLiteral<'a>
     where
         A: IntoIn<'a, Atom<'a>>,
+        S: IntoIn<'a, &'a str>,
     {
-        TSLiteral::StringLiteral(self.alloc(self.string_literal(span, value)))
+        TSLiteral::StringLiteral(self.alloc(self.string_literal(span, value, raw)))
     }
 
     /// Build a [`TSLiteral::TemplateLiteral`]
@@ -11034,17 +11068,20 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: Node location in source code
-    /// - value: The string as it appears in source code
+    /// - value: The value of the string
+    /// - raw: The string as it appears in source code, including quotes
     #[inline]
-    pub fn ts_module_declaration_name_string_literal<A>(
+    pub fn ts_module_declaration_name_string_literal<A, S>(
         self,
         span: Span,
         value: A,
+        raw: S,
     ) -> TSModuleDeclarationName<'a>
     where
         A: IntoIn<'a, Atom<'a>>,
+        S: IntoIn<'a, &'a str>,
     {
-        TSModuleDeclarationName::StringLiteral(self.string_literal(span, value))
+        TSModuleDeclarationName::StringLiteral(self.string_literal(span, value, raw))
     }
 
     /// Build a [`TSModuleDeclarationBody::TSModuleDeclaration`]
@@ -11432,17 +11469,20 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: Node location in source code
-    /// - value: The string as it appears in source code
+    /// - value: The value of the string
+    /// - raw: The string as it appears in source code, including quotes
     #[inline]
-    pub fn ts_import_attribute_name_string_literal<A>(
+    pub fn ts_import_attribute_name_string_literal<A, S>(
         self,
         span: Span,
         value: A,
+        raw: S,
     ) -> TSImportAttributeName<'a>
     where
         A: IntoIn<'a, Atom<'a>>,
+        S: IntoIn<'a, &'a str>,
     {
-        TSImportAttributeName::StringLiteral(self.string_literal(span, value))
+        TSImportAttributeName::StringLiteral(self.string_literal(span, value, raw))
     }
 
     /// Build a [`TSFunctionType`].
@@ -12826,17 +12866,20 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: Node location in source code
-    /// - value: The string as it appears in source code
+    /// - value: The value of the string
+    /// - raw: The string as it appears in source code, including quotes
     #[inline]
-    pub fn jsx_attribute_value_string_literal<A>(
+    pub fn jsx_attribute_value_string_literal<A, S>(
         self,
         span: Span,
         value: A,
+        raw: S,
     ) -> JSXAttributeValue<'a>
     where
         A: IntoIn<'a, Atom<'a>>,
+        S: IntoIn<'a, &'a str>,
     {
-        JSXAttributeValue::StringLiteral(self.alloc(self.string_literal(span, value)))
+        JSXAttributeValue::StringLiteral(self.alloc(self.string_literal(span, value, raw)))
     }
 
     /// Build a [`JSXAttributeValue::ExpressionContainer`]

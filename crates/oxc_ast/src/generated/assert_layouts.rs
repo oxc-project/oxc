@@ -25,6 +25,12 @@ const _: () = {
     assert!(offset_of!(NumericLiteral, raw) == 16usize);
     assert!(offset_of!(NumericLiteral, base) == 32usize);
 
+    assert!(size_of::<StringLiteral>() == 40usize);
+    assert!(align_of::<StringLiteral>() == 8usize);
+    assert!(offset_of!(StringLiteral, span) == 0usize);
+    assert!(offset_of!(StringLiteral, value) == 8usize);
+    assert!(offset_of!(StringLiteral, raw) == 24usize);
+
     assert!(size_of::<BigIntLiteral>() == 32usize);
     assert!(align_of::<BigIntLiteral>() == 8usize);
     assert!(offset_of!(BigIntLiteral, span) == 0usize);
@@ -44,11 +50,6 @@ const _: () = {
 
     assert!(size_of::<RegExpPattern>() == 24usize);
     assert!(align_of::<RegExpPattern>() == 8usize);
-
-    assert!(size_of::<StringLiteral>() == 24usize);
-    assert!(align_of::<StringLiteral>() == 8usize);
-    assert!(offset_of!(StringLiteral, span) == 0usize);
-    assert!(offset_of!(StringLiteral, value) == 8usize);
 
     assert!(size_of::<Program>() == 160usize);
     assert!(align_of::<Program>() == 8usize);
@@ -335,11 +336,11 @@ const _: () = {
     assert!(size_of::<Statement>() == 16usize);
     assert!(align_of::<Statement>() == 8usize);
 
-    assert!(size_of::<Directive>() == 48usize);
+    assert!(size_of::<Directive>() == 64usize);
     assert!(align_of::<Directive>() == 8usize);
     assert!(offset_of!(Directive, span) == 0usize);
     assert!(offset_of!(Directive, expression) == 8usize);
-    assert!(offset_of!(Directive, directive) == 32usize);
+    assert!(offset_of!(Directive, directive) == 48usize);
 
     assert!(size_of::<Hashbang>() == 24usize);
     assert!(align_of::<Hashbang>() == 8usize);
@@ -703,23 +704,23 @@ const _: () = {
     assert!(offset_of!(ImportExpression, source) == 8usize);
     assert!(offset_of!(ImportExpression, arguments) == 24usize);
 
-    assert!(size_of::<ImportDeclaration>() == 80usize);
+    assert!(size_of::<ImportDeclaration>() == 96usize);
     assert!(align_of::<ImportDeclaration>() == 8usize);
     assert!(offset_of!(ImportDeclaration, span) == 0usize);
     assert!(offset_of!(ImportDeclaration, specifiers) == 8usize);
     assert!(offset_of!(ImportDeclaration, source) == 40usize);
-    assert!(offset_of!(ImportDeclaration, with_clause) == 64usize);
-    assert!(offset_of!(ImportDeclaration, import_kind) == 72usize);
+    assert!(offset_of!(ImportDeclaration, with_clause) == 80usize);
+    assert!(offset_of!(ImportDeclaration, import_kind) == 88usize);
 
     assert!(size_of::<ImportDeclarationSpecifier>() == 16usize);
     assert!(align_of::<ImportDeclarationSpecifier>() == 8usize);
 
-    assert!(size_of::<ImportSpecifier>() == 88usize);
+    assert!(size_of::<ImportSpecifier>() == 96usize);
     assert!(align_of::<ImportSpecifier>() == 8usize);
     assert!(offset_of!(ImportSpecifier, span) == 0usize);
     assert!(offset_of!(ImportSpecifier, imported) == 8usize);
-    assert!(offset_of!(ImportSpecifier, local) == 48usize);
-    assert!(offset_of!(ImportSpecifier, import_kind) == 80usize);
+    assert!(offset_of!(ImportSpecifier, local) == 56usize);
+    assert!(offset_of!(ImportSpecifier, import_kind) == 88usize);
 
     assert!(size_of::<ImportDefaultSpecifier>() == 40usize);
     assert!(align_of::<ImportDefaultSpecifier>() == 8usize);
@@ -737,49 +738,49 @@ const _: () = {
     assert!(offset_of!(WithClause, attributes_keyword) == 8usize);
     assert!(offset_of!(WithClause, with_entries) == 32usize);
 
-    assert!(size_of::<ImportAttribute>() == 64usize);
+    assert!(size_of::<ImportAttribute>() == 96usize);
     assert!(align_of::<ImportAttribute>() == 8usize);
     assert!(offset_of!(ImportAttribute, span) == 0usize);
     assert!(offset_of!(ImportAttribute, key) == 8usize);
-    assert!(offset_of!(ImportAttribute, value) == 40usize);
+    assert!(offset_of!(ImportAttribute, value) == 56usize);
 
-    assert!(size_of::<ImportAttributeKey>() == 32usize);
+    assert!(size_of::<ImportAttributeKey>() == 48usize);
     assert!(align_of::<ImportAttributeKey>() == 8usize);
 
-    assert!(size_of::<ExportNamedDeclaration>() == 96usize);
+    assert!(size_of::<ExportNamedDeclaration>() == 112usize);
     assert!(align_of::<ExportNamedDeclaration>() == 8usize);
     assert!(offset_of!(ExportNamedDeclaration, span) == 0usize);
     assert!(offset_of!(ExportNamedDeclaration, declaration) == 8usize);
     assert!(offset_of!(ExportNamedDeclaration, specifiers) == 24usize);
     assert!(offset_of!(ExportNamedDeclaration, source) == 56usize);
-    assert!(offset_of!(ExportNamedDeclaration, export_kind) == 80usize);
-    assert!(offset_of!(ExportNamedDeclaration, with_clause) == 88usize);
+    assert!(offset_of!(ExportNamedDeclaration, export_kind) == 96usize);
+    assert!(offset_of!(ExportNamedDeclaration, with_clause) == 104usize);
 
-    assert!(size_of::<ExportDefaultDeclaration>() == 64usize);
+    assert!(size_of::<ExportDefaultDeclaration>() == 72usize);
     assert!(align_of::<ExportDefaultDeclaration>() == 8usize);
     assert!(offset_of!(ExportDefaultDeclaration, span) == 0usize);
     assert!(offset_of!(ExportDefaultDeclaration, declaration) == 8usize);
     assert!(offset_of!(ExportDefaultDeclaration, exported) == 24usize);
 
-    assert!(size_of::<ExportAllDeclaration>() == 88usize);
+    assert!(size_of::<ExportAllDeclaration>() == 112usize);
     assert!(align_of::<ExportAllDeclaration>() == 8usize);
     assert!(offset_of!(ExportAllDeclaration, span) == 0usize);
     assert!(offset_of!(ExportAllDeclaration, exported) == 8usize);
-    assert!(offset_of!(ExportAllDeclaration, source) == 48usize);
-    assert!(offset_of!(ExportAllDeclaration, with_clause) == 72usize);
-    assert!(offset_of!(ExportAllDeclaration, export_kind) == 80usize);
+    assert!(offset_of!(ExportAllDeclaration, source) == 56usize);
+    assert!(offset_of!(ExportAllDeclaration, with_clause) == 96usize);
+    assert!(offset_of!(ExportAllDeclaration, export_kind) == 104usize);
 
-    assert!(size_of::<ExportSpecifier>() == 96usize);
+    assert!(size_of::<ExportSpecifier>() == 112usize);
     assert!(align_of::<ExportSpecifier>() == 8usize);
     assert!(offset_of!(ExportSpecifier, span) == 0usize);
     assert!(offset_of!(ExportSpecifier, local) == 8usize);
-    assert!(offset_of!(ExportSpecifier, exported) == 48usize);
-    assert!(offset_of!(ExportSpecifier, export_kind) == 88usize);
+    assert!(offset_of!(ExportSpecifier, exported) == 56usize);
+    assert!(offset_of!(ExportSpecifier, export_kind) == 104usize);
 
     assert!(size_of::<ExportDefaultDeclarationKind>() == 16usize);
     assert!(align_of::<ExportDefaultDeclarationKind>() == 8usize);
 
-    assert!(size_of::<ModuleExportName>() == 40usize);
+    assert!(size_of::<ModuleExportName>() == 48usize);
     assert!(align_of::<ModuleExportName>() == 8usize);
 
     assert!(size_of::<TSThisParameter>() == 24usize);
@@ -1089,19 +1090,19 @@ const _: () = {
     assert!(size_of::<TSTypePredicateName>() == 16usize);
     assert!(align_of::<TSTypePredicateName>() == 8usize);
 
-    assert!(size_of::<TSModuleDeclaration>() == 72usize);
+    assert!(size_of::<TSModuleDeclaration>() == 80usize);
     assert!(align_of::<TSModuleDeclaration>() == 8usize);
     assert!(offset_of!(TSModuleDeclaration, span) == 0usize);
     assert!(offset_of!(TSModuleDeclaration, id) == 8usize);
-    assert!(offset_of!(TSModuleDeclaration, body) == 48usize);
-    assert!(offset_of!(TSModuleDeclaration, kind) == 64usize);
-    assert!(offset_of!(TSModuleDeclaration, declare) == 65usize);
-    assert!(offset_of!(TSModuleDeclaration, scope_id) == 68usize);
+    assert!(offset_of!(TSModuleDeclaration, body) == 56usize);
+    assert!(offset_of!(TSModuleDeclaration, kind) == 72usize);
+    assert!(offset_of!(TSModuleDeclaration, declare) == 73usize);
+    assert!(offset_of!(TSModuleDeclaration, scope_id) == 76usize);
 
     assert!(size_of::<TSModuleDeclarationKind>() == 1usize);
     assert!(align_of::<TSModuleDeclarationKind>() == 1usize);
 
-    assert!(size_of::<TSModuleDeclarationName>() == 40usize);
+    assert!(size_of::<TSModuleDeclarationName>() == 48usize);
     assert!(align_of::<TSModuleDeclarationName>() == 8usize);
 
     assert!(size_of::<TSModuleDeclarationBody>() == 16usize);
@@ -1147,13 +1148,13 @@ const _: () = {
     assert!(offset_of!(TSImportAttributes, attributes_keyword) == 8usize);
     assert!(offset_of!(TSImportAttributes, elements) == 32usize);
 
-    assert!(size_of::<TSImportAttribute>() == 56usize);
+    assert!(size_of::<TSImportAttribute>() == 72usize);
     assert!(align_of::<TSImportAttribute>() == 8usize);
     assert!(offset_of!(TSImportAttribute, span) == 0usize);
     assert!(offset_of!(TSImportAttribute, name) == 8usize);
-    assert!(offset_of!(TSImportAttribute, value) == 40usize);
+    assert!(offset_of!(TSImportAttribute, value) == 56usize);
 
-    assert!(size_of::<TSImportAttributeName>() == 32usize);
+    assert!(size_of::<TSImportAttributeName>() == 48usize);
     assert!(align_of::<TSImportAttributeName>() == 8usize);
 
     assert!(size_of::<TSFunctionType>() == 40usize);
@@ -1219,7 +1220,7 @@ const _: () = {
     assert!(size_of::<TSModuleReference>() == 16usize);
     assert!(align_of::<TSModuleReference>() == 8usize);
 
-    assert!(size_of::<TSExternalModuleReference>() == 32usize);
+    assert!(size_of::<TSExternalModuleReference>() == 48usize);
     assert!(align_of::<TSExternalModuleReference>() == 8usize);
     assert!(offset_of!(TSExternalModuleReference, span) == 0usize);
     assert!(offset_of!(TSExternalModuleReference, expression) == 8usize);
@@ -1582,6 +1583,12 @@ const _: () = {
     assert!(offset_of!(NumericLiteral, raw) == 16usize);
     assert!(offset_of!(NumericLiteral, base) == 24usize);
 
+    assert!(size_of::<StringLiteral>() == 24usize);
+    assert!(align_of::<StringLiteral>() == 4usize);
+    assert!(offset_of!(StringLiteral, span) == 0usize);
+    assert!(offset_of!(StringLiteral, value) == 8usize);
+    assert!(offset_of!(StringLiteral, raw) == 16usize);
+
     assert!(size_of::<BigIntLiteral>() == 20usize);
     assert!(align_of::<BigIntLiteral>() == 4usize);
     assert!(offset_of!(BigIntLiteral, span) == 0usize);
@@ -1601,11 +1608,6 @@ const _: () = {
 
     assert!(size_of::<RegExpPattern>() == 12usize);
     assert!(align_of::<RegExpPattern>() == 4usize);
-
-    assert!(size_of::<StringLiteral>() == 16usize);
-    assert!(align_of::<StringLiteral>() == 4usize);
-    assert!(offset_of!(StringLiteral, span) == 0usize);
-    assert!(offset_of!(StringLiteral, value) == 8usize);
 
     assert!(size_of::<Program>() == 88usize);
     assert!(align_of::<Program>() == 4usize);
@@ -1892,11 +1894,11 @@ const _: () = {
     assert!(size_of::<Statement>() == 8usize);
     assert!(align_of::<Statement>() == 4usize);
 
-    assert!(size_of::<Directive>() == 32usize);
+    assert!(size_of::<Directive>() == 40usize);
     assert!(align_of::<Directive>() == 4usize);
     assert!(offset_of!(Directive, span) == 0usize);
     assert!(offset_of!(Directive, expression) == 8usize);
-    assert!(offset_of!(Directive, directive) == 24usize);
+    assert!(offset_of!(Directive, directive) == 32usize);
 
     assert!(size_of::<Hashbang>() == 16usize);
     assert!(align_of::<Hashbang>() == 4usize);
@@ -2260,23 +2262,23 @@ const _: () = {
     assert!(offset_of!(ImportExpression, source) == 8usize);
     assert!(offset_of!(ImportExpression, arguments) == 16usize);
 
-    assert!(size_of::<ImportDeclaration>() == 48usize);
+    assert!(size_of::<ImportDeclaration>() == 56usize);
     assert!(align_of::<ImportDeclaration>() == 4usize);
     assert!(offset_of!(ImportDeclaration, span) == 0usize);
     assert!(offset_of!(ImportDeclaration, specifiers) == 8usize);
     assert!(offset_of!(ImportDeclaration, source) == 24usize);
-    assert!(offset_of!(ImportDeclaration, with_clause) == 40usize);
-    assert!(offset_of!(ImportDeclaration, import_kind) == 44usize);
+    assert!(offset_of!(ImportDeclaration, with_clause) == 48usize);
+    assert!(offset_of!(ImportDeclaration, import_kind) == 52usize);
 
     assert!(size_of::<ImportDeclarationSpecifier>() == 8usize);
     assert!(align_of::<ImportDeclarationSpecifier>() == 4usize);
 
-    assert!(size_of::<ImportSpecifier>() == 56usize);
+    assert!(size_of::<ImportSpecifier>() == 60usize);
     assert!(align_of::<ImportSpecifier>() == 4usize);
     assert!(offset_of!(ImportSpecifier, span) == 0usize);
     assert!(offset_of!(ImportSpecifier, imported) == 8usize);
-    assert!(offset_of!(ImportSpecifier, local) == 32usize);
-    assert!(offset_of!(ImportSpecifier, import_kind) == 52usize);
+    assert!(offset_of!(ImportSpecifier, local) == 36usize);
+    assert!(offset_of!(ImportSpecifier, import_kind) == 56usize);
 
     assert!(size_of::<ImportDefaultSpecifier>() == 28usize);
     assert!(align_of::<ImportDefaultSpecifier>() == 4usize);
@@ -2294,49 +2296,49 @@ const _: () = {
     assert!(offset_of!(WithClause, attributes_keyword) == 8usize);
     assert!(offset_of!(WithClause, with_entries) == 24usize);
 
-    assert!(size_of::<ImportAttribute>() == 44usize);
+    assert!(size_of::<ImportAttribute>() == 60usize);
     assert!(align_of::<ImportAttribute>() == 4usize);
     assert!(offset_of!(ImportAttribute, span) == 0usize);
     assert!(offset_of!(ImportAttribute, key) == 8usize);
-    assert!(offset_of!(ImportAttribute, value) == 28usize);
+    assert!(offset_of!(ImportAttribute, value) == 36usize);
 
-    assert!(size_of::<ImportAttributeKey>() == 20usize);
+    assert!(size_of::<ImportAttributeKey>() == 28usize);
     assert!(align_of::<ImportAttributeKey>() == 4usize);
 
-    assert!(size_of::<ExportNamedDeclaration>() == 56usize);
+    assert!(size_of::<ExportNamedDeclaration>() == 64usize);
     assert!(align_of::<ExportNamedDeclaration>() == 4usize);
     assert!(offset_of!(ExportNamedDeclaration, span) == 0usize);
     assert!(offset_of!(ExportNamedDeclaration, declaration) == 8usize);
     assert!(offset_of!(ExportNamedDeclaration, specifiers) == 16usize);
     assert!(offset_of!(ExportNamedDeclaration, source) == 32usize);
-    assert!(offset_of!(ExportNamedDeclaration, export_kind) == 48usize);
-    assert!(offset_of!(ExportNamedDeclaration, with_clause) == 52usize);
+    assert!(offset_of!(ExportNamedDeclaration, export_kind) == 56usize);
+    assert!(offset_of!(ExportNamedDeclaration, with_clause) == 60usize);
 
-    assert!(size_of::<ExportDefaultDeclaration>() == 40usize);
+    assert!(size_of::<ExportDefaultDeclaration>() == 44usize);
     assert!(align_of::<ExportDefaultDeclaration>() == 4usize);
     assert!(offset_of!(ExportDefaultDeclaration, span) == 0usize);
     assert!(offset_of!(ExportDefaultDeclaration, declaration) == 8usize);
     assert!(offset_of!(ExportDefaultDeclaration, exported) == 16usize);
 
-    assert!(size_of::<ExportAllDeclaration>() == 56usize);
+    assert!(size_of::<ExportAllDeclaration>() == 68usize);
     assert!(align_of::<ExportAllDeclaration>() == 4usize);
     assert!(offset_of!(ExportAllDeclaration, span) == 0usize);
     assert!(offset_of!(ExportAllDeclaration, exported) == 8usize);
-    assert!(offset_of!(ExportAllDeclaration, source) == 32usize);
-    assert!(offset_of!(ExportAllDeclaration, with_clause) == 48usize);
-    assert!(offset_of!(ExportAllDeclaration, export_kind) == 52usize);
+    assert!(offset_of!(ExportAllDeclaration, source) == 36usize);
+    assert!(offset_of!(ExportAllDeclaration, with_clause) == 60usize);
+    assert!(offset_of!(ExportAllDeclaration, export_kind) == 64usize);
 
-    assert!(size_of::<ExportSpecifier>() == 60usize);
+    assert!(size_of::<ExportSpecifier>() == 68usize);
     assert!(align_of::<ExportSpecifier>() == 4usize);
     assert!(offset_of!(ExportSpecifier, span) == 0usize);
     assert!(offset_of!(ExportSpecifier, local) == 8usize);
-    assert!(offset_of!(ExportSpecifier, exported) == 32usize);
-    assert!(offset_of!(ExportSpecifier, export_kind) == 56usize);
+    assert!(offset_of!(ExportSpecifier, exported) == 36usize);
+    assert!(offset_of!(ExportSpecifier, export_kind) == 64usize);
 
     assert!(size_of::<ExportDefaultDeclarationKind>() == 8usize);
     assert!(align_of::<ExportDefaultDeclarationKind>() == 4usize);
 
-    assert!(size_of::<ModuleExportName>() == 24usize);
+    assert!(size_of::<ModuleExportName>() == 28usize);
     assert!(align_of::<ModuleExportName>() == 4usize);
 
     assert!(size_of::<TSThisParameter>() == 20usize);
@@ -2646,19 +2648,19 @@ const _: () = {
     assert!(size_of::<TSTypePredicateName>() == 12usize);
     assert!(align_of::<TSTypePredicateName>() == 4usize);
 
-    assert!(size_of::<TSModuleDeclaration>() == 48usize);
+    assert!(size_of::<TSModuleDeclaration>() == 52usize);
     assert!(align_of::<TSModuleDeclaration>() == 4usize);
     assert!(offset_of!(TSModuleDeclaration, span) == 0usize);
     assert!(offset_of!(TSModuleDeclaration, id) == 8usize);
-    assert!(offset_of!(TSModuleDeclaration, body) == 32usize);
-    assert!(offset_of!(TSModuleDeclaration, kind) == 40usize);
-    assert!(offset_of!(TSModuleDeclaration, declare) == 41usize);
-    assert!(offset_of!(TSModuleDeclaration, scope_id) == 44usize);
+    assert!(offset_of!(TSModuleDeclaration, body) == 36usize);
+    assert!(offset_of!(TSModuleDeclaration, kind) == 44usize);
+    assert!(offset_of!(TSModuleDeclaration, declare) == 45usize);
+    assert!(offset_of!(TSModuleDeclaration, scope_id) == 48usize);
 
     assert!(size_of::<TSModuleDeclarationKind>() == 1usize);
     assert!(align_of::<TSModuleDeclarationKind>() == 1usize);
 
-    assert!(size_of::<TSModuleDeclarationName>() == 24usize);
+    assert!(size_of::<TSModuleDeclarationName>() == 28usize);
     assert!(align_of::<TSModuleDeclarationName>() == 4usize);
 
     assert!(size_of::<TSModuleDeclarationBody>() == 8usize);
@@ -2704,13 +2706,13 @@ const _: () = {
     assert!(offset_of!(TSImportAttributes, attributes_keyword) == 8usize);
     assert!(offset_of!(TSImportAttributes, elements) == 24usize);
 
-    assert!(size_of::<TSImportAttribute>() == 36usize);
+    assert!(size_of::<TSImportAttribute>() == 44usize);
     assert!(align_of::<TSImportAttribute>() == 4usize);
     assert!(offset_of!(TSImportAttribute, span) == 0usize);
     assert!(offset_of!(TSImportAttribute, name) == 8usize);
-    assert!(offset_of!(TSImportAttribute, value) == 28usize);
+    assert!(offset_of!(TSImportAttribute, value) == 36usize);
 
-    assert!(size_of::<TSImportAttributeName>() == 20usize);
+    assert!(size_of::<TSImportAttributeName>() == 28usize);
     assert!(align_of::<TSImportAttributeName>() == 4usize);
 
     assert!(size_of::<TSFunctionType>() == 24usize);
@@ -2776,7 +2778,7 @@ const _: () = {
     assert!(size_of::<TSModuleReference>() == 8usize);
     assert!(align_of::<TSModuleReference>() == 4usize);
 
-    assert!(size_of::<TSExternalModuleReference>() == 24usize);
+    assert!(size_of::<TSExternalModuleReference>() == 32usize);
     assert!(align_of::<TSExternalModuleReference>() == 4usize);
     assert!(offset_of!(TSExternalModuleReference, span) == 0usize);
     assert!(offset_of!(TSExternalModuleReference, expression) == 8usize);

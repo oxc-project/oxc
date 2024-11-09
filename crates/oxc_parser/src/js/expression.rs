@@ -396,9 +396,10 @@ impl<'a> ParserImpl<'a> {
             return Err(self.unexpected());
         }
         let value = self.cur_string();
+        let raw = self.cur_src();
         let span = self.start_span();
         self.bump_any();
-        Ok(self.ast.string_literal(self.end_span(span), value))
+        Ok(self.ast.string_literal(self.end_span(span), value, raw))
     }
 
     /// Section [Array Expression](https://tc39.es/ecma262/#prod-ArrayLiteral)

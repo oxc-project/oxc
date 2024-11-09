@@ -34,6 +34,13 @@ impl<'a> GetSpanMut for NumericLiteral<'a> {
     }
 }
 
+impl<'a> GetSpanMut for StringLiteral<'a> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
 impl<'a> GetSpanMut for BigIntLiteral<'a> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
@@ -42,13 +49,6 @@ impl<'a> GetSpanMut for BigIntLiteral<'a> {
 }
 
 impl<'a> GetSpanMut for RegExpLiteral<'a> {
-    #[inline]
-    fn span_mut(&mut self) -> &mut Span {
-        &mut self.span
-    }
-}
-
-impl<'a> GetSpanMut for StringLiteral<'a> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
