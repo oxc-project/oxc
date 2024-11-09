@@ -38,6 +38,8 @@ pub struct BabelPlugins {
     pub react_jsx_self: bool,
     pub react_jsx_source: bool,
     pub react_display_name: bool,
+    // modules
+    pub modules_commonjs: bool,
     // regexp
     pub sticky_flag: bool,
     pub unicode_flag: bool,
@@ -100,6 +102,7 @@ impl TryFrom<PluginPresetEntries> for BabelPlugins {
                 "transform-react-display-name" => p.react_display_name = true,
                 "transform-react-jsx-self" => p.react_jsx_self = true,
                 "transform-react-jsx-source" => p.react_jsx_source = true,
+                "transform-modules-commonjs" => p.modules_commonjs = true,
                 "transform-sticky-regex" => p.sticky_flag = true,
                 "transform-unicode-regex" => p.unicode_flag = true,
                 "transform-dotall-regex" => p.dot_all_flag = true,

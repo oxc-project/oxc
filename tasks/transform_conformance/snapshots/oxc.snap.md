@@ -1,6 +1,6 @@
 commit: d20b314c
 
-Passed: 82/91
+Passed: 82/92
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -168,8 +168,11 @@ rebuilt        : SymbolId(2): []
 x Output mismatch
 
 
-# babel-plugin-transform-react-jsx (31/33)
+# babel-plugin-transform-react-jsx (31/34)
 * refresh/does-not-transform-it-because-it-is-not-used-in-the-AST/input.jsx
+x Output mismatch
+
+* refresh/react-refresh/includes-custom-hooks-into-the-signatures-when-commonjs-target-is-used/input.jsx
 x Output mismatch
 
 * refresh/react-refresh/supports-typescript-namespace-syntax/input.tsx

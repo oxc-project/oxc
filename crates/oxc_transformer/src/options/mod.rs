@@ -164,7 +164,9 @@ impl TryFrom<&BabelOptions> for TransformOptions {
 
         let env = options.presets.env.unwrap_or_default();
 
-        let module = options.presets.env.as_ref().map(|env| env.module).unwrap_or_default();
+        let module = Module::try_from(&options.plugins).unwrap_or_else(|_| {
+            options.presets.env.as_ref().map(|env| env.module).unwrap_or_default()
+        });
 
         let regexp = RegExpOptions {
             sticky_flag: env.regexp.sticky_flag || options.plugins.sticky_flag,
