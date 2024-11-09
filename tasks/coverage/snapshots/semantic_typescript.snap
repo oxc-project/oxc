@@ -2,7 +2,7 @@ commit: df9d1650
 
 semantic_typescript Summary:
 AST Parsed     : 6490/6490 (100.00%)
-Positive Passed: 2621/6490 (40.39%)
+Positive Passed: 2666/6490 (41.08%)
 tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 semantic error: Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -1102,9 +1102,6 @@ rebuilt        : ScopeId(26): ["value"]
 Bindings mismatch:
 after transform: ScopeId(22): ["T", "value"]
 rebuilt        : ScopeId(29): ["value"]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(27): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Unresolved references mismatch:
 after transform: ["Promise", "arguments", "require"]
 rebuilt        : ["arguments", "require"]
@@ -1278,16 +1275,8 @@ Symbol reference IDs mismatch for "B":
 after transform: SymbolId(9): [ReferenceId(6), ReferenceId(9), ReferenceId(14)]
 rebuilt        : SymbolId(6): [ReferenceId(16)]
 
-tasks/coverage/typescript/tests/cases/compiler/asyncArrowInClassES5.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(4): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
 tasks/coverage/typescript/tests/cases/compiler/asyncAwaitWithCapturedBlockScopeVar.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(13): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Unresolved references mismatch:
+semantic error: Unresolved references mismatch:
 after transform: ["Promise", "arguments", "require"]
 rebuilt        : ["arguments", "require"]
 
@@ -1298,9 +1287,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "increment", "increment2"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(17), ScopeId(19), ScopeId(21), ScopeId(23), ScopeId(25)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(5), ScopeId(6), ScopeId(9), ScopeId(11), ScopeId(15), ScopeId(19)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(22): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Unresolved references mismatch:
 after transform: ["Promise", "PromiseLike", "arguments", "f", "g", "h", "require"]
 rebuilt        : ["Promise", "arguments", "f", "g", "h", "require"]
@@ -1309,10 +1295,7 @@ after transform: [ReferenceId(3), ReferenceId(6), ReferenceId(10), ReferenceId(1
 rebuilt        : [ReferenceId(3), ReferenceId(7), ReferenceId(12), ReferenceId(16), ReferenceId(21), ReferenceId(25)]
 
 tasks/coverage/typescript/tests/cases/compiler/asyncFunctionReturnType.2.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(2): SymbolFlags(Import)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
-Unresolved references mismatch:
+semantic error: Unresolved references mismatch:
 after transform: ["Promise", "require"]
 rebuilt        : ["require"]
 
@@ -1350,22 +1333,9 @@ rebuilt        : ScopeId(48): ["key", "obj"]
 Bindings mismatch:
 after transform: ScopeId(18): ["K", "TObj", "key", "obj"]
 rebuilt        : ScopeId(51): ["key", "obj"]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(49): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Unresolved reference IDs mismatch for "Promise":
 after transform: [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(8), ReferenceId(11), ReferenceId(13), ReferenceId(17), ReferenceId(21), ReferenceId(23), ReferenceId(26), ReferenceId(28), ReferenceId(33), ReferenceId(38), ReferenceId(40), ReferenceId(44), ReferenceId(46), ReferenceId(51), ReferenceId(56), ReferenceId(58), ReferenceId(62), ReferenceId(64), ReferenceId(71), ReferenceId(80), ReferenceId(83), ReferenceId(90), ReferenceId(93)]
 rebuilt        : [ReferenceId(24), ReferenceId(32), ReferenceId(47), ReferenceId(55), ReferenceId(70), ReferenceId(78), ReferenceId(93), ReferenceId(101), ReferenceId(117), ReferenceId(126)]
-
-tasks/coverage/typescript/tests/cases/compiler/asyncFunctionTempVariableScoping.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(5): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-tasks/coverage/typescript/tests/cases/compiler/asyncFunctionWithForStatementNoInitializer.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(10): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/asyncFunctionsAndStrictNullChecks.ts
 semantic error: Bindings mismatch:
@@ -1374,25 +1344,9 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_sample", "_sample2", "sampl
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(11), ScopeId(12), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(22): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Unresolved references mismatch:
 after transform: ["Promise", "Windows", "arguments", "require", "resolve1", "resolve2"]
 rebuilt        : ["arguments", "require", "resolve1", "resolve2"]
-
-tasks/coverage/typescript/tests/cases/compiler/asyncIIFE.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(2): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-tasks/coverage/typescript/tests/cases/compiler/asyncImportNestedYield.ts
-semantic error: Symbol flags mismatch for "_awaitAsyncGenerator":
-after transform: SymbolId(1): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "_wrapAsyncGenerator":
-after transform: SymbolId(3): SymbolFlags(Import)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/asyncYieldStarContextualType.ts
 semantic error: Bindings mismatch:
@@ -1401,18 +1355,6 @@ rebuilt        : ScopeId(0): ["_asyncGeneratorDelegate", "_asyncIterator", "_awa
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(8)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_awaitAsyncGenerator":
-after transform: SymbolId(17): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "_asyncIterator":
-after transform: SymbolId(18): SymbolFlags(Import)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "_asyncGeneratorDelegate":
-after transform: SymbolId(19): SymbolFlags(Import)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "_wrapAsyncGenerator":
-after transform: SymbolId(21): SymbolFlags(Import)
-rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "authorPromise":
 after transform: SymbolId(6) "authorPromise"
 rebuilt        : <None>
@@ -1578,11 +1520,6 @@ Unresolved references mismatch:
 after transform: []
 rebuilt        : ["foo"]
 
-tasks/coverage/typescript/tests/cases/compiler/awaitExpressionInnerCommentEmit.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(2): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
 tasks/coverage/typescript/tests/cases/compiler/awaitUnionPromise.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["AsyncEnumeratorDone", "IAsyncEnumerator", "_asyncToGenerator", "_main", "main"]
@@ -1590,9 +1527,6 @@ rebuilt        : ScopeId(0): ["AsyncEnumeratorDone", "_asyncToGenerator", "_main
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(8), ScopeId(9)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(10): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "AsyncEnumeratorDone":
 after transform: SymbolId(0): [ReferenceId(2), ReferenceId(6)]
 rebuilt        : SymbolId(1): []
@@ -1604,9 +1538,6 @@ tasks/coverage/typescript/tests/cases/compiler/awaitedTypeCrash.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["T"]
 rebuilt        : ScopeId(3): []
-Symbol flags mismatch for "_wrapAsyncGenerator":
-after transform: SymbolId(3): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Unresolved references mismatch:
 after transform: ["AsyncGenerator", "Promise", "arguments", "require"]
 rebuilt        : ["arguments", "require"]
@@ -2003,11 +1934,6 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
-tasks/coverage/typescript/tests/cases/compiler/castOfAwait.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(2): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
 tasks/coverage/typescript/tests/cases/compiler/castTest.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(5), ScopeId(6)]
@@ -2134,11 +2060,6 @@ rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
 after transform: ["this"]
 rebuilt        : []
-
-tasks/coverage/typescript/tests/cases/compiler/circularInferredTypeOfVariable.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(6): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/circularInstantiationExpression.ts
 semantic error: Scope children mismatch:
@@ -5466,10 +5387,7 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/contextualReturnTypeOfIIFE.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(4): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Unresolved reference IDs mismatch for "Promise":
+semantic error: Unresolved reference IDs mismatch for "Promise":
 after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 rebuilt        : [ReferenceId(2)]
 
@@ -5839,9 +5757,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "cb1", "cb2", "cb3", "fn1"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(5), ScopeId(7), ScopeId(8), ScopeId(12), ScopeId(14), ScopeId(16), ScopeId(17), ScopeId(19)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(6), ScopeId(8), ScopeId(12), ScopeId(15)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(12): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Unresolved references mismatch:
 after transform: ["Promise", "Record", "StateMachine", "arguments", "createMachine", "load", "require"]
 rebuilt        : ["Promise", "arguments", "createMachine", "load", "require"]
@@ -5856,12 +5771,6 @@ rebuilt        : ScopeId(0): ["_awaitAsyncGenerator", "_wrapAsyncGenerator", "te
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_awaitAsyncGenerator":
-after transform: SymbolId(6): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "_wrapAsyncGenerator":
-after transform: SymbolId(7): SymbolFlags(Import)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 Unresolved references mismatch:
 after transform: ["AsyncGenerator", "Generator", "Promise", "require"]
 rebuilt        : ["Promise", "require"]
@@ -6165,9 +6074,6 @@ rebuilt        : ScopeId(0): ["Foo", "_asyncToGenerator", "_test", "test"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(6), ScopeId(7), ScopeId(13), ScopeId(15), ScopeId(22), ScopeId(23)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(8)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(9): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Unresolved references mismatch:
 after transform: ["Aborter", "Promise", "arguments", "require", "test1", "test2", "undefined"]
 rebuilt        : ["Aborter", "arguments", "require", "test1", "test2", "undefined"]
@@ -6300,9 +6206,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_countEverything", "countEve
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(11), ScopeId(12)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(12): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Unresolved reference IDs mismatch for "Promise":
 after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(5), ReferenceId(16), ReferenceId(17)]
 rebuilt        : [ReferenceId(11), ReferenceId(22)]
@@ -6454,9 +6357,6 @@ tasks/coverage/typescript/tests/cases/compiler/customAsyncIterator.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["T"]
 rebuilt        : ScopeId(1): []
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(5): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Unresolved references mismatch:
 after transform: ["AsyncIterator", "Error", "IteratorResult", "Promise", "require"]
 rebuilt        : ["Error", "require"]
@@ -10214,9 +10114,6 @@ tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataPromise.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["A", "_asyncToGenerator", "decorator"]
 rebuilt        : ScopeId(0): ["A", "_asyncToGenerator"]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(3): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "decorator":
 after transform: SymbolId(0) "decorator"
 rebuilt        : <None>
@@ -10712,9 +10609,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_main", "main"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(6), ScopeId(7)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(13): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Unresolved references mismatch:
 after transform: ["Promise", "arguments", "get", "require"]
 rebuilt        : ["arguments", "get", "require"]
@@ -10981,9 +10875,6 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(23), ScopeId(24), ScopeId(25)]
 Bindings mismatch:
 after transform: ScopeId(2): ["R", "T", "U", "_mapResult", "callback", "iterable", "iterator", "mapResult"]
 rebuilt        : ScopeId(1): ["_mapResult", "callback", "iterable", "iterator", "mapResult"]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(22): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Unresolved references mismatch:
 after transform: ["AsyncGenerator", "AsyncIterable", "IteratorResult", "Promise", "Symbol", "arguments", "require", "undefined"]
 rebuilt        : ["Promise", "Symbol", "arguments", "require", "undefined"]
@@ -11567,11 +11458,6 @@ rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2)]
 Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
-
-tasks/coverage/typescript/tests/cases/compiler/dynamicImportEvaluateSpecifier.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(6): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/dynamicNames.ts
 semantic error: Bindings mismatch:
@@ -12193,10 +12079,7 @@ after transform: ["Error", "Function", "Object", "RangeError"]
 rebuilt        : ["Error", "RangeError", "x"]
 
 tasks/coverage/typescript/tests/cases/compiler/es2017basicAsync.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(6): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Unresolved references mismatch:
+semantic error: Unresolved references mismatch:
 after transform: ["Promise", "arguments", "require"]
 rebuilt        : ["arguments", "require"]
 
@@ -12215,9 +12098,6 @@ tasks/coverage/typescript/tests/cases/compiler/es5-asyncFunction.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["_asyncToGenerator", "_empty", "_singleAwait", "empty", "singleAwait", "x"]
 rebuilt        : ScopeId(0): ["_asyncToGenerator", "_empty", "_singleAwait", "empty", "singleAwait"]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(4): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "x":
 after transform: SymbolId(0) "x"
 rebuilt        : <None>
@@ -12229,9 +12109,6 @@ tasks/coverage/typescript/tests/cases/compiler/es5-asyncFunctionArrayLiterals.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["_arrayLiteral", "_arrayLiteral2", "_arrayLiteral3", "_arrayLiteral4", "_arrayLiteral5", "_arrayLiteral6", "_arrayLiteral7", "_arrayLiteral8", "_asyncToGenerator", "a", "arrayLiteral0", "arrayLiteral1", "arrayLiteral2", "arrayLiteral3", "arrayLiteral4", "arrayLiteral5", "arrayLiteral6", "arrayLiteral7", "x", "y", "z"]
 rebuilt        : ScopeId(0): ["_arrayLiteral", "_arrayLiteral2", "_arrayLiteral3", "_arrayLiteral4", "_arrayLiteral5", "_arrayLiteral6", "_arrayLiteral7", "_arrayLiteral8", "_asyncToGenerator", "arrayLiteral0", "arrayLiteral1", "arrayLiteral2", "arrayLiteral3", "arrayLiteral4", "arrayLiteral5", "arrayLiteral6", "arrayLiteral7"]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(13): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "x":
 after transform: SymbolId(0) "x"
 rebuilt        : <None>
@@ -12318,9 +12195,6 @@ tasks/coverage/typescript/tests/cases/compiler/es5-asyncFunctionBinaryExpression
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["_asyncToGenerator", "_binaryAssignment", "_binaryAssignment10", "_binaryAssignment11", "_binaryAssignment12", "_binaryAssignment13", "_binaryAssignment14", "_binaryAssignment2", "_binaryAssignment3", "_binaryAssignment4", "_binaryAssignment5", "_binaryAssignment6", "_binaryAssignment7", "_binaryAssignment8", "_binaryAssignment9", "_binaryComma", "_binaryComma2", "_binaryCompoundAssignment", "_binaryCompoundAssignment2", "_binaryCompoundAssignment3", "_binaryCompoundAssignment4", "_binaryCompoundAssignment5", "_binaryCompoundAssignment6", "_binaryCompoundAssignment7", "_binaryCompoundAssignment8", "_binaryCompoundAssignment9", "_binaryExponentiation", "_binaryLogicalAnd", "_binaryLogicalAnd2", "_binaryPlus", "_binaryPlus2", "a", "b", "binaryAssignment0", "binaryAssignment1", "binaryAssignment10", "binaryAssignment11", "binaryAssignment12", "binaryAssignment13", "binaryAssignment2", "binaryAssignment3", "binaryAssignment4", "binaryAssignment5", "binaryAssignment6", "binaryAssignment7", "binaryAssignment8", "binaryAssignment9", "binaryComma0", "binaryComma1", "binaryCompoundAssignment0", "binaryCompoundAssignment1", "binaryCompoundAssignment2", "binaryCompoundAssignment3", "binaryCompoundAssignment4", "binaryCompoundAssignment5", "binaryCompoundAssignment6", "binaryCompoundAssignment7", "binaryCompoundAssignment8", "binaryExponentiation", "binaryLogicalAnd0", "binaryLogicalAnd1", "binaryPlus0", "binaryPlus1", "c", "x", "y", "z"]
 rebuilt        : ScopeId(0): ["_asyncToGenerator", "_binaryAssignment", "_binaryAssignment10", "_binaryAssignment11", "_binaryAssignment12", "_binaryAssignment13", "_binaryAssignment14", "_binaryAssignment2", "_binaryAssignment3", "_binaryAssignment4", "_binaryAssignment5", "_binaryAssignment6", "_binaryAssignment7", "_binaryAssignment8", "_binaryAssignment9", "_binaryComma", "_binaryComma2", "_binaryCompoundAssignment", "_binaryCompoundAssignment2", "_binaryCompoundAssignment3", "_binaryCompoundAssignment4", "_binaryCompoundAssignment5", "_binaryCompoundAssignment6", "_binaryCompoundAssignment7", "_binaryCompoundAssignment8", "_binaryCompoundAssignment9", "_binaryExponentiation", "_binaryLogicalAnd", "_binaryLogicalAnd2", "_binaryPlus", "_binaryPlus2", "binaryAssignment0", "binaryAssignment1", "binaryAssignment10", "binaryAssignment11", "binaryAssignment12", "binaryAssignment13", "binaryAssignment2", "binaryAssignment3", "binaryAssignment4", "binaryAssignment5", "binaryAssignment6", "binaryAssignment7", "binaryAssignment8", "binaryAssignment9", "binaryComma0", "binaryComma1", "binaryCompoundAssignment0", "binaryCompoundAssignment1", "binaryCompoundAssignment2", "binaryCompoundAssignment3", "binaryCompoundAssignment4", "binaryCompoundAssignment5", "binaryCompoundAssignment6", "binaryCompoundAssignment7", "binaryCompoundAssignment8", "binaryExponentiation", "binaryLogicalAnd0", "binaryLogicalAnd1", "binaryPlus0", "binaryPlus1"]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(37): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "x":
 after transform: SymbolId(0) "x"
 rebuilt        : <None>
@@ -12557,9 +12431,6 @@ tasks/coverage/typescript/tests/cases/compiler/es5-asyncFunctionCallExpressions.
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["_asyncToGenerator", "_callExpression", "_callExpression10", "_callExpression11", "_callExpression12", "_callExpression13", "_callExpression14", "_callExpression15", "_callExpression16", "_callExpression17", "_callExpression18", "_callExpression19", "_callExpression2", "_callExpression20", "_callExpression21", "_callExpression3", "_callExpression4", "_callExpression5", "_callExpression6", "_callExpression7", "_callExpression8", "_callExpression9", "a", "b", "c", "callExpression0", "callExpression1", "callExpression10", "callExpression11", "callExpression12", "callExpression13", "callExpression14", "callExpression15", "callExpression16", "callExpression17", "callExpression18", "callExpression19", "callExpression2", "callExpression20", "callExpression3", "callExpression4", "callExpression5", "callExpression6", "callExpression7", "callExpression8", "callExpression9", "x", "y", "z"]
 rebuilt        : ScopeId(0): ["_asyncToGenerator", "_callExpression", "_callExpression10", "_callExpression11", "_callExpression12", "_callExpression13", "_callExpression14", "_callExpression15", "_callExpression16", "_callExpression17", "_callExpression18", "_callExpression19", "_callExpression2", "_callExpression20", "_callExpression21", "_callExpression3", "_callExpression4", "_callExpression5", "_callExpression6", "_callExpression7", "_callExpression8", "_callExpression9", "callExpression0", "callExpression1", "callExpression10", "callExpression11", "callExpression12", "callExpression13", "callExpression14", "callExpression15", "callExpression16", "callExpression17", "callExpression18", "callExpression19", "callExpression2", "callExpression20", "callExpression3", "callExpression4", "callExpression5", "callExpression6", "callExpression7", "callExpression8", "callExpression9"]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(28): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "x":
 after transform: SymbolId(0) "x"
 rebuilt        : <None>
@@ -12775,9 +12646,6 @@ tasks/coverage/typescript/tests/cases/compiler/es5-asyncFunctionConditionals.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["_asyncToGenerator", "_conditional", "_conditional2", "_conditional3", "a", "b", "c", "conditional0", "conditional1", "conditional2", "x", "y", "z"]
 rebuilt        : ScopeId(0): ["_asyncToGenerator", "_conditional", "_conditional2", "_conditional3", "conditional0", "conditional1", "conditional2"]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(10): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "a":
 after transform: SymbolId(3) "a"
 rebuilt        : <None>
@@ -12822,9 +12690,6 @@ tasks/coverage/typescript/tests/cases/compiler/es5-asyncFunctionDoStatements.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["_asyncToGenerator", "_doStatement", "_doStatement10", "_doStatement11", "_doStatement12", "_doStatement13", "_doStatement14", "_doStatement15", "_doStatement16", "_doStatement17", "_doStatement18", "_doStatement19", "_doStatement2", "_doStatement3", "_doStatement4", "_doStatement5", "_doStatement6", "_doStatement7", "_doStatement8", "_doStatement9", "a", "b", "c", "doStatement0", "doStatement1", "doStatement10", "doStatement11", "doStatement12", "doStatement13", "doStatement14", "doStatement15", "doStatement16", "doStatement17", "doStatement18", "doStatement2", "doStatement3", "doStatement4", "doStatement5", "doStatement6", "doStatement7", "doStatement8", "doStatement9", "x", "y", "z"]
 rebuilt        : ScopeId(0): ["_asyncToGenerator", "_doStatement", "_doStatement10", "_doStatement11", "_doStatement12", "_doStatement13", "_doStatement14", "_doStatement15", "_doStatement16", "_doStatement17", "_doStatement18", "_doStatement19", "_doStatement2", "_doStatement3", "_doStatement4", "_doStatement5", "_doStatement6", "_doStatement7", "_doStatement8", "_doStatement9", "doStatement0", "doStatement1", "doStatement10", "doStatement11", "doStatement12", "doStatement13", "doStatement14", "doStatement15", "doStatement16", "doStatement17", "doStatement18", "doStatement2", "doStatement3", "doStatement4", "doStatement5", "doStatement6", "doStatement7", "doStatement8", "doStatement9"]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(26): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "x":
 after transform: SymbolId(0) "x"
 rebuilt        : <None>
@@ -12923,9 +12788,6 @@ tasks/coverage/typescript/tests/cases/compiler/es5-asyncFunctionElementAccess.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["_asyncToGenerator", "_elementAccess", "_elementAccess2", "_elementAccess3", "a", "b", "c", "elementAccess0", "elementAccess1", "elementAccess2", "x", "y", "z"]
 rebuilt        : ScopeId(0): ["_asyncToGenerator", "_elementAccess", "_elementAccess2", "_elementAccess3", "elementAccess0", "elementAccess1", "elementAccess2"]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(10): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "z":
 after transform: SymbolId(2) "z"
 rebuilt        : <None>
@@ -12961,9 +12823,6 @@ tasks/coverage/typescript/tests/cases/compiler/es5-asyncFunctionForInStatements.
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["_asyncToGenerator", "_forInStatement", "_forInStatement2", "_forInStatement3", "_forInStatement4", "_forInStatement5", "_forInStatement6", "_forInStatement7", "_forInStatement8", "_forInStatement9", "a", "b", "c", "forInStatement0", "forInStatement1", "forInStatement2", "forInStatement3", "forInStatement4", "forInStatement5", "forInStatement6", "forInStatement7", "forInStatement8", "x", "y", "z"]
 rebuilt        : ScopeId(0): ["_asyncToGenerator", "_forInStatement", "_forInStatement2", "_forInStatement3", "_forInStatement4", "_forInStatement5", "_forInStatement6", "_forInStatement7", "_forInStatement8", "_forInStatement9", "forInStatement0", "forInStatement1", "forInStatement2", "forInStatement3", "forInStatement4", "forInStatement5", "forInStatement6", "forInStatement7", "forInStatement8"]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(19): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "x":
 after transform: SymbolId(0) "x"
 rebuilt        : <None>
@@ -13044,9 +12903,6 @@ tasks/coverage/typescript/tests/cases/compiler/es5-asyncFunctionForOfStatements.
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["_asyncToGenerator", "_forOfStatement", "_forOfStatement10", "_forOfStatement11", "_forOfStatement12", "_forOfStatement13", "_forOfStatement14", "_forOfStatement15", "_forOfStatement16", "_forOfStatement17", "_forOfStatement18", "_forOfStatement19", "_forOfStatement2", "_forOfStatement3", "_forOfStatement4", "_forOfStatement5", "_forOfStatement6", "_forOfStatement7", "_forOfStatement8", "_forOfStatement9", "a", "b", "c", "forOfStatement0", "forOfStatement1", "forOfStatement10", "forOfStatement11", "forOfStatement12", "forOfStatement13", "forOfStatement14", "forOfStatement15", "forOfStatement16", "forOfStatement17", "forOfStatement18", "forOfStatement2", "forOfStatement3", "forOfStatement4", "forOfStatement5", "forOfStatement6", "forOfStatement7", "forOfStatement8", "forOfStatement9", "x", "y", "z"]
 rebuilt        : ScopeId(0): ["_asyncToGenerator", "_forOfStatement", "_forOfStatement10", "_forOfStatement11", "_forOfStatement12", "_forOfStatement13", "_forOfStatement14", "_forOfStatement15", "_forOfStatement16", "_forOfStatement17", "_forOfStatement18", "_forOfStatement19", "_forOfStatement2", "_forOfStatement3", "_forOfStatement4", "_forOfStatement5", "_forOfStatement6", "_forOfStatement7", "_forOfStatement8", "_forOfStatement9", "forOfStatement0", "forOfStatement1", "forOfStatement10", "forOfStatement11", "forOfStatement12", "forOfStatement13", "forOfStatement14", "forOfStatement15", "forOfStatement16", "forOfStatement17", "forOfStatement18", "forOfStatement2", "forOfStatement3", "forOfStatement4", "forOfStatement5", "forOfStatement6", "forOfStatement7", "forOfStatement8", "forOfStatement9"]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(29): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "x":
 after transform: SymbolId(0) "x"
 rebuilt        : <None>
@@ -13235,9 +13091,6 @@ tasks/coverage/typescript/tests/cases/compiler/es5-asyncFunctionForStatements.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["_asyncToGenerator", "_forStatement", "_forStatement2", "_forStatement3", "_forStatement4", "_forStatement5", "_forStatement6", "_forStatement7", "a", "b", "c", "forStatement0", "forStatement1", "forStatement2", "forStatement3", "forStatement4", "forStatement5", "forStatement6", "x", "y", "z"]
 rebuilt        : ScopeId(0): ["_asyncToGenerator", "_forStatement", "_forStatement2", "_forStatement3", "_forStatement4", "_forStatement5", "_forStatement6", "_forStatement7", "forStatement0", "forStatement1", "forStatement2", "forStatement3", "forStatement4", "forStatement5", "forStatement6"]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(16): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "x":
 after transform: SymbolId(0) "x"
 rebuilt        : <None>
@@ -13327,9 +13180,6 @@ tasks/coverage/typescript/tests/cases/compiler/es5-asyncFunctionHoisting.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["_asyncToGenerator", "_hoisting", "_hoistingWithAwait", "hoisting", "hoistingWithAwait", "y"]
 rebuilt        : ScopeId(0): ["_asyncToGenerator", "_hoisting", "_hoistingWithAwait", "hoisting", "hoistingWithAwait"]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(24): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "y":
 after transform: SymbolId(0) "y"
 rebuilt        : <None>
@@ -13356,9 +13206,6 @@ tasks/coverage/typescript/tests/cases/compiler/es5-asyncFunctionIfStatements.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["_asyncToGenerator", "_ifStatement", "_ifStatement2", "_ifStatement3", "a", "b", "c", "ifStatement1", "ifStatement2", "ifStatement3", "x", "y", "z"]
 rebuilt        : ScopeId(0): ["_asyncToGenerator", "_ifStatement", "_ifStatement2", "_ifStatement3", "ifStatement1", "ifStatement2", "ifStatement3"]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(10): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "x":
 after transform: SymbolId(0) "x"
 rebuilt        : <None>
@@ -13390,18 +13237,10 @@ Unresolved references mismatch:
 after transform: ["arguments", "require"]
 rebuilt        : ["arguments", "require", "x", "y", "z"]
 
-tasks/coverage/typescript/tests/cases/compiler/es5-asyncFunctionLongObjectLiteral.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(4): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
 tasks/coverage/typescript/tests/cases/compiler/es5-asyncFunctionNestedLoops.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["_asyncToGenerator", "_nestedLoops", "a", "b", "c", "nestedLoops", "x", "y", "z"]
 rebuilt        : ScopeId(0): ["_asyncToGenerator", "_nestedLoops", "nestedLoops"]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(8): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "x":
 after transform: SymbolId(0) "x"
 rebuilt        : <None>
@@ -13422,9 +13261,6 @@ tasks/coverage/typescript/tests/cases/compiler/es5-asyncFunctionNewExpressions.t
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["_asyncToGenerator", "_newExpression", "_newExpression10", "_newExpression11", "_newExpression12", "_newExpression13", "_newExpression14", "_newExpression15", "_newExpression16", "_newExpression17", "_newExpression18", "_newExpression19", "_newExpression2", "_newExpression20", "_newExpression21", "_newExpression3", "_newExpression4", "_newExpression5", "_newExpression6", "_newExpression7", "_newExpression8", "_newExpression9", "a", "b", "c", "newExpression0", "newExpression1", "newExpression10", "newExpression11", "newExpression12", "newExpression13", "newExpression14", "newExpression15", "newExpression16", "newExpression17", "newExpression18", "newExpression19", "newExpression2", "newExpression20", "newExpression3", "newExpression4", "newExpression5", "newExpression6", "newExpression7", "newExpression8", "newExpression9", "x", "y", "z"]
 rebuilt        : ScopeId(0): ["_asyncToGenerator", "_newExpression", "_newExpression10", "_newExpression11", "_newExpression12", "_newExpression13", "_newExpression14", "_newExpression15", "_newExpression16", "_newExpression17", "_newExpression18", "_newExpression19", "_newExpression2", "_newExpression20", "_newExpression21", "_newExpression3", "_newExpression4", "_newExpression5", "_newExpression6", "_newExpression7", "_newExpression8", "_newExpression9", "newExpression0", "newExpression1", "newExpression10", "newExpression11", "newExpression12", "newExpression13", "newExpression14", "newExpression15", "newExpression16", "newExpression17", "newExpression18", "newExpression19", "newExpression2", "newExpression20", "newExpression3", "newExpression4", "newExpression5", "newExpression6", "newExpression7", "newExpression8", "newExpression9"]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(28): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "x":
 after transform: SymbolId(0) "x"
 rebuilt        : <None>
@@ -13640,9 +13476,6 @@ tasks/coverage/typescript/tests/cases/compiler/es5-asyncFunctionObjectLiterals.t
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["_asyncToGenerator", "_objectLiteral", "_objectLiteral2", "_objectLiteral3", "_objectLiteral4", "_objectLiteral5", "_objectLiteral6", "_objectLiteral7", "a", "b", "c", "objectLiteral0", "objectLiteral1", "objectLiteral2", "objectLiteral3", "objectLiteral4", "objectLiteral5", "objectLiteral6", "x", "y", "z"]
 rebuilt        : ScopeId(0): ["_asyncToGenerator", "_objectLiteral", "_objectLiteral2", "_objectLiteral3", "_objectLiteral4", "_objectLiteral5", "_objectLiteral6", "_objectLiteral7", "objectLiteral0", "objectLiteral1", "objectLiteral2", "objectLiteral3", "objectLiteral4", "objectLiteral5", "objectLiteral6"]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(14): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "x":
 after transform: SymbolId(0) "x"
 rebuilt        : <None>
@@ -13729,9 +13562,6 @@ tasks/coverage/typescript/tests/cases/compiler/es5-asyncFunctionPropertyAccess.t
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["_asyncToGenerator", "_callExpression", "_propertyAccess", "_propertyAccess2", "a", "b", "c", "callExpression0", "propertyAccess0", "propertyAccess1", "x", "y", "z"]
 rebuilt        : ScopeId(0): ["_asyncToGenerator", "_callExpression", "_propertyAccess", "_propertyAccess2", "callExpression0", "propertyAccess0", "propertyAccess1"]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(10): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "y":
 after transform: SymbolId(1) "y"
 rebuilt        : <None>
@@ -13761,9 +13591,6 @@ tasks/coverage/typescript/tests/cases/compiler/es5-asyncFunctionReturnStatements
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["_asyncToGenerator", "_returnStatement", "_returnStatement2", "_returnStatement3", "_returnStatement4", "_returnStatement5", "_returnStatement6", "a", "b", "c", "returnStatement0", "returnStatement1", "returnStatement2", "returnStatement3", "returnStatement4", "returnStatement5", "x", "y", "z"]
 rebuilt        : ScopeId(0): ["_asyncToGenerator", "_returnStatement", "_returnStatement2", "_returnStatement3", "_returnStatement4", "_returnStatement5", "_returnStatement6", "returnStatement0", "returnStatement1", "returnStatement2", "returnStatement3", "returnStatement4", "returnStatement5"]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(13): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "x":
 after transform: SymbolId(0) "x"
 rebuilt        : <None>
@@ -13784,9 +13611,6 @@ tasks/coverage/typescript/tests/cases/compiler/es5-asyncFunctionSwitchStatements
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["_asyncToGenerator", "_switchStatement", "_switchStatement2", "_switchStatement3", "_switchStatement4", "_switchStatement5", "_switchStatement6", "_switchStatement7", "_switchStatement8", "_switchStatement9", "a", "b", "c", "switchStatement0", "switchStatement1", "switchStatement2", "switchStatement3", "switchStatement4", "switchStatement5", "switchStatement6", "switchStatement7", "switchStatement8", "x", "y", "z"]
 rebuilt        : ScopeId(0): ["_asyncToGenerator", "_switchStatement", "_switchStatement2", "_switchStatement3", "_switchStatement4", "_switchStatement5", "_switchStatement6", "_switchStatement7", "_switchStatement8", "_switchStatement9", "switchStatement0", "switchStatement1", "switchStatement2", "switchStatement3", "switchStatement4", "switchStatement5", "switchStatement6", "switchStatement7", "switchStatement8"]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(16): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "x":
 after transform: SymbolId(0) "x"
 rebuilt        : <None>
@@ -13924,9 +13748,6 @@ tasks/coverage/typescript/tests/cases/compiler/es5-asyncFunctionTryStatements.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["_asyncToGenerator", "_tryCatch", "_tryCatch2", "_tryCatch3", "_tryCatch4", "_tryCatchFinally", "_tryCatchFinally2", "_tryCatchFinally3", "_tryCatchFinally4", "_tryFinally", "_tryFinally2", "_tryFinally3", "a", "b", "c", "tryCatch0", "tryCatch1", "tryCatch2", "tryCatch3", "tryCatchFinally0", "tryCatchFinally1", "tryCatchFinally2", "tryCatchFinally3", "tryFinally0", "tryFinally1", "tryFinally2", "x", "y", "z"]
 rebuilt        : ScopeId(0): ["_asyncToGenerator", "_tryCatch", "_tryCatch2", "_tryCatch3", "_tryCatch4", "_tryCatchFinally", "_tryCatchFinally2", "_tryCatchFinally3", "_tryCatchFinally4", "_tryFinally", "_tryFinally2", "_tryFinally3", "tryCatch0", "tryCatch1", "tryCatch2", "tryCatch3", "tryCatchFinally0", "tryCatchFinally1", "tryCatchFinally2", "tryCatchFinally3", "tryFinally0", "tryFinally1", "tryFinally2"]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(52): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Unresolved references mismatch:
 after transform: ["Function", "Promise", "arguments", "require"]
 rebuilt        : ["arguments", "require"]
@@ -13935,9 +13756,6 @@ tasks/coverage/typescript/tests/cases/compiler/es5-asyncFunctionWhileStatements.
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["_asyncToGenerator", "_whileStatement", "_whileStatement10", "_whileStatement11", "_whileStatement12", "_whileStatement13", "_whileStatement14", "_whileStatement15", "_whileStatement16", "_whileStatement17", "_whileStatement18", "_whileStatement19", "_whileStatement2", "_whileStatement3", "_whileStatement4", "_whileStatement5", "_whileStatement6", "_whileStatement7", "_whileStatement8", "_whileStatement9", "a", "b", "c", "whileStatement0", "whileStatement1", "whileStatement10", "whileStatement11", "whileStatement12", "whileStatement13", "whileStatement14", "whileStatement15", "whileStatement16", "whileStatement17", "whileStatement18", "whileStatement2", "whileStatement3", "whileStatement4", "whileStatement5", "whileStatement6", "whileStatement7", "whileStatement8", "whileStatement9", "x", "y", "z"]
 rebuilt        : ScopeId(0): ["_asyncToGenerator", "_whileStatement", "_whileStatement10", "_whileStatement11", "_whileStatement12", "_whileStatement13", "_whileStatement14", "_whileStatement15", "_whileStatement16", "_whileStatement17", "_whileStatement18", "_whileStatement19", "_whileStatement2", "_whileStatement3", "_whileStatement4", "_whileStatement5", "_whileStatement6", "_whileStatement7", "_whileStatement8", "_whileStatement9", "whileStatement0", "whileStatement1", "whileStatement10", "whileStatement11", "whileStatement12", "whileStatement13", "whileStatement14", "whileStatement15", "whileStatement16", "whileStatement17", "whileStatement18", "whileStatement2", "whileStatement3", "whileStatement4", "whileStatement5", "whileStatement6", "whileStatement7", "whileStatement8", "whileStatement9"]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(26): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "x":
 after transform: SymbolId(0) "x"
 rebuilt        : <None>
@@ -15996,12 +15814,6 @@ tasks/coverage/typescript/tests/cases/compiler/forAwaitForUnion.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["T", "_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "source"]
 rebuilt        : ScopeId(3): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "source"]
-Symbol flags mismatch for "_asyncIterator":
-after transform: SymbolId(5): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(13): SymbolFlags(Import)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 Unresolved references mismatch:
 after transform: ["AsyncIterable", "Iterable", "arguments", "require"]
 rebuilt        : ["arguments", "require"]
@@ -16621,11 +16433,6 @@ rebuilt        : SymbolId(4): [ReferenceId(2)]
 Symbol reference IDs mismatch for "x":
 after transform: SymbolId(5): [ReferenceId(2), ReferenceId(3)]
 rebuilt        : SymbolId(5): [ReferenceId(0)]
-
-tasks/coverage/typescript/tests/cases/compiler/generatorTransformFinalLabel.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(4): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/genericAndNonGenericOverload1.ts
 semantic error: Bindings mismatch:
@@ -19458,9 +19265,6 @@ rebuilt        : ScopeId(1): []
 Scope children mismatch:
 after transform: ScopeId(3): [ScopeId(4)]
 rebuilt        : ScopeId(1): []
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(34): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "SomeAbstractClass":
 after transform: SymbolId(3): [ReferenceId(8), ReferenceId(12), ReferenceId(15), ReferenceId(18)]
 rebuilt        : SymbolId(1): [ReferenceId(2)]
@@ -21902,9 +21706,6 @@ rebuilt        : ScopeId(0): ["MyMap", "_source", "_wrapAsyncGenerator", "double
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(14), ScopeId(15)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4)]
-Symbol flags mismatch for "_wrapAsyncGenerator":
-after transform: SymbolId(18): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "map":
 after transform: SymbolId(0) "map"
 rebuilt        : <None>
@@ -21934,11 +21735,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["shouldBeIdentity"]
 rebuilt        : ["p1", "shouldBeIdentity"]
-
-tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationAwaitModifier.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(1): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/jsdocAccessEnumType.ts
 semantic error: Bindings mismatch:
@@ -23775,21 +23571,10 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
-tasks/coverage/typescript/tests/cases/compiler/modularizeLibrary_Dom.asynciterable.ts
-semantic error: Symbol flags mismatch for "_asyncIterator":
-after transform: SymbolId(4): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(12): SymbolFlags(Import)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
-
 tasks/coverage/typescript/tests/cases/compiler/modularizeLibrary_NoErrorDuplicateLibOptions1.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["Baz", "_asyncToGenerator", "_out", "console", "f", "gen", "gen2", "m", "o", "o1", "out", "p", "reg", "s", "str", "t"]
 rebuilt        : ScopeId(0): ["Baz", "_asyncToGenerator", "_out", "f", "gen", "gen2", "m", "o", "o1", "out", "p", "reg", "s", "str", "t"]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(24): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "console":
 after transform: SymbolId(15) "console"
 rebuilt        : <None>
@@ -23801,9 +23586,6 @@ tasks/coverage/typescript/tests/cases/compiler/modularizeLibrary_NoErrorDuplicat
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["Baz", "_asyncToGenerator", "_out", "console", "f", "gen", "gen2", "m", "o", "o1", "out", "p", "reg", "s", "str", "t"]
 rebuilt        : ScopeId(0): ["Baz", "_asyncToGenerator", "_out", "f", "gen", "gen2", "m", "o", "o1", "out", "p", "reg", "s", "str", "t"]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(24): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "console":
 after transform: SymbolId(15) "console"
 rebuilt        : <None>
@@ -23815,23 +23597,12 @@ tasks/coverage/typescript/tests/cases/compiler/modularizeLibrary_TargetES5UsingE
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["Baz", "_asyncToGenerator", "_out", "console", "f", "gen", "gen2", "m", "o", "o1", "out", "p", "reg", "s", "str", "t"]
 rebuilt        : ScopeId(0): ["Baz", "_asyncToGenerator", "_out", "f", "gen", "gen2", "m", "o", "o1", "out", "p", "reg", "s", "str", "t"]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(24): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "console":
 after transform: SymbolId(15) "console"
 rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Array", "Map", "Math", "Promise", "Proxy", "Reflect", "RegExp", "Symbol", "arguments", "require"]
 rebuilt        : ["Array", "Map", "Math", "Promise", "Proxy", "Reflect", "RegExp", "Symbol", "arguments", "console", "require"]
-
-tasks/coverage/typescript/tests/cases/compiler/modularizeLibrary_Worker.asynciterable.ts
-semantic error: Symbol flags mismatch for "_asyncIterator":
-after transform: SymbolId(4): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(12): SymbolFlags(Import)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAliasAsFunctionArgument.ts
 semantic error: Missing SymbolId: "a"
@@ -26175,11 +25946,6 @@ Bindings mismatch:
 after transform: ScopeId(2): ["T", "f", "x"]
 rebuilt        : ScopeId(2): ["f", "x"]
 
-tasks/coverage/typescript/tests/cases/compiler/noImplicitReturnsInAsync1.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(4): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
 tasks/coverage/typescript/tests/cases/compiler/noImplicitReturnsWithProtectedBlocks1.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
@@ -26803,11 +26569,6 @@ Unresolved references mismatch:
 after transform: ["File", "setupImages"]
 rebuilt        : ["setupImages", "test"]
 
-tasks/coverage/typescript/tests/cases/compiler/objectRestSpread.ts
-semantic error: Symbol flags mismatch for "_wrapAsyncGenerator":
-after transform: SymbolId(11): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
 tasks/coverage/typescript/tests/cases/compiler/observableInferenceCanBeMade.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["ObservableInput", "ObservedValueOf", "Subscribable", "asObservable"]
@@ -27291,11 +27052,6 @@ rebuilt        : ScopeId(0): ["a", "a2", "a3", "a4"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5), ScopeId(6)]
 rebuilt        : ScopeId(0): []
-
-tasks/coverage/typescript/tests/cases/compiler/parenthesizedAsyncArrowFunction.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(4): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/parseArrowFunctionWithFunctionReturnType.ts
 semantic error: Bindings mismatch:
@@ -30436,11 +30192,6 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
-tasks/coverage/typescript/tests/cases/compiler/promiseAllOnAny01.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(6): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
 tasks/coverage/typescript/tests/cases/compiler/promiseChaining.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["T"]
@@ -30456,9 +30207,6 @@ tasks/coverage/typescript/tests/cases/compiler/promiseDefinitionTest.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["T"]
 rebuilt        : ScopeId(1): []
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(5): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/promiseTest.ts
 semantic error: Bindings mismatch:
@@ -30472,9 +30220,6 @@ tasks/coverage/typescript/tests/cases/compiler/promiseType.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["A", "B", "C", "D", "E", "F", "G", "H", "I", "_A", "_B", "_C", "_D", "_E", "_F", "_G", "_H", "_I", "_asyncToGenerator", "p", "p00", "p01", "p10", "p11", "p12", "p13", "p14", "p15", "p16", "p17", "p18", "p19", "p20", "p21", "p22", "p23", "p24", "p25", "p26", "p27", "p28", "p29", "p30", "p31", "p32", "p33", "p34", "p35", "p36", "p37", "p38", "p39", "p40", "p41", "p42", "p43", "p44", "p45", "p46", "p47", "p48", "p49", "p50", "p51", "p52", "p53", "p54", "p55", "p56", "p57", "p58", "p59", "p60", "p61", "p62", "p63", "p64", "p65", "p66", "p67", "p68", "p69", "p70", "p71", "p72", "p73", "p74", "p75", "p76", "p77", "p78", "p79", "p80", "p81", "p82", "p83", "p84", "p85", "p86", "p87", "p88", "p89", "p90", "p91", "p92", "p93", "p94", "p95", "p96", "p97", "p98", "p99", "pa0", "pa1", "pa2", "pa3", "pa4", "pa5", "pa6", "pa7", "pa8", "pa9", "pb0", "pb1", "pb2", "pb3", "pb4", "pb5", "pb6", "pb7", "pb8", "pb9", "pc0", "pc1", "pc2", "pc3", "pc4", "pc5", "pc6", "pc7", "pc8", "pc9", "x"]
 rebuilt        : ScopeId(0): ["A", "B", "C", "D", "E", "F", "G", "H", "I", "_A", "_B", "_C", "_D", "_E", "_F", "_G", "_H", "_I", "_asyncToGenerator", "p00", "p01", "p10", "p11", "p12", "p13", "p14", "p15", "p16", "p17", "p18", "p19", "p20", "p21", "p22", "p23", "p24", "p25", "p26", "p27", "p28", "p29", "p30", "p31", "p32", "p33", "p34", "p35", "p36", "p37", "p38", "p39", "p40", "p41", "p42", "p43", "p44", "p45", "p46", "p47", "p48", "p49", "p50", "p51", "p52", "p53", "p54", "p55", "p56", "p57", "p58", "p59", "p60", "p61", "p62", "p63", "p64", "p65", "p66", "p67", "p68", "p69", "p70", "p71", "p72", "p73", "p74", "p75", "p76", "p77", "p78", "p79", "p80", "p81", "p82", "p83", "p84", "p85", "p86", "p87", "p88", "p89", "p90", "p91", "p92", "p93", "p94", "p95", "p96", "p97", "p98", "p99", "pa0", "pa1", "pa2", "pa3", "pa4", "pa5", "pa6", "pa7", "pa8", "pa9", "pb0", "pb1", "pb2", "pb3", "pb4", "pb5", "pb6", "pb7", "pb8", "pb9", "pc0", "pc1", "pc2", "pc3", "pc4", "pc5", "pc6", "pc7", "pc8", "pc9"]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(150): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "p":
 after transform: SymbolId(0) "p"
 rebuilt        : <None>
@@ -30964,9 +30709,6 @@ tasks/coverage/typescript/tests/cases/compiler/promiseTypeStrictNull.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["A", "B", "C", "D", "E", "F", "G", "H", "I", "_A", "_B", "_C", "_D", "_E", "_F", "_G", "_H", "_I", "_asyncToGenerator", "p", "p00", "p01", "p10", "p11", "p12", "p13", "p14", "p15", "p16", "p17", "p18", "p19", "p20", "p21", "p22", "p23", "p24", "p25", "p26", "p27", "p28", "p29", "p30", "p31", "p32", "p33", "p34", "p35", "p36", "p37", "p38", "p39", "p40", "p41", "p42", "p43", "p44", "p45", "p46", "p47", "p48", "p49", "p50", "p51", "p52", "p53", "p54", "p55", "p56", "p57", "p58", "p59", "p60", "p61", "p62", "p63", "p64", "p65", "p66", "p67", "p68", "p69", "p70", "p71", "p72", "p73", "p74", "p75", "p76", "p77", "p78", "p79", "p80", "p81", "p82", "p83", "p84", "p85", "p86", "p87", "p88", "p89", "p90", "p91", "p92", "p93", "p94", "p95", "p96", "p97", "p98", "p99", "pa0", "pa1", "pa2", "pa3", "pa4", "pa5", "pa6", "pa7", "pa8", "pa9", "pb0", "pb1", "pb2", "pb3", "pb4", "pb5", "pb6", "pb7", "pb8", "pb9", "pc0", "pc1", "pc2", "pc3", "pc4", "pc5", "pc6", "pc7", "pc8", "pc9", "x"]
 rebuilt        : ScopeId(0): ["A", "B", "C", "D", "E", "F", "G", "H", "I", "_A", "_B", "_C", "_D", "_E", "_F", "_G", "_H", "_I", "_asyncToGenerator", "p00", "p01", "p10", "p11", "p12", "p13", "p14", "p15", "p16", "p17", "p18", "p19", "p20", "p21", "p22", "p23", "p24", "p25", "p26", "p27", "p28", "p29", "p30", "p31", "p32", "p33", "p34", "p35", "p36", "p37", "p38", "p39", "p40", "p41", "p42", "p43", "p44", "p45", "p46", "p47", "p48", "p49", "p50", "p51", "p52", "p53", "p54", "p55", "p56", "p57", "p58", "p59", "p60", "p61", "p62", "p63", "p64", "p65", "p66", "p67", "p68", "p69", "p70", "p71", "p72", "p73", "p74", "p75", "p76", "p77", "p78", "p79", "p80", "p81", "p82", "p83", "p84", "p85", "p86", "p87", "p88", "p89", "p90", "p91", "p92", "p93", "p94", "p95", "p96", "p97", "p98", "p99", "pa0", "pa1", "pa2", "pa3", "pa4", "pa5", "pa6", "pa7", "pa8", "pa9", "pb0", "pb1", "pb2", "pb3", "pb4", "pb5", "pb6", "pb7", "pb8", "pb9", "pc0", "pc1", "pc2", "pc3", "pc4", "pc5", "pc6", "pc7", "pc8", "pc9"]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(150): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "p":
 after transform: SymbolId(0) "p"
 rebuilt        : <None>
@@ -33248,9 +32990,6 @@ tasks/coverage/typescript/tests/cases/compiler/simpleRecursionWithBaseCase2.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["_asyncToGenerator", "_foo", "_foo2", "_rec", "_rec2", "_rec3", "_rec4", "_rec5", "_rec6", "foo1", "foo2", "ps", "rec1", "rec2", "rec3", "rec4", "rec5", "rec6"]
 rebuilt        : ScopeId(0): ["_asyncToGenerator", "_foo", "_foo2", "_rec", "_rec2", "_rec3", "_rec4", "_rec5", "_rec6", "foo1", "foo2", "rec1", "rec2", "rec3", "rec4", "rec5", "rec6"]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(10): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "ps":
 after transform: SymbolId(6) "ps"
 rebuilt        : <None>
@@ -37341,9 +37080,6 @@ rebuilt        : ScopeId(0): ["_wrapAsyncGenerator", "asyncFactory", "looserAsyn
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(6), ScopeId(8), ScopeId(10)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5), ScopeId(7)]
-Symbol flags mismatch for "_wrapAsyncGenerator":
-after transform: SymbolId(11): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Unresolved references mismatch:
 after transform: ["AsyncGenerator", "Generator", "require"]
 rebuilt        : ["require"]
@@ -38626,9 +38362,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_myUnusedFunction", "myUnuse
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(6): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/unknownPropertiesAreAssignableToObjectUnion.ts
 semantic error: Unresolved references mismatch:
@@ -39646,30 +39379,14 @@ after transform: ScopeId(0): ["bar", "foo"]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/async/es2017/asyncArrowFunction/asyncArrowFunction1_es2017.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(3): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Unresolved references mismatch:
+semantic error: Unresolved references mismatch:
 after transform: ["Promise", "arguments", "require"]
 rebuilt        : ["arguments", "require"]
-
-tasks/coverage/typescript/tests/cases/conformance/async/es2017/asyncArrowFunction/asyncArrowFunctionCapturesArguments_es2017.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(6): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-tasks/coverage/typescript/tests/cases/conformance/async/es2017/asyncArrowFunction/asyncArrowFunctionCapturesThis_es2017.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(5): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/conformance/async/es2017/asyncArrowFunction/asyncUnParenthesizedArrowFunction_es2017.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(6)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(4)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(8): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Unresolved references mismatch:
 after transform: ["Promise", "arguments", "require", "someOtherFunction"]
 rebuilt        : ["arguments", "require", "someOtherFunction"]
@@ -39699,9 +39416,6 @@ rebuilt        : ScopeId(54): ScopeFlags(Function)
 Scope flags mismatch:
 after transform: ScopeId(59): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(55): ScopeFlags(Function)
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(24): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol flags mismatch for "f1":
 after transform: SymbolId(20): SymbolFlags(BlockScopedVariable | Export | Function)
 rebuilt        : SymbolId(35): SymbolFlags(FunctionScopedVariable)
@@ -39724,23 +39438,10 @@ Unresolved references mismatch:
 after transform: ["Promise", "arguments", "require"]
 rebuilt        : ["arguments", "mp", "p", "require"]
 
-tasks/coverage/typescript/tests/cases/conformance/async/es2017/asyncMethodWithSuperConflict_es6.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(15): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-tasks/coverage/typescript/tests/cases/conformance/async/es2017/asyncMethodWithSuper_es2017.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(11): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
 tasks/coverage/typescript/tests/cases/conformance/async/es2017/asyncUseStrict_es2017.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["_asyncToGenerator", "_func", "a", "func", "p"]
 rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(5): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "p":
 after transform: SymbolId(1) "p"
 rebuilt        : <None>
@@ -39758,9 +39459,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(5): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "p":
 after transform: SymbolId(1) "p"
 rebuilt        : <None>
@@ -39778,9 +39476,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(5): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "p":
 after transform: SymbolId(1) "p"
 rebuilt        : <None>
@@ -39798,9 +39493,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(5): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "p":
 after transform: SymbolId(1) "p"
 rebuilt        : <None>
@@ -39818,9 +39510,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(5): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "p":
 after transform: SymbolId(1) "p"
 rebuilt        : <None>
@@ -39838,9 +39527,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(5): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "p":
 after transform: SymbolId(1) "p"
 rebuilt        : <None>
@@ -39855,9 +39541,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(8)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(11): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "a":
 after transform: SymbolId(0) "a"
 rebuilt        : <None>
@@ -39878,9 +39561,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(8)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(11): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "p":
 after transform: SymbolId(1) "p"
 rebuilt        : <None>
@@ -39901,9 +39581,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(8)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(11): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "a":
 after transform: SymbolId(0) "a"
 rebuilt        : <None>
@@ -39924,9 +39601,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(8)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(11): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "pfn":
 after transform: SymbolId(6) "pfn"
 rebuilt        : <None>
@@ -39950,9 +39624,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(8)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(11): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "o":
 after transform: SymbolId(5) "o"
 rebuilt        : <None>
@@ -39976,9 +39647,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(8)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(11): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "o":
 after transform: SymbolId(5) "o"
 rebuilt        : <None>
@@ -40002,9 +39670,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(8)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(11): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "o":
 after transform: SymbolId(5) "o"
 rebuilt        : <None>
@@ -40028,9 +39693,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(8)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(11): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "po":
 after transform: SymbolId(7) "po"
 rebuilt        : <None>
@@ -40054,9 +39716,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(4): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "p":
 after transform: SymbolId(0) "p"
 rebuilt        : <None>
@@ -40071,9 +39730,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_f", "f"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(4): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "a":
 after transform: SymbolId(1) "a"
 rebuilt        : <None>
@@ -40081,69 +39737,36 @@ Unresolved references mismatch:
 after transform: ["Promise", "arguments", "require"]
 rebuilt        : ["a", "arguments", "require"]
 
-tasks/coverage/typescript/tests/cases/conformance/async/es2017/await_unaryExpression_es2017.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(5): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
 tasks/coverage/typescript/tests/cases/conformance/async/es2017/functionDeclarations/asyncFunctionDeclaration11_es2017.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(2): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Unresolved references mismatch:
+semantic error: Unresolved references mismatch:
 after transform: ["Promise", "arguments", "require"]
 rebuilt        : ["arguments", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/async/es2017/functionDeclarations/asyncFunctionDeclaration14_es2017.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(2): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Unresolved references mismatch:
+semantic error: Unresolved references mismatch:
 after transform: ["Promise", "arguments", "require"]
 rebuilt        : ["arguments", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/async/es2017/functionDeclarations/asyncFunctionDeclaration1_es2017.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(2): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Unresolved references mismatch:
+semantic error: Unresolved references mismatch:
 after transform: ["Promise", "arguments", "require"]
 rebuilt        : ["arguments", "require"]
-
-tasks/coverage/typescript/tests/cases/conformance/async/es5/asyncArrowFunction/asyncArrowFunction11_es5.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(4): SymbolFlags(Import)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/conformance/async/es5/asyncArrowFunction/asyncArrowFunction1_es5.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(3): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Unresolved references mismatch:
+semantic error: Unresolved references mismatch:
 after transform: ["Promise", "arguments", "require"]
 rebuilt        : ["arguments", "require"]
-
-tasks/coverage/typescript/tests/cases/conformance/async/es5/asyncArrowFunction/asyncArrowFunctionCapturesThis_es5.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(5): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/conformance/async/es5/asyncArrowFunction/asyncUnParenthesizedArrowFunction_es5.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(6)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(4)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(8): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Unresolved references mismatch:
 after transform: ["Promise", "arguments", "require", "someOtherFunction"]
 rebuilt        : ["arguments", "require", "someOtherFunction"]
 
 tasks/coverage/typescript/tests/cases/conformance/async/es5/asyncAwaitNestedClasses_es5.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(4): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Unresolved reference IDs mismatch for "Promise":
+semantic error: Unresolved reference IDs mismatch for "Promise":
 after transform: [ReferenceId(0), ReferenceId(1)]
 rebuilt        : [ReferenceId(1)]
 
@@ -40172,9 +39795,6 @@ rebuilt        : ScopeId(54): ScopeFlags(Function)
 Scope flags mismatch:
 after transform: ScopeId(59): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(55): ScopeFlags(Function)
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(24): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol flags mismatch for "f1":
 after transform: SymbolId(20): SymbolFlags(BlockScopedVariable | Export | Function)
 rebuilt        : SymbolId(35): SymbolFlags(FunctionScopedVariable)
@@ -40202,11 +39822,6 @@ semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["T"]
 rebuilt        : ScopeId(1): []
 
-tasks/coverage/typescript/tests/cases/conformance/async/es5/asyncMethodWithSuper_es5.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(11): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
 tasks/coverage/typescript/tests/cases/conformance/async/es5/asyncMultiFile_es5.ts
 semantic error: Symbol flags mismatch for "_f":
 after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
@@ -40231,9 +39846,6 @@ rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["T"]
 rebuilt        : ScopeId(2): []
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(6): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol flags mismatch for "MyPromise":
 after transform: SymbolId(1): SymbolFlags(Export | Class)
 rebuilt        : SymbolId(3): SymbolFlags(Class)
@@ -40248,9 +39860,6 @@ tasks/coverage/typescript/tests/cases/conformance/async/es5/asyncUseStrict_es5.t
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["_asyncToGenerator", "_func", "a", "func", "p"]
 rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(5): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "p":
 after transform: SymbolId(1) "p"
 rebuilt        : <None>
@@ -40268,9 +39877,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(5): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "p":
 after transform: SymbolId(1) "p"
 rebuilt        : <None>
@@ -40288,9 +39894,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(5): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "p":
 after transform: SymbolId(1) "p"
 rebuilt        : <None>
@@ -40308,9 +39911,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(5): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "p":
 after transform: SymbolId(1) "p"
 rebuilt        : <None>
@@ -40328,9 +39928,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(5): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "p":
 after transform: SymbolId(1) "p"
 rebuilt        : <None>
@@ -40348,9 +39945,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(5): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "p":
 after transform: SymbolId(1) "p"
 rebuilt        : <None>
@@ -40365,9 +39959,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(8)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(11): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "a":
 after transform: SymbolId(0) "a"
 rebuilt        : <None>
@@ -40388,9 +39979,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(8)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(11): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "p":
 after transform: SymbolId(1) "p"
 rebuilt        : <None>
@@ -40411,9 +39999,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(8)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(11): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "a":
 after transform: SymbolId(0) "a"
 rebuilt        : <None>
@@ -40434,9 +40019,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(8)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(11): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "pfn":
 after transform: SymbolId(6) "pfn"
 rebuilt        : <None>
@@ -40460,9 +40042,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(8)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(11): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "o":
 after transform: SymbolId(5) "o"
 rebuilt        : <None>
@@ -40486,9 +40065,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(8)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(11): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "o":
 after transform: SymbolId(5) "o"
 rebuilt        : <None>
@@ -40512,9 +40088,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(8)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(11): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "o":
 after transform: SymbolId(5) "o"
 rebuilt        : <None>
@@ -40538,9 +40111,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(8)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(11): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "po":
 after transform: SymbolId(7) "po"
 rebuilt        : <None>
@@ -40564,9 +40134,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(4): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "p":
 after transform: SymbolId(0) "p"
 rebuilt        : <None>
@@ -40578,9 +40145,6 @@ tasks/coverage/typescript/tests/cases/conformance/async/es5/awaitUnion_es5.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["_asyncToGenerator", "_f", "a", "b", "c", "d", "e", "f"]
 rebuilt        : ScopeId(0): ["_asyncToGenerator", "_f", "f"]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(12): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "a":
 after transform: SymbolId(0) "a"
 rebuilt        : <None>
@@ -40601,26 +40165,17 @@ after transform: ["PromiseLike", "arguments", "require"]
 rebuilt        : ["a", "arguments", "b", "c", "d", "e", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/async/es5/functionDeclarations/asyncFunctionDeclaration11_es5.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(2): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Unresolved references mismatch:
+semantic error: Unresolved references mismatch:
 after transform: ["Promise", "arguments", "require"]
 rebuilt        : ["arguments", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/async/es5/functionDeclarations/asyncFunctionDeclaration14_es5.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(2): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Unresolved references mismatch:
+semantic error: Unresolved references mismatch:
 after transform: ["Promise", "arguments", "require"]
 rebuilt        : ["arguments", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/async/es5/functionDeclarations/asyncFunctionDeclaration1_es5.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(2): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Unresolved references mismatch:
+semantic error: Unresolved references mismatch:
 after transform: ["Promise", "arguments", "require"]
 rebuilt        : ["arguments", "require"]
 
@@ -40631,38 +40186,19 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_f", "f"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(4): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Unresolved references mismatch:
 after transform: ["Promise", "arguments", "require"]
 rebuilt        : ["arguments", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/async/es6/asyncArrowFunction/asyncArrowFunction1_es6.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(3): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Unresolved references mismatch:
+semantic error: Unresolved references mismatch:
 after transform: ["Promise", "arguments", "require"]
 rebuilt        : ["arguments", "require"]
-
-tasks/coverage/typescript/tests/cases/conformance/async/es6/asyncArrowFunction/asyncArrowFunctionCapturesArguments_es6.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(7): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-tasks/coverage/typescript/tests/cases/conformance/async/es6/asyncArrowFunction/asyncArrowFunctionCapturesThis_es6.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(5): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/conformance/async/es6/asyncArrowFunction/asyncUnParenthesizedArrowFunction_es6.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(6)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(4)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(8): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Unresolved references mismatch:
 after transform: ["Promise", "arguments", "require", "someOtherFunction"]
 rebuilt        : ["arguments", "require", "someOtherFunction"]
@@ -40692,9 +40228,6 @@ rebuilt        : ScopeId(54): ScopeFlags(Function)
 Scope flags mismatch:
 after transform: ScopeId(59): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(55): ScopeFlags(Function)
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(24): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol flags mismatch for "f1":
 after transform: SymbolId(20): SymbolFlags(BlockScopedVariable | Export | Function)
 rebuilt        : SymbolId(35): SymbolFlags(FunctionScopedVariable)
@@ -40717,14 +40250,6 @@ Unresolved references mismatch:
 after transform: ["Promise", "arguments", "require"]
 rebuilt        : ["arguments", "mp", "p", "require"]
 
-tasks/coverage/typescript/tests/cases/conformance/async/es6/asyncMethodWithSuper_es6.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(25): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "_wrapAsyncGenerator":
-after transform: SymbolId(48): SymbolFlags(Import)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
-
 tasks/coverage/typescript/tests/cases/conformance/async/es6/asyncMultiFile_es6.ts
 semantic error: Symbol flags mismatch for "_f":
 after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
@@ -40734,9 +40259,6 @@ tasks/coverage/typescript/tests/cases/conformance/async/es6/asyncUseStrict_es6.t
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["_asyncToGenerator", "_func", "a", "func", "p"]
 rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(5): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "p":
 after transform: SymbolId(1) "p"
 rebuilt        : <None>
@@ -40757,9 +40279,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(5): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "p":
 after transform: SymbolId(1) "p"
 rebuilt        : <None>
@@ -40777,9 +40296,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(5): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "p":
 after transform: SymbolId(1) "p"
 rebuilt        : <None>
@@ -40797,9 +40313,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(5): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "p":
 after transform: SymbolId(1) "p"
 rebuilt        : <None>
@@ -40817,9 +40330,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(5): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "p":
 after transform: SymbolId(1) "p"
 rebuilt        : <None>
@@ -40837,9 +40347,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(5): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "p":
 after transform: SymbolId(1) "p"
 rebuilt        : <None>
@@ -40854,9 +40361,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(8)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(11): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "a":
 after transform: SymbolId(0) "a"
 rebuilt        : <None>
@@ -40877,9 +40381,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(8)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(11): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "p":
 after transform: SymbolId(1) "p"
 rebuilt        : <None>
@@ -40900,9 +40401,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(8)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(11): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "a":
 after transform: SymbolId(0) "a"
 rebuilt        : <None>
@@ -40923,9 +40421,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(8)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(11): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "pfn":
 after transform: SymbolId(6) "pfn"
 rebuilt        : <None>
@@ -40949,9 +40444,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(8)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(11): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "o":
 after transform: SymbolId(5) "o"
 rebuilt        : <None>
@@ -40975,9 +40467,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(8)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(11): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "o":
 after transform: SymbolId(5) "o"
 rebuilt        : <None>
@@ -41001,9 +40490,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(8)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(11): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "o":
 after transform: SymbolId(5) "o"
 rebuilt        : <None>
@@ -41027,9 +40513,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(8)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(11): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "po":
 after transform: SymbolId(7) "po"
 rebuilt        : <None>
@@ -41053,9 +40536,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_func", "func"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(4): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "p":
 after transform: SymbolId(0) "p"
 rebuilt        : <None>
@@ -41067,9 +40547,6 @@ tasks/coverage/typescript/tests/cases/conformance/async/es6/awaitUnion_es6.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["_asyncToGenerator", "_f", "a", "b", "c", "d", "e", "f"]
 rebuilt        : ScopeId(0): ["_asyncToGenerator", "_f", "f"]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(12): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "a":
 after transform: SymbolId(0) "a"
 rebuilt        : <None>
@@ -41089,32 +40566,18 @@ Unresolved references mismatch:
 after transform: ["PromiseLike", "arguments", "require"]
 rebuilt        : ["a", "arguments", "b", "c", "d", "e", "require"]
 
-tasks/coverage/typescript/tests/cases/conformance/async/es6/await_unaryExpression_es6.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(5): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
 tasks/coverage/typescript/tests/cases/conformance/async/es6/functionDeclarations/asyncFunctionDeclaration11_es6.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(2): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Unresolved references mismatch:
+semantic error: Unresolved references mismatch:
 after transform: ["Promise", "arguments", "require"]
 rebuilt        : ["arguments", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/async/es6/functionDeclarations/asyncFunctionDeclaration14_es6.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(2): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Unresolved references mismatch:
+semantic error: Unresolved references mismatch:
 after transform: ["Promise", "arguments", "require"]
 rebuilt        : ["arguments", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/async/es6/functionDeclarations/asyncFunctionDeclaration1_es6.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(2): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Unresolved references mismatch:
+semantic error: Unresolved references mismatch:
 after transform: ["Promise", "arguments", "require"]
 rebuilt        : ["arguments", "require"]
 
@@ -41136,12 +40599,6 @@ rebuilt        : ScopeId(0): ["_awaitAsyncGenerator", "_saverGen", "_saverGen2",
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(5), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(6), ScopeId(7), ScopeId(8)]
-Symbol flags mismatch for "_awaitAsyncGenerator":
-after transform: SymbolId(11): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "_wrapAsyncGenerator":
-after transform: SymbolId(13): SymbolFlags(Import)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 Unresolved references mismatch:
 after transform: ["AsyncGenerator", "Promise", "arguments", "console", "require"]
 rebuilt        : ["Promise", "arguments", "console", "require"]
@@ -41605,45 +41062,10 @@ semantic error: Symbol reference IDs mismatch for "Test":
 after transform: SymbolId(0): [ReferenceId(0)]
 rebuilt        : SymbolId(0): []
 
-tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameMethodAsync.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(2): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "_awaitAsyncGenerator":
-after transform: SymbolId(4): SymbolFlags(Import)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "_wrapAsyncGenerator":
-after transform: SymbolId(5): SymbolFlags(Import)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
-
 tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameStaticFieldDestructuredBinding.ts
 semantic error: Symbol reference IDs mismatch for "A":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(10), ReferenceId(11), ReferenceId(12)]
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(10), ReferenceId(11)]
-
-tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameStaticsAndStaticMethods.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(7): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "_wrapAsyncGenerator":
-after transform: SymbolId(8): SymbolFlags(Import)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
-
-tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNamesAndMethods.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(7): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "_wrapAsyncGenerator":
-after transform: SymbolId(8): SymbolFlags(Import)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
-
-tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNamesAndStaticMethods.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(7): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "_wrapAsyncGenerator":
-after transform: SymbolId(8): SymbolFlags(Import)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/typeFromPrivatePropertyAssignment.ts
 semantic error: Bindings mismatch:
@@ -42415,9 +41837,6 @@ rebuilt        : ScopeId(7): ["fn", "promises"]
 Scope children mismatch:
 after transform: ScopeId(5): [ScopeId(6), ScopeId(7)]
 rebuilt        : ScopeId(7): [ScopeId(8)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(22): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Unresolved references mismatch:
 after transform: ["Awaited", "Error", "Math", "Promise", "String", "arguments", "const", "require", "undefined"]
 rebuilt        : ["Error", "Math", "Promise", "String", "arguments", "require", "undefined"]
@@ -44229,11 +43648,6 @@ tasks/coverage/typescript/tests/cases/conformance/es2022/es2022IntlAPIs.ts
 semantic error: Unresolved references mismatch:
 after transform: ["Intl", "const"]
 rebuilt        : ["Intl"]
-
-tasks/coverage/typescript/tests/cases/conformance/es2024/sharedMemory.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(12): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolDeclarationEmit3.ts
 semantic error: Scope children mismatch:
@@ -48289,11 +47703,6 @@ Unresolved references mismatch:
 after transform: []
 rebuilt        : ["f"]
 
-tasks/coverage/typescript/tests/cases/conformance/expressions/nullishCoalescingOperator/nullishCoalescingOperatorInAsyncGenerator.ts
-semantic error: Symbol flags mismatch for "_wrapAsyncGenerator":
-after transform: SymbolId(6): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
 tasks/coverage/typescript/tests/cases/conformance/expressions/nullishCoalescingOperator/nullishCoalescingOperatorInParameterBindingPattern.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["a"]
@@ -48858,11 +48267,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["o1", "o2", "o3", "o4"]
-
-tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/callChain/superMethodCall.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(3): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/elementAccessChain/elementAccessChain.2.ts
 semantic error: Bindings mismatch:
@@ -50446,9 +49850,6 @@ rebuilt        : ScopeId(8): ["step"]
 Bindings mismatch:
 after transform: ScopeId(25): ["Context", "State", "_context", "selection", "state", "step"]
 rebuilt        : ScopeId(9): ["_context", "selection", "state", "step"]
-Symbol flags mismatch for "_wrapAsyncGenerator":
-after transform: SymbolId(55): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol flags mismatch for "Directive":
 after transform: SymbolId(10): SymbolFlags(RegularEnum | NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
@@ -51839,11 +51240,6 @@ rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
 after transform: ["Uint8Array"]
 rebuilt        : []
-
-tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsNestedParams.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(6): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag1.ts
 semantic error: Bindings mismatch:
@@ -53851,11 +53247,6 @@ Scope children mismatch:
 after transform: ScopeId(4): [ScopeId(5), ScopeId(6)]
 rebuilt        : ScopeId(2): [ScopeId(3)]
 
-tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression7.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(0): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
 tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration16.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
@@ -54430,14 +53821,6 @@ Unresolved references mismatch:
 after transform: ["HTMLCanvasElement", "HTMLDivElement", "HTMLElement", "HTMLSpanElement"]
 rebuilt        : []
 
-tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/Iterators/parserForOfStatement23.ts
-semantic error: Symbol flags mismatch for "_asyncIterator":
-after transform: SymbolId(4): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(12): SymbolFlags(Import)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
-
 tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/Symbols/parserSymbolIndexer1.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["I"]
@@ -54726,16 +54109,6 @@ Reference symbol mismatch for "M":
 after transform: SymbolId(6) "M"
 rebuilt        : SymbolId(4) "M"
 
-tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.15.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(2): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInFor.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(5): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForAwaitOf.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
@@ -54752,25 +54125,9 @@ rebuilt        : ScopeId(9): []
 Scope children mismatch:
 after transform: ScopeId(2): [ScopeId(4)]
 rebuilt        : ScopeId(9): []
-Symbol flags mismatch for "_asyncIterator":
-after transform: SymbolId(3): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(9): SymbolFlags(Import)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 Symbol scope ID mismatch for "d1":
 after transform: SymbolId(1): ScopeId(2)
 rebuilt        : SymbolId(9): ScopeId(3)
-
-tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForOf.1.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(2): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForOf.2.ts
-semantic error: Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(3): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.1.ts
 semantic error: Missing SymbolId: "N"
@@ -54820,12 +54177,6 @@ rebuilt        : ScopeId(7): []
 Scope children mismatch:
 after transform: ScopeId(2): [ScopeId(3)]
 rebuilt        : ScopeId(7): []
-Symbol flags mismatch for "_asyncIterator":
-after transform: SymbolId(3): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(10): SymbolFlags(Import)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 Symbol scope ID mismatch for "d1":
 after transform: SymbolId(1): ScopeId(2)
 rebuilt        : SymbolId(9): ScopeId(3)
@@ -55186,20 +54537,6 @@ semantic error: Symbol flags mismatch for "_f":
 after transform: SymbolId(10): SymbolFlags(FunctionScopedVariable)
 rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable | Function)
 
-tasks/coverage/typescript/tests/cases/conformance/statements/for-await-ofStatements/forAwaitPerIterationBindingDownlevel.ts
-semantic error: Symbol flags mismatch for "_awaitAsyncGenerator":
-after transform: SymbolId(7): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "_wrapAsyncGenerator":
-after transform: SymbolId(9): SymbolFlags(Import)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "_asyncIterator":
-after transform: SymbolId(11): SymbolFlags(Import)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(17): SymbolFlags(Import)
-rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
-
 tasks/coverage/typescript/tests/cases/conformance/statements/for-inStatements/for-inStatementsArray.ts
 semantic error: Unresolved references mismatch:
 after transform: ["Date"]
@@ -55393,18 +54730,6 @@ tasks/coverage/typescript/tests/cases/conformance/types/asyncGenerators/types.as
 semantic error: Scope children mismatch:
 after transform: ScopeId(49): [ScopeId(50)]
 rebuilt        : ScopeId(103): []
-Symbol flags mismatch for "_wrapAsyncGenerator":
-after transform: SymbolId(46): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "_asyncIterator":
-after transform: SymbolId(51): SymbolFlags(Import)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "_asyncGeneratorDelegate":
-after transform: SymbolId(52): SymbolFlags(Import)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "_awaitAsyncGenerator":
-after transform: SymbolId(72): SymbolFlags(Import)
-rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
 Unresolved references mismatch:
 after transform: ["AsyncIterable", "AsyncIterableIterator", "AsyncIterator", "Promise", "PromiseLike", "arguments", "require"]
 rebuilt        : ["Promise", "arguments", "require"]
@@ -55470,9 +54795,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_fn", "fn1"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(6): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Unresolved reference IDs mismatch for "Promise":
 after transform: [ReferenceId(0), ReferenceId(4)]
 rebuilt        : [ReferenceId(5)]
@@ -55545,18 +54867,6 @@ tasks/coverage/typescript/tests/cases/conformance/types/forAwait/types.forAwait.
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["_asyncIterator", "_asyncToGenerator", "_awaitAsyncGenerator", "_f", "_f2", "_wrapAsyncGenerator", "asyncIterable", "f1", "f2", "iterable", "iterableOfPromise"]
 rebuilt        : ScopeId(0): ["_asyncIterator", "_asyncToGenerator", "_awaitAsyncGenerator", "_f", "_f2", "_wrapAsyncGenerator", "f1", "f2"]
-Symbol flags mismatch for "_asyncIterator":
-after transform: SymbolId(14): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(51): SymbolFlags(Import)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "_awaitAsyncGenerator":
-after transform: SymbolId(58): SymbolFlags(Import)
-rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "_wrapAsyncGenerator":
-after transform: SymbolId(90): SymbolFlags(Import)
-rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
 Reference symbol mismatch for "asyncIterable":
 after transform: SymbolId(0) "asyncIterable"
 rebuilt        : <None>
@@ -57562,9 +56872,6 @@ tasks/coverage/typescript/tests/cases/conformance/types/rest/objectRest2.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(11): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/conformance/types/rest/objectRestParameter.ts
 semantic error: Scope children mismatch:
@@ -62296,12 +61603,6 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), Sc
 Scope children mismatch:
 after transform: ScopeId(50): [ScopeId(51)]
 rebuilt        : ScopeId(56): []
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(90): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "_wrapAsyncGenerator":
-after transform: SymbolId(94): SymbolFlags(Import)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "constCall":
 after transform: SymbolId(0): [ReferenceId(4), ReferenceId(8), ReferenceId(12), ReferenceId(16), ReferenceId(17), ReferenceId(20), ReferenceId(23), ReferenceId(24), ReferenceId(25), ReferenceId(29), ReferenceId(30), ReferenceId(31), ReferenceId(34), ReferenceId(83), ReferenceId(84)]
 rebuilt        : SymbolId(2): [ReferenceId(6), ReferenceId(10), ReferenceId(14), ReferenceId(18), ReferenceId(20), ReferenceId(23), ReferenceId(24), ReferenceId(27), ReferenceId(32), ReferenceId(53), ReferenceId(99), ReferenceId(100)]
@@ -62481,12 +61782,6 @@ rebuilt        : ScopeId(0): ["C", "C0", "C1", "_asyncFuncReturnConstCall", "_as
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(25), ScopeId(26), ScopeId(27), ScopeId(33), ScopeId(34), ScopeId(40), ScopeId(43), ScopeId(44), ScopeId(45), ScopeId(46), ScopeId(47), ScopeId(48), ScopeId(49), ScopeId(50), ScopeId(51), ScopeId(52), ScopeId(53), ScopeId(54), ScopeId(55), ScopeId(56), ScopeId(57), ScopeId(58), ScopeId(61), ScopeId(62)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(12), ScopeId(13), ScopeId(15), ScopeId(16), ScopeId(18), ScopeId(19), ScopeId(21), ScopeId(22), ScopeId(24), ScopeId(25), ScopeId(27), ScopeId(28), ScopeId(29), ScopeId(31), ScopeId(33), ScopeId(34), ScopeId(35), ScopeId(43), ScopeId(44), ScopeId(45), ScopeId(47), ScopeId(49), ScopeId(50)]
-Symbol flags mismatch for "_asyncToGenerator":
-after transform: SymbolId(81): SymbolFlags(Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol flags mismatch for "_wrapAsyncGenerator":
-after transform: SymbolId(85): SymbolFlags(Import)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "constCall":
 after transform: SymbolId(0): [ReferenceId(4), ReferenceId(8), ReferenceId(12), ReferenceId(16), ReferenceId(17), ReferenceId(20), ReferenceId(23), ReferenceId(24), ReferenceId(25), ReferenceId(29), ReferenceId(30), ReferenceId(31), ReferenceId(34), ReferenceId(83), ReferenceId(84)]
 rebuilt        : SymbolId(2): [ReferenceId(6), ReferenceId(10), ReferenceId(14), ReferenceId(18), ReferenceId(20), ReferenceId(23), ReferenceId(24), ReferenceId(27), ReferenceId(32), ReferenceId(53), ReferenceId(99), ReferenceId(100)]

@@ -261,7 +261,12 @@ impl<'a> HelperLoaderStore<'a> {
         source.push_str(helper_name);
         let source = Atom::from(source.into_bump_str());
 
-        let binding = ctx.generate_uid_in_root_scope(helper_name, SymbolFlags::Import);
+        let flag = if transform_ctx.source_type.is_module() {
+            SymbolFlags::Import
+        } else {
+            SymbolFlags::FunctionScopedVariable
+        };
+        let binding = ctx.generate_uid_in_root_scope(helper_name, flag);
 
         transform_ctx.module_imports.add_default_import(source, binding.clone(), false);
 
