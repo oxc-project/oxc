@@ -116,7 +116,7 @@ impl Rule for NoCallbackInPromise {
             }
         } else if ctx
             .nodes()
-            .iter_parents(node.id())
+            .ancestors(node.id())
             .skip(1)
             .any(|node| Self::is_inside_promise(node, ctx))
         {
@@ -133,7 +133,7 @@ impl NoCallbackInPromise {
             return false;
         }
 
-        ctx.nodes().iter_parents(node.id()).nth(2).is_some_and(|node| {
+        ctx.nodes().ancestors(node.id()).nth(2).is_some_and(|node| {
             node.kind().as_call_expression().is_some_and(Self::has_promise_callback)
         })
     }

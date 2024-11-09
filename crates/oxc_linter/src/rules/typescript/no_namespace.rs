@@ -108,7 +108,7 @@ impl Rule for NoNamespace {
 }
 
 fn is_declaration(node: &AstNode, ctx: &LintContext) -> bool {
-    ctx.nodes().iter_parents(node.id()).any(|node| {
+    ctx.nodes().ancestors(node.id()).any(|node| {
         let AstKind::TSModuleDeclaration(declaration) = node.kind() else {
             return false;
         };

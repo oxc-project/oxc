@@ -255,7 +255,7 @@ fn not_allowed_namespace_declaration(span: Span) -> OxcDiagnostic {
 
 pub fn check_ts_module_declaration<'a>(decl: &TSModuleDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
     // skip current node
-    for node in ctx.nodes.iter_parents(ctx.current_node_id).skip(1) {
+    for node in ctx.nodes.ancestors(ctx.current_node_id).skip(1) {
         match node.kind() {
             AstKind::Program(_) | AstKind::TSModuleBlock(_) | AstKind::TSModuleDeclaration(_) => {
                 break;

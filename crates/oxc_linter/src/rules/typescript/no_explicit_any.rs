@@ -127,7 +127,7 @@ impl NoExplicitAny {
     fn is_in_rest<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
         debug_assert!(matches!(node.kind(), AstKind::TSAnyKeyword(_)));
         ctx.nodes()
-            .iter_parents(node.id())
+            .ancestors(node.id())
             .any(|parent| matches!(parent.kind(), AstKind::BindingRestElement(_)))
     }
 }

@@ -236,7 +236,7 @@ pub fn outermost_paren_parent<'a, 'b>(
 ) -> Option<&'b AstNode<'a>> {
     semantic
         .nodes()
-        .iter_parents(node.id())
+        .ancestors(node.id())
         .skip(1)
         .find(|parent| !matches!(parent.kind(), AstKind::ParenthesizedExpression(_)))
 }
@@ -248,7 +248,7 @@ pub fn nth_outermost_paren_parent<'a, 'b>(
 ) -> Option<&'b AstNode<'a>> {
     semantic
         .nodes()
-        .iter_parents(node.id())
+        .ancestors(node.id())
         .skip(1)
         .filter(|parent| !matches!(parent.kind(), AstKind::ParenthesizedExpression(_)))
         .nth(n)
@@ -260,7 +260,7 @@ pub fn iter_outer_expressions<'a, 's>(
     semantic: &'s Semantic<'a>,
     node_id: NodeId,
 ) -> impl Iterator<Item = &'s AstNode<'a>> + 's {
-    semantic.nodes().iter_parents(node_id).skip(1).filter(|parent| {
+    semantic.nodes().ancestors(node_id).skip(1).filter(|parent| {
         !matches!(
             parent.kind(),
             AstKind::ParenthesizedExpression(_)

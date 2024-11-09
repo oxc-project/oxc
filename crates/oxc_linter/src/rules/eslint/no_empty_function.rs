@@ -76,7 +76,7 @@ fn get_function_name_and_kind<'a>(
     node: &AstNode<'a>,
     ctx: &LintContext<'a>,
 ) -> (&'static str, Option<Cow<'a, str>>) {
-    for parent in ctx.nodes().iter_parents(node.id()).skip(1).map(AstNode::kind) {
+    for parent in ctx.nodes().ancestors(node.id()).skip(1).map(AstNode::kind) {
         match parent {
             AstKind::Function(f) => {
                 if let Some(name) = f.name() {
