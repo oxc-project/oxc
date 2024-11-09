@@ -5,7 +5,7 @@ use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast::*;
 use oxc_traverse::{Traverse, TraverseCtx};
 
-use crate::{TransformCtx, TransformOptions};
+use crate::{EnvOptions, TransformCtx};
 
 pub mod arrow_function_converter;
 pub mod helper_loader;
@@ -28,7 +28,7 @@ pub struct Common<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> Common<'a, 'ctx> {
-    pub fn new(options: &TransformOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(options: &EnvOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
         Self {
             module_imports: ModuleImports::new(ctx),
             var_declarations: VarDeclarations::new(ctx),

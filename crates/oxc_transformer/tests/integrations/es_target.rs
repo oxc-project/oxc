@@ -21,15 +21,15 @@ fn es_target() {
     ];
 
     // Test no transformation for esnext.
+    let options = TransformOptions::from(ESTarget::from_str("esnext").unwrap());
     for (_, case) in cases {
-        let options = TransformOptions::from(ESTarget::from_str("esnext").unwrap());
-        assert_eq!(test(case, options), Ok(codegen(case, SourceType::mjs())));
+        assert_eq!(test(case, &options), Ok(codegen(case, SourceType::mjs())));
     }
 
     let snapshot =
         cases.into_iter().enumerate().fold(String::new(), |mut w, (i, (target, case))| {
             let options = TransformOptions::from_target(target).unwrap();
-            let result = match test(case, options) {
+            let result = match test(case, &options) {
                 Ok(code) => code,
                 Err(errors) => errors
                     .into_iter()

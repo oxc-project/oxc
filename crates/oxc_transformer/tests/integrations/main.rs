@@ -23,7 +23,7 @@ pub fn codegen(source_text: &str, source_type: SourceType) -> String {
 
 pub(crate) fn test(
     source_text: &str,
-    options: TransformOptions,
+    options: &TransformOptions,
 ) -> Result<String, Vec<OxcDiagnostic>> {
     let source_type = SourceType::default();
     let allocator = Allocator::default();

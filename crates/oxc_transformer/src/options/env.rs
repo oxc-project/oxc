@@ -18,7 +18,7 @@ use crate::{
 
 use super::{babel::BabelEnvOptions, ESFeature, ESTarget, Engine};
 
-#[derive(Debug, Default, Clone, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, Deserialize)]
 #[serde(try_from = "BabelEnvOptions")]
 pub struct EnvOptions {
     pub regexp: RegExpOptions,

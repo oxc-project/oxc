@@ -70,14 +70,24 @@ pub struct TransformerReturn {
 
 pub struct Transformer<'a> {
     ctx: TransformCtx<'a>,
-    options: TransformOptions,
+    // options: TransformOptions,
     allocator: &'a Allocator,
+
+    typescript: TypeScriptOptions,
+    jsx: JsxOptions,
+    env: EnvOptions,
 }
 
 impl<'a> Transformer<'a> {
-    pub fn new(allocator: &'a Allocator, source_path: &Path, options: TransformOptions) -> Self {
-        let ctx = TransformCtx::new(source_path, &options);
-        Self { ctx, options, allocator }
+    pub fn new(allocator: &'a Allocator, source_path: &Path, options: &TransformOptions) -> Self {
+        let ctx = TransformCtx::new(source_path, options);
+        Self {
+            ctx,
+            allocator,
+            typescript: options.typescript.clone(),
+            jsx: options.jsx.clone(),
+            env: options.env,
+        }
     }
 
     pub fn build_with_symbols_and_scopes(
@@ -91,24 +101,29 @@ impl<'a> Transformer<'a> {
 
         self.ctx.source_type = program.source_type;
         self.ctx.source_text = program.source_text;
-        jsx::update_options_with_comments(&program.comments, &mut self.options, &self.ctx);
+        jsx::update_options_with_comments(
+            &program.comments,
+            &mut self.typescript,
+            &mut self.jsx,
+            &self.ctx,
+        );
 
         let mut transformer = TransformerImpl {
-            common: Common::new(&self.options, &self.ctx),
+            common: Common::new(&self.env, &self.ctx),
             x0_typescript: program
                 .source_type
                 .is_typescript()
-                .then(|| TypeScript::new(&self.options.typescript, &self.ctx)),
-            x1_jsx: Jsx::new(self.options.jsx, ast_builder, &self.ctx),
-            x2_es2022: ES2022::new(self.options.env.es2022, &self.ctx),
-            x2_es2021: ES2021::new(self.options.env.es2021, &self.ctx),
-            x2_es2020: ES2020::new(self.options.env.es2020, &self.ctx),
-            x2_es2019: ES2019::new(self.options.env.es2019),
-            x2_es2018: ES2018::new(self.options.env.es2018, &self.ctx),
-            x2_es2016: ES2016::new(self.options.env.es2016, &self.ctx),
-            x2_es2017: ES2017::new(self.options.env.es2017, &self.ctx),
-            x3_es2015: ES2015::new(self.options.env.es2015, &self.ctx),
-            x4_regexp: RegExp::new(self.options.env.regexp, &self.ctx),
+                .then(|| TypeScript::new(&self.typescript, &self.ctx)),
+            x1_jsx: Jsx::new(self.jsx, ast_builder, &self.ctx),
+            x2_es2022: ES2022::new(self.env.es2022, &self.ctx),
+            x2_es2021: ES2021::new(self.env.es2021, &self.ctx),
+            x2_es2020: ES2020::new(self.env.es2020, &self.ctx),
+            x2_es2019: ES2019::new(self.env.es2019),
+            x2_es2018: ES2018::new(self.env.es2018, &self.ctx),
+            x2_es2016: ES2016::new(self.env.es2016, &self.ctx),
+            x2_es2017: ES2017::new(self.env.es2017, &self.ctx),
+            x3_es2015: ES2015::new(self.env.es2015, &self.ctx),
+            x4_regexp: RegExp::new(self.env.regexp, &self.ctx),
         };
 
         let (symbols, scopes) = traverse_mut(&mut transformer, allocator, program, symbols, scopes);

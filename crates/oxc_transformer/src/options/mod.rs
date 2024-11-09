@@ -161,7 +161,7 @@ impl TryFrom<&BabelOptions> for TransformOptions {
             jsx_options
         };
 
-        let env = options.presets.env.clone().unwrap_or_default();
+        let env = options.presets.env.unwrap_or_default();
 
         let regexp = RegExpOptions {
             sticky_flag: env.regexp.sticky_flag || options.plugins.sticky_flag,

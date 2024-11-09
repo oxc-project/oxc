@@ -111,8 +111,8 @@ impl CompilerInterface for Compiler {
         self.sourcemap
     }
 
-    fn transform_options(&self) -> Option<oxc::transformer::TransformOptions> {
-        Some(self.transform_options.clone())
+    fn transform_options(&self) -> Option<&oxc::transformer::TransformOptions> {
+        Some(&self.transform_options)
     }
 
     fn isolated_declaration_options(&self) -> Option<IsolatedDeclarationsOptions> {

@@ -243,7 +243,7 @@ impl Oxc {
 
         if run_options.transform.unwrap_or_default() {
             let options = TransformOptions::enable_all();
-            let result = Transformer::new(&allocator, &path, options)
+            let result = Transformer::new(&allocator, &path, &options)
                 .build_with_symbols_and_scopes(symbols, scopes, &mut program);
             if !result.errors.is_empty() {
                 self.save_diagnostics(

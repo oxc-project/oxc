@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use oxc_ast::{Comment, CommentKind};
 use oxc_syntax::identifier::is_irregular_whitespace;
 
-use crate::{JsxRuntime, TransformCtx, TransformOptions};
+use crate::{JsxOptions, JsxRuntime, TransformCtx, TypeScriptOptions};
 
 /// Scan through all comments and find the following pragmas:
 ///
@@ -18,16 +18,18 @@ use crate::{JsxRuntime, TransformCtx, TransformOptions};
 /// This behavior is aligned with Babel.
 pub(crate) fn update_options_with_comments(
     comments: &[Comment],
-    options: &mut TransformOptions,
+    typescript: &mut TypeScriptOptions,
+    jsx: &mut JsxOptions,
     ctx: &TransformCtx,
 ) {
     for comment in comments {
-        update_options_with_comment(options, comment, ctx.source_text);
+        update_options_with_comment(typescript, jsx, comment, ctx.source_text);
     }
 }
 
 fn update_options_with_comment(
-    options: &mut TransformOptions,
+    typescript: &mut TypeScriptOptions,
+    jsx: &mut JsxOptions,
     comment: &Comment,
     source_text: &str,
 ) {
@@ -38,14 +40,14 @@ fn update_options_with_comment(
         "" => {
             // Don't set React option unless React transform is enabled
             // otherwise can cause error in `ReactJsx::new`
-            if options.jsx.jsx_plugin || options.jsx.development {
-                options.jsx.pragma = Some(remainder.to_string());
+            if jsx.jsx_plugin || jsx.development {
+                jsx.pragma = Some(remainder.to_string());
             }
-            options.typescript.jsx_pragma = Cow::from(remainder.to_string());
+            typescript.jsx_pragma = Cow::from(remainder.to_string());
         }
         // @jsxRuntime
         "Runtime" => {
-            options.jsx.runtime = match remainder {
+            jsx.runtime = match remainder {
                 "classic" => JsxRuntime::Classic,
                 "automatic" => JsxRuntime::Automatic,
                 _ => return,
@@ -53,16 +55,16 @@ fn update_options_with_comment(
         }
         // @jsxImportSource
         "ImportSource" => {
-            options.jsx.import_source = Some(remainder.to_string());
+            jsx.import_source = Some(remainder.to_string());
         }
         // @jsxFrag
         "Frag" => {
             // Don't set React option unless React transform is enabled
             // otherwise can cause error in `ReactJsx::new`
-            if options.jsx.jsx_plugin || options.jsx.development {
-                options.jsx.pragma_frag = Some(remainder.to_string());
+            if jsx.jsx_plugin || jsx.development {
+                jsx.pragma_frag = Some(remainder.to_string());
             }
-            options.typescript.jsx_pragma_frag = Cow::from(remainder.to_string());
+            typescript.jsx_pragma_frag = Cow::from(remainder.to_string());
         }
         _ => {}
     }

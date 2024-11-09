@@ -98,7 +98,7 @@ use oxc_syntax::{
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
 use rustc_hash::FxHashMap;
 
-use crate::TransformOptions;
+use crate::EnvOptions;
 
 /// Mode for arrow function conversion
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -129,12 +129,10 @@ pub struct ArrowFunctionConverter<'a> {
 }
 
 impl<'a> ArrowFunctionConverter<'a> {
-    pub fn new(options: &TransformOptions) -> Self {
-        let mode = if options.env.es2015.arrow_function.is_some() {
+    pub fn new(env: &EnvOptions) -> Self {
+        let mode = if env.es2015.arrow_function.is_some() {
             ArrowFunctionConverterMode::Enabled
-        } else if options.env.es2017.async_to_generator
-            || options.env.es2018.async_generator_functions
-        {
+        } else if env.es2017.async_to_generator || env.es2018.async_generator_functions {
             ArrowFunctionConverterMode::AsyncOnly
         } else {
             ArrowFunctionConverterMode::Disabled

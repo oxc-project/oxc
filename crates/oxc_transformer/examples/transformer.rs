@@ -66,7 +66,7 @@ fn main() {
         TransformOptions::enable_all()
     };
 
-    let ret = Transformer::new(&allocator, path, transform_options).build_with_symbols_and_scopes(
+    let ret = Transformer::new(&allocator, path, &transform_options).build_with_symbols_and_scopes(
         symbols,
         scopes,
         &mut program,
