@@ -23,9 +23,17 @@ pub struct NoReturnWrapOptions {
     pub allow_reject: bool,
 }
 
+// This documentation and the following test cases are based on the original
+// implementation from eslint-plugin-promise and are licensed under the ISC License.
+//
+// Copyright (c) 2020, Jamund Ferguson
+//
+// See the LICENSE file in the root of this repository for more information.
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// Ensure that inside a then() or a catch() we always return or throw a raw value instead of
+    /// wrapping in Promise.resolve or Promise.reject
     ///
     /// ### Why is this bad?
     ///
@@ -34,20 +42,25 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// myPromise.then(function (val) {
+    ///     return Promise.resolve(val * 2)
+    /// })
+    /// myPromise.then(function (val) {
+    ///     return Promise.reject('bad thing')
+    /// })
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// myPromise.then(function (val) {
+    ///   return val * 2
+    ///   })
+    /// myPromise.then(function (val) {
+    ///     throw 'bad thing'
+    /// })
     /// ```
     NoReturnWrap,
-    nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
-             // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
-
-    pending  // TODO: describe fix capabilities. Remove if no fix can be done,
-             // keep at 'pending' if you think one could be added but don't know how.
-             // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
+    style,
 );
 
 impl Rule for NoReturnWrap {
