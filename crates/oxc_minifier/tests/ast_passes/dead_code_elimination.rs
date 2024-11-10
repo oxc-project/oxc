@@ -49,11 +49,11 @@ fn dce_if_statement() {
     test("if (!false) { foo }", "foo");
     test("if (!true) { foo } else { bar }", "bar");
 
-    test("if (!false && xxx) { foo }", "if (xxx) foo");
+    test("if (!false && xxx) { foo }", "xxx && foo");
     test("if (!true && yyy) { foo } else { bar }", "bar");
 
     test("if (true || xxx) { foo }", "foo");
-    test("if (false || xxx) { foo }", "if (xxx) foo");
+    test("if (false || xxx) { foo }", "xxx && foo");
 
     test("if ('production' == 'production') { foo } else { bar }", "foo");
     test("if ('development' == 'production') { foo } else { bar }", "bar");

@@ -80,6 +80,7 @@ impl<'a> Traverse<'a> for EarlyPass {
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x1_peephole_remove_dead_code.exit_statement(stmt, ctx);
+        self.x2_peephole_minimize_conditions.exit_statement(stmt, ctx);
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
