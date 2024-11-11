@@ -10,7 +10,6 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_empty_object_type_diagnostic(span: Span) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
     OxcDiagnostic::warn("Do not use the empty object type literal.")
         .with_help("To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.")
         .with_label(span)
@@ -115,56 +114,82 @@ impl Rule for NoEmptyObjectType {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let interface_declaration_is_empty = |interface: &TSInterfaceDeclaration| {
-            if let AllowInterfaces::Always = self.allow_interfaces {
-                return;
-            };
-            if interface.id.name.as_str() == self.allow_with_name.as_str() {
-                return;
-            }
-            match interface.extends.as_ref() {
-                Some(extends) if extends.len() == 1 => {
-                    match self.allow_interfaces {
-                        AllowInterfaces::WithSingleExtends => (),
-                        _ => ctx.diagnostic(no_empty_object_type_diagnostic(interface.span)),
-                    };
-                }
-                Some(extends) if extends.len() == 0 => {
-                    ctx.diagnostic(no_empty_object_type_diagnostic(interface.span));
-                }
-                None => ctx.diagnostic(no_empty_object_type_diagnostic(interface.span)),
-                _ => (),
-            }
-        };
-        let type_literal_is_empty = |type_literal: &TSTypeLiteral, node_id: NodeId| {
-            if let AllowObjectTypes::Always = self.allow_object_types {
-                return;
-            };
-            let parent_node = ctx.nodes().parent_node(node_id).unwrap();
-            match parent_node.kind() {
-                AstKind::TSIntersectionType(_) => return,
-                AstKind::TSTypeAliasDeclaration(alias) => {
-                    if alias.id.name.as_str() == self.allow_with_name.as_str() {
-                        return;
-                    }
-                }
-                _ => (),
-            }
-            ctx.diagnostic(no_empty_object_type_diagnostic(type_literal.span));
-        };
         match node.kind() {
             AstKind::TSInterfaceDeclaration(interface) if interface.body.body.len() == 0 => {
-                interface_declaration_is_empty(interface);
+                check_interface_declaration(
+                    ctx,
+                    interface,
+                    self.allow_interfaces,
+                    &self.allow_with_name,
+                );
             }
             AstKind::TSTypeLiteral(typeliteral) if typeliteral.members.len() == 0 => {
-                type_literal_is_empty(typeliteral, node.id());
+                check_type_literal(
+                    ctx,
+                    typeliteral,
+                    node.id(),
+                    self.allow_object_types,
+                    &self.allow_with_name,
+                );
             }
             _ => {}
         }
     }
 }
 
-#[derive(Debug, Default, Clone)]
+fn check_interface_declaration(
+    ctx: &LintContext,
+    interface: &TSInterfaceDeclaration,
+    allow_interfaces: AllowInterfaces,
+    allow_with_name: &str,
+) {
+    if let AllowInterfaces::Always = allow_interfaces {
+        return;
+    };
+    if interface.id.name.as_str() == allow_with_name {
+        return;
+    }
+    match interface.extends.as_ref() {
+        Some(extends) if extends.len() == 1 => {
+            match allow_interfaces {
+                AllowInterfaces::WithSingleExtends => (),
+                _ => ctx.diagnostic(no_empty_object_type_diagnostic(interface.body.span)),
+            };
+        }
+        Some(extends) if extends.len() == 0 => {
+            ctx.diagnostic(no_empty_object_type_diagnostic(interface.body.span));
+        }
+        None => ctx.diagnostic(no_empty_object_type_diagnostic(interface.body.span)),
+        _ => (),
+    }
+}
+
+fn check_type_literal(
+    ctx: &LintContext,
+    type_literal: &TSTypeLiteral,
+    node_id: NodeId,
+    allow_object_types: AllowObjectTypes,
+    allow_with_name: &str,
+) {
+    if let AllowObjectTypes::Always = allow_object_types {
+        return;
+    };
+    let Some(parent_node) = ctx.nodes().parent_node(node_id) else {
+        return;
+    };
+    match parent_node.kind() {
+        AstKind::TSIntersectionType(_) => return,
+        AstKind::TSTypeAliasDeclaration(alias) => {
+            if alias.id.name.as_str() == allow_with_name {
+                return;
+            }
+        }
+        _ => (),
+    }
+    ctx.diagnostic(no_empty_object_type_diagnostic(type_literal.span));
+}
+
+#[derive(Debug, Default, Clone, Copy)]
 enum AllowInterfaces {
     #[default]
     Never,
@@ -182,7 +207,7 @@ impl From<&str> for AllowInterfaces {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Copy)]
 enum AllowObjectTypes {
     #[default]
     Never,

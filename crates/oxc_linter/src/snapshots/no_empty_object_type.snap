@@ -2,66 +2,66 @@
 source: crates/oxc_linter/src/tester.rs
 ---
   ⚠ typescript-eslint(no-empty-object-type): Do not use the empty object type literal.
-   ╭─[no_empty_object_type.tsx:1:1]
+   ╭─[no_empty_object_type.tsx:1:16]
  1 │ interface Base {}
-   · ─────────────────
+   ·                ──
    ╰────
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
 
   ⚠ typescript-eslint(no-empty-object-type): Do not use the empty object type literal.
-   ╭─[no_empty_object_type.tsx:1:1]
+   ╭─[no_empty_object_type.tsx:1:16]
  1 │ interface Base {}
-   · ─────────────────
+   ·                ──
    ╰────
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
 
   ⚠ typescript-eslint(no-empty-object-type): Do not use the empty object type literal.
-   ╭─[no_empty_object_type.tsx:6:4]
+   ╭─[no_empty_object_type.tsx:6:35]
  5 │             
  6 │             interface Derived extends Base {}
-   ·             ─────────────────────────────────
+   ·                                            ──
  7 │             
    ╰────
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
 
   ⚠ typescript-eslint(no-empty-object-type): Do not use the empty object type literal.
-   ╭─[no_empty_object_type.tsx:6:4]
+   ╭─[no_empty_object_type.tsx:6:35]
  5 │             
  6 │             interface Derived extends Base {}
-   ·             ─────────────────────────────────
+   ·                                            ──
  7 │             
    ╰────
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
 
   ⚠ typescript-eslint(no-empty-object-type): Do not use the empty object type literal.
-   ╭─[no_empty_object_type.tsx:6:4]
+   ╭─[no_empty_object_type.tsx:6:35]
  5 │             
  6 │             interface Derived extends Base {}
-   ·             ─────────────────────────────────
+   ·                                            ──
  7 │             
    ╰────
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
 
   ⚠ typescript-eslint(no-empty-object-type): Do not use the empty object type literal.
-   ╭─[no_empty_object_type.tsx:6:4]
+   ╭─[no_empty_object_type.tsx:6:35]
  5 │             
  6 │             interface Derived extends Base {}
-   ·             ─────────────────────────────────
+   ·                                            ──
  7 │                   
    ╰────
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
 
   ⚠ typescript-eslint(no-empty-object-type): Do not use the empty object type literal.
-   ╭─[no_empty_object_type.tsx:1:1]
+   ╭─[no_empty_object_type.tsx:1:38]
  1 │ interface Base extends Array<number> {}
-   · ───────────────────────────────────────
+   ·                                      ──
    ╰────
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
 
   ⚠ typescript-eslint(no-empty-object-type): Do not use the empty object type literal.
-   ╭─[no_empty_object_type.tsx:1:1]
+   ╭─[no_empty_object_type.tsx:1:43]
  1 │ interface Base extends Array<number | {}> {}
-   · ────────────────────────────────────────────
+   ·                                           ──
    ╰────
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
 
@@ -73,35 +73,35 @@ source: crates/oxc_linter/src/tester.rs
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
 
   ⚠ typescript-eslint(no-empty-object-type): Do not use the empty object type literal.
-   ╭─[no_empty_object_type.tsx:5:4]
+   ╭─[no_empty_object_type.tsx:5:42]
  4 │             }
  5 │             interface Base extends Array<Derived> {}
-   ·             ────────────────────────────────────────
+   ·                                                   ──
  6 │                   
    ╰────
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
 
   ⚠ typescript-eslint(no-empty-object-type): Do not use the empty object type literal.
-   ╭─[no_empty_object_type.tsx:3:4]
+   ╭─[no_empty_object_type.tsx:3:29]
  2 │             type R = Record<string, unknown>;
  3 │             interface Base extends R {}
-   ·             ───────────────────────────
+   ·                                      ──
  4 │                   
    ╰────
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
 
   ⚠ typescript-eslint(no-empty-object-type): Do not use the empty object type literal.
-   ╭─[no_empty_object_type.tsx:1:1]
+   ╭─[no_empty_object_type.tsx:1:38]
  1 │ interface Base<T> extends Derived<T> {}
-   · ───────────────────────────────────────
+   ·                                      ──
    ╰────
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
 
   ⚠ typescript-eslint(no-empty-object-type): Do not use the empty object type literal.
-   ╭─[no_empty_object_type.tsx:4:13]
+   ╭─[no_empty_object_type.tsx:4:44]
  3 │               type Base = typeof base;
  4 │               export interface Derived extends Base {}
-   ·                      ─────────────────────────────────
+   ·                                                     ──
  5 │             }
    ╰────
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
@@ -166,8 +166,8 @@ source: crates/oxc_linter/src/tester.rs
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
 
   ⚠ typescript-eslint(no-empty-object-type): Do not use the empty object type literal.
-   ╭─[no_empty_object_type.tsx:1:1]
+   ╭─[no_empty_object_type.tsx:1:16]
  1 │ interface Base {}
-   · ─────────────────
+   ·                ──
    ╰────
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
