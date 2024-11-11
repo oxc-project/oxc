@@ -1,9 +1,9 @@
 {
   "name": "oxc",
   "private": true,
-  "packageManager": "pnpm@9.12.1",
+  "packageManager": "pnpm@9.12.3",
   "volta": {
-    "node": "22.7.0"
+    "node": "22.11.0"
   },
   "scripts": {
     "build": "pnpm --workspace-concurrency=1 --filter './napi/*' build",
@@ -11,6 +11,7 @@
   },
   "devDependencies": {
     "@napi-rs/cli": "catalog:",
+    "typescript": "catalog:",
     "vitest": "catalog:"
   }
 }

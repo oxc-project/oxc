@@ -200,7 +200,7 @@ impl<'a> InjectGlobalVariables<'a> {
             let import_decl = self
                 .ast
                 .module_declaration_import_declaration(SPAN, specifiers, source, NONE, kind);
-            self.ast.statement_module_declaration(import_decl)
+            Statement::from(import_decl)
         });
         program.body.splice(0..0, imports);
     }

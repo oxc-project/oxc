@@ -76,7 +76,7 @@ impl<'a> Gen for Directive<'a> {
 
 impl<'a> Gen for Statement<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        p.print_leading_comments(self.span().start);
+        p.print_statement_comments(self.span().start);
         match self {
             Self::BlockStatement(stmt) => stmt.print(p, ctx),
             Self::BreakStatement(stmt) => stmt.print(p, ctx),
@@ -1329,7 +1329,7 @@ impl<'a> GenExpr for CallExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         let is_export_default = p.start_of_default_export == p.code_len();
         let mut wrap = precedence >= Precedence::New || ctx.intersects(Context::FORBID_CALL);
-        if p.has_annotation_comment(self.span.start) && precedence >= Precedence::Postfix {
+        if precedence >= Precedence::Postfix && p.has_annotation_comment(self.span.start) {
             wrap = true;
         }
 
@@ -2040,7 +2040,7 @@ impl<'a> GenExpr for ChainExpression<'a> {
 impl<'a> GenExpr for NewExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         let mut wrap = precedence >= self.precedence();
-        if p.has_annotation_comment(self.span.start) && precedence >= Precedence::Postfix {
+        if precedence >= Precedence::Postfix && p.has_annotation_comment(self.span.start) {
             wrap = true;
         }
         p.wrap(wrap, |p| {
@@ -2186,6 +2186,7 @@ impl<'a> Gen for ClassBody<'a> {
         p.print_curly_braces(self.span, self.body.is_empty(), |p| {
             for item in &self.body {
                 p.print_semicolon_if_needed();
+                p.print_leading_comments(item.span().start);
                 p.print_indent();
                 item.print(p, ctx);
             }
@@ -2197,27 +2198,22 @@ impl<'a> Gen for ClassElement<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::StaticBlock(elem) => {
-                p.print_leading_comments(elem.span.start);
                 elem.print(p, ctx);
                 p.print_soft_newline();
             }
             Self::MethodDefinition(elem) => {
-                p.print_leading_comments(elem.span.start);
                 elem.print(p, ctx);
                 p.print_soft_newline();
             }
             Self::PropertyDefinition(elem) => {
-                p.print_leading_comments(elem.span.start);
                 elem.print(p, ctx);
                 p.print_semicolon_after_statement();
             }
             Self::AccessorProperty(elem) => {
-                p.print_leading_comments(elem.span.start);
                 elem.print(p, ctx);
                 p.print_semicolon_after_statement();
             }
             Self::TSIndexSignature(elem) => {
-                p.print_leading_comments(elem.span.start);
                 elem.print(p, ctx);
                 p.print_semicolon_after_statement();
             }
@@ -3547,8 +3543,8 @@ impl<'a> Gen for TSInterfaceDeclaration<'a> {
         p.print_soft_space();
         p.print_curly_braces(self.body.span, self.body.body.is_empty(), |p| {
             for item in &self.body.body {
-                p.print_indent();
                 p.print_leading_comments(item.span().start);
+                p.print_indent();
                 item.print(p, ctx);
                 p.print_semicolon();
                 p.print_soft_newline();
@@ -3581,6 +3577,7 @@ impl<'a> Gen for TSEnumDeclaration<'a> {
         p.print_space_before_identifier();
         p.print_curly_braces(self.span, self.members.is_empty(), |p| {
             for member in &self.members {
+                p.print_leading_comments(member.span().start);
                 p.print_indent();
                 member.print(p, ctx);
                 p.print_comma();
@@ -3592,19 +3589,9 @@ impl<'a> Gen for TSEnumDeclaration<'a> {
 
 impl<'a> Gen for TSEnumMember<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        p.print_leading_comments(self.span.start);
         match &self.id {
             TSEnumMemberName::StaticIdentifier(decl) => decl.print(p, ctx),
             TSEnumMemberName::StaticStringLiteral(decl) => decl.print(p, ctx),
-            TSEnumMemberName::StaticTemplateLiteral(decl) => decl.print(p, ctx),
-            TSEnumMemberName::StaticNumericLiteral(decl) => {
-                decl.print_expr(p, Precedence::Lowest, ctx);
-            }
-            decl @ match_expression!(TSEnumMemberName) => {
-                p.print_str("[");
-                decl.to_expression().print_expr(p, Precedence::Lowest, ctx);
-                p.print_str("]");
-            }
         }
         if let Some(init) = &self.initializer {
             p.print_soft_space();

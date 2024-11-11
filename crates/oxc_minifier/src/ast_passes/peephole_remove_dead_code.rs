@@ -215,15 +215,13 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
                                 .declarations
                                 .splice(0..0, ctx.ast.move_vec(&mut var_init.declarations));
                         } else {
-                            var_decl = Some(ctx.ast.move_variable_declaration(var_init));
+                            var_decl =
+                                Some(ctx.ast.alloc(ctx.ast.move_variable_declaration(var_init)));
                         }
                     }
                     Some(var_decl.map_or_else(
                         || ctx.ast.statement_empty(SPAN),
-                        |var_decl| {
-                            ctx.ast
-                                .statement_declaration(ctx.ast.declaration_from_variable(var_decl))
-                        },
+                        Statement::VariableDeclaration,
                     ))
                 }
                 None => {
@@ -231,10 +229,7 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
                     keep_var.visit_statement(&for_stmt.body);
                     Some(keep_var.get_variable_declaration().map_or_else(
                         || ctx.ast.statement_empty(SPAN),
-                        |var_decl| {
-                            ctx.ast
-                                .statement_declaration(ctx.ast.declaration_from_variable(var_decl))
-                        },
+                        Statement::VariableDeclaration,
                     ))
                 }
                 _ => None,
@@ -315,9 +310,7 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
 
                     return Some(ctx.ast.statement_expression(
                         template_lit.span,
-                        ctx.ast.expression_from_sequence(
-                            ctx.ast.sequence_expression(template_lit.span, expressions),
-                        ),
+                        ctx.ast.expression_sequence(template_lit.span, expressions),
                     ));
                 }
                 Expression::FunctionExpression(function_expr) if function_expr.id.is_none() => {
@@ -390,9 +383,7 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
 
         Some(ctx.ast.statement_expression(
             array_expr.span,
-            ctx.ast.expression_from_sequence(
-                ctx.ast.sequence_expression(array_expr.span, transformed_elements),
-            ),
+            ctx.ast.expression_sequence(array_expr.span, transformed_elements),
         ))
     }
 

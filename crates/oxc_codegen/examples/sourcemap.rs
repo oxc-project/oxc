@@ -27,7 +27,7 @@ fn main() -> std::io::Result<()> {
         return Ok(());
     }
 
-    let CodegenReturn { code, map } = CodeGenerator::new()
+    let CodegenReturn { code, map, .. } = CodeGenerator::new()
         .with_options(CodegenOptions {
             source_map_path: Some(path.to_path_buf()),
             ..CodegenOptions::default()

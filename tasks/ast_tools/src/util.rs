@@ -122,6 +122,7 @@ pub enum TypeWrapper {
     Box,
     Vec,
     Opt,
+    #[expect(dead_code)]
     VecBox,
     VecOpt,
     OptBox,

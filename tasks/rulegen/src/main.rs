@@ -23,6 +23,7 @@ use ureq::Response;
 
 mod json;
 mod template;
+mod util;
 
 const ESLINT_TEST_PATH: &str =
     "https://raw.githubusercontent.com/eslint/eslint/main/tests/lib/rules";
@@ -175,6 +176,17 @@ fn format_code_snippet(code: &str) -> String {
     format!("r#\"{}\"#", code.replace("\\\"", "\""))
 }
 
+// TODO: handle `noFormat`(in typescript-eslint)
+fn format_tagged_template_expression(tag_expr: &TaggedTemplateExpression) -> Option<String> {
+    if tag_expr.tag.is_specific_member_access("String", "raw") {
+        tag_expr.quasi.quasis.first().map(|quasi| format!("r#\"{}\"#", quasi.value.raw))
+    } else if tag_expr.tag.is_specific_id("dedent") || tag_expr.tag.is_specific_id("outdent") {
+        tag_expr.quasi.quasis.first().map(|quasi| util::dedent(&quasi.value.raw).to_string())
+    } else {
+        tag_expr.quasi.quasi().map(|quasi| quasi.to_string())
+    }
+}
+
 impl<'a> Visit<'a> for TestCase {
     fn visit_expression(&mut self, expr: &Expression<'a>) {
         match expr {
@@ -215,19 +227,7 @@ impl<'a> Visit<'a> for TestCase {
                         self.code = match &prop.value {
                             Expression::StringLiteral(s) => Some(s.value.to_string()),
                             Expression::TaggedTemplateExpression(tag_expr) => {
-                                // If it is a raw string like String.raw`something`, then we import that as a Rust raw string literal
-                                if tag_expr.tag.is_specific_member_access("String", "raw") {
-                                    tag_expr
-                                        .quasi
-                                        .quasis
-                                        .first()
-                                        .map(|quasi| format!("r#\"{}\"#", quasi.value.raw))
-                                } else {
-                                    // There are `dedent`(in eslint-plugin-jest), `outdent`(in eslint-plugin-unicorn) and `noFormat`(in typescript-eslint)
-                                    // are known to be used to format test cases for their own purposes.
-                                    // We read the quasi of tagged template directly also for the future usage.
-                                    tag_expr.quasi.quasi().map(|quasi| quasi.to_string())
-                                }
+                                format_tagged_template_expression(tag_expr)
                             }
                             Expression::TemplateLiteral(tag_expr) => {
                                 tag_expr.quasi().map(|quasi| quasi.to_string())
@@ -268,7 +268,7 @@ impl<'a> Visit<'a> for TestCase {
                         self.output = match &prop.value {
                             Expression::StringLiteral(s) => Some(s.value.to_string()),
                             Expression::TaggedTemplateExpression(tag_expr) => {
-                                tag_expr.quasi.quasi().map(|quasi| quasi.to_string())
+                                format_tagged_template_expression(tag_expr)
                             }
                             Expression::TemplateLiteral(tag_expr) => {
                                 tag_expr.quasi().map(|quasi| quasi.to_string())
@@ -316,16 +316,7 @@ impl<'a> Visit<'a> for TestCase {
     }
 
     fn visit_tagged_template_expression(&mut self, expr: &TaggedTemplateExpression<'a>) {
-        if expr.tag.is_specific_id("dedent") || expr.tag.is_specific_id("outdent") {
-            return;
-        }
-
-        // If it is a raw string like String.raw`something`, then we import that as a Rust raw string literal
-        self.code = if expr.tag.is_specific_member_access("String", "raw") {
-            expr.quasi.quasis.first().map(|quasi| format!("r#\"{}\"#", quasi.value.raw))
-        } else {
-            expr.quasi.quasi().map(|quasi| quasi.to_string())
-        };
+        self.code = format_tagged_template_expression(expr);
         self.config = None;
     }
 }

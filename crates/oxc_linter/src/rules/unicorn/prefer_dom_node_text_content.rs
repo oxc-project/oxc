@@ -61,8 +61,7 @@ impl Rule for PreferDomNodeTextContent {
                     return;
                 }
 
-                let mut ancestor_kinds =
-                    ctx.nodes().iter_parents(node.id()).skip(1).map(AstNode::kind);
+                let mut ancestor_kinds = ctx.nodes().ancestor_kinds(node.id()).skip(1);
                 let (Some(parent_node_kind), Some(grand_parent_node_kind)) =
                     (ancestor_kinds.next(), ancestor_kinds.next())
                 else {
@@ -87,8 +86,7 @@ impl Rule for PreferDomNodeTextContent {
                     return;
                 }
 
-                let mut ancestor_kinds =
-                    ctx.nodes().iter_parents(node.id()).skip(1).map(AstNode::kind);
+                let mut ancestor_kinds = ctx.nodes().ancestor_kinds(node.id()).skip(1);
                 let (Some(parent_node_kind), Some(grand_parent_node_kind)) =
                     (ancestor_kinds.next(), ancestor_kinds.next())
                 else {

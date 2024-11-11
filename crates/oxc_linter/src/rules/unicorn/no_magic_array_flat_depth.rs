@@ -93,7 +93,7 @@ fn get_call_expression_parentheses_pos<'a>(
         let callee_span = member_expr.object().span();
 
         // walk forward from the end of callee_span to find the opening `(` of the argument
-        let source = ctx.semantic().source_text().char_indices();
+        let source = ctx.source_text().char_indices();
 
         let start = source
             .skip(callee_span.end as usize)

@@ -13,7 +13,8 @@ pub(super) fn __internal_log_enable() -> bool {
 macro_rules! log {
         ($fmt:literal $(, $args:expr)*) => {
             if $crate::logger::__internal_log_enable() {
-                print!("{}", format!($fmt$(, $args)*));
+                print!($fmt$(, $args)*);
+                std::io::Write::flush(&mut std::io::stdout()).unwrap();
             }
         }
     }

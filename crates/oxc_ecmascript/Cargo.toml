@@ -1,6 +1,6 @@
 [package]
 name = "oxc_ecmascript"
-version = "0.34.0"
+version = "0.36.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -27,6 +27,11 @@ oxc_syntax = { workspace = true, features = ["to_js_string"] }
 
 num-bigint = { workspace = true }
 num-traits = { workspace = true }
+
+[dev-dependencies]
+# Parser and allocator are only used in tests to make testing easier
+oxc_allocator = { workspace = true }
+oxc_parser = { workspace = true }
 
 [features]
 default = []

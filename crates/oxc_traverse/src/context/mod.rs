@@ -538,10 +538,7 @@ impl<'a> TraverseCtx<'a> {
         ident: &IdentifierReference<'a>,
         flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
-        let reference =
-            self.symbols().get_reference(ident.reference_id.get().unwrap_or_else(|| {
-                unreachable!("IdentifierReference must have a reference_id");
-            }));
+        let reference = self.symbols().get_reference(ident.reference_id());
         let symbol_id = reference.symbol_id();
         self.create_reference_id(ident.span, ident.name.clone(), symbol_id, flags)
     }

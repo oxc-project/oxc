@@ -18,7 +18,7 @@ fn no_duplicate_enum_values_diagnostic(
     second_member: &TSEnumMember,
     value: &str,
 ) -> OxcDiagnostic {
-    let second_name = second_member.id.static_name().unwrap_or("the second member");
+    let second_name = second_member.id.static_name();
     // Unwrap will never panic since violations are only reported for members
     // with initializers.
     let second_init_span = second_member.initializer.as_ref().map(GetSpan::span).unwrap();

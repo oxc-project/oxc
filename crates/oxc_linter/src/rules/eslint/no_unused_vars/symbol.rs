@@ -102,7 +102,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
     }
 
     pub fn iter_self_and_parents(&self) -> impl Iterator<Item = &AstNode<'a>> + '_ {
-        self.nodes().iter_parents(self.declaration_id())
+        self.nodes().ancestors(self.declaration_id())
     }
 
     #[inline]
@@ -114,7 +114,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
         &self,
         node_id: NodeId,
     ) -> impl Iterator<Item = &AstNode<'a>> + Clone + '_ {
-        self.nodes().iter_parents(node_id).skip(1).filter(|n| Self::is_relevant_kind(n.kind()))
+        self.nodes().ancestors(node_id).skip(1).filter(|n| Self::is_relevant_kind(n.kind()))
     }
 
     pub fn iter_relevant_parent_and_grandparent_kinds(
@@ -124,8 +124,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
     {
         let parents_iter = self
             .nodes()
-            .iter_parents(node_id)
-            .map(AstNode::kind)
+            .ancestor_kinds(node_id)
             // no skip
             .filter(|kind| Self::is_relevant_kind(*kind));
 
@@ -190,7 +189,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
 
     /// We need to do this due to limitations of [`Semantic`].
     fn in_export_node(&self) -> bool {
-        for parent in self.nodes().iter_parents(self.declaration_id()).skip(1) {
+        for parent in self.nodes().ancestors(self.declaration_id()).skip(1) {
             match parent.kind() {
                 AstKind::ModuleDeclaration(module) => {
                     return module.is_export();

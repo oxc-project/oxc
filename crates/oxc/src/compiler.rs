@@ -65,8 +65,8 @@ pub trait CompilerInterface {
         None
     }
 
-    fn transform_options(&self) -> Option<TransformOptions> {
-        Some(TransformOptions::default())
+    fn transform_options(&self) -> Option<&TransformOptions> {
+        None
     }
 
     fn define_options(&self) -> Option<ReplaceGlobalDefinesConfig> {
@@ -152,6 +152,7 @@ pub trait CompilerInterface {
             return;
         }
 
+        let stats = semantic_return.semantic.stats();
         let (mut symbols, mut scopes) = semantic_return.semantic.into_symbol_table_and_scope_tree();
 
         /* Transform */
@@ -169,20 +170,34 @@ pub trait CompilerInterface {
                 return;
             }
 
-            symbols = transformer_return.symbols;
-            scopes = transformer_return.scopes;
+            (symbols, scopes) = (transformer_return.symbols, transformer_return.scopes);
         }
 
-        if let Some(config) = self.inject_options() {
-            let ret =
-                InjectGlobalVariables::new(&allocator, config).build(symbols, scopes, &mut program);
+        let inject_options = self.inject_options();
+        let define_options = self.define_options();
+
+        // Symbols and scopes are out of sync.
+        if inject_options.is_some() || define_options.is_some() {
+            (symbols, scopes) = SemanticBuilder::new()
+                .with_stats(stats)
+                .build(&program)
+                .semantic
+                .into_symbol_table_and_scope_tree();
+        }
+
+        if let Some(options) = inject_options {
+            let ret = InjectGlobalVariables::new(&allocator, options).build(
+                symbols,
+                scopes,
+                &mut program,
+            );
             symbols = ret.symbols;
             scopes = ret.scopes;
         }
 
-        if let Some(config) = self.define_options() {
+        if let Some(options) = define_options {
             let ret =
-                ReplaceGlobalDefines::new(&allocator, config).build(symbols, scopes, &mut program);
+                ReplaceGlobalDefines::new(&allocator, options).build(symbols, scopes, &mut program);
             Compressor::new(&allocator, CompressOptions::dead_code_elimination())
                 .build_with_symbols_and_scopes(ret.symbols, ret.scopes, &mut program);
             // symbols = ret.symbols;
@@ -252,7 +267,7 @@ pub trait CompilerInterface {
     #[allow(clippy::too_many_arguments)]
     fn transform<'a>(
         &self,
-        options: TransformOptions,
+        options: &TransformOptions,
         allocator: &'a Allocator,
         program: &mut Program<'a>,
         source_path: &Path,

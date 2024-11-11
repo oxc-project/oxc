@@ -2,7 +2,7 @@
   "name": "oxc-vscode",
   "description": "oxc vscode extension",
   "license": "MIT",
-  "version": "0.10.3",
+  "version": "0.11.1",
   "icon": "icon.png",
   "publisher": "oxc",
   "displayName": "Oxc",
@@ -22,7 +22,7 @@
     "oxc"
   ],
   "engines": {
-    "vscode": "^1.90.0"
+    "vscode": "^1.95.0"
   },
   "sponsor": {
     "url": "https://github.com/sponsors/boshen"
@@ -51,11 +51,6 @@
       {
         "command": "oxc.showOutputChannel",
         "title": "Show Output Channel",
-        "category": "Oxc"
-      },
-      {
-        "command": "oxc.showTraceOutputChannel",
-        "title": "Show Trace Output Channel",
         "category": "Oxc"
       }
     ],
@@ -144,7 +139,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
-    "@types/vscode": "1.80.0",
+    "@types/vscode": "1.95.0",
     "@vscode/vsce": "^3.0.0",
     "cross-env": "^7.0.3",
     "esbuild": "^0.24.0",

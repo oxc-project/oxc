@@ -178,7 +178,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
     /// for (let a of iter) { fn(b) }
     /// ```
     fn is_used_in_for_of_loop(&self, reference: &Reference) -> bool {
-        for parent in self.nodes().iter_parents(reference.node_id()) {
+        for parent in self.nodes().ancestors(reference.node_id()) {
             match parent.kind() {
                 AstKind::ParenthesizedExpression(_)
                 | AstKind::IdentifierReference(_)
@@ -222,7 +222,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
             return false;
         }
 
-        for parent in self.nodes().iter_parents(reference.node_id()).map(AstNode::kind) {
+        for parent in self.nodes().ancestors(reference.node_id()).map(AstNode::kind) {
             match parent {
                 AstKind::IdentifierReference(_)
                 | AstKind::SimpleAssignmentTarget(_)
@@ -378,7 +378,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
         let name = self.name();
         let ref_span = self.get_ref_span(reference);
 
-        for node in self.nodes().iter_parents(reference.node_id()).skip(1) {
+        for node in self.nodes().ancestors(reference.node_id()).skip(1) {
             match node.kind() {
                 // references used in declaration of another variable are definitely
                 // used by others

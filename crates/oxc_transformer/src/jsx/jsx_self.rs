@@ -63,8 +63,7 @@ impl<'a, 'ctx> JsxSelf<'a, 'ctx> {
         self.ctx.error(error);
     }
 
-    #[allow(clippy::unused_self)]
-    fn is_inside_constructor(&self, ctx: &TraverseCtx<'a>) -> bool {
+    fn is_inside_constructor(ctx: &TraverseCtx<'a>) -> bool {
         for scope_id in ctx.ancestor_scopes() {
             let flags = ctx.scopes().get_flags(scope_id);
             if flags.is_block() || flags.is_arrow() {
@@ -90,12 +89,11 @@ impl<'a, 'ctx> JsxSelf<'a, 'ctx> {
         let kind = PropertyKind::Init;
         let key = ctx.ast.property_key_identifier_name(SPAN, SELF);
         let value = ctx.ast.expression_this(SPAN);
-        ctx.ast
-            .object_property_kind_object_property(SPAN, kind, key, value, None, false, false, false)
+        ctx.ast.object_property_kind_object_property(SPAN, kind, key, value, false, false, false)
     }
 
-    pub fn can_add_self_attribute(&self, ctx: &TraverseCtx<'a>) -> bool {
-        !self.is_inside_constructor(ctx) || Self::has_no_super_class(ctx)
+    pub fn can_add_self_attribute(ctx: &TraverseCtx<'a>) -> bool {
+        !Self::is_inside_constructor(ctx) || Self::has_no_super_class(ctx)
     }
 
     /// `<div __self={this} />`

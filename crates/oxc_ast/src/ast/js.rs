@@ -365,7 +365,6 @@ pub struct ObjectProperty<'a> {
     pub kind: PropertyKind,
     pub key: PropertyKey<'a>,
     pub value: Expression<'a>,
-    pub init: Option<Expression<'a>>, // for `CoverInitializedName`
     pub method: bool,
     pub shorthand: bool,
     pub computed: bool,
@@ -425,6 +424,7 @@ pub struct TaggedTemplateExpression<'a> {
     pub span: Span,
     pub tag: Expression<'a>,
     pub quasi: TemplateLiteral<'a>,
+    #[ts]
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
@@ -544,6 +544,7 @@ pub struct PrivateFieldExpression<'a> {
 pub struct CallExpression<'a> {
     pub span: Span,
     pub callee: Expression<'a>,
+    #[ts]
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     pub arguments: Vec<'a, Argument<'a>>,
     pub optional: bool, // for optional chaining
@@ -568,6 +569,7 @@ pub struct NewExpression<'a> {
     pub span: Span,
     pub callee: Expression<'a>,
     pub arguments: Vec<'a, Argument<'a>>,
+    #[ts]
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
@@ -802,12 +804,10 @@ pub use match_assignment_target_pattern;
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(custom_serialize)]
 pub struct ArrayAssignmentTarget<'a> {
     pub span: Span,
-    #[estree(type = "Array<AssignmentTargetMaybeDefault | AssignmentTargetRest | null>")]
     pub elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
-    #[estree(skip)]
+    #[estree(append_to = "elements")]
     pub rest: Option<AssignmentTargetRest<'a>>,
     #[estree(skip)]
     pub trailing_comma: Option<Span>,
@@ -819,12 +819,10 @@ pub struct ArrayAssignmentTarget<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(custom_serialize)]
 pub struct ObjectAssignmentTarget<'a> {
     pub span: Span,
-    #[estree(type = "Array<AssignmentTargetProperty | AssignmentTargetRest>")]
     pub properties: Vec<'a, AssignmentTargetProperty<'a>>,
-    #[estree(skip)]
+    #[estree(append_to = "properties")]
     pub rest: Option<AssignmentTargetRest<'a>>,
 }
 
@@ -1088,6 +1086,7 @@ pub struct VariableDeclaration<'a> {
     pub span: Span,
     pub kind: VariableDeclarationKind,
     pub declarations: Vec<'a, VariableDeclarator<'a>>,
+    #[ts]
     pub declare: bool,
 }
 
@@ -1120,6 +1119,7 @@ pub struct VariableDeclarator<'a> {
     pub kind: VariableDeclarationKind,
     pub id: BindingPattern<'a>,
     pub init: Option<Expression<'a>>,
+    #[ts]
     pub definite: bool,
 }
 
@@ -1441,7 +1441,9 @@ pub struct BindingPattern<'a> {
     )]
     #[span]
     pub kind: BindingPatternKind<'a>,
+    #[ts]
     pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
+    #[ts]
     pub optional: bool,
 }
 
@@ -1475,12 +1477,10 @@ pub struct AssignmentPattern<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(custom_serialize)]
 pub struct ObjectPattern<'a> {
     pub span: Span,
-    #[estree(type = "Array<BindingProperty | BindingRestElement>")]
     pub properties: Vec<'a, BindingProperty<'a>>,
-    #[estree(skip)]
+    #[estree(append_to = "properties")]
     pub rest: Option<Box<'a, BindingRestElement<'a>>>,
 }
 
@@ -1499,12 +1499,10 @@ pub struct BindingProperty<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(custom_serialize)]
 pub struct ArrayPattern<'a> {
     pub span: Span,
-    #[estree(type = "Array<BindingPattern | BindingRestElement | null>")]
     pub elements: Vec<'a, Option<BindingPattern<'a>>>,
-    #[estree(skip)]
+    #[estree(append_to = "elements")]
     pub rest: Option<Box<'a, BindingRestElement<'a>>>,
 }
 
@@ -1582,7 +1580,9 @@ pub struct Function<'a> {
     /// ```
     pub generator: bool,
     pub r#async: bool,
+    #[ts]
     pub declare: bool,
+    #[ts]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     /// Declaring `this` in a Function <https://www.typescriptlang.org/docs/handbook/2/functions.html#declaring-this-in-a-function>
     ///
@@ -1600,12 +1600,14 @@ pub struct Function<'a> {
     ///     return this.admin;
     /// });
     /// ```
+    #[ts]
     pub this_param: Option<Box<'a, TSThisParameter<'a>>>,
     /// Function parameters.
     ///
     /// Does not include `this` parameters used by some TypeScript functions.
     pub params: Box<'a, FormalParameters<'a>>,
     /// The TypeScript return type annotation.
+    #[ts]
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     /// The function body.
     ///
@@ -1657,10 +1659,14 @@ pub struct FormalParameters<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct FormalParameter<'a> {
     pub span: Span,
+    #[ts]
     pub decorators: Vec<'a, Decorator<'a>>,
     pub pattern: BindingPattern<'a>,
+    #[ts]
     pub accessibility: Option<TSAccessibility>,
+    #[ts]
     pub readonly: bool,
+    #[ts]
     pub r#override: bool,
 }
 
@@ -1702,8 +1708,10 @@ pub struct ArrowFunctionExpression<'a> {
     /// Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     pub expression: bool,
     pub r#async: bool,
+    #[ts]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub params: Box<'a, FormalParameters<'a>>,
+    #[ts]
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     /// See `expression` for whether this arrow expression returns an expression.
     pub body: Box<'a, FunctionBody<'a>>,
@@ -1740,10 +1748,12 @@ pub struct Class<'a> {
     /// @Bar() // <-- Decorator
     /// class Foo {}
     /// ```
+    #[ts]
     pub decorators: Vec<'a, Decorator<'a>>,
     /// Class identifier, AKA the name
     pub id: Option<BindingIdentifier<'a>>,
     #[scope(enter_before)]
+    #[ts]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     /// Super class. When present, this will usually be an [`IdentifierReference`].
     ///
@@ -1760,6 +1770,7 @@ pub struct Class<'a> {
     /// class Foo<T> extends Bar<T> {}
     /// //                       ^
     /// ```
+    #[ts]
     pub super_type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     /// Interface implementation clause for TypeScript classes.
     ///
@@ -1769,6 +1780,7 @@ pub struct Class<'a> {
     /// class Foo implements Bar {}
     /// //                   ^^^
     /// ```
+    #[ts]
     pub implements: Option<Vec<'a, TSClassImplements<'a>>>,
     pub body: Box<'a, ClassBody<'a>>,
     /// Whether the class is abstract
@@ -1778,6 +1790,7 @@ pub struct Class<'a> {
     /// class Foo {}          // true
     /// abstract class Bar {} // false
     /// ```
+    #[ts]
     pub r#abstract: bool,
     /// Whether the class was `declare`ed
     ///
@@ -1785,6 +1798,7 @@ pub struct Class<'a> {
     /// ```ts
     /// declare class Foo {}
     /// ```
+    #[ts]
     pub declare: bool,
     /// Id of the scope created by the [`Class`], including type parameters and
     /// statements within the [`ClassBody`].
@@ -1868,6 +1882,7 @@ pub struct MethodDefinition<'a> {
     /// This will always be true when an `abstract` modifier is used on the method.
     pub r#type: MethodDefinitionType,
     pub span: Span,
+    #[ts]
     pub decorators: Vec<'a, Decorator<'a>>,
     pub key: PropertyKey<'a>,
     #[visit(args(flags = match self.kind {
@@ -1880,8 +1895,11 @@ pub struct MethodDefinition<'a> {
     pub kind: MethodDefinitionKind,
     pub computed: bool,
     pub r#static: bool,
+    #[ts]
     pub r#override: bool,
+    #[ts]
     pub optional: bool,
+    #[ts]
     pub accessibility: Option<TSAccessibility>,
 }
 
@@ -1903,6 +1921,7 @@ pub struct PropertyDefinition<'a> {
     /// Decorators applied to the property.
     ///
     /// See [`Decorator`] for more information.
+    #[ts]
     pub decorators: Vec<'a, Decorator<'a>>,
     /// The expression used to declare the property.
     pub key: PropertyKey<'a>,
@@ -1945,16 +1964,22 @@ pub struct PropertyDefinition<'a> {
     ///   x: number         // false
     /// }
     /// ```
+    #[ts]
     pub declare: bool,
+    #[ts]
     pub r#override: bool,
     /// `true` when created with an optional modifier (`?`)
+    #[ts]
     pub optional: bool,
+    #[ts]
     pub definite: bool,
     /// `true` when declared with a `readonly` modifier
+    #[ts]
     pub readonly: bool,
     /// Type annotation on the property.
     ///
     /// Will only ever be [`Some`] for TypeScript files.
+    #[ts]
     pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     /// Accessibility modifier.
     ///
@@ -1970,6 +1995,7 @@ pub struct PropertyDefinition<'a> {
     ///   readonly z           // None
     /// }
     /// ```
+    #[ts]
     pub accessibility: Option<TSAccessibility>,
 }
 
@@ -2116,6 +2142,7 @@ pub struct AccessorProperty<'a> {
     /// Decorators applied to the accessor property.
     ///
     /// See [`Decorator`] for more information.
+    #[ts]
     pub decorators: Vec<'a, Decorator<'a>>,
     /// The expression used to declare the property.
     pub key: PropertyKey<'a>,
@@ -2126,10 +2153,12 @@ pub struct AccessorProperty<'a> {
     /// Property was declared with a `static` modifier
     pub r#static: bool,
     /// Property has a `!` after its key.
+    #[ts]
     pub definite: bool,
     /// Type annotation on the property.
     ///
     /// Will only ever be [`Some`] for TypeScript files.
+    #[ts]
     pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     /// Accessibility modifier.
     ///
@@ -2145,6 +2174,7 @@ pub struct AccessorProperty<'a> {
     ///   accessor z           // None
     /// }
     /// ```
+    #[ts]
     pub accessibility: Option<TSAccessibility>,
 }
 
@@ -2166,8 +2196,10 @@ pub struct ImportDeclaration<'a> {
     pub specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a>>>,
     pub source: StringLiteral<'a>,
     /// Some(vec![]) for empty assertion
+    #[ts]
     pub with_clause: Option<Box<'a, WithClause<'a>>>,
     /// `import type { foo } from 'bar'`
+    #[ts]
     pub import_kind: ImportOrExportKind,
 }
 
@@ -2204,6 +2236,7 @@ pub struct ImportSpecifier<'a> {
     /// //              ^^^
     /// ```
     pub local: BindingIdentifier<'a>,
+    #[ts]
     pub import_kind: ImportOrExportKind,
 }
 
@@ -2283,8 +2316,10 @@ pub struct ExportNamedDeclaration<'a> {
     pub specifiers: Vec<'a, ExportSpecifier<'a>>,
     pub source: Option<StringLiteral<'a>>,
     /// `export type { foo }`
+    #[ts]
     pub export_kind: ImportOrExportKind,
     /// Some(vec![]) for empty assertion
+    #[ts]
     pub with_clause: Option<Box<'a, WithClause<'a>>>,
 }
 
@@ -2324,7 +2359,9 @@ pub struct ExportAllDeclaration<'a> {
     pub exported: Option<ModuleExportName<'a>>,
     pub source: StringLiteral<'a>,
     /// Will be `Some(vec![])` for empty assertion
+    #[ts]
     pub with_clause: Option<Box<'a, WithClause<'a>>>, // Some(vec![]) for empty assertion
+    #[ts]
     pub export_kind: ImportOrExportKind, // `export type *`
 }
 
@@ -2346,6 +2383,7 @@ pub struct ExportSpecifier<'a> {
     pub span: Span,
     pub local: ModuleExportName<'a>,
     pub exported: ModuleExportName<'a>,
+    #[ts]
     pub export_kind: ImportOrExportKind, // `export type *`
 }
 

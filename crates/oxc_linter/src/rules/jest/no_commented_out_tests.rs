@@ -60,16 +60,14 @@ impl Rule for NoCommentedOutTests {
             Regex::new(r#"(?mu)^\s*[xf]?(test|it|describe)(\.\w+|\[['"]\w+['"]\])?\s*\("#).unwrap();
         }
         let comments = ctx.semantic().comments();
-        let source_text = ctx.semantic().source_text();
         let commented_tests = comments.iter().filter_map(|comment| {
-            let text = comment.span.source_text(source_text);
+            let text = ctx.source_range(comment.content_span());
             if RE.is_match(text) {
-                Some(comment.span)
+                Some(comment.content_span())
             } else {
                 None
             }
         });
-
         for span in commented_tests {
             ctx.diagnostic(no_commented_out_tests_diagnostic(span));
         }

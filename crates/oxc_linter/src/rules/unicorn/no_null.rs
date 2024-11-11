@@ -180,14 +180,14 @@ impl Rule for NoNull {
         };
 
         let mut parents = iter_outer_expressions(ctx, node.id());
-        let Some(parent_kind) = parents.next().map(AstNode::kind) else {
+        let Some(parent_kind) = parents.next() else {
             ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
                 fix_null(fixer, null_literal)
             });
             return;
         };
 
-        let grandparent_kind = parents.next().map(AstNode::kind);
+        let grandparent_kind = parents.next();
         match (parent_kind, grandparent_kind) {
             (AstKind::Argument(_), Some(AstKind::CallExpression(call_expr)))
                 if match_call_expression_pass_case(null_literal, call_expr) =>
@@ -204,7 +204,7 @@ impl Rule for NoNull {
                 ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
                     let mut null_span = null_literal.span;
                     // Find the last parent that is a TSAsExpression (`null as any`) or TSNonNullExpression (`null!`)
-                    for parent in ctx.nodes().iter_parents(node.id()).skip(1) {
+                    for parent in ctx.nodes().ancestors(node.id()).skip(1) {
                         let parent = parent.kind();
                         if matches!(
                             parent,

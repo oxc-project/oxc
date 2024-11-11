@@ -92,8 +92,7 @@ impl<'a, 'ctx> JsxSource<'a, 'ctx> {
         let kind = PropertyKind::Init;
         let key = ctx.ast.property_key_identifier_name(SPAN, SOURCE);
         let value = self.get_source_object(line, column, ctx);
-        ctx.ast
-            .object_property_kind_object_property(SPAN, kind, key, value, None, false, false, false)
+        ctx.ast.object_property_kind_object_property(SPAN, kind, key, value, false, false, false)
     }
 
     pub fn report_error(&self, span: Span) {
@@ -149,9 +148,8 @@ impl<'a, 'ctx> JsxSource<'a, 'ctx> {
         let filename = {
             let key = ctx.ast.property_key_identifier_name(SPAN, "fileName");
             let value = self.get_filename_var(ctx).create_read_expression(ctx);
-            ctx.ast.object_property_kind_object_property(
-                SPAN, kind, key, value, None, false, false, false,
-            )
+            ctx.ast
+                .object_property_kind_object_property(SPAN, kind, key, value, false, false, false)
         };
 
         let line_number = {
@@ -162,9 +160,8 @@ impl<'a, 'ctx> JsxSource<'a, 'ctx> {
                 line.to_string(),
                 NumberBase::Decimal,
             );
-            ctx.ast.object_property_kind_object_property(
-                SPAN, kind, key, value, None, false, false, false,
-            )
+            ctx.ast
+                .object_property_kind_object_property(SPAN, kind, key, value, false, false, false)
         };
 
         let column_number = {
@@ -175,9 +172,8 @@ impl<'a, 'ctx> JsxSource<'a, 'ctx> {
                 column.to_string(),
                 NumberBase::Decimal,
             );
-            ctx.ast.object_property_kind_object_property(
-                SPAN, kind, key, value, None, false, false, false,
-            )
+            ctx.ast
+                .object_property_kind_object_property(SPAN, kind, key, value, false, false, false)
         };
 
         let mut properties = ctx.ast.vec_with_capacity(3);

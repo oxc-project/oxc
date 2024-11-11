@@ -324,7 +324,10 @@ fn has_conditional_path_accept_throw(
 }
 
 fn parent_func<'a>(nodes: &'a AstNodes<'a>, node: &AstNode) -> Option<&'a AstNode<'a>> {
-    nodes.ancestors(node.id()).map(|id| nodes.get_node(id)).find(|it| it.kind().is_function_like())
+    nodes
+        .ancestor_ids(node.id())
+        .map(|id| nodes.get_node(id))
+        .find(|it| it.kind().is_function_like())
 }
 
 /// Checks if the `node_id` is a callback argument,
@@ -346,7 +349,7 @@ fn is_non_react_func_arg(nodes: &AstNodes, node_id: NodeId) -> bool {
 
 fn is_somewhere_inside_component_or_hook(nodes: &AstNodes, node_id: NodeId) -> bool {
     nodes
-        .ancestors(node_id)
+        .ancestor_ids(node_id)
         .map(|id| nodes.get_node(id))
         .filter(|node| node.kind().is_function_like())
         .map(|node| {
@@ -372,7 +375,7 @@ fn get_declaration_identifier<'a>(
     nodes: &'a AstNodes<'a>,
     node_id: NodeId,
 ) -> Option<Cow<'a, str>> {
-    nodes.ancestors(node_id).map(|id| nodes.kind(id)).find_map(|kind| {
+    nodes.ancestor_ids(node_id).map(|id| nodes.kind(id)).find_map(|kind| {
         match kind {
             // const useHook = () => {};
             AstKind::VariableDeclaration(decl) if decl.declarations.len() == 1 => {
@@ -399,7 +402,7 @@ fn get_declaration_identifier<'a>(
 
 fn is_export_default<'a>(nodes: &'a AstNodes<'a>, node_id: NodeId) -> bool {
     nodes
-        .ancestors(node_id)
+        .ancestor_ids(node_id)
         .map(|id| nodes.get_node(id))
         .nth(1)
         .is_some_and(|node| matches!(node.kind(), AstKind::ExportDefaultDeclaration(_)))
@@ -408,7 +411,7 @@ fn is_export_default<'a>(nodes: &'a AstNodes<'a>, node_id: NodeId) -> bool {
 /// # Panics
 /// `node_id` should always point to a valid `Function`.
 fn is_memo_or_forward_ref_callback(nodes: &AstNodes, node_id: NodeId) -> bool {
-    nodes.ancestors(node_id).map(|id| nodes.get_node(id)).any(|node| {
+    nodes.ancestor_ids(node_id).map(|id| nodes.get_node(id)).any(|node| {
         if let AstKind::CallExpression(call) = node.kind() {
             call.callee_name().is_some_and(|name| matches!(name, "forwardRef" | "memo"))
         } else {

@@ -116,15 +116,6 @@ impl Schema {
     }
 }
 
-impl<'a> IntoIterator for &'a Schema {
-    type IntoIter = std::slice::Iter<'a, TypeDef>;
-    type Item = &'a TypeDef;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.defs.iter()
-    }
-}
-
 fn parse_struct_outer_markers(attrs: &Vec<Attribute>) -> Result<StructOuterMarkers> {
     Ok(StructOuterMarkers {
         scope: get_scope_attribute(attrs).transpose()?,
@@ -179,7 +170,7 @@ fn lower_ast_enum(it @ rust::Enum { item, meta }: &rust::Enum, ctx: &EarlyCtx) -
     EnumDef {
         id: ctx.type_id(&it.ident().to_string()).unwrap(),
         name: it.ident().to_string(),
-        visitable: meta.visitable,
+        is_visitable: meta.is_visitable,
         variants: item
             .variants
             .iter()
@@ -217,7 +208,7 @@ fn lower_ast_struct(it @ rust::Struct { item, meta }: &rust::Struct, ctx: &Early
     StructDef {
         id: ctx.type_id(&it.ident().to_string()).unwrap(),
         name: it.ident().to_string(),
-        visitable: meta.visitable,
+        is_visitable: meta.is_visitable,
         fields: item.fields.iter().map(|fi| lower_field(fi, ctx)).collect(),
         has_lifetime: item.generics.lifetimes().count() > 0,
 

@@ -302,6 +302,7 @@ fn test() {
         r"array.flatMap(() => x)",
         r"array.flatMap((x, y) => x)",
         r"array.flatMap(x => y)",
+        r"(array?.flatMap)?.(x => y)",
         r"new array.reduce((a, b) => a.concat(b), [])",
         r"array.reduce",
         r"reduce((a, b) => a.concat(b), [])",
@@ -388,6 +389,7 @@ fn test() {
 
     let fail = vec![
         r"array.flatMap(x => x)",
+        r"(array?.flatMap)?.(x => x)",
         r"function foo(){return[].flatMap(x => x)}",
         r"foo.flatMap(x => x) instanceof Array",
         r"array.reduce((a, b) => a.concat(b), [])",

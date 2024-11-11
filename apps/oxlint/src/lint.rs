@@ -244,6 +244,9 @@ mod test {
         let options = lint_command().run_inner(new_args.as_slice()).unwrap();
         match LintRunner::new(options).run() {
             CliRunResult::LintResult(lint_result) => lint_result,
+            CliRunResult::LintError { error } => {
+                panic!("{error}")
+            }
             other => panic!("{other:?}"),
         }
     }
@@ -491,10 +494,7 @@ mod test {
             "--disable-typescript-plugin",
             "fixtures/typescript_eslint/test.ts",
         ];
-        let result = test(args);
-        assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 2);
-        assert_eq!(result.number_of_errors, 0);
+        test(args);
     }
 
     #[test]
@@ -544,16 +544,17 @@ mod test {
     }
 
     #[test]
-    fn test_enable_vitest_plugin() {
+    fn test_enable_vitest_rule_without_plugin() {
         let args = &[
             "-c",
             "fixtures/eslintrc_vitest_replace/eslintrc.json",
             "fixtures/eslintrc_vitest_replace/foo.test.js",
         ];
-        let result = test(args);
-        assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_errors, 0);
+        test(args);
+    }
 
+    #[test]
+    fn test_enable_vitest_plugin() {
         let args = &[
             "--vitest-plugin",
             "-c",

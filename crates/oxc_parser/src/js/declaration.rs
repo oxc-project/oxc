@@ -39,7 +39,7 @@ impl<'a> ParserImpl<'a> {
 
         self.asi()?;
 
-        Ok(Statement::VariableDeclaration(self.ast.alloc(using_decl)))
+        Ok(Statement::VariableDeclaration(self.alloc(using_decl)))
     }
 
     pub(crate) fn parse_variable_declaration(

@@ -4,9 +4,7 @@ use std::{borrow::Cow, fmt};
 
 use oxc_allocator::{Address, Box, FromIn, GetAddress, Vec};
 use oxc_span::{Atom, GetSpan, Span};
-use oxc_syntax::{
-    operator::UnaryOperator, reference::ReferenceId, scope::ScopeFlags, symbol::SymbolId,
-};
+use oxc_syntax::{operator::UnaryOperator, scope::ScopeFlags, symbol::SymbolId};
 
 use crate::ast::*;
 
@@ -293,14 +291,6 @@ impl<'a> fmt::Display for IdentifierName<'a> {
     }
 }
 
-impl<'a> IdentifierReference<'a> {
-    #[inline]
-    #[allow(missing_docs)]
-    pub fn reference_id(&self) -> Option<ReferenceId> {
-        self.reference_id.get()
-    }
-}
-
 impl<'a> fmt::Display for IdentifierReference<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.name.fmt(f)
@@ -512,22 +502,23 @@ impl<'a> ComputedMemberExpression<'a> {
 impl<'a> StaticMemberExpression<'a> {
     #[allow(missing_docs)]
     pub fn get_first_object(&self) -> &Expression<'a> {
-        match &self.object {
-            Expression::StaticMemberExpression(member) => {
-                if let Expression::StaticMemberExpression(expr) = &member.object {
-                    expr.get_first_object()
-                } else {
-                    &self.object
+        let mut object = &self.object;
+        loop {
+            match object {
+                Expression::StaticMemberExpression(member) => {
+                    object = &member.object;
+                    continue;
                 }
-            }
-            Expression::ChainExpression(chain) => {
-                if let ChainElement::StaticMemberExpression(expr) = &chain.expression {
-                    expr.get_first_object()
-                } else {
-                    &self.object
+                Expression::ChainExpression(chain) => {
+                    if let ChainElement::StaticMemberExpression(member) = &chain.expression {
+                        object = &member.object;
+                        continue;
+                    }
                 }
+                _ => {}
             }
-            _ => &self.object,
+
+            return object;
         }
     }
 }
@@ -979,10 +970,10 @@ impl<'a> Function<'a> {
 
     /// Get the [`SymbolId`] this [`Function`] is bound to.
     ///
-    /// Returns [`None`] for anonymous functions, or if semantic analysis was skipped.
+    /// Returns [`None`] for anonymous functions.
     #[inline]
     pub fn symbol_id(&self) -> Option<SymbolId> {
-        self.id.as_ref().and_then(|id| id.symbol_id.get())
+        self.id.as_ref().map(BindingIdentifier::symbol_id)
     }
 
     /// `true` for overload signatures and `declare function` statements.

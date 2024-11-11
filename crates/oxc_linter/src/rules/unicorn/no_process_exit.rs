@@ -68,7 +68,7 @@ fn has_hashbang(ctx: &LintContext) -> bool {
 }
 
 fn is_inside_process_event_handler(ctx: &LintContext, node: &AstNode) -> bool {
-    for parent in ctx.nodes().iter_parents(node.id()) {
+    for parent in ctx.nodes().ancestors(node.id()) {
         if let AstKind::CallExpression(expr) = parent.kind() {
             if is_method_call(expr, Some(&["process"]), Some(&["on", "once"]), Some(1), None) {
                 return true;

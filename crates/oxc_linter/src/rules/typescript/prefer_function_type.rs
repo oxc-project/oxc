@@ -166,13 +166,12 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                                         let comments = ctx
                                             .semantic()
                                             .comments_range(node_start..node_end)
-                                            .map(|comment| (*comment, comment.span));
+                                            .map(|comment| (*comment, comment.content_span()));
 
                                         let comments_text = {
                                             let mut comments_vec: Vec<String> = vec![];
                                             comments.for_each(|(comment_interface, span)| {
-                                                let comment = &source_code
-                                                    [span.start as usize..span.end as usize];
+                                                let comment = span.source_text(source_code);
 
                                                 match comment_interface.kind {
                                                     CommentKind::Line => {

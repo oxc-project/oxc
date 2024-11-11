@@ -57,7 +57,7 @@ impl<'a> ParserImpl<'a> {
     /// `PrimaryExpression`: Identifier Reference
     pub(crate) fn parse_identifier_expression(&mut self) -> Result<Expression<'a>> {
         let ident = self.parse_identifier_reference()?;
-        Ok(self.ast.expression_from_identifier_reference(ident))
+        Ok(Expression::Identifier(self.alloc(ident)))
     }
 
     pub(crate) fn parse_identifier_reference(&mut self) -> Result<IdentifierReference<'a>> {
@@ -198,7 +198,7 @@ impl<'a> ParserImpl<'a> {
             Kind::LParen => self.parse_parenthesized_expression(span),
             Kind::Slash | Kind::SlashEq => self
                 .parse_literal_regexp()
-                .map(|literal| self.ast.expression_from_reg_exp_literal(literal)),
+                .map(|literal| Expression::RegExpLiteral(self.alloc(literal))),
             // JSXElement, JSXFragment
             Kind::LAngle if self.source_type.is_jsx() => self.parse_jsx_expression(),
             _ => self.parse_identifier_expression(),
@@ -253,21 +253,21 @@ impl<'a> ParserImpl<'a> {
         match self.cur_kind() {
             Kind::Str => self
                 .parse_literal_string()
-                .map(|literal| self.ast.expression_from_string_literal(literal)),
+                .map(|literal| Expression::StringLiteral(self.alloc(literal))),
             Kind::True | Kind::False => self
                 .parse_literal_boolean()
-                .map(|literal| self.ast.expression_from_boolean_literal(literal)),
+                .map(|literal| Expression::BooleanLiteral(self.alloc(literal))),
             Kind::Null => {
                 let literal = self.parse_literal_null();
-                Ok(self.ast.expression_from_null_literal(literal))
+                Ok(Expression::NullLiteral(self.alloc(literal)))
             }
             kind if kind.is_number() => {
                 if self.cur_src().ends_with('n') {
                     self.parse_literal_bigint()
-                        .map(|literal| self.ast.expression_from_big_int_literal(literal))
+                        .map(|literal| Expression::BigIntLiteral(self.alloc(literal)))
                 } else {
                     self.parse_literal_number()
-                        .map(|literal| self.ast.expression_from_numeric_literal(literal))
+                        .map(|literal| Expression::NumericLiteral(self.alloc(literal)))
                 }
             }
             _ => Err(self.unexpected()),
@@ -350,6 +350,7 @@ impl<'a> ParserImpl<'a> {
         let pattern_text = &self.source_text[pattern_start as usize..pattern_end as usize];
         let flags_start = pattern_end + 1; // +1 to include right `/`
         let flags_text = &self.source_text[flags_start as usize..self.cur_token().end as usize];
+        let raw = self.cur_src();
         self.bump_any();
         // Parse pattern if options is enabled and also flags are valid
         let pattern = (self.options.parse_regular_expression && !flags_error)
@@ -363,7 +364,7 @@ impl<'a> ParserImpl<'a> {
                     pat.map_or_else(|| RegExpPattern::Invalid(pattern_text), RegExpPattern::Pattern)
                 },
             );
-        Ok(self.ast.reg_exp_literal(self.end_span(span), EmptyObject, RegExp { pattern, flags }))
+        Ok(self.ast.reg_exp_literal(self.end_span(span), RegExp { pattern, flags }, raw))
     }
 
     fn parse_regex_pattern(
@@ -382,7 +383,7 @@ impl<'a> ParserImpl<'a> {
         )
         .parse()
         {
-            Ok(regular_expression) => Some(self.ast.alloc(regular_expression)),
+            Ok(regular_expression) => Some(self.alloc(regular_expression)),
             Err(diagnostic) => {
                 self.error(diagnostic);
                 None
@@ -488,7 +489,7 @@ impl<'a> ParserImpl<'a> {
         tagged: bool,
     ) -> Result<Expression<'a>> {
         self.parse_template_literal(tagged)
-            .map(|template_literal| self.ast.expression_from_template_literal(template_literal))
+            .map(|template_literal| Expression::TemplateLiteral(self.alloc(template_literal)))
     }
 
     fn parse_tagged_template(
@@ -635,12 +636,6 @@ impl<'a> ParserImpl<'a> {
         let mut lhs = lhs;
         loop {
             lhs = match self.cur_kind() {
-                // computed member expression is not allowed in decorator
-                // class C { @dec ["1"]() { } }
-                //                ^
-                Kind::LBrack if !self.ctx.has_decorator() => {
-                    self.parse_computed_member_expression(lhs_span, lhs, false)?
-                }
                 Kind::Dot => self.parse_static_member_expression(lhs_span, lhs, false)?,
                 Kind::QuestionDot => {
                     *in_optional_chain = true;
@@ -657,6 +652,12 @@ impl<'a> ParserImpl<'a> {
                         }
                         _ => break,
                     }
+                }
+                // computed member expression is not allowed in decorator
+                // class C { @dec ["1"]() { } }
+                //                ^
+                Kind::LBrack if !self.ctx.has_decorator() => {
+                    self.parse_computed_member_expression(lhs_span, lhs, false)?
                 }
                 Kind::Bang if !self.cur_token().is_on_new_line && self.is_ts => {
                     self.bump_any();

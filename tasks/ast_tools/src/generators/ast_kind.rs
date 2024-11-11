@@ -4,9 +4,8 @@ use quote::{format_ident, quote};
 use syn::{parse_quote, Arm, ImplItemFn, Variant};
 
 use crate::{
-    codegen::LateCtx,
     output::{output_path, Output},
-    schema::{GetIdent, ToType},
+    schema::{GetIdent, Schema, ToType},
     Generator,
 };
 
@@ -81,12 +80,12 @@ pub const BLACK_LIST: [&str; 61] = [
 ];
 
 impl Generator for AstKindGenerator {
-    fn generate(&mut self, ctx: &LateCtx) -> Output {
-        let have_kinds = ctx
-            .schema()
-            .into_iter()
+    fn generate(&mut self, schema: &Schema) -> Output {
+        let have_kinds = schema
+            .defs
+            .iter()
             .filter(|def| {
-                let is_visitable = def.visitable();
+                let is_visitable = def.is_visitable();
                 let is_blacklisted = BLACK_LIST.contains(&def.name());
                 is_visitable && !is_blacklisted
             })
@@ -115,9 +114,9 @@ impl Generator for AstKindGenerator {
                 parse_quote!(
                     ///@@line_break
                     #[inline]
-                    pub fn #snake_case_name(&self) -> Option<&'a #typ> {
+                    pub fn #snake_case_name(self) -> Option<&'a #typ> {
                         if let Self::#ident(v) = self {
-                            Some(*v)
+                            Some(v)
                         } else {
                             None
                         }

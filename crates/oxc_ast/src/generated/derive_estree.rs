@@ -15,52 +15,31 @@ use crate::ast::ts::*;
 
 impl Serialize for BooleanLiteral {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "BooleanLiteral")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("value", &self.value)?;
-        map.end()
+        crate::serialize::ESTreeLiteral::from(self).serialize(serializer)
     }
 }
 
 impl Serialize for NullLiteral {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "NullLiteral")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.end()
+        crate::serialize::ESTreeLiteral::from(self).serialize(serializer)
     }
 }
 
 impl<'a> Serialize for NumericLiteral<'a> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "NumericLiteral")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("value", &self.value)?;
-        map.serialize_entry("raw", &self.raw)?;
-        map.end()
+        crate::serialize::ESTreeLiteral::from(self).serialize(serializer)
     }
 }
 
 impl<'a> Serialize for BigIntLiteral<'a> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "BigIntLiteral")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("raw", &self.raw)?;
-        map.end()
+        crate::serialize::ESTreeLiteral::from(self).serialize(serializer)
     }
 }
 
 impl<'a> Serialize for RegExpLiteral<'a> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "RegExpLiteral")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("value", &self.value)?;
-        map.serialize_entry("regex", &self.regex)?;
-        map.end()
+        crate::serialize::ESTreeLiteral::from(self).serialize(serializer)
     }
 }
 
@@ -80,13 +59,6 @@ impl<'a> Serialize for RegExpPattern<'a> {
             RegExpPattern::Invalid(x) => Serialize::serialize(x, serializer),
             RegExpPattern::Pattern(x) => Serialize::serialize(x, serializer),
         }
-    }
-}
-
-impl Serialize for EmptyObject {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.end()
     }
 }
 
@@ -313,7 +285,6 @@ impl<'a> Serialize for ObjectProperty<'a> {
         map.serialize_entry("kind", &self.kind)?;
         map.serialize_entry("key", &self.key)?;
         map.serialize_entry("value", &self.value)?;
-        map.serialize_entry("init", &self.init)?;
         map.serialize_entry("method", &self.method)?;
         map.serialize_entry("shorthand", &self.shorthand)?;
         map.serialize_entry("computed", &self.computed)?;
@@ -704,6 +675,32 @@ impl<'a> Serialize for AssignmentTargetPattern<'a> {
                 Serialize::serialize(x, serializer)
             }
         }
+    }
+}
+
+impl<'a> Serialize for ArrayAssignmentTarget<'a> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "ArrayAssignmentTarget")?;
+        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry(
+            "elements",
+            &oxc_estree::ser::AppendTo { array: &self.elements, after: &self.rest },
+        )?;
+        map.end()
+    }
+}
+
+impl<'a> Serialize for ObjectAssignmentTarget<'a> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "ObjectAssignmentTarget")?;
+        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry(
+            "properties",
+            &oxc_estree::ser::AppendTo { array: &self.properties, after: &self.rest },
+        )?;
+        map.end()
     }
 }
 
@@ -1311,6 +1308,19 @@ impl<'a> Serialize for AssignmentPattern<'a> {
     }
 }
 
+impl<'a> Serialize for ObjectPattern<'a> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "ObjectPattern")?;
+        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry(
+            "properties",
+            &oxc_estree::ser::AppendTo { array: &self.properties, after: &self.rest },
+        )?;
+        map.end()
+    }
+}
+
 impl<'a> Serialize for BindingProperty<'a> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
@@ -1320,6 +1330,19 @@ impl<'a> Serialize for BindingProperty<'a> {
         map.serialize_entry("value", &self.value)?;
         map.serialize_entry("shorthand", &self.shorthand)?;
         map.serialize_entry("computed", &self.computed)?;
+        map.end()
+    }
+}
+
+impl<'a> Serialize for ArrayPattern<'a> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "ArrayPattern")?;
+        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry(
+            "elements",
+            &oxc_estree::ser::AppendTo { array: &self.elements, after: &self.rest },
+        )?;
         map.end()
     }
 }
@@ -1954,50 +1977,6 @@ impl<'a> Serialize for TSEnumMemberName<'a> {
         match self {
             TSEnumMemberName::StaticIdentifier(x) => Serialize::serialize(x, serializer),
             TSEnumMemberName::StaticStringLiteral(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::StaticTemplateLiteral(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::StaticNumericLiteral(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::BooleanLiteral(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::NullLiteral(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::NumericLiteral(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::BigIntLiteral(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::RegExpLiteral(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::StringLiteral(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::TemplateLiteral(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::Identifier(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::MetaProperty(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::Super(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::ArrayExpression(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::ArrowFunctionExpression(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::AssignmentExpression(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::AwaitExpression(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::BinaryExpression(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::CallExpression(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::ChainExpression(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::ClassExpression(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::ConditionalExpression(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::FunctionExpression(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::ImportExpression(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::LogicalExpression(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::NewExpression(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::ObjectExpression(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::ParenthesizedExpression(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::SequenceExpression(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::TaggedTemplateExpression(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::ThisExpression(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::UnaryExpression(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::UpdateExpression(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::YieldExpression(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::PrivateInExpression(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::JSXElement(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::JSXFragment(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::TSAsExpression(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::TSSatisfiesExpression(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::TSTypeAssertion(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::TSNonNullExpression(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::TSInstantiationExpression(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::ComputedMemberExpression(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::StaticMemberExpression(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::PrivateFieldExpression(x) => Serialize::serialize(x, serializer),
         }
     }
 }
@@ -2552,6 +2531,7 @@ impl<'a> Serialize for TSIndexSignature<'a> {
         map.serialize_entry("parameters", &self.parameters)?;
         map.serialize_entry("typeAnnotation", &self.type_annotation)?;
         map.serialize_entry("readonly", &self.readonly)?;
+        map.serialize_entry("static", &self.r#static)?;
         map.end()
     }
 }

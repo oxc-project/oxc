@@ -52,62 +52,45 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_enum_member(&mut self) -> Result<TSEnumMember<'a>> {
         let span = self.start_span();
         let id = self.parse_ts_enum_member_name()?;
-
         let initializer = if self.eat(Kind::Eq) {
             Some(self.parse_assignment_expression_or_higher()?)
         } else {
             None
         };
-
-        let span = self.end_span(span);
-        if initializer.is_some() && matches!(id, TSEnumMemberName::StaticTemplateLiteral(_)) {
-            self.error(diagnostics::invalid_assignment(span));
-        }
-
-        Ok(self.ast.ts_enum_member(span, id, initializer))
+        Ok(self.ast.ts_enum_member(self.end_span(span), id, initializer))
     }
 
     fn parse_ts_enum_member_name(&mut self) -> Result<TSEnumMemberName<'a>> {
         match self.cur_kind() {
-            Kind::LBrack => {
-                let node = self.parse_computed_property_name()?;
-                self.check_invalid_ts_enum_computed_property(&node);
-                Ok(self.ast.ts_enum_member_name_expression(node))
-            }
             Kind::Str => {
-                let node = self.parse_literal_string()?;
-                Ok(self.ast.ts_enum_member_name_from_string_literal(node))
+                let literal = self.parse_literal_string()?;
+                Ok(TSEnumMemberName::StaticStringLiteral(self.alloc(literal)))
             }
-            Kind::NoSubstitutionTemplate | Kind::TemplateHead => {
-                let node = self.parse_template_literal(false)?;
-                if !node.expressions.is_empty() {
-                    self.error(diagnostics::computed_property_names_not_allowed_in_enums(
-                        node.span(),
-                    ));
+            Kind::LBrack => match self.parse_computed_property_name()? {
+                Expression::StringLiteral(literal) => {
+                    Ok(TSEnumMemberName::StaticStringLiteral(literal))
                 }
-                Ok(self.ast.ts_enum_member_name_from_template_literal(node))
-            }
+                Expression::TemplateLiteral(template) if template.is_no_substitution_template() => {
+                    Ok(self.ast.ts_enum_member_name_string_literal(
+                        template.span,
+                        template.quasi().unwrap(),
+                    ))
+                }
+                Expression::NumericLiteral(literal) => {
+                    Err(diagnostics::enum_member_cannot_have_numeric_name(literal.span()))
+                }
+                expr => Err(diagnostics::computed_property_names_not_allowed_in_enums(expr.span())),
+            },
+            Kind::NoSubstitutionTemplate | Kind::TemplateHead => Err(
+                diagnostics::computed_property_names_not_allowed_in_enums(self.cur_token().span()),
+            ),
             kind if kind.is_number() => {
-                let node = self.parse_literal_number()?;
-                self.error(diagnostics::enum_member_cannot_have_numeric_name(node.span()));
-                Ok(self.ast.ts_enum_member_name_from_numeric_literal(node))
+                Err(diagnostics::enum_member_cannot_have_numeric_name(self.cur_token().span()))
             }
             _ => {
-                let node = self.parse_identifier_name()?;
-                Ok(self.ast.ts_enum_member_name_from_identifier_name(node))
+                let ident_name = self.parse_identifier_name()?;
+                Ok(TSEnumMemberName::StaticIdentifier(self.alloc(ident_name)))
             }
-        }
-    }
-
-    fn check_invalid_ts_enum_computed_property(&mut self, property: &Expression<'a>) {
-        match property {
-            Expression::StringLiteral(_) => {}
-            Expression::TemplateLiteral(template) if template.expressions.is_empty() => {}
-            Expression::NumericLiteral(_) => {
-                self.error(diagnostics::enum_member_cannot_have_numeric_name(property.span()));
-            }
-            _ => self
-                .error(diagnostics::computed_property_names_not_allowed_in_enums(property.span())),
         }
     }
 
@@ -206,7 +189,11 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_ts_type_signature(&mut self) -> Result<Option<TSSignature<'a>>> {
         if self.is_at_ts_index_signature_member() {
-            return self.parse_ts_index_signature_member().map(Some);
+            let span = self.start_span();
+            let modifiers = self.parse_modifiers(false, false, false);
+            return self
+                .parse_index_signature_declaration(span, &modifiers)
+                .map(|sig| Some(TSSignature::TSIndexSignature(self.alloc(sig))));
         }
 
         match self.cur_kind() {
@@ -457,8 +444,8 @@ impl<'a> ParserImpl<'a> {
                 expression,
             )
         } else {
-            let node = self.parse_ts_type_name()?;
-            self.ast.ts_module_reference_type_name(node)
+            let type_name = self.parse_ts_type_name()?;
+            TSModuleReference::from(type_name)
         };
 
         self.asi()?;

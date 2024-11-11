@@ -16,6 +16,7 @@ use refresh::ReactRefresh;
 
 pub use display_name::ReactDisplayName;
 pub use jsx_impl::JsxImpl;
+use jsx_self::JsxSelf;
 pub use options::{JsxOptions, JsxRuntime, ReactRefreshOptions};
 
 pub(crate) use comments::update_options_with_comments;
@@ -103,7 +104,7 @@ impl<'a, 'ctx> Traverse<'a> for Jsx<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         if !self.enable_jsx_plugin {
-            if self.self_plugin && self.implementation.jsx_self.can_add_self_attribute(ctx) {
+            if self.self_plugin && JsxSelf::can_add_self_attribute(ctx) {
                 self.implementation.jsx_self.enter_jsx_opening_element(elem, ctx);
             }
             if self.source_plugin {

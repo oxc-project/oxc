@@ -4,6 +4,30 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.36.0] - 2024-11-09
+
+- 0e4adc1 ast: [**BREAKING**] Remove invalid expressions from `TSEnumMemberName` (#7219) (Boshen)
+
+- d1d1874 ast: [**BREAKING**] Change `comment.span` to real position that contain `//` and `/*` (#7154) (Boshen)
+
+### Features
+
+
+## [0.35.0] - 2024-11-04
+
+### Features
+
+- caa4b1f codegen: Improve printing of comments (#7108) (Boshen)
+- 001058a codegen: Always print legal comments on its own line (#7089) (Boshen)
+- 413973d codegen: Print linked and external legal comment (#7059) (Boshen)
+- ee27b92 codegen: Print eof legal comments (#7058) (Boshen)
+- 6516f9e codegen: Print inline legal comments (#7054) (Boshen)
+
+### Refactor
+
+- dd79c1b codegen: Replace `daachorse` with string match for annotation comment (#7064) (Boshen)
+- 0bb1aa4 codegen: Move options to its own file (#7053) (Boshen)
+
 ## [0.34.0] - 2024-10-26
 
 ### Refactor

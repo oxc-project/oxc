@@ -3306,9 +3306,6 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         visitor.visit_property_key(&mut it.key);
         visitor.visit_expression(&mut it.value);
-        if let Some(init) = &mut it.init {
-            visitor.visit_expression(init);
-        }
         visitor.leave_node(kind);
     }
 
@@ -4029,9 +4026,6 @@ pub mod walk_mut {
         match it {
             TSEnumMemberName::StaticIdentifier(it) => visitor.visit_identifier_name(it),
             TSEnumMemberName::StaticStringLiteral(it) => visitor.visit_string_literal(it),
-            TSEnumMemberName::StaticTemplateLiteral(it) => visitor.visit_template_literal(it),
-            TSEnumMemberName::StaticNumericLiteral(it) => visitor.visit_numeric_literal(it),
-            match_expression!(TSEnumMemberName) => visitor.visit_expression(it.to_expression_mut()),
         }
     }
 

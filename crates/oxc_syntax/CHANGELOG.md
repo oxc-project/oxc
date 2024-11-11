@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.36.0] - 2024-11-09
+
+### Features
+
+- dc0215c ast_tools: Add #[estree(append_to)], remove some custom serialization code (#7149) (ottomated)
+
+## [0.35.0] - 2024-11-04
+
+### Features
+
+- 169fa22 ast_tools: Default enums to rename_all = "camelCase" (#6933) (ottomated)
+
 ## [0.34.0] - 2024-10-26
 
 ### Features

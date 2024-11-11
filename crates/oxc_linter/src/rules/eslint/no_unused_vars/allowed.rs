@@ -1,7 +1,7 @@
 //! This module checks if an unused variable is allowed. Note that this does not
 //! consider variables ignored by name pattern, but by where they are declared.
 use oxc_ast::{ast::*, AstKind};
-use oxc_semantic::{AstNode, NodeId, Semantic};
+use oxc_semantic::{NodeId, Semantic};
 use oxc_span::GetSpan;
 
 use super::{options::ArgsOption, NoUnusedVars, Symbol};
@@ -255,7 +255,7 @@ impl NoUnusedVars {
         param: &FormalParameter<'a>,
         params_id: NodeId,
     ) -> bool {
-        let mut parents_iter = semantic.nodes().iter_parents(params_id).skip(1).map(AstNode::kind);
+        let mut parents_iter = semantic.nodes().ancestor_kinds(params_id).skip(1);
 
         // in function declarations, the parent immediately before the
         // FormalParameters is a TSDeclareBlock

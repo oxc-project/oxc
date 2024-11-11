@@ -1,5 +1,3 @@
-use proc_macro2::TokenStream;
-use quote::{ToTokens, TokenStreamExt};
 use syn::{
     braced,
     parse::{Parse, ParseBuffer},
@@ -35,7 +33,7 @@ pub struct EnumMeta {
     pub inherits: Vec<Inherit>,
     pub layout_32: Layout,
     pub layout_64: Layout,
-    pub visitable: bool,
+    pub is_visitable: bool,
     pub ast: bool,
     pub module_path: String,
 }
@@ -46,7 +44,7 @@ impl EnumMeta {
             inherits: Vec::default(),
             layout_32: Layout::default(),
             layout_64: Layout::default(),
-            visitable: false,
+            is_visitable: false,
             ast: false,
             module_path,
         }
@@ -80,7 +78,7 @@ impl Enum {
 pub struct StructMeta {
     pub layout_32: Layout,
     pub layout_64: Layout,
-    pub visitable: bool,
+    pub is_visitable: bool,
     pub ast: bool,
     pub module_path: String,
 }
@@ -90,7 +88,7 @@ impl StructMeta {
         Self {
             layout_32: Layout::default(),
             layout_64: Layout::default(),
-            visitable: false,
+            is_visitable: false,
             ast: false,
             module_path,
         }
@@ -151,16 +149,6 @@ pub enum AstType {
     Macro(Macro),
 }
 
-impl ToTokens for AstType {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        match self {
-            Self::Enum(it) => it.item.to_tokens(tokens),
-            Self::Struct(it) => it.item.to_tokens(tokens),
-            Self::Macro(it) => it.item.to_tokens(tokens),
-        }
-    }
-}
-
 impl AstType {
     fn new(item: Item, module_path: String) -> Result<Self> {
         match item {
@@ -192,10 +180,10 @@ impl AstType {
     }
 
     #[expect(unused)]
-    pub fn visitable(&self) -> bool {
+    pub fn is_visitable(&self) -> bool {
         match self {
-            AstType::Enum(it) => it.meta.visitable,
-            AstType::Struct(it) => it.meta.visitable,
+            AstType::Enum(it) => it.meta.is_visitable,
+            AstType::Struct(it) => it.meta.is_visitable,
             AstType::Macro(_) => false,
         }
     }
@@ -204,11 +192,11 @@ impl AstType {
         match self {
             AstType::Enum(enum_) => {
                 debug_assert!(enum_.meta.ast, "only AST types can be visitable!");
-                enum_.meta.visitable = value;
+                enum_.meta.is_visitable = value;
             }
             AstType::Struct(struct_) => {
                 debug_assert!(struct_.meta.ast, "only AST types can be visitable!");
-                struct_.meta.visitable = value;
+                struct_.meta.is_visitable = value;
             }
             AstType::Macro(macro_) => return Err(unexpanded_macro_err(&macro_.item)),
         };
@@ -269,28 +257,20 @@ impl AstType {
 }
 
 const LOAD_ERROR: &str = "should be loaded by now!";
+
 #[derive(Debug)]
 pub struct Module {
-    pub file: PathBuf,
+    pub file_path: PathBuf,
     pub path: String,
-    pub shebang: Option<String>,
-    pub attrs: Vec<Attribute>,
     pub items: Vec<AstRef>,
     pub loaded: bool,
 }
 
-impl ToTokens for Module {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        tokens.append_all(self.attrs.clone());
-        self.items.iter().for_each(|it| it.borrow().to_tokens(tokens));
-    }
-}
-
 impl Module {
     /// Expects a file path to a rust source file in the `crates` directory.
-    pub fn with_path(file: PathBuf) -> Self {
+    pub fn with_path(file_path: PathBuf) -> Self {
         let path = {
-            let no_ext = file.with_extension("");
+            let no_ext = file_path.with_extension("");
             let string = no_ext.to_string_lossy();
             let mut parts = string.split('/');
             assert_eq!(parts.next(), Some("crates"));
@@ -299,19 +279,17 @@ impl Module {
             let mut parts = [krate].into_iter().chain(parts);
             parts.join("::")
         };
-        Self { file, path, shebang: None, attrs: Vec::new(), items: Vec::new(), loaded: false }
+        Self { file_path, path, items: Vec::new(), loaded: false }
     }
 
     pub fn load(mut self) -> Result<Self> {
         assert!(!self.loaded, "can't load twice!");
-        let mut file = std::fs::File::open(&self.file).normalize().map_err(|err| {
-            format!("Error reading file: {}, reason: {}", &self.file.to_string_lossy(), err)
+        let mut file = std::fs::File::open(&self.file_path).normalize().map_err(|err| {
+            format!("Error reading file: {}, reason: {}", &self.file_path.to_string_lossy(), err)
         })?;
         let mut content = String::new();
         file.read_to_string(&mut content).normalize()?;
         let file = parse_file(content.as_str()).normalize()?;
-        self.shebang = file.shebang;
-        self.attrs = file.attrs;
         self.items = file
             .items
             .into_iter()
@@ -470,10 +448,4 @@ pub fn analyze(ast_ref: &AstRef) -> Result<()> {
     }
 
     Ok(())
-}
-
-impl From<PathBuf> for Module {
-    fn from(path: PathBuf) -> Self {
-        Self::with_path(path)
-    }
 }

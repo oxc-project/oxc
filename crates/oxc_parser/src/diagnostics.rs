@@ -441,6 +441,13 @@ pub fn jsx_element_no_match(span: Span, span1: Span, name: &str) -> OxcDiagnosti
         .with_labels([span, span1])
 }
 
+#[cold]
+pub fn cover_initialized_name(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Invalid assignment in object literal")
+.with_help("Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.")
+.with_label(span)
+}
+
 // ================================= MODIFIERS =================================
 
 #[cold]

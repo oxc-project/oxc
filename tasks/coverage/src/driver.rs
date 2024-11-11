@@ -49,8 +49,8 @@ impl CompilerInterface for Driver {
         true
     }
 
-    fn transform_options(&self) -> Option<TransformOptions> {
-        self.transform.clone()
+    fn transform_options(&self) -> Option<&TransformOptions> {
+        self.transform.as_ref()
     }
 
     fn compress_options(&self) -> Option<CompressOptions> {

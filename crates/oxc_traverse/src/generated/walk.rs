@@ -373,12 +373,6 @@ pub(crate) unsafe fn walk_object_property<'a, Tr: Traverse<'a>>(
         (node as *mut u8).add(ancestor::OFFSET_OBJECT_PROPERTY_VALUE) as *mut Expression,
         ctx,
     );
-    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_OBJECT_PROPERTY_INIT)
-        as *mut Option<Expression>)
-    {
-        ctx.retag_stack(AncestorType::ObjectPropertyInit);
-        walk_expression(traverser, field as *mut _, ctx);
-    }
     ctx.pop_stack(pop_token);
     traverser.exit_object_property(&mut *node, ctx);
 }
@@ -3726,56 +3720,6 @@ pub(crate) unsafe fn walk_ts_enum_member_name<'a, Tr: Traverse<'a>>(
         }
         TSEnumMemberName::StaticStringLiteral(node) => {
             walk_string_literal(traverser, (&mut **node) as *mut _, ctx)
-        }
-        TSEnumMemberName::StaticTemplateLiteral(node) => {
-            walk_template_literal(traverser, (&mut **node) as *mut _, ctx)
-        }
-        TSEnumMemberName::StaticNumericLiteral(node) => {
-            walk_numeric_literal(traverser, (&mut **node) as *mut _, ctx)
-        }
-        TSEnumMemberName::BooleanLiteral(_)
-        | TSEnumMemberName::NullLiteral(_)
-        | TSEnumMemberName::NumericLiteral(_)
-        | TSEnumMemberName::BigIntLiteral(_)
-        | TSEnumMemberName::RegExpLiteral(_)
-        | TSEnumMemberName::StringLiteral(_)
-        | TSEnumMemberName::TemplateLiteral(_)
-        | TSEnumMemberName::Identifier(_)
-        | TSEnumMemberName::MetaProperty(_)
-        | TSEnumMemberName::Super(_)
-        | TSEnumMemberName::ArrayExpression(_)
-        | TSEnumMemberName::ArrowFunctionExpression(_)
-        | TSEnumMemberName::AssignmentExpression(_)
-        | TSEnumMemberName::AwaitExpression(_)
-        | TSEnumMemberName::BinaryExpression(_)
-        | TSEnumMemberName::CallExpression(_)
-        | TSEnumMemberName::ChainExpression(_)
-        | TSEnumMemberName::ClassExpression(_)
-        | TSEnumMemberName::ConditionalExpression(_)
-        | TSEnumMemberName::FunctionExpression(_)
-        | TSEnumMemberName::ImportExpression(_)
-        | TSEnumMemberName::LogicalExpression(_)
-        | TSEnumMemberName::NewExpression(_)
-        | TSEnumMemberName::ObjectExpression(_)
-        | TSEnumMemberName::ParenthesizedExpression(_)
-        | TSEnumMemberName::SequenceExpression(_)
-        | TSEnumMemberName::TaggedTemplateExpression(_)
-        | TSEnumMemberName::ThisExpression(_)
-        | TSEnumMemberName::UnaryExpression(_)
-        | TSEnumMemberName::UpdateExpression(_)
-        | TSEnumMemberName::YieldExpression(_)
-        | TSEnumMemberName::PrivateInExpression(_)
-        | TSEnumMemberName::JSXElement(_)
-        | TSEnumMemberName::JSXFragment(_)
-        | TSEnumMemberName::TSAsExpression(_)
-        | TSEnumMemberName::TSSatisfiesExpression(_)
-        | TSEnumMemberName::TSTypeAssertion(_)
-        | TSEnumMemberName::TSNonNullExpression(_)
-        | TSEnumMemberName::TSInstantiationExpression(_)
-        | TSEnumMemberName::ComputedMemberExpression(_)
-        | TSEnumMemberName::StaticMemberExpression(_)
-        | TSEnumMemberName::PrivateFieldExpression(_) => {
-            walk_expression(traverser, node as *mut _, ctx)
         }
     }
     traverser.exit_ts_enum_member_name(&mut *node, ctx);

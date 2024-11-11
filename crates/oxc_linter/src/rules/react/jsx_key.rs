@@ -141,7 +141,7 @@ pub fn is_children<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> b
     return is_import(ctx, ident.name.as_str(), REACT, REACT) && local_name == CHILDREN;
 }
 fn is_within_children_to_array<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
-    let parents_iter = ctx.nodes().iter_parents(node.id()).skip(2);
+    let parents_iter = ctx.nodes().ancestors(node.id()).skip(2);
     parents_iter
         .filter(|parent_node| matches!(parent_node.kind(), AstKind::CallExpression(_)))
         .any(|parent_node| is_children(parent_node, ctx) && is_to_array(parent_node))

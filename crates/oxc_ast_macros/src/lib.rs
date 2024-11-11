@@ -53,6 +53,10 @@ mod ast;
 /// However, Instead of expanding the derive at compile-time, We do this process on PR submits via `ast_tools` code generation.
 /// These derived implementations would be output in the `crates/oxc_ast/src/generated` directory.
 ///
+/// ## `#[ts]`:
+///
+/// Marks a struct field as only relevant for TypeScript ASTs.
+///
 /// # Derive Helper Attributes:
 ///
 /// These are helper attributes that are only meaningful when their respective trait is derived via `generate_derive`.
@@ -81,7 +85,10 @@ pub fn ast(_args: TokenStream, input: TokenStream) -> TokenStream {
 /// The only purpose is to allow the occurrence of helper attributes used with the `tasks/ast_tools`.
 ///
 /// Read [`macro@ast`] for further details.
-#[proc_macro_derive(Ast, attributes(scope, visit, span, generate_derive, clone_in, estree, tsify))]
+#[proc_macro_derive(
+    Ast,
+    attributes(scope, visit, span, generate_derive, clone_in, estree, tsify, ts)
+)]
 pub fn ast_derive(_input: TokenStream) -> TokenStream {
     TokenStream::new()
 }

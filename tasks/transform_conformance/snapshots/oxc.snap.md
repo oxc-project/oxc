@@ -1,11 +1,12 @@
 commit: d20b314c
 
-Passed: 74/83
+Passed: 82/92
 
 # All Passed:
 * babel-plugin-transform-class-static-block
 * babel-plugin-transform-nullish-coalescing-operator
 * babel-plugin-transform-optional-catch-binding
+* babel-plugin-transform-async-generator-functions
 * babel-plugin-transform-async-to-generator
 * babel-plugin-transform-exponentiation-operator
 * babel-plugin-transform-arrow-functions
@@ -167,8 +168,11 @@ rebuilt        : SymbolId(2): []
 x Output mismatch
 
 
-# babel-plugin-transform-react-jsx (31/33)
+# babel-plugin-transform-react-jsx (31/34)
 * refresh/does-not-transform-it-because-it-is-not-used-in-the-AST/input.jsx
+x Output mismatch
+
+* refresh/react-refresh/includes-custom-hooks-into-the-signatures-when-commonjs-target-is-used/input.jsx
 x Output mismatch
 
 * refresh/react-refresh/supports-typescript-namespace-syntax/input.tsx

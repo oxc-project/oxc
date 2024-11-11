@@ -48,14 +48,6 @@ impl<'a> IsolatedDeclarations<'a> {
                 let member_name = match &member.id {
                     TSEnumMemberName::StaticIdentifier(id) => &id.name,
                     TSEnumMemberName::StaticStringLiteral(str) => &str.value,
-                    TSEnumMemberName::StaticTemplateLiteral(template) => {
-                        &template.quasi().expect("Template enum members cannot have substitutions.")
-                    }
-                    #[allow(clippy::unnested_or_patterns)] // Clippy is wrong
-                    TSEnumMemberName::StaticNumericLiteral(_)
-                    | match_expression!(TSEnumMemberName) => {
-                        unreachable!()
-                    }
                 };
                 prev_members.insert(member_name.clone(), value.clone());
             }

@@ -78,6 +78,7 @@ pub struct JSXOpeningElement<'a> {
     /// List of JSX attributes. In React-like applications, these become props.
     pub attributes: Vec<'a, JSXAttributeItem<'a>>,
     /// Type parameters for generic JSX elements.
+    #[ts]
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 

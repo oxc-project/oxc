@@ -2,22 +2,21 @@ import { promises as fsPromises } from 'node:fs';
 
 import { commands, ExtensionContext, StatusBarAlignment, StatusBarItem, ThemeColor, window, workspace } from 'vscode';
 
+import { MessageType, ShowMessageNotification } from 'vscode-languageclient';
+
 import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
 
 import { join } from 'node:path';
 import { ConfigService } from './config';
 
-const languageClientId = 'oxc-vscode';
 const languageClientName = 'oxc';
 const outputChannelName = 'Oxc';
-const traceOutputChannelName = 'Oxc (Trace)';
 const commandPrefix = 'oxc';
 
 const enum OxcCommands {
   RestartServer = `${commandPrefix}.restartServer`,
   ApplyAllFixes = `${commandPrefix}.applyAllFixes`,
   ShowOutputChannel = `${commandPrefix}.showOutputChannel`,
-  ShowTraceOutputChannel = `${commandPrefix}.showTraceOutputChannel`,
   ToggleEnable = `${commandPrefix}.toggleEnable`,
 }
 
@@ -56,13 +55,6 @@ export async function activate(context: ExtensionContext) {
     },
   );
 
-  const showTraceOutputCommand = commands.registerCommand(
-    OxcCommands.ShowTraceOutputChannel,
-    () => {
-      client?.traceOutputChannel?.show();
-    },
-  );
-
   const toggleEnable = commands.registerCommand(
     OxcCommands.ToggleEnable,
     () => {
@@ -73,13 +65,11 @@ export async function activate(context: ExtensionContext) {
   context.subscriptions.push(
     restartCommand,
     showOutputCommand,
-    showTraceOutputCommand,
     toggleEnable,
     config,
   );
 
-  const outputChannel = window.createOutputChannel(outputChannelName);
-  const traceOutputChannel = window.createOutputChannel(traceOutputChannelName);
+  const outputChannel = window.createOutputChannel(outputChannelName, { log: true });
 
   async function findBinary(): Promise<string> {
     let bin = config.binPath;
@@ -161,16 +151,36 @@ export async function activate(context: ExtensionContext) {
       settings: config.toLanguageServerConfig(),
     },
     outputChannel,
-    traceOutputChannel,
+    traceOutputChannel: outputChannel,
   };
 
   // Create the language client and start the client.
   client = new LanguageClient(
-    languageClientId,
     languageClientName,
     serverOptions,
     clientOptions,
   );
+  client.onNotification(ShowMessageNotification.type, (params) => {
+    switch (params.type) {
+      case MessageType.Debug:
+        outputChannel.debug(params.message);
+        break;
+      case MessageType.Log:
+        outputChannel.info(params.message);
+        break;
+      case MessageType.Info:
+        window.showInformationMessage(params.message);
+        break;
+      case MessageType.Warning:
+        window.showWarningMessage(params.message);
+        break;
+      case MessageType.Error:
+        window.showErrorMessage(params.message);
+        break;
+      default:
+        outputChannel.info(params.message);
+    }
+  });
 
   workspace.onDidDeleteFiles((event) => {
     event.files.forEach((fileUri) => {

@@ -269,9 +269,7 @@ impl Rule for ExplicitLengthCheck {
                     self.report(ctx, ancestor, is_negative, static_member_expr, true);
                     return;
                 }
-                let parent = ctx.nodes().parent_node(node.id());
-                let kind = parent.map(AstNode::kind);
-                match kind {
+                match ctx.nodes().parent_kind(node.id()) {
                     Some(AstKind::LogicalExpression(LogicalExpression {
                         operator, right, ..
                     })) if *operator == LogicalOperator::And

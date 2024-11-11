@@ -1,6 +1,6 @@
 [package]
 name = "oxc_span"
-version = "0.34.0"
+version = "0.36.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -32,5 +32,5 @@ serde = { workspace = true, features = ["derive"], optional = true }
 
 [features]
 default = []
-serialize = ["compact_str/serde", "dep:serde"]
+serialize = ["compact_str/serde", "dep:serde", "oxc_estree/serialize"]
 schemars = ["dep:schemars"]

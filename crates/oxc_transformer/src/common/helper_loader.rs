@@ -70,7 +70,7 @@ use std::{borrow::Cow, cell::RefCell};
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
-use oxc_allocator::{String as AString, Vec};
+use oxc_allocator::{String as ArenaString, Vec as ArenaVec};
 use oxc_ast::ast::{Argument, CallExpression, Expression, TSTypeParameterInstantiation};
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
 use oxc_span::{Atom, SPAN};
@@ -137,15 +137,23 @@ fn default_as_module_name() -> Cow<'static, str> {
 /// Available helpers.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum Helper {
+    AwaitAsyncGenerator,
+    AsyncGeneratorDelegate,
+    AsyncIterator,
     AsyncToGenerator,
     ObjectSpread2,
+    WrapAsyncGenerator,
 }
 
 impl Helper {
     const fn name(self) -> &'static str {
         match self {
+            Self::AwaitAsyncGenerator => "awaitAsyncGenerator",
+            Self::AsyncGeneratorDelegate => "asyncGeneratorDelegate",
+            Self::AsyncIterator => "asyncIterator",
             Self::AsyncToGenerator => "asyncToGenerator",
             Self::ObjectSpread2 => "objectSpread2",
+            Self::WrapAsyncGenerator => "wrapAsyncGenerator",
         }
     }
 }
@@ -175,7 +183,7 @@ impl<'a> TransformCtx<'a> {
     pub fn helper_call(
         &self,
         helper: Helper,
-        arguments: Vec<'a, Argument<'a>>,
+        arguments: ArenaVec<'a, Argument<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> CallExpression<'a> {
         let callee = self.helper_load(helper, ctx);
@@ -192,7 +200,7 @@ impl<'a> TransformCtx<'a> {
     pub fn helper_call_expr(
         &self,
         helper: Helper,
-        arguments: Vec<'a, Argument<'a>>,
+        arguments: ArenaVec<'a, Argument<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let callee = self.helper_load(helper, ctx);
@@ -247,13 +255,18 @@ impl<'a> HelperLoaderStore<'a> {
 
         // Construct string directly in arena without an intermediate temp allocation
         let len = self.module_name.len() + "/helpers/".len() + helper_name.len();
-        let mut source = AString::with_capacity_in(len, ctx.ast.allocator);
+        let mut source = ArenaString::with_capacity_in(len, ctx.ast.allocator);
         source.push_str(&self.module_name);
         source.push_str("/helpers/");
         source.push_str(helper_name);
         let source = Atom::from(source.into_bump_str());
 
-        let binding = ctx.generate_uid_in_root_scope(helper_name, SymbolFlags::Import);
+        let flag = if transform_ctx.source_type.is_module() {
+            SymbolFlags::Import
+        } else {
+            SymbolFlags::FunctionScopedVariable
+        };
+        let binding = ctx.generate_uid_in_root_scope(helper_name, flag);
 
         transform_ctx.module_imports.add_default_import(source, binding.clone(), false);
 
@@ -266,7 +279,7 @@ impl<'a> HelperLoaderStore<'a> {
         let symbol_id = ctx.scopes().find_binding(ctx.current_scope_id(), HELPER_VAR);
         let ident =
             ctx.create_reference_id(SPAN, Atom::from(HELPER_VAR), symbol_id, ReferenceFlags::Read);
-        let object = ctx.ast.expression_from_identifier_reference(ident);
+        let object = Expression::Identifier(ctx.alloc(ident));
         let property = ctx.ast.identifier_name(SPAN, Atom::from(helper.name()));
         Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false))
     }

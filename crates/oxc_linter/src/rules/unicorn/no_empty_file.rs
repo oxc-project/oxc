@@ -73,7 +73,7 @@ fn has_triple_slash_directive(ctx: &LintContext<'_>) -> bool {
         if !comment.is_line() {
             continue;
         }
-        let text = comment.span.source_text(ctx.source_text());
+        let text = ctx.source_range(comment.content_span());
         if text.starts_with("///") {
             return true;
         }

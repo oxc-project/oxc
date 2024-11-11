@@ -3,9 +3,8 @@ use quote::quote;
 use syn::Type;
 
 use crate::{
-    codegen::LateCtx,
     output::{output_path, Output},
-    schema::{FieldDef, ToType, TypeDef},
+    schema::{FieldDef, Schema, ToType, TypeDef},
     util::ToIdent,
     Generator,
 };
@@ -17,10 +16,10 @@ pub struct AssertLayouts;
 define_generator!(AssertLayouts);
 
 impl Generator for AssertLayouts {
-    fn generate(&mut self, ctx: &LateCtx) -> Output {
-        let (assertions_64, assertions_32) = ctx
-            .schema()
-            .into_iter()
+    fn generate(&mut self, schema: &Schema) -> Output {
+        let (assertions_64, assertions_32) = schema
+            .defs
+            .iter()
             .map(|def| {
                 let typ = def.to_type_elide();
                 assert_type(&typ, def)

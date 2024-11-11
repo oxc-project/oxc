@@ -4,6 +4,32 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.36.0] - 2024-11-09
+
+- b11ed2c ast: [**BREAKING**] Remove useless `ObjectProperty::init` field (#7220) (Boshen)
+
+- 0e4adc1 ast: [**BREAKING**] Remove invalid expressions from `TSEnumMemberName` (#7219) (Boshen)
+
+- 843bce4 ast: [**BREAKING**] `IdentifierReference::reference_id` return `ReferenceId` (#7126) (overlookmotel)
+
+### Features
+
+
+### Refactor
+
+- cacfb9b traverse: Use `symbol_id` etc methods (#7129) (overlookmotel)
+
+## [0.35.0] - 2024-11-04
+
+### Bug Fixes
+
+- caaf00e parser: Fix incorrect parsed `TSIndexSignature` (#7016) (Boshen)
+
+### Refactor
+
+- d9edef6 transformer: Combine ObjectRestSpread into a single file (#7002) (Boshen)
+- 938ee87 traverse: Do not use `AstBuilder::*_from_*` methods (#7069) (overlookmotel)
+
 ## [0.34.0] - 2024-10-26
 
 ### Features

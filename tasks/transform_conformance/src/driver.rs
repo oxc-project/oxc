@@ -18,8 +18,8 @@ pub struct Driver {
 }
 
 impl CompilerInterface for Driver {
-    fn transform_options(&self) -> Option<TransformOptions> {
-        Some(self.options.clone())
+    fn transform_options(&self) -> Option<&TransformOptions> {
+        Some(&self.options)
     }
 
     fn codegen_options(&self) -> Option<CodegenOptions> {

@@ -10,7 +10,7 @@ use std::mem;
 
 use oxc_allocator::{Allocator, Box, FromIn, String, Vec};
 use oxc_span::{Atom, GetSpan, Span};
-use oxc_syntax::{number::NumberBase, operator::UnaryOperator};
+use oxc_syntax::{number::NumberBase, operator::UnaryOperator, scope::ScopeId};
 
 use crate::ast::*;
 use crate::AstBuilder;
@@ -234,18 +234,19 @@ impl<'a> AstBuilder<'a> {
         self.formal_parameter(span, self.vec(), pattern, None, false, false)
     }
 
-    /// Create a [`Function`] with no "extras", i.e. decorators, type
-    /// annotations, accessibility modifiers, etc.
+    /// Create a [`Function`] with no "extras".
+    /// i.e. no decorators, type annotations, accessibility modifiers, etc.
     #[inline]
-    pub fn plain_function(
+    pub fn alloc_plain_function_with_scope_id(
         self,
         r#type: FunctionType,
         span: Span,
         id: Option<BindingIdentifier<'a>>,
         params: FormalParameters<'a>,
         body: FunctionBody<'a>,
+        scope_id: ScopeId,
     ) -> Box<'a, Function<'a>> {
-        self.alloc(self.function(
+        self.alloc_function_with_scope_id(
             r#type,
             span,
             id,
@@ -257,7 +258,8 @@ impl<'a> AstBuilder<'a> {
             params,
             NONE,
             Some(body),
-        ))
+            scope_id,
+        )
     }
 
     /* ---------- Modules ---------- */

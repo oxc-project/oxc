@@ -21,7 +21,7 @@ use oxc::{
         ScopeFlags, ScopeId, ScopeTree, SemanticBuilder, SymbolTable,
     },
     span::SourceType,
-    transformer::{EnvOptions, Targets, TransformOptions, Transformer},
+    transformer::{TransformOptions, Transformer},
 };
 use oxc_index::Idx;
 use oxc_linter::Linter;
@@ -242,17 +242,13 @@ impl Oxc {
         }
 
         if run_options.transform.unwrap_or_default() {
-            if let Ok(options) = TransformOptions::from_preset_env(&EnvOptions {
-                targets: Targets::from_query("chrome 51"),
-                ..EnvOptions::default()
-            }) {
-                let result = Transformer::new(&allocator, &path, options)
-                    .build_with_symbols_and_scopes(symbols, scopes, &mut program);
-                if !result.errors.is_empty() {
-                    self.save_diagnostics(
-                        result.errors.into_iter().map(Error::from).collect::<Vec<_>>(),
-                    );
-                }
+            let options = TransformOptions::enable_all();
+            let result = Transformer::new(&allocator, &path, &options)
+                .build_with_symbols_and_scopes(symbols, scopes, &mut program);
+            if !result.errors.is_empty() {
+                self.save_diagnostics(
+                    result.errors.into_iter().map(Error::from).collect::<Vec<_>>(),
+                );
             }
         }
 
@@ -405,7 +401,7 @@ impl Oxc {
                     CommentKind::Line => CommentType::Line,
                     CommentKind::Block => CommentType::Block,
                 },
-                value: comment.span.source_text(source_text).to_string(),
+                value: comment.content_span().source_text(source_text).to_string(),
                 start: comment.span.start,
                 end: comment.span.end,
             })

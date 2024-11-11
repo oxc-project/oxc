@@ -1,8 +1,8 @@
 commit: d20b314c
 
 semantic_babel Summary:
-AST Parsed     : 2136/2136 (100.00%)
-Positive Passed: 1778/2136 (83.24%)
+AST Parsed     : 2210/2210 (100.00%)
+Positive Passed: 1841/2210 (83.30%)
 tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body/input.js
 semantic error: Symbol scope ID mismatch for "f":
 after transform: SymbolId(0): ScopeId(4294967294)
@@ -25,6 +25,66 @@ semantic error: A 'return' statement can only be used within a function body.
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/core/uncategorised/328/input.js
 semantic error: A 'return' statement can only be used within a function body.
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/uncategorised/385/input.js
+semantic error: Symbol flags mismatch for "_foo":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/25/input.js
+semantic error: Symbol flags mismatch for "_foo":
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/export/input.js
+semantic error: Symbol flags mismatch for "_foo":
+after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
+Symbol flags mismatch for "_bar":
+after transform: SymbolId(4): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(4): SymbolFlags(BlockScopedVariable | Function)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-in-private-property-in-params-of-async-arrow/input.js
+semantic error: Expected a semicolon or an implicit semicolon after a statement, but found none
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/arguments-in-key/input.js
+semantic error: 'arguments' is not allowed in class field initializer
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-in-property-in-params-of-async-arrow/input.js
+semantic error: Expected a semicolon or an implicit semicolon after a statement, but found none
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/new-target/input.js
+semantic error: Unexpected new.target expression
+Unexpected new.target expression
+Unexpected new.target expression
+Unexpected new.target expression
+Unexpected new.target expression
+Unexpected new.target expression
+Unexpected new.target expression
+Unexpected new.target expression
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-static-block/await-binding-in-function-in-static-block/input.js
+semantic error: Symbol flags mismatch for "f":
+after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | Function)
+rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
+Symbol flags mismatch for "f":
+after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
+rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
+Symbol flags mismatch for "f":
+after transform: SymbolId(4): SymbolFlags(BlockScopedVariable | Function)
+rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
+Symbol flags mismatch for "f":
+after transform: SymbolId(6): SymbolFlags(BlockScopedVariable | Function)
+rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-static-block/await-binding-in-initializer-in-static-block/input.js
+semantic error: Unexpected token
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-static-block/duplicate-function-var-name/input.js
+semantic error: Identifier `x` has already been declared
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/top-level-await-unambiguous/module/input.js
+semantic error: `await` is only allowed within async functions and at the top levels of modules
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/statement-if/migrated_0003/input.js
 semantic error: Symbol scope ID mismatch for "a":
@@ -58,8 +118,14 @@ after transform: ["Y", "foo"]
 rebuilt        : []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/import-require/input.js
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Missing SymbolId: "x"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/literals/input.js
 semantic error: Bindings mismatch:
@@ -101,8 +167,8 @@ semantic error: Expected `<` but found `EOF`
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/arrow-function-with-newline/input.ts
 semantic error: Unresolved references mismatch:
-after transform: ["t"]
-rebuilt        : []
+after transform: ["arguments", "t"]
+rebuilt        : ["arguments"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/arrow-like-in-conditional-3/input.ts
 semantic error: Unresolved references mismatch:
@@ -142,12 +208,12 @@ rebuilt        : ["async"]
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/async-generic-tokens-true/input.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["T", "a"]
-rebuilt        : ScopeId(1): ["a"]
+rebuilt        : ScopeId(2): ["a"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/async-generic-tokens-true-babel-7/input.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["T", "a"]
-rebuilt        : ScopeId(1): ["a"]
+rebuilt        : ScopeId(2): ["a"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/destructuring-with-annotation-newline/input.ts
 semantic error: Unresolved references mismatch:
@@ -482,8 +548,8 @@ rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), Sc
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-methods-async/input.ts
 semantic error: Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8)]
-rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6)]
+after transform: ScopeId(1): [ScopeId(2), ScopeId(4), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(4), ScopeId(6), ScopeId(8), ScopeId(10)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-override/input.ts
 semantic error: Identifier `show` has already been declared
@@ -736,12 +802,14 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), Sc
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/equals/input.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Reference flags mismatch for "f":
+after transform: ReferenceId(0): ReferenceFlags(Read | Type)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/equals-in-unambiguous/input.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Reference flags mismatch for "f":
+after transform: ReferenceId(0): ReferenceFlags(Read | Type)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/export-type/input.ts
 semantic error: Bindings mismatch:
@@ -861,8 +929,14 @@ after transform: ScopeId(0): [SymbolId(0)]
 rebuilt        : ScopeId(0): [SymbolId(0)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals-require/input.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Missing SymbolId: "a"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals-require-in-unambiguous/input.ts
 semantic error: Missing SymbolId: "a"
@@ -881,12 +955,24 @@ after transform: ScopeId(0): [SymbolId(0)]
 rebuilt        : ScopeId(0): [SymbolId(0)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/export-import-require/input.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Missing SymbolId: "a"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/export-import-type-as-identifier/input.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Missing SymbolId: "type"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/export-import-type-require/input.ts
 semantic error: Bindings mismatch:
@@ -894,8 +980,17 @@ after transform: ScopeId(0): ["a"]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/export-named-import-require/input.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Missing SymbolId: "a"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : SymbolId(0) "a"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/import-default-and-named-id-type/input.ts
 semantic error: Bindings mismatch:
@@ -918,8 +1013,14 @@ after transform: ScopeId(0): ["a"]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/import-type-as-identifier/input.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Missing SymbolId: "type"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/internal-comments/input.ts
 semantic error: Bindings mismatch:

@@ -212,12 +212,12 @@ impl<'a> ParserImpl<'a> {
             let ident = match ident {
                 Expression::Identifier(ident) => {
                     let ident = ident.unbox();
-                    self.ast.binding_identifier(ident.span, ident.name)
+                    self.ast.alloc_binding_identifier(ident.span, ident.name)
                 }
                 _ => unreachable!(),
             };
             let params_span = self.end_span(ident.span);
-            let ident = self.ast.binding_pattern_kind_from_binding_identifier(ident);
+            let ident = BindingPatternKind::BindingIdentifier(ident);
             let pattern = self.ast.binding_pattern(ident, NONE, false);
             let formal_parameter = self.ast.plain_formal_parameter(params_span, pattern);
             self.ast.alloc_formal_parameters(

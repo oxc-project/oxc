@@ -171,7 +171,7 @@ pub fn check_binding_identifier<'a>(
     // LexicalDeclaration : LetOrConst BindingList ;
     // * It is a Syntax Error if the BoundNames of BindingList contains "let".
     if !strict_mode && ident.name == "let" {
-        for node_id in ctx.nodes.ancestors(node.id()).skip(1) {
+        for node_id in ctx.nodes.ancestor_ids(node.id()).skip(1) {
             match ctx.nodes.kind(node_id) {
                 AstKind::VariableDeclaration(decl) if decl.kind.is_lexical() => {
                     return ctx.error(invalid_let_declaration(decl.kind.as_str(), ident.span));
@@ -197,7 +197,7 @@ pub fn check_identifier_reference<'a>(
     //  Static Semantics: AssignmentTargetType
     //  1. If this IdentifierReference is contained in strict mode code and StringValue of Identifier is "eval" or "arguments", return invalid.
     if ctx.strict_mode() && matches!(ident.name.as_str(), "arguments" | "eval") {
-        for node_id in ctx.nodes.ancestors(node.id()).skip(1) {
+        for node_id in ctx.nodes.ancestor_ids(node.id()).skip(1) {
             match ctx.nodes.kind(node_id) {
                 AstKind::AssignmentTarget(_) | AstKind::SimpleAssignmentTarget(_) => {
                     return ctx.error(unexpected_identifier_assign(&ident.name, ident.span));
@@ -214,7 +214,7 @@ pub fn check_identifier_reference<'a>(
     //   It is a Syntax Error if ContainsArguments of ClassStaticBlockStatementList is true.
 
     if ident.name == "arguments" {
-        for node_id in ctx.nodes.ancestors(node.id()).skip(1) {
+        for node_id in ctx.nodes.ancestor_ids(node.id()).skip(1) {
             match ctx.nodes.kind(node_id) {
                 AstKind::Function(_) => break,
                 AstKind::PropertyDefinition(_) => {
@@ -567,7 +567,7 @@ pub fn check_break_statement<'a>(
     ctx: &SemanticBuilder<'a>,
 ) {
     // It is a Syntax Error if this BreakStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement or a SwitchStatement.
-    for node_id in ctx.nodes.ancestors(node.id()).skip(1) {
+    for node_id in ctx.nodes.ancestor_ids(node.id()).skip(1) {
         match ctx.nodes.kind(node_id) {
             AstKind::Program(_) => {
                 return stmt.label.as_ref().map_or_else(
@@ -613,7 +613,7 @@ pub fn check_continue_statement<'a>(
     ctx: &SemanticBuilder<'a>,
 ) {
     // It is a Syntax Error if this ContinueStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement.
-    for node_id in ctx.nodes.ancestors(node.id()).skip(1) {
+    for node_id in ctx.nodes.ancestor_ids(node.id()).skip(1) {
         match ctx.nodes.kind(node_id) {
             AstKind::Program(_) => {
                 return stmt.label.as_ref().map_or_else(
@@ -666,7 +666,7 @@ pub fn check_labeled_statement<'a>(
     node: &AstNode<'a>,
     ctx: &SemanticBuilder<'a>,
 ) {
-    for node_id in ctx.nodes.ancestors(node.id()).skip(1) {
+    for node_id in ctx.nodes.ancestor_ids(node.id()).skip(1) {
         match ctx.nodes.kind(node_id) {
             // label cannot cross boundary on function or static block
             AstKind::Function(_) | AstKind::StaticBlock(_) | AstKind::Program(_) => break,
@@ -863,7 +863,7 @@ pub fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &SemanticBuilder<'a
 
     // skip(1) is the self `Super`
     // skip(2) is the parent `CallExpression` or `NewExpression`
-    for node_id in ctx.nodes.ancestors(node.id()).skip(2) {
+    for node_id in ctx.nodes.ancestor_ids(node.id()).skip(2) {
         match ctx.nodes.kind(node_id) {
             AstKind::MethodDefinition(def) => {
                 // ClassElement : MethodDefinition
@@ -913,19 +913,7 @@ pub fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &SemanticBuilder<'a
     }
 }
 
-fn cover_initialized_name(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Invalid assignment in object literal")
-.with_help("Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.")
-.with_label(span)
-}
-
 pub fn check_object_property(prop: &ObjectProperty, ctx: &SemanticBuilder<'_>) {
-    // PropertyDefinition : cover_initialized_name
-    // It is a Syntax Error if any source text is matched by this production.
-    if let Some(expr) = &prop.init {
-        ctx.error(cover_initialized_name(expr.span()));
-    }
-
     if let Expression::FunctionExpression(function) = &prop.value {
         match prop.kind {
             PropertyKind::Set => check_setter(function, ctx),
@@ -984,13 +972,21 @@ pub fn check_object_expression(obj_expr: &ObjectExpression, ctx: &SemanticBuilde
     // It is a Syntax Error if PropertyNameList of PropertyDefinitionList contains any duplicate entries for "__proto__"
     // and at least two of those entries were obtained from productions of the form PropertyDefinition : PropertyName : AssignmentExpression
     let mut prev_proto: Option<Span> = None;
-    let prop_names = obj_expr.properties.iter().filter_map(PropName::prop_name);
-    for prop_name in prop_names {
-        if prop_name.0 == "__proto__" {
-            if let Some(prev_span) = prev_proto {
-                ctx.error(redeclaration("__proto__", prev_span, prop_name.1));
+    for prop in &obj_expr.properties {
+        if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop {
+            // Skip if not a property definition production:
+            // PropertyDefinition : PropertyName : AssignmentExpression
+            if obj_prop.kind != PropertyKind::Init || obj_prop.method {
+                continue;
             }
-            prev_proto = Some(prop_name.1);
+            if let Some((prop_name, span)) = prop.prop_name() {
+                if prop_name == "__proto__" {
+                    if let Some(prev_span) = prev_proto {
+                        ctx.error(redeclaration("__proto__", prev_span, span));
+                    }
+                    prev_proto = Some(span);
+                }
+            }
         }
     }
 }
@@ -1086,7 +1082,7 @@ pub fn check_unary_expression<'a>(
 }
 
 fn is_in_formal_parameters<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) -> bool {
-    for node_id in ctx.nodes.ancestors(node.id()).skip(1) {
+    for node_id in ctx.nodes.ancestor_ids(node.id()).skip(1) {
         match ctx.nodes.kind(node_id) {
             AstKind::FormalParameter(_) => return true,
             AstKind::Program(_) | AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {

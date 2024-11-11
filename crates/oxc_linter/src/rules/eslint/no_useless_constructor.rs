@@ -118,7 +118,7 @@ impl Rule for NoUselessConstructor {
 
         let class = ctx
             .nodes()
-            .iter_parents(node.id())
+            .ancestors(node.id())
             .skip(1)
             .find(|parent| matches!(parent.kind(), AstKind::Class(_)));
         debug_assert!(class.is_some(), "Found a constructor outside of a class definition");

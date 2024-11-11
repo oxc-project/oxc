@@ -80,7 +80,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
     ) {
         let if_statement_node = ctx
             .nodes()
-            .iter_parents(node.id())
+            .ancestors(node.id())
             .find(|node| matches!(node.kind(), AstKind::IfStatement(_)))?;
 
         let if_statement = if_statement_node.kind().as_if_statement()?;

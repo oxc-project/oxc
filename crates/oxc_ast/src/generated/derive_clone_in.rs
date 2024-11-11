@@ -60,8 +60,8 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for RegExpLiteral<'old_alloc> {
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         RegExpLiteral {
             span: CloneIn::clone_in(&self.span, allocator),
-            value: CloneIn::clone_in(&self.value, allocator),
             regex: CloneIn::clone_in(&self.regex, allocator),
+            raw: CloneIn::clone_in(&self.raw, allocator),
         }
     }
 }
@@ -84,13 +84,6 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for RegExpPattern<'old_alloc> {
             Self::Invalid(it) => RegExpPattern::Invalid(CloneIn::clone_in(it, allocator)),
             Self::Pattern(it) => RegExpPattern::Pattern(CloneIn::clone_in(it, allocator)),
         }
-    }
-}
-
-impl<'alloc> CloneIn<'alloc> for EmptyObject {
-    type Cloned = EmptyObject;
-    fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
-        EmptyObject
     }
 }
 
@@ -470,7 +463,6 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for ObjectProperty<'old_alloc> 
             kind: CloneIn::clone_in(&self.kind, allocator),
             key: CloneIn::clone_in(&self.key, allocator),
             value: CloneIn::clone_in(&self.value, allocator),
-            init: CloneIn::clone_in(&self.init, allocator),
             method: CloneIn::clone_in(&self.method, allocator),
             shorthand: CloneIn::clone_in(&self.shorthand, allocator),
             computed: CloneIn::clone_in(&self.computed, allocator),
@@ -2607,132 +2599,6 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for TSEnumMemberName<'old_alloc
             Self::StaticStringLiteral(it) => {
                 TSEnumMemberName::StaticStringLiteral(CloneIn::clone_in(it, allocator))
             }
-            Self::StaticTemplateLiteral(it) => {
-                TSEnumMemberName::StaticTemplateLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::StaticNumericLiteral(it) => {
-                TSEnumMemberName::StaticNumericLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::BooleanLiteral(it) => {
-                TSEnumMemberName::BooleanLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::NullLiteral(it) => {
-                TSEnumMemberName::NullLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::NumericLiteral(it) => {
-                TSEnumMemberName::NumericLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::BigIntLiteral(it) => {
-                TSEnumMemberName::BigIntLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::RegExpLiteral(it) => {
-                TSEnumMemberName::RegExpLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::StringLiteral(it) => {
-                TSEnumMemberName::StringLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::TemplateLiteral(it) => {
-                TSEnumMemberName::TemplateLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::Identifier(it) => TSEnumMemberName::Identifier(CloneIn::clone_in(it, allocator)),
-            Self::MetaProperty(it) => {
-                TSEnumMemberName::MetaProperty(CloneIn::clone_in(it, allocator))
-            }
-            Self::Super(it) => TSEnumMemberName::Super(CloneIn::clone_in(it, allocator)),
-            Self::ArrayExpression(it) => {
-                TSEnumMemberName::ArrayExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ArrowFunctionExpression(it) => {
-                TSEnumMemberName::ArrowFunctionExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::AssignmentExpression(it) => {
-                TSEnumMemberName::AssignmentExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::AwaitExpression(it) => {
-                TSEnumMemberName::AwaitExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::BinaryExpression(it) => {
-                TSEnumMemberName::BinaryExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::CallExpression(it) => {
-                TSEnumMemberName::CallExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ChainExpression(it) => {
-                TSEnumMemberName::ChainExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ClassExpression(it) => {
-                TSEnumMemberName::ClassExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ConditionalExpression(it) => {
-                TSEnumMemberName::ConditionalExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::FunctionExpression(it) => {
-                TSEnumMemberName::FunctionExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ImportExpression(it) => {
-                TSEnumMemberName::ImportExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::LogicalExpression(it) => {
-                TSEnumMemberName::LogicalExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::NewExpression(it) => {
-                TSEnumMemberName::NewExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ObjectExpression(it) => {
-                TSEnumMemberName::ObjectExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ParenthesizedExpression(it) => {
-                TSEnumMemberName::ParenthesizedExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::SequenceExpression(it) => {
-                TSEnumMemberName::SequenceExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TaggedTemplateExpression(it) => {
-                TSEnumMemberName::TaggedTemplateExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ThisExpression(it) => {
-                TSEnumMemberName::ThisExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::UnaryExpression(it) => {
-                TSEnumMemberName::UnaryExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::UpdateExpression(it) => {
-                TSEnumMemberName::UpdateExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::YieldExpression(it) => {
-                TSEnumMemberName::YieldExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::PrivateInExpression(it) => {
-                TSEnumMemberName::PrivateInExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::JSXElement(it) => TSEnumMemberName::JSXElement(CloneIn::clone_in(it, allocator)),
-            Self::JSXFragment(it) => {
-                TSEnumMemberName::JSXFragment(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSAsExpression(it) => {
-                TSEnumMemberName::TSAsExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSSatisfiesExpression(it) => {
-                TSEnumMemberName::TSSatisfiesExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSTypeAssertion(it) => {
-                TSEnumMemberName::TSTypeAssertion(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSNonNullExpression(it) => {
-                TSEnumMemberName::TSNonNullExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSInstantiationExpression(it) => {
-                TSEnumMemberName::TSInstantiationExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ComputedMemberExpression(it) => {
-                TSEnumMemberName::ComputedMemberExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::StaticMemberExpression(it) => {
-                TSEnumMemberName::StaticMemberExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::PrivateFieldExpression(it) => {
-                TSEnumMemberName::PrivateFieldExpression(CloneIn::clone_in(it, allocator))
-            }
         }
     }
 }
@@ -3369,6 +3235,7 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for TSIndexSignature<'old_alloc
             parameters: CloneIn::clone_in(&self.parameters, allocator),
             type_annotation: CloneIn::clone_in(&self.type_annotation, allocator),
             readonly: CloneIn::clone_in(&self.readonly, allocator),
+            r#static: CloneIn::clone_in(&self.r#static, allocator),
         }
     }
 }

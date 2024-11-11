@@ -1,1199 +1,48 @@
 commit: d20b314c
 
-Passed: 357/1058
+Passed: 319/633
 
 # All Passed:
 * babel-plugin-transform-class-static-block
 * babel-plugin-transform-logical-assignment-operators
 * babel-plugin-transform-optional-catch-binding
+* babel-plugin-transform-async-generator-functions
 * babel-preset-react
 * babel-plugin-transform-react-display-name
 * babel-plugin-transform-react-jsx-self
 * babel-plugin-transform-react-jsx-source
 
 
-# babel-preset-env (110/585)
-* .plugins-overlapping/chrome-49/input.js
-x Output mismatch
-
-* .plugins-overlapping/chrome-50/input.js
-x Output mismatch
-
-* .plugins-overlapping/chrome-54/input.js
-x Output mismatch
-
-* bugfixes/_esmodules/input.js
-Targets: The `esmodules` is not supported
-
-* bugfixes/_esmodules-no-bugfixes/input.js
-Targets: The `esmodules` is not supported
-
-* bugfixes/edge-default-params-chrome-40/input.js
-x Output mismatch
-
-* bugfixes/edge-default-params-edge-14/input.js
-x Output mismatch
-
-* bugfixes/edge-default-params-edge-15/input.js
-x Output mismatch
-
-* bugfixes/edge-default-params-edge-17/input.js
-x Output mismatch
-
-* bugfixes/edge-default-params-edge-17-no-bugfixes/input.js
-x Output mismatch
-
-* bugfixes/edge-function-name-edge-14/input.js
-x Output mismatch
-
-* bugfixes/edge-function-name-edge-14-no-bugfixes/input.js
-x Output mismatch
-
-* bugfixes/edge-function-name-edge-15/input.js
-x Output mismatch
-
-* bugfixes/safari-block-scoping-safari-10/input.js
-x Output mismatch
-
-* bugfixes/safari-block-scoping-safari-10-no-bugfixes/input.js
-x Output mismatch
-
-* bugfixes/safari-block-scoping-safari-9/input.js
-x Output mismatch
-
-* bugfixes/safari-class-fields-safari-13/input.mjs
-x Output mismatch
-
-* bugfixes/safari-class-fields-safari-15/input.mjs
-x Output mismatch
-
-* bugfixes/safari-id-destructuring-collision-in-function-expression-safari-15/input.js
-x Output mismatch
-
-* bugfixes/safari-id-destructuring-collision-in-function-expression-safari-15-no-bugfixes/input.js
-x Output mismatch
-
-* bugfixes/v8-spread-parameters-in-optional-chaining-chrome-89/input.js
-x Output mismatch
-
-* bugfixes/v8-spread-parameters-in-optional-chaining-chrome-89-no-bugfixes/input.js
-x Output mismatch
-
-* bugfixes-always-enabled/class-in-computed-field-firefox-50/input.js
-x Output mismatch
-
-* bugfixes-always-enabled/class-in-computed-field-firefox-90/input.js
-x Output mismatch
-
-* bugfixes-always-enabled/static-class-fields-chrome-70/input.js
-x Output mismatch
-
-* bugfixes-always-enabled/static-class-fields-chrome-90/input.js
-x Output mismatch
-
-* bugfixes-always-enabled/static-class-fields-chrome-96/input.js
-x Output mismatch
-
-* bugfixes-always-enabled/static-class-fields-chrome-97/input.js
-x Output mismatch
-
-* corejs2-babel-7/entry-all/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/entry-chrome-48/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/entry-chrome-49/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/entry-chrome-66/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/entry-chrome-71/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/entry-chromeandroid/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/entry-core-js-main/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/entry-core-js-main-require/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/entry-electron/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/entry-ie-11/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/entry-ie-9/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/entry-import/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/entry-node/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/entry-node-10.13/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/entry-node-11/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/entry-node-web/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/entry-require/input.js
-x Output mismatch
-
-* corejs2-babel-7/entry-shippedProposals/input.js
-x Output mismatch
-
-* corejs2-babel-7/exclude-built-ins/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/exclude-include/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/exclude-regenerator/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/force-all-transforms/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/include-built-ins/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/usage-all/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/usage-browserslist-config-ignore/input.mjs
-Targets: The `esmodules` is not supported
-
-* corejs2-babel-7/usage-destructuring-assignment/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/usage-destructuring-catch/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/usage-destructuring-for-x/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/usage-destructuring-params/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/usage-destructuring-variable-declaration/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/usage-evaluated-class-methods/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/usage-evaluated-instance-methods/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/usage-evaluated-not-confident/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/usage-for-of/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/usage-for-of-destructure-with/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/usage-instance-methods/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/usage-instance-methods-native-support/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/usage-modules-transform/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/usage-native-support/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/usage-number-ie-11/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/usage-promise-all/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/usage-promise-finally/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/usage-promise-race/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/usage-regenerator-used-async/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/usage-regenerator-used-generator/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/usage-remove-babel-polyfill-import/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/usage-shippedProposals/input.js
-x Output mismatch
-
-* corejs2-babel-7/usage-source-type-script/input.js
-x Output mismatch
-
-* corejs2-babel-7/usage-source-type-script-query/input.js
-x Output mismatch
-
-* corejs2-babel-7/usage-symbol-iterator/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/usage-symbol-iterator-in/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/usage-timers/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/usage-typed-array/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/usage-typed-array-static/input.mjs
-x Output mismatch
-
-* corejs2-babel-7/usage-yield-star/input.mjs
-x Output mismatch
-
-* corejs3/entry-all/input.mjs
-x Output mismatch
-
-* corejs3/entry-all-chrome-71/input.mjs
-x Output mismatch
-
-* corejs3/entry-chrome-48/input.mjs
-x Output mismatch
-
-* corejs3/entry-chrome-49/input.mjs
-x Output mismatch
-
-* corejs3/entry-chrome-66/input.mjs
-x Output mismatch
-
-* corejs3/entry-chrome-71/input.mjs
-x Output mismatch
-
-* corejs3/entry-chromeandroid/input.mjs
-x Output mismatch
-
-* corejs3/entry-electron/input.mjs
-x Output mismatch
-
-* corejs3/entry-entries-es-proposals-stage/input.mjs
-x Output mismatch
-
-* corejs3/entry-entries-es-proposals-stage-chrome-71/input.mjs
-x Output mismatch
-
-* corejs3/entry-entries-features/input.mjs
-x Output mismatch
-
-* corejs3/entry-entries-features-chrome-71/input.mjs
-x Output mismatch
-
-* corejs3/entry-entries-missed/input.mjs
-x Output mismatch
-
-* corejs3/entry-entries-mixed/input.mjs
-x Output mismatch
-
-* corejs3/entry-entries-mixed-chrome-71/input.mjs
-x Output mismatch
-
-* corejs3/entry-entries-modules/input.mjs
-x Output mismatch
-
-* corejs3/entry-entries-modules-chrome-71/input.mjs
-x Output mismatch
-
-* corejs3/entry-entries-proposals/input.mjs
-x Output mismatch
-
-* corejs3/entry-entries-proposals-chrome-71/input.mjs
-x Output mismatch
-
-* corejs3/entry-entries-stable/input.mjs
-x Output mismatch
-
-* corejs3/entry-entries-stable-chrome-71/input.mjs
-x Output mismatch
-
-* corejs3/entry-entries-stage/input.mjs
-x Output mismatch
-
-* corejs3/entry-entries-stage-chrome-71/input.mjs
-x Output mismatch
-
-* corejs3/entry-entries-web/input.mjs
-x Output mismatch
-
-* corejs3/entry-entries-web-chrome-71/input.mjs
-x Output mismatch
-
-* corejs3/entry-ie-11/input.mjs
-x Output mismatch
-
-* corejs3/entry-ie-9/input.mjs
-x Output mismatch
-
-* corejs3/entry-import/input.mjs
-x Output mismatch
-
-* corejs3/entry-node/input.mjs
-x Output mismatch
-
-* corejs3/entry-node-10.13/input.mjs
-x Output mismatch
-
-* corejs3/entry-node-11/input.mjs
-x Output mismatch
-
-* corejs3/entry-node-web/input.mjs
-x Output mismatch
-
-* corejs3/entry-normalization/input.mjs
-x Output mismatch
-
-* corejs3/entry-require/input.js
-x Output mismatch
-
-* corejs3/entry-require-all/input.js
-x Output mismatch
-
-* corejs3/entry-require-es-chrome-71/input.js
-x Output mismatch
-
-* corejs3/entry-require-es-proposals/input.js
-x Output mismatch
-
-* corejs3/entry-stable/input.mjs
-x Output mismatch
-
-* corejs3/entry-stable-chrome-71/input.mjs
-x Output mismatch
-
-* corejs3/entry-stable-samsung-8.2/input.mjs
-x Output mismatch
-
-* corejs3/exclude-built-ins/input.mjs
-x Output mismatch
-
-* corejs3/exclude-include/input.mjs
-x Output mismatch
-
-* corejs3/force-all-transforms/input.mjs
-x Output mismatch
-
-* corejs3/include-built-ins/input.mjs
-x Output mismatch
-
-* corejs3/usage-all-proposals/input.mjs
-x Output mismatch
-
-* corejs3/usage-all-proposals-chrome-71/input.mjs
-x Output mismatch
-
-* corejs3/usage-browserslist-config-ignore/input.mjs
-Targets: The `esmodules` is not supported
-
-* corejs3/usage-determanated-instance-methods/input.mjs
-x Output mismatch
-
-* corejs3/usage-for-of-destructure-with/input.mjs
-x Output mismatch
-
-* corejs3/usage-instance-methods/input.mjs
-x Output mismatch
-
-* corejs3/usage-modules-transform/input.mjs
-x Output mismatch
-
-* corejs3/usage-number-ie-11/input.mjs
-x Output mismatch
-
-* corejs3/usage-object-destructuring/input.mjs
-x Output mismatch
-
-* corejs3/usage-object-destructuring-with-rest/input.mjs
-x Output mismatch
-
-* corejs3/usage-promise-all/input.mjs
-x Output mismatch
-
-* corejs3/usage-promise-finally/input.mjs
-x Output mismatch
-
-* corejs3/usage-promise-race/input.mjs
-x Output mismatch
-
-* corejs3/usage-regenerator-used-async-native-support/input.mjs
-x Output mismatch
-
-* corejs3/usage-shippedProposals/input.mjs
-x Output mismatch
-
-* corejs3/usage-source-type-script/input.js
-x Output mismatch
-
-* corejs3/usage-source-type-script-query/input.js
-x Output mismatch
-
-* corejs3/usage-static-methods/input.mjs
-x Output mismatch
-
-* corejs3/usage-timers/input.mjs
-x Output mismatch
-
-* corejs3/usage-typed-array/input.mjs
-x Output mismatch
-
-* corejs3/usage-typed-array-edge-13/input.mjs
-x Output mismatch
-
-* corejs3/usage-typed-array-static/input.mjs
-x Output mismatch
-
-* corejs3/usage-yield-star/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/entry-all/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/entry-all-chrome-71/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/entry-chrome-48/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/entry-chrome-49/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/entry-chrome-66/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/entry-chrome-71/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/entry-chromeandroid/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/entry-electron/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/entry-entries-es-proposals-stage/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/entry-entries-es-proposals-stage-chrome-71/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/entry-entries-features/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/entry-entries-features-chrome-71/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/entry-entries-missed/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/entry-entries-mixed/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/entry-entries-mixed-chrome-71/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/entry-entries-modules/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/entry-entries-modules-chrome-71/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/entry-entries-proposals/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/entry-entries-proposals-chrome-71/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/entry-entries-stable/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/entry-entries-stable-chrome-71/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/entry-entries-stage/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/entry-entries-stage-chrome-71/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/entry-entries-web/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/entry-entries-web-chrome-71/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/entry-ie-11/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/entry-ie-9/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/entry-import/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/entry-node/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/entry-node-10.13/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/entry-node-11/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/entry-node-web/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/entry-normalization/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/entry-require/input.js
-x Output mismatch
-
-* corejs3-babel-7/entry-require-all/input.js
-x Output mismatch
-
-* corejs3-babel-7/entry-require-es-chrome-71/input.js
-x Output mismatch
-
-* corejs3-babel-7/entry-require-es-proposals/input.js
-x Output mismatch
-
-* corejs3-babel-7/entry-specified-imports/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/entry-stable/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/entry-stable-chrome-71/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/entry-stable-samsung-8.2/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/exclude/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/exclude-built-ins/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/exclude-include/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/exclude-regenerator/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/force-all-transforms/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/include-built-ins/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-all/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-all-proposals/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-all-proposals-chrome-71/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-browserslist-config-ignore/input.mjs
-Targets: The `esmodules` is not supported
-
-* corejs3-babel-7/usage-built-in-from-global-object/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-destructuring-assignment/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-destructuring-catch/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-destructuring-for-x/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-destructuring-iife/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-destructuring-params/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-destructuring-variable-declaration/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-determanated-instance-methods/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-dynamic-import/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-evaluated-class-methods/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-evaluated-instance-methods/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-fetch/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-for-of/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-for-of-destructure-with/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-in/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-instance-methods/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-modules-transform/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-number-ie-11/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-object-destructuring/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-object-destructuring-with-rest/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-promise-all/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-promise-finally/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-promise-race/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-regenerator-used-async/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-regenerator-used-async-native-support/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-regenerator-used-generator/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-shippedProposals/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-source-type-script/input.js
-x Output mismatch
-
-* corejs3-babel-7/usage-source-type-script-query/input.js
-x Output mismatch
-
-* corejs3-babel-7/usage-spread/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-static-methods/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-symbol-iterator/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-symbol-iterator-in/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-timers/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-typed-array/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-typed-array-edge-13/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-typed-array-static/input.mjs
-x Output mismatch
-
-* corejs3-babel-7/usage-yield-star/input.mjs
-x Output mismatch
-
-* debug/browserslist-env/input.mjs
-x Output mismatch
-
-* debug/browserslists-android-3/input.mjs
-x Output mismatch
-
-* debug/browserslists-defaults/input.mjs
-x Output mismatch
-
-* debug/browserslists-defaults-not-ie/input.mjs
-x Output mismatch
-
-* debug/browserslists-last-2-versions-not-ie/input.mjs
-x Output mismatch
-
-* debug/corejs-without-usebuiltins/input.mjs
-x Output mismatch
-
-* debug/entry-corejs3/input.mjs
-x Output mismatch
-
-* debug/entry-corejs3-all/input.mjs
-x Output mismatch
-
-* debug/entry-corejs3-all-chrome-71/input.mjs
-x Output mismatch
-
-* debug/entry-corejs3-android/input.mjs
-x Output mismatch
-
-* debug/entry-corejs3-babel-polyfill/input.mjs
-x Output mismatch
-
-* debug/entry-corejs3-electron/input.mjs
-x Output mismatch
-
-* debug/entry-corejs3-es/input.mjs
-x Output mismatch
-
-* debug/entry-corejs3-es-chrome-71/input.mjs
-x Output mismatch
-
-* debug/entry-corejs3-es-proposals/input.mjs
-x Output mismatch
-
-* debug/entry-corejs3-es-proposals-chrome-71/input.mjs
-x Output mismatch
-
-* debug/entry-corejs3-force-all-transforms/input.mjs
-x Output mismatch
-
-* debug/entry-corejs3-no-import/input.js
-x Output mismatch
-
-* debug/entry-corejs3-proposals/input.mjs
-x Output mismatch
-
-* debug/entry-corejs3-proposals-chrome-71/input.mjs
-x Output mismatch
-
-* debug/entry-corejs3-runtime-only/input.mjs
-x Output mismatch
-
-* debug/entry-corejs3-runtime-only-chrome-71/input.mjs
-x Output mismatch
-
-* debug/entry-corejs3-specific-entries/input.mjs
-x Output mismatch
-
-* debug/entry-corejs3-specific-entries-chrome-71/input.mjs
-x Output mismatch
-
-* debug/entry-corejs3-specific-targets/input.mjs
-x Output mismatch
-
-* debug/entry-corejs3-stable/input.mjs
-x Output mismatch
-
-* debug/entry-corejs3-stable-chrome-71/input.mjs
-x Output mismatch
-
-* debug/entry-corejs3-stable-samsung-8.2/input.mjs
-x Output mismatch
-
-* debug/entry-corejs3-stage/input.mjs
-x Output mismatch
-
-* debug/entry-corejs3-stage-chrome-71/input.mjs
-x Output mismatch
-
-* debug/entry-corejs3-versions-strings-minor-3.0/input.mjs
-x Output mismatch
-
-* debug/entry-corejs3-versions-strings-minor-3.1/input.mjs
-x Output mismatch
-
-* debug/entry-corejs3-web/input.mjs
-x Output mismatch
-
-* debug/entry-corejs3-web-chrome-71/input.mjs
-x Output mismatch
-
-* debug/plugins-only/input.mjs
-x Output mismatch
-
-* debug/shippedProposals-chrome-80/input.mjs
-x Output mismatch
-
-* debug/shippedProposals-chrome-84/input.mjs
-x Output mismatch
-
-* debug/top-level-targets/input.mjs
-x Output mismatch
-
-* debug/top-level-targets-shadowed/input.mjs
-x Output mismatch
-
-* debug/usage-corejs3-1/input.js
-x Output mismatch
-
-* debug/usage-corejs3-2/input.js
-x Output mismatch
-
-* debug/usage-corejs3-chrome-71-1/input.js
-x Output mismatch
-
-* debug/usage-corejs3-chrome-71-2/input.js
-x Output mismatch
-
-* debug/usage-corejs3-none-1/input.js
-x Output mismatch
-
-* debug/usage-corejs3-none-2/input.js
-x Output mismatch
-
-* debug/usage-corejs3-proposals-1/input.js
-x Output mismatch
-
-* debug/usage-corejs3-proposals-2/input.js
-x Output mismatch
-
-* debug/usage-corejs3-proposals-chrome-71-1/input.js
-x Output mismatch
-
-* debug/usage-corejs3-proposals-chrome-71-2/input.js
-x Output mismatch
-
-* debug/usage-corejs3-shippedProposals-1/input.js
-x Output mismatch
-
-* debug/usage-corejs3-shippedProposals-2/input.js
-x Output mismatch
-
-* debug/usage-corejs3-versions-strings-minor-3.0-1/input.js
-x Output mismatch
-
-* debug/usage-corejs3-versions-strings-minor-3.0-2/input.js
-x Output mismatch
-
-* debug/usage-corejs3-versions-strings-minor-3.1-1/input.js
-x Output mismatch
-
-* debug/usage-corejs3-versions-strings-minor-3.1-2/input.js
-x Output mismatch
-
-* debug/usage-corejs3-with-import/input.mjs
-x Output mismatch
-
-* debug-babel-7/browserslists-android-3/input.mjs
-x Output mismatch
-
-* debug-babel-7/browserslists-defaults/input.mjs
-x Output mismatch
-
-* debug-babel-7/browserslists-defaults-not-ie/input.mjs
-x Output mismatch
-
-* debug-babel-7/browserslists-last-2-versions-not-ie/input.mjs
-x Output mismatch
-
-* debug-babel-7/corejs-without-usebuiltins/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs2/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs2-android/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs2-electron/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs2-force-all-transforms/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs2-no-import/input.js
-x Output mismatch
-
-* debug-babel-7/entry-corejs2-proposals/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs2-proposals-chrome-71/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs2-shippedProposals/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs2-shippedProposals-chrome-71/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs2-specific-targets/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs2-versions-decimals/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs2-versions-strings/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs3/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs3-all/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs3-all-chrome-71/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs3-android/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs3-babel-polyfill/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs3-electron/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs3-es/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs3-es-chrome-71/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs3-es-proposals/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs3-es-proposals-chrome-71/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs3-force-all-transforms/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs3-no-import/input.js
-x Output mismatch
-
-* debug-babel-7/entry-corejs3-proposals/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs3-proposals-chrome-71/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs3-runtime-only/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs3-runtime-only-chrome-71/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs3-specific-entries/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs3-specific-entries-chrome-71/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs3-specific-targets/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs3-stable/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs3-stable-chrome-71/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs3-stable-samsung-8.2/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs3-stage/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs3-stage-chrome-71/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs3-versions-decimals/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs3-versions-strings/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs3-versions-strings-minor-3.0/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs3-versions-strings-minor-3.1/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs3-web/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-corejs3-web-chrome-71/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-no-corejs/input.mjs
-x Output mismatch
-
-* debug-babel-7/entry-no-corejs-no-import/input.js
-x Output mismatch
-
-* debug-babel-7/entry-no-corejs-shippedProposals/input.mjs
-x Output mismatch
-
-* debug-babel-7/plugins-only/input.mjs
-x Output mismatch
-
-* debug-babel-7/shippedProposals-chrome-80/input.mjs
-x Output mismatch
-
-* debug-babel-7/shippedProposals-chrome-84/input.mjs
-x Output mismatch
-
-* debug-babel-7/top-level-targets/input.mjs
-x Output mismatch
-
-* debug-babel-7/top-level-targets-shadowed/input.mjs
-x Output mismatch
-
-* debug-babel-7/usage-corejs2-1/input.js
-x Output mismatch
-
-* debug-babel-7/usage-corejs2-2/input.js
-x Output mismatch
-
-* debug-babel-7/usage-corejs2-chrome-71-1/input.js
-x Output mismatch
-
-* debug-babel-7/usage-corejs2-chrome-71-2/input.js
-x Output mismatch
-
-* debug-babel-7/usage-corejs2-none-1/input.js
-x Output mismatch
-
-* debug-babel-7/usage-corejs2-none-2/input.js
-x Output mismatch
-
-* debug-babel-7/usage-corejs2-proposals-1/input.js
-x Output mismatch
-
-* debug-babel-7/usage-corejs2-proposals-2/input.js
-x Output mismatch
-
-* debug-babel-7/usage-corejs2-proposals-chrome-71-1/input.js
-x Output mismatch
-
-* debug-babel-7/usage-corejs2-proposals-chrome-71-2/input.js
-x Output mismatch
-
-* debug-babel-7/usage-corejs2-shippedProposals-1/input.js
-x Output mismatch
-
-* debug-babel-7/usage-corejs2-shippedProposals-2/input.js
-x Output mismatch
-
-* debug-babel-7/usage-corejs2-with-import/input.mjs
-x Output mismatch
-
-* debug-babel-7/usage-corejs3-1/input.js
-x Output mismatch
-
-* debug-babel-7/usage-corejs3-2/input.js
-x Output mismatch
-
-* debug-babel-7/usage-corejs3-chrome-71-1/input.js
-x Output mismatch
-
-* debug-babel-7/usage-corejs3-chrome-71-2/input.js
-x Output mismatch
-
-* debug-babel-7/usage-corejs3-none-1/input.js
-x Output mismatch
-
-* debug-babel-7/usage-corejs3-none-2/input.js
-x Output mismatch
-
-* debug-babel-7/usage-corejs3-proposals-1/input.js
-x Output mismatch
-
-* debug-babel-7/usage-corejs3-proposals-2/input.js
-x Output mismatch
-
-* debug-babel-7/usage-corejs3-proposals-chrome-71-1/input.js
-x Output mismatch
-
-* debug-babel-7/usage-corejs3-proposals-chrome-71-2/input.js
-x Output mismatch
-
-* debug-babel-7/usage-corejs3-shippedProposals-1/input.js
-x Output mismatch
-
-* debug-babel-7/usage-corejs3-shippedProposals-2/input.js
-x Output mismatch
-
-* debug-babel-7/usage-corejs3-versions-strings-minor-3.0-1/input.js
-x Output mismatch
-
-* debug-babel-7/usage-corejs3-versions-strings-minor-3.0-2/input.js
-x Output mismatch
-
-* debug-babel-7/usage-corejs3-versions-strings-minor-3.1-1/input.js
-x Output mismatch
-
-* debug-babel-7/usage-corejs3-versions-strings-minor-3.1-2/input.js
-x Output mismatch
-
-* debug-babel-7/usage-corejs3-with-import/input.mjs
-x Output mismatch
-
-* debug-babel-7/usage-no-corejs-1/input.js
-x Output mismatch
-
-* debug-babel-7/usage-no-corejs-2/input.js
-x Output mismatch
-
-* debug-babel-7/usage-no-corejs-none-1/input.js
-x Output mismatch
-
-* debug-babel-7/usage-no-corejs-none-2/input.js
-x Output mismatch
-
+# babel-preset-env (41/127)
 * dynamic-import/auto-esm-unsupported-import-unsupported/input.mjs
 x Output mismatch
 
 * dynamic-import/modules-amd/input.js
-x Output mismatch
+env: Amd module is not implemented.
 
 * dynamic-import/modules-cjs/input.mjs
 x Output mismatch
 
 * dynamic-import/modules-systemjs/input.mjs
-x Output mismatch
+env: Systemjs module is not implemented.
 
 * dynamic-import/modules-umd/input.mjs
-x Output mismatch
+env: Umd module is not implemented.
 
 * dynamic-import-babel-7/auto-esm-unsupported-import-unsupported/input.mjs
 x Output mismatch
 
 * dynamic-import-babel-7/modules-amd/input.js
-x Output mismatch
+env: Amd module is not implemented.
 
 * dynamic-import-babel-7/modules-cjs/input.mjs
 x Output mismatch
 
 * dynamic-import-babel-7/modules-systemjs/input.mjs
-x Output mismatch
+env: Systemjs module is not implemented.
 
 * dynamic-import-babel-7/modules-umd/input.mjs
-x Output mismatch
+env: Umd module is not implemented.
 
 * export-namespace-from/auto-esm-not-supported/input.mjs
 x Output mismatch
@@ -1220,10 +69,10 @@ x Output mismatch
 x Output mismatch
 
 * modules/modules-systemjs/input.mjs
-x Output mismatch
+env: Systemjs module is not implemented.
 
 * modules/modules-umd/input.mjs
-x Output mismatch
+env: Umd module is not implemented.
 
 * plugins-integration/block-scoping-inside-generator/input.js
 x Output mismatch
@@ -1241,7 +90,7 @@ x Output mismatch
 x Output mismatch
 
 * plugins-integration/issue-10662/input.mjs
-x Output mismatch
+env: Umd module is not implemented.
 
 * plugins-integration/issue-11278/input.mjs
 x Output mismatch
@@ -1256,9 +105,6 @@ x Output mismatch
 x Output mismatch
 
 * plugins-integration/issue-7527/input.mjs
-x Output mismatch
-
-* plugins-integration/issue-9935/input.js
 x Output mismatch
 
 * plugins-integration/regression-2892/input.mjs
@@ -1280,7 +126,7 @@ x Output mismatch
 x Output mismatch
 
 * preset-options/browserslist-defaults-not-ie/input.mjs
-Targets: node `current` is not supported
+x Output mismatch
 
 * preset-options/deno-1_0/input.mjs
 x Output mismatch
@@ -1293,9 +139,6 @@ x Output mismatch
 
 * preset-options/empty-options/input.mjs
 x Output mismatch
-
-* preset-options/esmodules-async-functions/input.mjs
-Targets: The `esmodules` is not supported
 
 * preset-options/include/input.mjs
 x Output mismatch
@@ -1324,9 +167,6 @@ x Output mismatch
 * preset-options/safari-tagged-template-literals/input.js
 x Output mismatch
 
-* preset-options/safari-tp/input.js
-failed to resolve query: failed to parse the rest of input: ...''
-
 * preset-options/unicode-property-regex-chrome-49/input.js
 x Output mismatch
 
@@ -1343,7 +183,7 @@ x Output mismatch
 x Output mismatch
 
 * preset-options-babel-7/browserslist-defaults-not-ie/input.mjs
-Targets: node `current` is not supported
+x Output mismatch
 
 * preset-options-babel-7/deno-1_0/input.mjs
 x Output mismatch
@@ -1358,7 +198,7 @@ x Output mismatch
 x Output mismatch
 
 * preset-options-babel-7/esmodules-async-functions/input.mjs
-Targets: The `esmodules` is not supported
+x Output mismatch
 
 * preset-options-babel-7/include/input.mjs
 x Output mismatch
@@ -1399,9 +239,6 @@ x Output mismatch
 * preset-options-babel-7/safari-tagged-template-literals/input.js
 x Output mismatch
 
-* preset-options-babel-7/safari-tp/input.js
-failed to resolve query: failed to parse the rest of input: ...''
-
 * preset-options-babel-7/shippedProposals/input.js
 x Output mismatch
 
@@ -1430,9 +267,6 @@ x Output mismatch
 x Output mismatch
 
 * shipped-proposals/new-class-features-chrome-90/input.js
-x Output mismatch
-
-* shipped-proposals/new-class-features-chrome-94/input.js
 x Output mismatch
 
 * shipped-proposals/new-class-features-firefox-70/input.js
@@ -1626,7 +460,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-async-to-generator (9/24)
+# babel-plugin-transform-async-to-generator (11/28)
 * assumption-ignoreFunctionLength-true/basic/input.mjs
 x Output mismatch
 
@@ -1637,9 +471,6 @@ x Output mismatch
 x Output mismatch
 
 * async-to-generator/async-iife-with-regenerator-spec/input.js
-x Output mismatch
-
-* async-to-generator/object-method-with-super/input.js
 x Output mismatch
 
 * bluebird-coroutines/arrow-function/input.js
@@ -1657,6 +488,18 @@ x Output mismatch
 * bluebird-coroutines/statement/input.js
 x Output mismatch
 
+* export-async/default-arrow-export/input.mjs
+x Output mismatch
+
+* export-async/default-export/input.mjs
+x Output mismatch
+
+* export-async/import-and-export/input.mjs
+x Output mismatch
+
+* export-async/lone-export/input.mjs
+x Output mismatch
+
 * regression/15978/input.js
 x Output mismatch
 
@@ -1667,9 +510,6 @@ x Output mismatch
 x Output mismatch
 
 * regression/in-uncompiled-class-fields/input.js
-x Output mismatch
-
-* regression/regression-2765/input.js
 x Output mismatch
 
 
@@ -1704,7 +544,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-preset-typescript (5/10)
+# babel-preset-typescript (11/16)
 * jsx-compat/ts-invalid/input.ts
 
   x Expected `>` but found `/`
@@ -1732,7 +572,7 @@ rebuilt        : ScopeId(1): []
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (39/152)
+# babel-plugin-transform-typescript (43/155)
 * cast/as-expression/input.ts
 Unresolved references mismatch:
 after transform: ["T", "x"]
@@ -2103,17 +943,6 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
-* exports/export=/input.ts
-
-  ! `export = <value>;` is only supported when compiling modules to CommonJS.
-  | Please consider using `export default <value>;`, or add @babel/plugin-
-  | transform-modules-commonjs to your Babel config.
-   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/exports/export=/input.ts:1:1]
- 1 | export = 0;
-   : ^^^^^^^^^^^
-   `----
-
-
 * exports/imported-types/input.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["A", "B", "C"]
@@ -2300,19 +1129,18 @@ Bindings mismatch:
 after transform: ScopeId(0): ["A", "B"]
 rebuilt        : ScopeId(0): []
 
-* imports/import=-module/input.ts
-
-  ! `import lib = require(...);` is only supported when compiling modules
-  | to CommonJS.
-  | Please consider using `import lib from '...';` alongside Typescript's
-  | --allowSyntheticDefaultImports option, or add @babel/plugin-transform-
-  | modules-commonjs to your Babel config.
-   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/imports/import=-module/input.ts:1:1]
- 1 | import lib = require("lib");
-   : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 2 | lib();
-   `----
-
+* imports/import=-module-to-cjs/input.ts
+Missing SymbolId: "lib"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Reference symbol mismatch for "lib":
+after transform: SymbolId(0) "lib"
+rebuilt        : SymbolId(0) "lib"
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 * imports/only-remove-type-imports/input.ts
 x Output mismatch
@@ -3339,7 +2167,10 @@ after transform: ["T", "f"]
 rebuilt        : ["f"]
 
 
-# babel-plugin-transform-react-jsx (124/144)
+# babel-plugin-transform-react-jsx (124/145)
+* autoImport/after-polyfills-compiled-to-cjs/input.mjs
+x Output mismatch
+
 * pure/false-pragma-comment-automatic-runtime/input.js
 pragma and pragmaFrag cannot be set when runtime is automatic.
 

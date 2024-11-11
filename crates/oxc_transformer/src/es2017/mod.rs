@@ -1,13 +1,13 @@
-use oxc_ast::ast::{Expression, Statement};
+pub(crate) mod async_to_generator;
+mod options;
+
+use oxc_ast::ast::{Expression, Function, Statement};
 use oxc_traverse::{Traverse, TraverseCtx};
 
-use crate::{
-    es2017::{async_to_generator::AsyncToGenerator, options::ES2017Options},
-    TransformCtx,
-};
+use crate::{es2017::async_to_generator::AsyncToGenerator, TransformCtx};
+pub use async_to_generator::AsyncGeneratorExecutor;
 
-mod async_to_generator;
-pub mod options;
+pub use options::ES2017Options;
 
 #[allow(dead_code)]
 pub struct ES2017<'a, 'ctx> {
@@ -30,13 +30,9 @@ impl<'a, 'ctx> Traverse<'a> for ES2017<'a, 'ctx> {
         }
     }
 
-    fn exit_method_definition(
-        &mut self,
-        node: &mut oxc_ast::ast::MethodDefinition<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
+    fn exit_function(&mut self, node: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.async_to_generator {
-            self.async_to_generator.exit_method_definition(node, ctx);
+            self.async_to_generator.exit_function(node, ctx);
         }
     }
 

@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 30/30 (100.00%)
 Positive Passed: 30/30 (100.00%)
-Negative Passed: 20/20 (100.00%)
+Negative Passed: 25/25 (100.00%)
 
   × Unexpected token
    ╭─[misc/fail/oxc-169.js:2:1]
@@ -180,49 +180,38 @@ Negative Passed: 20/20 (100.00%)
   help: Try insert a semicolon here
 
   × TS(1164): Computed property names are not allowed in enums.
-   ╭─[misc/fail/oxc-4449.ts:2:11]
- 1 │ // should fail
- 2 │ enum A { [foo] }               // Computed property names are not allowed in enums
+   ╭─[misc/fail/oxc-4449-1.ts:1:11]
+ 1 │ enum A { [foo] } // Computed property names are not allowed in enums
    ·           ───
- 3 │ enum B { [1] }                 // An enum member cannot have a numeric name.
    ╰────
 
   × TS(2452): An enum member cannot have a numeric name.
-   ╭─[misc/fail/oxc-4449.ts:3:11]
- 2 │ enum A { [foo] }               // Computed property names are not allowed in enums
- 3 │ enum B { [1] }                 // An enum member cannot have a numeric name.
+   ╭─[misc/fail/oxc-4449-2.ts:1:11]
+ 1 │ enum B { [1] } // An enum member cannot have a numeric name.
    ·           ─
- 4 │ enum C { 1 }                   // An enum member cannot have a numeric name.
    ╰────
 
   × TS(2452): An enum member cannot have a numeric name.
-   ╭─[misc/fail/oxc-4449.ts:4:10]
- 3 │ enum B { [1] }                 // An enum member cannot have a numeric name.
- 4 │ enum C { 1 }                   // An enum member cannot have a numeric name.
+   ╭─[misc/fail/oxc-4449-3.ts:1:10]
+ 1 │ enum C { 1 } // An enum member cannot have a numeric name.
    ·          ─
- 5 │ enum D { [`test${foo}`] }      // Computed property names are not allowed in enums.
    ╰────
 
   × TS(1164): Computed property names are not allowed in enums.
-   ╭─[misc/fail/oxc-4449.ts:5:11]
- 4 │ enum C { 1 }                   // An enum member cannot have a numeric name.
- 5 │ enum D { [`test${foo}`] }      // Computed property names are not allowed in enums.
+   ╭─[misc/fail/oxc-4449-4.ts:1:11]
+ 1 │ enum D { [`test${foo}`] } // Computed property names are not allowed in enums.
    ·           ────────────
- 6 │ enum E { `baz` = 2 }           // Enum member expected.
-   ╰────
-
-  × Cannot assign to this expression
-   ╭─[misc/fail/oxc-4449.ts:6:10]
- 5 │ enum D { [`test${foo}`] }      // Computed property names are not allowed in enums.
- 6 │ enum E { `baz` = 2 }           // Enum member expected.
-   ·          ─────────
- 7 │ enum F { ['baz' + 'baz'] }     // Computed property names are not allowed in enums.
    ╰────
 
   × TS(1164): Computed property names are not allowed in enums.
-   ╭─[misc/fail/oxc-4449.ts:7:11]
- 6 │ enum E { `baz` = 2 }           // Enum member expected.
- 7 │ enum F { ['baz' + 'baz'] }     // Computed property names are not allowed in enums.
+   ╭─[misc/fail/oxc-4449-5.ts:1:10]
+ 1 │ enum E { `baz` = 2 } // Enum member expected.
+   ·          ─────
+   ╰────
+
+  × TS(1164): Computed property names are not allowed in enums.
+   ╭─[misc/fail/oxc-4449-6.ts:1:11]
+ 1 │ enum F { ['baz' + 'baz']  // Computed property names are not allowed in enums.
    ·           ─────────────
    ╰────
 

@@ -1,6 +1,13 @@
-# For cargo-watch
-*/tasks/coverage/test262/**/*
-*/tasks/coverage/babel/**/*
-*/tasks/coverage/typescript/**/*
-*/target/**/*
-*/node_modules/**/*
+# For watchexec https://github.com/watchexec/watchexec/tree/main/crates/cli#features
+
+target/**
+**/node_modules/**
+
+tasks/coverage/test262/**
+tasks/coverage/babel/**
+tasks/coverage/typescript/**
+tasks/prettier_conformance/prettier/**
+
+**/*.snap
+
+crates/oxc_transformer/src/options/es_features.rs

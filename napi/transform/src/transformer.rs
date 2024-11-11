@@ -6,6 +6,7 @@ use napi_derive::napi;
 use oxc::{
     codegen::CodegenReturn,
     diagnostics::OxcDiagnostic,
+    isolated_declarations::IsolatedDeclarationsOptions,
     napi::{
         source_map::SourceMap,
         transform::{TransformOptions, TransformResult},
@@ -20,6 +21,8 @@ use crate::errors::wrap_diagnostics;
 #[derive(Default)]
 struct Compiler {
     transform_options: oxc::transformer::TransformOptions,
+    isolated_declaration_options: Option<oxc::isolated_declarations::IsolatedDeclarationsOptions>,
+
     sourcemap: bool,
 
     printed: String,
@@ -37,6 +40,13 @@ struct Compiler {
 impl Compiler {
     fn new(options: Option<TransformOptions>) -> Result<Self, Vec<OxcDiagnostic>> {
         let mut options = options;
+
+        let isolated_declaration_options = options
+            .as_ref()
+            .and_then(|o| o.typescript.as_ref())
+            .and_then(|o| o.declaration)
+            .map(oxc::isolated_declarations::IsolatedDeclarationsOptions::from);
+
         let sourcemap = options.as_ref().and_then(|o| o.sourcemap).unwrap_or_default();
 
         let define = options
@@ -76,8 +86,10 @@ impl Compiler {
 
         let transform_options =
             options.map(oxc::transformer::TransformOptions::from).unwrap_or_default();
+
         Ok(Self {
             transform_options,
+            isolated_declaration_options,
             sourcemap,
             printed: String::default(),
             printed_sourcemap: None,
@@ -99,8 +111,12 @@ impl CompilerInterface for Compiler {
         self.sourcemap
     }
 
-    fn transform_options(&self) -> Option<oxc::transformer::TransformOptions> {
-        Some(self.transform_options.clone())
+    fn transform_options(&self) -> Option<&oxc::transformer::TransformOptions> {
+        Some(&self.transform_options)
+    }
+
+    fn isolated_declaration_options(&self) -> Option<IsolatedDeclarationsOptions> {
+        self.isolated_declaration_options
     }
 
     fn define_options(&self) -> Option<ReplaceGlobalDefinesConfig> {
@@ -173,6 +189,7 @@ pub fn transform(
             }
         }
     };
+
     compiler.compile(&source_text, source_type, source_path);
 
     TransformResult {

@@ -48,7 +48,6 @@ impl OptionalCatchBinding {
 
 impl<'a> Traverse<'a> for OptionalCatchBinding {
     /// If CatchClause has no param, add a parameter called `unused`.
-    #[allow(clippy::unused_self)]
     fn enter_catch_clause(&mut self, clause: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {
         if clause.param.is_some() {
             return;
@@ -56,7 +55,7 @@ impl<'a> Traverse<'a> for OptionalCatchBinding {
 
         let binding = ctx.generate_uid(
             "unused",
-            clause.body.scope_id.get().unwrap(),
+            clause.body.scope_id(),
             SymbolFlags::CatchVariable | SymbolFlags::FunctionScopedVariable,
         );
         let binding_pattern = binding.create_binding_pattern(ctx);

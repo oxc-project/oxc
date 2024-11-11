@@ -20,6 +20,7 @@ use oxc_syntax::number::{BigintBase, NumberBase};
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
+#[estree(type = "Literal", via = crate::serialize::ESTreeLiteral, add_ts = "raw: string")]
 pub struct BooleanLiteral {
     /// Node location in source code
     pub span: Span,
@@ -33,6 +34,7 @@ pub struct BooleanLiteral {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(type = "Literal", via = crate::serialize::ESTreeLiteral, add_ts = "value: null, raw: \"null\"")]
 pub struct NullLiteral {
     /// Node location in source code
     pub span: Span,
@@ -44,6 +46,7 @@ pub struct NullLiteral {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(type = "Literal", via = crate::serialize::ESTreeLiteral)]
 pub struct NumericLiteral<'a> {
     /// Node location in source code
     pub span: Span,
@@ -60,6 +63,7 @@ pub struct NumericLiteral<'a> {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
+#[estree(type = "Literal", via = crate::serialize::ESTreeLiteral, add_ts = "value: null, bigint: string")]
 pub struct BigIntLiteral<'a> {
     /// Node location in source code
     pub span: Span,
@@ -76,18 +80,20 @@ pub struct BigIntLiteral<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
+#[estree(
+	type = "Literal",
+	via = crate::serialize::ESTreeLiteral,
+	add_ts = "value: {} | null, regex: { pattern: string, flags: string }"
+)]
 pub struct RegExpLiteral<'a> {
     /// Node location in source code
     pub span: Span,
-    /// Placeholder for printing.
-    ///
-    /// Valid regular expressions are printed as `{}`, while invalid ones are
-    /// printed as `null`. Note that invalid regular expressions are not yet
-    /// printed properly.
-    pub value: EmptyObject,
     /// The parsed regular expression. See [`oxc_regular_expression`] for more
     /// details.
+    #[estree(skip)]
     pub regex: RegExp<'a>,
+    /// The regular expression as it appears in source code
+    pub raw: &'a str,
 }
 
 /// A regular expression
@@ -121,13 +127,6 @@ pub enum RegExpPattern<'a> {
     /// Pattern was parsed and found to be valid.
     Pattern(Box<'a, Pattern<'a>>) = 2,
 }
-
-/// An empty object literal (`{}`)
-#[ast]
-#[derive(Debug, Clone)]
-#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
-#[estree(no_type)]
-pub struct EmptyObject;
 
 /// String literal
 ///

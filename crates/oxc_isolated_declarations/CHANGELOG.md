@@ -4,6 +4,26 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.36.0] - 2024-11-09
+
+- 0e4adc1 ast: [**BREAKING**] Remove invalid expressions from `TSEnumMemberName` (#7219) (Boshen)
+
+- d1d1874 ast: [**BREAKING**] Change `comment.span` to real position that contain `//` and `/*` (#7154) (Boshen)
+
+### Features
+
+- b74686c isolated-declarations: Support transform TSExportAssignment declaration (#7204) (Dunqing)
+
+## [0.35.0] - 2024-11-04
+
+### Features
+
+- 6d97af4 rust: Use `oxc-miette` (#6938) (Boshen)
+
+### Refactor
+
+- cea0e6b isolated_declarations: Do not use `AstBuilder::*_from_*` methods (#7071) (overlookmotel)
+
 ## [0.34.0] - 2024-10-26
 
 ### Refactor

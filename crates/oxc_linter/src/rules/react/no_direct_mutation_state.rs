@@ -176,7 +176,7 @@ fn should_ignore_component<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'
     let mut is_call_expression = false;
     let mut is_component = false;
 
-    for parent in ctx.nodes().iter_parents(node.id()) {
+    for parent in ctx.nodes().ancestors(node.id()) {
         if let AstKind::MethodDefinition(method_def) = parent.kind() {
             if method_def.kind == MethodDefinitionKind::Constructor {
                 is_constructor = true;

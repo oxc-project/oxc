@@ -195,7 +195,7 @@ pub fn get_parent_component<'a, 'b>(
     node: &'b AstNode<'a>,
     ctx: &'b LintContext<'a>,
 ) -> Option<&'b AstNode<'a>> {
-    for node_id in ctx.nodes().ancestors(node.id()) {
+    for node_id in ctx.nodes().ancestor_ids(node.id()) {
         let node = ctx.nodes().get_node(node_id);
         if is_es5_component(node) || is_es6_component(node) {
             return Some(node);

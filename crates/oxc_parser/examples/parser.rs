@@ -35,7 +35,7 @@ fn main() -> Result<(), String> {
     if show_comments {
         println!("Comments:");
         for comment in ret.program.comments {
-            let s = comment.real_span().source_text(&source_text);
+            let s = comment.content_span().source_text(&source_text);
             println!("{s}");
         }
     }

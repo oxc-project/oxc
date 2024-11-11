@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.36.0] - 2024-11-09
+
+- 846711c transformer: [**BREAKING**] Change API to take a `&TransformOptions` instead of `TransformOptions` (#7213) (Boshen)
+
+### Features
+
+
+## [0.35.0] - 2024-11-04
+
+### Features
+
+- fcaba4a transformer: Add `TransformerOptions::env` with `EnvOptions` (#7037) (Boshen)
+
+### Bug Fixes
+
+- d15e408 napi/transform: Fix 'typescript.declaration' option not working (#7012) (Boshen)
+- b188b4a transformer: Fix typescript globals being recognized as globals (#7100) (Boshen)
+
 ## [0.34.0] - 2024-10-26
 
 - 4618aa2 transformer: [**BREAKING**] Rename `TransformerOptions::react` to `jsx` (#6888) (Boshen)

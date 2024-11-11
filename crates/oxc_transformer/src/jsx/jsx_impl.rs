@@ -88,7 +88,7 @@
 //!
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/main/packages/babel-helper-builder-react-jsx>
 
-use oxc_allocator::Vec;
+use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::{ast::*, AstBuilder, NONE};
 use oxc_ecmascript::PropName;
 use oxc_span::{Atom, GetSpan, Span, SPAN};
@@ -363,7 +363,7 @@ impl<'a> Pragma<'a> {
         if let Some(property) = self.property.as_ref() {
             create_static_member_expression(object, property.clone(), ctx)
         } else {
-            ctx.ast.expression_from_identifier_reference(object)
+            Expression::Identifier(ctx.alloc(object))
         }
     }
 }
@@ -481,7 +481,7 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
             self.ctx.top_level_statements.insert_statement(stmt);
         } else {
             // Insert after imports - add to `var_declarations`, which are inserted after `require` statements
-            self.ctx.var_declarations.insert_declarator(declarator, ctx);
+            self.ctx.var_declarations.insert_var_declarator(declarator, ctx);
         }
     }
 
@@ -536,7 +536,7 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
                         let key = Self::get_attribute_name(&attr.name, ctx);
                         let value = self.transform_jsx_attribute_value(attr.value.as_ref(), ctx);
                         let object_property = ctx.ast.object_property_kind_object_property(
-                            attr.span, kind, key, value, None, false, false, false,
+                            attr.span, kind, key, value, false, false, false,
                         );
                         properties.push(object_property);
                     }
@@ -600,7 +600,6 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
                     PropertyKind::Init,
                     ctx.ast.property_key_identifier_name(SPAN, "children"),
                     value,
-                    None,
                     false,
                     false,
                     false,
@@ -610,7 +609,7 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
 
         // React.createElement's second argument
         if !is_fragment && is_classic {
-            if self.options.jsx_self_plugin && self.jsx_self.can_add_self_attribute(ctx) {
+            if self.options.jsx_self_plugin && JsxSelf::can_add_self_attribute(ctx) {
                 if let Some(span) = self_attr_span {
                     self.jsx_self.report_error(span);
                 } else {
@@ -689,7 +688,7 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
                 }
 
                 // this
-                if self.options.jsx_self_plugin && self.jsx_self.can_add_self_attribute(ctx) {
+                if self.options.jsx_self_plugin && JsxSelf::can_add_self_attribute(ctx) {
                     if let Some(span) = self_attr_span {
                         self.jsx_self.report_error(span);
                     } else {
@@ -722,7 +721,7 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
                 ctx.ast.expression_string_literal(ident.span, ident.name.clone())
             }
             JSXElementName::IdentifierReference(ident) => {
-                ctx.ast.expression_from_identifier_reference(ident.as_ref().clone())
+                Expression::Identifier(ctx.alloc(ident.as_ref().clone()))
             }
             JSXElementName::MemberExpression(member_expr) => {
                 Self::transform_jsx_member_expression(member_expr, ctx)
@@ -747,7 +746,7 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
             }
             Bindings::AutomaticModule(bindings) => {
                 let ident = bindings.import_fragment(ctx);
-                ctx.ast.expression_from_identifier_reference(ident)
+                Expression::Identifier(ctx.alloc(ident))
             }
         }
     }
@@ -783,7 +782,7 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
                 } else {
                     bindings.import_jsx(ctx)
                 };
-                ctx.ast.expression_from_identifier_reference(ident)
+                Expression::Identifier(ctx.alloc(ident))
             }
         }
     }
@@ -794,7 +793,7 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
     ) -> Expression<'a> {
         let object = match &expr.object {
             JSXMemberExpressionObject::IdentifierReference(ident) => {
-                ctx.ast.expression_from_identifier_reference(ident.as_ref().clone())
+                Expression::Identifier(ctx.alloc(ident.as_ref().clone()))
             }
             JSXMemberExpressionObject::MemberExpression(expr) => {
                 Self::transform_jsx_member_expression(expr, ctx)
@@ -866,16 +865,14 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
             JSXAttributeName::Identifier(ident) => {
                 let name = ident.name.clone();
                 if ident.name.contains('-') {
-                    let expr = ctx.ast.expression_string_literal(ident.span, name);
-                    ctx.ast.property_key_expression(expr)
+                    PropertyKey::from(ctx.ast.expression_string_literal(ident.span, name))
                 } else {
                     ctx.ast.property_key_identifier_name(ident.span, name)
                 }
             }
             JSXAttributeName::NamespacedName(namespaced) => {
                 let name = ctx.ast.atom(&namespaced.to_string());
-                let expr = ctx.ast.expression_string_literal(namespaced.span, name);
-                ctx.ast.property_key_expression(expr)
+                PropertyKey::from(ctx.ast.expression_string_literal(namespaced.span, name))
             }
         }
     }
@@ -999,7 +996,7 @@ impl<'a, 'b> JSXElementOrFragment<'a, 'b> {
         }
     }
 
-    fn children(&self) -> &'b Vec<'a, JSXChild<'a>> {
+    fn children(&self) -> &'b ArenaVec<'a, JSXChild<'a>> {
         match self {
             Self::Element(e) => &e.children,
             Self::Fragment(e) => &e.children,
@@ -1042,7 +1039,7 @@ fn create_static_member_expression<'a>(
     property_name: Atom<'a>,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let object = ctx.ast.expression_from_identifier_reference(object_ident);
+    let object = Expression::Identifier(ctx.alloc(object_ident));
     let property = ctx.ast.identifier_name(SPAN, property_name);
     ctx.ast.member_expression_static(SPAN, object, property, false).into()
 }

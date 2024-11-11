@@ -187,7 +187,7 @@ impl Rule for NoUselessUndefined {
                                     .comments_range(ret_stmt.span.start..ret_stmt.span.end)
                                     .last()
                                 {
-                                    Span::new(comment.span.end + 2, undefined_literal.span.end)
+                                    Span::new(comment.span.end, undefined_literal.span.end)
                                 } else {
                                     Span::new(ret_stmt.span().start + 6, undefined_literal.span.end)
                                 };
