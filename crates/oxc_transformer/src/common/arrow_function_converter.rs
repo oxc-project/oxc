@@ -87,16 +87,18 @@
 //! The Implementation based on
 //! <https://github.com/babel/babel/blob/d20b314c14533ab86351ecf6ca6b7296b66a57b3/packages/babel-traverse/src/path/conversion.ts#L170-L247>
 
+use rustc_hash::{FxHashMap, FxHashSet};
+
 use oxc_allocator::{Box as ArenaBox, String as ArenaString, Vec as ArenaVec};
 use oxc_ast::{ast::*, AstBuilder, NONE};
 use oxc_data_structures::stack::SparseStack;
-use oxc_span::SPAN;
+use oxc_semantic::{ReferenceFlags, SymbolId};
+use oxc_span::{CompactStr, SPAN};
 use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolFlags,
 };
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
-use rustc_hash::FxHashMap;
 
 use crate::EnvOptions;
 
@@ -125,6 +127,8 @@ struct SuperMethodInfo<'a> {
 pub struct ArrowFunctionConverter<'a> {
     mode: ArrowFunctionConverterMode,
     this_var_stack: SparseStack<BoundIdentifier<'a>>,
+    arguments_var_stack: SparseStack<BoundIdentifier<'a>>,
+    renamed_arguments_symbol_ids: FxHashSet<SymbolId>,
     super_methods: Option<FxHashMap<Atom<'a>, SuperMethodInfo<'a>>>,
 }
 
@@ -138,7 +142,13 @@ impl<'a> ArrowFunctionConverter<'a> {
             ArrowFunctionConverterMode::Disabled
         };
         // `SparseStack` is created with 1 empty entry, for `Program`
-        Self { mode, this_var_stack: SparseStack::new(), super_methods: None }
+        Self {
+            mode,
+            this_var_stack: SparseStack::new(),
+            arguments_var_stack: SparseStack::new(),
+            renamed_arguments_symbol_ids: FxHashSet::default(),
+            super_methods: None,
+        }
     }
 }
 
@@ -153,10 +163,12 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
         }
 
         let this_var = self.this_var_stack.take_last();
+        let arguments_var = self.arguments_var_stack.take_last();
         self.insert_variable_statement_at_the_top_of_statements(
             program.scope_id(),
             &mut program.body,
             this_var,
+            arguments_var,
             ctx,
         );
         debug_assert!(self.this_var_stack.len() == 1);
@@ -169,6 +181,7 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
         }
 
         self.this_var_stack.push(None);
+        self.arguments_var_stack.push(None);
         if self.is_async_only() && func.r#async && Self::is_class_method_like_ancestor(ctx.parent())
         {
             self.super_methods = Some(FxHashMap::default());
@@ -196,10 +209,12 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
             return;
         };
         let this_var = self.this_var_stack.pop();
+        let arguments_var = self.arguments_var_stack.pop();
         self.insert_variable_statement_at_the_top_of_statements(
             scope_id,
             &mut body.statements,
             this_var,
+            arguments_var,
             ctx,
         );
     }
@@ -222,6 +237,8 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
             block.scope_id(),
             &mut block.body,
             this_var,
+            // `arguments` is not allowed to be used in static blocks
+            None,
             ctx,
         );
     }
@@ -300,6 +317,22 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
 
             *expr = Self::transform_arrow_function_expression(arrow_function_expr, ctx);
         }
+    }
+
+    fn enter_identifier_reference(
+        &mut self,
+        ident: &mut IdentifierReference<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.transform_identifier_reference_for_arguments(ident, ctx);
+    }
+
+    fn enter_binding_identifier(
+        &mut self,
+        ident: &mut BindingIdentifier<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.transform_binding_identifier_for_arguments(ident, ctx);
     }
 }
 
@@ -787,28 +820,189 @@ impl<'a> ArrowFunctionConverter<'a> {
         ast.atom(name.into_bump_str())
     }
 
+    /// Whether to transform the `arguments` identifier.
+    fn should_transform_arguments_identifier(&self, name: &str, ctx: &mut TraverseCtx<'a>) -> bool {
+        self.is_async_only() && name == "arguments" && Self::is_affected_arguments_identifier(ctx)
+    }
+
+    /// Check if the `arguments` identifier is affected by the transformation.
+    fn is_affected_arguments_identifier(ctx: &mut TraverseCtx<'a>) -> bool {
+        let mut ancestors = ctx.ancestors().skip(1);
+        while let Some(ancestor) = ancestors.next() {
+            match ancestor {
+                Ancestor::ArrowFunctionExpressionParams(arrow) => {
+                    if *arrow.r#async() {
+                        return true;
+                    }
+                }
+                Ancestor::ArrowFunctionExpressionBody(arrow) => {
+                    if *arrow.r#async() {
+                        return true;
+                    }
+                }
+                Ancestor::FunctionBody(func) => {
+                    return *func.r#async()
+                        && Self::is_class_method_like_ancestor(ancestors.next().unwrap());
+                }
+                _ => (),
+            }
+        }
+
+        false
+    }
+
+    /// Rename the `arguments` symbol to a new name.
+    fn rename_arguments_symbol(symbol_id: SymbolId, name: CompactStr, ctx: &mut TraverseCtx<'a>) {
+        let scope_id = ctx.symbols().get_scope_id(symbol_id);
+        ctx.symbols_mut().rename(symbol_id, name.clone());
+        ctx.scopes_mut().rename_binding(scope_id, "arguments", name);
+    }
+
+    /// Transform the identifier reference for `arguments` if it's affected after transformation.
+    ///
+    /// The reason is the same as [`Self::transform_member_expression_for_super`] mentioned.
+    fn transform_identifier_reference_for_arguments(
+        &mut self,
+        ident: &mut IdentifierReference<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if !self.should_transform_arguments_identifier(&ident.name, ctx) {
+            return;
+        }
+
+        let reference_id = ident.reference_id();
+        let symbol_id = ctx.symbols().get_reference(reference_id).symbol_id();
+
+        let binding = self.arguments_var_stack.last_or_init(|| {
+            if let Some(symbol_id) = symbol_id {
+                let arguments_name = ctx.generate_uid_name("arguments");
+                let arguments_name_atom = ctx.ast.atom(&arguments_name);
+                Self::rename_arguments_symbol(symbol_id, arguments_name, ctx);
+                // Record the symbol ID as a renamed `arguments` variable.
+                self.renamed_arguments_symbol_ids.insert(symbol_id);
+                BoundIdentifier::new(arguments_name_atom, symbol_id)
+            } else {
+                // We cannot determine the final scope ID of the `arguments` variable insertion,
+                // because the `arguments` variable will be inserted to a new scope which haven't been created yet,
+                // so we temporary use root scope id as the fake target scope ID.
+                let target_scope_id = ctx.scopes().root_scope_id();
+                ctx.generate_uid("arguments", target_scope_id, SymbolFlags::FunctionScopedVariable)
+            }
+        });
+
+        // If no symbol ID, it means there is no variable named `arguments` in the scope,
+        // the following code just for sync semantics.
+        if symbol_id.is_none() {
+            let reference = ctx.symbols_mut().get_reference_mut(reference_id);
+            reference.set_symbol_id(binding.symbol_id);
+            ctx.scopes_mut().delete_root_unresolved_reference(&ident.name, reference_id);
+            ctx.symbols_mut().resolved_references[binding.symbol_id].push(reference_id);
+        }
+
+        ident.name = binding.name.clone();
+    }
+
+    /// Transform the binding identifier for `arguments` if it's affected after transformation.
+    ///
+    /// The main work is to rename the `arguments` binding identifier to a new name.
+    fn transform_binding_identifier_for_arguments(
+        &mut self,
+        ident: &mut BindingIdentifier<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if ctx.current_scope_flags().is_strict_mode() // `arguments` is not allowed to be defined in strict mode.
+            || !self.should_transform_arguments_identifier(&ident.name, ctx)
+        {
+            return;
+        }
+
+        self.arguments_var_stack.last_or_init(|| {
+            let arguments_name = ctx.generate_uid_name("arguments");
+            ident.name = ctx.ast.atom(&arguments_name);
+            let symbol_id = ident.symbol_id();
+            Self::rename_arguments_symbol(symbol_id, arguments_name, ctx);
+            // Record the symbol ID as a renamed `arguments` variable.
+            self.renamed_arguments_symbol_ids.insert(symbol_id);
+            BoundIdentifier::from_binding_ident(ident)
+        });
+    }
+
+    /// Create a variable declarator looks like `_arguments = arguments;`.
+    fn create_arguments_var_declarator(
+        &self,
+        target_scope_id: ScopeId,
+        arguments_var: Option<BoundIdentifier<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<VariableDeclarator<'a>> {
+        let arguments_var = arguments_var?;
+
+        // Just a renamed `arguments` variable, we don't need to create a new variable declaration.
+        if self.renamed_arguments_symbol_ids.contains(&arguments_var.symbol_id) {
+            return None;
+        }
+
+        Self::adjust_binding_scope(target_scope_id, &arguments_var, ctx);
+        let reference =
+            ctx.create_unbound_ident_reference(SPAN, Atom::from("arguments"), ReferenceFlags::Read);
+        let mut init = Expression::Identifier(ctx.ast.alloc(reference.clone()));
+
+        // Top level may don't have `arguments`, so we need to check it.
+        // `typeof arguments === "undefined" ? void 0 : arguments;`
+        if ctx.scopes().root_scope_id() == target_scope_id {
+            let argument = Expression::Identifier(ctx.ast.alloc(reference));
+            let typeof_arguments = ctx.ast.expression_unary(SPAN, UnaryOperator::Typeof, argument);
+            let undefined_literal = ctx.ast.expression_string_literal(SPAN, "undefined");
+            let test = ctx.ast.expression_binary(
+                SPAN,
+                typeof_arguments,
+                BinaryOperator::StrictEquality,
+                undefined_literal,
+            );
+            init = ctx.ast.expression_conditional(SPAN, test, ctx.ast.void_0(SPAN), init);
+        }
+
+        Some(ctx.ast.variable_declarator(
+            SPAN,
+            VariableDeclarationKind::Var,
+            arguments_var.create_binding_pattern(ctx),
+            Some(init),
+            false,
+        ))
+    }
+
     /// Insert variable statement at the top of the statements.
     fn insert_variable_statement_at_the_top_of_statements(
         &mut self,
         target_scope_id: ScopeId,
         statements: &mut ArenaVec<'a, Statement<'a>>,
         this_var: Option<BoundIdentifier<'a>>,
+        arguments_var: Option<BoundIdentifier<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        // `_arguments = arguments;`
+        let arguments = self.create_arguments_var_declarator(target_scope_id, arguments_var, ctx);
+
+        let is_class_method_like = Self::is_class_method_like_ancestor(ctx.parent());
+        let capacity = usize::from(arguments.is_some())
+            + is_class_method_like
+                .then(|| self.super_methods.as_ref().map_or(0, FxHashMap::len))
+                .unwrap_or(0)
+            + usize::from(this_var.is_some());
+
+        let mut declarations = ctx.ast.vec_with_capacity(capacity);
+
+        if let Some(arguments) = arguments {
+            declarations.push(arguments);
+        }
+
         // `_superprop_getSomething = () => super.getSomething;`
-        let mut declarations = if Self::is_class_method_like_ancestor(ctx.parent()) {
+        if is_class_method_like {
             if let Some(super_methods) = self.super_methods.as_mut() {
-                let mut declarations = ctx.ast.vec_with_capacity(super_methods.len() + 1);
                 declarations.extend(super_methods.drain().map(|(_, super_method)| {
                     Self::generate_super_method(target_scope_id, super_method, ctx)
                 }));
-                declarations
-            } else {
-                ctx.ast.vec_with_capacity(1)
             }
-        } else {
-            ctx.ast.vec_with_capacity(1)
-        };
+        }
 
         // `_this = this;`
         if let Some(this_var) = this_var {
@@ -822,6 +1016,8 @@ impl<'a> ArrowFunctionConverter<'a> {
             );
             declarations.push(variable_declarator);
         }
+
+        debug_assert_eq!(capacity, declarations.len());
 
         // If there are no declarations, we don't need to insert a variable declaration.
         if declarations.is_empty() {

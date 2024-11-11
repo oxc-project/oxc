@@ -81,7 +81,7 @@ impl Reference {
     }
 
     #[inline]
-    pub(crate) fn set_symbol_id(&mut self, symbol_id: SymbolId) {
+    pub fn set_symbol_id(&mut self, symbol_id: SymbolId) {
         self.symbol_id = Some(symbol_id);
     }
 
