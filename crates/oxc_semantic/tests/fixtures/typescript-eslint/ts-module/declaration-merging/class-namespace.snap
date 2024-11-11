@@ -1,11 +1,8 @@
 ---
 source: crates/oxc_semantic/tests/main.rs
 input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-module/declaration-merging/class-namespace.ts
+snapshot_kind: text
 ---
-================================================================================
-SCOPES
-================================================================================
-
 [
   {
     "children": [
@@ -60,9 +57,3 @@ SCOPES
     ]
   }
 ]
-
-================================================================================
-CONFORMANCE
-================================================================================
-
-All tests passed.

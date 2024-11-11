@@ -114,43 +114,20 @@ fn run_scope_snapshot_test(ctx: &TestContext<'_>) -> String {
     serde_json::to_string_pretty(&value).unwrap()
 }
 
-fn analyze(path: &Path, source_text: &str, conformance_suite: &SemanticConformance) -> String {
-    /// Separator between snapshot sections
-    const SEP: &str =
-        "================================================================================";
-
+fn analyze(
+    path: &Path,
+    source_text: &str,
+    conformance_suite: &SemanticConformance,
+) -> (String, String) {
     let allocator = Allocator::default();
     let source_type = SourceType::from_path(path).unwrap();
-
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let semantic =
         SemanticBuilder::new().with_check_syntax_error(true).build(&ret.program).semantic;
-
     let ctx = TestContext { path, semantic };
-
-    // scope tests
     let scope_snapshot = run_scope_snapshot_test(&ctx);
-
-    // conformance tests
-    let mut conformance_snapshot = conformance_suite.run_on_source(&ctx);
-    if conformance_snapshot.is_empty() {
-        conformance_snapshot = "All tests passed.".to_string();
-    }
-
-    format!(
-        "{SEP}
-SCOPES
-{SEP}
-
-{scope_snapshot}
-
-{SEP}
-CONFORMANCE
-{SEP}
-
-{conformance_snapshot}
-"
-    )
+    let conformance_snapshot = conformance_suite.run_on_source(&ctx);
+    (scope_snapshot, conformance_snapshot)
 }
 
 /// # Panics
@@ -160,10 +137,19 @@ fn main() {
     insta::glob!("fixtures/**/*.{js,jsx,ts,tsx}", |path| {
         let source_text = fs::read_to_string(path).unwrap();
         let conformance_suite = conformance::conformance_suite();
-        let snapshot = analyze(path, &source_text, &conformance_suite);
+        let (scope_snapshot, conformance_snapshot) =
+            analyze(path, &source_text, &conformance_suite);
+
         let name = path.file_stem().unwrap().to_str().unwrap();
+
         insta::with_settings!({ snapshot_path => path.parent().unwrap(), prepend_module_to_snapshot => false, snapshot_suffix => "", omit_expression => true }, {
-            insta::assert_snapshot!(name, snapshot);
+            insta::assert_snapshot!(name, scope_snapshot);
         });
+
+        if !conformance_snapshot.is_empty() {
+            insta::with_settings!({ snapshot_path => path.parent().unwrap(), prepend_module_to_snapshot => false, snapshot_suffix => "", omit_expression => true }, {
+                insta::assert_snapshot!(format!("{name}.fail"), conformance_snapshot);
+            });
+        }
     });
 }
