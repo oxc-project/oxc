@@ -15,11 +15,12 @@ use tower_lsp::{
     lsp_types::{
         CodeAction, CodeActionKind, CodeActionOptions, CodeActionOrCommand, CodeActionParams,
         CodeActionProviderCapability, CodeActionResponse, ConfigurationItem, Diagnostic,
-        DidChangeConfigurationParams, DidChangeTextDocumentParams, DidCloseTextDocumentParams,
-        DidOpenTextDocumentParams, DidSaveTextDocumentParams, InitializeParams, InitializeResult,
-        InitializedParams, OneOf, ServerCapabilities, ServerInfo, TextDocumentSyncCapability,
-        TextDocumentSyncKind, TextEdit, Url, WorkDoneProgressOptions, WorkspaceEdit,
-        WorkspaceFoldersServerCapabilities, WorkspaceServerCapabilities,
+        DidChangeConfigurationParams, DidChangeTextDocumentParams, DidChangeWatchedFilesParams,
+        DidCloseTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams,
+        InitializeParams, InitializeResult, InitializedParams, OneOf, ServerCapabilities,
+        ServerInfo, TextDocumentSyncCapability, TextDocumentSyncKind, TextEdit, Url,
+        WorkDoneProgressOptions, WorkspaceEdit, WorkspaceFoldersServerCapabilities,
+        WorkspaceServerCapabilities,
     },
     Client, LanguageServer, LspService, Server,
 };
@@ -170,6 +171,11 @@ impl LanguageServer for Backend {
             self.publish_all_diagnostics(&cleared_diagnostics).await;
         }
         *self.options.lock().await = changed_options;
+    }
+
+    async fn did_change_watched_files(&self, _params: DidChangeWatchedFilesParams) {
+        self.init_linter_config().await;
+        self.revalidate_open_files().await;
     }
 
     async fn initialized(&self, _params: InitializedParams) {
@@ -337,6 +343,16 @@ impl Backend {
             )
         }))
         .await;
+    }
+
+    async fn revalidate_open_files(&self) {
+        let opened_files = self.diagnostics_report_map.iter().map(|k| k.key().to_string());
+
+        for file in opened_files {
+            let url = Url::from_str(&file).expect("should convert to path");
+
+            self.handle_file_update(url, None, None).await;
+        }
     }
 
     async fn init_linter_config(&self) {
