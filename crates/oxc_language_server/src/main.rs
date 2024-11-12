@@ -1,7 +1,5 @@
 mod linter;
 
-use std::{fmt::Debug, path::PathBuf, str::FromStr};
-
 use dashmap::DashMap;
 use futures::future::join_all;
 use globset::Glob;
@@ -9,6 +7,8 @@ use ignore::gitignore::Gitignore;
 use log::{debug, error, info, warn};
 use oxc_linter::{FixKind, LinterBuilder, Oxlintrc};
 use serde::{Deserialize, Serialize};
+use std::path::{Path, PathBuf};
+use std::{fmt::Debug, str::FromStr};
 use tokio::sync::{Mutex, OnceCell, RwLock, SetError};
 use tower_lsp::{
     jsonrpc::{Error, ErrorCode, Result},
@@ -67,7 +67,7 @@ impl Options {
         }
     }
 
-    fn get_config_path(&self, root_path: &PathBuf) -> Option<PathBuf> {
+    fn get_config_path(&self, root_path: &Path) -> Option<PathBuf> {
         let Some(config_path) = &self.config_path else {
             // no config file is provided, let search in the root_path for one
             let search_configs = vec![
