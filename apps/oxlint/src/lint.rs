@@ -244,9 +244,6 @@ mod test {
         let options = lint_command().run_inner(new_args.as_slice()).unwrap();
         match LintRunner::new(options).run() {
             CliRunResult::LintResult(lint_result) => lint_result,
-            CliRunResult::LintError { error } => {
-                panic!("{error}")
-            }
             other => panic!("{other:?}"),
         }
     }

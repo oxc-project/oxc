@@ -3,7 +3,6 @@ use std::{
     fmt,
 };
 
-use oxc_diagnostics::{Error, OxcDiagnostic};
 use oxc_span::CompactStr;
 use rustc_hash::FxHashSet;
 
@@ -100,20 +99,6 @@ impl LinterBuilder {
         {
             let all_rules = builder.cache.borrow();
             oxlintrc_rules.override_rules(&mut builder.rules, all_rules.as_slice());
-        }
-
-        #[expect(clippy::print_stderr)]
-        if !oxlintrc_rules.unknown_rules.is_empty() {
-            let rules = oxlintrc_rules
-                .unknown_rules
-                .iter()
-                .map(|r| r.full_name())
-                .collect::<Vec<_>>()
-                .join("\n");
-            let error = Error::from(OxcDiagnostic::warn(format!(
-                "The following rules do not match the currently supported rules:\n{rules}"
-            )));
-            eprintln!("{error:?}");
         }
 
         builder
