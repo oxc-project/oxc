@@ -8,7 +8,7 @@ export class ConfigService implements Config, IDisposable {
   private _runTrigger: Trigger;
   private _enable: boolean;
   private _trace: TraceLevel;
-  private _configPath: string;
+  private _configPath: string | undefined;
   private _binPath: string | undefined;
 
   public onConfigChange:
@@ -20,7 +20,7 @@ export class ConfigService implements Config, IDisposable {
     this._runTrigger = this._inner.get<Trigger>('lint.run') || 'onType';
     this._enable = this._inner.get<boolean>('enable') ?? true;
     this._trace = this._inner.get<TraceLevel>('trace.server') || 'off';
-    this._configPath = this._inner.get<string>('configPath') || '.eslintrc';
+    this._configPath = this._inner.get<string>('configPath');
     this._binPath = this._inner.get<string>('path.server');
     this.onConfigChange = undefined;
 
@@ -63,11 +63,11 @@ export class ConfigService implements Config, IDisposable {
       .update('trace.server', value);
   }
 
-  get configPath(): string {
+  get configPath(): string | undefined {
     return this._configPath;
   }
 
-  set configPath(value: string) {
+  set configPath(value: string | undefined) {
     this._configPath = value;
     workspace
       .getConfiguration(ConfigService._namespace)
@@ -90,7 +90,7 @@ export class ConfigService implements Config, IDisposable {
       this._runTrigger = this._inner.get<Trigger>('lint.run') || 'onType';
       this._enable = this._inner.get<boolean>('enable') ?? true;
       this._trace = this._inner.get<TraceLevel>('trace.server') || 'off';
-      this._configPath = this._inner.get<string>('configPath') || '.eslintrc';
+      this._configPath = this._inner.get<string>('configPath');
       this._binPath = this._inner.get<string>('path.server');
       this.onConfigChange?.call(this, event);
     }
@@ -115,7 +115,7 @@ type Trigger = 'onSave' | 'onType';
 type TraceLevel = 'off' | 'messages' | 'verbose';
 
 interface LanguageServerConfig {
-  configPath: string;
+  configPath: string | undefined;
   enable: boolean;
   run: Trigger;
 }
@@ -149,9 +149,9 @@ interface Config {
    *
    * `oxc.configPath`
    *
-   * @default ".eslintrc"
+   * @default undefined
    */
-  configPath: string;
+  configPath: string | undefined;
   /**
    * Path to LSP binary
    * `oxc.path.server`

@@ -6,7 +6,7 @@ use dashmap::DashMap;
 use futures::future::join_all;
 use globset::Glob;
 use ignore::gitignore::Gitignore;
-use log::{debug, error, info};
+use log::{debug, error, info, warn};
 use oxc_linter::{FixKind, LinterBuilder, Oxlintrc};
 use serde::{Deserialize, Serialize};
 use tokio::sync::{Mutex, OnceCell, RwLock, SetError};
@@ -46,12 +46,12 @@ enum Run {
 struct Options {
     run: Run,
     enable: bool,
-    config_path: String,
+    config_path: Option<String>,
 }
 
 impl Default for Options {
     fn default() -> Self {
-        Self { enable: true, run: Run::default(), config_path: ".eslintrc".into() }
+        Self { enable: true, run: Run::default(), config_path: None }
     }
 }
 
@@ -67,11 +67,42 @@ impl Options {
         }
     }
 
-    fn get_config_path(&self) -> Option<PathBuf> {
-        if self.config_path.is_empty() {
+    fn get_config_path(&self, root_path: &PathBuf) -> Option<PathBuf> {
+        let Some(config_path) = &self.config_path else {
+            // no config file is provided, let search in the root_path for one
+            let search_configs = vec![
+               "oxlintrc.json",
+                "oxlint.json",
+                ".oxlintrc.json",
+                ".oxlint.json",
+                ".oxlintrc",
+                ".eslintrc"
+            ];
+
+            for search_config in search_configs {
+                let config_path = root_path.join(search_config);
+
+                if config_path.exists() {
+                    return Some(config_path)
+                }
+            }
+
+            return None;
+        };
+
+        // config path is provided and is empty, e.g "oxc.configPath": ""
+        if config_path.is_empty() {
             None
         } else {
-            Some(PathBuf::from(&self.config_path))
+            // provided config path is not empty
+            let config_path = root_path.join(config_path);
+
+            if config_path.exists() {
+                return Some(config_path)
+            }
+
+            warn!("could not found oxlint config in {:?}", config_path);
+            None
         }
     }
 }
@@ -346,11 +377,9 @@ impl Backend {
         let Ok(root_path) = uri.to_file_path() else {
             return;
         };
-        let mut config_path = None;
-        let config = root_path.join(self.options.lock().await.get_config_path().unwrap());
-        if config.exists() {
-            config_path = Some(config);
-        }
+
+        let config_path = self.options.lock().await.get_config_path(&root_path);
+
         if let Some(config_path) = config_path {
             let mut linter = self.server_linter.write().await;
             *linter = ServerLinter::new_with_linter(
