@@ -1,0 +1,60 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/function/arrow_return_type.ts
+snapshot_kind: text
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flags": "ScopeFlags(StrictMode)",
+        "id": 1,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": []
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(StrictMode)",
+            "id": 3,
+            "node": "TSTypeAliasDeclaration",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(StrictMode | Function | Arrow)",
+        "id": 2,
+        "node": "ArrowFunctionExpression",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(TypeAlias)",
+            "id": 1,
+            "name": "T",
+            "node": "TSTypeAliasDeclaration",
+            "references": []
+          }
+        ]
+      }
+    ],
+    "flags": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(Export | TypeAlias)",
+        "id": 0,
+        "name": "T",
+        "node": "TSTypeAliasDeclaration",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 0,
+            "name": "T",
+            "node_id": 13
+          }
+        ]
+      }
+    ]
+  }
+]

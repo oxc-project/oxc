@@ -1671,6 +1671,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_formal_parameters(&func.params);
         if let Some(return_type) = &func.return_type {
             self.visit_ts_type_annotation(return_type);
+            // Resolve identifier references in return type.
+            self.resolve_references_for_current_scope();
         }
         if let Some(body) = &func.body {
             self.visit_function_body(body);
@@ -1724,6 +1726,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         if let Some(return_type) = &expr.return_type {
             self.visit_ts_type_annotation(return_type);
+            // Resolve identifier references in return type.
+            self.resolve_references_for_current_scope();
         }
 
         self.visit_function_body(&expr.body);
