@@ -71,19 +71,19 @@ impl Options {
         let Some(config_path) = &self.config_path else {
             // no config file is provided, let search in the root_path for one
             let search_configs = vec![
-               "oxlintrc.json",
+                "oxlintrc.json",
                 "oxlint.json",
                 ".oxlintrc.json",
                 ".oxlint.json",
                 ".oxlintrc",
-                ".eslintrc"
+                ".eslintrc",
             ];
 
             for search_config in search_configs {
                 let config_path = root_path.join(search_config);
 
                 if config_path.exists() {
-                    return Some(config_path)
+                    return Some(config_path);
                 }
             }
 
@@ -98,7 +98,7 @@ impl Options {
             let config_path = root_path.join(config_path);
 
             if config_path.exists() {
-                return Some(config_path)
+                return Some(config_path);
             }
 
             warn!("could not found oxlint config in {:?}", config_path);
