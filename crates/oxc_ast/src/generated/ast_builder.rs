@@ -7745,7 +7745,7 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(self.ts_enum_member(span, id, initializer), self.allocator)
     }
 
-    /// Build a [`TSEnumMemberName::StaticIdentifier`]
+    /// Build a [`TSEnumMemberName::Identifier`]
     ///
     /// This node contains an [`IdentifierName`] that will be stored in the memory arena.
     ///
@@ -7757,10 +7757,10 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
-        TSEnumMemberName::StaticIdentifier(self.alloc(self.identifier_name(span, name)))
+        TSEnumMemberName::Identifier(self.alloc(self.identifier_name(span, name)))
     }
 
-    /// Build a [`TSEnumMemberName::StaticStringLiteral`]
+    /// Build a [`TSEnumMemberName::String`]
     ///
     /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
     ///
@@ -7772,7 +7772,7 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
-        TSEnumMemberName::StaticStringLiteral(self.alloc(self.string_literal(span, value)))
+        TSEnumMemberName::String(self.alloc(self.string_literal(span, value)))
     }
 
     /// Build a [`TSTypeAnnotation`].

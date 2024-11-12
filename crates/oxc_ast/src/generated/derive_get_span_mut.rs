@@ -1272,8 +1272,8 @@ impl<'a> GetSpanMut for TSEnumMember<'a> {
 impl<'a> GetSpanMut for TSEnumMemberName<'a> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::StaticIdentifier(it) => GetSpanMut::span_mut(&mut **it),
-            Self::StaticStringLiteral(it) => GetSpanMut::span_mut(&mut **it),
+            Self::Identifier(it) => GetSpanMut::span_mut(&mut **it),
+            Self::String(it) => GetSpanMut::span_mut(&mut **it),
         }
     }
 }

@@ -1256,8 +1256,8 @@ impl<'a> Format<'a> for TSEnumMember<'a> {
 impl<'a> Format<'a> for TSEnumMemberName<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match self {
-            TSEnumMemberName::StaticIdentifier(identifier) => identifier.format(p),
-            TSEnumMemberName::StaticStringLiteral(string_literal) => string_literal.format(p),
+            TSEnumMemberName::Identifier(identifier) => identifier.format(p),
+            TSEnumMemberName::String(string_literal) => string_literal.format(p),
         }
     }
 }

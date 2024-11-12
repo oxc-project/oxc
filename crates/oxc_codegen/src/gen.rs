@@ -3607,8 +3607,8 @@ impl<'a> Gen for TSEnumDeclaration<'a> {
 impl<'a> Gen for TSEnumMember<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         match &self.id {
-            TSEnumMemberName::StaticIdentifier(decl) => decl.print(p, ctx),
-            TSEnumMemberName::StaticStringLiteral(decl) => decl.print(p, ctx),
+            TSEnumMemberName::Identifier(decl) => decl.print(p, ctx),
+            TSEnumMemberName::String(decl) => decl.print(p, ctx),
         }
         if let Some(init) = &self.initializer {
             p.print_soft_space();

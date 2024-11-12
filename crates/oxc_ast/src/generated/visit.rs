@@ -3806,8 +3806,8 @@ pub mod walk {
     #[inline]
     pub fn walk_ts_enum_member_name<'a, V: Visit<'a>>(visitor: &mut V, it: &TSEnumMemberName<'a>) {
         match it {
-            TSEnumMemberName::StaticIdentifier(it) => visitor.visit_identifier_name(it),
-            TSEnumMemberName::StaticStringLiteral(it) => visitor.visit_string_literal(it),
+            TSEnumMemberName::Identifier(it) => visitor.visit_identifier_name(it),
+            TSEnumMemberName::String(it) => visitor.visit_string_literal(it),
         }
     }
 

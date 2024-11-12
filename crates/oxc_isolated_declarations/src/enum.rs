@@ -46,8 +46,8 @@ impl<'a> IsolatedDeclarations<'a> {
 
             if let Some(value) = &value {
                 let member_name = match &member.id {
-                    TSEnumMemberName::StaticIdentifier(id) => &id.name,
-                    TSEnumMemberName::StaticStringLiteral(str) => &str.value,
+                    TSEnumMemberName::Identifier(id) => &id.name,
+                    TSEnumMemberName::String(str) => &str.value,
                 };
                 prev_members.insert(member_name.clone(), value.clone());
             }

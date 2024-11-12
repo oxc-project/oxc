@@ -2593,12 +2593,8 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for TSEnumMemberName<'old_alloc
     type Cloned = TSEnumMemberName<'new_alloc>;
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::StaticIdentifier(it) => {
-                TSEnumMemberName::StaticIdentifier(CloneIn::clone_in(it, allocator))
-            }
-            Self::StaticStringLiteral(it) => {
-                TSEnumMemberName::StaticStringLiteral(CloneIn::clone_in(it, allocator))
-            }
+            Self::Identifier(it) => TSEnumMemberName::Identifier(CloneIn::clone_in(it, allocator)),
+            Self::String(it) => TSEnumMemberName::String(CloneIn::clone_in(it, allocator)),
         }
     }
 }

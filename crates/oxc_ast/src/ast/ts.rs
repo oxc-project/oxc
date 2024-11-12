@@ -107,8 +107,8 @@ pub struct TSEnumMember<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub enum TSEnumMemberName<'a> {
-    StaticIdentifier(Box<'a, IdentifierName<'a>>) = 0,
-    StaticStringLiteral(Box<'a, StringLiteral<'a>>) = 1,
+    Identifier(Box<'a, IdentifierName<'a>>) = 0,
+    String(Box<'a, StringLiteral<'a>>) = 1,
 }
 
 /// TypeScript Type Annotation

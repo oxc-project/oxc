@@ -193,8 +193,8 @@ impl<'a> TypeScriptEnum<'a> {
 
         for member in members.iter_mut() {
             let member_name: &Atom<'_> = match &member.id {
-                TSEnumMemberName::StaticIdentifier(id) => &id.name,
-                TSEnumMemberName::StaticStringLiteral(str) => &str.value,
+                TSEnumMemberName::Identifier(id) => &id.name,
+                TSEnumMemberName::String(str) => &str.value,
             };
 
             let init = if let Some(initializer) = &mut member.initializer {
