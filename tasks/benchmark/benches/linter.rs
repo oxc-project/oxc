@@ -34,6 +34,7 @@ fn bench_linter(criterion: &mut Criterion) {
                 let path = Path::new("");
                 let semantic_ret = SemanticBuilder::new()
                     .with_build_jsdoc(true)
+                    .with_scope_tree_child_ids(true)
                     .with_cfg(true)
                     .build_module_record(path, &ret.program)
                     .build(&ret.program);
