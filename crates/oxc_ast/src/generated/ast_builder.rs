@@ -196,7 +196,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: Node location in source code
-    /// - value: The string as it appears in source code
+    /// - value: The value of the string.
     #[inline]
     pub fn string_literal<A>(self, span: Span, value: A) -> StringLiteral<'a>
     where
@@ -211,7 +211,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: Node location in source code
-    /// - value: The string as it appears in source code
+    /// - value: The value of the string.
     #[inline]
     pub fn alloc_string_literal<A>(self, span: Span, value: A) -> Box<'a, StringLiteral<'a>>
     where
@@ -467,7 +467,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: Node location in source code
-    /// - value: The string as it appears in source code
+    /// - value: The value of the string.
     #[inline]
     pub fn expression_string_literal<A>(self, span: Span, value: A) -> Expression<'a>
     where
@@ -7165,7 +7165,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: Node location in source code
-    /// - value: The string as it appears in source code
+    /// - value: The value of the string.
     #[inline]
     pub fn import_attribute_key_string_literal<A>(
         self,
@@ -7552,7 +7552,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: Node location in source code
-    /// - value: The string as it appears in source code
+    /// - value: The value of the string.
     #[inline]
     pub fn module_export_name_string_literal<A>(self, span: Span, value: A) -> ModuleExportName<'a>
     where
@@ -7766,7 +7766,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: Node location in source code
-    /// - value: The string as it appears in source code
+    /// - value: The value of the string.
     #[inline]
     pub fn ts_enum_member_name_string_literal<A>(self, span: Span, value: A) -> TSEnumMemberName<'a>
     where
@@ -7929,7 +7929,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: Node location in source code
-    /// - value: The string as it appears in source code
+    /// - value: The value of the string.
     #[inline]
     pub fn ts_literal_string_literal<A>(self, span: Span, value: A) -> TSLiteral<'a>
     where
@@ -10979,7 +10979,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: Node location in source code
-    /// - value: The string as it appears in source code
+    /// - value: The value of the string.
     #[inline]
     pub fn ts_module_declaration_name_string_literal<A>(
         self,
@@ -11377,7 +11377,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: Node location in source code
-    /// - value: The string as it appears in source code
+    /// - value: The value of the string.
     #[inline]
     pub fn ts_import_attribute_name_string_literal<A>(
         self,
@@ -12771,7 +12771,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: Node location in source code
-    /// - value: The string as it appears in source code
+    /// - value: The value of the string.
     #[inline]
     pub fn jsx_attribute_value_string_literal<A>(
         self,

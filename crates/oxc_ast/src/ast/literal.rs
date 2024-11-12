@@ -137,7 +137,9 @@ pub enum RegExpPattern<'a> {
 pub struct StringLiteral<'a> {
     /// Node location in source code
     pub span: Span,
-    /// The string as it appears in source code
+    /// The value of the string.
+    ///
+    /// Any escape sequences in the raw code are unescaped.
     pub value: Atom<'a>,
 }
 
