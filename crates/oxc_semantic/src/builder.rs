@@ -54,7 +54,7 @@ macro_rules! control_flow {
 /// # Example
 ///
 /// ```rust
-#[doc = include_str!("../examples/simple.rs")]
+#[doc = include_str!("../examples/semantic.rs")]
 /// ```
 ///
 /// [`build`]: SemanticBuilder::build
