@@ -226,7 +226,7 @@ impl Rule for ExhaustiveDeps {
             Argument::SpreadElement(_) => {
                 ctx.diagnostic(unknown_dependencies_diagnostic(
                     hook_name.as_str(),
-                    callback_node.span(),
+                    call_expr.callee.span(),
                 ));
                 None
             }
@@ -312,7 +312,7 @@ impl Rule for ExhaustiveDeps {
                     _ => {
                         ctx.diagnostic(unknown_dependencies_diagnostic(
                             hook_name.as_str(),
-                            callback_node.span(),
+                            call_expr.callee.span(),
                         ));
                         None
                     }

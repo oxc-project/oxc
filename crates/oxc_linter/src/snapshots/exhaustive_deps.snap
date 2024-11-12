@@ -1953,12 +1953,11 @@ source: crates/oxc_linter/src/tester.rs
   help: Either include it or remove the dependency array.
 
   ⚠ react_hooks(exhaustive-deps): React Hook useEffect received a function whose dependencies are unknown.
-   ╭─[exhaustive_deps.tsx:3:21]
- 2 │               const local = {};
- 3 │ ╭─▶           useEffect(debounce(() => {
- 4 │ │               console.log(local);
- 5 │ ╰─▶           }, delay), []);
- 6 │             }
+   ╭─[exhaustive_deps.tsx:3:11]
+ 2 │           const local = {};
+ 3 │           useEffect(debounce(() => {
+   ·           ─────────
+ 4 │             console.log(local);
    ╰────
   help: Pass an inline function instead.
 
