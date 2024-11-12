@@ -46,6 +46,7 @@ const NOT_SUPPORTED_RULE_NAMES = new Set([
   'eslint/no-octal', // superseded by strict mode
   'eslint/no-with', // superseded by strict mode
   'eslint/no-new-symbol', // Deprecated as of ESLint v9, but for a while disable manually
+  'eslint/no-undef-init', // #6456 unicorn/no-useless-undefined covers this case
   'import/no-unresolved', // Will always contain false positives due to module resolution complexity
 ]);
 
