@@ -181,10 +181,36 @@ fn get_function_like_node<'a, 'b>(
 }
 
 fn is_promise_callback<'a, 'b>(node: &'a AstNode<'b>, ctx: &'a LintContext<'b>) -> bool {
-    let Some(parent) = outermost_paren_parent(node, ctx) else {
-        return false;
+    let mut function_node = node;
+
+    let function_node = loop {
+        let Some(parent) = outermost_paren_parent(function_node, ctx) else {
+            break function_node;
+        };
+
+        let AstKind::MemberExpression(mem) = parent.kind() else {
+            break function_node;
+        };
+
+        if mem.static_property_name() != Some("bind") {
+            break function_node;
+        };
+
+        let Some(grand_parent) = outermost_paren_parent(parent, ctx) else {
+            break function_node;
+        };
+
+        let AstKind::CallExpression(_) = grand_parent.kind() else {
+            break function_node;
+        };
+        // FIXME: ensure callee is functionNode.parent
+        debug_assert_ne!(function_node.id(), grand_parent.id());
+        function_node = grand_parent;
     };
 
+    let Some(parent) = outermost_paren_parent(function_node, ctx) else {
+        return false;
+    };
     let Some(parent) = outermost_paren_parent(parent, ctx) else {
         return false;
     };
@@ -1146,6 +1172,7 @@ fn test() {
             None,
         ),
     ];
+
     Tester::new(NoUselessPromiseResolveReject::NAME, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
