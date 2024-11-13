@@ -77,12 +77,14 @@ impl Options {
                 ".oxlint.json",
                 ".oxlintrc",
                 ".eslintrc",
+                ".eslintrc.json",
             ];
 
             for search_config in search_configs {
                 let config_path = root_path.join(search_config);
 
                 if config_path.exists() {
+                    info!("Automatically detected config {config_path:?}");
                     return Some(config_path);
                 }
             }
@@ -101,7 +103,7 @@ impl Options {
                 return Some(config_path);
             }
 
-            warn!("could not found oxlint config in {:?}", config_path);
+            warn!("could not find oxlint config file {:?}", config_path);
             None
         }
     }
