@@ -710,6 +710,7 @@ dependencies = [
  "log",
  "regex-automata",
  "regex-syntax",
+ "serde",
 ]
 
 [[package]]
@@ -1709,6 +1710,7 @@ dependencies = [
  "markdown",
  "memchr",
  "mime_guess",
+ "nonmax",
  "once_cell",
  "oxc_allocator",
  "oxc_ast",

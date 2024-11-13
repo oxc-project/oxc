@@ -64,12 +64,10 @@ impl<'a> ParserImpl<'a> {
         match self.cur_kind() {
             Kind::Str => {
                 let literal = self.parse_literal_string()?;
-                Ok(TSEnumMemberName::StaticStringLiteral(self.alloc(literal)))
+                Ok(TSEnumMemberName::String(self.alloc(literal)))
             }
             Kind::LBrack => match self.parse_computed_property_name()? {
-                Expression::StringLiteral(literal) => {
-                    Ok(TSEnumMemberName::StaticStringLiteral(literal))
-                }
+                Expression::StringLiteral(literal) => Ok(TSEnumMemberName::String(literal)),
                 Expression::TemplateLiteral(template) if template.is_no_substitution_template() => {
                     Ok(self.ast.ts_enum_member_name_string_literal(
                         template.span,
@@ -89,7 +87,7 @@ impl<'a> ParserImpl<'a> {
             }
             _ => {
                 let ident_name = self.parse_identifier_name()?;
-                Ok(TSEnumMemberName::StaticIdentifier(self.alloc(ident_name)))
+                Ok(TSEnumMemberName::Identifier(self.alloc(ident_name)))
             }
         }
     }

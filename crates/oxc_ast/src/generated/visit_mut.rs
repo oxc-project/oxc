@@ -4024,8 +4024,8 @@ pub mod walk_mut {
         it: &mut TSEnumMemberName<'a>,
     ) {
         match it {
-            TSEnumMemberName::StaticIdentifier(it) => visitor.visit_identifier_name(it),
-            TSEnumMemberName::StaticStringLiteral(it) => visitor.visit_string_literal(it),
+            TSEnumMemberName::Identifier(it) => visitor.visit_identifier_name(it),
+            TSEnumMemberName::String(it) => visitor.visit_string_literal(it),
         }
     }
 

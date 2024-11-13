@@ -75,3 +75,41 @@ function bar() {
 	var foo;
 	/*! #__NO_SIDE_EFFECTS__ */ function() {}
 }
+
+########## 7
+function foo() {
+	(() => {
+		/**
+		 * @preserve
+		 */
+	})();
+	/**
+	 * @preserve
+	 */
+}
+/**
+ * @preserve
+ */
+----------
+function foo() {
+	(() => {
+		/**
+		* @preserve
+		*/
+	})();
+	/**
+	* @preserve
+	*/
+}
+/**
+* @preserve
+*/
+########## 8
+/**
+* @preserve
+*/
+
+----------
+/**
+* @preserve
+*/

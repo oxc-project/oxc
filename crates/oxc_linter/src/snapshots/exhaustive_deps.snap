@@ -1,0 +1,2223 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props.foo.toString'
+   ╭─[exhaustive_deps.tsx:4:14]
+ 3 │             console.log(props.foo?.toString());
+ 4 │           }, []);
+   ·              ──
+ 5 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props.foo.bar.baz'
+   ╭─[exhaustive_deps.tsx:4:14]
+ 3 │             console.log(props.foo?.bar.baz);
+ 4 │           }, []);
+   ·              ──
+ 5 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props.foo.bar.baz'
+   ╭─[exhaustive_deps.tsx:4:14]
+ 3 │             console.log(props.foo?.bar?.baz);
+ 4 │           }, []);
+   ·              ──
+ 5 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props.foo.bar.toString'
+   ╭─[exhaustive_deps.tsx:4:14]
+ 3 │             console.log(props.foo?.bar.toString());
+ 4 │           }, []);
+   ·              ──
+ 5 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local'
+   ╭─[exhaustive_deps.tsx:5:14]
+ 4 │             console.log(local);
+ 5 │           }, []);
+   ·              ──
+ 6 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'setCount'
+    ╭─[exhaustive_deps.tsx:9:14]
+  8 │             return () => clearInterval(id);
+  9 │           }, []);
+    ·              ──
+ 10 │ 
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local'
+   ╭─[exhaustive_deps.tsx:5:14]
+ 4 │             console.log(local);
+ 5 │           }, []);
+   ·              ──
+ 6 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local'
+   ╭─[exhaustive_deps.tsx:5:14]
+ 4 │             console.log(local);
+ 5 │           }, []);
+   ·              ──
+ 6 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useMemo does nothing when called with only one argument.
+   ╭─[exhaustive_deps.tsx:2:25]
+ 1 │ function MyComponent(props) {
+ 2 │           const value = useMemo(() => { return 2*2; });
+   ·                         ──────────────────────────────
+ 3 │           const fn = useCallback(() => { alert('foo'); });
+   ╰────
+  help: Did you forget to pass an array of dependencies?
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback does nothing when called with only one argument.
+   ╭─[exhaustive_deps.tsx:3:22]
+ 2 │           const value = useMemo(() => { return 2*2; });
+ 3 │           const fn = useCallback(() => { alert('foo'); });
+   ·                      ────────────────────────────────────
+ 4 │         }
+   ╰────
+  help: Did you forget to pass an array of dependencies?
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useMemo does nothing when called with only one argument.
+   ╭─[exhaustive_deps.tsx:2:25]
+ 1 │ function MyComponent({ fn1, fn2 }) {
+ 2 │           const value = useMemo(fn1);
+   ·                         ────────────
+ 3 │           const fn = useCallback(fn2);
+   ╰────
+  help: Did you forget to pass an array of dependencies?
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback does nothing when called with only one argument.
+   ╭─[exhaustive_deps.tsx:3:22]
+ 2 │           const value = useMemo(fn1);
+ 3 │           const fn = useCallback(fn2);
+   ·                      ────────────────
+ 4 │         }
+   ╰────
+  help: Did you forget to pass an array of dependencies?
+
+  ⚠ react_hooks(exhaustive-deps): React hook useEffect requires an effect callback.
+   ╭─[exhaustive_deps.tsx:2:11]
+ 1 │ function MyComponent() {
+ 2 │           useEffect()
+   ·           ───────────
+ 3 │           useLayoutEffect()
+   ╰────
+  help: Did you forget to pass a callback to the hook?
+
+  ⚠ react_hooks(exhaustive-deps): React hook useLayoutEffect requires an effect callback.
+   ╭─[exhaustive_deps.tsx:3:11]
+ 2 │           useEffect()
+ 3 │           useLayoutEffect()
+   ·           ─────────────────
+ 4 │           useCallback()
+   ╰────
+  help: Did you forget to pass a callback to the hook?
+
+  ⚠ react_hooks(exhaustive-deps): React hook useCallback requires an effect callback.
+   ╭─[exhaustive_deps.tsx:4:11]
+ 3 │           useLayoutEffect()
+ 4 │           useCallback()
+   ·           ─────────────
+ 5 │           useMemo()
+   ╰────
+  help: Did you forget to pass a callback to the hook?
+
+  ⚠ react_hooks(exhaustive-deps): React hook useMemo requires an effect callback.
+   ╭─[exhaustive_deps.tsx:5:11]
+ 4 │           useCallback()
+ 5 │           useMemo()
+   ·           ─────────
+ 6 │         }
+   ╰────
+  help: Did you forget to pass a callback to the hook?
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local'
+   ╭─[exhaustive_deps.tsx:7:14]
+ 6 │             }
+ 7 │           }, []);
+   ·              ──
+ 8 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local'
+   ╭─[exhaustive_deps.tsx:7:14]
+ 6 │             } finally {}
+ 7 │           }, []);
+   ·              ──
+ 8 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local'
+   ╭─[exhaustive_deps.tsx:8:14]
+ 7 │             inner();
+ 8 │           }, []);
+   ·              ──
+ 9 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local1'
+   ╭─[exhaustive_deps.tsx:8:16]
+ 7 │               console.log(local2);
+ 8 │             }, []);
+   ·                ──
+ 9 │           }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local2'
+   ╭─[exhaustive_deps.tsx:7:14]
+ 6 │             console.log(local2);
+ 7 │           }, [local1]);
+   ·              ────────
+ 8 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
+   ╭─[exhaustive_deps.tsx:7:15]
+ 6 │             console.log(local2);
+ 7 │           }, [local1]);
+   ·               ──────
+ 8 │         }
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useMemo has unnecessary dependency: local2
+   ╭─[exhaustive_deps.tsx:6:23]
+ 5 │             console.log(local1);
+ 6 │           }, [local1, local2]);
+   ·                       ──────
+ 7 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
+   ╭─[exhaustive_deps.tsx:6:15]
+ 5 │             console.log(local1);
+ 6 │           }, [local1, local2]);
+   ·               ──────
+ 7 │         }
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
+   ╭─[exhaustive_deps.tsx:6:23]
+ 5 │             console.log(local1);
+ 6 │           }, [local1, local2]);
+   ·                       ──────
+ 7 │         }
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has an unnecessary dependency: local1.
+   ╭─[exhaustive_deps.tsx:8:17]
+ 7 │               console.log(local2);
+ 8 │             }, [local1]);
+   ·                 ──────
+ 9 │           }
+   ╰────
+  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'local2'
+   ╭─[exhaustive_deps.tsx:8:16]
+ 7 │               console.log(local2);
+ 8 │             }, [local1]);
+   ·                ────────
+ 9 │           }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local'
+   ╭─[exhaustive_deps.tsx:6:14]
+ 5 │             console.log(local);
+ 6 │           }, []);
+   ·              ──
+ 7 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): The literal is not a valid dependency because it never changes.
+   ╭─[exhaustive_deps.tsx:6:22]
+ 5 │             console.log(local);
+ 6 │           }, [local, local]);
+   ·                      ─────
+ 7 │         }
+   ╰────
+  help: Remove the literal from the array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
+   ╭─[exhaustive_deps.tsx:6:15]
+ 5 │             console.log(local);
+ 6 │           }, [local, local]);
+   ·               ─────
+ 7 │         }
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has an unnecessary dependency: window.
+   ╭─[exhaustive_deps.tsx:2:34]
+ 1 │ function MyComponent() {
+ 2 │           useCallback(() => {}, [window]);
+   ·                                  ──────
+ 3 │         }
+   ╰────
+  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: window
+   ╭─[exhaustive_deps.tsx:2:34]
+ 1 │ function MyComponent() {
+ 2 │           useCallback(() => {}, [window]);
+   ·                                  ──────
+ 3 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: local
+   ╭─[exhaustive_deps.tsx:3:34]
+ 2 │           let local = props.foo;
+ 3 │           useCallback(() => {}, [local]);
+   ·                                  ─────
+ 4 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'history.listen'
+   ╭─[exhaustive_deps.tsx:4:14]
+ 3 │             return history.listen();
+ 4 │           }, []);
+   ·              ──
+ 5 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'history.foo.bar'
+   ╭─[exhaustive_deps.tsx:7:14]
+ 6 │             ];
+ 7 │           }, []);
+   ·              ──
+ 8 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'history.foo'
+   ╭─[exhaustive_deps.tsx:6:14]
+ 5 │             ];
+ 6 │           }, []);
+   ·              ──
+ 7 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a complex expression in the dependency array.
+   ╭─[exhaustive_deps.tsx:2:32]
+ 1 │ function MyComponent() {
+ 2 │           useEffect(() => {}, ['foo']);
+   ·                                ─────
+ 3 │         }
+   ╰────
+  help: Extract the expression to a separate variable so it can be statically checked.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a complex expression in the dependency array.
+   ╭─[exhaustive_deps.tsx:4:15]
+ 3 │             console.log(foo, bar, baz);
+ 4 │           }, ['foo', 'bar']);
+   ·               ─────
+ 5 │         }
+   ╰────
+  help: Extract the expression to a separate variable so it can be statically checked.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a complex expression in the dependency array.
+   ╭─[exhaustive_deps.tsx:4:22]
+ 3 │             console.log(foo, bar, baz);
+ 4 │           }, ['foo', 'bar']);
+   ·                      ─────
+ 5 │         }
+   ╰────
+  help: Extract the expression to a separate variable so it can be statically checked.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'bar', 'baz', and 'foo'
+   ╭─[exhaustive_deps.tsx:4:14]
+ 3 │             console.log(foo, bar, baz);
+ 4 │           }, ['foo', 'bar']);
+   ·              ──────────────
+ 5 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a complex expression in the dependency array.
+   ╭─[exhaustive_deps.tsx:4:15]
+ 3 │             console.log(foo, bar, baz);
+ 4 │           }, [42, false, null]);
+   ·               ──
+ 5 │         }
+   ╰────
+  help: Extract the expression to a separate variable so it can be statically checked.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a complex expression in the dependency array.
+   ╭─[exhaustive_deps.tsx:4:19]
+ 3 │             console.log(foo, bar, baz);
+ 4 │           }, [42, false, null]);
+   ·                   ─────
+ 5 │         }
+   ╰────
+  help: Extract the expression to a separate variable so it can be statically checked.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a complex expression in the dependency array.
+   ╭─[exhaustive_deps.tsx:4:26]
+ 3 │             console.log(foo, bar, baz);
+ 4 │           }, [42, false, null]);
+   ·                          ────
+ 5 │         }
+   ╰────
+  help: Extract the expression to a separate variable so it can be statically checked.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'bar', 'baz', and 'foo'
+   ╭─[exhaustive_deps.tsx:4:14]
+ 3 │             console.log(foo, bar, baz);
+ 4 │           }, [42, false, null]);
+   ·              ─────────────────
+ 5 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect was passed a dependency list that is not an array literal. This means we can't statically verify whether you've passed the correct dependencies.
+   ╭─[exhaustive_deps.tsx:3:31]
+ 2 │           const dependencies = [];
+ 3 │           useEffect(() => {}, dependencies);
+   ·                               ────────────
+ 4 │         }
+   ╰────
+  help: Use an array literal as the second argument.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect was passed a dependency list that is not an array literal. This means we can't statically verify whether you've passed the correct dependencies.
+   ╭─[exhaustive_deps.tsx:6:14]
+ 5 │             console.log(local);
+ 6 │           }, dependencies);
+   ·              ────────────
+ 7 │         }
+   ╰────
+  help: Use an array literal as the second argument.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a complex expression in the dependency array.
+   ╭─[exhaustive_deps.tsx:6:15]
+ 5 │             console.log(local);
+ 6 │           }, [...dependencies]);
+   ·               ───────────────
+ 7 │         }
+   ╰────
+  help: Extract the expression to a separate variable so it can be statically checked.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local'
+   ╭─[exhaustive_deps.tsx:6:14]
+ 5 │             console.log(local);
+ 6 │           }, [...dependencies]);
+   ·              ─────────────────
+ 7 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a complex expression in the dependency array.
+   ╭─[exhaustive_deps.tsx:5:22]
+ 4 │             console.log(local);
+ 5 │           }, [local, ...dependencies]);
+   ·                      ───────────────
+ 6 │         }
+   ╰────
+  help: Extract the expression to a separate variable so it can be statically checked.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a complex expression in the dependency array.
+   ╭─[exhaustive_deps.tsx:5:15]
+ 4 │             console.log(local);
+ 5 │           }, [computeCacheKey(local)]);
+   ·               ──────────────────────
+ 6 │         }
+   ╰────
+  help: Extract the expression to a separate variable so it can be statically checked.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local'
+   ╭─[exhaustive_deps.tsx:5:14]
+ 4 │             console.log(local);
+ 5 │           }, [computeCacheKey(local)]);
+   ·              ────────────────────────
+ 6 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a complex expression in the dependency array.
+   ╭─[exhaustive_deps.tsx:4:15]
+ 3 │             console.log(props.items[0]);
+ 4 │           }, [props.items[0]]);
+   ·               ──────────────
+ 5 │         }
+   ╰────
+  help: Extract the expression to a separate variable so it can be statically checked.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'props.items'
+   ╭─[exhaustive_deps.tsx:4:14]
+ 3 │             console.log(props.items[0]);
+ 4 │           }, [props.items[0]]);
+   ·              ────────────────
+ 5 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a complex expression in the dependency array.
+   ╭─[exhaustive_deps.tsx:4:28]
+ 3 │             console.log(props.items[0]);
+ 4 │           }, [props.items, props.items[0]]);
+   ·                            ──────────────
+ 5 │         }
+   ╰────
+  help: Extract the expression to a separate variable so it can be statically checked.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a complex expression in the dependency array.
+   ╭─[exhaustive_deps.tsx:4:15]
+ 3 │             console.log(items[0]);
+ 4 │           }, [items[0]]);
+   ·               ────────
+ 5 │         }
+   ╰────
+  help: Extract the expression to a separate variable so it can be statically checked.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'items'
+   ╭─[exhaustive_deps.tsx:4:14]
+ 3 │             console.log(items[0]);
+ 4 │           }, [items[0]]);
+   ·              ──────────
+ 5 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a complex expression in the dependency array.
+   ╭─[exhaustive_deps.tsx:4:22]
+ 3 │             console.log(items[0]);
+ 4 │           }, [items, items[0]]);
+   ·                      ────────
+ 5 │         }
+   ╰────
+  help: Extract the expression to a separate variable so it can be statically checked.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.foo
+   ╭─[exhaustive_deps.tsx:6:22]
+ 5 │             console.log(props.bar);
+ 6 │           }, [props, props.foo]);
+   ·                      ─────────
+ 7 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has missing dependencies: 'props.foo', and 'props.bar'
+   ╭─[exhaustive_deps.tsx:6:14]
+ 5 │             console.log(props.bar);
+ 6 │           }, []);
+   ·              ──
+ 7 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local'
+   ╭─[exhaustive_deps.tsx:5:14]
+ 4 │             console.log(local);
+ 5 │           }, [local.id]);
+   ·              ──────────
+ 6 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'local'
+   ╭─[exhaustive_deps.tsx:5:14]
+ 4 │             console.log(local);
+ 5 │           }, [local.id]);
+   ·              ──────────
+ 6 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: local.id
+   ╭─[exhaustive_deps.tsx:5:15]
+ 4 │             console.log(local);
+ 5 │           }, [local.id]);
+   ·               ────────
+ 6 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: local
+   ╭─[exhaustive_deps.tsx:5:25]
+ 4 │             console.log(local);
+ 5 │           }, [local.id, local]);
+   ·                         ─────
+ 6 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: local.id
+   ╭─[exhaustive_deps.tsx:5:15]
+ 4 │             console.log(local);
+ 5 │           }, [local.id, local]);
+   ·               ────────
+ 6 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has a dependency array that changes every render.
+   ╭─[exhaustive_deps.tsx:5:25]
+ 4 │             console.log(local);
+ 5 │           }, [local.id, local]);
+   ·                         ─────
+ 6 │         }
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props.foo.bar.baz'
+   ╭─[exhaustive_deps.tsx:4:14]
+ 3 │             console.log(props.foo.bar.baz);
+ 4 │           }, []);
+   ·              ──
+ 5 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'color'
+   ╭─[exhaustive_deps.tsx:6:14]
+ 5 │             console.log(color);
+ 6 │           }, [props.foo, props.foo.bar.baz]);
+   ·              ──────────────────────────────
+ 7 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.foo.bar.baz
+   ╭─[exhaustive_deps.tsx:6:26]
+ 5 │             console.log(color);
+ 6 │           }, [props.foo, props.foo.bar.baz]);
+   ·                          ─────────────────
+ 7 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.foo
+   ╭─[exhaustive_deps.tsx:4:34]
+ 3 │             console.log(props.foo.bar.baz);
+ 4 │           }, [props.foo.bar.baz, props.foo]);
+   ·                                  ─────────
+ 5 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has missing dependencies: 'props.foo.bar.baz', and 'props.foo.fizz.bizz'
+   ╭─[exhaustive_deps.tsx:5:14]
+ 4 │             console.log(props.foo.fizz.bizz);
+ 5 │           }, []);
+   ·              ──
+ 6 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props.foo.bar'
+   ╭─[exhaustive_deps.tsx:4:14]
+ 3 │             console.log(props.foo.bar);
+ 4 │           }, [props.foo.bar.baz]);
+   ·              ───────────────────
+ 5 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.foo.bar.baz
+   ╭─[exhaustive_deps.tsx:4:15]
+ 3 │             console.log(props.foo.bar);
+ 4 │           }, [props.foo.bar.baz]);
+   ·               ─────────────────
+ 5 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has missing dependencies: 'props', and 'props.hello'
+   ╭─[exhaustive_deps.tsx:5:14]
+ 4 │             console.log(props.hello);
+ 5 │           }, [props.foo.bar.baz]);
+   ·              ───────────────────
+ 6 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.foo.bar.baz
+   ╭─[exhaustive_deps.tsx:5:15]
+ 4 │             console.log(props.hello);
+ 5 │           }, [props.foo.bar.baz]);
+   ·               ─────────────────
+ 6 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): The literal is not a valid dependency because it never changes.
+   ╭─[exhaustive_deps.tsx:5:22]
+ 4 │             console.log(local);
+ 5 │           }, [local, local]);
+   ·                      ─────
+ 6 │         }
+   ╰────
+  help: Remove the literal from the array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
+   ╭─[exhaustive_deps.tsx:5:15]
+ 4 │             console.log(local);
+ 5 │           }, [local, local]);
+   ·               ─────
+ 6 │         }
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  × Unterminated string
+   ╭─[exhaustive_deps.tsx:7:10]
+ 6 │           }, [local1]);
+ 7 │         }`
+   ·          ─
+   ╰────
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: local1
+   ╭─[exhaustive_deps.tsx:3:34]
+ 2 │           const local1 = {};
+ 3 │           useCallback(() => {}, [local1]);
+   ·                                  ──────
+ 4 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has a dependency array that changes every render.
+   ╭─[exhaustive_deps.tsx:3:34]
+ 2 │           const local1 = {};
+ 3 │           useCallback(() => {}, [local1]);
+   ·                                  ──────
+ 4 │         }
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'props.foo'
+   ╭─[exhaustive_deps.tsx:4:14]
+ 3 │             console.log(props.foo);
+ 4 │           }, []);
+   ·              ──
+ 5 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'props.foo', and 'props.bar'
+   ╭─[exhaustive_deps.tsx:5:14]
+ 4 │             console.log(props.bar);
+ 5 │           }, []);
+   ·              ──
+ 6 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'b', 'e', 'd', and 'f'
+   ╭─[exhaustive_deps.tsx:5:14]
+ 4 │             console.log(b, e, d, c, a, g, f);
+ 5 │           }, [c, a, g]);
+   ·              ─────────
+ 6 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'b', 'e', 'd', and 'f'
+   ╭─[exhaustive_deps.tsx:5:14]
+ 4 │             console.log(b, e, d, c, a, g, f);
+ 5 │           }, [a, c, g]);
+   ·              ─────────
+ 6 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'b', 'a', 'c', 'e', 'd', 'g', and 'f'
+   ╭─[exhaustive_deps.tsx:5:14]
+ 4 │             console.log(b, e, d, c, a, g, f);
+ 5 │           }, []);
+   ·              ──
+ 6 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'props.foo', 'local', and 'props.bar'
+   ╭─[exhaustive_deps.tsx:7:14]
+ 6 │             console.log(local);
+ 7 │           }, []);
+   ·              ──
+ 8 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local'
+   ╭─[exhaustive_deps.tsx:7:14]
+ 6 │             console.log(local);
+ 7 │           }, [props]);
+   ·              ───────
+ 8 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'props.foo'
+   ╭─[exhaustive_deps.tsx:4:14]
+ 3 │             console.log(props.foo);
+ 4 │           }, []);
+   ·              ──
+ 5 │           useCallback(() => {
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props.foo'
+   ╭─[exhaustive_deps.tsx:7:14]
+ 6 │             console.log(props.foo);
+ 7 │           }, []);
+   ·              ──
+ 8 │           useMemo(() => {
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useMemo has a missing dependency: 'props.foo'
+    ╭─[exhaustive_deps.tsx:10:14]
+  9 │             console.log(props.foo);
+ 10 │           }, []);
+    ·              ──
+ 11 │           React.useEffect(() => {
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'props.foo'
+    ╭─[exhaustive_deps.tsx:13:14]
+ 12 │             console.log(props.foo);
+ 13 │           }, []);
+    ·              ──
+ 14 │           React.useCallback(() => {
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props.foo'
+    ╭─[exhaustive_deps.tsx:16:14]
+ 15 │             console.log(props.foo);
+ 16 │           }, []);
+    ·              ──
+ 17 │           React.useMemo(() => {
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useMemo has a missing dependency: 'props.foo'
+    ╭─[exhaustive_deps.tsx:19:14]
+ 18 │             console.log(props.foo);
+ 19 │           }, []);
+    ·              ──
+ 20 │           React.notReactiveHook(() => {
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'props.foo'
+   ╭─[exhaustive_deps.tsx:7:14]
+ 6 │             console.log(props.foo);
+ 7 │           }, []);
+   ·              ──
+ 8 │           React.useEffect(() => {
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'props.foo'
+    ╭─[exhaustive_deps.tsx:10:14]
+  9 │             console.log(props.foo);
+ 10 │           }, []);
+    ·              ──
+ 11 │           React.useCustomEffect(() => {
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a complex expression in the dependency array.
+   ╭─[exhaustive_deps.tsx:5:15]
+ 4 │             console.log(local);
+ 5 │           }, [a ? local : b]);
+   ·               ─────────────
+ 6 │         }
+   ╰────
+  help: Extract the expression to a separate variable so it can be statically checked.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local'
+   ╭─[exhaustive_deps.tsx:5:14]
+ 4 │             console.log(local);
+ 5 │           }, [a ? local : b]);
+   ·              ───────────────
+ 6 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a complex expression in the dependency array.
+   ╭─[exhaustive_deps.tsx:5:15]
+ 4 │             console.log(local);
+ 5 │           }, [a && local]);
+   ·               ──────────
+ 6 │         }
+   ╰────
+  help: Extract the expression to a separate variable so it can be statically checked.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local'
+   ╭─[exhaustive_deps.tsx:5:14]
+ 4 │             console.log(local);
+ 5 │           }, [a && local]);
+   ·              ────────────
+ 6 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a complex expression in the dependency array.
+   ╭─[exhaustive_deps.tsx:2:32]
+ 1 │ function MyComponent(props) {
+ 2 │           useEffect(() => {}, [props?.attribute.method()]);
+   ·                                ─────────────────────────
+ 3 │         }
+   ╰────
+  help: Extract the expression to a separate variable so it can be statically checked.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a complex expression in the dependency array.
+   ╭─[exhaustive_deps.tsx:2:32]
+ 1 │ function MyComponent(props) {
+ 2 │           useEffect(() => {}, [props.method()]);
+   ·                                ──────────────
+ 3 │         }
+   ╰────
+  help: Extract the expression to a separate variable so it can be statically checked.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'state'
+   ╭─[exhaustive_deps.tsx:7:14]
+ 6 │             setState(state + 1);
+ 7 │           }, []);
+   ·              ──
+ 8 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'state'
+   ╭─[exhaustive_deps.tsx:7:14]
+ 6 │             setState(state + 1);
+ 7 │           }, [ref]);
+   ·              ─────
+ 8 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'props.someOtherRefs.current.innerHTML', and 'props.color'
+    ╭─[exhaustive_deps.tsx:9:14]
+  8 │             fetch(props.color);
+  9 │           }, []);
+    ·              ──
+ 10 │         }
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref2.
+    ╭─[exhaustive_deps.tsx:9:29]
+  8 │             fetch(props.color);
+  9 │           }, [ref1.current, ref2.current, props.someOtherRefs, props.color]);
+    ·                             ────────────
+ 10 │         }
+    ╰────
+  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref1.
+    ╭─[exhaustive_deps.tsx:9:15]
+  8 │             fetch(props.color);
+  9 │           }, [ref1.current, ref2.current, props.someOtherRefs, props.color]);
+    ·               ────────────
+ 10 │         }
+    ╰────
+  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref2.
+    ╭─[exhaustive_deps.tsx:9:30]
+  8 │             fetch(props.color);
+  9 │           }, [ref1?.current, ref2?.current, props.someOtherRefs, props.color]);
+    ·                              ─────────────
+ 10 │         }
+    ╰────
+  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref1.
+    ╭─[exhaustive_deps.tsx:9:15]
+  8 │             fetch(props.color);
+  9 │           }, [ref1?.current, ref2?.current, props.someOtherRefs, props.color]);
+    ·               ─────────────
+ 10 │         }
+    ╰────
+  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref.
+   ╭─[exhaustive_deps.tsx:5:15]
+ 4 │             console.log(ref.current);
+ 5 │           }, [ref.current]);
+   ·               ───────────
+ 6 │         }
+   ╰────
+  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref2.
+   ╭─[exhaustive_deps.tsx:7:29]
+ 6 │             ref2.current.scrollTop = 0;
+ 7 │           }, [ref1.current, ref2.current, activeTab]);
+   ·                             ────────────
+ 8 │         }
+   ╰────
+  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref1.
+   ╭─[exhaustive_deps.tsx:7:15]
+ 6 │             ref2.current.scrollTop = 0;
+ 7 │           }, [ref1.current, ref2.current, activeTab]);
+   ·               ────────────
+ 8 │         }
+   ╰────
+  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has an unnecessary dependency: ref2.
+   ╭─[exhaustive_deps.tsx:7:29]
+ 6 │             ref2.current.scrollTop = initY;
+ 7 │           }, [ref1.current, ref2.current, activeTab, initY]);
+   ·                             ────────────
+ 8 │         }
+   ╰────
+  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has an unnecessary dependency: ref1.
+   ╭─[exhaustive_deps.tsx:7:15]
+ 6 │             ref2.current.scrollTop = initY;
+ 7 │           }, [ref1.current, ref2.current, activeTab, initY]);
+   ·               ────────────
+ 8 │         }
+   ╰────
+  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: activeTab
+   ╭─[exhaustive_deps.tsx:7:43]
+ 6 │             ref2.current.scrollTop = initY;
+ 7 │           }, [ref1.current, ref2.current, activeTab, initY]);
+   ·                                           ─────────
+ 8 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref.
+   ╭─[exhaustive_deps.tsx:5:15]
+ 4 │             console.log(ref.current);
+ 5 │           }, [ref.current, ref]);
+   ·               ───────────
+ 6 │         }
+   ╰────
+  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useImperativeHandle has a missing dependency: 'props.hello'
+   ╭─[exhaustive_deps.tsx:6:15]
+ 5 │             }
+ 6 │           }), [])
+   ·               ──
+ 7 │         });
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'props.onChange'
+   ╭─[exhaustive_deps.tsx:6:14]
+ 5 │             }
+ 6 │           }, []);
+   ·              ──
+ 7 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'props.onChange'
+   ╭─[exhaustive_deps.tsx:6:14]
+ 5 │             }
+ 6 │           }, []);
+   ·              ──
+ 7 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'props.onPause', and 'props.onPlay'
+    ╭─[exhaustive_deps.tsx:9:14]
+  8 │             }
+  9 │           }, []);
+    ·              ──
+ 10 │         }
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'props.foo.onChange'
+   ╭─[exhaustive_deps.tsx:6:14]
+ 5 │             }
+ 6 │           }, []);
+   ·              ──
+ 7 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'props.onChange', and 'props.foo.onChange'
+   ╭─[exhaustive_deps.tsx:7:14]
+ 6 │             }
+ 7 │           }, []);
+   ·              ──
+ 8 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'skillsCount', 'props.toggleEditMode', and 'props.isEditMode'
+   ╭─[exhaustive_deps.tsx:7:14]
+ 6 │             }
+ 7 │           }, []);
+   ·              ──
+ 8 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'props.onChange', and 'props'
+   ╭─[exhaustive_deps.tsx:5:14]
+ 4 │             props.onChange();
+ 5 │           }, []);
+   ·              ──
+ 6 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'props.onChange', and 'props'
+   ╭─[exhaustive_deps.tsx:5:14]
+ 4 │             externalCall(props);
+ 5 │           }, []);
+   ·              ──
+ 6 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'value', 'value2', 'value4', 'asyncValue', and 'value3'
+    ╭─[exhaustive_deps.tsx:19:14]
+ 18 │             });
+ 19 │           }, []);
+    ·              ──
+ 20 │         }
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'asyncValue'
+    ╭─[exhaustive_deps.tsx:15:14]
+ 14 │             });
+ 15 │           }, [value, value2, value3]);
+    ·              ───────────────────────
+ 16 │         }
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): The ref's value `.current` is accessed directly in the effect cleanup function.
+   ╭─[exhaustive_deps.tsx:6:26]
+ 5 │             myRef.current.addEventListener('mousemove', handleMove);
+ 6 │             return () => myRef.current.removeEventListener('mousemove', handleMove);
+   ·                          ─────────────
+ 7 │           }, []);
+   ╰────
+  help: The ref value will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by react, copy it to a variable inside the effect and use that variable in the cleanup function.
+
+  ⚠ react_hooks(exhaustive-deps): The ref's value `.current` is accessed directly in the effect cleanup function.
+   ╭─[exhaustive_deps.tsx:6:26]
+ 5 │             myRef?.current?.addEventListener('mousemove', handleMove);
+ 6 │             return () => myRef?.current?.removeEventListener('mousemove', handleMove);
+   ·                          ──────────────
+ 7 │           }, []);
+   ╰────
+  help: The ref value will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by react, copy it to a variable inside the effect and use that variable in the cleanup function.
+
+  ⚠ react_hooks(exhaustive-deps): The ref's value `.current` is accessed directly in the effect cleanup function.
+   ╭─[exhaustive_deps.tsx:6:26]
+ 5 │             myRef.current.addEventListener('mousemove', handleMove);
+ 6 │             return () => myRef.current.removeEventListener('mousemove', handleMove);
+   ·                          ─────────────
+ 7 │           });
+   ╰────
+  help: The ref value will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by react, copy it to a variable inside the effect and use that variable in the cleanup function.
+
+  ⚠ react_hooks(exhaustive-deps): The ref's value `.current` is accessed directly in the effect cleanup function.
+   ╭─[exhaustive_deps.tsx:5:26]
+ 4 │             myRef.current.addEventListener('mousemove', handleMove);
+ 5 │             return () => myRef.current.removeEventListener('mousemove', handleMove);
+   ·                          ─────────────
+ 6 │           }, [myRef]);
+   ╰────
+  help: The ref value will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by react, copy it to a variable inside the effect and use that variable in the cleanup function.
+
+  ⚠ react_hooks(exhaustive-deps): The ref's value `.current` is accessed directly in the effect cleanup function.
+   ╭─[exhaustive_deps.tsx:8:17]
+ 7 │               setTimeout(() => {
+ 8 │                 myRef.current.removeEventListener('mousemove', handleMouse);
+   ·                 ─────────────
+ 9 │                 myRef.current.removeEventListener('mousein', handleMouse);
+   ╰────
+  help: The ref value will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by react, copy it to a variable inside the effect and use that variable in the cleanup function.
+
+  ⚠ react_hooks(exhaustive-deps): The ref's value `.current` is accessed directly in the effect cleanup function.
+    ╭─[exhaustive_deps.tsx:9:17]
+  8 │                 myRef.current.removeEventListener('mousemove', handleMouse);
+  9 │                 myRef.current.removeEventListener('mousein', handleMouse);
+    ·                 ─────────────
+ 10 │               });
+    ╰────
+  help: The ref value will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by react, copy it to a variable inside the effect and use that variable in the cleanup function.
+
+  ⚠ react_hooks(exhaustive-deps): The ref's value `.current` is accessed directly in the effect cleanup function.
+   ╭─[exhaustive_deps.tsx:8:19]
+ 7 │                 setTimeout(() => {
+ 8 │                   myRef.current.removeEventListener('mousemove', handleMove);
+   ·                   ─────────────
+ 9 │                 });
+   ╰────
+  help: The ref value will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by react, copy it to a variable inside the effect and use that variable in the cleanup function.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local4'
+    ╭─[exhaustive_deps.tsx:11:14]
+ 10 │             console.log(local4);
+ 11 │           }, [local1, local3]);
+    ·              ────────────────
+ 12 │         }
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: window.
+   ╭─[exhaustive_deps.tsx:4:15]
+ 3 │             window.scrollTo(0, 0);
+ 4 │           }, [window]);
+   ·               ──────
+ 5 │         }
+   ╰────
+  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: MutableStore.
+   ╭─[exhaustive_deps.tsx:5:15]
+ 4 │             console.log(MutableStore.hello);
+ 5 │           }, [MutableStore.hello]);
+   ·               ──────────────────
+ 6 │         }
+   ╰────
+  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: z.
+    ╭─[exhaustive_deps.tsx:10:60]
+  9 │               console.log(MutableStore.hello.world, props.foo, x, y, z, global.stuff);
+ 10 │             }, [MutableStore.hello.world, props.foo, x, y, z, global.stuff]);
+    ·                                                            ─
+ 11 │           }
+    ╰────
+  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: MutableStore.
+    ╭─[exhaustive_deps.tsx:10:17]
+  9 │               console.log(MutableStore.hello.world, props.foo, x, y, z, global.stuff);
+ 10 │             }, [MutableStore.hello.world, props.foo, x, y, z, global.stuff]);
+    ·                 ────────────────────────
+ 11 │           }
+    ╰────
+  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: global.
+    ╭─[exhaustive_deps.tsx:10:63]
+  9 │               console.log(MutableStore.hello.world, props.foo, x, y, z, global.stuff);
+ 10 │             }, [MutableStore.hello.world, props.foo, x, y, z, global.stuff]);
+    ·                                                               ────────────
+ 11 │           }
+    ╰────
+  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
+    ╭─[exhaustive_deps.tsx:10:60]
+  9 │               console.log(MutableStore.hello.world, props.foo, x, y, z, global.stuff);
+ 10 │             }, [MutableStore.hello.world, props.foo, x, y, z, global.stuff]);
+    ·                                                            ─
+ 11 │           }
+    ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: z.
+    ╭─[exhaustive_deps.tsx:10:60]
+  9 │               // nothing
+ 10 │             }, [MutableStore.hello.world, props.foo, x, y, z, global.stuff]);
+    ·                                                            ─
+ 11 │           }
+    ╰────
+  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: MutableStore.
+    ╭─[exhaustive_deps.tsx:10:17]
+  9 │               // nothing
+ 10 │             }, [MutableStore.hello.world, props.foo, x, y, z, global.stuff]);
+    ·                 ────────────────────────
+ 11 │           }
+    ╰────
+  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: global.
+    ╭─[exhaustive_deps.tsx:10:63]
+  9 │               // nothing
+ 10 │             }, [MutableStore.hello.world, props.foo, x, y, z, global.stuff]);
+    ·                                                               ────────────
+ 11 │           }
+    ╰────
+  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
+    ╭─[exhaustive_deps.tsx:10:60]
+  9 │               // nothing
+ 10 │             }, [MutableStore.hello.world, props.foo, x, y, z, global.stuff]);
+    ·                                                            ─
+ 11 │           }
+    ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has an unnecessary dependency: z.
+    ╭─[exhaustive_deps.tsx:10:60]
+  9 │               // nothing
+ 10 │             }, [MutableStore.hello.world, props.foo, x, y, z, global.stuff]);
+    ·                                                            ─
+ 11 │           }
+    ╰────
+  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has an unnecessary dependency: MutableStore.
+    ╭─[exhaustive_deps.tsx:10:17]
+  9 │               // nothing
+ 10 │             }, [MutableStore.hello.world, props.foo, x, y, z, global.stuff]);
+    ·                 ────────────────────────
+ 11 │           }
+    ╰────
+  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has an unnecessary dependency: global.
+    ╭─[exhaustive_deps.tsx:10:63]
+  9 │               // nothing
+ 10 │             }, [MutableStore.hello.world, props.foo, x, y, z, global.stuff]);
+    ·                                                               ────────────
+ 11 │           }
+    ╰────
+  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.foo
+    ╭─[exhaustive_deps.tsx:10:43]
+  9 │               // nothing
+ 10 │             }, [MutableStore.hello.world, props.foo, x, y, z, global.stuff]);
+    ·                                           ─────────
+ 11 │           }
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: y
+    ╭─[exhaustive_deps.tsx:10:57]
+  9 │               // nothing
+ 10 │             }, [MutableStore.hello.world, props.foo, x, y, z, global.stuff]);
+    ·                                                         ─
+ 11 │           }
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: z
+    ╭─[exhaustive_deps.tsx:10:60]
+  9 │               // nothing
+ 10 │             }, [MutableStore.hello.world, props.foo, x, y, z, global.stuff]);
+    ·                                                            ─
+ 11 │           }
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: MutableStore.hello.world
+    ╭─[exhaustive_deps.tsx:10:17]
+  9 │               // nothing
+ 10 │             }, [MutableStore.hello.world, props.foo, x, y, z, global.stuff]);
+    ·                 ────────────────────────
+ 11 │           }
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: global.stuff
+    ╭─[exhaustive_deps.tsx:10:63]
+  9 │               // nothing
+ 10 │             }, [MutableStore.hello.world, props.foo, x, y, z, global.stuff]);
+    ·                                                               ────────────
+ 11 │           }
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: x
+    ╭─[exhaustive_deps.tsx:10:54]
+  9 │               // nothing
+ 10 │             }, [MutableStore.hello.world, props.foo, x, y, z, global.stuff]);
+    ·                                                      ─
+ 11 │           }
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has a dependency array that changes every render.
+    ╭─[exhaustive_deps.tsx:10:60]
+  9 │               // nothing
+ 10 │             }, [MutableStore.hello.world, props.foo, x, y, z, global.stuff]);
+    ·                                                            ─
+ 11 │           }
+    ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has an unnecessary dependency: z.
+    ╭─[exhaustive_deps.tsx:10:62]
+  9 │               // nothing
+ 10 │             }, [MutableStore?.hello?.world, props.foo, x, y, z, global?.stuff]);
+    ·                                                              ─
+ 11 │           }
+    ╰────
+  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has an unnecessary dependency: MutableStore.
+    ╭─[exhaustive_deps.tsx:10:17]
+  9 │               // nothing
+ 10 │             }, [MutableStore?.hello?.world, props.foo, x, y, z, global?.stuff]);
+    ·                 ──────────────────────────
+ 11 │           }
+    ╰────
+  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has an unnecessary dependency: global.
+    ╭─[exhaustive_deps.tsx:10:65]
+  9 │               // nothing
+ 10 │             }, [MutableStore?.hello?.world, props.foo, x, y, z, global?.stuff]);
+    ·                                                                 ─────────────
+ 11 │           }
+    ╰────
+  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.foo
+    ╭─[exhaustive_deps.tsx:10:45]
+  9 │               // nothing
+ 10 │             }, [MutableStore?.hello?.world, props.foo, x, y, z, global?.stuff]);
+    ·                                             ─────────
+ 11 │           }
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: y
+    ╭─[exhaustive_deps.tsx:10:59]
+  9 │               // nothing
+ 10 │             }, [MutableStore?.hello?.world, props.foo, x, y, z, global?.stuff]);
+    ·                                                           ─
+ 11 │           }
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: z
+    ╭─[exhaustive_deps.tsx:10:62]
+  9 │               // nothing
+ 10 │             }, [MutableStore?.hello?.world, props.foo, x, y, z, global?.stuff]);
+    ·                                                              ─
+ 11 │           }
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: MutableStore.hello.world
+    ╭─[exhaustive_deps.tsx:10:17]
+  9 │               // nothing
+ 10 │             }, [MutableStore?.hello?.world, props.foo, x, y, z, global?.stuff]);
+    ·                 ──────────────────────────
+ 11 │           }
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: global.stuff
+    ╭─[exhaustive_deps.tsx:10:65]
+  9 │               // nothing
+ 10 │             }, [MutableStore?.hello?.world, props.foo, x, y, z, global?.stuff]);
+    ·                                                                 ─────────────
+ 11 │           }
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: x
+    ╭─[exhaustive_deps.tsx:10:56]
+  9 │               // nothing
+ 10 │             }, [MutableStore?.hello?.world, props.foo, x, y, z, global?.stuff]);
+    ·                                                        ─
+ 11 │           }
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has a dependency array that changes every render.
+    ╭─[exhaustive_deps.tsx:10:62]
+  9 │               // nothing
+ 10 │             }, [MutableStore?.hello?.world, props.foo, x, y, z, global?.stuff]);
+    ·                                                              ─
+ 11 │           }
+    ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'handleNext1'
+    ╭─[exhaustive_deps.tsx:21:14]
+ 20 │             return Store.subscribe(handleNext1);
+ 21 │           }, []);
+    ·              ──
+ 22 │           useLayoutEffect(() => {
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useLayoutEffect has a missing dependency: 'handleNext2'
+    ╭─[exhaustive_deps.tsx:24:14]
+ 23 │             return Store.subscribe(handleNext2);
+ 24 │           }, []);
+    ·              ──
+ 25 │           useMemo(() => {
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useMemo has a missing dependency: 'handleNext3'
+    ╭─[exhaustive_deps.tsx:27:14]
+ 26 │             return Store.subscribe(handleNext3);
+ 27 │           }, []);
+    ·              ──
+ 28 │         }
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'handleNext1'
+    ╭─[exhaustive_deps.tsx:24:14]
+ 23 │             return Store.subscribe(handleNext1);
+ 24 │           }, []);
+    ·              ──
+ 25 │           useLayoutEffect(() => {
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useLayoutEffect has a missing dependency: 'handleNext2'
+    ╭─[exhaustive_deps.tsx:27:14]
+ 26 │             return Store.subscribe(handleNext2);
+ 27 │           }, []);
+    ·              ──
+ 28 │           useMemo(() => {
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useMemo has a missing dependency: 'handleNext3'
+    ╭─[exhaustive_deps.tsx:30:14]
+ 29 │             return Store.subscribe(handleNext3);
+ 30 │           }, []);
+    ·              ──
+ 31 │         }
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'handleNext1'
+    ╭─[exhaustive_deps.tsx:24:14]
+ 23 │             return Store.subscribe(handleNext1);
+ 24 │           }, []);
+    ·              ──
+ 25 │           useLayoutEffect(() => {
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useLayoutEffect has a missing dependency: 'handleNext2'
+    ╭─[exhaustive_deps.tsx:27:14]
+ 26 │             return Store.subscribe(handleNext2);
+ 27 │           }, []);
+    ·              ──
+ 28 │           useMemo(() => {
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useMemo has a missing dependency: 'handleNext3'
+    ╭─[exhaustive_deps.tsx:30:14]
+ 29 │             return Store.subscribe(handleNext3);
+ 30 │           }, []);
+    ·              ──
+ 31 │         }
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
+    ╭─[exhaustive_deps.tsx:10:15]
+  9 │             return Store.subscribe(handleNext);
+ 10 │           }, [handleNext]);
+    ·               ──────────
+ 11 │         }
+    ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
+    ╭─[exhaustive_deps.tsx:10:15]
+  9 │             return Store.subscribe(handleNext);
+ 10 │           }, [handleNext]);
+    ·               ──────────
+ 11 │         }
+    ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
+    ╭─[exhaustive_deps.tsx:10:15]
+  9 │             return Store.subscribe(handleNext);
+ 10 │           }, [handleNext]);
+    ·               ──────────
+ 11 │ 
+    ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
+    ╭─[exhaustive_deps.tsx:13:15]
+ 12 │             return Store.subscribe(handleNext1);
+ 13 │           }, [handleNext1]);
+    ·               ───────────
+ 14 │           useLayoutEffect(() => {
+    ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useLayoutEffect has a dependency array that changes every render.
+    ╭─[exhaustive_deps.tsx:16:15]
+ 15 │             return Store.subscribe(handleNext2);
+ 16 │           }, [handleNext2]);
+    ·               ───────────
+ 17 │           useMemo(() => {
+    ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
+    ╭─[exhaustive_deps.tsx:19:15]
+ 18 │             return Store.subscribe(handleNext3);
+ 19 │           }, [handleNext3]);
+    ·               ───────────
+ 20 │         }
+    ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
+    ╭─[exhaustive_deps.tsx:14:15]
+ 13 │             return Store.subscribe(() => handleNext1());
+ 14 │           }, [handleNext1]);
+    ·               ───────────
+ 15 │           useLayoutEffect(() => {
+    ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useLayoutEffect has a dependency array that changes every render.
+    ╭─[exhaustive_deps.tsx:18:15]
+ 17 │             return Store.subscribe(() => handleNext2());
+ 18 │           }, [handleNext2]);
+    ·               ───────────
+ 19 │           useMemo(() => {
+    ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
+    ╭─[exhaustive_deps.tsx:22:15]
+ 21 │             return Store.subscribe(() => handleNext3());
+ 22 │           }, [handleNext3]);
+    ·               ───────────
+ 23 │         }
+    ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
+    ╭─[exhaustive_deps.tsx:14:15]
+ 13 │             return Store.subscribe(() => handleNext1());
+ 14 │           }, [handleNext1]);
+    ·               ───────────
+ 15 │           useLayoutEffect(() => {
+    ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useLayoutEffect has a dependency array that changes every render.
+    ╭─[exhaustive_deps.tsx:18:15]
+ 17 │             return Store.subscribe(() => handleNext2());
+ 18 │           }, [handleNext2]);
+    ·               ───────────
+ 19 │           useMemo(() => {
+    ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
+    ╭─[exhaustive_deps.tsx:22:15]
+ 21 │             return Store.subscribe(() => handleNext3());
+ 22 │           }, [handleNext3]);
+    ·               ───────────
+ 23 │           return (
+    ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
+    ╭─[exhaustive_deps.tsx:11:15]
+ 10 │             return Store.subscribe(handleNext2);
+ 11 │           }, [handleNext1, handleNext2]);
+    ·               ───────────
+ 12 │           useEffect(() => {
+    ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
+    ╭─[exhaustive_deps.tsx:11:28]
+ 10 │             return Store.subscribe(handleNext2);
+ 11 │           }, [handleNext1, handleNext2]);
+    ·                            ───────────
+ 12 │           useEffect(() => {
+    ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
+    ╭─[exhaustive_deps.tsx:15:15]
+ 14 │             return Store.subscribe(handleNext2);
+ 15 │           }, [handleNext1, handleNext2]);
+    ·               ───────────
+ 16 │         }
+    ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
+    ╭─[exhaustive_deps.tsx:15:28]
+ 14 │             return Store.subscribe(handleNext2);
+ 15 │           }, [handleNext1, handleNext2]);
+    ·                            ───────────
+ 16 │         }
+    ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
+    ╭─[exhaustive_deps.tsx:12:15]
+ 11 │             return Store.subscribe(handleNext);
+ 12 │           }, [handleNext]);
+    ·               ──────────
+ 13 │         }
+    ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
+    ╭─[exhaustive_deps.tsx:13:15]
+ 12 │             return Store.subscribe(handleNext);
+ 13 │           }, [handleNext]);
+    ·               ──────────
+ 14 │         }
+    ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'count'
+    ╭─[exhaustive_deps.tsx:9:14]
+  8 │             return () => clearInterval(id);
+  9 │           }, []);
+    ·              ──
+ 10 │ 
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'increment', and 'count'
+    ╭─[exhaustive_deps.tsx:10:14]
+  9 │             return () => clearInterval(id);
+ 10 │           }, []);
+    ·              ──
+ 11 │ 
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'increment'
+    ╭─[exhaustive_deps.tsx:10:14]
+  9 │             return () => clearInterval(id);
+ 10 │           }, []);
+    ·              ──
+ 11 │ 
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'increment'
+    ╭─[exhaustive_deps.tsx:10:14]
+  9 │             return () => clearInterval(id);
+ 10 │           }, []);
+    ·              ──
+ 11 │ 
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'increment'
+    ╭─[exhaustive_deps.tsx:13:14]
+ 12 │             return () => clearInterval(id);
+ 13 │           }, []);
+    ·              ──
+ 14 │ 
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
+    ╭─[exhaustive_deps.tsx:13:15]
+ 12 │             return () => clearInterval(id);
+ 13 │           }, [increment]);
+    ·               ─────────
+ 14 │ 
+    ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'increment'
+    ╭─[exhaustive_deps.tsx:9:14]
+  8 │             return () => clearInterval(id);
+  9 │           }, []);
+    ·              ──
+ 10 │ 
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'tick'
+    ╭─[exhaustive_deps.tsx:13:14]
+ 12 │             return () => clearInterval(id);
+ 13 │           }, []);
+    ·              ──
+ 14 │ 
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'podcasts'
+   ╭─[exhaustive_deps.tsx:4:14]
+ 3 │             alert(podcasts);
+ 4 │           }, []);
+   ·              ──
+ 5 │           let [podcasts, setPodcasts] = useState(null);
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'fetchPodcasts'
+   ╭─[exhaustive_deps.tsx:5:14]
+ 4 │             fetchPodcasts(id).then(setPodcasts);
+ 5 │           }, [id]);
+   ·              ────
+ 6 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'fetchPodcasts'
+   ╭─[exhaustive_deps.tsx:5:14]
+ 4 │             fetchPodcasts(id).then(setPodcasts);
+ 5 │           }, [id]);
+   ·              ────
+ 6 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'fetchPodcasts2', and 'fetchPodcasts'
+    ╭─[exhaustive_deps.tsx:9:14]
+  8 │             });
+  9 │           }, [id]);
+    ·              ────
+ 10 │         }
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'fetchPodcasts'
+   ╭─[exhaustive_deps.tsx:6:14]
+ 5 │             fetchPodcasts(id).then(setPodcasts);
+ 6 │           }, [id]);
+   ·              ────
+ 7 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'fetchPodcasts'
+   ╭─[exhaustive_deps.tsx:6:14]
+ 5 │             fetchPodcasts?.(id).then(setPodcasts);
+ 6 │           }, [id]);
+   ·              ────
+ 7 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect contains a call to setState. Without a list of dependencies, this can lead to an infinite chain of updates.
+   ╭─[exhaustive_deps.tsx:3:11]
+ 2 │           const [state, setState] = useState(0);
+ 3 │           useEffect(() => {
+   ·           ─────────
+ 4 │             setState({});
+   ╰────
+  help: Consider adding an empty list of dependencies to make it clear which values are intended to be stable.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect contains a call to setState. Without a list of dependencies, this can lead to an infinite chain of updates.
+   ╭─[exhaustive_deps.tsx:3:11]
+ 2 │           const [data, setData] = useState(0);
+ 3 │           useEffect(() => {
+   ·           ─────────
+ 4 │             fetchData.then(setData);
+   ╰────
+  help: Consider adding an empty list of dependencies to make it clear which values are intended to be stable.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect contains a call to setState. Without a list of dependencies, this can lead to an infinite chain of updates.
+   ╭─[exhaustive_deps.tsx:3:11]
+ 2 │           const [data, setData] = useState(0);
+ 3 │           useEffect(() => {
+   ·           ─────────
+ 4 │             fetchData(country).then(setData);
+   ╰────
+  help: Consider adding an empty list of dependencies to make it clear which values are intended to be stable.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect contains a call to setState. Without a list of dependencies, this can lead to an infinite chain of updates.
+   ╭─[exhaustive_deps.tsx:3:11]
+ 2 │           const [state, setState] = useState(0);
+ 3 │           useEffect(() => {
+   ·           ─────────
+ 4 │             if (prop1) {
+   ╰────
+  help: Consider adding an empty list of dependencies to make it clear which values are intended to be stable.
+
+  ⚠ react_hooks(exhaustive-deps): Effect callbacks are synchronous to prevent race conditions.
+   ╭─[exhaustive_deps.tsx:2:21]
+ 1 │ function Thing() {
+ 2 │           useEffect(async () => {}, []);
+   ·                     ──────────────
+ 3 │         }
+   ╰────
+  help: Consider putting the asynchronous code inside a function and calling it from the effect.
+
+  ⚠ react_hooks(exhaustive-deps): Effect callbacks are synchronous to prevent race conditions.
+   ╭─[exhaustive_deps.tsx:2:21]
+ 1 │ function Thing() {
+ 2 │           useEffect(async () => {});
+   ·                     ──────────────
+ 3 │         }
+   ╰────
+  help: Consider putting the asynchronous code inside a function and calling it from the effect.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local'
+   ╭─[exhaustive_deps.tsx:6:31]
+ 5 │           }
+ 6 │           useEffect(myEffect, []);
+   ·                               ──
+ 7 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local'
+   ╭─[exhaustive_deps.tsx:6:31]
+ 5 │           };
+ 6 │           useEffect(myEffect, []);
+   ·                               ──
+ 7 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local'
+   ╭─[exhaustive_deps.tsx:6:31]
+ 5 │           };
+ 6 │           useEffect(myEffect, []);
+   ·                               ──
+ 7 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'otherThing'
+    ╭─[exhaustive_deps.tsx:9:31]
+  8 │           };
+  9 │           useEffect(myEffect, []);
+    ·                               ──
+ 10 │         }
+    ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'myEffect'
+   ╭─[exhaustive_deps.tsx:7:31]
+ 6 │ 
+ 7 │           useEffect(myEffect, []);
+   ·                               ──
+ 8 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'myEffect'
+   ╭─[exhaustive_deps.tsx:6:31]
+ 5 │           }, delay);
+ 6 │           useEffect(myEffect, [local]);
+   ·                               ───────
+ 7 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'myEffect'
+   ╭─[exhaustive_deps.tsx:2:31]
+ 1 │ function MyComponent({myEffect}) {
+ 2 │           useEffect(myEffect, []);
+   ·                               ──
+ 3 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect received a function whose dependencies are unknown.
+   ╭─[exhaustive_deps.tsx:3:11]
+ 2 │           const local = {};
+ 3 │           useEffect(debounce(() => {
+   ·           ─────────
+ 4 │             console.log(local);
+   ╰────
+  help: Pass an inline function instead.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local'
+   ╭─[exhaustive_deps.tsx:5:14]
+ 4 │             console.log(local);
+ 5 │           }, []);
+   ·              ──
+ 6 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'foo.bar.baz', and 'props.foo.bar.baz'
+   ╭─[exhaustive_deps.tsx:6:14]
+ 5 │             props.foo.bar.baz = 1;
+ 6 │           }, []);
+   ·              ──
+ 7 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
+   ╭─[exhaustive_deps.tsx:3:31]
+ 2 │           const foo = {};
+ 3 │           useMemo(() => foo, [foo]);
+   ·                               ───
+ 4 │         }
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
+   ╭─[exhaustive_deps.tsx:3:31]
+ 2 │           const foo = [];
+ 3 │           useMemo(() => foo, [foo]);
+   ·                               ───
+ 4 │         }
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
+   ╭─[exhaustive_deps.tsx:3:31]
+ 2 │           const foo = () => {};
+ 3 │           useMemo(() => foo, [foo]);
+   ·                               ───
+ 4 │         }
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
+   ╭─[exhaustive_deps.tsx:3:31]
+ 2 │           const foo = function bar(){};
+ 3 │           useMemo(() => foo, [foo]);
+   ·                               ───
+ 4 │         }
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
+   ╭─[exhaustive_deps.tsx:3:31]
+ 2 │           const foo = class {};
+ 3 │           useMemo(() => foo, [foo]);
+   ·                               ───
+ 4 │         }
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
+   ╭─[exhaustive_deps.tsx:3:31]
+ 2 │           const foo = true ? {} : 'fine';
+ 3 │           useMemo(() => foo, [foo]);
+   ·                               ───
+ 4 │         }
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
+   ╭─[exhaustive_deps.tsx:3:31]
+ 2 │           const foo = bar || {};
+ 3 │           useMemo(() => foo, [foo]);
+   ·                               ───
+ 4 │         }
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
+   ╭─[exhaustive_deps.tsx:3:31]
+ 2 │           const foo = bar ?? {};
+ 3 │           useMemo(() => foo, [foo]);
+   ·                               ───
+ 4 │         }
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
+   ╭─[exhaustive_deps.tsx:3:31]
+ 2 │           const foo = bar && {};
+ 3 │           useMemo(() => foo, [foo]);
+   ·                               ───
+ 4 │         }
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
+   ╭─[exhaustive_deps.tsx:3:31]
+ 2 │           const foo = bar ? baz ? {} : null : null;
+ 3 │           useMemo(() => foo, [foo]);
+   ·                               ───
+ 4 │         }
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
+   ╭─[exhaustive_deps.tsx:3:31]
+ 2 │           let foo = {};
+ 3 │           useMemo(() => foo, [foo]);
+   ·                               ───
+ 4 │         }
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
+   ╭─[exhaustive_deps.tsx:3:31]
+ 2 │           var foo = {};
+ 3 │           useMemo(() => foo, [foo]);
+   ·                               ───
+ 4 │         }
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useCallback has a dependency array that changes every render.
+   ╭─[exhaustive_deps.tsx:5:15]
+ 4 │             console.log(foo);
+ 5 │           }, [foo]);
+   ·               ───
+ 6 │         }
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
+   ╭─[exhaustive_deps.tsx:5:15]
+ 4 │             console.log(foo);
+ 5 │           }, [foo]);
+   ·               ───
+ 6 │         }
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useLayoutEffect has a dependency array that changes every render.
+   ╭─[exhaustive_deps.tsx:5:15]
+ 4 │             console.log(foo);
+ 5 │           }, [foo]);
+   ·               ───
+ 6 │         }
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useImperativeHandle has a dependency array that changes every render.
+   ╭─[exhaustive_deps.tsx:8:14]
+ 7 │             },
+ 8 │             [foo]
+   ·              ───
+ 9 │           );
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
+   ╭─[exhaustive_deps.tsx:5:15]
+ 4 │             console.log(foo);
+ 5 │           }, [foo]);
+   ·               ───
+ 6 │         }
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
+   ╭─[exhaustive_deps.tsx:6:15]
+ 5 │             console.log(foo);
+ 6 │           }, [foo]);
+   ·               ───
+ 7 │         }
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
+   ╭─[exhaustive_deps.tsx:5:15]
+ 4 │             console.log(foo);
+ 5 │           }, [foo]);
+   ·               ───
+ 6 │         }
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
+   ╭─[exhaustive_deps.tsx:5:15]
+ 4 │             console.log(foo);
+ 5 │           }, [foo]);
+   ·               ───
+ 6 │         }
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
+   ╭─[exhaustive_deps.tsx:5:15]
+ 4 │             console.log(foo);
+ 5 │           }, [foo]);
+   ·               ───
+ 6 │         }
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
+   ╭─[exhaustive_deps.tsx:5:15]
+ 4 │             console.log(foo);
+ 5 │           }, [foo]);
+   ·               ───
+ 6 │         }
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
+   ╭─[exhaustive_deps.tsx:5:15]
+ 4 │             console.log(foo);
+ 5 │           }, [foo]);
+   ·               ───
+ 6 │         }
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
+   ╭─[exhaustive_deps.tsx:5:15]
+ 4 │             console.log(foo);
+ 5 │           }, [foo]);
+   ·               ───
+ 6 │         }
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
+   ╭─[exhaustive_deps.tsx:5:15]
+ 4 │             console.log(new Bar());
+ 5 │           }, [Bar]);
+   ·               ───
+ 6 │         }
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useLayoutEffect has a dependency array that changes every render.
+   ╭─[exhaustive_deps.tsx:5:15]
+ 4 │             console.log(foo);
+ 5 │           }, [foo]);
+   ·               ───
+ 6 │           useEffect(() => {
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react_hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
+   ╭─[exhaustive_deps.tsx:8:15]
+ 7 │             console.log(foo);
+ 8 │           }, [foo]);
+   ·               ───
+ 9 │         }
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.

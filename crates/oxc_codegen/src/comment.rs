@@ -70,14 +70,15 @@ impl<'a> Codegen<'a> {
         self.print_comments(start, &comments, unused_comments);
     }
 
-    /// A statement comment also includes legal comments
-    pub(crate) fn print_statement_comments(&mut self, start: u32) {
+    pub(crate) fn get_statement_comments(
+        &mut self,
+        start: u32,
+    ) -> Option<(Vec<Comment>, Vec<Comment>)> {
         if self.options.minify {
-            return;
+            return None;
         }
-        let Some(comments) = self.comments.remove(&start) else {
-            return;
-        };
+
+        let comments = self.comments.remove(&start)?;
 
         let mut leading_comments = vec![];
         let mut unused_comments = vec![];
@@ -107,7 +108,14 @@ impl<'a> Codegen<'a> {
             unused_comments.push(comment);
         }
 
-        self.print_comments(start, &leading_comments, unused_comments);
+        Some((leading_comments, unused_comments))
+    }
+
+    /// A statement comment also includes legal comments
+    pub(crate) fn print_statement_comments(&mut self, start: u32) {
+        if let Some((comments, unused)) = self.get_statement_comments(start) {
+            self.print_comments(start, &comments, unused);
+        }
     }
 
     pub(crate) fn print_annotation_comments(&mut self, node_start: u32) {
@@ -162,7 +170,12 @@ impl<'a> Codegen<'a> {
         }
     }
 
-    fn print_comments(&mut self, start: u32, comments: &[Comment], unused_comments: Vec<Comment>) {
+    pub(crate) fn print_comments(
+        &mut self,
+        start: u32,
+        comments: &[Comment],
+        unused_comments: Vec<Comment>,
+    ) {
         for (i, comment) in comments.iter().enumerate() {
             if i == 0 {
                 if comment.preceded_by_newline {

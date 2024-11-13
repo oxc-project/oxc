@@ -5,8 +5,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::{
-    categories::OxlintCategories, env::OxlintEnv, globals::OxlintGlobals, plugins::LintPlugins,
-    rules::OxlintRules, settings::OxlintSettings,
+    categories::OxlintCategories, env::OxlintEnv, globals::OxlintGlobals,
+    overrides::OxlintOverrides, plugins::LintPlugins, rules::OxlintRules, settings::OxlintSettings,
 };
 
 use crate::utils::read_to_string;
@@ -30,7 +30,7 @@ use crate::utils::read_to_string;
 /// ```json
 /// {
 ///   "$schema": "./node_modules/oxlint/configuration_schema.json",
-///   "plugins": ["import", "unicorn"],
+///   "plugins": ["import", "typescript", "unicorn"],
 ///   "env": {
 ///     "browser": true
 ///   },
@@ -42,7 +42,15 @@ use crate::utils::read_to_string;
 ///   "rules": {
 ///     "eqeqeq": "warn",
 ///     "import/no-cycle": "error"
-///   }
+///   },
+///   "overrides": [
+///     {
+///       "files": ["*.test.ts", "*.spec.ts"],
+///       "rules": {
+///         "@typescript-eslint/no-explicit-any": "off"
+///       }
+///     }
+///   ]
 ///  }
 /// ```
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
@@ -74,6 +82,9 @@ pub struct Oxlintrc {
     pub env: OxlintEnv,
     /// Enabled or disabled specific global variables.
     pub globals: OxlintGlobals,
+    /// Add, remove, or otherwise reconfigure rules for specific files or groups of files.
+    #[serde(skip_serializing_if = "OxlintOverrides::is_empty")]
+    pub overrides: OxlintOverrides,
 }
 
 impl Oxlintrc {

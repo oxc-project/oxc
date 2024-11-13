@@ -1416,8 +1416,8 @@ impl<'a> ContentHash for TSEnumMemberName<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
-            Self::StaticIdentifier(it) => ContentHash::content_hash(it, state),
-            Self::StaticStringLiteral(it) => ContentHash::content_hash(it, state),
+            Self::Identifier(it) => ContentHash::content_hash(it, state),
+            Self::String(it) => ContentHash::content_hash(it, state),
         }
     }
 }

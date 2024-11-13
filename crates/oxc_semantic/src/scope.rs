@@ -289,6 +289,21 @@ impl ScopeTree {
         &self.child_ids[scope_id]
     }
 
+    pub fn iter_all_child_ids(&self, scope_id: ScopeId) -> impl Iterator<Item = ScopeId> + '_ {
+        let mut stack = self.child_ids[scope_id].clone();
+        let child_ids: &IndexVec<ScopeId, Vec<ScopeId>> = &self.child_ids;
+        std::iter::from_fn(move || {
+            if let Some(scope_id) = stack.pop() {
+                if let Some(children) = child_ids.get(scope_id) {
+                    stack.extend(children.iter().copied());
+                }
+                Some(scope_id)
+            } else {
+                None
+            }
+        })
+    }
+
     /// Get a mutable reference to a scope's children
     #[inline]
     pub fn get_child_ids_mut(&mut self, scope_id: ScopeId) -> &mut Vec<ScopeId> {

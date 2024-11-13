@@ -97,6 +97,7 @@ pub struct OxcCode {
     pub scope: Option<Cow<'static, str>>,
     pub number: Option<Cow<'static, str>>,
 }
+
 impl OxcCode {
     pub fn is_some(&self) -> bool {
         self.scope.is_some() || self.number.is_some()

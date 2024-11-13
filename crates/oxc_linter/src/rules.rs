@@ -505,6 +505,10 @@ mod node {
     pub mod no_new_require;
 }
 
+mod react_hooks {
+    pub mod exhaustive_deps;
+}
+
 oxc_macros::declare_all_lint_rules! {
     // import::no_deprecated,
     // import::no_unused_modules,
@@ -956,4 +960,5 @@ oxc_macros::declare_all_lint_rules! {
     vitest::prefer_to_be_object,
     vitest::prefer_to_be_truthy,
     vitest::require_local_test_context_for_concurrent_snapshots,
+    react_hooks::exhaustive_deps,
 }

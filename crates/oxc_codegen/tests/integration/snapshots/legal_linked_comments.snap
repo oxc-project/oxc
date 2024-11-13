@@ -62,3 +62,41 @@ function bar() {
 	function() {}
 }
 /*! For license information please see test.js */
+########## 7
+function foo() {
+	(() => {
+		/**
+		 * @preserve
+		 */
+	})();
+	/**
+	 * @preserve
+	 */
+}
+/**
+ * @preserve
+ */
+----------
+function foo() {
+	(() => {
+		/**
+		* @preserve
+		*/
+	})();
+	/**
+	* @preserve
+	*/
+}
+/**
+* @preserve
+*//*! For license information please see test.js */
+########## 8
+/**
+* @preserve
+*/
+
+----------
+/**
+* @preserve
+*/
+/*! For license information please see test.js */

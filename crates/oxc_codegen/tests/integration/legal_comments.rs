@@ -17,6 +17,23 @@ fn cases() -> Vec<&'static str> {
     bar;
 }",
         "function bar() { var foo; /*! #__NO_SIDE_EFFECTS__ */ function () { } }",
+        "function foo() {
+	(() => {
+		/**
+		 * @preserve
+		 */
+	})();
+	/**
+	 * @preserve
+	 */
+}
+/**
+ * @preserve
+ */",
+        "/**
+* @preserve
+*/
+",
     ]
 }
 

@@ -2579,12 +2579,12 @@ impl<'a> ContentEq for TSEnumMember<'a> {
 impl<'a> ContentEq for TSEnumMemberName<'a> {
     fn content_eq(&self, other: &Self) -> bool {
         match self {
-            Self::StaticIdentifier(it) => match other {
-                Self::StaticIdentifier(other) if ContentEq::content_eq(it, other) => true,
+            Self::Identifier(it) => match other {
+                Self::Identifier(other) if ContentEq::content_eq(it, other) => true,
                 _ => false,
             },
-            Self::StaticStringLiteral(it) => match other {
-                Self::StaticStringLiteral(other) if ContentEq::content_eq(it, other) => true,
+            Self::String(it) => match other {
+                Self::String(other) if ContentEq::content_eq(it, other) => true,
                 _ => false,
             },
         }

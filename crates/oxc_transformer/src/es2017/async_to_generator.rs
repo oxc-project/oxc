@@ -755,7 +755,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         match ancestor {
             // `class A { async foo() {} }`
             Ancestor::MethodDefinitionValue(_) => true,
-            // Only `({ async foo() {} })` does not include non-method like `({ async foo: function() {} })`,
+            // Only `({ async foo() {} })` does not include non-method like `({ foo: async function() {} })`,
             // because it's just a property with a function value
             Ancestor::ObjectPropertyValue(property) => *property.method(),
             _ => false,

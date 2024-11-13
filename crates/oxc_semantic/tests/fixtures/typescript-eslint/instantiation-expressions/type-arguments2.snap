@@ -1,11 +1,8 @@
 ---
 source: crates/oxc_semantic/tests/main.rs
 input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/instantiation-expressions/type-arguments2.ts
+snapshot_kind: text
 ---
-================================================================================
-SCOPES
-================================================================================
-
 [
   {
     "children": [
@@ -109,9 +106,3 @@ SCOPES
     ]
   }
 ]
-
-================================================================================
-CONFORMANCE
-================================================================================
-
-All tests passed.

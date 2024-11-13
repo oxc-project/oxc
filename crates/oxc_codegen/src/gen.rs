@@ -48,6 +48,8 @@ impl<'a> Gen for Program<'a> {
             stmt.print(p, ctx);
             p.print_semicolon_if_needed();
         }
+        // Print trailing statement comments.
+        p.print_statement_comments(self.span.end);
     }
 }
 
@@ -662,13 +664,28 @@ impl<'a> Gen for Function<'a> {
 
 impl<'a> Gen for FunctionBody<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        p.print_curly_braces(self.span, self.is_empty(), |p| {
+        let span_end = self.span.end;
+        let comments_at_end = if !p.options.minify && span_end != 0 {
+            p.get_statement_comments(span_end - 1)
+        } else {
+            None
+        };
+        let is_empty = if self.is_empty() {
+            comments_at_end.is_none() || comments_at_end.as_ref().is_some_and(|c| c.0.is_empty())
+        } else {
+            false
+        };
+        p.print_curly_braces(self.span, is_empty, |p| {
             for directive in &self.directives {
                 directive.print(p, ctx);
             }
             for stmt in &self.statements {
                 p.print_semicolon_if_needed();
                 stmt.print(p, ctx);
+            }
+            // Print trailing statement comments.
+            if let Some((comments, unused)) = comments_at_end {
+                p.print_comments(span_end - 1, &comments, unused);
             }
         });
         p.needs_semicolon = false;
@@ -3590,8 +3607,8 @@ impl<'a> Gen for TSEnumDeclaration<'a> {
 impl<'a> Gen for TSEnumMember<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         match &self.id {
-            TSEnumMemberName::StaticIdentifier(decl) => decl.print(p, ctx),
-            TSEnumMemberName::StaticStringLiteral(decl) => decl.print(p, ctx),
+            TSEnumMemberName::Identifier(decl) => decl.print(p, ctx),
+            TSEnumMemberName::String(decl) => decl.print(p, ctx),
         }
         if let Some(init) = &self.initializer {
             p.print_soft_space();

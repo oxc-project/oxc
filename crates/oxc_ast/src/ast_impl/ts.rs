@@ -14,8 +14,8 @@ impl<'a> TSEnumMemberName<'a> {
     /// Get the name of this enum member.
     pub fn static_name(&self) -> Atom<'a> {
         match self {
-            Self::StaticIdentifier(ident) => ident.name.clone(),
-            Self::StaticStringLiteral(lit) => lit.value.clone(),
+            Self::Identifier(ident) => ident.name.clone(),
+            Self::String(lit) => lit.value.clone(),
         }
     }
 }

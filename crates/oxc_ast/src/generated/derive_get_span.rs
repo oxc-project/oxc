@@ -1272,8 +1272,8 @@ impl<'a> GetSpan for TSEnumMember<'a> {
 impl<'a> GetSpan for TSEnumMemberName<'a> {
     fn span(&self) -> Span {
         match self {
-            Self::StaticIdentifier(it) => GetSpan::span(it.as_ref()),
-            Self::StaticStringLiteral(it) => GetSpan::span(it.as_ref()),
+            Self::Identifier(it) => GetSpan::span(it.as_ref()),
+            Self::String(it) => GetSpan::span(it.as_ref()),
         }
     }
 }

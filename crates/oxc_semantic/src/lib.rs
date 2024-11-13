@@ -2,7 +2,7 @@
 //!
 //! # Example
 //! ```rust
-#![doc = include_str!("../examples/simple.rs")]
+#![doc = include_str!("../examples/semantic.rs")]
 //! ```
 
 use std::ops::RangeBounds;

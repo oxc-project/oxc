@@ -3715,10 +3715,10 @@ pub(crate) unsafe fn walk_ts_enum_member_name<'a, Tr: Traverse<'a>>(
 ) {
     traverser.enter_ts_enum_member_name(&mut *node, ctx);
     match &mut *node {
-        TSEnumMemberName::StaticIdentifier(node) => {
+        TSEnumMemberName::Identifier(node) => {
             walk_identifier_name(traverser, (&mut **node) as *mut _, ctx)
         }
-        TSEnumMemberName::StaticStringLiteral(node) => {
+        TSEnumMemberName::String(node) => {
             walk_string_literal(traverser, (&mut **node) as *mut _, ctx)
         }
     }

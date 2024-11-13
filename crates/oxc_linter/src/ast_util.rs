@@ -1,6 +1,6 @@
 use oxc_ast::{ast::BindingIdentifier, AstKind};
 use oxc_ecmascript::ToBoolean;
-use oxc_semantic::{AstNode, IsGlobalReference, NodeId, Semantic, SymbolId};
+use oxc_semantic::{AstNode, IsGlobalReference, NodeId, ReferenceId, Semantic, SymbolId};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};
 
@@ -279,6 +279,15 @@ pub fn get_declaration_of_variable<'a, 'b>(
 ) -> Option<&'b AstNode<'a>> {
     let symbol_id = get_symbol_id_of_variable(ident, semantic)?;
     let symbol_table = semantic.symbols();
+    Some(semantic.nodes().get_node(symbol_table.get_declaration(symbol_id)))
+}
+
+pub fn get_declaration_from_reference_id<'a, 'b>(
+    reference_id: ReferenceId,
+    semantic: &'b Semantic<'a>,
+) -> Option<&'b AstNode<'a>> {
+    let symbol_table = semantic.symbols();
+    let symbol_id = symbol_table.get_reference(reference_id).symbol_id()?;
     Some(semantic.nodes().get_node(symbol_table.get_declaration(symbol_id)))
 }
 

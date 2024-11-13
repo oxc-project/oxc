@@ -99,6 +99,9 @@ impl Rule for IframeHasTitle {
                             return;
                         }
                     }
+                    JSXExpression::CallExpression(_) => {
+                        return;
+                    }
                     expr @ JSXExpression::Identifier(_) => {
                         if !expr.is_undefined() {
                             return;
@@ -124,6 +127,7 @@ fn test() {
         (r"<iframe title='Unique title' />", None, None),
         (r"<iframe title={foo} />", None, None),
         (r"<FooComponent />", None, None),
+        (r"<iframe title={titleGenerator('hello')} />", None, None),
         // CUSTOM ELEMENT TESTS FOR COMPONENTS SETTINGS
         (
             r"<FooComponent title='Unique title' />",

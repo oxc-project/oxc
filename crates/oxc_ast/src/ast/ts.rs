@@ -102,20 +102,13 @@ pub struct TSEnumMember<'a> {
     pub initializer: Option<Expression<'a>>,
 }
 
-inherit_variants! {
 /// TS Enum Member Name
-///
-/// Used in [`TSEnumMember`]. Inherits variants from [`Expression`]. See [`ast` module docs] for
-/// explanation of inheritance.
-///
-/// [`ast` module docs]: `super`
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub enum TSEnumMemberName<'a> {
-    StaticIdentifier(Box<'a, IdentifierName<'a>>) = 64,
-    StaticStringLiteral(Box<'a, StringLiteral<'a>>) = 65,
-}
+    Identifier(Box<'a, IdentifierName<'a>>) = 0,
+    String(Box<'a, StringLiteral<'a>>) = 1,
 }
 
 /// TypeScript Type Annotation

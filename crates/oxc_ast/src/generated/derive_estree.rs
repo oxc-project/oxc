@@ -1975,8 +1975,8 @@ impl<'a> Serialize for TSEnumMember<'a> {
 impl<'a> Serialize for TSEnumMemberName<'a> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            TSEnumMemberName::StaticIdentifier(x) => Serialize::serialize(x, serializer),
-            TSEnumMemberName::StaticStringLiteral(x) => Serialize::serialize(x, serializer),
+            TSEnumMemberName::Identifier(x) => Serialize::serialize(x, serializer),
+            TSEnumMemberName::String(x) => Serialize::serialize(x, serializer),
         }
     }
 }
