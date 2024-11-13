@@ -6,11 +6,15 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::Span;
+use std::borrow::Cow;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_empty_object_type_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not use the empty object type literal.")
+fn no_empty_object_type_diagnostic<S: Into<Cow<'static, str>>>(
+    span: Span,
+    message: S,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warn(message)
         .with_help("To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.")
         .with_label(span)
 }
@@ -79,7 +83,7 @@ declare_oxc_lint!(
     /// type TypeWith = { property: boolean };
     /// ```
     NoEmptyObjectType,
-    suspicious,
+    restriction,
 );
 
 impl Rule for NoEmptyObjectType {
@@ -153,13 +157,22 @@ fn check_interface_declaration(
         Some(extends) if extends.len() == 1 => {
             match allow_interfaces {
                 AllowInterfaces::WithSingleExtends => (),
-                _ => ctx.diagnostic(no_empty_object_type_diagnostic(interface.body.span)),
+                _ => ctx.diagnostic(no_empty_object_type_diagnostic(
+                    interface.body.span,
+                    "Do not use an empty interface declaration.",
+                )),
             };
         }
         Some(extends) if extends.len() == 0 => {
-            ctx.diagnostic(no_empty_object_type_diagnostic(interface.body.span));
+            ctx.diagnostic(no_empty_object_type_diagnostic(
+                interface.body.span,
+                "Do not use an empty interface declaration.",
+            ));
         }
-        None => ctx.diagnostic(no_empty_object_type_diagnostic(interface.body.span)),
+        None => ctx.diagnostic(no_empty_object_type_diagnostic(
+            interface.body.span,
+            "Do not use an empty interface declaration.",
+        )),
         _ => (),
     }
 }
@@ -186,7 +199,10 @@ fn check_type_literal(
         }
         _ => (),
     }
-    ctx.diagnostic(no_empty_object_type_diagnostic(type_literal.span));
+    ctx.diagnostic(no_empty_object_type_diagnostic(
+        type_literal.span,
+        "Do not use the empty object type literal.",
+    ));
 }
 
 #[derive(Debug, Default, Clone, Copy)]
