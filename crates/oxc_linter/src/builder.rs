@@ -82,7 +82,7 @@ impl LinterBuilder {
     /// match any recognized rules.
     pub fn from_oxlintrc(start_empty: bool, oxlintrc: Oxlintrc) -> Self {
         // TODO: monorepo config merging, plugin-based extends, etc.
-        let Oxlintrc { plugins, settings, env, globals, categories, rules: mut oxlintrc_rules } =
+        let Oxlintrc { plugins, settings, env, globals, categories, rules: oxlintrc_rules } =
             oxlintrc;
 
         let config = LintConfig { plugins, settings, env, globals };

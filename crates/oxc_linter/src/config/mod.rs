@@ -101,7 +101,7 @@ mod test {
     fn test_vitest_rule_replace() {
         let fixture_path: std::path::PathBuf =
             env::current_dir().unwrap().join("fixtures/eslint_config_vitest_replace.json");
-        let mut config = Oxlintrc::from_file(&fixture_path).unwrap();
+        let config = Oxlintrc::from_file(&fixture_path).unwrap();
         let mut set = FxHashSet::default();
         config.rules.override_rules(&mut set, &RULES);
 
