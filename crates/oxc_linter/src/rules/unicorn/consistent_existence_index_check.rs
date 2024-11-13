@@ -60,58 +60,61 @@ const METHOD_NAMES: [&str; 4] = ["indexOf", "lastIndexOf", "findIndex", "findLas
 
 impl Rule for ConsistentExistenceIndexCheck {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::BinaryExpression(binary_expression) = node.kind() {
-            let left = binary_expression.left.without_parentheses();
-            let right = binary_expression.right.without_parentheses();
-            let operator = binary_expression.operator;
+        let AstKind::BinaryExpression(binary_expression) = node.kind() else {
+            return;
+        };
 
-            let Expression::Identifier(identifier) = left else {
+        let left = binary_expression.left.get_inner_expression();
+        let right = binary_expression.right.get_inner_expression();
+        let operator = binary_expression.operator;
+
+        let Expression::Identifier(identifier) = left else {
+            return;
+        };
+
+        let Some(reference_id) = identifier.reference_id.get() else {
+            return;
+        };
+
+        let Some(reference_symbol_id) = ctx.symbols().get_reference(reference_id).symbol_id()
+        else {
+            return;
+        };
+
+        let declaration = ctx.symbols().get_declaration(reference_symbol_id);
+        let node = ctx.nodes().get_node(declaration);
+
+        if let AstKind::VariableDeclarator(variables_declarator) = node.kind() {
+            if variables_declarator.kind != VariableDeclarationKind::Const {
+                return;
+            }
+
+            let Some(Expression::CallExpression(call)) = &variables_declarator.init else {
                 return;
             };
 
-            let Some(reference_id) = identifier.reference_id.get() else {
+            if !call.callee.is_member_expression() {
+                return;
+            }
+
+            let Some(callee_name) = call.callee_name() else {
                 return;
             };
 
-            let Some(reference_symbol_id) = ctx.symbols().get_reference(reference_id).symbol_id()
-            else {
+            if !METHOD_NAMES.contains(&callee_name) {
+                return;
+            }
+
+            let replacement = get_replacement(right, &operator);
+
+            let Some(replacement) = &replacement else {
                 return;
             };
 
-            let declaration = ctx.symbols().get_declaration(reference_symbol_id);
-            let node = ctx.nodes().get_node(declaration);
+            let existence_or_non_existence =
+                if replacement.replacement_value == "-1" { "non-existence" } else { "existence" };
 
-            if let AstKind::VariableDeclarator(variables_declarator) = node.kind() {
-                if variables_declarator.kind != VariableDeclarationKind::Const {
-                    return;
-                }
-
-                let Some(Expression::CallExpression(call)) = &variables_declarator.init else {
-                    return;
-                };
-
-                if !call.callee.is_member_expression() {
-                    return;
-                }
-
-                let Some(callee_name) = call.callee_name() else {
-                    return;
-                };
-
-                if !METHOD_NAMES.contains(&callee_name) {
-                    return;
-                }
-
-                let replacement = get_replacement(right, &operator);
-
-                if let Some(replacement) = &replacement {
-                    let existence_or_non_existence = if replacement.replacement_value == "-1" {
-                        "non-existence"
-                    } else {
-                        "existence"
-                    };
-
-                    let label = format!(
+            let label = format!(
                         "Prefer `{replacement_operator} {replacement_value}` over `{original_operator} {original_value}` to check {existenceOrNonExistence}.",
                         replacement_operator = replacement.replacement_operator,
                         replacement_value = replacement.replacement_value,
@@ -120,57 +123,51 @@ impl Rule for ConsistentExistenceIndexCheck {
                         existenceOrNonExistence = existence_or_non_existence,
                     );
 
-                    let operator_start = binary_expression.left.span().end;
-                    let operator_end = binary_expression.right.span().start;
-                    let operator_span = Span::new(operator_start, operator_end);
-                    let operator_source = ctx.source_range(operator_span);
+            let operator_start = binary_expression.left.span().end;
+            let operator_end = binary_expression.right.span().start;
+            let operator_span = Span::new(operator_start, operator_end);
+            let operator_source = ctx.source_range(operator_span);
 
-                    let operator_matches =
-                        operator_source.match_indices(replacement.original_operator);
-                    let mut operator_replacement_text = operator_source.to_string();
+            let operator_matches = operator_source.match_indices(replacement.original_operator);
+            let mut operator_replacement_text = operator_source.to_string();
 
-                    for (index, text) in operator_matches {
-                        let comments =
-                            ctx.semantic().trivias().comments_range(operator_start..operator_end);
+            for (index, text) in operator_matches {
+                let comments = ctx.semantic().comments_range(operator_start..operator_end);
 
-                        let start = operator_start + index as u32;
-                        let end = start + text.len() as u32;
-                        let span = Span::new(start, end);
+                let start = operator_start + index as u32;
+                let end = start + text.len() as u32;
+                let span = Span::new(start, end);
 
-                        let mut is_in_comment = false;
+                let mut is_in_comment = false;
 
-                        for comment in comments {
-                            if comment.span.contains_inclusive(span) {
-                                is_in_comment = true;
-                                break;
-                            }
-                        }
-
-                        if !is_in_comment {
-                            let head = &operator_source[..index];
-                            let tail = &operator_source[index + text.len()..];
-
-                            operator_replacement_text =
-                                format!("{}{}{}", head, replacement.replacement_operator, tail);
-                        }
+                for comment in comments {
+                    if comment.span.contains_inclusive(span) {
+                        is_in_comment = true;
+                        break;
                     }
+                }
 
-                    ctx.diagnostic_with_fix(
-                        consistent_existence_index_check_diagnostic(label, binary_expression.span),
-                        |fixer| {
-                            let fixer = fixer.for_multifix();
-                            let mut rule_fixes = fixer.new_fix_with_capacity(2);
+                if !is_in_comment {
+                    let head = &operator_source[..index];
+                    let tail = &operator_source[index + text.len()..];
 
-                            rule_fixes
-                                .push(fixer.replace(operator_span, operator_replacement_text));
-                            rule_fixes
-                                .push(fixer.replace(right.span(), replacement.replacement_value));
-
-                            return rule_fixes;
-                        },
-                    );
+                    operator_replacement_text =
+                        format!("{}{}{}", head, replacement.replacement_operator, tail);
                 }
             }
+
+            ctx.diagnostic_with_fix(
+                consistent_existence_index_check_diagnostic(label, binary_expression.span),
+                |fixer| {
+                    let fixer = fixer.for_multifix();
+                    let mut rule_fixes = fixer.new_fix_with_capacity(2);
+
+                    rule_fixes.push(fixer.replace(operator_span, operator_replacement_text));
+                    rule_fixes.push(fixer.replace(right.span(), replacement.replacement_value));
+
+                    return rule_fixes;
+                },
+            );
         };
     }
 }
@@ -198,7 +195,7 @@ fn get_replacement(right: &Expression, operator: &BinaryOperator) -> Option<GetR
             None
         }
         BinaryOperator::GreaterThan => {
-            if is_negative_one(right.without_parentheses()) {
+            if is_negative_one(right.get_inner_expression()) {
                 return Some(GetReplacementOutput {
                     replacement_operator: "!==",
                     replacement_value: "-1",
@@ -229,7 +226,7 @@ fn is_negative_one(expression: &Expression) -> bool {
     if let Expression::UnaryExpression(unary_expression) = expression {
         if let UnaryOperator::UnaryNegation = unary_expression.operator {
             if let Expression::NumericLiteral(value) =
-                &unary_expression.argument.without_parentheses()
+                &unary_expression.argument.get_inner_expression()
             {
                 return value.value == 1.0;
             }
