@@ -351,7 +351,8 @@ impl Backend {
             let url = Url::from_str(&map.key()).expect("should convert to path");
 
             self.handle_file_update(url, None, None)
-        })).await;
+        }))
+        .await;
     }
 
     async fn init_linter_config(&self) {
