@@ -181,33 +181,7 @@ fn get_function_like_node<'a, 'b>(
 }
 
 fn is_promise_callback<'a, 'b>(node: &'a AstNode<'b>, ctx: &'a LintContext<'b>) -> bool {
-    let mut function_node = node;
-
-    let function_node = loop {
-        let Some(parent) = outermost_paren_parent(function_node, ctx) else {
-            break function_node;
-        };
-
-        let AstKind::MemberExpression(mem) = parent.kind() else {
-            break function_node;
-        };
-
-        if mem.static_property_name() != Some("bind") {
-            break function_node;
-        };
-
-        let Some(grand_parent) = outermost_paren_parent(parent, ctx) else {
-            break function_node;
-        };
-
-        let AstKind::CallExpression(_) = grand_parent.kind() else {
-            break function_node;
-        };
-        // FIXME: ensure callee is functionNode.parent
-        debug_assert_ne!(function_node.id(), grand_parent.id());
-        function_node = grand_parent;
-    };
-
+    let function_node = traverse_bind_calls(node, ctx);
     let Some(parent) = outermost_paren_parent(function_node, ctx) else {
         return false;
     };
@@ -242,6 +216,36 @@ fn is_promise_callback<'a, 'b>(node: &'a AstNode<'b>, ctx: &'a LintContext<'b>) 
     }
 
     false
+}
+
+// Traverse bind functions and return outer call expression
+fn traverse_bind_calls<'a, 'b>(node: &'a AstNode<'b>, ctx: &'a LintContext<'b>) -> &'a AstNode<'b> {
+    let mut current_node = node;
+    loop {
+        let Some(parent) = outermost_paren_parent(current_node, ctx) else {
+            return current_node;
+        };
+        if !is_bind_member_expression(parent) {
+            return current_node;
+        }
+
+        let Some(grand_parent) = outermost_paren_parent(parent, ctx) else {
+            return current_node;
+        };
+        let AstKind::CallExpression(_) = grand_parent.kind() else {
+            return current_node;
+        };
+
+        current_node = grand_parent;
+    }
+}
+
+fn is_bind_member_expression(node: &AstNode) -> bool {
+    let AstKind::MemberExpression(member_expr) = node.kind() else {
+        return false;
+    };
+
+    member_expr.static_property_name() == Some("bind")
 }
 
 fn match_arrow_function_body<'a>(ctx: &LintContext<'a>, parent: &AstNode<'a>) -> bool {
