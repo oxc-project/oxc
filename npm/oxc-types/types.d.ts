@@ -20,8 +20,9 @@ export interface NumericLiteral extends Span {
 }
 
 export interface StringLiteral extends Span {
-  type: 'StringLiteral';
+  type: 'Literal';
   value: string;
+  raw?: undefined;
 }
 
 export interface BigIntLiteral extends Span {

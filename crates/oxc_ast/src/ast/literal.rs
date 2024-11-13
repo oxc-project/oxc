@@ -65,6 +65,7 @@ pub struct NumericLiteral<'a> {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
+#[estree(type = "Literal", via = crate::serialize::ESTreeLiteral, add_ts = "raw?: undefined")]
 pub struct StringLiteral<'a> {
     /// Node location in source code
     pub span: Span,

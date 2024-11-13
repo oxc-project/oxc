@@ -33,11 +33,7 @@ impl<'a> Serialize for NumericLiteral<'a> {
 
 impl<'a> Serialize for StringLiteral<'a> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "StringLiteral")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("value", &self.value)?;
-        map.end()
+        crate::serialize::ESTreeLiteral::from(self).serialize(serializer)
     }
 }
 

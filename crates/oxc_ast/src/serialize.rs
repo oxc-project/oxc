@@ -22,7 +22,7 @@ pub struct ESTreeLiteral<'a, T> {
     #[serde(flatten)]
     span: Span,
     value: T,
-    raw: &'a str,
+    raw: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
     bigint: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -34,7 +34,7 @@ impl<'a> From<&BooleanLiteral> for ESTreeLiteral<'a, bool> {
         Self {
             span: value.span,
             value: value.value,
-            raw: if value.value { "true" } else { "false" },
+            raw: Some(if value.value { "true" } else { "false" }),
             bigint: None,
             regex: None,
         }
@@ -43,13 +43,25 @@ impl<'a> From<&BooleanLiteral> for ESTreeLiteral<'a, bool> {
 
 impl<'a> From<&NullLiteral> for ESTreeLiteral<'a, ()> {
     fn from(value: &NullLiteral) -> Self {
-        Self { span: value.span, value: (), raw: "null", bigint: None, regex: None }
+        Self { span: value.span, value: (), raw: Some("null"), bigint: None, regex: None }
     }
 }
 
 impl<'a> From<&'a NumericLiteral<'a>> for ESTreeLiteral<'a, f64> {
     fn from(value: &'a NumericLiteral) -> Self {
-        Self { span: value.span, value: value.value, raw: value.raw, bigint: None, regex: None }
+        Self {
+            span: value.span,
+            value: value.value,
+            raw: Some(value.raw),
+            bigint: None,
+            regex: None,
+        }
+    }
+}
+
+impl<'a> From<&'a StringLiteral<'a>> for ESTreeLiteral<'a, &'a str> {
+    fn from(value: &'a StringLiteral) -> Self {
+        Self { span: value.span, value: &value.value, raw: None, bigint: None, regex: None }
     }
 }
 
@@ -73,7 +85,7 @@ impl<'a> From<&'a BigIntLiteral<'a>> for ESTreeLiteral<'a, ()> {
             span: value.span,
             // BigInts can't be serialized to JSON
             value: (),
-            raw: value.raw.as_str(),
+            raw: Some(value.raw.as_str()),
             bigint: Some(bigint.to_string()),
             regex: None,
         }
@@ -94,7 +106,7 @@ impl<'a> From<&'a RegExpLiteral<'a>> for ESTreeLiteral<'a, Option<EmptyObject>> 
     fn from(value: &'a RegExpLiteral) -> Self {
         Self {
             span: value.span,
-            raw: value.raw,
+            raw: Some(value.raw),
             value: match &value.regex.pattern {
                 RegExpPattern::Pattern(_) => Some(EmptyObject {}),
                 _ => None,
