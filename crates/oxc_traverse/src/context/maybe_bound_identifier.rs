@@ -1,76 +1,60 @@
-use oxc_ast::{
-    ast::{
-        AssignmentTarget, BindingIdentifier, BindingPattern, BindingPatternKind, Expression,
-        IdentifierReference,
-    },
-    NONE,
-};
+use oxc_ast::ast::{AssignmentTarget, Expression, IdentifierReference};
 use oxc_span::{Atom, Span, SPAN};
 use oxc_syntax::{reference::ReferenceFlags, symbol::SymbolId};
 
 use crate::TraverseCtx;
 
-use super::MaybeBoundIdentifier;
+use super::BoundIdentifier;
 
-/// Info about a binding, from which one can create a `BindingIdentifier` or `IdentifierReference`s.
+/// A factory for generating `IdentifierReference`s.
 ///
 /// Typical usage:
 ///
 /// ```rs
-/// // Generate a UID for a top-level var
-/// let binding = ctx.generate_uid_in_current_scope("foo", SymbolFlags::FunctionScopedVariable);
+/// // Create `MaybeBoundIdentifier` from an existing `IdentifierReference`
+/// let binding = MaybeBoundIdentifier::from_identifier_reference(ident, ctx);
 ///
 /// // Generate `IdentifierReference`s and insert them into AST
-/// some_node.id = binding.create_read_reference(ctx);
-/// some_other_node.id = binding.create_read_reference(ctx);
-///
-/// // Store details of the binding for later
-/// self.foo_binding = binding;
-///
-/// // Later on in `exit_program`
-/// let id = self.foo_binding.create_binding_identifier(ctx);
-/// // Insert `var <id> = something;` into `program.body`
+/// assign_expr.left = binding.create_write_target(ctx);
+/// assign_expr.right = binding.create_read_expression(ctx);
 /// ```
 ///
 /// Notes:
 ///
-/// * `BoundIdentifier` is smaller than `BindingIdentifier`, so takes less memory when you store
+/// * The original `IdentifierReference` must also be used in the AST, or it'll be a dangling reference.
+/// * `MaybeBoundIdentifier` is smaller than `IdentifierReference`, so takes less memory when you store
 ///   it for later use.
-/// * `BoundIdentifier` is `Clone` (unlike `BindingIdentifier`).
-/// * `BoundIdentifier` re-uses the same `Atom` for all `BindingIdentifier` / `IdentifierReference`s
+/// * `MaybeBoundIdentifier` re-uses the same `Atom` for all `BindingIdentifier` / `IdentifierReference`s
 ///   created from it.
+/// * `MaybeBoundIdentifier` looks up the `SymbolId` for the reference only once,
+///   rather than `TraverseCtx::clone_identifier_reference` which looks it up every time you create
+///   an `IdentifierReference`.
 #[derive(Debug, Clone)]
-pub struct BoundIdentifier<'a> {
+pub struct MaybeBoundIdentifier<'a> {
     pub name: Atom<'a>,
-    pub symbol_id: SymbolId,
+    pub symbol_id: Option<SymbolId>,
 }
 
-impl<'a> BoundIdentifier<'a> {
-    /// Create `BoundIdentifier` for `name` and `symbol_id`
-    pub fn new(name: Atom<'a>, symbol_id: SymbolId) -> Self {
+impl<'a> MaybeBoundIdentifier<'a> {
+    /// Create `MaybeBoundIdentifier` for `name` and `Option<SymbolId>`
+    pub fn new(name: Atom<'a>, symbol_id: Option<SymbolId>) -> Self {
         Self { name, symbol_id }
     }
 
-    /// Create `BoundIdentifier` from a `BindingIdentifier`
-    pub fn from_binding_ident(ident: &BindingIdentifier<'a>) -> Self {
-        Self { name: ident.name.clone(), symbol_id: ident.symbol_id() }
+    /// Create `MaybeBoundIdentifier` from an `IdentifierReference`
+    pub fn from_identifier_reference(
+        ident: &IdentifierReference<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> Self {
+        let symbol_id = ctx.symbols().get_reference(ident.reference_id()).symbol_id();
+        Self { name: ident.name.clone(), symbol_id }
     }
 
-    /// Convert `BoundIdentifier` to `MaybeBoundIdentifier`
-    pub fn to_maybe_bound_identifier(&self) -> MaybeBoundIdentifier<'a> {
-        MaybeBoundIdentifier::new(self.name.clone(), Some(self.symbol_id))
-    }
-
-    /// Create `BindingIdentifier` for this binding
-    pub fn create_binding_identifier(&self, ctx: &TraverseCtx<'a>) -> BindingIdentifier<'a> {
-        ctx.ast.binding_identifier_with_symbol_id(SPAN, self.name.clone(), self.symbol_id)
-    }
-
-    /// Create `BindingPattern` for this binding
-    pub fn create_binding_pattern(&self, ctx: &TraverseCtx<'a>) -> BindingPattern<'a> {
-        let ident = self.create_binding_identifier(ctx);
-        let binding_pattern_kind = BindingPatternKind::BindingIdentifier(ctx.alloc(ident));
-        ctx.ast.binding_pattern(binding_pattern_kind, NONE, false)
+    /// Convert `MaybeBoundIdentifier` to `BoundIdentifier`.
+    ///
+    /// Returns `None` if symbol is not bound.
+    pub fn to_bound_identifier(&self) -> Option<BoundIdentifier<'a>> {
+        self.symbol_id.map(|symbol_id| BoundIdentifier::new(self.name.clone(), symbol_id))
     }
 
     // --- Read only ---
@@ -236,7 +220,7 @@ impl<'a> BoundIdentifier<'a> {
         flags: ReferenceFlags,
         ctx: &mut TraverseCtx<'a>,
     ) -> IdentifierReference<'a> {
-        ctx.create_bound_reference_id(span, self.name.clone(), self.symbol_id, flags)
+        ctx.create_reference_id(span, self.name.clone(), self.symbol_id, flags)
     }
 
     /// Create `Expression::Identifier` referencing this binding, with specified `Span` and `ReferenceFlags`

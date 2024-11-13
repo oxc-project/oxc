@@ -18,10 +18,12 @@ use crate::{
 
 mod ancestry;
 mod bound_identifier;
+mod maybe_bound_identifier;
 mod scoping;
 use ancestry::PopToken;
 pub use ancestry::TraverseAncestry;
 pub use bound_identifier::BoundIdentifier;
+pub use maybe_bound_identifier::MaybeBoundIdentifier;
 pub use scoping::TraverseScoping;
 
 /// Traverse context.
