@@ -59,6 +59,21 @@ pub struct NumericLiteral<'a> {
     pub base: NumberBase,
 }
 
+/// String literal
+///
+/// <https://tc39.es/ecma262/#sec-literals-string-literals>
+#[ast(visit)]
+#[derive(Debug, Clone)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
+pub struct StringLiteral<'a> {
+    /// Node location in source code
+    pub span: Span,
+    /// The value of the string.
+    ///
+    /// Any escape sequences in the raw code are unescaped.
+    pub value: Atom<'a>,
+}
+
 /// BigInt literal
 #[ast(visit)]
 #[derive(Debug, Clone)]
@@ -126,21 +141,6 @@ pub enum RegExpPattern<'a> {
     /// A parsed pattern. Read [Pattern] for more details.
     /// Pattern was parsed and found to be valid.
     Pattern(Box<'a, Pattern<'a>>) = 2,
-}
-
-/// String literal
-///
-/// <https://tc39.es/ecma262/#sec-literals-string-literals>
-#[ast(visit)]
-#[derive(Debug, Clone)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-pub struct StringLiteral<'a> {
-    /// Node location in source code
-    pub span: Span,
-    /// The value of the string.
-    ///
-    /// Any escape sequences in the raw code are unescaped.
-    pub value: Atom<'a>,
 }
 
 bitflags! {

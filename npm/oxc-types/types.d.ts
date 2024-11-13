@@ -19,6 +19,11 @@ export interface NumericLiteral extends Span {
   raw: string;
 }
 
+export interface StringLiteral extends Span {
+  type: 'StringLiteral';
+  value: string;
+}
+
 export interface BigIntLiteral extends Span {
   type: 'Literal';
   raw: string;
@@ -39,11 +44,6 @@ export interface RegExp {
 }
 
 export type RegExpPattern = string | string | Pattern;
-
-export interface StringLiteral extends Span {
-  type: 'StringLiteral';
-  value: string;
-}
 
 export interface Program extends Span {
   type: 'Program';
