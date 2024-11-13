@@ -545,12 +545,12 @@ impl<'a> TraverseCtx<'a> {
 
     /// Determine whether evaluating the specific input `node` is a consequenceless reference.
     ///
-    /// I.E evaluating it won't result in potentially arbitrary code from being ran. The following are
-    /// allowed and determined not to cause side effects:
+    /// i.e. evaluating it won't result in potentially arbitrary code from being run.
+    /// The following are allowed and determined not to cause side effects:
     ///
     /// - `this` expressions
     /// - `super` expressions
-    /// - Bound identifiers
+    /// - Bound identifiers which are not mutated
     ///
     /// This is a shortcut for `ctx.scoping.is_static`.
     #[inline]
