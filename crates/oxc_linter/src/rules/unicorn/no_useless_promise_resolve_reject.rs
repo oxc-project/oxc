@@ -600,11 +600,15 @@ fn test() {
         (r"function then() { return Promise.reject() }", None),
         (r"doThing(function(x) { return Promise.reject(x) })", None),
         (r"doThing().then(function() { return })", None),
-        // TODO: support `allow_reject` option
-        // "doThing().then(function() { return Promise.reject(4) })",
+        (
+            "doThing().then(function() { return Promise.reject(4) })",
+            Some(serde_json::json!([{ "allowReject": true }])),
+        ),
         (r"doThing().then((function() { return Promise.resolve(4) }).toString())", None),
-        // TODO: support `allow_reject` option
-        // "doThing().then(() => Promise.reject(4))",
+        (
+            "doThing().then(() => Promise.reject(4))",
+            Some(serde_json::json!([{ "allowReject": true }])),
+        ),
         (r"doThing().then(function() { return a() })", None),
         (r"doThing().then(function() { return Promise.a() })", None),
         (r"doThing().then(() => { return a() })", None),
