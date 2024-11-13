@@ -348,7 +348,7 @@ impl Backend {
 
     async fn revalidate_open_files(&self) {
         join_all(self.diagnostics_report_map.iter().map(|map| {
-            let url = Url::from_str(&map.key()).expect("should convert to path");
+            let url = Url::from_str(map.key()).expect("should convert to path");
 
             self.handle_file_update(url, None, None)
         }))
