@@ -33,7 +33,7 @@ use oxc_ast::{ast::*, NONE};
 use oxc_semantic::{ReferenceFlags, ScopeFlags, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
-use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
+use oxc_traverse::{Ancestor, MaybeBoundIdentifier, Traverse, TraverseCtx};
 
 use crate::TransformCtx;
 
@@ -142,9 +142,10 @@ impl<'a, 'ctx> Traverse<'a> for NullishCoalescingOperator<'a, 'ctx> {
 impl<'a, 'ctx> NullishCoalescingOperator<'a, 'ctx> {
     fn clone_expression(expr: &Expression<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         match expr {
-            Expression::Identifier(ident) => Expression::Identifier(
-                ctx.ast.alloc(ctx.clone_identifier_reference(ident, ReferenceFlags::Read)),
-            ),
+            Expression::Identifier(ident) => {
+                let binding = MaybeBoundIdentifier::from_identifier_reference(ident, ctx);
+                binding.create_spanned_expression(ident.span, ReferenceFlags::Read, ctx)
+            }
             _ => expr.clone_in(ctx.ast.allocator),
         }
     }

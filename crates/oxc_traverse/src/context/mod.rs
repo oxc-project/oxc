@@ -530,21 +530,6 @@ impl<'a> TraverseCtx<'a> {
         self.scoping.delete_reference_for_identifier(ident);
     }
 
-    /// Clone `IdentifierReference` based on the original reference's `SymbolId` and name.
-    ///
-    /// This method makes a lookup of the `SymbolId` for the reference. If you need to create multiple
-    /// `IdentifierReference`s for the same binding, it is better to look up the `SymbolId` only once,
-    /// and generate `IdentifierReference`s with `TraverseCtx::create_reference_id`.
-    pub fn clone_identifier_reference(
-        &mut self,
-        ident: &IdentifierReference<'a>,
-        flags: ReferenceFlags,
-    ) -> IdentifierReference<'a> {
-        let reference = self.symbols().get_reference(ident.reference_id());
-        let symbol_id = reference.symbol_id();
-        self.create_reference_id(ident.span, ident.name.clone(), symbol_id, flags)
-    }
-
     /// Determine whether evaluating the specific input `node` is a consequenceless reference.
     ///
     /// i.e. evaluating it won't result in potentially arbitrary code from being run.

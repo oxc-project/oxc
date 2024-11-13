@@ -59,7 +59,7 @@ use oxc_ast::ast::*;
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, LogicalOperator};
-use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
+use oxc_traverse::{BoundIdentifier, MaybeBoundIdentifier, Traverse, TraverseCtx};
 
 use crate::TransformCtx;
 
@@ -293,14 +293,15 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
 
     /// Clone an expression
     ///
-    /// If it is an identifier, clone the identifier by [TraverseCtx::clone_identifier_reference], otherwise, use [CloneIn].
+    /// If it is an identifier, clone the identifier via [MaybeBoundIdentifier], otherwise, use [CloneIn].
     ///
     /// TODO: remove this once <https://github.com/oxc-project/oxc/issues/4804> is resolved.
     fn clone_expression(expr: &Expression<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         match expr {
-            Expression::Identifier(ident) => Expression::Identifier(
-                ctx.ast.alloc(ctx.clone_identifier_reference(ident, ReferenceFlags::Read)),
-            ),
+            Expression::Identifier(ident) => {
+                let binding = MaybeBoundIdentifier::from_identifier_reference(ident, ctx);
+                binding.create_spanned_expression(ident.span, ReferenceFlags::Read, ctx)
+            }
             _ => expr.clone_in(ctx.ast.allocator),
         }
     }

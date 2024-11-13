@@ -26,9 +26,7 @@ use super::BoundIdentifier;
 ///   it for later use.
 /// * `MaybeBoundIdentifier` re-uses the same `Atom` for all `BindingIdentifier` / `IdentifierReference`s
 ///   created from it.
-/// * `MaybeBoundIdentifier` looks up the `SymbolId` for the reference only once,
-///   rather than `TraverseCtx::clone_identifier_reference` which looks it up every time you create
-///   an `IdentifierReference`.
+/// * `MaybeBoundIdentifier` looks up the `SymbolId` for the reference only once.
 #[derive(Debug, Clone)]
 pub struct MaybeBoundIdentifier<'a> {
     pub name: Atom<'a>,
