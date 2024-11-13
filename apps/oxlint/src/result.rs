@@ -7,21 +7,10 @@ use std::{
 #[derive(Debug)]
 pub enum CliRunResult {
     None,
-    InvalidOptions {
-        message: String,
-    },
-    PathNotFound {
-        paths: Vec<PathBuf>,
-    },
-    /// Indicates that there was an error trying to run the linter and it was
-    /// not able to complete linting successfully.
-    LintError {
-        error: String,
-    },
+    InvalidOptions { message: String },
+    PathNotFound { paths: Vec<PathBuf> },
     LintResult(LintResult),
-    PrintConfigResult {
-        config_file: String,
-    },
+    PrintConfigResult { config_file: String },
 }
 
 /// A summary of a complete linter run.
@@ -56,10 +45,6 @@ impl Termination for CliRunResult {
             }
             Self::PathNotFound { paths } => {
                 println!("Path {paths:?} does not exist.");
-                ExitCode::from(1)
-            }
-            Self::LintError { error } => {
-                eprintln!("Error: {error}");
                 ExitCode::from(1)
             }
             Self::LintResult(LintResult {
