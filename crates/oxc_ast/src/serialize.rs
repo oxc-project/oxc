@@ -91,6 +91,7 @@ impl<'a> From<&'a BigIntLiteral<'a>> for ESTreeLiteral<'a, ()> {
         }
     }
 }
+
 #[derive(Serialize)]
 pub struct SerRegExpValue {
     pattern: String,
