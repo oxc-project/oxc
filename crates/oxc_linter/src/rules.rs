@@ -159,6 +159,7 @@ mod typescript {
     pub mod no_duplicate_enum_values;
     pub mod no_dynamic_delete;
     pub mod no_empty_interface;
+    pub mod no_empty_object_type;
     pub mod no_explicit_any;
     pub mod no_extra_non_null_assertion;
     pub mod no_extraneous_class;
@@ -841,6 +842,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_duplicate_enum_values,
     typescript::no_dynamic_delete,
     typescript::no_empty_interface,
+    typescript::no_empty_object_type,
     typescript::no_explicit_any,
     typescript::no_extra_non_null_assertion,
     typescript::no_extraneous_class,
