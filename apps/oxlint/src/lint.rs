@@ -629,4 +629,25 @@ mod test {
             std::fs::read_to_string("fixtures/print_config/ban_rules/expect.json").unwrap();
         assert_eq!(config, expect_json.trim());
     }
+
+    #[test]
+    fn test_overrides() {
+        let result =
+            test(&["-c", "fixtures/overrides/.oxlintrc.json", "fixtures/overrides/test.js"]);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 0);
+        assert_eq!(result.number_of_errors, 1);
+
+        let result =
+            test(&["-c", "fixtures/overrides/.oxlintrc.json", "fixtures/overrides/test.ts"]);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 1);
+        assert_eq!(result.number_of_errors, 1);
+
+        let result =
+            test(&["-c", "fixtures/overrides/.oxlintrc.json", "fixtures/overrides/other.jsx"]);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 0);
+        assert_eq!(result.number_of_errors, 1);
+    }
 }

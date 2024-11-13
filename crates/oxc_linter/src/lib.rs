@@ -21,9 +21,10 @@ mod utils;
 pub mod loader;
 pub mod table;
 
+use crate::config::ResolvedLinterState;
 use std::{io::Write, path::Path, rc::Rc, sync::Arc};
 
-use config::LintConfig;
+use config::{ConfigStore, LintConfig};
 use context::ContextHost;
 use options::LintOptions;
 use oxc_semantic::{AstNode, Semantic};
@@ -57,9 +58,10 @@ fn size_asserts() {
 
 #[derive(Debug)]
 pub struct Linter {
-    rules: Vec<RuleWithSeverity>,
+    // rules: Vec<RuleWithSeverity>,
     options: LintOptions,
-    config: Arc<LintConfig>,
+    // config: Arc<LintConfig>,
+    config: ConfigStore,
 }
 
 impl Default for Linter {
@@ -69,18 +71,14 @@ impl Default for Linter {
 }
 
 impl Linter {
-    pub(crate) fn new(
-        rules: Vec<RuleWithSeverity>,
-        options: LintOptions,
-        config: LintConfig,
-    ) -> Self {
-        Self { rules, options, config: Arc::new(config) }
+    pub(crate) fn new(options: LintOptions, config: ConfigStore) -> Self {
+        Self { options, config }
     }
 
     #[cfg(test)]
     #[must_use]
     pub fn with_rules(mut self, rules: Vec<RuleWithSeverity>) -> Self {
-        self.rules = rules;
+        self.config.set_rules(rules);
         self
     }
 
@@ -105,20 +103,19 @@ impl Linter {
     }
 
     pub fn number_of_rules(&self) -> usize {
-        self.rules.len()
+        self.config.number_of_rules()
     }
 
-    #[cfg(test)]
-    pub(crate) fn rules(&self) -> &Vec<RuleWithSeverity> {
-        &self.rules
+    pub(crate) fn rules(&self) -> &Arc<[RuleWithSeverity]> {
+        self.config.rules()
     }
 
     pub fn run<'a>(&self, path: &Path, semantic: Rc<Semantic<'a>>) -> Vec<Message<'a>> {
-        let ctx_host =
-            Rc::new(ContextHost::new(path, semantic, self.options, Arc::clone(&self.config)));
+        // Get config + rules for this file. Takes base rules and applies glob-based overrides.
+        let ResolvedLinterState { rules, config } = self.config.resolve(path);
+        let ctx_host = Rc::new(ContextHost::new(path, semantic, self.options, config));
 
-        let rules = self
-            .rules
+        let rules = rules
             .iter()
             .filter(|rule| rule.should_run(&ctx_host))
             .map(|rule| (rule, Rc::clone(&ctx_host).spawn(rule)));
@@ -126,7 +123,7 @@ impl Linter {
         let semantic = ctx_host.semantic();
 
         let should_run_on_jest_node =
-            self.config.plugins.has_test() && ctx_host.frameworks().is_test();
+            ctx_host.plugins().has_test() && ctx_host.frameworks().is_test();
 
         // IMPORTANT: We have two branches here for performance reasons:
         //

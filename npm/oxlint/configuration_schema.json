@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Oxlintrc",
-  "description": "Oxlint Configuration File\n\nThis configuration is aligned with ESLint v8's configuration schema (`eslintrc.json`).\n\nUsage: `oxlint -c oxlintrc.json --import-plugin`\n\n::: danger NOTE\n\nOnly the `.json` format is supported. You can use comments in configuration files.\n\n:::\n\nExample\n\n`.oxlintrc.json`\n\n```json { \"$schema\": \"./node_modules/oxlint/configuration_schema.json\", \"plugins\": [\"import\", \"unicorn\"], \"env\": { \"browser\": true }, \"globals\": { \"foo\": \"readonly\" }, \"settings\": { }, \"rules\": { \"eqeqeq\": \"warn\", \"import/no-cycle\": \"error\" } } ```",
+  "description": "Oxlint Configuration File\n\nThis configuration is aligned with ESLint v8's configuration schema (`eslintrc.json`).\n\nUsage: `oxlint -c oxlintrc.json --import-plugin`\n\n::: danger NOTE\n\nOnly the `.json` format is supported. You can use comments in configuration files.\n\n:::\n\nExample\n\n`.oxlintrc.json`\n\n```json { \"$schema\": \"./node_modules/oxlint/configuration_schema.json\", \"plugins\": [\"import\", \"typescript\", \"unicorn\"], \"env\": { \"browser\": true }, \"globals\": { \"foo\": \"readonly\" }, \"settings\": { }, \"rules\": { \"eqeqeq\": \"warn\", \"import/no-cycle\": \"error\" }, \"overrides\": [ { \"files\": [\"*.test.ts\", \"*.spec.ts\"], \"rules\": { \"@typescript-eslint/no-explicit-any\": \"off\" } } ] } ```",
   "type": "object",
   "properties": {
     "categories": {
@@ -29,6 +29,14 @@
       "allOf": [
         {
           "$ref": "#/definitions/OxlintGlobals"
+        }
+      ]
+    },
+    "overrides": {
+      "description": "Add, remove, or otherwise reconfigure rules for specific files or groups of files.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/OxlintOverrides"
         }
       ]
     },
@@ -164,6 +172,12 @@
       "type": "object",
       "additionalProperties": {
         "$ref": "#/definitions/DummyRule"
+      }
+    },
+    "GlobSet": {
+      "type": "array",
+      "items": {
+        "type": "string"
       }
     },
     "GlobalValue": {
@@ -316,6 +330,48 @@
       "type": "object",
       "additionalProperties": {
         "$ref": "#/definitions/GlobalValue"
+      }
+    },
+    "OxlintOverride": {
+      "type": "object",
+      "required": [
+        "files"
+      ],
+      "properties": {
+        "files": {
+          "description": "A list of glob patterns to override.\n\n## Example `[ \"*.test.ts\", \"*.spec.ts\" ]`",
+          "allOf": [
+            {
+              "$ref": "#/definitions/GlobSet"
+            }
+          ]
+        },
+        "plugins": {
+          "description": "Optionally change what plugins are enabled for this override. When omitted, the base config's plugins are used.",
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/definitions/LintPlugins"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "rules": {
+          "default": {},
+          "allOf": [
+            {
+              "$ref": "#/definitions/OxlintRules"
+            }
+          ]
+        }
+      }
+    },
+    "OxlintOverrides": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/OxlintOverride"
       }
     },
     "OxlintRules": {

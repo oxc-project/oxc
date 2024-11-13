@@ -7,7 +7,7 @@ use oxc_span::CompactStr;
 use rustc_hash::FxHashSet;
 
 use crate::{
-    config::{ESLintRule, LintPlugins, OxlintRules},
+    config::{ConfigStore, ESLintRule, LintPlugins, OxlintOverrides, OxlintRules},
     rules::RULES,
     AllowWarnDeny, FixKind, FrameworkFlags, LintConfig, LintFilter, LintFilterKind, LintOptions,
     Linter, Oxlintrc, RuleCategory, RuleEnum, RuleWithSeverity,
@@ -18,6 +18,7 @@ pub struct LinterBuilder {
     pub(super) rules: FxHashSet<RuleWithSeverity>,
     options: LintOptions,
     config: LintConfig,
+    overrides: OxlintOverrides,
     cache: RulesCache,
 }
 
@@ -36,9 +37,10 @@ impl LinterBuilder {
         let options = LintOptions::default();
         let config = LintConfig::default();
         let rules = FxHashSet::default();
+        let overrides = OxlintOverrides::default();
         let cache = RulesCache::new(config.plugins);
 
-        Self { rules, options, config, cache }
+        Self { rules, options, config, overrides, cache }
     }
 
     /// Warn on all rules in all plugins and categories, including those in `nursery`.
@@ -48,6 +50,7 @@ impl LinterBuilder {
     pub fn all() -> Self {
         let options = LintOptions::default();
         let config = LintConfig { plugins: LintPlugins::all(), ..LintConfig::default() };
+        let overrides = OxlintOverrides::default();
         let cache = RulesCache::new(config.plugins);
         Self {
             rules: RULES
@@ -56,6 +59,7 @@ impl LinterBuilder {
                 .collect(),
             options,
             config,
+            overrides,
             cache,
         }
     }
@@ -82,15 +86,22 @@ impl LinterBuilder {
     /// match any recognized rules.
     pub fn from_oxlintrc(start_empty: bool, oxlintrc: Oxlintrc) -> Self {
         // TODO: monorepo config merging, plugin-based extends, etc.
-        let Oxlintrc { plugins, settings, env, globals, categories, rules: oxlintrc_rules } =
-            oxlintrc;
+        let Oxlintrc {
+            plugins,
+            settings,
+            env,
+            globals,
+            categories,
+            rules: oxlintrc_rules,
+            overrides,
+        } = oxlintrc;
 
         let config = LintConfig { plugins, settings, env, globals };
         let options = LintOptions::default();
         let rules =
             if start_empty { FxHashSet::default() } else { Self::warn_correctness(plugins) };
         let cache = RulesCache::new(config.plugins);
-        let mut builder = Self { rules, options, config, cache };
+        let mut builder = Self { rules, options, config, overrides, cache };
 
         if !categories.is_empty() {
             builder = builder.with_filters(categories.filters());
@@ -240,7 +251,8 @@ impl LinterBuilder {
             self.rules.into_iter().collect::<Vec<_>>()
         };
         rules.sort_unstable_by_key(|r| r.id());
-        Linter::new(rules, self.options, self.config)
+        let config = ConfigStore::new(rules, self.config, self.overrides);
+        Linter::new(self.options, config)
     }
 
     /// Warn for all correctness rules in the given set of plugins.
@@ -564,7 +576,7 @@ mod test {
         desired_plugins.set(LintPlugins::TYPESCRIPT, false);
 
         let linter = LinterBuilder::default().with_plugins(desired_plugins).build();
-        for rule in linter.rules() {
+        for rule in linter.rules().iter() {
             let name = rule.name();
             let plugin = rule.plugin_name();
             assert_ne!(
