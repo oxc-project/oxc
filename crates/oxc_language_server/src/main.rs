@@ -174,6 +174,7 @@ impl LanguageServer for Backend {
     }
 
     async fn did_change_watched_files(&self, _params: DidChangeWatchedFilesParams) {
+        debug!("watched file did change");
         self.init_linter_config().await;
         self.revalidate_open_files().await;
     }
@@ -346,13 +347,11 @@ impl Backend {
     }
 
     async fn revalidate_open_files(&self) {
-        let opened_files = self.diagnostics_report_map.iter().map(|k| k.key().to_string());
+        join_all(self.diagnostics_report_map.iter().map(|map| {
+            let url = Url::from_str(&map.key()).expect("should convert to path");
 
-        for file in opened_files {
-            let url = Url::from_str(&file).expect("should convert to path");
-
-            self.handle_file_update(url, None, None).await;
-        }
+            self.handle_file_update(url, None, None)
+        })).await;
     }
 
     async fn init_linter_config(&self) {
