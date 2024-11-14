@@ -395,7 +395,7 @@ impl<'a> Binder<'a> for TSEnumMember<'a> {
 impl<'a> Binder<'a> for TSModuleDeclaration<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
         // do not bind `global` for `declare global { ... }`
-        if matches!(self.kind, TSModuleDeclarationKind::Global) {
+        if self.kind == TSModuleDeclarationKind::Global {
             return;
         }
 
