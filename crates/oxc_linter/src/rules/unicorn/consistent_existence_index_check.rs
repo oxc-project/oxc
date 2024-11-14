@@ -52,7 +52,7 @@ declare_oxc_lint!(
     /// if (index !== -1) {}
     /// ```
     ConsistentExistenceIndexCheck,
-    restriction,
+    correctness,
     fix,
 );
 
