@@ -108,20 +108,19 @@ fn typescript_struct(def: &StructDef, always_flatten_structs: &FxHashSet<TypeId>
 
         let ident = field.ident().unwrap();
         if let Some(append_after) = append_to.get(&ident.to_string()) {
-            let after_type = if let Some(ty) =
-                &append_after.markers.derive_attributes.estree.typescript_type
-            {
-                ty.clone()
-            } else {
-                let typ = append_after.typ.name();
-                if let TypeName::Opt(inner) = typ {
-                    type_to_string(inner)
+            let after_type =
+                if let Some(ty) = &append_after.markers.derive_attributes.estree.typescript_type {
+                    ty.clone()
                 } else {
-                    panic!(
+                    let typ = append_after.typ.name();
+                    if let TypeName::Opt(inner) = typ {
+                        type_to_string(inner)
+                    } else {
+                        panic!(
                         "expected field labeled with append_to to be Option<...>, but found {typ}"
                     );
-                }
-            };
+                    }
+                };
             if let Some(inner) = ty.strip_prefix("Array<") {
                 ty = format!("Array<{after_type} | {inner}");
             } else {
