@@ -28,6 +28,7 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/main/packages/babel-plugin-transform-nullish-coalescing-operator>
 //! * Nullish coalescing TC39 proposal: <https://github.com/tc39-transfer/proposal-nullish-coalescing>
 
+use oxc_allocator::Box as ArenaBox;
 use oxc_ast::{ast::*, NONE};
 use oxc_semantic::{ScopeFlags, SymbolFlags};
 use oxc_span::SPAN;
@@ -55,16 +56,27 @@ impl<'a, 'ctx> Traverse<'a> for NullishCoalescingOperator<'a, 'ctx> {
         }
 
         // Take ownership of the `LogicalExpression`
-        let logical_expr = match ctx.ast.move_expression(expr) {
-            Expression::LogicalExpression(logical_expr) => logical_expr.unbox(),
-            _ => unreachable!(),
+        let Expression::LogicalExpression(logical_expr) = ctx.ast.move_expression(expr) else {
+            unreachable!()
         };
+
+        *expr = self.transform_logical_expression(logical_expr, ctx);
+    }
+}
+
+impl<'a, 'ctx> NullishCoalescingOperator<'a, 'ctx> {
+    fn transform_logical_expression(
+        &mut self,
+        logical_expr: ArenaBox<'a, LogicalExpression<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        let logical_expr = logical_expr.unbox();
 
         // Skip creating extra reference when `left` is static
         match &logical_expr.left {
             Expression::ThisExpression(this) => {
                 let this_span = this.span;
-                *expr = Self::create_conditional_expression(
+                return Self::create_conditional_expression(
                     logical_expr.left,
                     ctx.ast.expression_this(this_span),
                     ctx.ast.expression_this(this_span),
@@ -72,7 +84,6 @@ impl<'a, 'ctx> Traverse<'a> for NullishCoalescingOperator<'a, 'ctx> {
                     logical_expr.span,
                     ctx,
                 );
-                return;
             }
             Expression::Identifier(ident) => {
                 let symbol_id = ctx.symbols().get_reference(ident.reference_id()).symbol_id();
@@ -82,7 +93,7 @@ impl<'a, 'ctx> Traverse<'a> for NullishCoalescingOperator<'a, 'ctx> {
                     if ctx.symbols().get_resolved_references(symbol_id).all(|r| !r.is_write()) {
                         let binding = BoundIdentifier::new(ident.name.clone(), symbol_id);
                         let ident_span = ident.span;
-                        *expr = Self::create_conditional_expression(
+                        return Self::create_conditional_expression(
                             logical_expr.left,
                             binding.create_spanned_read_expression(ident_span, ctx),
                             binding.create_spanned_read_expression(ident_span, ctx),
@@ -90,7 +101,6 @@ impl<'a, 'ctx> Traverse<'a> for NullishCoalescingOperator<'a, 'ctx> {
                             logical_expr.span,
                             ctx,
                         );
-                        return;
                     }
                 }
             }
@@ -165,11 +175,9 @@ impl<'a, 'ctx> Traverse<'a> for NullishCoalescingOperator<'a, 'ctx> {
             self.ctx.var_declarations.insert_var(&binding, None, ctx);
         }
 
-        *expr = new_expr;
+        new_expr
     }
-}
 
-impl<'a, 'ctx> NullishCoalescingOperator<'a, 'ctx> {
     /// Create a conditional expression.
     ///
     /// ```js
