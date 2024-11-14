@@ -12,6 +12,7 @@ mod import {
     pub mod default;
     pub mod export;
     pub mod first;
+    pub mod import_no_namespace;
     pub mod max_dependencies;
     pub mod named;
     pub mod namespace;
@@ -627,6 +628,7 @@ oxc_macros::declare_all_lint_rules! {
     import::default,
     import::export,
     import::first,
+    import::import_no_namespace,
     import::max_dependencies,
     import::named,
     import::namespace,
