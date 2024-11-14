@@ -66,7 +66,7 @@ impl Rule for NoUselessPromiseResolveReject {
         let allow_reject = config
             .and_then(|c| c.get("allowReject"))
             .and_then(serde_json::Value::as_bool)
-            .map_or(false, |v| v);
+            .unwrap_or_default();
 
         Self(Box::new(NoUselessPromiseResolveRejectOptions { allow_reject }))
     }
