@@ -15,11 +15,12 @@ use tower_lsp::{
     lsp_types::{
         CodeAction, CodeActionKind, CodeActionOptions, CodeActionOrCommand, CodeActionParams,
         CodeActionProviderCapability, CodeActionResponse, ConfigurationItem, Diagnostic,
-        DidChangeConfigurationParams, DidChangeTextDocumentParams, DidCloseTextDocumentParams,
-        DidOpenTextDocumentParams, DidSaveTextDocumentParams, InitializeParams, InitializeResult,
-        InitializedParams, OneOf, ServerCapabilities, ServerInfo, TextDocumentSyncCapability,
-        TextDocumentSyncKind, TextEdit, Url, WorkDoneProgressOptions, WorkspaceEdit,
-        WorkspaceFoldersServerCapabilities, WorkspaceServerCapabilities,
+        DidChangeConfigurationParams, DidChangeTextDocumentParams, DidChangeWatchedFilesParams,
+        DidCloseTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams,
+        InitializeParams, InitializeResult, InitializedParams, OneOf, ServerCapabilities,
+        ServerInfo, TextDocumentSyncCapability, TextDocumentSyncKind, TextEdit, Url,
+        WorkDoneProgressOptions, WorkspaceEdit, WorkspaceFoldersServerCapabilities,
+        WorkspaceServerCapabilities,
     },
     Client, LanguageServer, LspService, Server,
 };
@@ -170,6 +171,12 @@ impl LanguageServer for Backend {
             self.publish_all_diagnostics(&cleared_diagnostics).await;
         }
         *self.options.lock().await = changed_options;
+    }
+
+    async fn did_change_watched_files(&self, _params: DidChangeWatchedFilesParams) {
+        debug!("watched file did change");
+        self.init_linter_config().await;
+        self.revalidate_open_files().await;
     }
 
     async fn initialized(&self, _params: InitializedParams) {
@@ -335,6 +342,15 @@ impl Backend {
                 diagnostics.clone(),
                 None,
             )
+        }))
+        .await;
+    }
+
+    async fn revalidate_open_files(&self) {
+        join_all(self.diagnostics_report_map.iter().map(|map| {
+            let url = Url::from_str(map.key()).expect("should convert to path");
+
+            self.handle_file_update(url, None, None)
         }))
         .await;
     }
