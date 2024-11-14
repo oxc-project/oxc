@@ -150,18 +150,25 @@ impl<'a, 'ctx> NullishCoalescingOperator<'a, 'ctx> {
         }
     }
 
-    /// Create a conditional expression
+    /// Create a conditional expression.
     ///
     /// ```js
     /// // Input
-    /// bar ?? "qux"
+    /// foo = bar ?? "qux"
     ///
     /// // Output
-    /// qux = bar !== null && bar !== void 0 ? bar : "qux"
-    /// //    ^^^ assignment  ^^^ reference           ^^^ default
+    /// foo = bar !== null && bar !== void 0 ? bar : "qux"
+    /// //    ^^^ assignment  ^^^ reference          ^^^^^ default
     /// ```
     ///
-    /// reference and assignment are the same in this case, but they can be different
+    /// ```js
+    /// // Input
+    /// foo = bar.x ?? "qux"
+    ///
+    /// // Output
+    /// foo = (_bar$x = bar.x) !== null && _bar$x !== void 0 ? _bar$x : "qux"
+    /// //    ^^^^^^^^^^^^^^^^ assignment  ^^^^^^ reference             ^^^^^ default
+    /// ```
     fn create_conditional_expression(
         reference: Expression<'a>,
         assignment: Expression<'a>,
