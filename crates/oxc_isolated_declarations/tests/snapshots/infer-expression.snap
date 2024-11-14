@@ -10,7 +10,7 @@ declare const s: string;
 declare const t: string;
 declare const b: boolean;
 declare let unaryA: number;
-declare const unaryB = -1_2n;
+declare const unaryB = -12n;
 declare const unaryC: unknown;
 declare const unaryD: unknown;
 declare const unaryE: {};

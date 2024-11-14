@@ -1,6 +1,8 @@
 use std::ops::Not;
 
 use cow_utils::CowUtils;
+use num_bigint::BigInt;
+use num_traits::Num;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 use oxc_syntax::{
@@ -1162,13 +1164,55 @@ impl<'a> GenExpr for NumericLiteral<'a> {
 }
 
 impl<'a> Gen for BigIntLiteral<'a> {
-    fn gen(&self, p: &mut Codegen, _ctx: Context) {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         if self.raw.starts_with('-') {
             p.print_space_before_operator(Operator::Unary(UnaryOperator::UnaryNegation));
         }
         p.print_space_before_identifier();
         p.add_source_mapping(self.span.start);
-        p.print_str(self.raw.as_str());
+
+        if ctx.contains(Context::TYPESCRIPT) {
+            p.print_str(self.raw.as_str());
+        } else {
+            let str = self
+                .raw
+                .as_str()
+                .strip_suffix("n")
+                .map(|s| {
+                    let prefix_size = match self.base {
+                        BigintBase::Decimal => 0,
+                        BigintBase::Binary | BigintBase::Hex | BigintBase::Octal => 2,
+                    };
+
+                    &s[prefix_size..]
+                })
+                .and_then(|s| BigInt::from_str_radix(s, self.base.base()).ok());
+
+            if let Some(big_int) = str {
+                if p.options.minify {
+                    if big_int >= 10_000_000_000_000_000_i64.into() {
+                        p.print_str("0x");
+                        p.print_str(&big_int.to_str_radix(16));
+                    } else if big_int <= (-10_000_000_000_000_000_i64).into() {
+                        p.print_str("-0x");
+                        p.print_str(&(-big_int).to_str_radix(16));
+                    } else {
+                        p.print_str(&big_int.to_string());
+                    }
+                } else {
+                    p.print_str(&big_int.to_string());
+                }
+            } else {
+                #[cfg(debug_assertions)]
+                {
+                    // This should never happen, we should've validated that the BigInt is valid in the parser.
+                    unreachable!("Invalid BigIntLiteral: {:?}", self);
+                }
+                #[cfg(not(debug_assertions))]
+                p.print_str(self.raw.as_str());
+            }
+            p.print_ascii_byte(b'n');
+        }
     }
 }
 

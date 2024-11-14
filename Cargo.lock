@@ -1556,6 +1556,8 @@ dependencies = [
  "cow-utils",
  "insta",
  "nonmax",
+ "num-bigint",
+ "num-traits",
  "oxc_allocator",
  "oxc_ast",
  "oxc_index",

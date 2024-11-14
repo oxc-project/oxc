@@ -34,6 +34,15 @@ impl BigintBase {
     pub fn is_base_10(&self) -> bool {
         self == &Self::Decimal
     }
+
+    pub fn base(&self) -> u32 {
+        match self {
+            BigintBase::Decimal => 10,
+            BigintBase::Binary => 2,
+            BigintBase::Octal => 8,
+            BigintBase::Hex => 16,
+        }
+    }
 }
 
 /// <https://tc39.es/ecma262/#sec-numeric-types-number-tostring>
