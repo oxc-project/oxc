@@ -56,7 +56,7 @@ fn target_list_pass() {
     let result = TransformOptions::from_target(target).unwrap();
     assert!(!result.env.es2019.optional_catch_binding);
     assert!(!result.env.es2020.nullish_coalescing_operator);
-    assert!(!result.env.es2021.logical_assignment_operators);
+    assert!(result.env.es2021.logical_assignment_operators);
     assert!(result.env.es2022.class_static_block);
 }
 

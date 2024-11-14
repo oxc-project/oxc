@@ -8,10 +8,12 @@ const f = (es) => (item) => {
 
 const es5 = [
   {
-    name: 'ReservedWords',
+    name: 'MemberExpressionLiterals',
     es: 'ES5',
-    babel: 'transform-reserved-words',
-    features: ['Miscellaneous / Unreserved words'],
+    babel: 'transform-member-expression-literals',
+    features: [
+      'Object/array literal extensions / Reserved words as property names',
+    ],
   },
   {
     name: 'PropertyLiterals',
@@ -22,12 +24,10 @@ const es5 = [
     ],
   },
   {
-    name: 'MemberExpressionLiterals',
+    name: 'ReservedWords',
     es: 'ES5',
-    babel: 'transform-member-expression-literals',
-    features: [
-      'Object/array literal extensions / Reserved words as property names',
-    ],
+    babel: 'transform-reserved-words',
+    features: ['Miscellaneous / Unreserved words'],
   },
 ].map(f('ES5'));
 
@@ -44,97 +44,19 @@ const es2015 = [
     ],
   },
   {
-    name: 'Regenerator',
-    babel: 'transform-regenerator',
-    features: ['generators'],
+    name: 'TemplateLiterals',
+    babel: 'transform-template-literals',
+    features: ['template literals'],
   },
   {
-    name: 'NewTarget',
-    babel: 'transform-new-target',
-    features: ['new.target', 'arrow functions / lexical "new.target" binding'],
-  },
-  {
-    name: 'TypeofSymbol',
-    babel: 'transform-typeof-symbol',
-    features: ['Symbol / typeof support'],
-  },
-  {
-    name: 'BlockScoping',
-    babel: 'transform-block-scoping',
-    features: ['const', 'let', 'generators'],
-  },
-  {
-    name: 'Destructuring',
-    babel: 'transform-destructuring',
-    features: ['destructuring, assignment', 'destructuring, declarations'],
-  },
-  {
-    name: 'Spread',
-    babel: 'transform-spread',
-    features: ['spread syntax for iterable objects', 'class', 'super'],
-  },
-  {
-    name: 'UnicodeRegex',
-    babel: 'transform-unicode-regex',
-    features: [
-      'RegExp "y" and "u" flags / "u" flag, case folding',
-      'RegExp "y" and "u" flags / "u" flag, Unicode code point escapes',
-      'RegExp "y" and "u" flags / "u" flag, non-BMP Unicode characters',
-      'RegExp "y" and "u" flags / "u" flag',
-    ],
-  },
-  {
-    name: 'UnicodeEscapes',
-    babel: 'transform-unicode-escapes',
+    name: 'Literals',
+    babel: 'transform-literals',
     features: ['Unicode code point escapes'],
   },
   {
-    name: 'StickyRegex',
-    babel: 'transform-sticky-regex',
-    features: [
-      'RegExp "y" and "u" flags / "y" flag, lastIndex',
-      'RegExp "y" and "u" flags / "y" flag',
-    ],
-  },
-  {
-    name: 'ForOf',
-    babel: 'transform-for-of',
-    features: ['for..of loops'],
-  },
-  {
-    name: 'ComputedProperties',
-    babel: 'transform-computed-properties',
-    features: ['object literal extensions / computed properties'],
-  },
-  {
-    name: 'DuplicateKeys',
-    babel: 'transform-duplicate-keys',
-    features: ['miscellaneous / duplicate property names in strict mode'],
-  },
-  {
-    name: 'ShorthandProperties',
-    babel: 'transform-shorthand-properties',
-    features: ['object literal extensions / shorthand properties'],
-  },
-  {
-    name: 'ObjectSuper',
-    babel: 'transform-object-super',
-    features: ['super'],
-  },
-  {
-    name: 'Classes',
-    babel: 'transform-classes',
-    features: [
-      'class',
-      'super',
-      'arrow functions / lexical "super" binding in constructors',
-      'arrow functions / lexical "super" binding in methods',
-    ],
-  },
-  {
-    name: 'BlockScopedFunctions',
-    babel: 'transform-block-scoped-functions',
-    features: ['block-level function declaration'],
+    name: 'FunctionName',
+    babel: 'transform-function-name',
+    features: ['function "name" property'],
   },
   {
     name: 'ArrowFunctions',
@@ -153,19 +75,97 @@ const es2015 = [
     ],
   },
   {
-    name: 'FunctionName',
-    babel: 'transform-function-name',
-    features: ['function "name" property'],
+    name: 'BlockScopedFunctions',
+    babel: 'transform-block-scoped-functions',
+    features: ['block-level function declaration'],
   },
   {
-    name: 'Literals',
-    babel: 'transform-literals',
+    name: 'Classes',
+    babel: 'transform-classes',
+    features: [
+      'class',
+      'super',
+      'arrow functions / lexical "super" binding in constructors',
+      'arrow functions / lexical "super" binding in methods',
+    ],
+  },
+  {
+    name: 'ObjectSuper',
+    babel: 'transform-object-super',
+    features: ['super'],
+  },
+  {
+    name: 'ShorthandProperties',
+    babel: 'transform-shorthand-properties',
+    features: ['object literal extensions / shorthand properties'],
+  },
+  {
+    name: 'DuplicateKeys',
+    babel: 'transform-duplicate-keys',
+    features: ['miscellaneous / duplicate property names in strict mode'],
+  },
+  {
+    name: 'ComputedProperties',
+    babel: 'transform-computed-properties',
+    features: ['object literal extensions / computed properties'],
+  },
+  {
+    name: 'ForOf',
+    babel: 'transform-for-of',
+    features: ['for..of loops'],
+  },
+  {
+    name: 'StickyRegex',
+    babel: 'transform-sticky-regex',
+    features: [
+      'RegExp "y" and "u" flags / "y" flag, lastIndex',
+      'RegExp "y" and "u" flags / "y" flag',
+    ],
+  },
+  {
+    name: 'UnicodeEscapes',
+    babel: 'transform-unicode-escapes',
     features: ['Unicode code point escapes'],
   },
   {
-    name: 'TemplateLiterals',
-    babel: 'transform-template-literals',
-    features: ['template literals'],
+    name: 'UnicodeRegex',
+    babel: 'transform-unicode-regex',
+    features: [
+      'RegExp "y" and "u" flags / "u" flag, case folding',
+      'RegExp "y" and "u" flags / "u" flag, Unicode code point escapes',
+      'RegExp "y" and "u" flags / "u" flag, non-BMP Unicode characters',
+      'RegExp "y" and "u" flags / "u" flag',
+    ],
+  },
+  {
+    name: 'Spread',
+    babel: 'transform-spread',
+    features: ['spread syntax for iterable objects', 'class', 'super'],
+  },
+  {
+    name: 'Destructuring',
+    babel: 'transform-destructuring',
+    features: ['destructuring, assignment', 'destructuring, declarations'],
+  },
+  {
+    name: 'BlockScoping',
+    babel: 'transform-block-scoping',
+    features: ['const', 'let', 'generators'],
+  },
+  {
+    name: 'TypeofSymbol',
+    babel: 'transform-typeof-symbol',
+    features: ['Symbol / typeof support'],
+  },
+  {
+    name: 'NewTarget',
+    babel: 'transform-new-target',
+    features: ['new.target', 'arrow functions / lexical "new.target" binding'],
+  },
+  {
+    name: 'Regenerator',
+    babel: 'transform-regenerator',
+    features: ['generators'],
   },
 ].map(f('ES2015'));
 
@@ -187,24 +187,9 @@ const es2017 = [
 
 const es2018 = [
   {
-    name: 'NamedCapturingGroupsRegex',
-    babel: 'transform-named-capturing-groups-regex',
-    features: ['RegExp named capture groups'],
-  },
-  {
-    name: 'UnicodePropertyRegex',
-    babel: 'transform-unicode-property-regex',
-    features: ['RegExp Unicode Property Escapes / basic'],
-  },
-  {
-    name: 'DotallRegex',
-    babel: 'transform-dotall-regex',
-    features: ['s (dotAll) flag for regular expressions'],
-  },
-  {
-    name: 'LookbehindRegex',
-    babel: null,
-    features: ['RegExp Lookbehind Assertions'],
+    name: 'AsyncGeneratorFunctions',
+    babel: 'transform-async-generator-functions',
+    features: ['Asynchronous Iterators'],
   },
   {
     name: 'ObjectRestSpread',
@@ -212,14 +197,24 @@ const es2018 = [
     features: ['object rest/spread properties'],
   },
   {
-    name: 'AsyncGeneratorFunctions',
-    babel: 'transform-async-generator-functions',
-    features: ['Asynchronous Iterators'],
+    name: 'DotallRegex',
+    babel: 'transform-dotall-regex',
+    features: ['s (dotAll) flag for regular expressions'],
   },
   {
-    name: 'OptionalCatchBinding',
-    babel: 'transform-optional-catch-binding',
-    features: ['optional catch binding'],
+    name: 'UnicodePropertyRegex',
+    babel: 'transform-unicode-property-regex',
+    features: ['RegExp Unicode Property Escapes / basic'],
+  },
+  {
+    name: 'NamedCapturingGroupsRegex',
+    babel: 'transform-named-capturing-groups-regex',
+    features: ['RegExp named capture groups'],
+  },
+  {
+    name: 'LookbehindRegex',
+    babel: null,
+    features: ['RegExp Lookbehind Assertions'],
   },
 ].map(f('ES2018'));
 
@@ -230,9 +225,9 @@ const es2019 = [
     features: ['JSON superset'],
   },
   {
-    name: 'OptionalChaining',
-    babel: 'transform-optional-chaining',
-    features: ['optional chaining operator (?.)'],
+    name: 'OptionalCatchBinding',
+    babel: 'transform-optional-catch-binding',
+    features: ['optional catch binding'],
   },
 ].map(f('ES2019'));
 
@@ -243,9 +238,9 @@ const es2020 = [
     features: ['nullish coalescing operator (??)'],
   },
   {
-    name: 'LogicalAssignmentOperators',
-    babel: 'transform-logical-assignment-operators',
-    features: ['Logical Assignment'],
+    name: 'OptionalChaining',
+    babel: 'transform-optional-chaining',
+    features: ['optional chaining operator (?.)'],
   },
   {
     name: 'BigInt',
@@ -260,13 +255,23 @@ const es2021 = [
     babel: 'transform-numeric-separator',
     features: ['numeric separators'],
   },
+  {
+    name: 'LogicalAssignmentOperators',
+    babel: 'transform-logical-assignment-operators',
+    features: ['Logical Assignment'],
+  },
 ].map(f('ES2021'));
 
 const es2022 = [
   {
-    name: 'PrivateMethods',
-    babel: 'transform-private-methods',
-    features: ['private class methods'],
+    name: 'ClassStaticBlock',
+    babel: 'transform-class-static-block',
+    features: ['Class static initialization blocks'],
+  },
+  {
+    name: 'PrivatePropertyInObject',
+    babel: 'transform-private-property-in-object',
+    features: ['Ergonomic brand checks for private fields'],
   },
   {
     name: 'ClassProperties',
@@ -280,14 +285,9 @@ const es2022 = [
     ],
   },
   {
-    name: 'PrivatePropertyInObject',
-    babel: 'transform-private-property-in-object',
-    features: ['Ergonomic brand checks for private fields'],
-  },
-  {
-    name: 'ClassStaticBlock',
-    babel: 'transform-class-static-block',
-    features: ['Class static initialization blocks'],
+    name: 'PrivateMethods',
+    babel: 'transform-private-methods',
+    features: ['private class methods'],
   },
   {
     name: 'MatchIndicesRegex',
@@ -314,14 +314,14 @@ const es2024 = [
 
 const es2025 = [
   {
-    name: 'RegexpModifiers',
-    babel: 'transform-regexp-modifiers',
-    features: ['RegExp Pattern Modifiers'],
-  },
-  {
     name: 'DuplicateNamedCapturingGroupsRegex',
     babel: 'transform-duplicate-named-capturing-groups-regex',
     features: ['Duplicate named capturing groups'],
+  },
+  {
+    name: 'RegexpModifiers',
+    babel: 'transform-regexp-modifiers',
+    features: ['RegExp Pattern Modifiers'],
   },
 ].map(f('ES2025'));
 
