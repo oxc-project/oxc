@@ -181,10 +181,10 @@ fn get_function_like_node<'a, 'b>(
 }
 
 fn is_promise_callback<'a, 'b>(node: &'a AstNode<'b>, ctx: &'a LintContext<'b>) -> bool {
-    let Some(parent) = outermost_paren_parent(node, ctx) else {
+    let function_node = traverse_bind_calls(node, ctx);
+    let Some(parent) = outermost_paren_parent(function_node, ctx) else {
         return false;
     };
-
     let Some(parent) = outermost_paren_parent(parent, ctx) else {
         return false;
     };
@@ -216,6 +216,36 @@ fn is_promise_callback<'a, 'b>(node: &'a AstNode<'b>, ctx: &'a LintContext<'b>) 
     }
 
     false
+}
+
+// Traverse bind functions and return outer call expression
+fn traverse_bind_calls<'a, 'b>(node: &'a AstNode<'b>, ctx: &'a LintContext<'b>) -> &'a AstNode<'b> {
+    let mut current_node = node;
+    loop {
+        let Some(parent) = outermost_paren_parent(current_node, ctx) else {
+            return current_node;
+        };
+        if !is_bind_member_expression(parent) {
+            return current_node;
+        }
+
+        let Some(grand_parent) = outermost_paren_parent(parent, ctx) else {
+            return current_node;
+        };
+        let AstKind::CallExpression(_) = grand_parent.kind() else {
+            return current_node;
+        };
+
+        current_node = grand_parent;
+    }
+}
+
+fn is_bind_member_expression(node: &AstNode) -> bool {
+    let AstKind::MemberExpression(member_expr) = node.kind() else {
+        return false;
+    };
+
+    member_expr.static_property_name() == Some("bind")
 }
 
 fn match_arrow_function_body<'a>(ctx: &LintContext<'a>, parent: &AstNode<'a>) -> bool {
@@ -466,6 +496,39 @@ fn test() {
         r"(async () => { Promise.resolve().then(() => console.log('foo')); })();",
         // TODO: enhance to report this case?
         r#"fs.promises.readFile("foo", 'utf8').then(undefined, err => err.code === 'ENOENT' ? Promise.resolve('{}') : Promise.reject(err))"#,
+        r"Promise.resolve(4).then(function(x) { return x })",
+        r"Promise.reject(4).then(function(x) { return x })",
+        r"Promise.resolve(4).then(function() {})",
+        r"Promise.reject(4).then(function() {})",
+        r"doThing().then(function() { return 4 })",
+        r"doThing().then(function() { throw 4 })",
+        r"doThing().then(null, function() { return 4 })",
+        r"doThing().then(null, function() { throw 4 })",
+        r"doThing().catch(null, function() { return 4 })",
+        r"doThing().catch(null, function() { throw 4 })",
+        r"doThing().then(function() { return Promise.all([a,b,c]) })",
+        r"doThing().then(() => 4)",
+        r"doThing().then(() => { throw 4 })",
+        r"doThing().then(()=>{}, () => 4)",
+        r"doThing().then(()=>{}, () => { throw 4 })",
+        r"doThing().catch(() => 4)",
+        r"doThing().catch(() => { throw 4 })",
+        r"var x = function() { return Promise.resolve(4) }",
+        r"function y() { return Promise.resolve(4) }",
+        r"function then() { return Promise.reject() }",
+        r"doThing(function(x) { return Promise.reject(x) })",
+        r"doThing().then(function() { return })",
+        // TODO: support `allow_reject` option
+        // "doThing().then(function() { return Promise.reject(4) })",
+        r"doThing().then((function() { return Promise.resolve(4) }).toString())",
+        // TODO: support `allow_reject` option
+        // "doThing().then(() => Promise.reject(4))",
+        r"doThing().then(function() { return a() })",
+        r"doThing().then(function() { return Promise.a() })",
+        r"doThing().then(() => { return a() })",
+        r"doThing().then(() => { return Promise.a() })",
+        r"doThing().then(() => a())",
+        r"doThing().then(() => Promise.a())",
     ];
 
     let fail = vec![
@@ -642,6 +705,77 @@ fn test() {
         r"promise.then(() => {}, () => { return Promise.resolve(bar); })",
         r"promise.then(() => {}, async () => Promise.reject(bar))",
         r"promise.then(() => {}, async () => { return Promise.reject(bar); })",
+        r"doThing().then(function() { return Promise.resolve(4) })",
+        r"doThing().then(null, function() { return Promise.resolve(4) })",
+        r"doThing().catch(function() { return Promise.resolve(4) })",
+        r"doThing().then(function() { return Promise.reject(4) })",
+        r"doThing().then(null, function() { return Promise.reject(4) })",
+        r"doThing().catch(function() { return Promise.reject(4) })",
+        r#"doThing().then(function(x) { if (x>1) { return Promise.resolve(4) } else { throw "bad" } })"#,
+        r"doThing().then(function(x) { if (x>1) { return Promise.reject(4) } })",
+        r"doThing().then(null, function() { if (true && false) { return Promise.resolve() } })",
+        r"doThing().catch(function(x) {if (x) { return Promise.resolve(4) } else { return Promise.reject() } })",
+        "
+                          fn(function() {
+                            doThing().then(function() {
+                              return Promise.resolve(4)
+                            })
+                            return
+                          })",
+        "
+                          fn(function() {
+                            doThing().then(function nm() {
+                              return Promise.resolve(4)
+                            })
+                            return
+                          })",
+        "
+                          fn(function() {
+                            fn2(function() {
+                              doThing().then(function() {
+                                return Promise.resolve(4)
+                              })
+                            })
+                          })",
+        "
+                          fn(function() {
+                            fn2(function() {
+                              doThing().then(function() {
+                                fn3(function() {
+                                  return Promise.resolve(4)
+                                })
+                                return Promise.resolve(4)
+                              })
+                            })
+                          })",
+        "
+                          const o = {
+                            fn: function() {
+                              return doThing().then(function() {
+                                return Promise.resolve(5);
+                              });
+                            },
+                          }
+                          ",
+        "
+                          fn(
+                            doThing().then(function() {
+                              return Promise.resolve(5);
+                            })
+                          );
+                          ",
+        r"doThing().then((function() { return Promise.resolve(4) }).bind(this))",
+        r"doThing().then((function() { return Promise.resolve(4) }).bind(this).bind(this))",
+        r"doThing().then(() => { return Promise.resolve(4) })",
+        "
+                          function a () {
+                            return p.then(function(val) {
+                              return Promise.resolve(val * 4)
+                            })
+                          }
+                          ",
+        r"doThing().then(() => Promise.resolve(4))",
+        r"doThing().then(() => Promise.reject(4))",
     ];
 
     let fix = vec![
@@ -1042,6 +1176,7 @@ fn test() {
             None,
         ),
     ];
+
     Tester::new(NoUselessPromiseResolveReject::NAME, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
