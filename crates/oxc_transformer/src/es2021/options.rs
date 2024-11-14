@@ -5,4 +5,6 @@ use serde::Deserialize;
 pub struct ES2021Options {
     #[serde(skip)]
     pub logical_assignment_operators: bool,
+    #[serde(skip)]
+    pub numeric_separator: bool,
 }

@@ -218,6 +218,7 @@ impl TryFrom<&BabelOptions> for TransformOptions {
         let es2021 = ES2021Options {
             logical_assignment_operators: options.plugins.logical_assignment_operators
                 || env.es2021.logical_assignment_operators,
+            numeric_separator: options.plugins.numeric_separator || env.es2021.numeric_separator,
         };
 
         let es2022 = ES2022Options {

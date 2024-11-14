@@ -86,7 +86,7 @@ impl EnvOptions {
                 // Turn this on would throw error for all bigints.
                 big_int: false,
             },
-            es2021: ES2021Options { logical_assignment_operators: true },
+            es2021: ES2021Options { logical_assignment_operators: true, numeric_separator: true },
             es2022: ES2022Options {
                 class_static_block: true,
                 class_properties: if include_unfinished_plugins {
@@ -184,6 +184,7 @@ impl From<EngineTargets> for EnvOptions {
             },
             es2021: ES2021Options {
                 logical_assignment_operators: o.has_feature(ES2020LogicalAssignmentOperators),
+                numeric_separator: o.has_feature(ES2021NumericSeparator),
             },
             es2022: ES2022Options {
                 class_static_block: o.has_feature(ES2022ClassStaticBlock),

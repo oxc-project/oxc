@@ -10,7 +10,7 @@ pub(crate) const PLUGINS: &[&str] = &[
     // // [Syntax] "babel-plugin-transform-syntax-top-level-await",
     // ES2021
     "babel-plugin-transform-logical-assignment-operators",
-    // "babel-plugin-transform-numeric-separator",
+    "babel-plugin-transform-numeric-separator",
     // ES2020
     // "babel-plugin-transform-export-namespace-from",
     // "babel-plugin-transform-dynamic-import",

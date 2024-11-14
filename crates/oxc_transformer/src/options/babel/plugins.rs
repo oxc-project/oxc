@@ -65,6 +65,7 @@ pub struct BabelPlugins {
     pub nullish_coalescing_operator: bool,
     // ES2021
     pub logical_assignment_operators: bool,
+    pub numeric_separator: bool,
     // ES2022
     pub class_static_block: bool,
     pub class_properties: Option<ClassPropertiesOptions>,
