@@ -67,6 +67,7 @@ impl<'a, 'ctx> Traverse<'a> for NullishCoalescingOperator<'a, 'ctx> {
                 Self::clone_expression(&logical_expr.left, ctx),
                 logical_expr.left,
                 logical_expr.right,
+                logical_expr.span,
                 ctx,
             );
             return;
@@ -98,8 +99,13 @@ impl<'a, 'ctx> Traverse<'a> for NullishCoalescingOperator<'a, 'ctx> {
             binding.create_read_write_target(ctx),
             logical_expr.left,
         );
-        let mut new_expr =
-            Self::create_conditional_expression(reference, assignment, logical_expr.right, ctx);
+        let mut new_expr = Self::create_conditional_expression(
+            reference,
+            assignment,
+            logical_expr.right,
+            logical_expr.span,
+            ctx,
+        );
 
         if is_parent_formal_parameter {
             // Replace `function (a, x = a.b ?? c) {}` to `function (a, x = (() => a.b ?? c)() ){}`
@@ -173,6 +179,7 @@ impl<'a, 'ctx> NullishCoalescingOperator<'a, 'ctx> {
         reference: Expression<'a>,
         assignment: Expression<'a>,
         default: Expression<'a>,
+        span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let op = BinaryOperator::StrictInequality;
@@ -186,6 +193,6 @@ impl<'a, 'ctx> NullishCoalescingOperator<'a, 'ctx> {
         );
         let test = ctx.ast.expression_logical(SPAN, left, LogicalOperator::And, right);
 
-        ctx.ast.expression_conditional(SPAN, test, reference, default)
+        ctx.ast.expression_conditional(span, test, reference, default)
     }
 }
