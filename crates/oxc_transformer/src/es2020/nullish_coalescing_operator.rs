@@ -28,12 +28,11 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/main/packages/babel-plugin-transform-nullish-coalescing-operator>
 //! * Nullish coalescing TC39 proposal: <https://github.com/tc39-transfer/proposal-nullish-coalescing>
 
-use oxc_allocator::CloneIn;
 use oxc_ast::{ast::*, NONE};
-use oxc_semantic::{ReferenceFlags, ScopeFlags, SymbolFlags};
+use oxc_semantic::{ScopeFlags, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
-use oxc_traverse::{Ancestor, MaybeBoundIdentifier, Traverse, TraverseCtx};
+use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
 
 use crate::TransformCtx;
 
@@ -61,16 +60,41 @@ impl<'a, 'ctx> Traverse<'a> for NullishCoalescingOperator<'a, 'ctx> {
             _ => unreachable!(),
         };
 
-        // skip creating extra reference when `left` is static
-        if ctx.is_static(&logical_expr.left) {
-            *expr = Self::create_conditional_expression(
-                Self::clone_expression(&logical_expr.left, ctx),
-                logical_expr.left,
-                logical_expr.right,
-                logical_expr.span,
-                ctx,
-            );
-            return;
+        // Skip creating extra reference when `left` is static
+        match &logical_expr.left {
+            Expression::ThisExpression(this) => {
+                let this_span = this.span;
+                *expr = Self::create_conditional_expression(
+                    logical_expr.left,
+                    ctx.ast.expression_this(this_span),
+                    ctx.ast.expression_this(this_span),
+                    logical_expr.right,
+                    logical_expr.span,
+                    ctx,
+                );
+                return;
+            }
+            Expression::Identifier(ident) => {
+                let symbol_id = ctx.symbols().get_reference(ident.reference_id()).symbol_id();
+                if let Some(symbol_id) = symbol_id {
+                    // Check binding is not mutated.
+                    // TODO(improve-on-babel): Remove this check. Whether binding is mutated or not is not relevant.
+                    if ctx.symbols().get_resolved_references(symbol_id).all(|r| !r.is_write()) {
+                        let binding = BoundIdentifier::new(ident.name.clone(), symbol_id);
+                        let ident_span = ident.span;
+                        *expr = Self::create_conditional_expression(
+                            logical_expr.left,
+                            binding.create_spanned_read_expression(ident_span, ctx),
+                            binding.create_spanned_read_expression(ident_span, ctx),
+                            logical_expr.right,
+                            logical_expr.span,
+                            ctx,
+                        );
+                        return;
+                    }
+                }
+            }
+            _ => {}
         }
 
         // ctx.ancestor(0) is AssignmentPattern
@@ -92,7 +116,6 @@ impl<'a, 'ctx> Traverse<'a> for NullishCoalescingOperator<'a, 'ctx> {
             SymbolFlags::FunctionScopedVariable,
         );
 
-        let reference = binding.create_read_expression(ctx);
         let assignment = ctx.ast.expression_assignment(
             SPAN,
             AssignmentOperator::Assign,
@@ -100,8 +123,9 @@ impl<'a, 'ctx> Traverse<'a> for NullishCoalescingOperator<'a, 'ctx> {
             logical_expr.left,
         );
         let mut new_expr = Self::create_conditional_expression(
-            reference,
             assignment,
+            binding.create_read_expression(ctx),
+            binding.create_read_expression(ctx),
             logical_expr.right,
             logical_expr.span,
             ctx,
@@ -146,16 +170,6 @@ impl<'a, 'ctx> Traverse<'a> for NullishCoalescingOperator<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> NullishCoalescingOperator<'a, 'ctx> {
-    fn clone_expression(expr: &Expression<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        match expr {
-            Expression::Identifier(ident) => {
-                let binding = MaybeBoundIdentifier::from_identifier_reference(ident, ctx);
-                binding.create_spanned_expression(ident.span, ReferenceFlags::Read, ctx)
-            }
-            _ => expr.clone_in(ctx.ast.allocator),
-        }
-    }
-
     /// Create a conditional expression.
     ///
     /// ```js
@@ -164,7 +178,8 @@ impl<'a, 'ctx> NullishCoalescingOperator<'a, 'ctx> {
     ///
     /// // Output
     /// foo = bar !== null && bar !== void 0 ? bar : "qux"
-    /// //    ^^^ assignment  ^^^ reference          ^^^^^ default
+    /// //    ^^^ assignment  ^^^ reference1         ^^^^^ default
+    /// //                                     ^^^ reference2
     /// ```
     ///
     /// ```js
@@ -173,11 +188,13 @@ impl<'a, 'ctx> NullishCoalescingOperator<'a, 'ctx> {
     ///
     /// // Output
     /// foo = (_bar$x = bar.x) !== null && _bar$x !== void 0 ? _bar$x : "qux"
-    /// //    ^^^^^^^^^^^^^^^^ assignment  ^^^^^^ reference             ^^^^^ default
+    /// //    ^^^^^^^^^^^^^^^^ assignment  ^^^^^^ reference1            ^^^^^ default
+    /// //                                                     ^^^^^^ reference2
     /// ```
     fn create_conditional_expression(
-        reference: Expression<'a>,
         assignment: Expression<'a>,
+        reference1: Expression<'a>,
+        reference2: Expression<'a>,
         default: Expression<'a>,
         span: Span,
         ctx: &mut TraverseCtx<'a>,
@@ -185,14 +202,9 @@ impl<'a, 'ctx> NullishCoalescingOperator<'a, 'ctx> {
         let op = BinaryOperator::StrictInequality;
         let null = ctx.ast.expression_null_literal(SPAN);
         let left = ctx.ast.expression_binary(SPAN, assignment, op, null);
-        let right = ctx.ast.expression_binary(
-            SPAN,
-            Self::clone_expression(&reference, ctx),
-            op,
-            ctx.ast.void_0(SPAN),
-        );
+        let right = ctx.ast.expression_binary(SPAN, reference1, op, ctx.ast.void_0(SPAN));
         let test = ctx.ast.expression_logical(SPAN, left, LogicalOperator::And, right);
 
-        ctx.ast.expression_conditional(span, test, reference, default)
+        ctx.ast.expression_conditional(span, test, reference2, default)
     }
 }
