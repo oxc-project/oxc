@@ -29,10 +29,13 @@ use crate::{
     AstNode,
 };
 
+const SCOPE: &str = "eslint-plugin-react-hooks";
+
 fn missing_callback_diagnostic(hook_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("React hook {hook_name} requires an effect callback."))
         .with_label(span)
         .with_help("Did you forget to pass a callback to the hook?")
+        .with_error_code_scope(SCOPE)
 }
 
 fn dependency_array_required_diagnostic(hook_name: &str, span: Span) -> OxcDiagnostic {
@@ -49,12 +52,14 @@ fn unknown_dependencies_diagnostic(hook_name: &str, span: Span) -> OxcDiagnostic
     ))
     .with_help("Pass an inline function instead.")
     .with_label(span)
+    .with_error_code_scope(SCOPE)
 }
 
 fn async_effect_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Effect callbacks are synchronous to prevent race conditions.")
       .with_label(span)
       .with_help("Consider putting the asynchronous code inside a function and calling it from the effect.")
+      .with_error_code_scope(SCOPE)
 }
 
 fn missing_dependency_diagnostic(hook_name: &str, deps: &[String], span: Span) -> OxcDiagnostic {
@@ -79,6 +84,7 @@ fn missing_dependency_diagnostic(hook_name: &str, deps: &[String], span: Span) -
     })
     .with_label(span)
     .with_help("Either include it or remove the dependency array.")
+    .with_error_code_scope(SCOPE)
 }
 
 fn unnecessary_dependency_diagnostic(hook_name: &str, dep_name: &str, span: Span) -> OxcDiagnostic {
@@ -92,13 +98,14 @@ fn dependency_array_not_array_literal_diagnostic(hook_name: &str, span: Span) ->
         "React Hook {hook_name} was passed a dependency list that is not an array literal. This means we can't statically verify whether you've passed the correct dependencies."
     ))
     .with_label(span)
-    .with_help("Use an array literal as the second argument.")
+    .with_help("Use an array literal as the second argument.")        .with_error_code_scope(SCOPE)
 }
 
 fn literal_in_dependency_array_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("The literal is not a valid dependency because it never changes.")
         .with_label(span)
         .with_help("Remove the literal from the array.")
+        .with_error_code_scope(SCOPE)
 }
 
 fn complex_expression_in_dependency_array_diagnostic(hook_name: &str, span: Span) -> OxcDiagnostic {
@@ -107,6 +114,7 @@ fn complex_expression_in_dependency_array_diagnostic(hook_name: &str, span: Span
     ))
     .with_label(span)
     .with_help("Extract the expression to a separate variable so it can be statically checked.")
+    .with_error_code_scope(SCOPE)
 }
 
 fn dependency_changes_on_every_render_diagnostic(hook_name: &str, span: Span) -> OxcDiagnostic {
@@ -115,6 +123,7 @@ fn dependency_changes_on_every_render_diagnostic(hook_name: &str, span: Span) ->
     ))
     .with_label(span)
     .with_help("Try memoizing this variable with `useRef` or `useCallback`.")
+    .with_error_code_scope(SCOPE)
 }
 
 fn unnecessary_outer_scope_dependency_diagnostic(
@@ -127,6 +136,7 @@ fn unnecessary_outer_scope_dependency_diagnostic(
     ))
     .with_label(span)
     .with_help("Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.")
+    .with_error_code_scope(SCOPE)
 }
 
 fn infinite_rerender_call_to_set_state_diagnostic(hook_name: &str, span: Span) -> OxcDiagnostic {
@@ -135,12 +145,14 @@ fn infinite_rerender_call_to_set_state_diagnostic(hook_name: &str, span: Span) -
     ))
     .with_label(span)
     .with_help("Consider adding an empty list of dependencies to make it clear which values are intended to be stable.")
+    .with_error_code_scope(SCOPE)
 }
 
 fn ref_accessed_directly_in_effect_cleanup_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("The ref's value `.current` is accessed directly in the effect cleanup function.")
         .with_label(span)
         .with_help("The ref value will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by react, copy it to a variable inside the effect and use that variable in the cleanup function.")
+        .with_error_code_scope(SCOPE)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -226,7 +238,7 @@ impl Rule for ExhaustiveDeps {
             Argument::SpreadElement(_) => {
                 ctx.diagnostic(unknown_dependencies_diagnostic(
                     hook_name.as_str(),
-                    call_expr.callee.span(),
+                    callback_node.span(),
                 ));
                 None
             }
@@ -312,7 +324,7 @@ impl Rule for ExhaustiveDeps {
                     _ => {
                         ctx.diagnostic(unknown_dependencies_diagnostic(
                             hook_name.as_str(),
-                            call_expr.callee.span(),
+                            callback_node.span(),
                         ));
                         None
                     }
