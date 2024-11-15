@@ -25,7 +25,6 @@ export class ConfigService implements Config, IDisposable {
     this._disposables.push(disposeChangeListener);
   }
 
-  
   private setSettingsFromWorkspace(): void {
     this._inner = workspace.getConfiguration(ConfigService._namespace);
 
