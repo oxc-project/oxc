@@ -665,7 +665,7 @@ impl<'a> Gen for Function<'a> {
 impl<'a> Gen for FunctionBody<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         let span_end = self.span.end;
-        let comments_at_end = if !p.options.minify && span_end != 0 {
+        let comments_at_end = if !p.options.minify && span_end > 0 {
             p.get_statement_comments(span_end - 1)
         } else {
             None
@@ -1985,7 +1985,7 @@ impl<'a> GenExpr for ImportExpression<'a> {
             }
             if has_comment {
                 // Handle `/* comment */);`
-                if !p.print_expr_comments(self.span.end - 1) {
+                if self.span.end > 0 && !p.print_expr_comments(self.span.end - 1) {
                     p.print_soft_newline();
                 }
                 p.dedent();
@@ -2067,13 +2067,13 @@ impl<'a> GenExpr for NewExpression<'a> {
             p.print_str("new ");
             self.callee.print_expr(p, Precedence::New, Context::FORBID_CALL);
             p.print_ascii_byte(b'(');
-            let has_comment = (!self.span.is_unspanned() && p.has_comment(self.span.end - 1))
+            let has_comment = (self.span.end > 0 && p.has_comment(self.span.end - 1))
                 || self.arguments.iter().any(|item| p.has_comment(item.span().start));
             if has_comment {
                 p.indent();
                 p.print_list_with_comments(&self.arguments, ctx);
                 // Handle `/* comment */);`
-                if !p.print_expr_comments(self.span.end - 1) {
+                if self.span.end > 0 && !p.print_expr_comments(self.span.end - 1) {
                     p.print_soft_newline();
                 }
                 p.dedent();
