@@ -194,7 +194,7 @@ new-security-rule name:
 
 clone-submodule dir url sha:
   just git-init-if-not-exist {{dir}}
-  cd {{dir}} && git remote add origin {{url}}
+  cd {{dir}} && git remote add origin {{url}} || true
   cd {{dir}} && git fetch --depth=1 origin {{sha}} && git reset --hard {{sha}}
 
 [unix]
