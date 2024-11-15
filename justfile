@@ -1,6 +1,6 @@
 #!/usr/bin/env -S just --justfile
 
-set windows-shell := ["pwsh", "-NoLogo", "-Command"]
+set windows-shell := ["powershell.exe", "-NoLogo", "-Command"]
 set shell := ["bash", "-cu"]
 
 _default:
@@ -191,18 +191,17 @@ new-vitest-rule name:
 new-security-rule name:
     cargo run -p rulegen {{name}} security
 
+[unix]
 clone-submodule dir url sha:
-  just git-init-if-not-exist {{dir}}
-  cd {{dir}} && git remote add origin {{url}}
+  cd {{dir}} || git init {{dir}}
+  cd {{dir}} && git remote add origin {{url}} || true
   cd {{dir}} && git fetch --depth=1 origin {{sha}} && git reset --hard {{sha}}
 
-[unix]
-git-init-if-not-exist dir:
-  cd {{dir}} || git init {{dir}}
-
 [windows]
-git-init-if-not-exist dir:
-  if (Test-Path {{ dir }}) {cd {{ dir }}} else {git init {{dir}}}
+clone-submodule dir url sha:
+  if (-not (Test-Path {{dir}}/.git)) { git init {{dir}} }
+  cd {{dir}} ; if ((git remote) -notcontains 'origin') { git remote add origin {{url}} } else { git remote set-url origin {{url}} }
+  cd {{dir}} ; git fetch --depth=1 origin {{sha}} ; git reset --hard {{sha}}
 
 website path:
   cargo run -p website -- linter-rules --table {{path}}/src/docs/guide/usage/linter/generated-rules.md --rule-docs {{path}}/src/docs/guide/usage/linter/rules
