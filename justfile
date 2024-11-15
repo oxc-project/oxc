@@ -128,8 +128,7 @@ autoinherit:
 
 # Test Transform
 test-transform *args='':
-  cargo run -p oxc_transform_conformance -- {{args}}
-  cargo run -p oxc_transform_conformance -- --exec  {{args}}
+  cargo run -p oxc_transform_conformance -- --exec {{args}}
 
 # Install wasm-pack
 install-wasm:
