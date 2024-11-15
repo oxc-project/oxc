@@ -2,9 +2,450 @@ commit: 06454619
 
 runtime Summary:
 AST Parsed     : 18055/18055 (100.00%)
-Positive Passed: 18046/18055 (99.95%)
+Positive Passed: 17796/18055 (98.57%)
+tasks/coverage/test262/test/language/arguments-object/async-gen-meth-args-trailing-comma-multiple.js
+transform error: Test262Error: Expected SameValue(«0», «2») to be true
+
+tasks/coverage/test262/test/language/arguments-object/async-gen-meth-args-trailing-comma-null.js
+transform error: Test262Error: Expected SameValue(«0», «2») to be true
+
+tasks/coverage/test262/test/language/arguments-object/async-gen-meth-args-trailing-comma-single-args.js
+transform error: Test262Error: Expected SameValue(«0», «1») to be true
+
+tasks/coverage/test262/test/language/arguments-object/async-gen-meth-args-trailing-comma-spread-operator.js
+transform error: Test262Error: Expected SameValue(«0», «4») to be true
+
+tasks/coverage/test262/test/language/arguments-object/async-gen-meth-args-trailing-comma-undefined.js
+transform error: Test262Error: Expected SameValue(«0», «2») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-decl-async-gen-meth-args-trailing-comma-multiple.js
+transform error: Test262Error: Expected SameValue(«0», «2») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-decl-async-gen-meth-args-trailing-comma-null.js
+transform error: Test262Error: Expected SameValue(«0», «2») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-decl-async-gen-meth-args-trailing-comma-single-args.js
+transform error: Test262Error: Expected SameValue(«0», «1») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-decl-async-gen-meth-args-trailing-comma-spread-operator.js
+transform error: Test262Error: Expected SameValue(«0», «4») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-decl-async-gen-meth-args-trailing-comma-undefined.js
+transform error: Test262Error: Expected SameValue(«0», «2») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-decl-async-gen-meth-static-args-trailing-comma-multiple.js
+transform error: Test262Error: Expected SameValue(«0», «2») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-decl-async-gen-meth-static-args-trailing-comma-null.js
+transform error: Test262Error: Expected SameValue(«0», «2») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-decl-async-gen-meth-static-args-trailing-comma-single-args.js
+transform error: Test262Error: Expected SameValue(«0», «1») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-decl-async-gen-meth-static-args-trailing-comma-spread-operator.js
+transform error: Test262Error: Expected SameValue(«0», «4») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-decl-async-gen-meth-static-args-trailing-comma-undefined.js
+transform error: Test262Error: Expected SameValue(«0», «2») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-decl-async-private-gen-meth-args-trailing-comma-multiple.js
+transform error: Test262Error: Expected SameValue(«0», «2») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-decl-async-private-gen-meth-args-trailing-comma-null.js
+transform error: Test262Error: Expected SameValue(«0», «2») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-decl-async-private-gen-meth-args-trailing-comma-single-args.js
+transform error: Test262Error: Expected SameValue(«0», «1») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-decl-async-private-gen-meth-args-trailing-comma-spread-operator.js
+transform error: Test262Error: Expected SameValue(«0», «4») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-decl-async-private-gen-meth-args-trailing-comma-undefined.js
+transform error: Test262Error: Expected SameValue(«0», «2») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-decl-async-private-gen-meth-static-args-trailing-comma-multiple.js
+transform error: Test262Error: Expected SameValue(«0», «2») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-decl-async-private-gen-meth-static-args-trailing-comma-null.js
+transform error: Test262Error: Expected SameValue(«0», «2») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-decl-async-private-gen-meth-static-args-trailing-comma-single-args.js
+transform error: Test262Error: Expected SameValue(«0», «1») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-decl-async-private-gen-meth-static-args-trailing-comma-spread-operator.js
+transform error: Test262Error: Expected SameValue(«0», «4») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-decl-async-private-gen-meth-static-args-trailing-comma-undefined.js
+transform error: Test262Error: Expected SameValue(«0», «2») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-expr-async-gen-meth-args-trailing-comma-multiple.js
+transform error: Test262Error: Expected SameValue(«0», «2») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-expr-async-gen-meth-args-trailing-comma-null.js
+transform error: Test262Error: Expected SameValue(«0», «2») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-expr-async-gen-meth-args-trailing-comma-single-args.js
+transform error: Test262Error: Expected SameValue(«0», «1») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-expr-async-gen-meth-args-trailing-comma-spread-operator.js
+transform error: Test262Error: Expected SameValue(«0», «4») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-expr-async-gen-meth-args-trailing-comma-undefined.js
+transform error: Test262Error: Expected SameValue(«0», «2») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-expr-async-gen-meth-static-args-trailing-comma-multiple.js
+transform error: Test262Error: Expected SameValue(«0», «2») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-expr-async-gen-meth-static-args-trailing-comma-null.js
+transform error: Test262Error: Expected SameValue(«0», «2») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-expr-async-gen-meth-static-args-trailing-comma-single-args.js
+transform error: Test262Error: Expected SameValue(«0», «1») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-expr-async-gen-meth-static-args-trailing-comma-spread-operator.js
+transform error: Test262Error: Expected SameValue(«0», «4») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-expr-async-gen-meth-static-args-trailing-comma-undefined.js
+transform error: Test262Error: Expected SameValue(«0», «2») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-expr-async-private-gen-meth-args-trailing-comma-multiple.js
+transform error: Test262Error: Expected SameValue(«0», «2») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-expr-async-private-gen-meth-args-trailing-comma-null.js
+transform error: Test262Error: Expected SameValue(«0», «2») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-expr-async-private-gen-meth-args-trailing-comma-single-args.js
+transform error: Test262Error: Expected SameValue(«0», «1») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-expr-async-private-gen-meth-args-trailing-comma-spread-operator.js
+transform error: Test262Error: Expected SameValue(«0», «4») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-expr-async-private-gen-meth-args-trailing-comma-undefined.js
+transform error: Test262Error: Expected SameValue(«0», «2») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-expr-async-private-gen-meth-static-args-trailing-comma-multiple.js
+transform error: Test262Error: Expected SameValue(«0», «2») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-expr-async-private-gen-meth-static-args-trailing-comma-null.js
+transform error: Test262Error: Expected SameValue(«0», «2») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-expr-async-private-gen-meth-static-args-trailing-comma-single-args.js
+transform error: Test262Error: Expected SameValue(«0», «1») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-expr-async-private-gen-meth-static-args-trailing-comma-spread-operator.js
+transform error: Test262Error: Expected SameValue(«0», «4») to be true
+
+tasks/coverage/test262/test/language/arguments-object/cls-expr-async-private-gen-meth-static-args-trailing-comma-undefined.js
+transform error: Test262Error: Expected SameValue(«0», «2») to be true
+
 tasks/coverage/test262/test/language/expressions/assignment/fn-name-lhs-cover.js
 codegen error: Test262Error: descriptor value should be ; object value should be 
+
+tasks/coverage/test262/test/language/expressions/async-arrow-function/forbidden-ext/b1/async-arrow-function-forbidden-ext-direct-access-prop-arguments.js
+transform error: Test262Error: Expected SameValue(«true», «false») to be true
+
+tasks/coverage/test262/test/language/expressions/async-arrow-function/forbidden-ext/b1/async-arrow-function-forbidden-ext-direct-access-prop-caller.js
+transform error: Test262Error: Expected SameValue(«true», «false») to be true
+
+tasks/coverage/test262/test/language/expressions/async-arrow-function/prototype.js
+transform error: Test262Error: Expected SameValue(«function () { [native code] }», «[object AsyncFunction]») to be true
+
+tasks/coverage/test262/test/language/expressions/async-function/forbidden-ext/b1/async-func-expr-named-forbidden-ext-direct-access-prop-arguments.js
+transform error: Test262Error: Expected SameValue(«true», «false») to be true
+
+tasks/coverage/test262/test/language/expressions/async-function/forbidden-ext/b1/async-func-expr-named-forbidden-ext-direct-access-prop-caller.js
+transform error: Test262Error: Expected SameValue(«true», «false») to be true
+
+tasks/coverage/test262/test/language/expressions/async-function/forbidden-ext/b1/async-func-expr-nameless-forbidden-ext-direct-access-prop-arguments.js
+transform error: Test262Error: Expected SameValue(«true», «false») to be true
+
+tasks/coverage/test262/test/language/expressions/async-function/forbidden-ext/b1/async-func-expr-nameless-forbidden-ext-direct-access-prop-caller.js
+transform error: Test262Error: Expected SameValue(«true», «false») to be true
+
+tasks/coverage/test262/test/language/expressions/async-function/named-reassign-fn-name-in-body-in-arrow.js
+transform error: Test262Error: Expected SameValue(«1», «function BindingIdentifier() {
+		return _BindingIdentifier.apply(this, arguments);
+	}») to be true
+
+tasks/coverage/test262/test/language/expressions/async-function/named-reassign-fn-name-in-body-in-eval.js
+transform error: Test262Error: Expected SameValue(«1», «function BindingIdentifier() {
+		return _BindingIdentifier.apply(this, arguments);
+	}») to be true
+
+tasks/coverage/test262/test/language/expressions/async-function/named-reassign-fn-name-in-body.js
+transform error: Test262Error: Expected SameValue(«1», «function BindingIdentifier() {
+		return _BindingIdentifier.apply(this, arguments);
+	}») to be true
+
+tasks/coverage/test262/test/language/expressions/async-function/named-returns-async-arrow-returns-arguments-from-parent-function.js
+transform error: Test262Error: Expected SameValue(«false», «true») to be true
+
+tasks/coverage/test262/test/language/expressions/async-function/named-strict-error-reassign-fn-name-in-body-in-arrow.js
+transform error: Test262Error: Expected SameValue(«0», «1») to be true
+
+tasks/coverage/test262/test/language/expressions/async-function/named-strict-error-reassign-fn-name-in-body-in-eval.js
+transform error: Test262Error: Expected SameValue(«0», «1») to be true
+
+tasks/coverage/test262/test/language/expressions/async-function/named-strict-error-reassign-fn-name-in-body.js
+transform error: Test262Error: Expected SameValue(«0», «1») to be true
+
+tasks/coverage/test262/test/language/expressions/async-generator/default-proto.js
+transform error: Test262Error: fn.prototype is undefined Expected SameValue(«[object Object]», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/expressions/async-generator/forbidden-ext/b1/async-gen-func-expr-forbidden-ext-direct-access-prop-arguments.js
+transform error: Test262Error: Expected SameValue(«true», «false») to be true
+
+tasks/coverage/test262/test/language/expressions/async-generator/forbidden-ext/b1/async-gen-func-expr-forbidden-ext-direct-access-prop-caller.js
+transform error: Test262Error: Expected SameValue(«true», «false») to be true
+
+tasks/coverage/test262/test/language/expressions/async-generator/forbidden-ext/b1/async-gen-named-func-expr-forbidden-ext-direct-access-prop-arguments.js
+transform error: Test262Error: Expected SameValue(«true», «false») to be true
+
+tasks/coverage/test262/test/language/expressions/async-generator/forbidden-ext/b1/async-gen-named-func-expr-forbidden-ext-direct-access-prop-caller.js
+transform error: Test262Error: Expected SameValue(«true», «false») to be true
+
+tasks/coverage/test262/test/language/expressions/async-generator/named-no-strict-reassign-fn-name-in-body-in-arrow.js
+transform error: Test262Error: Expected SameValue(«1», «function BindingIdentifier() {
+		return _BindingIdentifier.apply(this, arguments);
+	}») to be true
+
+tasks/coverage/test262/test/language/expressions/async-generator/named-no-strict-reassign-fn-name-in-body-in-eval.js
+transform error: Test262Error: Expected SameValue(«1», «function BindingIdentifier() {
+		return _BindingIdentifier.apply(this, arguments);
+	}») to be true
+
+tasks/coverage/test262/test/language/expressions/async-generator/named-no-strict-reassign-fn-name-in-body.js
+transform error: Test262Error: Expected SameValue(«1», «function BindingIdentifier() {
+		return _BindingIdentifier.apply(this, arguments);
+	}») to be true
+
+tasks/coverage/test262/test/language/expressions/async-generator/named-strict-error-reassign-fn-name-in-body-in-arrow.js
+transform error: Test262Error: Expected SameValue(«0», «1») to be true
+
+tasks/coverage/test262/test/language/expressions/async-generator/named-strict-error-reassign-fn-name-in-body-in-eval.js
+transform error: Test262Error: Expected SameValue(«0», «1») to be true
+
+tasks/coverage/test262/test/language/expressions/async-generator/named-strict-error-reassign-fn-name-in-body.js
+transform error: Test262Error: Expected SameValue(«0», «1») to be true
+
+tasks/coverage/test262/test/language/expressions/async-generator/named-yield-star-async-next.js
+transform error: Test262Error: Expected SameValue(«"get next done (1)"», «"get next value (1)"») to be true
+
+tasks/coverage/test262/test/language/expressions/async-generator/named-yield-star-async-return.js
+transform error: Test262Error: Expected SameValue(«"get return"», «"get next"») to be true
+
+tasks/coverage/test262/test/language/expressions/async-generator/named-yield-star-async-throw.js
+transform error: Test262Error: Expected SameValue(«"get throw"», «"get next"») to be true
+
+tasks/coverage/test262/test/language/expressions/async-generator/named-yield-star-next-call-done-get-abrupt.js
+transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+
+tasks/coverage/test262/test/language/expressions/async-generator/named-yield-star-next-call-returns-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/expressions/async-generator/named-yield-star-next-get-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/expressions/async-generator/named-yield-star-next-non-object-ignores-then.js
+transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+
+tasks/coverage/test262/test/language/expressions/async-generator/named-yield-star-next-then-get-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/expressions/async-generator/named-yield-star-next-then-returns-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/expressions/async-generator/named-yield-star-sync-throw.js
+transform error: throw-arg-1
+
+tasks/coverage/test262/test/language/expressions/async-generator/yield-star-async-next.js
+transform error: Test262Error: Expected SameValue(«"get next done (1)"», «"get next value (1)"») to be true
+
+tasks/coverage/test262/test/language/expressions/async-generator/yield-star-async-return.js
+transform error: Test262Error: Expected SameValue(«"get return"», «"get next"») to be true
+
+tasks/coverage/test262/test/language/expressions/async-generator/yield-star-async-throw.js
+transform error: Test262Error: Expected SameValue(«"get throw"», «"get next"») to be true
+
+tasks/coverage/test262/test/language/expressions/async-generator/yield-star-next-call-done-get-abrupt.js
+transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+
+tasks/coverage/test262/test/language/expressions/async-generator/yield-star-next-call-returns-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/expressions/async-generator/yield-star-next-get-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/expressions/async-generator/yield-star-next-non-object-ignores-then.js
+transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+
+tasks/coverage/test262/test/language/expressions/async-generator/yield-star-next-then-get-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/expressions/async-generator/yield-star-next-then-returns-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/expressions/async-generator/yield-star-sync-throw.js
+transform error: throw-arg-1
+
+tasks/coverage/test262/test/language/expressions/await/await-monkey-patched-promise.js
+transform error: Test262Error: Monkey-patched "then" on native promises should not be called. Expected SameValue(«1», «0») to be true
+
+tasks/coverage/test262/test/language/expressions/class/async-gen-method/yield-star-async-next.js
+transform error: Test262Error: Expected SameValue(«"get next done (1)"», «"get next value (1)"») to be true
+
+tasks/coverage/test262/test/language/expressions/class/async-gen-method/yield-star-async-return.js
+transform error: Test262Error: Expected SameValue(«"get return"», «"get next"») to be true
+
+tasks/coverage/test262/test/language/expressions/class/async-gen-method/yield-star-async-throw.js
+transform error: Test262Error: Expected SameValue(«"get throw"», «"get next"») to be true
+
+tasks/coverage/test262/test/language/expressions/class/async-gen-method/yield-star-next-call-done-get-abrupt.js
+transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+
+tasks/coverage/test262/test/language/expressions/class/async-gen-method/yield-star-next-call-returns-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/expressions/class/async-gen-method/yield-star-next-get-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/expressions/class/async-gen-method/yield-star-next-non-object-ignores-then.js
+transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+
+tasks/coverage/test262/test/language/expressions/class/async-gen-method/yield-star-next-then-get-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/expressions/class/async-gen-method/yield-star-next-then-returns-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/expressions/class/async-gen-method/yield-star-sync-throw.js
+transform error: throw-arg-1
+
+tasks/coverage/test262/test/language/expressions/class/async-gen-method-static/yield-star-async-next.js
+transform error: Test262Error: Expected SameValue(«"get next done (1)"», «"get next value (1)"») to be true
+
+tasks/coverage/test262/test/language/expressions/class/async-gen-method-static/yield-star-async-return.js
+transform error: Test262Error: Expected SameValue(«"get return"», «"get next"») to be true
+
+tasks/coverage/test262/test/language/expressions/class/async-gen-method-static/yield-star-async-throw.js
+transform error: Test262Error: Expected SameValue(«"get throw"», «"get next"») to be true
+
+tasks/coverage/test262/test/language/expressions/class/async-gen-method-static/yield-star-next-call-done-get-abrupt.js
+transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+
+tasks/coverage/test262/test/language/expressions/class/async-gen-method-static/yield-star-next-call-returns-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/expressions/class/async-gen-method-static/yield-star-next-get-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/expressions/class/async-gen-method-static/yield-star-next-non-object-ignores-then.js
+transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+
+tasks/coverage/test262/test/language/expressions/class/async-gen-method-static/yield-star-next-then-get-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/expressions/class/async-gen-method-static/yield-star-next-then-returns-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/expressions/class/async-gen-method-static/yield-star-sync-throw.js
+transform error: throw-arg-1
+
+tasks/coverage/test262/test/language/expressions/class/async-method/dflt-params-abrupt.js
+transform error: Test262Error: 
+
+tasks/coverage/test262/test/language/expressions/class/async-method/dflt-params-ref-later.js
+transform error: ReferenceError: Cannot access 'y' before initialization
+
+tasks/coverage/test262/test/language/expressions/class/async-method/dflt-params-ref-self.js
+transform error: ReferenceError: Cannot access 'x' before initialization
+
+tasks/coverage/test262/test/language/expressions/class/async-method/returns-async-arrow-returns-arguments-from-parent-function.js
+transform error: Test262Error: Expected SameValue(«false», «true») to be true
+
+tasks/coverage/test262/test/language/expressions/class/async-method-static/dflt-params-abrupt.js
+transform error: Test262Error: 
+
+tasks/coverage/test262/test/language/expressions/class/async-method-static/dflt-params-ref-later.js
+transform error: ReferenceError: Cannot access 'y' before initialization
+
+tasks/coverage/test262/test/language/expressions/class/async-method-static/dflt-params-ref-self.js
+transform error: ReferenceError: Cannot access 'x' before initialization
+
+tasks/coverage/test262/test/language/expressions/class/async-method-static/returns-async-arrow-returns-arguments-from-parent-function.js
+transform error: Test262Error: Expected SameValue(«false», «true») to be true
+
+tasks/coverage/test262/test/language/expressions/class/elements/async-gen-private-method/yield-star-async-next.js
+transform error: Test262Error: Expected SameValue(«"get next done (1)"», «"get next value (1)"») to be true
+
+tasks/coverage/test262/test/language/expressions/class/elements/async-gen-private-method/yield-star-async-return.js
+transform error: Test262Error: Expected SameValue(«"get return"», «"get next"») to be true
+
+tasks/coverage/test262/test/language/expressions/class/elements/async-gen-private-method/yield-star-async-throw.js
+transform error: Test262Error: Expected SameValue(«"get throw"», «"get next"») to be true
+
+tasks/coverage/test262/test/language/expressions/class/elements/async-gen-private-method/yield-star-next-call-done-get-abrupt.js
+transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+
+tasks/coverage/test262/test/language/expressions/class/elements/async-gen-private-method/yield-star-next-call-returns-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/expressions/class/elements/async-gen-private-method/yield-star-next-get-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/expressions/class/elements/async-gen-private-method/yield-star-next-non-object-ignores-then.js
+transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+
+tasks/coverage/test262/test/language/expressions/class/elements/async-gen-private-method/yield-star-next-then-get-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/expressions/class/elements/async-gen-private-method/yield-star-next-then-returns-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/expressions/class/elements/async-gen-private-method/yield-star-sync-throw.js
+transform error: throw-arg-1
+
+tasks/coverage/test262/test/language/expressions/class/elements/async-gen-private-method-static/yield-star-async-next.js
+transform error: Test262Error: Expected SameValue(«"get next done (1)"», «"get next value (1)"») to be true
+
+tasks/coverage/test262/test/language/expressions/class/elements/async-gen-private-method-static/yield-star-async-return.js
+transform error: Test262Error: Expected SameValue(«"get return"», «"get next"») to be true
+
+tasks/coverage/test262/test/language/expressions/class/elements/async-gen-private-method-static/yield-star-async-throw.js
+transform error: Test262Error: Expected SameValue(«"get throw"», «"get next"») to be true
+
+tasks/coverage/test262/test/language/expressions/class/elements/async-gen-private-method-static/yield-star-next-call-done-get-abrupt.js
+transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+
+tasks/coverage/test262/test/language/expressions/class/elements/async-gen-private-method-static/yield-star-next-call-returns-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/expressions/class/elements/async-gen-private-method-static/yield-star-next-get-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/expressions/class/elements/async-gen-private-method-static/yield-star-next-non-object-ignores-then.js
+transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+
+tasks/coverage/test262/test/language/expressions/class/elements/async-gen-private-method-static/yield-star-next-then-get-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/expressions/class/elements/async-gen-private-method-static/yield-star-next-then-returns-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/expressions/class/elements/async-gen-private-method-static/yield-star-sync-throw.js
+transform error: throw-arg-1
+
+tasks/coverage/test262/test/language/expressions/class/elements/async-private-method/returns-async-arrow-returns-arguments-from-parent-function.js
+transform error: Test262Error: Expected SameValue(«false», «true») to be true
+
+tasks/coverage/test262/test/language/expressions/class/elements/async-private-method-static/returns-async-arrow-returns-arguments-from-parent-function.js
+transform error: Test262Error: Expected SameValue(«false», «true») to be true
+
+tasks/coverage/test262/test/language/expressions/class/heritage-arrow-function.js
+transform error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
+
+tasks/coverage/test262/test/language/expressions/class/heritage-async-arrow-function.js
+transform error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
 tasks/coverage/test262/test/language/expressions/does-not-equals/bigint-and-object.js
 minify error: Test262Error: The result of (0n != {valueOf: function() {return 0n;}}) is false Expected SameValue(«true», «false») to be true
@@ -18,11 +459,332 @@ transform error: Test262Error: (-1n) ** -1n throws RangeError Expected a RangeEr
 tasks/coverage/test262/test/language/expressions/object/__proto__-permitted-dup-shorthand.js
 codegen error: Test262Error: Expected SameValue(«[object Object]», «2») to be true
 
+tasks/coverage/test262/test/language/expressions/object/method-definition/async-gen-yield-star-async-next.js
+transform error: Test262Error: Expected SameValue(«"get next done (1)"», «"get next value (1)"») to be true
+
+tasks/coverage/test262/test/language/expressions/object/method-definition/async-gen-yield-star-async-return.js
+transform error: Test262Error: Expected SameValue(«"get return"», «"get next"») to be true
+
+tasks/coverage/test262/test/language/expressions/object/method-definition/async-gen-yield-star-async-throw.js
+transform error: Test262Error: Expected SameValue(«"get throw"», «"get next"») to be true
+
+tasks/coverage/test262/test/language/expressions/object/method-definition/async-gen-yield-star-next-call-done-get-abrupt.js
+transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+
+tasks/coverage/test262/test/language/expressions/object/method-definition/async-gen-yield-star-next-call-returns-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/expressions/object/method-definition/async-gen-yield-star-next-get-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/expressions/object/method-definition/async-gen-yield-star-next-non-object-ignores-then.js
+transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+
+tasks/coverage/test262/test/language/expressions/object/method-definition/async-gen-yield-star-next-then-get-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/expressions/object/method-definition/async-gen-yield-star-next-then-returns-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/expressions/object/method-definition/async-gen-yield-star-sync-throw.js
+transform error: throw-arg-1
+
+tasks/coverage/test262/test/language/expressions/object/method-definition/async-meth-dflt-params-abrupt.js
+transform error: Test262Error: 
+
+tasks/coverage/test262/test/language/expressions/object/method-definition/async-meth-dflt-params-ref-later.js
+transform error: ReferenceError: Cannot access 'y' before initialization
+
+tasks/coverage/test262/test/language/expressions/object/method-definition/async-meth-dflt-params-ref-self.js
+transform error: ReferenceError: Cannot access 'x' before initialization
+
+tasks/coverage/test262/test/language/expressions/object/method-definition/async-meth-eval-var-scope-syntax-err.js
+transform error: SyntaxError: Identifier 'a' has already been declared
+
+tasks/coverage/test262/test/language/expressions/object/method-definition/async-returns-async-arrow-returns-arguments-from-parent-function.js
+transform error: Test262Error: Expected SameValue(«false», «true») to be true
+
+tasks/coverage/test262/test/language/expressions/object/method-definition/async-super-call-param.js
+transform error: ReferenceError: _superprop_getMethod is not defined
+
 tasks/coverage/test262/test/language/literals/regexp/u-surrogate-pairs-atom-escape-decimal.js
 codegen error: Test262Error: Expected SameValue(«true», «false») to be true
 
+tasks/coverage/test262/test/language/statements/async-function/forbidden-ext/b1/async-func-decl-forbidden-ext-direct-access-prop-arguments.js
+transform error: Test262Error: Expected SameValue(«true», «false») to be true
+
+tasks/coverage/test262/test/language/statements/async-function/forbidden-ext/b1/async-func-decl-forbidden-ext-direct-access-prop-caller.js
+transform error: Test262Error: Expected SameValue(«true», «false») to be true
+
+tasks/coverage/test262/test/language/statements/async-function/returns-async-arrow-returns-arguments-from-parent-function.js
+transform error: Test262Error: Expected SameValue(«false», «true») to be true
+
+tasks/coverage/test262/test/language/statements/async-generator/forbidden-ext/b1/async-gen-func-decl-forbidden-ext-direct-access-prop-arguments.js
+transform error: Test262Error: Expected SameValue(«true», «false») to be true
+
+tasks/coverage/test262/test/language/statements/async-generator/forbidden-ext/b1/async-gen-func-decl-forbidden-ext-direct-access-prop-caller.js
+transform error: Test262Error: Expected SameValue(«true», «false») to be true
+
 tasks/coverage/test262/test/language/statements/async-generator/return-undefined-implicit-and-explicit.js
-minify error: Test262Error: Actual [tick 1, g1 ret, g2 ret, g3 ret, g4 ret, tick 2] and expected [tick 1, g1 ret, g2 ret, tick 2, g3 ret, g4 ret] should have the same contents. Ticks for implicit and explicit return undefined
+transform error: Test262Error: Actual [tick 1, tick 2, g1 ret, g2 ret, g3 ret, g4 ret] and expected [tick 1, g1 ret, g2 ret, tick 2, g3 ret, g4 ret] should have the same contents. Ticks for implicit and explicit return undefined
+
+tasks/coverage/test262/test/language/statements/async-generator/yield-star-async-from-sync-iterator-inaccessible.js
+transform error: TypeError: Cannot convert undefined or null to object
+
+tasks/coverage/test262/test/language/statements/async-generator/yield-star-async-next.js
+transform error: Test262Error: Expected SameValue(«"get next done (1)"», «"get next value (1)"») to be true
+
+tasks/coverage/test262/test/language/statements/async-generator/yield-star-async-return.js
+transform error: Test262Error: Expected SameValue(«"get return"», «"get next"») to be true
+
+tasks/coverage/test262/test/language/statements/async-generator/yield-star-async-throw.js
+transform error: Test262Error: Expected SameValue(«"get throw"», «"get next"») to be true
+
+tasks/coverage/test262/test/language/statements/async-generator/yield-star-next-call-done-get-abrupt.js
+transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+
+tasks/coverage/test262/test/language/statements/async-generator/yield-star-next-call-returns-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/statements/async-generator/yield-star-next-get-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/statements/async-generator/yield-star-next-non-object-ignores-then.js
+transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+
+tasks/coverage/test262/test/language/statements/async-generator/yield-star-next-then-get-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/statements/async-generator/yield-star-next-then-returns-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/statements/async-generator/yield-star-normal-notdone-iter-value-throws.js
+transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+
+tasks/coverage/test262/test/language/statements/async-generator/yield-star-promise-not-unwrapped.js
+transform error: Test262Error: .throw should not be accessed
+
+tasks/coverage/test262/test/language/statements/async-generator/yield-star-return-notdone-iter-value-throws.js
+transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+
+tasks/coverage/test262/test/language/statements/async-generator/yield-star-return-then-getter-ticks.js
+transform error: Test262Error: Actual [start, get return, tick 1, get then, tick 2, tick 3] and expected [start, tick 1, get then, tick 2, get return, get then, tick 3] should have the same contents. Ticks for return with thenable getter
+
+tasks/coverage/test262/test/language/statements/async-generator/yield-star-sync-throw.js
+transform error: throw-arg-1
+
+tasks/coverage/test262/test/language/statements/async-generator/yield-star-throw-notdone-iter-value-throws.js
+transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+
+tasks/coverage/test262/test/language/statements/class/async-gen-method/yield-star-async-next.js
+transform error: Test262Error: Expected SameValue(«"get next done (1)"», «"get next value (1)"») to be true
+
+tasks/coverage/test262/test/language/statements/class/async-gen-method/yield-star-async-return.js
+transform error: Test262Error: Expected SameValue(«"get return"», «"get next"») to be true
+
+tasks/coverage/test262/test/language/statements/class/async-gen-method/yield-star-async-throw.js
+transform error: Test262Error: Expected SameValue(«"get throw"», «"get next"») to be true
+
+tasks/coverage/test262/test/language/statements/class/async-gen-method/yield-star-next-call-done-get-abrupt.js
+transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+
+tasks/coverage/test262/test/language/statements/class/async-gen-method/yield-star-next-call-returns-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/statements/class/async-gen-method/yield-star-next-get-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/statements/class/async-gen-method/yield-star-next-non-object-ignores-then.js
+transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+
+tasks/coverage/test262/test/language/statements/class/async-gen-method/yield-star-next-then-get-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/statements/class/async-gen-method/yield-star-next-then-returns-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/statements/class/async-gen-method/yield-star-sync-throw.js
+transform error: throw-arg-1
+
+tasks/coverage/test262/test/language/statements/class/async-gen-method-static/yield-star-async-next.js
+transform error: Test262Error: Expected SameValue(«"get next done (1)"», «"get next value (1)"») to be true
+
+tasks/coverage/test262/test/language/statements/class/async-gen-method-static/yield-star-async-return.js
+transform error: Test262Error: Expected SameValue(«"get return"», «"get next"») to be true
+
+tasks/coverage/test262/test/language/statements/class/async-gen-method-static/yield-star-async-throw.js
+transform error: Test262Error: Expected SameValue(«"get throw"», «"get next"») to be true
+
+tasks/coverage/test262/test/language/statements/class/async-gen-method-static/yield-star-next-call-done-get-abrupt.js
+transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+
+tasks/coverage/test262/test/language/statements/class/async-gen-method-static/yield-star-next-call-returns-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/statements/class/async-gen-method-static/yield-star-next-get-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/statements/class/async-gen-method-static/yield-star-next-non-object-ignores-then.js
+transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+
+tasks/coverage/test262/test/language/statements/class/async-gen-method-static/yield-star-next-then-get-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/statements/class/async-gen-method-static/yield-star-next-then-returns-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/statements/class/async-gen-method-static/yield-star-sync-throw.js
+transform error: throw-arg-1
+
+tasks/coverage/test262/test/language/statements/class/async-method/dflt-params-abrupt.js
+transform error: Test262Error: 
+
+tasks/coverage/test262/test/language/statements/class/async-method/dflt-params-ref-later.js
+transform error: ReferenceError: Cannot access 'y' before initialization
+
+tasks/coverage/test262/test/language/statements/class/async-method/dflt-params-ref-self.js
+transform error: ReferenceError: Cannot access 'x' before initialization
+
+tasks/coverage/test262/test/language/statements/class/async-method/returns-async-arrow-returns-arguments-from-parent-function.js
+transform error: Test262Error: Expected SameValue(«false», «true») to be true
+
+tasks/coverage/test262/test/language/statements/class/async-method-static/dflt-params-abrupt.js
+transform error: Test262Error: 
+
+tasks/coverage/test262/test/language/statements/class/async-method-static/dflt-params-ref-later.js
+transform error: ReferenceError: Cannot access 'y' before initialization
+
+tasks/coverage/test262/test/language/statements/class/async-method-static/dflt-params-ref-self.js
+transform error: ReferenceError: Cannot access 'x' before initialization
+
+tasks/coverage/test262/test/language/statements/class/async-method-static/returns-async-arrow-returns-arguments-from-parent-function.js
+transform error: Test262Error: Expected SameValue(«false», «true») to be true
+
+tasks/coverage/test262/test/language/statements/class/definition/methods-async-super-call-param.js
+transform error: ReferenceError: _superprop_getMethod is not defined
+
+tasks/coverage/test262/test/language/statements/class/elements/async-gen-private-method/yield-star-async-next.js
+transform error: Test262Error: Expected SameValue(«"get next done (1)"», «"get next value (1)"») to be true
+
+tasks/coverage/test262/test/language/statements/class/elements/async-gen-private-method/yield-star-async-return.js
+transform error: Test262Error: Expected SameValue(«"get return"», «"get next"») to be true
+
+tasks/coverage/test262/test/language/statements/class/elements/async-gen-private-method/yield-star-async-throw.js
+transform error: Test262Error: Expected SameValue(«"get throw"», «"get next"») to be true
+
+tasks/coverage/test262/test/language/statements/class/elements/async-gen-private-method/yield-star-next-call-done-get-abrupt.js
+transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+
+tasks/coverage/test262/test/language/statements/class/elements/async-gen-private-method/yield-star-next-call-returns-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/statements/class/elements/async-gen-private-method/yield-star-next-get-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/statements/class/elements/async-gen-private-method/yield-star-next-non-object-ignores-then.js
+transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+
+tasks/coverage/test262/test/language/statements/class/elements/async-gen-private-method/yield-star-next-then-get-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/statements/class/elements/async-gen-private-method/yield-star-next-then-returns-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/statements/class/elements/async-gen-private-method/yield-star-sync-throw.js
+transform error: throw-arg-1
+
+tasks/coverage/test262/test/language/statements/class/elements/async-gen-private-method-static/yield-star-async-next.js
+transform error: Test262Error: Expected SameValue(«"get next done (1)"», «"get next value (1)"») to be true
+
+tasks/coverage/test262/test/language/statements/class/elements/async-gen-private-method-static/yield-star-async-return.js
+transform error: Test262Error: Expected SameValue(«"get return"», «"get next"») to be true
+
+tasks/coverage/test262/test/language/statements/class/elements/async-gen-private-method-static/yield-star-async-throw.js
+transform error: Test262Error: Expected SameValue(«"get throw"», «"get next"») to be true
+
+tasks/coverage/test262/test/language/statements/class/elements/async-gen-private-method-static/yield-star-next-call-done-get-abrupt.js
+transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+
+tasks/coverage/test262/test/language/statements/class/elements/async-gen-private-method-static/yield-star-next-call-returns-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/statements/class/elements/async-gen-private-method-static/yield-star-next-get-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/statements/class/elements/async-gen-private-method-static/yield-star-next-non-object-ignores-then.js
+transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+
+tasks/coverage/test262/test/language/statements/class/elements/async-gen-private-method-static/yield-star-next-then-get-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/statements/class/elements/async-gen-private-method-static/yield-star-next-then-returns-abrupt.js
+transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
+
+tasks/coverage/test262/test/language/statements/class/elements/async-gen-private-method-static/yield-star-sync-throw.js
+transform error: throw-arg-1
+
+tasks/coverage/test262/test/language/statements/class/elements/async-private-method/returns-async-arrow-returns-arguments-from-parent-function.js
+transform error: Test262Error: Expected SameValue(«false», «true») to be true
+
+tasks/coverage/test262/test/language/statements/class/elements/async-private-method-static/returns-async-arrow-returns-arguments-from-parent-function.js
+transform error: Test262Error: Expected SameValue(«false», «true») to be true
+
+tasks/coverage/test262/test/language/statements/class/static-init-arguments-methods.js
+transform error: Test262Error: Actual [async method] and expected [] should have the same contents. body
+
+tasks/coverage/test262/test/language/statements/class/subclass/superclass-async-function.js
+transform error: TypeError: Cannot redefine property: prototype
+
+tasks/coverage/test262/test/language/statements/class/subclass/superclass-async-generator-function.js
+transform error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-from-sync-iterator-continuation-abrupt-completion-get-constructor.js
+transform error: Test262Error: Actual [start, tick 1, catch, tick 2] and expected [start, tick 1, tick 2, catch] should have the same contents. 
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-array-elem-init-yield-ident-valid.js
+transform error: Test262Error: Expected SameValue(«undefined», «4») to be true
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-array-elem-nested-array-yield-ident-valid.js
+transform error: Test262Error: Expected SameValue(«undefined», «22») to be true
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-array-elem-nested-obj-yield-ident-valid.js
+transform error: Test262Error: Expected SameValue(«undefined», «2») to be true
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-array-elem-target-yield-valid.js
+transform error: Test262Error: Expected SameValue(«undefined», «33») to be true
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-array-rest-nested-array-yield-ident-valid.js
+transform error: Test262Error: Expected SameValue(«undefined», «86») to be true
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-array-rest-nested-obj-yield-ident-valid.js
+transform error: Test262Error: Expected SameValue(«undefined», «2») to be true
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-array-rest-yield-ident-valid.js
+transform error: TypeError: Cannot read properties of undefined (reading 'length')
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-id-init-yield-ident-valid.js
+transform error: Test262Error: Expected SameValue(«undefined», «3») to be true
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-prop-elem-init-yield-ident-valid.js
+transform error: Test262Error: Expected SameValue(«undefined», «4») to be true
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-prop-elem-target-yield-ident-valid.js
+transform error: Test262Error: Expected SameValue(«undefined», «23») to be true
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-prop-nested-array-yield-ident-valid.js
+transform error: Test262Error: Expected SameValue(«undefined», «22») to be true
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-prop-nested-obj-yield-ident-valid.js
+transform error: Test262Error: Expected SameValue(«undefined», «2») to be true
+
+tasks/coverage/test262/test/language/statements/for-await-of/ticks-with-async-iter-resolved-promise-and-constructor-lookup-two.js
+transform error: Test262Error: Actual [pre, constructor, constructor, tick 1, loop, constructor, constructor, tick 2, post] and expected [pre, constructor, tick 1, loop, constructor, tick 2, post] should have the same contents. Ticks and constructor lookups
+
+tasks/coverage/test262/test/language/statements/for-await-of/ticks-with-async-iter-resolved-promise-and-constructor-lookup.js
+transform error: Test262Error: Actual [pre, constructor, tick 1, loop, constructor, tick 2, post] and expected [pre, tick 1, loop, tick 2, post] should have the same contents. Ticks and constructor lookups
+
+tasks/coverage/test262/test/language/statements/for-await-of/ticks-with-sync-iter-resolved-promise-and-constructor-lookup.js
+transform error: Test262Error: Actual [pre, constructor, constructor, constructor, constructor, tick 1, tick 2, loop, constructor, constructor, constructor, tick 3, tick 4, post] and expected [pre, constructor, constructor, tick 1, tick 2, loop, constructor, tick 3, tick 4, post] should have the same contents. Ticks and constructor lookups
 
 tasks/coverage/test262/test/language/statements/for-of/string-astral-truncated.js
 codegen error: Test262Error: Expected SameValue(«"\\"», «"\\ud801"») to be true
