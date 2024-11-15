@@ -1,6 +1,6 @@
 #!/usr/bin/env -S just --justfile
 
-set windows-shell := ["pwsh", "-NoLogo", "-Command"]
+set windows-shell := ["powershell.exe", "-NoLogo", "-Command"]
 set shell := ["bash", "-cu"]
 
 _default:
