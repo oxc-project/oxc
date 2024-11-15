@@ -336,7 +336,7 @@ impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
                             binding_name.as_str(),
                         )
                         .map(|symbol_id| {
-                            let ident = ctx.create_bound_reference_id(
+                            let ident = ctx.create_bound_ident_reference(
                                 SPAN,
                                 binding_name,
                                 symbol_id,
@@ -496,7 +496,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
         let left = self.create_registration(id.name.clone(), ReferenceFlags::Write, ctx);
-        let right = ctx.create_bound_reference_id(
+        let right = ctx.create_bound_ident_reference(
             SPAN,
             id.name.clone(),
             id.symbol_id(),

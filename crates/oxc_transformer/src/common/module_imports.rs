@@ -227,7 +227,7 @@ impl<'a> ModuleImportsStore<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
         let var_kind = VariableDeclarationKind::Var;
-        let ident = ctx.create_reference_id(
+        let ident = ctx.create_ident_reference(
             SPAN,
             Atom::from("require"),
             require_symbol_id,

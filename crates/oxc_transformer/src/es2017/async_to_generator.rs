@@ -310,7 +310,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
                 let id = caller_function.id.as_ref().unwrap();
                 // If the function has an id, then we need to return the id.
                 // `function foo() { ... }` -> `function foo() {} return foo;`
-                let reference = ctx.create_bound_reference_id(
+                let reference = ctx.create_bound_ident_reference(
                     SPAN,
                     id.name.clone(),
                     id.symbol_id(),
@@ -597,8 +597,12 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
         let symbol_id = ctx.scopes().find_binding(ctx.current_scope_id(), "arguments");
-        let arguments_ident =
-            ctx.create_reference_id(SPAN, Atom::from("arguments"), symbol_id, ReferenceFlags::Read);
+        let arguments_ident = ctx.create_ident_reference(
+            SPAN,
+            Atom::from("arguments"),
+            symbol_id,
+            ReferenceFlags::Read,
+        );
         let arguments_ident = Argument::Identifier(ctx.alloc(arguments_ident));
 
         // (this, arguments)

@@ -434,7 +434,7 @@ impl<'a> TraverseCtx<'a> {
     }
 
     /// Create an `IdentifierReference` bound to a `SymbolId`.
-    pub fn create_bound_reference_id(
+    pub fn create_bound_ident_reference(
         &mut self,
         span: Span,
         name: Atom<'a>,
@@ -458,7 +458,7 @@ impl<'a> TraverseCtx<'a> {
     }
 
     /// Create an unbound `IdentifierReference`.
-    pub fn create_unbound_reference_id(
+    pub fn create_unbound_ident_reference(
         &mut self,
         span: Span,
         name: Atom<'a>,
@@ -486,9 +486,9 @@ impl<'a> TraverseCtx<'a> {
 
     /// Create an `IdentifierReference` optionally bound to a `SymbolId`.
     ///
-    /// If you know if there's a `SymbolId` or not, prefer `TraverseCtx::create_bound_reference_id`
-    /// or `TraverseCtx::create_unbound_reference_id`.
-    pub fn create_reference_id(
+    /// If you know if there's a `SymbolId` or not, prefer `TraverseCtx::create_bound_ident_reference`
+    /// or `TraverseCtx::create_unbound_ident_reference`.
+    pub fn create_ident_reference(
         &mut self,
         span: Span,
         name: Atom<'a>,
@@ -496,9 +496,9 @@ impl<'a> TraverseCtx<'a> {
         flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
         if let Some(symbol_id) = symbol_id {
-            self.create_bound_reference_id(span, name, symbol_id, flags)
+            self.create_bound_ident_reference(span, name, symbol_id, flags)
         } else {
-            self.create_unbound_reference_id(span, name, flags)
+            self.create_unbound_ident_reference(span, name, flags)
         }
     }
 

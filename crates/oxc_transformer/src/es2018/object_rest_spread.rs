@@ -142,7 +142,7 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
 
     fn object_assign(symbol_id: Option<SymbolId>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         let ident =
-            ctx.create_reference_id(SPAN, Atom::from("Object"), symbol_id, ReferenceFlags::Read);
+            ctx.create_ident_reference(SPAN, Atom::from("Object"), symbol_id, ReferenceFlags::Read);
         let object = Expression::Identifier(ctx.alloc(ident));
         let property = ctx.ast.identifier_name(SPAN, Atom::from("assign"));
         Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false))

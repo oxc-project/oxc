@@ -180,7 +180,7 @@ impl<'a, 'ctx> Traverse<'a> for RegExp<'a, 'ctx> {
 
         let callee = {
             let symbol_id = ctx.scopes().find_binding(ctx.current_scope_id(), "RegExp");
-            let ident = ctx.create_reference_id(
+            let ident = ctx.create_ident_reference(
                 SPAN,
                 Atom::from("RegExp"),
                 symbol_id,
