@@ -863,7 +863,7 @@ impl<'a> ArrowFunctionConverter<'a> {
 
     /// Transform the identifier reference for `arguments` if it's affected after transformation.
     ///
-    /// The reason is the same as [`Self::transform_member_expression_for_super`] mentioned.
+    /// See [`Self::transform_member_expression_for_super`] for the reason.
     fn transform_identifier_reference_for_arguments(
         &mut self,
         ident: &mut IdentifierReference<'a>,
@@ -893,8 +893,8 @@ impl<'a> ArrowFunctionConverter<'a> {
             }
         });
 
-        // If no symbol ID, it means there is no variable named `arguments` in the scope,
-        // the following code just for sync semantics.
+        // If no symbol ID, it means there is no variable named `arguments` in the scope.
+        // The following code is just to sync semantics.
         if symbol_id.is_none() {
             let reference = ctx.symbols_mut().get_reference_mut(reference_id);
             reference.set_symbol_id(binding.symbol_id);
@@ -949,7 +949,7 @@ impl<'a> ArrowFunctionConverter<'a> {
             ctx.create_unbound_ident_reference(SPAN, Atom::from("arguments"), ReferenceFlags::Read);
         let mut init = Expression::Identifier(ctx.ast.alloc(reference.clone()));
 
-        // Top level may don't have `arguments`, so we need to check it.
+        // Top level may doesn't have `arguments`, so we need to check it.
         // `typeof arguments === "undefined" ? void 0 : arguments;`
         if ctx.scopes().root_scope_id() == target_scope_id {
             let argument = Expression::Identifier(ctx.ast.alloc(reference));
