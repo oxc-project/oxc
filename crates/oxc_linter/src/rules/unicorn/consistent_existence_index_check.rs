@@ -162,6 +162,7 @@ impl Rule for ConsistentExistenceIndexCheck {
                                 format!("{}{}{}", head, replacement.replacement_operator, tail);
                         }
                     }
+
                     let fixer = fixer.for_multifix();
                     let mut rule_fixes = fixer.new_fix_with_capacity(2);
 
