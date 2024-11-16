@@ -926,7 +926,7 @@ impl<'a> ArrowFunctionConverter<'a> {
             Self::rename_arguments_symbol(symbol_id, arguments_name, ctx);
             // Record the symbol ID as a renamed `arguments` variable.
             self.renamed_arguments_symbol_ids.insert(symbol_id);
-            BoundIdentifier::from_binding_ident(ident)
+            BoundIdentifier::new(ident.name.clone(), symbol_id)
         });
     }
 
