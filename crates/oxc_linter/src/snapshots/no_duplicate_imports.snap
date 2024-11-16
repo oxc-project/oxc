@@ -1,0 +1,44 @@
+---
+source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
+---
+  ⚠ eslint(no-duplicate-imports): 'fs' import is duplicated
+   ╭─[no_duplicate_imports.tsx:2:7]
+ 1 │ import "fs";
+ 2 │             import "fs"
+   ·             ───────────
+   ╰────
+  help: Merge the duplicated import into a single import statement
+
+  ⚠ eslint(no-duplicate-imports): 'lodash-es' import is duplicated
+   ╭─[no_duplicate_imports.tsx:2:7]
+ 1 │ import { merge } from "lodash-es";
+ 2 │             import { find } from "lodash-es";
+   ·             ─────────────────────────────────
+   ╰────
+  help: Merge the duplicated import into a single import statement
+
+  ⚠ eslint(no-duplicate-imports): 'lodash-es' import is duplicated
+   ╭─[no_duplicate_imports.tsx:2:9]
+ 1 │ import { merge } from "lodash-es";
+ 2 │         import _ from "lodash-es";
+   ·         ──────────────────────────
+   ╰────
+  help: Merge the duplicated import into a single import statement
+
+  ⚠ eslint(no-duplicate-imports): 'os' import is duplicated
+   ╭─[no_duplicate_imports.tsx:2:9]
+ 1 │ import os from "os";
+ 2 │         import { something } from "os";
+   ·         ───────────────────────────────
+ 3 │         import * as foobar from "os";
+   ╰────
+  help: Merge the duplicated import into a single import statement
+
+  ⚠ eslint(no-duplicate-imports): 'lodash-es' import is duplicated
+   ╭─[no_duplicate_imports.tsx:3:9]
+ 2 │         import { merge } from "lodash-es";
+ 3 │         import { baz } from "lodash-es";
+   ·         ────────────────────────────────
+   ╰────
+  help: Merge the duplicated import into a single import statement

@@ -67,6 +67,7 @@ mod eslint {
     pub mod no_dupe_else_if;
     pub mod no_dupe_keys;
     pub mod no_duplicate_case;
+    pub mod no_duplicate_imports;
     pub mod no_else_return;
     pub mod no_empty;
     pub mod no_empty_character_class;
@@ -531,6 +532,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::max_lines,
     eslint::max_params,
     eslint::no_object_constructor,
+    eslint::no_duplicate_imports,
     eslint::no_alert,
     eslint::no_array_constructor,
     eslint::no_async_promise_executor,
