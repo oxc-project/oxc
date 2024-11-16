@@ -195,9 +195,6 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         node: &mut BindingIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if let Some(typescript) = self.x0_typescript.as_mut() {
-            typescript.enter_binding_identifier(node, ctx);
-        }
         self.common.enter_binding_identifier(node, ctx);
     }
 
