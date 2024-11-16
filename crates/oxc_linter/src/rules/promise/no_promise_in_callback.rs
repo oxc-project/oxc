@@ -57,6 +57,9 @@ impl Rule for NoPromiseInCallback {
             return;
         }
 
+        // When a Promise is returned in a ReturnStatement, the function is most likely
+        // being used as part of a Promise chain rather than as a callback function.
+        // To avoid false positives, this case is intentionally excluded from the scope of this rule.
         if let Some(AstKind::ReturnStatement(_)) = ctx.nodes().parent_kind(node.id()) {
             return;
         };
