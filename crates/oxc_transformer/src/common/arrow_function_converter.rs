@@ -994,6 +994,11 @@ impl<'a> ArrowFunctionConverter<'a> {
             }
             + usize::from(this_var.is_some());
 
+        // Exit if no declarations to be inserted
+        if capacity == 0 {
+            return;
+        }
+
         let mut declarations = ctx.ast.vec_with_capacity(capacity);
 
         if let Some(arguments) = arguments {
@@ -1023,11 +1028,6 @@ impl<'a> ArrowFunctionConverter<'a> {
         }
 
         debug_assert_eq!(capacity, declarations.len());
-
-        // If there are no declarations, we don't need to insert a variable declaration.
-        if declarations.is_empty() {
-            return;
-        }
 
         let stmt = ctx.ast.alloc_variable_declaration(
             SPAN,
