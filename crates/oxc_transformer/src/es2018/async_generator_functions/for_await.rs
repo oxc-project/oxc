@@ -150,6 +150,7 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
         let iterator = ctx.ast.move_expression(&mut stmt.right);
         let iterator = self.ctx.helper_call_expr(
             Helper::AsyncIterator,
+            SPAN,
             ctx.ast.vec1(Argument::from(iterator)),
             ctx,
         );

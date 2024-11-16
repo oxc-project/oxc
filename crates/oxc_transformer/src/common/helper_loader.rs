@@ -73,7 +73,7 @@ use serde::Deserialize;
 use oxc_allocator::{String as ArenaString, Vec as ArenaVec};
 use oxc_ast::ast::{Argument, CallExpression, Expression, TSTypeParameterInstantiation};
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
-use oxc_span::{Atom, SPAN};
+use oxc_span::{Atom, Span, SPAN};
 use oxc_traverse::{BoundIdentifier, TraverseCtx};
 
 use crate::TransformCtx;
@@ -183,12 +183,13 @@ impl<'a> TransformCtx<'a> {
     pub fn helper_call(
         &self,
         helper: Helper,
+        span: Span,
         arguments: ArenaVec<'a, Argument<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> CallExpression<'a> {
         let callee = self.helper_load(helper, ctx);
         ctx.ast.call_expression(
-            SPAN,
+            span,
             callee,
             None::<TSTypeParameterInstantiation<'a>>,
             arguments,
@@ -200,12 +201,13 @@ impl<'a> TransformCtx<'a> {
     pub fn helper_call_expr(
         &self,
         helper: Helper,
+        span: Span,
         arguments: ArenaVec<'a, Argument<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let callee = self.helper_load(helper, ctx);
         ctx.ast.expression_call(
-            SPAN,
+            span,
             callee,
             None::<TSTypeParameterInstantiation<'a>>,
             arguments,
