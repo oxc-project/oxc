@@ -226,14 +226,12 @@ impl<'a> ModuleImportsStore<'a> {
         require_symbol_id: Option<SymbolId>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
-        let var_kind = VariableDeclarationKind::Var;
-        let ident = ctx.create_ident_reference(
+        let callee = ctx.create_ident_expr(
             SPAN,
             Atom::from("require"),
             require_symbol_id,
             ReferenceFlags::read(),
         );
-        let callee = Expression::Identifier(ctx.alloc(ident));
 
         let args = {
             let arg = Argument::from(ctx.ast.expression_string_literal(SPAN, source));
@@ -241,6 +239,7 @@ impl<'a> ModuleImportsStore<'a> {
         };
         let Some(Import::Default(local)) = names.into_iter().next() else { unreachable!() };
         let id = local.create_binding_pattern(ctx);
+        let var_kind = VariableDeclarationKind::Var;
         let decl = {
             let init = ctx.ast.expression_call(SPAN, callee, NONE, args, false);
             let decl = ctx.ast.variable_declarator(SPAN, var_kind, id, Some(init), false);

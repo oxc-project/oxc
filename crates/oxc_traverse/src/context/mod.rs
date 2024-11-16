@@ -445,6 +445,18 @@ impl<'a> TraverseCtx<'a> {
         self.ast.identifier_reference_with_reference_id(span, name, reference_id)
     }
 
+    /// Create an `Expression::Identifier` bound to a `SymbolId`.
+    pub fn create_bound_ident_expr(
+        &mut self,
+        span: Span,
+        name: Atom<'a>,
+        symbol_id: SymbolId,
+        flags: ReferenceFlags,
+    ) -> Expression<'a> {
+        let ident = self.create_bound_ident_reference(span, name, symbol_id, flags);
+        Expression::Identifier(self.ast.alloc(ident))
+    }
+
     /// Create an unbound reference.
     ///
     /// This is a shortcut for `ctx.scoping.create_unbound_reference`.
@@ -466,6 +478,17 @@ impl<'a> TraverseCtx<'a> {
     ) -> IdentifierReference<'a> {
         let reference_id = self.create_unbound_reference(name.to_compact_str(), flags);
         self.ast.identifier_reference_with_reference_id(span, name, reference_id)
+    }
+
+    /// Create an unbound `Expression::Identifier`.
+    pub fn create_unbound_ident_expr(
+        &mut self,
+        span: Span,
+        name: Atom<'a>,
+        flags: ReferenceFlags,
+    ) -> Expression<'a> {
+        let ident = self.create_unbound_ident_reference(span, name, flags);
+        Expression::Identifier(self.ast.alloc(ident))
     }
 
     /// Create a reference optionally bound to a `SymbolId`.
@@ -499,6 +522,24 @@ impl<'a> TraverseCtx<'a> {
             self.create_bound_ident_reference(span, name, symbol_id, flags)
         } else {
             self.create_unbound_ident_reference(span, name, flags)
+        }
+    }
+
+    /// Create an `Expression::Identifier` optionally bound to a `SymbolId`.
+    ///
+    /// If you know if there's a `SymbolId` or not, prefer `TraverseCtx::create_bound_ident_expr`
+    /// or `TraverseCtx::create_unbound_ident_expr`.
+    pub fn create_ident_expr(
+        &mut self,
+        span: Span,
+        name: Atom<'a>,
+        symbol_id: Option<SymbolId>,
+        flags: ReferenceFlags,
+    ) -> Expression<'a> {
+        if let Some(symbol_id) = symbol_id {
+            self.create_bound_ident_expr(span, name, symbol_id, flags)
+        } else {
+            self.create_unbound_ident_expr(span, name, flags)
         }
     }
 

@@ -277,13 +277,8 @@ impl<'a> HelperLoaderStore<'a> {
         static HELPER_VAR: &str = "babelHelpers";
 
         let symbol_id = ctx.scopes().find_binding(ctx.current_scope_id(), HELPER_VAR);
-        let ident = ctx.create_ident_reference(
-            SPAN,
-            Atom::from(HELPER_VAR),
-            symbol_id,
-            ReferenceFlags::Read,
-        );
-        let object = Expression::Identifier(ctx.alloc(ident));
+        let object =
+            ctx.create_ident_expr(SPAN, Atom::from(HELPER_VAR), symbol_id, ReferenceFlags::Read);
         let property = ctx.ast.identifier_name(SPAN, Atom::from(helper.name()));
         Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false))
     }

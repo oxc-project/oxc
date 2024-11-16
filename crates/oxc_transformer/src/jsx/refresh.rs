@@ -336,13 +336,12 @@ impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
                             binding_name.as_str(),
                         )
                         .map(|symbol_id| {
-                            let ident = ctx.create_bound_ident_reference(
+                            let mut expr = ctx.create_bound_ident_expr(
                                 SPAN,
                                 binding_name,
                                 symbol_id,
                                 ReferenceFlags::Read,
                             );
-                            let mut expr = Expression::Identifier(ctx.alloc(ident));
 
                             if is_member_expression {
                                 // binding_name.hook_name
@@ -496,13 +495,12 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
         let left = self.create_registration(id.name.clone(), ReferenceFlags::Write, ctx);
-        let right = ctx.create_bound_ident_reference(
+        let right = ctx.create_bound_ident_expr(
             SPAN,
             id.name.clone(),
             id.symbol_id(),
             ReferenceFlags::Read,
         );
-        let right = Expression::Identifier(ctx.alloc(right));
         let expr = ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, left, right);
         ctx.ast.statement_expression(SPAN, expr)
     }

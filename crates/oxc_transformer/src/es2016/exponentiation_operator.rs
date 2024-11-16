@@ -164,18 +164,12 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
                 *reference.flags_mut() = ReferenceFlags::Write;
             }
 
-            Expression::Identifier(ctx.ast.alloc(ctx.create_bound_ident_reference(
-                SPAN,
-                ident.name.clone(),
-                symbol_id,
-                ReferenceFlags::Read,
-            )))
+            ctx.create_bound_ident_expr(SPAN, ident.name.clone(), symbol_id, ReferenceFlags::Read)
         } else {
             // Unbound reference. Could possibly trigger a getter so we need to only evaluate it once.
             // Assign to a temp var.
-            let reference = Expression::Identifier(ctx.ast.alloc(
-                ctx.create_unbound_ident_reference(SPAN, ident.name.clone(), ReferenceFlags::Read),
-            ));
+            let reference =
+                ctx.create_unbound_ident_expr(SPAN, ident.name.clone(), ReferenceFlags::Read);
             let binding = self.create_temp_var(reference, &mut temp_var_inits, ctx);
             binding.create_read_expression(ctx)
         };
@@ -495,14 +489,12 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
                 if let Some(symbol_id) = symbol_id {
                     // This variable is declared in scope so evaluating it multiple times can't trigger a getter.
                     // No need for a temp var.
-                    return Expression::Identifier(ctx.ast.alloc(
-                        ctx.create_bound_ident_reference(
-                            SPAN,
-                            ident.name.clone(),
-                            symbol_id,
-                            ReferenceFlags::Read,
-                        ),
-                    ));
+                    return ctx.create_bound_ident_expr(
+                        SPAN,
+                        ident.name.clone(),
+                        symbol_id,
+                        ReferenceFlags::Read,
+                    );
                 }
                 // Unbound reference. Could possibly trigger a getter so we need to only evaluate it once.
                 // Assign to a temp var.
@@ -548,13 +540,8 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let math_symbol_id = ctx.scopes().find_binding(ctx.current_scope_id(), "Math");
-        let ident_math = ctx.create_ident_reference(
-            SPAN,
-            Atom::from("Math"),
-            math_symbol_id,
-            ReferenceFlags::Read,
-        );
-        let object = Expression::Identifier(ctx.alloc(ident_math));
+        let object =
+            ctx.create_ident_expr(SPAN, Atom::from("Math"), math_symbol_id, ReferenceFlags::Read);
         let property = ctx.ast.identifier_name(SPAN, "pow");
         let callee =
             Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false));
