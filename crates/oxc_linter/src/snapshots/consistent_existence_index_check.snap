@@ -1,0 +1,142 @@
+---
+source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
+---
+  ⚠ eslint-plugin-unicorn(consistent-existence-index-check): Prefer `=== -1` over `< 0` to check non-existence.
+   ╭─[consistent_existence_index_check.tsx:1:39]
+ 1 │ const index = foo.indexOf('bar'); if (index < 0) {}
+   ·                                       ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(consistent-existence-index-check): Prefer `=== -1` over `< 0` to check non-existence.
+   ╭─[consistent_existence_index_check.tsx:1:43]
+ 1 │ const index = foo.lastIndexOf('bar'); if (index < 0) {}
+   ·                                           ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(consistent-existence-index-check): Prefer `=== -1` over `< 0` to check non-existence.
+   ╭─[consistent_existence_index_check.tsx:1:41]
+ 1 │ const index = foo.findIndex('bar'); if (index < 0) {}
+   ·                                         ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(consistent-existence-index-check): Prefer `=== -1` over `< 0` to check non-existence.
+   ╭─[consistent_existence_index_check.tsx:1:45]
+ 1 │ const index = foo.findLastIndex('bar'); if (index < 0) {}
+   ·                                             ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(consistent-existence-index-check): Prefer `!== -1` over `>= 0` to check non-existence.
+   ╭─[consistent_existence_index_check.tsx:1:39]
+ 1 │ const index = foo.indexOf('bar'); if (index >= 0) {}
+   ·                                       ──────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(consistent-existence-index-check): Prefer `!== -1` over `>= 0` to check non-existence.
+   ╭─[consistent_existence_index_check.tsx:1:43]
+ 1 │ const index = foo.lastIndexOf('bar'); if (index >= 0) {}
+   ·                                           ──────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(consistent-existence-index-check): Prefer `!== -1` over `>= 0` to check non-existence.
+   ╭─[consistent_existence_index_check.tsx:1:41]
+ 1 │ const index = foo.findIndex('bar'); if (index >= 0) {}
+   ·                                         ──────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(consistent-existence-index-check): Prefer `!== -1` over `>= 0` to check non-existence.
+   ╭─[consistent_existence_index_check.tsx:1:45]
+ 1 │ const index = foo.findLastIndex('bar'); if (index >= 0) {}
+   ·                                             ──────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(consistent-existence-index-check): Prefer `!== -1` over `> -1` to check non-existence.
+   ╭─[consistent_existence_index_check.tsx:1:39]
+ 1 │ const index = foo.indexOf('bar'); if (index > -1) {}
+   ·                                       ──────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(consistent-existence-index-check): Prefer `!== -1` over `> -1` to check non-existence.
+   ╭─[consistent_existence_index_check.tsx:1:43]
+ 1 │ const index = foo.lastIndexOf('bar'); if (index > -1) {}
+   ·                                           ──────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(consistent-existence-index-check): Prefer `!== -1` over `> -1` to check non-existence.
+   ╭─[consistent_existence_index_check.tsx:1:41]
+ 1 │ const index = foo.findIndex('bar'); if (index > -1) {}
+   ·                                         ──────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(consistent-existence-index-check): Prefer `!== -1` over `> -1` to check non-existence.
+   ╭─[consistent_existence_index_check.tsx:1:45]
+ 1 │ const index = foo.findLastIndex('bar'); if (index > -1) {}
+   ·                                             ──────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(consistent-existence-index-check): Prefer `=== -1` over `< 0` to check non-existence.
+   ╭─[consistent_existence_index_check.tsx:5:15]
+ 4 │             function foo () {
+ 5 │                 if (index < 0) {}
+   ·                     ─────────
+ 6 │             }
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(consistent-existence-index-check): Prefer `=== -1` over `< 0` to check non-existence.
+   ╭─[consistent_existence_index_check.tsx:4:10]
+ 3 │                 index2 = foo.indexOf('2');
+ 4 │             index1 < 0;
+   ·             ──────────
+ 5 │             index2 >= 0;
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(consistent-existence-index-check): Prefer `!== -1` over `>= 0` to check non-existence.
+   ╭─[consistent_existence_index_check.tsx:5:10]
+ 4 │             index1 < 0;
+ 5 │             index2 >= 0;
+   ·             ───────────
+ 6 │         
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(consistent-existence-index-check): Prefer `=== -1` over `< 0` to check non-existence.
+    ╭─[consistent_existence_index_check.tsx:5:17]
+  4 │                         /* comment 1 */
+  5 │ ╭─▶                     ((
+  6 │ │                           /* comment 2 */
+  7 │ │                           index
+  8 │ │                           /* comment 3 */
+  9 │ │                       ))
+ 10 │ │                       /* comment 4 */
+ 11 │ │                       <
+ 12 │ │                       /* comment 5 */
+ 13 │ │                       ((
+ 14 │ │                           /* comment 6 */
+ 15 │ │                           0
+ 16 │ │                           /* comment 7 */
+ 17 │ ╰─▶                     ))
+ 18 │                         /* comment 8 */
+    ╰────
+
+  ⚠ eslint-plugin-unicorn(consistent-existence-index-check): Prefer `!== -1` over `> -1` to check non-existence.
+    ╭─[consistent_existence_index_check.tsx:5:11]
+  4 │                     /* comment 1 */
+  5 │ ╭─▶                 ((
+  6 │ │                       /* comment 2 */
+  7 │ │                       index
+  8 │ │                       /* comment 3 */
+  9 │ │                   ))
+ 10 │ │                   /* comment 4 */
+ 11 │ │                   >
+ 12 │ │                   ((
+ 13 │ │                       /* comment 5 */
+ 14 │ │                       - /* comment 6 */ (( /* comment 7 */ 1 /* comment 8 */ ))
+ 15 │ │                       /* comment 9 */
+ 16 │ ╰─▶                 ))
+ 17 │                 ));
+    ╰────
+
+  ⚠ eslint-plugin-unicorn(consistent-existence-index-check): Prefer `=== -1` over `< 0` to check non-existence.
+   ╭─[consistent_existence_index_check.tsx:1:43]
+ 1 │ const index = _.indexOf([1, 2, 1, 2], 2); index < 0;
+   ·                                           ─────────
+   ╰────
