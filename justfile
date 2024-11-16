@@ -16,7 +16,10 @@ alias new-typescript-rule := new-ts-rule
 # or install via `cargo install cargo-binstall`
 # Initialize the project by installing all the necessary tools.
 init:
+  # Rust related init
   cargo binstall watchexec-cli cargo-insta typos-cli cargo-shear dprint -y
+  # Node.js related init
+  pnpm install
 
 # When ready, run the same CI commands
 ready:
