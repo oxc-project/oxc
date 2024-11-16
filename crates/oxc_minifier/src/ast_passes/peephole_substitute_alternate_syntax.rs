@@ -18,7 +18,7 @@ use crate::{node_util::Ctx, CompressorPass};
 pub struct PeepholeSubstituteAlternateSyntax {
     /// Do not compress syntaxes that are hard to analyze inside the fixed loop.
     /// e.g. Do not compress `undefined -> void 0`, `true` -> `!0`.
-    /// Opposite of `late` in Closure Compier.
+    /// Opposite of `late` in Closure Compiler.
     in_fixed_loop: bool,
 
     // states

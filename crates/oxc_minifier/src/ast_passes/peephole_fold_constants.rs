@@ -362,14 +362,14 @@ impl<'a, 'b> PeepholeFoldConstants {
                 }
             }
 
-            if matches!(left, ValueType::String | ValueType::Number)
+            if matches!(left, ValueType::String | ValueType::Number | ValueType::BigInt)
                 && matches!(right, ValueType::Object)
             {
                 return None;
             }
 
             if matches!(left, ValueType::Object)
-                && matches!(right, ValueType::String | ValueType::Number)
+                && matches!(right, ValueType::String | ValueType::Number | ValueType::BigInt)
             {
                 return None;
             }
@@ -871,6 +871,13 @@ mod test {
         test("'1' != 1n", "false");
         test("'1' === 1n", "false");
         test("'1' !== 1n", "true");
+    }
+
+    #[test]
+    fn test_object_bigint_comparison() {
+        test_same("{ valueOf: function() { return 0n; } } != 0n");
+        test_same("0n != { valueOf: function() { return 0n; } }");
+        test_same("0n != { toString: function() { return '0'; } }");
     }
 
     #[test]
