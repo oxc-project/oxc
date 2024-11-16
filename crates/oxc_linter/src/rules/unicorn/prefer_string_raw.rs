@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{Expression, JSXAttributeValue, PropertyKey},
+    ast::{JSXAttributeValue, PropertyKey, TSEnumMemberName},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -22,16 +22,17 @@ declare_oxc_lint!(
     /// ```
     PreferStringRaw,
     restriction,
+    fix,
 );
 
-fn unescape_backslash(input: &str, quote: &char) -> Option<String> {
+fn unescape_backslash(input: &str, quote: char) -> String {
     let mut result = String::with_capacity(input.len());
     let mut chars = input.chars().peekable();
 
     while let Some(c) = chars.next() {
         if c == '\\' {
             if let Some(next) = chars.peek() {
-                if *next == '\\' || *next == *quote {
+                if *next == '\\' || *next == quote {
                     result.push(*next);
                     chars.next();
                     continue;
@@ -42,18 +43,17 @@ fn unescape_backslash(input: &str, quote: &char) -> Option<String> {
         result.push(c);
     }
 
-    Some(result)
+    result
 }
 
 impl Rule for PreferStringRaw {
+    #[allow(clippy::cast_precision_loss)]
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::StringLiteral(string_literal) = node.kind() else {
             return;
         };
 
         let parent_node = ctx.nodes().parent_node(node.id());
-
-        dbg!(&string_literal);
 
         if let Some(parent_node) = parent_node {
             match parent_node.kind() {
@@ -78,25 +78,26 @@ impl Rule for PreferStringRaw {
                     }
                 }
                 AstKind::ObjectProperty(prop) => {
-                    dbg!(&string_literal);
-                    dbg!(&prop);
                     let PropertyKey::StringLiteral(key) = &prop.key else {
                         return;
                     };
-
-                    dbg!(&key);
 
                     if !prop.computed && string_literal.span == key.span {
                         return;
                     }
                 }
-                AstKind::PropertyKey(key) => {
-                    let PropertyKey::StringLiteral(key) = &key else {
-                        return;
-                    };
+                AstKind::PropertyKey(_) => {
+                    if let Some(AstKind::ObjectProperty(prop)) =
+                        ctx.nodes().parent_node(parent_node.id()).map(AstNode::kind)
+                    {
+                        // todo: shared util
+                        let PropertyKey::StringLiteral(key) = &prop.key else {
+                            return;
+                        };
 
-                    if string_literal.span == key.span {
-                        return;
+                        if !prop.computed && key.span == string_literal.span {
+                            return;
+                        }
                     }
                 }
                 AstKind::JSXAttributeItem(attr) => {
@@ -108,31 +109,26 @@ impl Rule for PreferStringRaw {
                         return;
                     };
 
-                    dbg!(&value);
-
                     if value.span == string_literal.span {
                         return;
                     }
                 }
                 AstKind::TSEnumMember(member) => {
-                    println!("!!!!!");
-                    let Some(Expression::StringLiteral(value)) = &member.initializer else {
+                    if member.span == string_literal.span {
                         return;
                     };
 
-                    println!("~~~~ {:?}", value.span);
-                    println!("^^^^ {:?}", string_literal.span);
+                    let TSEnumMemberName::String(id) = &member.id else {
+                        return;
+                    };
 
-                    if value.span == string_literal.span {
-                        println!("SAME");
+                    if id.span == string_literal.span {
                         return;
                     }
                 }
                 _ => {}
             }
         }
-
-        println!("AFTER");
 
         let raw = ctx.source_range(string_literal.span);
 
@@ -141,31 +137,26 @@ impl Rule for PreferStringRaw {
             return;
         };
 
-        if !raw.contains("\\\\") || raw.contains("`") || raw.contains("${") {
+        if !raw.contains("\\\\") || raw.contains('`') || raw.contains("${") {
             return;
         }
-
-        let trimmed = ctx.source_range(string_literal.span.shrink(1));
 
         let Some(quote) = raw.char_at(Some(0.0)) else {
             return;
         };
 
-        let Some(unescaped) = unescape_backslash(trimmed, &quote) else {
-            return;
-        };
+        let trimmed = ctx.source_range(string_literal.span.shrink(1));
 
-        // dbg!(&unescaped);
-        // dbg!(string_literal.value.as_ref());
-        dbg!(string_literal.value.as_ref() != unescaped);
+        let unescaped = unescape_backslash(trimmed, quote);
 
         if unescaped != string_literal.value.as_ref() {
             return;
         }
 
-        ctx.diagnostic(
+        ctx.diagnostic_with_fix(
             OxcDiagnostic::warn(r"`String.raw` should be used to avoid escaping `\\`.")
                 .with_label(string_literal.span),
+            |fixer| fixer.replace(string_literal.span, format!("String.raw`{unescaped}`")),
         );
     }
 }
@@ -175,38 +166,45 @@ fn test() {
     use crate::tester::Tester;
 
     let pass: Vec<&str> = vec![
-        // r"a = '\''",
-        // r"'a\\b'",
-        // r#"import foo from "./foo\\bar.js";"#,
-        // r#"export {foo} from "./foo\\bar.js";"#,
-        // r#"export * from "./foo\\bar.js";"#,
-        // r"a = {'a\\b': 123}",
-        // "
-        //  	a = '\\\\a \\
-        //  		b'
-        //  ",
-        // r"a = 'a\\b\u{51}c'",
-        // "a = 'a\\\\b`'",
-        // "a = 'a\\\\b${foo}'",
-        // r#"<Component attribute="a\\b" />"#,
-        // r#"
-        //      enum Files {
-        //      	Foo = "C:\\\\path\\\\to\\\\foo.js",
-        //      }
-        //  "#,
+        r"a = '\''",
+        r"'a\\b'",
+        r#"import foo from "./foo\\bar.js";"#,
+        r#"export {foo} from "./foo\\bar.js";"#,
+        r#"export * from "./foo\\bar.js";"#,
+        r"a = {'a\\b': 1}",
+        "
+         	a = '\\\\a \\
+         		b'
+         ",
+        r"a = 'a\\b\u{51}c'",
+        "a = 'a\\\\b`'",
+        "a = 'a\\\\b${foo}'",
+        r#"<Component attribute="a\\b" />"#,
+        r#"
+             enum Files {
+             	Foo = "C:\\\\path\\\\to\\\\foo.js",
+             }
+        "#,
         r#"
              enum Foo {
              	"\\\\a\\\\b" = "baz",
              }
-         "#,
+        "#,
     ];
 
     let fail = vec![
-        // r"a = 'a\\b'",
-        // r"a = {['a\\b']: b}",
-        // r"function a() {return'a\\b'}",
-        // r"const foo = 'foo \\x46';",
+        r"a = 'a\\b'",
+        r"a = {['a\\b']: b}",
+        r"function a() {return'a\\b'}",
+        r"const foo = 'foo \\x46';",
     ];
 
-    Tester::new(PreferStringRaw::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        (r"a = 'a\\b'", r"a = String.raw`a\b`", None),
+        (r"a = {['a\\b']: b}", r"a = {[String.raw`a\b`]: b}", None),
+        (r"function a() {return 'a\\b'}", r"function a() {return String.raw`a\b`}", None),
+        (r"const foo = 'foo \\x46';", r"const foo = String.raw`foo \x46`;", None),
+    ];
+
+    Tester::new(PreferStringRaw::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }
