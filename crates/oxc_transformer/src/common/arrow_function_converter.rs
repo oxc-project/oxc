@@ -141,7 +141,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         } else {
             ArrowFunctionConverterMode::Disabled
         };
-        // `SparseStack` is created with 1 empty entry, for `Program`
+        // `SparseStack`s are created with 1 empty entry, for `Program`
         Self {
             mode,
             this_var_stack: SparseStack::new(),
