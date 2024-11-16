@@ -158,7 +158,7 @@ declare_oxc_lint!(
     /// Decides whether to use `test` or `it` within a `describe` scope.
     ///
     ///
-    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/consistent-test-it.md),
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/v1.1.9/docs/rules/consistent-test-it.md),
     /// to use it, add the following configuration to your `.eslintrc.json`:
     ///
     /// ```json

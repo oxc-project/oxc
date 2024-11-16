@@ -99,7 +99,7 @@ impl<'a> RefreshIdentifierResolver<'a> {
 /// References:
 ///
 /// * <https://github.com/facebook/react/issues/16604#issuecomment-528663101>
-/// * <https://github.com/facebook/react/blob/main/packages/react-refresh/src/ReactFreshBabelPlugin.js>
+/// * <https://github.com/facebook/react/blob/v18.3.1/packages/react-refresh/src/ReactFreshBabelPlugin.js>
 pub struct ReactRefresh<'a, 'ctx> {
     refresh_reg: RefreshIdentifierResolver<'a>,
     refresh_sig: RefreshIdentifierResolver<'a>,

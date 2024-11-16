@@ -30,7 +30,7 @@
 //! > NOTE: Using `import` or `require` is determined by [`TransformCtx::source_type`].
 //!
 //! Based on `@babel/helper-module-imports`
-//! <https://github.com/nicolo-ribaudo/babel/tree/main/packages/babel-helper-module-imports>
+//! <https://github.com/nicolo-ribaudo/babel/tree/v7.25.8/packages/babel-helper-module-imports>
 
 use std::cell::RefCell;
 

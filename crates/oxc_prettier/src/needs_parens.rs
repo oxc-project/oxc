@@ -1,6 +1,6 @@
 //! Direct port of needs-parens for adding or removing parentheses.
 //!
-//! See <https://github.com/prettier/prettier/blob/main/src/language-js/needs-parens.js>
+//! See <https://github.com/prettier/prettier/blob/3.3.3/src/language-js/needs-parens.js>
 
 #![allow(
     clippy::unused_self,

@@ -2,7 +2,7 @@ use napi_derive::napi;
 
 /// Babel Parser Options
 ///
-/// <https://github.com/babel/babel/blob/main/packages/babel-parser/typings/babel-parser.d.ts>
+/// <https://github.com/babel/babel/blob/v7.26.2/packages/babel-parser/typings/babel-parser.d.ts>
 #[napi(object)]
 #[derive(Default)]
 pub struct ParserOptions {

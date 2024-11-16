@@ -13,7 +13,7 @@ fn no_named_export(module_name: &str, span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-/// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/export.md>
+/// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/export.md>
 #[derive(Debug, Default, Clone)]
 pub struct Export;
 

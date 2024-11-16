@@ -22,9 +22,9 @@ fn no_direct_mutation_state_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct NoDirectMutationState;
 
-// code: https://github.com/jsx-eslint/eslint-plugin-react/blob/master/lib/rules/no-direct-mutation-state.js
-// doc: https://github.com/jsx-eslint/eslint-plugin-react/blob/master/docs/rules/no-direct-mutation-state.md
-// test: https://github.com/jsx-eslint/eslint-plugin-react/blob/master/tests/lib/rules/no-direct-mutation-state.js
+// code: https://github.com/jsx-eslint/eslint-plugin-react/blob/v7.37.2/lib/rules/no-direct-mutation-state.js
+// doc: https://github.com/jsx-eslint/eslint-plugin-react/blob/v7.37.2/docs/rules/no-direct-mutation-state.md
+// test: https://github.com/jsx-eslint/eslint-plugin-react/blob/v7.37.2/tests/lib/rules/no-direct-mutation-state.js
 
 declare_oxc_lint!(
     /// ### What it does

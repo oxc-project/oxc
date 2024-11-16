@@ -3,7 +3,7 @@
 //! References:
 //! * <https://devblogs.microsoft.com/typescript/announcing-typescript-5-5-rc/#isolated-declarations>
 //! * <https://www.typescriptlang.org/tsconfig#isolatedDeclarations>
-//! * <https://github.com/microsoft/TypeScript/blob/main/src/compiler/transformers/declarations.ts>
+//! * <https://github.com/microsoft/TypeScript/blob/v5.6.3/src/compiler/transformers/declarations.ts>
 
 mod class;
 mod declaration;

@@ -1,5 +1,5 @@
 use memchr::memchr2;
-// Ported from https://github.com/eslint/eslint/blob/main/lib/rules/no-empty-character-class.js
+// Ported from https://github.com/eslint/eslint/blob/v9.9.1/lib/rules/no-empty-character-class.js
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

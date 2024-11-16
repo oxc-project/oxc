@@ -31,7 +31,7 @@
 //! helperName(...arguments);
 //! ```
 //!
-//! Based on [@babel/plugin-transform-runtime](https://github.com/babel/babel/tree/main/packages/babel-plugin-transform-runtime).
+//! Based on [@babel/plugin-transform-runtime](https://github.com/babel/babel/tree/v7.26.2/packages/babel-plugin-transform-runtime).
 //!
 //! ### External ([`HelperLoaderMode::External`])
 //!
@@ -43,7 +43,7 @@
 //! babelHelpers.helperName(...arguments);
 //! ```
 //!
-//! Based on [@babel/plugin-external-helpers](https://github.com/babel/babel/tree/main/packages/babel-plugin-external-helpers).
+//! Based on [@babel/plugin-external-helpers](https://github.com/babel/babel/tree/v7.26.2/packages/babel-plugin-external-helpers).
 //!
 //! ### Inline ([`HelperLoaderMode::Inline`])
 //!
@@ -58,7 +58,7 @@
 //! helperName(...arguments);
 //! ```
 //!
-//! Based on [@babel/helper](https://github.com/babel/babel/tree/main/packages/babel-helpers).
+//! Based on [@babel/helper](https://github.com/babel/babel/tree/v7.26.2/packages/babel-helpers).
 //!
 //! ## Implementation
 //!

@@ -47,7 +47,7 @@ impl Deref for ConsistentTypeImports {
     }
 }
 
-/// <https://github.com/typescript-eslint/typescript-eslint/blob/main/packages/eslint-plugin/docs/rules/consistent-type-imports.mdx>
+/// <https://github.com/typescript-eslint/typescript-eslint/blob/v8.9.0/packages/eslint-plugin/docs/rules/consistent-type-imports.mdx>
 #[derive(Default, Debug, Clone)]
 pub struct ConsistentTypeImportsConfig {
     disallow_type_annotations: DisallowTypeAnnotations,

@@ -179,7 +179,7 @@ fn check_character(
              * it only needs to be escaped in character classes if it's at the beginning of the character class. To
              * account for this, consider it to be a valid escape character outside of character classes, and filter
              * out '^' characters that appear at the start of a character class.
-             * (From ESLint source: https://github.com/eslint/eslint/blob/main/lib/rules/no-useless-escape.js)
+             * (From ESLint source: https://github.com/eslint/eslint/blob/v9.9.1/lib/rules/no-useless-escape.js)
              */
             if class.span.start + 1 == span.start {
                 return None;
@@ -216,7 +216,7 @@ fn check_character(
              * class, and is not at either edge of the character class. To account for this, don't consider '-'
              * characters to be valid in general, and filter out '-' characters that appear in the middle of a
              * character class.
-             * (From ESLint source: https://github.com/eslint/eslint/blob/main/lib/rules/no-useless-escape.js)
+             * (From ESLint source: https://github.com/eslint/eslint/blob/v9.9.1/lib/rules/no-useless-escape.js)
              */
             if class.span.start + 1 != span.start && span.end != class.span.end - 1 {
                 return None;

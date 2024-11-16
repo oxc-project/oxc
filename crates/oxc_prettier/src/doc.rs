@@ -1,7 +1,7 @@
 //! Prettier IR
 //!
 //! References:
-//! * <https://github.com/prettier/prettier/blob/main/commands.md>
+//! * <https://github.com/prettier/prettier/blob/3.3.3/commands.md>
 
 use std::fmt;
 
@@ -218,7 +218,7 @@ impl<'a> fmt::Display for Doc<'a> {
     }
 }
 
-// https://github.com/prettier/prettier/blob/main/src/document/debug.js
+// https://github.com/prettier/prettier/blob/3.3.3/src/document/debug.js
 fn print_doc_to_debug(doc: &Doc<'_>) -> std::string::String {
     use std::string::String;
     let mut string = String::new();

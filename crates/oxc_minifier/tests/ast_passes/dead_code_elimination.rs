@@ -155,7 +155,7 @@ fn dce_var_hoisting() {
     );
 }
 
-// https://github.com/terser/terser/blob/master/test/compress/dead-code.js
+// https://github.com/terser/terser/blob/v5.9.0/test/compress/dead-code.js
 #[test]
 fn dce_from_terser() {
     test(

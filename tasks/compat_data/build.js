@@ -1,5 +1,5 @@
-// https://github.com/babel/babel/blob/main/packages/babel-compat-data/scripts/build-data.js
-// https://github.com/babel/babel/blob/main/packages/babel-compat-data/scripts/utils-build-data.js
+// https://github.com/babel/babel/blob/v7.26.2/packages/babel-compat-data/scripts/build-data.js
+// https://github.com/babel/babel/blob/v7.26.2/packages/babel-compat-data/scripts/utils-build-data.js
 
 const fs = require('node:fs');
 const envs = require('./compat-table/environments');

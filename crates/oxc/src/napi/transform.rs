@@ -1,4 +1,4 @@
-// NOTE: Types must be aligned with [@types/babel__core](https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/babel__core/index.d.ts).
+// NOTE: Types must be aligned with [@types/babel__core](https://github.com/DefinitelyTyped/DefinitelyTyped/blob/b5dc32740d9b45d11cff9b025896dd333c795b39/types/babel__core/index.d.ts).
 
 #![allow(rustdoc::bare_urls)]
 
@@ -241,7 +241,7 @@ pub struct JsxOptions {
 
     /// Enable React Fast Refresh .
     ///
-    /// Conforms to the implementation in {@link https://github.com/facebook/react/tree/main/packages/react-refresh}
+    /// Conforms to the implementation in {@link https://github.com/facebook/react/tree/v18.3.1/packages/react-refresh}
     ///
     /// @default false
     pub refresh: Option<Either<bool, ReactRefreshOptions>>,

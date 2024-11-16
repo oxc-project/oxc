@@ -1,4 +1,4 @@
-//! <https://github.com/microsoft/TypeScript/blob/main/src/testRunner/transpileRunner.ts>
+//! <https://github.com/microsoft/TypeScript/blob/v5.6.3/src/testRunner/transpileRunner.ts>
 
 use std::path::{Path, PathBuf};
 
