@@ -986,7 +986,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         let arguments = self.create_arguments_var_declarator(target_scope_id, arguments_var, ctx);
 
         let is_class_method_like = Self::is_class_method_like_ancestor(ctx.parent());
-        let capacity = usize::from(arguments.is_some())
+        let declarations_count = usize::from(arguments.is_some())
             + if is_class_method_like {
                 self.super_methods.as_ref().map_or(0, FxHashMap::len)
             } else {
@@ -995,11 +995,11 @@ impl<'a> ArrowFunctionConverter<'a> {
             + usize::from(this_var.is_some());
 
         // Exit if no declarations to be inserted
-        if capacity == 0 {
+        if declarations_count == 0 {
             return;
         }
 
-        let mut declarations = ctx.ast.vec_with_capacity(capacity);
+        let mut declarations = ctx.ast.vec_with_capacity(declarations_count);
 
         if let Some(arguments) = arguments {
             declarations.push(arguments);
@@ -1027,7 +1027,7 @@ impl<'a> ArrowFunctionConverter<'a> {
             declarations.push(variable_declarator);
         }
 
-        debug_assert_eq!(capacity, declarations.len());
+        debug_assert_eq!(declarations_count, declarations.len());
 
         let stmt = ctx.ast.alloc_variable_declaration(
             SPAN,
