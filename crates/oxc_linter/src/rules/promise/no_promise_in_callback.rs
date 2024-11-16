@@ -121,6 +121,11 @@ fn is_within_promise_handler<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> b
 fn test() {
     use crate::tester::Tester;
 
+    // The following test cases are based on the original
+    // implementation from eslint-plugin-promise and are licensed under the ISC License.
+    //
+    // Copyright (c) 2020, Jamund Ferguson
+    // https://github.com/eslint-community/eslint-plugin-promise/blob/266ddbb03076c05c362a6daecb9382b80cdd7108/__tests__/no-promise-in-callback.js
     let pass = vec![
         "go(function() { return Promise.resolve(4) })",
         "go(function() { return a.then(b) })",
