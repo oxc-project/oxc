@@ -4,11 +4,11 @@ import { IDisposable } from './types';
 export class ConfigService implements Config, IDisposable {
   private static readonly _namespace = 'oxc';
   private readonly _disposables: IDisposable[] = [];
-  private _inner: WorkspaceConfiguration;
-  private _runTrigger: Trigger;
-  private _enable: boolean;
-  private _trace: TraceLevel;
-  private _configPath: string;
+  private _inner!: WorkspaceConfiguration;
+  private _runTrigger!: Trigger;
+  private _enable!: boolean;
+  private _trace!: TraceLevel;
+  private _configPath!: string;
   private _binPath: string | undefined;
 
   public onConfigChange:
@@ -16,18 +16,23 @@ export class ConfigService implements Config, IDisposable {
     | undefined;
 
   constructor() {
-    this._inner = workspace.getConfiguration(ConfigService._namespace);
-    this._runTrigger = this._inner.get<Trigger>('lint.run') || 'onType';
-    this._enable = this._inner.get<boolean>('enable') ?? true;
-    this._trace = this._inner.get<TraceLevel>('trace.server') || 'off';
-    this._configPath = this._inner.get<string>('configPath') || '.eslintrc';
-    this._binPath = this._inner.get<string>('path.server');
+    this.setSettingsFromWorkspace();
     this.onConfigChange = undefined;
 
     const disposeChangeListener = workspace.onDidChangeConfiguration(
       this.onVscodeConfigChange.bind(this),
     );
     this._disposables.push(disposeChangeListener);
+  }
+
+  private setSettingsFromWorkspace(): void {
+    this._inner = workspace.getConfiguration(ConfigService._namespace);
+
+    this._runTrigger = this._inner.get<Trigger>('lint.run') || 'onType';
+    this._enable = this._inner.get<boolean>('enable') ?? true;
+    this._trace = this._inner.get<TraceLevel>('trace.server') || 'off';
+    this._configPath = this._inner.get<string>('configPath') || '.eslintrc';
+    this._binPath = this._inner.get<string>('path.server');
   }
 
   get runTrigger(): Trigger {
@@ -87,11 +92,7 @@ export class ConfigService implements Config, IDisposable {
 
   private onVscodeConfigChange(event: ConfigurationChangeEvent): void {
     if (event.affectsConfiguration(ConfigService._namespace)) {
-      this._runTrigger = this._inner.get<Trigger>('lint.run') || 'onType';
-      this._enable = this._inner.get<boolean>('enable') ?? true;
-      this._trace = this._inner.get<TraceLevel>('trace.server') || 'off';
-      this._configPath = this._inner.get<string>('configPath') || '.eslintrc';
-      this._binPath = this._inner.get<string>('path.server');
+      this.setSettingsFromWorkspace();
       this.onConfigChange?.call(this, event);
     }
   }
