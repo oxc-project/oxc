@@ -2062,6 +2062,7 @@ name = "oxc_transformer"
 version = "0.36.0"
 dependencies = [
  "base64",
+ "compact_str",
  "cow-utils",
  "dashmap 6.1.0",
  "indexmap",
