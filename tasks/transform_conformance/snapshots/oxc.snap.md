@@ -1,18 +1,22 @@
 commit: d20b314c
 
-Passed: 85/95
+Passed: 85/96
 
 # All Passed:
 * babel-plugin-transform-class-static-block
 * babel-plugin-transform-nullish-coalescing-operator
 * babel-plugin-transform-optional-catch-binding
 * babel-plugin-transform-async-generator-functions
-* babel-plugin-transform-async-to-generator
 * babel-plugin-transform-exponentiation-operator
 * babel-plugin-transform-arrow-functions
 * babel-preset-typescript
 * babel-plugin-transform-react-jsx-source
 * regexp
+
+
+# babel-plugin-transform-async-to-generator (14/15)
+* super/nested/input.js
+x Output mismatch
 
 
 # babel-plugin-transform-typescript (2/9)
