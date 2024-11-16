@@ -857,7 +857,7 @@ impl<'a> ArrowFunctionConverter<'a> {
 
     /// Whether to transform the `arguments` identifier.
     fn should_transform_arguments_identifier(&self, name: &str, ctx: &mut TraverseCtx<'a>) -> bool {
-        self.is_async_only() && name == "arguments" && Self::is_affected_arguments_identifier(ctx)
+        self.is_async_only() && Self::is_affected_arguments_identifier(ctx) && name == "arguments"
     }
 
     /// Check if the `arguments` identifier is affected by the transformation.
