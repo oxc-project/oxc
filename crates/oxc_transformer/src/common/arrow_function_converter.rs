@@ -987,9 +987,11 @@ impl<'a> ArrowFunctionConverter<'a> {
 
         let is_class_method_like = Self::is_class_method_like_ancestor(ctx.parent());
         let capacity = usize::from(arguments.is_some())
-            + is_class_method_like
-                .then(|| self.super_methods.as_ref().map_or(0, FxHashMap::len))
-                .unwrap_or(0)
+            + if is_class_method_like {
+                self.super_methods.as_ref().map_or(0, FxHashMap::len)
+            } else {
+                0
+            }
             + usize::from(this_var.is_some());
 
         let mut declarations = ctx.ast.vec_with_capacity(capacity);
