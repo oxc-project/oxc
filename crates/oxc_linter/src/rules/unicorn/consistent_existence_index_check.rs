@@ -13,7 +13,22 @@ use crate::{context::LintContext, rule::Rule};
 #[derive(Debug, Default, Clone)]
 pub struct ConsistentExistenceIndexCheck;
 
-fn consistent_existence_index_check_diagnostic(label: String, span: Span) -> OxcDiagnostic {
+fn consistent_existence_index_check_diagnostic(
+    replacement: &GetReplacementOutput,
+    span: Span,
+) -> OxcDiagnostic {
+    let existence_or_non_existence =
+        if replacement.replacement_value == "-1" { "non-existence" } else { "existence" };
+
+    let label = format!(
+        "Prefer `{replacement_operator} {replacement_value}` over `{original_operator} {original_value}` to check {existenceOrNonExistence}.",
+        replacement_operator = replacement.replacement_operator,
+        replacement_value = replacement.replacement_value,
+        original_operator = replacement.original_operator,
+        original_value = replacement.original_value,
+        existenceOrNonExistence = existence_or_non_existence,
+    );
+
     OxcDiagnostic::warn(label).with_label(span)
 }
 
@@ -105,67 +120,55 @@ impl Rule for ConsistentExistenceIndexCheck {
                 return;
             }
 
-            let replacement = get_replacement(right, &operator);
+            let replacement = get_replacement(right, operator);
 
             let Some(replacement) = &replacement else {
                 return;
             };
 
-            let existence_or_non_existence =
-                if replacement.replacement_value == "-1" { "non-existence" } else { "existence" };
-
-            let label = format!(
-                        "Prefer `{replacement_operator} {replacement_value}` over `{original_operator} {original_value}` to check {existenceOrNonExistence}.",
-                        replacement_operator = replacement.replacement_operator,
-                        replacement_value = replacement.replacement_value,
-                        original_operator = replacement.original_operator,
-                        original_value = replacement.original_value,
-                        existenceOrNonExistence = existence_or_non_existence,
-                    );
-
-            let operator_start = binary_expression.left.span().end;
-            let operator_end = binary_expression.right.span().start;
-            let operator_span = Span::new(operator_start, operator_end);
-            let operator_source = ctx.source_range(operator_span);
-
-            let operator_matches = operator_source.match_indices(replacement.original_operator);
-            let mut operator_replacement_text = operator_source.to_string();
-
-            for (index, text) in operator_matches {
-                let comments = ctx.semantic().comments_range(operator_start..operator_end);
-
-                let start = operator_start + index as u32;
-                let end = start + text.len() as u32;
-                let span = Span::new(start, end);
-
-                let mut is_in_comment = false;
-
-                for comment in comments {
-                    if comment.span.contains_inclusive(span) {
-                        is_in_comment = true;
-                        break;
-                    }
-                }
-
-                if !is_in_comment {
-                    let head = &operator_source[..index];
-                    let tail = &operator_source[index + text.len()..];
-
-                    operator_replacement_text =
-                        format!("{}{}{}", head, replacement.replacement_operator, tail);
-                }
-            }
-
             ctx.diagnostic_with_fix(
-                consistent_existence_index_check_diagnostic(label, binary_expression.span),
+                consistent_existence_index_check_diagnostic(replacement, binary_expression.span),
                 |fixer| {
+                    let operator_start = binary_expression.left.span().end;
+                    let operator_end = binary_expression.right.span().start;
+                    let operator_span = Span::new(operator_start, operator_end);
+                    let operator_source = ctx.source_range(operator_span);
+
+                    let operator_matches =
+                        operator_source.match_indices(replacement.original_operator);
+                    let mut operator_replacement_text = operator_source.to_string();
+
+                    for (index, text) in operator_matches {
+                        let comments = ctx.semantic().comments_range(operator_start..operator_end);
+
+                        let start = operator_start + u32::try_from(index).unwrap_or(0);
+                        let length = u32::try_from(text.len()).unwrap_or(0);
+                        let span = Span::sized(start, length);
+
+                        let mut is_in_comment = false;
+
+                        for comment in comments {
+                            if comment.span.contains_inclusive(span) {
+                                is_in_comment = true;
+                                break;
+                            }
+                        }
+
+                        if !is_in_comment {
+                            let head = &operator_source[..index];
+                            let tail = &operator_source[index + text.len()..];
+
+                            operator_replacement_text =
+                                format!("{}{}{}", head, replacement.replacement_operator, tail);
+                        }
+                    }
                     let fixer = fixer.for_multifix();
                     let mut rule_fixes = fixer.new_fix_with_capacity(2);
 
                     rule_fixes.push(fixer.replace(operator_span, operator_replacement_text));
                     rule_fixes.push(fixer.replace(right.span(), replacement.replacement_value));
 
-                    return rule_fixes;
+                    rule_fixes
                 },
             );
         };
@@ -180,7 +183,7 @@ struct GetReplacementOutput {
     pub original_value: &'static str,
 }
 
-fn get_replacement(right: &Expression, operator: &BinaryOperator) -> Option<GetReplacementOutput> {
+fn get_replacement(right: &Expression, operator: BinaryOperator) -> Option<GetReplacementOutput> {
     match operator {
         BinaryOperator::LessThan => {
             if right.is_number_0() {
@@ -228,7 +231,7 @@ fn is_negative_one(expression: &Expression) -> bool {
             if let Expression::NumericLiteral(value) =
                 &unary_expression.argument.get_inner_expression()
             {
-                return value.value == 1.0;
+                return value.raw == "1";
             }
         }
     }
@@ -373,6 +376,185 @@ fn test() {
     ];
 
     let fix = vec![
+        (
+            r"const index = foo.indexOf('bar'); if (index < 0) {}",
+            r"const index = foo.indexOf('bar'); if (index === -1) {}",
+            None,
+        ),
+        (
+            r"const index = foo.lastIndexOf('bar'); if (index < 0) {}",
+            r"const index = foo.lastIndexOf('bar'); if (index === -1) {}",
+            None,
+        ),
+        (
+            r"const index = foo.findIndex('bar'); if (index < 0) {}",
+            r"const index = foo.findIndex('bar'); if (index === -1) {}",
+            None,
+        ),
+        (
+            r"const index = foo.findLastIndex('bar'); if (index < 0) {}",
+            r"const index = foo.findLastIndex('bar'); if (index === -1) {}",
+            None,
+        ),
+        (
+            r"const index = foo.indexOf('bar'); if (index >= 0) {}",
+            r"const index = foo.indexOf('bar'); if (index !== -1) {}",
+            None,
+        ),
+        (
+            r"const index = foo.lastIndexOf('bar'); if (index >= 0) {}",
+            r"const index = foo.lastIndexOf('bar'); if (index !== -1) {}",
+            None,
+        ),
+        (
+            r"const index = foo.findIndex('bar'); if (index >= 0) {}",
+            r"const index = foo.findIndex('bar'); if (index !== -1) {}",
+            None,
+        ),
+        (
+            r"const index = foo.findLastIndex('bar'); if (index >= 0) {}",
+            r"const index = foo.findLastIndex('bar'); if (index !== -1) {}",
+            None,
+        ),
+        (
+            r"const index = foo.indexOf('bar'); if (index > -1) {}",
+            r"const index = foo.indexOf('bar'); if (index !== -1) {}",
+            None,
+        ),
+        (
+            r"const index = foo.lastIndexOf('bar'); if (index > -1) {}",
+            r"const index = foo.lastIndexOf('bar'); if (index !== -1) {}",
+            None,
+        ),
+        (
+            r"const index = foo.findIndex('bar'); if (index > -1) {}",
+            r"const index = foo.findIndex('bar'); if (index !== -1) {}",
+            None,
+        ),
+        (
+            r"const index = foo.findLastIndex('bar'); if (index > -1) {}",
+            r"const index = foo.findLastIndex('bar'); if (index !== -1) {}",
+            None,
+        ),
+        (
+            r"
+                    const index = foo.indexOf(bar);
+        
+                    function foo () {
+                        if (index < 0) {}
+                    }
+                    ",
+            r"
+                    const index = foo.indexOf(bar);
+        
+                    function foo () {
+                        if (index === -1) {}
+                    }
+                    ",
+            None,
+        ),
+        (
+            r"
+                    const index1 = foo.indexOf('1'),
+                        index2 = foo.indexOf('2');
+                    index1 < 0;
+                    index2 >= 0;
+                    ",
+            r"
+                    const index1 = foo.indexOf('1'),
+                        index2 = foo.indexOf('2');
+                    index1 === -1;
+                    index2 !== -1;
+                    ",
+            None,
+        ),
+        (
+            r"
+                    const index = foo.indexOf('1');
+                    ((
+                        /* comment 1 */
+                        ((
+                            /* comment 2 */
+                            index
+                            /* comment 3 */
+                        ))
+                        /* comment 4 */
+                        <
+                        /* comment 5 */
+                        ((
+                            /* comment 6 */
+                            0
+                            /* comment 7 */
+                        ))
+                        /* comment 8 */
+                    ));
+                    ",
+            r"
+                    const index = foo.indexOf('1');
+                    ((
+                        /* comment 1 */
+                        ((
+                            /* comment 2 */
+                            index
+                            /* comment 3 */
+                        ))
+                        /* comment 4 */
+                        ===
+                        /* comment 5 */
+                        ((
+                            /* comment 6 */
+                            -1
+                            /* comment 7 */
+                        ))
+                        /* comment 8 */
+                    ));
+                    ",
+            None,
+        ),
+        (
+            r"
+                const index = foo.indexOf('1');
+                ((
+                    /* comment 1 */
+                    ((
+                        /* comment 2 */
+                        index
+                        /* comment 3 */
+                    ))
+                    /* comment 4 */
+                    >
+                    ((
+                        /* comment 5 */
+                        - /* comment 6 */ (( /* comment 7 */ 1 /* comment 8 */ ))
+                        /* comment 9 */
+                    ))
+                ));
+            ",
+            r"
+                const index = foo.indexOf('1');
+                ((
+                    /* comment 1 */
+                    ((
+                        /* comment 2 */
+                        index
+                        /* comment 3 */
+                    ))
+                    /* comment 4 */
+                    !==
+                    ((
+                        /* comment 5 */
+                        -1
+                        /* comment 9 */
+                    ))
+                ));
+            ",
+            None,
+        ),
+        (
+            r"const index = _.indexOf([1, 2, 1, 2], 2); index < 0;",
+            r"const index = _.indexOf([1, 2, 1, 2], 2); index === -1;",
+            None,
+        ),
         (
             r"const i = foo.indexOf('bar'); if (i /* < */ < 0) {}",
             r"const i = foo.indexOf('bar'); if (i /* < */ === -1) {}",
