@@ -11,10 +11,12 @@ alias c := conformance
 alias f := fix
 alias new-typescript-rule := new-ts-rule
 
+# Make sure you have cargo-binstall installed.
+# You can download the pre-compiled binary from <https://github.com/cargo-bins/cargo-binstall#installation>
+# or install via `cargo install cargo-binstall`
 # Initialize the project by installing all the necessary tools.
 init:
   # Rust related init
-  cargo install cargo-binstall
   cargo binstall watchexec-cli cargo-insta typos-cli cargo-shear dprint -y
   # Node.js related init
   pnpm install
