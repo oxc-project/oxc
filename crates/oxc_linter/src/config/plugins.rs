@@ -178,7 +178,7 @@ impl<'de> Deserialize<'de> for LintPlugins {
             where
                 A: de::SeqAccess<'de>,
             {
-                let mut plugins = LintPlugins::default();
+                let mut plugins = LintPlugins::empty();
                 loop {
                     // serde_json::from_str will provide an &str, while
                     // serde_json::from_value provides a String. The former is
