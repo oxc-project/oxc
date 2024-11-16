@@ -70,7 +70,7 @@ pub const VALID_ARIA_PROPS: phf::Set<&'static str> = phf_set! {
 
 /// set of valid ARIA role definitions
 /// Reference: <https://www.w3.org/TR/wai-aria/#role_definitions>
-/// Reference: <https://github.com/A11yance/aria-query/blob/main/src/rolesMap.js>
+/// Reference: <https://github.com/A11yance/aria-query/blob/v5.3.2/src/rolesMap.js>
 pub const VALID_ARIA_ROLES: phf::Set<&'static str> = phf_set! {
   "alert",
   "alertdialog",
@@ -355,7 +355,7 @@ pub const HTML_TAG: phf::Set<&'static str> = phf_set! {
 /// if it's not reserved, then it can have aria-* roles, states, and properties
 /// Reference: <https://github.com/GoogleChrome/accessibility-developer-tools/wiki/Audit-Rules#ax_aria_12>
 /// Reference: <https://www.w3.org/TR/html-aria/#rules-wd>
-/// Reference: <https://github.com/A11yance/aria-query/blob/main/src/domMap.js>
+/// Reference: <https://github.com/A11yance/aria-query/blob/v5.3.2/src/domMap.js>
 pub const RESERVED_HTML_TAG: phf::Set<&'static str> = phf_set! {
     "base",
     "col",

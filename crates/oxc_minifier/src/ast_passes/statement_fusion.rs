@@ -10,7 +10,7 @@ use crate::CompressorPass;
 ///
 /// Tries to fuse all the statements in a block into a one statement by using COMMAs or statements.
 ///
-/// <https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/StatementFusion.java>
+/// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/StatementFusion.java>
 pub struct StatementFusion {
     changed: bool,
 }

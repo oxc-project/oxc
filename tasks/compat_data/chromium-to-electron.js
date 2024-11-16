@@ -1,4 +1,4 @@
-// https://github.com/babel/babel/blob/main/packages/babel-compat-data/scripts/chromium-to-electron.js
+// https://github.com/babel/babel/blob/v7.26.2/packages/babel-compat-data/scripts/chromium-to-electron.js
 
 const chromiumVersions = require('./chromium-versions');
 const chromiumVersionList = Object.keys(chromiumVersions);

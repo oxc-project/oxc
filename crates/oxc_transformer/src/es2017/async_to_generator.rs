@@ -48,7 +48,7 @@
 //!
 //! Reference:
 //! * Babel docs: <https://babeljs.io/docs/en/babel-plugin-transform-async-to-generator>
-//! * Babel implementation: <https://github.com/babel/babel/blob/main/packages/babel-plugin-transform-async-to-generator>
+//! * Babel implementation: <https://github.com/babel/babel/blob/v7.26.2/packages/babel-plugin-transform-async-to-generator>
 //! * Async / Await TC39 proposal: <https://github.com/tc39/proposal-async-await>
 
 use std::mem;

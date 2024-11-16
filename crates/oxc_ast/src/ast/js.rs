@@ -2414,7 +2414,7 @@ pub enum ExportDefaultDeclarationKind<'a> {
 /// Supports:
 ///   * `import {"\0 any unicode" as foo} from ""`
 ///   * `export {foo as "\0 any unicode"}`
-/// * es2022: <https://github.com/estree/estree/blob/master/es2022.md#modules>
+/// * es2022: <https://github.com/estree/estree/blob/e6015c4c63118634749001b1cd1c3f7a0388f16e/es2022.md#modules>
 /// * <https://github.com/tc39/ecma262/pull/2154>
 #[ast(visit)]
 #[derive(Debug, Clone)]

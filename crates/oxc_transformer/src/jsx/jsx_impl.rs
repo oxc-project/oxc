@@ -86,7 +86,7 @@
 //!
 //! ## References:
 //!
-//! * Babel plugin implementation: <https://github.com/babel/babel/tree/main/packages/babel-helper-builder-react-jsx>
+//! * Babel plugin implementation: <https://github.com/babel/babel/tree/v7.26.2/packages/babel-helper-builder-react-jsx>
 
 use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::{ast::*, AstBuilder, NONE};

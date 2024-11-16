@@ -31,7 +31,7 @@
 //!
 //! ## References:
 //!
-//! * Babel plugin implementation: <https://github.com/babel/babel/blob/main/packages/babel-plugin-transform-react-jsx-source/src/index.ts>
+//! * Babel plugin implementation: <https://github.com/babel/babel/blob/v7.26.2/packages/babel-plugin-transform-react-jsx-source/src/index.ts>
 
 use ropey::Rope;
 

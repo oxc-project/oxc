@@ -67,7 +67,7 @@ impl<'a> Gen for Directive<'a> {
         p.print_indent();
         // A Use Strict Directive may not contain an EscapeSequence or LineContinuation.
         // So here should print original `directive` value, the `expression` value is escaped str.
-        // See https://github.com/babel/babel/blob/main/packages/babel-generator/src/generators/base.ts#L64
+        // See https://github.com/babel/babel/blob/v7.26.2/packages/babel-generator/src/generators/base.ts#L64
         p.wrap_quote(|p, _| {
             p.print_str(self.directive.as_str());
         });

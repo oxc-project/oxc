@@ -1,4 +1,4 @@
-// copy from https://github.com/microsoft/TypeScript/blob/main/tests/cases/conformance/node/nodeModulesImportAttributesTypeModeDeclarationEmitErrors.ts#L72
+// copy from https://github.com/microsoft/TypeScript/blob/v5.6.3/tests/cases/conformance/node/nodeModulesImportAttributesTypeModeDeclarationEmitErrors.ts#L72
 
 // @filename: /node_modules/pkg/import.d.ts
 export interface ImportInterface {}

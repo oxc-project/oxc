@@ -48,7 +48,7 @@ impl<'a> ParserImpl<'a> {
 
             // Section 11.2.1 Directive Prologue
             // The only way to get a correct directive is to parse the statement first and check if it is a string literal.
-            // All other method are flawed, see test cases in [babel](https://github.com/babel/babel/blob/main/packages/babel-parser/test/fixtures/core/categorized/not-directive/input.js)
+            // All other method are flawed, see test cases in [babel](https://github.com/babel/babel/blob/v7.26.2/packages/babel-parser/test/fixtures/core/categorized/not-directive/input.js)
             if expecting_directives {
                 if let Statement::ExpressionStatement(expr) = &stmt {
                     if let Expression::StringLiteral(string) = &expr.expression {

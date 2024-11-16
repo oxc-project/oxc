@@ -9,7 +9,7 @@ use oxc_traverse::{Traverse, TraverseCtx};
 use crate::{node_util::Ctx, CompressorPass};
 
 /// Minimize With Known Methods
-/// <https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeReplaceKnownMethods.java>
+/// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeReplaceKnownMethods.java>
 pub struct PeepholeReplaceKnownMethods {
     changed: bool,
 }
@@ -269,7 +269,7 @@ impl PeepholeReplaceKnownMethods {
     }
 }
 
-/// Port from: <https://github.com/google/closure-compiler/blob/master/test/com/google/javascript/jscomp/PeepholeReplaceKnownMethodsTest.java>
+/// Port from: <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/PeepholeReplaceKnownMethodsTest.java>
 #[cfg(test)]
 mod test {
     use oxc_allocator::Allocator;

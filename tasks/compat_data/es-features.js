@@ -1,5 +1,5 @@
-// https://github.com/babel/babel/blob/main/packages/babel-compat-data/scripts/data/plugin-features.js
-// https://github.com/evanw/esbuild/blob/main/compat-table/src/index.ts
+// https://github.com/babel/babel/blob/v7.26.2/packages/babel-compat-data/scripts/data/plugin-features.js
+// https://github.com/evanw/esbuild/blob/v0.24.0/compat-table/src/index.ts
 
 const f = (es) => (item) => {
   item.es = es;

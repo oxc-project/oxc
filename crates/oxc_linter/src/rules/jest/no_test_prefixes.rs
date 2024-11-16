@@ -42,7 +42,7 @@ declare_oxc_lint!(
     /// xdescribe('foo'); // invalid
     /// ```
     ///
-    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/no-test-prefixes.md),
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/v1.1.9/docs/rules/no-test-prefixes.md),
     /// to use it, add the following configuration to your `.eslintrc.json`:
     ///
     /// ```json

@@ -116,7 +116,7 @@ impl Case for Test262Case {
     // each test must be executed twice: once in ECMAScript's non-strict mode, and again in ECMAScript's strict mode.
     // To run in strict mode, the test contents must be modified prior to execution--
     // a "use strict" directive must be inserted as the initial character sequence of the file
-    // https://github.com/tc39/test262/blob/main/INTERPRETING.md#strict-mode
+    // https://github.com/tc39/test262/blob/05c45a4c430ab6fee3e0c7f0d47d8a30d8876a6d/INTERPRETING.md#strict-mode
     fn run(&mut self) {
         let flags = &self.meta.flags;
         let source_type = SourceType::cjs();

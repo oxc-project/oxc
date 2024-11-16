@@ -47,7 +47,7 @@ declare_oxc_lint!(
     restriction
 );
 
-/// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/no-amd.md>
+/// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-amd.md>
 impl Rule for NoAmd {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         // not in top level

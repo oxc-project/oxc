@@ -1,7 +1,7 @@
 //! Oxc Codegen
 //!
 //! Code adapted from
-//! * [esbuild](https://github.com/evanw/esbuild/blob/main/internal/js_printer/js_printer.go)
+//! * [esbuild](https://github.com/evanw/esbuild/blob/v0.24.0/internal/js_printer/js_printer.go)
 #![warn(missing_docs)]
 
 mod binary_expr_visitor;

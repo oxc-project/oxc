@@ -1,6 +1,6 @@
 //! Parsing utilities for converting Javascript numbers to Rust f64.
 //! Code copied originally from
-//! [jsparagus](https://github.com/mozilla-spidermonkey/jsparagus/blob/master/crates/parser/src/numeric_value.rs)
+//! [jsparagus](https://github.com/mozilla-spidermonkey/jsparagus/blob/24004745a8ed4939fc0dc7332bfd1268ac52285f/crates/parser/src/numeric_value.rs)
 //! but iterated on since.
 
 use std::borrow::Cow;

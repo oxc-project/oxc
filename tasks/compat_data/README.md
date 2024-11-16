@@ -2,7 +2,7 @@
 
 Get engine compatibility Data from https://github.com/compat-table/compat-table/
 
-Code extracted from https://github.com/babel/babel/tree/main/packages/babel-compat-data
+Code extracted from https://github.com/babel/babel/tree/v7.26.2/packages/babel-compat-data
 
 ## Adding a new feature
 

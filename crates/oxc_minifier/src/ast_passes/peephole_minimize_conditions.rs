@@ -9,7 +9,7 @@ use crate::CompressorPass;
 /// Also rewrites conditional statements as expressions by replacing them
 /// with `? :` and short-circuit binary operators.
 ///
-/// <https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeMinimizeConditions.java>
+/// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeMinimizeConditions.java>
 pub struct PeepholeMinimizeConditions {
     changed: bool,
 }
@@ -58,7 +58,7 @@ impl<'a> PeepholeMinimizeConditions {
     }
 }
 
-/// <https://github.com/google/closure-compiler/blob/master/test/com/google/javascript/jscomp/PeepholeMinimizeConditionsTest.java>
+/// <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/PeepholeMinimizeConditionsTest.java>
 #[cfg(test)]
 mod test {
     use oxc_allocator::Allocator;

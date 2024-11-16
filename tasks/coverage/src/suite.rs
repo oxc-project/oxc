@@ -286,7 +286,7 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
 
     /// Mark strict mode as always strict
     ///
-    /// See <https://github.com/tc39/test262/blob/main/INTERPRETING.md#strict-mode>
+    /// See <https://github.com/tc39/test262/blob/05c45a4c430ab6fee3e0c7f0d47d8a30d8876a6d/INTERPRETING.md#strict-mode>
     fn always_strict(&self) -> bool {
         false
     }

@@ -34,7 +34,7 @@
 //! [`oxc_parser`]: <https://docs.rs/oxc_parser>
 //! [`Parser`]: <https://docs.rs/oxc_parser/latest/oxc_parser/struct.Parser.html>
 //! [estree]: <https://github.com/estree/estree>
-//! [typescript-eslint]: <https://github.com/typescript-eslint/typescript-eslint/tree/main/packages/ast-spec>
+//! [typescript-eslint]: <https://github.com/typescript-eslint/typescript-eslint/tree/v8.9.0/packages/ast-spec>
 //! [ECMAScript spec]: <https://tc39.es/ecma262/>
 //! [tsc]: <https://github.com/microsoft/TypeScript>
 //! [`Traverse`]: <https://github.com/oxc-project/oxc/tree/main/crates/oxc_traverse>

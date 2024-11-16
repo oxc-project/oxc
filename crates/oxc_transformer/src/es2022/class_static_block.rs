@@ -36,7 +36,7 @@
 //! Implementation based on [@babel/plugin-transform-class-static-block](https://babel.dev/docs/babel-plugin-transform-class-static-block).
 //!
 //! ## References:
-//! * Babel plugin implementation: <https://github.com/babel/babel/tree/main/packages/babel-plugin-transform-class-static-block>
+//! * Babel plugin implementation: <https://github.com/babel/babel/tree/v7.26.2/packages/babel-plugin-transform-class-static-block>
 //! * Class static initialization blocks TC39 proposal: <https://github.com/tc39/proposal-class-static-block>
 
 use itoa::Buffer as ItoaBuffer;

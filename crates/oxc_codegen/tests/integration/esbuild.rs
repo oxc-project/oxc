@@ -1,6 +1,6 @@
 //! Tests ported from `esbuild`
-//! * <https://github.com/evanw/esbuild/blob/main/internal/js_printer/js_printer_test.go>
-//! * <https://github.com/evanw/esbuild/blob/main/internal/js_parser/js_parser_test.go>
+//! * <https://github.com/evanw/esbuild/blob/v0.24.0/internal/js_printer/js_printer_test.go>
+//! * <https://github.com/evanw/esbuild/blob/v0.24.0/internal/js_parser/js_parser_test.go>
 
 use crate::tester::{test, test_minify};
 

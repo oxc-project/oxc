@@ -54,7 +54,7 @@ pub struct Prettier<'a> {
     options: PrettierOptions,
 
     /// The stack of AST Nodes
-    /// See <https://github.com/prettier/prettier/blob/main/src/common/ast-path.js>
+    /// See <https://github.com/prettier/prettier/blob/3.3.3/src/common/ast-path.js>
     stack: Vec<AstKind<'a>>,
 
     group_id_builder: GroupIdBuilder,

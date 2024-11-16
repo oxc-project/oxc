@@ -27,8 +27,8 @@
 //! ## References:
 //!
 //! * Babel plugin implementation:
-//!   <https://github.com/babel/babel/blob/main/packages/babel-plugin-transform-exponentiation-operator>
-//!   <https://github.com/babel/babel/tree/main/packages/babel-helper-builder-binary-assignment-operator-visitor>
+//!   <https://github.com/babel/babel/blob/v7.26.2/packages/babel-plugin-transform-exponentiation-operator>
+//!   <https://github.com/babel/babel/tree/v7.26.2/packages/babel-helper-builder-binary-assignment-operator-visitor>
 //! * Exponentiation operator TC39 proposal: <https://github.com/tc39/proposal-exponentiation-operator>
 //! * Exponentiation operator specification: <https://tc39.es/ecma262/#sec-exp-operator>
 

@@ -1,6 +1,6 @@
 //! References
 //!
-//! * <https://github.com/rollup/plugins/tree/master/packages/inject/test>
+//! * <https://github.com/rollup/plugins/tree/pluginutils-v5.1.3/packages/inject/test>
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{CodeGenerator, CodegenOptions};

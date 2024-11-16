@@ -3,9 +3,9 @@
 
 //! An Ecma-262 Lexer / Tokenizer
 //! Prior Arts:
-//!     * [jsparagus](https://github.com/mozilla-spidermonkey/jsparagus/blob/master/crates/parser/src)
-//!     * [rome](https://github.com/rome/tools/tree/main/crates/rome_js_parser/src/lexer)
-//!     * [rustc](https://github.com/rust-lang/rust/blob/master/compiler/rustc_lexer/src)
+//!     * [jsparagus](https://github.com/mozilla-spidermonkey/jsparagus/blob/24004745a8ed4939fc0dc7332bfd1268ac52285f/crates/parser/src)
+//!     * [rome](https://github.com/rome/tools/tree/lsp/v0.28.0/crates/rome_js_parser/src/lexer)
+//!     * [rustc](https://github.com/rust-lang/rust/blob/1.82.0/compiler/rustc_lexer/src)
 //!     * [v8](https://v8.dev/blog/scanner)
 
 mod byte_handlers;

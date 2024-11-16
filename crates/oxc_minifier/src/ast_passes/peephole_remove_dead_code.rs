@@ -12,7 +12,7 @@ use crate::{keep_var::KeepVar, CompressorPass};
 /// Terser option: `dead_code: true`.
 ///
 /// See `KeepVar` at the end of this file for `var` hoisting logic.
-/// <https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeRemoveDeadCode.java>
+/// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeRemoveDeadCode.java>
 pub struct PeepholeRemoveDeadCode {
     changed: bool,
 }
@@ -417,7 +417,7 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
     }
 }
 
-/// <https://github.com/google/closure-compiler/blob/master/test/com/google/javascript/jscomp/PeepholeRemoveDeadCodeTest.java>
+/// <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/PeepholeRemoveDeadCodeTest.java>
 #[cfg(test)]
 mod test {
     use oxc_allocator::Allocator;

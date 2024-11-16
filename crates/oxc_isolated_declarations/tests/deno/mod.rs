@@ -1,4 +1,4 @@
-//! Copy from <https://github.com/denoland/deno_graph/blob/main/src/fast_check/transform_dts.rs#L932-#L1532>
+//! Copy from <https://github.com/denoland/deno_graph/blob/0.84.0/src/fast_check/transform_dts.rs#L932-#L1532>
 //! Make some changes to conform to the Isolated Declarations output
 
 #[cfg(test)]

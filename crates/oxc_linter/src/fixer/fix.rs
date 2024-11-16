@@ -457,7 +457,7 @@ impl<'a> CompositeFix<'a> {
     // }
 
     /// Gets one fix from the fixes. If we retrieve multiple fixes, this merges those into one.
-    /// <https://github.com/eslint/eslint/blob/main/lib/linter/report-translator.js#L181-L203>
+    /// <https://github.com/eslint/eslint/blob/v9.9.1/lib/linter/report-translator.js#L181-L203>
     pub fn normalize_fixes(self, source_text: &str) -> Fix<'a> {
         match self {
             CompositeFix::Single(fix) => fix,
@@ -472,7 +472,7 @@ impl<'a> CompositeFix<'a> {
     /// 2. contains overlapped ranges
     /// 3. contains negative ranges (span.start > span.end)
     ///
-    /// <https://github.com/eslint/eslint/blob/main/lib/linter/report-translator.js#L147-L179>
+    /// <https://github.com/eslint/eslint/blob/v9.9.1/lib/linter/report-translator.js#L147-L179>
     fn merge_fixes(fixes: Vec<Fix<'a>>, source_text: &str) -> Fix<'a> {
         let mut fixes = fixes;
         if fixes.is_empty() {

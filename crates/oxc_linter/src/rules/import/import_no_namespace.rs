@@ -82,7 +82,7 @@ declare_oxc_lint!(
     pending  // TODO: fixer
 );
 
-/// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/no-namespace.md>
+/// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-namespace.md>
 impl Rule for ImportNoNamespace {
     fn from_configuration(value: serde_json::Value) -> Self {
         let obj = value.get(0);
