@@ -743,7 +743,8 @@ impl<'a> ArrowFunctionConverter<'a> {
         let scope_id =
             ctx.create_child_scope(target_scope_id, ScopeFlags::Arrow | ScopeFlags::Function);
 
-        let mut items = ctx.ast.vec_with_capacity(2);
+        let mut items =
+            ctx.ast.vec_with_capacity(usize::from(is_computed) + usize::from(is_assignment));
 
         // Create a parameter for the prop if it's a computed member expression.
         if is_computed {
