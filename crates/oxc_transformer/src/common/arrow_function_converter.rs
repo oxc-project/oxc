@@ -748,6 +748,8 @@ impl<'a> ArrowFunctionConverter<'a> {
 
         // Create a parameter for the prop if it's a computed member expression.
         if is_computed {
+            // TODO(improve-on-babel): No need for UID here. Just `prop` would be fine as there's nothing
+            // in `prop => super[prop]` or `(prop, value) => super[prop] = value` which can clash.
             let param_binding =
                 ctx.generate_uid("prop", scope_id, SymbolFlags::FunctionScopedVariable);
             let param = ctx.ast.formal_parameter(
@@ -771,6 +773,8 @@ impl<'a> ArrowFunctionConverter<'a> {
 
         // Create a parameter for the value if it's an assignment.
         if is_assignment {
+            // TODO(improve-on-babel): No need for UID here. Just `value` would be fine as there's nothing
+            // in `value => super.prop = value` or `(prop, value) => super[prop] = value` which can clash.
             let param_binding =
                 ctx.generate_uid("value", scope_id, SymbolFlags::FunctionScopedVariable);
             let param = ctx.ast.formal_parameter(
