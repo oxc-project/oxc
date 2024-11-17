@@ -1,14 +1,19 @@
 mod categories;
 mod env;
+mod flat;
 mod globals;
+mod overrides;
 mod oxlintrc;
 mod plugins;
 mod rules;
 mod settings;
 
+pub(crate) use self::flat::ResolvedLinterState;
 pub use self::{
     env::OxlintEnv,
+    flat::ConfigStore,
     globals::OxlintGlobals,
+    overrides::OxlintOverrides,
     oxlintrc::Oxlintrc,
     plugins::LintPlugins,
     rules::ESLintRule,
@@ -16,7 +21,7 @@ pub use self::{
     settings::{jsdoc::JSDocPluginSettings, OxlintSettings},
 };
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub(crate) struct LintConfig {
     pub(crate) plugins: LintPlugins,
     pub(crate) settings: OxlintSettings,
@@ -101,7 +106,7 @@ mod test {
     fn test_vitest_rule_replace() {
         let fixture_path: std::path::PathBuf =
             env::current_dir().unwrap().join("fixtures/eslint_config_vitest_replace.json");
-        let mut config = Oxlintrc::from_file(&fixture_path).unwrap();
+        let config = Oxlintrc::from_file(&fixture_path).unwrap();
         let mut set = FxHashSet::default();
         config.rules.override_rules(&mut set, &RULES);
 

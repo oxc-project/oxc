@@ -244,9 +244,6 @@ mod test {
         let options = lint_command().run_inner(new_args.as_slice()).unwrap();
         match LintRunner::new(options).run() {
             CliRunResult::LintResult(lint_result) => lint_result,
-            CliRunResult::LintError { error } => {
-                panic!("{error}")
-            }
             other => panic!("{other:?}"),
         }
     }
@@ -631,5 +628,26 @@ mod test {
         let expect_json =
             std::fs::read_to_string("fixtures/print_config/ban_rules/expect.json").unwrap();
         assert_eq!(config, expect_json.trim());
+    }
+
+    #[test]
+    fn test_overrides() {
+        let result =
+            test(&["-c", "fixtures/overrides/.oxlintrc.json", "fixtures/overrides/test.js"]);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 0);
+        assert_eq!(result.number_of_errors, 1);
+
+        let result =
+            test(&["-c", "fixtures/overrides/.oxlintrc.json", "fixtures/overrides/test.ts"]);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 1);
+        assert_eq!(result.number_of_errors, 1);
+
+        let result =
+            test(&["-c", "fixtures/overrides/.oxlintrc.json", "fixtures/overrides/other.jsx"]);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 0);
+        assert_eq!(result.number_of_errors, 1);
     }
 }

@@ -18,10 +18,12 @@ use crate::{
 
 mod ancestry;
 mod bound_identifier;
+mod maybe_bound_identifier;
+mod scoping;
 use ancestry::PopToken;
 pub use ancestry::TraverseAncestry;
 pub use bound_identifier::BoundIdentifier;
-mod scoping;
+pub use maybe_bound_identifier::MaybeBoundIdentifier;
 pub use scoping::TraverseScoping;
 
 /// Traverse context.
@@ -528,29 +530,14 @@ impl<'a> TraverseCtx<'a> {
         self.scoping.delete_reference_for_identifier(ident);
     }
 
-    /// Clone `IdentifierReference` based on the original reference's `SymbolId` and name.
-    ///
-    /// This method makes a lookup of the `SymbolId` for the reference. If you need to create multiple
-    /// `IdentifierReference`s for the same binding, it is better to look up the `SymbolId` only once,
-    /// and generate `IdentifierReference`s with `TraverseCtx::create_reference_id`.
-    pub fn clone_identifier_reference(
-        &mut self,
-        ident: &IdentifierReference<'a>,
-        flags: ReferenceFlags,
-    ) -> IdentifierReference<'a> {
-        let reference = self.symbols().get_reference(ident.reference_id());
-        let symbol_id = reference.symbol_id();
-        self.create_reference_id(ident.span, ident.name.clone(), symbol_id, flags)
-    }
-
     /// Determine whether evaluating the specific input `node` is a consequenceless reference.
     ///
-    /// I.E evaluating it won't result in potentially arbitrary code from being ran. The following are
-    /// allowed and determined not to cause side effects:
+    /// i.e. evaluating it won't result in potentially arbitrary code from being run.
+    /// The following are allowed and determined not to cause side effects:
     ///
     /// - `this` expressions
     /// - `super` expressions
-    /// - Bound identifiers
+    /// - Bound identifiers which are not mutated
     ///
     /// This is a shortcut for `ctx.scoping.is_static`.
     #[inline]

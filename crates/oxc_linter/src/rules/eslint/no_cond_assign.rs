@@ -94,12 +94,6 @@ impl Rule for NoCondAssign {
                             if let Some(test) = &for_stmt.test {
                                 spans.push(test.span());
                             }
-                            if let Some(update) = &for_stmt.update {
-                                spans.push(update.span());
-                            }
-                            if let Some(update) = &for_stmt.update {
-                                spans.push(update.span());
-                            }
                         }
                         AstKind::ConditionalExpression(cond_expr) => {
                             spans.push(cond_expr.span());
@@ -115,7 +109,7 @@ impl Rule for NoCondAssign {
                 }
 
                 // Only report the diagnostic if the assignment is in a span where it should not be.
-                // For example, report `if (a = b) { ...}`, not `if (...) { a = b }`
+                // For example, report `if (a = b) { ... }`, not `if (...) { a = b }`
                 if spans.iter().any(|span| span.contains_inclusive(node.span())) {
                     Self::emit_diagnostic(ctx, expr);
                 }
@@ -210,12 +204,7 @@ fn test() {
             ",
             Some(serde_json::json!(["always"])),
         ),
-        (
-            "
-            while(true) newValue = value;
-            ",
-            Some(serde_json::json!(["always"])),
-        ),
+        ("while(true) newValue = value;", Some(serde_json::json!(["always"]))),
         (
             "
             for(;;) newValue = value;
@@ -225,6 +214,11 @@ fn test() {
         ("for (; (typeof l === 'undefined' ? (l = 0) : l); i++) { }", None),
         ("for (x = 0;x<10;x++) { x = 0 }", None),
         ("for (x = 0;x<10;(x = x + 1)) { x = 0 }", None),
+        ("const nums = [1,2,3]; for(let i = 0; i < nums.length; i += 1) { dosomething(); }", None),
+        (
+            "for (let i = 0; i < nums.length; i += 1) { dosomething();}",
+            Some(serde_json::json!(["always"])),
+        ),
     ];
 
     let fail = vec![

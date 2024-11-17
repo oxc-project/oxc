@@ -1928,13 +1928,14 @@ pub struct PropertyDefinition<'a> {
     /// Initialized value in the declaration.
     ///
     /// ## Example
-    /// ```
+    /// ```ts
     /// class Foo {
-    ///   x = 5     // Some(NumericLiteral)
-    ///   y: string // None
+    ///   x = 5;     // Some(NumericLiteral)
+    ///   y;         // None
+    ///   z: string; // None
     ///
     ///   constructor() {
-    ///     this.y = "hello"
+    ///     this.z = "hello";
     ///   }
     /// }
     /// ```
@@ -1942,10 +1943,10 @@ pub struct PropertyDefinition<'a> {
     /// Property was declared with a computed key
     ///
     /// ## Example
-    /// ```ts
+    /// ```js
     /// class Foo {
-    ///   ["a"]: string // true
-    ///   b: number     // false
+    ///   ["a"]: 1; // true
+    ///   b: 2;     // false
     /// }
     /// ```
     pub computed: bool,
@@ -1956,12 +1957,12 @@ pub struct PropertyDefinition<'a> {
     /// ## Example
     /// ```ts
     /// class Foo {
-    ///   x: number         // false
-    ///   declare y: string // true
+    ///   x: number;         // false
+    ///   declare y: string; // true
     /// }
     ///
     /// declare class Bar {
-    ///   x: number         // false
+    ///   x: number;         // false
     /// }
     /// ```
     #[ts]
@@ -1989,10 +1990,10 @@ pub struct PropertyDefinition<'a> {
     ///
     /// ```ts
     /// class Foo {
-    ///   public w: number     // Some(TSAccessibility::Public)
-    ///   private x: string    // Some(TSAccessibility::Private)
-    ///   protected y: boolean // Some(TSAccessibility::Protected)
-    ///   readonly z           // None
+    ///   public w: number;     // Some(TSAccessibility::Public)
+    ///   private x: string;    // Some(TSAccessibility::Private)
+    ///   protected y: boolean; // Some(TSAccessibility::Protected)
+    ///   readonly z;           // None
     /// }
     /// ```
     #[ts]

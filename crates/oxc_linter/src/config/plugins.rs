@@ -179,9 +179,26 @@ impl<'de> Deserialize<'de> for LintPlugins {
                 A: de::SeqAccess<'de>,
             {
                 let mut plugins = LintPlugins::default();
-                while let Some(plugin) = seq.next_element::<&str>()? {
-                    plugins |= plugin.into();
+                loop {
+                    // serde_json::from_str will provide an &str, while
+                    // serde_json::from_value provides a String. The former is
+                    // used in almost all cases, but the latter is more
+                    // convenient for test cases.
+                    match seq.next_element::<&str>() {
+                        Ok(Some(next)) => {
+                            plugins |= next.into();
+                        }
+                        Ok(None) => break,
+                        Err(_) => {
+                            if let Some(next) = seq.next_element::<String>()? {
+                                plugins |= next.as_str().into();
+                            } else {
+                                break;
+                            }
+                        }
+                    };
                 }
+
                 Ok(plugins)
             }
         }

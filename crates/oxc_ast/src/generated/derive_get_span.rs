@@ -34,6 +34,13 @@ impl<'a> GetSpan for NumericLiteral<'a> {
     }
 }
 
+impl<'a> GetSpan for StringLiteral<'a> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
 impl<'a> GetSpan for BigIntLiteral<'a> {
     #[inline]
     fn span(&self) -> Span {
@@ -42,13 +49,6 @@ impl<'a> GetSpan for BigIntLiteral<'a> {
 }
 
 impl<'a> GetSpan for RegExpLiteral<'a> {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl<'a> GetSpan for StringLiteral<'a> {
     #[inline]
     fn span(&self) -> Span {
         self.span

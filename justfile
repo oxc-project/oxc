@@ -1,6 +1,6 @@
 #!/usr/bin/env -S just --justfile
 
-set windows-shell := ["powershell"]
+set windows-shell := ["pwsh", "-NoLogo", "-Command"]
 set shell := ["bash", "-cu"]
 
 _default:
@@ -32,10 +32,10 @@ ready:
 
 # Clone or update submodules
 submodules:
-  just clone-submodule tasks/coverage/test262 git@github.com:tc39/test262.git 0645461999632a17426e45d044ee519a0f07d022
-  just clone-submodule tasks/coverage/babel git@github.com:babel/babel.git d20b314c14533ab86351ecf6ca6b7296b66a57b3
-  just clone-submodule tasks/coverage/typescript git@github.com:microsoft/TypeScript.git df9d16503f6755dd071e4c591b9d21c39d03d95e
-  just clone-submodule tasks/prettier_conformance/prettier git@github.com:prettier/prettier.git 52829385bcc4d785e58ae2602c0b098a643523c9
+  just clone-submodule tasks/coverage/test262 https://github.com/tc39/test262.git 0645461999632a17426e45d044ee519a0f07d022
+  just clone-submodule tasks/coverage/babel https://github.com/babel/babel.git d20b314c14533ab86351ecf6ca6b7296b66a57b3
+  just clone-submodule tasks/coverage/typescript https://github.com/microsoft/TypeScript.git df9d16503f6755dd071e4c591b9d21c39d03d95e
+  just clone-submodule tasks/prettier_conformance/prettier https://github.com/prettier/prettier.git 52829385bcc4d785e58ae2602c0b098a643523c9
 
 # Install git pre-commit to format files
 install-hook:
@@ -193,9 +193,17 @@ new-security-rule name:
     cargo run -p rulegen {{name}} security
 
 clone-submodule dir url sha:
-  cd {{dir}} || git init {{dir}}
-  cd {{dir}} && git remote add origin {{url}} || true
+  just git-init-if-not-exist {{dir}}
+  cd {{dir}} && git remote add origin {{url}}
   cd {{dir}} && git fetch --depth=1 origin {{sha}} && git reset --hard {{sha}}
+
+[unix]
+git-init-if-not-exist dir:
+  cd {{dir}} || git init {{dir}}
+
+[windows]
+git-init-if-not-exist dir:
+  if (Test-Path {{ dir }}) {cd {{ dir }}} else {git init {{dir}}}
 
 website path:
   cargo run -p website -- linter-rules --table {{path}}/src/docs/guide/usage/linter/generated-rules.md --rule-docs {{path}}/src/docs/guide/usage/linter/rules

@@ -353,18 +353,15 @@ impl TraverseScoping {
 
     /// Determine whether evaluating the specific input `node` is a consequenceless reference.
     ///
-    /// I.E evaluating it won't result in potentially arbitrary code from being ran. The following are
-    /// allowed and determined not to cause side effects:
+    /// i.e. evaluating it won't result in potentially arbitrary code from being run.
+    /// The following are allowed and determined not to cause side effects:
     ///
     /// - `this` expressions
     /// - `super` expressions
-    /// - Bound identifiers
+    /// - Bound identifiers which are not mutated
     ///
     /// Based on Babel's `scope.isStatic` logic.
     /// <https://github.com/babel/babel/blob/419644f27c5c59deb19e71aaabd417a3bc5483ca/packages/babel-traverse/src/scope/index.ts#L557>
-    ///
-    /// # Panics
-    /// Can only panic if [`IdentifierReference`] does not have a reference_id, which it always should.
     #[inline]
     pub fn is_static(&self, expr: &Expression) -> bool {
         match expr {

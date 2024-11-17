@@ -135,6 +135,11 @@ impl<'a> ContextHost<'a> {
         self.semantic.source_type()
     }
 
+    #[inline]
+    pub fn plugins(&self) -> LintPlugins {
+        self.plugins
+    }
+
     /// Add a diagnostic message to the end of the list of diagnostics. Can be used
     /// by any rule to report issues.
     #[inline]

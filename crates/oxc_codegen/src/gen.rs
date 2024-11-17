@@ -2067,7 +2067,7 @@ impl<'a> GenExpr for NewExpression<'a> {
             p.print_str("new ");
             self.callee.print_expr(p, Precedence::New, Context::FORBID_CALL);
             p.print_ascii_byte(b'(');
-            let has_comment = p.has_comment(self.span.end - 1)
+            let has_comment = (!self.span.is_unspanned() && p.has_comment(self.span.end - 1))
                 || self.arguments.iter().any(|item| p.has_comment(item.span().start));
             if has_comment {
                 p.indent();

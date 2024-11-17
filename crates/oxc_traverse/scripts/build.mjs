@@ -30,10 +30,13 @@ const PREAMBLE = '// Auto-generated code, DO NOT EDIT DIRECTLY!\n' +
 const types = await getTypesFromCode();
 
 const outputDirPath = pathJoin(fileURLToPath(import.meta.url), '../../src/generated');
-await writeToFile('traverse.rs', generateTraverseTraitCode(types));
-await writeToFile('ancestor.rs', generateAncestorsCode(types));
-await writeToFile('walk.rs', generateWalkFunctionsCode(types));
-await writeToFile('scopes_collector.rs', generateScopesCollectorCode(types));
+
+await Promise.all([
+  writeToFile('traverse.rs', generateTraverseTraitCode(types)),
+  writeToFile('ancestor.rs', generateAncestorsCode(types)),
+  writeToFile('walk.rs', generateWalkFunctionsCode(types)),
+  writeToFile('scopes_collector.rs', generateScopesCollectorCode(types)),
+]);
 
 /**
  * @param {string} filename

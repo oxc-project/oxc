@@ -547,6 +547,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "fast-glob"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bb10ed0f8a3dca52477be37ac0fb8f9d1fd4cd8d311b4484bdd45c1c56e0c9ec"
+
+[[package]]
 name = "fastrand"
 version = "2.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -710,6 +716,7 @@ dependencies = [
  "log",
  "regex-automata",
  "regex-syntax",
+ "serde",
 ]
 
 [[package]]
@@ -1700,6 +1707,7 @@ dependencies = [
  "convert_case",
  "cow-utils",
  "dashmap 6.1.0",
+ "fast-glob",
  "globset",
  "insta",
  "itertools",
@@ -1709,6 +1717,7 @@ dependencies = [
  "markdown",
  "memchr",
  "mime_guess",
+ "nonmax",
  "once_cell",
  "oxc_allocator",
  "oxc_ast",

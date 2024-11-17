@@ -27,13 +27,11 @@ type RuleSet = FxHashSet<RuleWithSeverity>;
 pub struct OxlintRules {
     /// List of all configured rules
     pub(crate) rules: Vec<ESLintRule>,
-    /// List of rules that didn't match any known rules
-    pub unknown_rules: Vec<ESLintRule>,
 }
 
 impl OxlintRules {
     pub fn new(rules: Vec<ESLintRule>) -> Self {
-        Self { rules, unknown_rules: Vec::new() }
+        Self { rules }
     }
 
     /// Returns `true` if there are no rules.
@@ -60,11 +58,7 @@ pub struct ESLintRule {
 
 impl OxlintRules {
     #[allow(clippy::option_if_let_else, clippy::print_stderr)]
-    pub(crate) fn override_rules(
-        &mut self,
-        rules_for_override: &mut RuleSet,
-        all_rules: &[RuleEnum],
-    ) {
+    pub(crate) fn override_rules(&self, rules_for_override: &mut RuleSet, all_rules: &[RuleEnum]) {
         use itertools::Itertools;
         let mut rules_to_replace: Vec<RuleWithSeverity> = vec![];
         let mut rules_to_remove: Vec<RuleWithSeverity> = vec![];
@@ -91,13 +85,6 @@ impl OxlintRules {
                                 let config = rule_config.config.clone().unwrap_or_default();
                                 let rule = rule.read_json(config);
                                 rules_to_replace.push(RuleWithSeverity::new(rule, severity));
-                            } else {
-                                self.unknown_rules.push(ESLintRule {
-                                    plugin_name: plugin_name.to_string(),
-                                    rule_name: rule_name.to_string(),
-                                    severity,
-                                    config: rule_config.config.clone(),
-                                });
                             }
                         }
                         AllowWarnDeny::Allow => {
@@ -117,13 +104,6 @@ impl OxlintRules {
                                 let config = rule_config.config.clone().unwrap_or_default();
                                 let rule = rule.read_json(config);
                                 rules_to_remove.push(RuleWithSeverity::new(rule, severity));
-                            } else {
-                                self.unknown_rules.push(ESLintRule {
-                                    plugin_name: plugin_name.to_string(),
-                                    rule_name: rule_name.to_string(),
-                                    severity,
-                                    config: rule_config.config.clone(),
-                                });
                             }
                         }
                     }
@@ -262,7 +242,7 @@ impl<'de> Deserialize<'de> for OxlintRules {
                     rules.push(ESLintRule { plugin_name, rule_name, severity, config });
                 }
 
-                Ok(OxlintRules { rules, unknown_rules: Vec::new() })
+                Ok(OxlintRules { rules })
             }
         }
 
@@ -403,41 +383,13 @@ mod test {
     }
 
     #[test]
-    fn test_parse_unknown_rules() {
-        let config = json!({
-            "no-console": "off",
-            "foo/no-unused-vars": [1],
-            "dummy": ["error", "arg1", "args2"],
-        });
-        let mut rules = OxlintRules::deserialize(&config).unwrap();
-        let mut rule_set = RuleSet::default();
-
-        rules.override_rules(&mut rule_set, &RULES);
-
-        rules.unknown_rules.sort_by(|a, b| a.rule_name.cmp(&b.rule_name));
-        let mut rules = rules.unknown_rules.iter();
-
-        let r = rules.next().unwrap();
-        assert_eq!(r.rule_name, "dummy");
-        assert_eq!(r.plugin_name, "unknown_plugin");
-        assert!(r.severity.is_warn_deny());
-        assert_eq!(r.config, Some(serde_json::json!(["arg1", "args2"])));
-
-        let r = rules.next().unwrap();
-        assert_eq!(r.rule_name, "no-unused-vars");
-        assert_eq!(r.plugin_name, "foo");
-        assert!(r.severity.is_warn_deny());
-        assert!(r.config.is_none());
-    }
-
-    #[test]
     fn test_parse_rules_default() {
         let rules = OxlintRules::default();
         assert!(rules.is_empty());
     }
 
     fn r#override(rules: &mut RuleSet, rules_rc: &Value) {
-        let mut rules_config = OxlintRules::deserialize(rules_rc).unwrap();
+        let rules_config = OxlintRules::deserialize(rules_rc).unwrap();
         rules_config.override_rules(rules, &RULES);
     }
 

@@ -12,6 +12,7 @@ mod import {
     pub mod default;
     pub mod export;
     pub mod first;
+    pub mod import_no_namespace;
     pub mod max_dependencies;
     pub mod named;
     pub mod namespace;
@@ -159,6 +160,7 @@ mod typescript {
     pub mod no_duplicate_enum_values;
     pub mod no_dynamic_delete;
     pub mod no_empty_interface;
+    pub mod no_empty_object_type;
     pub mod no_explicit_any;
     pub mod no_extra_non_null_assertion;
     pub mod no_extraneous_class;
@@ -239,6 +241,7 @@ mod jest {
 mod react {
     pub mod button_has_type;
     pub mod checked_requires_onchange_or_readonly;
+    pub mod exhaustive_deps;
     pub mod iframe_missing_sandbox;
     pub mod jsx_boolean_value;
     pub mod jsx_curly_brace_presence;
@@ -505,10 +508,6 @@ mod node {
     pub mod no_new_require;
 }
 
-mod react_hooks {
-    pub mod exhaustive_deps;
-}
-
 oxc_macros::declare_all_lint_rules! {
     // import::no_deprecated,
     // import::no_unused_modules,
@@ -629,6 +628,7 @@ oxc_macros::declare_all_lint_rules! {
     import::default,
     import::export,
     import::first,
+    import::import_no_namespace,
     import::max_dependencies,
     import::named,
     import::namespace,
@@ -794,6 +794,7 @@ oxc_macros::declare_all_lint_rules! {
     promise::valid_params,
     react::button_has_type,
     react::checked_requires_onchange_or_readonly,
+    react::exhaustive_deps,
     react::iframe_missing_sandbox,
     react::jsx_boolean_value,
     react::jsx_curly_brace_presence,
@@ -805,8 +806,8 @@ oxc_macros::declare_all_lint_rules! {
     react::jsx_no_useless_fragment,
     react::jsx_props_no_spread_multi,
     react::no_children_prop,
-    react::no_danger,
     react::no_danger_with_children,
+    react::no_danger,
     react::no_direct_mutation_state,
     react::no_find_dom_node,
     react::no_is_mounted,
@@ -841,6 +842,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_duplicate_enum_values,
     typescript::no_dynamic_delete,
     typescript::no_empty_interface,
+    typescript::no_empty_object_type,
     typescript::no_explicit_any,
     typescript::no_extra_non_null_assertion,
     typescript::no_extraneous_class,
@@ -960,5 +962,4 @@ oxc_macros::declare_all_lint_rules! {
     vitest::prefer_to_be_object,
     vitest::prefer_to_be_truthy,
     vitest::require_local_test_context_for_concurrent_snapshots,
-    react_hooks::exhaustive_deps,
 }

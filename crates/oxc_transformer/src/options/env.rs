@@ -176,14 +176,14 @@ impl From<EngineTargets> for EnvOptions {
                 async_generator_functions: o.has_feature(ES2018AsyncGeneratorFunctions),
             },
             es2019: ES2019Options {
-                optional_catch_binding: o.has_feature(ES2018OptionalCatchBinding),
+                optional_catch_binding: o.has_feature(ES2019OptionalCatchBinding),
             },
             es2020: ES2020Options {
                 nullish_coalescing_operator: o.has_feature(ES2020NullishCoalescingOperator),
                 big_int: o.has_feature(ES2020BigInt),
             },
             es2021: ES2021Options {
-                logical_assignment_operators: o.has_feature(ES2020LogicalAssignmentOperators),
+                logical_assignment_operators: o.has_feature(ES2021LogicalAssignmentOperators),
             },
             es2022: ES2022Options {
                 class_static_block: o.has_feature(ES2022ClassStaticBlock),

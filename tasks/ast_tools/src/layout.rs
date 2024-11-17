@@ -160,10 +160,10 @@ impl Layout {
 /// For `n` bigger than `16`, Or if it's not a power of 2 number
 fn max_val_of_bytes(n: usize) -> u128 {
     match n {
-        1 => u8::MAX as u128,
-        2 => u16::MAX as u128,
-        4 => u32::MAX as u128,
-        8 => u64::MAX as u128,
+        1 => u128::from(u8::MAX),
+        2 => u128::from(u16::MAX),
+        4 => u128::from(u32::MAX),
+        8 => u128::from(u64::MAX),
         16 => u128::MAX,
         _ => panic!("We do not support `n` bigger than 16 bytes."),
     }
