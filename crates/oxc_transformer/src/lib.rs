@@ -171,6 +171,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         arrow: &mut ArrowFunctionExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        self.common.enter_arrow_function_expression(arrow, ctx);
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_arrow_function_expression(arrow, ctx);
         }
@@ -312,6 +313,14 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         self.x2_es2018.exit_function(func, ctx);
         self.x2_es2017.exit_function(func, ctx);
         self.common.exit_function(func, ctx);
+    }
+
+    fn enter_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.common.enter_function_body(body, ctx);
+    }
+
+    fn exit_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.common.exit_function_body(body, ctx);
     }
 
     fn enter_jsx_element(&mut self, node: &mut JSXElement<'a>, ctx: &mut TraverseCtx<'a>) {

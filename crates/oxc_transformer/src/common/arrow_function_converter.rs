@@ -95,7 +95,7 @@ use rustc_hash::{FxHashSet, FxHasher};
 
 use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
 use oxc_ast::{ast::*, NONE};
-use oxc_data_structures::stack::SparseStack;
+use oxc_data_structures::stack::{NonEmptyStack, SparseStack};
 use oxc_semantic::{ReferenceFlags, SymbolId};
 use oxc_span::{CompactStr, SPAN};
 use oxc_syntax::{
@@ -141,6 +141,7 @@ pub struct ArrowFunctionConverter<'a> {
     mode: ArrowFunctionConverterMode,
     this_var_stack: SparseStack<BoundIdentifier<'a>>,
     arguments_var_stack: SparseStack<BoundIdentifier<'a>>,
+    arguments_needs_transform_stack: NonEmptyStack<bool>,
     renamed_arguments_symbol_ids: FxHashSet<SymbolId>,
     // TODO(improve-on-babel): `FxHashMap` would suffice here. Iteration order is not important.
     // Only using `FxIndexMap` for predictable iteration order to match Babel's output.
@@ -161,6 +162,7 @@ impl<'a> ArrowFunctionConverter<'a> {
             mode,
             this_var_stack: SparseStack::new(),
             arguments_var_stack: SparseStack::new(),
+            arguments_needs_transform_stack: NonEmptyStack::new(false),
             renamed_arguments_symbol_ids: FxHashSet::default(),
             super_methods: None,
         }
@@ -235,6 +237,35 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
             arguments_var,
             ctx,
         );
+    }
+
+    fn enter_arrow_function_expression(
+        &mut self,
+        arrow: &mut ArrowFunctionExpression<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.is_async_only() {
+            let previous = *self.arguments_needs_transform_stack.last();
+            self.arguments_needs_transform_stack.push(previous || arrow.r#async);
+        }
+    }
+
+    fn enter_function_body(&mut self, _body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.is_async_only() {
+            // Ignore arrow functions
+            if let Ancestor::FunctionBody(func) = ctx.parent() {
+                let is_async_method =
+                    *func.r#async() && Self::is_class_method_like_ancestor(ctx.ancestor(1));
+                self.arguments_needs_transform_stack.push(is_async_method);
+            }
+        }
+    }
+
+    fn exit_function_body(&mut self, _body: &mut FunctionBody<'a>, _ctx: &mut TraverseCtx<'a>) {
+        // This covers exiting either a `Function` or an `ArrowFunctionExpression`
+        if self.is_async_only() {
+            self.arguments_needs_transform_stack.pop();
+        }
     }
 
     fn enter_static_block(&mut self, _block: &mut StaticBlock<'a>, _ctx: &mut TraverseCtx<'a>) {
@@ -361,6 +392,7 @@ impl<'a> ArrowFunctionConverter<'a> {
     }
 
     /// Check if arrow function conversion has enabled for transform async arrow functions
+    #[inline]
     fn is_async_only(&self) -> bool {
         self.mode == ArrowFunctionConverterMode::AsyncOnly
     }
@@ -860,37 +892,6 @@ impl<'a> ArrowFunctionConverter<'a> {
         name
     }
 
-    /// Whether to transform the `arguments` identifier.
-    fn should_transform_arguments_identifier(&self, name: &str, ctx: &mut TraverseCtx<'a>) -> bool {
-        self.is_async_only() && name == "arguments" && Self::is_affected_arguments_identifier(ctx)
-    }
-
-    /// Check if the `arguments` identifier is affected by the transformation.
-    fn is_affected_arguments_identifier(ctx: &mut TraverseCtx<'a>) -> bool {
-        let mut ancestors = ctx.ancestors().skip(1);
-        while let Some(ancestor) = ancestors.next() {
-            match ancestor {
-                Ancestor::ArrowFunctionExpressionParams(arrow) => {
-                    if *arrow.r#async() {
-                        return true;
-                    }
-                }
-                Ancestor::ArrowFunctionExpressionBody(arrow) => {
-                    if *arrow.r#async() {
-                        return true;
-                    }
-                }
-                Ancestor::FunctionBody(func) => {
-                    return *func.r#async()
-                        && Self::is_class_method_like_ancestor(ancestors.next().unwrap());
-                }
-                _ => (),
-            }
-        }
-
-        false
-    }
-
     /// Rename the `arguments` symbol to a new name.
     fn rename_arguments_symbol(symbol_id: SymbolId, name: CompactStr, ctx: &mut TraverseCtx<'a>) {
         let scope_id = ctx.symbols().get_scope_id(symbol_id);
@@ -906,7 +907,8 @@ impl<'a> ArrowFunctionConverter<'a> {
         ident: &mut IdentifierReference<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if !self.should_transform_arguments_identifier(&ident.name, ctx) {
+        let arguments_needs_transform = *self.arguments_needs_transform_stack.last();
+        if !arguments_needs_transform || &ident.name != "arguments" {
             return;
         }
 
@@ -950,8 +952,10 @@ impl<'a> ArrowFunctionConverter<'a> {
         ident: &mut BindingIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if ctx.current_scope_flags().is_strict_mode() // `arguments` is not allowed to be defined in strict mode.
-            || !self.should_transform_arguments_identifier(&ident.name, ctx)
+        let arguments_needs_transform = *self.arguments_needs_transform_stack.last();
+        if !arguments_needs_transform
+            || ctx.current_scope_flags().is_strict_mode() // `arguments` is not allowed to be defined in strict mode
+            || &ident.name != "arguments"
         {
             return;
         }
