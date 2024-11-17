@@ -70,9 +70,6 @@ after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3)
 rebuilt        : [ReferenceId(2), ReferenceId(5), ReferenceId(8), ReferenceId(12)]
 
 * elimination-declare/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "ReactiveMarkerSymbol"]
-rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
@@ -99,7 +96,7 @@ Missing ReferenceId: "_Name"
 Missing ReferenceId: "Name"
 Missing ReferenceId: "Name"
 Bindings mismatch:
-after transform: ScopeId(0): ["Baq", "Bar", "Baz", "Foo", "Func", "Im", "Name", "Ok", "T"]
+after transform: ScopeId(0): ["Bar", "Foo", "Func", "Im", "Name", "Ok"]
 rebuilt        : ScopeId(0): ["Bar", "Foo", "Func", "Im", "Name", "Ok", "T"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
@@ -130,39 +127,7 @@ after transform: SymbolId(7) "Name"
 rebuilt        : SymbolId(5) "Name"
 
 * redeclarations/input.ts
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): []
-Symbol flags mismatch for "A":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | Export | Import)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | Export)
-Symbol span mismatch for "A":
-after transform: SymbolId(0): Span { start: 57, end: 58 }
-rebuilt        : SymbolId(0): Span { start: 79, end: 83 }
-Symbol reference IDs mismatch for "A":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
-rebuilt        : SymbolId(0): [ReferenceId(0)]
-Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 79, end: 83 }]
-rebuilt        : SymbolId(0): []
-Symbol flags mismatch for "T":
-after transform: SymbolId(1): SymbolFlags(Export | Import | TypeAlias)
-rebuilt        : SymbolId(1): SymbolFlags(Export | Import)
-Symbol redeclarations mismatch for "T":
-after transform: SymbolId(1): [Span { start: 170, end: 171 }]
-rebuilt        : SymbolId(1): []
-Symbol flags mismatch for "B":
-after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable | Export | Import | TypeAlias)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable | Export)
-Symbol span mismatch for "B":
-after transform: SymbolId(2): Span { start: 267, end: 268 }
-rebuilt        : SymbolId(2): Span { start: 289, end: 293 }
-Symbol reference IDs mismatch for "B":
-after transform: SymbolId(2): [ReferenceId(3), ReferenceId(4)]
-rebuilt        : SymbolId(2): [ReferenceId(2)]
-Symbol redeclarations mismatch for "B":
-after transform: SymbolId(2): [Span { start: 289, end: 293 }, Span { start: 304, end: 305 }]
-rebuilt        : SymbolId(2): []
+x Output mismatch
 
 * ts-declaration-empty-output/input.d.ts
 x Output mismatch

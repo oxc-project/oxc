@@ -12,26 +12,17 @@ after transform: ScopeId(0): ["infer", "target", "type"]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/misc/pass/oxc-2087.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Helpers"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/misc/pass/oxc-2394.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/misc/pass/oxc-2592.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Foo"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
@@ -176,18 +167,12 @@ after transform: SymbolId(14): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(14): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/misc/pass/oxc-5177.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Bang", "Foo"]
-rebuilt        : ScopeId(0): ["Bang"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/misc/pass/oxc-5955.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["B", "C", "a"]
-rebuilt        : ScopeId(0): ["B", "a"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 

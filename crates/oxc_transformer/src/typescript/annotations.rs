@@ -1,3 +1,4 @@
+use oxc_ecmascript::BoundNames;
 use rustc_hash::FxHashSet;
 
 use oxc_allocator::Vec as ArenaVec;
@@ -65,13 +66,25 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
         let mut no_modules_remaining = true;
         let mut some_modules_deleted = false;
 
+        let scope_id = ctx.current_scope_id();
+        let mut bound_names = vec![];
+
         program.body.retain_mut(|stmt| {
             let need_retain = match stmt {
-                Statement::ExportNamedDeclaration(decl) if decl.declaration.is_some() => {
-                    decl.declaration.as_ref().is_some_and(|decl| !decl.is_typescript_syntax())
-                }
                 Statement::ExportNamedDeclaration(decl) => {
-                    if decl.export_kind.is_type() {
+                    if let Some(declaration) = &decl.declaration {
+                        if declaration.is_typescript_syntax() {
+                            if declaration.declare()
+                                || !matches!(declaration, Declaration::TSEnumDeclaration(_))
+                            {
+                                decl.bound_names(&mut |ident| {
+                                    bound_names.push(ident.name.clone().into());
+                                });
+                            }
+                            return false;
+                        }
+                        true
+                    } else if decl.export_kind.is_type() {
                         false
                     } else if decl.specifiers.is_empty() {
                         // `export {}` or `export {} from 'mod'`
@@ -140,6 +153,8 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
 
             need_retain
         });
+
+        ctx.scopes_mut().remove_bindings(scope_id, &bound_names);
 
         // Determine if we still have import/export statements, otherwise we
         // need to inject an empty statement (`export {}`) so that the file is
@@ -381,18 +396,23 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
     fn enter_statements(
         &mut self,
         stmts: &mut ArenaVec<'a, Statement<'a>>,
-        _ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
+        let scope_id = ctx.current_scope_id();
+        let mut bound_names = vec![];
         // Remove declare declaration
-        stmts.retain(
-            |stmt| {
-                if let Some(decl) = stmt.as_declaration() {
-                    !decl.declare()
-                } else {
-                    true
+        stmts.retain(|stmt| {
+            if let Some(decl) = stmt.as_declaration() {
+                if decl.declare() {
+                    decl.bound_names(&mut |ident| {
+                        bound_names.push(ident.name.clone().into());
+                    });
+                    return false;
                 }
-            },
-        );
+            }
+            true
+        });
+        ctx.scopes_mut().remove_bindings(scope_id, &bound_names);
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -419,17 +439,47 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
     fn exit_statements(
         &mut self,
         stmts: &mut ArenaVec<'a, Statement<'a>>,
-        _ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
+        let scope_id = ctx.current_scope_id();
+        let mut bound_names = vec![];
         // Remove TS specific statements
         stmts.retain(|stmt| match stmt {
             Statement::ExpressionStatement(s) => !s.expression.is_typescript_syntax(),
             // Any namespaces left after namespace transform are type only, so remove them
-            Statement::TSModuleDeclaration(_) => false,
-            match_declaration!(Statement) => !stmt.to_declaration().is_typescript_syntax(),
+            Statement::TSModuleDeclaration(decl) => {
+                match &decl.id {
+                    TSModuleDeclarationName::Identifier(ident) => {
+                        // Exclude module augmentation.
+                        if !ctx.symbols().get_flags(ident.symbol_id()).is_value() {
+                            bound_names.push(ident.name.clone().into());
+                        }
+                    }
+                    TSModuleDeclarationName::StringLiteral(lit) => {
+                        bound_names.push(lit.value.clone().into());
+                    }
+                }
+                false
+            }
+            Statement::TSEnumDeclaration(_) => {
+                // Symbol is not removed from scope because enum is transformed.
+                false
+            }
+            match_declaration!(Statement) => {
+                let decl = stmt.to_declaration();
+                if decl.is_typescript_syntax() {
+                    decl.bound_names(&mut |ident| {
+                        bound_names.push(ident.name.clone().into());
+                    });
+                    return false;
+                }
+                true
+            }
             // Ignore ModuleDeclaration as it's handled in the program
             _ => true,
         });
+
+        ctx.scopes_mut().remove_bindings(scope_id, &bound_names);
     }
 
     /// Transform if statement's consequent and alternate to block statements if they are super calls

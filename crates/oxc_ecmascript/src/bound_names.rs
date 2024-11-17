@@ -2,7 +2,8 @@ use oxc_ast::ast::{
     ArrayPattern, AssignmentPattern, BindingIdentifier, BindingPattern, BindingPatternKind,
     BindingRestElement, Class, Declaration, ExportNamedDeclaration, FormalParameter,
     FormalParameters, Function, ImportDeclaration, ImportDeclarationSpecifier, ModuleDeclaration,
-    ObjectPattern, VariableDeclaration,
+    ObjectPattern, TSEnumDeclaration, TSImportEqualsDeclaration, TSInterfaceDeclaration,
+    TSModuleDeclaration, TSModuleDeclarationName, TSTypeAliasDeclaration, VariableDeclaration,
 };
 
 /// [`BoundName`](https://tc39.es/ecma262/#sec-static-semantics-boundnames)
@@ -82,7 +83,11 @@ impl<'a> BoundNames<'a> for Declaration<'a> {
             Declaration::VariableDeclaration(decl) => decl.bound_names(f),
             Declaration::FunctionDeclaration(func) => func.bound_names(f),
             Declaration::ClassDeclaration(decl) => decl.bound_names(f),
-            _ => {}
+            Declaration::TSInterfaceDeclaration(decl) => decl.bound_names(f),
+            Declaration::TSEnumDeclaration(decl) => decl.bound_names(f),
+            Declaration::TSTypeAliasDeclaration(decl) => decl.bound_names(f),
+            Declaration::TSImportEqualsDeclaration(decl) => decl.bound_names(f),
+            Declaration::TSModuleDeclaration(decl) => decl.bound_names(f),
         }
     }
 }
@@ -163,6 +168,38 @@ impl<'a> BoundNames<'a> for ExportNamedDeclaration<'a> {
     fn bound_names<F: FnMut(&BindingIdentifier<'a>)>(&self, f: &mut F) {
         if let Some(decl) = &self.declaration {
             decl.bound_names(f);
+        }
+    }
+}
+
+impl<'a> BoundNames<'a> for TSInterfaceDeclaration<'a> {
+    fn bound_names<F: FnMut(&BindingIdentifier<'a>)>(&self, f: &mut F) {
+        self.id.bound_names(f);
+    }
+}
+
+impl<'a> BoundNames<'a> for TSEnumDeclaration<'a> {
+    fn bound_names<F: FnMut(&BindingIdentifier<'a>)>(&self, f: &mut F) {
+        self.id.bound_names(f);
+    }
+}
+
+impl<'a> BoundNames<'a> for TSTypeAliasDeclaration<'a> {
+    fn bound_names<F: FnMut(&BindingIdentifier<'a>)>(&self, f: &mut F) {
+        self.id.bound_names(f);
+    }
+}
+
+impl<'a> BoundNames<'a> for TSImportEqualsDeclaration<'a> {
+    fn bound_names<F: FnMut(&BindingIdentifier<'a>)>(&self, f: &mut F) {
+        self.id.bound_names(f);
+    }
+}
+
+impl<'a> BoundNames<'a> for TSModuleDeclaration<'a> {
+    fn bound_names<F: FnMut(&BindingIdentifier<'a>)>(&self, f: &mut F) {
+        if let TSModuleDeclarationName::Identifier(ident) = &self.id {
+            ident.bound_names(f);
         }
     }
 }

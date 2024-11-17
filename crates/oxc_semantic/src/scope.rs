@@ -339,8 +339,17 @@ impl ScopeTree {
     }
 
     /// Remove an existing binding from a scope.
-    pub fn remove_binding(&mut self, scope_id: ScopeId, name: &CompactStr) {
+    pub fn remove_binding(&mut self, scope_id: ScopeId, name: &str) {
         self.bindings[scope_id].shift_remove(name);
+    }
+
+    /// Remove existing bindings from a scope.
+    pub fn remove_bindings(&mut self, scope_id: ScopeId, names: &[&str]) {
+        let new_names = self.bindings[scope_id]
+            .drain(..)
+            .filter(|n| !names.contains(&n.0.as_str()))
+            .collect::<Vec<_>>();
+        self.bindings[scope_id] = IndexMap::from_iter(new_names);
     }
 
     /// Move a binding from one scope to another.
