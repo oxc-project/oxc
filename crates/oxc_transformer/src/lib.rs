@@ -191,6 +191,8 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         self.x2_es2020.enter_big_int_literal(node, ctx);
     }
 
+    // `#[inline]` because this is a hot path and function at end of chain in `common` transform is small
+    #[inline]
     fn enter_binding_identifier(
         &mut self,
         node: &mut BindingIdentifier<'a>,
@@ -199,6 +201,8 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         self.common.enter_binding_identifier(node, ctx);
     }
 
+    // `#[inline]` because this is a hot path and function at end of chain in `common` transform is small
+    #[inline]
     fn enter_identifier_reference(
         &mut self,
         node: &mut IdentifierReference<'a>,

@@ -120,6 +120,8 @@ impl<'a, 'ctx> Traverse<'a> for Common<'a, 'ctx> {
         self.arrow_function_converter.exit_expression(expr, ctx);
     }
 
+    // `#[inline]` because this is a hot path and `arrow_function_converter`'s function is small
+    #[inline]
     fn enter_binding_identifier(
         &mut self,
         node: &mut BindingIdentifier<'a>,
@@ -128,6 +130,8 @@ impl<'a, 'ctx> Traverse<'a> for Common<'a, 'ctx> {
         self.arrow_function_converter.enter_binding_identifier(node, ctx);
     }
 
+    // `#[inline]` because this is a hot path and `arrow_function_converter`'s function is small
+    #[inline]
     fn enter_identifier_reference(
         &mut self,
         node: &mut IdentifierReference<'a>,
